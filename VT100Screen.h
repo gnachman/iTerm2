@@ -31,6 +31,7 @@
 #import "VT100Terminal.h"
 #import "LineBuffer.h"
 #import "DVR.h"
+#import "PTYTextView.h"
 
 extern NSString * const kHighlightForegroundColor;
 extern NSString * const kHighlightBackgroundColor;
@@ -38,19 +39,7 @@ extern BOOL gExperimentalOptimization;
 
 @class PTYTask;
 @class PTYSession;
-@class PTYTextView;
 @class iTermGrowlDelegate;
-
-// continueFindAllResults populates an array of search results with these
-// objects.
-@interface SearchResult : NSObject
-{
-@public
-    int startX, endX;
-    long long absStartY, absEndY;
-}
-
-@end
 
 // For debugging: log the buffer.
 void DumpBuf(screen_char_t* p, int n);
@@ -75,7 +64,7 @@ void StringToScreenChars(NSString *s,
                          int* cursorIndex);
 void TranslateCharacterSet(screen_char_t *s, int len);
 
-@interface VT100Screen : NSObject
+@interface VT100Screen : NSObject <PTYTextViewDataSource>
 {
     int WIDTH; // width of screen
     int HEIGHT; // height of screen
@@ -173,14 +162,10 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)resetCharset;
 - (BOOL)usingDefaultCharset;
 - (void)setWidth:(int)width height:(int)height;
-- (int)width;
-- (int)height;
 - (void)setScrollback:(unsigned int)lines;
 - (void)setUnlimitedScrollback:(BOOL)enable;
 - (void)setTerminal:(VT100Terminal *)terminal;
-- (VT100Terminal *)terminal;
 - (void)setShellTask:(PTYTask *)shell;
-- (PTYTask *)shellTask;
 - (PTYSession *) session;
 - (void)setSession:(PTYSession *)session;
 
@@ -199,19 +184,12 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (BOOL)growl;
 
 // line access
-// This function is dangerous! It writes to an internal buffer and returns a
-// pointer to it. Better to use getLineAtIndex:withBuffer:.
-- (screen_char_t *) getLineAtIndex: (int) theIndex;
 
-// Provide a buffer as large as sizeof(screen_char_t*) * ([SCREEN width] + 1)
-- (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer;
-- (screen_char_t *)getLineAtScreenIndex:(int)theIndex;
 - (NSString *)getLineString:(screen_char_t *)theLine;
 
 // edit screen buffer
 - (void)putToken:(VT100TCC)token;
 - (void)clearBuffer;
-- (long long)absoluteLineNumberOfCursor;
 - (void)clearScrollbackBuffer;
 - (void)savePrimaryBuffer;
 - (void)showPrimaryBuffer;
@@ -263,42 +241,20 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)insertLines:(int)n;
 - (void)deleteLines:(int)n;
 - (void)blink;
-- (int)cursorX;
-- (int)cursorY;
-
-- (int)numberOfLines;
-- (int)numberOfScrollbackLines;
 
 - (void)setHistory:(NSArray *)history;
 - (void)setAltScreen:(NSArray *)lines;
 - (void)setTmuxState:(NSDictionary *)state;
 
-- (int)scrollbackOverflow;
-- (long long)totalScrollbackOverflow;
-- (void)resetScrollbackOverflow;
 - (void)scrollScreenIntoScrollbackBuffer:(int)leaving;
 
 // Set a range of bytes to dirty=1
 - (void)setRangeDirty:(NSRange)range;
 
-// Set the cursor dirty. Cursor coords are different because of how they handle
-// being in the WIDTH'th column (it wraps to the start of the next line)
-// whereas that wouldn't normally be a legal X value.
-- (void)setCharDirtyAtCursorX:(int)x Y:(int)y;
-
 // Set the char at x,y dirty.
 - (void)setCharDirtyAtX:(int)x Y:(int)y;
 
-// Retrieve the dirty flags at an x,y coordinate
-- (int)dirtyAtX:(int)x Y:(int)y;
-
-// Check if any flag is set at an x,y coordinate in the dirty array
-- (BOOL)isDirtyAtX:(int)x Y:(int)y;
-
-- (void)resetDirty;
 - (void)setDirty;
-- (BOOL)isAllDirty;
-- (void)resetAllDirty;
 
 // print to ansi...
 - (BOOL) printToAnsi;
@@ -311,31 +267,6 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 // Is this character double width on this screen?
 - (BOOL)isDoubleWidthCharacter:(unichar)c;
 
-// Initialize the find context.
-- (FindContext*)findContext;
-- (void)initFindString:(NSString*)aString
-      forwardDirection:(BOOL)direction
-          ignoringCase:(BOOL)ignoreCase
-                 regex:(BOOL)regex
-           startingAtX:(int)x
-           startingAtY:(int)y
-            withOffset:(int)offsetof
-             inContext:(FindContext*)context
-       multipleResults:(BOOL)multipleResults;
-
-- (BOOL)continueFindResultAtStartX:(int*)startX
-                          atStartY:(int*)startY
-                            atEndX:(int*)endX
-                            atEndY:(int*)endY
-                             found:(BOOL*)found
-                         inContext:(FindContext*)context;
-
-// Find all matches to to the search in the provided context. Returns YES if it
-// should be called again.
-- (BOOL)continueFindAllResults:(NSMutableArray*)results
-                     inContext:(FindContext*)context;
-- (void)cancelFindInContext:(FindContext*)context;
-
 - (void)dumpDebugLog;
 
 // Set the colors in the prototype char to all text on screen that matches the regex.
@@ -343,27 +274,14 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)highlightTextMatchingRegex:(NSString *)regex
                             colors:(NSDictionary *)colors;
 
-// Return a human-readable dump of the screen contents.
-- (NSString*)debugString;
-
-// Save the current state to a new frame in the dvr.
-- (void)saveToDvr;
-
 // Turn off DVR for this screen.
 - (void)disableDvr;
 
 // Accessor.
 - (DVR*)dvr;
 
-// If this returns true then the textview will broadcast iTermTabContentsChanged
-// when a dirty char is found.
-- (BOOL)shouldSendContentsChangedNotification;
-
 // Load a frame from a dvr decoder.
 - (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info;
-
-// Save the position of the current find context (with the screen appended).
-- (void)saveFindContextAbsPos;
 
 // Save the position of the end of the scrollback buffer without the screen appeneded.
 - (void)saveTerminalAbsPos;

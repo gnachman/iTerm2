@@ -56,6 +56,7 @@
 #import "iTermExpose.h"
 #import "RegexKitLite.h"
 #import "TmuxStateParser.h"
+#import "SearchResult.h"
 
 // for xterm's base64 decoding (paste64)
 #import <apr-1/apr_base64.h>
@@ -100,9 +101,6 @@ static const double kInterBellQuietPeriod = 0.1;
 
 // we add a character at the end of line to indicate wrapping
 #define REAL_WIDTH (WIDTH+1)
-
-@implementation SearchResult
-@end
 
 /* translates normal char into graphics char */
 void TranslateCharacterSet(screen_char_t *s, int len)
@@ -473,46 +471,6 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     return buffer_lines;
 }
 
-// gets line at specified index starting from scrollback_top
-- (screen_char_t *)getLineAtIndex: (int) theIndex
-{
-    return [self getLineAtIndex:theIndex withBuffer:result_line];
-}
-
-- (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer
-{
-    if (theIndex >= [linebuffer numLinesWithWidth: WIDTH]) {
-        // Get a line from the circular screen buffer
-        return [self _getLineAtIndex:(theIndex - [linebuffer numLinesWithWidth: WIDTH])
-                            fromLine:screen_top];
-    } else {
-        // Get a line from the scrollback buffer.
-        memcpy(buffer, default_line, sizeof(screen_char_t) * WIDTH);
-        int cont = [linebuffer copyLineToBuffer:buffer width:WIDTH lineNum:theIndex];
-        if (cont == EOL_SOFT &&
-            theIndex == [linebuffer numLinesWithWidth: WIDTH] - 1 &&
-            screen_top[1].code == DWC_RIGHT &&
-            buffer[WIDTH - 1].code == 0) {
-            // The last line in the scrollback buffer is actually a split DWC
-            // if the first line in the screen is double-width.
-            cont = EOL_DWC;
-        }
-        if (cont == EOL_DWC) {
-            buffer[WIDTH - 1].code = DWC_SKIP;
-            buffer[WIDTH - 1].complexChar = NO;
-        }
-        buffer[WIDTH].code = cont;
-
-        return buffer;
-    }
-}
-
-// gets line at specified index starting from screen_top
-- (screen_char_t *)getLineAtScreenIndex: (int) theIndex
-{
-    return ([self _getLineAtIndex:theIndex fromLine:screen_top]);
-}
-
 // returns NSString representation of line
 - (NSString *)getLineString:(screen_char_t *)theLine
 {
@@ -625,36 +583,6 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     return dirty[i];
 }
 
-- (BOOL)isDirtyAtX:(int)x Y:(int)y
-{
-    return [self dirtyAtX:x Y:y] != 0;
-}
-
-- (int)dirtyAtX:(int)x Y:(int)y
-{
-    assert(x >= 0);
-    assert(x < WIDTH);
-    assert(y >= 0);
-    assert(y < HEIGHT);
-    int i = x + y * WIDTH;
-    return [self dirtyAtOffset:i];
-}
-
-- (void)setCharDirtyAtCursorX:(int)x Y:(int)y
-{
-    int xToMark = x;
-    int yToMark = y;
-    if (xToMark == WIDTH && yToMark < HEIGHT - 1) {
-        xToMark = 0;
-        yToMark++;
-    }
-    [self setCharDirtyAtX:xToMark Y:yToMark];
-    if (xToMark < WIDTH - 1) {
-        // Just in case the cursor was over a double width character
-        [self setCharDirtyAtX:xToMark + 1 Y:yToMark];
-    }
-}
-
 - (void)setCharDirtyAtX:(int)x Y:(int)y
 {
     if (x == WIDTH) {
@@ -723,59 +651,6 @@ static char* FormatCont(int c)
         default:
             return "[?]";
     }
-}
-
-- (NSString*)debugString
-{
-    NSMutableString* result = [NSMutableString stringWithString:@""];
-    int x, y;
-    char line[1000];
-    char dirtyline[1000];
-    for (y = 0; y < HEIGHT; ++y) {
-        int ox = 0;
-        screen_char_t* p = [self getLineAtScreenIndex: y];
-        if (p == buffer_lines) {
-            [result appendString:@"--- top of buffer ---\n"];
-        }
-        for (x = 0; x < WIDTH; ++x, ++ox) {
-            if (dirty[y * WIDTH + x]) {
-                dirtyline[ox] = '-';
-            } else {
-                dirtyline[ox] = '.';
-            }
-            if (y == cursorY && x == cursorX) {
-                if (dirtyline[ox] == '-') {
-                    dirtyline[ox] = '=';
-                }
-                if (dirtyline[ox] == '.') {
-                    dirtyline[ox] = ':';
-                }
-            }
-            if (p+x > buffer_lines + HEIGHT*REAL_WIDTH) {
-                line[ox++] = '!';
-            }
-            if (p[x].code && !p[x].complexChar) {
-                if (p[x].code > 0 && p[x].code < 128) {
-                    line[ox] = p[x].code;
-                } else if (p[x].code == DWC_RIGHT) {
-                    line[ox] = '-';
-                } else if (p[x].code == TAB_FILLER) {
-                    line[ox] = ' ';
-                } else if (p[x].code == DWC_SKIP) {
-                    line[ox] = '>';
-                } else {
-                    line[ox] = '?';
-                }
-            } else {
-                line[ox] = '.';
-            }
-        }
-        line[x] = 0;
-        dirtyline[x] = 0;
-        [result appendFormat:@"%04d @ buffer+%lu lines: %s %s\n", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)];
-        [result appendFormat:@"%04d @ buffer+%lu dirty: %s\n", y, ((p - buffer_lines) / REAL_WIDTH), dirtyline];
-    }
-    return result;
 }
 
 - (void)dumpAll {
@@ -1799,16 +1674,6 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     [self resetPreservingPrompt:NO];
 }
 
-- (int)width
-{
-    return WIDTH;
-}
-
-- (int)height
-{
-    return HEIGHT;
-}
-
 // sets scrollback lines.
 - (void)setScrollback:(unsigned int)lines;
 {
@@ -1822,11 +1687,6 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 - (void)setUnlimitedScrollback:(BOOL)enable
 {
     unlimitedScrollback_ = enable;
-}
-
-- (PTYSession *)session
-{
-    return SESSION;
 }
 
 - (void)setSession:(PTYSession *)session
@@ -1846,11 +1706,6 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     TERMINAL = terminal;
 }
 
-- (VT100Terminal *)terminal
-{
-    return TERMINAL;
-}
-
 - (void)setAllowTitleReporting:(BOOL)allow {
     allowTitleReporting_ = allow;
 }
@@ -1862,14 +1717,6 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
       __FILE__, __LINE__, shell);
 #endif
     SHELL = shell;
-}
-
-- (PTYTask *)shellTask
-{
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen shellTask]", __FILE__, __LINE__);
-#endif
-    return SHELL;
 }
 
 - (PTYTextView *) display
@@ -2613,11 +2460,6 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 //    NSLog(@"Done");
 }
 
-- (long long)absoluteLineNumberOfCursor
-{
-    return [self totalScrollbackOverflow] + [self numberOfLines] - [self height] + [self cursorY] - 1;
-}
-
 - (void)clearBuffer
 {
     [self clearScreen];
@@ -3252,11 +3094,6 @@ void DumpBuf(screen_char_t* p, int n) {
         [self scrollUp];
         DebugLog(@"setNewline weird case");
     }
-}
-
-- (long long)totalScrollbackOverflow
-{
-    return cumulative_scrollback_overflow;
 }
 
 - (void)deleteCharacters:(int) n
@@ -4216,16 +4053,6 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 }
 
-- (int)cursorX
-{
-    return cursorX+1;
-}
-
-- (int)cursorY
-{
-    return cursorY+1;
-}
-
 - (void)clearTabStop
 {
     [tabStops removeAllObjects];
@@ -4246,35 +4073,6 @@ void DumpBuf(screen_char_t* p, int n) {
     [tabStops removeObject:[NSNumber numberWithInt:x]];
 }
 
-- (int)numberOfScrollbackLines
-{
-    return [linebuffer numLinesWithWidth: WIDTH];
-}
-
-- (int)numberOfLines
-{
-    return [linebuffer numLinesWithWidth: WIDTH] + HEIGHT;
-}
-
-- (int)scrollbackOverflow
-{
-    return scrollback_overflow;
-}
-
-- (void)resetScrollbackOverflow
-{
-    scrollback_overflow = 0;
-}
-
-- (void)resetDirty
-{
-    DebugLog(@"resetDirty");
-    assert(dirtySize == WIDTH*HEIGHT);
-    assert(dirty[dirtySize] == DIRTY_MAGIC);
-    memset(dirty, 0, dirtySize*sizeof(char));
-    assert(dirty[dirtySize] == DIRTY_MAGIC);
-}
-
 - (void)setDirty
 {
     [self resetScrollbackOverflow];
@@ -4284,16 +4082,6 @@ void DumpBuf(screen_char_t* p, int n) {
     // I'm almost sure it wasn't doing any good.
     allDirty_ = YES;
     DebugLog(@"setDirty (screen scrolled)");
-}
-
-- (BOOL)isAllDirty
-{
-    return allDirty_;
-}
-
-- (void)resetAllDirty
-{
-    allDirty_ = NO;
 }
 
 - (void)doPrint
@@ -4488,22 +4276,9 @@ void DumpBuf(screen_char_t* p, int n) {
     // kStateDictDECSCCursorY;
 }
 
-- (FindContext*)findContext
-{
-    return &findContext;
-}
-
 - (long long)findContextAbsPosition
 {
     return [linebuffer absPositionOfFindContext:findContext];
-}
-
-- (void)saveFindContextAbsPos
-{
-    int linesPushed;
-    linesPushed = [self _appendScreenToScrollback:[self _usedHeight]];
-    savedFindContextAbsPos_ = [self findContextAbsPosition];
-    [self _popScrollbackLines:linesPushed];
 }
 
 - (void)saveTerminalAbsPos
@@ -4520,60 +4295,6 @@ void DumpBuf(screen_char_t* p, int n) {
                             inContext:context];
 
     [self _popScrollbackLines:linesPushed];
-}
-
-- (void)initFindString:(NSString*)aString
-      forwardDirection:(BOOL)direction
-          ignoringCase:(BOOL)ignoreCase
-                 regex:(BOOL)regex
-           startingAtX:(int)x
-           startingAtY:(int)y
-            withOffset:(int)offset
-             inContext:(FindContext*)context
-       multipleResults:(BOOL)multipleResults
-{
-    // Append the screen contents to the scrollback buffer so they are included in the search.
-    int linesPushed;
-    linesPushed = [self _appendScreenToScrollback:[self _usedHeight]];
-
-    // Get the start position of (x,y)
-    int startPos;
-    BOOL isOk = [linebuffer convertCoordinatesAtX:x
-                                            atY:y
-                                      withWidth:WIDTH
-                                     toPosition:&startPos
-                                         offset:offset * (direction ? 1 : -1)];
-    if (!isOk) {
-        // NSLog(@"Couldn't convert %d,%d to position", x, y);
-        if (direction) {
-            startPos = [linebuffer firstPos];
-        } else {
-            startPos = [linebuffer lastPos] - 1;
-        }
-    }
-
-    // Set up the options bitmask and call findSubstring.
-    int opts = 0;
-    if (!direction) {
-        opts |= FindOptBackwards;
-    }
-    if (ignoreCase) {
-        opts |= FindOptCaseInsensitive;
-    }
-    if (regex) {
-        opts |= FindOptRegex;
-    }
-    if (multipleResults) {
-        opts |= FindMultipleResults;
-    }
-    [linebuffer initFind:aString startingAt:startPos options:opts withContext:context];
-    context->hasWrapped = NO;
-    [self _popScrollbackLines:linesPushed];
-}
-
-- (void)cancelFindInContext:(FindContext*)context
-{
-    [linebuffer releaseFind:context];
 }
 
 - (BOOL)_continueFindResultsInContext:(FindContext*)context
@@ -4707,59 +4428,6 @@ void DumpBuf(screen_char_t* p, int n) {
     return rc;
 }
 
-- (BOOL)continueFindAllResults:(NSMutableArray*)results
-                     inContext:(FindContext*)context
-{
-    context->hasWrapped = YES;
-
-    float MAX_TIME = 0.1;
-    NSDate* start = [NSDate date];
-    BOOL keepSearching;
-    context->hasWrapped = YES;
-    do {
-        keepSearching = [self _continueFindResultsInContext:context
-                                              maxTime:0.1
-                                              toArray:results];
-    } while (keepSearching &&
-             [[NSDate date] timeIntervalSinceDate:start] < MAX_TIME);
-
-    return keepSearching;
-}
-
-- (BOOL)continueFindResultAtStartX:(int*)startX
-                          atStartY:(int*)startY
-                            atEndX:(int*)endX
-                            atEndY:(int*)endY
-                             found:(BOOL*)found
-                         inContext:(FindContext*)context
-{
-    return [self _continueFindResultAtStartX:startX
-                                    atStartY:startY
-                                      atEndX:endX
-                                      atEndY:endY
-                                       found:found
-                                   inContext:context
-                                     maxTime:0.1];
-}
-
-- (void)saveToDvr
-{
-    if (!dvr || ![[PreferencePanel sharedInstance] instantReplay]) {
-        return;
-    }
-
-    DVRFrameInfo info;
-    info.cursorX = cursorX;
-    info.cursorY = cursorY;
-    info.height = HEIGHT;
-    info.width = WIDTH;
-    info.topOffset = screen_top - buffer_lines;
-
-    [dvr appendFrame:(char*)buffer_lines
-              length:sizeof(screen_char_t) * REAL_WIDTH * HEIGHT
-                info:&info];
-}
-
 - (void)disableDvr
 {
     [dvr release];
@@ -4840,12 +4508,6 @@ void DumpBuf(screen_char_t* p, int n) {
 - (DVR*)dvr
 {
     return dvr;
-}
-
-- (BOOL)shouldSendContentsChangedNotification
-{
-    return [[iTermExpose sharedInstance] isVisible] ||
-           [SESSION wantsContentChangedNotification];
 }
 
 @end
@@ -4966,6 +4628,341 @@ void DumpBuf(screen_char_t* p, int n) {
     for (int i = 0; i < kInitialTabWindow; i += TABSIZE) {
         [tabStops addObject:[NSNumber numberWithInt:i]];
     }
+}
+
+#pragma mark - PTYTextViewDataSource
+
+- (PTYSession *)session
+{
+    return SESSION;
+}
+
+- (VT100Terminal *)terminal
+{
+    return TERMINAL;
+}
+
+- (int)numberOfLines
+{
+    return [linebuffer numLinesWithWidth: WIDTH] + HEIGHT;
+}
+
+- (int)width
+{
+    return WIDTH;
+}
+
+- (int)height
+{
+    return HEIGHT;
+}
+
+- (int)cursorX
+{
+    return cursorX+1;
+}
+
+- (int)cursorY
+{
+    return cursorY+1;
+}
+
+// gets line at specified index starting from scrollback_top
+// This function is dangerous! It writes to an internal buffer and returns a
+// pointer to it. Better to use getLineAtIndex:withBuffer:.
+- (screen_char_t *)getLineAtIndex:(int)theIndex
+{
+    return [self getLineAtIndex:theIndex withBuffer:result_line];
+}
+
+- (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer
+{
+    if (theIndex >= [linebuffer numLinesWithWidth: WIDTH]) {
+        // Get a line from the circular screen buffer
+        return [self _getLineAtIndex:(theIndex - [linebuffer numLinesWithWidth: WIDTH])
+                            fromLine:screen_top];
+    } else {
+        // Get a line from the scrollback buffer.
+        memcpy(buffer, default_line, sizeof(screen_char_t) * WIDTH);
+        int cont = [linebuffer copyLineToBuffer:buffer width:WIDTH lineNum:theIndex];
+        if (cont == EOL_SOFT &&
+            theIndex == [linebuffer numLinesWithWidth: WIDTH] - 1 &&
+            screen_top[1].code == DWC_RIGHT &&
+            buffer[WIDTH - 1].code == 0) {
+            // The last line in the scrollback buffer is actually a split DWC
+            // if the first line in the screen is double-width.
+            cont = EOL_DWC;
+        }
+        if (cont == EOL_DWC) {
+            buffer[WIDTH - 1].code = DWC_SKIP;
+            buffer[WIDTH - 1].complexChar = NO;
+        }
+        buffer[WIDTH].code = cont;
+
+        return buffer;
+    }
+}
+
+// gets line at specified index starting from screen_top
+- (screen_char_t *)getLineAtScreenIndex: (int) theIndex
+{
+    return ([self _getLineAtIndex:theIndex fromLine:screen_top]);
+}
+
+- (int)numberOfScrollbackLines
+{
+    return [linebuffer numLinesWithWidth: WIDTH];
+}
+
+- (int)scrollbackOverflow
+{
+    return scrollback_overflow;
+}
+
+- (void)resetScrollbackOverflow
+{
+    scrollback_overflow = 0;
+}
+
+- (long long)totalScrollbackOverflow
+{
+    return cumulative_scrollback_overflow;
+}
+
+- (long long)absoluteLineNumberOfCursor
+{
+    return [self totalScrollbackOverflow] + [self numberOfLines] - [self height] + [self cursorY] - 1;
+}
+
+- (BOOL)continueFindAllResults:(NSMutableArray*)results
+                     inContext:(FindContext*)context
+{
+    context->hasWrapped = YES;
+
+    float MAX_TIME = 0.1;
+    NSDate* start = [NSDate date];
+    BOOL keepSearching;
+    context->hasWrapped = YES;
+    do {
+        keepSearching = [self _continueFindResultsInContext:context
+                                              maxTime:0.1
+                                              toArray:results];
+    } while (keepSearching &&
+             [[NSDate date] timeIntervalSinceDate:start] < MAX_TIME);
+
+    return keepSearching;
+}
+
+- (FindContext*)findContext
+{
+    return &findContext;
+}
+
+- (BOOL)continueFindResultAtStartX:(int*)startX
+                          atStartY:(int*)startY
+                            atEndX:(int*)endX
+                            atEndY:(int*)endY
+                             found:(BOOL*)found
+                         inContext:(FindContext*)context
+{
+    return [self _continueFindResultAtStartX:startX
+                                    atStartY:startY
+                                      atEndX:endX
+                                      atEndY:endY
+                                       found:found
+                                   inContext:context
+                                     maxTime:0.1];
+}
+
+- (void)cancelFindInContext:(FindContext*)context
+{
+    [linebuffer releaseFind:context];
+}
+
+- (void)initFindString:(NSString*)aString
+      forwardDirection:(BOOL)direction
+          ignoringCase:(BOOL)ignoreCase
+                 regex:(BOOL)regex
+           startingAtX:(int)x
+           startingAtY:(int)y
+            withOffset:(int)offset
+             inContext:(FindContext*)context
+       multipleResults:(BOOL)multipleResults
+{
+    // Append the screen contents to the scrollback buffer so they are included in the search.
+    int linesPushed;
+    linesPushed = [self _appendScreenToScrollback:[self _usedHeight]];
+
+    // Get the start position of (x,y)
+    int startPos;
+    BOOL isOk = [linebuffer convertCoordinatesAtX:x
+                                            atY:y
+                                      withWidth:WIDTH
+                                     toPosition:&startPos
+                                         offset:offset * (direction ? 1 : -1)];
+    if (!isOk) {
+        // NSLog(@"Couldn't convert %d,%d to position", x, y);
+        if (direction) {
+            startPos = [linebuffer firstPos];
+        } else {
+            startPos = [linebuffer lastPos] - 1;
+        }
+    }
+
+    // Set up the options bitmask and call findSubstring.
+    int opts = 0;
+    if (!direction) {
+        opts |= FindOptBackwards;
+    }
+    if (ignoreCase) {
+        opts |= FindOptCaseInsensitive;
+    }
+    if (regex) {
+        opts |= FindOptRegex;
+    }
+    if (multipleResults) {
+        opts |= FindMultipleResults;
+    }
+    [linebuffer initFind:aString startingAt:startPos options:opts withContext:context];
+    context->hasWrapped = NO;
+    [self _popScrollbackLines:linesPushed];
+}
+
+- (void)saveFindContextAbsPos
+{
+    int linesPushed;
+    linesPushed = [self _appendScreenToScrollback:[self _usedHeight]];
+    savedFindContextAbsPos_ = [self findContextAbsPosition];
+    [self _popScrollbackLines:linesPushed];
+}
+
+- (PTYTask *)shellTask
+{
+#if DEBUG_METHOD_TRACE
+    NSLog(@"%s(%d):-[VT100Screen shellTask]", __FILE__, __LINE__);
+#endif
+    return SHELL;
+}
+
+- (NSString*)debugString
+{
+    NSMutableString* result = [NSMutableString stringWithString:@""];
+    int x, y;
+    char line[1000];
+    char dirtyline[1000];
+    for (y = 0; y < HEIGHT; ++y) {
+        int ox = 0;
+        screen_char_t* p = [self getLineAtScreenIndex: y];
+        if (p == buffer_lines) {
+            [result appendString:@"--- top of buffer ---\n"];
+        }
+        for (x = 0; x < WIDTH; ++x, ++ox) {
+            if (dirty[y * WIDTH + x]) {
+                dirtyline[ox] = '-';
+            } else {
+                dirtyline[ox] = '.';
+            }
+            if (y == cursorY && x == cursorX) {
+                if (dirtyline[ox] == '-') {
+                    dirtyline[ox] = '=';
+                }
+                if (dirtyline[ox] == '.') {
+                    dirtyline[ox] = ':';
+                }
+            }
+            if (p+x > buffer_lines + HEIGHT*REAL_WIDTH) {
+                line[ox++] = '!';
+            }
+            if (p[x].code && !p[x].complexChar) {
+                if (p[x].code > 0 && p[x].code < 128) {
+                    line[ox] = p[x].code;
+                } else if (p[x].code == DWC_RIGHT) {
+                    line[ox] = '-';
+                } else if (p[x].code == TAB_FILLER) {
+                    line[ox] = ' ';
+                } else if (p[x].code == DWC_SKIP) {
+                    line[ox] = '>';
+                } else {
+                    line[ox] = '?';
+                }
+            } else {
+                line[ox] = '.';
+            }
+        }
+        line[x] = 0;
+        dirtyline[x] = 0;
+        [result appendFormat:@"%04d @ buffer+%lu lines: %s %s\n", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)];
+        [result appendFormat:@"%04d @ buffer+%lu dirty: %s\n", y, ((p - buffer_lines) / REAL_WIDTH), dirtyline];
+    }
+    return result;
+}
+
+- (BOOL)isAllDirty
+{
+    return allDirty_;
+}
+
+- (void)resetAllDirty
+{
+    allDirty_ = NO;
+}
+
+- (void)setCharDirtyAtCursorX:(int)x Y:(int)y
+{
+    int xToMark = x;
+    int yToMark = y;
+    if (xToMark == WIDTH && yToMark < HEIGHT - 1) {
+        xToMark = 0;
+        yToMark++;
+    }
+    [self setCharDirtyAtX:xToMark Y:yToMark];
+    if (xToMark < WIDTH - 1) {
+        // Just in case the cursor was over a double width character
+        [self setCharDirtyAtX:xToMark + 1 Y:yToMark];
+    }
+}
+
+- (BOOL)isDirtyAtX:(int)x Y:(int)y
+{
+    assert(x >= 0);
+    assert(x < WIDTH);
+    assert(y >= 0);
+    assert(y < HEIGHT);
+    int i = x + y * WIDTH;
+    return [self dirtyAtOffset:i];
+}
+
+- (void)resetDirty
+{
+    DebugLog(@"resetDirty");
+    assert(dirtySize == WIDTH*HEIGHT);
+    assert(dirty[dirtySize] == DIRTY_MAGIC);
+    memset(dirty, 0, dirtySize*sizeof(char));
+    assert(dirty[dirtySize] == DIRTY_MAGIC);
+}
+
+- (void)saveToDvr
+{
+    if (!dvr || ![[PreferencePanel sharedInstance] instantReplay]) {
+        return;
+    }
+
+    DVRFrameInfo info;
+    info.cursorX = cursorX;
+    info.cursorY = cursorY;
+    info.height = HEIGHT;
+    info.width = WIDTH;
+    info.topOffset = screen_top - buffer_lines;
+
+    [dvr appendFrame:(char*)buffer_lines
+              length:sizeof(screen_char_t) * REAL_WIDTH * HEIGHT
+                info:&info];
+}
+
+- (BOOL)shouldSendContentsChangedNotification
+{
+    return [[iTermExpose sharedInstance] isVisible] ||
+           [SESSION wantsContentChangedNotification];
 }
 
 @end

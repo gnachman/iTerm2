@@ -30,6 +30,7 @@
 		1D085F9F16F137D900B7FCE9 /* RoundedRectView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9D16F137D900B7FCE9 /* RoundedRectView.m */; };
 		1D085FA216F138A100B7FCE9 /* ToastWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D085FA016F138A000B7FCE9 /* ToastWindowController.h */; };
 		1D085FA316F138A100B7FCE9 /* ToastWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085FA116F138A000B7FCE9 /* ToastWindowController.m */; };
+		1D0AABC217B59B3D0072B5AF /* SearchResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DC393C417B59B08000EE0F2 /* SearchResult.m */; };
 		1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0B613614A7BC1200C57C33 /* TmuxControllerRegistry.h */; };
 		1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0B613714A7BC1200C57C33 /* TmuxControllerRegistry.m */; };
 		1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0B613A14A7C76500C57C33 /* TmuxWindowsTable.h */; };
@@ -656,6 +657,8 @@
 		1DB72CF51396059200EB1005 /* xterm-terminfo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "xterm-terminfo.txt"; sourceTree = "<group>"; };
 		1DC38816148E840600B89F7C /* SolidColorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SolidColorView.h; sourceTree = "<group>"; };
 		1DC38817148E840700B89F7C /* SolidColorView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SolidColorView.m; sourceTree = "<group>"; };
+		1DC393C317B59B08000EE0F2 /* SearchResult.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SearchResult.h; sourceTree = "<group>"; };
+		1DC393C417B59B08000EE0F2 /* SearchResult.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SearchResult.m; sourceTree = "<group>"; };
 		1DC7429F127C96F90069594C /* IBarCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = IBarCursor.png; path = images/IBarCursor.png; sourceTree = "<group>"; };
 		1DCA5ECD13EE507800B7725E /* WindowArrangements.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WindowArrangements.h; sourceTree = "<group>"; };
 		1DCA5ECE13EE507800B7725E /* WindowArrangements.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WindowArrangements.m; sourceTree = "<group>"; };
@@ -867,8 +870,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				1D9053C417A5CCF100A0B64E /* MovingAverage.h */,
-				1D9053C517A5CCF100A0B64E /* MovingAverage.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -929,6 +930,8 @@
 				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
 				1D72438C11F416E500BD4924 /* LineBuffer.m */,
 				1D29732614082676004C5DBE /* MovePaneController.m */,
+				1D9053C417A5CCF100A0B64E /* MovingAverage.h */,
+				1D9053C517A5CCF100A0B64E /* MovingAverage.m */,
 				1D085F8416F02E7400B7FCE9 /* PasteContext.h */,
 				1D085F8516F02E7400B7FCE9 /* PasteContext.m */,
 				1D085F9816F1135F00B7FCE9 /* PasteEvent.h */,
@@ -954,6 +957,8 @@
 				1D085F9C16F137D900B7FCE9 /* RoundedRectView.h */,
 				1D085F9D16F137D900B7FCE9 /* RoundedRectView.m */,
 				1D36155412CBF33E00803EA9 /* ScreenChar.m */,
+				1DC393C317B59B08000EE0F2 /* SearchResult.h */,
+				1DC393C417B59B08000EE0F2 /* SearchResult.m */,
 				1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */,
 				1D2E813012A18F7500F3D71E /* SessionView.m */,
 				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
@@ -1859,6 +1864,7 @@
 				1D5FDDA61208E93600C46BA3 /* PTYScrollView.m in Sources */,
 				1D5FDDA71208E93600C46BA3 /* PTYTextView.m in Sources */,
 				1D5FDDA81208E93600C46BA3 /* PTYTask.m in Sources */,
+				1D0AABC217B59B3D0072B5AF /* SearchResult.m in Sources */,
 				1D5FDDA91208E93600C46BA3 /* VT100Screen.m in Sources */,
 				1D5FDDAA1208E93600C46BA3 /* VT100Terminal.m in Sources */,
 				1D5FDDAB1208E93600C46BA3 /* iTermController.m in Sources */,
@@ -2126,7 +2132,7 @@
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_VERSION = 4.2;
+				GCC_VERSION = "";
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_MISSING_PARENTHESES = YES;
@@ -2152,7 +2158,7 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.6;
+				SDKROOT = macosx;
 				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
@@ -2189,7 +2195,7 @@
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = "";
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_MISSING_PARENTHESES = YES;
@@ -2215,7 +2221,7 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.6;
+				SDKROOT = macosx;
 				VALID_ARCHS = "i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
@@ -2261,7 +2267,7 @@
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
 				"GCC_PREPROCESSOR_DEFINITIONS[arch=*]" = BLOCKS_NOT_AVAILABLE;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = "";
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_MISSING_PARENTHESES = YES;
@@ -2287,7 +2293,7 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.5;
+				SDKROOT = macosx;
 				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
@@ -2309,7 +2315,7 @@
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = "";
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_MISSING_PARENTHESES = YES;
@@ -2335,7 +2341,7 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.7;
+				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
 				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
@@ -2357,7 +2363,7 @@
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = "";
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_MISSING_PARENTHESES = YES;
@@ -2383,7 +2389,7 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.6;
+				SDKROOT = macosx;
 				VALID_ARCHS = "i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
@@ -2407,7 +2413,7 @@
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G4;
 				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = "";
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_MISSING_PARENTHESES = YES;

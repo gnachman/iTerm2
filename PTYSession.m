@@ -56,6 +56,8 @@
 #import "PasteEvent.h"
 #import "PasteViewController.h"
 #import "TmuxWindowOpener.h"
+#import "SearchResult.h"
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>

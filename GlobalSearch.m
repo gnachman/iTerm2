@@ -41,7 +41,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
 @interface GlobalSearchInstance : NSObject
 {
     PTYTextView* textView_;
-    VT100Screen* theScreen_;
+    id<PTYTextViewDataSource> textViewDataSource_;
     PTYSession* theSession_;
     NSMutableArray* results_;
     BOOL more_;
@@ -178,18 +178,18 @@ const double GLOBAL_SEARCH_MARGIN = 10;
         findString_ = [findString copy];
         more_ = YES;
         textView_ = textView;
-        theScreen_ = [textView dataSource];  // TODO: this is a weak ref. Be on the lookout for its death.
-        theSession_ = [theScreen_ session];
+        textViewDataSource_ = [textView dataSource];  // TODO: this is a weak ref. Be on the lookout for its death.
+        theSession_ = [textViewDataSource_ session];
         label_ = [label retain];
-        [theScreen_ initFindString:findString_
-                  forwardDirection:NO
-                      ignoringCase:YES
-                             regex:NO
-                       startingAtX:0
-                       startingAtY:(long long)([theScreen_ numberOfLines] + 1) + [theScreen_ totalScrollbackOverflow]
-                        withOffset:0  // 1?
-                         inContext:&findContext_
-                   multipleResults:NO];
+        [textViewDataSource_ initFindString:findString_
+                           forwardDirection:NO
+                               ignoringCase:YES
+                                      regex:NO
+                                startingAtX:0
+                                startingAtY:(long long)([textViewDataSource_ numberOfLines] + 1) + [textViewDataSource_ totalScrollbackOverflow]
+                                 withOffset:0  // 1?
+                                  inContext:&findContext_
+                            multipleResults:NO];
         matchLocations_ = [[NSMutableSet alloc] init];
         findContext_.hasWrapped = YES;
     }
@@ -232,7 +232,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
 
     NSString* theContext = [textView_ contentFromX:0
                                                  Y:startY
-                                               ToX:[theScreen_ width] - 1
+                                               ToX:[textViewDataSource_ width] - 1
                                                  Y:endY
                                                pad:NO
                                 includeLastNewline:NO
@@ -262,33 +262,33 @@ const double GLOBAL_SEARCH_MARGIN = 10;
         int startY;
         int endX;
         int endY;
-        more = [theScreen_ continueFindResultAtStartX:&startX
-                                             atStartY:&startY
-                                               atEndX:&endX
-                                               atEndY:&endY
-                                                found:&found
-                                            inContext:&findContext_];
+        more = [textViewDataSource_ continueFindResultAtStartX:&startX
+                                                      atStartY:&startY
+                                                        atEndX:&endX
+                                                        atEndY:&endY
+                                                         found:&found
+                                                     inContext:&findContext_];
 
         if (found) {
             if ([self _emitResultFromX:startX y:startY toX:endX y:endY]) {
                 ++newResults;
             }
-            [theScreen_ initFindString:findString_
-                      forwardDirection:NO
-                          ignoringCase:YES
-                                 regex:NO
-                           startingAtX:startX
-                           startingAtY:startY
-                            withOffset:1
-                             inContext:&findContext_
-                       multipleResults:NO];
+            [textViewDataSource_ initFindString:findString_
+                               forwardDirection:NO
+                                   ignoringCase:YES
+                                          regex:NO
+                                    startingAtX:startX
+                                    startingAtY:startY
+                                     withOffset:1
+                                      inContext:&findContext_
+                                multipleResults:NO];
             findContext_.hasWrapped = YES;
         }
         now = [NSDate date];
     } while ((found || more) && [now timeIntervalSinceDate:begin] < kMaxTime);
 
     more_ = (found || more);
-    return newResults;    
+    return newResults;
 }
 
 - (PTYTextView*)textView

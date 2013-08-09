@@ -35,7 +35,7 @@
 #import "LineBuffer.h"
 #import "PasteboardHistory.h"
 #import "iTermApplicationDelegate.h"
-
+#import "SearchResult.h"
 //#define AUTOCOMPLETE_VERBOSE_LOGGING
 #ifdef AUTOCOMPLETE_VERBOSE_LOGGING
 #define AcLog NSLog

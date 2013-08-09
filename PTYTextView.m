@@ -71,6 +71,7 @@ static const int kMaxSelectedTextLinesForCustomActions = 100;
 #import "ThreeFingerTapGestureRecognizer.h"
 #import "FutureMethods.h"
 #import "MovingAverage.h"
+#import "SearchResult.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -269,7 +270,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 - (id)initWithFrame:(NSRect)aRect
 {
     self = [super initWithFrame: aRect];
-    dataSource=_delegate=markedTextAttributes=NULL;
     firstMouseEventNumber_ = -1;
 
     dimmedColorCache_ = [[NSMutableDictionary alloc] init];
@@ -8464,7 +8464,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     }
     for (int y = lineStart; y < lineEnd; y++) {
         for (int x = 0; x < WIDTH; x++) {
-            int dirtyFlags = allDirty || [dataSource dirtyAtX:x Y:y-lineStart];
+            int dirtyFlags = allDirty || [dataSource isDirtyAtX:x Y:y-lineStart];
             if (dirtyFlags) {
                 foundDirty = YES;
                 // Remove highlighted search matches on this line.
@@ -8478,7 +8478,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                     dirtyRect.origin.x = MARGIN + x * charWidth;
                     int maxX;
                     for (maxX = WIDTH - 1; maxX > x; maxX--) {
-                        if ([dataSource dirtyAtX:maxX Y:y-lineStart]) {
+                        if ([dataSource isDirtyAtX:maxX Y:y-lineStart]) {
                             break;
                         }
                     }
