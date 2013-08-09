@@ -348,53 +348,12 @@ NSWindowDelegate,
 
 - (void)toggleFullScreenTabBar;
 
-- (IBAction)toggleBroadcastingToCurrentSession:(id)sender;
-- (IBAction)runCoprocess:(id)sender;
-- (IBAction)stopCoprocess:(id)sender;
-- (IBAction)coprocessPanelEnd:(id)sender;
-- (IBAction)coprocessHelp:(id)sender;
-
-- (IBAction)openSplitHorizontallySheet:(id)sender;
-- (IBAction)openSplitVerticallySheet:(id)sender;
-- (IBAction)openDashboard:(id)sender;
-- (IBAction)findCursor:(id)sender;
-
 - (void)futureInvalidateRestorableState;
 
-// Close the active session.
-- (IBAction)closeCurrentSession:(id)sender;
 - (void)closeSessionWithConfirmation:(PTYSession *)aSession;
-
-// Close foreground tab.
-- (IBAction)closeCurrentTab:(id)sender;
-
-// Save the current scroll position
-- (IBAction)saveScrollPosition:(id)sender;
-
-// Jump to the saved scroll position
-- (IBAction)jumpToSavedScrollPosition:(id)sender;
 
 // Is there a saved scroll position?
 - (BOOL)hasSavedScrollPosition;
-
-// Show paste history window.
-- (IBAction)openPasteHistory:(id)sender;
-
-// Show autocomplete window.
-- (IBAction)openAutocomplete:(id)sender;
-
-// Select the tab to the left of the foreground tab.
-- (IBAction)previousTab:(id)sender;
-
-// Select the tab to the right of the foreground tab.
-- (IBAction)nextTab:(id)sender;
-
-// Select the most recent pane
-- (IBAction)previousPane:(id)sender;
-
-// Select the least recently used pane
-- (IBAction)nextPane:(id)sender;
-
 
 // Return the number of sessions in this window.
 - (int)numberOfTabs;
@@ -423,13 +382,7 @@ NSWindowDelegate,
 // Call writeTask: for each session's shell with the given data.
 - (void)sendInputToAllSessions:(NSData *)data;
 
-// Toggle whether transparency is allowed in this terminal.
-- (IBAction)toggleUseTransparency:(id)sender;
 - (BOOL)useTransparency;
-
-// Turn full-screen mode on or off. Creates a new PseudoTerminal and moves this
-// one's state into it.
-- (IBAction)toggleFullScreenMode:(id)sender;
 
 // Enter full screen mode in the next mainloop.
 - (void)delayedEnterFullscreen;
@@ -482,9 +435,6 @@ NSWindowDelegate,
 
 // Move backward/forward in time by one frame.
 - (void)irAdvance:(int)dir;
-
-// Called when next/prev frame button is clicked.
-- (IBAction)irButton:(id)sender;
 
 // Can progress indicators be shown? They're turned off during animation of the tabbar.
 - (BOOL)disableProgressIndicators;
@@ -641,9 +591,6 @@ NSWindowDelegate,
 // Fill in a path with the tabbar color.
 - (void)fillPath:(NSBezierPath*)path;
 
-// Called when the close button in the find bar is pressed.
-- (IBAction)closeInstantReplay:(id)sender;
-
 // Resize the window to exactly fit this tab.
 - (void)fitWindowToTab:(PTYTab*)tab;
 
@@ -681,14 +628,8 @@ NSWindowDelegate,
 - (NSRect)windowFrame;
 - (NSScreen*)windowScreen;
 
-- (IBAction)irSliderMoved:(id)sender;
-
 // Show or hide as needed for current session.
 - (void)showOrHideInstantReplayBar;
-
-// Advance to next or previous time step
-- (IBAction)irPrev:(id)sender;
-- (IBAction)irNext:(id)sender;
 
 // Maximize or unmaximize the active pane
 - (void)toggleMaximizeActivePane;
@@ -707,16 +648,8 @@ NSWindowDelegate,
           targetSession:(PTYSession*)targetSession
            performSetup:(BOOL)performSetup;
 
-// selector for menu item to split current session vertically.
-- (IBAction)splitVertically:(id)sender;
-- (IBAction)splitHorizontally:(id)sender;
 - (void)splitVertically:(BOOL)isVertical withBookmark:(Profile*)theBookmark targetSession:(PTYSession*)targetSession;
 
-// Change active pane.
-- (IBAction)selectPaneLeft:(id)sender;
-- (IBAction)selectPaneRight:(id)sender;
-- (IBAction)selectPaneUp:(id)sender;
-- (IBAction)selectPaneDown:(id)sender;
 
 // Do some cleanup after a session is removed.
 - (void)sessionWasRemoved;
@@ -730,9 +663,6 @@ NSWindowDelegate,
 - (NSDictionary*)arrangement;
 - (void)refreshTmuxLayoutsAndWindow;
 - (NSArray *)uniqueTmuxControllers;
-- (IBAction)detachTmux:(id)sender;
-- (IBAction)newTmuxWindow:(id)sender;
-- (IBAction)newTmuxTab:(id)sender;
 - (void)tmuxTabLayoutDidChange:(BOOL)nontrivialChange;
 - (NSSize)tmuxCompatibleSize;
 - (void)loadTmuxLayout:(NSMutableDictionary *)parseTree
@@ -766,11 +696,95 @@ NSWindowDelegate,
 
 - (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session;
 
-- (IBAction)moveTabLeft:(id)sender;
-- (IBAction)moveTabRight:(id)sender;
-
 - (void)setDimmingForSession:(PTYSession *)aSession;
 - (void)setDimmingForSessions;
+
+// Return the name of the foreground session.
+- (NSString *)currentSessionName;
+- (void)hideMenuBar;
+- (void)showMenuBar;
+
+// Set the session name. If theSessionName is nil then set it to the pathname
+// or "Finish" if it's closed.
+- (void)setName:(NSString*)theName forSession:(PTYSession*)aSession;
+
+// Cause every session in this window to reload its bookmark.
+- (void)reloadBookmarks;
+
+// accessor
+- (PSMTabBarControl*)tabBarControl;
+
+// Return all sessions in all tabs.
+- (NSArray*)allSessions;
+
+- (void)insertSession:(PTYSession *)aSession atIndex:(int)anIndex;
+
+#pragma mark - IBActions
+
+- (IBAction)openDashboard:(id)sender;
+- (IBAction)findCursor:(id)sender;
+// Save the current scroll position
+- (IBAction)saveScrollPosition:(id)sender;
+// Jump to the saved scroll position
+- (IBAction)jumpToSavedScrollPosition:(id)sender;
+// Close foreground tab.
+- (IBAction)closeCurrentTab:(id)sender;
+// Close the active session.
+- (IBAction)closeCurrentSession:(id)sender;
+// Select the tab to the left of the foreground tab.
+- (IBAction)previousTab:(id)sender;
+// Select the tab to the right of the foreground tab.
+- (IBAction)nextTab:(id)sender;
+// Select the most recent pane
+- (IBAction)previousPane:(id)sender;
+// Select the least recently used pane
+- (IBAction)nextPane:(id)sender;
+- (IBAction)detachTmux:(id)sender;
+- (IBAction)newTmuxWindow:(id)sender;
+- (IBAction)newTmuxTab:(id)sender;
+// Toggle whether transparency is allowed in this terminal.
+- (IBAction)toggleUseTransparency:(id)sender;
+// Turn full-screen mode on or off. Creates a new PseudoTerminal and moves this
+// one's state into it.
+- (IBAction)toggleFullScreenMode:(id)sender;
+// Called when next/prev frame button is clicked.
+- (IBAction)irButton:(id)sender;
+// Called when the close button in the find bar is pressed.
+- (IBAction)closeInstantReplay:(id)sender;
+- (IBAction)irSliderMoved:(id)sender;
+// Advance to next or previous time step
+- (IBAction)irPrev:(id)sender;
+- (IBAction)irNext:(id)sender;
+- (IBAction)stopCoprocess:(id)sender;
+- (IBAction)runCoprocess:(id)sender;
+- (IBAction)coprocessPanelEnd:(id)sender;
+- (IBAction)coprocessHelp:(id)sender;
+- (IBAction)openSplitHorizontallySheet:(id)sender;
+- (IBAction)openSplitVerticallySheet:(id)sender;
+// Show paste history window.
+- (IBAction)openPasteHistory:(id)sender;
+// Show autocomplete window.
+- (IBAction)openAutocomplete:(id)sender;
+// selector for menu item to split current session vertically.
+- (IBAction)splitVertically:(id)sender;
+- (IBAction)splitHorizontally:(id)sender;
+- (IBAction)moveTabLeft:(id)sender;
+- (IBAction)moveTabRight:(id)sender;
+- (IBAction)resetCharset:(id)sender;
+- (IBAction)logStart:(id)sender;
+- (IBAction)logStop:(id)sender;
+- (IBAction)wrapToggleToolbarShown:(id)sender;
+- (IBAction)enableSendInputToAllPanes:(id)sender;
+- (IBAction)disableBroadcasting:(id)sender;
+- (IBAction)enableSendInputToAllTabs:(id)sender;
+- (IBAction)closeWindow:(id)sender;
+- (IBAction)sendCommand:(id)sender;
+- (IBAction)parameterPanelEnd:(id)sender;
+// Change active pane.
+- (IBAction)selectPaneLeft:(id)sender;
+- (IBAction)selectPaneRight:(id)sender;
+- (IBAction)selectPaneUp:(id)sender;
+- (IBAction)selectPaneDown:(id)sender;
 
 @end
 
@@ -818,190 +832,6 @@ NSWindowDelegate,
 
 // a class method to provide the keys for KVC:
 +(NSArray*)kvcKeys;
-
-@end
-
-@interface PseudoTerminal (Private)
-- (IBAction)wrapToggleToolbarShown:(id)sender;
-- (void)_refreshTerminal:(NSNotification *)aNotification;
-- (void)_updateToolbeltParentage;
-
-- (int)_screenAtPoint:(NSPoint)p;
-
-// Allocate a new session and assign it a bookmark. Returns a retained object.
-- (PTYSession*)newSessionWithBookmark:(Profile*)bookmark;
-
-// Execute the bookmark command in this session.
-- (void)runCommandInSession:(PTYSession*)aSession
-                      inCwd:(NSString*)oldCWD
-              forObjectType:(iTermObjectType)objectType;
-
-// For full screen mode, draw the window contents in black except for the find
-// bar area.
-- (void)_drawFullScreenBlackBackground;
-
-- (void)hideMenuBar;
-- (void)showMenuBar;
-
-// Returns the width of characters in pixels in the session with the widest
-// characters. Fills in *numChars with the number of columns in that session.
-- (float)maxCharWidth:(int*)numChars;
-
-// Returns the height of characters in pixels in the session with the tallest
-// characters. Fills in *numChars with the number of rows in that session.
-- (float)maxCharHeight:(int*)numChars;
-
-// Returns the width of characters in pixels in the overall widest session.
-// Fills in *numChars with the number of columns in that session.
-- (float)widestSessionWidth:(int*)numChars;
-
-// Returns the height of characters in pixels in the overall tallest session.
-// Fills in *numChars with the number of rows in that session.
-- (float)tallestSessionHeight:(int*)numChars;
-
-// Copy state from 'other' to this terminal.
-- (void)copySettingsFrom:(PseudoTerminal*)other;
-
-
-// Set the session's address book and initialize its screen and name. Sets the
-// window title to the session's name. If size is not nil then the session is initialized to fit
-// a view of that size; otherwise the size is derived from the existing window if there is already
-// an open tab, or its bookmark's preference if it's the first session in the window.
-- (void)setupSession:(PTYSession *)aSession
-               title:(NSString *)title
-            withSize:(NSSize*)size;
-
-// Returns the size of the stuff outside the tabview.
-- (NSSize)windowDecorationSize;
-
-// Max window frame size that fits on screens.
-- (NSRect)maxFrame;
-
-// Push a size change to a session (and on to its shell) but clamps the size to
-// reasonable minimum and maximum limits.
-- (void)safelySetSessionSize:(PTYSession*)aSession
-                        rows:(int)rows
-                     columns:(int)columns;
-
-// Change position of window widgets.
-- (void)repositionWidgets;
-
-- (void)showFullScreenTabControl;
-- (void)hideFullScreenTabControl;
-
-// Adjust the tab's size for a new window size.
-- (void)fitTabToWindow:(PTYTab*)aTab;
-
-// Push size changes to all sessions so they are all as large as possible while
-// still fitting in the window.
-- (void)fitTabsToWindow;
-
-// Add a tab to the tabview.
-- (void)insertTab:(PTYTab*)aTab atIndex:(int)anIndex;
-
-// Add a session to the tab view.
-- (void)insertSession:(PTYSession *)aSession atIndex:(int)anIndex;
-
-// Seamlessly change the session in a tab.
-- (void)replaceSession:(PTYSession *)aSession atIndex:(int)anIndex;
-
-// Reutrn the name of the foreground session.
-- (NSString *)currentSessionName;
-
-- (CGFloat)fullscreenToolbeltWidth;
-
-// Set the session name. If theSessionName is nil then set it to the pathname
-// or "Finish" if it's closed.
-- (void)setName:(NSString*)theName forSession:(PTYSession*)aSession;
-
-// Assign a value to the 'framePos' member variable which is used for storing
-// window frame positions between invocations of iTerm.
-- (void)setFramePos;
-
-// Execute the given program and set the window title if it is uninitialized.
-- (void)startProgram:(NSString *)program
-           arguments:(NSArray *)prog_argv
-         environment:(NSDictionary *)prog_env
-              isUTF8:(BOOL)isUTF8
-           inSession:(PTYSession*)theSession
-      asLoginSession:(BOOL)asLoginSession;
-
-// Send a reset to the current session's terminal.
-- (void)reset:(id)sender;
-- (IBAction)resetCharset:(id)sender;
-
-// Clear the buffer of the current session.
-- (void)clearBuffer:(id)sender;
-
-// Erase the scrollback buffer of the current session.
-- (void)clearScrollbackBuffer:(id)sender;
-
-// Turn on session logging in the current session.
-- (IBAction)logStart:(id)sender;
-
-// Turn off session logging in the current session.
-- (IBAction)logStop:(id)sender;
-
-// Returns true if the given menu item is selectable.
-- (BOOL)validateMenuItem:(NSMenuItem *)item;
-
-// Turn on/off sending of input to all sessions. This causes a bunch of UI
-// to update in addition to flipping the flag.
-- (IBAction)enableSendInputToAllTabs:(id)sender;
-- (IBAction)enableSendInputToAllPanes:(id)sender;
-- (IBAction)disableBroadcasting:(id)sender;
-
-- (BOOL)anyTabIsTmuxTab;
-
-// Show a dialog confirming close. Returns YES if the window should be closed.
-- (BOOL)showCloseWindow;
-
-// accessor
-- (PSMTabBarControl*)tabBarControl;
-
-// Called when the "Close tab" contextual menu item is clicked.
-- (void)closeTabContextualMenuAction:(id)sender;
-
-// Move a tab to a new window due to a context menu selection.
-- (void)moveTabToNewWindowContextualMenuAction:(id)sender;
-
-// Change the tab color to the selected menu color
-- (void)changeTabColorToMenuAction:(id)sender;
-
-// Close this window.
-- (IBAction)closeWindow:(id)sender;
-
-// Sends text to the current session. Also interprets URLs and opens them.
-- (IBAction)sendCommand:(id)sender;
-
-// Cause every session in this window to reload its bookmark.
-- (void)reloadBookmarks;
-
-// Called when the parameter panel should close.
-- (IBAction)parameterPanelEnd:(id)sender;
-
-// Grow or shrink the tabview to make room for the find bar in fullscreen mode
-// and then fit sessions to new window size.
-- (void)adjustFullScreenWindowForBottomBarChange;
-
-// Adjust the find bar's width to match the window's.
-- (void)fitBottomBarToWindow;
-
-// Show or hide instant replay bar.
-- (void)setInstantReplayBarVisible:(BOOL)visible;
-
-// Return the timestamp for a slider position in [0, 1] for the current session.
-- (long long)timestampForFraction:(float)f;
-
-// Return all sessions in all tabs.
-- (NSArray*)allSessions;
-
-- (void)_loadFindStringFromSharedPasteboard;
-
-- (BOOL)_haveLeftBorder;
-- (BOOL)_haveBottomBorder;
-- (BOOL)_haveTopBorder;
-- (BOOL)_haveRightBorder;
 
 @end
 
