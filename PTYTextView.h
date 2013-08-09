@@ -464,6 +464,9 @@ enum {
 - (void)setSelectedTextColor:(NSColor *)aColor;
 - (void)setCursorTextColor:(NSColor*)color;
 
+// Update the scroller color for light or dark backgrounds.
+- (void)updateScrollerForBackgroundColor;
+
 - (int)selectionStartX;
 - (int)selectionStartY;
 - (int)selectionEndX;

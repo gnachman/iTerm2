@@ -60,5 +60,7 @@
 - (BOOL)windowIsMiniaturized;
 - (NSRect)windowFrame;
 - (NSScreen*)windowScreen;
+- (BOOL)scrollbarShouldBeVisible;
+- (NSScrollerStyle)scrollerStyle;
 
 @end

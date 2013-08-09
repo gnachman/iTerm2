@@ -38,6 +38,7 @@
 
     NSColor* pendingLabelColor;
     NSColor* pendingTabColor;
+    BOOL scrollbarShouldBeVisible;
 }
 
 - (id)initFromRealWindow:(PseudoTerminal*)aTerm session:(PTYSession*)aSession;
@@ -72,5 +73,6 @@
 - (BOOL)windowIsMiniaturized;
 - (NSRect)windowFrame;
 - (NSScreen*)windowScreen;
+- (BOOL)scrollbarShouldBeVisible;
 
 @end

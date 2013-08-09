@@ -532,7 +532,7 @@ NSString *sessionsKey = @"sessions";
             [self fitBottomBarToWindow];
         }
         [self repositionWidgets];
-                [self notifyTmuxOfWindowResize];
+        [self notifyTmuxOfWindowResize];
     } else {
         if ([itad showToolbelt]) {
             [drawer_ open];
@@ -2030,10 +2030,13 @@ NSString *sessionsKey = @"sessions";
     // match the current pane's character size and aligned so margins are
     // correct if all we have is a single pane.
     BOOL hasScrollbar = [self scrollbarShouldBeVisible];
-    NSSize contentSize = [PTYScrollView contentSizeForFrameSize:tabSize
-                                        hasHorizontalScroller:NO
-                                        hasVerticalScroller:hasScrollbar
-                                        borderType:NSNoBorder];
+    NSSize contentSize =
+        [NSScrollView contentSizeForFrameSize:tabSize
+                  horizontalScrollerClass:nil
+                    verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
+                               borderType:NSNoBorder
+                              controlSize:NSRegularControlSize
+                            scrollerStyle:[self scrollerStyle]];
 
     int screenWidth = (contentSize.width - MARGIN * 2) / charWidth;
     int screenHeight = (contentSize.height - VMARGIN * 2) / charHeight;
@@ -2044,11 +2047,13 @@ NSString *sessionsKey = @"sessions";
     if (snapHeight) {
       contentSize.height = screenHeight * charHeight + VMARGIN * 2;
     }
-    tabSize = [PTYScrollView frameSizeForContentSize:contentSize
-                             hasHorizontalScroller:NO
-                             hasVerticalScroller:hasScrollbar
-                             borderType:NSNoBorder];
-
+    tabSize =
+        [PTYScrollView frameSizeForContentSize:contentSize
+                       horizontalScrollerClass:nil
+                         verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
+                                    borderType:NSNoBorder
+                                   controlSize:NSRegularControlSize
+                                 scrollerStyle:[self scrollerStyle]];
     // Respect minimum tab sizes.
     for (NSTabViewItem* tabViewItem in [TABVIEW tabViewItems]) {
         PTYTab* theTab = [tabViewItem identifier];
@@ -2288,12 +2293,12 @@ NSString *sessionsKey = @"sessions";
 
 - (void)updateSessionScrollbars
 {
-
-        for (PTYSession *aSession in [self sessions]) {
-                BOOL hasScrollbar = (![self anyFullScreen] &&
-                                                         ![[PreferencePanel sharedInstance] hideScrollbar]);
-                [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
-        }
+    for (PTYSession *aSession in [self sessions]) {
+        BOOL hasScrollbar = [self scrollbarShouldBeVisible];
+        [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
+        [[aSession SCROLLVIEW] setScrollerStyle:[self scrollerStyle]];
+        [[aSession TEXTVIEW] updateScrollerForBackgroundColor];
+    }
 }
 
 - (void)toggleTraditionalFullScreenMode
@@ -2443,6 +2448,8 @@ NSString *sessionsKey = @"sessions";
         [newTerminal fitWindowToTabSize:contentSize];
     }
     newTerminal->togglingFullScreen_ = NO;
+    PtyLog(@"toggleFullScreenMode - calling updateSessionScrollbars");
+    [newTerminal updateSessionScrollbars];
     PtyLog(@"toggleFullScreenMode - calling fitTabsToWindow");
     [newTerminal repositionWidgets];
     [newTerminal fitTabsToWindow];
@@ -2459,7 +2466,6 @@ NSString *sessionsKey = @"sessions";
     for (PTYTab *aTab in [newTerminal tabs]) {
       [aTab notifyWindowChanged];
     }
-    [newTerminal updateSessionScrollbars];
     if (fs) {
         [newTerminal notifyTmuxOfWindowResize];
     }
@@ -2487,10 +2493,18 @@ NSString *sessionsKey = @"sessions";
             ![[PreferencePanel sharedInstance] hideTab]);
 }
 
+- (NSScrollerStyle)scrollerStyle
+{
+    if ([self anyFullScreen]) {
+        return NSScrollerStyleOverlay;
+    } else {
+        return [NSScroller preferredScrollerStyle];
+    }
+}
+
 - (BOOL)scrollbarShouldBeVisible
 {
-    return (![self anyFullScreen] &&
-            ![[PreferencePanel sharedInstance] hideScrollbar]);
+    return ![[PreferencePanel sharedInstance] hideScrollbar];
 }
 
 - (void)windowWillStartLiveResize:(NSNotification *)notification
@@ -2525,15 +2539,15 @@ NSString *sessionsKey = @"sessions";
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
     lionFullScreen_ = YES;
-    // Set scrollbars appropriately
     [self _updateToolbeltParentage];
+    // Set scrollbars appropriately
+    [self updateSessionScrollbars];
     [self fitTabsToWindow];
     [self futureInvalidateRestorableState];
     [self notifyTmuxOfWindowResize];
-        for (PTYTab *aTab in [self tabs]) {
-                [aTab notifyWindowChanged];
-        }
-        [self updateSessionScrollbars];
+    for (PTYTab *aTab in [self tabs]) {
+        [aTab notifyWindowChanged];
+    }
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
@@ -2561,6 +2575,7 @@ NSString *sessionsKey = @"sessions";
     zooming_ = NO;
     lionFullScreen_ = NO;
     // Set scrollbars appropriately
+    [self updateSessionScrollbars];
     [self fitTabsToWindow];
     [self repositionWidgets];
     [self futureInvalidateRestorableState];
@@ -2571,7 +2586,6 @@ NSString *sessionsKey = @"sessions";
     for (PTYTab *aTab in [self tabs]) {
         [aTab notifyWindowChanged];
     }
-    [self updateSessionScrollbars];
     [self notifyTmuxOfWindowResize];
 }
 
@@ -4418,6 +4432,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)_scrollerStyleChanged:(id)sender
 {
+    [self updateSessionScrollbars];
     if ([self anyFullScreen]) {
         [self fitTabsToWindow];
     } else {
@@ -4994,10 +5009,13 @@ NSString *sessionsKey = @"sessions";
         windowType_ == WINDOW_TYPE_RIGHT) {
         NSRect windowFrame = [[self window] frame];
         BOOL hasScrollbar = [self scrollbarShouldBeVisible];
-        NSSize contentSize = [PTYScrollView contentSizeForFrameSize:windowFrame.size
-                                              hasHorizontalScroller:NO
-                                                hasVerticalScroller:hasScrollbar
-                                                         borderType:NSNoBorder];
+        NSSize contentSize =
+            [NSScrollView contentSizeForFrameSize:windowFrame.size
+                      horizontalScrollerClass:nil
+                        verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
+                                   borderType:NSNoBorder
+                                  controlSize:NSRegularControlSize
+                                scrollerStyle:[self scrollerStyle]];
         if (windowType_ != WINDOW_TYPE_LEFT &&
             windowType_ != WINDOW_TYPE_RIGHT) {
             columns = (contentSize.width - MARGIN*2) / charSize.width;
@@ -5011,10 +5029,13 @@ NSString *sessionsKey = @"sessions";
     NSRect sessionRect;
     if (size != nil) {
         BOOL hasScrollbar = [self scrollbarShouldBeVisible];
-        NSSize contentSize = [PTYScrollView contentSizeForFrameSize:*size
-                                              hasHorizontalScroller:NO
-                                                hasVerticalScroller:hasScrollbar
-                                                         borderType:NSNoBorder];
+        NSSize contentSize =
+            [NSScrollView contentSizeForFrameSize:*size
+                      horizontalScrollerClass:nil
+                        verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
+                                   borderType:NSNoBorder
+                                  controlSize:NSRegularControlSize
+                                scrollerStyle:[self scrollerStyle]];
         rows = (contentSize.height - VMARGIN*2) / charSize.height;
         columns = (contentSize.width - MARGIN*2) / charSize.width;
         sessionRect.origin = NSZeroPoint;

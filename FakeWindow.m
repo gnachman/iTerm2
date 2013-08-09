@@ -47,6 +47,7 @@
     session = aSession;
     [session retain];
     realWindow = aTerm;
+    scrollbarShouldBeVisible = [aTerm scrollbarShouldBeVisible];
     return self;
 }
 
@@ -242,5 +243,14 @@
     return screen;
 }
 
+- (BOOL)scrollbarShouldBeVisible
+{
+    return scrollbarShouldBeVisible;
+}
+
+- (NSScrollerStyle)scrollerStyle
+{
+    return [self anyFullScreen] ? NSScrollerStyleOverlay : [NSScroller preferredScrollerStyle];
+}
 
 @end

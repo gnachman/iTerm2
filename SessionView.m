@@ -36,6 +36,7 @@
 #import "SessionTitleView.h"
 #import "iTermApplicationDelegate.h"  // For DLog
 #import "FutureMethods.h"
+#import "PTYScrollView.h"
 
 static const float kTargetFrameRate = 1.0/60.0;
 static int nextViewId;
@@ -407,20 +408,20 @@ static NSDate* lastResizeDate_;
 
 - (void)drawRect:(NSRect)dirtyRect
 {
-	// Fill in background color in the area around a scrollview if it's smaller
-	// than the session view.
-	[super drawRect:dirtyRect];
-	NSColor *bgColor = [[session_ TEXTVIEW] defaultBGColor];
-	[bgColor set];
+        // Fill in background color in the area around a scrollview if it's smaller
+        // than the session view.
+        [super drawRect:dirtyRect];
+        NSColor *bgColor = [[session_ TEXTVIEW] defaultBGColor];
+        [bgColor set];
     PTYScrollView *scrollView = [session_ SCROLLVIEW];
-	NSRect svFrame = [scrollView frame];
-	if (svFrame.size.width < self.frame.size.width) {
-		double widthDiff = self.frame.size.width - svFrame.size.width;
-		NSRectFill(NSMakeRect(self.frame.size.width - widthDiff, 0, widthDiff, self.frame.size.height));
-	}
-	if (svFrame.origin.y != 0) {
-		NSRectFill(NSMakeRect(0, 0, self.frame.size.width, svFrame.origin.y));
-	}
+        NSRect svFrame = [scrollView frame];
+        if (svFrame.size.width < self.frame.size.width) {
+                double widthDiff = self.frame.size.width - svFrame.size.width;
+                NSRectFill(NSMakeRect(self.frame.size.width - widthDiff, 0, widthDiff, self.frame.size.height));
+        }
+        if (svFrame.origin.y != 0) {
+                NSRectFill(NSMakeRect(0, 0, self.frame.size.width, svFrame.origin.y));
+        }
 }
 
 #pragma mark NSDraggingSource protocol
@@ -575,10 +576,15 @@ static NSDate* lastResizeDate_;
     NSSize dim = NSMakeSize([session_ columns], [session_ rows]);
     NSSize innerSize = NSMakeSize(cellSize.width * dim.width + MARGIN * 2,
                                   cellSize.height * dim.height + VMARGIN * 2);
-    NSSize size = [NSScrollView frameSizeForContentSize:innerSize
-                                  hasHorizontalScroller:NO
-                                    hasVerticalScroller:[[session_ SCROLLVIEW] hasVerticalScroller]
-                                             borderType:[[session_ SCROLLVIEW] borderType]];
+    const BOOL hasScrollbar = [[session_ SCROLLVIEW] hasVerticalScroller];
+    NSSize size =
+        [PTYScrollView frameSizeForContentSize:innerSize
+                       horizontalScrollerClass:nil
+                         verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
+                                    borderType:NSNoBorder
+                                   controlSize:NSRegularControlSize
+                                 scrollerStyle:[[session_ SCROLLVIEW] scrollerStyle]];
+
     if (showTitle_) {
         size.height += kTitleHeight;
     }
@@ -591,31 +597,40 @@ static NSDate* lastResizeDate_;
     if (showTitle_) {
         size.height -= kTitleHeight;
     }
-    return [NSScrollView contentSizeForFrameSize:size
-                           hasHorizontalScroller:NO
-                             hasVerticalScroller:[[session_ SCROLLVIEW] hasVerticalScroller]
-                                      borderType:[[session_ SCROLLVIEW] borderType]];
+
+    Class verticalScrollerClass = [[[session_ SCROLLVIEW] verticalScroller] class];
+    if (![[session_ SCROLLVIEW] hasVerticalScroller]) {
+        verticalScrollerClass = nil;
+    }
+    NSSize contentSize =
+            [NSScrollView contentSizeForFrameSize:size
+                          horizontalScrollerClass:nil
+                            verticalScrollerClass:verticalScrollerClass
+                                       borderType:[[session_ SCROLLVIEW] borderType]
+                                      controlSize:NSRegularControlSize
+                                    scrollerStyle:[[[session_ SCROLLVIEW] verticalScroller] scrollerStyle]];
+    return contentSize;
 }
 
 - (void)updateTitleFrame
 {
-	NSRect aRect = [self frame];
-	NSView *scrollView = (NSView *)[session_ SCROLLVIEW];
-	if (showTitle_) {
-		[title_ setFrame:NSMakeRect(0,
-									aRect.size.height - kTitleHeight,
-									aRect.size.width,
-									kTitleHeight)];
-		[scrollView setFrameOrigin:NSMakePoint(
-			0,
-			aRect.size.height - scrollView.frame.size.height - kTitleHeight)];
-	} else {
-		[scrollView setFrameOrigin:NSMakePoint(
-			0,
-			aRect.size.height - scrollView.frame.size.height)];
-	}
-	[findView_ setFrameOrigin:NSMakePoint(aRect.size.width - [[findView_ view] frame].size.width - 30,
-										  aRect.size.height - [[findView_ view] frame].size.height)];
+        NSRect aRect = [self frame];
+        NSView *scrollView = (NSView *)[session_ SCROLLVIEW];
+        if (showTitle_) {
+                [title_ setFrame:NSMakeRect(0,
+                                                                        aRect.size.height - kTitleHeight,
+                                                                        aRect.size.width,
+                                                                        kTitleHeight)];
+                [scrollView setFrameOrigin:NSMakePoint(
+                        0,
+                        aRect.size.height - scrollView.frame.size.height - kTitleHeight)];
+        } else {
+                [scrollView setFrameOrigin:NSMakePoint(
+                        0,
+                        aRect.size.height - scrollView.frame.size.height)];
+        }
+        [findView_ setFrameOrigin:NSMakePoint(aRect.size.width - [[findView_ view] frame].size.width - 30,
+                                                                                  aRect.size.height - [[findView_ view] frame].size.height)];
 }
 
 - (void)setTitle:(NSString *)title

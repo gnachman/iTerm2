@@ -1149,7 +1149,7 @@ static NSString* FormatRect(NSRect r) {
 
     // Make scrollbars the right size and put them at the tops of their session views.
     for (PTYSession *theSession in [self sessions]) {
-        NSSize theSize = [theSession idealScrollViewSize];
+        NSSize theSize = [theSession idealScrollViewSizeWithStyle:[parentWindow_ scrollerStyle]];
         [[theSession SCROLLVIEW] setFrame:NSMakeRect(0,
                                                      0,
                                                      theSize.width,
@@ -1354,11 +1354,14 @@ static NSString* FormatRect(NSRect r) {
     size.width = columns * charWidth + MARGIN * 2;
     size.height = rows * lineHeight + VMARGIN * 2;
 
-    BOOL hasScrollbar = ![term anyFullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
-    NSSize outerSize = [PTYScrollView frameSizeForContentSize:size
-                                        hasHorizontalScroller:NO
-                                          hasVerticalScroller:hasScrollbar
-                                                   borderType:NSNoBorder];
+    BOOL hasScrollbar = [term scrollbarShouldBeVisible];
+    NSSize outerSize =
+        [PTYScrollView frameSizeForContentSize:size
+                       horizontalScrollerClass:nil
+                         verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
+                                    borderType:NSNoBorder
+                                   controlSize:NSRegularControlSize
+                                 scrollerStyle:[term scrollerStyle]];
     if (showTitles) {
         outerSize.height += [SessionView titleHeight];
     }
@@ -1382,11 +1385,14 @@ static NSString* FormatRect(NSRect r) {
     size.width = MIN_SESSION_COLUMNS * [[session TEXTVIEW] charWidth] + MARGIN * 2;
     size.height = MIN_SESSION_ROWS * [[session TEXTVIEW] lineHeight] + VMARGIN * 2;
 
-    BOOL hasScrollbar = ![parentWindow_ anyFullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
-    NSSize scrollViewSize = [PTYScrollView frameSizeForContentSize:size
-                                             hasHorizontalScroller:NO
-                                               hasVerticalScroller:hasScrollbar
-                                                        borderType:NSNoBorder];
+    BOOL hasScrollbar = [parentWindow_ scrollbarShouldBeVisible];
+    NSSize scrollViewSize =
+        [PTYScrollView frameSizeForContentSize:size
+                       horizontalScrollerClass:nil
+                         verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
+                                    borderType:NSNoBorder
+                                   controlSize:NSRegularControlSize
+                                 scrollerStyle:[parentWindow_ scrollerStyle]];
     return scrollViewSize;
 }
 
@@ -1747,7 +1753,7 @@ static NSString* FormatRect(NSRect r) {
 {
     PtyLog(@"PTYTab fitSessionToCurrentViewSzie");
     PtyLog(@"fitSessionToCurrentViewSize begins");
-    BOOL hasScrollbar = ![parentWindow_ anyFullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
+    BOOL hasScrollbar = [parentWindow_ scrollbarShouldBeVisible];
     [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
     NSSize size = [[aSession view] maximumPossibleScrollViewContentSize];
     int width = (size.width - MARGIN*2) / [[aSession TEXTVIEW] charWidth];
@@ -2762,7 +2768,7 @@ static NSString* FormatRect(NSRect r) {
 
         NSRect aFrame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
         [sv setFrame:aFrame];
-        NSSize theSize = [theSession idealScrollViewSize];
+        NSSize theSize = [theSession idealScrollViewSizeWithStyle:[parentWindow_ scrollerStyle]];
         [[theSession SCROLLVIEW] setFrame:NSMakeRect(0,
                                                      0,
                                                      theSize.width,

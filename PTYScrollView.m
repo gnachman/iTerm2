@@ -51,8 +51,11 @@
 
 - (id)init
 {
-    userScroll=NO;
-    return [super init];
+    self = [super init];
+    if (self) {
+        userScroll = NO;
+    }
+    return self;
 }
 
 + (BOOL)isCompatibleWithOverlayScrollers
@@ -289,6 +292,7 @@
 {
     [self setHasVerticalScroller:flag inInit:NO];
 }
+
 @end
 
 

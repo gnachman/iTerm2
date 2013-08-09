@@ -659,15 +659,20 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [self setNeedsDisplay:YES];
 }
 
+- (void)updateScrollerForBackgroundColor
+{
+    PTYScroller *scroller = (PTYScroller*)[[[dataSource session] SCROLLVIEW] verticalScroller];
+    BOOL isDark = ([self perceivedBrightness:defaultBGColor] < kBackgroundConsideredDarkThreshold);
+    [scroller setHasDarkBackground:isDark];
+}
+
 - (void)setBGColor:(NSColor*)color
 {
     [defaultBGColor release];
     [color retain];
     defaultBGColor = color;
-    PTYScroller *scroller = (PTYScroller*)[[[dataSource session] SCROLLVIEW] verticalScroller];
-    BOOL isDark = ([self perceivedBrightness:color] < kBackgroundConsideredDarkThreshold);
     backgroundBrightness_ = PerceivedBrightness([color redComponent], [color greenComponent], [color blueComponent]);
-    [scroller setHasDarkBackground:isDark];
+    [self updateScrollerForBackgroundColor];
     [dimmedColorCache_ removeAllObjects];
     [cachedBackgroundColor_ release];
     cachedBackgroundColor_ = nil;
@@ -6249,14 +6254,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)_constructRuns:(NSPoint)initialPoint
-               theLine:(screen_char_t *)theLine
+               theLine:(const screen_char_t *)theLine
                   runs:(NSMutableArray *)runs
               reversed:(BOOL)reversed
             bgselected:(BOOL)bgselected
                  width:(const int)width
             indexRange:(NSRange)indexRange
                bgColor:(NSColor*)bgColor
-               matches:(NSData*)matches
+               matches:(NSData *)matches
 {
     CharacterRun* currentRun = NULL;
     const char* matchBytes = [matches bytes];
@@ -6538,13 +6543,13 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     }
 }
 
-- (void)_drawCharactersInLine:(screen_char_t*)theLine
+- (void)_drawCharactersInLine:(const screen_char_t *)theLine
                       inRange:(NSRange)indexRange
               startingAtPoint:(NSPoint)initialPoint
                    bgselected:(BOOL)bgselected
                      reversed:(BOOL)reversed
                       bgColor:(NSColor*)bgColor
-                      matches:(NSData*)matches
+                      matches:(NSData *)matches
 {
     const int width = [dataSource width];
     NSMutableArray *runs = [NSMutableArray arrayWithCapacity:width];
@@ -6607,7 +6612,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                        isMatch:(const BOOL)isMatch     // is Find On Page match?
                        stripes:(const BOOL)stripes     // bg is striped?
                           line:(screen_char_t const *)theLine  // Whole screen line
-                       matches:(NSData const *)matches // Bitmask of Find On Page matches
+                       matches:(NSData *)matches // Bitmask of Find On Page matches
 {
     NSColor *aColor = *defaultBgColorPtr;
 
