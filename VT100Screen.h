@@ -166,7 +166,6 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)setUnlimitedScrollback:(BOOL)enable;
 - (void)setTerminal:(VT100Terminal *)terminal;
 - (void)setShellTask:(PTYTask *)shell;
-- (PTYSession *) session;
 - (void)setSession:(PTYSession *)session;
 
 - (PTYTextView *) display;

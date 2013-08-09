@@ -4510,126 +4510,6 @@ void DumpBuf(screen_char_t* p, int n) {
     return dvr;
 }
 
-@end
-
-@implementation VT100Screen (Private)
-
-// gets line offset by specified index from specified line poiner; accounts for buffer wrap
-- (screen_char_t *)_getLineAtIndex:(int)anIndex fromLine:(screen_char_t *)aLine
-{
-    screen_char_t *the_line = NULL;
-
-    NSParameterAssert(anIndex >= 0);
-
-    // get the line offset from the specified line
-    the_line = aLine + anIndex * REAL_WIDTH;
-
-    // check if we have gone beyond our buffer; if so, we need to wrap around to the top of buffer
-    if (the_line >= buffer_lines + REAL_WIDTH * HEIGHT) {
-        the_line -= REAL_WIDTH * HEIGHT;
-        NSAssert(the_line >= buffer_lines && the_line < buffer_lines + REAL_WIDTH*HEIGHT, @"out of range.");
-    }
-
-    return the_line;
-}
-
-- (screen_char_t *)_getDefaultLineWithChar:(screen_char_t)defaultChar {
-    NSMutableData *data = [NSMutableData data];
-    for (int i = 0; i < WIDTH; i++) {
-        [data appendBytes:&defaultChar length:sizeof(defaultChar)];
-    }
-    screen_char_t eol;
-    memset(&eol, 0, sizeof(eol));
-    eol.code = EOL_HARD;
-    [data appendBytes:&eol length:sizeof(eol)];
-    return data.mutableBytes;
-}
-
-// returns a line set to default character and attributes
-// released when session is closed
-- (screen_char_t*)_getDefaultLineWithWidth:(int)width
-{
-    // check if we have to generate a new line
-    if (default_line &&
-        default_line_width >= width &&
-        ForegroundAttributesEqual(default_fg_code, [TERMINAL foregroundColorCodeReal]) &&
-        BackgroundColorsEqual(default_bg_code, [TERMINAL backgroundColorCodeReal])) {
-        return default_line;
-    }
-
-    default_fg_code = [TERMINAL foregroundColorCodeReal];
-    default_bg_code = [TERMINAL backgroundColorCodeReal];
-    default_line_width = width;
-
-    if (default_line) {
-        free(default_line);
-    }
-    default_line = (screen_char_t*)calloc((width+1), sizeof(screen_char_t));
-
-    for (int i = 0; i < width; i++) {
-        default_line[i].code = 0;
-        default_line[i].complexChar = NO;
-        CopyForegroundColor(&default_line[i], default_fg_code);
-        CopyBackgroundColor(&default_line[i], default_bg_code);
-    }
-
-    // Not wrapped by default
-    default_line[width].code = EOL_HARD;
-
-    return default_line;
-}
-
-
-// adds a line to scrollback area. Returns YES if oldest line is lost, NO otherwise
-- (int)_addLineToScrollbackImpl
-{
-    if (showingAltScreen && !saveToScrollbackInAlternateScreen_) {
-        // Don't save to scrollback in alternate screen mode.
-        return 0;
-    }
-
-    int len = WIDTH;
-    if (screen_top[WIDTH].code == EOL_HARD) {
-        // The line is not continued. Figure out its length by finding the last nonnull char.
-        while (len > 0 && (screen_top[len - 1].code == 0)) {
-            --len;
-        }
-    }
-    if (screen_top[WIDTH].code == EOL_DWC && len == WIDTH) {
-        --len;
-    }
-    [linebuffer appendLine:screen_top length:len partial:(screen_top[WIDTH].code != EOL_HARD) width:WIDTH];
-    int dropped;
-    if (!unlimitedScrollback_) {
-        dropped = [linebuffer dropExcessLinesWithWidth: WIDTH];
-    } else {
-        dropped = 0;
-    }
-
-    assert(dropped == 0 || dropped == 1);
-
-    return dropped;
-}
-
-- (screen_char_t)defaultChar {
-    screen_char_t fg = [TERMINAL foregroundColorCodeReal];
-    screen_char_t bg = [TERMINAL backgroundColorCodeReal];
-    screen_char_t c;
-    memset(&c, 0, sizeof(c));
-    CopyForegroundColor(&c, fg);
-    CopyBackgroundColor(&c, bg);
-    return c;
-}
-
-- (void)_setInitialTabStops
-{
-    [self clearTabStop];
-    const int kInitialTabWindow = 1000;
-    for (int i = 0; i < kInitialTabWindow; i += TABSIZE) {
-        [tabStops addObject:[NSNumber numberWithInt:i]];
-    }
-}
-
 #pragma mark - PTYTextViewDataSource
 
 - (PTYSession *)session
@@ -4963,6 +4843,126 @@ void DumpBuf(screen_char_t* p, int n) {
 {
     return [[iTermExpose sharedInstance] isVisible] ||
            [SESSION wantsContentChangedNotification];
+}
+
+@end
+
+@implementation VT100Screen (Private)
+
+// gets line offset by specified index from specified line poiner; accounts for buffer wrap
+- (screen_char_t *)_getLineAtIndex:(int)anIndex fromLine:(screen_char_t *)aLine
+{
+    screen_char_t *the_line = NULL;
+
+    NSParameterAssert(anIndex >= 0);
+
+    // get the line offset from the specified line
+    the_line = aLine + anIndex * REAL_WIDTH;
+
+    // check if we have gone beyond our buffer; if so, we need to wrap around to the top of buffer
+    if (the_line >= buffer_lines + REAL_WIDTH * HEIGHT) {
+        the_line -= REAL_WIDTH * HEIGHT;
+        NSAssert(the_line >= buffer_lines && the_line < buffer_lines + REAL_WIDTH*HEIGHT, @"out of range.");
+    }
+
+    return the_line;
+}
+
+- (screen_char_t *)_getDefaultLineWithChar:(screen_char_t)defaultChar {
+    NSMutableData *data = [NSMutableData data];
+    for (int i = 0; i < WIDTH; i++) {
+        [data appendBytes:&defaultChar length:sizeof(defaultChar)];
+    }
+    screen_char_t eol;
+    memset(&eol, 0, sizeof(eol));
+    eol.code = EOL_HARD;
+    [data appendBytes:&eol length:sizeof(eol)];
+    return data.mutableBytes;
+}
+
+// returns a line set to default character and attributes
+// released when session is closed
+- (screen_char_t*)_getDefaultLineWithWidth:(int)width
+{
+    // check if we have to generate a new line
+    if (default_line &&
+        default_line_width >= width &&
+        ForegroundAttributesEqual(default_fg_code, [TERMINAL foregroundColorCodeReal]) &&
+        BackgroundColorsEqual(default_bg_code, [TERMINAL backgroundColorCodeReal])) {
+        return default_line;
+    }
+
+    default_fg_code = [TERMINAL foregroundColorCodeReal];
+    default_bg_code = [TERMINAL backgroundColorCodeReal];
+    default_line_width = width;
+
+    if (default_line) {
+        free(default_line);
+    }
+    default_line = (screen_char_t*)calloc((width+1), sizeof(screen_char_t));
+
+    for (int i = 0; i < width; i++) {
+        default_line[i].code = 0;
+        default_line[i].complexChar = NO;
+        CopyForegroundColor(&default_line[i], default_fg_code);
+        CopyBackgroundColor(&default_line[i], default_bg_code);
+    }
+
+    // Not wrapped by default
+    default_line[width].code = EOL_HARD;
+
+    return default_line;
+}
+
+
+// adds a line to scrollback area. Returns YES if oldest line is lost, NO otherwise
+- (int)_addLineToScrollbackImpl
+{
+    if (showingAltScreen && !saveToScrollbackInAlternateScreen_) {
+        // Don't save to scrollback in alternate screen mode.
+        return 0;
+    }
+
+    int len = WIDTH;
+    if (screen_top[WIDTH].code == EOL_HARD) {
+        // The line is not continued. Figure out its length by finding the last nonnull char.
+        while (len > 0 && (screen_top[len - 1].code == 0)) {
+            --len;
+        }
+    }
+    if (screen_top[WIDTH].code == EOL_DWC && len == WIDTH) {
+        --len;
+    }
+    [linebuffer appendLine:screen_top length:len partial:(screen_top[WIDTH].code != EOL_HARD) width:WIDTH];
+    int dropped;
+    if (!unlimitedScrollback_) {
+        dropped = [linebuffer dropExcessLinesWithWidth: WIDTH];
+    } else {
+        dropped = 0;
+    }
+
+    assert(dropped == 0 || dropped == 1);
+
+    return dropped;
+}
+
+- (screen_char_t)defaultChar {
+    screen_char_t fg = [TERMINAL foregroundColorCodeReal];
+    screen_char_t bg = [TERMINAL backgroundColorCodeReal];
+    screen_char_t c;
+    memset(&c, 0, sizeof(c));
+    CopyForegroundColor(&c, fg);
+    CopyBackgroundColor(&c, bg);
+    return c;
+}
+
+- (void)_setInitialTabStops
+{
+    [self clearTabStop];
+    const int kInitialTabWindow = 1000;
+    for (int i = 0; i < kInitialTabWindow; i += TABSIZE) {
+        [tabStops addObject:[NSNumber numberWithInt:i]];
+    }
 }
 
 @end

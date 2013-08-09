@@ -46,8 +46,6 @@ static const int kMaxSelectedTextLinesForCustomActions = 100;
 #import "iTerm.h"
 #import "PTYTextView.h"
 #import "PseudoTerminal.h"
-#import "PTYSession.h"
-#import "VT100Screen.h"
 #import "PreferencePanel.h"
 #import "PTYScrollView.h"
 #import "PTYTask.h"
@@ -4620,7 +4618,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
     // Ask the delegae if there is anything to be added
-    if ([[self delegate] respondsToSelector:@selector(menuForEvent: menu:)]) {
+    if ([[self delegate] respondsToSelector:@selector(menuForEvent:menu:)]) {
         [[self delegate] menuForEvent:theEvent menu:theMenu];
     }
 
@@ -4781,7 +4779,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 aString = [pb stringForType:NSStringPboardType];
                 if (aString != nil) {
                     if ([delegate respondsToSelector:@selector(pasteString:)]) {
-                        [delegate pasteString: aString];
+                        [delegate pasteString:aString];
                         res = YES;
                     }
                 }

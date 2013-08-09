@@ -50,6 +50,21 @@
 @class VT100Screen;
 @class VT100Terminal;
 
+@protocol PTYTextViewDelegate
+
+- (BOOL)xtermMouseReporting;
+- (BOOL)isPasting;
+- (void)queueKeyDown:(NSEvent *)event;
+- (void)keyDown:(NSEvent *)event;
+- (BOOL)hasActionableKeyMappingForEvent:(NSEvent *)event;
+- (int)optionKey;
+- (int)rightOptionKey;
+// Contextual menu
+- (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu;
+- (void)pasteString:(NSString *)aString;
+
+@end
+
 @protocol PTYTextViewDataSource
 
 - (PTYSession *)session;
@@ -211,7 +226,7 @@ enum {
 
     // data source
     id<PTYTextViewDataSource> dataSource;
-    id _delegate;
+    id<PTYTextViewDelegate> _delegate;
 
     // selection goes from startX,startY to endX,endY. The end may be before or after the start.
     // While the selection is being made (the mouse was clicked and is being dragged) the end

@@ -36,6 +36,7 @@
 #import "TmuxGateway.h"
 #import "TmuxController.h"
 #import "PasteViewController.h"
+#import "PTYTextView.h"
 #include <sys/time.h>
 
 #define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
@@ -72,7 +73,11 @@ typedef enum {
 
 @class PTYTab;
 @class SessionView;
-@interface PTYSession : NSResponder <FindViewControllerDelegate, PasteViewControllerDelegate, TmuxGatewayDelegate>
+@interface PTYSession : NSResponder <
+    FindViewControllerDelegate,
+    PasteViewControllerDelegate,
+    PTYTextViewDelegate,
+    TmuxGatewayDelegate>
 {
     // Owning tab.
     PTYTab* tab_;
@@ -344,8 +349,6 @@ typedef enum {
 
 // PTYTextView
 - (BOOL)hasTextSendingKeyMappingForEvent:(NSEvent*)event;
-- (BOOL)hasActionableKeyMappingForEvent: (NSEvent *)event;
-- (void)keyDown:(NSEvent *)event;
 - (BOOL)willHandleEvent: (NSEvent *)theEvent;
 - (void)handleEvent: (NSEvent *)theEvent;
 - (void)insertText:(NSString *)string;
@@ -359,7 +362,6 @@ typedef enum {
 - (void)pageDown:(id)sender;
 - (void)paste:(id)sender;
 - (void)pasteString:(NSString *)str flags:(int)flags;
-- (void)pasteString: (NSString *)aString;
 - (void)pasteSlowly:(id)sender;
 - (void)deleteBackward:(id)sender;
 - (void)deleteForward:(id)sender;
@@ -388,10 +390,6 @@ typedef enum {
 
 // Array of subprocessess names.
 - (NSArray *)childJobNames;
-
-// Contextual menu
-- (void)menuForEvent:(NSEvent *)theEvent menu: (NSMenu *)theMenu;
-
 
 // get/set methods
 - (PTYTab*)tab;
@@ -446,7 +444,6 @@ typedef enum {
 - (void)setAutoClose:(BOOL)set;
 - (BOOL)doubleWidth;
 - (void)setDoubleWidth:(BOOL)set;
-- (BOOL)xtermMouseReporting;
 - (void)setXtermMouseReporting:(BOOL)set;
 - (NSDictionary *)addressBookEntry;
 - (void)setSendModifiers:(NSArray *)sendModifiers;
@@ -458,8 +455,6 @@ typedef enum {
 - (NSString *)contents;
 - (iTermGrowlDelegate*)growlDelegate;
 
-- (BOOL)isPasting;
-- (void)queueKeyDown:(NSEvent *)event;
 
 - (void)clearBuffer;
 - (void)clearScrollbackBuffer;
@@ -495,8 +490,6 @@ typedef enum {
 - (BOOL)useItalicFont;
 - (void)setUseItalicFont:(BOOL)boldFlag;
 - (void)setColorTable:(int)index color:(NSColor *)c;
-- (int)optionKey;
-- (int)rightOptionKey;
 - (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask;
 
 // Session status
