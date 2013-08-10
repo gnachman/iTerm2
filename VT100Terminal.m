@@ -1046,8 +1046,14 @@ static VT100TCC decode_csi(unsigned char *datap,
                     SET_PARAM_DEFAULT(param,0,0);
                     break;
                 case 's':
-                    result.type = ANSICSI_SCP;
-                    SET_PARAM_DEFAULT(param,0,0);
+                    if (SCREEN.vsplitMode) {
+                        result.type = VT100CSI_DECSLRM;
+                        SET_PARAM_DEFAULT(param, 0, 1);
+                        SET_PARAM_DEFAULT(param, 1, 1);
+                    } else {
+                        result.type = ANSICSI_SCP;
+                        SET_PARAM_DEFAULT(param, 0, 0);
+                    }
                     break;
                 case 'u':
                     result.type = ANSICSI_RCP;
