@@ -3399,11 +3399,13 @@ static VT100TCC decode_string(unsigned char *datap,
         case VT100CSI_RM:
             mode=(token.type == VT100CSI_SM);
 
-            switch (token.u.csi.p[0]) {
-                case 4:
-                    [self setInsertMode:mode]; break;
+            for (i = 0; i < token.u.csi.count; i++) {
+                switch (token.u.csi.p[i]) {
+                    case 4:
+                        [self setInsertMode:mode]; break;
+                }
             }
-                break;
+            break;
         case VT100CSI_DECKPAM:
             [self setKeypadMode:YES];
             break;
