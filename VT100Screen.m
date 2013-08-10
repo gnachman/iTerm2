@@ -3119,8 +3119,8 @@ void DumpBuf(screen_char_t* p, int n) {
         aLine = [self getLineAtScreenIndex: (HEIGHT - 1)];
 
         memcpy(aLine,
-           [self _getDefaultLineWithWidth:WIDTH],
-           REAL_WIDTH * sizeof(screen_char_t));
+               [self _getDefaultLineWithWidth:WIDTH],
+               REAL_WIDTH * sizeof(screen_char_t));
 
         // Mark everything dirty if we're not using the scrollback buffer
         if (showingAltScreen) {
