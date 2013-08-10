@@ -3137,7 +3137,10 @@ void DumpBuf(screen_char_t* p, int n) {
         [self moveDirtyRangeFromX:0 Y:1 toX:0 Y:0 size:WIDTH*(HEIGHT - 1)];
         [self setRangeDirty:NSMakeRange(WIDTH * (HEIGHT - 1), WIDTH)];
 
-        [self addLineToScrollback];
+        // Add the top line to the scrollback if left/right margins are not set
+        if (!vsplitMode || (SCROLL_LEFT == 0 && SCROLL_RIGHT == WIDTH - 1)) {
+            [self addLineToScrollback];
+        }
 
         // Increment screen_top pointer
         screen_top = incrementLinePointer(buffer_lines, screen_top, HEIGHT, WIDTH, &wrap);
@@ -3840,9 +3843,12 @@ void DumpBuf(screen_char_t* p, int n) {
         // Not scrolling the whole screen.
         if (SCROLL_TOP == 0 &&
             [[[SESSION addressBookEntry] objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue]) {
-            // A line is being scrolled off the top of the screen so add it to
-            // the scrollback buffer.
-            [self addLineToScrollback];
+            // Confirm if left/right margins are not set
+            if (!vsplitMode || (SCROLL_LEFT == 0 && SCROLL_RIGHT == WIDTH - 1)) {
+                // A line is being scrolled off the top of the screen so add it to
+                // the scrollback buffer.
+                [self addLineToScrollback];
+            }
         }
         // Move all lines between SCROLL_TOP and SCROLL_BOTTOM one line up
         // check if the screen area is wrapped
