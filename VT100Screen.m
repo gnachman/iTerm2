@@ -2085,6 +2085,9 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         if (SCROLL_RIGHT > WIDTH - 1) {
             SCROLL_RIGHT = WIDTH - 1;
         }
+
+        // set cursor to the home position
+        [self cursorToX:1 Y:1];
         break;
 
     /* My interpretation of this:
