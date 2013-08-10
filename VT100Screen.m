@@ -638,7 +638,9 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 - (void)carriageReturn
 {
-    [self setCursorX:vsplitMode ? SCROLL_LEFT:0 Y:cursorY];
+    const int leftMargin = vsplitMode ? SCROLL_LEFT: 0;
+
+    [self setCursorX:leftMargin Y:cursorY];
 }
 
 - (void)setWidth:(int)width height:(int)height
