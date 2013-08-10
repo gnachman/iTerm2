@@ -89,6 +89,10 @@ void TranslateCharacterSet(screen_char_t *s, int len);
     BOOL SHOWBELL;
     BOOL FLASHBELL;
     BOOL GROWL;
+
+    // DECLRMM/DECVSSM(VT class 4 feature).
+    // If this mode is enabled, the application can set 
+    // SCROLL_LEFT/SCROLL_RIGHT margins.
     BOOL vsplitMode;
 
     BOOL blinkingCursor;
