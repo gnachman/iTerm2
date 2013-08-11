@@ -2006,7 +2006,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         [SESSION clearTriggerLine];
         break;
     case VT100CSI_NEL:
-        [self setCursorX:0 Y:cursorY];
+        [self carriageReturn];
         // fall through
     case VT100CSI_IND:
         if (cursorY == SCROLL_BOTTOM) {
