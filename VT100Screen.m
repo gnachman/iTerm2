@@ -540,6 +540,28 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     [self setRangeDirty:NSMakeRange(i, toX + toY * WIDTH - i)];
 }
 
+// set the rectangular region specified by arguments as dirty
+- (void)setRectDirtyFromX:(int)fromX Y:(int)fromY toX:(int)toX Y:(int)toY
+{
+    assert(fromX >= 0);
+    assert(fromX < WIDTH);
+    assert(toX >= 0);
+    assert(toX <= WIDTH); // <= because not inclusive of toX.
+    assert(fromY >= 0);
+    assert(fromY < HEIGHT);
+    assert(toY >= 0);
+    assert(toY < HEIGHT);
+    assert(fromY <= toY);
+
+    if (fromY == toY) {
+        assert(fromX <= toX);
+    }
+    for (int y = fromY; y <= toY; y++) {
+        int i = fromX + y * WIDTH;
+        [self setRangeDirty:NSMakeRange(i, toX + y * WIDTH - i)];
+    }
+}
+
 - (void)setDirtyAtOffset:(int)i
 {
     i = MIN(i, WIDTH*HEIGHT-1);
@@ -3839,11 +3861,11 @@ void DumpBuf(screen_char_t* p, int n) {
                    [self _getDefaultLineWithWidth:SCROLL_RIGHT + 1 - SCROLL_LEFT],
                    (SCROLL_RIGHT + 1 - SCROLL_LEFT) * sizeof(screen_char_t));
 
-            // everything between SCROLL_TOP and SCROLL_BOTTOM is dirty
-            [self setDirtyFromX:SCROLL_LEFT
-                              Y:SCROLL_TOP
-                            toX:SCROLL_RIGHT + 1
-                              Y:SCROLL_BOTTOM];
+            // set the rect scrolling region dirty
+            [self setRectDirtyFromX:SCROLL_LEFT
+                                  Y:SCROLL_TOP
+                                toX:SCROLL_RIGHT + 1
+                                  Y:SCROLL_BOTTOM];
         } else {
             if (sourceLine < targetLine) {
                 // screen area is not wrapped; direct memmove
@@ -3910,11 +3932,11 @@ void DumpBuf(screen_char_t* p, int n) {
                    [self _getDefaultLineWithWidth:SCROLL_RIGHT + 1 - SCROLL_LEFT],
                    (SCROLL_RIGHT + 1 - SCROLL_LEFT) * sizeof(screen_char_t));
 
-            // everything between SCROLL_TOP and SCROLL_BOTTOM is dirty
-            [self setDirtyFromX:SCROLL_LEFT
-                              Y:SCROLL_TOP
-                            toX:SCROLL_RIGHT + 1
-                              Y:SCROLL_BOTTOM];
+            // set the rect scrolling region dirty
+            [self setRectDirtyFromX:SCROLL_LEFT
+                                  Y:SCROLL_TOP
+                                toX:SCROLL_RIGHT + 1
+                                  Y:SCROLL_BOTTOM];
         } else {
             if (sourceLine < targetLine) {
                 // screen area is not wrapped; direct memmove

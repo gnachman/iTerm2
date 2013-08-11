@@ -262,6 +262,16 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 // Set the char at x,y dirty.
 - (void)setCharDirtyAtX:(int)x Y:(int)y;
 
+// set a rectangular region dirty
+- (void)setDrctDirtyFromX:(int)fromX Y:(int)fromY toX:(int)toX Y:(int)toY;
+
+// Retrieve the dirty flags at an x,y coordinate
+- (int)dirtyAtX:(int)x Y:(int)y;
+
+// Check if any flag is set at an x,y coordinate in the dirty array
+- (BOOL)isDirtyAtX:(int)x Y:(int)y;
+
+- (void)resetDirty;
 - (void)setDirty;
 
 // print to ansi...
