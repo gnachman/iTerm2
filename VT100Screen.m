@@ -3125,7 +3125,8 @@ void DumpBuf(screen_char_t* p, int n) {
             }
         }
         DebugLog(@"setNewline advance cursor");
-    } else if (SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT - 1 && (!vsplitMode || (SCROLL_LEFT == 0 && SCROLL_RIGHT == WIDTH - 1))) {
+    } else if ((SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT - 1) &&
+               (!vsplitMode || (SCROLL_LEFT == 0 && SCROLL_RIGHT == WIDTH - 1))) {
         // Scroll the whole screen.
 
         // Mark the cursor's previous location dirty. This fixes a rare race condition where
