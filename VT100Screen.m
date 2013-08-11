@@ -3642,10 +3642,8 @@ void DumpBuf(screen_char_t* p, int n) {
 #endif
     x_pos = (x-1);
 
-    if (vsplitMode) {
-        if ([TERMINAL originMode]) {
-            x_pos += SCROLL_LEFT;
-        }
+    if (vsplitMode && [TERMINAL originMode]) {
+        x_pos += SCROLL_LEFT;
         leftMargin = SCROLL_LEFT;
         rightMargin = SCROLL_RIGHT + 1;
     } else {
@@ -3653,8 +3651,8 @@ void DumpBuf(screen_char_t* p, int n) {
         rightMargin = WIDTH;
     }
 
-    if (x_pos < 0) {
-        x_pos = 0;
+    if (x_pos < leftMargin) {
+        x_pos = leftMargin;
     } else if (x_pos >= WIDTH) {
         x_pos = WIDTH - 1;
     }
