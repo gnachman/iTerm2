@@ -3034,7 +3034,7 @@ void DumpBuf(screen_char_t* p, int n) {
 
         // Overwrote some stuff that was already on the screen leaving behind the
         // second half of a DWC
-        if (cursorX < rightMargin - 1 && aLine[cursorX].code == DWC_RIGHT) {
+        if (cursorX < WIDTH - 1 && aLine[cursorX].code == DWC_RIGHT) {
             aLine[cursorX].code = ' ';
             aLine[cursorX].complexChar = NO;
         }
