@@ -2857,9 +2857,9 @@ void DumpBuf(screen_char_t* p, int n) {
                 // Set the continuation marker
                 screen_char_t* prevLine = [self getLineAtScreenIndex:cursorY];
                 BOOL splitDwc = (cursorX == rightMargin - 1);
-                prevLine[rightMargin].code = (splitDwc ? EOL_DWC : EOL_SOFT);
+                prevLine[WIDTH].code = (splitDwc ? EOL_DWC : EOL_SOFT);
                 if (splitDwc) {
-                    prevLine[rightMargin].code = EOL_DWC;
+                    prevLine[WIDTH].code = EOL_DWC;
                     prevLine[rightMargin - 1].code = DWC_SKIP;
                 }
                 [self setCursorX:leftMargin Y:cursorY];
@@ -2875,7 +2875,7 @@ void DumpBuf(screen_char_t* p, int n) {
                 // and insert the last character there.
 
                 // Clear the continuation marker
-                [self getLineAtScreenIndex:cursorY][rightMargin].code = EOL_HARD;
+                [self getLineAtScreenIndex:cursorY][WIDTH].code = EOL_HARD;
                 // Cause the loop to end after this character.
                 int ncx = WIDTH - 1;
 
@@ -2988,9 +2988,9 @@ void DumpBuf(screen_char_t* p, int n) {
                     src[elements - 1].code = ' ';
                     src[elements - 1].complexChar = NO;
                 } else if (src[elements].code == DWC_SKIP &&
-                           aLine[rightMargin].code == EOL_DWC) {
+                           aLine[WIDTH].code == EOL_DWC) {
                     // Stomping on a DWC_SKIP. Join the lines normally.
-                    aLine[rightMargin].code = EOL_SOFT;
+                    aLine[WIDTH].code = EOL_SOFT;
                 }
                 memmove(dst, src, elements * sizeof(screen_char_t));
                 memset(dirty + screenIdx + cursorX,
@@ -3048,7 +3048,7 @@ void DumpBuf(screen_char_t* p, int n) {
         if (cursorX >= effective_width && [TERMINAL isAnsi]) {
             if ([TERMINAL wraparoundMode]) {
                 //set the wrapping flag
-                aLine[rightMargin].code = ((effective_width == WIDTH) ? EOL_SOFT : EOL_DWC);
+                aLine[WIDTH].code = ((effective_width == WIDTH) ? EOL_SOFT : EOL_DWC);
                 [self setCursorX:leftMargin Y:cursorY];
                 [self setNewLine];
             } else {
