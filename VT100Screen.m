@@ -3690,7 +3690,6 @@ void DumpBuf(screen_char_t* p, int n) {
 
     [self setCursorX:cursorX Y:y_pos];
 
-    [self setCharAtCursorDirty:1];
     DebugLog(@"cursorToY");
 
 }
