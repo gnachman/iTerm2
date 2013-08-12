@@ -3244,6 +3244,8 @@ void DumpBuf(screen_char_t* p, int n) {
 
 - (void)backTab
 {
+    // TODO: take a number argument
+    // TODO: respect left-right margins
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[VT100Screen backTab]", __FILE__, __LINE__);
 #endif
@@ -3262,6 +3264,7 @@ void DumpBuf(screen_char_t* p, int n) {
 
 - (void)advanceCursor:(BOOL)canOccupyLastSpace
 {
+    // TODO: respect left-right margins
     if (!gExperimentalOptimization) {
         [self setCharAtCursorDirty:1];
     }
@@ -3295,6 +3298,7 @@ void DumpBuf(screen_char_t* p, int n) {
 
 - (void)setTab
 {
+    // TODO: respect left-right margins
     if (![self haveTabStopBefore:WIDTH+1]) {
         // No legal tabstop so stop; otherwise the for loop would never exit.
         return;
