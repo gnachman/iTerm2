@@ -215,7 +215,7 @@ void TranslateCharacterSet(screen_char_t *s, int len);
               string:(NSString *)string
                ascii:(BOOL)ascii;
 - (void)addLineToScrollback;
-- (void)crlf;
+- (void)crlf; // -crlf is called only by tmux integration, so it ignores vsplit mode.
 - (void)setNewLine;
 - (void)deleteCharacters:(int)n;
 - (void)backSpace;
