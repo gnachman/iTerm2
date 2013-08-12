@@ -3667,6 +3667,7 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)cursorToY:(int)y
 {
     int y_pos;
+    int topMargin, bottomMargin;
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[VT100Screen cursorToY:%d]",
@@ -3677,12 +3678,17 @@ void DumpBuf(screen_char_t* p, int n) {
 
     if ([TERMINAL originMode]) {
         y_pos += SCROLL_TOP;
+        topMargin = SCROLL_TOP;
+        bottomMargin = SCROLL_BOTTOM + 1;
+    } else {
+        topMargin = 0;
+        bottomMargin = HEIGHT;
     }
 
-    if (y_pos < 0) {
-        y_pos = 0;
-    } else if (y_pos >= HEIGHT) {
-        y_pos = HEIGHT - 1;
+    if (y_pos < topMargin) {
+        y_pos = topMargin;
+    } else if (y_pos >= bottomMargin) {
+        y_pos = bottomMargin - 1;
     }
 
     [self setCursorX:cursorX Y:y_pos];
@@ -3698,6 +3704,7 @@ void DumpBuf(screen_char_t* p, int n) {
           __FILE__, __LINE__, x, y);
 #endif
     int x_pos, y_pos;
+    int topMargin, bottomMargin;
     int leftMargin, rightMargin;
 
     x_pos = x - 1;
@@ -3705,6 +3712,8 @@ void DumpBuf(screen_char_t* p, int n) {
 
     if ([TERMINAL originMode]) {
         y_pos += SCROLL_TOP;
+        topMargin = SCROLL_TOP;
+        bottomMargin = SCROLL_BOTTOM + 1;
         if (vsplitMode) {
             x_pos += SCROLL_LEFT;
             leftMargin = SCROLL_LEFT;
@@ -3714,6 +3723,8 @@ void DumpBuf(screen_char_t* p, int n) {
             rightMargin = WIDTH;
         }
     } else {
+        topMargin = 0;
+        bottomMargin = HEIGHT;
         leftMargin = 0;
         rightMargin = WIDTH;
     }
@@ -3723,10 +3734,10 @@ void DumpBuf(screen_char_t* p, int n) {
     } else if (x_pos >= rightMargin) {
         x_pos = rightMargin - 1;
     }
-    if (y_pos < 0) {
-        y_pos = 0;
-    } else if (y_pos >= HEIGHT) {
-        y_pos = HEIGHT - 1;
+    if (y_pos < topMargin) {
+        y_pos = topMargin;
+    } else if (y_pos >= bottomMargin) {
+        y_pos = bottomMargin - 1;
     }
 
     [self setCursorX:x_pos Y:y_pos];
