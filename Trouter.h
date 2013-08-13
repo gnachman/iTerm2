@@ -34,6 +34,7 @@
 @interface Trouter : NSObject {
     NSDictionary *prefs_;
     NSFileManager *fileManager;
+	id<TrouterDelegate> delegate_;
 }
 
 @property (nonatomic, copy) NSDictionary *prefs;
