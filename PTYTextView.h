@@ -66,7 +66,7 @@ enum {
 
 @end
 
-@interface PTYTextView : NSView <NSTextInput, PointerControllerDelegate>
+@interface PTYTextView : NSView <NSTextInput, PointerControllerDelegate, TrouterDelegate>
 {
     // This is a flag to let us know whether we are handling this
     // particular drag and drop operation. We are using it because
