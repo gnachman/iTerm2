@@ -1749,6 +1749,16 @@ NSString *sessionsKey = @"sessions";
     return isHotKeyWindow_;
 }
 
+- (NSRect)fullscreenToolbeltFrame
+{
+    CGFloat width = [self fullscreenToolbeltWidth];
+    NSRect toolbeltFrame = NSMakeRect(self.window.frame.size.width - width,
+                                      0,
+                                      width,
+                                      self.window.frame.size.height - kToolbeltMargin);
+    return toolbeltFrame;
+}
+
 - (void)canonicalizeWindowFrame {
     PtyLog(@"canonicalizeWindowFrame");
     PTYSession* session = [self currentSession];
@@ -1897,6 +1907,10 @@ NSString *sessionsKey = @"sessions";
 
         default:
             break;
+    }
+
+    if ([self anyFullScreen]) {
+        [toolbelt_ setFrame:[self fullscreenToolbeltFrame]];
     }
 }
 
@@ -5654,14 +5668,9 @@ NSString *sessionsKey = @"sessions";
 {
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     if ([self anyFullScreen]) {
-        CGFloat width = [self fullscreenToolbeltWidth];
-        NSRect toolbeltFrame = NSMakeRect(self.window.frame.size.width - width,
-                                          0,
-                                          width,
-                                          self.window.frame.size.height - kToolbeltMargin);
         [toolbelt_ retain];
         [toolbelt_ removeFromSuperview];
-        [toolbelt_ setFrame:toolbeltFrame];
+        [toolbelt_ setFrame:[self fullscreenToolbeltFrame]];
         [toolbelt_ setHidden:![itad showToolbelt]];
         [[[self window] contentView] addSubview:toolbelt_
                                      positioned:NSWindowBelow
