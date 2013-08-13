@@ -3472,7 +3472,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"is a click in the window");
 
         BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
-        if (altPressed) {
+        if (altPressed && [[PreferencePanel sharedInstance] optionClickMovesCursor]) {
             // This moves the cursor, but not if mouse reporting is on for button clicks.
             VT100Terminal *terminal = [dataSource terminal];
             switch ([terminal mouseMode]) {
