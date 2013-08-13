@@ -872,6 +872,13 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         checkedDebug = YES;
     }
     if (debugKeyDown || gDebugLogging) {
+        NSArray *stack = [NSThread callStackSymbols];
+        if (debugKeyDown) {
+            NSLog(@"writeTaskImpl %p: called from %@", self, stack);
+        }
+        if (gDebugLogging) {
+            DebugLog([NSString stringWithFormat:@"writeTaskImpl %p: called from %@", self, stack]);
+        }
         const char *bytes = [data bytes];
         for (int i = 0; i < [data length]; i++) {
             if (debugKeyDown) {
