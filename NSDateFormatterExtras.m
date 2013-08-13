@@ -20,28 +20,28 @@
     } else if (theTime < 3600) {
         int diff = round(theTime / 60);
         if (diff == 1) {
-            return [NSString stringWithFormat:@"1 minute ago", diff];
+            return [NSString stringWithFormat:@"1 minute ago"];
         }
         return [NSString stringWithFormat:@"%d minutes ago", diff];
     } else if (theTime < 86400) {
         int diff = round(theTime / 60 / 60);
         if (diff == 1) {
-            return [NSString stringWithFormat:@"1 hour ago", diff];
+            return [NSString stringWithFormat:@"1 hour ago"];
         }
         return [NSString stringWithFormat:@"%d hours ago", diff];
     } else if (theTime < 604800) {
         int diff = round(theTime / 60 / 60 / 24);
         if (diff == 1) {
-            return [NSString stringWithFormat:@"Yesterday", diff];
+            return [NSString stringWithFormat:@"Yesterday"];
         }
         if (diff == 7) {
-            return [NSString stringWithFormat:@"Last week", diff];
+            return [NSString stringWithFormat:@"Last week"];
         }
         return[NSString stringWithFormat:@"%d days ago", diff];
     } else {
         int diff = round(theTime / 60 / 60 / 24 / 7);
         if (diff == 1) {
-            return [NSString stringWithFormat:@"Last week", diff];
+            return [NSString stringWithFormat:@"Last week"];
    
         }
         return [NSString stringWithFormat:@"%d weeks ago", diff];
@@ -58,28 +58,28 @@
     } else if (theTime < 3600) {
         int diff = round(theTime / 60);
         if (diff == 1) {
-            return [NSString stringWithFormat:@"1 min", diff];
+            return [NSString stringWithFormat:@"1 min"];
         }
         return [NSString stringWithFormat:@"%d min", diff];
     } else if (theTime < 86400) {
         int diff = round(theTime / 60 / 60);
         if (diff == 1) {
-            return [NSString stringWithFormat:@"1 hour", diff];
+            return [NSString stringWithFormat:@"1 hour"];
         }
         return [NSString stringWithFormat:@"%d hrs", diff];
     } else if (theTime < 604800) {
         int diff = round(theTime / 60 / 60 / 24);
         if (diff == 1) {
-            return [NSString stringWithFormat:@"1 day", diff];
+            return [NSString stringWithFormat:@"1 day"];
         }
         if (diff == 7) {
-            return [NSString stringWithFormat:@"1 week", diff];
+            return [NSString stringWithFormat:@"1 week"];
         }
         return[NSString stringWithFormat:@"%d days", diff];
     } else {
         int diff = round(theTime / 60 / 60 / 24 / 7);
         if (diff == 1) {
-            return [NSString stringWithFormat:@"1 week", diff];
+            return [NSString stringWithFormat:@"1 week"];
             
         }
         return [NSString stringWithFormat:@"%d wks", diff];

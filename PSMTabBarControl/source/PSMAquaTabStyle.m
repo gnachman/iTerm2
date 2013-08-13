@@ -16,13 +16,14 @@
 @interface NSColor (CGColorAdditions)
 /**
  Return CGColor representation of the NSColor in the RGB color space
+ It has a silly name because OS 10.8 defines -[NSColor CGColor].
  */
-@property (readonly) CGColorRef CGColor;
+@property (readonly) CGColorRef PSMCGColor;
 @end
 
 @implementation NSColor (CGColorAdditions)
 
-- (CGColorRef)CGColor
+- (CGColorRef)PSMCGColor
 {
   NSColor *colorRGB = [self colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
   CGFloat components[4];
@@ -381,7 +382,7 @@ static CGImageRef CGImageCreateWithNSImage(NSImage *image, CGRect sourceRect) {
   CGContextRef context = [[NSGraphicsContext currentContext] graphicsPort];
   if (tabColor) {
     CGContextSetBlendMode(context, kCGBlendModeNormal);
-    CGContextSetFillColorWithColor(context, [tabColor CGColor]);
+    CGContextSetFillColorWithColor(context, [tabColor PSMCGColor]);
     CGContextFillRect(context, NSRectToCGRect(NSMakeRect(cellFrame.origin.x + 0.5,
                                           cellFrame.origin.y + 0.5,
                                           cellFrame.size.width,

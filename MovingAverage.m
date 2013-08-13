@@ -23,10 +23,15 @@
 
 - (void)startTimer {
     _time = [NSDate timeIntervalSinceReferenceDate];
+    _timePaused = 0;
 }
 
 - (NSTimeInterval)timeSinceTimerStarted {
-    return [NSDate timeIntervalSinceReferenceDate] - _time;
+    if (_timePaused) {
+        return _timePaused - _time;
+    } else {
+        return [NSDate timeIntervalSinceReferenceDate] - _time;
+    }
 }
 
 - (void)addValue:(double)value {
@@ -35,6 +40,20 @@
 
 - (BOOL)haveStartedTimer {
     return _time > 0;
+}
+
+- (void)pauseTimer {
+    assert([self haveStartedTimer]);
+    assert(_timePaused == 0);
+    _timePaused = [NSDate timeIntervalSinceReferenceDate];
+}
+
+- (void)resumeTimer {
+    assert(_timePaused > 0);
+    assert(_time > 0);
+    NSTimeInterval lengthOfPreviousRun = _timePaused - _time;
+    _time = [NSDate timeIntervalSinceReferenceDate] - lengthOfPreviousRun;
+    _timePaused = 0;
 }
 
 @end

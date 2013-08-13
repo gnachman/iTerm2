@@ -17,7 +17,7 @@
     NSPopUpButton *signal_;
     NSTimer *timer_;
     NSMutableArray *names_;
-    NSMutableArray *pids_;
+    NSArray *pids_;
     BOOL hasSelection;
     BOOL shutdown_;
     NSTimeInterval timerInterval_;

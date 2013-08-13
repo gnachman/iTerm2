@@ -14,7 +14,7 @@
 }
 
 - (NSArray *)valuesEqualTo:(NSObject *)target;
-- (void)setValue:(NSObject *)value equalToValue:(NSObject *)otherValue;
+- (void)setValue:(NSObject<NSCopying> *)n1 equalToValue:(NSObject<NSCopying> *)n2;
 - (void)removeValue:(NSObject *)target;
 - (NSArray *)classes;
 
