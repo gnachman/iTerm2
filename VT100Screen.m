@@ -2857,13 +2857,15 @@ void DumpBuf(screen_char_t* p, int n) {
         }
         if (cursorX >= rightMargin - widthOffset) {
             if ([TERMINAL wraparoundMode]) {
-                // Set the continuation marker
-                screen_char_t* prevLine = [self getLineAtScreenIndex:cursorY];
-                BOOL splitDwc = (cursorX == rightMargin - 1);
-                prevLine[WIDTH].code = (splitDwc ? EOL_DWC : EOL_SOFT);
-                if (splitDwc) {
-                    prevLine[WIDTH].code = EOL_DWC;
-                    prevLine[rightMargin - 1].code = DWC_SKIP;
+                if (leftMargin == 0 && rightMargin == WIDTH) {
+                    // Set the continuation marker
+                    screen_char_t* prevLine = [self getLineAtScreenIndex:cursorY];
+                    BOOL splitDwc = (cursorX == rightMargin - 1);
+                    prevLine[WIDTH].code = (splitDwc ? EOL_DWC : EOL_SOFT);
+                    if (splitDwc) {
+                        prevLine[WIDTH].code = EOL_DWC;
+                        prevLine[WIDTH - 1].code = DWC_SKIP;
+                    }
                 }
                 [self setCursorX:leftMargin Y:cursorY];
                 // Advance to the next line
