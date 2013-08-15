@@ -3853,7 +3853,8 @@ void DumpBuf(screen_char_t* p, int n) {
     assert(SCROLL_BOTTOM >= 0 && SCROLL_BOTTOM < HEIGHT);
     assert(SCROLL_TOP <= SCROLL_BOTTOM );
 
-    if (SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT - 1 && (!vsplitMode || (SCROLL_LEFT == 0 && SCROLL_RIGHT == WIDTH - 1))) {
+    if ((SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT - 1) &&
+        (!vsplitMode || (SCROLL_LEFT == 0 && SCROLL_RIGHT == WIDTH - 1))) {
         [self setNewLine];
     } else if (SCROLL_TOP < SCROLL_BOTTOM) {
         // Not scrolling the whole screen.
