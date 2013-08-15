@@ -3874,7 +3874,7 @@ void DumpBuf(screen_char_t* p, int n) {
             // screen area is wrapped; copy line by line
             for(i = SCROLL_TOP; i < SCROLL_BOTTOM; i++) {
                 sourceLine = [self getLineAtScreenIndex:i + 1];
-                targetLine = [self getLineAtScreenIndex: i];
+                targetLine = [self getLineAtScreenIndex:i];
                 memmove(targetLine + SCROLL_LEFT,
                         sourceLine + SCROLL_LEFT,
                         (SCROLL_RIGHT + 1 - SCROLL_LEFT) * sizeof(screen_char_t));
