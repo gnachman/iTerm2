@@ -2150,9 +2150,21 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         if (cursorX < WIDTH) {
             int dirtyX = cursorX;
             int dirtyY = cursorY;
+            int startOffset = 0;
+            int endOffset = 0;
 
             j = token.u.csi.p[0];
             aLine = [self getLineAtScreenIndex:cursorY];
+            if (cursorX > 0 && aLine[cursorX].code == DWC_RIGHT) {
+                aLine[cursorX - 1].code = 0;
+                aLine[cursorX - 1].complexChar = NO;
+                startOffset = -1;
+            }
+            if (aLine[cursorX + j].code == DWC_RIGHT) {
+                aLine[cursorX + j].code = 0;
+                aLine[cursorX + j].complexChar = NO;
+                endOffset = 1;
+            }
             for (k = 0; cursorX + k < WIDTH && k < j; k++) {
                 aLine[cursorX + k].code = 0;
                 aLine[cursorX + k].complexChar = NO;
@@ -2162,8 +2174,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             }
             aLine[WIDTH].code = EOL_HARD;
 
-            int endX = MIN(WIDTH, dirtyX + j);
-            [self setDirtyFromX:dirtyX
+            int endX = MIN(WIDTH, dirtyX + j + endOffset);
+            [self setDirtyFromX:dirtyX + startOffset
                               Y:dirtyY
                             toX:endX
                               Y:dirtyY];
@@ -3091,6 +3103,7 @@ void DumpBuf(screen_char_t* p, int n) {
 {
     screen_char_t *aLine;
     int i;
+    int startOffset = 0;
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[VT100Screen deleteCharacter]: %d", __FILE__, __LINE__, n);
@@ -3109,6 +3122,17 @@ void DumpBuf(screen_char_t* p, int n) {
         aLine = [self getLineAtScreenIndex:cursorY];
 
         if (n < WIDTH) {
+            if (cursorX > 0 && aLine[cursorX].code == DWC_RIGHT) {
+                aLine[cursorX - 1].code = 0;
+                aLine[cursorX - 1].complexChar = NO;
+                startOffset = -1;
+            }
+            if (aLine[cursorX + n].code == DWC_RIGHT) {
+                aLine[cursorX + n - 1].code = 0;
+                aLine[cursorX + n - 1].complexChar = NO;
+                aLine[cursorX + n].code = 0;
+                aLine[cursorX + n].complexChar = NO;
+            }
             memmove(aLine + cursorX,
                     aLine + cursorX + n,
                     (WIDTH - cursorX - n) * sizeof(screen_char_t));
@@ -3121,7 +3145,7 @@ void DumpBuf(screen_char_t* p, int n) {
         }
         DebugLog(@"deleteCharacters");
 
-        [self setRangeDirty:NSMakeRange(idx + cursorX, WIDTH - cursorX)];
+        [self setRangeDirty:NSMakeRange(idx + cursorX + startOffset, WIDTH - cursorX)];
     }
 }
 
@@ -3766,6 +3790,7 @@ void DumpBuf(screen_char_t* p, int n) {
 {
     screen_char_t *aLine;
     int i;
+    int startOffset = 0;
 
     if (cursorX >= WIDTH) {
         return;
@@ -3777,7 +3802,13 @@ void DumpBuf(screen_char_t* p, int n) {
 
     // get the appropriate line
     aLine = [self getLineAtScreenIndex:cursorY];
-
+    if (cursorX > 0 && aLine[cursorX].code == DWC_RIGHT) {
+        aLine[cursorX].code = 0;
+        aLine[cursorX].complexChar = NO;
+        aLine[cursorX - 1].code = 0;
+        aLine[cursorX - 1].complexChar = NO;
+        startOffset = -1;
+    }
     memmove(aLine + cursorX + n,
             aLine + cursorX,
             (WIDTH - cursorX - n) * sizeof(screen_char_t));
@@ -3790,7 +3821,7 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 
     // everything from cursorX to end of line is dirty
-    [self setDirtyFromX:MIN(WIDTH - 1, cursorX)
+    [self setDirtyFromX:MIN(WIDTH - 1, cursorX + startOffset)
                       Y:cursorY
                     toX:WIDTH
                       Y:cursorY];
