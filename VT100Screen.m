@@ -3660,8 +3660,8 @@ void DumpBuf(screen_char_t* p, int n) {
 
     if (x_pos < leftMargin) {
         x_pos = leftMargin;
-    } else if (x_pos >= WIDTH) {
-        x_pos = WIDTH - 1;
+    } else if (x_pos >= rightMargin) {
+        x_pos = rightMargin - 1;
     }
 
     [self setCursorX:x_pos Y:cursorY];
