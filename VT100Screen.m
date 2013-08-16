@@ -3872,9 +3872,31 @@ void DumpBuf(screen_char_t* p, int n) {
             for(i = SCROLL_TOP; i < SCROLL_BOTTOM; i++) {
                 sourceLine = [self getLineAtScreenIndex:i + 1];
                 targetLine = [self getLineAtScreenIndex:i];
+
+                // clear broken double-width characters
+                if (targetLine[SCROLL_LEFT].code == DWC_RIGHT) {
+                    targetLine[SCROLL_LEFT - 1].code = 0;
+                    targetLine[SCROLL_LEFT - 1].complexChar = NO;
+                    [self setCharDirtyAtX:SCROLL_LEFT - 1 Y:i];
+                }
+                if (targetLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
+                    targetLine[SCROLL_RIGHT + 1].code = 0;
+                    targetLine[SCROLL_RIGHT + 1].complexChar = NO;
+                    [self setCharDirtyAtX:SCROLL_RIGHT + 1 Y:i];
+                }
+
                 memmove(targetLine + SCROLL_LEFT,
                         sourceLine + SCROLL_LEFT,
                         (SCROLL_RIGHT + 1 - SCROLL_LEFT) * sizeof(screen_char_t));
+
+                if (sourceLine[SCROLL_LEFT].code == DWC_RIGHT) {
+                    targetLine[SCROLL_LEFT].code = 0;
+                    targetLine[SCROLL_LEFT].complexChar = NO;
+                }
+                if (sourceLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
+                    targetLine[SCROLL_RIGHT].code = 0;
+                    targetLine[SCROLL_RIGHT].complexChar = NO;
+                }
             }
             // new line at SCROLL_BOTTOM with default settings
             targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
@@ -3942,9 +3964,31 @@ void DumpBuf(screen_char_t* p, int n) {
             for(i = SCROLL_BOTTOM - 1; i >= SCROLL_TOP; i--) {
                 sourceLine = [self getLineAtScreenIndex:i];
                 targetLine = [self getLineAtScreenIndex:i + 1];
+
+                // clear broken double-width characters
+                if (targetLine[SCROLL_LEFT].code == DWC_RIGHT) {
+                    targetLine[SCROLL_LEFT - 1].code = 0;
+                    targetLine[SCROLL_LEFT - 1].complexChar = NO;
+                    [self setCharDirtyAtX:SCROLL_LEFT - 1 Y:i];
+                }
+                if (targetLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
+                    targetLine[SCROLL_RIGHT + 1].code = 0;
+                    targetLine[SCROLL_RIGHT + 1].complexChar = NO;
+                    [self setCharDirtyAtX:SCROLL_RIGHT + 1 Y:i];
+                }
+
                 memmove(targetLine + SCROLL_LEFT,
                         sourceLine + SCROLL_LEFT,
                         (SCROLL_RIGHT + 1 - SCROLL_LEFT) * sizeof(screen_char_t));
+
+                if (sourceLine[SCROLL_LEFT].code == DWC_RIGHT) {
+                    targetLine[SCROLL_LEFT].code = 0;
+                    targetLine[SCROLL_LEFT].complexChar = NO;
+                }
+                if (sourceLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
+                    targetLine[SCROLL_RIGHT].code = 0;
+                    targetLine[SCROLL_RIGHT].complexChar = NO;
+                }
             }
 
             // new line at SCROLL_TOP with default settings
