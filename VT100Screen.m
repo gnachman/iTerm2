@@ -3867,10 +3867,6 @@ void DumpBuf(screen_char_t* p, int n) {
                 [self addLineToScrollback];
             }
         }
-        // Move all lines between SCROLL_TOP and SCROLL_BOTTOM one line up
-        // check if the screen area is wrapped
-        sourceLine = [self getLineAtScreenIndex:SCROLL_TOP];
-        targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
         if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH - 1) && vsplitMode) {
             // screen area is wrapped; copy line by line
             for(i = SCROLL_TOP; i < SCROLL_BOTTOM; i++) {
@@ -3892,6 +3888,10 @@ void DumpBuf(screen_char_t* p, int n) {
                                 toX:SCROLL_RIGHT + 1
                                   Y:SCROLL_BOTTOM];
         } else {
+            // Move all lines between SCROLL_TOP and SCROLL_BOTTOM one line up
+            // check if the screen area is wrapped
+            sourceLine = [self getLineAtScreenIndex:SCROLL_TOP];
+            targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
             if (sourceLine < targetLine) {
                 // screen area is not wrapped; direct memmove
                 memmove(sourceLine,
@@ -3937,10 +3937,6 @@ void DumpBuf(screen_char_t* p, int n) {
     NSParameterAssert(SCROLL_TOP <= SCROLL_BOTTOM);
 
     if (SCROLL_TOP < SCROLL_BOTTOM) {
-        // move all lines between SCROLL_TOP and SCROLL_BOTTOM one line down
-        // check if screen is wrapped
-        sourceLine = [self getLineAtScreenIndex:SCROLL_TOP];
-        targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
         if ((SCROLL_LEFT > 0 || SCROLL_RIGHT + 1 < WIDTH) && vsplitMode) {
             // screen area is wrapped; move line by line
             for(i = SCROLL_BOTTOM - 1; i >= SCROLL_TOP; i--) {
@@ -3963,6 +3959,10 @@ void DumpBuf(screen_char_t* p, int n) {
                                 toX:SCROLL_RIGHT + 1
                                   Y:SCROLL_BOTTOM];
         } else {
+            // move all lines between SCROLL_TOP and SCROLL_BOTTOM one line down
+            // check if screen is wrapped
+            sourceLine = [self getLineAtScreenIndex:SCROLL_TOP];
+            targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
             if (sourceLine < targetLine) {
                 // screen area is not wrapped; direct memmove
                 memmove(sourceLine + REAL_WIDTH,
