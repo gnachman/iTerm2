@@ -89,6 +89,7 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
 
     close(inputPipe[0]);
     close(outputPipe[1]);
+
     return [Coprocess coprocessWithPid:pid
                               outputFd:inputPipe[1]
                                inputFd:outputPipe[0]];
@@ -102,6 +103,13 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
     result.pid = pid;
     result.outputFd = outputFd;
     result.inputFd = inputFd;
+
+    // Make sure the file descriptors are non-blocking.
+    int flags = fcntl(outputFd, F_GETFL);
+    fcntl(outputFd, F_SETFL, flags | O_NONBLOCK);
+    flags = fcntl(inputFd, F_GETFL);
+    fcntl(inputFd, F_SETFL, flags | O_NONBLOCK);
+
     return result;
 }
 
