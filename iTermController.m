@@ -539,7 +539,7 @@ static BOOL initDone = NO;
                                                           h)]
                  forKey:NSViewAnimationEndFrameKey];
         x += w;
-        if (x > frame.size.width - w) {
+        if (x > frame.size.width + frame.origin.x - w) {
             // Wrap around to the next row of windows.
             x = frame.origin.x;
             yOffset -= maxHeight;
