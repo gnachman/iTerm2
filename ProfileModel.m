@@ -571,7 +571,8 @@ int gMigrated;
     [self postChangeNotification];
 }
 
-- (NSArray *)names {
+- (NSArray *)names
+{
     NSMutableArray *array = [NSMutableArray array];
     for (Profile *profile in bookmarks_) {
         [array addObject:[profile objectForKey:KEY_NAME]];

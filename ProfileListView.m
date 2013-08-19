@@ -36,8 +36,12 @@
 const int kSearchWidgetHeight = 22;
 const int kInterWidgetMargin = 10;
 
-@implementation ProfileListView
+@interface ProfileListView ()
+- (NSDictionary *)rowOrder;
+- (void)syncTableViewsWithSelectedGuids:(NSArray *)guids;
+@end
 
+@implementation ProfileListView
 
 - (void)awakeFromNib
 {
@@ -131,7 +135,7 @@ const int kInterWidgetMargin = 10;
     // move because it would be overwhelming so we must do it ourselves. This
     // makes all other table views sync with the new order. First, add commands
     // to rebuild the menus.
-    [self syncTableViewsWithSelectedGuids:guids];
+    [self syncTableViewsWithSelectedGuids:[guids allObjects]];
     return YES;
 }
 
