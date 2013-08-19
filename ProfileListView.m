@@ -91,8 +91,10 @@ const int kInterWidgetMargin = 10;
     }
 }
 
-- (BOOL)tableView:(NSTableView *)aTableView acceptDrop:(id <NSDraggingInfo>)info
-              row:(NSInteger)row dropOperation:(NSTableViewDropOperation)operation
+- (BOOL)tableView:(NSTableView *)aTableView
+       acceptDrop:(id <NSDraggingInfo>)info
+              row:(NSInteger)row
+    dropOperation:(NSTableViewDropOperation)operation
 {
     [[self undoManager] registerUndoWithTarget:self
                                       selector:@selector(setRowOrder:)
@@ -707,7 +709,10 @@ const int kInterWidgetMargin = 10;
 
 - (void)dataChangeNotification:(id)sender
 {
-    [self reloadData];
+    // Use a delayed perform so the underlying model has a chance to parse its journal.
+    [self performSelector:@selector(reloadData)
+               withObject:nil
+               afterDelay:0];
 }
 
 - (void)onDoubleClick:(id)sender
