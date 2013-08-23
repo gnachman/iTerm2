@@ -2160,7 +2160,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
                 aLine[cursorX - 1].complexChar = NO;
                 startOffset = -1;
             }
-            if (aLine[cursorX + j].code == DWC_RIGHT) {
+            if (cursorX + j < WIDTH && aLine[cursorX + j].code == DWC_RIGHT) {
                 aLine[cursorX + j].code = 0;
                 aLine[cursorX + j].complexChar = NO;
                 endOffset = 1;
