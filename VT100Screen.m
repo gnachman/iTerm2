@@ -2154,6 +2154,9 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             int endOffset = 0;
 
             j = token.u.csi.p[0];
+            if (j <= 0) {
+                break;
+            }
             aLine = [self getLineAtScreenIndex:cursorY];
             if (cursorX > 0 && aLine[cursorX].code == DWC_RIGHT) {
                 aLine[cursorX - 1].code = 0;
