@@ -3121,7 +3121,7 @@ void DumpBuf(screen_char_t* p, int n) {
         // get the appropriate screen line
         aLine = [self getLineAtScreenIndex:cursorY];
 
-        if (n < WIDTH) {
+        if (n > 0 && n < WIDTH) {
             if (cursorX > 0 && aLine[cursorX].code == DWC_RIGHT) {
                 aLine[cursorX - 1].code = 0;
                 aLine[cursorX - 1].complexChar = NO;
