@@ -12,6 +12,10 @@
 
 static const int kDefaultAdvancesCapacity = 100;
 
+@interface CharacterRun ()
+- (NSAttributedString *)string;
+@end
+
 @implementation CharacterRun
 
 @synthesize antiAlias = antiAlias_;
@@ -24,10 +28,12 @@ static const int kDefaultAdvancesCapacity = 100;
 - (id)init {
     self = [super init];
     if (self) {
-        string_ = [[NSMutableAttributedString alloc] init];
         advancesCapacity_ = kDefaultAdvancesCapacity;
         advancesSize_ = 0;
         advances_ = malloc(advancesCapacity_ * sizeof(float));
+        temp_ = [[NSMutableData alloc] init];
+        parts_ = [[NSMutableArray alloc] init];
+        ascii_ = YES;
     }
     return self;
 }
@@ -35,8 +41,11 @@ static const int kDefaultAdvancesCapacity = 100;
 - (void)dealloc {
     [color_ release];
     [fontInfo_ release];
-    [string_ release];
+    [temp_ release];
+    [parts_ release];
     free(advances_);
+    free(glyphStorage_);
+    free(advancesStorage_);
 
     [super dealloc];
 }
@@ -48,14 +57,13 @@ static const int kDefaultAdvancesCapacity = 100;
     theCopy.color = color_;
     theCopy.fakeBold = fakeBold_;
     theCopy.x = x_;
-    [theCopy->string_ release];
-    theCopy->string_ = [string_ mutableCopy];
     theCopy->advances_ = (float*)realloc(theCopy->advances_, advancesCapacity_ * sizeof(float));
     memcpy(theCopy->advances_, advances_, advancesCapacity_ * sizeof(float));
     theCopy->advancesCapacity_ = advancesCapacity_;
-    memmove(theCopy->temp_, temp_, sizeof(temp_));
-    theCopy->tempCount_ = tempCount_;
+    theCopy->temp_ = [temp_ mutableCopy];
+    theCopy->parts_ = [parts_ mutableCopy];
     theCopy->advancesSize_ = advancesSize_;
+    theCopy->ascii_ = ascii_;
     theCopy.advancedFontRendering = advancedFontRendering_;
     return theCopy;
 }
@@ -76,7 +84,7 @@ static const int kDefaultAdvancesCapacity = 100;
     CGFloat width = 0;
     for (int glyphIndex = 0; glyphIndex < glyphCount; glyphIndex++) {
         if (glyphIndex == 0 || indices[glyphIndex] != characterIndex) {
-            // This glyph is for a new character in string_.
+            // This glyph is for a new character in the string.
             // Some characters, such as THAI CHARACTER SARA AM, are composed of
             // multiple glyphs, which is why this if statement's condition
             // isn't always true.
@@ -99,11 +107,22 @@ static const int kDefaultAdvancesCapacity = 100;
 }
 
 - (NSString *)description {
-    return [string_ description];
+    return [[self string] description];
 }
 
 - (CTLineRef)newLine {
-    return CTLineCreateWithAttributedString((CFAttributedStringRef) [[string_ copy] autorelease]);
+    return CTLineCreateWithAttributedString((CFAttributedStringRef) [[[self string] copy] autorelease]);
+}
+
+- (NSAttributedString *)string {
+    NSMutableAttributedString *string = [[NSMutableAttributedString alloc] init];
+    for (NSArray *part in parts_) {
+        NSString *s = [part objectAtIndex:0];
+        NSDictionary *attributes = [part objectAtIndex:1];
+        NSAttributedString *as = [[[NSAttributedString alloc] initWithString:s attributes:attributes] autorelease];
+        [string appendAttributedString:as];
+    }
+    return string;
 }
 
 - (BOOL)isCompatibleWith:(CharacterRun *)otherRun {
@@ -140,17 +159,22 @@ static const int kDefaultAdvancesCapacity = 100;
 }
 
 - (void)appendCode:(unichar)code withAdvance:(CGFloat)advance {
-    if (tempCount_ == kCharacterRunTempSize) {
-        [self commit];
-    }
-    temp_[tempCount_++] = code;
+    [temp_ appendBytes:&code length:sizeof(code)];
     [self appendToAdvances:advance];
+    if (code > 127) {
+        ascii_ = NO;
+    }
+}
+
+- (void)appendPartWithString:(NSString *)string {
+    [parts_ addObject:[NSArray arrayWithObjects:string, [self attributes], nil]];
 }
 
 - (void)commit {
-    if (tempCount_) {
-        [string_ appendAttributedString:[self attributedStringForString:[NSString stringWithCharacters:temp_ length:tempCount_]]];
-        tempCount_ = 0;
+    if ([temp_ length]) {
+        [self appendPartWithString:[NSString stringWithCharacters:[temp_ bytes]
+                                                           length:[temp_ length] / sizeof(unichar)]];
+        [temp_ setLength:0];
     }
 }
 
@@ -160,7 +184,8 @@ static const int kDefaultAdvancesCapacity = 100;
         [self appendToAdvances:0];
     }
     [self appendToAdvances:advance];
-    [string_ appendAttributedString:[self attributedStringForString:string]];
+    [self appendPartWithString:string];
+    ascii_ = NO;
 }
 
 - (void)setAntiAlias:(BOOL)antiAlias {
@@ -180,4 +205,59 @@ static const int kDefaultAdvancesCapacity = 100;
     fontInfo_ = [fontInfo retain];
 }
 
+- (BOOL)isAllAscii {
+    return ascii_;
+}
+
+- (CGGlyph *)glyphs {
+    assert(ascii_);
+    [self commit];
+    assert([parts_ count] <= 1);
+    NSArray *part = [parts_ lastObject];
+    if (!part) {
+        return nil;
+    }
+    NSString *s = [part objectAtIndex:0];
+    int len = [s length];
+    if (len == 0) {
+        return nil;
+    }
+    unichar chars[len];
+    [s getCharacters:chars range:NSMakeRange(0, len)];
+
+    if (glyphStorage_) {
+        free(glyphStorage_);
+    }
+    glyphStorage_ = malloc(sizeof(CGGlyph) * len);
+    CTFontGetGlyphsForCharacters((CTFontRef)fontInfo_.font,
+                                 chars,
+                                 glyphStorage_,
+                                 len);
+    return glyphStorage_;
+}
+
+- (size_t)length {
+    assert(ascii_);
+    [self commit];
+    assert([parts_ count] <= 1);
+    NSArray *part = [parts_ lastObject];
+    if (!part) {
+        return 0;
+    }
+    NSString *s = [part objectAtIndex:0];
+    return [s length];
+}
+
+- (NSSize *)advances {
+    if (advancesStorage_) {
+        free(advancesStorage_);
+    }
+    size_t length = [self length];
+    advancesStorage_ = malloc(sizeof(NSSize) * length);
+    for (int i = 0; i < length; i++) {
+        advancesStorage_[i] = NSMakeSize(advances_[i], 0);
+    }
+    return advancesStorage_;
+}
+    
 @end

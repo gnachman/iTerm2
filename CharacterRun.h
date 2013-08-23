@@ -10,9 +10,6 @@
 #import "PTYFontInfo.h"
 #import <ApplicationServices/ApplicationServices.h>
 
-#define kCharacterRunTempSize 100
-
-
 // When drawing lines, we use this object represents a run of cells of
 // the same font and attributes, differing only in the characters displayed.
 @interface CharacterRun : NSObject <NSCopying> {
@@ -21,10 +18,9 @@
     BOOL fakeBold_;
     CGFloat x_;
     PTYFontInfo *fontInfo_;
-	// Aggregates codes from appendCode:withAdvance: because appending to an attributed string is slow.
-    unichar temp_[kCharacterRunTempSize];
-    int tempCount_;
-    NSMutableAttributedString *string_;
+	// Aggregates codes from appendCode:withAdvance: to postpone construction of NSString.
+    NSMutableData *temp_;
+    NSMutableArray *parts_;
 
 	// Array of advances. Gets realloced. If there are multiple characters in a cell, the first will
     // have a positive advance and the others will have a 0 advance. Core Text's positions are used
@@ -34,6 +30,12 @@
     int advancesCapacity_;  // available space
 
     BOOL advancedFontRendering_;
+	// All chars in run are ASCII?
+    BOOL ascii_;
+	// Temp storage for result of -glyphs
+    CGGlyph *glyphStorage_;
+	// Temp storage for result of -advances
+    NSSize *advancesStorage_;
 }
 
 @property (nonatomic, assign) BOOL antiAlias;           // Use anti-aliasing?
@@ -66,5 +68,19 @@
     startingAtIndex:(int)firstCharacterIndex
          glyphCount:(int)glyphCount
         runWidthPtr:(CGFloat *)runWidthPtr;
+
+#pragma mark - ASCII Only
+
+// Are all codes in run ascii?
+- (BOOL)isAllAscii;
+
+// Returns array of glyphs. Only ok to call if -isAllAscii returns YES.
+- (CGGlyph *)glyphs;
+
+// Number of glyphs. Only ok to call if -isAllAscii returns YES.
+- (size_t)length;
+
+// Array of advances. Only ok to call if -isAllAscii returns YES.
+- (NSSize *)advances;
 
 @end

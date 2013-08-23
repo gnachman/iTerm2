@@ -6365,9 +6365,56 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     }
 }
 
+- (void)drawAsciiRun:(CharacterRun *)currentRun
+                 ctx:(CGContextRef)ctx
+        initialPoint:(NSPoint)initialPoint
+{
+    CGGlyph *glyphs = [currentRun glyphs];
+    if (!glyphs) {
+        return;
+    }
+    
+    size_t length = [currentRun length];
+    CGContextSelectFont(ctx,
+                        [[currentRun.fontInfo.font fontName] UTF8String],
+                        [currentRun.fontInfo.font pointSize],
+                        kCGEncodingMacRoman);
+    CGContextSetFillColorSpace(ctx, [[currentRun.color colorSpace] CGColorSpace]);
+    int componentCount = [currentRun.color numberOfComponents];
+    
+    CGFloat components[componentCount];
+    [currentRun.color getComponents:components];
+    CGContextSetFillColor(ctx, components);
+    
+    double y = initialPoint.y + lineHeight + currentRun.fontInfo.baselineOffset;
+    int x = currentRun.x;
+    // Flip vertically and translate to (x, y).
+    CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
+                                                      0.0, -1.0,
+                                                      x,    y));
+    
+    CGContextShowGlyphsWithAdvances(ctx, glyphs, [currentRun advances], length);
+    
+    if (currentRun.fakeBold) {
+        // If anti-aliased, drawing twice at the same position makes the strokes thicker.
+        // If not anti-alised, draw one pixel to the right.
+        CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
+                                                          0.0, -1.0,
+                                                          x + (currentRun.antiAlias ? 0 : 1),
+                                                          y));
+        
+        CGContextShowGlyphsWithAdvances(ctx, glyphs, [currentRun advances], length);
+    }
+}
+
 - (void)drawRun:(CharacterRun *)currentRun
             ctx:(CGContextRef)ctx
    initialPoint:(NSPoint)initialPoint {
+    if ([currentRun isAllAscii]) {
+        // This is a faster code path for ascii-only text
+        [self drawAsciiRun:currentRun ctx:ctx initialPoint:initialPoint];
+        return;
+    }
     NSGraphicsContext *graphicsContext = [NSGraphicsContext graphicsContextWithGraphicsPort:ctx flipped:YES];
     CTLineRef line = [currentRun newLine];
     NSArray *runs = (NSArray *)CTLineGetGlyphRuns(line);
