@@ -263,7 +263,7 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)setCharDirtyAtX:(int)x Y:(int)y;
 
 // set a rectangular region dirty
-- (void)setDrctDirtyFromX:(int)fromX Y:(int)fromY toX:(int)toX Y:(int)toY;
+- (void)setRectDirtyFromX:(int)fromX Y:(int)fromY toX:(int)toX Y:(int)toY;
 
 // Retrieve the dirty flags at an x,y coordinate
 - (int)dirtyAtX:(int)x Y:(int)y;
