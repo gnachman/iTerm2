@@ -3128,8 +3128,6 @@ void DumpBuf(screen_char_t* p, int n) {
                 startOffset = -1;
             }
             if (aLine[cursorX + n].code == DWC_RIGHT) {
-                aLine[cursorX + n - 1].code = 0;
-                aLine[cursorX + n - 1].complexChar = NO;
                 aLine[cursorX + n].code = 0;
                 aLine[cursorX + n].complexChar = NO;
             }
