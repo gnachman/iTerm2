@@ -2849,6 +2849,19 @@ void DumpBuf(screen_char_t* p, int n) {
         }
 
         if (vsplitMode && cursorX <= SCROLL_RIGHT + 1) {
+            // If the cursor is at the left of right margin,
+            // the text run stops (or wraps) at right margin.
+            // And if a text wraps at right margin,
+            // the next line starts from left margin.
+            //
+            // TODO:
+            //    Above behavior is compatible with xterm, but incompatible with VT525.
+            //    VT525 have curious glitch:
+            //        If a text run which starts from the left of left margin
+            //        wraps or returns by CR, the next line starts from column 1, but not left margin.
+            //        (see Mr. IWAMOTO's gist https://gist.github.com/ttdoda/5902671)
+            //    Now we do not implement this behavior because it is hard to emulate that.
+            //
             leftMargin = SCROLL_LEFT;
             rightMargin = SCROLL_RIGHT + 1;
         } else {
