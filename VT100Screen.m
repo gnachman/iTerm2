@@ -3857,6 +3857,8 @@ void DumpBuf(screen_char_t* p, int n) {
 {
     int i;
     screen_char_t *sourceLine, *targetLine;
+    int startOffset = 0;
+    int endOffset = 0;
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[VT100Screen scrollUp]", __FILE__, __LINE__);
@@ -3892,7 +3894,7 @@ void DumpBuf(screen_char_t* p, int n) {
                     targetLine[SCROLL_LEFT - 1].complexChar = NO;
                     [self setCharDirtyAtX:SCROLL_LEFT - 1 Y:i];
                 }
-                if (SCROLL_RIGHT < WIDTH && targetLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
+                if (SCROLL_RIGHT + 1 < WIDTH && targetLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
                     targetLine[SCROLL_RIGHT + 1].code = 0;
                     targetLine[SCROLL_RIGHT + 1].complexChar = NO;
                     [self setCharDirtyAtX:SCROLL_RIGHT + 1 Y:i];
@@ -3913,14 +3915,22 @@ void DumpBuf(screen_char_t* p, int n) {
             }
             // new line at SCROLL_BOTTOM with default settings
             targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
+
+            if (SCROLL_LEFT > 0 && targetLine[SCROLL_LEFT].code == DWC_RIGHT) {
+                startOffset = -1;
+            }
+            if (SCROLL_RIGHT + 1 < WIDTH && targetLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
+                endOffset = 1;
+            }
+
             memcpy(targetLine + SCROLL_LEFT,
-                   [self _getDefaultLineWithWidth:SCROLL_RIGHT + 1 - SCROLL_LEFT],
-                   (SCROLL_RIGHT + 1 - SCROLL_LEFT) * sizeof(screen_char_t));
+                   [self _getDefaultLineWithWidth:(SCROLL_RIGHT + 1 + endOffset) - (SCROLL_LEFT + startOffset)],
+                   ((SCROLL_RIGHT + 1 + endOffset) - (SCROLL_LEFT + startOffset)) * sizeof(screen_char_t));
 
             // set the rect scrolling region dirty
-            [self setRectDirtyFromX:SCROLL_LEFT
+            [self setRectDirtyFromX:SCROLL_LEFT + startOffset
                                   Y:SCROLL_TOP
-                                toX:SCROLL_RIGHT + 1
+                                toX:SCROLL_RIGHT + 1 + endOffset
                                   Y:SCROLL_BOTTOM];
         } else {
             // Move all lines between SCROLL_TOP and SCROLL_BOTTOM one line up
@@ -3962,6 +3972,8 @@ void DumpBuf(screen_char_t* p, int n) {
 {
     int i;
     screen_char_t *sourceLine, *targetLine;
+    int startOffset = 0;
+    int endOffset = 0;
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[VT100Screen scrollDown]", __FILE__, __LINE__);
@@ -3984,7 +3996,7 @@ void DumpBuf(screen_char_t* p, int n) {
                     targetLine[SCROLL_LEFT - 1].complexChar = NO;
                     [self setCharDirtyAtX:SCROLL_LEFT - 1 Y:i];
                 }
-                if (SCROLL_RIGHT < WIDTH && targetLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
+                if (SCROLL_RIGHT + 1 < WIDTH && targetLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
                     targetLine[SCROLL_RIGHT + 1].code = 0;
                     targetLine[SCROLL_RIGHT + 1].complexChar = NO;
                     [self setCharDirtyAtX:SCROLL_RIGHT + 1 Y:i];
@@ -4006,14 +4018,22 @@ void DumpBuf(screen_char_t* p, int n) {
 
             // new line at SCROLL_TOP with default settings
             targetLine = [self getLineAtScreenIndex:SCROLL_TOP];
+
+            if (SCROLL_LEFT > 0 && targetLine[SCROLL_LEFT].code == DWC_RIGHT) {
+                startOffset = -1;
+            }
+            if (SCROLL_RIGHT + 1 < WIDTH && targetLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
+                endOffset = 1;
+            }
+
             memcpy(targetLine + SCROLL_LEFT,
-                   [self _getDefaultLineWithWidth:SCROLL_RIGHT + 1 - SCROLL_LEFT],
-                   (SCROLL_RIGHT + 1 - SCROLL_LEFT) * sizeof(screen_char_t));
+                   [self _getDefaultLineWithWidth:(SCROLL_RIGHT + 1 + endOffset) - (SCROLL_LEFT + startOffset)],
+                   ((SCROLL_RIGHT + 1 + startOffset) - (SCROLL_LEFT + endOffset)) * sizeof(screen_char_t));
 
             // set the rect scrolling region dirty
-            [self setRectDirtyFromX:SCROLL_LEFT
+            [self setRectDirtyFromX:SCROLL_LEFT + startOffset
                                   Y:SCROLL_TOP
-                                toX:SCROLL_RIGHT + 1
+                                toX:SCROLL_RIGHT + 1 + endOffset
                                   Y:SCROLL_BOTTOM];
         } else {
             // move all lines between SCROLL_TOP and SCROLL_BOTTOM one line down
