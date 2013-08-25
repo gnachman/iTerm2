@@ -3156,10 +3156,8 @@ void DumpBuf(screen_char_t* p, int n) {
         [self moveDirtyRangeFromX:0 Y:1 toX:0 Y:0 size:WIDTH*(HEIGHT - 1)];
         [self setRangeDirty:NSMakeRange(WIDTH * (HEIGHT - 1), WIDTH)];
 
-        // Add the top line to the scrollback if left/right margins are not set
-        if (!vsplitMode || (SCROLL_LEFT == 0 && SCROLL_RIGHT == WIDTH - 1)) {
-            [self addLineToScrollback];
-        }
+        // Add the top line to the scrollback
+        [self addLineToScrollback];
 
         // Increment screen_top pointer
         screen_top = incrementLinePointer(buffer_lines, screen_top, HEIGHT, WIDTH, &wrap);
