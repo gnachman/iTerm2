@@ -2873,7 +2873,7 @@ void DumpBuf(screen_char_t* p, int n) {
                 if (leftMargin == 0 && rightMargin == WIDTH) {
                     // Set the continuation marker
                     screen_char_t* prevLine = [self getLineAtScreenIndex:cursorY];
-                    BOOL splitDwc = (cursorX == rightMargin - 1);
+                    BOOL splitDwc = (cursorX == WIDTH - 1);
                     prevLine[WIDTH].code = (splitDwc ? EOL_DWC : EOL_SOFT);
                     if (splitDwc) {
                         prevLine[WIDTH].code = EOL_DWC;
