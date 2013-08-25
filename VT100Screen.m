@@ -3582,8 +3582,9 @@ void DumpBuf(screen_char_t* p, int n) {
     NSLog(@"%s(%d):-[VT100Screen cursorLeft:%d]",
       __FILE__, __LINE__, n);
 #endif
-    if (x < leftMargin)
+    if (x < leftMargin) {
         x = leftMargin;
+    }
     if (x >= leftMargin && x < rightMargin) {
         [self setCursorX:x Y:cursorY];
     }
@@ -3611,8 +3612,9 @@ void DumpBuf(screen_char_t* p, int n) {
     NSLog(@"%s(%d):-[VT100Screen cursorRight:%d]",
           __FILE__, __LINE__, n);
 #endif
-    if (x >= rightMargin)
+    if (x >= rightMargin) {
         x = rightMargin - 1;
+    }
     if (x >= leftMargin && x < rightMargin) {
         [self setCursorX:x Y:cursorY];
     }
