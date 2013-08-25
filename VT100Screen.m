@@ -3887,12 +3887,12 @@ void DumpBuf(screen_char_t* p, int n) {
                 targetLine = [self getLineAtScreenIndex:i];
 
                 // clear broken double-width characters
-                if (targetLine[SCROLL_LEFT].code == DWC_RIGHT) {
+                if (SCROLL_LEFT > 0 && targetLine[SCROLL_LEFT].code == DWC_RIGHT) {
                     targetLine[SCROLL_LEFT - 1].code = 0;
                     targetLine[SCROLL_LEFT - 1].complexChar = NO;
                     [self setCharDirtyAtX:SCROLL_LEFT - 1 Y:i];
                 }
-                if (targetLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
+                if (SCROLL_RIGHT < WIDTH && targetLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
                     targetLine[SCROLL_RIGHT + 1].code = 0;
                     targetLine[SCROLL_RIGHT + 1].complexChar = NO;
                     [self setCharDirtyAtX:SCROLL_RIGHT + 1 Y:i];
@@ -3979,12 +3979,12 @@ void DumpBuf(screen_char_t* p, int n) {
                 targetLine = [self getLineAtScreenIndex:i + 1];
 
                 // clear broken double-width characters
-                if (targetLine[SCROLL_LEFT].code == DWC_RIGHT) {
+                if (SCROLL_LEFT > 0 && targetLine[SCROLL_LEFT].code == DWC_RIGHT) {
                     targetLine[SCROLL_LEFT - 1].code = 0;
                     targetLine[SCROLL_LEFT - 1].complexChar = NO;
                     [self setCharDirtyAtX:SCROLL_LEFT - 1 Y:i];
                 }
-                if (targetLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
+                if (SCROLL_RIGHT < WIDTH && targetLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
                     targetLine[SCROLL_RIGHT + 1].code = 0;
                     targetLine[SCROLL_RIGHT + 1].complexChar = NO;
                     [self setCharDirtyAtX:SCROLL_RIGHT + 1 Y:i];
