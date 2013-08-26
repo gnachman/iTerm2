@@ -4075,6 +4075,8 @@ void DumpBuf(screen_char_t* p, int n) {
     screen_char_t *aLine;
     int i;
     int leftMargin, rightMargin;
+    int startOffset = 0;
+    int endOffset = 0;
 
     if (vsplitMode) {
         leftMargin = SCROLL_LEFT;
@@ -4091,10 +4093,27 @@ void DumpBuf(screen_char_t* p, int n) {
     if (n + cursorX > rightMargin) {
         n = rightMargin - cursorX;
     }
+    if (n < 1) {
+        return;
+    }
 
     // get the appropriate line
     aLine = [self getLineAtScreenIndex:cursorY];
 
+    if (cursorX > 0 && aLine[cursorX].code == DWC_RIGHT) {
+        aLine[cursorX - 1].code = 0;
+        aLine[cursorX - 1].complexChar = NO;
+        startOffset = -1;
+    }
+    if (rightMargin < WIDTH && aLine[rightMargin].code == DWC_RIGHT) {
+        aLine[rightMargin].code = 0;
+        aLine[rightMargin].complexChar = NO;
+        endOffset = 1;
+    }
+    if (rightMargin > n && aLine[rightMargin - n].code == DWC_RIGHT) {
+        aLine[rightMargin - n - 1].code = 0;
+        aLine[rightMargin - n - 1].complexChar = NO;
+    }
     memmove(aLine + cursorX + n,
             aLine + cursorX,
             (rightMargin - cursorX - n) * sizeof(screen_char_t));
@@ -4106,10 +4125,11 @@ void DumpBuf(screen_char_t* p, int n) {
         CopyBackgroundColor(&aLine[cursorX + i], [TERMINAL backgroundColorCode]);
     }
 
+    // TODO: merge with #143
     // everything from cursorX to end of line is dirty
-    [self setDirtyFromX:MIN(rightMargin - 1, cursorX)
+    [self setDirtyFromX:MIN(rightMargin - 1, cursorX + startOffset)
                       Y:cursorY
-                    toX:rightMargin
+                    toX:rightMargin + endOffset
                       Y:cursorY];
     DebugLog(@"insertBlank");
 }
