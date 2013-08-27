@@ -3187,6 +3187,7 @@ void DumpBuf(screen_char_t* p, int n) {
     screen_char_t *aLine;
     int i;
     int leftMargin, rightMargin;
+    int endOffset = 0;
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[VT100Screen deleteCharacter]: %d", __FILE__, __LINE__, n);
@@ -3223,9 +3224,15 @@ void DumpBuf(screen_char_t* p, int n) {
             CopyForegroundColor(&aLine[rightMargin - n + i], [TERMINAL foregroundColorCodeReal]);
             CopyBackgroundColor(&aLine[rightMargin - n + i], [TERMINAL backgroundColorCodeReal]);
         }
+        if (rightMargin < WIDTH && aLine[rightMargin].code == DWC_RIGHT) {
+            aLine[rightMargin].code = 0;
+            aLine[rightMargin].complexChar = NO;
+            endOffset = 1;
+        }
+
         DebugLog(@"deleteCharacters");
 
-        [self setRangeDirty:NSMakeRange(idx + cursorX, rightMargin - cursorX)];
+        [self setRangeDirty:NSMakeRange(idx + cursorX, rightMargin - cursorX + endOffset)];
     }
 }
 
