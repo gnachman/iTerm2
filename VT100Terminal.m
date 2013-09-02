@@ -2658,33 +2658,21 @@ static VT100TCC decode_string(unsigned char *datap,
     }
 
     if (gDebugLogging) {
-        char* hexdigits = "0123456789abcdef";
-        int i;
-        char loginfo[1000];
-        int o = 0;
-        for (i = 0; i < result.length && i < 20; ++i) {
+        NSMutableString *loginfo = [NSMutableString string];
+        NSMutableString *ascii = [NSMutableString string];
+        int i = 0;
+        int start = 0;
+        while (i < result.length) {
             unsigned char c = datap[i];
-            if (c < 32) {
-                loginfo[o++] = '^';
-                loginfo[o++] = datap[i] + '@';
-            } else if (c == 32) {
-                loginfo[o++] = 'S';
-                loginfo[o++] = 'P';
-            } else if (c < 128) {
-                loginfo[o++] = c;
-            } else {
-                loginfo[o++] = '0';
-                loginfo[o++] = 'x';
-                loginfo[o++] = hexdigits[(c/16)];
-                loginfo[o++] = hexdigits[c & 0x0f];
+            [loginfo appendFormat:@"%02x ", (int)c];
+            [ascii appendFormat:@"%c", (c>=32 && c<128) ? c : '.'];
+            if (i == result.length - 1 || loginfo.length > 60) {
+                DebugLog([NSString stringWithFormat:@"Bytes %d-%d of %d: %@ (%@)", start, i, (int)result.length, loginfo, ascii]);
+                [loginfo setString:@""];
+                [ascii setString:@""];
+                start = i;
             }
-            loginfo[o++] = ' ';
-        }
-        loginfo[o] = 0;
-        if (i < result.length) {
-            DebugLog([NSString stringWithFormat:@"Read %d bytes (%d shown): %s", result.length, i, loginfo]);
-        } else {
-            DebugLog([NSString stringWithFormat:@"Read %d bytes: %s", result.length, loginfo]);
+            i++;
         }
     }
 

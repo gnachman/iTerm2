@@ -346,6 +346,14 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<PTYTextView: %p frame=%@ visibleRect=%@ SCREEN=%@>",
+            self,
+            [NSValue valueWithRect:self.frame],
+            [NSValue valueWithRect:[self visibleRect]],
+            dataSource];
+}
+
 - (void)sendFakeThreeFingerClickDown:(BOOL)isDown basedOnEvent:(NSEvent *)event {
     CGEventRef cgEvent = [event CGEvent];
     CGEventRef fakeCgEvent = CGEventCreateMouseEvent(NULL,
@@ -1850,6 +1858,7 @@ NSMutableArray* screens=0;
 
 - (void)drawRect:(NSRect)rect
 {
+    DLog(@"drawRect:%@ in view %@", [NSValue valueWithRect:rect], self);
     // If there are two or more rects that need display, the OS will pass in |rect| as the smallest
     // bounding rect that contains them all. Luckily, we can get the list of the "real" dirty rects
     // and they're guaranteed to be disjoint. So draw each of them individually.
@@ -1865,6 +1874,7 @@ NSMutableArray* screens=0;
     }
     [self getRectsBeingDrawn:&rectArray count:&rectCount];
     for (int i = 0; i < rectCount; i++) {
+        DLog(@"drawRect - draw sub rectangle %@", [NSValue valueWithRect:rectArray[i]]);
         [self drawRect:rectArray[i] to:nil];
     }
     if (drawRectDuration_) {
@@ -7259,6 +7269,8 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
 
 - (void)_drawCursorTo:(NSPoint*)toOrigin
 {
+    DLog(@"_drawCursorTo:%@", toOrigin ? [NSValue valueWithPoint:*toOrigin] : @"nil");
+
     int WIDTH, HEIGHT;
     screen_char_t* theLine;
     int yStart, x1;
@@ -7305,6 +7317,8 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
 
     // Draw the regular cursor only if there's not an IME open as it draws its
     // own cursor.
+    DLog(@"_drawCursorTo: hasMarkedText=%d, CURSOR=%d, showCursor=%d, x1=%d, yStart=%d, WIDTH=%d, HEIGHT=%d",
+         (int)[self hasMarkedText], (int)CURSOR, (int)showCursor, (int)x1, (int)yStart, (int)WIDTH, (int)HEIGHT);
     if (![self hasMarkedText] && CURSOR) {
         if (showCursor && x1 <= WIDTH && x1 >= 0 && yStart >= 0 && yStart < HEIGHT) {
             // get the cursor line
@@ -7395,6 +7409,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
             switch (cursorType_) {
                 case CURSOR_BOX:
                     // draw the box
+                    DLog(@"draw cursor box at %f,%f size %fx%f", (float)curX, (float)curY, (float)ceil(cursorWidth * (double_width ? 2 : 1)), cursorHeight);
                     if ([[self window] isKeyWindow] &&
                         [[[dataSource session] tab] activeSession] == [dataSource session]) {
                         frameOnly = NO;
@@ -7508,10 +7523,12 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                     break;
 
                 case CURSOR_VERTICAL:
+                    DLog(@"draw cursor vline at %f,%f size %fx%f", (float)curX, (float)curY, (float)1, cursorHeight);
                     NSRectFill(NSMakeRect(curX, curY, 1, cursorHeight));
                     break;
 
                 case CURSOR_UNDERLINE:
+                    DLog(@"draw cursor underline at %f,%f size %fx%f", (float)curX, (float)curY, (float)ceil(cursorWidth * (double_width ? 2 : 1)), 2);
                     NSRectFill(NSMakeRect(curX,
                                           curY + lineHeight - 2,
                                           ceil(cursorWidth * (double_width ? 2 : 1)),
