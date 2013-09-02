@@ -28,9 +28,11 @@
 
 + (Coprocess *)launchedCoprocessWithCommand:(NSString *)command;
 
+// This has the side-effect of making the file descriptors non-blocking so
+// it should only be called after exec.
 + (Coprocess *)coprocessWithPid:(pid_t)pid
-                        outputFd:(int)inputFd
-                       inputFd:(int)inputFd;
+                        outputFd:(int)outputFd
+						 inputFd:(int)inputFd;
 + (NSArray *)mostRecentlyUsedCommands;
 
 // Write from outputBuffer
