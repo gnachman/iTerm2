@@ -1737,7 +1737,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
             // Check if we are in keypad mode
             if (modflag & NSNumericPadKeyMask) {
                 if (debugKeyDown) {
-                    NSLog(@"PTYSession keyDown numeric keyoad");
+                    NSLog(@"PTYSession keyDown numeric keyboard");
                 }
                 DebugLog(@"Numeric keypad mask");
                 data = [TERMINAL keypadData:unicode keystr:keystr];

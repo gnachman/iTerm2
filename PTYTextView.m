@@ -2866,6 +2866,7 @@ NSMutableArray* screens=0;
 
 - (void)scrollWheel:(NSEvent *)event
 {
+    DLog(@"scrollWheel:%@", event);
     NSPoint locationInWindow, locationInTextView;
     locationInWindow = [event locationInWindow];
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
