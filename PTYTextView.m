@@ -6402,9 +6402,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                   antiAlias:(BOOL)antiAlias {
     NSDictionary* attrs;
     attrs = [NSDictionary dictionaryWithObjectsAndKeys:
-             fontInfo.font, NSFontAttributeName,
-             color, NSForegroundColorAttributeName,
-             nil];
+                fontInfo.font, NSFontAttributeName,
+                color, NSForegroundColorAttributeName,
+                nil];
     NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
     [ctx saveGraphicsState];
     [ctx setCompositingOperation:NSCompositeSourceOver];

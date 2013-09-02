@@ -9,13 +9,7 @@
 #import "CharacterRun.h"
 #import "ScreenChar.h"
 
-@implementation CRunStorage : NSObject {
-    unichar *codes_;
-    CGGlyph *glyphs_;
-    NSSize *advances_;
-    int capacity_;
-    int used_;
-}
+@implementation CRunStorage : NSObject
 
 + (CRunStorage *)cRunStorageWithCapacity:(int)capacity {
     return [[[CRunStorage alloc] initWithCapacity:capacity] autorelease];
@@ -40,19 +34,19 @@
     free(advances_);
     [super dealloc];
 }
-    
+
 - (unichar *)codesFromIndex:(int)theIndex {
-    assert(theIndex < used_);
+    assert(theIndex < used_ && theIndex >= 0);
     return codes_ + theIndex;
 }
 
 - (CGGlyph *)glyphsFromIndex:(int)theIndex {
-    assert(theIndex < used_);
+    assert(theIndex < used_ && theIndex >= 0);
     return glyphs_ + theIndex;
 }
 
 - (NSSize *)advancesFromIndex:(int)theIndex {
-    assert(theIndex < used_);
+    assert(theIndex < used_ && theIndex >= 0);
     return advances_ + theIndex;
 }
 
@@ -72,10 +66,16 @@
 
 static void CRunDumpWithIndex(CRun *run, int offset) {
     if (run->string) {
-        NSLog(@"run[%d]=%@    advance=%f [complex]", offset++, run->string, (float)run->advances[0].width);
+        NSLog(@"run[%d]=%@    advance=%f [complex]",
+              offset++,
+              run->string,
+              (float)run->advances[0].width);
     } else {
         for (int i = 0; i < run->length; i++) {
-            NSLog(@"run[%d]=%@    advance=%f", offset++, [NSString stringWithCharacters:run->codes + i length:1], (float)run->advances[i].width);
+            NSLog(@"run[%d]=%@    advance=%f",
+                  offset++,
+                  [NSString stringWithCharacters:run->codes + i length:1],
+                  (float)run->advances[i].width);
         }
     }
     if (run->next) {

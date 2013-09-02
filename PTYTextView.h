@@ -335,7 +335,8 @@ enum {
     // calls to -updateDirtyRects without making any changes, we only redraw the old and new cursor
     // positions.
     int prevCursorX, prevCursorY;
-    
+
+	// Current font. Only valid for the duration of a single drawing context.
     NSFont *selectedFont_;
 }
 

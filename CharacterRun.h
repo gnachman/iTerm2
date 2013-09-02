@@ -11,23 +11,34 @@
 #import <ApplicationServices/ApplicationServices.h>
 #import "ScreenChar.h"
 
-// Backinng storage for character runs.
+// Backing storage for CRuns.
 @interface CRunStorage : NSObject {
+	// There are |capacity_| elements in each of these, of which |used_|
+	// elements are in use. They are malloc()ed in -init, possibly realloc()ed
+	// in -allocate:, and free()d in -dealloc.
     unichar *codes_;
     CGGlyph *glyphs_;
     NSSize *advances_;
-    int capacity_;
-    int used_;
+
+    int capacity_;  // Number of elements allocated
+    int used_;  // Number of elements in use.
 }
 
+// Create a new CRunStorage with space preallocated for |capacity| characters.
 + (CRunStorage *)cRunStorageWithCapacity:(int)capacity;
+
+// Returns codes/glyphs/advances starting at a given |index|.
 - (unichar *)codesFromIndex:(int)index;
 - (CGGlyph *)glyphsFromIndex:(int)index;
 - (NSSize *)advancesFromIndex:(int)index;
+
+// Sets aside |size| characters for use in codes, glyphs, and advances, and
+// returns the index of the beginning of the allocation.
 - (int)allocate:(int)size;
 
 @end
 
+// Describes the appearance of a character.
 typedef struct {
     BOOL antiAlias;           // Use anti-aliasing?
     NSColor *color;           // Foreground color
@@ -37,18 +48,24 @@ typedef struct {
 
 typedef struct CRun CRun;
 
+// A node in a linked list of |CRun|s. All the characters in a single CRun
+// have the same CAttrs. A CRun may contain either an array of |codes| with
+// |length| elements, or else a single character in |string| which may include
+// combining marks.
 struct CRun {
-    CAttrs attrs;
+    CAttrs attrs;             // Attributes for this run.
     CGFloat x;                // x pixel coordinate for the run's start.
-    int length;
-    unichar *codes;
-    NSString *string;
-    CGGlyph *glyphs;
-    NSSize *advances;
-    BOOL terminated;
+    int length;               // Number of codes/glyphs/advances.
+    unichar *codes;           // Mutually exclusive with string.
+    NSString *string;         // Mutually exclusive with codes.
+    CGGlyph *glyphs;          // Populated by CRunGetGlyphs; only used if |codes| is non-nil.
+    NSSize *advances;         // Horizontal/vertical advance for each code. Only used if |codes| is non-nil.
+    BOOL terminated;          // No more appends allowed (will go into |next|)
 
-    CRun *next;
+    CRun *next;               // Next run in linked list.
 };
 
 // See CharacterRunInline.h for functions that operate on CRun.
+
+// NSLog human-readable representation of |run| and its linked successors.
 void CRunDump(CRun *run);
