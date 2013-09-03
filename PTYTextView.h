@@ -651,8 +651,8 @@ typedef enum {
 - (BOOL)_drawLine:(int)line
               AtY:(double)curY
           toPoint:(NSPoint*)toPoint
-          context:(CGContextRef)ctx
-        charRange:(NSRange)charRange;
+        charRange:(NSRange)charRange
+          context:(CGContextRef)ctx;
 
 - (void)_drawCursor;
 - (void)_drawCursorTo:(NSPoint*)toOrigin;
