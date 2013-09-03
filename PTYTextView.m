@@ -6626,7 +6626,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (void)_drawCharactersInLine:(const screen_char_t *)theLine
+- (void)_drawCharactersInLine:(screen_char_t *)theLine
                       inRange:(NSRange)indexRange
               startingAtPoint:(NSPoint)initialPoint
                    bgselected:(BOOL)bgselected
@@ -7494,12 +7494,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 }
 
                 [bgColor set];
+                DLog(@"Set cursor color=%@", bgColor);
             } else {
                 bgColor = [self defaultCursorColor];
                 [[bgColor colorWithAlphaComponent:alpha] set];
+                DLog(@"Set cursor color=%@", [bgColor colorWithAlphaComponent:alpha]);
             }
             if ([self isFindingCursor]) {
                 [[self _randomColor] set];
+                DLog(@"Set random cursor color");
             }
 
             BOOL frameOnly;
@@ -7627,7 +7630,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     break;
 
                 case CURSOR_UNDERLINE:
-                    DLog(@"draw cursor underline at %f,%f size %fx%f", (float)curX, (float)curY, (float)ceil(cursorWidth * (double_width ? 2 : 1)), 2);
+                    DLog(@"draw cursor underline at %f,%f size %fx%f", (float)curX, (float)curY, (float)ceil(cursorWidth * (double_width ? 2 : 1)), 2.0);
                     NSRectFill(NSMakeRect(curX,
                                           curY + lineHeight - 2,
                                           ceil(cursorWidth * (double_width ? 2 : 1)),

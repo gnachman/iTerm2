@@ -1392,8 +1392,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         for (NSString *filename in filenames) {
             [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
         }
-<<<<<<< HEAD
-=======
         DebugLog([NSString stringWithFormat:@"keyBindingAction=%d", keyBindingAction]);
         // A special action was bound to this key combination.
         NSString* temp;
