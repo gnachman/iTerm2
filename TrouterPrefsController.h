@@ -23,6 +23,7 @@ extern NSString *kTrouterUrlAction;
 extern NSString *kTrouterEditorAction;
 extern NSString *kTrouterCommandAction;
 extern NSString *kTrouterRawCommandAction;
+extern NSString *kTrouterCoprocessAction;
 
 @interface TrouterPrefsController : NSObject {
     NSString *guid_;

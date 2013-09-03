@@ -35,18 +35,9 @@ NAME=$(echo $VERSION | sed -e "s/\\./_/g")
 SVNDIR=~/iterm2-website
 ORIG_DIR=`pwd`
 
+set -x
 ./sign.sh
 
-# Build tmux and move its tar.gz into the Deployment build directory
-cd ~/tmux
-git checkout master
-git pull origin master
-make
-rm *.o
-cd ..
-tar cvfz tmux-for-iTerm2-$COMPACTDATE.tar.gz tmux/* tmux/.deps
-cd $ORIG_DIR
-mv ~/tmux-for-iTerm2-$COMPACTDATE.tar.gz build/Deployment
 cd build/Deployment
 
 # Create the zip file
@@ -54,6 +45,14 @@ zip -ry iTerm2-${NAME}.zip iTerm.app
 
 # Update the list of changes
 vi $SVNDIR/appcasts/testing_changes.txt
+
+# Place files in website git.
+cp iTerm2-${NAME}.zip $SVNDIR/downloads/beta/
+NEWFILES=""
+test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.summary || (echo "iTerm2 "$VERSION" beta (OS 10.6+, Intel-only)" > $SVNDIR/downloads/beta/iTerm2-${NAME}.summary)
+test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.description || (echo "This is the recommended beta build for most users. **ENTER CHANGES HERE**" > $SVNDIR/downloads/beta/iTerm2-${NAME}.description)
+vi $SVNDIR/downloads/beta/iTerm2-${NAME}.description
+NEWFILES=${NEWFILES}" downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.description"
 
 # Prepare the sparkle xml file
 SparkleSign testing.xml template.xml
@@ -68,16 +67,23 @@ NAME=$(echo $VERSION | sed -e "s/\\./_/g")-LeopardPPC
 # Create the zip file
 zip -ry iTerm2-${NAME}.zip iTerm.app
 
+# Place files in website git.
+cp iTerm2-${NAME}.zip $SVNDIR/downloads/beta/
+test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.summary || (echo "iTerm2 "$VERSION" beta (OS 10.6+, Intel-only)" > $SVNDIR/downloads/beta/iTerm2-${NAME}.summary)
+test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.description || (echo "This build has a limited set of features but supports OS 10.5 and PowerPC. If you have an Intel Mac that runs OS 10.6 or newer, you don't want this." > $SVNDIR/downloads/beta/iTerm2-${NAME}.description)
+vi $SVNDIR/downloads/beta/iTerm2-${NAME}.description
+NEWFILES="${NEWFILES}downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.description"
+
 # Prepare the sparkle xml file
 SparkleSign legacy_testing.xml legacy_template.xml
 # End legacy build
 ############################################################################################
 
-echo "Go upload iTerm2-${MODERN_NAME}.zip and iTerm2-${NAME}.zip"
-echo "Then run:"
 echo "git tag v${VERSION}"
-echo "git push --tags"
-echo "pushd ${SVNDIR} && git commit -am ${VERSION} && git push origin master"
-echo "popd"
 echo "git commit -am ${VERSION}"
+echo "git push origin master"
+echo "git push --tags"
+echo "cd "$SVNDIR
+echo "git add "$NEWFILES
+echo "git commit -am v${VERSION}"
 echo "git push origin master"

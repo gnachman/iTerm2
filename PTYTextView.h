@@ -34,6 +34,7 @@
 #import "LineBuffer.h"
 #import "PointerController.h"
 #import "PTYFontInfo.h"
+#import "CharacterRun.h"
 
 #include <sys/time.h>
 #define PRETTY_BOLD
@@ -43,13 +44,14 @@
 #define COLOR_KEY_SIZE 4
 
 @class MovingAverage;
+@class PTYScrollView;
 @class PTYSession;
 @class PTYTask;
 @class SearchResult;
 @class ThreeFingerTapGestureRecognizer;
 @class VT100Screen;
 @class VT100Terminal;
-@class PTYScrollView;
+@protocol TrouterDelegate;
 
 @protocol PTYTextViewDelegate <NSObject>
 
@@ -171,7 +173,9 @@ enum {
 
 @end
 
-@interface PTYTextView : NSView <NSTextInput, PointerControllerDelegate>
+@class CRunStorage;
+
+@interface PTYTextView : NSView <NSTextInput, PointerControllerDelegate, TrouterDelegate>
 {
     // This is a flag to let us know whether we are handling this
     // particular drag and drop operation. We are using it because
@@ -226,6 +230,7 @@ enum {
     NSColor* defaultBoldColor;
     NSColor* defaultCursorColor;
     NSColor* selectionColor;
+    NSColor* unfocusedSelectionColor;
     NSColor* selectedTextColor;
     NSColor* cursorTextColor;
 
@@ -441,6 +446,8 @@ enum {
     int prevCursorX, prevCursorY;
 
     MovingAverage *drawRectDuration_, *drawRectInterval_;
+	// Current font. Only valid for the duration of a single drawing context.
+    NSFont *selectedFont_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -720,6 +727,8 @@ enum {
 
 - (FindContext *)initialFindContext;
 
+- (NSString*)_allText;
+
 @end
 
 //
@@ -752,7 +761,8 @@ typedef enum {
 - (BOOL)_drawLine:(int)line
               AtY:(double)curY
           toPoint:(NSPoint*)toPoint
-        charRange:(NSRange)charRange;
+        charRange:(NSRange)charRange
+          context:(CGContextRef)ctx;
 
 - (void)_drawCursor;
 - (void)_drawCursorTo:(NSPoint*)toOrigin;
@@ -765,7 +775,13 @@ typedef enum {
                    AtX:(double)X
                      Y:(double)Y
            doubleWidth:(BOOL)double_width
-         overrideColor:(NSColor*)overrideColor;
+         overrideColor:(NSColor*)overrideColor
+               context:(CGContextRef)ctx;
+
+- (void)_drawRunsAt:(NSPoint)initialPoint
+                run:(CRun *)run
+            storage:(CRunStorage *)storage
+            context:(CGContextRef)ctx;
 
 - (BOOL)_isBlankLine:(int)y;
 - (void)_findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background;
@@ -814,7 +830,12 @@ typedef enum {
 // xStart, yStart: cell coordinates
 // width, height: cell width, height of screen
 // cursorHeight: cursor height in pixels
-- (BOOL)drawInputMethodEditorTextAt:(int)xStart y:(int)yStart width:(int)width height:(int)height cursorHeight:(double)cursorHeight;
+- (BOOL)drawInputMethodEditorTextAt:(int)xStart
+                                  y:(int)yStart
+                              width:(int)width
+                             height:(int)height
+                       cursorHeight:(double)cursorHeight
+                                ctx:(CGContextRef)ctx;
 
 - (BOOL)_wasAnyCharSelected;
 

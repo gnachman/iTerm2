@@ -1208,6 +1208,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultHotKeyBookmarkGuid = [[prefs objectForKey:@"HotKeyBookmark"] copy];
     defaultEnableBonjour = [prefs objectForKey:@"EnableRendezvous"]?[[prefs objectForKey:@"EnableRendezvous"] boolValue]: NO;
     defaultCmdSelection = [prefs objectForKey:@"CommandSelection"]?[[prefs objectForKey:@"CommandSelection"] boolValue]: YES;
+    defaultOptionClickMovesCursor = [prefs objectForKey:@"OptionClickMovesCursor"]?[[prefs objectForKey:@"OptionClickMovesCursor"] boolValue]: YES;
     defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
     defaultMaxVertically = [prefs objectForKey:@"MaxVertically"] ? [[prefs objectForKey:@"MaxVertically"] boolValue] : NO;
     defaultClosingHotkeySwitchesSpaces = [prefs objectForKey:@"ClosingHotkeySwitchesSpaces"] ? [[prefs objectForKey:@"ClosingHotkeySwitchesSpaces"] boolValue] : YES;
@@ -1335,6 +1336,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setValue:defaultHotKeyBookmarkGuid forKey:@"HotKeyBookmark"];
     [prefs setBool:defaultEnableBonjour forKey:@"EnableRendezvous"];
     [prefs setBool:defaultCmdSelection forKey:@"CommandSelection"];
+    [prefs setBool:defaultOptionClickMovesCursor forKey:@"OptionClickMovesCursor"];
     [prefs setFloat:defaultFsTabDelay forKey:@"FsTabDelay"];
     [prefs setBool:defaultPassOnControlLeftClick forKey:@"PassOnControlClick"];
     [prefs setBool:defaultMaxVertically forKey:@"MaxVertically"];
@@ -1429,7 +1431,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [self _populateHotKeyBookmarksMenu];
     [enableBonjour setState: defaultEnableBonjour?NSOnState:NSOffState];
     [cmdSelection setState: defaultCmdSelection?NSOnState:NSOffState];
-    [passOnControlLeftClick setState: defaultPassOnControlLeftClick?NSOnState:NSOffState];
+    [optionClickMovesCursor setState: defaultOptionClickMovesCursor?NSOnState:NSOffState];
+    [controlLeftClickActsLikeRightClick setState: defaultPassOnControlLeftClick?NSOffState:NSOnState];
     [maxVertically setState: defaultMaxVertically?NSOnState:NSOffState];
     [closingHotkeySwitchesSpaces setState:defaultClosingHotkeySwitchesSpaces?NSOnState:NSOffState];
     [useCompactLabel setState: defaultUseCompactLabel?NSOnState:NSOffState];
@@ -1770,7 +1773,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         }
 
         defaultCmdSelection = ([cmdSelection state] == NSOnState);
-        defaultPassOnControlLeftClick = ([passOnControlLeftClick state] == NSOnState);
+        defaultOptionClickMovesCursor = ([optionClickMovesCursor state] == NSOnState);
+        defaultPassOnControlLeftClick = ([controlLeftClickActsLikeRightClick state] == NSOffState);
         defaultMaxVertically = ([maxVertically state] == NSOnState);
         defaultClosingHotkeySwitchesSpaces = ([closingHotkeySwitchesSpaces state] == NSOnState);
         defaultOpenBookmark = ([openBookmark state] == NSOnState);
@@ -1988,6 +1992,11 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 - (BOOL)cmdSelection
 {
     return defaultCmdSelection;
+}
+
+- (BOOL)optionClickMovesCursor
+{
+    return defaultOptionClickMovesCursor;
 }
 
 - (BOOL)passOnControlLeftClick

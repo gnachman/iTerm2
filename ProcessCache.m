@@ -285,15 +285,15 @@ NSString *PID_INFO_NAME = @"name";
         if (!ppid) {
             continue;
         }
-        
+
         BOOL isForeground;
         NSString* name = [self getNameOfPid:thePid isForeground:&isForeground];
-        if (isForeground) {
+        if (isForeground && name != nil) {
             [temp setObject:name forKey:[NSNumber numberWithInt:thePid]];
         }
         [ancestry setObject:[NSNumber numberWithInt:ppid] forKey:n];
     }
-    
+
     // For each pid in 'temp', follow the parent pid chain in 'ancestry' and add a map of
     // ancestorPid->job name to 'cache' for all ancestors of the job with that name.
     for (NSNumber* tempPid in temp) {

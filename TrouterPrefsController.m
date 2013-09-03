@@ -21,12 +21,13 @@ NSString *kMacVimIdentifier = @"org.vim.MacVim";
 NSString *kTextmateIdentifier = @"com.macromates.textmate";
 NSString *kTextmate2Identifier = @"com.macromates.textmate.preview";
 NSString *kBBEditIdentifier = @"com.barebones.bbedit";
-    
+
 NSString *kTrouterBestEditorAction = @"best editor";
 NSString *kTrouterUrlAction = @"url";
 NSString *kTrouterEditorAction = @"editor";
 NSString *kTrouterCommandAction = @"command";
 NSString *kTrouterRawCommandAction = @"raw command";
+NSString *kTrouterCoprocessAction = @"coprocess";
 
 @implementation TrouterPrefsController
 
@@ -175,9 +176,13 @@ enum {
         case 4:
             return kTrouterCommandAction;
             break;
-            
+
         case 5:
             return kTrouterRawCommandAction;
+            break;
+
+        case 6:
+            return kTrouterCoprocessAction;
             break;
     }
     return nil;
@@ -240,6 +245,13 @@ enum {
             [caveat_ setHidden:NO];
             [text_ setHidden:NO];
             break;
+
+        case 6:
+            [[text_ cell] setPlaceholderString:@"Enter command"];
+            [caveat_ setStringValue:@"Coprocess runs when you activate Semantic History on any filename.\nUse \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
+            [caveat_ setHidden:NO];
+            [text_ setHidden:NO];
+            break;
     }
     if (sender) {
         if (![text_ isHidden]) {
@@ -286,6 +298,9 @@ enum {
     }
     if ([action isEqualToString:kTrouterRawCommandAction]) {
         [action_ selectItemWithTag:5];
+    }
+    if ([action isEqualToString:kTrouterCoprocessAction]) {
+        [action_ selectItemWithTag:6];
     }
     // Check selected item
     [[[action_ menu] itemWithTag:[action_ selectedTag]] setState:NSOnState];

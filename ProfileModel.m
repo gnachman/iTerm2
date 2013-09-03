@@ -571,6 +571,15 @@ int gMigrated;
     [self postChangeNotification];
 }
 
+- (NSArray *)names
+{
+    NSMutableArray *array = [NSMutableArray array];
+    for (Profile *profile in bookmarks_) {
+        [array addObject:[profile objectForKey:KEY_NAME]];
+    }
+    return array;
+}
+
 - (void)moveGuid:(NSString*)guid toRow:(int)destinationRow
 {
     int sourceRow = [self indexOfProfileWithGuid:guid];

@@ -85,6 +85,7 @@ typedef struct {
 - (NSArray*)bookmarks;
 - (NSArray*)guids;
 - (void)addBookmark:(Profile*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params atPos:(int)pos;
+- (NSArray *)names;
 
 // Tell all listeners that the model has changed.
 - (void)postChangeNotification;
