@@ -6021,12 +6021,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return PerceivedBrightness([c redComponent], [c greenComponent], [c blueComponent]);
 }
 
-@end
+#pragma mark - Trouter Delegate
 
-//
-// private methods
-//
-@implementation PTYTextView (Private)
+- (void)trouterLaunchCoprocessWithCommand:(NSString *)command {
+    [_delegate launchCoprocessWithCommand:command];
+}
+
+#pragma mark - Private methods
 
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
                      isComplex:(BOOL)complex
@@ -6409,7 +6410,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             BOOL fakeBold = theLine[i].bold;
             attrs.fontInfo = [self getFontForChar:theLine[i].code
                                         isComplex:theLine[i].complexChar
-                                          fgColor:theLine[i].foregroundColor
                                        renderBold:&fakeBold
                                      renderItalic:theLine[i].italic];
             attrs.fakeBold = fakeBold;
@@ -6488,7 +6488,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                       0.0, -1.0,
                                                       x,    y));
 
-    CGContextShowGlyphsWithAdvances(ctx, glyphs, currentRun->advances, length);
+    CGContextShowGlyphsWithAdvances(ctx, glyphs, (void*)currentRun->advances, length);
 
     if (currentRun->attrs.fakeBold) {
         // If anti-aliased, drawing twice at the same position makes the strokes thicker.
@@ -6498,7 +6498,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                           x + (currentRun->attrs.antiAlias ? 0 : 1),
                                                           y));
 
-        CGContextShowGlyphsWithAdvances(ctx, glyphs, currentRun->advances, length);
+        CGContextShowGlyphsWithAdvances(ctx, glyphs, (void*)currentRun->advances, length);
     }
     return firstMissingGlyph;
 }
@@ -6673,8 +6673,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     bgselected:(const BOOL)bgselected  // is selected text?
                        isMatch:(const BOOL)isMatch     // is Find On Page match?
                        stripes:(const BOOL)stripes     // bg is striped?
-                          line:(screen_char_t const *)theLine  // Whole screen line
-                       matches:(NSData const *)matches // Bitmask of Find On Page matches
+                          line:(screen_char_t *)theLine  // Whole screen line
+                       matches:(NSData *)matches // Bitmask of Find On Page matches
                        context:(CGContextRef)ctx       // Graphics context
 {
     NSColor *aColor = *defaultBgColorPtr;
@@ -6987,7 +6987,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                              isMatch:isMatch
                              stripes:stripes
                                 line:theLine
-                             matches:matches];
+                             matches:matches
+                             context:ctx];
     }
     return anyBlinking;
 }
@@ -7339,7 +7340,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)_drawCursorTo:(NSPoint*)toOrigin
 {
-    DLog(@"_drawCursorTo:%@", toOrigin ? [NSValue valueWithPoint:*toOrigin] : @"nil");
+    DLog(@"_drawCursorTo:%@", toOrigin ? (id)[NSValue valueWithPoint:*toOrigin] : (id)@"nil");
 
     int WIDTH, HEIGHT;
     screen_char_t* theLine;
@@ -8912,12 +8913,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     }
     return anyBlinkers;
-}
-
-#pragma mark - Trouter Delegate
-
-- (void)trouterLaunchCoprocessWithCommand:(NSString *)command {
-    [_delegate launchCoprocessWithCommand:command];
 }
 
 @end
