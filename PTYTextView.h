@@ -124,6 +124,7 @@ enum {
     NSColor* defaultBoldColor;
     NSColor* defaultCursorColor;
     NSColor* selectionColor;
+    NSColor* unfocusedSelectionColor;
     NSColor* selectedTextColor;
     NSColor* cursorTextColor;
 

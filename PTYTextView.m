@@ -489,6 +489,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [defaultBGColor release];
     [defaultBoldColor release];
     [selectionColor release];
+    [unfocusedSelectionColor release];
     [defaultCursorColor release];
 
     [primaryFont release];
@@ -936,11 +937,32 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return selectionColor;
 }
 
+- (NSColor *)selectionColorForCurrentFocus
+{
+    PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
+    if (self == frontTextView) {
+        return selectionColor;
+    } else {
+        return unfocusedSelectionColor;
+    }
+}
+
 - (void)setSelectionColor:(NSColor *)aColor
 {
     [selectionColor release];
     [aColor retain];
     selectionColor = aColor;
+
+    [unfocusedSelectionColor autorelease];
+    CGFloat r,g,b;
+    r = [aColor redComponent];
+    g = [aColor greenComponent];
+    b = [aColor blueComponent];
+    unfocusedSelectionColor = [[NSColor colorWithCalibratedRed:(r + 1) / 3
+                                                         green:(g + 1) / 3
+                                                          blue:(b + 1) / 3
+                                                         alpha:1] retain];
+
     [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
@@ -6707,7 +6729,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (isMatch && !bgselected) {
             aColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:1];
         } else if (bgselected) {
-            aColor = selectionColor;
+            aColor = [self selectionColorForCurrentFocus];
         } else {
             if (reversed && bgColor == ALTSEM_BG_DEFAULT && bgColorMode == ColorModeAlternate) {
                 // Reverse video is only applied to default background-
