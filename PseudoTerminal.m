@@ -2638,16 +2638,28 @@ NSString *sessionsKey = @"sessions";
         proposedFrame.size.width = [sender frame].size.width;
     } else {
         // Set the width & origin to fill the screen horizontally to a character boundary
-        proposedFrame.size.width = decorationWidth + floor((defaultFrame.size.width - decorationWidth) / charWidth) * charWidth;
+        if ([[NSApp currentEvent] modifierFlags] & NSControlKeyMask) {
+            // Don't snap width to character size multiples.
+            proposedFrame.size.width = defaultFrame.size.width;
+            proposedFrame.origin.x = defaultFrame.origin.x;
+        } else {
+            proposedFrame.size.width = decorationWidth + floor((defaultFrame.size.width - decorationWidth) / charWidth) * charWidth;
+        }
         proposedFrame.origin.x = defaultFrame.origin.x;
     }
-    // Set the height to fill the screen to a character boundary.
-    proposedFrame.size.height = floor((defaultFrame.size.height - decorationHeight) / charHeight) * charHeight + decorationHeight;
-    proposedFrame.origin.y += defaultFrame.size.height - proposedFrame.size.height;
-    PtyLog(@"For zoom, default frame is %fx%f, proposed frame is %f,%f %fx%f",
-           defaultFrame.size.width, defaultFrame.size.height,
-           proposedFrame.origin.x, proposedFrame.origin.y,
-           proposedFrame.size.width, proposedFrame.size.height);
+    if ([[NSApp currentEvent] modifierFlags] & NSControlKeyMask) {
+        // Don't snap width to character size multiples.
+        proposedFrame.size.height = defaultFrame.size.height;
+        proposedFrame.origin.y = defaultFrame.origin.y;
+    } else {
+        // Set the height to fill the screen to a character boundary.
+        proposedFrame.size.height = floor((defaultFrame.size.height - decorationHeight) / charHeight) * charHeight + decorationHeight;
+        proposedFrame.origin.y += defaultFrame.size.height - proposedFrame.size.height;
+        PtyLog(@"For zoom, default frame is %fx%f, proposed frame is %f,%f %fx%f",
+               defaultFrame.size.width, defaultFrame.size.height,
+               proposedFrame.origin.x, proposedFrame.origin.y,
+               proposedFrame.size.width, proposedFrame.size.height);
+    }
     return proposedFrame;
 }
 
