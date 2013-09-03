@@ -34,6 +34,7 @@
 #import "LineBuffer.h"
 #import "PointerController.h"
 #import "PTYFontInfo.h"
+#import "CharacterRun.h"
 
 #include <sys/time.h>
 #define PRETTY_BOLD
@@ -65,6 +66,8 @@ enum {
 @property (nonatomic, assign) NSPoint cursor;
 
 @end
+
+@class CRunStorage;
 
 @interface PTYTextView : NSView <NSTextInput, PointerControllerDelegate, TrouterDelegate>
 {
@@ -336,6 +339,8 @@ enum {
     int prevCursorX, prevCursorY;
 
     MovingAverage *drawRectDuration_, *drawRectInterval_;
+	// Current font. Only valid for the duration of a single drawing context.
+    NSFont *selectedFont_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -612,6 +617,8 @@ enum {
 
 - (FindContext *)initialFindContext;
 
+- (NSString*)_allText;
+
 @end
 
 //
@@ -644,6 +651,7 @@ typedef enum {
 - (BOOL)_drawLine:(int)line
               AtY:(double)curY
           toPoint:(NSPoint*)toPoint
+          context:(CGContextRef)ctx
         charRange:(NSRange)charRange;
 
 - (void)_drawCursor;
@@ -657,7 +665,13 @@ typedef enum {
                    AtX:(double)X
                      Y:(double)Y
            doubleWidth:(BOOL)double_width
-         overrideColor:(NSColor*)overrideColor;
+         overrideColor:(NSColor*)overrideColor
+               context:(CGContextRef)ctx;
+
+- (void)_drawRunsAt:(NSPoint)initialPoint
+                run:(CRun *)run
+            storage:(CRunStorage *)storage
+            context:(CGContextRef)ctx;
 
 - (BOOL)_isBlankLine:(int)y;
 - (void)_findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background;
@@ -706,7 +720,12 @@ typedef enum {
 // xStart, yStart: cell coordinates
 // width, height: cell width, height of screen
 // cursorHeight: cursor height in pixels
-- (BOOL)drawInputMethodEditorTextAt:(int)xStart y:(int)yStart width:(int)width height:(int)height cursorHeight:(double)cursorHeight;
+- (BOOL)drawInputMethodEditorTextAt:(int)xStart
+                                  y:(int)yStart
+                              width:(int)width
+                             height:(int)height
+                       cursorHeight:(double)cursorHeight
+                                ctx:(CGContextRef)ctx;
 
 - (BOOL)_wasAnyCharSelected;
 
