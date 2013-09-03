@@ -1872,14 +1872,26 @@ NSMutableArray* screens=0;
     [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
 }
 
+- (void)markCursorDirty
+{
+  int currentCursorX = [dataSource cursorX] - 1;
+  int currentCursorY = [dataSource cursorY] - 1;
+  DLog(@"Mark cursor position %d,%d dirty", prevCursorX, prevCursorY);
+  [dataSource setCharDirtyAtCursorX:currentCursorX Y:currentCursorY];
+}
+
 - (void)hideCursor
 {
-    CURSOR=NO;
+    DLog(@"hideCursor");
+    [self markCursorDirty];
+    CURSOR = NO;
 }
 
 - (void)showCursor
 {
-    CURSOR=YES;
+    DLog(@"showCursor");
+    [self markCursorDirty];
+    CURSOR = YES;
 }
 
 - (void)drawRect:(NSRect)rect
@@ -8571,7 +8583,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
       if (prevCursorX != currentCursorX ||
           prevCursorY != currentCursorY) {
           // Mark previous and current cursor position dirty
+          DLog(@"Mark previous cursor position %d,%d dirty", prevCursorX, prevCursorY);
           [dataSource setCharDirtyAtCursorX:prevCursorX Y:prevCursorY];
+          DLog(@"Mark current cursor position %d,%d dirty", currentCursorX, currentCursorY);
           [dataSource setCharDirtyAtCursorX:currentCursorX Y:currentCursorY];
 
           // Set prevCursor[XY] to new cursor position
@@ -8600,9 +8614,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         }
                     }
                     dirtyRect.size.width = (maxX - x + 1) * charWidth;
-                }
-                if (gDebugLogging) {
-                    DebugLog([NSString stringWithFormat:@"%d is dirty", y]);
+                    DLog(@"Line %d is dirty from %d to %d, set rect %@ dirty",
+                         y, x, maxX, [NSValue valueWithRect:dirtyRect]);
+                } else {
+                    DLog(@"Mark all of line %d dirty bc allDirty is set", y);
                 }
                 [self setNeedsDisplayInRect:dirtyRect];
 
