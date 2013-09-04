@@ -7062,6 +7062,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                              matches:nil
                              storage:storage];
     if (run) {
+        CRun *head = run;
         // If an override color is given, change the runs' colors.
         if (overrideColor) {
             while (run) {
@@ -7070,7 +7071,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         }
         [self _drawRunsAt:NSMakePoint(X, Y) run:run storage:storage context:ctx];
-        CRunFree(run);
+        CRunFree(head);
     }
 
     // draw underline
