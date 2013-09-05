@@ -2177,7 +2177,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 
     case VT100CSI_DECSET:
     case VT100CSI_DECRST:
-        if (token.u.csi.p[0] == 3 &&
+        if (token.u.csi.p[0] == 3 && // DECCOLM
             [TERMINAL allowColumnMode] == YES &&
             ![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue]) {
             // set the column
@@ -2187,7 +2187,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             token.u.csi.p[0] = 2;
             [self eraseInDisplay:token];  // erase the screen
             token.u.csi.p[0] = token.u.csi.p[1] = 0;
-            [self setTopBottom:token];  // reset scroll
+            [self setTopBottom:token];  // reset horizontal scroll
+            [self setVsplitMode: NO];   // reset vertical scroll
         }
 
         break;
