@@ -6836,7 +6836,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 run = run->next;
             }
         }
-        [self _drawRunsAt:NSMakePoint(X, Y) run:run storage:storage context:ctx];
+        [self _drawRunsAt:NSMakePoint(X, Y) run:head storage:storage context:ctx];
         CRunFree(head);
     }
 
