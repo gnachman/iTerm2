@@ -771,9 +771,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                      bold:(BOOL)isBold
 {
     NSColor* color;
-
+    BOOL ok = NO;
     switch (theMode) {
         case ColorModeAlternate:
+            ok = YES;
             switch (theIndex) {
                 case ALTSEM_SELECTED:
                     color = selectedTextColor;
@@ -799,11 +800,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             }
             break;
         case ColorMode24bit:
+            ok = YES;
             color = [self colorFromRed:theIndex
                                  green:green
                                   blue:blue];
             break;
         case ColorModeNormal:
+            ok = YES;
             // Render bold text as bright. The spec (ECMA-48) describes the intense
             // display setting (esc[1m) as "bold or bright". We make it a
             // preference.
@@ -814,6 +817,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             }
             color = colorTable[theIndex];
             break;
+    }
+    NSAssert(ok, @"Bogus color mode %d", (int)theMode);
+    if (!ok) {
+        color = [NSColor redColor];
     }
 
     return color;

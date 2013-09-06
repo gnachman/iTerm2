@@ -375,8 +375,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     }
 
     // free our default line
-    if (default_line) {
-        free(default_line);
+    if (defaultLine_) {
+        free(defaultLine_);
     }
 
     if (saved_primary_buffer) {
@@ -4554,6 +4554,7 @@ void DumpBuf(screen_char_t* p, int n) {
                             fromLine:screen_top];
     } else {
         // Get a line from the scrollback buffer.
+        screen_char_t *default_line = [self _getDefaultLineWithWidth:WIDTH];
         memcpy(buffer, default_line, sizeof(screen_char_t) * WIDTH);
         int cont = [linebuffer copyLineToBuffer:buffer width:WIDTH lineNum:theIndex];
         if (cont == EOL_SOFT &&
@@ -4876,33 +4877,33 @@ void DumpBuf(screen_char_t* p, int n) {
 - (screen_char_t*)_getDefaultLineWithWidth:(int)width
 {
     // check if we have to generate a new line
-    if (default_line &&
-        default_line_width >= width &&
+    if (defaultLine_ &&
+        default_line_width == width &&
         ForegroundAttributesEqual(default_fg_code, [TERMINAL foregroundColorCodeReal]) &&
         BackgroundColorsEqual(default_bg_code, [TERMINAL backgroundColorCodeReal])) {
-        return default_line;
+        return defaultLine_;
     }
 
     default_fg_code = [TERMINAL foregroundColorCodeReal];
     default_bg_code = [TERMINAL backgroundColorCodeReal];
     default_line_width = width;
 
-    if (default_line) {
-        free(default_line);
+    if (defaultLine_) {
+        free(defaultLine_);
     }
-    default_line = (screen_char_t*)calloc((width+1), sizeof(screen_char_t));
+    defaultLine_ = (screen_char_t*)calloc((width+1), sizeof(screen_char_t));
 
     for (int i = 0; i < width; i++) {
-        default_line[i].code = 0;
-        default_line[i].complexChar = NO;
-        CopyForegroundColor(&default_line[i], default_fg_code);
-        CopyBackgroundColor(&default_line[i], default_bg_code);
+        defaultLine_[i].code = 0;
+        defaultLine_[i].complexChar = NO;
+        CopyForegroundColor(&defaultLine_[i], default_fg_code);
+        CopyBackgroundColor(&defaultLine_[i], default_bg_code);
     }
 
     // Not wrapped by default
-    default_line[width].code = EOL_HARD;
+    defaultLine_[width].code = EOL_HARD;
 
-    return default_line;
+    return defaultLine_;
 }
 
 

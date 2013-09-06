@@ -106,7 +106,7 @@ void TranslateCharacterSet(screen_char_t *s, int len);
     int dirtySize;
 
     // a single default line
-    screen_char_t *default_line;
+    screen_char_t *defaultLine_;
     screen_char_t *result_line;
 
     // temporary buffers to store main/alt screens in SAVE_BUFFER/RESET_BUFFER mode
