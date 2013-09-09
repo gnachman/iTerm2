@@ -6459,12 +6459,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             attrs.fakeBold = fakeBold;
             if (!currentRun) {
                 firstRun = currentRun = malloc(sizeof(CRun));
-                CRunInitialize(currentRun, &attrs, curX);
+                CRunInitialize(currentRun, &attrs, storage, curX);
             }
             if (thisCharString) {
-                currentRun = CRunAppendString(currentRun, storage, &attrs, thisCharString, thisCharAdvance, curX);
+                currentRun = CRunAppendString(currentRun, &attrs, thisCharString, thisCharAdvance, curX);
             } else {
-                currentRun = CRunAppend(currentRun, storage, &attrs, thisCharUnichar, thisCharAdvance, curX);
+                currentRun = CRunAppend(currentRun, &attrs, thisCharUnichar, thisCharAdvance, curX);
             }
         } else {
             if (currentRun) {
@@ -6532,7 +6532,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                       0.0, -1.0,
                                                       x,    y));
 
-    CGContextShowGlyphsWithAdvances(ctx, glyphs, (void*)currentRun->advances, length);
+    void *advances = CRunGetAdvances(currentRun);
+    CGContextShowGlyphsWithAdvances(ctx, glyphs, advances, length);
 
     if (currentRun->attrs.fakeBold) {
         // If anti-aliased, drawing twice at the same position makes the strokes thicker.
@@ -6542,7 +6543,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                           x + (currentRun->attrs.antiAlias ? 0 : 1),
                                                           y));
 
-        CGContextShowGlyphsWithAdvances(ctx, glyphs, (void*)currentRun->advances, length);
+        CGContextShowGlyphsWithAdvances(ctx, glyphs, advances, length);
     }
     return firstMissingGlyph;
 }
@@ -6611,12 +6612,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (firstComplexGlyph < 0) {
                 break;
             }
-            CRun *complexRun = CRunSplit(currentRun, storage, firstComplexGlyph);
+            CRun *complexRun = CRunSplit(currentRun, firstComplexGlyph);
             [self _advancedDrawString:complexRun->string
                              fontInfo:complexRun->attrs.fontInfo
                                 color:complexRun->attrs.color
                                    at:NSMakePoint(initialPoint.x + complexRun->x, initialPoint.y)
-                                width:complexRun->advances[0].width
+                                width:CRunGetAdvances(complexRun)[0].width
                              fakeBold:complexRun->attrs.fakeBold
                             antiAlias:complexRun->attrs.antiAlias];
             CRunFree(complexRun);
@@ -6627,7 +6628,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                          fontInfo:currentRun->attrs.fontInfo
                             color:currentRun->attrs.color
                                at:NSMakePoint(initialPoint.x + currentRun->x, initialPoint.y)
-                            width:currentRun->advances[0].width
+                            width:CRunGetAdvances(currentRun)[0].width
                          fakeBold:currentRun->attrs.fakeBold
                         antiAlias:currentRun->attrs.antiAlias];
     }
