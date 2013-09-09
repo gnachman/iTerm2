@@ -448,6 +448,10 @@ enum {
     MovingAverage *drawRectDuration_, *drawRectInterval_;
 	// Current font. Only valid for the duration of a single drawing context.
     NSFont *selectedFont_;
+
+    // Used by _drawCursorTo: to remember the last time the cursor moved to avoid drawing a blinked-out
+    // cursor while it's moving.
+    NSTimeInterval lastTimeCursorMoved_;
 }
 
 + (NSCursor *)textViewCursor;
