@@ -1937,6 +1937,7 @@ NSString *sessionsKey = @"sessions";
         // becomes key. Note that if a popup closes this function shouldn't
         // be called at all because it makes us key before closing itself.
         // If a popup is opening, though, we shouldn't close ourselves.
+        /* Correction. We do nto want to do this!
         if (![[NSApp keyWindow] isKindOfClass:[PopupWindow class]] &&
             ![[[NSApp keyWindow] windowController] isKindOfClass:[ProfilesWindow class]] &&
             ![[[NSApp keyWindow] windowController] isKindOfClass:[PreferencePanel class]]) {
@@ -1946,6 +1947,7 @@ NSString *sessionsKey = @"sessions";
             }
             [[iTermController sharedInstance] hideHotKeyWindow:self];
         }
+        */
     }
     if (togglingFullScreen_) {
         PtyLog(@"windowDidResignKey returning because togglingFullScreen.");
