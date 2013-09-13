@@ -214,7 +214,7 @@
 {
     NSTabViewItem* tabViewItem = [self selectedTabViewItem];
     NSUInteger theIndex = [mruTabs indexOfObject:tabViewItem] + 1;
-    if (theIndex < 0 || theIndex >= [mruTabs count]) {
+    if (theIndex == NSNotFound || theIndex >= [mruTabs count]) {
         theIndex = 0;
     }
     NSTabViewItem* next = [mruTabs objectAtIndex:theIndex];

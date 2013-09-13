@@ -603,7 +603,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
            toSession:(NSString *)targetSession
 {
     [gateway_ sendCommand:[NSString stringWithFormat:@"link-window -s \"%@:@%d\" -t \"%@:+\"",
-                           sessionName, windowId, targetSession, windowId]
+                           sessionName, windowId, targetSession]
            responseTarget:nil
          responseSelector:nil];
 }

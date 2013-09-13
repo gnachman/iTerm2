@@ -295,7 +295,7 @@
                 }
 
 
-                const char const * names[] = {"TL", "TR", "BL", "BR"};
+                const char* const names[] = {"TL", "TR", "BL", "BR"};
                 PtyLog(@"%s: testRect:%@, bad:%.2f",
                         names[i], NSStringFromRect(testRects[i]), badness);
 
