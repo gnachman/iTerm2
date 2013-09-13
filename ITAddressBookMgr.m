@@ -525,42 +525,48 @@ static NSString* UserShell() {
 {
     NSString* thisUser = NSUserName();
     NSString* userShell = UserShell();
-        NSString *customDirectoryString;
-        if ([[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"Advanced"]) {
+    NSString *customDirectoryString;
+    if ([[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"Advanced"]) {
         switch (objectType) {
-          case iTermWindowObject:
-              customDirectoryString = [bookmark objectForKey:KEY_AWDS_WIN_OPTION];
-                          break;
-          case iTermTabObject:
-              customDirectoryString = [bookmark objectForKey:KEY_AWDS_TAB_OPTION];
-              break;
-          case iTermPaneObject:
-              customDirectoryString = [bookmark objectForKey:KEY_AWDS_PANE_OPTION];
-              break;
-          default:
-              NSLog(@"Bogus object type %d", (int)objectType);
-              customDirectoryString = @"No";
+            case iTermWindowObject:
+                customDirectoryString = [bookmark objectForKey:KEY_AWDS_WIN_OPTION];
+                break;
+            case iTermTabObject:
+                customDirectoryString = [bookmark objectForKey:KEY_AWDS_TAB_OPTION];
+                break;
+            case iTermPaneObject:
+                customDirectoryString = [bookmark objectForKey:KEY_AWDS_PANE_OPTION];
+                break;
+            default:
+                NSLog(@"Bogus object type %d", (int)objectType);
+                customDirectoryString = @"No";
         }
-        } else {
-                customDirectoryString = [bookmark objectForKey:KEY_CUSTOM_DIRECTORY];
-        }
+    } else {
+        customDirectoryString = [bookmark objectForKey:KEY_CUSTOM_DIRECTORY];
+    }
 
-        if ([customDirectoryString isEqualToString:@"No"]) {
+    if ([customDirectoryString isEqualToString:@"No"]) {
         // Run login without -l argument: this is a login session and will use the home dir.
         *asLoginShell = NO;
         return [NSString stringWithFormat:@"login -fp \"%@\"", thisUser];
-    } else if (userShell) {
-        // This is the normal case when using a custom dir or reusing previous tab's dir:
-        // Run the shell with - as the first char of argv[0]. It won't update
-        // utmpx (only login does), though.
-        *asLoginShell = YES;
-        return userShell;
     } else if (thisUser) {
-        // No shell known (not sure why this would happen) and we want a non-login shell.
+        // This is the (new) normal case when usinga custom dir or reusing the previous sessions'
+        // directory. It's nice to run login because it updates utmpx, sets environment vars like
+        // $SHELL, etc. For a long time, the default was to set *asLoginShell=YES and return
+        // userShell. I don't think that was ever right, but then this code affects people's
+        // configurations in unexpected ways, so I'm trying this as an experiment in the master
+        // (version 3) branch to see if it's ok.
         *asLoginShell = NO;
         // -l specifies a NON-LOGIN shell which doesn't changed the pwd.
         // (there is either a custom dir or we're recycling the last tab's dir)
         return [NSString stringWithFormat:@"login -fpl \"%@\"", thisUser];
+    } else if (userShell) {
+        // This used to be the normal case when using a custom dir/reusing a dir, but is now a
+        // fallback in case we couldn't get the user's name for some crazy reason. Run the shell
+        // with - as the first char of argv[0]. It won't update utmpx (only login does), set $SHELL,
+        // etc., though.
+        *asLoginShell = YES;
+        return userShell;
     } else {
         // Can't get the shell or the user name. Should never happen.
         *asLoginShell = YES;
@@ -578,8 +584,8 @@ static NSString* UserShell() {
         return [bookmark objectForKey:KEY_COMMAND];
     } else {
         return [ITAddressBookMgr loginShellCommandForBookmark:bookmark
-                                                                                                 asLoginShell:isLoginSession
-                                                                                                forObjectType:objectType];
+                                                 asLoginShell:isLoginSession
+                                                forObjectType:objectType];
     }
 }
 
