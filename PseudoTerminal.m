@@ -169,6 +169,12 @@ NSString *sessionsKey = @"sessions";
 
 @class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
 
+@interface PseudoTerminal ()
+
+- (void)updateDivisionView;
+
+@end
+
 @implementation BottomBarView
 - (void)drawRect:(NSRect)dirtyRect
 {
@@ -319,9 +325,6 @@ NSString *sessionsKey = @"sessions";
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
-            styleMask = NSBorderlessWindowMask;
-            break;
-
         case WINDOW_TYPE_FORCE_FULL_SCREEN:
             styleMask = NSBorderlessWindowMask;
             break;
@@ -453,6 +456,8 @@ NSString *sessionsKey = @"sessions";
         [self hideMenuBar];
     }
 
+    [self updateDivisionView];
+
     if (IsLionOrLater()) {
         if (isHotkey) {
             // This allows the hotkey window to be in the same space as a Lion fullscreen iTerm2 window.
@@ -480,6 +485,45 @@ NSString *sessionsKey = @"sessions";
     terminalGuid_ = [[NSString stringWithFormat:@"pty-%@", [ProfileModel freshGuid]] retain];
 
     return self;
+}
+
+- (void)updateDivisionView {
+    // The division is only shown if there is a title bar and no tab bar. There
+    // are cases in fullscreen (e.g., when entering Lion fullscreen) when the
+    // window doesn't have a title bar but also isn't borderless we also check
+    // if we're in fullscreen.
+    if (self.window.styleMask != NSBorderlessWindowMask &&
+        ![self anyFullScreen] &&
+        ![self tabBarShouldBeVisible]) {
+        // A division is needed, but there might already be one.
+        NSRect reducedTabviewFrame = TABVIEW.frame;
+        if (!_divisionView) {
+          reducedTabviewFrame.size.height -= 1;
+        }
+        NSRect divisionViewFrame = NSMakeRect(reducedTabviewFrame.origin.x,
+                                              reducedTabviewFrame.size.height,
+                                              reducedTabviewFrame.size.width,
+                                              1);
+        if (_divisionView) {
+            // Simply update divisionView's frame.
+            _divisionView.frame = divisionViewFrame;
+        } else {
+            // Shrink the tabview and add a division view.
+            TABVIEW.frame = reducedTabviewFrame;
+            _divisionView = [[SolidColorView alloc] initWithFrame:divisionViewFrame
+                                                            color:[NSColor darkGrayColor]];
+            _divisionView.autoresizingMask = (NSViewWidthSizable | NSViewMinYMargin);
+            [self.window.contentView addSubview:_divisionView];
+        }
+    } else if (_divisionView) {
+        // Remove existing division
+        NSRect augmentedTabviewFrame = TABVIEW.frame;
+        augmentedTabviewFrame.size.height += 1;
+        [_divisionView removeFromSuperview];
+        [_divisionView release];
+        _divisionView = nil;
+        TABVIEW.frame = augmentedTabviewFrame;
+    }
 }
 
 - (CGFloat)tabviewWidth
@@ -1050,11 +1094,12 @@ NSString *sessionsKey = @"sessions";
     [pbHistoryView release];
     [autocompleteView release];
     [tabBarControl release];
-        [terminalGuid_ release];
+    [terminalGuid_ release];
     if (fullScreenTabviewTimer_) {
         [fullScreenTabviewTimer_ invalidate];
     }
     [lastArrangement_ release];
+    [_divisionView release];
     [super dealloc];
 }
 
@@ -2546,6 +2591,9 @@ NSString *sessionsKey = @"sessions";
 {
     [self repositionWidgets];
     togglingLionFullScreen_ = YES;
+    [_divisionView removeFromSuperview];
+    [_divisionView release];
+    _divisionView = nil;
 }
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
@@ -2590,6 +2638,7 @@ NSString *sessionsKey = @"sessions";
     zooming_ = NO;
     lionFullScreen_ = NO;
     // Set scrollbars appropriately
+    [self updateDivisionView];
     [self updateSessionScrollbars];
     [self fitTabsToWindow];
     [self repositionWidgets];
@@ -4695,6 +4744,9 @@ NSString *sessionsKey = @"sessions";
     if ([self _haveTopBorder]) {
         ++contentSize.height;
     }
+    if (_divisionView) {
+        ++contentSize.height;
+    }
     return [[self window] frameRectForContentRect:NSMakeRect(0, 0, contentSize.width, contentSize.height)].size;
 }
 
@@ -4807,12 +4859,13 @@ NSString *sessionsKey = @"sessions";
         }
         aRect.size = [[thisWindow contentView] frame].size;
         aRect.size.height -= aRect.origin.y;
-        if ([self _haveTopBorder]) {
+        if ([self _haveTopBorder] || _divisionView) {
             aRect.size.height -= 1;
         }
         aRect.size.width = [self tabviewWidth];
         PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
         [TABVIEW setFrame:aRect];
+        [self updateDivisionView];
     } else {
         // The tabBar control is visible.
         PtyLog(@"repositionWidgets - tabs are visible. Adjusting window size...");
@@ -4836,6 +4889,7 @@ NSString *sessionsKey = @"sessions";
             aRect.size.width = [self tabviewWidth];
             PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
             [TABVIEW setFrame:aRect];
+            [self updateDivisionView];
             aRect.origin.y += aRect.size.height;
             aRect.size.height = [tabBarControl frame].size.height;
             [tabBarControl setFrame:aRect];
@@ -4860,6 +4914,7 @@ NSString *sessionsKey = @"sessions";
             }
             PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
             [TABVIEW setFrame:aRect];
+            [self updateDivisionView];
         }
     }
 
