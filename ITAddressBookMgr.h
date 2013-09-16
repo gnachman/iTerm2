@@ -220,10 +220,8 @@ typedef enum {
 - (void)netServiceDidStop:(NSNetService *)aNetService;
 - (NSString*) getBonjourServiceType:(NSString*)aType;
 + (NSString*)loginShellCommandForBookmark:(Profile*)bookmark
-							 asLoginShell:(BOOL*)asLoginShell
 							forObjectType:(iTermObjectType)objectType;
 + (NSString*)bookmarkCommand:(Profile*)bookmark
-			  isLoginSession:(BOOL*)isLoginSession
 			   forObjectType:(iTermObjectType)objectType;
 + (NSString*)bookmarkWorkingDirectory:(Profile*)bookmark
                         forObjectType:(iTermObjectType)objectType;

@@ -520,8 +520,7 @@ static NSString* UserShell() {
 }
 
 + (NSString*)loginShellCommandForBookmark:(Profile*)bookmark
-                                                         asLoginShell:(BOOL*)asLoginShell
-                                                        forObjectType:(iTermObjectType)objectType
+                            forObjectType:(iTermObjectType)objectType
 {
     NSString* thisUser = NSUserName();
     NSString* userShell = UserShell();
@@ -547,44 +546,23 @@ static NSString* UserShell() {
 
     if ([customDirectoryString isEqualToString:@"No"]) {
         // Run login without -l argument: this is a login session and will use the home dir.
-        *asLoginShell = NO;
         return [NSString stringWithFormat:@"login -fp \"%@\"", thisUser];
-    } else if (thisUser) {
-        // This is the (new) normal case when usinga custom dir or reusing the previous sessions'
-        // directory. It's nice to run login because it updates utmpx, sets environment vars like
-        // $SHELL, etc. For a long time, the default was to set *asLoginShell=YES and return
-        // userShell. I don't think that was ever right, but then this code affects people's
-        // configurations in unexpected ways, so I'm trying this as an experiment in the master
-        // (version 3) branch to see if it's ok.
-        *asLoginShell = NO;
-        // -l specifies a NON-LOGIN shell which doesn't changed the pwd.
-        // (there is either a custom dir or we're recycling the last tab's dir)
-        return [NSString stringWithFormat:@"login -fpl \"%@\"", thisUser];
-    } else if (userShell) {
-        // This used to be the normal case when using a custom dir/reusing a dir, but is now a
-        // fallback in case we couldn't get the user's name for some crazy reason. Run the shell
-        // with - as the first char of argv[0]. It won't update utmpx (only login does), set $SHELL,
-        // etc., though.
-        *asLoginShell = YES;
-        return userShell;
     } else {
-        // Can't get the shell or the user name. Should never happen.
-        *asLoginShell = YES;
-        return @"/bin/bash --login";
+        // Not using the home directory. This requires some trickery.
+        // Run iTerm2's executable with a special flag that makes it run the shell as a login shell
+        // (with "-" inserted at the start of argv[0]). See shell_launcher.c for more details.
+        return [NSString stringWithFormat:@"%@ --launch_shell", [[NSBundle mainBundle] executablePath]];
     }
 }
 
 + (NSString*)bookmarkCommand:(Profile*)bookmark
-                          isLoginSession:(BOOL*)isLoginSession
-                           forObjectType:(iTermObjectType)objectType
+               forObjectType:(iTermObjectType)objectType
 {
     BOOL custom = [[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"];
     if (custom) {
-        *isLoginSession = NO;
         return [bookmark objectForKey:KEY_COMMAND];
     } else {
         return [ITAddressBookMgr loginShellCommandForBookmark:bookmark
-                                                 asLoginShell:isLoginSession
                                                 forObjectType:objectType];
     }
 }

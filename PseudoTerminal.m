@@ -3369,7 +3369,6 @@ NSString *sessionsKey = @"sessions";
             }
             [self addNewSession:prototype
                     withCommand:[commandField stringValue]
-                 asLoginSession:NO
                   forObjectType:iTermTabObject];
             break;
         }
@@ -5326,7 +5325,6 @@ NSString *sessionsKey = @"sessions";
          environment:(NSDictionary *)prog_env
               isUTF8:(BOOL)isUTF8
            inSession:(PTYSession*)theSession
-      asLoginSession:(BOOL)asLoginSession
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PseudoTerminal startProgram:%@ arguments:%@]",
@@ -5335,8 +5333,7 @@ NSString *sessionsKey = @"sessions";
     [theSession startProgram:program
                    arguments:prog_argv
                  environment:prog_env
-                      isUTF8:isUTF8
-              asLoginSession:asLoginSession];
+                      isUTF8:isUTF8];
 
     if ([[[self window] title] compare:@"Window"] == NSOrderedSame) {
         [self setWindowTitle];
@@ -5708,9 +5705,7 @@ NSString *sessionsKey = @"sessions";
         BOOL isUTF8;
         // Grab the addressbook command
         Profile* addressbookEntry = [aSession addressBookEntry];
-        BOOL loginSession;
         cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
-                                                                          isLoginSession:&loginSession
                                                                            forObjectType:objectType]] autorelease];
         name = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey:KEY_NAME]] autorelease];
         // Get session parameters
@@ -5731,7 +5726,7 @@ NSString *sessionsKey = @"sessions";
         isUTF8 = ([[addressbookEntry objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
         [self setName:name forSession:aSession];
         // Start the command
-        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession asLoginSession:loginSession];
+        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession];
     }
 }
 
@@ -5991,10 +5986,8 @@ NSString *sessionsKey = @"sessions";
     [self appendSession: aSession];
     if ([aSession SCREEN]) {
         // We process the cmd to insert URL parts
-        BOOL loginSession;
         NSMutableString *cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
-                                                                                           isLoginSession:&loginSession
-                                                                                                                                                                                        forObjectType:objectType]] autorelease];
+                                                                                            forObjectType:objectType]] autorelease];
         NSMutableString *name = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey: KEY_NAME]] autorelease];
         NSURL *urlRep = [NSURL URLWithString: url];
 
@@ -6035,7 +6028,7 @@ NSString *sessionsKey = @"sessions";
         [self setName:name forSession:aSession];
 
         // Start the command
-        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession asLoginSession:loginSession];
+        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession];
     }
     [aSession release];
     return aSession;
@@ -6049,7 +6042,6 @@ NSString *sessionsKey = @"sessions";
 
 - (id)addNewSession:(NSDictionary *)addressbookEntry
         withCommand:(NSString *)command
-     asLoginSession:(BOOL)loginSession
       forObjectType:(iTermObjectType)objectType
 {
     PtyLog(@"PseudoTerminal: addNewSession 2");
@@ -6088,7 +6080,7 @@ NSString *sessionsKey = @"sessions";
         [self setName:name forSession:aSession];
 
         // Start the command
-        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession asLoginSession:loginSession];
+        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession];
     }
 
     [aSession release];

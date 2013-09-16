@@ -577,7 +577,6 @@ static void reapchild(int n)
                  width:(int)width
                 height:(int)height
                 isUTF8:(BOOL)isUTF8
-        asLoginSession:(BOOL)asLoginSession
 {
     struct termios term;
     struct winsize win;
@@ -596,11 +595,7 @@ static void reapchild(int n)
     int max = (args == nil) ? 0 : [args count];
     const char* argv[max + 2];
 
-    if (asLoginSession) {
-        argv[0] = [[NSString stringWithFormat:@"-%@", [progpath stringByStandardizingPath]] UTF8String];
-    } else {
-        argv[0] = [[progpath stringByStandardizingPath] UTF8String];
-    }
+    argv[0] = [[progpath stringByStandardizingPath] UTF8String];
     if (args != nil) {
         int i;
         for (i = 0; i < max; ++i) {

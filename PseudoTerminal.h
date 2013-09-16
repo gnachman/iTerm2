@@ -813,7 +813,6 @@ NSWindowDelegate,
      forObjectType:(iTermObjectType)objectType;
 -(id)addNewSession:(NSDictionary *) addressbookEntry
        withCommand:(NSString *)command
-    asLoginSession:(BOOL)loginSession
      forObjectType:(iTermObjectType)objectType;
 -(void)appendSession:(PTYSession *)object;
 -(void)removeFromSessionsAtIndex:(unsigned)index;

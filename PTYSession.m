@@ -509,9 +509,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     // Grab the addressbook command
     Profile* addressbookEntry = [self addressBookEntry];
-    BOOL loginSession;
     cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
-                                                                      isLoginSession:&loginSession
                                                                        forObjectType:objectType]] autorelease];
     NSMutableString* theName = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey:KEY_NAME]] autorelease];
     // Get session parameters
@@ -534,7 +532,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [[[self tab] realParentWindow] setName:theName forSession:self];
 
     // Start the command
-    [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 asLoginSession:loginSession];
+    [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8];
 }
 
 - (void)setWidth:(int)width height:(int)height
@@ -692,7 +690,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
            arguments:(NSArray *)prog_argv
          environment:(NSDictionary *)prog_env
               isUTF8:(BOOL)isUTF8
-      asLoginSession:(BOOL)asLoginSession
 {
     NSString *path = program;
     NSMutableArray *argv = [NSMutableArray arrayWithArray:prog_argv];
@@ -753,8 +750,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
               environment:env
                     width:[SCREEN width]
                    height:[SCREEN height]
-                   isUTF8:isUTF8
-           asLoginSession:asLoginSession];
+                   isUTF8:isUTF8];
     NSString *initialText = [addressBookEntry objectForKey:KEY_INITIAL_TEXT];
     if ([initialText length]) {
         [SHELL writeTask:[initialText dataUsingEncoding:[self encoding]]];
@@ -4335,7 +4331,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSArray *arg;
 
     [command breakDownCommandToPath:&cmd cmdArgs:&arg];
-    [self startProgram:cmd arguments:arg environment:[NSDictionary dictionary] isUTF8:isUTF8 asLoginSession:NO];
+    [self startProgram:cmd arguments:arg environment:[NSDictionary dictionary] isUTF8:isUTF8];
 
     return;
 }

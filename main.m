@@ -12,9 +12,16 @@
 #import "PreferencePanel.h"
 #import <signal.h>
 #import "FutureMethods.h"
+#import "shell_launcher.h"
 
 int main(int argc, const char *argv[])
 {
+    for (int i = 1; i < argc; i++) {
+        if (!strcmp(argv[i], "--launch_shell")) {
+            launch_shell();
+            return 1;
+        }
+    }
     signal(SIGPIPE, SIG_IGN);
     sigset_t signals;
     sigemptyset(&signals);

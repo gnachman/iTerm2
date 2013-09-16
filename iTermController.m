@@ -1037,7 +1037,6 @@ static BOOL initDone = NO;
 
     id result = [term addNewSession:aDict
                         withCommand:command
-                     asLoginSession:NO
                       forObjectType:theTerm ? iTermTabObject : iTermWindowObject];
     if (toggle) {
         [term delayedEnterFullscreen];
@@ -1057,9 +1056,8 @@ static BOOL initDone = NO;
     // Automatically fill in ssh command if command is exactly equal to $$ or it's a login shell.
     BOOL ignore;
     if (aDict == nil ||
-                [[ITAddressBookMgr bookmarkCommand:aDict
-                                                        isLoginSession:&ignore
-                                                         forObjectType:objectType] isEqualToString:@"$$"] ||
+        [[ITAddressBookMgr bookmarkCommand:aDict
+                             forObjectType:objectType] isEqualToString:@"$$"] ||
         ![[aDict objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
         Profile* prototype = aDict;
         if (!prototype) {

@@ -1,0 +1,185 @@
+From 4b5933987da6caca18d75059d81a5db59e78b6d0 Mon Sep 17 00:00:00 2001
+From: Foy Savas <foy@sav.as>
+Date: Mon, 21 Jan 2013 18:12:56 -0500
+Subject: [PATCH] Behold: background image tiling.
+
+---
+ ITAddressBookMgr.h                |   1 +
+ PTYScrollView.h                   |   2 +
+ PTYScrollView.m                   |  19 +-
+ PTYSession.h                      |   5 +
+ PTYSession.m                      |  21 +-
+ PreferencePanel.h                 |   1 +
+ PreferencePanel.m                 |   2 +
+ SplitPanel.xib                    | 670 +++-----------------------------------
+ 9 files changed, 277 insertions(+), 752 deletions(-)
+
+diff --git a/ITAddressBookMgr.h b/ITAddressBookMgr.h
+index b8bc839..8bb3183 100644
+--- a/ITAddressBookMgr.h
++++ b/ITAddressBookMgr.h
+@@ -122,6 +122,7 @@
+ #define KEY_ASCII_ANTI_ALIASED     @"ASCII Anti Aliased"
+ #define KEY_NONASCII_ANTI_ALIASED  @"Non-ASCII Anti Aliased"
+ #define KEY_BACKGROUND_IMAGE_LOCATION @"Background Image Location"
++#define KEY_BACKGROUND_IMAGE_TILED @"Background Image Tiled"
+ 
+ // Terminal
+ #define KEY_DISABLE_WINDOW_RESIZING           @"Disable Window Resizing"
+diff --git a/PTYScrollView.h b/PTYScrollView.h
+index 5d02240..b3226f6 100644
+--- a/PTYScrollView.h
++++ b/PTYScrollView.h
+@@ -50,6 +50,7 @@
+ @interface PTYScrollView : NSScrollView
+ {
+     NSImage *backgroundImage;
++    NSColor *backgroundPattern;
+     float transparency;
+ 
+     // Used for working around Lion bug described in setHasVerticalScroller:inInit:
+@@ -66,6 +67,7 @@
+ // background image
+ - (NSImage *)backgroundImage;
+ - (void)setBackgroundImage: (NSImage *) anImage;
++- (void)setBackgroundImage: (NSImage *) anImage asPattern:(BOOL)asPattern;
+ - (void)drawBackgroundImageRect:(NSRect)rect useTransparency:(BOOL)useTransparency;
+ - (void)drawBackgroundImageRect:(NSRect)rect toPoint:(NSPoint)dest useTransparency:(BOOL)useTransparency;
+ - (float)transparency;
+diff --git a/PTYScrollView.m b/PTYScrollView.m
+index 90af0dd..8187dbb 100644
+--- a/PTYScrollView.m
++++ b/PTYScrollView.m
+@@ -226,11 +226,26 @@ - (NSImage *) backgroundImage
+     return (backgroundImage);
+ }
+ 
+-- (void) setBackgroundImage: (NSImage *) anImage
++- (void) setBackgroundImage:(NSImage *)anImage
++{
++    [self setBackgroundImage:anImage asPattern:NO];
++}
++
++- (void) setBackgroundImage:(NSImage *)anImage asPattern:(BOOL)asPattern
+ {
+     [backgroundImage release];
+     [anImage retain];
+-    backgroundImage = anImage;
++    if (asPattern && anImage != nil) {
++        backgroundPattern = [NSColor colorWithPatternImage:anImage];
++        backgroundImage = [[NSImage alloc] initWithSize:[self documentVisibleRect].size];
++        [backgroundImage lockFocus];
++        [backgroundPattern drawSwatchInRect:NSMakeRect(0, 0,
++                                                       [self documentVisibleRect].size.width,
++                                                       [self documentVisibleRect].size.height)];
++        [backgroundImage unlockFocus];
++    } else {
++        backgroundImage = anImage;
++    }
+     [backgroundImage setScalesWhenResized: YES];
+     [backgroundImage setSize: [self documentVisibleRect].size];
+ }
+diff --git a/PTYSession.h b/PTYSession.h
+index 1a24cfc..2ab51b2 100644
+--- a/PTYSession.h
++++ b/PTYSession.h
+@@ -145,6 +145,9 @@
+     // This is not used as far as I can tell.
+     int bell;
+ 
++    // True if background image should be tiled
++    BOOL backgroundImageTiled;
++    
+     // Filename of background image.
+     NSString* backgroundImagePath;
+ 
+@@ -443,6 +446,8 @@
+ - (BOOL)logging;
+ - (void)logStart;
+ - (void)logStop;
++- (BOOL)backgroundImageTiled;
++- (void)setBackgroundImageTiled:(BOOL)set;
+ - (NSString *)backgroundImagePath;
+ - (void)setBackgroundImagePath: (NSString *)imageFilePath;
+ - (NSColor *)foregroundColor;
+diff --git a/PTYSession.m b/PTYSession.m
+index 347858c..7d5a4ca 100644
+--- a/PTYSession.m
++++ b/PTYSession.m
+@@ -2243,7 +2243,13 @@ - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs
+ 
+     // background image
+     [self setBackgroundImagePath:[aDict objectForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
+-
++    NSNumber *bgImageTiledEntry = [aDict objectForKey:KEY_BACKGROUND_IMAGE_TILED];
++    if (bgImageTiledEntry) {
++        [self setBackgroundImageTiled:[bgImageTiledEntry boolValue]];
++    } else {
++        [self setBackgroundImageTiled:YES];
++    }
++    
+     // colour scheme
+     [self setCOLORFGBG_VALUE:[self ansiColorsMatchingForeground:[aDict objectForKey:KEY_FOREGROUND_COLOR]
+                                                   andBackground:[aDict objectForKey:KEY_BACKGROUND_COLOR]
+@@ -2652,6 +2658,17 @@ - (NSString *)contents
+     return [TEXTVIEW content];
+ }
+ 
++- (BOOL)backgroundImageTiled
++{
++    return backgroundImageTiled;
++}
++
++- (void)setBackgroundImageTiled:(BOOL)set
++{
++    backgroundImageTiled = set;
++    [self setBackgroundImagePath:backgroundImagePath];
++}
++
+ - (NSString *)backgroundImagePath
+ {
+     return backgroundImagePath;
+@@ -2675,7 +2692,7 @@ - (void)setBackgroundImagePath:(NSString *)imageFilePath
+         NSImage *anImage = [[NSImage alloc] initWithContentsOfFile:backgroundImagePath];
+         if (anImage != nil) {
+             [SCROLLVIEW setDrawsBackground:NO];
+-            [SCROLLVIEW setBackgroundImage:anImage];
++            [SCROLLVIEW setBackgroundImage:anImage asPattern:[self backgroundImageTiled]];
+             [anImage release];
+         } else {
+             [SCROLLVIEW setDrawsBackground:YES];
+diff --git a/PreferencePanel.h b/PreferencePanel.h
+index 0acc192..0d4ba58 100644
+--- a/PreferencePanel.h
++++ b/PreferencePanel.h
+@@ -462,6 +462,7 @@
+     IBOutlet NSButton* nonasciiAntiAliased;
+     IBOutlet NSButton* backgroundImage;
+     NSString* backgroundImageFilename;
++    IBOutlet NSButton* backgroundImageTiled;
+     IBOutlet NSImageView* backgroundImagePreview;
+     IBOutlet NSTextField* displayFontsLabel;
+     IBOutlet NSButton* displayRegularFontButton;
+diff --git a/PreferencePanel.m b/PreferencePanel.m
+index 14dd6cd..81ade2f 100644
+--- a/PreferencePanel.m
++++ b/PreferencePanel.m
+@@ -2892,6 +2892,7 @@ - (void)updateBookmarkFields:(NSDictionary *)dict
+     [backgroundImage setState:[imageFilename length] > 0 ? NSOnState : NSOffState];
+     [backgroundImagePreview setImage:[[[NSImage alloc] initByReferencingFile:imageFilename] autorelease]];
+     backgroundImageFilename = imageFilename;
++    [backgroundImageTiled setState:[[dict objectForKey:KEY_BACKGROUND_IMAGE_TILED] boolValue] ? NSOnState : NSOffState];
+ 
+     // Terminal tab
+     [disableWindowResizing setState:[[dict objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] ? NSOnState : NSOffState];
+@@ -3321,6 +3322,7 @@ - (IBAction)bookmarkSettingChanged:(id)sender
+         backgroundImageFilename = filename;
+     }
+     [newDict setObject:backgroundImageFilename forKey:KEY_BACKGROUND_IMAGE_LOCATION];
++    [newDict setObject:[NSNumber numberWithBool:([backgroundImageTiled state]==NSOnState)] forKey:KEY_BACKGROUND_IMAGE_TILED];
+ 
+     // Terminal tab
+     [newDict setObject:[NSNumber numberWithBool:([disableWindowResizing state]==NSOnState)] forKey:KEY_DISABLE_WINDOW_RESIZING];
+-- 
+1.8.1.5
+
