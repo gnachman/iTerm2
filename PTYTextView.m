@@ -4066,6 +4066,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event
 {
+	static NSArray *shellProcesses = nil;
+	if (shellProcesses==nil)
+		shellProcesses = [[NSArray alloc] initWithObjects:@"bash", @"Shell", @"sh", @"sqlite3", @"mysql", nil];
     BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
 
     if (debugKeyDown) {
@@ -4082,35 +4085,75 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     VT100Terminal *terminal = [dataSource terminal];
     PTYSession* session = [dataSource session];
 
-    int i = abs(cursorX - x);
-    int j = abs(cursorY - y);
+	if ([shellProcesses containsObject:[session name]]) {
+		if (cursorY > y) {
+			// Cursor needs to be placed to the right of the line
+			// wanted as the user is going up.
+			int left = ((width*(cursorY-y))-width)+cursorX;
+			while (left > 0) {
+				[session writeTask:[terminal keyArrowLeft:0]];
+				left--;
+			}
+			// Cursor should now be at the righter most point.
+			cursorX = width;
+		} else if (cursorY < y) {
+			// Curosor needs to be placed to the left of the line
+			// wanted as the user is going down.
+			int right = ((width*(y-cursorY))-cursorX)+1;
+			while (right > 0) {
+				[session writeTask:[terminal keyArrowRight:0]];
+				right--;
+			}
+			// Cursor should now be at point 1.
+			cursorX = 1;
+		}
 
-    if (cursorX > x) {
-        // current position is right of going-to-be x,
-        // so first move to left, and (if necessary)
-        // up or down afterwards
-        while (i > 0) {
-            [session writeTask:[terminal keyArrowLeft:0]];
-            i--;
-        }
-    }
-    while (j > 0) {
-        if (cursorY > y) {
-            [session writeTask:[terminal keyArrowUp:0]];
-        } else {
-            [session writeTask:[terminal keyArrowDown:0]];
-        }
-        j--;
-    }
-    if (cursorX < x) {
-        // current position is left of going-to-be x
-        // so first moved up/down (if necessary)
-        // and then/now to the right
-        while (i > 0) {
-            [session writeTask:[terminal keyArrowRight:0]];
-            i--;
-        }
-    }
+		if (cursorX > x) {
+			// Move cursor left.
+			int left = cursorX-x;
+			while (left > 0) {
+				[session writeTask:[terminal keyArrowLeft:0]];
+				left--;
+			}
+		} else if (cursorX < x) {
+			// Move cursor right.
+			int right = x-cursorX;
+			while (right > 0) {
+				[session writeTask:[terminal keyArrowRight:0]];
+				right--;
+			}
+		}
+	} else {
+		int i = abs(cursorX - x);
+		int j = abs(cursorY - y);
+
+		if (cursorX > x) {
+			// current position is right of going-to-be x,
+			// so first move to left, and (if necessary)
+			// up or down afterwards
+			while (i > 0) {
+				[session writeTask:[terminal keyArrowLeft:0]];
+				i--;
+			}
+		}
+		while (j > 0) {
+			if (cursorY > y) {
+				[session writeTask:[terminal keyArrowUp:0]];
+			} else {
+				[session writeTask:[terminal keyArrowDown:0]];
+			}
+			j--;
+		}
+		if (cursorX < x) {
+			// current position is left of going-to-be x
+			// so first moved up/down (if necessary)
+			// and then/now to the right
+			while (i > 0) {
+				[session writeTask:[terminal keyArrowRight:0]];
+				i--;
+			}
+		}
+	}
     if (debugKeyDown) {
         NSLog(@"cursor at %d,%d (x,y) moved to %d,%d (x,y) [window width: %d]",
               cursorX, cursorY, x, y, width);
