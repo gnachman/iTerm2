@@ -263,7 +263,7 @@ static int advanceAndEatControlChars(unsigned char **ppdata,
                 [SCREEN setNewLine];
                 break;
             case VT100CC_CR:
-                [SCREEN cursorToX:1 Y:[SCREEN cursorY]];
+                [SCREEN carriageReturn];
                 break;
             case VT100CC_SO:
                 // TODO: ISO-2022 mode terminal should implement SO
@@ -458,7 +458,7 @@ static int getCSIParam(unsigned char *datap,
                 case VT100CC_LF:
                 case VT100CC_VT:
                 case VT100CC_FF:  [SCREEN setNewLine]; break;
-                case VT100CC_CR:  [SCREEN cursorToX:1 Y:[SCREEN cursorY]]; break;
+                case VT100CC_CR:  [SCREEN carriageReturn]; break;
                 case VT100CC_SO:  break;
                 case VT100CC_SI:  break;
                 case VT100CC_DC1: break;
@@ -1046,8 +1046,14 @@ static VT100TCC decode_csi(unsigned char *datap,
                     SET_PARAM_DEFAULT(param,0,0);
                     break;
                 case 's':
-                    result.type = ANSICSI_SCP;
-                    SET_PARAM_DEFAULT(param,0,0);
+                    if (SCREEN.vsplitMode) {
+                        result.type = VT100CSI_DECSLRM;
+                        SET_PARAM_DEFAULT(param, 0, 1);
+                        SET_PARAM_DEFAULT(param, 1, 1);
+                    } else {
+                        result.type = ANSICSI_SCP;
+                        SET_PARAM_DEFAULT(param, 0, 0);
+                    }
                     break;
                 case 'u':
                     result.type = ANSICSI_RCP;
@@ -1357,8 +1363,14 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
                 SET_PARAM_DEFAULT(param,0,0);
                 break;
             case 's':
-                result.type = ANSICSI_SCP;
-                SET_PARAM_DEFAULT(param,0,0);
+                if (SCREEN.vsplitMode) {
+                    result.type = VT100CSI_DECSLRM;
+                    SET_PARAM_DEFAULT(param, 0, 1);
+                    SET_PARAM_DEFAULT(param, 1, 1);
+                } else {
+                    result.type = ANSICSI_SCP;
+                    SET_PARAM_DEFAULT(param, 0, 0);
+                }
                 break;
             case 'u':
                 result.type = ANSICSI_RCP;
@@ -2497,6 +2509,7 @@ static VT100TCC decode_string(unsigned char *datap,
     MOUSE_MODE = MOUSE_REPORTING_NONE;
     MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
     [SCREEN mouseModeDidChange:MOUSE_MODE];
+    SCREEN.vsplitMode = NO;
     REPORT_FOCUS = NO;
 
     TRACE = NO;
@@ -3302,6 +3315,9 @@ static VT100TCC decode_string(unsigned char *datap,
                     case 9:  INTERLACE_MODE  = mode; break;
                     case 25: [SCREEN showCursor: mode]; break;
                     case 40: allowColumnMode = mode; break;
+                    case 69:
+                        SCREEN.vsplitMode = mode;
+                        break;
 
                     case 1049:
                         // From the xterm release log:
