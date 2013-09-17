@@ -29,6 +29,7 @@
 #import "ProfileModel.h"
 #import "PreferencePanel.h"
 #import "iTermKeyBindingMgr.h"
+#import "NSStringIterm.h"
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
@@ -551,7 +552,8 @@ static NSString* UserShell() {
         // Not using the home directory. This requires some trickery.
         // Run iTerm2's executable with a special flag that makes it run the shell as a login shell
         // (with "-" inserted at the start of argv[0]). See shell_launcher.c for more details.
-        return [NSString stringWithFormat:@"%@ --launch_shell", [[NSBundle mainBundle] executablePath]];
+        return [NSString stringWithFormat:@"%@ --launch_shell",
+                   [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters]];
     }
 }
 
