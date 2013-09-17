@@ -106,6 +106,7 @@
 #define VT100CSI_DECDSR      2050       // Device Status Report (DEC specific)
 #define VT100CSI_SET_MODIFIERS 2051     // CSI > Ps; Pm m (Whether to set modifiers for different kinds of key presses; no official name)
 #define VT100CSI_RESET_MODIFIERS 2052     // CSI > Ps n (Set all modifiers values to -1, disabled)
+#define VT100CSI_DECSLRM     2053       // Set left-right margin
 
 // some xterm extension
 #define XTERMCC_WIN_TITLE        86       // Set window title

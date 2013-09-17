@@ -76,6 +76,8 @@ void TranslateCharacterSet(screen_char_t *s, int len);
     int ALT_SAVE_CURSOR_Y;
     int SCROLL_TOP;
     int SCROLL_BOTTOM;
+    int SCROLL_LEFT;
+    int SCROLL_RIGHT;
     NSMutableSet* tabStops;
 
     VT100Terminal *TERMINAL;
@@ -88,6 +90,10 @@ void TranslateCharacterSet(screen_char_t *s, int len);
     BOOL FLASHBELL;
     BOOL GROWL;
 
+    // DECLRMM/DECVSSM(VT class 4 feature).
+    // If this mode is enabled, the application can set 
+    // SCROLL_LEFT/SCROLL_RIGHT margins.
+    BOOL vsplitMode;
 
     BOOL blinkingCursor;
     PTYTextView *display;
@@ -167,6 +173,8 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)setTerminal:(VT100Terminal *)terminal;
 - (void)setShellTask:(PTYTask *)shell;
 - (void)setSession:(PTYSession *)session;
+- (BOOL)vsplitMode;
+- (void)setVsplitMode:(BOOL)mode;
 
 - (PTYTextView *) display;
 - (void) setDisplay: (PTYTextView *) aDisplay;
@@ -207,7 +215,7 @@ void TranslateCharacterSet(screen_char_t *s, int len);
               string:(NSString *)string
                ascii:(BOOL)ascii;
 - (void)addLineToScrollback;
-- (void)crlf;
+- (void)crlf; // -crlf is called only by tmux integration, so it ignores vsplit mode.
 - (void)setNewLine;
 - (void)deleteCharacters:(int)n;
 - (void)backSpace;
@@ -225,8 +233,10 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)cursorRight:(int)n;
 - (void)cursorUp:(int)n;
 - (void)cursorDown:(int)n;
-- (void)cursorToX: (int) x;
+- (void)cursorToX:(int)x;
+- (void)cursorToY:(int)y;
 - (void)cursorToX:(int)x Y:(int)y;
+- (void)carriageReturn;
 - (void)saveCursorPosition;
 - (void)restoreCursorPosition;
 - (void)setTopBottom:(VT100TCC)token;
@@ -253,6 +263,13 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 // Set the char at x,y dirty.
 - (void)setCharDirtyAtX:(int)x Y:(int)y;
 
+// set a rectangular region dirty
+- (void)setRectDirtyFromX:(int)fromX Y:(int)fromY toX:(int)toX Y:(int)toY;
+
+// Check if any flag is set at an x,y coordinate in the dirty array
+- (BOOL)isDirtyAtX:(int)x Y:(int)y;
+
+- (void)resetDirty;
 - (void)setDirty;
 
 // print to ansi...
