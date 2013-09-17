@@ -3787,6 +3787,19 @@ void DumpBuf(screen_char_t* p, int n) {
     DebugLog(@"scrollDown");
 }
 
+- (BOOL)eraseDoubleWidthCharInLine:(screen_char_t*)aLine startingAtOffset:(int)offset
+{
+    if (offset >= 0 && offset < WIDTH - 1 && aLine[offset + 1].code == DWC_RIGHT) {
+        aLine[offset].code = 0;
+        aLine[offset].complexChar = NO;
+        aLine[offset + 1].code = 0;
+        aLine[offset + 1].complexChar = NO;
+        return YES;
+    } else {
+      return NO;
+    }
+}
+
 - (void)insertBlank:(int)n
 {
     screen_char_t *aLine;
@@ -3803,16 +3816,16 @@ void DumpBuf(screen_char_t* p, int n) {
 
     // get the appropriate line
     aLine = [self getLineAtScreenIndex:cursorY];
-    if (cursorX > 0 && aLine[cursorX].code == DWC_RIGHT) {
-        aLine[cursorX].code = 0;
-        aLine[cursorX].complexChar = NO;
-        aLine[cursorX - 1].code = 0;
-        aLine[cursorX - 1].complexChar = NO;
-        startOffset = -1;
+    int charsToMove = WIDTH - cursorX - n;
+    // If the first char to be moved is the right half of a DWC, erase it.
+    if ([self eraseDoubleWidthCharInLine:aLine startingAtOffset:cursorX - 1]) {
+      startOffset = -1;
     }
+    // If the last char to be moved is the left half of a DWC, erase it.
+    [self eraseDoubleWidthCharInLine:aLine startingAtOffset:cursorX + charsToMove - 1];
     memmove(aLine + cursorX + n,
             aLine + cursorX,
-            (WIDTH - cursorX - n) * sizeof(screen_char_t));
+            charsToMove * sizeof(screen_char_t));
 
     for (i = 0; i < n; i++) {
         aLine[cursorX + i].code = 0;
