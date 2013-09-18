@@ -4124,7 +4124,6 @@ void DumpBuf(screen_char_t* p, int n) {
     int leftMargin, rightMargin;
     int startOffset = 0;
     int endOffset = 0;
-    int startOffset = 0;
 
     if (vsplitMode) {
         leftMargin = SCROLL_LEFT;
