@@ -131,6 +131,7 @@ CRUN_INLINE CRun *CRunAppend(CRun *run,
 	if (run->attrs.antiAlias == attrs->antiAlias &&
 		run->attrs.color == attrs->color &&
 		run->attrs.fakeBold == attrs->fakeBold &&
+        run->attrs.underline == attrs->underline &&
 		run->attrs.fontInfo == attrs->fontInfo &&
 		!run->terminated &&
 		!run->string) {
