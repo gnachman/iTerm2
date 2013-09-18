@@ -382,7 +382,7 @@ static BOOL initDone = NO;
     } else if (button == NSAlertAlternateReturn) {
         return nil;
     } else {
-        NSAssert1(NO, @"Invalid input dialog button %d", button);
+        NSAssert1(NO, @"Invalid input dialog button %d", (int)button);
         return nil;
     }
 }
@@ -538,7 +538,7 @@ static BOOL initDone = NO;
                                                           h)]
                  forKey:NSViewAnimationEndFrameKey];
         x += w;
-        if (x > frame.size.width - w) {
+        if (x > frame.size.width + frame.origin.x - w) {
             // Wrap around to the next row of windows.
             x = frame.origin.x;
             yOffset -= maxHeight;

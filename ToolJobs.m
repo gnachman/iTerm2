@@ -181,7 +181,8 @@ static const CGFloat kMargin = 4;
     if (![pids isEqualToSet:[NSSet setWithArray:pids_]]) {
         // Something changed. Get job names, which is expensive.
         [pids_ release];
-        pids_ = [[[pids allObjects] sortedArrayUsingSelector:@selector(compare:)] retain];
+        NSArray *sortedArray = [[pids allObjects] sortedArrayUsingSelector:@selector(compare:)];
+        pids_ = [[NSMutableArray arrayWithArray:sortedArray] retain];
         [names_ removeAllObjects];
         int i = 0;
         for (NSNumber *pid in pids_) {
