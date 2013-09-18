@@ -2214,9 +2214,24 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         if (cursorX < WIDTH) {
             int dirtyX = cursorX;
             int dirtyY = cursorY;
+            int startOffset = 0;
+            int endOffset = 0;
 
             j = token.u.csi.p[0];
+            if (j <= 0) {
+                break;
+            }
             aLine = [self getLineAtScreenIndex:cursorY];
+            if (cursorX > 0 && aLine[cursorX].code == DWC_RIGHT) {
+                aLine[cursorX - 1].code = 0;
+                aLine[cursorX - 1].complexChar = NO;
+                startOffset = -1;
+            }
+            if (cursorX + j < WIDTH && aLine[cursorX + j].code == DWC_RIGHT) {
+                aLine[cursorX + j].code = 0;
+                aLine[cursorX + j].complexChar = NO;
+                endOffset = 1;
+            }
             for (k = 0; cursorX + k < WIDTH && k < j; k++) {
                 aLine[cursorX + k].code = 0;
                 aLine[cursorX + k].complexChar = NO;
@@ -2226,8 +2241,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             }
             aLine[WIDTH].code = EOL_HARD;
 
-            int endX = MIN(WIDTH, dirtyX + j);
-            [self setDirtyFromX:dirtyX
+            int endX = MIN(WIDTH, dirtyX + j + endOffset);
+            [self setDirtyFromX:dirtyX + startOffset
                               Y:dirtyY
                             toX:endX
                               Y:dirtyY];
@@ -3189,6 +3204,7 @@ void DumpBuf(screen_char_t* p, int n) {
     int i;
     int leftMargin, rightMargin;
     int endOffset = 0;
+    int startOffset = 0;
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[VT100Screen deleteCharacter]: %d", __FILE__, __LINE__, n);
@@ -3214,7 +3230,16 @@ void DumpBuf(screen_char_t* p, int n) {
         // get the appropriate screen line
         aLine = [self getLineAtScreenIndex:cursorY];
 
-        if (n < rightMargin) {
+        if (n > 0 && n < rightMargin) {
+            if (cursorX > 0 && aLine[cursorX].code == DWC_RIGHT) {
+                aLine[cursorX - 1].code = 0;
+                aLine[cursorX - 1].complexChar = NO;
+                startOffset = -1;
+            }
+            if (aLine[cursorX + n].code == DWC_RIGHT) {
+                aLine[cursorX + n].code = 0;
+                aLine[cursorX + n].complexChar = NO;
+            }
             memmove(aLine + cursorX,
                     aLine + cursorX + n,
                     (rightMargin - cursorX - n) * sizeof(screen_char_t));
@@ -3233,7 +3258,8 @@ void DumpBuf(screen_char_t* p, int n) {
 
         DebugLog(@"deleteCharacters");
 
-        [self setRangeDirty:NSMakeRange(idx + cursorX, rightMargin - cursorX + endOffset)];
+        [self setRangeDirty:NSMakeRange(idx + cursorX + startOffset,
+                                        rightMargin - cursorX + endOffset - startOffset)];
     }
 }
 
@@ -4078,6 +4104,19 @@ void DumpBuf(screen_char_t* p, int n) {
     DebugLog(@"scrollDown");
 }
 
+- (BOOL)eraseDoubleWidthCharInLine:(screen_char_t*)aLine startingAtOffset:(int)offset
+{
+    if (offset >= 0 && offset < WIDTH - 1 && aLine[offset + 1].code == DWC_RIGHT) {
+        aLine[offset].code = 0;
+        aLine[offset].complexChar = NO;
+        aLine[offset + 1].code = 0;
+        aLine[offset + 1].complexChar = NO;
+        return YES;
+    } else {
+      return NO;
+    }
+}
+
 - (void)insertBlank:(int)n
 {
     screen_char_t *aLine;
@@ -4085,6 +4124,7 @@ void DumpBuf(screen_char_t* p, int n) {
     int leftMargin, rightMargin;
     int startOffset = 0;
     int endOffset = 0;
+    int startOffset = 0;
 
     if (vsplitMode) {
         leftMargin = SCROLL_LEFT;
@@ -4107,24 +4147,24 @@ void DumpBuf(screen_char_t* p, int n) {
 
     // get the appropriate line
     aLine = [self getLineAtScreenIndex:cursorY];
-
-    if (cursorX > 0 && aLine[cursorX].code == DWC_RIGHT) {
-        aLine[cursorX - 1].code = 0;
-        aLine[cursorX - 1].complexChar = NO;
-        startOffset = -1;
+    int charsToMove = rightMargin - cursorX - n;
+    // If the first char to be moved is the right half of a DWC, erase it.
+    if ([self eraseDoubleWidthCharInLine:aLine startingAtOffset:cursorX - 1]) {
+      startOffset = -1;
     }
-    if (rightMargin < WIDTH && aLine[rightMargin].code == DWC_RIGHT) {
-        aLine[rightMargin].code = 0;
-        aLine[rightMargin].complexChar = NO;
-        endOffset = 1;
-    }
-    if (rightMargin > n && aLine[rightMargin - n].code == DWC_RIGHT) {
-        aLine[rightMargin - n - 1].code = 0;
-        aLine[rightMargin - n - 1].complexChar = NO;
+    // If the last char to be moved is the left half of a DWC, erase it.
+    [self eraseDoubleWidthCharInLine:aLine startingAtOffset:cursorX + charsToMove - 1];
+    // Pretty sure this isn't really needed b/c the last two chars will either
+    // be overwritten or handled by the case above, but it's harmless paranoia.
+    [self eraseDoubleWidthCharInLine:aLine startingAtOffset:rightMargin - 1];
+    if (rightMargin == WIDTH && aLine[WIDTH].code == EOL_DWC) {
+      // Since the last char in the line is being changed, the EOL is no longer because
+      // a DWC was forced onto the next line.
+      aLine[WIDTH].code = EOL_HARD;
     }
     memmove(aLine + cursorX + n,
             aLine + cursorX,
-            (rightMargin - cursorX - n) * sizeof(screen_char_t));
+            charsToMove * sizeof(screen_char_t));
 
     for (i = 0; i < n; i++) {
         aLine[cursorX + i].code = 0;

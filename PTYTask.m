@@ -591,7 +591,7 @@ static void reapchild(int n)
     signal(SIGCHLD, reapchild);
     const char* argpath;
     argpath = [[progpath stringByStandardizingPath] UTF8String];
-  NSLog(@"argpath=%s", argpath);
+
     int max = (args == nil) ? 0 : [args count];
     const char* argv[max + 2];
 
