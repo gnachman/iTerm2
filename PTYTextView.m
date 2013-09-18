@@ -6287,7 +6287,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Chatacter hidden because of blinking.
             drawable = NO;
         }
-
+        if (theLine[i].underline) {
+            // This is not as fast as possible, but is nice and simple. Always draw underlined text
+            // even if it's just a blank.
+            drawable = YES;
+        }
         // Set all other common attributes.
         if (doubleWidth) {
             thisCharAdvance = charWidth * 2;
@@ -6303,6 +6307,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                        renderBold:&fakeBold
                                      renderItalic:theLine[i].italic];
             attrs.fakeBold = fakeBold;
+            attrs.underline = theLine[i].underline;
             if (!currentRun) {
                 firstRun = currentRun = malloc(sizeof(CRun));
                 CRunInitialize(currentRun, &attrs, curX);
@@ -6320,15 +6325,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             attrs.fontInfo = nil;
         }
 
-        // draw underline
-        // TODO(georgen): Move this to the drawing functions!
-        if (theLine[i].underline && drawable) {
-            [attrs.color set];
-            NSRectFill(NSMakeRect(curX,
-                                  initialPoint.y + lineHeight - 2,
-                                  doubleWidth ? charWidth * 2 : charWidth,
-                                  1));
-        }
         curX += thisCharAdvance;
     }
     return firstRun;
@@ -6447,6 +6443,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             ctx:(CGContextRef)ctx
    initialPoint:(NSPoint)initialPoint
         storage:(CRunStorage *)storage {
+    NSPoint startPoint = NSMakePoint(initialPoint.x + currentRun->x, initialPoint.y);
     CGContextSetShouldAntialias(ctx, currentRun->attrs.antiAlias);
     if (!currentRun->string) {
         // Non-complex, except for glyphs we can't find.
@@ -6472,10 +6469,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self _advancedDrawString:currentRun->string
                          fontInfo:currentRun->attrs.fontInfo
                             color:currentRun->attrs.color
-                               at:NSMakePoint(initialPoint.x + currentRun->x, initialPoint.y)
+                               at:startPoint
                             width:currentRun->advances[0].width
                          fakeBold:currentRun->attrs.fakeBold
                         antiAlias:currentRun->attrs.antiAlias];
+    }
+
+    // Draw underline
+    if (currentRun->attrs.underline) {
+        [currentRun->attrs.color set];
+        CGFloat runWidth = 0;
+        int length = currentRun->string ? 1 : currentRun->length;
+        for (int i = 0; i < length; i++) {
+            runWidth += currentRun->advances[i].width;
+        }
+        NSRectFill(NSMakeRect(startPoint.x,
+                              startPoint.y + lineHeight - 2,
+                              runWidth,
+                              1));
     }
 }
 

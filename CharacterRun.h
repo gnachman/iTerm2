@@ -43,6 +43,7 @@ typedef struct {
     BOOL antiAlias;           // Use anti-aliasing?
     NSColor *color;           // Foreground color
     BOOL fakeBold;            // Should bold text be rendered by drawing text twice with a 1px shift?
+    BOOL underline;
     PTYFontInfo *fontInfo;    // Font to use.
 } CAttrs;
 
