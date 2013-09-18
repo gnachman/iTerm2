@@ -36,6 +36,9 @@
 // returns the index of the beginning of the allocation.
 - (int)allocate:(int)size;
 
+// Returns the index of the new code
+- (int)appendCode:(unichar)code andAdvance:(NSSize)advance;
+
 @end
 
 // Describes the appearance of a character.
@@ -57,12 +60,10 @@ struct CRun {
     CAttrs attrs;             // Attributes for this run.
     CGFloat x;                // x pixel coordinate for the run's start.
     int length;               // Number of codes/glyphs/advances.
-    unichar *codes;           // Mutually exclusive with string.
-    NSString *string;         // Mutually exclusive with codes.
-    CGGlyph *glyphs;          // Populated by CRunGetGlyphs; only used if |codes| is non-nil.
-    NSSize *advances;         // Horizontal/vertical advance for each code. Only used if |codes| is non-nil.
+    int index;                // -1 if nothing allocated, else start index of codes, glyphs, advances
+    NSString *string;         // If set then there are no codes or glyphs, but may be advances.
     BOOL terminated;          // No more appends allowed (will go into |next|)
-
+    CRunStorage *storage;     // Backing store for codes, glyphs, and advances.
     CRun *next;               // Next run in linked list.
 };
 

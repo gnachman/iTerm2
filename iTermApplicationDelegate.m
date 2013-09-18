@@ -1143,7 +1143,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
         struct timeval tv;
         gettimeofday(&tv, NULL);
 
-        [gDebugLogStr appendFormat:@"%ld.%08ld %s:%d (%s): ", (long long)tv.tv_sec, (long long)tv.tv_usec, file, line, function];
+        [gDebugLogStr appendFormat:@"%lld.%08lld %s:%d (%s): ", (long long)tv.tv_sec, (long long)tv.tv_usec, file, line, function];
         [gDebugLogStr appendString:value];
         [gDebugLogStr appendString:@"\n"];
         if ([gDebugLogStr length] > 100000000) {

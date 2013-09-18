@@ -3057,7 +3057,7 @@ static NSString* FormatRect(NSRect r) {
         // perfect.
         return proposedMin;
     }
-    PtyLog(@"PTYTab constrainMin:%f divider:%d", (float)proposedMin, dividerIndex);
+    PtyLog(@"PTYTab constrainMin:%f divider:%d", (float)proposedMin, (int)dividerIndex);
     CGFloat dim;
     NSSize minSize = [self _minSizeOfView:[[splitView subviews] objectAtIndex:dividerIndex]];
     if ([splitView isVertical]) {
@@ -3077,7 +3077,7 @@ static NSString* FormatRect(NSRect r) {
         // perfect.
         return proposedMax;
     }
-    PtyLog(@"PTYTab constrainMax:%f divider:%d", (float)proposedMax, dividerIndex);
+    PtyLog(@"PTYTab constrainMax:%f divider:%d", (float)proposedMax, (int)dividerIndex);
     CGFloat dim;
     NSSize minSize = [self _minSizeOfView:[[splitView subviews] objectAtIndex:dividerIndex+1]];
     if ([splitView isVertical]) {
@@ -3732,7 +3732,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     if (tmuxOriginatedResizeInProgress_) {
         return proposedPosition;
     }
-    PtyLog(@"PTYTab splitView:constraintSplitPosition%f divider:%d case ", (float)proposedPosition, dividerIndex);
+    PtyLog(@"PTYTab splitView:constraintSplitPosition%f divider:%d case ", (float)proposedPosition, (int)dividerIndex);
     NSArray* subviews = [splitView subviews];
     NSView* childBefore = [subviews objectAtIndex:dividerIndex];
     NSView* childAfter = [subviews objectAtIndex:dividerIndex + 1];

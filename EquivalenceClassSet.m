@@ -35,7 +35,7 @@
     return ec ? [classes_ objectForKey:ec] : nil;
 }
 
-- (void)addValue:(NSObject *)value toClass:(NSNumber *)ec
+- (void)addValue:(id<NSCopying>)value toClass:(NSNumber *)ec
 {
     [self removeValue:value];
     [index_ setObject:ec forKey:value];

@@ -62,6 +62,13 @@
     return theIndex;
 }
 
+- (int)appendCode:(unichar)code andAdvance:(NSSize)advance {
+    int i = [self allocate:1];
+    codes_[i] = code;
+    advances_[i] = advance;
+    return i;
+}
+
 @end
 
 static void CRunDumpWithIndex(CRun *run, int offset) {
@@ -69,13 +76,14 @@ static void CRunDumpWithIndex(CRun *run, int offset) {
         NSLog(@"run[%d]=%@    advance=%f [complex]",
               offset++,
               run->string,
-              (float)run->advances[0].width);
+              run->index < 0 ? -1.0 : (float)[run->storage advancesFromIndex:run->index][0].width);
     } else {
         for (int i = 0; i < run->length; i++) {
+            assert(run->index >= 0);
             NSLog(@"run[%d]=%@    advance=%f",
                   offset++,
-                  [NSString stringWithCharacters:run->codes + i length:1],
-                  (float)run->advances[i].width);
+                  [NSString stringWithCharacters:[run->storage codesFromIndex:run->index] + i length:1],
+                  (float)[run->storage advancesFromIndex:run->index][i].width);
         }
     }
     if (run->next) {

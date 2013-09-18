@@ -382,7 +382,7 @@ static BOOL initDone = NO;
     } else if (button == NSAlertAlternateReturn) {
         return nil;
     } else {
-        NSAssert1(NO, @"Invalid input dialog button %d", button);
+        NSAssert1(NO, @"Invalid input dialog button %d", (int)button);
         return nil;
     }
 }
