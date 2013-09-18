@@ -50,11 +50,7 @@
         NSMutableDictionary *dic = [NSMutableDictionary dictionary];
         [dic setObject:aFont forKey:NSFontAttributeName];
         NSSize size = [@"W" sizeWithAttributes:dic];
-#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
-        // Something changed at (I think) the 10.8 SDK where 12-pt Courier New's "W" glyph went from
-        // 7 to 8 pixels wide. I want to avoid an angry mob and preserve the existing kerning. This
-        // API seems to do the job, but until we officially transition to the 10.8 sdk I'll keep this
-        // if'ed out. TODO: see if height is affected.
+
         CGGlyph glyphs[1];
         int advances[1];
         UniChar characters[1];
@@ -72,7 +68,7 @@
             size.width = floor(size.width);
         }
         CGFontRelease(cgfont);
-#endif
+
         size.height = [aFont ascender] - [aFont descender];
         double baseline = -(floorf([aFont leading]) - floorf([aFont descender]));
         fse.size = size;
