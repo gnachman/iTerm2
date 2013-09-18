@@ -6635,8 +6635,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [currentRun->attrs.color set];
         CGFloat runWidth = 0;
         int length = currentRun->string ? 1 : currentRun->length;
+        NSSize *advances = CRunGetAdvances(currentRun);
         for (int i = 0; i < length; i++) {
-            runWidth += currentRun->advances[i].width;
+            runWidth += advances[i].width;
         }
         NSRectFill(NSMakeRect(startPoint.x,
                               startPoint.y + lineHeight - 2,
