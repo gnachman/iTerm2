@@ -1459,8 +1459,8 @@ static VT100TCC decode_xterm(unsigned char *datap,
     BOOL unrecognized = NO;
     if (datalen > 0) {
         if (*datap != ';' && *datap != 'P') {
-	    // Bogus first char after "esc ] [number]". Consume up to and
-	    // including terminator and then return VT100_NOTSUPPORT.
+            // Bogus first char after "esc ] [number]". Consume up to and
+            // including terminator and then return VT100_NOTSUPPORT.
             unrecognized = YES;
         } else {
             if (*datap == 'P') {
@@ -1912,14 +1912,6 @@ static VT100TCC decode_utf8(unsigned char *datap,
         // processed separately, e.g. they might get converted into
         // line drawing characters.
         if (theChar < 0x80) {
-            break;
-        }
-        // Reject UTF-16 surrogates. They are invalid Unicode codepoints,
-        // and NSString initWithBytes fails on them.
-        // Reject characters above U+10FFFF. NSString uses UTF-16
-        // internally, so it cannot handle higher codepoints.
-        if ((theChar >= 0xD800 && theChar <= 0xDFFF) || theChar > 0x10FFFF) {
-            utf8DecodeResult = -utf8DecodeResult;
             break;
         }
         p += utf8DecodeResult;
@@ -2583,7 +2575,7 @@ static VT100TCC decode_string(unsigned char *datap,
     assert(current_stream_length >= 0);
     if (current_stream_length == 0) {
         streamOffset = 0;
-	}
+        }
 }
 
 - (NSData *)streamData

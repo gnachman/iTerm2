@@ -1,1 +1,3 @@
-ð12345
+Bogus single-byte UTF-8 should print ?12345: ð12345
+Too-long sequence should print ?????: ø€€€€
+UTF-8 coding of surrogate value should print ???: í¿¿

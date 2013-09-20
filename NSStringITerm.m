@@ -457,6 +457,93 @@ static int fromhex(unichar c) {
                stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
 }
 
+// Returns the number of valid bytes in a sequence from a row in table 3-7 of the Unicode 6.2 spec.
+// Returns 0 if no bytes are valid (a true maximal subpart is never less than 1).
+static int maximal_subpart_of_row(const unsigned char *datap,
+                                  int datalen,
+                                  int bytesInRow,
+                                  int *min,  // array of min values, with |bytesInRow| elements.
+                                  int *max)  // array of max values, with |bytesInRow| elements.
+{
+    for (int i = 0; i < bytesInRow && i < datalen; i++) {
+        const int v = datap[i];
+        if (v < min[i] || v > max[i]) {
+            return i;
+        }
+    }
+    return bytesInRow;
+}
+
+// This function finds the longest intial sequence of bytes that look like a valid UTF-8 sequence.
+// It's used to gobble them up and replace them with a <?> replacement mark in an invalid sequence.
+static int minimal_subpart(const unsigned char *datap, int datalen)
+{
+    // This comes from table 3-7 in http://www.unicode.org/versions/Unicode6.2.0/ch03.pdf
+    struct {
+        int numBytes;  // Num values in min, max arrays
+        int min[4];    // Minimum values for each byte in a utf-8 sequence.
+        int max[4];    // Max values.
+    } wellFormedSequencesTable[] = {
+        {
+            1,
+            { 0x00, -1, -1, -1, },
+            { 0x7f, -1, -1, -1, },
+        },
+        {
+            2,
+            { 0xc2, 0x80, -1, -1, },
+            { 0xdf, 0xbf, -1, -1 },
+        },
+        {
+            3,
+            { 0xe0, 0xa0, 0x80, -1, },
+            { 0xe0, 0xbf, 0xbf, -1 },
+        },
+        {
+            3,
+            { 0xe1, 0x80, 0x80, -1, },
+            { 0xec, 0xbf, 0xbf, -1, },
+        },
+        {
+            3,
+            { 0xed, 0x80, 0x80, -1, },
+            { 0xed, 0x9f, 0xbf, -1 },
+        },
+        {
+            3,
+            { 0xee, 0x80, 0x80, -1, },
+            { 0xef, 0xbf, 0xbf, -1, },
+        },
+        {
+            4,
+            { 0xf0, 0x90, 0x80, -1, },
+            { 0xf0, 0xbf, 0xbf, -1, },
+        },
+        {
+            4,
+            { 0xf1, 0x80, 0x80, 0x80, },
+            { 0xf3, 0xbf, 0xbf, 0xbf, },
+        },
+        {
+            4,
+            { 0xf4, 0x80, 0x80, 0x80, },
+            { 0xf4, 0x8f, 0xbf, 0xbf },
+        },
+        { -1, { -1 }, { -1 } }
+    };
+
+    int longest = 0;
+    for (int row = 0; wellFormedSequencesTable[row].numBytes > 0; row++) {
+        longest = MAX(longest,
+                      maximal_subpart_of_row(datap,
+                                             datalen,
+                                             wellFormedSequencesTable[row].numBytes,
+                                             wellFormedSequencesTable[row].min,
+                                             wellFormedSequencesTable[row].max));
+    }
+    return MIN(datalen, MAX(1, longest));
+}
+
 int decode_utf8_char(const unsigned char *datap,
                      int datalen,
                      int * restrict result)
@@ -508,8 +595,16 @@ int decode_utf8_char(const unsigned char *datap,
     }
 
     if (theChar < smallest[utf8Length]) {
-        // Reject overlong sequences.
-        return -utf8Length;
+        // A too-long sequence was used to encode a value. For example, a 4-byte sequence must encode
+        // a value of at least 0x10000 (it is F0 90 80 80). A sequence like F0 8F BF BF is invalid
+        // because there is a 3-byte sequence to encode U+FFFF (the sequence is EF BF BF).
+        return -minimal_subpart(datap, datalen);
+    }
+
+    // Reject UTF-16 surrogates. They are invalid UTF-8 sequences.
+    // Reject characters above U+10FFFF, as they are also invalid UTF-8 sequences.
+    if ((theChar >= 0xD800 && theChar <= 0xDFFF) || theChar > 0x10FFFF) {
+        return -minimal_subpart(datap, datalen);
     }
 
     *result = (int)theChar;
