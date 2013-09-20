@@ -1504,11 +1504,11 @@ NSString *sessionsKey = @"sessions";
         [[addressbookEntry objectForKey:KEY_SPACE] intValue] == -1) {
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
     }
-        if ([arrangement objectForKey:TERMINAL_GUID] &&
+    if ([arrangement objectForKey:TERMINAL_GUID] &&
         [[arrangement objectForKey:TERMINAL_GUID] isKindOfClass:[NSString class]]) {
-                [terminalGuid_ autorelease];
-                terminalGuid_ = [[arrangement objectForKey:TERMINAL_GUID] retain];
-        }
+        [terminalGuid_ autorelease];
+        terminalGuid_ = [[arrangement objectForKey:TERMINAL_GUID] retain];
+    }
 
     [self fitTabsToWindow];
 }

@@ -480,6 +480,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 
     // Terminal tab
     IBOutlet NSButton* disableWindowResizing;
+    IBOutlet NSButton* preventTab;
     IBOutlet NSButton* hideAfterOpening;
     IBOutlet NSButton* syncTitle;
     IBOutlet NSButton* closeSessionsOnEnd;

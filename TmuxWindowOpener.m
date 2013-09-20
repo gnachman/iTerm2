@@ -282,7 +282,9 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
     if (pendingRequests_ == 0) {
         PseudoTerminal *term = nil;
         if (!tabToUpdate_) {
-            term = [self.controller windowWithAffinityForWindowId:self.windowIndex];
+            if (![[[PTYTab tmuxBookmark] objectForKey:KEY_PREVENT_TAB] boolValue]) {
+                term = [self.controller windowWithAffinityForWindowId:self.windowIndex];
+            }
         } else {
             term = [tabToUpdate_ realParentWindow];
         }

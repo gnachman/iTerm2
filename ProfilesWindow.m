@@ -152,18 +152,34 @@ typedef enum {
     [self profileTableSelectionDidChange:tableView_];
 }
 
+- (void)updateKeyEquivalents
+{
+    if (!tabButton_.isEnabled && windowButton_.isEnabled) {
+        windowButton_.keyEquivalentModifierMask = 0;
+    } else {
+        windowButton_.keyEquivalentModifierMask = NSShiftKeyMask;
+    }
+}
 
 - (void)profileTableSelectionDidChange:(id)profileTable
 {
     NSSet* guids = [tableView_ selectedGuids];
+    BOOL anySelectionDisablesTabs = NO;
+    for (NSString *guid in guids) {
+        Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+        if ([[profile objectForKey:KEY_PREVENT_TAB] boolValue]) {
+            anySelectionDisablesTabs = YES;
+        }
+    }
+
     if ([guids count]) {
         BOOL windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
         // tabButton is enabled even if windowExists==false because its shortcut is enter and we
         // don't want to break that.
-        [tabButton_ setEnabled:YES];
+        [tabButton_ setEnabled:!anySelectionDisablesTabs];
         [windowButton_ setEnabled:YES];
         if ([guids count] > 1) {
-            [newTabsInNewWindowButton_ setEnabled:YES];
+            [newTabsInNewWindowButton_ setEnabled:!anySelectionDisablesTabs];
             [horizontalPaneButton_ setEnabled:YES];
             [verticalPaneButton_ setEnabled:YES];
         } else {
@@ -176,10 +192,12 @@ typedef enum {
         [verticalPaneButton_ setEnabled:NO];
         [tabButton_ setEnabled:NO];
         [windowButton_ setEnabled:NO];
+        [newTabsInNewWindowButton_ setEnabled:NO];
     }
     for (int i = 0; i < 2; ++i) {
         [actions_ setEnabled:([guids count] > 0) forSegment:i];
     }
+    [self updateKeyEquivalents];
 }
 
 - (void)profileTableSelectionWillChange:(id)profileTable

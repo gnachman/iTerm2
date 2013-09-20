@@ -946,6 +946,9 @@ static BOOL initDone = NO;
         aDict = [self defaultBookmark];
     }
 
+    if (theTerm && [[aDict objectForKey:KEY_PREVENT_TAB] boolValue]) {
+        theTerm = nil;
+    }
     // Where do we execute this command?
     BOOL toggle = NO;
     if (theTerm == nil) {
@@ -1016,6 +1019,10 @@ static BOOL initDone = NO;
             [temp setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
             aDict = temp;
         }
+    }
+
+    if (theTerm && [[aDict objectForKey:KEY_PREVENT_TAB] boolValue]) {
+        theTerm = nil;
     }
 
     // Where do we execute this command?
@@ -1109,6 +1116,10 @@ static BOOL initDone = NO;
         if (!aDict) {
             aDict = tempDict;
         }
+    }
+
+    if (theTerm && [[aDict objectForKey:KEY_PREVENT_TAB] boolValue]) {
+        theTerm = nil;
     }
 
     // Where do we execute this command?
