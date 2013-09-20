@@ -50,7 +50,25 @@
         NSMutableDictionary *dic = [NSMutableDictionary dictionary];
         [dic setObject:aFont forKey:NSFontAttributeName];
         NSSize size = [@"W" sizeWithAttributes:dic];
-        size.width = size.width;
+
+        CGGlyph glyphs[1];
+        int advances[1];
+        UniChar characters[1];
+        characters[0] = 'W';
+        CTFontRef ctfont = (CTFontRef)aFont;  // Toll-free bridged
+        CGFontRef cgfont = CTFontCopyGraphicsFont(ctfont, NULL);
+        CTFontGetGlyphsForCharacters(ctfont, characters, glyphs, 1);
+        if (CGFontGetGlyphAdvances(cgfont,
+                                   glyphs,
+                                   1,
+                                   advances)) {
+            size.width = advances[0];
+            size.width *= [aFont pointSize];
+            size.width /= CGFontGetUnitsPerEm(cgfont);
+            size.width = floor(size.width);
+        }
+        CGFontRelease(cgfont);
+
         size.height = [aFont ascender] - [aFont descender];
         double baseline = -(floorf([aFont leading]) - floorf([aFont descender]));
         fse.size = size;

@@ -1058,7 +1058,9 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
                     toNonNullY:(int *)nonNullEndY
 {
     assert(actualStartX >= 0);
-
+    assert(actualEndX >= 0);
+    assert(actualStartY >= 0);
+    assert(actualEndY >= 0);
     // Advance start position until it hits a non-null or equals the end position.
     int x = actualStartX;
     int y = actualStartY;
@@ -1329,7 +1331,11 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         memcpy(new_buffer_lines + (new_width + 1) * i, defaultLine, sizeof(screen_char_t) * (new_width+1));
     }
 
-    BOOL hasSelection = display && ([display selectionStartX] >= 0);
+    BOOL hasSelection = (display &&
+                         [display selectionStartX] >= 0 &&
+                         [display selectionEndX] >= 0 &&
+                         [display selectionStartY] >= 0 &&
+                         [display selectionEndY] >= 0);
 
     int usedHeight = [self _usedHeight];
 

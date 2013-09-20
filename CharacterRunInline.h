@@ -215,7 +215,7 @@ CRUN_INLINE CGGlyph *CRunGetGlyphs(CRun *run, int *firstMissingGlyph) {
 	if (run->length == 0) {
 		return nil;
 	}
-    CGGlyph *glyphs = [run->storage glyphsFromIndex:run->index];
+        CGGlyph *glyphs = [run->storage glyphsFromIndex:run->index];
 	BOOL foundAllGlyphs = CTFontGetGlyphsForCharacters((CTFontRef)run->attrs.fontInfo.font,
 													   [run->storage codesFromIndex:run->index],
                                                        glyphs,
