@@ -282,6 +282,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             NULL]];
     CURSOR=YES;
     lastFindStartX = lastFindEndX = oldStartX = startX = -1;
+    _underlineStartX = _underlineStartY = _underlineEndX = _underlineEndY = -1;
     markedText = nil;
     gettimeofday(&lastBlink, NULL);
     [[self window] useOptimizedDrawing:YES];
@@ -408,6 +409,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (BOOL)resignFirstResponder
 {
+    [self removeUnderline];
     return YES;
 }
 
@@ -441,7 +443,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         if (trackingArea) {
             [self removeTrackingArea:trackingArea];
         }
-        if ([[dataSource terminal] mouseMode] == MOUSE_REPORTING_ALL_MOTION) {
+        if ([[dataSource terminal] mouseMode] == MOUSE_REPORTING_ALL_MOTION ||
+            ([NSEvent modifierFlags] & NSCommandKeyMask)) {
             trackingOptions |= NSTrackingMouseMoved;
         }
         trackingArea = [[[NSTrackingArea alloc] initWithRect:[self visibleRect]
@@ -2991,24 +2994,88 @@ NSMutableArray* screens=0;
     } else if ([self xtermMouseReporting] &&
                mouseMode != MOUSE_REPORTING_NONE &&
                mouseMode != MOUSE_REPORTING_HILITE) {
-                changed = [self setCursor:xmrCursor];
+        changed = [self setCursor:xmrCursor];
     } else {
-                changed = [self setCursor:textViewCursor];
+        changed = [self setCursor:textViewCursor];
     }
-        if (changed) {
-                [[_delegate SCROLLVIEW] setDocumentCursor:cursor_];
+    if (changed) {
+        [[_delegate SCROLLVIEW] setDocumentCursor:cursor_];
+    }
+}
+
+// Reset underlined chars indicating cmd-clicakble url.
+- (void)removeUnderline
+{
+    _underlineStartX = _underlineStartY = _underlineEndX = _underlineEndY = -1;
+    [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
+    [self updateTrackingAreas];  // Cause mouseMoved to be (not) called on movement if cmd is down (up).
+}
+
+// Update range of underlined chars indicating cmd-clicakble url.
+- (void)updateUnderlinedURLs:(NSEvent *)event
+{
+    if ([event modifierFlags] & NSCommandKeyMask) {
+        NSPoint screenPoint = [NSEvent mouseLocation];
+        NSRect windowRect = [[self window] convertRectFromScreen:NSMakeRect(screenPoint.x,
+                                                                            screenPoint.y,
+                                                                            0,
+                                                                            0)];
+        NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView: nil];
+        if (!NSPointInRect(locationInTextView, [self bounds])) {
+            [self removeUnderline];
+            return;
         }
+        NSPoint viewPoint = [self windowLocationToRowCol:windowRect.origin];
+        int x = viewPoint.x;
+        int y = viewPoint.y;
+        if (y < 0) {
+            [self removeUnderline];
+            return;
+        } else {
+            int charsTakenFromPrefix;
+            NSString *url = [self _getURLForX:x
+                                            y:y
+                                respectingHardNewlines:NO
+                                  charsTakenFromPrefix:&charsTakenFromPrefix];
+            if ([url length] > 0) {
+                _underlineStartX = x - charsTakenFromPrefix;
+                _underlineStartY = y;
+                _underlineEndX = x + [url length] - charsTakenFromPrefix - 1;
+                _underlineEndY = y;
+
+                int width = [dataSource width];
+                while (_underlineStartX < 0) {
+                    _underlineStartX += width;
+                    _underlineStartY--;
+                }
+                while (_underlineEndX >= width) {
+                    _underlineEndX -= width;
+                    _underlineEndY++;
+                }
+            } else {
+                [self removeUnderline];
+                return;
+            }
+        }
+    } else {
+        [self removeUnderline];
+        return;
+    }
+
+    [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
+    [self updateTrackingAreas];  // Cause mouseMoved to be (not) called on movement if cmd is down (up).
 }
 
 - (void)flagsChanged:(NSEvent *)theEvent
 {
-        [self updateCursor:theEvent];
+    [self updateCursor:theEvent];
+    [self updateUnderlinedURLs:theEvent];
     [super flagsChanged:theEvent];
 }
 
 - (void)flagsChangedNotification:(NSNotification *)notification
 {
-        [self updateCursor:(NSEvent *)[notification object]];
+    [self updateCursor:(NSEvent *)[notification object]];
 }
 
 - (void)swipeWithEvent:(NSEvent *)event
@@ -3019,12 +3086,14 @@ NSMutableArray* screens=0;
 - (void)mouseExited:(NSEvent *)event
 {
     mouseInRect_ = NO;
+    [self updateUnderlinedURLs:event];
 }
 
 - (void)mouseEntered:(NSEvent *)event
 {
     mouseInRect_ = YES;
-        [self updateCursor:event];
+    [self updateCursor:event];
+    [self updateUnderlinedURLs:event];
     if ([[PreferencePanel sharedInstance] focusFollowsMouse] &&
             [[self window] alphaValue] > 0) {
         // Some windows automatically close when they lose key status and are
@@ -3045,10 +3114,9 @@ NSMutableArray* screens=0;
     }
 }
 
-- (NSPoint)clickPoint:(NSEvent *)event
+- (NSPoint)windowLocationToRowCol:(NSPoint)locationInWindow
 {
-    NSPoint locationInWindow = [event locationInWindow];
-    NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
+    NSPoint locationInTextView = [self convertPoint:locationInWindow fromView: nil];
     int x, y;
     int width = [dataSource width];
 
@@ -3063,6 +3131,12 @@ NSMutableArray* screens=0;
     }
 
     return NSMakePoint(x, y);
+}
+
+- (NSPoint)clickPoint:(NSEvent *)event
+{
+    NSPoint locationInWindow = [event locationInWindow];
+    return [self windowLocationToRowCol:locationInWindow];
 }
 
 - (void)mouseDown:(NSEvent *)event
@@ -3589,6 +3663,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     DLog(@"mouseMoved");
     VT100Terminal *terminal = [dataSource terminal];
+    [self updateUnderlinedURLs:event];
     if (![self xtermMouseReporting]) {
         DLog(@"Mouse move event is dispatched but xtermMouseReporting is not enabled");
         return;
@@ -3763,7 +3838,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         trouterDragged = YES;
 
         // Drag a file handle (only possible when there is no selection).
-        NSString *path = [self _getURLForX:x y:y];
+        NSString *path = [self _getURLForX:x y:y charsTakenFromPrefix:nil];
         path = [trouter getFullPath:path
                    workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
                          lineNumber:nil];
@@ -3844,7 +3919,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int y = clickPoint.y;
 
     // Command click in place.
-    NSString *url = [self _getURLForX:x y:y];
+    NSString *url = [self _getURLForX:x y:y charsTakenFromPrefix:nil];
 
     NSString *prefix = [self wrappedStringAtX:x
                                             y:y
@@ -6316,6 +6391,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (CRun *)_constructRuns:(NSPoint)initialPoint
                  theLine:(screen_char_t *)theLine
+                     row:(int)row
                 reversed:(BOOL)reversed
               bgselected:(BOOL)bgselected
                    width:(const int)width
@@ -6324,6 +6400,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                  matches:(NSData*)matches
                  storage:(CRunStorage *)storage
 {
+    BOOL inUnderlinedRange = NO;
     CRun *firstRun = NULL;
     CAttrs attrs;
     CRun *currentRun = NULL;
@@ -6339,6 +6416,29 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (theLine[i].code == DWC_RIGHT) {
             continue;
         }
+        if (_underlineStartX >= 0) {
+            if (row == _underlineStartY && row == _underlineEndY) {
+                // Whole underline is on one line; this char is underlined if between start,end X.
+                inUnderlinedRange = (i >= _underlineStartX && i <= _underlineEndX);
+            } else if (row == _underlineStartY && i >= _underlineStartX) {
+                // Underline spans multiple lines, starting at this one. This char is underlined if
+                // at least at the startX column.
+                inUnderlinedRange = YES;
+            } else if (row == _underlineEndY && i <= _underlineEndX) {
+                // Underline spans multiple lines, ending at this one. This char is underlined if
+                // before or at the endX column.
+                inUnderlinedRange = YES;
+            } else if (row > _underlineStartY && row < _underlineEndY) {
+                // Underline spans multiple lines. This is not the first or last line, so all chars
+                // in it are underlined.
+                inUnderlinedRange = YES;
+            } else {
+                // Underline spans multiple lines. This is the first or last line, but outside the
+                // underlined range.
+                inUnderlinedRange = NO;
+            }
+        }
+
         BOOL doubleWidth = i < width - 1 && (theLine[i + 1].code == DWC_RIGHT);
         unichar thisCharUnichar = 0;
         NSString* thisCharString = nil;
@@ -6443,7 +6543,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Chatacter hidden because of blinking.
             drawable = NO;
         }
-        if (theLine[i].underline) {
+        if (theLine[i].underline || inUnderlinedRange) {
             // This is not as fast as possible, but is nice and simple. Always draw underlined text
             // even if it's just a blank.
             drawable = YES;
@@ -6462,7 +6562,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                        renderBold:&fakeBold
                                      renderItalic:theLine[i].italic];
             attrs.fakeBold = fakeBold;
-            attrs.underline = theLine[i].underline;
+            attrs.underline = theLine[i].underline || inUnderlinedRange;
+            if (inUnderlinedRange && theLine[i].underline) {
+                attrs.color = [NSColor blueColor];
+            }
             if (!currentRun) {
                 firstRun = currentRun = malloc(sizeof(CRun));
                 CRunInitialize(currentRun, &attrs, storage, curX);
@@ -6660,6 +6763,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)_drawCharactersInLine:(screen_char_t *)theLine
+                          row:(int)row
                       inRange:(NSRange)indexRange
               startingAtPoint:(NSPoint)initialPoint
                    bgselected:(BOOL)bgselected
@@ -6672,6 +6776,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     CRunStorage *storage = [CRunStorage cRunStorageWithCapacity:width];
     CRun *run = [self _constructRuns:initialPoint
                              theLine:theLine
+                                 row:row
                             reversed:reversed
                           bgselected:bgselected
                                width:width
@@ -6717,6 +6822,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 // Draw a run of background color/image and foreground text.
 - (void)drawRunStartingAtIndex:(const int)firstIndex  // Index into line of first char
+                           row:(int)row               // Row number of line
                          endAt:(const int)lastIndex   // Index into line of last char
                        yOrigin:(const double)yOrigin  // Top left corner of rect to draw into
                        toPoint:(NSPoint * const)toPoint  // If not nil, an offset for drawing
@@ -6823,6 +6929,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                  yOrigin);
     }
     [self _drawCharactersInLine:theLine
+                            row:row
                         inRange:NSMakeRange(firstIndex, lastIndex - firstIndex)
                 startingAtPoint:textOrigin
                      bgselected:bgselected
@@ -7002,6 +7109,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // This run is finished, draw it
 
             [self drawRunStartingAtIndex:bgstart
+                                     row:line
                                    endAt:j
                                  yOrigin:curY
                                  toPoint:toPoint
@@ -7030,6 +7138,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (bgstart >= 0) {
         // Draw last run, if necesary.
         [self drawRunStartingAtIndex:bgstart
+                                 row:line
                                endAt:j
                              yOrigin:curY
                              toPoint:toPoint
@@ -7075,6 +7184,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Draw the characters.
     CRun *run = [self _constructRuns:NSMakePoint(X, Y)
                              theLine:&temp
+                                 row:(int)Y
                             reversed:NO
                           bgselected:NO
                                width:[dataSource width]
@@ -7222,6 +7332,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             CRunStorage *storage = [CRunStorage cRunStorageWithCapacity:charsInLine];
             CRun *run = [self _constructRuns:NSMakePoint(x, y)
                                      theLine:buf
+                                         row:y
                                     reversed:NO
                                   bgselected:NO
                                        width:[dataSource width]
@@ -7835,7 +7946,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // "~/Library/Application Support/Screen sharing" if such a file exists.
 - (NSMutableString *)_bruteforcePathFromBeforeString:(NSMutableString *)beforeString
                                          afterString:(NSMutableString *)afterString
-                                    workingDirectory:(NSString *)workingDirectory {
+                                    workingDirectory:(NSString *)workingDirectory
+                                charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr
+{
     // Remove escaping slashes
     NSString *removeEscapingSlashes = @"\\\\([ \\(\\[\\]\\\\)])";
 
@@ -7864,6 +7977,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         for (int j = 0; j < [afterChunks count] && j < 10; j++) {
             [possiblePath appendString:[afterChunks objectAtIndex:j]];
             if ([trouter getFullPath:possiblePath workingDirectory:workingDirectory lineNumber:NULL]) {
+                if (charsTakenFromPrefixPtr) {
+                    *charsTakenFromPrefixPtr = [beforeChunk length];
+                }
                 return possiblePath;
             }
 
@@ -7953,6 +8069,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     int w = [dataSource width];
     int h = [dataSource height];
+    if (yi < 0 || yi >= [dataSource numberOfLines]) {
+        return @"";
+    }
     int x = xi;
     int y = yi;
     NSRect bounds = [self boundingRectForCharAtX:xi y:yi];
@@ -8022,9 +8141,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 // Returns a substring of contiguous characters only from a given character set
 // including some character in the middle of the "haystack" (source) string.
-- (NSString *)stringInString:(NSString *)haystack includingOffset:(int)offset fromCharacterSet:(NSCharacterSet *)charSet
+- (NSString *)stringInString:(NSString *)haystack
+             includingOffset:(int)offset
+            fromCharacterSet:(NSCharacterSet *)charSet
+        charsTakenFromPrefix:(int*)charsTakenFromPrefixPtr
 {
     if (![haystack length]) {
+        if (charsTakenFromPrefixPtr) {
+            *charsTakenFromPrefixPtr = 0;
+        }
         return @"";
     }
     NSRange firstBadCharRange = [haystack rangeOfCharacterFromSet:[charSet invertedSet]
@@ -8037,7 +8162,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int end = [haystack length];
     if (firstBadCharRange.location != NSNotFound) {
         start = firstBadCharRange.location + 1;
+        if (charsTakenFromPrefixPtr) {
+            *charsTakenFromPrefixPtr = offset - start;
+        }
+    } else if (charsTakenFromPrefixPtr) {
+        *charsTakenFromPrefixPtr = 0;
     }
+
     if (lastBadCharRange.location != NSNotFound) {
         end = lastBadCharRange.location;
     }
@@ -8048,11 +8179,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (NSString*)_getURLForX:(int)x
                        y:(int)y
   respectingHardNewlines:(BOOL)respectHardNewlines
+    charsTakenFromPrefix:(int*)charsTakenFromPrefixPtr
 {
     NSString *prefix = [self wrappedStringAtX:x y:y dir:-1 respectHardNewlines:respectHardNewlines];
     NSString *suffix = [self wrappedStringAtX:x y:y dir:1 respectHardNewlines:respectHardNewlines];
     NSString *joined = [prefix stringByAppendingString:suffix];
-    NSString *possibleUrl = [self stringInString:joined includingOffset:[prefix length] fromCharacterSet:[PTYTextView urlCharacterSet]];
+    NSString *possibleUrl = [self stringInString:joined
+                                 includingOffset:[prefix length]
+                                fromCharacterSet:[PTYTextView urlCharacterSet]
+                            charsTakenFromPrefix:charsTakenFromPrefixPtr];
     NSArray *punctuation = [NSArray arrayWithObjects:@".", @",", @";", nil];
     for (NSString *pchar in punctuation) {
         if ([possibleUrl hasSuffix:pchar]) {
@@ -8060,27 +8195,42 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             break;
         }
     }
-    NSString *possibleFilePart1 = [self stringInString:prefix includingOffset:[prefix length] - 1 fromCharacterSet:[PTYTextView filenameCharacterSet]];
-    NSString *possibleFilePart2 = [self stringInString:suffix includingOffset:0 fromCharacterSet:[PTYTextView filenameCharacterSet]];
+    NSString *possibleFilePart1 = [self stringInString:prefix
+                                       includingOffset:[prefix length] - 1
+                                      fromCharacterSet:[PTYTextView filenameCharacterSet]
+                                  charsTakenFromPrefix:NULL];
+    NSString *possibleFilePart2 = [self stringInString:suffix
+                                       includingOffset:0
+                                      fromCharacterSet:[PTYTextView filenameCharacterSet]
+                                   charsTakenFromPrefix:NULL];
 
+    int fileCharsTaken = 0;
     NSString *filename = [self _bruteforcePathFromBeforeString:[[possibleFilePart1 mutableCopy] autorelease]
                                                    afterString:[[possibleFilePart2 mutableCopy] autorelease]
-                                              workingDirectory:[self getWorkingDirectoryAtLine:y]];
+                                              workingDirectory:[self getWorkingDirectoryAtLine:y]
+                                          charsTakenFromPrefix:&fileCharsTaken];
     if (!filename && [self _stringLooksLikeURL:possibleUrl]) {
         return possibleUrl;
     } else if (filename) {
+        if (charsTakenFromPrefixPtr) {
+            *charsTakenFromPrefixPtr = fileCharsTaken;
+        }
         return filename;
     } else {
+        if (charsTakenFromPrefixPtr) {
+            *charsTakenFromPrefixPtr = 0;
+        }
         return @"";
     }
 }
 
 - (NSString *)_getURLForX:(int)x
                         y:(int)y
+     charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr
 {
     // I tried respecting hard newlines if that is a legal URL, but that's such a broad definition
     // that it doesn't work well. Hard EOLs mid-url are very common. Let's try always ignoring them.
-    return [self _getURLForX:x y:y respectingHardNewlines:NO];
+    return [self _getURLForX:x y:y respectingHardNewlines:NO charsTakenFromPrefix:charsTakenFromPrefixPtr];
 }
 
 - (BOOL) _findMatchingParenthesis: (NSString *) parenthesis withX:(int)X Y:(int)Y

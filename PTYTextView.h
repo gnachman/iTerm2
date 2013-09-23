@@ -247,6 +247,9 @@ enum {
     // position moves with the cursor.
     int startX, startY, endX, endY;
     int oldStartX, oldStartY, oldEndX, oldEndY;
+
+    // Underlined selection range (inclusive of all values), indicating clickable url.
+    int _underlineStartX, _underlineStartY, _underlineEndX, _underlineEndY;
     char oldSelectMode;
     BOOL mouseDown;
     BOOL mouseDragged;
@@ -591,6 +594,9 @@ enum {
 - (void)setSelectionFromX:(int)fromX fromY:(int)fromY toX:(int)toX toY:(int)toY;
 - (void)setRectangularSelection:(BOOL)isBox;
 
+// Remove underline indicating clickable URL.
+- (void)removeUnderline;
+
 - (double)excess;
 
 
@@ -760,7 +766,9 @@ typedef enum {
 - (PTYCharType)classifyChar:(unichar)ch
                   isComplex:(BOOL)complex;
 
-- (NSString *)_getURLForX:(int)x y:(int)y;
+- (NSString *)_getURLForX:(int)x
+                        y:(int)y
+     charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr;
 // Returns true if any char in the line is blinking.
 - (BOOL)_drawLine:(int)line
               AtY:(double)curY

@@ -1971,6 +1971,7 @@ NSString *sessionsKey = @"sessions";
         if ([[aSession TEXTVIEW] isFindingCursor]) {
             [[aSession TEXTVIEW] endFindCursor];
         }
+        [[aSession TEXTVIEW] removeUnderline];
     }
 
     PtyLog(@"PseudoTerminal windowDidResignKey");
