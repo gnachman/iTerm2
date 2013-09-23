@@ -48,7 +48,7 @@
                                         &len,
                                         ambiguousIsDoubleWidth,
                                         NULL);
-                    if ([terminal charset]) {
+                    if (token.type == VT100_ASCIISTRING && [terminal charset]) {
                         TranslateCharacterSet(screenChars, len);
                     }
                     [result appendBytes:screenChars
