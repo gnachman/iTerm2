@@ -65,7 +65,7 @@
 	<key>CFBundleIconFile</key>
 	<string>iTerm.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.georgester.iterm2</string>
+	<string>com.googlecode.iterm2</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
