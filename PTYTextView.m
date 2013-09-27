@@ -4031,6 +4031,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
          (int)trimSelectionTrailingSpaces);
     int endx = nonInclusiveEndx-1;
     int width = [dataSource width];
+    assert(endx <= width);
     const int estimatedSize = (endy - starty + 1) * (width + 1) + (endx - startx + 1);
     NSMutableString* result = [NSMutableString stringWithCapacity:estimatedSize];
     int y, x1, x2;

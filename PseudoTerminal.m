@@ -5566,8 +5566,8 @@ NSString *sessionsKey = @"sessions";
         Profile* addressbookEntry = [aSession addressBookEntry];
         BOOL loginSession;
         cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
-                                                                                                                                                  isLoginSession:&loginSession
-                                                                                                                                                   forObjectType:objectType]] autorelease];
+                                                                          isLoginSession:&loginSession
+                                                                           forObjectType:objectType]] autorelease];
         name = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey:KEY_NAME]] autorelease];
         // Get session parameters
         [self getSessionParameters:cmd withName:name];

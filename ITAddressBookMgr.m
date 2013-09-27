@@ -520,32 +520,32 @@ static NSString* UserShell() {
 }
 
 + (NSString*)loginShellCommandForBookmark:(Profile*)bookmark
-                                                         asLoginShell:(BOOL*)asLoginShell
-                                                        forObjectType:(iTermObjectType)objectType
+                             asLoginShell:(BOOL*)asLoginShell
+                            forObjectType:(iTermObjectType)objectType
 {
     NSString* thisUser = NSUserName();
     NSString* userShell = UserShell();
-        NSString *customDirectoryString;
-        if ([[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"Advanced"]) {
+    NSString *customDirectoryString;
+    if ([[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"Advanced"]) {
         switch (objectType) {
-          case iTermWindowObject:
-              customDirectoryString = [bookmark objectForKey:KEY_AWDS_WIN_OPTION];
-                          break;
-          case iTermTabObject:
-              customDirectoryString = [bookmark objectForKey:KEY_AWDS_TAB_OPTION];
-              break;
-          case iTermPaneObject:
-              customDirectoryString = [bookmark objectForKey:KEY_AWDS_PANE_OPTION];
-              break;
-          default:
-              NSLog(@"Bogus object type %d", (int)objectType);
-              customDirectoryString = @"No";
+            case iTermWindowObject:
+                customDirectoryString = [bookmark objectForKey:KEY_AWDS_WIN_OPTION];
+                break;
+            case iTermTabObject:
+                customDirectoryString = [bookmark objectForKey:KEY_AWDS_TAB_OPTION];
+                break;
+            case iTermPaneObject:
+                customDirectoryString = [bookmark objectForKey:KEY_AWDS_PANE_OPTION];
+                break;
+            default:
+                NSLog(@"Bogus object type %d", (int)objectType);
+                customDirectoryString = @"No";
         }
-        } else {
-                customDirectoryString = [bookmark objectForKey:KEY_CUSTOM_DIRECTORY];
-        }
+    } else {
+        customDirectoryString = [bookmark objectForKey:KEY_CUSTOM_DIRECTORY];
+    }
 
-        if ([customDirectoryString isEqualToString:@"No"]) {
+    if ([customDirectoryString isEqualToString:@"No"]) {
         // Run login without -l argument: this is a login session and will use the home dir.
         *asLoginShell = NO;
         return [NSString stringWithFormat:@"login -fp \"%@\"", thisUser];
@@ -569,8 +569,8 @@ static NSString* UserShell() {
 }
 
 + (NSString*)bookmarkCommand:(Profile*)bookmark
-                          isLoginSession:(BOOL*)isLoginSession
-                           forObjectType:(iTermObjectType)objectType
+              isLoginSession:(BOOL*)isLoginSession
+               forObjectType:(iTermObjectType)objectType
 {
     BOOL custom = [[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"];
     if (custom) {
@@ -578,8 +578,8 @@ static NSString* UserShell() {
         return [bookmark objectForKey:KEY_COMMAND];
     } else {
         return [ITAddressBookMgr loginShellCommandForBookmark:bookmark
-                                                                                                 asLoginShell:isLoginSession
-                                                                                                forObjectType:objectType];
+                                                 asLoginShell:isLoginSession
+                                                forObjectType:objectType];
     }
 }
 
