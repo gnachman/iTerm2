@@ -1207,7 +1207,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 {
     PseudoTerminal *frontTerminal = [[iTermController sharedInstance] currentTerminal];
     PTYSession *session = [frontTerminal currentSession];
-	[session changeFontSizeDirection:0];
+    [session changeFontSizeDirection:0];
     if ([sender isAlternate]) {
         NSDictionary *abEntry = [session originalAddressBookEntry];
         [frontTerminal sessionInitiatedResize:session
