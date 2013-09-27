@@ -57,8 +57,6 @@ CRUN_INLINE void CRunInitialize(CRun *run,
 								CRunStorage *storage,
 								CGFloat x) {
 	run->attrs = *attrs;
-	[run->attrs.color retain];
-	[run->attrs.fontInfo retain];
 	run->x = x;
 	run->length = 0;
 	run->index = -1;
@@ -157,8 +155,6 @@ CRUN_INLINE CRun *CRunAppendString(CRun *run,
 
 CRUN_INLINE void CRunDestroy(CRun *run) {
 	[run->string release];
-	[run->attrs.color release];
-	[run->attrs.fontInfo release];
 	[run->storage release];
 	if (run->next) {
 		CRunDestroy(run->next);
