@@ -44,10 +44,10 @@
 // Describes the appearance of a character.
 typedef struct {
     BOOL antiAlias;           // Use anti-aliasing?
-    NSColor *color;           // Foreground color
+    NSColor *color;           // Foreground color. WEAK.
     BOOL fakeBold;            // Should bold text be rendered by drawing text twice with a 1px shift?
     BOOL underline;
-    PTYFontInfo *fontInfo;    // Font to use.
+    PTYFontInfo *fontInfo;    // Font to use. WEAK.
 } CAttrs;
 
 typedef struct CRun CRun;
