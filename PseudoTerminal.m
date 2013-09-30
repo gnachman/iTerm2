@@ -4329,10 +4329,6 @@ NSString *sessionsKey = @"sessions";
         }
 }
 
-@end
-
-@implementation PseudoTerminal (Private)
-
 - (int)_screenAtPoint:(NSPoint)p
 {
     int i = 0;
@@ -4347,6 +4343,8 @@ NSString *sessionsKey = @"sessions";
     return 0;
 }
 
+// For full screen mode, draw the window contents in black except for the find
+// bar area.
 - (void)_drawFullScreenBlackBackground
 {
     [[[self window] contentView] lockFocus];
@@ -4462,6 +4460,8 @@ NSString *sessionsKey = @"sessions";
                                             unset:flags];
 }
 
+// Grow or shrink the tabview to make room for the find bar in fullscreen mode
+// and then fit sessions to new window size.
 - (void)adjustFullScreenWindowForBottomBarChange
 {
     if (![self anyFullScreen]) {
@@ -4488,6 +4488,7 @@ NSString *sessionsKey = @"sessions";
     [self fitBottomBarToWindow];
 }
 
+// Adjust the find bar's width to match the window's.
 - (void)fitBottomBarToWindow
 {
     // Adjust the position of the bottom bar to fit properly below the tabview.
@@ -4507,6 +4508,7 @@ NSString *sessionsKey = @"sessions";
     [self updateInstantReplay];
 }
 
+// Show or hide instant replay bar.
 - (void)setInstantReplayBarVisible:(BOOL)visible
 {
     BOOL hide = !visible;
@@ -4577,6 +4579,7 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+// Returns the size of the stuff outside the tabview.
 - (NSSize)windowDecorationSize
 {
     NSSize contentSize = NSZeroSize;
@@ -4694,6 +4697,7 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+// Change position of window widgets.
 - (void)repositionWidgets
 {
     PtyLog(@"repositionWidgets");
@@ -4802,6 +4806,8 @@ NSString *sessionsKey = @"sessions";
     PtyLog(@"repositionWidgets - return.");
 }
 
+// Returns the width of characters in pixels in the session with the widest
+// characters. Fills in *numChars with the number of columns in that session.
 - (float)maxCharWidth:(int*)numChars
 {
     float max=0;
@@ -4822,6 +4828,8 @@ NSString *sessionsKey = @"sessions";
     return max;
 }
 
+// Returns the height of characters in pixels in the session with the tallest
+// characters. Fills in *numChars with the number of rows in that session.
 - (float)maxCharHeight:(int*)numChars
 {
     float max=0;
@@ -4841,6 +4849,8 @@ NSString *sessionsKey = @"sessions";
     return max;
 }
 
+// Returns the width of characters in pixels in the overall widest session.
+// Fills in *numChars with the number of columns in that session.
 - (float)widestSessionWidth:(int*)numChars
 {
     float max=0;
@@ -4861,6 +4871,8 @@ NSString *sessionsKey = @"sessions";
     return ch;
 }
 
+// Returns the height of characters in pixels in the overall tallest session.
+// Fills in *numChars with the number of rows in that session.
 - (float)tallestSessionHeight:(int*)numChars
 {
     float max=0;
@@ -4879,6 +4891,7 @@ NSString *sessionsKey = @"sessions";
     return ch;
 }
 
+// Copy state from 'other' to this terminal.
 - (void)copySettingsFrom:(PseudoTerminal*)other
 {
     [bottomBar setHidden:YES];
@@ -4888,6 +4901,10 @@ NSString *sessionsKey = @"sessions";
     [bottomBar setHidden:[other->bottomBar isHidden]];
 }
 
+// Set the session's address book and initialize its screen and name. Sets the
+// window title to the session's name. If size is not nil then the session is initialized to fit
+// a view of that size; otherwise the size is derived from the existing window if there is already
+// an open tab, or its bookmark's preference if it's the first session in the window.
 - (void)setupSession:(PTYSession *)aSession
                title:(NSString *)title
             withSize:(NSSize*)size
@@ -4995,6 +5012,7 @@ NSString *sessionsKey = @"sessions";
 
 }
 
+// Max window frame size that fits on screens.
 - (NSRect)maxFrame
 {
     NSRect visibleFrame = NSZeroRect;
@@ -5004,6 +5022,8 @@ NSString *sessionsKey = @"sessions";
     return visibleFrame;
 }
 
+// Push a size change to a session (and on to its shell) but clamps the size to
+// reasonable minimum and maximum limits.
 // Set the session to a size that fits on the screen.
 - (void)safelySetSessionSize:(PTYSession*)aSession rows:(int)rows columns:(int)columns
 {
@@ -5062,6 +5082,7 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+// Adjust the tab's size for a new window size.
 - (void)fitTabToWindow:(PTYTab*)aTab
 {
     NSSize size = [TABVIEW contentRect].size;
@@ -5069,6 +5090,7 @@ NSString *sessionsKey = @"sessions";
     [aTab setSize:size];
 }
 
+// Add a tab to the tabview.
 - (void)insertTab:(PTYTab*)aTab atIndex:(int)anIndex
 {
     PtyLog(@"insertTab:atIndex:%d", anIndex);
@@ -5094,6 +5116,7 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+// Add a session to the tab view.
 - (void)insertSession:(PTYSession *)aSession atIndex:(int)anIndex
 {
     PtyLog(@"-[PseudoTerminal insertSession: %p atIndex: %d]", aSession, anIndex);
@@ -5115,6 +5138,7 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+// Seamlessly change the session in a tab.
 - (void)replaceSession:(PTYSession *)aSession atIndex:(int)anIndex
 {
     PtyLog(@"-[PseudoTerminal insertSession: %p atIndex: %d]", aSession, anIndex);
@@ -5153,12 +5177,15 @@ NSString *sessionsKey = @"sessions";
     return MIN(250, self.window.frame.size.width / 5);
 }
 
+// Reutrn the name of the foreground session.
 - (NSString *)currentSessionName
 {
     PTYSession* session = [self currentSession];
     return [session windowTitle] ? [session windowTitle] : [session defaultName];
 }
 
+// Set the session name. If theSessionName is nil then set it to the pathname
+// or "Finish" if it's closed.
 - (void)setName:(NSString *)theSessionName forSession:(PTYSession*)aSession
 {
     if (theSessionName != nil) {
@@ -5181,6 +5208,8 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+// Assign a value to the 'framePos' member variable which is used for storing
+// window frame positions between invocations of iTerm.
 - (void)setFramePos
 {
     // Set framePos to the next unused window position.
@@ -5194,6 +5223,7 @@ NSString *sessionsKey = @"sessions";
     framePos = CACHED_WINDOW_POSITIONS - 1;
 }
 
+// Execute the given program and set the window title if it is uninitialized.
 - (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv
          environment:(NSDictionary *)prog_env
@@ -5216,6 +5246,7 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+// Send a reset to the current session's terminal.
 - (void)reset:(id)sender
 {
     [[[self currentSession] TERMINAL] resetPreservingPrompt:YES];
@@ -5228,16 +5259,19 @@ NSString *sessionsKey = @"sessions";
     [[[self currentSession] SCREEN] resetCharset];
 }
 
+// Clear the buffer of the current session.
 - (void)clearBuffer:(id)sender
 {
     [[self currentSession] clearBuffer];
 }
 
+// Erase the scrollback buffer of the current session.
 - (void)clearScrollbackBuffer:(id)sender
 {
     [[self currentSession] clearScrollbackBuffer];
 }
 
+// Turn on session logging in the current session.
 - (IBAction)logStart:(id)sender
 {
     if (![[self currentSession] logging]) {
@@ -5249,6 +5283,7 @@ NSString *sessionsKey = @"sessions";
                                                         object:[self currentSession]];
 }
 
+// Turn off session logging in the current session.
 - (IBAction)logStop:(id)sender
 {
     if ([[self currentSession] logging]) {
@@ -5263,6 +5298,7 @@ NSString *sessionsKey = @"sessions";
     [[self ptyWindow] toggleToolbarShown:sender];
 }
 
+// Returns true if the given menu item is selectable.
 - (BOOL)validateMenuItem:(NSMenuItem *)item
 {
     BOOL logging = [[self currentSession] logging];
@@ -5326,6 +5362,8 @@ NSString *sessionsKey = @"sessions";
     return result;
 }
 
+// Turn on/off sending of input to all sessions. This causes a bunch of UI
+// to update in addition to flipping the flag.
 - (IBAction)enableSendInputToAllPanes:(id)sender
 {
     [self setBroadcastMode:BROADCAST_TO_ALL_PANES];
@@ -5359,6 +5397,8 @@ NSString *sessionsKey = @"sessions";
     [self setWindowTitle];
 }
 
+// Push size changes to all sessions so they are all as large as possible while
+// still fitting in the window.
 - (void)fitTabsToWindow
 {
     PtyLog(@"fitTabsToWindow begins");
@@ -5368,7 +5408,7 @@ NSString *sessionsKey = @"sessions";
     PtyLog(@"fitTabsToWindow returns");
 }
 
-// Close Window
+// Show a dialog confirming close. Returns YES if the window should be closed.
 - (BOOL)showCloseWindow
 {
     return ([self confirmCloseForSessions:[self sessions]
@@ -5376,18 +5416,19 @@ NSString *sessionsKey = @"sessions";
                               genericName:[NSString stringWithFormat:@"Window #%d", number_+1]]);
 }
 
+// accessor
 - (PSMTabBarControl*)tabBarControl
 {
     return tabBarControl;
 }
 
-// closes a tab
+// Called when the "Close tab" contextual menu item is clicked.
 - (void)closeTabContextualMenuAction: (id) sender
 {
     [self closeTab:(id)[[sender representedObject] identifier]];
 }
 
-// moves a tab with its session to a new window
+// Move a tab to a new window due to a context menu selection.
 - (void)moveTabToNewWindowContextualMenuAction:(id)sender
 {
     PseudoTerminal *term;
@@ -5448,11 +5489,13 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+// Close this window.
 - (IBAction)closeWindow:(id)sender
 {
     [[self window] performClose:sender];
 }
 
+// Sends text to the current session. Also interprets URLs and opens them.
 - (IBAction)sendCommand:(id)sender
 {
     NSString *command = [commandField stringValue];
@@ -5486,6 +5529,7 @@ NSString *sessionsKey = @"sessions";
     [commandField setStringValue:@""];
 }
 
+// Cause every session in this window to reload its bookmark.
 - (void)reloadBookmarks
 {
     for (PTYSession* session in [self allSessions]) {
@@ -5514,11 +5558,13 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+// Called when the parameter panel should close.
 - (IBAction)parameterPanelEnd:(id)sender
 {
     [NSApp stopModal];
 }
 
+// Return the timestamp for a slider position in [0, 1] for the current session.
 - (long long)timestampForFraction:(float)f
 {
     DVR* dvr = [[self currentSession] dvr];
@@ -5527,6 +5573,7 @@ NSString *sessionsKey = @"sessions";
     return [dvr firstTimeStamp] + offset;
 }
 
+// Return all sessions in all tabs.
 - (NSArray*)allSessions
 {
     NSMutableArray* result = [NSMutableArray arrayWithCapacity:[TABVIEW numberOfTabViewItems]];
@@ -5536,6 +5583,7 @@ NSString *sessionsKey = @"sessions";
     return result;
 }
 
+// Allocate a new session and assign it a bookmark. Returns a retained object.
 - (PTYSession*)newSessionWithBookmark:(Profile*)bookmark
 {
     assert(bookmark);
@@ -5552,6 +5600,7 @@ NSString *sessionsKey = @"sessions";
     return aSession;
 }
 
+// Execute the bookmark command in this session.
 // Used when adding a split pane.
 - (void)runCommandInSession:(PTYSession*)aSession
                       inCwd:(NSString*)oldCWD
