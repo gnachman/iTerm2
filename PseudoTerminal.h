@@ -771,6 +771,29 @@ NSWindowDelegate,
 - (void)setDimmingForSession:(PTYSession *)aSession;
 - (void)setDimmingForSessions;
 
+// Return the name of the foreground session.
+- (NSString *)currentSessionName;
+
+// Hide the menu bar only if this term is the key window.
+- (void)hideMenuBar;
+- (void)showMenuBar;
+
+// Set the session name. If theSessionName is nil then set it to the pathname
+// or "Finish" if it's closed.
+- (void)setName:(NSString *)theSessionName forSession:(PTYSession*)aSession;
+
+// Cause every session in this window to reload its bookmark.
+- (void)reloadBookmarks;
+
+// accessor
+- (PSMTabBarControl*)tabBarControl;
+
+// Return all sessions in all tabs.
+- (NSArray*)allSessions;
+
+// Add a session to the tab view.
+- (void)insertSession:(PTYSession *)aSession atIndex:(int)anIndex;
+
 @end
 
 @interface PseudoTerminal (KeyValueCoding)

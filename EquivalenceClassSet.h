@@ -13,9 +13,9 @@
     NSMutableDictionary *classes_;
 }
 
-- (NSArray *)valuesEqualTo:(NSObject *)target;
-- (void)setValue:(NSObject *)value equalToValue:(NSObject *)otherValue;
-- (void)removeValue:(NSObject *)target;
+- (NSArray *)valuesEqualTo:(NSObject<NSCopying> *)target;
+- (void)setValue:(NSObject<NSCopying> *)value equalToValue:(NSObject<NSCopying> *)otherValue;
+- (void)removeValue:(NSObject<NSCopying> *)target;
 - (NSArray *)classes;
 
 @end

@@ -28,7 +28,7 @@
 @property (nonatomic, assign) BOOL hasSelection;
 @property (nonatomic, assign) NSObject<TriggerDelegate> *delegate;
 
-- (NSDictionary *)triggers;
+- (NSArray *)triggers;
 
 - (IBAction)addTrigger:(id)sender;
 - (IBAction)removeTrigger:(id)sender;

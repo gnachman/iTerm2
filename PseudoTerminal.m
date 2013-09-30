@@ -4429,7 +4429,6 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
-// Hide the menu bar only if this term is the key window.
 - (void)hideMenuBar
 {
     NSScreen* menubarScreen = nil;
@@ -5116,7 +5115,6 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
-// Add a session to the tab view.
 - (void)insertSession:(PTYSession *)aSession atIndex:(int)anIndex
 {
     PtyLog(@"-[PseudoTerminal insertSession: %p atIndex: %d]", aSession, anIndex);
@@ -5177,15 +5175,12 @@ NSString *sessionsKey = @"sessions";
     return MIN(250, self.window.frame.size.width / 5);
 }
 
-// Reutrn the name of the foreground session.
 - (NSString *)currentSessionName
 {
     PTYSession* session = [self currentSession];
     return [session windowTitle] ? [session windowTitle] : [session defaultName];
 }
 
-// Set the session name. If theSessionName is nil then set it to the pathname
-// or "Finish" if it's closed.
 - (void)setName:(NSString *)theSessionName forSession:(PTYSession*)aSession
 {
     if (theSessionName != nil) {
@@ -5416,7 +5411,6 @@ NSString *sessionsKey = @"sessions";
                               genericName:[NSString stringWithFormat:@"Window #%d", number_+1]]);
 }
 
-// accessor
 - (PSMTabBarControl*)tabBarControl
 {
     return tabBarControl;
@@ -5529,7 +5523,6 @@ NSString *sessionsKey = @"sessions";
     [commandField setStringValue:@""];
 }
 
-// Cause every session in this window to reload its bookmark.
 - (void)reloadBookmarks
 {
     for (PTYSession* session in [self allSessions]) {
@@ -5573,7 +5566,6 @@ NSString *sessionsKey = @"sessions";
     return [dvr firstTimeStamp] + offset;
 }
 
-// Return all sessions in all tabs.
 - (NSArray*)allSessions
 {
     NSMutableArray* result = [NSMutableArray arrayWithCapacity:[TABVIEW numberOfTabViewItems]];

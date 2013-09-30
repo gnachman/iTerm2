@@ -53,6 +53,7 @@
 #import "iTerm.h"
 #import "WindowArrangements.h"
 #import "NSView+iTerm.h"
+#include <objc/runtime.h>
 
 //#define HOTKEY_WINDOW_VERBOSE_LOGGING
 #ifdef HOTKEY_WINDOW_VERBOSE_LOGGING

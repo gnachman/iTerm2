@@ -44,6 +44,7 @@
 #import "ToastWindowController.h"
 #include <unistd.h>
 #include <sys/stat.h>
+#include <objc/runtime.h>
 
 static NSString *APP_SUPPORT_DIR = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";

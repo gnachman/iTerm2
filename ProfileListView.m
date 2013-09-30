@@ -698,7 +698,7 @@ const int kInterWidgetMargin = 10;
 
 - (void)turnOnDebug
 {
-    NSLog(@"Debugging object at %x. Current count is %d", (void*)self, (int)[self retainCount]);
+    NSLog(@"Debugging object at %p. Current count is %d", (void*)self, (int)[self retainCount]);
     debug=YES;
 }
 
