@@ -113,7 +113,7 @@ static BOOL hasBecomeActive = NO;
         // while compiling against the 10.5 SDK.
 
         // presentationOptions =  [NSApp presentationOptions]
-        NSMethodSignature *presentationOptionsSignature = [NSApp->isa
+        NSMethodSignature *presentationOptionsSignature = [object_getClass(NSApp)
             instanceMethodSignatureForSelector:@selector(presentationOptions)];
         NSInvocation *presentationOptionsInvocation = [NSInvocation
             invocationWithMethodSignature:presentationOptionsSignature];
@@ -128,7 +128,7 @@ static BOOL hasBecomeActive = NO;
         presentationOptions &= ~antiflags;
 
         // [NSAppObj setPresentationOptions:presentationOptions];
-        NSMethodSignature *setSig = [NSApp->isa instanceMethodSignatureForSelector:@selector(setPresentationOptions:)];
+        NSMethodSignature *setSig = [object_getClass(NSApp) instanceMethodSignatureForSelector:@selector(setPresentationOptions:)];
         NSInvocation *setInv = [NSInvocation invocationWithMethodSignature:setSig];
         [setInv setTarget:NSApp];
         [setInv setSelector:@selector(setPresentationOptions:)];
