@@ -3857,6 +3857,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     Profile *tmuxBookmark = [PTYTab tmuxBookmark];
     theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
     theSize.height = MAX(1, [[tmuxBookmark objectForKey:KEY_ROWS] intValue]);
+    [tmuxController_ validateOptions];
     [tmuxController_ setClientSize:theSize];
 
     [self printTmuxMessage:@"** tmux mode started **"];
