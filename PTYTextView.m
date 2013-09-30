@@ -6207,7 +6207,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Is a selection.
             isSelection = YES;
             // NOTE: This could be optimized by caching the color.
-            attrs.color = [self _dimmedColorFrom:selectedTextColor];
+            CRunAttrsSetColor(&attrs, storage, [self _dimmedColorFrom:selectedTextColor]);
         } else {
             // Not a selection.
             if (reversed &&
@@ -6215,9 +6215,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 theLine[i].foregroundColor == ALTSEM_FG_DEFAULT) {
                 // Has default foreground color so use background color.
                 if (!dimOnlyText_) {
-                    attrs.color = [self _dimmedColorFrom:defaultBGColor];
+                    CRunAttrsSetColor(&attrs, storage, [self _dimmedColorFrom:defaultBGColor]);
                 } else {
-                    attrs.color = defaultBGColor;
+                    CRunAttrsSetColor(&attrs, storage, defaultBGColor);
                 }
             } else {
                 if (theLine[i].foregroundColor == lastForegroundColor &&
@@ -6225,14 +6225,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     theLine[i].bold == lastBold) {
                     // Looking up colors with -colorForCode:... is expensive and it's common to
                     // have consecutive characters with the same color.
-                    attrs.color = lastColor;
+                    CRunAttrsSetColor(&attrs, storage, lastColor);
                 } else {
                     // Not reversed or not subject to reversing (only default
                     // foreground color is drawn in reverse video).
-                    attrs.color = [self colorForCode:theLine[i].foregroundColor
-                                  alternateSemantics:theLine[i].alternateForegroundSemantics
-                                                bold:theLine[i].bold
-                                        isBackground:NO];
+                    CRunAttrsSetColor(&attrs,
+                                      storage,
+                                      [self colorForCode:theLine[i].foregroundColor
+                                      alternateSemantics:theLine[i].alternateForegroundSemantics
+                                                    bold:theLine[i].bold
+                                            isBackground:NO]);
                     lastForegroundColor = theLine[i].foregroundColor;
                     lastAlternateForegroundSemantics = theLine[i].alternateForegroundSemantics;
                     lastBold = theLine[i].bold;
@@ -6246,13 +6248,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             int theIndex = i / 8;
             int mask = 1 << (i & 7);
             if (theIndex < [matches length] && matchBytes[theIndex] & mask) {
-                attrs.color = [NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1];
+                CRunAttrsSetColor(&attrs,
+                                  storage,
+                                  [NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1]);
             }
         }
 
         if (minimumContrast_ > 0.001 && bgColor) {
             // TODO: Way too much time spent here. Use previous char's color if it is the same.
-            attrs.color = [self color:attrs.color withContrastAgainst:bgColor];
+            CRunAttrsSetColor(&attrs,
+                              storage,
+                              [self color:attrs.color withContrastAgainst:bgColor]);
         }
         BOOL drawable;
         if (blinkShow || ![self _charBlinks:theLine[i]]) {
@@ -6846,7 +6852,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // If an override color is given, change the runs' colors.
         if (overrideColor) {
             while (run) {
-                run->attrs.color = overrideColor;
+                CRunAttrsSetColor(&run->attrs, run->storage, overrideColor);
                 run = run->next;
             }
         }

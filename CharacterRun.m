@@ -23,6 +23,7 @@
         glyphs_ = malloc(sizeof(CGGlyph) * capacity);
         advances_ = malloc(sizeof(NSSize) * capacity);
         capacity_ = capacity;
+        colors_ = [[NSMutableSet alloc] init];
         used_ = 0;
     }
     return self;
@@ -32,6 +33,7 @@
     free(codes_);
     free(glyphs_);
     free(advances_);
+    [colors_ release];
     [super dealloc];
 }
 
@@ -67,6 +69,10 @@
     codes_[i] = code;
     advances_[i] = advance;
     return i;
+}
+
+- (void)addColor:(NSColor *)color {
+    [colors_ addObject:color];
 }
 
 @end

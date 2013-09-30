@@ -22,6 +22,9 @@
 
     int capacity_;  // Number of elements allocated
     int used_;  // Number of elements in use.
+
+    // Like an autorelease pool, but avoids multiple retain/release's per object.
+    NSMutableSet *colors_;
 }
 
 // Create a new CRunStorage with space preallocated for |capacity| characters.
@@ -39,12 +42,15 @@
 // Returns the index of the new code
 - (int)appendCode:(unichar)code andAdvance:(NSSize)advance;
 
+// Retain a color.
+- (void)addColor:(NSColor *)color;
+
 @end
 
 // Describes the appearance of a character.
 typedef struct {
     BOOL antiAlias;           // Use anti-aliasing?
-    NSColor *color;           // Foreground color. WEAK.
+    NSColor *color;           // Foreground color. Do not assign directly to this. Use CRunAttrsSetColor().
     BOOL fakeBold;            // Should bold text be rendered by drawing text twice with a 1px shift?
     BOOL underline;
     PTYFontInfo *fontInfo;    // Font to use. WEAK.
