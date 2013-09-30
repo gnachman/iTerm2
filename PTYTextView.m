@@ -6488,7 +6488,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     CRunAttrsSetColor(&attrs,
                                       storage,
                                       [self colorForCode:theLine[i].foregroundColor
-                                      alternateSemantics:theLine[i].alternateForegroundSemantics
+                                                   green:theLine[i].fgGreen
+                                                    blue:theLine[i].fgBlue
+                                               colorMode:theLine[i].foregroundColorMode
                                                     bold:theLine[i].bold
                                             isBackground:NO]);
                     lastColor = attrs.color;

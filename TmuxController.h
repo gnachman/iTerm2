@@ -92,6 +92,7 @@ extern NSString *kTmuxControllerSessionWasRenamed;
 - (void)detach;
 - (BOOL)windowDidResize:(PseudoTerminal *)term;
 - (void)fitLayoutToWindows;
+- (void)validateOptions;
 - (void)setClientSize:(NSSize)size;
 - (BOOL)hasOutstandingWindowResize;
 - (void)windowPane:(int)wp
