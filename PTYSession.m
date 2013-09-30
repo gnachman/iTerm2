@@ -1097,8 +1097,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (NSSize)idealScrollViewSizeWithStyle:(NSScrollerStyle)scrollerStyle
 {
-        NSSize innerSize = NSMakeSize([SCREEN width] * [TEXTVIEW charWidth] + MARGIN * 2,
-                                                                  [SCREEN height] * [TEXTVIEW lineHeight] + VMARGIN * 2);
+    NSSize innerSize = NSMakeSize([SCREEN width] * [TEXTVIEW charWidth] + MARGIN * 2,
+                                  [SCREEN height] * [TEXTVIEW lineHeight] + VMARGIN * 2);
     BOOL hasScrollbar = [[tab_ realParentWindow] scrollbarShouldBeVisible];
     NSSize outerSize =
         [PTYScrollView frameSizeForContentSize:innerSize
@@ -2554,7 +2554,18 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     // saved back into the arrangement, unfortunately.
     [ProfileModel migratePromptOnCloseInMutableBookmark:dict];
 
+    NSString *originalGuid = [entry objectForKey:KEY_ORIGINAL_GUID];
+    if (originalGuid) {
+        // This code path is taken when changing an existing session's profile.
+        // See bug 2632.
+        Profile *possibleOriginalProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:originalGuid];
+        if (possibleOriginalProfile) {
+            [originalAddressBookEntry autorelease];
+            originalAddressBookEntry = [possibleOriginalProfile copy];
+        }
+    }
     if (!originalAddressBookEntry) {
+        // This is normally taken when a new session is being created.
         originalAddressBookEntry = [NSDictionary dictionaryWithDictionary:dict];
         [originalAddressBookEntry retain];
     }
@@ -3210,6 +3221,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     Profile *tmuxBookmark = [PTYTab tmuxBookmark];
     theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
     theSize.height = MAX(1, [[tmuxBookmark objectForKey:KEY_ROWS] intValue]);
+    [tmuxController_ validateOptions];
     [tmuxController_ setClientSize:theSize];
 
     [self printTmuxMessage:@"** tmux mode started **"];

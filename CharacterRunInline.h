@@ -235,3 +235,8 @@ CRUN_INLINE NSSize *CRunGetAdvances(CRun *run) {
     assert(run->index >= 0);
     return [run->storage advancesFromIndex:run->index];
 }
+
+CRUN_INLINE void CRunAttrsSetColor(CAttrs *attrs, CRunStorage *storage, NSColor *color) {
+    attrs->color = color;
+    [storage addColor:color];
+}

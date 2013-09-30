@@ -912,6 +912,9 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
           contextInfo:nil];
 }
 
+// Replace a Profile in the sessions profile with a new dictionary that preserves the original
+// name and guid, takes all other fields from |bookmark|, and has KEY_ORIGINAL_GUID point at the
+// guid of the profile from which all that data came.n
 - (IBAction)changeProfile:(id)sender
 {
     NSString* origGuid = [bookmarksTableView selectedGuid];
