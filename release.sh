@@ -52,7 +52,8 @@ NEWFILES=""
 test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.summary || (echo "iTerm2 "$VERSION" beta (OS 10.6+, Intel-only)" > $SVNDIR/downloads/beta/iTerm2-${NAME}.summary)
 test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.description || (echo "This is the recommended beta build for most users. **ENTER CHANGES HERE**" > $SVNDIR/downloads/beta/iTerm2-${NAME}.description)
 vi $SVNDIR/downloads/beta/iTerm2-${NAME}.description
-NEWFILES=${NEWFILES}" downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.description"
+vi $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
+NEWFILES=${NEWFILES}" downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip appcasts/testing.xml appcasts/testing_changes.txt"
 
 # Prepare the sparkle xml file
 SparkleSign testing.xml template.xml
@@ -72,7 +73,7 @@ cp iTerm2-${NAME}.zip $SVNDIR/downloads/beta/
 test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.summary || (echo "iTerm2 "$VERSION" beta (OS 10.6+, Intel-only)" > $SVNDIR/downloads/beta/iTerm2-${NAME}.summary)
 test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.description || (echo "This build has a limited set of features but supports OS 10.5 and PowerPC. If you have an Intel Mac that runs OS 10.6 or newer, you don't want this." > $SVNDIR/downloads/beta/iTerm2-${NAME}.description)
 vi $SVNDIR/downloads/beta/iTerm2-${NAME}.description
-NEWFILES="${NEWFILES}downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.description"
+NEWFILES="${NEWFILES}downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.zip appcasts/legacy_testing.xml"
 
 # Prepare the sparkle xml file
 SparkleSign legacy_testing.xml legacy_template.xml
@@ -81,7 +82,7 @@ SparkleSign legacy_testing.xml legacy_template.xml
 
 echo "git tag v${VERSION}"
 echo "git commit -am ${VERSION}"
-echo "git push origin master"
+echo "git push origin v2"
 echo "git push --tags"
 echo "cd "$SVNDIR
 echo "git add "$NEWFILES
