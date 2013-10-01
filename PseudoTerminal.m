@@ -191,6 +191,14 @@ NSString *sessionsKey = @"sessions";
 
 @implementation PseudoTerminal
 
+- (id)init {
+    NSLog(@"Plain old init called");
+    return [self initWithSmartLayout:YES
+                          windowType:WINDOW_TYPE_NORMAL
+                              screen:-1];
+}
+
+
 - (id)initWithSmartLayout:(BOOL)smartLayout
                windowType:(int)windowType
                    screen:(int)screenNumber

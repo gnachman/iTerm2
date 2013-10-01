@@ -2106,14 +2106,10 @@ NSString *terminalsKey = @"terminals";
 
     [terminalWindows insertObject:object atIndex:theIndex];
     [self updateWindowTitles];
-    if (![object isInitialized]) {
-        [object initWithSmartLayout:YES
-                         windowType:WINDOW_TYPE_NORMAL
-                             screen:-1];
-    }
+    assert([object isInitialized]);
 }
 
--(void)removeFromTerminalsAtIndex:(unsigned)theIndex
+- (void)removeFromTerminalsAtIndex:(unsigned)theIndex
 {
     // NSLog(@"iTerm: removeFromTerminalsAtInde %d", theIndex);
     [terminalWindows removeObjectAtIndex:theIndex];
