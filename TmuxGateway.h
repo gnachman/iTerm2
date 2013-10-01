@@ -92,6 +92,7 @@ typedef enum {
 // Set initial to YES when notifications should be accepted after the last
 // command gets a response.
 - (void)sendCommandList:(NSArray *)commandDicts initial:(BOOL)initial;
+- (void)abortWithErrorMessage:(NSString *)message title:(NSString *)title;
 - (void)abortWithErrorMessage:(NSString *)message;
 
 // Use this to compose a command list for sendCommandList:.

@@ -67,12 +67,18 @@ static NSString *kCommandIsLastInList = @"lastInList";
 
 - (void)abortWithErrorMessage:(NSString *)message
 {
+    [self abortWithErrorMessage:[NSString stringWithFormat:@"Reason: %@", message]
+                          title:@"A tmux protocol error occurred."];
+}
+
+- (void)abortWithErrorMessage:(NSString *)message title:(NSString *)title
+{
     // TODO: be more forgiving of errors.
-    [[NSAlert alertWithMessageText:@"A tmux protocol error occurred."
+    [[NSAlert alertWithMessageText:title
                      defaultButton:@"Ok"
                    alternateButton:@""
                        otherButton:@""
-         informativeTextWithFormat:@"Reason: %@", message] runModal];
+         informativeTextWithFormat:@"%@", message] runModal];
     [self detach];
     [delegate_ tmuxHostDisconnected];  // Force the client to quit
     [stream_ replaceBytesInRange:NSMakeRange(0, stream_.length) withBytes:"" length:0];
