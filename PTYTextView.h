@@ -34,6 +34,7 @@
 #import "LineBuffer.h"
 #import "PointerController.h"
 #import "PTYFontInfo.h"
+#import "CharacterRun.h"
 
 #include <sys/time.h>
 #define PRETTY_BOLD
@@ -63,6 +64,8 @@ enum {
 @property (nonatomic, assign) NSPoint cursor;
 
 @end
+
+@class CRunStorage;
 
 @interface PTYTextView : NSView <NSTextInput, PointerControllerDelegate>
 {
@@ -332,6 +335,13 @@ enum {
     // calls to -updateDirtyRects without making any changes, we only redraw the old and new cursor
     // positions.
     int prevCursorX, prevCursorY;
+
+	// Current font. Only valid for the duration of a single drawing context.
+    NSFont *selectedFont_;
+
+    // Used by _drawCursorTo: to remember the last time the cursor moved to avoid drawing a blinked-out
+    // cursor while it's moving.
+    NSTimeInterval lastTimeCursorMoved_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -607,6 +617,8 @@ enum {
 
 - (FindContext *)initialFindContext;
 
+- (NSString*)_allText;
+
 @end
 
 //
@@ -636,7 +648,7 @@ typedef enum {
 
 - (NSString *)_getURLForX:(int)x y:(int)y;
 // Returns true if any char in the line is blinking.
-- (BOOL)_drawLine:(int)line AtY:(double)curY toPoint:(NSPoint*)toPoint;
+- (BOOL)_drawLine:(int)line AtY:(double)curY toPoint:(NSPoint*)toPoint context:(CGContextRef)ctx;
 - (void)_drawCursor;
 - (void)_drawCursorTo:(NSPoint*)toOrigin;
 - (void)_drawCharacter:(screen_char_t)screenChar
@@ -646,7 +658,13 @@ typedef enum {
                    AtX:(double)X
                      Y:(double)Y
            doubleWidth:(BOOL)double_width
-         overrideColor:(NSColor*)overrideColor;
+         overrideColor:(NSColor*)overrideColor
+               context:(CGContextRef)ctx;
+
+- (void)_drawRunsAt:(NSPoint)initialPoint
+                run:(CRun *)run
+            storage:(CRunStorage *)storage
+            context:(CGContextRef)ctx;
 
 - (BOOL)_isBlankLine:(int)y;
 - (void)_findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background;
@@ -696,7 +714,12 @@ typedef enum {
 // xStart, yStart: cell coordinates
 // width, height: cell width, height of screen
 // cursorHeight: cursor height in pixels
-- (BOOL)drawInputMethodEditorTextAt:(int)xStart y:(int)yStart width:(int)width height:(int)height cursorHeight:(double)cursorHeight;
+- (BOOL)drawInputMethodEditorTextAt:(int)xStart
+                                  y:(int)yStart
+                              width:(int)width
+                             height:(int)height
+                       cursorHeight:(double)cursorHeight
+                                ctx:(CGContextRef)ctx;
 
 - (BOOL)_wasAnyCharSelected;
 

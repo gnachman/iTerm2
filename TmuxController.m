@@ -31,6 +31,9 @@ NSString *kTmuxControllerAttachedSessionDidChange = @"kTmuxControllerAttachedSes
 NSString *kTmuxControllerWindowDidClose = @"kTmuxControllerWindowDidClose";
 NSString *kTmuxControllerSessionWasRenamed = @"kTmuxControllerSessionWasRenamed";
 
+// Unsupported global options:
+static NSString *const kAggressiveResize = @"aggressive-resize";
+
 static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     "#{window_name}\t"
     "#{window_width}\t#{window_height}\t"
@@ -418,6 +421,59 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [gateway_ sendCommandList:commands];
 }
 
+// Make sure that current tmux options are compatible with iTerm.
+- (void)validateOptions
+{
+    for (NSString *option in [self unsupportedGlobalOptions]) {
+        [gateway_ sendCommand:[NSString stringWithFormat:@"show-window-options -g %@", option]
+               responseTarget:self
+             responseSelector:@selector(showWindowOptionsResponse:)];
+    }
+}
+
+// Show an error and terminate the connection because tmux has an unsupported option turned on.
+- (void)optionValidationFailedForOption:(NSString *)option
+{
+    NSString *message = [NSString stringWithFormat:
+                            @"The \"%@\" option is turned on in tmux. "
+                             "It is not compatible with the iTerm2-tmux integration. "
+                             "Please disable it and try again.",
+                             option];
+    [gateway_ abortWithErrorMessage:message
+                              title:@"Unsupported tmux option"];
+}
+
+- (NSArray *)unsupportedGlobalOptions
+{
+    // The aggressive-resize option is not supported because it relies on the
+    // concept of a current window in tmux, which doesn't exist in the
+    // integration mode.
+    return [NSArray arrayWithObjects:kAggressiveResize, nil];
+}
+
+// Parse the output of show-window-options sent in -validateOptions, possibly
+// showing an error and terminating the connection.
+- (void)showWindowOptionsResponse:(NSString *)response {
+    NSArray *unsupportedGlobalOptions = [self unsupportedGlobalOptions];
+    NSArray *lines = [response componentsSeparatedByString:@"\n"];
+    for (NSString *line in lines) {
+        NSArray *fields = [line componentsSeparatedByString:@" "];
+        if ([fields count] == 2) {
+            NSString *option = [fields objectAtIndex:0];
+            NSString *value = [fields objectAtIndex:1];
+
+            for (NSString *unsupportedOption in unsupportedGlobalOptions) {
+                if ([option isEqualToString:unsupportedOption]) {
+                    if ([value isEqualToString:@"on"]) {
+                        [self optionValidationFailedForOption:unsupportedOption];
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
 - (BOOL)hasOutstandingWindowResize
 {
     return numOutstandingWindowResizes_ > 0;
@@ -514,8 +570,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [gateway_ sendCommand:[NSString stringWithFormat:@"unlink-window -k -t @%d", windowId]
            responseTarget:nil
          responseSelector:nil
-		   responseObject:nil
-					flags:kTmuxGatewayCommandHasEndGuardBug];
+                   responseObject:nil
+                                        flags:kTmuxGatewayCommandHasEndGuardBug];
 }
 
 - (void)renameWindowWithId:(int)windowId inSession:(NSString *)sessionName toName:(NSString *)newName
@@ -603,7 +659,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
            toSession:(NSString *)targetSession
 {
     [gateway_ sendCommand:[NSString stringWithFormat:@"link-window -s \"%@:@%d\" -t \"%@:+\"",
-                           sessionName, windowId, targetSession, windowId]
+                           sessionName, windowId, targetSession]
            responseTarget:nil
          responseSelector:nil];
 }

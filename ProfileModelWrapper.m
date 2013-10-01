@@ -127,7 +127,7 @@
 - (void)setFilter:(NSString*)newFilter
 {
     [filter release];
-    filter = [[NSString stringWithString:newFilter] retain];
+    filter = [[NSMutableString stringWithString:newFilter] retain];
 }
 
 @end

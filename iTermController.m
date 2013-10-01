@@ -53,6 +53,7 @@
 #import "iTerm.h"
 #import "WindowArrangements.h"
 #import "NSView+iTerm.h"
+#include <objc/runtime.h>
 
 //#define HOTKEY_WINDOW_VERBOSE_LOGGING
 #ifdef HOTKEY_WINDOW_VERBOSE_LOGGING
@@ -382,7 +383,7 @@ static BOOL initDone = NO;
     } else if (button == NSAlertAlternateReturn) {
         return nil;
     } else {
-        NSAssert1(NO, @"Invalid input dialog button %d", button);
+        NSAssert1(NO, @"Invalid input dialog button %d", (int)button);
         return nil;
     }
 }
@@ -538,7 +539,7 @@ static BOOL initDone = NO;
                                                           h)]
                  forKey:NSViewAnimationEndFrameKey];
         x += w;
-        if (x > frame.size.width - w) {
+        if (x > frame.size.width + frame.origin.x - w) {
             // Wrap around to the next row of windows.
             x = frame.origin.x;
             yOffset -= maxHeight;
@@ -1056,9 +1057,9 @@ static BOOL initDone = NO;
     // Automatically fill in ssh command if command is exactly equal to $$ or it's a login shell.
     BOOL ignore;
     if (aDict == nil ||
-                [[ITAddressBookMgr bookmarkCommand:aDict
-                                                        isLoginSession:&ignore
-                                                         forObjectType:objectType] isEqualToString:@"$$"] ||
+        [[ITAddressBookMgr bookmarkCommand:aDict
+                            isLoginSession:&ignore
+                             forObjectType:objectType] isEqualToString:@"$$"] ||
         ![[aDict objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
         Profile* prototype = aDict;
         if (!prototype) {
@@ -1238,7 +1239,7 @@ static BOOL initDone = NO;
         // 10.6 function.
 
         // app = [runningApplicationClass_ runningApplicationWithProcessIdentifier:[previouslyActiveAppPID_ intValue]];
-        NSMethodSignature *sig = [runningApplicationClass_->isa instanceMethodSignatureForSelector:@selector(runningApplicationWithProcessIdentifier:)];
+        NSMethodSignature *sig = [object_getClass(runningApplicationClass_) instanceMethodSignatureForSelector:@selector(runningApplicationWithProcessIdentifier:)];
         NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
         [inv setTarget:runningApplicationClass_];
         [inv setSelector:@selector(runningApplicationWithProcessIdentifier:)];

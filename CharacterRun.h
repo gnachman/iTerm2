@@ -9,62 +9,71 @@
 #import <Cocoa/Cocoa.h>
 #import "PTYFontInfo.h"
 #import <ApplicationServices/ApplicationServices.h>
+#import "ScreenChar.h"
 
-#define kCharacterRunTempSize 100
+// Backing storage for CRuns.
+@interface CRunStorage : NSObject {
+	// There are |capacity_| elements in each of these, of which |used_|
+	// elements are in use. They are malloc()ed in -init, possibly realloc()ed
+	// in -allocate:, and free()d in -dealloc.
+    unichar *codes_;
+    CGGlyph *glyphs_;
+    NSSize *advances_;
 
+    int capacity_;  // Number of elements allocated
+    int used_;  // Number of elements in use.
 
-// When drawing lines, we use this object represents a run of cells of
-// the same font and attributes, differing only in the characters displayed.
-@interface CharacterRun : NSObject <NSCopying> {
-    BOOL antiAlias_;
-    NSColor *color_;
-    BOOL fakeBold_;
-    CGFloat x_;
-    PTYFontInfo *fontInfo_;
-	// Aggregates codes from appendCode:withAdvance: because appending to an attributed string is slow.
-    unichar temp_[kCharacterRunTempSize];
-    int tempCount_;
-    NSMutableAttributedString *string_;
-
-	// Array of advances. Gets realloced. If there are multiple characters in a cell, the first will
-    // have a positive advance and the others will have a 0 advance. Core Text's positions are used
-    // for those codes.
-    float *advances_;
-    int advancesSize_;  // used space
-    int advancesCapacity_;  // available space
-
-    BOOL advancedFontRendering_;
+    // Like an autorelease pool, but avoids multiple retain/release's per object.
+    NSMutableSet *colors_;
 }
 
-@property (nonatomic, assign) BOOL antiAlias;           // Use anti-aliasing?
-@property (nonatomic, retain) NSColor *color;           // Foreground color
-@property (nonatomic, assign) BOOL fakeBold;            // Should bold text be rendered by drawing text twice with a 1px shift?
-@property (nonatomic, assign) CGFloat x;                // x pixel coordinate for the run's start.
-@property (nonatomic, retain) PTYFontInfo *fontInfo;    // Font to use.
-@property (nonatomic, assign) BOOL advancedFontRendering;
+// Create a new CRunStorage with space preallocated for |capacity| characters.
++ (CRunStorage *)cRunStorageWithCapacity:(int)capacity;
 
-// Returns YES if the codes in otherRun can be safely added to this run.
-- (BOOL)isCompatibleWith:(CharacterRun *)otherRun;
+// Returns codes/glyphs/advances starting at a given |index|.
+- (unichar *)codesFromIndex:(int)index;
+- (CGGlyph *)glyphsFromIndex:(int)index;
+- (NSSize *)advancesFromIndex:(int)index;
 
-// Append codes from |string|, which will be rendered in a single cell (perhaps double-width) and may
-// include combining marks.
-- (void)appendCodesFromString:(NSString *)string withAdvance:(CGFloat)advance;
+// Sets aside |size| characters for use in codes, glyphs, and advances, and
+// returns the index of the beginning of the allocation.
+- (int)allocate:(int)size;
 
-// This adds the code to temporary storage; call |commit| to actually append.
-- (void)appendCode:(unichar)code withAdvance:(CGFloat)advance;
+// Returns the index of the new code
+- (int)appendCode:(unichar)code andAdvance:(NSSize)advance;
 
-// Returns a newly allocated line.
-- (CTLineRef)newLine;
-
-// Commit appended codes to the internal string.
-- (void)commit;
-
-// Returns the positions for characters in the given run, which begins at the specified character
-// and x position. Returns the number of characters.
-- (int)getPositions:(NSPoint *)positions
-             forRun:(CTRunRef)run
-    startingAtIndex:(int)firstCharacterIndex
-         glyphCount:(int)glyphCount
-        runWidthPtr:(CGFloat *)runWidthPtr;
+// Retain a color.
+- (void)addColor:(NSColor *)color;
 
 @end
+
+// Describes the appearance of a character.
+typedef struct {
+    BOOL antiAlias;           // Use anti-aliasing?
+    NSColor *color;           // Foreground color. Do not assign directly to this. Use CRunAttrsSetColor().
+    BOOL fakeBold;            // Should bold text be rendered by drawing text twice with a 1px shift?
+    BOOL underline;
+    PTYFontInfo *fontInfo;    // Font to use. WEAK.
+} CAttrs;
+
+typedef struct CRun CRun;
+
+// A node in a linked list of |CRun|s. All the characters in a single CRun
+// have the same CAttrs. A CRun may contain either an array of |codes| with
+// |length| elements, or else a single character in |string| which may include
+// combining marks.
+struct CRun {
+    CAttrs attrs;             // Attributes for this run.
+    CGFloat x;                // x pixel coordinate for the run's start.
+    int length;               // Number of codes/glyphs/advances.
+    int index;                // -1 if nothing allocated, else start index of codes, glyphs, advances
+    NSString *string;         // If set then there are no codes or glyphs, but may be advances.
+    BOOL terminated;          // No more appends allowed (will go into |next|)
+    CRunStorage *storage;     // Backing store for codes, glyphs, and advances.
+    CRun *next;               // Next run in linked list.
+};
+
+// See CharacterRunInline.h for functions that operate on CRun.
+
+// NSLog human-readable representation of |run| and its linked successors.
+void CRunDump(CRun *run);

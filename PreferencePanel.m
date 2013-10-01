@@ -548,7 +548,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [[screenButton lastItem] setTag:-1];
     for (NSScreen* screen in [NSScreen screens]) {
         if (i == 0) {
-            [screenButton addItemWithTitle:[NSString stringWithFormat:@"Main Screen", i]];
+            [screenButton addItemWithTitle:[NSString stringWithFormat:@"Main Screen"]];
         } else {
             [screenButton addItemWithTitle:[NSString stringWithFormat:@"Screen %d", i+1]];
         }
@@ -912,6 +912,9 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
           contextInfo:nil];
 }
 
+// Replace a Profile in the sessions profile with a new dictionary that preserves the original
+// name and guid, takes all other fields from |bookmark|, and has KEY_ORIGINAL_GUID point at the
+// guid of the profile from which all that data came.n
 - (IBAction)changeProfile:(id)sender
 {
     NSString* origGuid = [bookmarksTableView selectedGuid];
@@ -3517,7 +3520,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         augmented = [NSMutableArray arrayWithArray:jobNames];
         [augmented addObject:@"Job Name"];
     } else {
-        augmented = [NSArray arrayWithObject:@"Job Name"];
+        augmented = [NSMutableArray arrayWithObject:@"Job Name"];
     }
     [dataSource setObject:augmented forKey:KEY_JOBS inBookmark:bookmark];
     [jobsTable_ reloadData];

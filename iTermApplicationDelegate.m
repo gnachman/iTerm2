@@ -44,6 +44,7 @@
 #import "ToastWindowController.h"
 #include <unistd.h>
 #include <sys/stat.h>
+#include <objc/runtime.h>
 
 static NSString *APP_SUPPORT_DIR = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
@@ -113,7 +114,7 @@ static BOOL hasBecomeActive = NO;
         // while compiling against the 10.5 SDK.
 
         // presentationOptions =  [NSApp presentationOptions]
-        NSMethodSignature *presentationOptionsSignature = [NSApp->isa
+        NSMethodSignature *presentationOptionsSignature = [object_getClass(NSApp)
             instanceMethodSignatureForSelector:@selector(presentationOptions)];
         NSInvocation *presentationOptionsInvocation = [NSInvocation
             invocationWithMethodSignature:presentationOptionsSignature];
@@ -128,7 +129,7 @@ static BOOL hasBecomeActive = NO;
         presentationOptions &= ~antiflags;
 
         // [NSAppObj setPresentationOptions:presentationOptions];
-        NSMethodSignature *setSig = [NSApp->isa instanceMethodSignatureForSelector:@selector(setPresentationOptions:)];
+        NSMethodSignature *setSig = [object_getClass(NSApp) instanceMethodSignatureForSelector:@selector(setPresentationOptions:)];
         NSInvocation *setInv = [NSInvocation invocationWithMethodSignature:setSig];
         [setInv setTarget:NSApp];
         [setInv setSelector:@selector(setPresentationOptions:)];
@@ -1143,7 +1144,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
         struct timeval tv;
         gettimeofday(&tv, NULL);
 
-        [gDebugLogStr appendFormat:@"%ld.%08ld %s:%d (%s): ", (long long)tv.tv_sec, (long long)tv.tv_usec, file, line, function];
+        [gDebugLogStr appendFormat:@"%lld.%08lld %s:%d (%s): ", (long long)tv.tv_sec, (long long)tv.tv_usec, file, line, function];
         [gDebugLogStr appendString:value];
         [gDebugLogStr appendString:@"\n"];
         if ([gDebugLogStr length] > 100000000) {
@@ -1207,7 +1208,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 {
     PseudoTerminal *frontTerminal = [[iTermController sharedInstance] currentTerminal];
     PTYSession *session = [frontTerminal currentSession];
-	[session changeFontSizeDirection:0];
+    [session changeFontSizeDirection:0];
     if ([sender isAlternate]) {
         NSDictionary *abEntry = [session originalAddressBookEntry];
         [frontTerminal sessionInitiatedResize:session

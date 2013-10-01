@@ -419,10 +419,10 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [SCROLLVIEW setAutoresizingMask: NSViewWidthSizable|NSViewHeightSizable];
 
     // assign the main view
-	[view addSubview:SCROLLVIEW];
-	if (![self isTmuxClient]) {
-		[view setAutoresizesSubviews:YES];
-	}
+        [view addSubview:SCROLLVIEW];
+        if (![self isTmuxClient]) {
+                [view setAutoresizesSubviews:YES];
+        }
     // TODO(georgen): I disabled setCopiesOnScroll because there is a vertical margin in the PTYTextView and
     // we would not want that copied. This is obviously bad for performance when scrolling, but it's unclear
     // whether the difference will ever be noticable. I believe it could be worked around (painfully) by
@@ -446,8 +446,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     horizontalSpacing:[[addressBookEntry objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
       verticalSpacing:[[addressBookEntry objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [self setTransparency:[[addressBookEntry objectForKey:KEY_TRANSPARENCY] floatValue]];
-	const float theBlend = [addressBookEntry objectForKey:KEY_BLEND] ?
-						  [[addressBookEntry objectForKey:KEY_BLEND] floatValue] : 0.5;
+        const float theBlend = [addressBookEntry objectForKey:KEY_BLEND] ?
+                                                  [[addressBookEntry objectForKey:KEY_BLEND] floatValue] : 0.5;
     [self setBlend:theBlend];
 
     [WRAPPER addSubview:TEXTVIEW];
@@ -508,8 +508,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     Profile* addressbookEntry = [self addressBookEntry];
     BOOL loginSession;
     cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
-																	  isLoginSession:&loginSession
-																	   forObjectType:objectType]] autorelease];
+                                                                                                                                          isLoginSession:&loginSession
+                                                                                                                                           forObjectType:objectType]] autorelease];
     NSMutableString* theName = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey:KEY_NAME]] autorelease];
     // Get session parameters
     [[[self tab] realParentWindow] getSessionParameters:cmd withName:theName];
@@ -810,10 +810,10 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         }
     } else if (tmuxMode_ == TMUX_GATEWAY) {
         [tmuxController_ detach];
-		[tmuxGateway_ release];
-		tmuxGateway_ = nil;
+                [tmuxGateway_ release];
+                tmuxGateway_ = nil;
     }
-	tmuxMode_ = TMUX_NONE;
+        tmuxMode_ = TMUX_NONE;
     [tmuxController_ release];
     tmuxController_ = nil;
 
@@ -1091,15 +1091,15 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (NSSize)idealScrollViewSize
 {
-	NSSize innerSize = NSMakeSize([SCREEN width] * [TEXTVIEW charWidth] + MARGIN * 2,
-								  [SCREEN height] * [TEXTVIEW lineHeight] + VMARGIN * 2);
+        NSSize innerSize = NSMakeSize([SCREEN width] * [TEXTVIEW charWidth] + MARGIN * 2,
+                                                                  [SCREEN height] * [TEXTVIEW lineHeight] + VMARGIN * 2);
     BOOL hasScrollbar = ![[tab_ realParentWindow] anyFullScreen] &&
-		![[PreferencePanel sharedInstance] hideScrollbar];
+                ![[PreferencePanel sharedInstance] hideScrollbar];
     NSSize outerSize = [PTYScrollView frameSizeForContentSize:innerSize
                                         hasHorizontalScroller:NO
                                           hasVerticalScroller:hasScrollbar
                                                    borderType:NSNoBorder];
-	return outerSize;
+        return outerSize;
 }
 
 - (int)_keyBindingActionForEvent:(NSEvent*)event
@@ -3170,7 +3170,18 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     // saved back into the arrangement, unfortunately.
     [ProfileModel migratePromptOnCloseInMutableBookmark:dict];
 
+    NSString *originalGuid = [entry objectForKey:KEY_ORIGINAL_GUID];
+    if (originalGuid) {
+        // This code path is taken when changing an existing session's profile.
+        // See bug 2632.
+        Profile *possibleOriginalProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:originalGuid];
+        if (possibleOriginalProfile) {
+            [originalAddressBookEntry autorelease];
+            originalAddressBookEntry = [possibleOriginalProfile copy];
+        }
+    }
     if (!originalAddressBookEntry) {
+        // This is normally taken when a new session is being created.
         originalAddressBookEntry = [NSDictionary dictionaryWithDictionary:dict];
         [originalAddressBookEntry retain];
     }
@@ -3498,44 +3509,44 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 {
     NSFont* font;
     NSFont* nafont;
-	float hs, vs;
-	if (dir) {
+        float hs, vs;
+        if (dir) {
         // Grow or srhink
-		font = [self fontWithRelativeSize:dir from:[TEXTVIEW font]];
-		nafont = [self fontWithRelativeSize:dir from:[TEXTVIEW nafont]];
-		hs = [TEXTVIEW horizontalSpacing];
-		vs = [TEXTVIEW verticalSpacing];
-	} else {
+                font = [self fontWithRelativeSize:dir from:[TEXTVIEW font]];
+                nafont = [self fontWithRelativeSize:dir from:[TEXTVIEW nafont]];
+                hs = [TEXTVIEW horizontalSpacing];
+                vs = [TEXTVIEW verticalSpacing];
+        } else {
         // Restore original font size.
-		NSDictionary *abEntry = [self originalAddressBookEntry];
-		NSString* fontDesc = [abEntry objectForKey:KEY_NORMAL_FONT];
-		font = [ITAddressBookMgr fontWithDesc:fontDesc];
-		nafont = [ITAddressBookMgr fontWithDesc:[abEntry objectForKey:KEY_NON_ASCII_FONT]];
-		hs = [[abEntry objectForKey:KEY_HORIZONTAL_SPACING] floatValue];
-		vs = [[abEntry objectForKey:KEY_VERTICAL_SPACING] floatValue];
-	}
+                NSDictionary *abEntry = [self originalAddressBookEntry];
+                NSString* fontDesc = [abEntry objectForKey:KEY_NORMAL_FONT];
+                font = [ITAddressBookMgr fontWithDesc:fontDesc];
+                nafont = [ITAddressBookMgr fontWithDesc:[abEntry objectForKey:KEY_NON_ASCII_FONT]];
+                hs = [[abEntry objectForKey:KEY_HORIZONTAL_SPACING] floatValue];
+                vs = [[abEntry objectForKey:KEY_VERTICAL_SPACING] floatValue];
+        }
     [self setFont:font nafont:nafont horizontalSpacing:hs verticalSpacing:vs];
 
-	if (dir || isDivorced) {
-		// Move this bookmark into the sessions model.
-		NSString* guid = [self divorceAddressBookEntryFromPreferences];
+        if (dir || isDivorced) {
+                // Move this bookmark into the sessions model.
+                NSString* guid = [self divorceAddressBookEntryFromPreferences];
 
-		// Set the font in the bookmark dictionary
-		NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:addressBookEntry];
-		[temp setObject:[ITAddressBookMgr descFromFont:font] forKey:KEY_NORMAL_FONT];
-		[temp setObject:[ITAddressBookMgr descFromFont:nafont] forKey:KEY_NON_ASCII_FONT];
+                // Set the font in the bookmark dictionary
+                NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:addressBookEntry];
+                [temp setObject:[ITAddressBookMgr descFromFont:font] forKey:KEY_NORMAL_FONT];
+                [temp setObject:[ITAddressBookMgr descFromFont:nafont] forKey:KEY_NON_ASCII_FONT];
 
-		// Update this session's copy of the bookmark
-		[self setAddressBookEntry:[NSDictionary dictionaryWithDictionary:temp]];
+                // Update this session's copy of the bookmark
+                [self setAddressBookEntry:[NSDictionary dictionaryWithDictionary:temp]];
 
-		// Update the model's copy of the bookmark.
-		[[ProfileModel sessionsInstance] setBookmark:[self addressBookEntry] withGuid:guid];
+                // Update the model's copy of the bookmark.
+                [[ProfileModel sessionsInstance] setBookmark:[self addressBookEntry] withGuid:guid];
 
-		// Update an existing one-bookmark prefs dialog, if open.
-		if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
-			[[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
-		}
-	}
+                // Update an existing one-bookmark prefs dialog, if open.
+                if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
+                        [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
+                }
+        }
 }
 
 - (void)remarry
@@ -3846,6 +3857,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     Profile *tmuxBookmark = [PTYTab tmuxBookmark];
     theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
     theSize.height = MAX(1, [[tmuxBookmark objectForKey:KEY_ROWS] intValue]);
+    [tmuxController_ validateOptions];
     [tmuxController_ setClientSize:theSize];
 
     [self printTmuxMessage:@"** tmux mode started **"];
@@ -3941,8 +3953,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)tmuxWindowAddedWithId:(int)windowId
 {
     if (![tmuxController_ window:windowId]) {
-		[tmuxController_ openWindowWithId:windowId
-							  intentional:NO];
+                [tmuxController_ openWindowWithId:windowId
+                                                          intentional:NO];
     }
     [tmuxController_ windowsChanged];
 }
@@ -4036,20 +4048,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (NSSize)tmuxBookmarkSize
 {
-	NSDictionary *dict = [PTYTab tmuxBookmark];
-	return NSMakeSize([[dict objectForKey:KEY_COLUMNS] intValue],
-					  [[dict objectForKey:KEY_ROWS] intValue]);
+        NSDictionary *dict = [PTYTab tmuxBookmark];
+        return NSMakeSize([[dict objectForKey:KEY_COLUMNS] intValue],
+                                          [[dict objectForKey:KEY_ROWS] intValue]);
 }
 
 - (int)tmuxNumHistoryLinesInBookmark
 {
-	NSDictionary *dict = [PTYTab tmuxBookmark];
+        NSDictionary *dict = [PTYTab tmuxBookmark];
     if ([[dict objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]) {
-		// 10M is close enough to infinity to be indistinguishable.
-		return 10 * 1000 * 1000;
-	} else {
-		return [[dict objectForKey:KEY_SCROLLBACK_LINES] intValue];
-	}
+                // 10M is close enough to infinity to be indistinguishable.
+                return 10 * 1000 * 1000;
+        } else {
+                return [[dict objectForKey:KEY_SCROLLBACK_LINES] intValue];
+        }
 }
 
 - (void)pasteViewControllerDidCancel
@@ -4344,9 +4356,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     screen_char_t savedFgColor = [TERMINAL foregroundColorCode];
     screen_char_t savedBgColor = [TERMINAL backgroundColorCode];
     [TERMINAL setForegroundColor:ALTSEM_FG_DEFAULT
-			  alternateSemantics:YES];
+                          alternateSemantics:YES];
     [TERMINAL setBackgroundColor:ALTSEM_BG_DEFAULT
-			  alternateSemantics:YES];
+                          alternateSemantics:YES];
     [SCREEN setString:message ascii:YES];
     [SCREEN crlf];
     [TERMINAL setForegroundColor:savedFgColor.foregroundColor
