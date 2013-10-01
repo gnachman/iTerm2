@@ -120,7 +120,12 @@ static const int MIN_SESSION_COLUMNS = 2;
     NSMutableArray *hiddenLiveViews_;  // SessionView objects
 
     NSString *tmuxWindowName_;
+
+	// This tab broadcasts to all its sessions?
+	BOOL broadcasting_;
 }
+
+@property(nonatomic, assign, getter=isBroadcasting) BOOL broadcasting;
 
 // init/dealloc
 - (id)initWithSession:(PTYSession*)session;
