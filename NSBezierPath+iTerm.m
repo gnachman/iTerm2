@@ -11,7 +11,7 @@
 @implementation NSBezierPath (iTerm)
 
 + (NSBezierPath *)smoothPathAroundBottomOfFrame:(NSRect)frame {
-    NSBezierPath* path = [[NSBezierPath alloc] init];
+    NSBezierPath* path = [[[NSBezierPath alloc] init] autorelease];
     [path setLineWidth:1];
     float radius = 4;
     float height = frame.size.height - 1;

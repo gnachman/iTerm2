@@ -1056,7 +1056,7 @@ static NSString* FormatRect(NSRect r) {
                 NSView* referencePoint = splitViewIndex > 0 ? [[splitViewParent subviews] objectAtIndex:splitViewIndex - 1] : nil;
 
                 // Remove splitView
-                [splitView retain];
+                [[splitView retain] autorelease];
                 [splitView removeFromSuperview];
 
                 // Move grandchildren into grandparent.

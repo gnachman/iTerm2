@@ -516,6 +516,7 @@ static BOOL initDone = NO;
                 }
             }
         }
+        assert(terminal);
 
         // Remove it from terminalsCopy.
         [terminalsCopy removeObjectAtIndex:bestIndex];
@@ -2097,7 +2098,7 @@ NSString *terminalsKey = @"terminals";
     [self updateWindowTitles];
 }
 
--(void)insertInTerminals:(PseudoTerminal *)object atIndex:(unsigned)theIndex
+- (void)insertInTerminals:(PseudoTerminal *)object atIndex:(unsigned)theIndex
 {
     if ([terminalWindows containsObject:object] == YES) {
         return;

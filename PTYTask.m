@@ -111,6 +111,7 @@ static TaskNotifier* taskNotifier = nil;
 
         int unblockPipe[2];
         if (pipe(unblockPipe) != 0) {
+            [self release];
             return nil;
         }
         fcntl(unblockPipe[0], F_SETFL, O_NONBLOCK);
@@ -178,21 +179,16 @@ static TaskNotifier* taskNotifier = nil;
 
 - (void)run
 {
-    // There's an analyzer warning here because outerPool never gets drained due to the
-    // loop being infinite. I'm not quite sure why there is an outer pool, but I'm afraid to mess
-    // with it.
-    NSAutoreleasePool* outerPool = [[NSAutoreleasePool alloc] init];
-
     fd_set rfds;
     fd_set wfds;
     fd_set efds;
     int highfd;
     NSEnumerator* iter;
     PTYTask* task;
+    NSAutoreleasePool* autoreleasePool = [[NSAutoreleasePool alloc] init];
 
     // FIXME: replace this with something better...
     for(;;) {
-        NSAutoreleasePool* innerPool = [[NSAutoreleasePool alloc] init];
 
         FD_ZERO(&rfds);
         FD_ZERO(&wfds);
@@ -433,10 +429,10 @@ static TaskNotifier* taskNotifier = nil;
 
     breakloop:
         [handledFds release];
-        [innerPool drain];
+        [autoreleasePool drain];
+        autoreleasePool = [[NSAutoreleasePool alloc] init];
     }
-
-    [outerPool drain];
+    assert(false);  // Must never get here or the autorelease pool would leak.
 }
 
 // This is run in the main thread.
@@ -606,6 +602,11 @@ static void reapchild(int n)
     const int envsize = env.count;
     const char *envKeys[envsize];
     const char *envValues[envsize];
+
+    // This quiets an analyzer warning about envKeys[i] being uninitialized in setenv().
+    bzero(envKeys, sizeof(char *) * envsize);
+    bzero(envValues, sizeof(char *) * envsize);
+
     // Copy values from env (our custom environment vars) into envDict
     int i = 0;
     for (NSString *k in env) {

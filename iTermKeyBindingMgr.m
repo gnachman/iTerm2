@@ -621,6 +621,7 @@ static NSDictionary* globalKeyMap;
                 createNew:(BOOL)newMapping
              inDictionary:(NSMutableDictionary*)km
 {
+    assert(keyString);
     NSString* origKeyCombo = nil;
     NSArray* allKeys =
         [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];

@@ -43,7 +43,8 @@
     NSPoint locationInView = [self convertPoint:locationInWindow toView:self];
     int x, y;
     int bestDistance = -1;
-    if ([self isVertical]) {
+    const BOOL isVertical = [self isVertical];
+    if (isVertical) {
         int mouseX = locationInView.x;
         x = 0;
         int bestX = 0;
@@ -87,7 +88,7 @@
     // See how much the view after the splitter moved
     NSSize changePx = NSZeroSize;
     NSRect frame = [[subviews objectAtIndex:clickedOnSplitterIndex] frame];
-    if ([self isVertical]) {
+    if (isVertical) {
         changePx.width = (frame.origin.x + frame.size.width) - x;
     } else {
         changePx.height = (frame.origin.y + frame.size.height) - y;

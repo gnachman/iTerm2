@@ -115,14 +115,14 @@ NSString *PID_INFO_NAME = @"name";
     int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, thePid };
     struct kinfo_proc kp;
     size_t bufSize = sizeof(kp);
-    
+
     kp.kp_proc.p_comm[0] = 0;
     @synchronized ([ProcessCache class]) {
         if (sysctl(mib, 4, &kp, &bufSize, NULL, 0) < 0) {
-            return 0;
+            return nil;
         }
     }
-    
+
     // has a controlling terminal and
     // process group id = tty process group id
     if (isForeground) {
@@ -210,7 +210,7 @@ NSString *PID_INFO_NAME = @"name";
 
 - (NSDictionary *)dictionaryOfTaskInfoForPid:(pid_t)thePid
 {
-    BOOL isForeground;
+    BOOL isForeground = NO;
     NSString* name = [self getNameOfPid:thePid isForeground:&isForeground];
     return [NSDictionary dictionaryWithObjectsAndKeys:
             [NSNumber numberWithBool:isForeground], PID_INFO_IS_FOREGROUND,

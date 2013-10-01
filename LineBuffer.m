@@ -41,18 +41,20 @@
 
 - (LineBlock*) initWithRawBufferSize: (int) size
 {
-    raw_buffer = (screen_char_t*) malloc(sizeof(screen_char_t) * size);
-    buffer_start = raw_buffer;
-    start_offset = 0;
-    first_entry = 0;
-    buffer_size = size;
-    // Allocate enough space for a bunch of 80-character lines. It can grow if needed.
-    cll_capacity = 1 + size/80;
-    cll_entries = 0;
-    cumulative_line_lengths = (int*) malloc(sizeof(int) * cll_capacity);
-    is_partial = NO;
-    cached_numlines_width = -1;
-
+    self = [super init];
+    if (self) {
+        raw_buffer = (screen_char_t*) malloc(sizeof(screen_char_t) * size);
+        buffer_start = raw_buffer;
+        start_offset = 0;
+        first_entry = 0;
+        buffer_size = size;
+        // Allocate enough space for a bunch of 80-character lines. It can grow if needed.
+        cll_capacity = 1 + size/80;
+        cll_entries = 0;
+        cumulative_line_lengths = (int*) malloc(sizeof(int) * cll_capacity);
+        is_partial = NO;
+        cached_numlines_width = -1;
+    }
     return self;
 }
 
@@ -101,6 +103,7 @@
 {
     if (cll_entries == cll_capacity) {
         cll_capacity *= 2;
+        cll_capacity = MAX(1, cll_capacity);
         cumulative_line_lengths = (int*) realloc((void*) cumulative_line_lengths, cll_capacity * sizeof(int));
     }
     cumulative_line_lengths[cll_entries] = cumulativeLength;
@@ -451,6 +454,7 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
 - (void) changeBufferSize: (int) capacity
 {
     NSAssert(capacity >= [self rawSpaceUsed], @"Truncating used space");
+    capacity = MAX(1, capacity);
     raw_buffer = (screen_char_t*) realloc((void*) raw_buffer, sizeof(screen_char_t) * capacity);
     buffer_start = raw_buffer + start_offset;
     buffer_size = capacity;
@@ -1154,7 +1158,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             BOOL ok = [block popLastLineInto: &temp
                                   withLength: &prefix_len
                                    upToWidth: [block rawBufferSize]+1];
-            prefix = (screen_char_t*) malloc(prefix_len * sizeof(screen_char_t));
+            assert(ok);
+            prefix = (screen_char_t*) malloc(MAX(1, prefix_len) * sizeof(screen_char_t));
             memcpy(prefix, temp, prefix_len * sizeof(screen_char_t));
             NSAssert(ok, @"hasPartial but pop failed.");
         }
