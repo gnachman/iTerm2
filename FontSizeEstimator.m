@@ -65,7 +65,7 @@
             size.width = advances[0];
             size.width *= [aFont pointSize];
             size.width /= CGFontGetUnitsPerEm(cgfont);
-            size.width = floor(size.width);
+            size.width = round(size.width);
         }
         CGFontRelease(cgfont);
 
