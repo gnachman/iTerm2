@@ -115,6 +115,7 @@ static TaskNotifier* taskNotifier = nil;
             return nil;
         }
         fcntl(unblockPipe[0], F_SETFL, O_NONBLOCK);
+        fcntl(unblockPipe[1], F_SETFL, O_NONBLOCK);
         unblockPipeR = unblockPipe[0];
         unblockPipeW = unblockPipe[1];
     }
@@ -537,7 +538,7 @@ setup_tty_param(
     [writeBuffer release];
     [tty release];
     [path release];
-	[command_ release];
+        [command_ release];
 
     @synchronized (self) {
         [[self coprocess] mainProcessDidTerminate];
@@ -564,7 +565,7 @@ static void reapchild(int n)
 
 - (NSString *)command
 {
-	return command_;
+        return command_;
 }
 
 - (void)launchWithPath:(NSString*)progpath
@@ -789,6 +790,9 @@ static void reapchild(int n)
 
     // forward the data to our delegate
     if ([delegate respondsToSelector:@selector(readTask:)]) {
+        // This waitsUntilDone because otherwise we can read data from a child process faster than
+        // we can parse it. The main thread will quickly end up overloaded with calls to readTask:,
+        // never catching up, and never having a chance to draw or respond to input.
         [delegate performSelectorOnMainThread:@selector(readTask:)
                                    withObject:data 
                                 waitUntilDone:YES];
