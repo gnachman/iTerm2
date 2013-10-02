@@ -67,6 +67,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
 
 @implementation PTYTab
 
+@synthesize broadcasting = broadcasting_;
+
 // tab label attributes
 static NSColor *normalStateColor;
 static NSColor *chosenStateColor;

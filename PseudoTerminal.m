@@ -1153,7 +1153,7 @@ NSString *sessionsKey = @"sessions";
     NSMutableArray *sessions = [NSMutableArray array];
     int i;
     int n = [TABVIEW numberOfTabViewItems];
-    switch (broadcastMode_) {
+    switch ([self broadcastMode]) {
         case BROADCAST_OFF:
             break;
 
@@ -1204,7 +1204,7 @@ NSString *sessionsKey = @"sessions";
 
 - (BOOL)broadcastInputToSession:(PTYSession *)session
 {
-    switch (broadcastMode_) {
+    switch ([self broadcastMode]) {
         case BROADCAST_OFF:
             return NO;
 
@@ -2944,6 +2944,8 @@ NSString *sessionsKey = @"sessions";
         [[aSession TEXTVIEW] setNeedsDisplay:YES];
         [aSession updateDisplay];
         [aSession scheduleUpdateIn:kFastTimerIntervalSec];
+		[self setDimmingForSession:aSession];
+		[[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
     }
 
     for (PTYSession *session in [self sessions]) {
@@ -2978,6 +2980,8 @@ NSString *sessionsKey = @"sessions";
       [aSession setFocused:(s == activeSession)];
     }
     [self showOrHideInstantReplayBar];
+    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    [itad updateBroadcastMenuState];
 }
 
 - (void)showOrHideInstantReplayBar
@@ -3012,6 +3016,8 @@ NSString *sessionsKey = @"sessions";
     NSLog(@"%s(%d):-[PseudoTerminal tabView:willRemoveTabViewItem]", __FILE__, __LINE__);
 #endif
     [self saveAffinitiesLater:[tabViewItem identifier]];
+	iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+	[itad updateBroadcastMenuState];
 }
 
 - (void)tabView:(NSTabView *)tabView willAddTabViewItem:(NSTabViewItem *)tabViewItem
@@ -3022,6 +3028,8 @@ NSString *sessionsKey = @"sessions";
 
     [self tabView:tabView willInsertTabViewItem:tabViewItem atIndex:[tabView numberOfTabViewItems]];
     [self saveAffinitiesLater:[tabViewItem identifier]];
+	iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+	[itad updateBroadcastMenuState];
 }
 
 - (void)tabView:(NSTabView *)tabView willInsertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(int)anIndex
@@ -3037,6 +3045,8 @@ NSString *sessionsKey = @"sessions";
       [[theTab tmuxController] setClientSize:[theTab tmuxSize]];
     }
     [self saveAffinitiesLater:[tabViewItem identifier]];
+	iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+	[itad updateBroadcastMenuState];
 }
 
 - (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem
@@ -3603,7 +3613,7 @@ NSString *sessionsKey = @"sessions";
 
 - (BOOL)sendInputToAllSessions
 {
-    return broadcastMode_ != BROADCAST_OFF;
+    return [self broadcastMode] != BROADCAST_OFF;
 }
 
 -(void)replaySession:(PTYSession *)oldSession
@@ -4301,15 +4311,19 @@ NSString *sessionsKey = @"sessions";
 
 - (BroadcastMode)broadcastMode
 {
-    return broadcastMode_;
+    if ([[self currentTab] isBroadcasting]) {
+		    return BROADCAST_TO_ALL_PANES;
+	} else {
+		    return broadcastMode_;
+	}
 }
 
 - (void)setBroadcastMode:(BroadcastMode)mode
 {
-    if (mode != BROADCAST_CUSTOM && mode == broadcastMode_) {
+    if (mode != BROADCAST_CUSTOM && mode == [self broadcastMode]) {
         mode = BROADCAST_OFF;
     }
-    if (mode != BROADCAST_OFF && broadcastMode_ == BROADCAST_OFF) {
+    if (mode != BROADCAST_OFF && [self broadcastMode] == BROADCAST_OFF) {
         if (NSRunAlertPanel(@"Warning!",
                             @"Keyboard input will be sent to multiple sessions.",
                             @"OK",
@@ -4318,8 +4332,14 @@ NSString *sessionsKey = @"sessions";
             return;
         }
     }
+	if (mode == BROADCAST_TO_ALL_PANES) {
+		[[self currentTab] setBroadcasting:YES];
+		mode = BROADCAST_OFF;
+	} else {
+		[[self currentTab] setBroadcasting:NO];
+	}
     broadcastMode_ = mode;
-        [self setDimmingForSessions];
+	[self setDimmingForSessions];
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     [itad updateBroadcastMenuState];
 }
@@ -4327,8 +4347,9 @@ NSString *sessionsKey = @"sessions";
 - (void)toggleBroadcastingInputToSession:(PTYSession *)session
 {
     NSNumber *n = [NSNumber numberWithInt:[[session view] viewId]];
-    switch (broadcastMode_) {
+    switch ([self broadcastMode]) {
         case BROADCAST_TO_ALL_PANES:
+            [[self currentTab] setBroadcasting:NO];
             [broadcastViewIds_ removeAllObjects];
             for (PTYSession *aSession in [[self currentTab] sessions]) {
                 [broadcastViewIds_ addObject:[NSNumber numberWithInt:[[aSession view] viewId]]];
@@ -4440,30 +4461,30 @@ NSString *sessionsKey = @"sessions";
 - (void)setDimmingForSession:(PTYSession *)aSession
 {
     BOOL canDim = [[PreferencePanel sharedInstance] dimInactiveSplitPanes];
-        if (!canDim) {
-                [[aSession view] setDimmed:NO];
-        } else if (aSession == [[aSession tab] activeSession]) {
-                [[aSession view] setDimmed:NO];
-        } else if (![self broadcastInputToSession:aSession]) {
-                // Session is not the active session and we're not broadcasting to it.
-                [[aSession view] setDimmed:YES];
-        } else if ([self broadcastInputToSession:[self currentSession]]) {
-                // Session is not active, we are broadcasting to it, and the current
-                // session is also broadcasting.
-                [[aSession view] setDimmed:NO];
-        } else {
-                // Session is is not active, we are broadcasting to it, but we are not
-                // broadcasting to the current session.
-                [[aSession view] setDimmed:YES];
-        }
-        [[aSession view] setNeedsDisplay:YES];
+    if (!canDim) {
+        [[aSession view] setDimmed:NO];
+    } else if (aSession == [[aSession tab] activeSession]) {
+        [[aSession view] setDimmed:NO];
+    } else if (![self broadcastInputToSession:aSession]) {
+        // Session is not the active session and we're not broadcasting to it.
+        [[aSession view] setDimmed:YES];
+    } else if ([self broadcastInputToSession:[self currentSession]]) {
+        // Session is not active, we are broadcasting to it, and the current
+        // session is also broadcasting.
+        [[aSession view] setDimmed:NO];
+    } else {
+        // Session is is not active, we are broadcasting to it, but we are not
+        // broadcasting to the current session.
+        [[aSession view] setDimmed:YES];
+    }
+    [[aSession view] setNeedsDisplay:YES];
 }
 
 - (void)setDimmingForSessions
 {
-        for (PTYSession *aSession in [self sessions]) {
-                [self setDimmingForSession:aSession];
-        }
+	for (PTYSession *aSession in [self sessions]) {
+		[self setDimmingForSession:aSession];
+	}
 }
 
 - (BOOL)anyTabIsTmuxTab
