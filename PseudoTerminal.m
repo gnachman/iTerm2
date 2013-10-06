@@ -2050,9 +2050,16 @@ NSString *sessionsKey = @"sessions";
 {
     PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignMain:%@]",
           __FILE__, __LINE__, aNotification);
-    if (_fullScreen && !togglingFullScreen_) {
-        [self toggleFullScreenMode:nil];
-    }
+    // Note: there used to be code here that would toggle fullscreen mode. I can't figure out
+    // why it existed. It was added in the original iTerm to help avoid users getting "stuck"
+    // in fullscreen mode, then commented out in a later revision without comment. During a big
+    // refactor, iTerm2 brought it back for reasons that were unclear. It was causing problems
+    // with toggling fullscreen from top-of-screen windows so I removed it because it didn't seem
+    // to provide any benefit. I'll leave this here as a reminder in case a bug pops up. 10/6/13
+    // if (_fullScreen && !togglingFullScreen_) {
+    //     [self toggleFullScreenMode:nil];
+    // }
+
     // update the cursor
     [[[self currentSession] TEXTVIEW] refresh];
     [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
@@ -2319,11 +2326,8 @@ NSString *sessionsKey = @"sessions";
 {
     if ([self lionFullScreen] ||
         (windowType_ != WINDOW_TYPE_FULL_SCREEN &&
-         windowType_ != WINDOW_TYPE_TOP &&
-         windowType_ != WINDOW_TYPE_BOTTOM &&
-         windowType_ != WINDOW_TYPE_LEFT &&
-         windowType_ != WINDOW_TYPE_RIGHT &&
          IsLionOrLater() &&
+         !isHotKeyWindow_ &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
          [[PreferencePanel sharedInstance] lionStyleFullscreen])) {
         // Is 10.7 Lion or later.
         [[self ptyWindow] performSelector:@selector(toggleFullScreen:) withObject:self];
@@ -2372,11 +2376,6 @@ NSString *sessionsKey = @"sessions";
 - (void)toggleTraditionalFullScreenMode
 {
     [SessionView windowDidResize];
-    if (windowType_ == WINDOW_TYPE_TOP || windowType_ == WINDOW_TYPE_BOTTOM
-        || windowType_ == WINDOW_TYPE_LEFT || windowType_ == WINDOW_TYPE_RIGHT) {
-        // TODO: would be nice if you could toggle top windows to fullscreen
-        return;
-    }
     PtyLog(@"toggleFullScreenMode called");
     PseudoTerminal *newTerminal;
     if (!_fullScreen) {
@@ -2385,6 +2384,7 @@ NSString *sessionsKey = @"sessions";
                                                        windowType:WINDOW_TYPE_FORCE_FULL_SCREEN
                                                            screen:[[NSScreen screens] indexOfObjectIdenticalTo:currentScreen]];
         newTerminal->oldFrame_ = [[self window] frame];
+        newTerminal->savedWindowType_ = windowType_;
         [[newTerminal window] setOpaque:NO];
     } else {
         // If a window is created while the menu bar is hidden then its
@@ -2394,10 +2394,9 @@ NSString *sessionsKey = @"sessions";
         // hiding the menu bar must be done after setting the window's frame.
         [self showMenuBar];
         PtyLog(@"toggleFullScreenMode - allocate new terminal");
-        // TODO: restore previous window type
         NSScreen *currentScreen = [[[[iTermController sharedInstance] currentTerminal] window] screen];
         newTerminal = [[PseudoTerminal alloc] initWithSmartLayout:NO
-                                                       windowType:WINDOW_TYPE_NORMAL
+                                                       windowType:savedWindowType_
                                                        screen:[[NSScreen screens] indexOfObjectIdenticalTo:currentScreen]];
         PtyLog(@"toggleFullScreenMode - set new frame to old frame: %fx%f", oldFrame_.size.width, oldFrame_.size.height);
         [[newTerminal window] setFrame:oldFrame_ display:YES];
@@ -2438,6 +2437,9 @@ NSString *sessionsKey = @"sessions";
     }
     PtyLog(@"toggleFullScreenMode - copy settings");
     [newTerminal copySettingsFrom:self];
+
+    newTerminal->isHotKeyWindow_ = isHotKeyWindow_;
+    isHotKeyWindow_ = NO;
 
     PtyLog(@"toggleFullScreenMode - calling addInTerminals");
     [[iTermController sharedInstance] addInTerminals:newTerminal];

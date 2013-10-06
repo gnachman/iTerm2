@@ -195,6 +195,7 @@ NSWindowDelegate,
     BOOL tempDisableProgressIndicators_;
 
     int windowType_;
+    int savedWindowType_;  // Window type before entering fullscreen. Only relevant if in/entering fullscreen.
     BOOL isHotKeyWindow_;
     BOOL haveScreenPreference_;
     int screenNumber_;
