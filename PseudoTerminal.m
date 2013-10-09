@@ -3389,6 +3389,9 @@ NSString *sessionsKey = @"sessions";
         newX = sf.origin.x;
     }
     [currentTime setFrameOrigin:NSMakePoint(newX, f.origin.y)];
+
+    [bottomBar setNeedsDisplay:YES];
+    [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
 }
 
 - (IBAction)irButton:(id)sender
