@@ -66,68 +66,26 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 
 @interface VT100Screen : NSObject <PTYTextViewDataSource>
 {
-    int WIDTH; // width of screen
-    int HEIGHT; // height of screen
-    int cursorX;
-    int cursorY;
-    int SAVE_CURSOR_X;
-    int SAVE_CURSOR_Y;
-    int ALT_SAVE_CURSOR_X;
-    int ALT_SAVE_CURSOR_Y;
-    int SCROLL_TOP;
-    int SCROLL_BOTTOM;
-    int SCROLL_LEFT;
-    int SCROLL_RIGHT;
     NSMutableSet* tabStops;
 
     VT100Terminal *TERMINAL;
     PTYTask *SHELL;
     PTYSession *SESSION;
-    int charset[4], saveCharset[4];
+    int charset[4];
+    int saveCharset[4];
     BOOL blinkShow;
     BOOL PLAYBELL;
     BOOL SHOWBELL;
     BOOL FLASHBELL;
     BOOL GROWL;
-
-    // DECLRMM/DECVSSM(VT class 4 feature).
-    // If this mode is enabled, the application can set 
-    // SCROLL_LEFT/SCROLL_RIGHT margins.
-    BOOL vsplitMode;
-
     BOOL blinkingCursor;
     PTYTextView *display;
-
-    // A circular buffer exactly (WIDTH+1) * HEIGHT elements in size. This contains
-    // only the contents of the screen. The scrollback buffer is stored in linebuffer.
-    screen_char_t *buffer_lines;
-
-    // The position in buffer_lines of the first line in the screen. The logical lines
-    // wrap around the circular buffer.
-    screen_char_t *screen_top;
-
-    // buffer holding flags for each char on whether it needs to be redrawn
-    char *dirty;
-    // Number of bytes in the dirty array.
-    int dirtySize;
-
-    // a single default line
-    screen_char_t *defaultLine_;
-    screen_char_t *result_line;
-
-    // temporary buffers to store main/alt screens in SAVE_BUFFER/RESET_BUFFER mode
-    screen_char_t *saved_primary_buffer;
-    screen_char_t *saved_alt_buffer;
-    screen_char_t primary_default_char;
-    BOOL showingAltScreen;
-
-    // default line stuff
-    screen_char_t default_bg_code;
-    screen_char_t default_fg_code;
-    int default_line_width;
-
+    VT100Grid *primaryGrid_;
+    VT100Grid *altGrid_;  // may be nil
+    VT100Grid *currentGrid_;  // Weak reference. Points to either primaryGrid or altGrid.
+    
     // Max size of scrollback buffer
-    unsigned int  max_scrollback_lines;
+    unsigned int max_scrollback_lines;
     // This flag overrides max_scrollback_lines:
     BOOL unlimitedScrollback_;
 
@@ -161,7 +119,7 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 
 - (NSString *)description;
 
-- (screen_char_t*)initScreenWithWidth:(int)width Height:(int)height;
+- (void)setUpScreenWithWidth:(int)width height:(int)height;
 - (void)resizeWidth:(int)new_width height:(int)height;
 - (void)reset;
 - (void)resetPreservingPrompt:(BOOL)preservePrompt;
@@ -210,10 +168,6 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 
 // internal
 - (void)setString:(NSString *)s ascii:(BOOL)ascii;
-- (void)setStringToX:(int)x
-                   Y:(int)y
-              string:(NSString *)string
-               ascii:(BOOL)ascii;
 - (void)addLineToScrollback;
 - (void)crlf; // -crlf is called only by tmux integration, so it ignores vsplit mode.
 - (void)setNewLine;
@@ -282,8 +236,6 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 
 // Is this character double width on this screen?
 - (BOOL)isDoubleWidthCharacter:(unichar)c;
-
-- (void)dumpDebugLog;
 
 // Set the colors in the prototype char to all text on screen that matches the regex.
 // See kHighlightXxxColor constants at the top of this file for dict keys, values are NSColor*s.

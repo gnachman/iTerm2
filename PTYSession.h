@@ -419,7 +419,6 @@ typedef enum {
 - (PTYTask *)SHELL;
 - (void)setSHELL: (PTYTask *)theSHELL;
 - (VT100Terminal *)TERMINAL;
-- (void)setTERMINAL: (VT100Terminal *)theTERMINAL;
 - (NSString *)TERM_VALUE;
 - (void)setTERM_VALUE: (NSString *)theTERM_VALUE;
 - (NSString *)COLORFGBG_VALUE;

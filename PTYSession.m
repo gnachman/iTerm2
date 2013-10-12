@@ -118,7 +118,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     // Allocate screen, shell, and terminal objects
     SHELL = [[PTYTask alloc] init];
     TERMINAL = [[VT100Terminal alloc] init];
-    SCREEN = [[VT100Screen alloc] init];
+    SCREEN = [[VT100Screen alloc] initWithTerminal:TERMINAL];
     NSParameterAssert(SHELL != nil && TERMINAL != nil && SCREEN != nil);
 
     // Need Growl plist stuff
@@ -460,43 +460,33 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     // assign terminal and task objects
     [SCREEN setShellTask:SHELL];
-    [SCREEN setTerminal:TERMINAL];
     [TERMINAL setScreen: SCREEN];
     [SHELL setDelegate:self];
 
     // initialize the screen
     int width = (aSize.width - MARGIN*2) / [TEXTVIEW charWidth];
     int height = (aSize.height - VMARGIN*2) / [TEXTVIEW lineHeight];
-    if ([SCREEN initScreenWithWidth:width Height:height]) {
-        [self setName:@"Shell"];
-        [self setDefaultName:@"Shell"];
+    // NB: In the bad old days, this returned whether setup succeeded because it would allocate an
+    // enormous amount of memory. That's no longer an issue.
+    [SCREEN setUpScreenWithWidth:width height:height];
+    [self setName:@"Shell"];
+    [self setDefaultName:@"Shell"];
 
-        [TEXTVIEW setDataSource:SCREEN];
-        [TEXTVIEW setDelegate:self];
-        [SCROLLVIEW setDocumentView:WRAPPER];
-        [WRAPPER release];
-        [SCROLLVIEW setDocumentCursor:[PTYTextView textViewCursor]];
-        [SCROLLVIEW setLineScroll:[TEXTVIEW lineHeight]];
-        [SCROLLVIEW setPageScroll:2*[TEXTVIEW lineHeight]];
-        [SCROLLVIEW setHasVerticalScroller:[parent scrollbarShouldBeVisible]];
+    [TEXTVIEW setDataSource:SCREEN];
+    [TEXTVIEW setDelegate:self];
+    [SCROLLVIEW setDocumentView:WRAPPER];
+    [WRAPPER release];
+    [SCROLLVIEW setDocumentCursor:[PTYTextView textViewCursor]];
+    [SCROLLVIEW setLineScroll:[TEXTVIEW lineHeight]];
+    [SCROLLVIEW setPageScroll:2*[TEXTVIEW lineHeight]];
+    [SCROLLVIEW setHasVerticalScroller:[parent scrollbarShouldBeVisible]];
 
-        ai_code=0;
-        [antiIdleTimer release];
-        antiIdleTimer = nil;
-        newOutput = NO;
+    ai_code=0;
+    [antiIdleTimer release];
+    antiIdleTimer = nil;
+    newOutput = NO;
 
-        return YES;
-    } else {
-        [SCREEN release];
-        SCREEN = nil;
-        [TEXTVIEW release];
-        NSRunCriticalAlertPanel(NSLocalizedStringFromTableInBundle(@"Out of memory",@"iTerm", [NSBundle bundleForClass:[self class]], @"Error"),
-                                NSLocalizedStringFromTableInBundle(@"New sesssion cannot be created. Try smaller buffer sizes.",@"iTerm", [NSBundle bundleForClass:[self class]], @"Error"),
-                                NSLocalizedStringFromTableInBundle(@"OK",@"iTerm", [NSBundle bundleForClass:[self class]], @"OK"),
-                         nil, nil);
-
-        return NO;
-    }
+    return YES;
 }
 
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
@@ -2100,12 +2090,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (VT100Terminal *)TERMINAL
 {
     return TERMINAL;
-}
-
-- (void)setTERMINAL:(VT100Terminal *)theTERMINAL
-{
-    [TERMINAL autorelease];
-    TERMINAL = [theTERMINAL retain];
 }
 
 - (NSString *)TERM_VALUE

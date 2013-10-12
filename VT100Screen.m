@@ -1,4 +1,3 @@
-
 // -*- mode:objc -*-
 // $Id: VT100Screen.m,v 1.289 2008-10-22 00:43:30 yfabian Exp $
 //
@@ -69,14 +68,6 @@
 
 NSString * const kHighlightForegroundColor = @"kHighlightForegroundColor";
 NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
-
-// If set, turns on the following optimizations:
-// 1. When appending a single character, make sure it is different than the existing character at its
-//    cell before marking the cell dirty. This improves performance with vim drawing a vertical divider.
-// 2. Change how the cursor's cells (old and new) are marked dirty. Ordinarily, every position the cursor
-//    passes through is marked dirty. With the optimization, only its previous position at the last update
-//    and its current position at the current update are marked dirty.
-BOOL gExperimentalOptimization;
 
 typedef struct {
     screen_char_t *saved_buffer_lines;
@@ -261,29 +252,6 @@ void StringToScreenChars(NSString *s,
     }
 }
 
-// increments line pointer accounting for buffer wrap-around
-static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, screen_char_t *current_line,
-                                  int max_lines, int line_width, BOOL *wrap)
-{
-    screen_char_t *next_line;
-
-    //include the wrapping indicator
-    line_width++;
-
-    next_line = current_line + line_width;
-    if (next_line >= (buf_start + line_width*max_lines))
-    {
-        next_line = buf_start;
-        if (wrap)
-            *wrap = YES;
-    }
-    else if (wrap)
-        *wrap = NO;
-
-    return (next_line);
-}
-
-
 @implementation VT100Screen
 
 #define DEFAULT_WIDTH     80
@@ -296,392 +264,90 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 #define TABSIZE     8
 
-+ (void)initialize
+- (id)initWithTerminal:(VT100Terminal *)terminal
 {
-    gExperimentalOptimization =
-        [[NSUserDefaults standardUserDefaults] boolForKey:@"ExperimentalOptimizationsEnabled"];
-    if (gExperimentalOptimization) {
-        NSLog(@"** Experimental optimizations enabled **");
+    self = [super init];
+    if (self) {
+        TERMINAL = [terminal retain];
+        primaryGrid_ = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(DEFAULT_WIDTH, DEFAULT_HEIGHT)
+                                              terminal:terminal];
+        currentGrid_ = primaryGrid_;
+
+        max_scrollback_lines = DEFAULT_SCROLLBACK;
+        tabStops = [[NSMutableSet alloc] init];
+        [self _setInitialTabStops];
+        linebuffer = [[LineBuffer alloc] init];
+
+        // Need Growl plist stuff
+        gd = [iTermGrowlDelegate sharedInstance];
+
+        dvr = [DVR alloc];
+        [dvr initWithBufferCapacity:[[PreferencePanel sharedInstance] irMemory] * 1024 * 1024];
     }
-}
-
-- (id)init
-{
-#if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
-#endif
-    if ((self = [super init]) == nil)
-        return nil;
-
-    WIDTH = DEFAULT_WIDTH;
-    HEIGHT = DEFAULT_HEIGHT;
-
-    cursorX = cursorY = 0;
-    SAVE_CURSOR_X = SAVE_CURSOR_Y = 0;
-    ALT_SAVE_CURSOR_X = ALT_SAVE_CURSOR_Y = 0;
-    SCROLL_LEFT = 0;
-    SCROLL_TOP = 0;
-    SCROLL_RIGHT = WIDTH - 1;
-    SCROLL_BOTTOM = HEIGHT - 1;
-
-    TERMINAL = nil;
-    SHELL = nil;
-
-    buffer_lines = NULL;
-    dirty = NULL;
-    dirtySize = 0;
-    // Temporary storage for returning lines from the screen or scrollback
-    // buffer to hide the details of the encoding of each.
-    result_line = NULL;
-    screen_top = NULL;
-
-    saved_primary_buffer = NULL;
-    saved_alt_buffer = NULL;
-    showingAltScreen = NO;
-    findContext.substring = nil;
-
-    max_scrollback_lines = DEFAULT_SCROLLBACK;
-    scrollback_overflow = 0;
-    tabStops = [[NSMutableSet alloc] init];
-    [self _setInitialTabStops];
-    linebuffer = [[LineBuffer alloc] init];
-
-    for (int i = 0; i < 4; i++) {
-        saveCharset[i] = charset[i] = 0;
-    }
-
-    // Need Growl plist stuff
-    gd = [iTermGrowlDelegate sharedInstance];
-
-    dvr = [DVR alloc];
-    [dvr initWithBufferCapacity:[[PreferencePanel sharedInstance] irMemory] * 1024 * 1024];
     return self;
 }
 
 - (void)dealloc
 {
-#if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
-#endif
-    // free our character buffer
-    if (buffer_lines)
-        free(buffer_lines);
-
-    // free our "dirty flags" buffer
-    if (dirty) {
-        assert(dirty[dirtySize] == DIRTY_MAGIC);
-        free(dirty);
-    }
-    if (result_line) {
-        free(result_line);
-    }
-
-    // free our default line
-    if (defaultLine_) {
-        free(defaultLine_);
-    }
-
-    if (saved_primary_buffer) {
-        free(saved_primary_buffer);
-    }
-    if (saved_alt_buffer) {
-        free(saved_alt_buffer);
-    }
-
+    [primaryGrid_ release];
+    [altGrid_ release];
     [tabStops release];
     [printToAnsiString release];
     [linebuffer release];
     [dvr release];
-    dirty = 0;
-    dirtySize = 0;
     [super dealloc];
-#if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x, done", __PRETTY_FUNCTION__, self);
-#endif
 }
 
 - (NSString *)description
 {
-    return [NSString stringWithFormat:@"<%@: %p WIDTH %d, HEIGHT %d, CURSOR (%d,%d)>", [self class], self, WIDTH, HEIGHT, cursorX, cursorY];
+    return [NSString stringWithFormat:@"<%@: %p grid:%@>", [self class], self, currentGrid_];
 }
 
--(screen_char_t *)initScreenWithWidth:(int)width Height:(int)height
+- (void)setUpScreenWithWidth:(int)width height:(int)height
 {
     int i;
     screen_char_t *aDefaultLine;
 
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen initScreenWithWidth:%d Height:%d]", __FILE__, __LINE__, width, height );
-#endif
-
     width = MAX(width, MIN_SESSION_COLUMNS);
     height = MAX(height, MIN_SESSION_ROWS);
 
-    WIDTH = width;
-    HEIGHT = height;
-    cursorX = cursorY = 0;
-    SAVE_CURSOR_X = SAVE_CURSOR_Y = 0;
-    ALT_SAVE_CURSOR_X = ALT_SAVE_CURSOR_Y = 0;
-    SCROLL_LEFT = 0;
-    SCROLL_TOP = 0;
-    SCROLL_RIGHT = WIDTH - 1;
-    SCROLL_BOTTOM = HEIGHT - 1;
-    blinkShow=YES;
+    primaryGrid_.size = VT100GridSizeMake(width, height);
+    altGrid_.size = VT100GridSizeMake(width, height);
+    primaryGrid_.cursor = VT100GridCoordMake(0, 0);
+    altGrid_.cursor = VT100GridCoordMake(0, 0);
+    primaryGrid_.savedCursor = VT100GridCoordMake(0, 0);
+    altGrid_.savedCursor = VT100GridCoordMake(0, 0);
+    primaryGrid_.scrollRegionRows = VT100GridRangeMake(0, height - 1);
+    altGrid_.scrollRegionRows = VT100GridRangeMake(0, height - 1);
+    primaryGrid_.scrollRegionCols = VT100GridRangeMake(0, width - 1);
+    altGrid_.scrollRegionCols = VT100GridRangeMake(0, width - 1);
+
+    blinkShow = YES;
     findContext.substring = nil;
-    // allocate our buffer to hold both scrollback and screen contents
-    buffer_lines = (screen_char_t *)calloc(HEIGHT * REAL_WIDTH, sizeof(screen_char_t));
-#ifdef DEBUG_CORRUPTION
-    memset(buffer_lines, -1, HEIGHT*REAL_WIDTH*sizeof(screen_char_t));
-#endif
-    if (!buffer_lines) {
-        return NULL;
-    }
 
-    // set up our pointers
-    screen_top = buffer_lines;
+    scrollback_overflow = 0;
+    [display deselect];
 
-    // set all lines in buffer to default
-    default_fg_code = [TERMINAL foregroundColorCodeReal];
-    default_bg_code = [TERMINAL backgroundColorCodeReal];
-    default_line_width = WIDTH;
-    aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
-    for(i = 0; i < HEIGHT; i++) {
-        memcpy([self getLineAtScreenIndex: i],
-               aDefaultLine,
-               REAL_WIDTH*sizeof(screen_char_t));
-    }
-
-    // set up our dirty flags buffer
-    dirtySize = WIDTH * HEIGHT;
-    // allocate one extra byte to check for overruns.
-    dirty = (char*)calloc(dirtySize + 1, sizeof(char));
-    dirty[dirtySize] = DIRTY_MAGIC;
-    result_line = (screen_char_t*) calloc(REAL_WIDTH, sizeof(screen_char_t));
-
-    // force a redraw
-    [self setDirty];
+    [primaryGrid_ markAllCharsDirty:YES];
+    [altGrid_ markAllCharsDirty:YES];
 
     return buffer_lines;
 }
 
-// returns NSString representation of line
-- (NSString *)getLineString:(screen_char_t *)theLine
-{
-    NSMutableString* result = [NSMutableString stringWithCapacity:REAL_WIDTH];
-
-    for (int i = 0; i < WIDTH; i++) {
-        [result appendString:ScreenCharToStr(&theLine[i])];
-    }
-
-    if (theLine[WIDTH].code) {
-        [result appendString:@"\n"];
-    }
-
-    return result;
-}
-
 - (BOOL)isAnyCharDirty
 {
-    assert(WIDTH * HEIGHT == dirtySize);
-    for (int i = 0; i < WIDTH*HEIGHT; i++) {
-      if (dirty[i]) {
-        return YES;
-      }
-    }
-    return NO;
-}
-
-- (void)moveDirtyRangeFromOffset:(int)i toOffset:(int)o size:(int)s
-{
-    assert(i >= 0);
-    assert(i < dirtySize);
-    assert(i + s <= dirtySize);
-    assert(o >= 0);
-    assert(o < dirtySize);
-    assert(o + s <= dirtySize);
-    memmove(dirty+o, dirty+i, s*sizeof(char));
-}
-
-// moves a block of size 's' from (fromX, fromY) to (toX, toY)
-- (void)moveDirtyRangeFromX:(int)fromX Y:(int)fromY toX:(int)toX Y:(int)toY size:(int)s
-{
-    assert(fromX >= 0);
-    assert(fromX <= WIDTH);
-    assert(toX >= 0);
-    assert(toX < WIDTH);
-    assert(fromY >= 0);
-    if (fromY >= HEIGHT) {
-        // Can happen with 1-line tall session
-        return;
-    }
-    assert(toY >= 0);
-    assert(toY < HEIGHT);
-    [self moveDirtyRangeFromOffset:(fromX + fromY * WIDTH)
-                          toOffset:(toX + toY * WIDTH)
-                              size:s];
-}
-
-// not inclusive of toX. Is inclusive of toY.
-- (void)setDirtyFromX:(int)fromX Y:(int)fromY toX:(int)toX Y:(int)toY
-{
-    assert(fromX >= 0);
-    assert(fromX < WIDTH);
-    assert(toX >= 0);
-    assert(toX <= WIDTH);  // <= because not inclusive of toX.
-    assert(fromY >= 0);
-    assert(fromY < HEIGHT);
-    assert(toY >= 0);
-    assert(toY < HEIGHT);
-    assert(fromY <= toY);
-    if (fromY == toY) {
-        assert(fromX <= toX);
-    }
-    int i = fromX + fromY * WIDTH;
-    [self setRangeDirty:NSMakeRange(i, toX + toY * WIDTH - i)];
-}
-
-// set the rectangular region specified by arguments as dirty
-- (void)setRectDirtyFromX:(int)fromX Y:(int)fromY toX:(int)toX Y:(int)toY
-{
-    assert(fromX >= 0);
-    assert(fromX < WIDTH);
-    assert(toX >= 0);
-    assert(toX <= WIDTH); // <= because not inclusive of toX.
-    assert(fromY >= 0);
-    assert(fromY < HEIGHT);
-    assert(toY >= 0);
-    assert(toY < HEIGHT);
-    assert(fromY <= toY);
-
-    if (fromY == toY) {
-        assert(fromX <= toX);
-    }
-    for (int y = fromY; y <= toY; y++) {
-        int i = fromX + y * WIDTH;
-        [self setRangeDirty:NSMakeRange(i, toX + y * WIDTH - i)];
-    }
-}
-
-- (void)setDirtyAtOffset:(int)i
-{
-    i = MIN(i, WIDTH*HEIGHT-1);
-    assert(i >= 0);
-    assert(i < dirtySize);
-
-    dirty[i] = 1;
-}
-
-- (void)setRangeDirty:(NSRange)range
-{
-    assert(range.location >= 0);
-    if (range.location >= dirtySize) {
-        return;
-    }
-    assert(range.length >= 0);
-    if (range.location + range.length > dirtySize) {
-        range.length = dirtySize - range.location;
-    }
-    assert(range.location + range.length <= dirtySize);
-
-    memset(dirty + range.location,
-           1,
-           range.length);
-}
-
-- (int)dirtyAtOffset:(int)i
-{
-    if (i >= WIDTH*HEIGHT) {
-        i = WIDTH*HEIGHT - 1;
-    }
-    assert(i >= 0);
-    assert(i < dirtySize);
-    return dirty[i];
-}
-
-- (void)setCharDirtyAtX:(int)x Y:(int)y
-{
-    if (x == WIDTH) {
-        x = WIDTH-1;
-    }
-    if (x >= 0 &&
-        x < WIDTH &&
-        y >= 0 &&
-        y < HEIGHT) {
-        int i = x + y * WIDTH;
-        [self setDirtyAtOffset:i];
-    }
-}
-
-- (void)setCharAtCursorDirty:(int)value
-{
-    [self setCharDirtyAtCursorX:cursorX Y:cursorY];
+    return [currentGrid_ isAnyCharDirty];
 }
 
 - (void)setCursorX:(int)x Y:(int)y
 {
-    if (!gExperimentalOptimization) {
-        if (cursorX >= 0 && cursorX < WIDTH && cursorY >= 0 && cursorY < HEIGHT) {
-            [self setCharAtCursorDirty:1];
-        }
-    }
-    if (gDebugLogging) {
-      DebugLog([NSString stringWithFormat:@"Move cursor to %d,%d", x, y]);
-    }
-    cursorX = x;
-    cursorY = y;
-    if (!gExperimentalOptimization) {
-        if (cursorX >= 0 && cursorX < WIDTH && cursorY >= 0 && cursorY < HEIGHT) {
-            [self setCharAtCursorDirty:1];
-        }
-    }
+    DLog(@"Move cursor to %d,%d", x, y);
+    grid_.cursor = VT100GridCoordMake(x, y);
 }
 
 - (void)carriageReturn
 {
-    const int leftMargin = vsplitMode ? SCROLL_LEFT: 0;
-
-    [self setCursorX:leftMargin Y:cursorY];
-}
-
-- (void)setWidth:(int)width height:(int)height
-{
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen setWidth:%d height:%d]",
-          __FILE__, __LINE__, width, height);
-#endif
-
-    if (width >= MIN_WIDTH && height >= MIN_HEIGHT) {
-        WIDTH = width;
-        HEIGHT = height;
-        [self setCursorX:0 Y:0];
-        SAVE_CURSOR_X = SAVE_CURSOR_Y = 0;
-        ALT_SAVE_CURSOR_X = ALT_SAVE_CURSOR_Y = 0;
-        SCROLL_LEFT = 0;
-        SCROLL_TOP = 0;
-        SCROLL_RIGHT = WIDTH - 1;
-        SCROLL_BOTTOM = HEIGHT - 1;
-    }
-}
-
-static char* FormatCont(int c)
-{
-    switch (c) {
-        case EOL_HARD:
-            return "[hard]";
-        case EOL_SOFT:
-            return "[soft]";
-        case EOL_DWC:
-            return "[dwc]";
-        default:
-            return "[?]";
-    }
-}
-
-- (void)dumpAll {
-    int n = [self numberOfLines];
-    for (int i = 0; i < n; i++) {
-        NSLog(@"%8d: %@", i, ScreenCharArrayToStringDebug([self getLineAtIndex:i], WIDTH));
-    }
+    [grid_ moveCursorToLeftMargin];
 }
 
 // NSLog the screen contents for debugging.
@@ -690,345 +356,77 @@ static char* FormatCont(int c)
     NSLog(@"%@", [self debugString]);
 }
 
-- (void)dumpDebugLog
-{
-    int x, y;
-    char line[1000];
-    char dirtyline[1000];
-    DebugLog([NSString stringWithFormat:@"width=%d height=%d cursor_x=%d cursor_y=%d scroll_top=%d scroll_bottom=%d max_scrollback_lines=%d current_scrollback_lines=%d scrollback_overflow=%d",
-              WIDTH, HEIGHT, cursorX, cursorY, SCROLL_TOP, SCROLL_BOTTOM, max_scrollback_lines, [linebuffer numLinesWithWidth: WIDTH], scrollback_overflow]);
-
-    for (y = 0; y < HEIGHT; ++y) {
-        int ox = 0;
-        screen_char_t* p = [self getLineAtScreenIndex: y];
-        if (p == buffer_lines) {
-            DebugLog(@"--- top of buffer ---\n");
-        }
-        for (x = 0; x < WIDTH; ++x, ++ox) {
-            if (y == cursorY && x == cursorX) {
-                line[ox++] = '<';
-                line[ox++] = '*';
-                line[ox++] = '>';
-            }
-            if (p+x > buffer_lines + HEIGHT*REAL_WIDTH) {
-                line[ox++] = '!';
-            }
-            if (p[x].code && !p[x].complexChar) {
-                line[ox] = p[x].code;
-            } else {
-                line[ox] = '.';
-            }
-            if (dirty[y*WIDTH+x]) {
-                dirtyline[x] = '*';
-            } else {
-                dirtyline[x] = ' ';
-            }
-        }
-        dirtyline[x] = 0;
-        line[x] = 0;
-        DebugLog([NSString stringWithFormat:@"%04d @ buffer+%d lines: %s %s",
-                  y, (int)((p - buffer_lines) / REAL_WIDTH), line,
-                  FormatCont(p[WIDTH].code)]);
-        DebugLog([NSString stringWithFormat:@"                 dirty: %s", dirtyline]);
-    }
-}
-
 - (int)colorCodeForColor:(NSColor *)theColor
 {
-    theColor = [theColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-    int r = 5 * [theColor redComponent];
-    int g = 5 * [theColor greenComponent];
-    int b = 5 * [theColor blueComponent];
-    return 16 + b + g*6 + r*36;
+    if (theColor) {
+        theColor = [theColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+        int r = 5 * [theColor redComponent];
+        int g = 5 * [theColor greenComponent];
+        int b = 5 * [theColor blueComponent];
+        return 16 + b + g*6 + r*36;
+    } else {
+        return 0;
+    }
 }
 
 // Set the color of prototypechar to all chars between startPoint and endPoint on the screen.
-- (void)highlightWithColors:(NSDictionary *)colors
-                  fromPoint:(CellCoord)startPoint
-                    toPoint:(CellCoord)endPoint
+- (void)highlightRun:(VT100GridRun)run
+    withForegroundColor:(NSColor *)fgColor
+        backgroundColor:(NSColor *)bgColor
 {
-    NSColor *fgColor = [colors objectForKey:kHighlightForegroundColor];
-    NSColor *bgColor = [colors objectForKey:kHighlightBackgroundColor];
-    int fgColorCode, bgColorCode;
-    if (fgColor) {
-        fgColorCode = [self colorCodeForColor:fgColor];
-    }
-    if (bgColor) {
-        bgColorCode = [self colorCodeForColor:bgColor];
-    }
+    int fgColorCode = [self colorCodeForColor:fgColor];
+    int bgColorCode = [self colorCodeForColor:bgColor];
 
-    int x = startPoint.x;
-    int y = startPoint.y;
-    screen_char_t *theLine = nil;
-    int lineY = -1;
-    [self setDirtyFromX:startPoint.x Y:startPoint.y toX:endPoint.x Y:endPoint.y];
-    int n = endPoint.x + endPoint.y * WIDTH;
-    while (x + y * WIDTH < n) {
-        if (lineY != y) {
-            theLine = [self getLineAtScreenIndex:y];
-            lineY = y;
-        }
-        assert(theLine);
-        if (theLine) {
-            if (fgColor) {
-                theLine[x].foregroundColor = fgColorCode;
-                theLine[x].foregroundColorMode = ColorModeNormal;
-            }
-            if (bgColor) {
-                theLine[x].backgroundColor = bgColorCode;
-                theLine[x].backgroundColorMode = ColorModeNormal;
-            }
-        }
-        ++x;
-        if (x == WIDTH) {
-            x = 0;
-            ++y;
-        }
+    VT100GridRun run = VT100GridRunFromCoords(VT100GridCoordMake(startPoint.x, startPoint.y),
+                                              VT100GridCoordMake(endPoint.x, endPoint.y),
+                                              currentGrid_.size.width);
+    screen_char_t fg;
+    screen_char_t bg;
+
+    fg.foregroundColor = bgColorCode;
+    fg.foregroundColorMode = fgColor ? ColorModeNormal : ColorModeInvalid;
+    bg.backgroundColor = bgColorCode;
+    bg.backgroundColorMode = bgColor ? ColorModeNormal : ColorModeInvalid;
+
+    for (NSValue *value in [currentGrid_ rectsForRun:run]) {
+        VT100GridRect rect = [value gridRectValue];
+        [currentGrid_ setBackgroundColor:bg
+                         foregroundColor:fg
+                              inRectFrom:rect.origin
+                                      to:VT100GridRectGetMax(rect)];
     }
-}
-
-// Find all the lines starting at startScreenY that have non-hard EOLs. Combine them into a string and return it.
-// Store the number of screen lines in *numLines
-// Store an array of UTF-16 codes in backingStorePtr, which the caller must free
-// Store an array of offsets between chars in the string and screen_char_t indices in deltasPtr, which the caller must free.
-- (NSString *)joinedLineBeginningAtScreenLine:(int)startScreenY
-                            numScreenLinesPtr:(int *)numLines
-                              backingStorePtr:(unichar **)backingStorePtr  // caller must free
-                                    deltasPtr:(int **)deltasPtr            // caller must free
-{
-    // Count the number of screen lines that have soft/dwc newlines beginning at
-    // line startScreenY.
-    int limitY;
-    for (limitY = startScreenY; limitY < HEIGHT; limitY++) {
-        screen_char_t *screenLine = [self getLineAtScreenIndex:limitY];
-        if (screenLine[WIDTH].code == EOL_HARD) {
-            break;
-        }
-    }
-    *numLines = limitY - startScreenY + 1;
-
-    // Create a single array of screen_char_t's that has those screen lines
-    // concatenated together in "temp".
-    screen_char_t *temp = malloc(sizeof(screen_char_t) * WIDTH * *numLines);
-    int i = 0;
-    for (int y = startScreenY; y <= limitY; y++, i++) {
-        screen_char_t *screenLine = [self getLineAtScreenIndex:y];
-        memcpy(temp + WIDTH * i, screenLine, WIDTH * sizeof(screen_char_t));
-    }
-
-    // Convert "temp" into an NSString. backingStorePtr and deltasPtr are filled
-    // in with malloc'ed pointers that the caller must free.
-    NSString *screenLine = ScreenCharArrayToString(temp, 0, WIDTH * *numLines, backingStorePtr, deltasPtr);
-    free(temp);
-
-    return screenLine;
 }
 
 // Change color of text on screen that matches regex to the color of prototypechar.
 - (void)highlightTextMatchingRegex:(NSString *)regex
                             colors:(NSDictionary *)colors
 {
-    int y = 0;
-    while (y < HEIGHT) {
-        int numLines;
-        unichar *backingStore;
-        int *deltas;
-        NSString *joinedLine = [self joinedLineBeginningAtScreenLine:y
-                                                   numScreenLinesPtr:&numLines
-                                                     backingStorePtr:&backingStore
-                                                           deltasPtr:&deltas];
-        NSRange searchRange = NSMakeRange(0, joinedLine.length);
-        NSRange range;
-        while (1) {
-            range = [joinedLine rangeOfRegex:regex
-                                     options:0
-                                     inRange:searchRange
-                                     capture:0
-                                       error:nil];
-            if (range.location == NSNotFound || range.length == 0) {
-                break;
-            }
-            int start = range.location;
-            int end = range.location + range.length;
-            start += deltas[start];
-            end += deltas[end];
-            int startY = y + start / WIDTH;
-            int startX = start % WIDTH;
-            int endY = y + end / WIDTH;
-            int endX = end % WIDTH;
-
-            if (endY >= HEIGHT) {
-                endY = HEIGHT - 1;
-                endX = WIDTH;
-            }
-            if (startY < HEIGHT) {
-                [self highlightWithColors:colors
-                                fromPoint:MakeCellCoord(startX, startY)
-                                  toPoint:MakeCellCoord(endX, endY)];
-            }
-
-            searchRange.location = range.location + range.length;
-            searchRange.length = joinedLine.length - searchRange.location;
-        }
-        y += numLines;
-        free(backingStore);
-        free(deltas);
+    NSArray *runs = [currentGrid_ runsMatchingRegex:regex];
+    for (NSValue *run in runs) {
+        [self highlightRun:[run gridRunValue]
+            withForegroundColor:[colors objectForKey:kHighlightForegroundColor]
+                backgroundColor:[colors objectForKey:kHighlightBackgroundColor]];
     }
 }
 
-- (int)_getLineLength:(screen_char_t*)line
+// This assumes the window's height is going to change to newHeight but currentGrid_.size.height
+// is still the "old" height.
+- (void)appendScreenToScrollbackWithUsedHeight:(int)usedHeight newHeight:(int)newHeight
 {
-    int line_length = 0;
-    // Figure out the line length.
-    if (line[WIDTH].code == EOL_SOFT) {
-        line_length = WIDTH;
-    } else if (line[WIDTH].code == EOL_DWC) {
-        line_length = WIDTH - 1;
-    } else {
-        for (line_length = WIDTH - 1; line_length >= 0; --line_length) {
-            if (line[line_length].code && line[line_length].code != DWC_SKIP) {
-                break;
-            }
-        }
-        ++line_length;
-    }
-    return line_length;
-}
-
-- (int)_usedHeight
-{
-    int used_height = HEIGHT;
-    int i;
-
-    for(; used_height > cursorY + 1; used_height--) {
-        screen_char_t* aLine = [self getLineAtScreenIndex: used_height-1];
-        for (i = 0; i < WIDTH; i++)
-            if (aLine[i].code) {
-                break;
-            }
-        if (i < WIDTH) {
-            break;
-        }
-    }
-
-    return used_height;
-}
-
-// Returns the number of lines appended.
-- (int)_appendScreenToScrollback:(int)numLines
-{
-    // Set numLines to the number of lines on the screen that are in use.
-    int i;
-
-    // Push the current screen contents into the scrollback buffer.
-    // The maximum number of lines of scrollback are temporarily ignored because this
-    // loop doesn't call dropExcessLinesWithWidth.
-    int next_line_length;
-    if (numLines > 0) {
-        next_line_length = [self _getLineLength:[self getLineAtScreenIndex: 0]];
-    }
-    for (i = 0; i < numLines; ++i) {
-        screen_char_t* line = [self getLineAtScreenIndex: i];
-        int line_length = next_line_length;
-        if (i+1 < HEIGHT) {
-            next_line_length = [self _getLineLength:[self getLineAtScreenIndex:i+1]];
-        } else {
-            next_line_length = -1;
-        }
-
-        int continuation = line[WIDTH].code;
-        if (i == cursorY) {
-            [linebuffer setCursor:cursorX];
-        } else if ((cursorX == 0) &&
-                   (i == cursorY - 1) &&
-                   (next_line_length == 0) &&
-                   line[WIDTH].code != EOL_HARD) {
-            // This line is continued, the next line is empty, and the cursor is
-            // on the first column of the next line. Pull it up.
-            [linebuffer setCursor:cursorX + 1];
-        }
-
-        [linebuffer appendLine:line length:line_length partial:(continuation != EOL_HARD) width:WIDTH];
-#ifdef DEBUG_RESIZEDWIDTH
-        NSLog(@"Appended a line. now have %d lines for width %d\n", [linebuffer numLinesWithWidth:WIDTH], WIDTH);
-#endif
-    }
-
-    return numLines;
-}
-
-- (void)restoreScreenFromScrollbackWithDefaultLine:(screen_char_t *)defaultLine
-                                              upTo:(int)maxLines
-{
-    // Move scrollback lines into screen
-    int num_lines_in_scrollback = [linebuffer numLinesWithWidth:WIDTH];
-    int dest_y;
-    if (num_lines_in_scrollback >= HEIGHT) {
-        dest_y = HEIGHT - 1;
-    } else {
-        dest_y = num_lines_in_scrollback - 1;
-    }
-    dest_y = MIN(dest_y, maxLines - 1);
-
-    BOOL found_cursor = NO;
-    BOOL prevLineStartsWithDoubleWidth = NO;
-    while (dest_y >= 0) {
-        screen_char_t* dest = [self getLineAtScreenIndex: dest_y];
-        memcpy(dest, defaultLine, sizeof(screen_char_t) * WIDTH);
-        if (!found_cursor) {
-            int tempCursor = cursorX;
-            found_cursor = [linebuffer getCursorInLastLineWithWidth:WIDTH atX:&tempCursor];
-            if (found_cursor) {
-                [self setCursorX:tempCursor % WIDTH
-                               Y:dest_y + tempCursor / WIDTH];
-            }
-        }
-        int cont;
-        [linebuffer popAndCopyLastLineInto:dest width:WIDTH includesEndOfLine:&cont];
-        if (cont && dest[WIDTH - 1].code == 0 && prevLineStartsWithDoubleWidth) {
-            // If you pop a soft-wrapped line that's a character short and the
-            // line below it starts with a DWC, it's safe to conclude that a DWC
-            // was wrapped.
-            dest[WIDTH - 1].code = DWC_SKIP;
-            cont = EOL_DWC;
-        }
-        if (dest[1].code == DWC_RIGHT) {
-            prevLineStartsWithDoubleWidth = YES;
-        } else {
-            prevLineStartsWithDoubleWidth = NO;
-        }
-        dest[WIDTH].code = cont;
-        if (cont == EOL_DWC) {
-            dest[WIDTH - 1].code = DWC_SKIP;
-        }
-        --dest_y;
-    }
-}
-
-- (void)restoreScreenFromScrollbackWithDefaultLine:(screen_char_t *)defaultLine
-{
-    [self restoreScreenFromScrollbackWithDefaultLine:defaultLine
-                                                upTo:[linebuffer numLinesWithWidth:WIDTH]];
-}
-
-// This assumes the window's height is going to change to new_height but the ivar HEIGHT is still the
-// "old" height.
-- (void)_appendScreenToScrollbackWithUsedHeight:(int)usedHeight newHeight:(int)new_height
-{
-    if (HEIGHT - new_height >= usedHeight) {
+    if (currentGrid_.size.height - newHeight >= usedHeight) {
         // Height is decreasing but pushing HEIGHT lines into the buffer would scroll all the used
         // lines off the top, leaving the cursor floating without any text. Keep all used lines that
         // fit onscreen.
-        [self _appendScreenToScrollback:MAX(usedHeight, new_height)];
+        [currentGrid_ appendLines:MAX(usedHeight, newHeight) toLineBuffer:linebuffer];
     } else {
-        if (new_height < HEIGHT) {
+        if (newHeight < currentGrid_.size.height) {
             // Screen is shrinking.
             // If possible, keep the last used line a fixed distance from the top of
             // the screen. If not, at least save all the used lines.
-            [self _appendScreenToScrollback:usedHeight];
+            [currentGrid_ appendLines:usedHeight toLineBuffer:linebuffer];
         } else {
             // Screen is growing. New content may be brought in on top.
-            [self _appendScreenToScrollback:HEIGHT];
+            [currentGrid_ appendLines:currentGrid_.size.height toLineBuffer:linebuffer];
         }
     }
 }
@@ -1043,10 +441,11 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     }
 }
 
-- (void)printLine:(screen_char_t *)theLine {
-    NSLog(@"%@", ScreenCharArrayToStringDebug(theLine, WIDTH));
+static void SwapInt(int *a, int *b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
 }
-        
 
 - (void)convertSelectionStartX:(int)actualStartX
                         startY:(int)actualStartY
@@ -1061,54 +460,39 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     assert(actualEndX >= 0);
     assert(actualStartY >= 0);
     assert(actualEndY >= 0);
+
+    if (!XYIsBeforeXY(actualStartX, actualStartY, actualEndX, actualEndY)) {
+        SwapInt(&actualStartX, &actualEndX);
+        SwapInt(&actualStartY, &actualEndY);
+    }
+
     // Advance start position until it hits a non-null or equals the end position.
-    int x = actualStartX;
-    int y = actualStartY;
-    if (x == WIDTH) {
-        x = 0;
-        y++;
-    }
-    screen_char_t *theLine = [self getLineAtIndex:y];
-    while (XYIsBeforeXY(x, y, actualEndX, actualEndY)) {
-        if (theLine[x].code) {
-            break;
-        }
-        x++;
-        if (x == WIDTH) {
-            x = 0;
-            y++;
-            theLine = [self getLineAtIndex:y];
-        }
+    int startX = actualStartX;
+    int startY = actualStartY;
+    if (startX == WIDTH) {
+        startX = 0;
+        startY++;
     }
 
-    *nonNullStartX = x;
-    *nonNullStartY = y;
-
-    x = actualEndX;
-    y = actualEndY;
-    if (x == WIDTH) {
-        x = 0;
-        y++;
+    int endX = actualEndX;
+    int endY = actualEndY;
+    if (endX == WIDTH) {
+        endX = 0;
+        endY++;
     }
-    theLine = [self getLineAtIndex:y];
 
-    while (XYIsBeforeXY(*nonNullStartX, *nonNullStartY, x, y)) {
-        if (x == 0) {
-            x = WIDTH;
-            y--;
-            assert(y >= 0);
-            theLine = [self getLineAtIndex:y];
-        }
-        if (theLine[x - 1].code) {
-            break;
-        }
-        x--;
-    }
-    assert(x >= 0);
-    assert(y >= 0);
+    VT100GridRun run = VT100GridRunFromCoords(VT100GridMakeCoord(startX, startY),
+                                              VT100GridMakeCoord(endX, endY),
+                                              currentGrid_.size.width);
+    assert(run.length >= 0);
+    run = [currentGrid_ runByTrimmingNullsFromRun:run];
+    assert(run.length >= 0);
+    VT100GridCoord max = VT100GridRunMax(run, currentGrid_.size.width);
 
-    *nonNullEndX = x;
-    *nonNullEndY = y;
+    *nonNullStartX = run.origin.x;
+    *nonNullStartY = run.origin.y;
+    *nonNullEndX = max.x;
+    *nonNullEndY = max.y;
 }
 
 - (BOOL)getNullCorrectedSelectionStartPosition:(int *)startPos
@@ -1151,7 +535,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     BOOL v;
     v = [linebuffer convertCoordinatesAtX:nonNullStartX
                                       atY:nonNullStartY
-                                withWidth:WIDTH
+                                withWidth:currentGrid_.size.x
                                toPosition:startPos
                                    offset:0];
     if (selectionStartPositionIsValid) {
@@ -1250,8 +634,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     LineBuffer *savedLineBuffer = linebuffer;
     linebuffer = lineBufferToUse;
 
-    int usedHeight = [self _usedHeight];
-    [self _appendScreenToScrollbackWithUsedHeight:usedHeight newHeight:new_height];
+    int usedHeight = [currentGrid_ numberOfLinesUsed];
+    [self appendScreenToScrollbackWithUsedHeight:usedHeight newHeight:new_height];
 
     linebuffer = savedLineBuffer;
     [self restoreScreenInfoFrom:&savedInfo];
@@ -1279,6 +663,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 
 - (void)clampCursorPositionToValid
 {
+    // TODO use grid's method, but handle alt properly.
     if (cursorX >= WIDTH) {
         [self setCursorX:WIDTH - 1 Y:cursorY];
     }
@@ -1303,7 +688,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 {
 #ifdef DEBUG_RESIZEDWIDTH
     NSLog(@"Size before resizing is %dx%d", WIDTH, HEIGHT);
-    [self dumpAll];
+    [self dumpScreen];
 #endif
     DLog(@"Resize session to %d height", new_height);
     int i;
@@ -1337,7 +722,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
                          [display selectionStartY] >= 0 &&
                          [display selectionEndY] >= 0);
 
-    int usedHeight = [self _usedHeight];
+    int usedHeight = [currentGrid_ numberOfLinesUsed];
 
     SavedScreenInfo originalScreenInfo;
     [self saveAutoreleasedCopyOfScreenInfoTo:&originalScreenInfo];
@@ -1359,7 +744,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         BOOL ok1, ok2;
         LineBuffer *lineBufferWithAltScreen = [[linebuffer newAppendOnlyCopy] autorelease];
         linebuffer = lineBufferWithAltScreen;
-        [self _appendScreenToScrollbackWithUsedHeight:usedHeight newHeight:new_height];
+        [self appendScreenToScrollbackWithUsedHeight:usedHeight newHeight:new_height];
 
         [self getNullCorrectedSelectionStartPosition:&originalStartPos
                                          endPosition:&originalEndPos
@@ -1384,7 +769,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
      *                  real data
      * alt screen
      */
-    [self _appendScreenToScrollbackWithUsedHeight:usedHeight newHeight:new_height];
+    [self appendScreenToScrollbackWithUsedHeight:usedHeight newHeight:new_height];
     int newSelStartX = -1, newSelStartY = -1;
     int newSelEndX = -1, newSelEndY = -1;
     BOOL isFullLineSelection = NO;
@@ -1443,7 +828,10 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     HEIGHT = new_height;
 
     // Restore the screen contents that were pushed onto the linebuffer.
-    [self restoreScreenFromScrollbackWithDefaultLine:[self _getDefaultLineWithWidth:WIDTH]];
+    [currentGrid_ restoreScreenFromLineBuffer:linebuffer
+                              withDefaultChar:[currentGrid_ defaultChar]
+                            maxLinesToRestore:[linebuffer numLinesWithWidth:currentGrid_.size.width]];
+
     // In alternate screen mode, the screen contents move up when a line wraps.
     int linesMovedUp = [linebuffer numLinesWithWidth:WIDTH];
 
@@ -1480,15 +868,17 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             // Growing (avoid pulling in stuff from scrollback. Add blank lines
             // at bottom instead). Note there's a little hack here: we use saved_primary_buffer as the default
             // line because it was just initialized with default lines.
-            [self restoreScreenFromScrollbackWithDefaultLine:saved_primary_buffer
-                                                        upTo:old_height];
+            [currentGrid_ restoreScreenFromLineBuffer:linebuffer
+                                      withDefaultChar:saved_primary_buffer[0]
+                                    maxLinesToRestore:old_height];
         } else {
             // Shrinking (avoid pulling in stuff from scrollback, pull in no more
             // than might have been pushed, even if more is available). Note there's a little hack
             // here: we use saved_primary_buffer as the default line because it was just initialized with
             // default lines.
-            [self restoreScreenFromScrollbackWithDefaultLine:saved_primary_buffer
-                                                        upTo:new_height];
+            [currentGrid_ restoreScreenFromLineBuffer:linebuffer
+                                      withDefaultChar:saved_primary_buffer[0]
+                                    maxLinesToRestore:new_height];
         }
         /*                  **************
          * tempLineBuffer   realLineBuffer  appendOnlyLineBuffer
@@ -1521,7 +911,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         [self restoreScreenInfoFrom:&originalScreenInfo];
         WIDTH = old_width;
         HEIGHT = old_height;
-        [self _appendScreenToScrollbackWithUsedHeight:usedHeight newHeight:new_height];
+        [self appendScreenToScrollbackWithUsedHeight:usedHeight newHeight:new_height];
         WIDTH = new_width;
         HEIGHT = new_height;
         /*                                  **************
@@ -1669,6 +1059,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 - (void)resetScreen
 {
     [SESSION clearTriggerLine];
+    // TODO [grid reset]
+
     // Save screen contents before resetting.
     [self scrollScreenIntoScrollbackBuffer:1];
 
@@ -1951,6 +1343,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         [self secondaryDeviceAttribute:token];
         break;
     case VT100CSI_DECALN:
+        //{    [grid fillWithTestPattern];
         for (i = 0; i < HEIGHT; i++) {
             aLine = [self getLineAtScreenIndex:i];
             for (j = 0; j < WIDTH; j++) {
@@ -2659,70 +2052,17 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     }
 }
 
-void DumpBuf(screen_char_t* p, int n) {
-    for (int i = 0; i < n; ++i) {
-        NSLog(@"%3d: \"%@\" (0x%04x)", i, ScreenCharToStr(&p[i]), (int)p[i].code);
-    }
-}
-
-// Add a combining char to the cell at the cursor position if possible. Returns
-// YES if it is able to and NO if there is no base character to combine with.
-- (BOOL)addCombiningCharAtCursor:(unichar)combiningChar
-{
-    // set cx, cy to the char before the cursor.
-    int cx = cursorX;
-    int cy = cursorY;
-    if (cx == 0) {
-        cx = WIDTH;
-        --cy;
-    }
-    --cx;
-    if (cy < 0) {
-        // can't affect characters above screen so have it stand alone.
-        return NO;
-    }
-    screen_char_t* theLine = [self getLineAtScreenIndex:cy];
-    if (theLine[cx].code == 0) {
-        // Mark is preceeded by an unset char, so make it stand alone.
-        return NO;
-    }
-    if (theLine[cx].complexChar) {
-        theLine[cx].code = AppendToComplexChar(theLine[cx].code,
-                                               combiningChar);
-    } else {
-        theLine[cx].code = BeginComplexChar(theLine[cx].code,
-                                            combiningChar);
-        theLine[cx].complexChar = YES;
-    }
-    return YES;
-}
-
 // ascii: True if string contains only ascii characters.
 - (void)setString:(NSString *)string ascii:(BOOL)ascii
 {
-    assert(self);
-    assert(string);
-    int idx, screenIdx;
-    int charsToInsert;
-    int len;
-    int newx;
-    int leftMargin, rightMargin;
-    screen_char_t *buffer;
-    screen_char_t *aLine;
-
     if (gDebugLogging) {
-        DebugLog([NSString stringWithFormat:@"setString: %ld chars starting with %c at x=%d, y=%d, line=%d",
-                  (unsigned long)[string length], [string characterAtIndex:0],
-                  cursorX, cursorY, cursorY + [linebuffer numLinesWithWidth: WIDTH]]);
+        DLog([NSString stringWithFormat:@"setString: %ld chars starting with %c at x=%d, y=%d, line=%d",
+              (unsigned long)[string length], [string characterAtIndex:0],
+              cursorX, cursorY, cursorY + [linebuffer numLinesWithWidth: WIDTH]]);
     }
 
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen setString:%@ at %d]",
-          __FILE__, __LINE__, string, cursorX);
-#endif
-
-    if ((len=[string length]) < 1 || !string) {
-        //NSLog(@"%s: invalid string '%@'", __PRETTY_FUNCTION__, string);
+    len = [string length];
+    if (len < 1 || !string) {
         return;
     }
 
@@ -2841,301 +2181,10 @@ void DumpBuf(screen_char_t* p, int n) {
         return;
     }
 
-    // Iterate over each character in the buffer and copy/insert into screen.
-    // Grab a block of consecutive characters up to the remaining length in the
-    // line and append them at once.
-    for (idx = 0; idx < len; )  {
-        int startIdx = idx;
-#ifdef VERBOSE_STRING
-        NSLog(@"Begin inserting line. cursorX=%d, WIDTH=%d", cursorX, WIDTH);
-#endif
-        NSAssert(buffer[idx].code != DWC_RIGHT, @"DWC cut off");
-
-        if (buffer[idx].code == DWC_SKIP) {
-            // I'm pretty sure this can never happen and that this code is just a historical leftover.
-            // This is an invalid unicode character that iTerm2 has appropriated
-            // for internal use. Change it to something invalid but safe.
-            buffer[idx].code = BOGUS_CHAR;
-        }
-        int widthOffset;
-        if (idx + 1 < len && buffer[idx + 1].code == DWC_RIGHT) {
-            // If we're about to insert a double width character then reduce the
-            // line width for the purposes of testing if the cursor is in the
-            // rightmost position.
-            widthOffset = 1;
-#ifdef VERBOSE_STRING
-            NSLog(@"The first char we're going to insert is a DWC");
-#endif
-        } else {
-            widthOffset = 0;
-        }
-
-        if (vsplitMode && cursorX <= SCROLL_RIGHT + 1) {
-            // If the cursor is at the left of right margin,
-            // the text run stops (or wraps) at right margin.
-            // And if a text wraps at right margin,
-            // the next line starts from left margin.
-            //
-            // TODO:
-            //    Above behavior is compatible with xterm, but incompatible with VT525.
-            //    VT525 have curious glitch:
-            //        If a text run which starts from the left of left margin
-            //        wraps or returns by CR, the next line starts from column 1, but not left margin.
-            //        (see Mr. IWAMOTO's gist https://gist.github.com/ttdoda/5902671)
-            //    Now we do not implement this behavior because it is hard to emulate that.
-            //
-            leftMargin = SCROLL_LEFT;
-            rightMargin = SCROLL_RIGHT + 1;
-        } else {
-            leftMargin = 0;
-            rightMargin = WIDTH;
-        }
-        if (cursorX >= rightMargin - widthOffset) {
-            if ([TERMINAL wraparoundMode]) {
-                if (leftMargin == 0 && rightMargin == WIDTH) {
-                    // Set the continuation marker
-                    screen_char_t* prevLine = [self getLineAtScreenIndex:cursorY];
-                    BOOL splitDwc = (cursorX == WIDTH - 1);
-                    prevLine[WIDTH].code = (splitDwc ? EOL_DWC : EOL_SOFT);
-                    if (splitDwc) {
-                        prevLine[WIDTH].code = EOL_DWC;
-                        prevLine[WIDTH - 1].code = DWC_SKIP;
-                    }
-                }
-                [self setCursorX:leftMargin Y:cursorY];
-                // Advance to the next line
-                [self setNewLine];
-#ifdef VERBOSE_STRING
-                NSLog(@"Advance cursor to next line");
-#endif
-            } else {
-                // Wraparound is off.
-                // That means all the characters are effectively inserted at the
-                // rightmost position. Move the cursor to the end of the line
-                // and insert the last character there.
-
-                // Clear the continuation marker
-                [self getLineAtScreenIndex:cursorY][WIDTH].code = EOL_HARD;
-                // Cause the loop to end after this character.
-                int ncx = WIDTH - 1;
-
-                idx = len-1;
-                if (buffer[idx].code == DWC_RIGHT && idx > startIdx) {
-                    // The last character to insert is double width. Back up one
-                    // byte in buffer and move the cursor left one position.
-                    idx--;
-                    ncx--;
-                }
-                if (ncx < 0) {
-                    ncx = 0;
-                }
-                [self setCursorX:ncx Y:cursorY];
-                screen_char_t* line = [self getLineAtScreenIndex:cursorY];
-                if (line[cursorX].code == DWC_RIGHT) {
-                    // This would cause us to overwrite the second part of a
-                    // double-width character. Convert it to a space.
-                    line[cursorX - 1].code = ' ';
-                    line[cursorX - 1].complexChar = NO;
-                }
-
-#ifdef VERBOSE_STRING
-                NSLog(@"Scribbling on last position");
-#endif
-            }
-        }
-        const int spaceRemainingInLine = rightMargin - cursorX;
-        const int charsLeftToAppend = len - idx;
-
-#ifdef VERBOSE_STRING
-        DumpBuf(buffer + idx, charsLeftToAppend);
-#endif
-        BOOL wrapDwc = NO;
-#ifdef VERBOSE_STRING
-        NSLog(@"There is %d space left in the line and we are appending %d chars",
-              spaceRemainingInLine, charsLeftToAppend);
-#endif
-        int effective_width;
-        if (vsplitMode) {
-            effective_width = WIDTH;
-        } else {
-            effective_width = SCROLL_RIGHT + 1;
-        }
-        if (spaceRemainingInLine <= charsLeftToAppend) {
-#ifdef VERBOSE_STRING
-            NSLog(@"Not enough space in the line for everything we want to append.");
-#endif
-            // There is enough text to at least fill the line. Place the cursor
-            // at the end of the line.
-            int potentialCharsToInsert = spaceRemainingInLine;
-            if (idx + potentialCharsToInsert < len &&
-                buffer[idx + potentialCharsToInsert].code == DWC_RIGHT) {
-                // If we filled the line all the way out to WIDTH a DWC would be
-                // split. Wrap the DWC around to the next line.
-#ifdef VERBOSE_STRING
-                NSLog(@"Dropping a char from the end to avoid splitting a DWC.");
-#endif
-                wrapDwc = YES;
-                newx = rightMargin - 1;
-                --effective_width;
-            } else {
-#ifdef VERBOSE_STRING
-                NSLog(@"Inserting up to the end of the line only.");
-#endif
-                newx = rightMargin;
-            }
-        } else {
-            // This is the last iteration through this loop and we will not
-            // advance to another line. Place the cursor at the end of the line
-            // where it should be after appending is complete.
-            newx = cursorX + charsLeftToAppend;
-#ifdef VERBOSE_STRING
-            NSLog(@"All remaining chars fit.");
-#endif
-        }
-
-        // Get the number of chars to insert this iteration (no more than fit
-        // on the current line).
-        charsToInsert = newx - cursorX;
-#ifdef VERBOSE_STRING
-        NSLog(@"Will insert %d chars", charsToInsert);
-#endif
-        if (charsToInsert <= 0) {
-            //NSLog(@"setASCIIString: output length=0?(%d+%d)%d+%d",cursorX,charsToInsert,idx2,len);
-            break;
-        }
-
-        screenIdx = cursorY * WIDTH;
-        aLine = [self getLineAtScreenIndex:cursorY];
-
-        if ([TERMINAL insertMode]) {
-            if (cursorX + charsToInsert < rightMargin) {
-#ifdef VERBOSE_STRING
-                NSLog(@"Shifting old contents to the right");
-#endif
-                // Shift the old line contents to the right by 'charsToInsert' positions.
-                screen_char_t* src = aLine + cursorX;
-                screen_char_t* dst = aLine + cursorX + charsToInsert;
-                int elements = rightMargin - cursorX - charsToInsert;
-                if (cursorX > 0 && src[0].code == DWC_RIGHT) {
-                    // The insert occurred in the middle of a DWC.
-                    src[-1].code = ' ';
-                    src[-1].complexChar = NO;
-                    src[0].code = ' ';
-                    src[0].complexChar = NO;
-                }
-                if (src[elements].code == DWC_RIGHT) {
-                    // Moving a DWC on top of its right half. Erase the DWC.
-                    src[elements - 1].code = ' ';
-                    src[elements - 1].complexChar = NO;
-                } else if (src[elements].code == DWC_SKIP &&
-                           aLine[WIDTH].code == EOL_DWC) {
-                    // Stomping on a DWC_SKIP. Join the lines normally.
-                    aLine[WIDTH].code = EOL_SOFT;
-                }
-                memmove(dst, src, elements * sizeof(screen_char_t));
-                memset(dirty + screenIdx + cursorX,
-                       1,
-                       rightMargin - cursorX);
-            }
-        }
-
-        // Overwriting the second-half of a double-width character so turn the
-        // DWC into a space.
-        if (aLine[cursorX].code == DWC_RIGHT) {
-#ifdef VERBOSE_STRING
-            NSLog(@"Wiping out the right-half DWC at the cursor before writing to screen");
-#endif
-            NSAssert(cursorX > 0, @"DWC split");  // there should never be the second half of a DWC at x=0
-            aLine[cursorX].code = ' ';
-            aLine[cursorX].complexChar = NO;
-            aLine[cursorX-1].code = ' ';
-            aLine[cursorX-1].complexChar = NO;
-            [self setDirtyAtOffset:screenIdx + cursorX];
-            [self setDirtyAtOffset:screenIdx + cursorX - 1];
-        }
-
-        // This is an ugly little optimization--if we're inserting just one character, see if it would
-        // change anything (because the memcmp is really cheap). In particular, this helps vim out because
-        // it really likes redrawing pane separators when it doesn't need to.
-        if (!gExperimentalOptimization ||
-            charsToInsert > 1 ||
-            memcmp(aLine + cursorX, buffer + idx, charsToInsert * sizeof(screen_char_t))) {
-            // copy charsToInsert characters into the line and set them dirty.
-            memcpy(aLine + cursorX,
-                   buffer + idx,
-                   charsToInsert * sizeof(screen_char_t));
-            [self setRangeDirty:NSMakeRange(screenIdx + cursorX, charsToInsert)];
-        }
-        if (wrapDwc) {
-            aLine[cursorX + charsToInsert].code = DWC_SKIP;
-        }
-        [self setCursorX:newx Y:cursorY];
-        idx += charsToInsert;
-
-        // Overwrote some stuff that was already on the screen leaving behind the
-        // second half of a DWC
-        if (cursorX < WIDTH - 1 && aLine[cursorX].code == DWC_RIGHT) {
-            aLine[cursorX].code = ' ';
-            aLine[cursorX].complexChar = NO;
-        }
-
-        // The next char in the buffer shouldn't be DWC_RIGHT because we
-        // wouldn't have inserted its first half due to a check at the top.
-        assert(!(idx < len && buffer[idx].code == DWC_RIGHT));
-
-        // ANSI terminals will go to a new line after displaying a character at
-        // the rightmost column.
-        if (cursorX >= effective_width && [TERMINAL isAnsi]) {
-            if ([TERMINAL wraparoundMode]) {
-                //set the wrapping flag
-                aLine[WIDTH].code = ((effective_width == WIDTH) ? EOL_SOFT : EOL_DWC);
-                [self setCursorX:leftMargin Y:cursorY];
-                [self setNewLine];
-            } else {
-                [self setCursorX:rightMargin - 1
-                               Y:cursorY];
-                if (idx < len - 1) {
-                    // Iterate once more to draw the last character at the end
-                    // of the line.
-                    idx = len - 1;
-                } else {
-                    // Break out of the loop after the last character is drawn.
-                    idx = len;
-                }
-            }
-        }
-    }
+    [grid whatever];
 
     if (dynamicBuffer) {
         free(dynamicBuffer);
-    }
-}
-
-- (void)setStringToX:(int)x
-                   Y:(int)y
-              string:(NSString *)string
-               ascii:(BOOL)ascii
-{
-    int sx, sy;
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen setStringToX:%d Y:%d string:%@]",
-          __FILE__, __LINE__, x, y, string);
-#endif
-
-    sx = cursorX;
-    sy = cursorY;
-    [self setCursorX:x Y:y];
-    [self setString:string ascii:ascii];
-    [self setCursorX:sx Y:sy];
-}
-
-- (void)addLineToScrollback
-{
-    int overflowCount = [self _addLineToScrollbackImpl];
-    if (overflowCount) {
-        scrollback_overflow += overflowCount;
-        cumulative_scrollback_overflow += overflowCount;
     }
 }
 
@@ -3143,130 +2192,6 @@ void DumpBuf(screen_char_t* p, int n) {
 {
     [self setNewLine];
     [self setCursorX:0 Y:cursorY];
-}
-
-- (void)setNewLine
-{
-    screen_char_t *aLine;
-    BOOL wrap = NO;
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen setNewLine](%d,%d)-[%d,%d]", __FILE__, __LINE__, cursorX, cursorY, SCROLL_TOP, SCROLL_BOTTOM);
-#endif
-
-    if (cursorY < SCROLL_BOTTOM ||
-        (cursorY < (HEIGHT - 1) &&
-         cursorY > SCROLL_BOTTOM)) {
-        // Do not scroll the screen; just move the cursor.
-        [self setCursorX:cursorX Y:cursorY + 1];
-        if (!gExperimentalOptimization) {
-            if (cursorX < WIDTH) {
-                [self setCharAtCursorDirty:1];
-            }
-        }
-        DebugLog(@"setNewline advance cursor");
-    } else if ((SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT - 1) &&
-               (!vsplitMode || (SCROLL_LEFT == 0 && SCROLL_RIGHT == WIDTH - 1))) {
-        // Scroll the whole screen.
-
-        // Mark the cursor's previous location dirty. This fixes a rare race condition where
-        // the cursor is not erased.
-        [self setCharDirtyAtX:MAX(0, cursorX - 1)
-                            Y:MAX(0, cursorY - 1)];
-
-        // Top line can move into scroll area; we need to draw only bottom line.
-        [self moveDirtyRangeFromX:0 Y:1 toX:0 Y:0 size:WIDTH*(HEIGHT - 1)];
-        [self setRangeDirty:NSMakeRange(WIDTH * (HEIGHT - 1), WIDTH)];
-
-        // Add the top line to the scrollback
-        [self addLineToScrollback];
-
-        // Increment screen_top pointer
-        screen_top = incrementLinePointer(buffer_lines, screen_top, HEIGHT, WIDTH, &wrap);
-
-        // set last screen line default
-        aLine = [self getLineAtScreenIndex: (HEIGHT - 1)];
-
-        memcpy(aLine,
-               [self _getDefaultLineWithWidth:WIDTH],
-               REAL_WIDTH * sizeof(screen_char_t));
-
-        // Mark everything dirty if we're not using the scrollback buffer
-        if (showingAltScreen) {
-            [self setDirty];
-        }
-
-        DebugLog(@"setNewline scroll screen");
-    } else {
-        // We are scrolling within a strict subset of the screen.
-        [self scrollUp];
-        DebugLog(@"setNewline weird case");
-    }
-}
-
-- (void)deleteCharacters:(int) n
-{
-    screen_char_t *aLine;
-    int i;
-    int leftMargin, rightMargin;
-    int endOffset = 0;
-    int startOffset = 0;
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen deleteCharacter]: %d", __FILE__, __LINE__, n);
-#endif
-
-    if (vsplitMode) {
-        leftMargin = SCROLL_LEFT;
-        rightMargin = SCROLL_RIGHT + 1;
-    } else {
-        leftMargin = 0;
-        rightMargin = WIDTH;
-    }
-
-    if (cursorX >= leftMargin && cursorX < rightMargin &&
-        cursorY >= 0 && cursorY < HEIGHT) {
-        int idx;
-
-        idx = cursorY * WIDTH;
-        if (n + cursorX > rightMargin) {
-            n = rightMargin - cursorX;
-        }
-
-        // get the appropriate screen line
-        aLine = [self getLineAtScreenIndex:cursorY];
-
-        if (n > 0 && n < rightMargin) {
-            if (cursorX > 0 && aLine[cursorX].code == DWC_RIGHT) {
-                aLine[cursorX - 1].code = 0;
-                aLine[cursorX - 1].complexChar = NO;
-                startOffset = -1;
-            }
-            if (aLine[cursorX + n].code == DWC_RIGHT) {
-                aLine[cursorX + n].code = 0;
-                aLine[cursorX + n].complexChar = NO;
-            }
-            memmove(aLine + cursorX,
-                    aLine + cursorX + n,
-                    (rightMargin - cursorX - n) * sizeof(screen_char_t));
-        }
-        for (i = 0; i < n; i++) {
-            aLine[rightMargin - n + i].code = 0;
-            aLine[rightMargin - n + i].complexChar = NO;
-            CopyForegroundColor(&aLine[rightMargin - n + i], [TERMINAL foregroundColorCodeReal]);
-            CopyBackgroundColor(&aLine[rightMargin - n + i], [TERMINAL backgroundColorCodeReal]);
-        }
-        if (rightMargin < WIDTH && aLine[rightMargin].code == DWC_RIGHT) {
-            aLine[rightMargin].code = 0;
-            aLine[rightMargin].complexChar = NO;
-            endOffset = 1;
-        }
-
-        DebugLog(@"deleteCharacters");
-
-        [self setRangeDirty:NSMakeRange(idx + cursorX + startOffset,
-                                        rightMargin - cursorX + endOffset - startOffset)];
-    }
 }
 
 - (void)backSpace
@@ -3318,9 +2243,6 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)advanceCursor:(BOOL)canOccupyLastSpace
 {
     // TODO: respect left-right margins
-    if (!gExperimentalOptimization) {
-        [self setCharAtCursorDirty:1];
-    }
     ++cursorX;
     if (canOccupyLastSpace) {
         if (cursorX > WIDTH) {
@@ -3334,9 +2256,6 @@ void DumpBuf(screen_char_t* p, int n) {
         cursorX = WIDTH;
         [self setNewLine];
         [self setCursorX:0 Y:cursorY];
-    }
-    if (!gExperimentalOptimization) {
-        [self setCharAtCursorDirty:1];
     }
 }
 
@@ -3387,9 +2306,6 @@ void DumpBuf(screen_char_t* p, int n) {
             allNulls = NO;
         }
     }
-    if (!gExperimentalOptimization) {
-        [self setCharAtCursorDirty:1];
-    }
     if (allNulls) {
         // If only nulls were advanced over, convert them to tab fillers
         // and place a tab character at the end of the run.
@@ -3427,7 +2343,6 @@ void DumpBuf(screen_char_t* p, int n) {
         return;
     }
 
-    aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
     // make the current line the first line and clear everything else
     for (i = cursorY - 1; i >= 0; i--) {
         aLine = [self getLineAtScreenIndex:i];
@@ -3446,6 +2361,7 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 
     [self setCursorX:cursorX Y:j - 1];
+    aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
     for (i = j; i < HEIGHT; i++) {
         aLine = [self getLineAtScreenIndex:i];
         memcpy(aLine, aDefaultLine, REAL_WIDTH*sizeof(screen_char_t));
@@ -3458,53 +2374,12 @@ void DumpBuf(screen_char_t* p, int n) {
 
 }
 
-- (int)_lastNonEmptyLine
-{
-    int y;
-    int x;
-    for (y = HEIGHT - 1; y >= 0; --y) {
-        screen_char_t* aLine = [self getLineAtScreenIndex: y];
-        for (x = 0; x < WIDTH; ++x) {
-            if (aLine[x].code) {
-                return y;
-            }
-        }
-    }
-    return y;
-}
-
-- (void)scrollScreenIntoScrollbackBuffer:(int)leaving
-{
-    // Move the current screen into the scrollback buffer unless it's empty.
-    int cx = cursorX;
-    int cy = cursorY;
-    int st = SCROLL_TOP;
-    int sb = SCROLL_BOTTOM;
-
-    SCROLL_TOP = 0;
-    SCROLL_BOTTOM = HEIGHT - 1;
-    [self setCursorX:cursorX Y:HEIGHT - 1];
-    int last_line = [self _lastNonEmptyLine];
-    for (int j = 0; j <= last_line - leaving; ++j) {
-        [self setNewLine];
-    }
-    [self setCursorX:cx Y:cy];
-    SCROLL_TOP = st;
-    SCROLL_BOTTOM = sb;
-    assert(SCROLL_BOTTOM < HEIGHT);
-}
-
 - (void)eraseInDisplay:(VT100TCC)token
 {
     int x1, yStart, x2, y2;
     int i;
     screen_char_t *aScreenChar;
-    //BOOL wrap;
 
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen eraseInDisplay:(param=%d); X = %d; Y = %d]",
-          __FILE__, __LINE__, token.u.csi.p[0], cursorX, cursorY);
-#endif
     switch (token.u.csi.p[0]) {
     case 1:
         x1 = 0;
@@ -3535,6 +2410,7 @@ void DumpBuf(screen_char_t* p, int n) {
     idx1=yStart*REAL_WIDTH+x1;
     idx2=y2*REAL_WIDTH+x2;
 
+    // TODO use setCharsInRun:toChar:
     // clear the contents between idx1 and idx2
     for(i = idx1, aScreenChar = screen_top + idx1; i < idx2; i++, aScreenChar++) {
         if (aScreenChar >= (buffer_lines + HEIGHT*REAL_WIDTH)) {
@@ -3579,6 +2455,7 @@ void DumpBuf(screen_char_t* p, int n) {
 
     fgCode = [TERMINAL foregroundColorCodeReal];
     bgCode = [TERMINAL backgroundColorCodeReal];
+    // TODO use setCharsInRun:toChar:
 
     for (i = x1; i < x2; i++) {
         aLine[i].code = 0;
@@ -3607,6 +2484,7 @@ void DumpBuf(screen_char_t* p, int n) {
 
 - (void)cursorLeft:(int)n
 {
+    // TODO moveCursorLeft:, treat <=0 values of n as 1
     int x = cursorX - (n > 0 ? n : 1);
     int leftMargin, rightMargin;
 
@@ -3629,14 +2507,12 @@ void DumpBuf(screen_char_t* p, int n) {
         [self setCursorX:x Y:cursorY];
     }
 
-    if (!gExperimentalOptimization) {
-        [self setCharAtCursorDirty:1];
-    }
     DebugLog(@"cursorLeft");
 }
 
 - (void)cursorRight:(int)n
 {
+    // TODO moveCursorRight:, treat <=0 values of n as 1
     int x = cursorX + (n > 0 ? n : 1);
     int leftMargin, rightMargin;
 
@@ -3659,14 +2535,12 @@ void DumpBuf(screen_char_t* p, int n) {
         [self setCursorX:x Y:cursorY];
     }
 
-    if (!gExperimentalOptimization) {
-        [self setCharAtCursorDirty:1];
-    }
     DebugLog(@"cursorRight");
 }
 
 - (void)cursorUp:(int)n
 {
+    // TODO: use moveCursorUp:, handle nonpositive n
     int y = cursorY - (n > 0 ? n : 1);
 
     int x = MIN(cursorX, WIDTH - 1);
@@ -3680,6 +2554,7 @@ void DumpBuf(screen_char_t* p, int n) {
 
 - (void)cursorDown:(int)n
 {
+    // TODO: use moveCursorDown, handle nonpositive n
     int y = cursorY + (n > 0 ? n : 1);
 
     int x = MIN(cursorX, WIDTH - 1);
@@ -3719,9 +2594,6 @@ void DumpBuf(screen_char_t* p, int n) {
 
     [self setCursorX:x_pos Y:cursorY];
 
-    if (!gExperimentalOptimization) {
-        [self setCharAtCursorDirty:1];
-    }
     DebugLog(@"cursorToX");
 
 }
@@ -3804,12 +2676,10 @@ void DumpBuf(screen_char_t* p, int n) {
 
     [self setCursorX:x_pos Y:y_pos];
 
-    if (!gExperimentalOptimization) {
-        [self setCharAtCursorDirty:1];
-    }
     DebugLog(@"cursorToX:Y");
 }
 
+// TODO this is a misnomer
 - (void)saveCursorPosition
 {
 #if DEBUG_METHOD_TRACE
@@ -3891,409 +2761,6 @@ void DumpBuf(screen_char_t* p, int n) {
             [self setCursorX:0 Y:0];
         }
     }
-}
-
-- (void)scrollUp
-{
-    int i;
-    screen_char_t *sourceLine, *targetLine;
-    int startOffset = 0;
-    int endOffset = 0;
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen scrollUp]", __FILE__, __LINE__);
-#endif
-
-    assert(SCROLL_TOP >= 0 && SCROLL_TOP < HEIGHT);
-    assert(SCROLL_BOTTOM >= 0 && SCROLL_BOTTOM < HEIGHT);
-    assert(SCROLL_TOP <= SCROLL_BOTTOM );
-
-    if ((SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT - 1) &&
-        (!vsplitMode || (SCROLL_LEFT == 0 && SCROLL_RIGHT == WIDTH - 1))) {
-        [self setNewLine];
-    } else if (SCROLL_TOP < SCROLL_BOTTOM) {
-        // Not scrolling the whole screen.
-        if (SCROLL_TOP == 0 &&
-            [[[SESSION addressBookEntry] objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue]) {
-            // Confirm if left/right margins are not set
-            if (!vsplitMode || (SCROLL_LEFT == 0 && SCROLL_RIGHT == WIDTH - 1)) {
-                // A line is being scrolled off the top of the screen so add it to
-                // the scrollback buffer.
-                [self addLineToScrollback];
-            }
-        }
-        if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH - 1) && vsplitMode) {
-            // screen area is wrapped; copy line by line
-            for(i = SCROLL_TOP; i < SCROLL_BOTTOM; i++) {
-                sourceLine = [self getLineAtScreenIndex:i + 1];
-                targetLine = [self getLineAtScreenIndex:i];
-
-                // clear broken double-width characters
-                if (SCROLL_LEFT > 0 && targetLine[SCROLL_LEFT].code == DWC_RIGHT) {
-                    targetLine[SCROLL_LEFT - 1].code = 0;
-                    targetLine[SCROLL_LEFT - 1].complexChar = NO;
-                    [self setCharDirtyAtX:SCROLL_LEFT - 1 Y:i];
-                }
-                if (SCROLL_RIGHT + 1 < WIDTH && targetLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
-                    targetLine[SCROLL_RIGHT + 1].code = 0;
-                    targetLine[SCROLL_RIGHT + 1].complexChar = NO;
-                    [self setCharDirtyAtX:SCROLL_RIGHT + 1 Y:i];
-                }
-
-                memmove(targetLine + SCROLL_LEFT,
-                        sourceLine + SCROLL_LEFT,
-                        (SCROLL_RIGHT + 1 - SCROLL_LEFT) * sizeof(screen_char_t));
-
-                if (sourceLine[SCROLL_LEFT].code == DWC_RIGHT) {
-                    targetLine[SCROLL_LEFT].code = 0;
-                    targetLine[SCROLL_LEFT].complexChar = NO;
-                }
-                if (sourceLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
-                    targetLine[SCROLL_RIGHT].code = 0;
-                    targetLine[SCROLL_RIGHT].complexChar = NO;
-                }
-            }
-            // new line at SCROLL_BOTTOM with default settings
-            targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
-
-            if (SCROLL_LEFT > 0 && targetLine[SCROLL_LEFT].code == DWC_RIGHT) {
-                startOffset = -1;
-            }
-            if (SCROLL_RIGHT + 1 < WIDTH && targetLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
-                endOffset = 1;
-            }
-
-            memcpy(targetLine + SCROLL_LEFT,
-                   [self _getDefaultLineWithWidth:(SCROLL_RIGHT + 1 + endOffset) - (SCROLL_LEFT + startOffset)],
-                   ((SCROLL_RIGHT + 1 + endOffset) - (SCROLL_LEFT + startOffset)) * sizeof(screen_char_t));
-
-            // set the rect scrolling region dirty
-            [self setRectDirtyFromX:SCROLL_LEFT + startOffset
-                                  Y:SCROLL_TOP
-                                toX:SCROLL_RIGHT + 1 + endOffset
-                                  Y:SCROLL_BOTTOM];
-        } else {
-            // Move all lines between SCROLL_TOP and SCROLL_BOTTOM one line up
-            // check if the screen area is wrapped
-            sourceLine = [self getLineAtScreenIndex:SCROLL_TOP];
-            targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
-            if (sourceLine < targetLine) {
-                // screen area is not wrapped; direct memmove
-                memmove(sourceLine,
-                        sourceLine + REAL_WIDTH,
-                        (SCROLL_BOTTOM - SCROLL_TOP) * REAL_WIDTH * sizeof(screen_char_t));
-            } else {
-                // screen area is wrapped; copy line by line
-                for(i = SCROLL_TOP; i < SCROLL_BOTTOM; i++) {
-                    sourceLine = [self getLineAtScreenIndex:i + 1];
-                    targetLine = [self getLineAtScreenIndex:i];
-                    memmove(targetLine,
-                            sourceLine,
-                            REAL_WIDTH * sizeof(screen_char_t));
-                }
-            }
-            // new line at SCROLL_BOTTOM with default settings
-            targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
-            memcpy(targetLine,
-                   [self _getDefaultLineWithWidth:WIDTH],
-                   REAL_WIDTH * sizeof(screen_char_t));
-
-            // everything between SCROLL_TOP and SCROLL_BOTTOM is dirty
-            [self setDirtyFromX:0
-                              Y:SCROLL_TOP
-                            toX:WIDTH
-                              Y:SCROLL_BOTTOM];
-        }
-        DebugLog(@"scrollUp");
-    }
-}
-
-- (void)scrollDown
-{
-    int i;
-    screen_char_t *sourceLine, *targetLine;
-    int startOffset = 0;
-    int endOffset = 0;
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen scrollDown]", __FILE__, __LINE__);
-#endif
-
-    NSParameterAssert(SCROLL_TOP >= 0 && SCROLL_TOP < HEIGHT);
-    NSParameterAssert(SCROLL_BOTTOM >= 0 && SCROLL_BOTTOM < HEIGHT);
-    NSParameterAssert(SCROLL_TOP <= SCROLL_BOTTOM);
-
-    if (SCROLL_TOP < SCROLL_BOTTOM) {
-        if ((SCROLL_LEFT > 0 || SCROLL_RIGHT + 1 < WIDTH) && vsplitMode) {
-            // screen area is wrapped; move line by line
-            for(i = SCROLL_BOTTOM - 1; i >= SCROLL_TOP; i--) {
-                sourceLine = [self getLineAtScreenIndex:i];
-                targetLine = [self getLineAtScreenIndex:i + 1];
-
-                // clear broken double-width characters
-                if (SCROLL_LEFT > 0 && targetLine[SCROLL_LEFT].code == DWC_RIGHT) {
-                    targetLine[SCROLL_LEFT - 1].code = 0;
-                    targetLine[SCROLL_LEFT - 1].complexChar = NO;
-                    [self setCharDirtyAtX:SCROLL_LEFT - 1 Y:i];
-                }
-                if (SCROLL_RIGHT + 1 < WIDTH && targetLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
-                    targetLine[SCROLL_RIGHT + 1].code = 0;
-                    targetLine[SCROLL_RIGHT + 1].complexChar = NO;
-                    [self setCharDirtyAtX:SCROLL_RIGHT + 1 Y:i];
-                }
-
-                memmove(targetLine + SCROLL_LEFT,
-                        sourceLine + SCROLL_LEFT,
-                        (SCROLL_RIGHT + 1 - SCROLL_LEFT) * sizeof(screen_char_t));
-
-                if (sourceLine[SCROLL_LEFT].code == DWC_RIGHT) {
-                    targetLine[SCROLL_LEFT].code = 0;
-                    targetLine[SCROLL_LEFT].complexChar = NO;
-                }
-                if (sourceLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
-                    targetLine[SCROLL_RIGHT].code = 0;
-                    targetLine[SCROLL_RIGHT].complexChar = NO;
-                }
-            }
-
-            // new line at SCROLL_TOP with default settings
-            targetLine = [self getLineAtScreenIndex:SCROLL_TOP];
-
-            if (SCROLL_LEFT > 0 && targetLine[SCROLL_LEFT].code == DWC_RIGHT) {
-                startOffset = -1;
-            }
-            if (SCROLL_RIGHT + 1 < WIDTH && targetLine[SCROLL_RIGHT + 1].code == DWC_RIGHT) {
-                endOffset = 1;
-            }
-
-            memcpy(targetLine + SCROLL_LEFT,
-                   [self _getDefaultLineWithWidth:(SCROLL_RIGHT + 1 + endOffset) - (SCROLL_LEFT + startOffset)],
-                   ((SCROLL_RIGHT + 1 + startOffset) - (SCROLL_LEFT + endOffset)) * sizeof(screen_char_t));
-
-            // set the rect scrolling region dirty
-            [self setRectDirtyFromX:SCROLL_LEFT + startOffset
-                                  Y:SCROLL_TOP
-                                toX:SCROLL_RIGHT + 1 + endOffset
-                                  Y:SCROLL_BOTTOM];
-        } else {
-            // move all lines between SCROLL_TOP and SCROLL_BOTTOM one line down
-            // check if screen is wrapped
-            sourceLine = [self getLineAtScreenIndex:SCROLL_TOP];
-            targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
-            if (sourceLine < targetLine) {
-                // screen area is not wrapped; direct memmove
-                memmove(sourceLine + REAL_WIDTH,
-                        sourceLine,
-                        (SCROLL_BOTTOM - SCROLL_TOP) * REAL_WIDTH * sizeof(screen_char_t));
-            } else {
-                // screen area is wrapped; move line by line
-                for(i = SCROLL_BOTTOM - 1; i >= SCROLL_TOP; i--) {
-                    sourceLine = [self getLineAtScreenIndex:i];
-                    targetLine = [self getLineAtScreenIndex:i + 1];
-                    memmove(targetLine, sourceLine, REAL_WIDTH * sizeof(screen_char_t));
-                }
-            }
-
-            // new line at SCROLL_TOP with default settings
-            targetLine = [self getLineAtScreenIndex:SCROLL_TOP];
-            memcpy(targetLine,
-                   [self _getDefaultLineWithWidth:WIDTH],
-                   REAL_WIDTH * sizeof(screen_char_t));
-
-            // everything between SCROLL_TOP and SCROLL_BOTTOM is dirty
-            [self setDirtyFromX:0
-                              Y:SCROLL_TOP
-                            toX:WIDTH
-                              Y:SCROLL_BOTTOM];
-        }
-    }
-    DebugLog(@"scrollDown");
-}
-
-- (BOOL)eraseDoubleWidthCharInLine:(screen_char_t*)aLine startingAtOffset:(int)offset
-{
-    if (offset >= 0 && offset < WIDTH - 1 && aLine[offset + 1].code == DWC_RIGHT) {
-        aLine[offset].code = 0;
-        aLine[offset].complexChar = NO;
-        aLine[offset + 1].code = 0;
-        aLine[offset + 1].complexChar = NO;
-        return YES;
-    } else {
-      return NO;
-    }
-}
-
-- (void)insertBlank:(int)n
-{
-    screen_char_t *aLine;
-    int i;
-    int leftMargin, rightMargin;
-    int startOffset = 0;
-    int endOffset = 0;
-
-    if (vsplitMode) {
-        leftMargin = SCROLL_LEFT;
-        rightMargin = SCROLL_RIGHT + 1;
-    } else {
-        leftMargin = 0;
-        rightMargin = WIDTH;
-    }
-
-    if (cursorX >= rightMargin || cursorX < leftMargin) {
-        return;
-    }
-
-    if (n + cursorX > rightMargin) {
-        n = rightMargin - cursorX;
-    }
-    if (n < 1) {
-        return;
-    }
-
-    // get the appropriate line
-    aLine = [self getLineAtScreenIndex:cursorY];
-    int charsToMove = rightMargin - cursorX - n;
-    // If the first char to be moved is the right half of a DWC, erase it.
-    if ([self eraseDoubleWidthCharInLine:aLine startingAtOffset:cursorX - 1]) {
-      startOffset = -1;
-    }
-    // If the last char to be moved is the left half of a DWC, erase it.
-    [self eraseDoubleWidthCharInLine:aLine startingAtOffset:cursorX + charsToMove - 1];
-    // Pretty sure this isn't really needed b/c the last two chars will either
-    // be overwritten or handled by the case above, but it's harmless paranoia.
-    [self eraseDoubleWidthCharInLine:aLine startingAtOffset:rightMargin - 1];
-    if (rightMargin == WIDTH && aLine[WIDTH].code == EOL_DWC) {
-      // Since the last char in the line is being changed, the EOL is no longer because
-      // a DWC was forced onto the next line.
-      aLine[WIDTH].code = EOL_HARD;
-    }
-    memmove(aLine + cursorX + n,
-            aLine + cursorX,
-            charsToMove * sizeof(screen_char_t));
-
-    for (i = 0; i < n; i++) {
-        aLine[cursorX + i].code = 0;
-        aLine[cursorX + i].complexChar = NO;
-        CopyForegroundColor(&aLine[cursorX + i], [TERMINAL foregroundColorCode]);
-        CopyBackgroundColor(&aLine[cursorX + i], [TERMINAL backgroundColorCode]);
-    }
-
-    // TODO: merge with #143
-    // everything from cursorX to end of line is dirty
-    [self setDirtyFromX:MIN(rightMargin - 1, cursorX + startOffset)
-                      Y:cursorY
-                    toX:rightMargin + endOffset
-                      Y:cursorY];
-    DebugLog(@"insertBlank");
-}
-
-- (void) insertLines: (int)n
-{
-    int i, num_lines_moved;
-    screen_char_t *sourceLine, *targetLine, *aDefaultLine;
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen insertLines; %d]", __FILE__, __LINE__, n);
-#endif
-
-
-//    NSLog(@"insertLines %d[%d,%d]",n, cursorX,cursorY);
-    if (n + cursorY <= SCROLL_BOTTOM) {
-        // number of lines we can move down by n before we hit SCROLL_BOTTOM
-        num_lines_moved = SCROLL_BOTTOM - (cursorY + n);
-        // start from lower end
-        for (i = num_lines_moved ; i >= 0; i--) {
-            sourceLine = [self getLineAtScreenIndex:cursorY + i];
-            targetLine = [self getLineAtScreenIndex:cursorY + i + n];
-            if ((SCROLL_LEFT > 0 || SCROLL_RIGHT + 1 < WIDTH) && vsplitMode) {
-                memcpy(targetLine + SCROLL_LEFT,
-                       sourceLine + SCROLL_LEFT,
-                       (SCROLL_RIGHT + 1 - SCROLL_LEFT) * sizeof(screen_char_t));
-            } else {
-                memcpy(targetLine,
-                       sourceLine,
-                       REAL_WIDTH * sizeof(screen_char_t));
-            }
-        }
-    }
-    if (n + cursorY > SCROLL_BOTTOM) {
-        n = SCROLL_BOTTOM - cursorY + 1;
-    }
-
-    // clear the n lines
-    aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
-    for (i = 0; i < n; i++) {
-        sourceLine = [self getLineAtScreenIndex:cursorY + i];
-        if ((SCROLL_LEFT > 0 || SCROLL_RIGHT + 1 < WIDTH) && vsplitMode) {
-            memcpy(sourceLine + SCROLL_LEFT,
-                   aDefaultLine,
-                   (SCROLL_RIGHT + 1 - SCROLL_LEFT) * sizeof(screen_char_t));
-        } else {
-            memcpy(sourceLine,
-                   aDefaultLine,
-                   REAL_WIDTH * sizeof(screen_char_t));
-        }
-    }
-
-    // everything between cursorY and SCROLL_BOTTOM is dirty
-    if (cursorY <= SCROLL_BOTTOM) {
-        [self setDirtyFromX:0 Y:cursorY toX:WIDTH Y:SCROLL_BOTTOM];
-    }
-    DebugLog(@"insertLines");
-}
-
-- (void)deleteLines:(int)n
-{
-    int i, num_lines_moved;
-    screen_char_t *sourceLine, *targetLine, *aDefaultLine;
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen deleteLines; %d]", __FILE__, __LINE__, n);
-#endif
-
-    if (n + cursorY <= SCROLL_BOTTOM) {
-        // number of lines we can move down by n before we hit SCROLL_BOTTOM
-        num_lines_moved = SCROLL_BOTTOM - (cursorY + n);
-
-        for (i = 0; i <= num_lines_moved; i++) {
-            sourceLine = [self getLineAtScreenIndex:cursorY + i + n];
-            targetLine = [self getLineAtScreenIndex:cursorY + i];
-            if ((SCROLL_LEFT > 0 || SCROLL_RIGHT + 1 < WIDTH) && vsplitMode) {
-                memcpy(targetLine + SCROLL_LEFT,
-                       sourceLine + SCROLL_LEFT,
-                       (SCROLL_RIGHT + 1 - SCROLL_LEFT) * sizeof(screen_char_t));
-            } else {
-                memcpy(targetLine,
-                       sourceLine,
-                       REAL_WIDTH * sizeof(screen_char_t));
-            }
-        }
-
-    }
-    if (n + cursorY > SCROLL_BOTTOM) {
-        n = SCROLL_BOTTOM - cursorY + 1;
-    }
-    // clear the n lines
-    aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
-    for (i = 0; i < n; i++) {
-        sourceLine = [self getLineAtScreenIndex:SCROLL_BOTTOM-n+1+i];
-        if ((SCROLL_LEFT > 0 || SCROLL_RIGHT + 1 < WIDTH) && vsplitMode) {
-            memcpy(sourceLine + SCROLL_LEFT,
-                   aDefaultLine,
-                   (SCROLL_RIGHT + 1 - SCROLL_LEFT) * sizeof(screen_char_t));
-        } else {
-            memcpy(sourceLine,
-                   aDefaultLine,
-                   REAL_WIDTH * sizeof(screen_char_t));
-        }
-    }
-
-    // everything between cursorY and SCROLL_BOTTOM is dirty
-    if (cursorY <= SCROLL_BOTTOM) {
-        [self setDirtyFromX:0 Y:cursorY toX:WIDTH Y:SCROLL_BOTTOM];
-    }
-    DebugLog(@"deleteLines");
-
 }
 
 - (void)setPlayBellFlag:(BOOL)flag
@@ -4499,6 +2966,7 @@ void DumpBuf(screen_char_t* p, int n) {
     [tabStops removeObject:[NSNumber numberWithInt:x]];
 }
 
+// This is super destructive and terribly named.
 - (void)setDirty
 {
     [self resetScrollbackOverflow];
@@ -4606,7 +3074,9 @@ void DumpBuf(screen_char_t* p, int n) {
     // We don't know the cursor position yet but give the linebuffer something
     // so it doesn't get confused in restoreScreenFromScrollback.
     [linebuffer setCursor:0];
-    [self restoreScreenFromScrollbackWithDefaultLine:[self _getDefaultLineWithWidth:WIDTH]];
+    [currentGrid_ restoreScreenFromLineBuffer:linebuffer
+                              withDefaultChar:[currentGrid_ defaultChar]
+                            maxLinesToRestore:[linebuffer numLinesWithWidth:currentGrid_.size.width]];
 }
 
 - (void)setAltScreen:(NSArray *)lines
@@ -4715,7 +3185,7 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)restoreSavedPositionToFindContext:(FindContext *)context
 {
     int linesPushed;
-    linesPushed = [self _appendScreenToScrollback:[self _usedHeight]];
+    [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed] toLineBuffer:linebuffer];
 
     [linebuffer storeLocationOfAbsPos:savedFindContextAbsPos_
                             inContext:context];
@@ -4729,7 +3199,8 @@ void DumpBuf(screen_char_t* p, int n) {
 {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
-    linesPushed = [self _appendScreenToScrollback:[self _usedHeight]];
+    linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
+                               toLineBuffer:linebuffer];
 
     // Search one block.
     int stopAt;
@@ -4860,77 +3331,6 @@ void DumpBuf(screen_char_t* p, int n) {
     dvr = nil;
 }
 
-- (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info
-{
-    int yo = 0;
-    if (info.width == WIDTH && info.height == HEIGHT) {
-        memcpy(buffer_lines, s, len);
-        screen_top = buffer_lines + info.topOffset;
-        [self setDirty];
-    } else {
-        yo = info.height - HEIGHT;
-        if (yo < 0) {
-            // Display is larger than history. Happens if you're in fullscreen.
-            yo = 0;
-        }
-        int widthToCopy = WIDTH;
-        if (info.width < WIDTH) {
-            // Display is larger than history. Happens if you're in fullscreen.
-            widthToCopy = info.width;
-        }
-
-        screen_char_t* lineOut;
-        screen_char_t* lineIn;
-
-        int truncateHistoryLines = 0;
-        if (HEIGHT < info.height) {
-            truncateHistoryLines = info.height - HEIGHT;
-        }
-
-        screen_top = buffer_lines;
-        for (int y = 0; y < HEIGHT && y < info.height; ++y) {
-            lineOut = buffer_lines + y * REAL_WIDTH;
-            lineIn = s + ((info.topOffset + (truncateHistoryLines + y) * (info.width + 1)) % (len / sizeof(screen_char_t)));
-            memcpy(lineOut, lineIn, widthToCopy * sizeof(screen_char_t));
-            if (WIDTH > info.width) {
-                // Display wider than history
-                memset(lineOut + widthToCopy, 0, (WIDTH - widthToCopy) * sizeof(screen_char_t));
-                lineOut[WIDTH].code = 0;
-                lineOut[WIDTH].complexChar = NO;
-            } else {
-                // History too wide for screen
-                if (lineIn[widthToCopy].code == DWC_RIGHT) {
-                    lineOut[widthToCopy - 1].code = 0;
-                    lineOut[widthToCopy - 1].complexChar = NO;
-                }
-                if (lineOut[widthToCopy - 1].code == TAB_FILLER) {
-                    lineOut[widthToCopy - 1].code = '\t';
-                    lineOut[widthToCopy - 1].complexChar = NO;
-                }
-            }
-        }
-        for (int y = info.height; y < HEIGHT; ++y) {
-            lineOut = buffer_lines + y * REAL_WIDTH;
-            memset(lineOut, 0, REAL_WIDTH * sizeof(screen_char_t));
-        }
-        [self setDirty];
-    }
-    cursorX = info.cursorX;
-    cursorY = info.cursorY - yo;
-    if (cursorX < 0) {
-        cursorX = 0;
-    }
-    if (cursorY < 0) {
-        cursorY = 0;
-    }
-    if (cursorX >= WIDTH) {
-        cursorX = WIDTH - 1;
-    }
-    if (cursorY >= HEIGHT) {
-        cursorY = HEIGHT - 1;
-    }
-}
-
 - (DVR*)dvr
 {
     return dvr;
@@ -4965,12 +3365,12 @@ void DumpBuf(screen_char_t* p, int n) {
 
 - (int)cursorX
 {
-    return cursorX+1;
+    return cursorX + 1;
 }
 
 - (int)cursorY
 {
-    return cursorY+1;
+    return cursorY + 1;
 }
 
 // gets line at specified index starting from scrollback_top
@@ -5097,8 +3497,8 @@ void DumpBuf(screen_char_t* p, int n) {
        multipleResults:(BOOL)multipleResults
 {
     // Append the screen contents to the scrollback buffer so they are included in the search.
-    int linesPushed;
-    linesPushed = [self _appendScreenToScrollback:[self _usedHeight]];
+    int linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
+                                   toLineBuffer:linebuffer];
 
     // Get the start position of (x,y)
     int startPos;
@@ -5138,7 +3538,9 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)saveFindContextAbsPos
 {
     int linesPushed;
-    linesPushed = [self _appendScreenToScrollback:[self _usedHeight]];
+    linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
+                               toLineBuffer:linebuffer];
+
     savedFindContextAbsPos_ = [self findContextAbsPosition];
     [self _popScrollbackLines:linesPushed];
 }
@@ -5149,61 +3551,6 @@ void DumpBuf(screen_char_t* p, int n) {
     NSLog(@"%s(%d):-[VT100Screen shellTask]", __FILE__, __LINE__);
 #endif
     return SHELL;
-}
-
-- (NSString*)debugString
-{
-    NSMutableString* result = [NSMutableString stringWithString:@""];
-    int x, y;
-    char line[1000];
-    char dirtyline[1000];
-    for (y = 0; y < HEIGHT; ++y) {
-        int ox = 0;
-        screen_char_t* p = [self getLineAtScreenIndex: y];
-        if (p == buffer_lines) {
-            [result appendString:@"--- top of buffer ---\n"];
-        }
-        for (x = 0; x < WIDTH; ++x, ++ox) {
-            if (dirty[y * WIDTH + x]) {
-                dirtyline[ox] = '-';
-            } else {
-                dirtyline[ox] = '.';
-            }
-            if (y == cursorY && x == cursorX) {
-                if (dirtyline[ox] == '-') {
-                    dirtyline[ox] = '=';
-                }
-                if (dirtyline[ox] == '.') {
-                    dirtyline[ox] = ':';
-                }
-            }
-            if (p+x > buffer_lines + HEIGHT*REAL_WIDTH) {
-                line[ox++] = '!';
-            }
-            if (p[x].code && !p[x].complexChar) {
-                if (p[x].code > 0 && p[x].code < 128) {
-                    line[ox] = p[x].code;
-                } else if (p[x].code == DWC_RIGHT) {
-                    line[ox] = '-';
-                } else if (p[x].code == TAB_FILLER) {
-                    line[ox] = ' ';
-                } else if (p[x].code == DWC_SKIP) {
-                    line[ox] = '>';
-                } else {
-                    line[ox] = '?';
-                }
-            } else {
-                line[ox] = '.';
-            }
-        }
-        line[x] = 0;
-        dirtyline[x] = 0;
-        [result appendFormat:@"%04d @ buffer+%d lines: %s %s\n",
-            y, (int)((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)];
-        [result appendFormat:@"%04d @ buffer+%d dirty: %s\n",
-            y, (int)((p - buffer_lines) / REAL_WIDTH), dirtyline];
-    }
-    return result;
 }
 
 - (BOOL)isAllDirty
@@ -5341,37 +3688,6 @@ void DumpBuf(screen_char_t* p, int n) {
     return defaultLine_;
 }
 
-
-// adds a line to scrollback area. Returns YES if oldest line is lost, NO otherwise
-- (int)_addLineToScrollbackImpl
-{
-    if (showingAltScreen && !saveToScrollbackInAlternateScreen_) {
-        // Don't save to scrollback in alternate screen mode.
-        return 0;
-    }
-
-    int len = WIDTH;
-    if (screen_top[WIDTH].code == EOL_HARD) {
-        // The line is not continued. Figure out its length by finding the last nonnull char.
-        while (len > 0 && (screen_top[len - 1].code == 0)) {
-            --len;
-        }
-    }
-    if (screen_top[WIDTH].code == EOL_DWC && len == WIDTH) {
-        --len;
-    }
-    [linebuffer appendLine:screen_top length:len partial:(screen_top[WIDTH].code != EOL_HARD) width:WIDTH];
-    int dropped;
-    if (!unlimitedScrollback_) {
-        dropped = [linebuffer dropExcessLinesWithWidth: WIDTH];
-    } else {
-        dropped = 0;
-    }
-
-    assert(dropped == 0 || dropped == 1);
-
-    return dropped;
-}
 
 - (screen_char_t)defaultChar {
     screen_char_t fg = [TERMINAL foregroundColorCodeReal];

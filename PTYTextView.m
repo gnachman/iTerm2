@@ -820,6 +820,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             }
             color = colorTable[theIndex];
             break;
+
+        case ColorModeInvalid:
+            assert(false);
     }
     NSAssert(ok, @"Bogus color mode %d", (int)theMode);
     if (!ok) {
