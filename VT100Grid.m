@@ -8,72 +8,11 @@
 
 #import "VT100Grid.h"
 
-VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
-                                    VT100GridCoord end,
-                                    int width) {
-    VT100GridRun run;
-    run.origin = start;
-    if (start.y == end.y) {
-        run.length = end.x - start.x;
-    } else {
-        run.length = size_.width - start.x + end.x + size_.width * (end.y - start.y - 1);
-    }
-    return run;
-}
-
-@implementation NSValue (VT100Grid)
-
-+ (NSValue *)valueWithGridCoord:(VT100GridCoord)coord {
-    return [[[NSValue alloc] initWithBytes:&coord objCType:@encode(VT10GridCoord)] autorelease];
-}
-
-+ (NSValue *)valueWithGridSize:(VT100GridSize)size {
-    return [[[NSValue alloc] initWithBytes:&size objCType:@encode(VT10GridSize)] autorelease];
-}
-
-+ (NSValue *)valueWithGridRange:(VT100GridRange)range {
-    return [[[NSValue alloc] initWithBytes:&range objCType:@encode(VT10GridRange)] autorelease];
-}
-
-+ (NSValue *)valueWithGridRect:(VT100GridRect)rect {
-    return [[[NSValue alloc] initWithBytes:&rect objCType:@encode(VT10GridRect)] autorelease];
-}
-
-+ (NSValue *)valueWithGridRun:(VT100GridRun)run {
-    return [[[NSValue alloc] initWithBytes:&run objCType:@encode(VT10GridRun)] autorelease];
-}
-
-- (VT100GridCoord)gridCoordValue {
-    VT100GridCoord coord;
-    [self getValue:&coord];
-    return coord;
-}
-
-- (VT100GridSize)gridSizeValue {
-    VT100GridSize size;
-    [self getValue:&size];
-    return size;
-}
-
-- (VT100GridRange)gridRangeValue {
-    VT100GridRange range;
-    [self getValue:&range];
-    return range;
-}
-
-- (VT100GridRect)gridRectValue {
-    VT100GridRect rect;
-    [self getValue:&rect];
-    return rect;
-}
-
-- (VT100GridRun)gridRunValue {
-    VT100GridRun run;
-    [self getValue:&run];
-    return run;
-}
-
-@end
+#import "iTermApplicationDelegate.h"
+#import "LineBuffer.h"
+#import "RegexKitLite.h"
+#import "VT100GridTypes.h"
+#import "VT100Terminal.h"
 
 @implementation VT100Grid
 
@@ -82,8 +21,6 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 @synthesize scrollRegionCols = scrollRegionCols_;
 @synthesize useScrollRegionCols = useScrollRegionCols_;
 @synthesize savedCursor = savedCursor_;
-@synthesize charset = charset_;
-@synthesize savedCharset = savedCharset_;
 @synthesize allDirty = allDirty_;
 @synthesize lines = lines_;
 @synthesize savedDefaultChar = savedDefaultChar_;
@@ -95,7 +32,6 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
         [self setSize:size];
         scrollRegionRows_ = VT100GridRangeMake(0, size_.height);
         scrollRegionCols_ = VT100GridRangeMake(0, size_.width);
-        terminal_ = [terminal retain];
     }
     return self;
 }
@@ -124,8 +60,8 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     if (!dirty) {
         allDirty_ = NO;
     }
-    char *dirty = [self dirtyArrayAtLineNumber:coord.y];
-    dirty[coord.x] = dirty ? 1 : 0;
+    char *dirtyArray = [self dirtyArrayAtLineNumber:coord.y];
+    dirtyArray[coord.x] = dirty ? 1 : 0;
 }
 
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to {
@@ -152,7 +88,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     }
     for (NSValue *value in [self rectsForRun:run]) {
         VT100GridRect rect = [value gridRectValue];
-        [self markCharsDirty:dirty inRectFrom:rect.origin to:VT100GridRectGetMax(rect)];
+        [self markCharsDirty:dirty inRectFrom:rect.origin to:VT100GridRectMax(rect)];
     }
 }
 
@@ -203,12 +139,12 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     for(; numberOfLinesUsed > cursor_.y + 1; numberOfLinesUsed--) {
         screen_char_t *line = [self screenCharsAtLineNumber:numberOfLinesUsed - 1];
         int i;
-        for (i = 0; i < WIDTH; i++) {
+        for (i = 0; i < size_.width; i++) {
             if (line[i].code) {
                 break;
             }
         }
-        if (i < WIDTH) {
+        if (i < size_.width) {
             break;
         }
     }
@@ -271,8 +207,8 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     // Figure out the line length.
     if (line[size_.width].code == EOL_SOFT) {
         lineLength = size_.width;
-    } else if (line[size_.width.width].code == EOL_DWC) {
-        lineLength = WIDTH - 1;
+    } else if (line[size_.width].code == EOL_DWC) {
+        lineLength = size_.width - 1;
     } else {
         for (lineLength = size_.width - 1; lineLength >= 0; --lineLength) {
             if (line[lineLength].code && line[lineLength].code != DWC_SKIP) {
@@ -285,8 +221,8 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 }
 
 - (int)continuationMarkForLineNumber:(int)lineNumber {
-    screen_char_t *line = [self screnCharsAtLineNumber:lineNumber];
-    return line[size_.width];
+    screen_char_t *line = [self screenCharsAtLineNumber:lineNumber];
+    return line[size_.width].code;
 }
 
 - (int)indexOfLineNumber:(int)lineNumber {
@@ -300,7 +236,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
                      unlimitedScrollback:(BOOL)unlimitedScrollback {
     // Mark the cursor's previous location dirty. This fixes a rare race condition where
     // the cursor is not erased.
-    [self markCharDirtyAt:cursor_];
+    [self markCharDirty:YES at:cursor_];
 
     // Add the top line to the scrollback
     int numLinesDropped = [self appendLineToLineBuffer:lineBuffer
@@ -314,15 +250,17 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 
     if (lineBuffer) {
         // Mark new line at bottom of screen dirty.
-        [self markCharsDirtyFrom:VT100GridCoordMake(0, size_.height - 1)
-                              to:VT100GridCoordMake(size_.width - 1, size_.height - 1)];
+        [self markCharsDirty:YES
+                  inRectFrom:VT100GridCoordMake(0, size_.height - 1)
+                          to:VT100GridCoordMake(size_.width - 1, size_.height - 1)];
     } else {
         // Mark everything dirty if we're not using the scrollback buffer.
-        [self markCharsDirtyFrom:VT100GridCoordMake(0, 0)
-                              to:VT100GridCoordMake(size_.width - 1, size_.height - 1)];
+        [self markCharsDirty:YES
+                  inRectFrom:VT100GridCoordMake(0, 0)
+                          to:VT100GridCoordMake(size_.width - 1, size_.height - 1)];
     }
 
-    DebugLog(@"scrolled screen up by 1 line");
+    DLog(@"scrolled screen up by 1 line");
     return numLinesDropped;
 }
 
@@ -330,10 +268,10 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
           unlimitedScrollback:(BOOL)unlimitedScrollback
       useScrollbackWithRegion:(BOOL)useScrollbackWithRegion {
     // TODO: caller should set useScrollbackWithRegion from [[[SESSION addressBookEntry] objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue]
-    int scrollTop = scrollRegionRows.location;
-    int scrollBottom = VT100GridRangeMax(scrollRegionRows);
-    int scrollLeft = useScrollRegionCols_ ? scrollRegionCols.location : 0;
-    int scrollRight = useScrollRegionCols_ ? VT100GridRangeMax(scrollRegionCols) : size_.width - 1;
+    const int scrollTop = self.topMargin;
+    const int scrollBottom = self.bottomMargin;
+    const int scrollLeft = self.leftMargin;
+    const int scrollRight = self.rightMargin;
     BOOL haveColumnScrollRegion = (scrollLeft > 0 || scrollRight < size_.width - 1);
 
     assert(scrollTop >= 0 && scrollTop < size_.height);
@@ -385,7 +323,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
         return;  // Not sure how this would happen, but the old code in -[VT100Screen clearScreen] had this check.
     }
     int sourceLineNumber = [self cursorLineNumberIncludingPrecedingWrappedLines];
-    for (int i = 0; i < sourceLineNumber) {
+    for (int i = 0; i < sourceLineNumber; i++) {
         [self scrollWholeScreenUpIntoLineBuffer:nil unlimitedScrollback:NO];
     }
     self.cursorY = cursor_.y - sourceLineNumber;
@@ -395,16 +333,13 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 - (int)moveCursorDownOneLineScrollingIntoLineBuffer:(LineBuffer *)lineBuffer
                                 unlimitedScrollback:(BOOL)unlimitedScrollback
                             useScrollbackWithRegion:(BOOL)useScrollbackWithRegion {
-    int scrollBottom = VT100GridRangeMax(scrollRegionRows);
-    int scrollTop = scrollRegionRows.location;
-    int scrollLeft = scrollRegionCols.location;
-    int scrollRight = VT100GridRangeMax(scrollRegionCols);
+    const int scrollBottom = self.bottomMargin;
 
     if (cursor_.y < scrollBottom ||
         (cursor_.y < (size_.height - 1) && cursor_.y > scrollBottom)) {
         // Do not scroll the screen; just move the cursor.
         self.cursorY = cursor_.y + 1;
-        DebugLog(@"moved cursor down by 1 line");
+        DLog(@"moved cursor down by 1 line");
         return 0;
     } else {
         // We are scrolling within a strict subset of the screen.
@@ -442,26 +377,26 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 }
 
 - (void)moveCursorUp:(int)n {
-    const int scrollTop = scrollRegionRows.location;
+    const int scrollTop = self.topMargin;
     int y = MAX(0, MIN(size_.height - 1, cursor_.y - n));
-    int x = MIN(cursor_.x, size._width - 1);
+    int x = MIN(cursor_.x, size_.width - 1);
     if (cursor_.y >= scrollTop) {
-        [self setCursor:VT100GridMakeCoord(x,
+        [self setCursor:VT100GridCoordMake(x,
                                            y < scrollTop ? scrollTop : y)];
     } else {
-        [self setCursor:VT100GridMakeCoord(x, y)];
+        [self setCursor:VT100GridCoordMake(x, y)];
     }
 }
 
 - (void)moveCursorDown:(int)n {
-    const int scrollBottom = VT100GridRangeMax(scrollRegionRows);
-    int y = MAX(0, MIN(size_.height - 1, cursorY + n));
+    const int scrollBottom = self.bottomMargin;
+    int y = MAX(0, MIN(size_.height - 1, cursor_.y + n));
     int x = MIN(cursor_.x, size_.width - 1);
-    if (cursorY <= scrollBottom) {
-        [self setCursor:VT100GridMakeCoord(x,
+    if (cursor_.y <= scrollBottom) {
+        [self setCursor:VT100GridCoordMake(x,
                                            y > scrollBottom ? scrollBottom : y)];
     } else {
-        [self setCursor:VT100GridMakeCoord(x, y)];
+        [self setCursor:VT100GridCoordMake(x, y)];
     }
 }
 
@@ -474,17 +409,16 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
             line[x] = c;
         }
         if (to.x == size_.width - 1) {
-            line[size_.width] = EOL_HARD;
+            line[size_.width].code = EOL_HARD;
         }
     }
-    [self markCharsDirtyFrom:from
-                          to:to];
+    [self markCharsDirty:YES inRectFrom:from to:to];
 }
 
 - (void)setCharsInRun:(VT100GridRun)run toChar:(unichar)code {
     screen_char_t c = [self defaultChar];
     c.code = code;
-    c.complexCode = NO;
+    c.complexChar = NO;
 
     VT100GridCoord max = VT100GridRunMax(run, size_.width);
     int y = run.origin.y;
@@ -527,8 +461,9 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
                 CopyBackgroundColor(&line[x], bg);
             }
         }
-        [self markCharsDirtyFrom:VT100GridCoordMake(from.x, y)
-                              to:VT100GridCoordMake(to.x, y)];
+        [self markCharsDirty:YES
+                  inRectFrom:VT100GridCoordMake(from.x, y)
+                          to:VT100GridCoordMake(to.x, y)];
     }
 }
 
@@ -544,7 +479,15 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
                 source,
                 sizeof(screen_char_t) * (size_.width + 1));
     }
-    [self markAllCharsDirty];
+    [self markAllCharsDirty:YES];
+}
+
+- (int)scrollLeft {
+    return scrollRegionCols_.location;
+}
+
+- (int)scrollRight {
+    return VT100GridRangeMax(scrollRegionCols_);
 }
 
 - (int)appendCharsAtCursor:(screen_char_t *)buffer
@@ -554,17 +497,16 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
        unlimitedScrollback:(BOOL)unlimitedScrollback
    useScrollbackWithRegion:(BOOL)useScrollbackWithRegion {
     int numDropped = 0;
-    assert(string);
+    assert(buffer);
     int idx;  // Index into buffer
     int charsToInsert;
     int newx;
     int leftMargin, rightMargin;
-    screen_char_t *buffer;
     screen_char_t *aLine;
-    const int scrollBottom = VT100GridRangeMax(scrollRegionRows);
-    const int scrollTop = scrollRegionRows.location;
-    const int scrollLeft = scrollRegionCols.location;
-    const int scrollRight = VT100GridRangeMax(scrollRegionCols);
+    const int scrollBottom = self.bottomMargin;
+    const int scrollTop = self.topMargin;
+    const int scrollLeft = self.scrollLeft;
+    const int scrollRight = self.scrollRight;
 
     // Iterate over each character in the buffer and copy/insert into screen.
     // Grab a block of consecutive characters up to the remaining length in the
@@ -627,7 +569,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
                         prevLine[size_.width - 1].code = DWC_SKIP;
                     }
                 }
-                [self setcursor_.x:leftMargin Y:cursorY];
+                self.cursorX = leftMargin;
                 // Advance to the next line
                 numDropped += [self moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                                              unlimitedScrollback:unlimitedScrollback
@@ -683,7 +625,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
               spaceRemainingInLine, charsLeftToAppend);
 #endif
         int effective_width;
-        if (vsplitMode) {
+        if (useScrollRegionCols_) {
             effective_width = size_.width;
         } else {
             effective_width = scrollRight + 1;
@@ -761,8 +703,9 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
                     aLine[size_.width].code = EOL_SOFT;
                 }
                 memmove(dst, src, elements * sizeof(screen_char_t));
-                [self markCharsDirtyFrom:VT100GridCoordMake(cursor_.x, lineNumber)
-                                      to:VT100GridCoordMake(rightMargin, lineNumber)];
+                [self markCharsDirty:YES
+                          inRectFrom:VT100GridCoordMake(cursor_.x, lineNumber)
+                                  to:VT100GridCoordMake(rightMargin, lineNumber)];
             }
         }
 
@@ -777,8 +720,8 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
             aLine[cursor_.x].complexChar = NO;
             aLine[cursor_.x-1].code = ' ';
             aLine[cursor_.x-1].complexChar = NO;
-            [self markCharDirtyAt:VT100GridCoordMake(cursor_.x, lineNumber)];
-            [self markCharDirtyAt:VT100GridCoordMake(cursor_.x - 1, lineNumber)];
+            [self markCharDirty:YES at:VT100GridCoordMake(cursor_.x, lineNumber)];
+            [self markCharDirty:YES at:VT100GridCoordMake(cursor_.x - 1, lineNumber)];
         }
 
         // This is an ugly little optimization--if we're inserting just one character, see if it would
@@ -790,8 +733,9 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
             memcpy(aLine + cursor_.x,
                    buffer + idx,
                    charsToInsert * sizeof(screen_char_t));
-            [self markCharsDirtyFrom:VT100GridCoordMake(cursor_.x, lineNumber)
-                                  to:VT100GridCoordMake(cursor_.x + charsToInsert - 1, lineNumber)];
+            [self markCharsDirty:YES
+                      inRectFrom:VT100GridCoordMake(cursor_.x, lineNumber)
+                              to:VT100GridCoordMake(cursor_.x + charsToInsert - 1, lineNumber)];
         }
         if (wrapDwc) {
             aLine[cursor_.x + charsToInsert].code = DWC_SKIP;
@@ -843,7 +787,6 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 
     screen_char_t *aLine;
     int i;
-    int leftMargin, rightMargin;
     const int leftMargin = [self leftMargin];
     const int rightMargin = [self rightMargin];
     screen_char_t defaultChar = [self defaultChar];
@@ -864,26 +807,19 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
             // Erase a section in the middle of a line. Shift the stuff to the right of the
             // deletion region left to the startCoord.
 
-            if (startCoord.x > 0 && aLine[startCoord.x].code == DWC_RIGHT) {
-                // Erase orphan dwc just before startCoord
-                [self setCharsFrom:VT100GridCoordMake(startCoord.x - 1, lineNumber)
-                                to:VT100GridCoordMake(startCoord.x - 1, lineNumber)
-                            toChar:defaultChar];
-                startCoord.x++;
-                num--;
-            }
-            if (startCoord.x + n < size_.width && aLine[startCoord.x + n].code == DWC_RIGHT) {
-                // Erase orphan dwc just after range to be deleted.
-                [self setCharsFrom:VT100GridCoordMake(startCoord.x + n, lineNumber)
-                                to:VT100GridCoordMake(startCoord.x + n, lineNumber)
-                            toChar:defaultChar];
-            }
+            [self erasePossibleDoubleWidthCharInLineNumber:startCoord.y
+                                          startingAtOffset:startCoord.x - 1
+                                                  withChar:[self defaultChar]];
+            [self erasePossibleDoubleWidthCharInLineNumber:startCoord.y
+                                          startingAtOffset:startCoord.x + n - 1
+                                                  withChar:[self defaultChar]];
             const int numCharsToMove = (rightMargin - startCoord.x - n);
             memmove(aLine + startCoord.x,
                     aLine + startCoord.x + n,
                     numCharsToMove * sizeof(screen_char_t));
-            [self markCharsDirtyFrom:VT100GridCoordMake(startCoord.x, lineNumber)
-                                  to:VT100GridCoordMake(statCoord.x + numCharsToMove - 1, lineNumber)];
+            [self markCharsDirty:YES
+                      inRectFrom:VT100GridCoordMake(startCoord.x, lineNumber)
+                              to:VT100GridCoordMake(startCoord.x + numCharsToMove - 1, lineNumber)];
         }
         // Erase chars on right side of line.
         [self setCharsFrom:VT100GridCoordMake(rightMargin - n, lineNumber)
@@ -893,19 +829,11 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 }
 
 - (void)scrollDown {
-    const int scrollBottom = VT100GridRangeMax(scrollRegionRows);
-    const int scrollTop = scrollRegionRows.location;
-    const int scrollLeft = useScrollRegionCols_ ? scrollRegionCols.location : 0;
-    const int scrollRight = useScrollRegionCols_ ? VT100GridRangeMax(scrollRegionCols) : size_.width;
-    [self scrollRect:VT100GridRectMake(scrollLeft,
-                                       scrollTop,
-                                       scrollRight - scrollLeft + 1,
-                                       scrollBottom - scrollTop + 1)
-                downBy:1];
+    [self scrollRect:[self scrollRegionRect] downBy:1];
 }
 
 - (void)scrollRect:(VT100GridRect)rect downBy:(int)direction {
-    DebugLog(@"scrollRect:%d,%d %dx%d downBy:%d",
+    DLog(@"scrollRect:%d,%d %dx%d downBy:%d",
              rect.origin.x, rect.origin.y, rect.size.width, rect.size.height, direction);
     if (direction == 0) {
         return;
@@ -951,11 +879,12 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
                 targetLine[scrollRight].complexChar = NO;
             }
 
-            sourceIndex += step;
-            destIndex += step;
+            sourceIndex += direction;
+            destIndex += direction;
         }
-        [self markCharsDirtyFrom:VT100GridCoordMake(scrollLeft, scrollTop)
-                              to:VT100GridCoordMake(scrollRight, scrollBottom)];
+        [self markCharsDirty:YES
+                  inRectFrom:VT100GridCoordMake(scrollLeft, scrollTop)
+                          to:VT100GridCoordMake(scrollRight, scrollBottom)];
 
         // Clear region left over.
         if (direction > 0) {
@@ -987,12 +916,12 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
             dest[charsToCopyPerLine - 1].code = 0;
             dest[charsToCopyPerLine - 1].complexChar = NO;
         }
-        if (casrToCopyPerLine - 1 < info.width && src[charsToCopyPerLine - 1].code == TAB_FILLER) {
+        if (charsToCopyPerLine - 1 < info.width && src[charsToCopyPerLine - 1].code == TAB_FILLER) {
             dest[charsToCopyPerLine - 1].code = '\t';
             dest[charsToCopyPerLine - 1].complexChar = NO;
         }
     }
-    [self markAllCharsDirty];
+    [self markAllCharsDirty:YES];
 
     const int yOffset = info.height - size_.height;
     self.cursorX = MIN(size_.width - 1, MAX(0, info.cursorX));
@@ -1012,7 +941,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
             [result appendString:@"--- top of buffer ---\n"];
         }
         for (x = 0; x < size_.width; ++x, ++ox) {
-            if (dirty[y * size_.width + x]) {
+            if ([self isCharDirtyAt:VT100GridCoordMake(x, y)]) {
                 dirtyline[ox] = '-';
             } else {
                 dirtyline[ox] = '.';
@@ -1043,7 +972,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
         }
         line[x] = 0;
         dirtyline[x] = 0;
-        [result appendFormat:@"%04d: %s %s\n", y, line, [self stringForContinuationMark:p[WIDTH].code]];
+        [result appendFormat:@"%04d: %s %@\n", y, line, [self stringForContinuationMark:p[size_.width].code]];
         [result appendFormat:@"dirty %s\n", dirtyline];
     }
     return result;
@@ -1092,7 +1021,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
                 NSValue *value = [NSValue valueWithGridRun:VT100GridRunMake(startX,
                                                                             startY,
                                                                             length + 1)];
-                [runs appendObject:value];
+                [runs addObject:value];
             }
 
             searchRange.location = range.location + range.length;
@@ -1120,9 +1049,10 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     }
     destLineNumber = MIN(destLineNumber, maxLines - 1);
 
-    char defaultLine[size_.width];
+    screen_char_t defaultLine[size_.width];
+    screen_char_t dc = [self defaultChar];
     for (int i = 0; i < size_.width; i++) {
-        defaultLine[i] = defaultChar;
+        defaultLine[i] = dc;
     }
 
     BOOL foundCursor = NO;
@@ -1131,7 +1061,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
         screen_char_t *dest = [self screenCharsAtLineNumber:destLineNumber];
         memcpy(dest, defaultLine, sizeof(screen_char_t) * size_.width);
         if (!foundCursor) {
-            int tempCursor = cursorX;
+            int tempCursor = cursor_.x;
             foundCursor = [lineBuffer getCursorInLastLineWithWidth:size_.width atX:&tempCursor];
             if (foundCursor) {
                 [self setCursor:VT100GridCoordMake(tempCursor % size_.width,
@@ -1200,7 +1130,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     if (cursor_.x >= size_.width) {
         self.cursorX = size_.width - 1;
     }
-    if (cursorY >= size_.height) {
+    if (cursor_.y >= size_.height) {
         self.cursorY = size_.height - 1;
     }
     if (savedCursor_.x >= size_.width) {
@@ -1212,12 +1142,12 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 }
 
 - (screen_char_t *)resultLine {
-    length = sizeof(screen_char_t) * (size_.width + 1);
+    const int length = sizeof(screen_char_t) * (size_.width + 1);
     if (resultLine_.length != length) {
         [resultLine_ release];
         resultLine_ = [[NSMutableData alloc] initWithLength:length];
     }
-    return [resultLine_ mutableData];
+    return (screen_char_t *)[resultLine_ mutableBytes];
 }
 
 - (void)moveCursorToLeftMargin {
@@ -1239,19 +1169,19 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 }
 
 - (int)leftMargin {
-    return useScrollRegionCols_ ? scrollRegionCols.location : 0;
+    return useScrollRegionCols_ ? scrollRegionCols_.location : 0;
 }
 
 - (int)rightMargin {
-    return useScrollRegionCols_ ? VT100GridRangeMax(scrollRegionCols) : size_.width;
+    return useScrollRegionCols_ ? VT100GridRangeMax(scrollRegionCols_) : size_.width;
 }
 
 - (int)topMargin {
-    return scrollRegionRows.location;
+    return scrollRegionRows_.location;
 }
 
 - (int)bottomMargin {
-    return VT100GridRangeMax(scrollRegionRows);
+    return VT100GridRangeMax(scrollRegionRows_);
 }
 
 - (VT100GridRect)scrollRegionRect {
@@ -1266,26 +1196,24 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 - (NSMutableArray *)linesWithSize:(VT100GridSize)size {
     NSMutableArray *lines = [[[NSMutableArray alloc] init] autorelease];
     for (int i = 0; i < size.height; i++) {
-        [lines appendObject:[[[self defaultLineOfWidth:size.width] copy] autorelease]];
+        [lines addObject:[[[self defaultLineOfWidth:size.width] copy] autorelease]];
     }
     return lines;
 }
 
-- (NSMutableData *)emptyDirtyLine {
-}
-
 - (NSMutableArray *)dirtyBufferWithSize:(VT100GridSize)size {
-    NSMutableArray *dirty =  = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray *dirty = [[[NSMutableArray alloc] init] autorelease];
     for (int i = 0; i < size.height; i++) {
-        [dirty appendObject:[self emptyDirtyLine]];
+        [dirty addObject:[NSMutableData dataWithLength:size_.width]];
     }
     return dirty;
 }
 
 - (screen_char_t)defaultChar {
+    assert(terminal_);
     screen_char_t c = { 0 };
-    screen_char_t fg = [TERMINAL foregroundColorCodeReal];
-    screen_char_t bg = [TERMINAL backgroundColorCodeReal];
+    screen_char_t fg = [terminal_ foregroundColorCodeReal];
+    screen_char_t bg = [terminal_ backgroundColorCodeReal];
 
     c.code = 0;
     c.complexChar = NO;
@@ -1298,10 +1226,12 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 - (NSMutableData *)defaultLineOfWidth:(int)width {
     size_t length = (width + 1) * sizeof(screen_char_t);
 
+    screen_char_t *existingCache = (screen_char_t *)[cachedDefaultLine_ mutableBytes];
+    screen_char_t currentDefaultChar = [self defaultChar];
     if (cachedDefaultLine_ &&
         [cachedDefaultLine_ length] == length &&
         length > 0 &&
-        ((screen_char_t *)[cachedDefaultLine_ mutableBytes])[0] == [self defaultChar]) {
+        !memcmp(existingCache, &currentDefaultChar, sizeof(screen_char_t))) {
         return cachedDefaultLine_;
     }
 
@@ -1326,8 +1256,10 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 
 - (void)clearLineData:(NSMutableData *)line {
     int length = [line length] / sizeof(screen_char_t);
+    assert(length == size_.width + 1);
     [self clearScreenChars:[line mutableBytes] inRange:VT100GridRangeMake(0, length)];
-    chars[width].code = EOL_HARD;
+    screen_char_t *chars = (screen_char_t *)[line mutableBytes];
+    chars[size_.width].code = EOL_HARD;
 }
 
 // Returns number of lines dropped from line buffer because it exceeded its size (always 0 or 1).
@@ -1339,7 +1271,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     }
     screen_char_t *line = [self screenCharsAtLineNumber:0];
     int len = [self lengthOfLine:line];
-    int continuationMark = line[size_.width];
+    int continuationMark = line[size_.width].code;
     if (continuationMark == EOL_DWC && len == size_.width) {
         --len;
     }
@@ -1361,21 +1293,17 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 
 - (BOOL)haveColumnScrollRegion {
     return (useScrollRegionCols_ &&
-            (scrollLeft != 0 || scrollRight != size_.width - 1));
+            (self.scrollLeft != 0 || self.scrollRight != size_.width - 1));
 }
 
 - (BOOL)haveScrollRegion {
-    const int scrollBottom = VT100GridRangeMax(scrollRegionRows);
-    const int scrollTop = scrollRegionRows.location;
-    const int scrollLeft = scrollRegionCols.location;
-    const int scrollRight = VT100GridRangeMax(scrollRegionCols);
-    const BOOL haveScrollRows = !(scrollTop == 0 && scrollBottom == size_.height - 1);
+    const BOOL haveScrollRows = !(self.topMargin == 0 && self.bottomMargin == size_.height - 1);
     return haveScrollRows || [self haveColumnScrollRegion];
 }
 
 - (int)cursorLineNumberIncludingPrecedingWrappedLines {
-    for (i = cursor_.y - 1; i >= 0; i--) {
-        int mark = [self continuationMarkForLineNumberi];
+    for (int i = cursor_.y - 1; i >= 0; i--) {
+        int mark = [self continuationMarkForLineNumber:i];
         if (mark == EOL_HARD) {
             return i + 1;
         }
@@ -1397,11 +1325,11 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 // Warning: does not set dirty.
 - (void)setSize:(VT100GridSize)newSize {
     if (newSize.width != size_.width || newSize.height != size_.height) {
-        size_ = size;
+        size_ = newSize;
         [lines_ release];
         [dirty_ release];
-        lines_ = [[self linesWithSize:size] retain];
-        dirty_ = [[self dirtyBufferWithSize:size] retain];
+        lines_ = [[self linesWithSize:newSize] retain];
+        dirty_ = [[self dirtyBufferWithSize:newSize] retain];
         scrollRegionRows_.location = MIN(scrollRegionRows_.location, size_.width - 1);
         scrollRegionRows_.length = MIN(scrollRegionRows_.length,
                                        size_.width - scrollRegionRows_.location);
@@ -1458,7 +1386,7 @@ void DumpBuf(screen_char_t* p, int n) {
     screen_char_t *aLine = [self screenCharsAtLineNumber:lineNumber];
     if (offset >= 0 && offset < size_.width - 1 && aLine[offset + 1].code == DWC_RIGHT) {
         aLine[offset] = c;
-        [self markCharDirtyAt:VT100GridCoordMake(offset, lineNumber)];
+        [self markCharDirty:YES at:VT100GridCoordMake(offset, lineNumber)];
         return YES;
     } else {
         return NO;
@@ -1557,13 +1485,11 @@ void DumpBuf(screen_char_t* p, int n) {
     scrollRegionCols_ = VT100GridRangeMake(0, size_.width);
 }
 
-- (screen_char_t *)dvrFormattedFrame {
-}
-
 #pragma mark - NSCopying
 
 - (id)copyWithZone:(NSZone *)zone {
-    VT100Grid *theCopy = [[VT100Grid alloc] initWithSize:size_ terminal:terminal_];
+    VT100Grid *theCopy = [[VT100Grid alloc] initWithSize:size_];
+    theCopy->terminal_ = [terminal_ retain];
     [theCopy->lines_ release];
     theCopy->lines_ = [[NSMutableArray alloc] init];
     for (NSObject *line in lines_) {

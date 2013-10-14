@@ -7,99 +7,12 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "DVRIndexEntry.h"
+#import "ScreenChar.h"
+#import "VT100GridTypes.h"
 
-typedef struct {
-    int x;
-    int y;
-} VT100GridCoord;
-
-typedef struct {
-    int width;
-    int height;
-} VT100GridSize;
-
-typedef struct {
-    int location;
-    int length;
-} VT100GridRange;
-
-typedef struct {
-    VT100GridCoord origin;
-    VT100GridSize size;
-} VT100GridRect;
-
-typedef struct {
-    VT100GridCoord origin;
-    int length;
-} VT100GridRun;
-
-@interface NSValue (VT100Grid)
-
-+ (NSValue *)valueWithGridCoord:(VT100GridCoord)coord;
-+ (NSValue *)valueWithGridSize:(VT100GridSize)size;
-+ (NSValue *)valueWithGridRange:(VT100GridRange)range;
-+ (NSValue *)valueWithGridRect:(VT100GridRect)rect;
-+ (NSValue *)valueWithGridRun:(VT100GridRun)run;
-
-- (VT100GridCoord)gridCoordValue;
-- (VT100GridSize)gridSizeValue;
-- (VT100GridRange)gridRangeValue;
-- (VT100GridRect)gridRectValue;
-- (VT100GridRun)gridRunValue;
-
-@end
-
-NS_INLINE VT100GridCoord VT100GridCoordMake(int x, int y) {
-    VT100GridCoord coord;
-    coord.x = x;
-    coord.y = y;
-    return coord;
-}
-
-NS_INLINE VT100GridSize VT100GridSizeMake(int width, int height) {
-    VT100GridSize size;
-    size.width = width;
-    size.height = height;
-    return size;
-}
-
-NS_INLINE VT100GridRange VT100GridRangeMake(int location, int length) {
-    VT100GridRange range;
-    range.location = location;
-    range.length = length;
-    return range;
-}
-
-NS_INLINE int VT100GridRangeMax(VT100GridRange range) {
-    return range.location + range.length - 1;
-}
-
-NS_INLINE VT100GridRect VT100GridRectMake(int x, int y, int width, int height) {
-    VT100GridRect rect;
-    rect.origin = VT100GridCoordMake(x, y);
-    rect.size = VT100GridSizeMake(width, height);
-    return rect;
-}
-
-NS_INLINE VT100GridCoord VT100GridRunMax(VT100GridRun run, int width) {
-    VT100GridCoord coord = run.origin;
-    coord.y += (coord.x + run.length) / width;
-    coord.x = (coord.x + run.length) % width;
-    return coord;
-}
-
-// Returns the coord of the bottom-right cell that is in the rect. The rect must not be 0-dimensioned.
-NS_INLINE VT100GridCoord VT100GridRectMax(VT100GridRect rect) {
-    VT100GridCoord coord = rect.origin;
-    coord.x += rect.size.width - 1;
-    coord.y += rect.size.height - 1;
-    return coord;
-}
-
-// Creates a run between two coords, not inclusive of end.
-VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
-                                    VT100GridCoord end,
-                                    int width);
+@class LineBuffer;
+@class VT100Terminal;
 
 @interface VT100Grid : NSObject <NSCopying> {
     VT100GridSize size_;
@@ -135,14 +48,14 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 @property(nonatomic, readonly) NSArray *lines;
 @property(nonatomic, assign) screen_char_t savedDefaultChar;
 
-- (id)initWithSize:(VT100GridSize)size terminal:(VT100Terminal *)terminal;
+- (id)initWithSize:(VT100GridSize)size;
 
 - (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber;
 
 // Set both x and y coord of cursor at once.
 - (void)setCursor:(VT100GridCoord)coord;
 
-- (void)markCharDirtyAt:(VT100GridCoord)coord;
+- (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord;
 
 // Mark chars dirty in a rectangle, inclusive of endpoints.
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to;
@@ -195,6 +108,9 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 // Scroll regions are ignored.
 - (int)scrollWholeScreenUpIntoLineBuffer:(LineBuffer *)lineBuffer
                      unlimitedScrollback:(BOOL)unlimitedScrollback;
+
+// Scroll the scroll region down by one line.
+- (void)scrollDown;
 
 // Clear scroll region, clear screen, move cursor to origin, leaving only the last non-empty line
 // at the top of the screen if preservingLastLine is set, or clearing the whole screen otherwise.
@@ -270,10 +186,6 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 
 // Reset scroll regions to whole screen.
 - (void)resetScrollRegions;
-
-// Returns a 2-d array of screen_char_t's giving the whole screen contents. It has (width + 1)*height
-// elements.
-- (screen_char_t *)dvrFormattedFrame;
 
 - (VT100GridRect)scrollRegionRect;
 

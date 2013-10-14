@@ -1197,7 +1197,7 @@ static void SwapInt(int *a, int *b) {
             break;
         case VT100CSI_RI:
             if (currentGrid_.cursorY == currentGrid_.topMargin) {
-                [currentGrid_ scrollRect:[currentGrid scrollRegionRect] downBy:1];
+                [currentGrid_ scrollDown];
             } else {
                 currentGrid_.cursorY = currentGrid_.cursorY - 1;
             }
