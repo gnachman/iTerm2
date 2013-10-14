@@ -14,12 +14,20 @@
 @class LineBuffer;
 @class VT100Terminal;
 
+@protocol VT100GridDelegate <NSObject>
+- (BOOL)wraparoundMode;
+- (BOOL)insertMode;
+- (BOOL)isAnsi;
+- (screen_char_t)foregroundColorCodeReal;
+- (screen_char_t)backgroundColorCodeReal;
+@end
+
 @interface VT100Grid : NSObject <NSCopying> {
     VT100GridSize size_;
     int screenTop_;  // Index into lines_ and dirty_ of first line visible in the grid.
     NSMutableArray *lines_;  // Array of NSMutableData. Each data has size_.width+1 screen_char_t's.
     NSMutableArray *dirty_;  // Array of NSMutableData. Each data has size_.width char's.
-    VT100Terminal *terminal_;
+    id<VT100GridDelegate> delegate_;
     VT100GridCoord cursor_;
     VT100GridCoord savedCursor_;
     VT100GridRange scrollRegionRows_;
@@ -47,14 +55,17 @@
 @property(nonatomic, readonly) int bottomMargin;
 @property(nonatomic, readonly) NSArray *lines;
 @property(nonatomic, assign) screen_char_t savedDefaultChar;
+@property(nonatomic, assign) id<VT100GridDelegate> delegate;
 
-- (id)initWithSize:(VT100GridSize)size;
+- (id)initWithSize:(VT100GridSize)size delegate:(id<VT100GridDelegate>)delegate;
 
 - (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber;
 
-// Set both x and y coord of cursor at once.
+// Set both x and y coord of cursor at once. Cursor positions are clamped to legal values. The cursor
+// may extend into the right edge (cursorX == size.width is allowed).
 - (void)setCursor:(VT100GridCoord)coord;
 
+// Mark a specific character dirty.
 - (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord;
 
 // Mark chars dirty in a rectangle, inclusive of endpoints.
@@ -64,7 +75,7 @@
 - (BOOL)isAnyCharDirty;
 
 // Returns the count of lines excluding totally empty lines at the bottom, and always including the
-// line the cursor is on and its successor.
+// line the cursor is on.
 - (int)numberOfLinesUsed;
 
 // Append the first numLines to the given line buffer. Returns the number of lines appended.
@@ -194,5 +205,8 @@
                                         withChar:(screen_char_t)c;
 
 - (void)moveCursorToLeftMargin;
+
+- (NSString *)compactLineDump;
+- (NSString *)compactDirtyDump;
 
 @end

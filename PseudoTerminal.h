@@ -596,9 +596,6 @@ NSWindowDelegate,
 // Fill in a path with the tabbar color.
 - (void)fillPath:(NSBezierPath*)path;
 
-// Resize the window to exactly fit this tab.
-- (void)fitWindowToTab:(PTYTab*)tab;
-
 // Resize window to be just large enough to fit the largest tab without changing session sizes.
 - (void)fitWindowToTabs;
 
@@ -652,8 +649,6 @@ NSWindowDelegate,
           addingSession:(PTYSession*)newSession
           targetSession:(PTYSession*)targetSession
            performSetup:(BOOL)performSetup;
-
-- (void)splitVertically:(BOOL)isVertical withBookmark:(Profile*)theBookmark targetSession:(PTYSession*)targetSession;
 
 
 // Do some cleanup after a session is removed.

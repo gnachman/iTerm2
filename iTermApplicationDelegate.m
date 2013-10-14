@@ -56,11 +56,7 @@ NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPa
 static BOOL gStartupActivitiesPerformed = NO;
 // Prior to 8/7/11, there was only one window arrangement, always called Default.
 static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
-NSMutableString* gDebugLogStr = nil;
-NSMutableString* gDebugLogStr2 = nil;
 static BOOL ranAutoLaunchScript = NO;
-BOOL gDebugLogging = NO;
-int gDebugLogFile = -1;
 static BOOL hasBecomeActive = NO;
 
 @interface iTermApplicationDelegate ()
@@ -1037,20 +1033,6 @@ static BOOL hasBecomeActive = NO;
                 defaultDelay:0.125];
 }
 
-static void SwapDebugLog() {
-        NSMutableString* temp;
-        temp = gDebugLogStr;
-        gDebugLogStr = gDebugLogStr2;
-        gDebugLogStr2 = temp;
-}
-
-static void FlushDebugLog() {
-        NSData* data = [gDebugLogStr dataUsingEncoding:NSUTF8StringEncoding];
-        int written = write(gDebugLogFile, [data bytes], [data length]);
-        assert(written == [data length]);
-        [gDebugLogStr setString:@""];
-}
-
 - (IBAction)maximizePane:(id)sender
 {
     [[[iTermController sharedInstance] currentTerminal] toggleMaximizeActivePane];
@@ -1113,47 +1095,9 @@ static void FlushDebugLog() {
 // Debug logging
 -(IBAction)debugLogging:(id)sender
 {
-    if (!gDebugLogging) {
-        NSRunAlertPanel(@"Debug Logging Enabled",
-                        @"Writing to /tmp/debuglog.txt",
-                        @"OK", nil, nil);
-        gDebugLogFile = open("/tmp/debuglog.txt", O_TRUNC | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
-        gDebugLogStr = [[NSMutableString alloc] init];
-        gDebugLogStr2 = [[NSMutableString alloc] init];
-        gDebugLogging = !gDebugLogging;
-    } else {
-        gDebugLogging = !gDebugLogging;
-        SwapDebugLog();
-        FlushDebugLog();
-        SwapDebugLog();
-        FlushDebugLog();
-        
-        close(gDebugLogFile);
-        gDebugLogFile=-1;
-        NSRunAlertPanel(@"Debug Logging Stopped",
-                        @"Please compress and send /tmp/debuglog.txt to the developers.",
-                        @"OK", nil, nil);
-        [gDebugLogStr release];
-        [gDebugLogStr2 release];
-    }
+    ToggleDebugLogging();
 }
 
-int DebugLogImpl(const char *file, int line, const char *function, NSString* value)
-{
-    if (gDebugLogging) {
-        struct timeval tv;
-        gettimeofday(&tv, NULL);
-
-        [gDebugLogStr appendFormat:@"%lld.%08lld %s:%d (%s): ", (long long)tv.tv_sec, (long long)tv.tv_usec, file, line, function];
-        [gDebugLogStr appendString:value];
-        [gDebugLogStr appendString:@"\n"];
-        if ([gDebugLogStr length] > 100000000) {
-            SwapDebugLog();
-            [gDebugLogStr2 setString:@""];
-        }
-    }
-    return 1;
-}
 
 /// About window
 

@@ -7,7 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 // This is for the args to CGSSetWindowBackgroundBlurRadiusFunction, which is used for window-blurring using undocumented APIs.
-#import <CGSInternal.h>
+#import "CGSInternal.h"
 
 #ifdef BLOCKS_NOT_AVAILABLE
 // OS 10.5 Compatibility

@@ -356,6 +356,26 @@
 		1DCF3F001224EEBD00AD56F1 /* MigrationMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */; };
 		1DCF3F4A1225F6F200AD56F1 /* BookmarkModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */; };
 		1DD39ACF180B7884004E56D5 /* VT100GridTypes.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */; };
+		1DD39AD7180B8118004E56D5 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39AD6180B8118004E56D5 /* Cocoa.framework */; };
+		1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1DD39ADF180B8118004E56D5 /* InfoPlist.strings */; };
+		1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 1DD39AE5180B8118004E56D5 /* Credits.rtf */; };
+		1DD39AEA180B8118004E56D5 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39AE9180B8118004E56D5 /* AppDelegate.m */; };
+		1DD39AED180B8118004E56D5 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DD39AEB180B8118004E56D5 /* MainMenu.xib */; };
+		1DD39AEF180B8118004E56D5 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1DD39AEE180B8118004E56D5 /* Images.xcassets */; };
+		1DD39B10180B817B004E56D5 /* VT100Grid.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8B8A131806038F00C2DC25 /* VT100Grid.m */; };
+		1DD39B11180B817B004E56D5 /* VT100GridTypes.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */; };
+		1DD39B14180B819A004E56D5 /* VT100GridTest.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD39B12180B819A004E56D5 /* VT100GridTest.h */; };
+		1DD39B15180B819A004E56D5 /* VT100GridTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B13180B819A004E56D5 /* VT100GridTest.m */; };
+		1DD39B16180B81B3004E56D5 /* VT100GridTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B13180B819A004E56D5 /* VT100GridTest.m */; };
+		1DD39B17180B82AC004E56D5 /* ScreenChar.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D36155412CBF33E00803EA9 /* ScreenChar.m */; };
+		1DD39B1A180B82F5004E56D5 /* DebugLogging.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD39B18180B82F5004E56D5 /* DebugLogging.h */; };
+		1DD39B1B180B82F5004E56D5 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
+		1DD39B1C180B834A004E56D5 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
+		1DD39B1D180B83EF004E56D5 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39AE2180B8118004E56D5 /* main.m */; };
+		1DD39B1E180B8415004E56D5 /* LineBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D72438C11F416E500BD4924 /* LineBuffer.m */; };
+		1DD39B1F180B841C004E56D5 /* RegexKitLite.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D85D1DA1306687700A3E998 /* RegexKitLite.m */; };
+		1DD39B22180B8467004E56D5 /* BackgroundThread.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA26ABF15007507004B5792 /* BackgroundThread.m */; };
+		1DD39B7B180B8842004E56D5 /* libicucore.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39B7A180B8842004E56D5 /* libicucore.dylib */; };
 		1DD4CE7D14A5163B00ED182E /* TmuxDashboard.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */; };
 		1DD4CE8014A51C0D00ED182E /* TmuxDashboardController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD4CE7E14A51C0D00ED182E /* TmuxDashboardController.h */; };
 		1DD4CE8114A51C0D00ED182E /* TmuxDashboardController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD4CE7F14A51C0D00ED182E /* TmuxDashboardController.m */; };
@@ -680,6 +700,29 @@
 		1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BookmarkModel.h; path = Headers/iTerm/BookmarkModel.h; sourceTree = "<group>"; };
 		1DD39ACD180B785A004E56D5 /* VT100GridTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100GridTypes.h; sourceTree = "<group>"; };
 		1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100GridTypes.m; sourceTree = "<group>"; };
+		1DD39AD4180B8117004E56D5 /* iTermTests.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTermTests.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1DD39AD6180B8118004E56D5 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		1DD39AD9180B8118004E56D5 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		1DD39ADA180B8118004E56D5 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
+		1DD39ADB180B8118004E56D5 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		1DD39ADE180B8118004E56D5 /* iTermTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "iTermTests-Info.plist"; sourceTree = "<group>"; };
+		1DD39AE0180B8118004E56D5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1DD39AE2180B8118004E56D5 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		1DD39AE4180B8118004E56D5 /* iTermTests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermTests-Prefix.pch"; sourceTree = "<group>"; };
+		1DD39AE6180B8118004E56D5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
+		1DD39AE8180B8118004E56D5 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		1DD39AE9180B8118004E56D5 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		1DD39AEC180B8118004E56D5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		1DD39AEE180B8118004E56D5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		1DD39AF5180B8119004E56D5 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		1DD39AFC180B8119004E56D5 /* iTermTestsTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "iTermTestsTests-Info.plist"; sourceTree = "<group>"; };
+		1DD39AFE180B8119004E56D5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1DD39B00180B8119004E56D5 /* iTermTestsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTestsTests.m; sourceTree = "<group>"; };
+		1DD39B12180B819A004E56D5 /* VT100GridTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VT100GridTest.h; path = iTermTests/VT100GridTest.h; sourceTree = "<group>"; };
+		1DD39B13180B819A004E56D5 /* VT100GridTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = VT100GridTest.m; path = iTermTests/VT100GridTest.m; sourceTree = "<group>"; };
+		1DD39B18180B82F5004E56D5 /* DebugLogging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DebugLogging.h; sourceTree = "<group>"; };
+		1DD39B19180B82F5004E56D5 /* DebugLogging.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DebugLogging.m; sourceTree = "<group>"; };
+		1DD39B7A180B8842004E56D5 /* libicucore.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libicucore.dylib; path = usr/lib/libicucore.dylib; sourceTree = SDKROOT; };
 		1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = TmuxDashboard.xib; sourceTree = "<group>"; };
 		1DD4CE7E14A51C0D00ED182E /* TmuxDashboardController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxDashboardController.h; sourceTree = "<group>"; };
 		1DD4CE7F14A51C0D00ED182E /* TmuxDashboardController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxDashboardController.m; sourceTree = "<group>"; };
@@ -862,6 +905,15 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		1DD39AD1180B8117004E56D5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1DD39B7B180B8842004E56D5 /* libicucore.dylib in Frameworks */,
+				1DD39AD7180B8118004E56D5 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		874206510564169600CFC3F1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -894,6 +946,9 @@
 				0464AB27006CD2EC7F000001 /* Supporting Files */,
 				0464AB2E006CD2EC7F000001 /* External Frameworks and Libraries */,
 				1D94EAA312D64022008225A9 /* UKCrashReporter */,
+				1DD39ADC180B8118004E56D5 /* iTermTests */,
+				1DD39AFA180B8119004E56D5 /* iTermTestsTests */,
+				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
 				F69E774A0AB78CDB001EC0FF /* Growl-Info.plist */,
 				1D13EADB12113A2D00909F9C /* libncurses.dylib */,
@@ -924,6 +979,8 @@
 				1D699BC317CABC060094F0C1 /* CharacterRunInline.h */,
 				1D48B378167E809D000046EE /* CharacterRun.m */,
 				1D9DDD9B142E5FBB00275650 /* Coprocess.m */,
+				1DD39B18180B82F5004E56D5 /* DebugLogging.h */,
+				1DD39B19180B82F5004E56D5 /* DebugLogging.m */,
 				1D237D27131D8741004DD60C /* FindView.m */,
 				1D237D93131D8D66004DD60C /* FindViewController.m */,
 				1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */,
@@ -1187,6 +1244,7 @@
 			isa = PBXGroup;
 			children = (
 				8742065A0564169600CFC3F1 /* iTerm.app */,
+				1DD39AD4180B8117004E56D5 /* iTermTests.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1306,6 +1364,8 @@
 				1D72477311F55E5700BD4924 /* LineBufferTest.m */,
 				1D82FF5F14ABC38700B34CEA /* EquivalenceClassSetTest.h */,
 				1D82FF6014ABC38700B34CEA /* EquivalenceClassSetTest.m */,
+				1DD39B12180B819A004E56D5 /* VT100GridTest.h */,
+				1DD39B13180B819A004E56D5 /* VT100GridTest.m */,
 			);
 			name = Tests;
 			sourceTree = "<group>";
@@ -1401,6 +1461,69 @@
 				1D085F9516F04D0900B7FCE9 /* NSBezierPath+iTerm.m */,
 			);
 			name = Categories;
+			sourceTree = "<group>";
+		};
+		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1DD39B7A180B8842004E56D5 /* libicucore.dylib */,
+				1DD39AD6180B8118004E56D5 /* Cocoa.framework */,
+				1DD39AF5180B8119004E56D5 /* XCTest.framework */,
+				1DD39AD8180B8118004E56D5 /* Other Frameworks */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		1DD39AD8180B8118004E56D5 /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1DD39AD9180B8118004E56D5 /* AppKit.framework */,
+				1DD39ADA180B8118004E56D5 /* CoreData.framework */,
+				1DD39ADB180B8118004E56D5 /* Foundation.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+		1DD39ADC180B8118004E56D5 /* iTermTests */ = {
+			isa = PBXGroup;
+			children = (
+				1DD39AE8180B8118004E56D5 /* AppDelegate.h */,
+				1DD39AE9180B8118004E56D5 /* AppDelegate.m */,
+				1DD39AEB180B8118004E56D5 /* MainMenu.xib */,
+				1DD39AEE180B8118004E56D5 /* Images.xcassets */,
+				1DD39ADD180B8118004E56D5 /* Supporting Files */,
+			);
+			path = iTermTests;
+			sourceTree = "<group>";
+		};
+		1DD39ADD180B8118004E56D5 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				1DD39ADE180B8118004E56D5 /* iTermTests-Info.plist */,
+				1DD39ADF180B8118004E56D5 /* InfoPlist.strings */,
+				1DD39AE2180B8118004E56D5 /* main.m */,
+				1DD39AE4180B8118004E56D5 /* iTermTests-Prefix.pch */,
+				1DD39AE5180B8118004E56D5 /* Credits.rtf */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		1DD39AFA180B8119004E56D5 /* iTermTestsTests */ = {
+			isa = PBXGroup;
+			children = (
+				1DD39B00180B8119004E56D5 /* iTermTestsTests.m */,
+				1DD39AFB180B8119004E56D5 /* Supporting Files */,
+			);
+			path = iTermTestsTests;
+			sourceTree = "<group>";
+		};
+		1DD39AFB180B8119004E56D5 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				1DD39AFC180B8119004E56D5 /* iTermTestsTests-Info.plist */,
+				1DD39AFD180B8119004E56D5 /* InfoPlist.strings */,
+			);
+			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
 		DD02571D09CB9363008F320C /* PSMTabBarControl */ = {
@@ -1577,6 +1700,7 @@
 				1D7C18811275D22900461E55 /* PasteboardHistory.h in Headers */,
 				1D7C1D1212772ECC00461E55 /* NSDateFormatterExtras.h in Headers */,
 				1DE214E1128212EE004E3ADF /* Autocomplete.h in Headers */,
+				1DD39B1A180B82F5004E56D5 /* DebugLogging.h in Headers */,
 				1DD736411283C2FA009B7829 /* Popup.h in Headers */,
 				1D44218C1290B34500891504 /* TextViewWrapper.h in Headers */,
 				1D2E802E129DA45A00F3D71E /* PTYTab.h in Headers */,
@@ -1584,6 +1708,7 @@
 				1D36155512CBF33E00803EA9 /* ScreenChar.h in Headers */,
 				1D94EAAE12D64022008225A9 /* UKCrashReporter.h in Headers */,
 				1D94EAB212D64022008225A9 /* UKNibOwner.h in Headers */,
+				1DD39B14180B819A004E56D5 /* VT100GridTest.h in Headers */,
 				1D94EAB412D64022008225A9 /* UKSystemInfo.h in Headers */,
 				1DDBC61E12E2BCDC00BC3868 /* iTermExpose.h in Headers */,
 				1DAED28812E9395E005E49ED /* GlobalSearch.h in Headers */,
@@ -1691,6 +1816,23 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		1DD39AD3180B8117004E56D5 /* iTermTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1DD39B02180B812D004E56D5 /* Build configuration list for PBXNativeTarget "iTermTests" */;
+			buildPhases = (
+				1DD39AD0180B8117004E56D5 /* Sources */,
+				1DD39AD1180B8117004E56D5 /* Frameworks */,
+				1DD39AD2180B8117004E56D5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = iTermTests;
+			productName = iTermTests;
+			productReference = 1DD39AD4180B8117004E56D5 /* iTermTests.app */;
+			productType = "com.apple.product-type.application";
+		};
 		874206460564169600CFC3F1 /* iTerm */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BB024D35096EE4080021E793 /* Build configuration list for PBXNativeTarget "iTerm" */;
@@ -1733,6 +1875,8 @@
 				zh_CN,
 				zh_TW,
 				Korean,
+				en,
+				Base,
 			);
 			mainGroup = 0464AB0D006CD2EC7F000001 /* JTerminal */;
 			productRefGroup = 0464AB32006CD2EC7F000001 /* Products */;
@@ -1740,11 +1884,23 @@
 			projectRoot = "";
 			targets = (
 				874206460564169600CFC3F1 /* iTerm */,
+				1DD39AD3180B8117004E56D5 /* iTermTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		1DD39AD2180B8117004E56D5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */,
+				1DD39AEF180B8118004E56D5 /* Images.xcassets in Resources */,
+				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
+				1DD39AED180B8118004E56D5 /* MainMenu.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8742064A0564169600CFC3F1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1876,6 +2032,22 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		1DD39AD0180B8117004E56D5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1DD39AEA180B8118004E56D5 /* AppDelegate.m in Sources */,
+				1DD39B11180B817B004E56D5 /* VT100GridTypes.m in Sources */,
+				1DD39B1F180B841C004E56D5 /* RegexKitLite.m in Sources */,
+				1DD39B22180B8467004E56D5 /* BackgroundThread.m in Sources */,
+				1DD39B10180B817B004E56D5 /* VT100Grid.m in Sources */,
+				1DD39B17180B82AC004E56D5 /* ScreenChar.m in Sources */,
+				1DD39B16180B81B3004E56D5 /* VT100GridTest.m in Sources */,
+				1DD39B1C180B834A004E56D5 /* DebugLogging.m in Sources */,
+				1DD39B1E180B8415004E56D5 /* LineBuffer.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8742064E0564169600CFC3F1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1968,6 +2140,7 @@
 				1D9DCC0F142D7F5F0016228A /* BellTrigger.m in Sources */,
 				1D9DCC13142D7F970016228A /* ScriptTrigger.m in Sources */,
 				1D9DCC17142D7FC10016228A /* AlertTrigger.m in Sources */,
+				1DD39B15180B819A004E56D5 /* VT100GridTest.m in Sources */,
 				1D9DDD93142E5AC600275650 /* CoprocessTrigger.m in Sources */,
 				1D9DDD9D142E5FBB00275650 /* Coprocess.m in Sources */,
 				1D24C285142EF334006B246F /* SendTextTrigger.m in Sources */,
@@ -1976,6 +2149,7 @@
 				1DEDC8FE1451F67D004F1615 /* SessionTitleView.m in Sources */,
 				5ECE00601454E59B004861E9 /* PseudoTerminalRestorer.m in Sources */,
 				1D8255FD14687EE8007CAE78 /* PointerPrefsController.m in Sources */,
+				1DD39B1D180B83EF004E56D5 /* main.m in Sources */,
 				1D825601146881EC007CAE78 /* PointerController.m in Sources */,
 				1D825605146B258A007CAE78 /* EventMonitorView.m in Sources */,
 				1D3BBD6C14759D6C00FAB389 /* HighlightTrigger.m in Sources */,
@@ -1990,6 +2164,7 @@
 				1DC38819148E840700B89F7C /* SolidColorView.m in Sources */,
 				1D7B9A6A1491D82F003A2A22 /* IntervalMap.m in Sources */,
 				1DD6707814934ADE008E4361 /* PTYSplitView.m in Sources */,
+				1DD39B1B180B82F5004E56D5 /* DebugLogging.m in Sources */,
 				1DD4CE8114A51C0D00ED182E /* TmuxDashboardController.m in Sources */,
 				1DA9AEEB14A51CA000BEB37B /* TmuxSessionsTable.m in Sources */,
 				1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */,
@@ -2058,6 +2233,38 @@
 				1D99785212EEB3D600F0794D /* English */,
 			);
 			name = GlobalSearch.xib;
+			sourceTree = "<group>";
+		};
+		1DD39ADF180B8118004E56D5 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1DD39AE0180B8118004E56D5 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		1DD39AE5180B8118004E56D5 /* Credits.rtf */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1DD39AE6180B8118004E56D5 /* en */,
+			);
+			name = Credits.rtf;
+			sourceTree = "<group>";
+		};
+		1DD39AEB180B8118004E56D5 /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1DD39AEC180B8118004E56D5 /* Base */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+		1DD39AFD180B8119004E56D5 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1DD39AFE180B8119004E56D5 /* en */,
+			);
+			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
 		1DE2154112821F1C004E3ADF /* Autocomplete.xib */ = {
@@ -2129,7 +2336,7 @@
 				);
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = "";
 				GCC_WARN_PROTOTYPE_CONVERSION = NO;
 				GCC_WARN_SIGN_COMPARE = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
@@ -2235,7 +2442,7 @@
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = "";
 				GCC_WARN_PROTOTYPE_CONVERSION = NO;
 				GCC_WARN_SIGN_COMPARE = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
@@ -2341,7 +2548,7 @@
 				);
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = "";
 				GCC_WARN_PROTOTYPE_CONVERSION = NO;
 				GCC_WARN_SIGN_COMPARE = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
@@ -2441,6 +2648,264 @@
 				ZERO_LINK = NO;
 			};
 			name = "Leopard Deployment";
+		};
+		1DD39B03180B812D004E56D5 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "iTermTests/iTermTests-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = "iTermTests/iTermTests-Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-shorten-64-to-32",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Development;
+		};
+		1DD39B04180B812D004E56D5 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "iTermTests/iTermTests-Prefix.pch";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = "iTermTests/iTermTests-Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-shorten-64-to-32",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Deployment;
+		};
+		1DD39B05180B812D004E56D5 /* Leopard Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "iTermTests/iTermTests-Prefix.pch";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = "iTermTests/iTermTests-Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-shorten-64-to-32",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = "Leopard Deployment";
+		};
+		1DD39B06180B812D004E56D5 /* Nightly */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "iTermTests/iTermTests-Prefix.pch";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = "iTermTests/iTermTests-Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-shorten-64-to-32",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Nightly;
+		};
+		1DD39B07180B812D004E56D5 /* LegacyDeployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "iTermTests/iTermTests-Prefix.pch";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = "iTermTests/iTermTests-Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-shorten-64-to-32",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = LegacyDeployment;
+		};
+		1DD39B08180B812D004E56D5 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "iTermTests/iTermTests-Prefix.pch";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = "iTermTests/iTermTests-Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-shorten-64-to-32",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Default;
 		};
 		BB024D36096EE4080021E793 /* Development */ = {
 			isa = XCBuildConfiguration;
@@ -2712,7 +3177,7 @@
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = "";
 				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
 				GCC_WARN_MISSING_PARENTHESES = YES;
 				GCC_WARN_PROTOTYPE_CONVERSION = NO;
@@ -2738,7 +3203,7 @@
 				);
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = "";
 				GCC_WARN_PROTOTYPE_CONVERSION = NO;
 				GCC_WARN_SIGN_COMPARE = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
@@ -2753,7 +3218,7 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = "";
 				GCC_WARN_PROTOTYPE_CONVERSION = NO;
 				GCC_WARN_SIGN_COMPARE = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
@@ -2766,6 +3231,18 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		1DD39B02180B812D004E56D5 /* Build configuration list for PBXNativeTarget "iTermTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DD39B03180B812D004E56D5 /* Development */,
+				1DD39B04180B812D004E56D5 /* Deployment */,
+				1DD39B05180B812D004E56D5 /* Leopard Deployment */,
+				1DD39B06180B812D004E56D5 /* Nightly */,
+				1DD39B07180B812D004E56D5 /* LegacyDeployment */,
+				1DD39B08180B812D004E56D5 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
 		BB024D35096EE4080021E793 /* Build configuration list for PBXNativeTarget "iTerm" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

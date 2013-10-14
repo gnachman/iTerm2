@@ -8,7 +8,7 @@
 
 #import "VT100Grid.h"
 
-#import "iTermApplicationDelegate.h"
+#import "DebugLogging.h"
 #import "LineBuffer.h"
 #import "RegexKitLite.h"
 #import "VT100GridTypes.h"
@@ -25,10 +25,12 @@
 @synthesize lines = lines_;
 @synthesize savedDefaultChar = savedDefaultChar_;
 @synthesize cursor = cursor_;
+@synthesize delegate = delegate_;
 
-- (id)initWithSize:(VT100GridSize)size {
+- (id)initWithSize:(VT100GridSize)size delegate:(id<VT100GridDelegate>)delegate {
     self = [super init];
     if (self) {
+        delegate_ = delegate;
         [self setSize:size];
         scrollRegionRows_ = VT100GridRangeMake(0, size_.height);
         scrollRegionCols_ = VT100GridRangeMake(0, size_.width);
@@ -39,7 +41,6 @@
 - (void)dealloc {
     [lines_ release];
     [dirty_ release];
-    [terminal_ release];
     [cachedDefaultLine_ release];
     [super dealloc];
 }
@@ -93,7 +94,10 @@
 }
 
 - (BOOL)isCharDirtyAt:(VT100GridCoord)coord {
-    char *dirty = allDirty_ || [self dirtyArrayAtLineNumber:coord.y];
+    if (allDirty_) {
+        return YES;
+    }
+    char *dirty = [self dirtyArrayAtLineNumber:coord.y];
     return dirty[coord.x];
 }
 
@@ -129,8 +133,8 @@
 }
 
 - (void)setCursor:(VT100GridCoord)coord {
-    cursor_.x = MIN(size_.width + 1, MAX(0, coord.x));
-    cursor_.y = MIN(size_.height, MAX(0, coord.y));
+    cursor_.x = MIN(size_.width, MAX(0, coord.x));
+    cursor_.y = MIN(size_.height - 1, MAX(0, coord.y));
 }
 
 - (int)numberOfLinesUsed {
@@ -181,7 +185,8 @@
                    line[size_.width].code != EOL_HARD) {
             // This line is continued, the next line is empty, and the cursor is
             // on the first column of the next line. Pull it up.
-            [lineBuffer setCursor:cursor_.x + 1];
+            // NOTE: This was cursor_.x + 1, but I'm pretty sure that's wrong as it would always be 1.
+            [lineBuffer setCursor:currentLineLength];
         }
 
         [lineBuffer appendLine:line
@@ -272,7 +277,6 @@
     const int scrollBottom = self.bottomMargin;
     const int scrollLeft = self.leftMargin;
     const int scrollRight = self.rightMargin;
-    BOOL haveColumnScrollRegion = (scrollLeft > 0 || scrollRight < size_.width - 1);
 
     assert(scrollTop >= 0 && scrollTop < size_.height);
     assert(scrollBottom >= 0 && scrollBottom < size_.height);
@@ -329,7 +333,6 @@
     self.cursorY = cursor_.y - sourceLineNumber;
 }
 
-// TODO: callers need to implement logic formerly in addLineToScrollback
 - (int)moveCursorDownOneLineScrollingIntoLineBuffer:(LineBuffer *)lineBuffer
                                 unlimitedScrollback:(BOOL)unlimitedScrollback
                             useScrollbackWithRegion:(BOOL)useScrollbackWithRegion {
@@ -422,7 +425,7 @@
 
     VT100GridCoord max = VT100GridRunMax(run, size_.width);
     int y = run.origin.y;
-    int x = run.origin.x;
+
     if (y == max.y) {
         // Whole run is on one line.
         [self setCharsFrom:run.origin to:max toChar:c];
@@ -503,8 +506,6 @@
     int newx;
     int leftMargin, rightMargin;
     screen_char_t *aLine;
-    const int scrollBottom = self.bottomMargin;
-    const int scrollTop = self.topMargin;
     const int scrollLeft = self.scrollLeft;
     const int scrollRight = self.scrollRight;
 
@@ -558,7 +559,7 @@
             rightMargin = size_.width;
         }
         if (cursor_.x >= rightMargin - widthOffset) {
-            if ([terminal_ wraparoundMode]) {
+            if ([delegate_ wraparoundMode]) {
                 if (leftMargin == 0 && rightMargin == size_.width) {
                     // Set the continuation marker
                     screen_char_t* prevLine = [self screenCharsAtLineNumber:cursor_.y];
@@ -677,7 +678,7 @@
         int lineNumber = cursor_.y;
         aLine = [self screenCharsAtLineNumber:cursor_.y];
 
-        if ([terminal_ insertMode]) {
+        if ([delegate_ insertMode]) {
             if (cursor_.x + charsToInsert < rightMargin) {
 #ifdef VERBOSE_STRING
                 NSLog(@"Shifting old contents to the right");
@@ -756,8 +757,8 @@
 
         // ANSI terminals will go to a new line after displaying a character at
         // the rightmost column.
-        if (cursor_.x >= effective_width && [terminal_ isAnsi]) {
-            if ([terminal_ wraparoundMode]) {
+        if (cursor_.x >= effective_width && [delegate_ isAnsi]) {
+            if ([delegate_ wraparoundMode]) {
                 //set the wrapping flag
                 aLine[size_.width].code = ((effective_width == size_.width) ? EOL_SOFT : EOL_DWC);
                 self.cursorX = leftMargin;
@@ -786,7 +787,6 @@
     DLog(@"deleteChars:%d startingAt:%d,%d", n, startCoord.x, startCoord.y);
 
     screen_char_t *aLine;
-    int i;
     const int leftMargin = [self leftMargin];
     const int rightMargin = [self rightMargin];
     screen_char_t defaultChar = [self defaultChar];
@@ -1002,8 +1002,9 @@
             if (range.location == NSNotFound || range.length == 0) {
                 break;
             }
-            int start = range.location;
-            int end = range.location + range.length;
+            assert(range.location != NSNotFound);
+            int start = (int)(range.location);
+            int end = (int)(range.location + range.length);
             start += deltas[start];
             end += deltas[end];
             int startY = y + start / size_.width;
@@ -1191,12 +1192,47 @@
                              self.bottomMargin - self.topMargin + 1);
 }
 
+- (NSString *)compactLineDump {
+    NSMutableString *dump = [NSMutableString string];
+    for (int y = 0; y < size_.height; y++) {
+        screen_char_t *line = [self screenCharsAtLineNumber:y];
+        for (int x = 0; x < size_.height; x++) {
+            char c = line[x].code;
+            if (line[x].code == 0) c = '.';
+            if (line[x].code > 127) c = '?';
+            if (line[x].complexChar) c = '!';
+            [dump appendFormat:@"%c", c];
+        }
+        if (y != size_.height - 1) {
+            [dump appendString:@"\n"];
+        }
+    }
+    return dump;
+}
+
+- (NSString *)compactDirtyDump {
+    NSMutableString *dump = [NSMutableString string];
+    for (int y = 0; y < size_.height; y++) {
+        for (int x = 0; x < size_.height; x++) {
+            if ([self isCharDirtyAt:VT100GridCoordMake(x, y)]) {
+                [dump appendString:@"d"];
+            } else {
+                [dump appendString:@"c"];
+            }
+        }
+        if (y != size_.height - 1) {
+            [dump appendString:@"\n"];
+        }
+    }
+    return dump;
+}
+
 #pragma mark - Private
 
 - (NSMutableArray *)linesWithSize:(VT100GridSize)size {
     NSMutableArray *lines = [[[NSMutableArray alloc] init] autorelease];
     for (int i = 0; i < size.height; i++) {
-        [lines addObject:[[[self defaultLineOfWidth:size.width] copy] autorelease]];
+        [lines addObject:[[[self defaultLineOfWidth:size.width] mutableCopy] autorelease]];
     }
     return lines;
 }
@@ -1210,10 +1246,10 @@
 }
 
 - (screen_char_t)defaultChar {
-    assert(terminal_);
+    assert(delegate_);
     screen_char_t c = { 0 };
-    screen_char_t fg = [terminal_ foregroundColorCodeReal];
-    screen_char_t bg = [terminal_ backgroundColorCodeReal];
+    screen_char_t fg = [delegate_ foregroundColorCodeReal];
+    screen_char_t bg = [delegate_ backgroundColorCodeReal];
 
     c.code = 0;
     c.complexChar = NO;
@@ -1255,7 +1291,7 @@
 }
 
 - (void)clearLineData:(NSMutableData *)line {
-    int length = [line length] / sizeof(screen_char_t);
+    int length = (int)([line length] / sizeof(screen_char_t));
     assert(length == size_.width + 1);
     [self clearScreenChars:[line mutableBytes] inRange:VT100GridRangeMake(0, length)];
     screen_char_t *chars = (screen_char_t *)[line mutableBytes];
@@ -1313,7 +1349,6 @@
 
 - (int)lineNumberOfLastNonEmptyLine {
     int y;
-    int x;
     for (y = size_.height - 1; y >= 0; --y) {
         if ([self lengthOfLineNumber:y] > 0) {
             return y;
@@ -1488,8 +1523,8 @@ void DumpBuf(screen_char_t* p, int n) {
 #pragma mark - NSCopying
 
 - (id)copyWithZone:(NSZone *)zone {
-    VT100Grid *theCopy = [[VT100Grid alloc] initWithSize:size_];
-    theCopy->terminal_ = [terminal_ retain];
+    VT100Grid *theCopy = [[VT100Grid alloc] initWithSize:size_
+                                                delegate:delegate_];
     [theCopy->lines_ release];
     theCopy->lines_ = [[NSMutableArray alloc] init];
     for (NSObject *line in lines_) {

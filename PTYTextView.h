@@ -508,7 +508,6 @@ enum {
 - (void)selectPaneAboveWithEvent:(NSEvent *)event;
 - (void)selectPaneBelowWithEvent:(NSEvent *)event;
 - (void)newWindowWithProfile:(NSString *)guid withEvent:(NSEvent *)event;
-- (void)newWindowWithProfile:(NSString *)guid withEvent:(NSEvent *)event;
 - (void)newTabWithProfile:(NSString *)guid withEvent:(NSEvent *)event;
 - (void)newVerticalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event;
 - (void)newHorizontalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event;

@@ -86,7 +86,7 @@ int ExpandScreenChar(screen_char_t* sct, unichar* dest) {
     }
     assert(value);
     [value getCharacters:dest];
-    return [value length];
+    return (int)[value length];
 }
 
 UTF32Char CharToLongChar(unichar code, BOOL isComplex)

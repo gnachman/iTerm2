@@ -267,7 +267,7 @@ void StringToScreenChars(NSString *s,
     if (self) {
         TERMINAL = [terminal retain];
         primaryGrid_ = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(DEFAULT_WIDTH, DEFAULT_HEIGHT)
-                                              terminal:terminal];
+                                              delegate:terminal];
         currentGrid_ = primaryGrid_;
 
         max_scrollback_lines = DEFAULT_SCROLLBACK;

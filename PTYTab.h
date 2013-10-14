@@ -144,14 +144,11 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (int)indexOfSessionView:(SessionView*)sessionView;
 
 - (void)setLockedSession:(PTYSession*)lockedSession;
-- (PTYSession*)activeSession;
 - (id<WindowControllerInterface>)parentWindow;
 - (PseudoTerminal*)realParentWindow;
 - (void)setParentWindow:(PseudoTerminal*)theParent;
 - (void)setFakeParentWindow:(FakeWindow*)theParent;
 - (FakeWindow*)fakeWindow;
-- (NSTabViewItem *)tabViewItem;
-- (void)setTabViewItem: (NSTabViewItem *)theTabViewItem;
 
 - (void)setBell:(BOOL)flag;
 - (void)nameOfSession:(PTYSession*)session didChangeTo:(NSString*)newName;

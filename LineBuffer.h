@@ -313,4 +313,6 @@ typedef struct FindContext {
 // Set the start location of a find context to an absolute position.
 - (void)storeLocationOfAbsPos:(long long)absPos
                     inContext:(FindContext *)context;
+
+- (NSString *)debugString;
 @end

@@ -29,6 +29,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ScreenChar.h"
+#import "VT100Grid.h"
 
 @class VT100Screen;
 
@@ -319,7 +320,7 @@ typedef enum {
 
 } MouseButtonModifierFlag;
 
-@interface VT100Terminal : NSObject
+@interface VT100Terminal : NSObject <VT100GridDelegate>
 {
     NSString          *termType;
     NSStringEncoding  ENCODING;

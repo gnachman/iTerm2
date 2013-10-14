@@ -27,7 +27,7 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <LineBuffer.h>
+#import "LineBuffer.h"
 #import "RegexKitLite/RegexKitLite.h"
 #import "BackgroundThread.h"
 
@@ -119,6 +119,28 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     }
     dest[i] = 0;
     return dest;
+}
+
+- (void)appendToDebugString:(NSMutableString *)s
+{
+    char temp[1000];
+    int i;
+    int prev;
+    if (first_entry > 0) {
+        prev = cumulative_line_lengths[first_entry - 1];
+    } else {
+        prev = 0;
+    }
+    for (i = first_entry; i < cll_entries; ++i) {
+        BOOL iscont = (i == cll_entries-1) && is_partial;
+        formatsct(buffer_start + prev - start_offset,
+                  cumulative_line_lengths[i] - prev,
+                  temp);
+        [s appendFormat:@"%s%c\n",
+         temp,
+         iscont ? '+' : '!'];
+        prev = cumulative_line_lengths[i];
+    }
 }
 
 - (void)dump:(int)rawOffset
@@ -1099,6 +1121,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         [self _dropLinesForWidth: width];
     }
     return nl - RawNumLines(self, width);
+}
+
+- (NSString *)debugString {
+    NSMutableString *s = [NSMutableString string];
+    for (int i = 0; i < [blocks count]; i++) {
+        LineBlock *block = [blocks objectAtIndex:i];
+        [block appendToDebugString:s];
+    }
+    return [s substringToIndex:s.length - 1];  // strip trailing newline
 }
 
 - (void) dump
