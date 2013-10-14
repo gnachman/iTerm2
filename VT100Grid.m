@@ -295,6 +295,7 @@
             numLinesDropped = [self appendLineToLineBuffer:lineBuffer
                                        unlimitedScrollback:unlimitedScrollback];
         }
+        // TODO: formerly, scrollTop==scrollBottom was a no-op but I think that's wrong. See what other terms do.
         [self scrollRect:VT100GridRectMake(scrollLeft,
                                            scrollTop,
                                            scrollRight - scrollLeft + 1,
@@ -838,63 +839,88 @@
     if (direction == 0) {
         return;
     }
-    const int scrollTop = rect.origin.y;
-    const int scrollBottom = rect.origin.y + rect.size.height - 1;
-    const int scrollLeft = rect.origin.x;
-    const int scrollRight = rect.origin.x + rect.size.width - 1;
-    assert(scrollTop >= 0 && scrollTop < size_.height);
-    assert(scrollBottom >= 0 && scrollBottom < size_.height);
-    assert(scrollTop <= scrollBottom);
 
     screen_char_t defaultChar = [self defaultChar];
 
-    if (scrollTop < scrollBottom) {
-        int sourceHeight = scrollBottom - scrollTop + 1 - abs(direction);
-        int sourceIndex = direction > 0 ? scrollBottom - direction : scrollTop - direction;
-        int destIndex = direction > 0 ? scrollBottom : scrollTop;
+    if (rect.size.width > 0 && rect.size.height > 0) {
+        int rightIndex = rect.origin.x + rect.size.width - 1;
+        int bottomIndex = rect.origin.y + rect.size.height - 1;
+        int sourceHeight = rect.size.height - abs(direction);
+        int sourceIndex = (direction > 0 ? bottomIndex - direction :
+                           rect.origin.y - direction);
+        int destIndex = direction > 0 ? bottomIndex : rect.origin.y;
+        int continuation = (rightIndex == size_.width - 1) ? 1 : 0;
+
+        // Fix up split DWCs that will be broken.
+        if (continuation) {
+            screen_char_t *bottomSourceLine = [self screenCharsAtLineNumber:bottomIndex];
+            if (bottomSourceLine[size_.width].code == EOL_DWC) {
+                // The last line scrolled up had a split-dwc. Replace its continuation mark with a hard
+                // newline.
+                bottomSourceLine[size_.width].code = EOL_HARD;
+            }
+            if (rect.origin.y > 0) {
+                screen_char_t *lineAboveTopSourceLine = [self screenCharsAtLineNumber:rect.origin.y - 1];
+                if (lineAboveTopSourceLine[size_.width].code == EOL_DWC) {
+                    // The line above the top line had a split-dwc. Replace it with a har newline
+                    lineAboveTopSourceLine[size_.width].code = EOL_HARD;
+                }
+            }
+        }
+
+        // clear DWC's that are about to get orphaned
+        int si = sourceIndex;
+        int di = destIndex;
+        for (int iteration = 0; iteration < rect.size.height; iteration++) {
+            const int lineNumber = iteration + rect.origin.y;
+            [self erasePossibleDoubleWidthCharInLineNumber:lineNumber
+                                          startingAtOffset:rect.origin.x - 1
+                                                  withChar:defaultChar];
+            [self erasePossibleDoubleWidthCharInLineNumber:lineNumber
+                                          startingAtOffset:rightIndex
+                                                  withChar:defaultChar];
+            si -= direction;
+            di -= direction;
+        }
+
+        // Move lines.
         for (int iteration = 0; iteration < sourceHeight; iteration++) {
             screen_char_t *sourceLine = [self screenCharsAtLineNumber:sourceIndex];
             screen_char_t *targetLine = [self screenCharsAtLineNumber:destIndex];
 
-            // clear DWC's that are about to get orphaned
-            [self erasePossibleDoubleWidthCharInLineNumber:destIndex
-                                          startingAtOffset:scrollLeft - 1
-                                                  withChar:defaultChar];
-            [self erasePossibleDoubleWidthCharInLineNumber:destIndex
-                                          startingAtOffset:scrollRight
-                                                  withChar:defaultChar];
-
-            memmove(targetLine + scrollLeft,
-                    sourceLine + scrollLeft,
-                    (scrollRight - scrollLeft + 1) * sizeof(screen_char_t));
-
-            if (targetLine[scrollLeft].code == DWC_RIGHT) {
-                // Moved a DWC_RIGHT without its counterpart into target
-                targetLine[scrollLeft].code = 0;
-                targetLine[scrollLeft].complexChar = NO;
-            }
-            if (scrollRight + 1 < size_.width && sourceLine[scrollRight + 1].code == DWC_RIGHT) {
-                // Moved a dwc without the corresponding DWC_RIGHT into target
-                targetLine[scrollRight].code = 0;
-                targetLine[scrollRight].complexChar = NO;
-            }
+            memmove(targetLine + rect.origin.x,
+                    sourceLine + rect.origin.x,
+                    (rect.size.width + continuation) * sizeof(screen_char_t));
 
             sourceIndex -= direction;
             destIndex -= direction;
         }
+
         [self markCharsDirty:YES
-                  inRectFrom:VT100GridCoordMake(scrollLeft, scrollTop)
-                          to:VT100GridCoordMake(scrollRight, scrollBottom)];
+                  inRectFrom:rect.origin
+                          to:VT100GridCoordMake(rightIndex, bottomIndex)];
 
         // Clear region left over.
         if (direction > 0) {
-            [self setCharsFrom:VT100GridCoordMake(scrollLeft, scrollTop)
-                            to:VT100GridCoordMake(scrollRight, scrollTop + direction - 1)
+            [self setCharsFrom:rect.origin
+                            to:VT100GridCoordMake(rightIndex, MIN(bottomIndex, rect.origin.y + direction - 1))
                         toChar:defaultChar];
         } else {
-            [self setCharsFrom:VT100GridCoordMake(scrollLeft, scrollBottom + direction + 1)
-                            to:VT100GridCoordMake(scrollRight, scrollBottom)
+            [self setCharsFrom:VT100GridCoordMake(rect.origin.x, MAX(rect.origin.y, bottomIndex + direction + 1))
+                            to:VT100GridCoordMake(rightIndex, bottomIndex)
                         toChar:defaultChar];
+        }
+
+        for (int iteration = 0; iteration < rect.size.height; iteration++) {
+            const int lineNumber = iteration + rect.origin.y;
+            if ((rect.origin.x == 0) ^ continuation) {
+                screen_char_t *line = [self screenCharsAtLineNumber:lineNumber];
+                if (line[size_.width].code == EOL_DWC) {
+                    // Either a continuation mark is being moved or a DWC was moved (but not both!),
+                    // causing a split-dwc continuation mark to become invalid.
+                    line[size_.width].code = EOL_HARD;
+                }
+            }
         }
     }
 }
@@ -1192,15 +1218,23 @@
                              self.bottomMargin - self.topMargin + 1);
 }
 
+// . = null cell
+// ? = non-ascii
+// - = righthalf of dwc
+// > = split-dwc (in rightmost column only)
+// U = complex unicode char
+// anything else = literal ascii char
 - (NSString *)compactLineDump {
     NSMutableString *dump = [NSMutableString string];
     for (int y = 0; y < size_.height; y++) {
         screen_char_t *line = [self screenCharsAtLineNumber:y];
-        for (int x = 0; x < size_.height; x++) {
+        for (int x = 0; x < size_.width; x++) {
             char c = line[x].code;
             if (line[x].code == 0) c = '.';
             if (line[x].code > 127) c = '?';
-            if (line[x].complexChar) c = '!';
+            if (line[x].code == DWC_RIGHT) c = '-';
+            if (line[x].code == 0 && x == size_.width - 1 && line[x+1].code == EOL_DWC) c = '>';
+            if (line[x].complexChar) c = 'U';
             [dump appendFormat:@"%c", c];
         }
         if (y != size_.height - 1) {
@@ -1213,7 +1247,7 @@
 - (NSString *)compactDirtyDump {
     NSMutableString *dump = [NSMutableString string];
     for (int y = 0; y < size_.height; y++) {
-        for (int x = 0; x < size_.height; x++) {
+        for (int x = 0; x < size_.width; x++) {
             if ([self isCharDirtyAt:VT100GridCoordMake(x, y)]) {
                 [dump appendString:@"d"];
             } else {
@@ -1421,7 +1455,18 @@ void DumpBuf(screen_char_t* p, int n) {
     screen_char_t *aLine = [self screenCharsAtLineNumber:lineNumber];
     if (offset >= 0 && offset < size_.width - 1 && aLine[offset + 1].code == DWC_RIGHT) {
         aLine[offset] = c;
+        aLine[offset + 1] = c;
         [self markCharDirty:YES at:VT100GridCoordMake(offset, lineNumber)];
+        [self markCharDirty:YES at:VT100GridCoordMake(offset + 1, lineNumber)];
+
+        if (offset == 0 && lineNumber > 0) {
+            screen_char_t *predecessor = [self screenCharsAtLineNumber:lineNumber - 1];
+            if (predecessor[size_.width].code == EOL_DWC) {
+                // Clean up split-dwc after wrapped DWC was cleared.
+                predecessor[size_.width].code = EOL_HARD;
+            }
+        }
+
         return YES;
     } else {
         return NO;

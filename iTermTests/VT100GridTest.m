@@ -220,6 +220,15 @@ do { \
         for (int j = 0; j < [line length]; j++) {
             unichar c = [line characterAtIndex:j];;
             if (c == '.') c = 0;
+            if (c == '-') c = DWC_RIGHT;
+            if (j == [line length] - 1) {
+                if (c == '>') {
+                    c = 0;
+                    s[j+1].code = EOL_DWC;
+                } else {
+                    s[j+1].code = EOL_HARD;
+                }
+            }
             s[j].code = c;
         }
     }
@@ -584,6 +593,324 @@ do { \
 }
 
 // No test for scrollDown because it's just a wafer thin wrapper around scrollRect:downBy:.
+
+// Scrolls a 2x2 region in at (1,1)
+- (NSString *)compactLineDumpForRectScrolledDownBy:(int)downBy
+                                        scrollRect:(VT100GridRect)scrollRect
+                                      initialValue:(NSString *)initialValue {
+    VT100Grid *grid = [self gridFromCompactLines:initialValue];
+    [grid scrollRect:scrollRect downBy:downBy];
+    return [NSString stringWithFormat:@"%@\n\n%@", [grid compactLineDump], [grid compactDirtyDump]];
+}
+
+- (void)testScrollRectDownBy {
+    NSString *s;
+    NSString *basicValue = @"abcd\nefgh\nijkl\nmnop";
+    NSString *largerValue =
+        @"abcde\n"
+        @"fghij\n"
+        @"klmno\n"
+        @"pqrst\n"
+        @"uvwxy";
+
+    // Test that downBy=0 does nothing
+    s = [self compactLineDumpForRectScrolledDownBy:0
+                                        scrollRect:VT100GridRectMake(1, 1, 2, 2)
+                                      initialValue:basicValue];
+    assert([s isEqualToString:@"abcd\nefgh\nijkl\nmnop\n\ncccc\ncccc\ncccc\ncccc"]);
+
+
+    // Test that downBy:1 works
+    s = [self compactLineDumpForRectScrolledDownBy:1
+                                        scrollRect:VT100GridRectMake(1, 1, 2, 2)
+                                      initialValue:basicValue];
+    assert([s isEqualToString:
+            @"abcd\n"
+            @"e..h\n"
+            @"ifgl\n"
+            @"mnop\n"
+            @"\n"
+            @"cccc\n"
+            @"cddc\n"
+            @"cddc\n"
+            @"cccc"]);
+
+    // Test that downBy:-1 works
+    s = [self compactLineDumpForRectScrolledDownBy:-1
+                                        scrollRect:VT100GridRectMake(1, 1, 2, 2)
+                                      initialValue:basicValue];
+    assert([s isEqualToString:
+            @"abcd\n"
+            @"ejkh\n"
+            @"i..l\n"
+            @"mnop\n"
+            @"\n"
+            @"cccc\n"
+            @"cddc\n"
+            @"cddc\n"
+            @"cccc"]);
+
+    // Test that downBy:2 works
+    s = [self compactLineDumpForRectScrolledDownBy:2
+                                        scrollRect:VT100GridRectMake(1, 1, 3, 3)
+                                      initialValue:largerValue];
+    assert([s isEqualToString:
+            @"abcde\n"
+            @"f...j\n"
+            @"k...o\n"
+            @"pghit\n"
+            @"uvwxy\n"
+            @"\n"
+            @"ccccc\n"
+            @"cdddc\n"
+            @"cdddc\n"
+            @"cdddc\n"
+            @"ccccc"]);
+
+    // Test that downBy:-2 works
+    s = [self compactLineDumpForRectScrolledDownBy:-2
+                                        scrollRect:VT100GridRectMake(1, 1, 3, 3)
+                                      initialValue:largerValue];
+    assert([s isEqualToString:
+            @"abcde\n"
+            @"fqrsj\n"
+            @"k...o\n"
+            @"p...t\n"
+            @"uvwxy\n"
+            @"\n"
+            @"ccccc\n"
+            @"cdddc\n"
+            @"cdddc\n"
+            @"cdddc\n"
+            @"ccccc"]);
+
+    // Test that direction = height works
+    s = [self compactLineDumpForRectScrolledDownBy:3
+                                        scrollRect:VT100GridRectMake(1, 1, 3, 3)
+                                      initialValue:largerValue];
+    assert([s isEqualToString:
+            @"abcde\n"
+            @"f...j\n"
+            @"k...o\n"
+            @"p...t\n"
+            @"uvwxy\n"
+            @"\n"
+            @"ccccc\n"
+            @"cdddc\n"
+            @"cdddc\n"
+            @"cdddc\n"
+            @"ccccc"]);
+
+    // Test that direction = -height works
+    s = [self compactLineDumpForRectScrolledDownBy:-3
+                                        scrollRect:VT100GridRectMake(1, 1, 3, 3)
+                                      initialValue:largerValue];
+    assert([s isEqualToString:
+            @"abcde\n"
+            @"f...j\n"
+            @"k...o\n"
+            @"p...t\n"
+            @"uvwxy\n"
+            @"\n"
+            @"ccccc\n"
+            @"cdddc\n"
+            @"cdddc\n"
+            @"cdddc\n"
+            @"ccccc"]);
+
+    // Test that direction = height + 1 works
+    s = [self compactLineDumpForRectScrolledDownBy:4
+                                        scrollRect:VT100GridRectMake(1, 1, 3, 3)
+                                      initialValue:largerValue];
+    assert([s isEqualToString:
+            @"abcde\n"
+            @"f...j\n"
+            @"k...o\n"
+            @"p...t\n"
+            @"uvwxy\n"
+            @"\n"
+            @"ccccc\n"
+            @"cdddc\n"
+            @"cdddc\n"
+            @"cdddc\n"
+            @"ccccc"]);
+
+    // Test that direction = -height - 1 works
+    s = [self compactLineDumpForRectScrolledDownBy:-4
+                                        scrollRect:VT100GridRectMake(1, 1, 3, 3)
+                                      initialValue:largerValue];
+    assert([s isEqualToString:
+            @"abcde\n"
+            @"f...j\n"
+            @"k...o\n"
+            @"p...t\n"
+            @"uvwxy\n"
+            @"\n"
+            @"ccccc\n"
+            @"cdddc\n"
+            @"cdddc\n"
+            @"cdddc\n"
+            @"ccccc"]);
+
+
+    // Test that split-dwc's are cleaned up when broken
+    NSString *multiSplitDwcValue =
+        @"ab>\n"
+        @"c-d\n"
+        @"ef>\n"
+        @"gh-";
+    // Test that a split-dwc at bottom when separated from its dwc is handled correctly.
+    s = [self compactLineDumpForRectScrolledDownBy:-1
+                                        scrollRect:VT100GridRectMake(0, 1, 3, 2)
+                                      initialValue:multiSplitDwcValue];
+    assert([s isEqualToString:
+            @"ab.\n"
+            @"ef.\n"
+            @"...\n"
+            @"gh-\n"
+            @"\n"
+            @"ccc\n"
+            @"ddd\n"
+            @"ddd\n"
+            @"ccc"]);
+
+    // Test that a split-dwc at top when separated from its dwc is handled correctly.
+    NSString *singleSplitDwcOnTopValue =
+        @"ab>\n"
+        @"c-d\n"
+        @"efg";
+    s = [self compactLineDumpForRectScrolledDownBy:1
+                                        scrollRect:VT100GridRectMake(0, 1, 3, 2)
+                                      initialValue:singleSplitDwcOnTopValue];
+    assert([s isEqualToString:
+            @"ab.\n"
+            @"...\n"
+            @"c-d\n"
+            @"\n"
+            @"ccc\n"
+            @"ddd\n"
+            @"ddd"]);
+
+    // Test that a split-dwc is scrolled correctly.
+    NSString *singleSplitDwcOnBottomValue =
+        @"abc\n"
+        @"de>\n"
+        @"f-g";
+    s = [self compactLineDumpForRectScrolledDownBy:-1
+                                        scrollRect:VT100GridRectMake(0, 0, 3, 3)
+                                      initialValue:singleSplitDwcOnBottomValue];
+    assert([s isEqualToString:
+            @"de>\n"
+            @"f-g\n"
+            @"...\n"
+            @"\n"
+            @"ddd\n"
+            @"ddd\n"
+            @"ddd"]);
+
+    // Test that orphaned DWCs are cleaned up when scrolling a subset of columns
+    NSString *orphansValue =
+        @"abcde\n"
+        @"f-gh-\n"  // f- and h- should be erased because they're split up
+        @"ij-k>\n"  // j- can move up, but the split-dwc is broken since l- doesn't move as a whole
+        @"l-mno\n"  // l- gets erased
+        @"p-qr-\n"  // p- and r- get erased
+        @"stuvw";
+    s = [self compactLineDumpForRectScrolledDownBy:-1
+                                        scrollRect:VT100GridRectMake(1, 0, 3, 6)
+                                      initialValue:orphansValue];
+    assert([s isEqualToString:
+            @"a.g.e\n"
+            @".j-k.\n"
+            @"i.mn.\n"
+            @"..q.o\n"
+            @".tuv.\n"
+            @"s...w\n"
+            @"\n"
+            @"cdddc\n"
+            @"ddddd\n"
+            @"cdddc\n"
+            @"ddddc\n"
+            @"ddddd\n"
+            @"cdddc"]);
+
+    // Test edge cases of split-dwc cleanup.
+    NSString *edgeCaseyOrphans =
+        @"abcd>\n"
+        @"e-fgh\n"
+        @"ijklm\n"
+        @"nopq>\n"
+        @"r-stu";
+    s = [self compactLineDumpForRectScrolledDownBy:-1
+                                        scrollRect:VT100GridRectMake(0, 1, 5, 3)
+                                      initialValue:edgeCaseyOrphans];
+    assert([s isEqualToString:
+            @"abcd.\n"
+            @"ijklm\n"
+            @"nopq.\n"
+            @".....\n"
+            @"r-stu\n"
+            @"\n"
+            @"ccccc\n"
+            @"ddddd\n"
+            @"ddddd\n"
+            @"ddddd\n"
+            @"ccccc"]);
+
+    // Same, but scroll by so much it just clears the area out.
+    s = [self compactLineDumpForRectScrolledDownBy:-10
+                                        scrollRect:VT100GridRectMake(0, 1, 5, 3)
+                                      initialValue:edgeCaseyOrphans];
+    assert([s isEqualToString:
+            @"abcd.\n"
+            @".....\n"
+            @".....\n"
+            @".....\n"
+            @"r-stu\n"
+            @"\n"
+            @"ccccc\n"
+            @"ddddd\n"
+            @"ddddd\n"
+            @"ddddd\n"
+            @"ccccc"]);
+
+    // Test scrolling a region where scrollRight=right margin, scrollLeft=1, and there's a split-dwc
+    s = [self compactLineDumpForRectScrolledDownBy:-1
+                                        scrollRect:VT100GridRectMake(1, 0, 4, 5)
+                                      initialValue:edgeCaseyOrphans];
+    assert([s isEqualToString:
+            @"a.fgh\n"
+            @".jklm\n"
+            @"iopq.\n"
+            @"n.stu\n"
+            @".....\n"
+            @"\n"
+            @"cdddd\n"
+            @"ddddd\n"
+            @"cdddd\n"
+            @"cdddd\n"
+            @"ddddd"]);
+
+    // Test scrolling a region where scrollRight=right margin-1, scrollLeft=0, and there's a split-dwc
+    s = [self compactLineDumpForRectScrolledDownBy:-1
+                                        scrollRect:VT100GridRectMake(0, 0, 4, 5)
+                                      initialValue:edgeCaseyOrphans];
+    assert([s isEqualToString:
+            @"e-fg.\n"
+            @"ijklh\n"
+            @"nopqm\n"
+            @"r-st.\n"
+            @"....u\n"
+            @"\n"
+            @"ddddc\n"
+            @"ddddc\n"
+            @"ddddc\n"
+            @"ddddc\n"
+            @"ddddc"]);
+
+    // with scrollLeft/right + orphaned dwc before and after in both source and destination lines
+    // scrolltop > scrollbottom does nothing
+}
 
 // TODO: Write more tests.
 @end
