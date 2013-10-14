@@ -36,10 +36,6 @@ typedef struct {
     int cursorX;
     int cursorY;
 
-    // Position (in number of lines) where the top of the screen begins in the frame
-    // because it's a snapshot of a circular buffer.
-    int topOffset;
-
     // Time in us since 1970 of frame.
     long long timestamp;
 

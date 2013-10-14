@@ -88,11 +88,12 @@ NS_INLINE VT100GridCoord VT100GridRunMax(VT100GridRun run, int width) {
     return coord;
 }
 
+// Creates a run between two coords, not inclusive of end.
 VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
                                     VT100GridCoord end,
                                     int width);
 
-@interface VT100Grid : NSObject {
+@interface VT100Grid : NSObject <NSCopying> {
     VT100GridSize size_;
     int screenTop_;  // Index into lines_ and dirty_ of first line visible in the grid.
     NSMutableArray *lines_;  // Array of NSMutableData. Each data has size_.width+1 screen_char_t's.
@@ -106,8 +107,10 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 
     NSMutableData *cachedDefaultLine_;
     NSMutableData *resultLine_;
+    screen_char_t savedDefaultChar_;
 }
 
+// Changing the size erases grid contents.
 @property(nonatomic, readonly) VT100GridSize size;
 @property(nonatomic, assign) int cursorX;
 @property(nonatomic, assign) int cursorY;
@@ -115,6 +118,13 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 @property(nonatomic, assign) VT100GridRange scrollRegionCols;
 @property(nonatomic, assign) BOOL useScrollRegionCols;
 @property(nonatomic, assign) VT100GridCoord savedCursor;
+@property(nonatomic, assign, getter=isAllDirty) BOOL allDirty;
+@property(nonatomic, readonly) int leftMargin;
+@property(nonatomic, readonly) int rightMargin;
+@property(nonatomic, readonly) int topMargin;
+@property(nonatomic, readonly) int bottomMargin;
+@property(nonatomic, readonly) NSArray *lines;
+@property(nonatomic, assign) screen_char_t savedDefaultChar;
 
 - (id)initWithSize:(VT100GridSize)size terminal:(VT100Terminal *)terminal;
 
@@ -211,6 +221,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
          startingAt:(VT100GridCoord)startCoord;
 
 // Scroll a rectangular area of the screen down (positive direction) or up (negative direction).
+// Clears the left-over region.
 - (void)scrollRect:(VT100GridRect)rect downBy:(int)direction;
 
 // Load contents from a DVR frame.
@@ -249,5 +260,16 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 
 // Converts a run into one or more VT100GridRect NSValues.
 - (NSArray *)rectsForRun:(VT100GridRun)run;
+
+// Reset scroll regions to whole screen.
+- (void)resetScrollRegions;
+
+// Returns a 2-d array of screen_char_t's giving the whole screen contents. It has (width + 1)*height
+// elements.
+- (screen_char_t *)dvrFormattedFrame;
+
+- (VT100GridRect)scrollRegionRect;
+
+- (BOOL)erasePossibleDoubleWidthCharInLineNumber:(int)lineNumber startingAtOffset:(int)offset;
 
 @end

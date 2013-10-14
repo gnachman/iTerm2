@@ -55,7 +55,7 @@
     [super dealloc];
 }
 
-- (void)appendFrame:(char*)buffer length:(int)length info:(DVRFrameInfo*)info
+- (void)appendFrame:(NSArray*)frameLines length:(int)length info:(DVRFrameInfo*)info
 {
     if (length > [buffer_ capacity] / 2) {
         // Protect the buffer from overflowing if you have a really big window.
@@ -71,7 +71,7 @@
             }
         }
     }
-    [encoder_ appendFrame:buffer length:length info:info];
+    [encoder_ appendFrame:frameLines length:length info:info];
 }
 
 - (DVRDecoder*)getDecoder

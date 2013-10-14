@@ -64,7 +64,7 @@ static long long now()
     [super dealloc];
 }
 
-- (void)appendFrame:(char*)buffer length:(int)length info:(DVRFrameInfo*)info
+- (void)appendFrame:(NSArray *)frameLines length:(int)length info:(DVRFrameInfo*)info
 {
     BOOL eligibleForDiff;
     if (lastFrame_ &&
@@ -80,9 +80,9 @@ static long long now()
     const int kKeyFrameFrequency = 100;
 
     if (!eligibleForDiff || count_++ % kKeyFrameFrequency == 0) {
-        [self _appendKeyFrame:buffer length:length info:info];
+        [self _appendKeyFrame:frameLines length:length info:info];
     } else {
-        [self _appendDiffFrame:buffer length:length info:info];
+        [self _appendDiffFrame:frameLines length:length info:info];
     }
 }
 
@@ -128,40 +128,35 @@ static long long now()
 #endif
 }
 
-- (void)_appendKeyFrame:(char*)buffer length:(int)length info:(DVRFrameInfo*)info
+- (NSMutableData *)combinedFrameLines:(NSArray *)frameLines {
+    NSMutableData *data = [[[NSMutableData alloc] init] autorelease];
+    for (NSData *line in frameLines) {
+        [data appendData:line];
+    }
+    return data;
+}
+
+- (void)_appendKeyFrame:(NSArray *)frameLines length:(int)length info:(DVRFrameInfo*)info
 {
     [lastFrame_ release];
-    lastFrame_ = [[NSMutableData dataWithBytes:buffer length:length] retain];
-#ifdef DVRDEBUG
-    char d[30000];
-    int i;
-    for (i = 0; i < length / sizeof(screen_char_t); i++) {
-        screen_char_t s = ((screen_char_t*)buffer)[i];
-        if (s.code && !s.complexChar) {
-            d[i] = s.code;
-        } else {
-            d[i] = ' ';
-        }
-    }
-    d[i] = 0;
-    NSLog(@"KEY: %s", d);
-#endif
+    lastFrame_ = [[self combinedFrameLines:frameLines] retain];
+    assert(lastFrame_.length == length);
     char* scratch = [buffer_ scratch];
-    memcpy(scratch, buffer, length);
+    memcpy(scratch, [lastFrame_ mutableBytes], length);
     [self _appendFrameImpl:scratch length:length type:DVRFrameTypeKeyFrame info:info];
     bytesSinceLastKeyFrame_ = 0;
 }
 
-- (void)_appendDiffFrame:(char*)buffer length:(int)length info:(DVRFrameInfo*)info
+- (void)_appendDiffFrame:(NSArray *)frameLines length:(int)length info:(DVRFrameInfo*)info
 {
     char* scratch = [buffer_ scratch];
-    int diffBytes = [self _computeDiff:buffer
+    int diffBytes = [self _computeDiff:frameLines
                                 length:length
                                   dest:scratch
                                maxSize:reservation_];
     if (diffBytes < 0) {
         // Diff ended up being larger than a key frame would be.
-        [self _appendKeyFrame:buffer length:length info:info];
+        [self _appendKeyFrame:frameLines length:length info:info];
         return;
     }
 
@@ -194,7 +189,7 @@ static long long now()
     entry->info.frameType = type;
 }
 
-- (int)_computeDiff:(char*)buffer length:(int)length dest:(char*)scratch maxSize:(int)maxBytes
+- (int)_computeDiff:(NSArray *)frameLines length:(int)length dest:(char*)scratch maxSize:(int)maxBytes
 {
     assert(length == [lastFrame_ length]);
     char* other = [lastFrame_ mutableBytes];
@@ -206,66 +201,72 @@ static long long now()
     char* startDiff = 0;
 
     // TODO(georgen): Implement a better diff
-    for (int i = 0; i < length; ++i) {
-        if (buffer[i] == other[i]) {
-            if (diffCount > 0) {
-                if (o + 1 + sizeof(diffCount) + diffCount > maxBytes) {
-                    // Diff is too big.
-                    return -1;
+    int numLines = [frameLines count];
+    int i = 0;
+    for (int y = 0; y < numLines; y++) {
+        NSMutableData *lineData = [frameLines objectAtIndex:y];
+        screen_char_t *frameLine = (screen_char_t *)[lineData mutableBytes];
+        for (int x = 0; x < lineData.count; x++, i++) {
+            if (buffer[x] == other[i]) {
+                if (diffCount > 0) {
+                    if (o + 1 + sizeof(diffCount) + diffCount > maxBytes) {
+                        // Diff is too big.
+                        return -1;
+                    }
+                    scratch[o++] = kDiffSequence;
+                    memcpy(scratch + o, &diffCount, sizeof(diffCount));
+                    o += sizeof(diffCount);
+                    memcpy(scratch + o, startDiff, diffCount);
+                    o += diffCount;
+                    [self debug:@"diff " buffer:startDiff length:diffCount];
+                    diffCount = 0;
                 }
-                scratch[o++] = kDiffSequence;
-                memcpy(scratch + o, &diffCount, sizeof(diffCount));
-                o += sizeof(diffCount);
-                memcpy(scratch + o, startDiff, diffCount);
-                o += diffCount;
-                [self debug:@"diff " buffer:startDiff length:diffCount];
-                diffCount = 0;
-            }
-            ++sameCount;
-        } else {
-            if (sameCount > 0) {
-                if (o + 1 + sizeof(sameCount) > maxBytes) {
-                    // Diff is too big.
-                    return -1;
+                ++sameCount;
+            } else {
+                if (sameCount > 0) {
+                    if (o + 1 + sizeof(sameCount) > maxBytes) {
+                        // Diff is too big.
+                        return -1;
+                    }
+                    scratch[o++] = kSameSequence;
+                    memcpy(scratch + o, &sameCount, sizeof(sameCount));
+                    o += sizeof(sameCount);
+    #ifdef DVRDEBUG
+                    NSLog(@"%d the same", sameCount);
+    #endif
+                    sameCount = 0;
                 }
-                scratch[o++] = kSameSequence;
-                memcpy(scratch + o, &sameCount, sizeof(sameCount));
-                o += sizeof(sameCount);
-#ifdef DVRDEBUG
-                NSLog(@"%d the same", sameCount);
-#endif
-                sameCount = 0;
+                if (!diffCount) {
+                    startDiff = buffer + i;
+                }
+                other[i] = buffer[i];
+                ++diffCount;
             }
-            if (!diffCount) {
-                startDiff = buffer + i;
+        }
+        if (diffCount > 0) {
+            if (o + 1 + sizeof(diffCount) + diffCount > maxBytes) {
+                // Diff is too big.
+                return -1;
             }
-            other[i] = buffer[i];
-            ++diffCount;
+            scratch[o++] = kDiffSequence;
+            memcpy(scratch + o, &diffCount, sizeof(diffCount));
+            o += sizeof(diffCount);
+            memcpy(scratch + o, startDiff, diffCount);
+            o += diffCount;
+            [self debug:@"diff " buffer:startDiff length:diffCount];
         }
-    }
-    if (diffCount > 0) {
-        if (o + 1 + sizeof(diffCount) + diffCount > maxBytes) {
-            // Diff is too big.
-            return -1;
-        }
-        scratch[o++] = kDiffSequence;
-        memcpy(scratch + o, &diffCount, sizeof(diffCount));
-        o += sizeof(diffCount);
-        memcpy(scratch + o, startDiff, diffCount);
-        o += diffCount;
-        [self debug:@"diff " buffer:startDiff length:diffCount];
-    }
-    if (sameCount > 0) {
-        if (o + 1 + sizeof(sameCount) > maxBytes) {
-            // Diff is too big.
-            return -1;
-        }
-        scratch[o++] = kSameSequence;
-        memcpy(scratch + o, &sameCount, sizeof(sameCount));
-        o += sizeof(sameCount);
+        if (sameCount > 0) {
+            if (o + 1 + sizeof(sameCount) > maxBytes) {
+                // Diff is too big.
+                return -1;
+            }
+            scratch[o++] = kSameSequence;
+            memcpy(scratch + o, &sameCount, sizeof(sameCount));
+            o += sizeof(sameCount);
 #ifdef DVRDEBUG
-        NSLog(@"%d the same", sameCount);
+            NSLog(@"%d the same", sameCount);
 #endif
+        }
     }
     return o;
 }

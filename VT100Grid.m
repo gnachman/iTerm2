@@ -82,6 +82,11 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 @synthesize scrollRegionCols = scrollRegionCols_;
 @synthesize useScrollRegionCols = useScrollRegionCols_;
 @synthesize savedCursor = savedCursor_;
+@synthesize charset = charset_;
+@synthesize savedCharset = savedCharset_;
+@synthesize allDirty = allDirty_;
+@synthesize lines = lines_;
+@synthesize savedDefaultChar = savedDefaultChar_;
 
 - (id)initWithSize:(VT100GridSize)size {
     self = [super init];
@@ -115,11 +120,17 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 }
 
 - (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord {
+    if (!dirty) {
+        allDirty_ = NO;
+    }
     char *dirty = [self dirtyArrayAtLineNumber:coord.y];
     dirty[coord.x] = dirty ? 1 : 0;
 }
 
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to {
+    if (!dirty) {
+        allDirty_ = NO;
+    }
     char c = dirty ? 1 : 0;
     for (int y = from.y; y <= to.y; y++) {
         char *dirty = [self dirtyArrayAtLineNumber:y];
@@ -128,13 +139,16 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 }
 
 - (void)markAllCharsDirty:(BOOL)dirty {
-    // TODO optimize this with allDirty_ flag
+    allDirty_ = dirty;
     [self markCharsDirty:dirty
               inRectFrom:VT100GridCoordMake(0, 0)
                       to:VT100GridCoordMake(size_.width - 1, size_.height - 1)];
 }
 
 - (void)markCharsDirty:(BOOL)dirty inRun:(VT100GridRun)run {
+    if (!dirty) {
+        allDirty_ = NO;
+    }
     for (NSValue *value in [self rectsForRun:run]) {
         VT100GridRect rect = [value gridRectValue];
         [self markCharsDirty:dirty inRectFrom:rect.origin to:VT100GridRectGetMax(rect)];
@@ -142,11 +156,14 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 }
 
 - (BOOL)isCharDirtyAt:(VT100GridCoord)coord {
-    char *dirty = [self dirtyArrayAtLineNumber:coord.y];
+    char *dirty = allDirty_ || [self dirtyArrayAtLineNumber:coord.y];
     return dirty[coord.x];
 }
 
 - (BOOL)isAnyCharDirty {
+    if (allDirty_) {
+        return YES;
+    }
     for (int y = 0; y < size_.height; y++) {
         char *dirty = [self dirtyArrayAtLineNumber:y];
         for (int x = 0; x < size_.width; x++) {
@@ -167,11 +184,11 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 }
 
 - (void)setCursorX:(int)cursorX {
-    cursor_.x = cursorX;
+    cursor_.x = MIN(size_.width + 1, MAX(0, cursorX));
 }
 
 - (void)setCursorY:(int)cursorY {
-    cursor_.y = cursorY;
+    cursor_.y = MIN(size_.height, MAX(0, cursorY));
 }
 
 - (int)numberOfLinesUsed {
@@ -345,7 +362,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
       preservingLastLine:(BOOL)preservingLastLine {
     self.scrollRegionRows = VT100GridRangeMake(0, size_.height);
     self.scrollRegionCols = VT100GridRangeMake(0, size_.width);
-    int numLinesToScroll = preservingLastLine ? [self lineNumberOfLastNonEmptyLine] : size_.height;
+    int numLinesToScroll = preservingLastLine ? [self lineNumberOfLastNonEmptyLine] - 1 : size_.height;
     int numLinesDropped = 0;
     for (int i = 1; i < numLinesToScroll; i++) {
         numLinesDropped += [self scrollUpIntoLineBuffer:lineBuffer
@@ -358,6 +375,9 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 }
 
 - (void)moveWrappedCursorLineToTopOfGrid {
+    if (cursor_.y < 0) {
+        return;  // Not sure how this would happen, but the old code in -[VT100Screen clearScreen] had this check.
+    }
     int sourceLineNumber = [self cursorLineNumberIncludingPrecedingWrappedLines];
     for (int i = 0; i < sourceLineNumber) {
         [self scrollWholeScreenUpIntoLineBuffer:nil unlimitedScrollback:NO];
@@ -391,8 +411,8 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 
 - (void)moveCursorLeft:(int)n {
     int x = cursor_.x - n;
-    const int leftMargin = useScrollRegionCols_ ? scrollRegionCols.location : 0;
-    const int rightMargin = useScrollRegionCols_ ? VT100GridRangeMax(scrollRegionCols) : size_.width;
+    const int leftMargin = [self leftMargin];
+    const int rightMargin = [self rightMargin];
 
     if (x < leftMargin) {
         x = leftMargin;
@@ -404,8 +424,8 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 
 - (void)moveCursorRight:(int)n {
     int x = cursor_.x + n;
-    const int leftMargin = useScrollRegionCols_ ? scrollRegionCols.location : 0;
-    const int rightMargin = useScrollRegionCols_ ? VT100GridRangeMax(scrollRegionCols) : size_.width;
+    const int leftMargin = [self leftMargin];
+    const int rightMargin = [self rightMargin];
 
     if (x >= rightMargin) {
         x = rightMargin - 1;
@@ -443,11 +463,11 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     screen_char_t fg = [TERMINAL foregroundColorCodeReal];
     screen_char_t bg = [TERMINAL backgroundColorCodeReal];
 
-    for (int y = from.y; y <= to.y; y++) {
+    for (int y = MAX(0, from.y); y <= MIN(to.y, size_.height - 1); y++) {
         screen_char_t *line = [self screenCharsAtLineNumber:y];
         [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:from.x - 1];
         [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:to.x];
-        for (int x = from.x; x <= to.x; x++) {
+        for (int x = MAX(0, from.x); x <= MIN(to.x, size_.width - 1); x++) {
             line[x].code = c;
             line[x].complexChar = NO;
             CopyForegroundColor(&line[x], fg);
@@ -816,16 +836,8 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     screen_char_t *aLine;
     int i;
     int leftMargin, rightMargin;
-    const int scrollLeft = scrollRegionCols.location;
-    const int scrollRight = VT100GridRangeMax(scrollRegionCols);
-
-    if (useScrollRegionCols_) {
-        leftMargin = scrollLeft;
-        rightMargin = scrollRight + 1;
-    } else {
-        leftMargin = 0;
-        rightMargin = size_.width;
-    }
+    const int leftMargin = [self leftMargin];
+    const int rightMargin = [self rightMargin];
 
     if (startCoord.x >= leftMargin &&
         startCoord.x < rightMargin &&
@@ -952,7 +964,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     int charsToCopyPerLine = MIN(size_.width, info.width);
     for (int y = 0; y < size_.height; y++) {
         screen_char_t *dest = [self screenCharsAtLineNumber:y];
-        screen_char_t *src = s + (y * (info.width + 1)) % info.topOffset;
+        screen_char_t *src = s + (y * (info.width + 1));
         memmove(dest, src, sizeof(screen_char_t) * charsToCopyPerLine);
         if (size_.width != info.width) {
             dest[size_.width].code = EOL_HARD;
@@ -1195,7 +1207,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 }
 
 - (void)moveCursorToLeftMargin {
-    const int leftMargin = useScrollRegionCols_ ? scrollRegionCols.location : 0;
+    const int leftMargin = [self leftMargin];
     self.cursorX = leftMargin;
 }
 
@@ -1210,6 +1222,29 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
         x = 0;
     }
     return rects;
+}
+
+- (int)leftMargin {
+    return useScrollRegionCols_ ? scrollRegionCols.location : 0;
+}
+
+- (int)rightMargin {
+    return useScrollRegionCols_ ? VT100GridRangeMax(scrollRegionCols) : size_.width;
+}
+
+- (int)topMargin {
+    return scrollRegionRows.location;
+}
+
+- (int)bottomMargin {
+    return VT100GridRangeMax(scrollRegionRows);
+}
+
+- (VT100GridRect)scrollRegionRect {
+    return VT100GridRectMake(self.leftMargin,
+                             self.topMargin,
+                             self.rightMargin - self.leftMargin + 1,
+                             self.bottomMargin - self.topMargin + 1);
 }
 
 #pragma mark - Private
@@ -1502,6 +1537,38 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 
     return result;
+}
+
+- (void)resetScrollRegions {
+    scrollRegionRows_ = VT100GridRangeMake(0, size_.height);
+    scrollRegionCols_ = VT100GridRangeMake(0, size_.width);
+}
+
+- (screen_char_t *)dvrFormattedFrame {
+}
+
+#pragma mark - NSCopying
+
+- (id)copyWithZone:(NSZone *)zone {
+    VT100Grid *theCopy = [[VT100Grid alloc] initWithSize:size_ terminal:terminal_];
+    [theCopy->lines_ release];
+    theCopy->lines_ = [[NSMutableArray alloc] init];
+    for (NSObject *line in lines_) {
+        [theCopy->lines_ addObject:line];
+    }
+    theCopy->dirty_ = [[NSMutableArray alloc] init];
+    for (NSObject *line in dirty_) {
+        [theCopy->dirty_ addObject:line];
+    }
+    theCopy->screenTop_ = screenTop_;
+    theCopy.cursor = cursor_;
+    theCopy.savedCursor = savedCursor_;
+    theCopy.scrollRegionRows = scrollRegionRows_;
+    theCopy.scrollRegionCols = scrollRegionCols_;
+    theCopy.useScrollRegionCols = useScrollRegionCols_;
+    theCopy.savedDefaultChar = savedDefaultChar_;
+
+    return theCopy;
 }
 
 @end
