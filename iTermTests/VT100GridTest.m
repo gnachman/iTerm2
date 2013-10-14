@@ -306,6 +306,286 @@ do { \
     assert([grid lengthOfLineNumber:2] == 0);
 }
 
+- (void)testMoveCursorDownOneLineNoScroll {
+    // Test cursor in default scroll region
+    VT100Grid *grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    grid.cursorX = 0;
+    grid.cursorY = 0;
+    [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
+                                   unlimitedScrollback:NO
+                               useScrollbackWithRegion:NO];
+    assert([[grid compactLineDump] isEqualToString:@"abcd\nefgh\nijkl\nmnop"]);
+    assert([[lineBuffer debugString] isEqualToString:@""]);
+    assert(grid.cursorX == 0);
+    assert(grid.cursorY == 1);
+
+    // Test cursor below scrollBottom but above last line.
+    grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
+    lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    grid.scrollRegionRows = VT100GridRangeMake(0, 1);
+    grid.cursorX = 0;
+    grid.cursorY = 1;
+    [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
+                                   unlimitedScrollback:NO
+                               useScrollbackWithRegion:NO];
+    assert([[grid compactLineDump] isEqualToString:@"abcd\nefgh\nijkl\nmnop"]);
+    assert(grid.cursorX == 0);
+    assert(grid.cursorY == 2);
+
+    // Test whole screen scrolling
+    grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
+    lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    grid.cursorX = 0;
+    grid.cursorY = 3;
+    [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
+                                   unlimitedScrollback:NO
+                               useScrollbackWithRegion:NO];
+    assert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
+    assert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
+    assert(grid.cursorX == 0);
+    assert(grid.cursorY == 3);
+
+    // Test whole screen scrolling, verify soft eol's are respected
+    grid = [self gridFromCompactLinesWithContinuationMarks:@"abcd+\nefgh!\nijkl!\nmnop!"];
+    lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    grid.cursorX = 0;
+    grid.cursorY = 3;
+    [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
+                                   unlimitedScrollback:NO
+                               useScrollbackWithRegion:NO];
+    assert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
+    assert([[lineBuffer debugString] isEqualToString:@"abcd+"]);
+    assert(grid.cursorX == 0);
+    assert(grid.cursorY == 3);
+
+    // Test scrolling when there's a full-width region touching the top of the screen
+    grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
+    lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    grid.scrollRegionRows = VT100GridRangeMake(0, 2);
+    grid.cursorX = 0;
+    grid.cursorY = 1;
+    [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
+                                   unlimitedScrollback:NO
+                               useScrollbackWithRegion:YES];
+    assert([[grid compactLineDump] isEqualToString:@"efgh\n....\nijkl\nmnop"]);
+    assert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
+    assert(grid.cursorX == 0);
+    assert(grid.cursorY == 1);
+
+    // Same, but with useScrollbackWithRegion = NO
+    grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
+    lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    grid.scrollRegionRows = VT100GridRangeMake(0, 2);
+    grid.cursorX = 0;
+    grid.cursorY = 1;
+    [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
+                                   unlimitedScrollback:NO
+                               useScrollbackWithRegion:NO];
+    assert([[grid compactLineDump] isEqualToString:@"efgh\n....\nijkl\nmnop"]);
+    assert([[lineBuffer debugString] isEqualToString:@""]);
+    assert(grid.cursorX == 0);
+    assert(grid.cursorY == 1);
+
+    // Test that the dropped line count is correct.
+    grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
+    lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    [lineBuffer setMaxLines:1];
+    grid.cursorX = 0;
+    grid.cursorY = 3;
+    int dropped = 0;
+    for (int i = 0; i < 3; i++) {
+        dropped += [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
+                                                  unlimitedScrollback:NO
+                                              useScrollbackWithRegion:NO];
+    }
+    assert(dropped == 2);
+    assert([[grid compactLineDump] isEqualToString:@"mnop\n....\n....\n...."]);
+    assert([[lineBuffer debugString] isEqualToString:@"ijkl!"]);
+    assert(grid.cursorX == 0);
+    assert(grid.cursorY == 3);
+
+    // Test with both vertical and horizontal scroll region
+    grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
+    lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    grid.scrollRegionRows = VT100GridRangeMake(1, 2);
+    grid.scrollRegionCols = VT100GridRangeMake(1, 2);
+    grid.useScrollRegionCols = YES;
+    grid.cursorX = 1;
+    grid.cursorY = 2;
+    [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
+                                   unlimitedScrollback:NO
+                               useScrollbackWithRegion:YES];
+    assert([[grid compactLineDump] isEqualToString:@"abcd\nejkh\ni..l\nmnop"]);
+    assert([[lineBuffer debugString] isEqualToString:@""]);
+    assert(grid.cursorX == 1);
+    assert(grid.cursorY == 2);
+}
+
+- (void)testMoveCursorLeft {
+    VT100Grid *grid = [self mediumGrid];
+    grid.cursorX = 1;
+    grid.cursorY = 0;
+    [grid moveCursorLeft:1];
+    assert(grid.cursorX == 0 && grid.cursorY == 0);
+    [grid moveCursorLeft:1];
+    assert(grid.cursorX == 0 && grid.cursorY == 0);
+
+    grid.scrollRegionCols = VT100GridRangeMake(1, 2);
+    grid.useScrollRegionCols = YES;
+    grid.cursorX = 1;
+    [grid moveCursorLeft:1];
+    assert(grid.cursorX == 1);
+
+    grid.cursorX = 2;
+    [grid moveCursorLeft:1];
+    assert(grid.cursorX == 1);
+
+    grid.cursorX = 3;
+    [grid moveCursorLeft:1];
+    assert(grid.cursorX == 3);  // I'm not persuaded this is sane. Check with saitoha.
+}
+
+- (void)testMoveCursorRight {
+    VT100Grid *grid = [self mediumGrid];
+    grid.cursorX = 2;
+    grid.cursorY = 0;
+    [grid moveCursorRight:1];
+    assert(grid.cursorX == 3 && grid.cursorY == 0);
+    [grid moveCursorRight:1];
+    assert(grid.cursorX == 3 && grid.cursorY == 0);
+
+    grid.scrollRegionCols = VT100GridRangeMake(2, 2);
+    grid.useScrollRegionCols = YES;
+    grid.cursorX = 0;
+    [grid moveCursorRight:1];
+    assert(grid.cursorX == 0);  // I'm not persuaded this is sane. Check with saitoha.
+
+    grid.cursorX = 1;
+    [grid moveCursorRight:1];
+    assert(grid.cursorX == 2);
+
+    grid.cursorX = 2;
+    [grid moveCursorRight:1];
+    assert(grid.cursorX == 2);  // Pretty sure this is wrong too.
+}
+
+- (void)testMoveCursorUp {
+    VT100Grid *grid = [self mediumGrid];
+    grid.cursorX = 0;
+    grid.cursorY = 2;
+    [grid moveCursorUp:1];
+    assert(grid.cursorY == 1);
+    [grid moveCursorUp:1];
+    assert(grid.cursorY == 0);
+    [grid moveCursorUp:1];
+    assert(grid.cursorY == 0);
+
+    // If starting at or below scrollTop, clamp to scrollTop
+    grid.scrollRegionRows = VT100GridRangeMake(1, 2);
+    grid.cursorY = 2;
+    [grid moveCursorUp:1];
+    assert(grid.cursorY == 1);
+    [grid moveCursorUp:1];
+    assert(grid.cursorY == 1);
+
+    // If starting above scrollTop, don't clamp
+    grid.scrollRegionRows = VT100GridRangeMake(2, 2);
+    grid.cursorY = 1;
+    [grid moveCursorUp:1];
+    assert(grid.cursorY == 0);
+}
+
+- (void)testMoveCursorDown {
+    VT100Grid *grid = [self mediumGrid];
+    grid.cursorX = 0;
+    grid.cursorY = 2;
+    [grid moveCursorDown:1];
+    assert(grid.cursorY == 3);
+    [grid moveCursorDown:1];
+    assert(grid.cursorY == 3);
+
+    // If starting at or above scrollBottom, clamp to scrollBottom
+    grid.scrollRegionRows = VT100GridRangeMake(1, 2);
+    grid.cursorY = 1;
+    [grid moveCursorDown:1];
+    assert(grid.cursorY == 2);
+    [grid moveCursorDown:1];
+    assert(grid.cursorY == 2);
+
+    // If starting below scrollBottom, don't clamp
+    grid.scrollRegionRows = VT100GridRangeMake(0, 2);
+    grid.cursorY = 2;
+    [grid moveCursorDown:1];
+    assert(grid.cursorY == 3);
+    [grid moveCursorDown:1];
+    assert(grid.cursorY == 3);
+}
+
+- (void)testScrollUpIntoLineBuffer {
+    VT100Grid *grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    [grid scrollUpIntoLineBuffer:lineBuffer
+             unlimitedScrollback:NO
+         useScrollbackWithRegion:YES];
+    assert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
+    assert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
+
+    // Check that dropped lines is accurate
+    grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
+    lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    [lineBuffer setMaxLines:1];
+    int dropped = [grid scrollUpIntoLineBuffer:lineBuffer
+                           unlimitedScrollback:NO
+                       useScrollbackWithRegion:YES];
+    assert(dropped == 0);
+    dropped = [grid scrollUpIntoLineBuffer:lineBuffer
+                       unlimitedScrollback:NO
+                   useScrollbackWithRegion:YES];
+    assert(dropped == 1);
+    assert([[grid compactLineDump] isEqualToString:@"ijkl\nmnop\n....\n...."]);
+    assert([[lineBuffer debugString] isEqualToString:@"efgh!"]);
+
+    // Scroll a horizontal region. Shouldn't append to linebuffer.
+    grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
+    lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    grid.scrollRegionCols = VT100GridRangeMake(1, 2);
+    grid.useScrollRegionCols = YES;
+    dropped = [grid scrollUpIntoLineBuffer:lineBuffer
+                       unlimitedScrollback:NO
+                   useScrollbackWithRegion:YES];
+    assert(dropped == 0);
+    assert([[grid compactLineDump] isEqualToString:@"afgd\nejkh\ninol\nm..p"]);
+    assert([[lineBuffer debugString] isEqualToString:@""]);
+}
+
+- (void)setLine:(int)lineNumber ofGrid:(VT100Grid *)grid toString:(NSString *)string {
+    assert(grid.size.width == string.length);
+    VT100Grid *temp = [self gridFromCompactLines:string];
+    screen_char_t *src = [temp screenCharsAtLineNumber:0];
+    screen_char_t *dst = [grid screenCharsAtLineNumber:lineNumber];
+    memmove(dst, src, sizeof(screen_char_t) * grid.size.width);
+}
+
+- (void)testScrollWholeScreenUpIntoLineBuffer {
+    VT100Grid *grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
+    [grid markCharDirty:YES at:VT100GridCoordMake(2, 2)];
+    assert([[grid compactDirtyDump] isEqualToString:@"cccc\ncccc\nccdc\ncccc"]);
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    [lineBuffer setMaxLines:1];
+    assert([grid scrollWholeScreenUpIntoLineBuffer:lineBuffer unlimitedScrollback:NO] == 0);
+    assert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
+    assert([[grid compactDirtyDump] isEqualToString:@"cccc\nccdc\ncccc\ndddd"]);
+    [self setLine:3 ofGrid:grid toString:@"qrst"];
+    assert([grid scrollWholeScreenUpIntoLineBuffer:lineBuffer unlimitedScrollback:NO] == 1);
+    assert([[grid compactLineDump] isEqualToString:@"ijkl\nmnop\nqrst\n...."]);
+    assert([[lineBuffer debugString] isEqualToString:@"efgh!"]);
+    assert([[grid compactDirtyDump] isEqualToString:@"ccdc\ncccc\ndddd\ndddd"]);
+}
+
+// No test for scrollDown because it's just a wafer thin wrapper around scrollRect:downBy:.
+
+// TODO: Write more tests.
 @end
 
 int main(int argc, const char * argv[])

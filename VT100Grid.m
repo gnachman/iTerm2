@@ -247,7 +247,7 @@
     int numLinesDropped = [self appendLineToLineBuffer:lineBuffer
                                    unlimitedScrollback:unlimitedScrollback];
 
-    // Increment screenTop_, effectively scrolling the screen up by one line.
+    // Increment screenTop_, effectively scrolling the lines & dirty up by one line.
     screenTop_ = (screenTop_ + 1) % size_.height;
 
     // Empty contents of last line on screen.
@@ -260,6 +260,7 @@
                           to:VT100GridCoordMake(size_.width - 1, size_.height - 1)];
     } else {
         // Mark everything dirty if we're not using the scrollback buffer.
+        // TODO: Test what happens when the alt screen scrolls while it has a selection.
         [self markCharsDirty:YES
                   inRectFrom:VT100GridCoordMake(0, 0)
                           to:VT100GridCoordMake(size_.width - 1, size_.height - 1)];
@@ -272,7 +273,6 @@
 - (int)scrollUpIntoLineBuffer:(LineBuffer *)lineBuffer
           unlimitedScrollback:(BOOL)unlimitedScrollback
       useScrollbackWithRegion:(BOOL)useScrollbackWithRegion {
-    // TODO: caller should set useScrollbackWithRegion from [[[SESSION addressBookEntry] objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue]
     const int scrollTop = self.topMargin;
     const int scrollBottom = self.bottomMargin;
     const int scrollLeft = self.leftMargin;
@@ -849,7 +849,7 @@
     screen_char_t defaultChar = [self defaultChar];
 
     if (scrollTop < scrollBottom) {
-        int sourceHeight = scrollBottom - scrollTop - abs(direction);
+        int sourceHeight = scrollBottom - scrollTop + 1 - abs(direction);
         int sourceIndex = direction > 0 ? scrollBottom - direction : scrollTop - direction;
         int destIndex = direction > 0 ? scrollBottom : scrollTop;
         for (int iteration = 0; iteration < sourceHeight; iteration++) {
@@ -879,8 +879,8 @@
                 targetLine[scrollRight].complexChar = NO;
             }
 
-            sourceIndex += direction;
-            destIndex += direction;
+            sourceIndex -= direction;
+            destIndex -= direction;
         }
         [self markCharsDirty:YES
                   inRectFrom:VT100GridCoordMake(scrollLeft, scrollTop)

@@ -1129,7 +1129,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         LineBlock *block = [blocks objectAtIndex:i];
         [block appendToDebugString:s];
     }
-    return [s substringToIndex:s.length - 1];  // strip trailing newline
+    return [s length] ? [s substringToIndex:s.length - 1] : @"";  // strip trailing newline
 }
 
 - (void) dump

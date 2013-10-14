@@ -92,11 +92,14 @@
                             useScrollbackWithRegion:(BOOL)useScrollbackWithRegion;
 
 // Move cursor to the left by n steps. Does not wrap around when it hits the left margin.
-// If it begins outside the scroll region, it is moved into it.
+// If it starts left of the scroll region, clamp it to the left. If it starts right of the scroll
+// region, don't move it.  TODO: This is probably wrong w/r/t scroll region logic.
 - (void)moveCursorLeft:(int)n;
 
-// Move cursor to the right by n steps. Does not wrap around when it hits the right margin.
-// If it begins outside the scroll region, it is moved into it.
+// Move cursor to the right by n steps. Does not wrap around when it hits the right margin. The
+// cursor is not permitted to extend into the width'th column, which setCursorX: allows.
+// It has a similar same logic oddity as moveCursorLeft:, but slightly different (if the cursor's
+// moved position is inside the scroll region, then it can change).
 - (void)moveCursorRight:(int)n;
 
 // Move cursor up by n steps. If there is a scroll region, it won't go past the top.
