@@ -82,7 +82,7 @@ typedef enum {
     ColorModeNormal = 0,
     ColorModeAlternate = 1,
     ColorMode24bit = 2,
-    ColorModeInvalid = 3;
+    ColorModeInvalid = 3
 } ColorMode;
 
 

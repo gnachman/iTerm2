@@ -74,7 +74,7 @@ NS_INLINE int VT100GridRangeMax(VT100GridRange range) {
     return range.location + range.length - 1;
 }
 
-NS_INLINE void VT100GridRectMake(int x, int y, int width, int height) {
+NS_INLINE VT100GridRect VT100GridRectMake(int x, int y, int width, int height) {
     VT100GridRect rect;
     rect.origin = VT100GridCoordMake(x, y);
     rect.size = VT100GridSizeMake(width, height);
@@ -85,6 +85,14 @@ NS_INLINE VT100GridCoord VT100GridRunMax(VT100GridRun run, int width) {
     VT100GridCoord coord = run.origin;
     coord.y += (coord.x + run.length) / width;
     coord.x = (coord.x + run.length) % width;
+    return coord;
+}
+
+// Returns the coord of the bottom-right cell that is in the rect. The rect must not be 0-dimensioned.
+NS_INLINE VT100GridCoord VT100GridRectMax(VT100GridRect rect) {
+    VT100GridCoord coord = rect.origin;
+    coord.x += rect.size.width - 1;
+    coord.y += rect.size.height - 1;
     return coord;
 }
 
@@ -111,9 +119,10 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 }
 
 // Changing the size erases grid contents.
-@property(nonatomic, readonly) VT100GridSize size;
+@property(nonatomic, assign) VT100GridSize size;
 @property(nonatomic, assign) int cursorX;
 @property(nonatomic, assign) int cursorY;
+@property(nonatomic, assign) VT100GridCoord cursor;
 @property(nonatomic, assign) VT100GridRange scrollRegionRows;
 @property(nonatomic, assign) VT100GridRange scrollRegionCols;
 @property(nonatomic, assign) BOOL useScrollRegionCols;
@@ -196,10 +205,8 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 // Move the grid contents up, leaving only the whole wrapped line the cursor is on at the top.
 - (void)moveWrappedCursorLineToTopOfGrid;
 
-// Set chars in a rectangle, inclusive of from and to. The character is assumed non-complex and the
-// foreground and background colors are reset to the terminals's current default values.
-// It will clean up orphaned DWCs.
-- (void)setCharsFrom:(VT100GridCoord)from to:(VT100GridCoord)to toChar:(unichar)c;
+// Set chars in a rectangle, inclusive of from and to. It will clean up orphaned DWCs.
+- (void)setCharsFrom:(VT100GridCoord)from to:(VT100GridCoord)to toChar:(screen_char_t)c;
 
 // Same as above, but for runs.
 - (void)setCharsInRun:(VT100GridRun)run toChar:(unichar)c;
@@ -270,6 +277,10 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 
 - (VT100GridRect)scrollRegionRect;
 
-- (BOOL)erasePossibleDoubleWidthCharInLineNumber:(int)lineNumber startingAtOffset:(int)offset;
+- (BOOL)erasePossibleDoubleWidthCharInLineNumber:(int)lineNumber
+                                startingAtOffset:(int)offset
+                                        withChar:(screen_char_t)c;
+
+- (void)moveCursorToLeftMargin;
 
 @end

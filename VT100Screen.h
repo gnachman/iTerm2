@@ -37,9 +37,10 @@ extern NSString * const kHighlightForegroundColor;
 extern NSString * const kHighlightBackgroundColor;
 extern BOOL gExperimentalOptimization;
 
-@class PTYTask;
-@class PTYSession;
 @class iTermGrowlDelegate;
+@class PTYSession;
+@class PTYTask;
+@class VT100Grid;
 
 // For debugging: log the buffer.
 void DumpBuf(screen_char_t* p, int n);
@@ -114,7 +115,7 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 }
 
 
-- (id)init;
+- (id)initWithTerminal:(VT100Terminal *)terminal;
 - (void)dealloc;
 
 - (NSString *)description;
@@ -134,12 +135,12 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (BOOL)vsplitMode;
 - (void)setVsplitMode:(BOOL)mode;
 
-- (PTYTextView *) display;
-- (void) setDisplay: (PTYTextView *) aDisplay;
+- (PTYTextView *)display;
+- (void)setDisplay:(PTYTextView *)aDisplay;
 
-- (BOOL) blinkingCursor;
-- (void) setBlinkingCursor: (BOOL) flag;
-- (void)processXtermPaste64: (NSString*) commandString;
+- (BOOL)blinkingCursor;
+- (void)setBlinkingCursor:(BOOL)flag;
+- (void)processXtermPaste64:(NSString*)commandString;
 - (void)showCursor:(BOOL)show;
 - (void)setPlayBellFlag:(BOOL)flag;
 - (void)setShowBellFlag:(BOOL)flag;
@@ -224,15 +225,15 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (BOOL)isDirtyAtX:(int)x Y:(int)y;
 
 - (void)resetDirty;
-- (void)setDirty;
+- (void)markAsNeedingCompleteRedraw;
 
 // print to ansi...
-- (BOOL) printToAnsi;
-- (void) setPrintToAnsi: (BOOL) aFlag;
-- (void) printStringToAnsi: (NSString *) aString;
+- (BOOL)printToAnsi;
+- (void)setPrintToAnsi:(BOOL)aFlag;
+- (void)printStringToAnsi:(NSString *)aString;
 
 // UI stuff
-- (void) doPrint;
+- (void)doPrint;
 
 // Is this character double width on this screen?
 - (BOOL)isDoubleWidthCharacter:(unichar)c;

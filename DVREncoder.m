@@ -205,9 +205,11 @@ static long long now()
     int i = 0;
     for (int y = 0; y < numLines; y++) {
         NSMutableData *lineData = [frameLines objectAtIndex:y];
-        screen_char_t *frameLine = (screen_char_t *)[lineData mutableBytes];
-        for (int x = 0; x < lineData.count; x++, i++) {
-            if (buffer[x] == other[i]) {
+        char *frameLine = [lineData mutableBytes];
+        const int numChars = lineData.length;
+        for (int x = 0; x < numChars; x++, i++) {
+            // TODO: This should be a screen_char_t-wise comparison, not bytewise
+            if (frameLine[x] == other[i]) {
                 if (diffCount > 0) {
                     if (o + 1 + sizeof(diffCount) + diffCount > maxBytes) {
                         // Diff is too big.
@@ -237,9 +239,9 @@ static long long now()
                     sameCount = 0;
                 }
                 if (!diffCount) {
-                    startDiff = buffer + i;
+                    startDiff = frameLine + x;
                 }
-                other[i] = buffer[i];
+                other[i] = frameLine[x];
                 ++diffCount;
             }
         }

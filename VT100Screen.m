@@ -35,30 +35,33 @@
 
 #import "iTerm.h"
 #import "VT100Screen.h"
-#import "NSStringITerm.h"
-#import "WindowControllerInterface.h"
-#import "PTYTextView.h"
-#import "PTYScrollView.h"
-#import "charmaps.h"
-#import "PTYSession.h"
-#import "PTYTask.h"
-#import "PreferencePanel.h"
-#import "iTermApplicationDelegate.h"
-#import "iTermGrowlDelegate.h"
-#import "ITAddressBookMgr.h"
-#include <string.h>
-#include <unistd.h>
-#include <LineBuffer.h>
+
 #import "DVRBuffer.h"
-#import "PTYTab.h"
 #import "ITAddressBookMgr.h"
-#import "iTermExpose.h"
+#import "ITAddressBookMgr.h"
+#import "NSStringITerm.h"
+#import "PTYScrollView.h"
+#import "PTYSession.h"
+#import "PTYTab.h"
+#import "PTYTask.h"
+#import "PTYTextView.h"
+#import "PreferencePanel.h"
 #import "RegexKitLite.h"
-#import "TmuxStateParser.h"
 #import "SearchResult.h"
+#import "TmuxStateParser.h"
+#import "VT100Grid.h"
+#import "WindowControllerInterface.h"
+#import "charmaps.h"
+#import "iTermApplicationDelegate.h"
+#import "iTermExpose.h"
+#import "iTermGrowlDelegate.h"
 
 // for xterm's base64 decoding (paste64)
 #import <apr-1/apr_base64.h>
+
+#include <LineBuffer.h>
+#include <string.h>
+#include <unistd.h>
 
 #define MAX_SCROLLBACK_LINES 1000000
 #define MAX_SCROLL_AT_ONCE 1024
@@ -322,8 +325,6 @@ void StringToScreenChars(NSString *s,
 
     [primaryGrid_ markAllCharsDirty:YES];
     [altGrid_ markAllCharsDirty:YES];
-
-    return buffer_lines;
 }
 
 - (BOOL)isAnyCharDirty
@@ -334,12 +335,12 @@ void StringToScreenChars(NSString *s,
 - (void)setCursorX:(int)x Y:(int)y
 {
     DLog(@"Move cursor to %d,%d", x, y);
-    grid_.cursor = VT100GridCoordMake(x, y);
+    currentGrid_.cursor = VT100GridCoordMake(x, y);
 }
 
 - (void)carriageReturn
 {
-    [grid_ moveCursorToLeftMargin];
+    [currentGrid_ moveCursorToLeftMargin];
 }
 
 // NSLog the screen contents for debugging.
@@ -369,9 +370,6 @@ void StringToScreenChars(NSString *s,
     int fgColorCode = [self colorCodeForColor:fgColor];
     int bgColorCode = [self colorCodeForColor:bgColor];
 
-    VT100GridRun run = VT100GridRunFromCoords(VT100GridCoordMake(startPoint.x, startPoint.y),
-                                              VT100GridCoordMake(endPoint.x, endPoint.y),
-                                              currentGrid_.size.width);
     screen_char_t fg;
     screen_char_t bg;
 
@@ -385,7 +383,7 @@ void StringToScreenChars(NSString *s,
         [currentGrid_ setBackgroundColor:bg
                          foregroundColor:fg
                               inRectFrom:rect.origin
-                                      to:VT100GridRectGetMax(rect)];
+                                      to:VT100GridRectMax(rect)];
     }
 }
 
@@ -476,8 +474,8 @@ static void SwapInt(int *a, int *b) {
         endY++;
     }
 
-    VT100GridRun run = VT100GridRunFromCoords(VT100GridMakeCoord(startX, startY),
-                                              VT100GridMakeCoord(endX, endY),
+    VT100GridRun run = VT100GridRunFromCoords(VT100GridCoordMake(startX, startY),
+                                              VT100GridCoordMake(endX, endY),
                                               currentGrid_.size.width);
     assert(run.length >= 0);
     run = [currentGrid_ runByTrimmingNullsFromRun:run];
@@ -585,44 +583,6 @@ static void SwapInt(int *a, int *b) {
     return YES;
 }
 
-// TODO: These four methods are just a horrorshow. Figure out what they're supposed to be doing and kill them.
-- (void)saveAutoreleasedCopyOfScreenInfoTo:(SavedScreenInfo *)savedInfo {
-    savedInfo.grid = [[primaryGrid_ copy] autorelease];
-}
-
-- (void)saveScreenInfoTo:(SavedScreenInfo *)savedInfo {
-    savedInfo.grid = primaryGrid_;
-}
-
-- (void)restoreScreenInfoFrom:(SavedScreenInfo *)savedInfo {
-    [primaryGrid_ autorelease];
-    primaryGrid_ = [savedInfo.grid retain];
-}
-
-- (void)swapToScreenInfo:(SavedScreenInfo *)restore savingCurrentScreenTo:(SavedScreenInfo *)save
-{
-    save.grid = primaryGrid_;
-    [self restoreScreenInfoFrom:restore];
-}
-
-// Returns the number of lines of used height in the screen with the saved info
-- (int)appendScreenWithInfo:(SavedScreenInfo *)savedInfoToUse
-                  andHeight:(int)newHeight
-               toLineBuffer:(LineBuffer *)lineBufferToUse
-{
-    int usedHeight = [savedInfoToUse.grid numberOfLinesUsed];
-    [self appendScreen:savedInfoToUse.grid
-          toScrollback:lineBufferToUse
-        withUsedHeight:usedHeight
-             newHeight:newHeight];
-    return usedHeight;
-}
-
-- (void)loadAltScreenInfoInto:(SavedScreenInfo *)info
-{
-    info->grid = altGrid_;
-}
-
 - (void)resizeWidth:(int)new_width height:(int)new_height
 {
 #ifdef DEBUG_RESIZEDWIDTH
@@ -643,6 +603,7 @@ static void SwapInt(int *a, int *b) {
          new_height == currentGrid_.size.height)) {
         return;
     }
+    VT100GridSize oldSize = currentGrid_.size;
     new_width = MAX(new_width, 1);
     new_height = MAX(new_height, 1);
 
@@ -713,7 +674,6 @@ static void SwapInt(int *a, int *b) {
                                       toIsFullLineSelection:&isFullLineSelection];
     }
 
-    VT100GridSize oldSize = currentGrid_.size;
     VT100GridSize newSize = VT100GridSizeMake(new_width, new_height);
     currentGrid_.size = newSize;
 
@@ -732,14 +692,14 @@ static void SwapInt(int *a, int *b) {
         primaryGrid_.size = newSize;
         [primaryGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                                 to:VT100GridCoordMake(newSize.width - 1, newSize.height - 1)
-                                to:primaryGrid_.savedDefaultChar];
-        if (old_height < new_height) {
+                            toChar:primaryGrid_.savedDefaultChar];
+        if (oldSize.height < new_height) {
             // Growing (avoid pulling in stuff from scrollback. Add blank lines
             // at bottom instead). Note there's a little hack here: we use saved_primary_buffer as the default
             // line because it was just initialized with default lines.
             [primaryGrid_ restoreScreenFromLineBuffer:realLineBuffer
                                       withDefaultChar:[primaryGrid_ defaultChar]
-                                    maxLinesToRestore:old_height];
+                                    maxLinesToRestore:oldSize.height];
         } else {
             // Shrinking (avoid pulling in stuff from scrollback, pull in no more
             // than might have been pushed, even if more is available). Note there's a little hack
@@ -821,7 +781,7 @@ static void SwapInt(int *a, int *b) {
     }
 
     [primaryGrid_ resetScrollRegions];
-    [alt_ resetScrollRegions];
+    [altGrid_ resetScrollRegions];
     [primaryGrid_ clampCursorPositionToValid];
     [altGrid_ clampCursorPositionToValid];
 
@@ -883,11 +843,9 @@ static void SwapInt(int *a, int *b) {
                                              preservingLastLine:YES]];
     [self clearScreen];
     [self _setInitialTabStops];
-    SAVE_CURSOR_X = 0;
-    ALT_SAVE_CURSOR_X = 0;
+    primaryGrid_.savedCursor = VT100GridCoordMake(0, 0);
+    altGrid_.savedCursor = VT100GridCoordMake(0, 0);
     [self setCursorX:0 Y:0];
-    SAVE_CURSOR_Y = 0;
-    ALT_SAVE_CURSOR_Y = 0;
 
     for (int i = 0; i < 4; i++) {
         saveCharset[i] = charset[i] = 0;
@@ -898,9 +856,9 @@ static void SwapInt(int *a, int *b) {
 
 - (void)resetPreservingPrompt:(BOOL)preservePrompt
 {
-    int savedCursorX = cursorX;
+    int savedCursorX = currentGrid_.cursorX;
     if (preservePrompt) {
-        [self setCursorX:savedCursorX Y:SCROLL_TOP];
+        [self setCursorX:savedCursorX Y:currentGrid_.topMargin];
     }
     [self resetScreen];
     if (preservePrompt) {
@@ -1737,12 +1695,11 @@ static void SwapInt(int *a, int *b) {
     [linebuffer setMaxLines:max_scrollback_lines];
     [display clearHighlights];
 
-    scrollback_overflow = 0;
     savedFindContextAbsPos_ = 0;
 
     [self resetScrollbackOverflow];
     [display deselect];
-    [grid_ markAllCharsDirty];
+    [currentGrid_ markAllCharsDirty];
 }
 
 - (void)showPrimaryBuffer
@@ -2804,6 +2761,16 @@ static void SwapInt(int *a, int *b) {
     [dvr release];
     dvr = nil;
 }
+
+- (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info
+{
+    [currentGrid_ setContentsFromDVRFrame:s len:len info:info];
+    [self resetScrollbackOverflow];
+    savedFindContextAbsPos_ = 0;
+    [display deselect];
+    [currentGrid_ markAllCharsDirty];
+}
+
 
 - (DVR*)dvr
 {

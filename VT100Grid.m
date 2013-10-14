@@ -87,6 +87,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 @synthesize allDirty = allDirty_;
 @synthesize lines = lines_;
 @synthesize savedDefaultChar = savedDefaultChar_;
+@synthesize cursor = cursor_;
 
 - (id)initWithSize:(VT100GridSize)size {
     self = [super init];
@@ -189,6 +190,11 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 
 - (void)setCursorY:(int)cursorY {
     cursor_.y = MIN(size_.height, MAX(0, cursorY));
+}
+
+- (void)setCursor:(VT100GridCoord)coord {
+    cursor_.x = MIN(size_.width + 1, MAX(0, coord.x));
+    cursor_.y = MIN(size_.height, MAX(0, coord.y));
 }
 
 - (int)numberOfLinesUsed {
@@ -459,19 +465,13 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     }
 }
 
-- (void)setCharsFrom:(VT100GridCoord)from to:(VT100GridCoord)to toChar:(unichar)c {
-    screen_char_t fg = [TERMINAL foregroundColorCodeReal];
-    screen_char_t bg = [TERMINAL backgroundColorCodeReal];
-
+- (void)setCharsFrom:(VT100GridCoord)from to:(VT100GridCoord)to toChar:(screen_char_t)c {
     for (int y = MAX(0, from.y); y <= MIN(to.y, size_.height - 1); y++) {
         screen_char_t *line = [self screenCharsAtLineNumber:y];
-        [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:from.x - 1];
-        [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:to.x];
+        [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:from.x - 1 withChar:c];
+        [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:to.x withChar:c];
         for (int x = MAX(0, from.x); x <= MIN(to.x, size_.width - 1); x++) {
-            line[x].code = c;
-            line[x].complexChar = NO;
-            CopyForegroundColor(&line[x], fg);
-            CopyBackgroundColor(&line[x], bg);
+            line[x] = c;
         }
         if (to.x == size_.width - 1) {
             line[size_.width] = EOL_HARD;
@@ -481,7 +481,11 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
                           to:to];
 }
 
-- (void)setCharsInRun:(VT100GridRun)run toChar:(unichar)c {
+- (void)setCharsInRun:(VT100GridRun)run toChar:(unichar)code {
+    screen_char_t c = [self defaultChar];
+    c.code = code;
+    c.complexCode = NO;
+
     VT100GridCoord max = VT100GridRunMax(run, size_.width);
     int y = run.origin.y;
     int x = run.origin.x;
@@ -516,8 +520,12 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     for (int y = from.y; y <= to.y; y++) {
         screen_char_t *line = [self screenCharsAtLineNumber:y];
         for (int x = from.x; x <= to.x; x++) {
-            CopyForegroundColor(&line[x], fg);
-            CopyBackgroundColor(&line[x], bg);
+            if (fg.foregroundColorMode != ColorModeInvalid) {
+                CopyForegroundColor(&line[x], fg);
+            }
+            if (bg.backgroundColorMode != ColorModeInvalid) {
+                CopyBackgroundColor(&line[x], bg);
+            }
         }
         [self markCharsDirtyFrom:VT100GridCoordMake(from.x, y)
                               to:VT100GridCoordMake(to.x, y)];
@@ -838,6 +846,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     int leftMargin, rightMargin;
     const int leftMargin = [self leftMargin];
     const int rightMargin = [self rightMargin];
+    screen_char_t defaultChar = [self defaultChar];
 
     if (startCoord.x >= leftMargin &&
         startCoord.x < rightMargin &&
@@ -859,7 +868,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
                 // Erase orphan dwc just before startCoord
                 [self setCharsFrom:VT100GridCoordMake(startCoord.x - 1, lineNumber)
                                 to:VT100GridCoordMake(startCoord.x - 1, lineNumber)
-                            toChar:0];
+                            toChar:defaultChar];
                 startCoord.x++;
                 num--;
             }
@@ -867,7 +876,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
                 // Erase orphan dwc just after range to be deleted.
                 [self setCharsFrom:VT100GridCoordMake(startCoord.x + n, lineNumber)
                                 to:VT100GridCoordMake(startCoord.x + n, lineNumber)
-                            toChar:0];
+                            toChar:defaultChar];
             }
             const int numCharsToMove = (rightMargin - startCoord.x - n);
             memmove(aLine + startCoord.x,
@@ -879,7 +888,7 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
         // Erase chars on right side of line.
         [self setCharsFrom:VT100GridCoordMake(rightMargin - n, lineNumber)
                         to:VT100GridCoordMake(rightMargin - 1, lineNumber)
-                    toChar:0];
+                    toChar:defaultChar];
     }
 }
 
@@ -909,6 +918,8 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     assert(scrollBottom >= 0 && scrollBottom < size_.height);
     assert(scrollTop <= scrollBottom);
 
+    screen_char_t defaultChar = [self defaultChar];
+
     if (scrollTop < scrollBottom) {
         int sourceHeight = scrollBottom - scrollTop - abs(direction);
         int sourceIndex = direction > 0 ? scrollBottom - direction : scrollTop - direction;
@@ -918,8 +929,12 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
             screen_char_t *targetLine = [self screenCharsAtLineNumber:destIndex];
 
             // clear DWC's that are about to get orphaned
-            [self erasePossibleDoubleWidthCharInLineNumber:destIndex startingAtOffset:scrollLeft - 1];
-            [self erasePossibleDoubleWidthCharInLineNumber:destIndex startingAtOffset:scrollRight];
+            [self erasePossibleDoubleWidthCharInLineNumber:destIndex
+                                          startingAtOffset:scrollLeft - 1
+                                                  withChar:defaultChar];
+            [self erasePossibleDoubleWidthCharInLineNumber:destIndex
+                                          startingAtOffset:scrollRight
+                                                  withChar:defaultChar];
 
             memmove(targetLine + scrollLeft,
                     sourceLine + scrollLeft,
@@ -946,21 +961,20 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
         if (direction > 0) {
             [self setCharsFrom:VT100GridCoordMake(scrollLeft, scrollTop)
                             to:VT100GridCoordMake(scrollRight, scrollTop + direction - 1)
-                        toChar:0];
+                        toChar:defaultChar];
         } else {
             [self setCharsFrom:VT100GridCoordMake(scrollLeft, scrollBottom + direction + 1)
                             to:VT100GridCoordMake(scrollRight, scrollBottom)
-                        toChar:0];
+                        toChar:defaultChar];
         }
     }
 }
 
-// TODO callers must call -VT100Screen setDirty to erase history, etc.
 - (void)setContentsFromDVRFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info
 {
     [self setCharsFrom:VT100GridCoordMake(0, 0)
                     to:VT100GridCoordMake(size_.width - 1, size_.height - 1)
-                toChar:0];
+                toChar:[self defaultChar]];
     int charsToCopyPerLine = MIN(size_.width, info.width);
     for (int y = 0; y < size_.height; y++) {
         screen_char_t *dest = [self screenCharsAtLineNumber:y];
@@ -1437,14 +1451,13 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 }
 
-- (BOOL)erasePossibleDoubleWidthCharInLineNumber:(int)lineNumber startingAtOffset:(int)offset
+- (BOOL)erasePossibleDoubleWidthCharInLineNumber:(int)lineNumber
+                                startingAtOffset:(int)offset
+                                        withChar:(screen_char_t)c
 {
     screen_char_t *aLine = [self screenCharsAtLineNumber:lineNumber];
     if (offset >= 0 && offset < size_.width - 1 && aLine[offset + 1].code == DWC_RIGHT) {
-        aLine[offset].code = 0;
-        aLine[offset].complexChar = NO;
-        aLine[offset + 1].code = 0;
-        aLine[offset + 1].complexChar = NO;
+        aLine[offset] = c;
         [self markCharDirtyAt:VT100GridCoordMake(offset, lineNumber)];
         return YES;
     } else {

@@ -78,7 +78,7 @@
 - (void)_appendDiffFrame:(NSArray *)frameLine length:(int)length info:(DVRFrameInfo*)info;
 
 // Save a frame into DVRBuffer.
-- (void)_appendFrameImpl:(NSArray *)frameLine length:(int)length type:(DVRFrameType)type info:(DVRFrameInfo*)info;
+- (void)_appendFrameImpl:(char *)buffer length:(int)length type:(DVRFrameType)type info:(DVRFrameInfo*)info;
 
 // Calculate the diff between buffer,length and the previous frame. Saves results into
 // scratch. Won't use more than maxSize bytes in scratch. Returns number of bytes used or
