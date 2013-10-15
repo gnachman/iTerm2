@@ -853,19 +853,10 @@
 
         // Fix up split DWCs that will be broken.
         if (continuation) {
-            screen_char_t *bottomSourceLine = [self screenCharsAtLineNumber:bottomIndex];
-            if (bottomSourceLine[size_.width].code == EOL_DWC) {
-                // The last line scrolled up had a split-dwc. Replace its continuation mark with a hard
-                // newline.
-                bottomSourceLine[size_.width].code = EOL_HARD;
-            }
-            if (rect.origin.y > 0) {
-                screen_char_t *lineAboveTopSourceLine = [self screenCharsAtLineNumber:rect.origin.y - 1];
-                if (lineAboveTopSourceLine[size_.width].code == EOL_DWC) {
-                    // The line above the top line had a split-dwc. Replace it with a har newline
-                    lineAboveTopSourceLine[size_.width].code = EOL_HARD;
-                }
-            }
+            // The last line scrolled may have had a split-dwc. Replace its continuation mark with a hard
+            // newline.
+            [self erasePossibleSplitDwcAtLineNumber:bottomIndex];
+            [self erasePossibleSplitDwcAtLineNumber:rect.origin.y - 1];
         }
 
         // clear DWC's that are about to get orphaned
@@ -911,29 +902,47 @@
                         toChar:defaultChar];
         }
 
-        for (int iteration = 0; iteration < rect.size.height; iteration++) {
-            const int lineNumber = iteration + rect.origin.y;
-            if ((rect.origin.x == 0) ^ continuation) {
-                screen_char_t *line = [self screenCharsAtLineNumber:lineNumber];
-                if (line[size_.width].code == EOL_DWC) {
-                    // Either a continuation mark is being moved or a DWC was moved (but not both!),
-                    // causing a split-dwc continuation mark to become invalid.
-                    line[size_.width].code = EOL_HARD;
-                }
+        if ((rect.origin.x == 0) ^ continuation) {
+            // It's possible that either a continuation mark is being moved or a DWC was moved
+            // (but not both!), causing a split-dwc continuation mark to become invalid.
+            for (int iteration = 0; iteration < rect.size.height; iteration++) {
+                [self erasePossibleSplitDwcAtLineNumber:iteration + rect.origin.y];
+            }
+        }
+
+        // Clean up split-dwc continuation marker on last line if scrolling down, or line before
+        // rectangle if scrolling up.
+        if (continuation && rect.origin.x == 0) {
+            // Moving whole lines
+            if (direction > 0) {
+                // scrolling down
+                [self erasePossibleSplitDwcAtLineNumber:rect.origin.y + rect.size.height - 1];
+            } else {
+                // scrolling up
+                [self erasePossibleSplitDwcAtLineNumber:rect.origin.y - 1];
             }
         }
     }
 }
 
-- (void)setContentsFromDVRFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info
+- (void)setContentsFromDVRFrame:(screen_char_t*)s info:(DVRFrameInfo)info
 {
     [self setCharsFrom:VT100GridCoordMake(0, 0)
                     to:VT100GridCoordMake(size_.width - 1, size_.height - 1)
                 toChar:[self defaultChar]];
     int charsToCopyPerLine = MIN(size_.width, info.width);
-    for (int y = 0; y < size_.height; y++) {
+    int sourceLineOffset = 0;
+    if (info.height > size_.height) {
+        sourceLineOffset = info.height - size_.height;
+    }
+    if (info.height < size_.height || info.width < size_.width) {
+        [self setCharsFrom:VT100GridCoordMake(0, 0)
+                        to:VT100GridCoordMake(size_.width - 1, size_.height - 1)
+                    toChar:[self defaultChar]];
+    }
+    for (int y = 0; y < MIN(info.height, size_.height); y++) {
         screen_char_t *dest = [self screenCharsAtLineNumber:y];
-        screen_char_t *src = s + (y * (info.width + 1));
+        screen_char_t *src = s + ((y + sourceLineOffset) * (info.width + 1));
         memmove(dest, src, sizeof(screen_char_t) * charsToCopyPerLine);
         if (size_.width != info.width) {
             dest[size_.width].code = EOL_HARD;
@@ -949,7 +958,7 @@
     }
     [self markAllCharsDirty:YES];
 
-    const int yOffset = info.height - size_.height;
+    const int yOffset = MAX(0, info.height - size_.height);
     self.cursorX = MIN(size_.width - 1, MAX(0, info.cursorX));
     self.cursorY = MIN(size_.height - 1, MAX(0, info.cursorY - yOffset));
 }
@@ -1030,7 +1039,7 @@
             }
             assert(range.location != NSNotFound);
             int start = (int)(range.location);
-            int end = (int)(range.location + range.length);
+            int end = (int)(range.location + range.length - 1);
             start += deltas[start];
             end += deltas[end];
             int startY = y + start / size_.width;
@@ -1047,7 +1056,7 @@
                                              to:VT100GridCoordMake(endX, endY)];
                 NSValue *value = [NSValue valueWithGridRun:VT100GridRunMake(startX,
                                                                             startY,
-                                                                            length + 1)];
+                                                                            length)];
                 [runs addObject:value];
             }
 
@@ -1076,11 +1085,8 @@
     }
     destLineNumber = MIN(destLineNumber, maxLines - 1);
 
-    screen_char_t defaultLine[size_.width];
-    screen_char_t dc = [self defaultChar];
-    for (int i = 0; i < size_.width; i++) {
-        defaultLine[i] = dc;
-    }
+    screen_char_t *defaultLine = [[self lineOfWidth:size_.width
+                                     filledWithChar:defaultChar] mutableBytes];
 
     BOOL foundCursor = NO;
     BOOL prevLineStartsWithDoubleWidth = NO;
@@ -1129,7 +1135,11 @@
         if (x == size_.width) {
             x = 0;
             y++;
-            assert(y < size_.height);
+            if (y == size_.height) {
+                // Run is all nulls
+                result.length = 0;
+                return result;
+            }
             line = [self screenCharsAtLineNumber:y];
         }
     }
@@ -1138,6 +1148,7 @@
     VT100GridCoord end = VT100GridRunMax(run, size_.width);
     x = end.x;
     y = end.y;
+    line = [self screenCharsAtLineNumber:y];
     while (result.length > 0 && line[x].code == 0 && y < size_.height) {
         x--;
         result.length--;
@@ -1186,12 +1197,13 @@
     NSMutableArray *rects = [NSMutableArray array];
     int length = run.length;
     int x = run.origin.x;
-    for (int y = run.origin.y; length > 0; y++, length -= size_.width) {
+    for (int y = run.origin.y; length > 0; y++) {
         int endX = MIN(size_.width - 1, x + length - 1);
         [rects addObject:[NSValue valueWithGridRect:VT100GridRectMake(x, y, endX - x + 1, 1)]];
         length -= (endX - x + 1);
         x = 0;
     }
+    assert(length >= 0);
     return rects;
 }
 
@@ -1200,7 +1212,7 @@
 }
 
 - (int)rightMargin {
-    return useScrollRegionCols_ ? VT100GridRangeMax(scrollRegionCols_) : size_.width;
+    return useScrollRegionCols_ ? VT100GridRangeMax(scrollRegionCols_) : size_.width - 1;
 }
 
 - (int)topMargin {
@@ -1233,7 +1245,10 @@
             if (line[x].code == 0) c = '.';
             if (line[x].code > 127) c = '?';
             if (line[x].code == DWC_RIGHT) c = '-';
-            if (line[x].code == 0 && x == size_.width - 1 && line[x+1].code == EOL_DWC) c = '>';
+            if (line[x].code == DWC_SKIP) {
+                assert(x == size_.width - 1);
+                c = '>';
+            }
             if (line[x].complexChar) c = 'U';
             [dump appendFormat:@"%c", c];
         }
@@ -1293,6 +1308,15 @@
     return c;
 }
 
+- (NSMutableData *)lineOfWidth:(int)width filledWithChar:(screen_char_t)c {
+    NSMutableData *data = [NSMutableData dataWithLength:sizeof(screen_char_t) * (width + 1)];
+    screen_char_t *line = data.mutableBytes;
+    for (int i = 0; i < width + 1; i++) {
+        line[i] = c;
+    }
+    return data;
+}
+
 - (NSMutableData *)defaultLineOfWidth:(int)width {
     size_t length = (width + 1) * sizeof(screen_char_t);
 
@@ -1326,10 +1350,10 @@
 
 - (void)clearLineData:(NSMutableData *)line {
     int length = (int)([line length] / sizeof(screen_char_t));
-    assert(length == size_.width + 1);
     [self clearScreenChars:[line mutableBytes] inRange:VT100GridRangeMake(0, length)];
     screen_char_t *chars = (screen_char_t *)[line mutableBytes];
-    chars[size_.width].code = EOL_HARD;
+    int width = [line length] / sizeof(screen_char_t) - 1;
+    chars[width].code = EOL_HARD;
 }
 
 // Returns number of lines dropped from line buffer because it exceeded its size (always 0 or 1).
@@ -1448,6 +1472,20 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 }
 
+- (void)erasePossibleSplitDwcAtLineNumber:(int)lineNumber {
+    if (lineNumber < 0) {
+        return;
+    }
+    screen_char_t *line = [self screenCharsAtLineNumber:lineNumber];
+    if (line[size_.width].code == EOL_DWC) {
+        line[size_.width].code = EOL_HARD;
+        if (line[size_.width - 1].code == DWC_SKIP) {  // This really should always be the case.
+            line[size_.width - 1].code = 0;
+        } else {
+            NSLog(@"Warning! EOL_DWC without DWC_SKIP at line %d", lineNumber);
+        }
+    }
+}
 - (BOOL)erasePossibleDoubleWidthCharInLineNumber:(int)lineNumber
                                 startingAtOffset:(int)offset
                                         withChar:(screen_char_t)c
@@ -1460,11 +1498,7 @@ void DumpBuf(screen_char_t* p, int n) {
         [self markCharDirty:YES at:VT100GridCoordMake(offset + 1, lineNumber)];
 
         if (offset == 0 && lineNumber > 0) {
-            screen_char_t *predecessor = [self screenCharsAtLineNumber:lineNumber - 1];
-            if (predecessor[size_.width].code == EOL_DWC) {
-                // Clean up split-dwc after wrapped DWC was cleared.
-                predecessor[size_.width].code = EOL_HARD;
-            }
+            [self erasePossibleSplitDwcAtLineNumber:lineNumber - 1];
         }
 
         return YES;
@@ -1534,9 +1568,8 @@ void DumpBuf(screen_char_t* p, int n) {
 // yyxx
 // The number of cells from (2,0) to (1,1) is 4 (the cells containing "y").
 - (int)numCellsFrom:(VT100GridCoord)from to:(VT100GridCoord)to {
-    int fromPos = from.x + from.y * size_.width;
-    int toPos = to.x + to.y * size_.width;
-    return toPos - fromPos + 1;
+    VT100GridRun run = VT100GridRunFromCoords(from, to, size_.width);
+    return run.length;
 }
 
 - (NSString *)description {

@@ -89,10 +89,11 @@ NS_INLINE VT100GridRun VT100GridRunMake(int x, int y, int length) {
     return run;
 }
 
+// Returns the coord of the last char inside the run.
 NS_INLINE VT100GridCoord VT100GridRunMax(VT100GridRun run, int width) {
     VT100GridCoord coord = run.origin;
-    coord.y += (coord.x + run.length) / width;
-    coord.x = (coord.x + run.length) % width;
+    coord.y += (coord.x + run.length - 1) / width;
+    coord.x = (coord.x + run.length - 1) % width;
     return coord;
 }
 

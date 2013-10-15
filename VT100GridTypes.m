@@ -6,9 +6,9 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     VT100GridRun run;
     run.origin = start;
     if (start.y == end.y) {
-        run.length = end.x - start.x;
+        run.length = end.x - start.x + 1;
     } else {
-        run.length = width - start.x + end.x + width * (end.y - start.y - 1);
+        run.length = width - start.x + end.x + 1 + width * (end.y - start.y - 1);
     }
     return run;
 }

@@ -162,7 +162,7 @@
 - (void)scrollRect:(VT100GridRect)rect downBy:(int)direction;
 
 // Load contents from a DVR frame.
-- (void)setContentsFromDVRFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info;
+- (void)setContentsFromDVRFrame:(screen_char_t*)s info:(DVRFrameInfo)info;
 
 // Returns a grid-owned empty line.
 - (NSMutableData *)defaultLineOfWidth:(int)width;
@@ -198,15 +198,21 @@
 // Converts a run into one or more VT100GridRect NSValues.
 - (NSArray *)rectsForRun:(VT100GridRun)run;
 
-// Reset scroll regions to whole screen.
+// Reset scroll regions to whole screen. NOTE: It does not reset useScrollRegionCols.
 - (void)resetScrollRegions;
 
+// Returns a rect describing the current scroll region. Takes useScrollRegionCols into account.
 - (VT100GridRect)scrollRegionRect;
 
+// If a DWC is presetn at (offset, lineNumber), then both its cells are erased. They're replaced
+// with c (normally -defaultChar). If there's a DWC_SKIP + EOL_DWC on the preceding line
+// when offset==0 then those are converted to a null and EOL_HARD. Returns true if a DWC was erased.
 - (BOOL)erasePossibleDoubleWidthCharInLineNumber:(int)lineNumber
                                 startingAtOffset:(int)offset
                                         withChar:(screen_char_t)c;
 
+// Moves the cursor to the left margin (either 0 or scrollRegionCols.location, depending on
+// useScrollRegionCols).
 - (void)moveCursorToLeftMargin;
 
 - (NSString *)compactLineDump;
