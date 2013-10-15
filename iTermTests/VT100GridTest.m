@@ -2017,13 +2017,91 @@ do { \
                                        expectDropped:0];
 }
 
+- (void)testCoordinateBefore {
+    VT100Grid *grid = [self smallGrid];
+    // Test basic case
+    VT100GridCoord coord = [grid coordinateBefore:VT100GridCoordMake(1, 0)];
+    assert(coord.x == 0);
+    assert(coord.y == 0);
+
+    // Test failure to move before grid
+    coord = [grid coordinateBefore:VT100GridCoordMake(0, 0)];
+    assert(coord.x == -1);
+    assert(coord.y == -1);
+
+    // Test simple wrap-back over EOL_SOFT
+    grid = [self gridFromCompactLinesWithContinuationMarks:@"ab+\ncd!"];
+    coord = [grid coordinateBefore:VT100GridCoordMake(0, 1)];
+    assert(coord.x == 1);
+    assert(coord.y == 0);
+
+    // Test failure to wrap-back across EOL_HARD
+    grid = [self gridFromCompactLinesWithContinuationMarks:@"ab!\ncd!"];
+    coord = [grid coordinateBefore:VT100GridCoordMake(0, 1)];
+    assert(coord.x == -1);
+    assert(coord.y == -1);
+
+    // Test wrap-back over EOL_DWC + DWC_SKIP
+    grid = [self gridFromCompactLinesWithContinuationMarks:@"a>>\nC-!"];
+    coord = [grid coordinateBefore:VT100GridCoordMake(0, 1)];
+    assert(coord.x == 0);
+    assert(coord.y == 0);
+
+    // Test scroll region
+    grid = [self gridFromCompactLinesWithContinuationMarks:@"abcd!\nefgh!"];
+    grid.scrollRegionCols = VT100GridRangeMake(1, 2);
+    grid.useScrollRegionCols = YES;
+    coord = [grid coordinateBefore:VT100GridCoordMake(1, 1)];
+    assert(coord.x == 2);
+    assert(coord.y == 0);
+
+    // Test moving back over DWC_RIGHT
+    grid = [self gridFromCompactLinesWithContinuationMarks:@"A-b!"];
+    coord = [grid coordinateBefore:VT100GridCoordMake(2, 0)];
+    assert(coord.x == 0);
+    assert(coord.y == 0);
+
+    // Test wrap + skip over dwc
+    grid = [self gridFromCompactLinesWithContinuationMarks:@"aB-+\ncde!"];
+    coord = [grid coordinateBefore:VT100GridCoordMake(0, 1)];
+    assert(coord.x == 1);
+    assert(coord.y == 0);
+}
+
+- (void)testAddCombiningCharToCoord {
+    const unichar kCombiningAcuteAccent = 0x301;
+    const unichar kCombiningCedilla = 0x327;
+
+    VT100Grid *grid = [self gridFromCompactLines:@"abcd"];
+    assert([grid addCombiningChar:kCombiningAcuteAccent
+                          toCoord:VT100GridCoordMake(0, 0)]);
+    screen_char_t *line = [grid screenCharsAtLineNumber:0];
+    assert(line[0].complexChar);
+    NSString *str = ScreenCharToStr(&line[0]);
+    assert([[str decomposedStringWithCanonicalMapping] isEqualToString:[@"á" decomposedStringWithCanonicalMapping]]);
+
+    // Fail to modify null character
+    grid = [self gridFromCompactLines:@".bcd"];
+    assert(![grid addCombiningChar:kCombiningAcuteAccent
+                           toCoord:VT100GridCoordMake(0, 0)]);
+
+    // Add two combining marks
+    grid = [self gridFromCompactLines:@"abcd"];
+    assert([grid addCombiningChar:kCombiningAcuteAccent
+                          toCoord:VT100GridCoordMake(0, 0)]);
+    assert([grid addCombiningChar:kCombiningCedilla
+                          toCoord:VT100GridCoordMake(0, 0)]);
+    line = [grid screenCharsAtLineNumber:0];
+    assert(line[0].complexChar);
+    str = ScreenCharToStr(&line[0]);
+    assert([[str decomposedStringWithCanonicalMapping] isEqualToString:[@"á̧" decomposedStringWithCanonicalMapping]]);
+}
+
 // Missing tests:
 /*
 
  - (void)deleteChars:(int)num
  startingAt:(VT100GridCoord)startCoord;
-
- - (BOOL)addCombiningCharAtCursor:(unichar)combiningChar;
 
  - (void)insertChar:(screen_char_t)c at:(VT100GridCoord)pos times:(int)num;
 */

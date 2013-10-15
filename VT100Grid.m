@@ -1517,25 +1517,63 @@
     }
 }
 
-// Add a combining char to the cell at the cursor position if possible. Returns
-// YES if it is able to and NO if there is no base character to combine with.
-- (BOOL)addCombiningCharAtCursor:(unichar)combiningChar
-{
-    // set cx, cy to the char before the cursor.
-    int cx = cursor_.x;
-    int cy = cursor_.y;
-    if (cx == 0) {
-        cx = size_.width;
+- (VT100GridCoord)coordinateBefore:(VT100GridCoord)coord {
+    // set cx, cy to the char before the given coordinate.
+    VT100GridCoord invalid = VT100GridCoordMake(-1, -1);
+    int cx = coord.x;
+    int cy = coord.y;
+    if (cx == self.leftMargin || cx == 0) {
+        cx = self.rightMargin + 1;
         --cy;
+        if (cy < 0) {
+            return invalid;
+        }
+        if (![self haveColumnScrollRegion]) {
+            switch ([self continuationMarkForLineNumber:cy]) {
+                case EOL_HARD:
+                    return invalid;
+                case EOL_SOFT:
+                    // Ok to wrap around
+                    break;
+                case EOL_DWC:
+                    // Ok to wrap around, but move back over presumed DWC_SKIP at line[rightMargin-1].
+                    cx--;
+                    if (cx < 0) {
+                        return invalid;
+                    }
+                    break;
+            }
+        }
     }
     --cx;
-    if (cy < 0) {
-        // can't affect characters above screen so have it stand alone.
-        return NO;
+    if (cx < 0 || cy < 0) {
+        // can't affect characters above screen so have it stand alone. cx really should never be
+        // less than zero, but paranoia.
+        return invalid;
     }
+
+    screen_char_t *line = [self screenCharsAtLineNumber:cy];
+    if (line[cx].code == DWC_RIGHT) {
+        if (cx > 0) {
+            cx--;
+        } else {
+            // This should never happen.
+            return invalid;
+        }
+    }
+
+    return VT100GridCoordMake(cx, cy);
+}
+
+// Add a combining char to the cell at the cursor position if possible. Returns
+// YES if it is able to and NO if there is no base character to combine with.
+- (BOOL)addCombiningChar:(unichar)combiningChar toCoord:(VT100GridCoord)coord
+{
+    int cx = coord.x;
+    int cy = coord.y;
     screen_char_t* theLine = [self screenCharsAtLineNumber:cy];
     if (theLine[cx].code == 0) {
-        // Mark is preceeded by an unset char, so make it stand alone.
+        // Not a real character.
         return NO;
     }
     if (theLine[cx].complexChar) {

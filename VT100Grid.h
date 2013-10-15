@@ -217,8 +217,12 @@
 - (NSString *)compactLineDumpWithContinuationMarks;
 - (NSString *)compactDirtyDump;
 
-// TODO: write a test for this
-- (BOOL)addCombiningCharAtCursor:(unichar)combiningChar;
+// Returns the coordinate of the cell before this one. It respects scroll regions and double-width
+// characters.
+// Returns (-1,-1) if there is no previous cell.
+- (VT100GridCoord)coordinateBefore:(VT100GridCoord)coord;
+
+- (BOOL)addCombiningChar:(unichar)combiningChar toCoord:(VT100GridCoord)coord;
 
 // TODO: write a test for this
 - (void)insertChar:(screen_char_t)c at:(VT100GridCoord)pos times:(int)num;
