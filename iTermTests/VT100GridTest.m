@@ -256,7 +256,7 @@ do { \
         screen_char_t *s = [grid screenCharsAtLineNumber:i++];
         int j;
         for (j = 0; j < [line length] - 1; j++) {
-            unichar c = [line characterAtIndex:j];;
+            unichar c = [line characterAtIndex:j];
             if (c == '.') c = 0;
             if (c == '-') c = DWC_RIGHT;
             if (c == '>' && j == [line length] - 2 && [line characterAtIndex:j+1] == '>') c = DWC_SKIP;
@@ -1475,6 +1475,558 @@ do { \
     assert(grid.cursorX == 1);
 
 }
+
+- (void)testResetWithLineBuffer {
+    VT100Grid *grid = [self gridFromCompactLines:@"0123\nabcd\nefgh\n...."];
+    grid.scrollRegionRows = VT100GridRangeMake(1, 2);
+    grid.scrollRegionCols = VT100GridRangeMake(2, 2);
+    grid.cursorX = 2;
+    grid.cursorY = 3;
+    grid.savedCursor = grid.cursor;
+
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    [lineBuffer setMaxLines:1];
+    int dropped = [grid resetWithLineBuffer:lineBuffer
+                        unlimitedScrollback:NO];
+    assert(dropped == 1);
+    assert([[grid compactLineDump] isEqualToString:
+            @"efgh\n"
+            @"....\n"
+            @"....\n"
+            @"...."]);
+    assert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
+    assert(grid.scrollRegionRows.location == 0);
+    assert(grid.scrollRegionRows.length == 4);
+    assert(grid.scrollRegionCols.location == 0);
+    assert(grid.scrollRegionCols.length == 4);
+    assert(grid.cursor.x == 0);
+    assert(grid.cursor.y == 0);
+    assert(grid.savedCursor.x == 0);
+    assert(grid.savedCursor.y == 0);
+
+    // Test unlimited scrollback --------------------------------------------------------------------
+    grid = [self gridFromCompactLines:@"0123\nabcd\nefgh\n...."];
+    lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    [lineBuffer setMaxLines:1];
+    dropped = [grid resetWithLineBuffer:lineBuffer
+                    unlimitedScrollback:YES];
+    assert(dropped == 0);
+    assert([[grid compactLineDump] isEqualToString:
+            @"efgh\n"
+            @"....\n"
+            @"....\n"
+            @"...."]);
+    assert([[lineBuffer debugString] isEqualToString:@"0123!\nabcd!"]);
+
+    // Test on empty screen ------------------------------------------------------------------------
+    grid = [self smallGrid];
+    lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    [lineBuffer setMaxLines:1];
+    dropped = [grid resetWithLineBuffer:lineBuffer
+                    unlimitedScrollback:YES];
+    assert(dropped == 0);
+    assert([[grid compactLineDump] isEqualToString:
+            @"..\n"
+            @".."]);
+    assert([lineBuffer numLinesWithWidth:grid.size.width] == 0);
+}
+
+- (void)testMoveWrappedCursorLineToTopOfGrid {
+    VT100Grid *grid = [self gridFromCompactLinesWithContinuationMarks:
+                       @"abcd+\n"
+                       @"efg.!\n"
+                       @"hijk+\n"
+                       @"lmno+\n"
+                       @"pq..!\n"
+                       @"rstu+\n"
+                       @"vwx.!"];
+    grid.cursorX = 1;
+    grid.cursorY = 4;
+    [grid moveWrappedCursorLineToTopOfGrid];
+
+    assert([[grid compactLineDump] isEqualToString:
+            @"hijk\n"
+            @"lmno\n"
+            @"pq..\n"
+            @"rstu\n"
+            @"vwx.\n"
+            @"....\n"
+            @"...."]);
+    assert(grid.cursorX == 1);
+    assert(grid.cursorY == 2);
+
+    // Test empty screen
+    grid = [self smallGrid];
+    grid.cursorX = 1;
+    grid.cursorY = 1;
+    [grid moveWrappedCursorLineToTopOfGrid];
+
+    assert([[grid compactLineDump] isEqualToString:@"..\n.."]);
+    assert(grid.cursorX == 1);
+    assert(grid.cursorY == 0);
+
+    // Test that scroll regions are ignored.
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hijk+\n"
+            @"lmno+\n"
+            @"pq..!\n"
+            @"rstu+\n"
+            @"vwx.!"];
+    grid.scrollRegionRows = VT100GridRangeMake(1, 2);
+    grid.scrollRegionCols = VT100GridRangeMake(2, 2);
+    grid.useScrollRegionCols = YES;
+    grid.cursorX = 1;
+    grid.cursorY = 4;
+    [grid moveWrappedCursorLineToTopOfGrid];
+
+    assert([[grid compactLineDump] isEqualToString:
+            @"hijk\n"
+            @"lmno\n"
+            @"pq..\n"
+            @"rstu\n"
+            @"vwx.\n"
+            @"....\n"
+            @"...."]);
+    assert(grid.cursorX == 1);
+    assert(grid.cursorY == 2);
+}
+
+- (void)doAppendCharsAtCursorTestWithInitialBuffer:(NSString *)initialBuffer
+                                      scrollRegion:(VT100GridRect)scrollRect
+                           useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
+                               unlimitedScrollback:(BOOL)unlimitedScrollback
+                                         appending:(NSString *)stringToAppend
+                                                at:(VT100GridCoord)initialCursor
+                                            expect:(NSString *)expectedLines
+                                      expectCursor:(VT100GridCoord)expectedCursor
+                                  expectLineBuffer:(NSString *)expectedLineBuffer
+                                     expectDropped:(int)expectedNumLinesDropped {
+    VT100Grid *grid = [self gridFromCompactLinesWithContinuationMarks:initialBuffer];
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    if (scrollRect.size.width >= 0) {
+        grid.scrollRegionCols = VT100GridRangeMake(scrollRect.origin.x, scrollRect.size.width);
+        grid.useScrollRegionCols = YES;
+    }
+    if (scrollRect.size.height >= 0) {
+        grid.scrollRegionRows = VT100GridRangeMake(scrollRect.origin.y, scrollRect.size.height);
+    }
+    screen_char_t *line = [self screenCharLineForString:stringToAppend];
+    grid.cursor = initialCursor;
+    int numLinesDropped = [grid appendCharsAtCursor:line
+                                             length:[stringToAppend length]
+                            scrollingIntoLineBuffer:lineBuffer
+                                unlimitedScrollback:unlimitedScrollback
+                            useScrollbackWithRegion:useScrollbackWithRegion];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:expectedLines]);
+    assert([[lineBuffer debugString] isEqualToString:expectedLineBuffer]);
+    assert(numLinesDropped == expectedNumLinesDropped);
+    assert(grid.cursorX == expectedCursor.x);
+    assert(grid.cursorY == expectedCursor.y);
+}
+
+- (void)testAppendCharsAtCursor {
+    // append empty buffer
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"ab!\n"
+                                                     @"cd!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@""
+                                                  at:VT100GridCoordMake(0, 0)
+                                              expect:@"ab!\n"
+                                                     @"cd!"
+                                        expectCursor:VT100GridCoordMake(0, 0)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // scrolling into line buffer
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abc!\n"
+                                                     @"d..!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"efgh"
+                                                  at:VT100GridCoordMake(1, 1)
+                                              expect:@"def+\n"
+                                                     @"gh.!"
+                                        expectCursor:VT100GridCoordMake(2, 1)
+                                    expectLineBuffer:@"abc!"
+                                       expectDropped:0];
+
+    // no scrolling into line buffer with vsplit
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abc!\n"
+                                                     @"d..!"
+                                        scrollRegion:VT100GridRectMake(1, 0, 2, 2)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"efgh"
+                                                  at:VT100GridCoordMake(1, 1)
+                                              expect:@"aef!\n"
+                                                     @"dgh!"
+                                        expectCursor:VT100GridCoordMake(3, 1)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // scrolling into line buffer with scrollTop/Bottom + useScrollbackWithRegion
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abc!\n"
+                                                     @"d..!"
+                                        scrollRegion:VT100GridRectMake(0, 0, 3, 1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"efgh"
+                                                  at:VT100GridCoordMake(3, 0)
+                                              expect:@"h..!\n"
+                                                     @"d..!"
+                                        expectCursor:VT100GridCoordMake(1, 0)
+                                    expectLineBuffer:@"abcefg+"
+                                       expectDropped:0];
+
+    // no scrolling into line buffer with scrollTop/Bottom + !useScrollbackWithRegion
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abc!\n"
+                                                     @"d..!"
+                                        scrollRegion:VT100GridRectMake(0, 0, 3, 1)
+                             useScrollbackWithRegion:NO
+                                 unlimitedScrollback:NO
+                                           appending:@"efgh"
+                                                  at:VT100GridCoordMake(3, 0)
+                                              expect:@"h..!\n"
+                                                     @"d..!"
+                                        expectCursor:VT100GridCoordMake(1, 0)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // cursor starts outside scrollTop/Bottom region and scrolls (not sure what should happen!)
+    // TODO
+
+    // no scrolling into line buffer with h-region + v-region + useScrollbackWithRegion
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abc!\n"
+                                                     @"d..!"
+                                        scrollRegion:VT100GridRectMake(1, 0, 2, 1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"efgh"
+                                                  at:VT100GridCoordMake(3, 0)
+                                              expect:@"agh!\n"
+                                                     @"d..!"
+                                        expectCursor:VT100GridCoordMake(3, 0)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+    // unlimited scrollback
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"ab!\n"
+                                                     @"cd!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:YES
+                                           appending:@"efghijklmn"
+                                                  at:VT100GridCoordMake(2, 1)
+                                              expect:@"kl+\n"
+                                                     @"mn!"
+                                        expectCursor:VT100GridCoordMake(2, 1)
+                                    expectLineBuffer:@"ab!\ncdefghij+"
+                                       expectDropped:0];
+    // DWC
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"...!\n"
+                                                     @"...!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"A-bcd"
+                                                  at:VT100GridCoordMake(0, 0)
+                                              expect:@"A-b+\n"
+                                                     @"cd.!"
+                                        expectCursor:VT100GridCoordMake(2, 1)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // DWC that gets split to next line (wraparoundmode on)
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"...!\n"
+                                                     @"...!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"abC-d"
+                                                  at:VT100GridCoordMake(0, 0)
+                                              expect:@"ab>>\n"
+                                                     @"C-d!"
+                                        expectCursor:VT100GridCoordMake(3, 1)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // DWC that gets split to next line at vsplit (wraparoundmode on)
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"....!\n"
+                                                     @"....!\n"
+                                                     @"....!"
+                                        scrollRegion:VT100GridRectMake(0, 0, 3, 3)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"abC-d"
+                                                  at:VT100GridCoordMake(0, 0)
+                                              expect:@"ab..!\n"
+                                                     @"C-d.!\n"
+                                                     @"....!"
+                                        expectCursor:VT100GridCoordMake(3, 1)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // plain text wraps around in wraparoundmode
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"a.!\n"
+                                                     @"..!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"bcd"
+                                                  at:VT100GridCoordMake(1, 0)
+                                              expect:@"ab+\n"
+                                                     @"cd!"
+                                        expectCursor:VT100GridCoordMake(2, 1)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // plain text wraps around in wraparoundmode in vsplit
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"a...!\n"
+                                                     @"....!"
+                                        scrollRegion:VT100GridRectMake(0, 0, 2, 2)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"bcde"
+                                                  at:VT100GridCoordMake(1, 0)
+                                              expect:@"cd..!\n"
+                                                     @"e...!"
+                                        expectCursor:VT100GridCoordMake(1, 1)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // plain text truncated bc wraparoundmode is off (cont marker should go to hard)
+    wraparoundMode_ = NO;
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"zyxwv+\n"
+                                                     @"u....!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"abcdefgh"
+                                                  at:VT100GridCoordMake(1, 0)
+                                              expect:@"zabch!\n"
+                                                     @"u....!"
+                                        expectCursor:VT100GridCoordMake(5, 0)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // Appending long string ending in DWC with wraparound off
+    wraparoundMode_ = NO;
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"zyxwv+\n"
+                                                     @"u....!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"abcdefghI-"
+                                                  at:VT100GridCoordMake(1, 0)
+                                              expect:@"zabI-!\n"
+                                                     @"u....!"
+                                        expectCursor:VT100GridCoordMake(5, 0)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // Appending long string with wraparound off that orphans a dwc |abC-d| -> |abCxz|
+    wraparoundMode_ = NO;
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"zyxwv+\n"
+                                                     @"u....!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"abC-defg"
+                                                  at:VT100GridCoordMake(1, 0)
+                                              expect:@"zab.g!\n"
+                                                     @"u....!"
+                                        expectCursor:VT100GridCoordMake(5, 0)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    wraparoundMode_ = YES;
+
+    // insert mode with plain text
+    insertMode_ = YES;
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abcdgh..!\n"
+                                                     @"zy......!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"ef"
+                                                  at:VT100GridCoordMake(4, 0)
+                                              expect:@"abcdefgh!\n"
+                                                     @"zy......!"
+                                        expectCursor:VT100GridCoordMake(6, 0)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // insert orphaning DWCs
+    insertMode_ = YES;
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abcdgH-.!\n"
+                                                     @"zy......!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"ef"
+                                                  at:VT100GridCoordMake(4, 0)
+                                              expect:@"abcdefg.!\n"
+                                                     @"zy......!"
+                                        expectCursor:VT100GridCoordMake(6, 0)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // insert stomping DWC_SKIP, causing lines to be joined normally
+    insertMode_ = YES;
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abcdfgh>>\n"
+                                                     @"I-......!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"e"
+                                                  at:VT100GridCoordMake(4, 0)
+                                              expect:@"abcdefgh+\n"
+                                                     @"I-......!"
+                                        expectCursor:VT100GridCoordMake(5, 0)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // insert really long string, causing truncation at end of line and of inserted string and
+    // wraparound
+    insertMode_ = YES;
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abcdtuvw+\n"
+                                                     @"xyz.....!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"efghijklm"
+                                                  at:VT100GridCoordMake(4, 0)
+                                              expect:@"abcdefgh+\n"
+                                                     @"ijklmxyz!"
+                                        expectCursor:VT100GridCoordMake(5, 1)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    //  insert long string without wrapraround
+    insertMode_ = YES;
+    wraparoundMode_ = NO;
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abcdtuvw+\n"
+                                                     @"xyz.....!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"efghijklm"
+                                                  at:VT100GridCoordMake(4, 0)
+                                              expect:@"abcdefgm!\n"
+                                                     @"xyz.....!"
+                                        expectCursor:VT100GridCoordMake(8, 0)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+    wraparoundMode_ = YES;
+
+    // insert mode with vsplit
+    insertMode_ = YES;
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abcde!\n"
+                                                     @"xyz..!"
+                                        scrollRegion:VT100GridRectMake(1, 0, 3, 2)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"m"
+                                                  at:VT100GridCoordMake(2, 0)
+                                              expect:@"abmce!\n"
+                                                     @"xyz..!"
+                                        expectCursor:VT100GridCoordMake(3, 0)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // insert wrapping string with vsplit
+    insertMode_ = YES;
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abcde!\n"
+                                                     @"xyz..!"
+                                        scrollRegion:VT100GridRectMake(1, 0, 3, 2)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"mno"
+                                                  at:VT100GridCoordMake(2, 0)
+                                              expect:@"abmne!\n"
+                                                     @"xoyz.!"
+                                        expectCursor:VT100GridCoordMake(2, 1)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // insert orphaning dwc and end of line with vsplit
+    insertMode_ = YES;
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abcD-e!\n"
+                                                     @"xyz...!"
+                                        scrollRegion:VT100GridRectMake(1, 0, 4, 2)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"m"
+                                                  at:VT100GridCoordMake(2, 0)
+                                              expect:@"abmc.e!\n"
+                                                     @"xyz...!"
+                                        expectCursor:VT100GridCoordMake(3, 0)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    insertMode_ = NO;
+    // with insert mode off, overwrite the left half of a DWC, leaving orphan
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abcD-e!\n"
+                                                     @"xyz...!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"mn"
+                                                  at:VT100GridCoordMake(2, 0)
+                                              expect:@"abmn.e!\n"
+                                                     @"xyz...!"
+                                        expectCursor:VT100GridCoordMake(4, 0)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // with ansi terminal, placing cursor at right margin wraps it around in wraparound mode
+    // TODO: vsplits aren't treated the same way; should they be?
+    isAnsi_ = YES;
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abc.!\n"
+                                                     @"xyz.!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"d"
+                                                  at:VT100GridCoordMake(3, 0)
+                                              expect:@"abcd+\n"
+                                                     @"xyz.!"
+                                        expectCursor:VT100GridCoordMake(0, 1)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // with ansi terminal, placing cursor at right margin moves it back one space if wraparoundmode is off
+    // TODO: vsplits aren't treated the same way; should they be?
+    isAnsi_ = YES;
+    wraparoundMode_ = NO;
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abc.!\n"
+                                                     @"xyz.!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"d"
+                                                  at:VT100GridCoordMake(3, 0)
+                                              expect:@"abcd!\n"
+                                                     @"xyz.!"
+                                        expectCursor:VT100GridCoordMake(3, 0)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+}
+
+// Missing tests:
+/*
+
+ - (void)deleteChars:(int)num
+ startingAt:(VT100GridCoord)startCoord;
+
+ - (BOOL)addCombiningCharAtCursor:(unichar)combiningChar;
+
+ - (void)insertChar:(screen_char_t)c at:(VT100GridCoord)pos times:(int)num;
+*/
 
 @end
 

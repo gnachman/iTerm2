@@ -126,11 +126,10 @@
 // Scroll the scroll region down by one line.
 - (void)scrollDown;
 
-// Clear scroll region, clear screen, move cursor to origin, leaving only the last non-empty line
-// at the top of the screen if preservingLastLine is set, or clearing the whole screen otherwise.
+// Clear scroll region, clear screen, move cursor and saved cursor to origin, leaving only the last
+// non-empty line at the top of the screen.
 - (int)resetWithLineBuffer:(LineBuffer *)lineBuffer
-       unlimitedScrollback:(BOOL)unlimitedScrollback
-        preservingLastLine:(BOOL)preservingLastLine;
+       unlimitedScrollback:(BOOL)unlimitedScrollback;
 
 // Move the grid contents up, leaving only the whole wrapped line the cursor is on at the top.
 - (void)moveWrappedCursorLineToTopOfGrid;
@@ -148,7 +147,6 @@
 // Returns number of scrollback lines dropped from lineBuffer.
 - (int)appendCharsAtCursor:(screen_char_t *)buffer
                     length:(int)len
-                isAllAscii:(BOOL)ascii
    scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
        unlimitedScrollback:(BOOL)unlimitedScrollback
    useScrollbackWithRegion:(BOOL)useScrollbackWithRegion;
@@ -216,6 +214,7 @@
 - (void)moveCursorToLeftMargin;
 
 - (NSString *)compactLineDump;
+- (NSString *)compactLineDumpWithContinuationMarks;
 - (NSString *)compactDirtyDump;
 
 // TODO: write a test for this

@@ -307,18 +307,18 @@
 }
 
 - (int)resetWithLineBuffer:(LineBuffer *)lineBuffer
-        unlimitedScrollback:(BOOL)unlimitedScrollback
-      preservingLastLine:(BOOL)preservingLastLine {
+        unlimitedScrollback:(BOOL)unlimitedScrollback {
     self.scrollRegionRows = VT100GridRangeMake(0, size_.height);
     self.scrollRegionCols = VT100GridRangeMake(0, size_.width);
-    int numLinesToScroll = preservingLastLine ? [self lineNumberOfLastNonEmptyLine] - 1 : size_.height;
+    int numLinesToScroll = [self lineNumberOfLastNonEmptyLine];
     int numLinesDropped = 0;
-    for (int i = 1; i < numLinesToScroll; i++) {
+    for (int i = 0; i < numLinesToScroll; i++) {
         numLinesDropped += [self scrollUpIntoLineBuffer:lineBuffer
                                     unlimitedScrollback:unlimitedScrollback
                                 useScrollbackWithRegion:NO];
     }
     self.savedCursor = VT100GridCoordMake(0, 0);
+    self.cursor = VT100GridCoordMake(0, 0);
 
     return numLinesDropped;
 }
@@ -496,7 +496,6 @@
 
 - (int)appendCharsAtCursor:(screen_char_t *)buffer
                     length:(int)len
-                isAllAscii:(BOOL)ascii
    scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
        unlimitedScrollback:(BOOL)unlimitedScrollback
    useScrollbackWithRegion:(BOOL)useScrollbackWithRegion {
@@ -606,7 +605,7 @@
                 if (line[cursor_.x].code == DWC_RIGHT) {
                     // This would cause us to overwrite the second part of a
                     // double-width character. Convert it to a space.
-                    line[cursor_.x - 1].code = ' ';
+                    line[cursor_.x - 1].code = 0;
                     line[cursor_.x - 1].complexChar = NO;
                 }
 
@@ -690,14 +689,14 @@
                 int elements = rightMargin - cursor_.x - charsToInsert;
                 if (cursor_.x > 0 && src[0].code == DWC_RIGHT) {
                     // The insert occurred in the middle of a DWC.
-                    src[-1].code = ' ';
+                    src[-1].code = 0;
                     src[-1].complexChar = NO;
-                    src[0].code = ' ';
+                    src[0].code = 0;
                     src[0].complexChar = NO;
                 }
                 if (src[elements].code == DWC_RIGHT) {
                     // Moving a DWC on top of its right half. Erase the DWC.
-                    src[elements - 1].code = ' ';
+                    src[elements - 1].code = 0;
                     src[elements - 1].complexChar = NO;
                 } else if (src[elements].code == DWC_SKIP &&
                            aLine[size_.width].code == EOL_DWC) {
@@ -718,9 +717,9 @@
             NSLog(@"Wiping out the right-half DWC at the cursor before writing to screen");
 #endif
             NSAssert(cursor_.x > 0, @"DWC split");  // there should never be the second half of a DWC at x=0
-            aLine[cursor_.x].code = ' ';
+            aLine[cursor_.x].code = 0;
             aLine[cursor_.x].complexChar = NO;
-            aLine[cursor_.x-1].code = ' ';
+            aLine[cursor_.x-1].code = 0;
             aLine[cursor_.x-1].complexChar = NO;
             [self markCharDirty:YES at:VT100GridCoordMake(cursor_.x, lineNumber)];
             [self markCharDirty:YES at:VT100GridCoordMake(cursor_.x - 1, lineNumber)];
@@ -740,7 +739,12 @@
                               to:VT100GridCoordMake(cursor_.x + charsToInsert - 1, lineNumber)];
         }
         if (wrapDwc) {
-            aLine[cursor_.x + charsToInsert].code = DWC_SKIP;
+            if (cursor_.x + charsToInsert == size_.width - 1) {
+                aLine[cursor_.x + charsToInsert].code = DWC_SKIP;
+            } else {
+                aLine[cursor_.x + charsToInsert].code = 0;
+            }
+            aLine[cursor_.x + charsToInsert].complexChar = NO;
         }
         self.cursorX = newx;
         idx += charsToInsert;
@@ -748,7 +752,7 @@
         // Overwrote some stuff that was already on the screen leaving behind the
         // second half of a DWC
         if (cursor_.x < size_.width - 1 && aLine[cursor_.x].code == DWC_RIGHT) {
-            aLine[cursor_.x].code = ' ';
+            aLine[cursor_.x].code = 0;
             aLine[cursor_.x].complexChar = NO;
         }
 
@@ -1251,6 +1255,43 @@
             }
             if (line[x].complexChar) c = 'U';
             [dump appendFormat:@"%c", c];
+        }
+        if (y != size_.height - 1) {
+            [dump appendString:@"\n"];
+        }
+    }
+    return dump;
+}
+
+- (NSString *)compactLineDumpWithContinuationMarks {
+    NSMutableString *dump = [NSMutableString string];
+    for (int y = 0; y < size_.height; y++) {
+        screen_char_t *line = [self screenCharsAtLineNumber:y];
+        for (int x = 0; x < size_.width; x++) {
+            char c = line[x].code;
+            if (line[x].code == 0) c = '.';
+            if (line[x].code > 127) c = '?';
+            if (line[x].code == DWC_RIGHT) c = '-';
+            if (line[x].code == DWC_SKIP) {
+                assert(x == size_.width - 1);
+                c = '>';
+            }
+            if (line[x].complexChar) c = 'U';
+            [dump appendFormat:@"%c", c];
+        }
+        switch (line[size_.width].code) {
+            case EOL_HARD:
+                [dump appendString:@"!"];
+                break;
+            case EOL_SOFT:
+                [dump appendString:@"+"];
+                break;
+            case EOL_DWC:
+                [dump appendString:@">"];
+                break;
+            default:
+                [dump appendString:@"?"];
+                break;
         }
         if (y != size_.height - 1) {
             [dump appendString:@"\n"];

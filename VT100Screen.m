@@ -843,13 +843,10 @@ static void SwapInt(int *a, int *b) {
 {
     [SESSION clearTriggerLine];
     [self incrementOverflowBy:[currentGrid_ resetWithLineBuffer:linebuffer
-                                            unlimitedScrollback:unlimitedScrollback_
-                                             preservingLastLine:YES]];
+                                            unlimitedScrollback:unlimitedScrollback_]];
     [self clearScreen];
     [self _setInitialTabStops];
-    primaryGrid_.savedCursor = VT100GridCoordMake(0, 0);
     altGrid_.savedCursor = VT100GridCoordMake(0, 0);
-    [self setCursorX:0 Y:0];
 
     for (int i = 0; i < 4; i++) {
         saveCharset[i] = charset[i] = 0;
@@ -1896,7 +1893,6 @@ static void SwapInt(int *a, int *b) {
 
     [self incrementOverflowBy:[currentGrid_ appendCharsAtCursor:buffer
                                                          length:len
-                                                     isAllAscii:ascii
                                         scrollingIntoLineBuffer:linebuffer
                                             unlimitedScrollback:unlimitedScrollback_
                                         useScrollbackWithRegion:[self useScrollbackWithRegion]]];
