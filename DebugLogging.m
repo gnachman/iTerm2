@@ -7,6 +7,7 @@
 //
 
 #import "DebugLogging.h"
+#import <Cocoa/Cocoa.h>
 #include <sys/time.h>
 
 NSMutableString* gDebugLogStr = nil;

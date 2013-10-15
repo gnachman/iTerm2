@@ -332,6 +332,10 @@ void StringToScreenChars(NSString *s,
     return [currentGrid_ isAnyCharDirty];
 }
 
+- (void)setCharDirtyAtX:(int)x Y:(int)y {
+    [currentGrid_ markCharDirty:YES at:VT100GridCoordMake(x, y)];
+}
+
 - (void)setCursorX:(int)x Y:(int)y
 {
     DLog(@"Move cursor to %d,%d", x, y);
@@ -1073,7 +1077,7 @@ static void SwapInt(int *a, int *b) {
             [SESSION clearTriggerLine];
             break;
         case VT100CC_CR:
-            [grid_ moveCursorToLeftMargin];
+            [currentGrid_ moveCursorToLeftMargin];
             [SESSION clearTriggerLine];
             break;
         case VT100CC_SO:
@@ -1121,14 +1125,17 @@ static void SwapInt(int *a, int *b) {
         case VT100CSI_DA2:
             [self secondaryDeviceAttribute:token];
             break;
-        case VT100CSI_DECALN:
+        case VT100CSI_DECALN: {
+            screen_char_t ch = [currentGrid_ defaultChar];
+            ch.code = 'E';
             [currentGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                                     to:VT100GridCoordMake(currentGrid_.size.width - 1, currentGrid_.size.height - 1)
-                                toChar:'E'];
+                                toChar:ch];
             [currentGrid_ resetScrollRegions];
-            currentGrid.cursor = VT100GridCoordMake(0, 0);
+            currentGrid_.cursor = VT100GridCoordMake(0, 0);
             DebugLog(@"putToken DECALN");
             break;
+        }
         case VT100CSI_DECDHL:
             break;
         case VT100CSI_DECDWL:
@@ -1286,7 +1293,7 @@ static void SwapInt(int *a, int *b) {
             if (scrollRight > width - 1) {
                 scrollRight = width - 1;
             }
-            currentGrid.scrollRegionCols = VT100GridRangeMake(scrollLeft,
+            currentGrid_.scrollRegionCols = VT100GridRangeMake(scrollLeft,
                                                               scrollRight - scrollLeft + 1);
             // set cursor to the home position
             [self cursorToX:1 Y:1];
@@ -1390,9 +1397,9 @@ static void SwapInt(int *a, int *b) {
             [SESSION clearTriggerLine];
             break;
         case ANSICSI_ECH:
-            if (cursorX < currentGrid_.size.width) {
-                int dirtyX = cursorX;
-                int dirtyY = cursorY;
+            if (currentGrid_.cursorX < currentGrid_.size.width) {
+                int dirtyX = currentGrid_.cursorX;
+                int dirtyY = currentGrid_.cursorY;
 
                 j = token.u.csi.p[0];
                 if (j <= 0) {
@@ -1402,7 +1409,7 @@ static void SwapInt(int *a, int *b) {
                 int limit = MIN(currentGrid_.cursorX + j, currentGrid_.size.width);
                 [currentGrid_ setCharsFrom:VT100GridCoordMake(currentGrid_.cursorX, currentGrid_.cursorY)
                                         to:VT100GridCoordMake(limit - 1, currentGrid_.cursorY)
-                                    toChar:0];
+                                    toChar:[currentGrid_ defaultChar]];
                 // TODO: This used to always set the continuation mark to hard, but I think it should only do that if the last char in the line is erased.
                 DebugLog(@"putToken ECH");
             }
@@ -1476,10 +1483,14 @@ static void SwapInt(int *a, int *b) {
             [SESSION setName: newTitle];
             break;
         case XTERMCC_INSBLNK:
-            [self insertBlank:token.u.csi.p[0]];
+            [currentGrid_ insertChar:[currentGrid_ defaultChar]
+                                  at:currentGrid_.cursor
+                               times:token.u.csi.p[0]];
             break;
         case XTERMCC_INSLN:
-            [self insertLines:token.u.csi.p[0]];
+            // TODO: I think the original code was buggy when the cursor was outside the scroll region.
+            [currentGrid_ scrollRect:[currentGrid_ scrollRegionRect]
+                              downBy:token.u.csi.p[0]];
             [SESSION clearTriggerLine];
             break;
         case XTERMCC_DELCH:
@@ -1699,7 +1710,7 @@ static void SwapInt(int *a, int *b) {
 
     [self resetScrollbackOverflow];
     [display deselect];
-    [currentGrid_ markAllCharsDirty];
+    [currentGrid_ markAllCharsDirty:YES];
 }
 
 - (void)showPrimaryBuffer
@@ -1755,9 +1766,12 @@ static void SwapInt(int *a, int *b) {
 - (void)setString:(NSString *)string ascii:(BOOL)ascii
 {
     if (gDebugLogging) {
-        DLog([NSString stringWithFormat:@"setString: %ld chars starting with %c at x=%d, y=%d, line=%d",
-              (unsigned long)[string length], [string characterAtIndex:0],
-              cursorX, cursorY, cursorY + [linebuffer numLinesWithWidth:currentGrid_.size.width]]);
+        DLog(@"setString: %ld chars starting with %c at x=%d, y=%d, line=%d",
+             (unsigned long)[string length],
+             [string characterAtIndex:0],
+             currentGrid_.cursorX,
+             currentGrid_.cursorY,
+             currentGrid_.cursorY + [linebuffer numLinesWithWidth:currentGrid_.size.width]);
     }
 
     int len = [string length];
@@ -1768,8 +1782,8 @@ static void SwapInt(int *a, int *b) {
     // Allocate a buffer of screen_char_t and place the new string in it.
     const int kStaticBufferElements = 1024;
     screen_char_t staticBuffer[kStaticBufferElements];
-    screen_char_t* dynamicBuffer = 0;
-
+    screen_char_t *dynamicBuffer = 0;
+    screen_char_t *buffer;
     if (ascii) {
         // Only Unicode code points 0 through 127 occur in the string.
         const int kStaticTempElements = 1024;
@@ -1835,7 +1849,7 @@ static void SwapInt(int *a, int *b) {
         unichar firstChar = [string characterAtIndex:0];
         while ([string length] > 0 &&
                (IsCombiningMark(firstChar) || IsLowSurrogate(firstChar))) {
-            if (![self addCombiningCharAtCursor:firstChar]) {
+            if (![currentGrid_ addCombiningCharAtCursor:firstChar]) {
                 // Combining mark will need to stand alone rather than combine
                 // because nothing precedes it.
                 if (IsCombiningMark(firstChar)) {
@@ -1895,7 +1909,7 @@ static void SwapInt(int *a, int *b) {
 
  - (BOOL)useScrollbackWithRegion
 {
-    return [[[SESSION addressBookEntry] objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue]];
+    return [[[SESSION addressBookEntry] objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue];
 }
 
 // This used to be called setNewline
@@ -1909,7 +1923,12 @@ static void SwapInt(int *a, int *b) {
 - (void)crlf
 {
     [self linefeed];
-    [self setCursorX:0 Y:cursorY];
+    currentGrid_.cursorX = 0;
+}
+
+- (void)deleteCharacters:(int)n
+{
+    [currentGrid_ deleteChars:n startingAt:currentGrid_.cursor];
 }
 
 - (void)backSpace
@@ -1927,9 +1946,9 @@ static void SwapInt(int *a, int *b) {
     } else if (cursorX == 0 && cursorY > 0 && !currentGrid_.useScrollRegionCols) {
         screen_char_t* aLine = [self getLineAtScreenIndex:cursorY - 1];
         if (aLine[currentGrid_.size.width].code == EOL_SOFT) {
-            [self setCursor:VT100GridCoordMake(currentGrid_.size.width - 1, cursorY - 1)];
+            currentGrid_.cursor = VT100GridCoordMake(currentGrid_.size.width - 1, cursorY - 1);
         } else if (aLine[currentGrid_.size.width].code == EOL_DWC) {
-            [self setCursor:VT100GridCoordMake(currentGrid_.size.width - 2, cursorY - 1)];
+            currentGrid_.cursor = VT100GridCoordMake(currentGrid_.size.width - 2, cursorY - 1);
         }
     }
 }
@@ -1996,8 +2015,8 @@ static void SwapInt(int *a, int *b) {
     while (1) {
         if (currentGrid_.cursorX == currentGrid_.size.width) {
             // Wrap around to the next line.
-            if (aLine[cursorX].code == EOL_HARD) {
-                aLine[cursorX].code = EOL_SOFT;
+            if (aLine[currentGrid_.cursorX].code == EOL_HARD) {
+                aLine[currentGrid_.cursorX].code = EOL_SOFT;
             }
             [self linefeed];
             currentGrid_.cursorX = 0;
@@ -2042,7 +2061,7 @@ static void SwapInt(int *a, int *b) {
     [currentGrid_ setCharsFrom:VT100GridCoordMake(0, currentGrid_.cursor.y + 1)
                             to:VT100GridCoordMake(currentGrid_.size.width - 1,
                                                   currentGrid_.size.height - 1)
-                        toChar:0];
+                        toChar:[currentGrid_ defaultChar]];
 }
 
 - (void)eraseInDisplay:(VT100TCC)token
@@ -2143,8 +2162,8 @@ static void SwapInt(int *a, int *b) {
 - (void)cursorToX:(int)x
 {
     int xPos;
-    int leftMargin = [currentGrid leftMargin];
-    int rightMargin = [currentGrid rightMargin];
+    int leftMargin = [currentGrid_ leftMargin];
+    int rightMargin = [currentGrid_ rightMargin];
 
     xPos = x - 1;
 
@@ -2153,7 +2172,7 @@ static void SwapInt(int *a, int *b) {
         xPos = MAX(leftMargin, MIN(rightMargin, xPos));
     }
 
-    currentGrid.cursorX = xPos;
+    currentGrid_.cursorX = xPos;
 
     DebugLog(@"cursorToX");
 
@@ -2202,8 +2221,8 @@ static void SwapInt(int *a, int *b) {
         charset[i] = saveCharset[i];
     }
 
-    NSParameterAssert(cursorX >= 0 && cursorX < currentGrid_.size.width);
-    NSParameterAssert(cursorY >= 0 && cursorY < currentGrid_.size.height);
+    NSParameterAssert(currentGrid_.cursorX >= 0 && currentGrid_.cursorX < currentGrid_.size.width);
+    NSParameterAssert(currentGrid_.cursorY >= 0 && currentGrid_.cursorY < currentGrid_.size.height);
 }
 
 - (void)setTopBottom:(VT100TCC)token
@@ -2219,7 +2238,7 @@ static void SwapInt(int *a, int *b) {
         bottom < currentGrid_.size.height &&
         bottom >= top) {
         assert(bottom < currentGrid_.size.height);
-        currentGrid.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
+        currentGrid_.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
 
         if ([TERMINAL originMode]) {
             currentGrid_.cursor = VT100GridCoordMake(currentGrid_.leftMargin,
@@ -2322,8 +2341,8 @@ static void SwapInt(int *a, int *b) {
             int x, y;
 
             if ([TERMINAL originMode]) {
-                x = currentGrid_.cursorX - currentGrid.leftMargin + 1;
-                y = currentGrid_.cursorY - currentGrid.topMargin + 1;
+                x = currentGrid_.cursorX - currentGrid_.leftMargin + 1;
+                y = currentGrid_.cursorY - currentGrid_.topMargin + 1;
             }
             else {
                 x = currentGrid_.cursorX + 1;
@@ -2424,7 +2443,7 @@ static void SwapInt(int *a, int *b) {
 }
 
 - (void)markAsNeedingCompleteRedraw {
-    [currentGrid_ markAllCharsDirty];
+    [currentGrid_ markAllCharsDirty:YES];
 }
 
 - (void)doPrint
@@ -2533,7 +2552,7 @@ static void SwapInt(int *a, int *b) {
     // Initialize alternate screen to be empty
     [altGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                         to:VT100GridCoordMake(altGrid_.size.width - 1, altGrid_.size.height - 1)
-                    toChar:0];
+                    toChar:[altGrid_ defaultChar]];
     // Copy the lines back over it
     int o = 0;
     for (int i = 0; o < altGrid_.size.height && i < MIN(lines.count, altGrid_.size.height); i++) {
@@ -2570,7 +2589,7 @@ static void SwapInt(int *a, int *b) {
                              withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedGrid,
                                                                         kStateDictInAlternateScreen,
                                                                         nil]] intValue];
-    if (!savedGrid && saved_primary_buffer) {
+    if (!savedGrid && altGrid_) {
         [altGrid_ release];
         altGrid_ = nil;
     }
@@ -2622,6 +2641,18 @@ static void SwapInt(int *a, int *b) {
 - (void)saveTerminalAbsPos
 {
     savedFindContextAbsPos_ = [linebuffer absPositionForPosition:[linebuffer lastPos]];
+}
+
+- (void)restoreSavedPositionToFindContext:(FindContext *)context
+{
+    int linesPushed;
+    linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
+                               toLineBuffer:linebuffer];
+
+    [linebuffer storeLocationOfAbsPos:savedFindContextAbsPos_
+                            inContext:context];
+
+    [self popScrollbackLines:linesPushed];
 }
 
 - (BOOL)_continueFindResultsInContext:(FindContext*)context
@@ -2764,11 +2795,12 @@ static void SwapInt(int *a, int *b) {
 
 - (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info
 {
-    [currentGrid_ setContentsFromDVRFrame:s len:len info:info];
+    assert(len == info.width * info.height * sizeof(screen_char_t));
+    [currentGrid_ setContentsFromDVRFrame:s info:info];
     [self resetScrollbackOverflow];
     savedFindContextAbsPos_ = 0;
     [display deselect];
-    [currentGrid_ markAllCharsDirty];
+    [currentGrid_ markAllCharsDirty:YES];
 }
 
 
@@ -2819,7 +2851,7 @@ static void SwapInt(int *a, int *b) {
 // pointer to it. Better to use getLineAtIndex:withBuffer:.
 - (screen_char_t *)getLineAtIndex:(int)theIndex
 {
-    return [self getLineAtIndex:theIndex withBuffer:result_line];
+    return [self getLineAtIndex:theIndex withBuffer:[currentGrid_ resultLine]];
 }
 
 // theIndex = 0 for first line in history; for sufficiently large values, it pulls from the current
@@ -2832,7 +2864,7 @@ static void SwapInt(int *a, int *b) {
         return [currentGrid_ screenCharsAtLineNumber:(theIndex - numLinesInLineBuffer)];
     } else {
         // Get a line from the scrollback buffer.
-        screen_char_t *defaultLine = [currentGrid_ defaultLineOfWidth:currentGrid_.size.width];
+        screen_char_t *defaultLine = [[currentGrid_ defaultLineOfWidth:currentGrid_.size.width] mutableBytes];
         memcpy(buffer, defaultLine, sizeof(screen_char_t) * currentGrid_.size.width);
         int cont = [linebuffer copyLineToBuffer:buffer
                                           width:currentGrid_.size.width
@@ -2993,20 +3025,21 @@ static void SwapInt(int *a, int *b) {
 
 - (PTYTask *)shellTask
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen shellTask]", __FILE__, __LINE__);
-#endif
     return SHELL;
+}
+
+- (NSString *)debugString {
+    return [currentGrid_ debugString];
 }
 
 - (BOOL)isAllDirty
 {
-    currentGrid_.isAllDirty;
+    return currentGrid_.isAllDirty;
 }
 
 - (void)resetAllDirty
 {
-    currentGrid.allDirty = NO;
+    currentGrid_.allDirty = NO;
 }
 
 - (void)setCharDirtyAtCursorX:(int)x Y:(int)y
@@ -3017,11 +3050,11 @@ static void SwapInt(int *a, int *b) {
         xToMark = 0;
         yToMark++;
     }
-    [currentGrid_ markCharDirtyAt:VT100GridCoordMake(xToMark, yToMark)];
+    [currentGrid_ markCharDirty:YES at:VT100GridCoordMake(xToMark, yToMark)];
     [self setCharDirtyAtX:xToMark Y:yToMark];
     if (xToMark < currentGrid_.size.width - 1) {
         // Just in case the cursor was over a double width character
-        [currentGrid_ markCharDirtyAt:VT100GridCoordMake(xToMark + 1, yToMark)];
+        [currentGrid_ markCharDirty:YES at:VT100GridCoordMake(xToMark + 1, yToMark)];
     }
 }
 

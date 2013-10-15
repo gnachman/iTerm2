@@ -365,13 +365,11 @@
 		1DD39B10180B817B004E56D5 /* VT100Grid.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8B8A131806038F00C2DC25 /* VT100Grid.m */; };
 		1DD39B11180B817B004E56D5 /* VT100GridTypes.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */; };
 		1DD39B14180B819A004E56D5 /* VT100GridTest.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD39B12180B819A004E56D5 /* VT100GridTest.h */; };
-		1DD39B15180B819A004E56D5 /* VT100GridTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B13180B819A004E56D5 /* VT100GridTest.m */; };
 		1DD39B16180B81B3004E56D5 /* VT100GridTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B13180B819A004E56D5 /* VT100GridTest.m */; };
 		1DD39B17180B82AC004E56D5 /* ScreenChar.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D36155412CBF33E00803EA9 /* ScreenChar.m */; };
 		1DD39B1A180B82F5004E56D5 /* DebugLogging.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD39B18180B82F5004E56D5 /* DebugLogging.h */; };
 		1DD39B1B180B82F5004E56D5 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
 		1DD39B1C180B834A004E56D5 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
-		1DD39B1D180B83EF004E56D5 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39AE2180B8118004E56D5 /* main.m */; };
 		1DD39B1E180B8415004E56D5 /* LineBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D72438C11F416E500BD4924 /* LineBuffer.m */; };
 		1DD39B1F180B841C004E56D5 /* RegexKitLite.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D85D1DA1306687700A3E998 /* RegexKitLite.m */; };
 		1DD39B22180B8467004E56D5 /* BackgroundThread.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA26ABF15007507004B5792 /* BackgroundThread.m */; };
@@ -707,7 +705,6 @@
 		1DD39ADB180B8118004E56D5 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		1DD39ADE180B8118004E56D5 /* iTermTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "iTermTests-Info.plist"; sourceTree = "<group>"; };
 		1DD39AE0180B8118004E56D5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		1DD39AE2180B8118004E56D5 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		1DD39AE4180B8118004E56D5 /* iTermTests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermTests-Prefix.pch"; sourceTree = "<group>"; };
 		1DD39AE6180B8118004E56D5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
 		1DD39AE8180B8118004E56D5 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -1501,7 +1498,6 @@
 			children = (
 				1DD39ADE180B8118004E56D5 /* iTermTests-Info.plist */,
 				1DD39ADF180B8118004E56D5 /* InfoPlist.strings */,
-				1DD39AE2180B8118004E56D5 /* main.m */,
 				1DD39AE4180B8118004E56D5 /* iTermTests-Prefix.pch */,
 				1DD39AE5180B8118004E56D5 /* Credits.rtf */,
 			);
@@ -2140,7 +2136,6 @@
 				1D9DCC0F142D7F5F0016228A /* BellTrigger.m in Sources */,
 				1D9DCC13142D7F970016228A /* ScriptTrigger.m in Sources */,
 				1D9DCC17142D7FC10016228A /* AlertTrigger.m in Sources */,
-				1DD39B15180B819A004E56D5 /* VT100GridTest.m in Sources */,
 				1D9DDD93142E5AC600275650 /* CoprocessTrigger.m in Sources */,
 				1D9DDD9D142E5FBB00275650 /* Coprocess.m in Sources */,
 				1D24C285142EF334006B246F /* SendTextTrigger.m in Sources */,
@@ -2149,7 +2144,6 @@
 				1DEDC8FE1451F67D004F1615 /* SessionTitleView.m in Sources */,
 				5ECE00601454E59B004861E9 /* PseudoTerminalRestorer.m in Sources */,
 				1D8255FD14687EE8007CAE78 /* PointerPrefsController.m in Sources */,
-				1DD39B1D180B83EF004E56D5 /* main.m in Sources */,
 				1D825601146881EC007CAE78 /* PointerController.m in Sources */,
 				1D825605146B258A007CAE78 /* EventMonitorView.m in Sources */,
 				1D3BBD6C14759D6C00FAB389 /* HighlightTrigger.m in Sources */,

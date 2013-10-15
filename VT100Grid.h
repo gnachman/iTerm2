@@ -218,4 +218,10 @@
 - (NSString *)compactLineDump;
 - (NSString *)compactDirtyDump;
 
+// TODO: write a test for this
+- (BOOL)addCombiningCharAtCursor:(unichar)combiningChar;
+
+// TODO: write a test for this
+- (void)insertChar:(screen_char_t)c at:(VT100GridCoord)pos times:(int)num;
+
 @end

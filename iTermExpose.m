@@ -1539,7 +1539,8 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     // Count up wasted space
     float availableSpace = screenFrame.size.width * screenFrame.size.height - searchFrame.size.width * searchFrame.size.height;
     for (i = 0; i < n; i++) {
-        const NSSize origSize = [[images objectAtIndex:i] size];
+        NSImage *image = [images objectAtIndex:i];
+        const NSSize origSize = [image size];
         NSSize scaledSize = [self scaledImageSize:origSize
                                         thumbSize:frames[i].size];
         availableSpace -= scaledSize.width * scaledSize.height;

@@ -8762,22 +8762,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int allDirty = [dataSource isAllDirty] ? 1 : 0;
     [dataSource resetAllDirty];
 
-    if (gExperimentalOptimization) {
-      int currentCursorX = [dataSource cursorX] - 1;
-      int currentCursorY = [dataSource cursorY] - 1;
-      if (prevCursorX != currentCursorX ||
-          prevCursorY != currentCursorY) {
-          // Mark previous and current cursor position dirty
-          DLog(@"Mark previous cursor position %d,%d dirty", prevCursorX, prevCursorY);
-          [dataSource setCharDirtyAtCursorX:prevCursorX Y:prevCursorY];
-          DLog(@"Mark current cursor position %d,%d dirty", currentCursorX, currentCursorY);
-          [dataSource setCharDirtyAtCursorX:currentCursorX Y:currentCursorY];
+    int currentCursorX = [dataSource cursorX] - 1;
+    int currentCursorY = [dataSource cursorY] - 1;
+    if (prevCursorX != currentCursorX ||
+        prevCursorY != currentCursorY) {
+        // Mark previous and current cursor position dirty
+        DLog(@"Mark previous cursor position %d,%d dirty", prevCursorX, prevCursorY);
+        [dataSource setCharDirtyAtCursorX:prevCursorX Y:prevCursorY];
+        DLog(@"Mark current cursor position %d,%d dirty", currentCursorX, currentCursorY);
+        [dataSource setCharDirtyAtCursorX:currentCursorX Y:currentCursorY];
 
-          // Set prevCursor[XY] to new cursor position
-          prevCursorX = currentCursorX;
-          prevCursorY = currentCursorY;
-      }
+        // Set prevCursor[XY] to new cursor position
+        prevCursorX = currentCursorX;
+        prevCursorY = currentCursorY;
     }
+
     for (int y = lineStart; y < lineEnd; y++) {
         for (int x = 0; x < WIDTH; x++) {
             int dirtyFlags = allDirty || [dataSource isDirtyAtX:x Y:y-lineStart];

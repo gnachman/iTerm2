@@ -260,7 +260,7 @@ static int advanceAndEatControlChars(unsigned char **ppdata,
             case VT100CC_LF:
             case VT100CC_VT:
             case VT100CC_FF:
-                [SCREEN setNewLine];
+                [SCREEN linefeed];
                 break;
             case VT100CC_CR:
                 [SCREEN carriageReturn];
@@ -457,7 +457,7 @@ static int getCSIParam(unsigned char *datap,
                 case VT100CC_HT:  [SCREEN setTab]; break;
                 case VT100CC_LF:
                 case VT100CC_VT:
-                case VT100CC_FF:  [SCREEN setNewLine]; break;
+                case VT100CC_FF:  [SCREEN linefeed]; break;
                 case VT100CC_CR:  [SCREEN carriageReturn]; break;
                 case VT100CC_SO:  break;
                 case VT100CC_SI:  break;

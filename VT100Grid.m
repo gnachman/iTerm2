@@ -1276,6 +1276,48 @@
     return dump;
 }
 
+- (void)insertChar:(screen_char_t)c at:(VT100GridCoord)pos times:(int)n {
+    if (pos.x >= self.rightMargin ||  // TODO: Do we really want =?
+        pos.x < self.leftMargin) {
+        return;
+    }
+    if (n + pos.x > self.rightMargin) {
+        n = self.rightMargin - pos.x;
+    }
+    if (n < 1) {
+        return;
+    }
+
+    screen_char_t *line = [self screenCharsAtLineNumber:pos.y];
+    int charsToMove = self.rightMargin - pos.x - n;
+
+    // If the last char to be moved is the left half of a DWC, erase it.
+    [self erasePossibleDoubleWidthCharInLineNumber:pos.y
+                                  startingAtOffset:pos.x + charsToMove - 1
+                                          withChar:[self defaultChar]];
+
+    // Pretty sure this isn't really needed b/c the last two chars will either
+    // be overwritten or handled by the case above, but it's harmless paranoia.
+    [self erasePossibleDoubleWidthCharInLineNumber:pos.y
+                                  startingAtOffset:self.rightMargin - 1
+                                          withChar:[self defaultChar]];
+    if (self.rightMargin == size_.width &&
+        line[size_.width].code == EOL_DWC) {
+        // Since the last char in the line is being changed, the EOL is no longer because
+        // a DWC was forced onto the next line.
+        line[size_.width].code = EOL_HARD;
+    }
+
+    memmove(line + pos.x + n,
+            line + pos.x,
+            charsToMove * sizeof(screen_char_t));
+
+    [self markCharsDirty:YES
+              inRectFrom:VT100GridCoordMake(MIN(self.rightMargin - 1, pos.x), pos.y)
+                      to:VT100GridCoordMake(self.rightMargin, pos.y)];
+    [self setCharsFrom:pos to:VT100GridCoordMake(pos.x + n - 1, pos.y) toChar:c];
+}
+
 #pragma mark - Private
 
 - (NSMutableArray *)linesWithSize:(VT100GridSize)size {

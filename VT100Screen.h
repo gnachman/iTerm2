@@ -35,7 +35,6 @@
 
 extern NSString * const kHighlightForegroundColor;
 extern NSString * const kHighlightBackgroundColor;
-extern BOOL gExperimentalOptimization;
 
 @class iTermGrowlDelegate;
 @class PTYSession;
@@ -126,7 +125,6 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)resetPreservingPrompt:(BOOL)preservePrompt;
 - (void)resetCharset;
 - (BOOL)usingDefaultCharset;
-- (void)setWidth:(int)width height:(int)height;
 - (void)setScrollback:(unsigned int)lines;
 - (void)setUnlimitedScrollback:(BOOL)enable;
 - (void)setTerminal:(VT100Terminal *)terminal;
@@ -149,17 +147,11 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)setSaveToScrollbackInAlternateScreen:(BOOL)flag;
 - (BOOL)growl;
 
-// line access
-
-- (NSString *)getLineString:(screen_char_t *)theLine;
-
 // edit screen buffer
 - (void)putToken:(VT100TCC)token;
 - (void)clearBuffer;
 - (void)clearScrollbackBuffer;
-- (void)savePrimaryBuffer;
 - (void)showPrimaryBuffer;
-- (void)saveAltBuffer;
 - (void)showAltBuffer;
 
 - (void)setSendModifiers:(int *)modifiers
@@ -169,9 +161,8 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 
 // internal
 - (void)setString:(NSString *)s ascii:(BOOL)ascii;
-- (void)addLineToScrollback;
 - (void)crlf; // -crlf is called only by tmux integration, so it ignores vsplit mode.
-- (void)setNewLine;
+- (void)linefeed;
 - (void)deleteCharacters:(int)n;
 - (void)backSpace;
 - (void)backTab;
@@ -195,14 +186,10 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)saveCursorPosition;
 - (void)restoreCursorPosition;
 - (void)setTopBottom:(VT100TCC)token;
-- (void)scrollUp;
-- (void)scrollDown;
 - (void)activateBell;
 - (void)deviceReport:(VT100TCC)token withQuestion:(BOOL)question;
 - (void)deviceAttribute:(VT100TCC)token;
 - (void)secondaryDeviceAttribute:(VT100TCC)token;
-- (void)insertBlank:(int)n;
-- (void)insertLines:(int)n;
 - (void)deleteLines:(int)n;
 - (void)blink;
 
@@ -210,16 +197,8 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)setAltScreen:(NSArray *)lines;
 - (void)setTmuxState:(NSDictionary *)state;
 
-- (void)scrollScreenIntoScrollbackBuffer:(int)leaving;
-
-// Set a range of bytes to dirty=1
-- (void)setRangeDirty:(NSRange)range;
-
 // Set the char at x,y dirty.
 - (void)setCharDirtyAtX:(int)x Y:(int)y;
-
-// set a rectangular region dirty
-- (void)setRectDirtyFromX:(int)fromX Y:(int)fromY toX:(int)toX Y:(int)toY;
 
 // Check if any flag is set at an x,y coordinate in the dirty array
 - (BOOL)isDirtyAtX:(int)x Y:(int)y;
