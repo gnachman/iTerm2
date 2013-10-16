@@ -405,6 +405,9 @@
 }
 
 - (void)setCharsFrom:(VT100GridCoord)from to:(VT100GridCoord)to toChar:(screen_char_t)c {
+    if (from.x > to.x || from.y > to.y) {
+        return;
+    }
     for (int y = MAX(0, from.y); y <= MIN(to.y, size_.height - 1); y++) {
         screen_char_t *line = [self screenCharsAtLineNumber:y];
         [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:from.x - 1 withChar:c];
@@ -412,7 +415,7 @@
         for (int x = MAX(0, from.x); x <= MIN(to.x, size_.width - 1); x++) {
             line[x] = c;
         }
-        if (to.x == size_.width - 1) {
+        if (c.code == 0 && to.x == size_.width - 1) {
             line[size_.width].code = EOL_HARD;
         }
     }
@@ -802,33 +805,54 @@
         startCoord.y < size_.height) {
         int lineNumber = startCoord.y;
         if (n + startCoord.x > rightMargin) {
-            n = rightMargin - startCoord.x;
+            n = rightMargin - startCoord.x + 1;
         }
 
         // get the appropriate screen line
         aLine = [self screenCharsAtLineNumber:startCoord.y];
 
-        if (n > 0 && startCoord.x + n < rightMargin) {
+        if (n > 0 && startCoord.x + n <= rightMargin) {
             // Erase a section in the middle of a line. Shift the stuff to the right of the
             // deletion region left to the startCoord.
 
+            // Deleting right half of DWC at startCoord?
             [self erasePossibleDoubleWidthCharInLineNumber:startCoord.y
                                           startingAtOffset:startCoord.x - 1
                                                   withChar:[self defaultChar]];
+
+            // Deleting left half of DWC at end of run to be deleted?
             [self erasePossibleDoubleWidthCharInLineNumber:startCoord.y
                                           startingAtOffset:startCoord.x + n - 1
                                                   withChar:[self defaultChar]];
-            const int numCharsToMove = (rightMargin - startCoord.x - n);
+
+            // When there's a scroll region, are we moving the left half of a DWC w/o right half?
+            [self erasePossibleDoubleWidthCharInLineNumber:startCoord.y
+                                          startingAtOffset:self.rightMargin
+                                                  withChar:[self defaultChar]];
+            const int numCharsToMove = rightMargin - startCoord.x - n + 1;
+
+            // Try to clean up DWC_SKIP+EOL_DWC pair, if needed.
+            if (rightMargin == size_.width - 1 &&
+                aLine[rightMargin].code == DWC_SKIP) {
+                // Moving DWC_SKIP left will break it.
+                aLine[rightMargin].code = 0;
+            }
+            if (rightMargin == size_.width - 1 &&
+                aLine[size_.width].code == EOL_DWC) {
+                // When the previous if statement is true, this one should also always be true.
+                aLine[size_.width].code = EOL_HARD;
+            }
+
             memmove(aLine + startCoord.x,
                     aLine + startCoord.x + n,
                     numCharsToMove * sizeof(screen_char_t));
             [self markCharsDirty:YES
                       inRectFrom:VT100GridCoordMake(startCoord.x, lineNumber)
                               to:VT100GridCoordMake(startCoord.x + numCharsToMove - 1, lineNumber)];
+            // Erase chars on right side of line.
         }
-        // Erase chars on right side of line.
-        [self setCharsFrom:VT100GridCoordMake(rightMargin - n, lineNumber)
-                        to:VT100GridCoordMake(rightMargin - 1, lineNumber)
+        [self setCharsFrom:VT100GridCoordMake(rightMargin - n + 1, lineNumber)
+                        to:VT100GridCoordMake(rightMargin, lineNumber)
                     toChar:defaultChar];
     }
 }
@@ -1318,40 +1342,46 @@
 }
 
 - (void)insertChar:(screen_char_t)c at:(VT100GridCoord)pos times:(int)n {
-    if (pos.x >= self.rightMargin ||  // TODO: Do we really want =?
+    if (pos.x > self.rightMargin ||  // TODO: Test right-margin boundary case
         pos.x < self.leftMargin) {
         return;
     }
     if (n + pos.x > self.rightMargin) {
-        n = self.rightMargin - pos.x;
+        n = self.rightMargin - pos.x + 1;
     }
     if (n < 1) {
         return;
     }
 
     screen_char_t *line = [self screenCharsAtLineNumber:pos.y];
-    int charsToMove = self.rightMargin - pos.x - n;
+    int charsToMove = self.rightMargin - pos.x - n + 1;
+
+    // Splitting a dwc in half?
+    [self erasePossibleDoubleWidthCharInLineNumber:pos.y
+                                  startingAtOffset:pos.x - 1
+                                          withChar:[self defaultChar]];
 
     // If the last char to be moved is the left half of a DWC, erase it.
     [self erasePossibleDoubleWidthCharInLineNumber:pos.y
                                   startingAtOffset:pos.x + charsToMove - 1
                                           withChar:[self defaultChar]];
 
-    // Pretty sure this isn't really needed b/c the last two chars will either
-    // be overwritten or handled by the case above, but it's harmless paranoia.
+    // When there's a scroll region, does the right margin overlap half a dwc?
     [self erasePossibleDoubleWidthCharInLineNumber:pos.y
-                                  startingAtOffset:self.rightMargin - 1
+                                  startingAtOffset:self.rightMargin
                                           withChar:[self defaultChar]];
-    if (self.rightMargin == size_.width &&
-        line[size_.width].code == EOL_DWC) {
-        // Since the last char in the line is being changed, the EOL is no longer because
-        // a DWC was forced onto the next line.
-        line[size_.width].code = EOL_HARD;
-    }
 
     memmove(line + pos.x + n,
             line + pos.x,
             charsToMove * sizeof(screen_char_t));
+
+    // Try to clean up DWC_SKIP+EOL_DWC pair, if needed.
+    if (self.rightMargin == size_.width - 1 &&
+        line[size_.width].code == EOL_DWC) {
+        // The line shifting means a split DWC is gone. The wrapping changes to hard if the last
+        // code is 0 because soft wrapping doesn't make sense across a null code.
+        line[size_.width].code = line[size_.width - 1].code ? EOL_SOFT : EOL_HARD;
+    }
 
     [self markCharsDirty:YES
               inRectFrom:VT100GridCoordMake(MIN(self.rightMargin - 1, pos.x), pos.y)

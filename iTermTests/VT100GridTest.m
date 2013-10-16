@@ -2097,14 +2097,271 @@ do { \
     assert([[str decomposedStringWithCanonicalMapping] isEqualToString:[@"á̧" decomposedStringWithCanonicalMapping]]);
 }
 
-// Missing tests:
-/*
+- (void)testDeleteChars {
+    // Base case
+    VT100Grid *grid = [self gridFromCompactLinesWithContinuationMarks:
+                       @"abcd!\n"
+                       @"efg.!"];
+    [grid deleteChars:1 startingAt:VT100GridCoordMake(1, 0)];
+    assert([[grid compactLineDump] isEqualToString:
+            @"acd.\n"
+            @"efg."]);
 
- - (void)deleteChars:(int)num
- startingAt:(VT100GridCoord)startCoord;
+    // Delete more chars than exist in line
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcd+\n"
+            @"efg.!"];
+    [grid deleteChars:100 startingAt:VT100GridCoordMake(1, 0)];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"a...!\n"
+            @"efg.!"]);
 
- - (void)insertChar:(screen_char_t)c at:(VT100GridCoord)pos times:(int)num;
-*/
+    // Delete 0 chars
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcd+\n"
+            @"efg.!"];
+    [grid deleteChars:0 startingAt:VT100GridCoordMake(1, 0)];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!"]);
+
+    // Orphan dwc - deleting left half
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"aB-d!\n"
+            @"efg.!"];
+    [grid deleteChars:1 startingAt:VT100GridCoordMake(1, 0)];
+    assert([[grid compactLineDump] isEqualToString:
+            @"a.d.\n"
+            @"efg."]);
+
+    // Orphan dwc - deleting right half
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"aB-d!\n"
+            @"efg.!"];
+    [grid deleteChars:1 startingAt:VT100GridCoordMake(2, 0)];
+    assert([[grid compactLineDump] isEqualToString:
+            @"a.d.\n"
+            @"efg."]);
+
+    // Break DWC_SKIP
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abc>>\n"
+            @"D-ef!"];
+    [grid deleteChars:1 startingAt:VT100GridCoordMake(0, 0)];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"bc..!\n"
+            @"D-ef!"]);
+
+    // Scroll region
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcde+\n"
+            @"fghi.!"];
+    grid.scrollRegionCols = VT100GridRangeMake(1, 3);
+    grid.useScrollRegionCols = YES;
+    [grid deleteChars:1 startingAt:VT100GridCoordMake(2, 0)];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"abd.e+\n"
+            @"fghi.!"]);
+
+    // Scroll region, deleting bignum
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcde+\n"
+            @"fghi.!"];
+    grid.scrollRegionCols = VT100GridRangeMake(1, 3);
+    grid.useScrollRegionCols = YES;
+    [grid deleteChars:100 startingAt:VT100GridCoordMake(2, 0)];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"ab..e+\n"
+            @"fghi.!"]);
+
+    // Scroll region, creating orphan dwc by deleting right half
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"aB-cd+\n"
+            @"fghi.!"];
+    grid.scrollRegionCols = VT100GridRangeMake(1, 3);
+    grid.useScrollRegionCols = YES;
+    [grid deleteChars:1 startingAt:VT100GridCoordMake(2, 0)];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"a.c.d+\n"
+            @"fghi.!"]);
+
+    // Scroll region right boundary overlaps half a DWC, orphaning its right half
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abC-e+"];
+    grid.scrollRegionCols = VT100GridRangeMake(0, 3);
+    grid.useScrollRegionCols = YES;
+    [grid deleteChars:1 startingAt:VT100GridCoordMake(0, 0)];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"b...e+"]);
+
+    // Scroll region right boundary overlaps half a DWC, orphaning its left half
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abC-efg+"];
+    grid.scrollRegionCols = VT100GridRangeMake(3, 2);
+    grid.useScrollRegionCols = YES;
+    [grid deleteChars:1 startingAt:VT100GridCoordMake(3, 0)];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"ab.e.fg+"]);
+
+    // DWC skip survives with a scroll region
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abc>>\n"
+            @"D-ef!"];
+    grid.scrollRegionCols = VT100GridRangeMake(0, 3);
+    grid.useScrollRegionCols = YES;
+    [grid deleteChars:1 startingAt:VT100GridCoordMake(0, 0)];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"bc.>>\n"
+            @"D-ef!"]);
+
+    // Delete outside scroll region (should be a noop)
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abc!\n"
+            @"def!"];
+    grid.scrollRegionCols = VT100GridRangeMake(0, 1);
+    grid.useScrollRegionCols = YES;
+    [grid deleteChars:1 startingAt:VT100GridCoordMake(10, 10)];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"abc!\n"
+            @"def!"]);
+}
+
+- (void)testInsertChar {
+    // Base case
+    VT100Grid *grid = [self gridFromCompactLinesWithContinuationMarks:
+                       @"abcd+\n"
+                       @"efg.!"];
+    screen_char_t c = [grid defaultChar];
+    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:1];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"a.bc+\n"
+            @"efg.!"]);
+
+    // Insert more chars than there is room for
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcd+\n"
+            @"efg.!"];
+    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:100];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"a...!\n"
+            @"efg.!"]);
+
+    // Verify that continuation marks are preserved if inserted char is not null.
+    c.code = 'x';
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcd+\n"
+            @"efg.!"];
+    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:100];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"axxx+\n"
+            @"efg.!"]);
+    c.code = 0;
+
+    // Insert 0 chars
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcd+\n"
+            @"efg.!"];
+    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:0];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!"]);
+
+    // Insert into middle of dwc, creating two orphans
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"aB-de+\n"
+            @"fghi.!"];
+    c.code = 'x';
+    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:1];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"a.x.d+\n"
+            @"fghi.!"]);
+    c.code = 0;
+
+    // Shift right one, removing DWC_SKIP, changing EOL_DWC into EOL_SOFT
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcd>>\n"
+            @"E-fgh!"];
+    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:1];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"ab.cd+\n"
+            @"E-fgh!"]);
+
+    // Break DWC_SKIP/EOL_DWC
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcd>>\n"
+            @"E-fgh!"];
+    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:2];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"ab..c+\n"
+            @"E-fgh!"]);
+
+    // Break DWC_SKIP/EOL_DWC, leave null and hard-wrap
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abC->>\n"
+            @"E-fgh!"];
+    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:2];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"ab...!\n"
+            @"E-fgh!"]);
+
+    // Scroll region
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcdef+"];
+    grid.scrollRegionCols = VT100GridRangeMake(1, 4);
+    grid.useScrollRegionCols = YES;
+    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:1];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"ab.cdf+"]);
+
+    // Insert more than fits in scroll region
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcdef+"];
+    grid.scrollRegionCols = VT100GridRangeMake(1, 4);
+    grid.useScrollRegionCols = YES;
+    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:100];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"ab...f+"]);
+
+    // Make orphan by inserting into scroll region that overlaps left half of dwc
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcD-f+"];
+    grid.scrollRegionCols = VT100GridRangeMake(1, 3);
+    grid.useScrollRegionCols = YES;
+    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:1];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"a.bc.f+"]);
+
+    // Make orphan by inserting into scroll region that overlaps right half of dec
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"A-cdef+"];
+    grid.scrollRegionCols = VT100GridRangeMake(1, 3);
+    grid.useScrollRegionCols = YES;
+    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:1];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"...cef+"]);
+
+    // DWC skip survives with scroll region
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abC->>\n"
+            @"E-fgh!"];
+    grid.scrollRegionCols = VT100GridRangeMake(0, 2);
+    grid.useScrollRegionCols = YES;
+    [grid insertChar:c at:VT100GridCoordMake(0, 0) times:1];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @".aC->>\n"
+            @"E-fgh!"]);
+
+    // Insert outside scroll region (noop)
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abC->>\n"
+            @"E-fgh!"];
+    grid.scrollRegionCols = VT100GridRangeMake(0, 2);
+    grid.useScrollRegionCols = YES;
+    [grid insertChar:c at:VT100GridCoordMake(3, 0) times:1];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"abC->>\n"
+            @"E-fgh!"]);
+}
 
 @end
 
