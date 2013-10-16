@@ -8410,7 +8410,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)logWorkingDirectoryAtLine:(long long)line
 {
-    NSString *workingDirectory = [[dataSource shellTask] getWorkingDirectory];
+    NSString *workingDirectory = [[dataSource shell] getWorkingDirectory];
     [self logWorkingDirectoryAtLine:line withDirectory:workingDirectory];
 }
 
@@ -8431,7 +8431,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Return current directory if not able to log via XTERMCC_WINDOW_TITLE
     if ([workingDirectoryAtLines count] == 0) {
-        return [[dataSource shellTask] getWorkingDirectory];
+        return [[dataSource shell] getWorkingDirectory];
     }
 
     long long previousLine = [[[workingDirectoryAtLines lastObject] objectAtIndex:0] longLongValue];

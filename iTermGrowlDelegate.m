@@ -30,12 +30,10 @@
 
 #import "iTermGrowlDelegate.h"
 #import "PreferencePanel.h"
-#import "PTYSession.h"
 #import "PTYTab.h"
 #import "iTermController.h"
 #import "PseudoTerminal.h"
 #import "Growl.framework/Headers/GrowlApplicationBridge.h"
-#import "SessionView.h"
 
 /**
  **  The category is used to extend iTermGrowlDelegate with private methods.
@@ -125,28 +123,29 @@
       [self growlNotify:title
         withDescription:description
         andNotification:notification
-             andSession:nil];
+            windowIndex:-1
+               tabIndex:-1
+              viewIndex:-1];
 }
 
 - (void)growlNotify:(NSString *)title
     withDescription:(NSString *)description
     andNotification:(NSString *)notification
-         andSession:(PTYSession *)session
+        windowIndex:(int)windowIndex
+           tabIndex:(int)tabIndex
+          viewIndex:(int)viewIndex
 {
     if (![self isEnabled]) {
         return;
     }
 
     NSDictionary *context = nil;
-    if (session) {
-      context = [[[NSDictionary alloc] initWithObjectsAndKeys:
-                     [NSNumber numberWithInt:[[iTermController sharedInstance] indexOfTerminal:[[session tab] realParentWindow]]],
-                     @"win",
-                     [NSNumber numberWithInt:[[session tab] number]],
-                     @"tab",
-                     [NSNumber numberWithInt:[[session view] viewId]],
-                     @"view",
-                     nil] autorelease];
+    if (windowIndex >= 0) {
+        context = [[[NSDictionary alloc] initWithObjectsAndKeys:
+                    [NSNumber numberWithInt:windowIndex], @"win",
+                    [NSNumber numberWithInt:tabIndex], @"tab",
+                    [NSNumber numberWithInt:viewIndex], @"view",
+                    nil] autorelease];
     }
 
     if ([[PreferencePanel sharedInstance] enableGrowl]) {

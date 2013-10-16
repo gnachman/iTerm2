@@ -45,7 +45,7 @@
 
 @class MovingAverage;
 @class PTYScrollView;
-@class PTYSession;
+@class PTYSession;  // TODO: Remove this after PTYTextView doesn't depend directly on PTYSession
 @class PTYTask;
 @class SearchResult;
 @class ThreeFingerTapGestureRecognizer;
@@ -129,7 +129,7 @@
 
 // Save the position of the current find context (with the screen appended).
 - (void)saveFindContextAbsPos;
-- (PTYTask *)shellTask;
+- (PTYTask *)shell;
 
 // Return a human-readable dump of the screen contents.
 - (NSString*)debugString;

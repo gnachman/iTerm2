@@ -404,7 +404,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     NSLog(@"%s(%d):-[PTYSession setScreenSize:parent:]", __FILE__, __LINE__);
 #endif
 
-    [SCREEN setSession:self];
+    SCREEN.delegate = self;
 
     // Allocate a container to hold the scrollview
     if (!view) {
@@ -459,7 +459,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [TEXTVIEW release];
 
     // assign terminal and task objects
-    [SCREEN setShellTask:SHELL];
+    [SCREEN setShell:SHELL];
     [TERMINAL setScreen: SCREEN];
     [SHELL setDelegate:self];
 
@@ -831,8 +831,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     TEXTVIEW = nil;
 
     [SHELL setDelegate:nil];
-    [SCREEN setShellTask:nil];
-    [SCREEN setSession:nil];
+    [SCREEN setShell:nil];
+    SCREEN.delegate = nil;
     [SCREEN setTerminal:nil];
     [TERMINAL setScreen:nil];
     if ([[view findViewController] delegate] == self) {
@@ -1071,8 +1071,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
             withDescription:[NSString stringWithFormat:@"Session \"%@\" in tab #%d just terminated.",
                              [self name],
                              [[self tab] realObjectCount]]
-            andNotification:@"Broken Pipes"
-                 andSession:nil];
+            andNotification:@"Broken Pipes"];
     }
 
     EXIT = YES;
@@ -1645,7 +1644,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                                  [self name],
                                  [[self tab] realObjectCount]]
                 andNotification:@"Bells"
-                     andSession:self];
+                    windowIndex:[self screenWindowIndex]
+                       tabIndex:[self screenTabIndex]
+                      viewIndex:[self screenViewIndex]];
             }
         }
     }
@@ -1763,7 +1764,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [self setUseItalicFont:[[aDict objectForKey:KEY_USE_ITALIC_FONT] boolValue]];
 
     // set up the rest of the preferences
-    [SCREEN setPlayBellFlag:![[aDict objectForKey:KEY_SILENCE_BELL] boolValue]];
+    [SCREEN setAudibleBell:![[aDict objectForKey:KEY_SILENCE_BELL] boolValue]];
     [SCREEN setShowBellFlag:[[aDict objectForKey:KEY_VISUAL_BELL] boolValue]];
     [SCREEN setFlashBellFlag:[[aDict objectForKey:KEY_FLASHING_BELL] boolValue]];
     [SCREEN setGrowlFlag:[[aDict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue]];
@@ -4274,6 +4275,194 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     // Restore locale and return
     setlocale(LC_CTYPE, backupLocale);
     return supported;
+}
+
+#pragma mark - VT100ScreenDelegate
+
+- (void)screenNeedsRedraw {
+    [self refreshAndStartTimerIfNeeded];
+}
+
+- (void)screenUpdateDisplay {
+    [self updateDisplay];
+}
+
+- (void)screenSizeDidChange {
+    [self updateScroll];
+}
+
+- (void)screenTriggerableChangeDidOccur {
+    [self clearTriggerLine];
+}
+
+- (BOOL)screenShouldSyncTitle {
+    return [[[self addressBookEntry] objectForKey:KEY_SYNC_TITLE] boolValue];
+}
+
+- (void)screenDidAppendStringToCurrentLine:(NSString *)string {
+    [self appendStringToTriggerLine:string];
+}
+
+- (void)screenSetCursorBlinking:(BOOL)blink
+                     cursorType:(ITermCursorType)type {
+    [[self TEXTVIEW] setBlinkingCursor:blink];
+    [[self TEXTVIEW] setCursorType:type];
+}
+
+- (BOOL)screenShouldInitiateWindowResize {
+    return [[[self addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue];
+}
+
+- (void)screenResizeToWidth:(int)width height:(int)height {
+    [[self tab] sessionInitiatedResize:self width:width height:height];
+}
+
+- (BOOL)screenShouldBeginPrinting {
+    return ![[[self addressBookEntry] objectForKey:KEY_DISABLE_PRINTING] boolValue];
+}
+
+- (NSString *)screenNameExcludingJob {
+    return [self joblessDefaultName];
+}
+
+- (void)screenSetWindowTitle:(NSString *)title {
+    [self setWindowTitle:title];
+}
+
+- (NSString *)screenWindowTitle {
+    return [self windowTitle];
+}
+
+- (NSString *)screenDefaultName {
+    return [self defaultName];
+}
+
+- (void)screenSetName:(NSString *)theName {
+    [self setName:theName];
+}
+
+- (void)screenLogWorkingDirectoryAtLine:(long long)lineNumber {
+    [[self TEXTVIEW] logWorkingDirectoryAtLine:lineNumber];
+}
+
+- (BOOL)screenWindowIsFullscreen {
+    return [[[self tab] parentWindow] anyFullScreen];
+}
+
+- (void)screenMoveWindowTopLeftPointTo:(NSPoint)point {
+    [[[self tab] parentWindow] windowSetFrameTopLeftPoint:point];
+}
+
+- (NSScreen *)screenWindowScreen {
+    return [[[self tab] parentWindow] windowScreen];
+}
+
+// If flag is set, miniaturize; otherwise, deminiaturize.
+- (void)screenMiniaturizeWindow:(BOOL)flag {
+    if (flag) {
+        [[[self tab] parentWindow] windowPerformMiniaturize:nil];
+    } else {
+        [[[self tab] parentWindow] windowDeminiaturize:nil];
+    }
+}
+
+// If flag is set, bring to front; if not, move to back.
+- (void)screenRaise:(BOOL)flag {
+    if (flag) {
+        [[[self tab] parentWindow] windowOrderFront:nil];
+    } else {
+        [[[self tab] parentWindow] windowOrderBack:nil];
+    }
+}
+
+- (BOOL)screenWindowIsMiniaturized {
+    return [[[self tab] parentWindow] windowIsMiniaturized];
+}
+
+- (void)screenWriteDataToTask:(NSData *)data {
+    [self writeTask:data];
+}
+
+- (NSRect)screenWindowFrame {
+    return [[[self tab] parentWindow] windowFrame];
+}
+
+- (NSRect)screenCurrentlyVisibleRect {
+    return [[[[[self tab] parentWindow] currentSession] SCROLLVIEW] documentVisibleRect];
+}
+
+// If the flag is set, push the window title; otherwise push the icon title.
+- (void)screenPushCurrentTitleForWindow:(BOOL)flag {
+    if (flag) {
+        [self pushWindowTitle];
+    } else {
+        [self pushIconTitle];
+    }
+}
+
+// If the flag is set, pop the window title; otherwise pop the icon title.
+- (void)screenPopCurrentTitleForWindow:(BOOL)flag {
+    if (flag) {
+        [self popWindowTitle];
+    } else {
+        [self popIconTitle];
+    }
+}
+
+- (NSString *)screenName {
+    return [self name];
+}
+
+- (NSString *)screenWindowName {
+    return [self screenWindowName];
+}
+
+- (int)screenNumber {
+    return [[self tab] realObjectCount];
+}
+
+- (int)screenWindowIndex {
+    return [[iTermController sharedInstance] indexOfTerminal:[[self tab] realParentWindow]];
+}
+
+- (int)screenTabIndex {
+    return [[self tab] number];
+}
+
+- (int)screenViewIndex {
+    return [[self view] viewId];
+}
+
+- (void)screenStartTmuxMode {
+    [self startTmuxMode];
+}
+
+- (void)screenModifiersDidChangeTo:(NSArray *)modifiers {
+    [self setSendModifiers:modifiers];
+}
+
+- (BOOL)screenShouldTreatAmbiguousCharsAsDoubleWidth {
+    return [self doubleWidth];
+}
+
+- (BOOL)screenShouldAppendToScrollbackWithStatusBar {
+    return [[[self addressBookEntry] objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue];
+}
+
+- (void)screenShowVisualBell {
+    [self setBell:YES];
+}
+
+- (void)screenPrintString:(NSString *)string {
+    [[self TEXTVIEW] printContent:string];
+}
+
+- (void)screenPrintVisibleArea {
+    [[self TEXTVIEW] print:nil];
+}
+
+- (BOOL)screenShouldSendContentsChangedNotification {
+    return [self wantsContentChangedNotification];
 }
 
 @end

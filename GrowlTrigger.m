@@ -35,7 +35,9 @@
                          [aSession name],
                          [[aSession tab] realObjectCount]]
         andNotification:@"Customized Message"
-             andSession:aSession];
+        windowIndex:[aSession screenWindowIndex]
+           tabIndex:[aSession screenTabIndex]
+          viewIndex:[aSession screenViewIndex]];
 }
 
 @end

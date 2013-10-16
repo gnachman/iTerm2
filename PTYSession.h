@@ -26,33 +26,35 @@
 
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
-#import "ProfileModel.h"
+#include <sys/time.h>
+
 #import "DVR.h"
-#import "WindowControllerInterface.h"
-#import "TextViewWrapper.h"
 #import "FindViewController.h"
 #import "ITAddressBookMgr.h"
 #import "LineBuffer.h"
-#import "TmuxGateway.h"
-#import "TmuxController.h"
-#import "PasteViewController.h"
 #import "PTYTextView.h"
-#include <sys/time.h>
+#import "PasteViewController.h"
+#import "ProfileModel.h"
+#import "TextViewWrapper.h"
+#import "TmuxController.h"
+#import "TmuxGateway.h"
+#import "WindowControllerInterface.h"
+#import "VT100Screen.h"
 
 #define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
 #define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
 
+@class FakeWindow;
+@class PTYScrollView;
 @class PTYTask;
 @class PTYTextView;
-@class PTYScrollView;
+@class PasteContext;
+@class PreferencePanel;
+@class PseudoTerminal;
 @class VT100Screen;
 @class VT100Terminal;
-@class PreferencePanel;
 @class iTermController;
 @class iTermGrowlDelegate;
-@class FakeWindow;
-@class PseudoTerminal;
-@class PasteContext;
 
 // Timer period when all we have to do is update blinking text/cursor.
 static const float kBlinkTimerIntervalSec = 1.0 / 2.0;
@@ -77,7 +79,8 @@ typedef enum {
     FindViewControllerDelegate,
     PasteViewControllerDelegate,
     PTYTextViewDelegate,
-    TmuxGatewayDelegate>
+    TmuxGatewayDelegate,
+    VT100ScreenDelegate>
 {
     // Owning tab.
     PTYTab* tab_;

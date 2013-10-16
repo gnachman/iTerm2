@@ -3808,7 +3808,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
                                                                   [[self activeSession] name],
                                                                   [self realObjectCount]]
                                                  andNotification:@"Idle"
-                                                      andSession:session];
+                                                     windowIndex:[session screenWindowIndex]
+                                                        tabIndex:[session screenTabIndex]
+                                                       viewIndex:[session screenViewIndex]];
                 [session setGrowlIdle:YES];
                 [session setGrowlNewOutput:NO];
             }
@@ -3841,7 +3843,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
                                                           [[self activeSession] name],
                                                           [self realObjectCount]]
                                          andNotification:@"New Output"
-                                              andSession:[self activeSession]];
+                                             windowIndex:[[self activeSession] screenWindowIndex]
+                                                tabIndex:[[self activeSession] screenTabIndex]
+                                               viewIndex:[[self activeSession] screenViewIndex]];
         [[self activeSession] setGrowlNewOutput:YES];
     }
 

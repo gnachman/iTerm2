@@ -54,7 +54,6 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import "PTYSession.h"
 #import "Growl.framework/Headers/GrowlApplicationBridge.h"
 
 
@@ -101,14 +100,19 @@
   /**
    **  Generate a 'full' Growl message with a specified notification type.
    **/
-- (void) growlNotify: (NSString *) title withDescription: (NSString *) description andNotification: (NSString *) notification;
+- (void) growlNotify:(NSString *)title
+     withDescription:(NSString *)description
+     andNotification:(NSString *)notification;
+
   /**
    **  Generate a 'full' Growl message with a specified notification type,
-   **  associated with a PTYSession.
+   **  associated with a particular window/tab/view.
    **/
 - (void)growlNotify:(NSString *)title
     withDescription:(NSString *)description
     andNotification:(NSString *)notification
-         andSession:(PTYSession *)session;
+        windowIndex:(int)windowIndex
+           tabIndex:(int)tabIndex
+          viewIndex:(int)viewIndex;
 
 @end

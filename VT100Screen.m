@@ -41,7 +41,6 @@
 #import "ITAddressBookMgr.h"
 #import "NSStringITerm.h"
 #import "PTYScrollView.h"
-#import "PTYSession.h"
 #import "PTYTab.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
@@ -251,6 +250,10 @@ void StringToScreenChars(NSString *s,
 
 @implementation VT100Screen
 
+@synthesize terminal = terminal_;
+@synthesize shell = shell_;
+@synthesize audibleBell = audibleBell_;
+
 #define DEFAULT_WIDTH     80
 #define DEFAULT_HEIGHT    25
 #define DEFAULT_FONTSIZE  14
@@ -265,7 +268,7 @@ void StringToScreenChars(NSString *s,
 {
     self = [super init];
     if (self) {
-        TERMINAL = [terminal retain];
+        terminal_ = [terminal retain];
         primaryGrid_ = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(DEFAULT_WIDTH, DEFAULT_HEIGHT)
                                               delegate:terminal];
         currentGrid_ = primaryGrid_;
@@ -292,6 +295,8 @@ void StringToScreenChars(NSString *s,
     [printToAnsiString release];
     [linebuffer release];
     [dvr release];
+    [terminal_ release];
+    [shell_ release];
     [super dealloc];
 }
 
@@ -801,7 +806,7 @@ static void SwapInt(int *a, int *b) {
     // An immediate refresh is needed so that the size of TEXTVIEW can be
     // adjusted to fit the new size
     DebugLog(@"resizeWidth setDirty");
-    [SESSION refreshAndStartTimerIfNeeded];
+    [delegate_ screenNeedsRedraw];
     if (hasSelection &&
         newSelStartY >= linesDropped &&
         newSelEndY >= linesDropped) {
@@ -813,7 +818,7 @@ static void SwapInt(int *a, int *b) {
         [display deselect];
     }
 
-    [SESSION updateScroll];
+    [delegate_ screenSizeDidChange];
 }
 
 - (BOOL)usingDefaultCharset {
@@ -822,7 +827,7 @@ static void SwapInt(int *a, int *b) {
             return NO;
         }
     }
-    if ([TERMINAL charset]) {
+    if ([terminal_ charset]) {
         return NO;
     }
     return YES;
@@ -841,7 +846,7 @@ static void SwapInt(int *a, int *b) {
 
 - (void)resetScreen
 {
-    [SESSION clearTriggerLine];
+    [delegate_ screenTriggerableChangeDidOccur];
     [self incrementOverflowBy:[currentGrid_ resetWithLineBuffer:linebuffer
                                             unlimitedScrollback:unlimitedScrollback_]];
     [self clearScreen];
@@ -887,34 +892,8 @@ static void SwapInt(int *a, int *b) {
     unlimitedScrollback_ = enable;
 }
 
-- (void)setSession:(PTYSession *)session
-{
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s", __PRETTY_FUNCTION__);
-#endif
-    SESSION=session;
-}
-
-- (void)setTerminal:(VT100Terminal *)terminal
-{
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen setTerminal:%@]",
-      __FILE__, __LINE__, terminal);
-#endif
-    TERMINAL = terminal;
-}
-
 - (void)setAllowTitleReporting:(BOOL)allow {
     allowTitleReporting_ = allow;
-}
-
-- (void)setShellTask:(PTYTask *)shell
-{
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen setShellTask:%@]",
-      __FILE__, __LINE__, shell);
-#endif
-    SHELL = shell;
 }
 
 - (PTYTextView *) display
@@ -1006,7 +985,7 @@ static void SwapInt(int *a, int *b) {
         [data setLength:outputLength];
 
         NSString *resultString = [[[NSString alloc] initWithData:data
-                                                        encoding:[TERMINAL encoding]] autorelease];
+                                                        encoding:[terminal_ encoding]] autorelease];
         // set the result to paste board.
         NSPasteboard* thePasteboard = [NSPasteboard generalPasteboard];
         [thePasteboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
@@ -1021,7 +1000,7 @@ static void SwapInt(int *a, int *b) {
     if (![[PreferencePanel sharedInstance] showBookmarkName]) {
         return NO;
     }
-    return [[[SESSION addressBookEntry] objectForKey:KEY_SYNC_TITLE] boolValue];
+    return [delegate_ screenShouldSyncTitle];
 }
 
 - (void)putToken:(VT100TCC)token
@@ -1042,7 +1021,7 @@ static void SwapInt(int *a, int *b) {
                 // else display string on screen
                 [self setString:token.u.string ascii:(token.type == VT100_ASCIISTRING)];
             }
-            [SESSION appendStringToTriggerLine:token.u.string];
+            [delegate_ screenDidAppendStringToCurrentLine:token.u.string];
             break;
 
         case VT100_UNKNOWNCHAR:
@@ -1054,7 +1033,7 @@ static void SwapInt(int *a, int *b) {
         case VT100CC_ENQ:
             break;
         case VT100CC_BEL:
-            [SESSION appendStringToTriggerLine:@"\a"];
+            [delegate_ screenDidAppendStringToCurrentLine:@"\a"];
             [self activateBell];
             break;
         case VT100CC_BS:
@@ -1071,11 +1050,11 @@ static void SwapInt(int *a, int *b) {
             } else {
                 [self linefeed];
             }
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case VT100CC_CR:
             [currentGrid_ moveCursorToLeftMargin];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case VT100CC_SO:
             break;
@@ -1090,7 +1069,7 @@ static void SwapInt(int *a, int *b) {
             break;
         case VT100CC_DEL:
             [currentGrid_ deleteChars:1 startingAt:currentGrid_.cursor];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
 
         // VT100 CSI
@@ -1098,23 +1077,23 @@ static void SwapInt(int *a, int *b) {
             break;
         case VT100CSI_CUB:
             [self cursorLeft:token.u.csi.p[0]];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case VT100CSI_CUD:
             [self cursorDown:token.u.csi.p[0]];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case VT100CSI_CUF:
             [self cursorRight:token.u.csi.p[0]];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case VT100CSI_CUP:
             [self cursorToX:token.u.csi.p[1] Y:token.u.csi.p[0]];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case VT100CSI_CUU:
             [self cursorUp:token.u.csi.p[0]];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case VT100CSI_DA:
             [self deviceAttribute:token];
@@ -1147,7 +1126,7 @@ static void SwapInt(int *a, int *b) {
             break;
         case VT100CSI_DECRC:
             [self restoreCursorPosition];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case VT100CSI_DECREPTPARM:
             break;
@@ -1171,11 +1150,11 @@ static void SwapInt(int *a, int *b) {
             break;
         case VT100CSI_ED:
             [self eraseInDisplay:token];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case VT100CSI_EL:
             [self eraseInLine:token];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case VT100CSI_HTS:
             if (currentGrid_.cursorX < currentGrid_.size.width) {
@@ -1184,7 +1163,7 @@ static void SwapInt(int *a, int *b) {
             break;
         case VT100CSI_HVP:
             [self cursorToX:token.u.csi.p[1] Y:token.u.csi.p[0]];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case VT100CSI_NEL:
             [currentGrid_ moveCursorToLeftMargin];
@@ -1197,7 +1176,7 @@ static void SwapInt(int *a, int *b) {
             } else {
                 currentGrid_.cursorY = currentGrid_.cursorY + 1;
             }
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case VT100CSI_RI:
             if (currentGrid_.cursorY == currentGrid_.topMargin) {
@@ -1205,7 +1184,7 @@ static void SwapInt(int *a, int *b) {
             } else {
                 currentGrid_.cursorY = currentGrid_.cursorY - 1;
             }
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case VT100CSI_RIS:
             // As far as I can tell, this is not part of the standard and should not be
@@ -1213,7 +1192,7 @@ static void SwapInt(int *a, int *b) {
             break;
 
         case ANSI_RIS:
-            [TERMINAL reset];
+            [terminal_ reset];
             break;
         case VT100CSI_RM:
             break;
@@ -1236,35 +1215,29 @@ static void SwapInt(int *a, int *b) {
             // reset origin mode (done in VT100Terminal)
             // restore cursor
             [self restoreCursorPosition];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         }
         case VT100CSI_DECSCUSR:
             switch (token.u.csi.p[0]) {
                 case 0:
                 case 1:
-                    [[SESSION TEXTVIEW] setBlinkingCursor:true];
-                    [[SESSION TEXTVIEW] setCursorType:CURSOR_BOX];
+                    [delegate_ screenSetCursorBlinking:true cursorType:CURSOR_BOX];
                     break;
                 case 2:
-                    [[SESSION TEXTVIEW] setBlinkingCursor:false];
-                    [[SESSION TEXTVIEW] setCursorType:CURSOR_BOX];
+                    [delegate_ screenSetCursorBlinking:false cursorType:CURSOR_BOX];
                     break;
                 case 3:
-                    [[SESSION TEXTVIEW] setBlinkingCursor:true];
-                    [[SESSION TEXTVIEW] setCursorType:CURSOR_UNDERLINE];
+                    [delegate_ screenSetCursorBlinking:true cursorType:CURSOR_UNDERLINE];
                     break;
                 case 4:
-                    [[SESSION TEXTVIEW] setBlinkingCursor:false];
-                    [[SESSION TEXTVIEW] setCursorType:CURSOR_UNDERLINE];
+                    [delegate_ screenSetCursorBlinking:false cursorType:CURSOR_UNDERLINE];
                     break;
                 case 5:
-                    [[SESSION TEXTVIEW] setBlinkingCursor:true];
-                    [[SESSION TEXTVIEW] setCursorType:CURSOR_VERTICAL];
+                    [delegate_ screenSetCursorBlinking:true cursorType:CURSOR_VERTICAL];
                     break;
                 case 6:
-                    [[SESSION TEXTVIEW] setBlinkingCursor:false];
-                    [[SESSION TEXTVIEW] setCursorType:CURSOR_VERTICAL];
+                    [delegate_ screenSetCursorBlinking:false cursorType:CURSOR_VERTICAL];
                     break;
                 default:
                     //NSLog(@"DECSCUSR: Unrecognized parameter: %d", token.u.csi.p[0]);
@@ -1320,7 +1293,7 @@ static void SwapInt(int *a, int *b) {
          * Here's my take on the way things work. There are four charsets: G0
          * (default), G1, G2, and G3. They are switched between with codes like SI
          * (^O), SO (^N), LS2 (ESC n), and LS3 (ESC o). You can get the current
-         * character set from [TERMINAL charset], and that gives you a number from
+         * character set from [terminal_ charset], and that gives you a number from
          * 0 to 3 inclusive. It is an index into Screen's charset array. In iTerm2,
          * it is an array of booleans where 0 means normal behavior and 1 means
          * line-drawing. There should be a bunch of other values too (like
@@ -1361,12 +1334,11 @@ static void SwapInt(int *a, int *b) {
         case VT100CSI_DECSET:
         case VT100CSI_DECRST:
             if (token.u.csi.p[0] == 3 && // DECCOLM
-                [TERMINAL allowColumnMode] == YES &&
-                ![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue]) {
+                [terminal_ allowColumnMode] == YES &&
+                ![delegate_ screenShouldInitiateWindowResize]) {
                 // set the column
-                [[SESSION tab] sessionInitiatedResize:SESSION
-                                                width:([TERMINAL columnMode] ? 132 : 80)
-                                               height:currentGrid_.size.height];
+                [delegate_ screenResizeToWidth:([terminal_ columnMode] ? 132 : 80)
+                                        height:currentGrid_.size.height];
                 token.u.csi.p[0] = 2;
                 [self eraseInDisplay:token];  // erase the screen
                 token.u.csi.p[0] = token.u.csi.p[1] = 0;
@@ -1379,19 +1351,19 @@ static void SwapInt(int *a, int *b) {
         // ANSI CSI
         case ANSICSI_CBT:
             [self backTab];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case ANSICSI_CHA:
             [self cursorToX:token.u.csi.p[0]];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case ANSICSI_VPA:
             [self cursorToY:token.u.csi.p[0]];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case ANSICSI_VPR:
             [self cursorDown:token.u.csi.p[0]];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case ANSICSI_ECH:
             if (currentGrid_.cursorX < currentGrid_.size.width) {
@@ -1410,15 +1382,15 @@ static void SwapInt(int *a, int *b) {
                 // TODO: This used to always set the continuation mark to hard, but I think it should only do that if the last char in the line is erased.
                 DebugLog(@"putToken ECH");
             }
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
 
         case STRICT_ANSI_MODE:
-            [TERMINAL setStrictAnsiMode:![TERMINAL strictAnsiMode]];
+            [terminal_ setStrictAnsiMode:![terminal_ strictAnsiMode]];
             break;
 
         case ANSICSI_PRINT:
-            if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_PRINTING] boolValue]) {
+            if ([delegate_ screenShouldBeginPrinting]) {
                 switch (token.u.csi.p[0]) {
                     case 4:
                         // print our stuff!!
@@ -1448,26 +1420,26 @@ static void SwapInt(int *a, int *b) {
             break;
         case ANSICSI_RCP:
             [self restoreCursorPosition];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
 
         // XTERM extensions
         case XTERMCC_WIN_TITLE:
             newTitle = [[token.u.string copy] autorelease];
             if ([self _syncTitle]) {
-                newTitle = [NSString stringWithFormat:@"%@: %@", [SESSION joblessDefaultName], newTitle];
+                newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
             }
-            [SESSION setWindowTitle:newTitle];
+            [delegate_ screenSetWindowTitle:newTitle];
             long long lineNumber = [self absoluteLineNumberOfCursor];
-            [[SESSION TEXTVIEW] logWorkingDirectoryAtLine:lineNumber];
+            [delegate_ screenLogWorkingDirectoryAtLine:lineNumber];
             break;
         case XTERMCC_WINICON_TITLE:
             newTitle = [[token.u.string copy] autorelease];
             if ([self _syncTitle]) {
-                newTitle = [NSString stringWithFormat:@"%@: %@", [SESSION joblessDefaultName], newTitle];
+                newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
             }
-            [SESSION setWindowTitle: newTitle];
-            [SESSION setName: newTitle];
+            [delegate_ screenSetWindowTitle:newTitle];
+            [delegate_ screenSetName:newTitle];
             break;
         case XTERMCC_PASTE64:
             [self processXtermPaste64: [[token.u.string copy] autorelease]];
@@ -1475,9 +1447,9 @@ static void SwapInt(int *a, int *b) {
         case XTERMCC_ICON_TITLE:
             newTitle = [[token.u.string copy] autorelease];
             if ([self _syncTitle]) {
-                newTitle = [NSString stringWithFormat:@"%@: %@", [SESSION joblessDefaultName], newTitle];
+                newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
             }
-            [SESSION setName: newTitle];
+            [delegate_ screenSetName: newTitle];
             break;
         case XTERMCC_INSBLNK:
             [currentGrid_ insertChar:[currentGrid_ defaultChar]
@@ -1488,61 +1460,62 @@ static void SwapInt(int *a, int *b) {
             // TODO: I think the original code was buggy when the cursor was outside the scroll region.
             [currentGrid_ scrollRect:[currentGrid_ scrollRegionRect]
                               downBy:token.u.csi.p[0]];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case XTERMCC_DELCH:
             [currentGrid_ deleteChars:token.u.csi.p[0] startingAt:currentGrid_.cursor];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case XTERMCC_DELLN:
             [self deleteLines:token.u.csi.p[0]];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case XTERMCC_WINDOWSIZE:
             //NSLog(@"setting window size from (%d, %d) to (%d, %d)", WIDTH, HEIGHT, token.u.csi.p[1], token.u.csi.p[2]);
-            if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] &&
-                ![[[SESSION tab] parentWindow] anyFullScreen]) {
+            if ([delegate_ screenShouldInitiateWindowResize] &&
+                ![delegate_ screenWindowIsFullscreen]) {
                 // set the column
-                [[SESSION tab] sessionInitiatedResize:SESSION
-                                                width:MIN(token.u.csi.p[2], MAX_COLUMNS)
-                                               height:MIN(token.u.csi.p[1], MAX_ROWS)];
+                [delegate_ screenResizeToWidth:MIN(token.u.csi.p[2], MAX_COLUMNS)
+                                        height:MIN(token.u.csi.p[1], MAX_ROWS)];
 
             }
             break;
         case XTERMCC_WINDOWSIZE_PIXEL:
-            if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] &&
-                ![[[SESSION tab] parentWindow] anyFullScreen]) {
+            if ([delegate_ screenShouldInitiateWindowResize] &&
+                ![delegate_ screenWindowIsFullscreen]) {
                 // TODO: Only allow this if there is a single session in the tab.
-                [[SESSION tab] sessionInitiatedResize:SESSION
-                                                width:MIN(token.u.csi.p[2] / [display charWidth], MAX_COLUMNS)
-                                               height:MIN(token.u.csi.p[1] / [display lineHeight], MAX_ROWS)];
+                [delegate_ screenResizeToWidth:MIN(token.u.csi.p[2] / [display charWidth], MAX_COLUMNS)
+                                        height:MIN(token.u.csi.p[1] / [display lineHeight], MAX_ROWS)];
             }
             break;
         case XTERMCC_WINDOWPOS:
             //NSLog(@"setting window position to Y=%d, X=%d", token.u.csi.p[1], token.u.csi.p[2]);
-            if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] &&
-                ![[[SESSION tab] parentWindow] anyFullScreen])
+            if ([delegate_ screenShouldInitiateWindowResize] &&
+                ![delegate_ screenWindowIsFullscreen]) {
                 // TODO: Only allow this if there is a single session in the tab.
-                [[[SESSION tab] parentWindow] windowSetFrameTopLeftPoint:NSMakePoint(token.u.csi.p[1],
-                                                                                     [[[[SESSION tab] parentWindow] windowScreen] frame].size.height - token.u.csi.p[2])];
+                [delegate_ screenMoveWindowTopLeftPointTo:NSMakePoint(token.u.csi.p[1],
+                                                                      [[delegate_ screenWindowScreen] frame].size.height - token.u.csi.p[2])];
+            }
             break;
         case XTERMCC_ICONIFY:
             // TODO: Only allow this if there is a single session in the tab.
-            if (![[[SESSION tab] parentWindow] anyFullScreen])
-                [[[SESSION tab] parentWindow] windowPerformMiniaturize:nil];
+            if (![delegate_ screenWindowIsFullscreen]) {
+                [delegate_ screenMiniaturizeWindow:YES];
+             }
             break;
         case XTERMCC_DEICONIFY:
             // TODO: Only allow this if there is a single session in the tab.
-            [[[SESSION tab] parentWindow] windowDeminiaturize:nil];
+            [delegate_ screenMiniaturizeWindow:NO];
             break;
         case XTERMCC_RAISE:
             // TODO: Only allow this if there is a single session in the tab.
-            [[[SESSION tab] parentWindow] windowOrderFront:nil];
+            [delegate_ screenRaise:YES];
             break;
         case XTERMCC_LOWER:
             // TODO: Only allow this if there is a single session in the tab.
-            if (![[[SESSION tab] parentWindow] anyFullScreen])
-                [[[SESSION tab] parentWindow] windowOrderBack: nil];
+            if (![delegate_ screenWindowIsFullscreen]) {
+                [delegate_ screenRaise:NO];
+            }
             break;
         case XTERMCC_SU:
             for (i = 0; i < MIN(MAX(currentGrid_.size.height, MAX_SCROLL_AT_ONCE), token.u.csi.p[0]); i++) {
@@ -1550,98 +1523,98 @@ static void SwapInt(int *a, int *b) {
                                                            unlimitedScrollback:unlimitedScrollback_
                                                        useScrollbackWithRegion:[self useScrollbackWithRegion]]];
             }
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case XTERMCC_SD:
             [currentGrid_ scrollRect:[currentGrid_ scrollRegionRect]
                               downBy:MIN(MAX(currentGrid_.size.height, MAX_SCROLL_AT_ONCE), token.u.csi.p[0])];
-            [SESSION clearTriggerLine];
+            [delegate_ screenTriggerableChangeDidOccur];
             break;
         case XTERMCC_REPORT_WIN_STATE: {
             char buf[64];
-            snprintf(buf, sizeof(buf), "\033[%dt", [[[SESSION tab] parentWindow] windowIsMiniaturized] ? 2 : 1);
-            [SESSION writeTask:[NSData dataWithBytes:buf length:strlen(buf)]];
+            snprintf(buf, sizeof(buf), "\033[%dt", [delegate_ screenWindowIsMiniaturized] ? 2 : 1);
+            [delegate_ screenWriteDataToTask:[NSData dataWithBytes:buf length:strlen(buf)]];
             break;
         }
         case XTERMCC_REPORT_WIN_POS: {
             char buf[64];
-            id<WindowControllerInterface> term = [[SESSION tab] parentWindow];
-            NSRect frame = [term windowFrame];
-            NSScreen *screen = [term windowScreen];
+            NSRect frame = [delegate_ screenWindowFrame];
+            NSScreen *screen = [delegate_ screenWindowScreen];
             // Report the Y coordinate in a non-Macish way; give the distance
             // from the top of the usable part of the display to the top of the
             // window frame.
             int y = [screen frame].size.height - frame.origin.y - frame.size.height;
             // TODO: Figure out wtf to do if there are multiple sessions in one tab.
             snprintf(buf, sizeof(buf), "\033[3;%d;%dt", (int) frame.origin.x, y);
-            [SESSION writeTask:[NSData dataWithBytes:buf length:strlen(buf)]];
+            [delegate_ screenWriteDataToTask:[NSData dataWithBytes:buf length:strlen(buf)]];
             break;
         }
         case XTERMCC_REPORT_WIN_PIX_SIZE: {
             char buf[64];
-            NSRect frame = [[[SESSION tab] parentWindow] windowFrame];
+            NSRect frame = [delegate_ screenWindowFrame];
             // TODO: Some kind of adjustment for panes?
             snprintf(buf, sizeof(buf), "\033[4;%d;%dt", (int) frame.size.height, (int) frame.size.width);
-            [SESSION writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
+            [delegate_ screenWriteDataToTask:[NSData dataWithBytes:buf length:strlen(buf)]];
             break;
         }
         case XTERMCC_REPORT_WIN_SIZE: {
             char buf[64];
             // TODO: Some kind of adjustment for panes
             snprintf(buf, sizeof(buf), "\033[8;%d;%dt", currentGrid_.size.height, currentGrid_.size.width);
-            [SESSION writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
+            [delegate_ screenWriteDataToTask:[NSData dataWithBytes:buf length:strlen(buf)]];
             break;
         }
         case XTERMCC_REPORT_SCREEN_SIZE: {
             char buf[64];
             // TODO: This isn't really right since a window couldn't be made this large given the
             // window decorations.
-            NSRect screenSize = [[[[SESSION tab] parentWindow] windowScreen] frame];
+            NSRect screenSize = [[delegate_ screenWindowScreen] frame];
             //  TODO: WTF do we do with panes here?
-            float nch = [[[SESSION tab] parentWindow] windowFrame].size.height - [[[[[SESSION tab] parentWindow] currentSession] SCROLLVIEW] documentVisibleRect].size.height;
-            float wch = [[[SESSION tab] parentWindow] windowFrame].size.width - [[[[[SESSION tab] parentWindow] currentSession] SCROLLVIEW] documentVisibleRect].size.width;
+            float nch = [delegate_ screenWindowFrame].size.height - [delegate_ screenCurrentlyVisibleRect].size.height;
+            float wch = [delegate_ screenWindowFrame].size.width - [delegate_ screenCurrentlyVisibleRect].size.width;
             int h = (screenSize.size.height - nch) / [display lineHeight];
             int w =  (screenSize.size.width - wch - MARGIN * 2) / [display charWidth];
 
             snprintf(buf, sizeof(buf), "\033[9;%d;%dt", h, w);
-            [SESSION writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
+            [delegate_ screenWriteDataToTask:[NSData dataWithBytes:buf length:strlen(buf)]];
             break;
         }
         case XTERMCC_REPORT_ICON_TITLE: {
             NSString *theString;
             if (allowTitleReporting_) {
-                theString = [NSString stringWithFormat:@"\033]L%@\033\\", [SESSION windowTitle] ? [SESSION windowTitle] : [SESSION defaultName]];
+                theString = [NSString stringWithFormat:@"\033]L%@\033\\",
+                             [delegate_ screenWindowTitle] ? [delegate_ screenWindowTitle] : [delegate_ screenDefaultName]];
             } else {
                 NSLog(@"Not reporting icon title. You can enable this in prefs>profiles>terminal");
                 theString = @"\033]L\033\\";
             }
             NSData *theData = [theString dataUsingEncoding:NSUTF8StringEncoding];
-            [SESSION writeTask:theData];
+            [delegate_ screenWriteDataToTask:theData];
             break;
         }
         case XTERMCC_REPORT_WIN_TITLE: {
             NSString *theString;
             if (allowTitleReporting_) {
-                theString = [NSString stringWithFormat:@"\033]l%@\033\\", [SESSION windowName]];
+                theString = [NSString stringWithFormat:@"\033]l%@\033\\", [delegate_ screenWindowName]];
             } else {
                 NSLog(@"Not reporting window title. You can enable this in prefs>profiles>terminal");
                 theString = @"\033]l\033\\";
             }
             NSData *theData = [theString dataUsingEncoding:NSUTF8StringEncoding];
-            [SESSION writeTask:theData];
+            [delegate_ screenWriteDataToTask:theData];
             break;
         }
         case XTERMCC_PUSH_TITLE: {
             switch (token.u.csi.p[1]) {
                 case 0:
-                    [SESSION pushWindowTitle];
-                    [SESSION pushIconTitle];
+                    [delegate_ screenPushCurrentTitleForWindow:YES];
+                    [delegate_ screenPushCurrentTitleForWindow:NO];
                     break;
                 case 1:
-                    [SESSION pushIconTitle];
+                    [delegate_ screenPushCurrentTitleForWindow:NO];
                     break;
                 case 2:
-                    [SESSION pushWindowTitle];
+                    [delegate_ screenPushCurrentTitleForWindow:YES];
                     break;
                 break;
             }
@@ -1650,14 +1623,14 @@ static void SwapInt(int *a, int *b) {
         case XTERMCC_POP_TITLE: {
             switch (token.u.csi.p[1]) {
                 case 0:
-                    [SESSION popWindowTitle];
-                    [SESSION popIconTitle];
+                    [delegate_ screenPopCurrentTitleForWindow:YES];
+                    [delegate_ screenPopCurrentTitleForWindow:NO];
                     break;
                 case 1:
-                    [SESSION popIconTitle];
+                    [delegate_ screenPopCurrentTitleForWindow:NO];
                     break;
                 case 2:
-                    [SESSION popWindowTitle];
+                    [delegate_ screenPopCurrentTitleForWindow:YES];
                     break;
             }
             break;
@@ -1670,21 +1643,22 @@ static void SwapInt(int *a, int *b) {
                                                                    [NSBundle bundleForClass:[self class]],
                                                                    @"Growl Alerts")
                 withDescription:[NSString stringWithFormat:@"Session %@ #%d: %@",
-                                 [SESSION name],
-                                 [[SESSION tab] realObjectCount],
+                                 [delegate_ screenName],
+                                 [delegate_ screenNumber],
                                  token.u.string]
                 andNotification:@"Customized Message"
-                     andSession:SESSION];
+                    windowIndex:[delegate_ screenWindowIndex]
+                       tabIndex:[delegate_ screenTabIndex]
+                      viewIndex:[delegate_ screenViewIndex]];
             }
             break;
 
         case DCS_TMUX:
-            [SESSION startTmuxMode];
+            [delegate_ screenStartTmuxMode];
             break;
 
         default:
-            /*NSLog(@"%s(%d): bug?? token.type = %d",
-                __FILE__, __LINE__, token.type);*/
+            NSLog(@"%s(%d): bug?? token.type = %d", __FILE__, __LINE__, token.type);
             break;
     }
 }
@@ -1693,7 +1667,7 @@ static void SwapInt(int *a, int *b) {
 {
     [self clearScreen];
     [self clearScrollbackBuffer];
-    [SESSION updateDisplay];
+    [delegate_ screenUpdateDisplay];
 }
 
 - (void)clearScrollbackBuffer
@@ -1733,7 +1707,7 @@ static void SwapInt(int *a, int *b) {
     for (int i = 0; i < numValues; i++) {
         [array addObject:[NSNumber numberWithInt:modifiers[i]]];
     }
-    [SESSION setSendModifiers:array];
+    [delegate_ screenModifiersDidChangeTo:array];
 }
 
 - (void)mouseModeDidChange:(MouseMode)mouseMode
@@ -1793,9 +1767,9 @@ static void SwapInt(int *a, int *b) {
         } else {
             sc = staticTemp;
         }
-        assert(TERMINAL);
-        screen_char_t fg = [TERMINAL foregroundColorCode];
-        screen_char_t bg = [TERMINAL backgroundColorCode];
+        assert(terminal_);
+        screen_char_t fg = [terminal_ foregroundColorCode];
+        screen_char_t bg = [terminal_ backgroundColorCode];
 
         if ([string length] > kStaticBufferElements) {
             buffer = dynamicBuffer = (screen_char_t *) calloc([string length],
@@ -1820,7 +1794,7 @@ static void SwapInt(int *a, int *b) {
 
         // If a graphics character set was selected then translate buffer
         // characters into graphics charaters.
-        if (charset[[TERMINAL charset]]) {
+        if (charset[[terminal_ charset]]) {
             TranslateCharacterSet(buffer, len);
         }
         if (dynamicTemp) {
@@ -1875,13 +1849,13 @@ static void SwapInt(int *a, int *b) {
         }
 
         // Add DWC_RIGHT after each double-byte character.
-        assert(TERMINAL);
+        assert(terminal_);
         StringToScreenChars(string,
                             buffer,
-                            [TERMINAL foregroundColorCode],
-                            [TERMINAL backgroundColorCode],
+                            [terminal_ foregroundColorCode],
+                            [terminal_ backgroundColorCode],
                             &len,
-                            [SESSION doubleWidth],
+                            [delegate_ screenShouldTreatAmbiguousCharsAsDoubleWidth],
                             NULL);
     }
 
@@ -1907,7 +1881,7 @@ static void SwapInt(int *a, int *b) {
 
  - (BOOL)useScrollbackWithRegion
 {
-    return [[[SESSION addressBookEntry] objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue];
+    return [delegate_ screenShouldAppendToScrollbackWithStatusBar];
 }
 
 // This used to be called setNewline
@@ -2165,7 +2139,7 @@ static void SwapInt(int *a, int *b) {
 
     xPos = x - 1;
 
-    if (currentGrid_.useScrollRegionCols && [TERMINAL originMode]) {
+    if (currentGrid_.useScrollRegionCols && [terminal_ originMode]) {
         xPos += leftMargin;
         xPos = MAX(leftMargin, MIN(rightMargin, xPos));
     }
@@ -2184,7 +2158,7 @@ static void SwapInt(int *a, int *b) {
 
     yPos = y - 1;
 
-    if ([TERMINAL originMode]) {
+    if ([terminal_ originMode]) {
         yPos += topMargin;
         yPos = MIN(topMargin, MAX(bottomMargin, yPos));
     }
@@ -2238,7 +2212,7 @@ static void SwapInt(int *a, int *b) {
         assert(bottom < currentGrid_.size.height);
         currentGrid_.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
 
-        if ([TERMINAL originMode]) {
+        if ([terminal_ originMode]) {
             currentGrid_.cursor = VT100GridCoordMake(currentGrid_.leftMargin,
                                                      currentGrid_.topMargin);
         } else {
@@ -2265,11 +2239,6 @@ static void SwapInt(int *a, int *b) {
     
 }
 
-- (void)setPlayBellFlag:(BOOL)flag
-{
-    PLAYBELL = flag;
-}
-
 - (void)setShowBellFlag:(BOOL)flag
 {
     SHOWBELL = flag;
@@ -2282,7 +2251,7 @@ static void SwapInt(int *a, int *b) {
 
 - (void)activateBell
 {
-    if (PLAYBELL) {
+    if (audibleBell_) {
         // Some bells or systems block on NSBeep so it's important to rate-limit it to prevent
         // bells from blocking the terminal indefinitely. The small delay we insert between
         // bells allows us to swallow up the vast majority of ^G characters when you cat a
@@ -2296,7 +2265,7 @@ static void SwapInt(int *a, int *b) {
         }
     }
     if (SHOWBELL) {
-        [SESSION setBell:YES];
+        [delegate_ screenShowVisualBell];
     }
     if (FLASHBELL) {
         [display beginFlash:FlashBell];
@@ -2322,7 +2291,7 @@ static void SwapInt(int *a, int *b) {
 {
     NSData *report = nil;
 
-    if (SHELL == nil) {
+    if (shell_ == nil) {
         return;
     }
 
@@ -2331,14 +2300,14 @@ static void SwapInt(int *a, int *b) {
             break;
 
         case 5: // Command from host -- Please report status
-            report = [TERMINAL reportStatus];
+            report = [terminal_ reportStatus];
             break;
 
         case 6: // Command from host -- Please report active position
         {
             int x, y;
 
-            if ([TERMINAL originMode]) {
+            if ([terminal_ originMode]) {
                 x = currentGrid_.cursorX - currentGrid_.leftMargin + 1;
                 y = currentGrid_.cursorY - currentGrid_.topMargin + 1;
             }
@@ -2346,7 +2315,7 @@ static void SwapInt(int *a, int *b) {
                 x = currentGrid_.cursorX + 1;
                 y = currentGrid_.cursorY + 1;
             }
-            report = [TERMINAL reportActivePositionWithX:x Y:y withQuestion:question];
+            report = [terminal_ reportActivePositionWithX:x Y:y withQuestion:question];
         }
             break;
 
@@ -2356,7 +2325,7 @@ static void SwapInt(int *a, int *b) {
     }
 
     if (report != nil) {
-        [SESSION writeTask:report];
+        [delegate_ screenWriteDataToTask:report];
     }
 }
 
@@ -2364,14 +2333,14 @@ static void SwapInt(int *a, int *b) {
 {
     NSData *report = nil;
 
-    if (SHELL == nil) {
+    if (shell_ == nil) {
         return;
     }
 
-    report = [TERMINAL reportDeviceAttribute];
+    report = [terminal_ reportDeviceAttribute];
 
     if (report != nil) {
-        [SESSION writeTask:report];
+        [delegate_ screenWriteDataToTask:report];
     }
 }
 
@@ -2379,14 +2348,14 @@ static void SwapInt(int *a, int *b) {
 {
     NSData *report = nil;
 
-    if (SHELL == nil) {
+    if (shell_ == nil) {
         return;
     }
 
-    report = [TERMINAL reportSecondaryDeviceAttribute];
+    report = [terminal_ reportSecondaryDeviceAttribute];
 
     if (report != nil) {
-        [SESSION writeTask:report];
+        [delegate_ screenWriteDataToTask:report];
     }
 }
 
@@ -2416,7 +2385,7 @@ static void SwapInt(int *a, int *b) {
 - (void)blink
 {
     if ([currentGrid_ isAnyCharDirty]) {
-        [SESSION refreshAndStartTimerIfNeeded];
+        [delegate_ screenNeedsRedraw];
     }
 }
 
@@ -2447,19 +2416,19 @@ static void SwapInt(int *a, int *b) {
 - (void)doPrint
 {
     if ([printToAnsiString length] > 0) {
-        [[SESSION TEXTVIEW] printContent: printToAnsiString];
+        [delegate_ screenPrintString:printToAnsiString];
     } else {
-        [[SESSION TEXTVIEW] print: nil];
+        [delegate_ screenPrintVisibleArea];
     }
     [printToAnsiString release];
     printToAnsiString = nil;
-    [self setPrintToAnsi: NO];
+    [self setPrintToAnsi:NO];
 }
 
 - (BOOL)isDoubleWidthCharacter:(unichar)c
 {
     return [NSString isDoubleWidthCharacter:c
-                     ambiguousIsDoubleWidth:[SESSION doubleWidth]];
+                     ambiguousIsDoubleWidth:[delegate_ screenShouldTreatAmbiguousCharsAsDoubleWidth]];
 }
 
 - (void)popScrollbackLines:(int)linesPushed
@@ -2809,14 +2778,9 @@ static void SwapInt(int *a, int *b) {
 
 #pragma mark - PTYTextViewDataSource
 
-- (PTYSession *)session
-{
-    return SESSION;
-}
-
-- (VT100Terminal *)terminal
-{
-    return TERMINAL;
+// This is a wee hack until PTYTextView breaks its direct dependence on PTYSession
+- (PTYSession *)session {
+    return (PTYSession *)delegate_;
 }
 
 - (int)numberOfLines
@@ -3021,11 +2985,6 @@ static void SwapInt(int *a, int *b) {
     [self popScrollbackLines:linesPushed];
 }
 
-- (PTYTask *)shellTask
-{
-    return SHELL;
-}
-
 - (NSString *)debugString {
     return [currentGrid_ debugString];
 }
@@ -3086,7 +3045,7 @@ static void SwapInt(int *a, int *b) {
 - (BOOL)shouldSendContentsChangedNotification
 {
     return [[iTermExpose sharedInstance] isVisible] ||
-           [SESSION wantsContentChangedNotification];
+           [delegate_ screenShouldSendContentsChangedNotification];
 }
 
 - (void)_setInitialTabStops
