@@ -1846,7 +1846,9 @@ static void SwapInt(int *a, int *b) {
         unichar firstChar = [string characterAtIndex:0];
         while ([string length] > 0 &&
                (IsCombiningMark(firstChar) || IsLowSurrogate(firstChar))) {
-            if (![currentGrid_ addCombiningCharAtCursor:firstChar]) {
+            VT100GridCoord pred = [currentGrid_ coordinateBefore:currentGrid_.cursor];
+            if (pred.x < 0 ||
+                ![currentGrid_ addCombiningChar:firstChar toCoord:pred]) {
                 // Combining mark will need to stand alone rather than combine
                 // because nothing precedes it.
                 if (IsCombiningMark(firstChar)) {
