@@ -1,5 +1,6 @@
 #import "VT100Screen.h"
 
+#import "DVR.h"
 #import "DVRBuffer.h"
 #import "ITAddressBookMgr.h"
 #import "ITAddressBookMgr.h"
@@ -14,6 +15,7 @@
 #import "SearchResult.h"
 #import "TmuxStateParser.h"
 #import "VT100Grid.h"
+#import "VT100Terminal.h"
 #import "WindowControllerInterface.h"
 #import "charmaps.h"
 #import "iTerm.h"
@@ -371,14 +373,15 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 }
 
 - (void)resetCharset {
-    for (int i = 0; i < 4; i++) {
-        charsetUsesLineDrawingMode_[i] = NO;
+    [charsetUsesLineDrawingMode_ removeAllObjects];
+    for (int i = 0; i < NUM_CHARSETS; i++) {
+        [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
     }
 }
 
 - (BOOL)usingDefaultCharset {
-    for (int i = 0; i < 4; i++) {
-        if (charsetUsesLineDrawingMode_[i]) {
+    for (int i = 0; i < NUM_CHARSETS; i++) {
+        if ([[charsetUsesLineDrawingMode_ objectAtIndex:i] boolValue]) {
             return NO;
         }
     }
@@ -514,7 +517,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
         case VT100CSI_DECLL:
             break;
         case VT100CSI_DECRC:
-            [self restoreCursorPosition];
+            [self restoreCursorAndCharsetFlags];
             [delegate_ screenTriggerableChangeDidOccur];
             break;
         case VT100CSI_DECREPTPARM:
@@ -522,7 +525,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
         case VT100CSI_DECREQTPARM:
             break;
         case VT100CSI_DECSC:
-            [self saveCursorPosition];
+            [self saveCursorAndCharsetFlags];
             break;
         case VT100CSI_DECSTBM:
             [self setTopBottom:token];
@@ -590,7 +593,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
             // See note in xterm-terminfo.txt (search for DECSTR).
 
             // save cursor (fixes origin-mode side-effect)
-            [self saveCursorPosition];
+            [self saveCursorAndCharsetFlags];
 
             // reset scrolling margins
             VT100TCC wholeScreen = { 0 };
@@ -603,7 +606,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
             // reset application cursor keys (done in VT100Terminal)
             // reset origin mode (done in VT100Terminal)
             // restore cursor
-            [self restoreCursorPosition];
+            [self restoreCursorAndCharsetFlags];
             [delegate_ screenTriggerableChangeDidOccur];
             break;
         }
@@ -691,16 +694,20 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
              * doesn't work well with common behavior (esp line drawing).
              */
         case VT100CSI_SCS0:
-            charsetUsesLineDrawingMode_[0] = (token.u.code=='0');
+            [charsetUsesLineDrawingMode_ replaceObjectAtIndex:0
+                                                   withObject:[NSNumber numberWithBool:(token.u.code=='0')]];
             break;
         case VT100CSI_SCS1:
-            charsetUsesLineDrawingMode_[1] = (token.u.code=='0');
+            [charsetUsesLineDrawingMode_ replaceObjectAtIndex:1
+                                                   withObject:[NSNumber numberWithBool:(token.u.code=='0')]];
             break;
         case VT100CSI_SCS2:
-            charsetUsesLineDrawingMode_[2] = (token.u.code=='0');
+            [charsetUsesLineDrawingMode_ replaceObjectAtIndex:2
+                                                   withObject:[NSNumber numberWithBool:(token.u.code=='0')]];
             break;
         case VT100CSI_SCS3:
-            charsetUsesLineDrawingMode_[3] = (token.u.code=='0');
+            [charsetUsesLineDrawingMode_ replaceObjectAtIndex:3
+                                                   withObject:[NSNumber numberWithBool:(token.u.code=='0')]];
             break;
         case VT100CSI_SGR:
             [self selectGraphicRendition:token];
@@ -805,10 +812,10 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
             }
             break;
         case ANSICSI_SCP:
-            [self saveCursorPosition];
+            [self saveCursorAndCharsetFlags];
             break;
         case ANSICSI_RCP:
-            [self restoreCursorPosition];
+            [self restoreCursorAndCharsetFlags];
             [delegate_ screenTriggerableChangeDidOccur];
             break;
 
@@ -1167,7 +1174,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
         // If a graphics character set was selected then translate buffer
         // characters into graphics charaters.
-        if (charsetUsesLineDrawingMode_[[terminal_ charset]]) {
+        if ([[charsetUsesLineDrawingMode_ objectAtIndex:[terminal_ charset]] boolValue]) {
             ConvertCharsToGraphicsCharset(buffer, len);
         }
         if (dynamicTemp) {
@@ -1389,23 +1396,19 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     [currentGrid_ moveCursorToLeftMargin];
 }
 
-- (void)saveCursorPosition
+- (void)saveCursorAndCharsetFlags
 {
     [currentGrid_ clampCursorPositionToValid];
     currentGrid_.savedCursor = currentGrid_.cursor;
-
-    for (int i = 0; i < 4; i++) {
-        savedCharsetUsesLineDrawingMode_[i] = charsetUsesLineDrawingMode_[i];
-    }
+    [savedCharsetUsesLineDrawingMode_ removeAllObjects];
+    [savedCharsetUsesLineDrawingMode_ addObjectsFromArray:charsetUsesLineDrawingMode_];
 }
 
-- (void)restoreCursorPosition
+- (void)restoreCursorAndCharsetFlags
 {
     currentGrid_.cursor = currentGrid_.savedCursor;
-
-    for (int i = 0; i < 4; i++) {
-        charsetUsesLineDrawingMode_[i] = savedCharsetUsesLineDrawingMode_[i];
-    }
+    [charsetUsesLineDrawingMode_ removeAllObjects];
+    [charsetUsesLineDrawingMode_ addObjectsFromArray:savedCharsetUsesLineDrawingMode_];
 
     NSParameterAssert(currentGrid_.cursorX >= 0 && currentGrid_.cursorX < currentGrid_.size.width);
     NSParameterAssert(currentGrid_.cursorY >= 0 && currentGrid_.cursorY < currentGrid_.size.height);
@@ -1578,12 +1581,6 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
        withForegroundColor:[colors objectForKey:kHighlightForegroundColor]
            backgroundColor:[colors objectForKey:kHighlightBackgroundColor]];
     }
-}
-
-- (void)disableDvr
-{
-    [dvr release];
-    dvr = nil;
 }
 
 - (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info
@@ -2137,8 +2134,11 @@ static void SwapInt(int *a, int *b) {
     [self setInitialTabStops];
     altGrid_.savedCursor = VT100GridCoordMake(0, 0);
 
-    for (int i = 0; i < 4; i++) {
-        savedCharsetUsesLineDrawingMode_[i] = charsetUsesLineDrawingMode_[i] = 0;
+    [savedCharsetUsesLineDrawingMode_ removeAllObjects];
+    [charsetUsesLineDrawingMode_ removeAllObjects];
+    for (int i = 0; i < NUM_CHARSETS; i++) {
+        [savedCharsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
+        [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
     }
 
     [self showCursor:YES];

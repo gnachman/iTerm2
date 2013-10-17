@@ -216,7 +216,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     liveSession_ = liveSession;
     [liveSession_ retain];
-    [SCREEN disableDvr];
+    SCREEN.dvr = nil;
     dvr_ = dvr;
     [dvr_ retain];
     dvrDecoder_ = [dvr getDecoder];

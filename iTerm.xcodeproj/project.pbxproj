@@ -721,6 +721,7 @@
 		1DD39B19180B82F5004E56D5 /* DebugLogging.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DebugLogging.m; sourceTree = "<group>"; };
 		1DD39B7A180B8842004E56D5 /* libicucore.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libicucore.dylib; path = usr/lib/libicucore.dylib; sourceTree = SDKROOT; };
 		1DD39B7C180F68BF004E56D5 /* PTYTextViewDataSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PTYTextViewDataSource.h; sourceTree = "<group>"; };
+		1DD39B7D180F969E004E56D5 /* VT100ScreenDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100ScreenDelegate.h; sourceTree = "<group>"; };
 		1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = TmuxDashboard.xib; sourceTree = "<group>"; };
 		1DD4CE7E14A51C0D00ED182E /* TmuxDashboardController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxDashboardController.h; sourceTree = "<group>"; };
 		1DD4CE7F14A51C0D00ED182E /* TmuxDashboardController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxDashboardController.m; sourceTree = "<group>"; };
@@ -932,6 +933,7 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				1DD39B7D180F969E004E56D5 /* VT100ScreenDelegate.h */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,

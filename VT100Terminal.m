@@ -3322,13 +3322,13 @@ static VT100TCC decode_string(unsigned char *datap,
                         if (!disableSmcupRmcup) {
                             if (mode) {
                                 [self saveCursorAttributes];
-                                [SCREEN saveCursorPosition];
+                                [SCREEN saveCursorAndCharsetFlags];
                                 [SCREEN showAltBuffer];
                                 [SCREEN clearScreen];
                             } else {
                                 [SCREEN showPrimaryBuffer];
                                 [self restoreCursorAttributes];
-                                [SCREEN restoreCursorPosition];
+                                [SCREEN restoreCursorAndCharsetFlags];
                             }
                         }
                         break;
