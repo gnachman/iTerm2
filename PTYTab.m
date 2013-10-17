@@ -1384,8 +1384,8 @@ static NSString* FormatRect(NSRect r) {
 {
     NSSize size;
     PTYSession* session = [sessionView session];
-    size.width = MIN_SESSION_COLUMNS * [[session TEXTVIEW] charWidth] + MARGIN * 2;
-    size.height = MIN_SESSION_ROWS * [[session TEXTVIEW] lineHeight] + VMARGIN * 2;
+    size.width = kVT100ScreenMinColumns * [[session TEXTVIEW] charWidth] + MARGIN * 2;
+    size.height = kVT100ScreenMinRows * [[session TEXTVIEW] lineHeight] + VMARGIN * 2;
 
     BOOL hasScrollbar = [parentWindow_ scrollbarShouldBeVisible];
     NSSize scrollViewSize =

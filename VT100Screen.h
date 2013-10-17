@@ -13,6 +13,8 @@
 // Dictionary keys for -highlightTextMatchingRegex:
 extern NSString * const kHighlightForegroundColor;
 extern NSString * const kHighlightBackgroundColor;
+extern int kVT100ScreenMinColumns;
+extern int kVT100ScreenMinRows;
 
 @interface VT100Screen : NSObject <PTYTextViewDataSource>
 {

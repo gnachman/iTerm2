@@ -33,9 +33,6 @@
 #import "PTYSplitView.h"
 #import "FutureMethods.h"
 
-static const int MIN_SESSION_ROWS = 2;
-static const int MIN_SESSION_COLUMNS = 2;
-
 @class PTYSession;
 @class PseudoTerminal;
 @class FakeWindow;

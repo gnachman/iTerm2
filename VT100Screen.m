@@ -1,31 +1,20 @@
 #import "VT100Screen.h"
 
+#import "DebugLogging.h"
 #import "DVR.h"
-#import "DVRBuffer.h"
-#import "ITAddressBookMgr.h"
-#import "ITAddressBookMgr.h"
-#import "LineBuffer.h"
-#import "NSStringITerm.h"
-#import "PTYScrollView.h"
-#import "PTYTab.h"
-#import "PTYTask.h"
 #import "PTYTextView.h"
-#import "PreferencePanel.h"
 #import "RegexKitLite.h"
 #import "SearchResult.h"
 #import "TmuxStateParser.h"
-#import "VT100Grid.h"
-#import "VT100Terminal.h"
-#import "WindowControllerInterface.h"
-#import "charmaps.h"
-#import "iTerm.h"
-#import "iTermApplicationDelegate.h"
 #import "iTermExpose.h"
 #import "iTermGrowlDelegate.h"
 
 #import <apr-1/apr_base64.h>  // for xterm's base64 decoding (paste64)
 #include <string.h>
 #include <unistd.h>
+
+int kVT100ScreenMinColumns = 2;
+int kVT100ScreenMinRows = 2;
 
 static const int kMaxLinesToScrollAtOneTime = 1024;  // Prevents DOS by XTERMCC_SU/XTERMCC_SD
 
@@ -110,8 +99,8 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     int i;
     screen_char_t *aDefaultLine;
 
-    width = MAX(width, MIN_SESSION_COLUMNS);
-    height = MAX(height, MIN_SESSION_ROWS);
+    width = MAX(width, kVT100ScreenMinColumns);
+    height = MAX(height, kVT100ScreenMinRows);
 
     primaryGrid_.size = VT100GridSizeMake(width, height);
     altGrid_.size = VT100GridSizeMake(width, height);
