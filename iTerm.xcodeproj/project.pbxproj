@@ -715,9 +715,6 @@
 		1DD39AEC180B8118004E56D5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		1DD39AEE180B8118004E56D5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		1DD39AF5180B8119004E56D5 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
-		1DD39AFC180B8119004E56D5 /* iTermTestsTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "iTermTestsTests-Info.plist"; sourceTree = "<group>"; };
-		1DD39AFE180B8119004E56D5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		1DD39B00180B8119004E56D5 /* iTermTestsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTestsTests.m; sourceTree = "<group>"; };
 		1DD39B12180B819A004E56D5 /* VT100GridTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VT100GridTest.h; path = iTermTests/VT100GridTest.h; sourceTree = "<group>"; };
 		1DD39B13180B819A004E56D5 /* VT100GridTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = VT100GridTest.m; path = iTermTests/VT100GridTest.m; sourceTree = "<group>"; };
 		1DD39B18180B82F5004E56D5 /* DebugLogging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DebugLogging.h; sourceTree = "<group>"; };
@@ -950,7 +947,6 @@
 				0464AB2E006CD2EC7F000001 /* External Frameworks and Libraries */,
 				1D94EAA312D64022008225A9 /* UKCrashReporter */,
 				1DD39ADC180B8118004E56D5 /* iTermTests */,
-				1DD39AFA180B8119004E56D5 /* iTermTestsTests */,
 				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
 				F69E774A0AB78CDB001EC0FF /* Growl-Info.plist */,
@@ -1509,24 +1505,6 @@
 				1DD39ADF180B8118004E56D5 /* InfoPlist.strings */,
 				1DD39AE4180B8118004E56D5 /* iTermTests-Prefix.pch */,
 				1DD39AE5180B8118004E56D5 /* Credits.rtf */,
-			);
-			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
-		1DD39AFA180B8119004E56D5 /* iTermTestsTests */ = {
-			isa = PBXGroup;
-			children = (
-				1DD39B00180B8119004E56D5 /* iTermTestsTests.m */,
-				1DD39AFB180B8119004E56D5 /* Supporting Files */,
-			);
-			path = iTermTestsTests;
-			sourceTree = "<group>";
-		};
-		1DD39AFB180B8119004E56D5 /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				1DD39AFC180B8119004E56D5 /* iTermTestsTests-Info.plist */,
-				1DD39AFD180B8119004E56D5 /* InfoPlist.strings */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -2261,14 +2239,6 @@
 				1DD39AEC180B8118004E56D5 /* Base */,
 			);
 			name = MainMenu.xib;
-			sourceTree = "<group>";
-		};
-		1DD39AFD180B8119004E56D5 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				1DD39AFE180B8119004E56D5 /* en */,
-			);
-			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
 		1DE2154112821F1C004E3ADF /* Autocomplete.xib */ = {
