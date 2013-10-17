@@ -38,7 +38,7 @@
 #import "VT100Screen.h"
 #import "NSStringITerm.h"
 #import "ITAddressBookMgr.h"
-#import <iTermGrowlDelegate.h>
+#import "iTermGrowlDelegate.h"
 #import "PasteboardHistory.h"
 #import <Carbon/Carbon.h>
 #import "iTermApplicationDelegate.h"
@@ -1062,7 +1062,6 @@ static BOOL initDone = NO;
 
     aDict = bookmarkData;
     // Automatically fill in ssh command if command is exactly equal to $$ or it's a login shell.
-    BOOL ignore;
     if (aDict == nil ||
         [[ITAddressBookMgr bookmarkCommand:aDict
                              forObjectType:objectType] isEqualToString:@"$$"] ||

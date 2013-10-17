@@ -173,6 +173,8 @@ static NSString* FormatRect(NSRect r) {
            screenFrame:(NSRect)screenFrame
                 frames:(NSRect*)frames;
 
+- (void)tabChangedSinceLastExpose;
+
 @end
 
 

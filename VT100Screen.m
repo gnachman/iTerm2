@@ -96,9 +96,6 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
 - (void)setUpScreenWithWidth:(int)width height:(int)height
 {
-    int i;
-    screen_char_t *aDefaultLine;
-
     width = MAX(width, kVT100ScreenMinColumns);
     height = MAX(height, kVT100ScreenMinRows);
 
@@ -127,7 +124,6 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     [self dumpScreen];
 #endif
     DLog(@"Resize session to %d height", new_height);
-    int i;
 
 #ifdef DEBUG_RESIZEDWIDTH
     NSLog(@"Resize from %dx%d to %dx%d\n", currentGrid_.size.width, currentGrid_.size.height, new_width, new_height);
@@ -152,8 +148,6 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
     int usedHeight = [currentGrid_ numberOfLinesUsed];
 
-    VT100Grid *originalPrimaryGrid = primaryGrid_;
-    VT100Grid *originalAltGrid = altGrid_;
     VT100Grid *copyOfAltGrid = [[altGrid_ copy] autorelease];
     LineBuffer *realLineBuffer = linebuffer_;
 
@@ -225,7 +219,6 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     // If we're in the alternate screen, restore its contents from the temporary
     // linebuffer.
     if (wasShowingAltScreen) {
-        VT100Grid *savedCurrentGrid = currentGrid_;
         primaryGrid_.size = newSize;
         [primaryGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                                 to:VT100GridCoordMake(newSize.width - 1, newSize.height - 1)
@@ -389,8 +382,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 {
     NSString *newTitle;
 
-    int i,j,k;
-    screen_char_t *aLine;
+    int i, j;
 
     switch (token.type) {
             // our special code
@@ -752,9 +744,6 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
             break;
         case ANSICSI_ECH:
             if (currentGrid_.cursorX < currentGrid_.size.width) {
-                int dirtyX = currentGrid_.cursorX;
-                int dirtyY = currentGrid_.cursorY;
-
                 j = token.u.csi.p[0];
                 if (j <= 0) {
                     break;
@@ -1911,7 +1900,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     screen_char_t fg;
     screen_char_t bg;
 
-    fg.foregroundColor = bgColorCode;
+    fg.foregroundColor = fgColorCode;
     fg.foregroundColorMode = fgColor ? ColorModeNormal : ColorModeInvalid;
     bg.backgroundColor = bgColorCode;
     bg.backgroundColorMode = bgColor ? ColorModeNormal : ColorModeInvalid;
@@ -2281,7 +2270,6 @@ static void SwapInt(int *a, int *b) {
 - (void)eraseInDisplay:(VT100TCC)token
 {
     int x1, yStart, x2, y2;
-    int i;
 
     switch (token.u.csi.p[0]) {
     case 1:
@@ -2424,8 +2412,7 @@ static void SwapInt(int *a, int *b) {
 
 - (void)deleteLines:(int)n
 {
-    int i, num_lines_moved;
-    screen_char_t *sourceLine, *targetLine, *aDefaultLine;
+    int num_lines_moved;
 
     if (n + currentGrid_.cursorY <= currentGrid_.bottomMargin) {
         // number of lines we can move down by n before we hit SCROLL_BOTTOM

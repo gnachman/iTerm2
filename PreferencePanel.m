@@ -4460,11 +4460,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [self bookmarkSettingChanged:nil];
 }
 
-@end
-
-
-@implementation PreferencePanel (Private)
-
 - (void)_reloadURLHandlers:(NSNotification *)aNotification
 {
     // TODO: maybe something here for the current bookmark?

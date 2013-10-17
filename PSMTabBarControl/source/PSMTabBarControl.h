@@ -11,7 +11,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import <PTYTabView.h>
+#import "PTYTabView.h"
 
 #define PSMTabDragDidEndNotification @"PSMTabDragDidEndNotification"
 #define PSMTabDragDidBeginNotification @"PSMTabDragDidBeginNotification"

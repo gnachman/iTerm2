@@ -58,7 +58,7 @@
 #import "FakeWindow.h"
 #import "PSMTabBarControl.h"
 #import "PSMTabStyle.h"
-#import <iTermGrowlDelegate.h>
+#import "iTermGrowlDelegate.h"
 #include <unistd.h>
 #import "PasteboardHistory.h"
 #import "PTYTab.h"

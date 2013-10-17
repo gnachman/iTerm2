@@ -7,6 +7,7 @@
 //
 
 #import "VT100ScreenTest.h"
+#import "VT100Screen.h"
 
 @implementation VT100ScreenTest
 
