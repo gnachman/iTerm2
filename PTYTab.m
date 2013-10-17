@@ -3794,7 +3794,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         if ([session newOutput]) {
             // Idle after new output
             if (![session growlIdle] &&
-                [[session SCREEN] growl] &&
+                [[session SCREEN] postGrowlNotifications] &&
                 [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC &&
                 now.tv_sec > [session lastOutput].tv_sec + 1) {
                 [[iTermGrowlDelegate sharedInstance] growlNotify:NSLocalizedStringFromTableInBundle(@"Idle",
@@ -3833,7 +3833,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 
     if (![[self activeSession] growlNewOutput] &&
         [[self realParentWindow] broadcastMode] == BROADCAST_OFF &&
-        [[[self activeSession] SCREEN] growl] &&
+        [[[self activeSession] SCREEN] postGrowlNotifications] &&
         [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC) {
         [[iTermGrowlDelegate sharedInstance] growlNotify:NSLocalizedStringFromTableInBundle(@"New Output",
                                                                                             @"iTerm",

@@ -299,15 +299,15 @@ const int kMaxResultContextWords = 4;
     matchCount_ = 0;
     [findResults_ removeAllObjects];
     more_ = YES;
-    [screen initFindString:prefix_
-          forwardDirection:NO
-              ignoringCase:YES
-                     regex:NO
-               startingAtX:x_
-               startingAtY:y_
-                withOffset:1
-                 inContext:&findContext_
-           multipleResults:YES];
+    [screen setFindString:prefix_
+         forwardDirection:NO
+             ignoringCase:YES
+                    regex:NO
+              startingAtX:x_
+              startingAtY:y_
+               withOffset:1
+                inContext:&findContext_
+          multipleResults:YES];
 
     [self _doPopulateMore];
 }

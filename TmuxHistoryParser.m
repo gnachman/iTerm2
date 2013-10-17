@@ -7,7 +7,6 @@
 
 #import "TmuxHistoryParser.h"
 #import "ScreenChar.h"
-#import "VT100Screen.h"
 #import "VT100Terminal.h"
 
 @implementation TmuxHistoryParser
@@ -49,7 +48,7 @@
                                         ambiguousIsDoubleWidth,
                                         NULL);
                     if (token.type == VT100_ASCIISTRING && [terminal charset]) {
-                        TranslateCharacterSet(screenChars, len);
+                        ConvertCharsToGraphicsCharset(screenChars, len);
                     }
                     [result appendBytes:screenChars
                                  length:sizeof(screen_char_t) * len];

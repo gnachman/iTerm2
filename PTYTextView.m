@@ -5026,7 +5026,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSMutableAttributedString *theContents;
 
     tempView = [[NSTextView alloc] initWithFrame:[[self enclosingScrollView] documentVisibleRect]];
-    theContents = [[NSMutableAttributedString alloc] initWithString: aString];
+    theContents = [[NSMutableAttributedString alloc] initWithString:aString];
     [theContents addAttributes: [NSDictionary dictionaryWithObjectsAndKeys:
         [NSColor textBackgroundColor], NSBackgroundColorAttributeName,
         [NSColor textColor], NSForegroundColorAttributeName,
@@ -5523,15 +5523,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Search backwards from the end. This is slower than searching
         // forwards, but most searches are reverse searches begun at the end,
         // so it will get a result sooner.
-        [dataSource initFindString:aString
-                  forwardDirection:NO
-                      ignoringCase:ignoreCase
-                             regex:regex
-                       startingAtX:0
-                       startingAtY:[dataSource numberOfLines] + 1 + [dataSource totalScrollbackOverflow]
-                        withOffset:0
-                         inContext:[dataSource findContext]
-                   multipleResults:YES];
+        [dataSource setFindString:aString
+                 forwardDirection:NO
+                     ignoringCase:ignoreCase
+                            regex:regex
+                      startingAtX:0
+                      startingAtY:[dataSource numberOfLines] + 1 + [dataSource totalScrollbackOverflow]
+                       withOffset:0
+                        inContext:[dataSource findContext]
+                  multipleResults:YES];
 
         [initialFindContext_.substring release];
         initialFindContext_ = *[dataSource findContext];

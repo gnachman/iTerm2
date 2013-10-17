@@ -329,7 +329,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         needDivorce = YES;
     }
     [[aSession SCREEN] setUnlimitedScrollback:[[theBookmark objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
-    [[aSession SCREEN] setScrollback:[[theBookmark objectForKey:KEY_SCROLLBACK_LINES] intValue]];
+    [[aSession SCREEN] setMaxScrollbackLines:[[theBookmark objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
      // set our preferences
     [aSession setAddressBookEntry:theBookmark];
@@ -341,7 +341,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [aSession setSizeFromArrangement:arrangement];
     }
     [aSession setPreferencesFromAddressBookEntry:theBookmark];
-    [[aSession SCREEN] setDisplay:[aSession TEXTVIEW]];
     [aSession setName:[theBookmark objectForKey:KEY_NAME]];
     [aSession setBookmarkName:[theBookmark objectForKey:KEY_NAME]];
     if ([[[[theTab realParentWindow] window] title] compare:@"Window"] == NSOrderedSame) {
@@ -1066,7 +1065,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)brokenPipe
 {
-    if ([SCREEN growl] && (![[self tab] isForegroundTab] || [self _growlOnForegroundTabs])) {
+    if (SCREEN.postGrowlNotifications &&
+        (![[self tab] isForegroundTab] || [self _growlOnForegroundTabs])) {
         [gd growlNotify:@"Session Ended"
             withDescription:[NSString stringWithFormat:@"Session \"%@\" in tab #%d just terminated.",
                              [self name],
@@ -1632,7 +1632,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         if (bell) {
             if ([TEXTVIEW keyIsARepeat] == NO &&
                 ![[TEXTVIEW window] isKeyWindow] &&
-                [SCREEN growl]) {
+                SCREEN.postGrowlNotifications) {
                 [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Bell",
                                                                    @"iTerm",
                                                                    [NSBundle bundleForClass:[self class]],
@@ -1765,10 +1765,10 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     // set up the rest of the preferences
     [SCREEN setAudibleBell:![[aDict objectForKey:KEY_SILENCE_BELL] boolValue]];
-    [SCREEN setShowBellFlag:[[aDict objectForKey:KEY_VISUAL_BELL] boolValue]];
-    [SCREEN setFlashBellFlag:[[aDict objectForKey:KEY_FLASHING_BELL] boolValue]];
-    [SCREEN setGrowlFlag:[[aDict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue]];
-    [SCREEN setBlinkingCursor:[[aDict objectForKey:KEY_BLINKING_CURSOR] boolValue]];
+    [SCREEN setShowBellIndicator:[[aDict objectForKey:KEY_VISUAL_BELL] boolValue]];
+    [SCREEN setFlashBell:[[aDict objectForKey:KEY_FLASHING_BELL] boolValue]];
+    [SCREEN setPostGrowlNotifications:[[aDict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue]];
+    [SCREEN setCursorBlinks:[[aDict objectForKey:KEY_BLINKING_CURSOR] boolValue]];
     [TEXTVIEW setBlinkAllowed:[[aDict objectForKey:KEY_BLINK_ALLOWED] boolValue]];
     [TEXTVIEW setBlinkingCursor:[[aDict objectForKey:KEY_BLINKING_CURSOR] boolValue]];
     [TEXTVIEW setCursorType:([aDict objectForKey:KEY_CURSOR_TYPE] ? [[aDict objectForKey:KEY_CURSOR_TYPE] intValue] : [[PreferencePanel sharedInstance] legacyCursorType])];
@@ -1812,7 +1812,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [SCREEN setAllowTitleReporting:[[aDict objectForKey:KEY_ALLOW_TITLE_REPORTING] boolValue]];
     [TERMINAL setUseCanonicalParser:[[aDict objectForKey:KEY_USE_CANONICAL_PARSER] boolValue]];
     [SCREEN setUnlimitedScrollback:[[aDict objectForKey:KEY_UNLIMITED_SCROLLBACK] intValue]];
-    [SCREEN setScrollback:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
+    [SCREEN setMaxScrollbackLines:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
     [self setFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NORMAL_FONT]]
            nafont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NON_ASCII_FONT]]
@@ -3336,7 +3336,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     tmuxGateway_ = nil;
     [tmuxController_ release];
     tmuxController_ = nil;
-    [SCREEN setString:@"Detached" ascii:YES];
+    [SCREEN appendStringAtCursor:@"Detached" ascii:YES];
     [SCREEN crlf];
     tmuxMode_ = TMUX_NONE;
     tmuxLogging_ = NO;
@@ -4198,15 +4198,15 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (!initialFindContext->substring) {
         return;
     }
-    [SCREEN initFindString:initialFindContext->substring
-          forwardDirection:YES
-              ignoringCase:!!(initialFindContext->options & FindOptCaseInsensitive)
-                     regex:!!(initialFindContext->options & FindOptRegex)
-               startingAtX:0
-               startingAtY:0
-                withOffset:0
-                 inContext:&tailFindContext_
-           multipleResults:YES];
+    [SCREEN setFindString:initialFindContext->substring
+         forwardDirection:YES
+             ignoringCase:!!(initialFindContext->options & FindOptCaseInsensitive)
+                    regex:!!(initialFindContext->options & FindOptRegex)
+              startingAtX:0
+              startingAtY:0
+               withOffset:0
+                inContext:&tailFindContext_
+          multipleResults:YES];
 
     // Set the starting position to the block & offset that the backward search
     // began at. Do a forward search from that location.
@@ -4243,7 +4243,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
               alternateSemantics:YES];
     [TERMINAL setBackgroundColor:ALTSEM_BG_DEFAULT
               alternateSemantics:YES];
-    [SCREEN setString:message ascii:YES];
+    [SCREEN appendStringAtCursor:message ascii:YES];
     [SCREEN crlf];
     [TERMINAL setForegroundColor:savedFgColor.foregroundColor
               alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
@@ -4387,8 +4387,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [[[self tab] parentWindow] windowFrame];
 }
 
-- (NSRect)screenCurrentlyVisibleRect {
-    return [[[[[self tab] parentWindow] currentSession] SCROLLVIEW] documentVisibleRect];
+- (NSSize)screenSize {
+    return [[[[[self tab] parentWindow] currentSession] SCROLLVIEW] documentVisibleRect].size;
 }
 
 // If the flag is set, push the window title; otherwise push the icon title.
@@ -4449,7 +4449,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [[[self addressBookEntry] objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue];
 }
 
-- (void)screenShowVisualBell {
+- (void)screenShowBellIndicator {
     [self setBell:YES];
 }
 
@@ -4463,6 +4463,62 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (BOOL)screenShouldSendContentsChangedNotification {
     return [self wantsContentChangedNotification];
+}
+
+- (void)screenRemoveSelection {
+    [TEXTVIEW deselect];
+}
+
+- (int)screenSelectionStartX {
+    return [TEXTVIEW selectionStartX];
+}
+
+- (int)screenSelectionEndX {
+    return [TEXTVIEW selectionEndX];
+}
+
+- (int)screenSelectionStartY {
+    return [TEXTVIEW selectionStartY];
+}
+
+- (int)screenSelectionEndY {
+    return [TEXTVIEW selectionEndY];
+}
+
+- (void)screenSetSelectionFromX:(int)startX
+                          fromY:(int)startY
+                            toX:(int)endX
+                            toY:(int)endY {
+    [TEXTVIEW setSelectionFromX:startX fromY:startY toX:endX toY:endY];
+}
+
+- (NSSize)screenCellSize {
+    return NSMakeSize([TEXTVIEW charWidth], [TEXTVIEW lineHeight]);
+}
+
+- (void)screenClearHighlights {
+    [TEXTVIEW clearHighlights];
+}
+
+- (void)screenMouseModeDidChange {
+    [TEXTVIEW updateCursor:nil];
+    [TEXTVIEW updateTrackingAreas];
+}
+
+- (void)screenFlashImage:(FlashImage)image {
+    [TEXTVIEW beginFlash:image];
+}
+
+- (void)screenSetCursorVisible:(BOOL)visible {
+    if (visible) {
+        [TEXTVIEW showCursor];
+    } else {
+        [TEXTVIEW hideCursor];
+    }
+}
+
+- (BOOL)screenHasView {
+    return TEXTVIEW != nil;
 }
 
 @end

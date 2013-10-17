@@ -31,6 +31,7 @@
 #import "TriggerController.h"
 #import "SmartSelectionController.h"
 #import "FutureMethods.h"
+#import "PTYTextViewDataSource.h"
 
 #define OPT_NORMAL 0
 #define OPT_META   1
@@ -61,8 +62,6 @@
 @class TriggerController;
 @class SmartSelectionController;
 @class TrouterPrefsController;
-
-typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 
 @interface PreferencePanel : NSWindowController <
     ProfileListViewDelegate,

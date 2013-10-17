@@ -320,6 +320,8 @@ typedef enum {
 
 } MouseButtonModifierFlag;
 
+#define NUM_CHARSETS 4  // G0...G3. Values returned from -charset go from 0 to this.
+
 @interface VT100Terminal : NSObject <VT100GridDelegate>
 {
     NSString          *termType;

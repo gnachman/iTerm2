@@ -307,3 +307,27 @@ NSString* ScreenCharArrayToStringDebug(screen_char_t* screenChars,
 NSString* CharArrayToString(unichar* charHaystack, int o);
 
 void DumpScreenCharArray(screen_char_t* screenChars, int lineLength);
+
+// Convert a string into screen_char_t. This deals with padding out double-
+// width characters, joining combining marks, and skipping zero-width spaces.
+//
+// The buffer size must be at least twice the length of the string (worst case:
+//   every character is double-width).
+// Pass prototype foreground and background colors in fg and bg.
+// *len is filled in with the number of elements of *buf that were set.
+// encoding is currently ignored and it's assumed to be UTF-16.
+// A good choice for ambiguousIsDoubleWidth is [SESSION doubleWidth].
+// If not null, *cursorIndex gives an index into s and is changed into the
+//   corresponding index into buf.
+void StringToScreenChars(NSString *s,
+                         screen_char_t *buf,
+                         screen_char_t fg,
+                         screen_char_t bg,
+                         int *len,
+                         BOOL ambiguousIsDoubleWidth,
+                         int* cursorIndex);
+
+// Translates normal characters into graphics characters, as defined in charsets.h. Must not contain
+// complex characters.
+void ConvertCharsToGraphicsCharset(screen_char_t *s, int len);
+

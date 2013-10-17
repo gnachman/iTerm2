@@ -181,15 +181,15 @@ const double GLOBAL_SEARCH_MARGIN = 10;
         textViewDataSource_ = [textView dataSource];  // TODO: this is a weak ref. Be on the lookout for its death.
         theSession_ = [textViewDataSource_ session];
         label_ = [label retain];
-        [textViewDataSource_ initFindString:findString_
-                           forwardDirection:NO
-                               ignoringCase:YES
-                                      regex:NO
-                                startingAtX:0
-                                startingAtY:(long long)([textViewDataSource_ numberOfLines] + 1) + [textViewDataSource_ totalScrollbackOverflow]
-                                 withOffset:0  // 1?
-                                  inContext:&findContext_
-                            multipleResults:NO];
+        [textViewDataSource_ setFindString:findString_
+                          forwardDirection:NO
+                              ignoringCase:YES
+                                     regex:NO
+                               startingAtX:0
+                               startingAtY:(long long)([textViewDataSource_ numberOfLines] + 1) + [textViewDataSource_ totalScrollbackOverflow]
+                                withOffset:0  // 1?
+                                 inContext:&findContext_
+                           multipleResults:NO];
         matchLocations_ = [[NSMutableSet alloc] init];
         findContext_.hasWrapped = YES;
     }
@@ -273,15 +273,15 @@ const double GLOBAL_SEARCH_MARGIN = 10;
             if ([self _emitResultFromX:startX y:startY toX:endX y:endY]) {
                 ++newResults;
             }
-            [textViewDataSource_ initFindString:findString_
-                               forwardDirection:NO
-                                   ignoringCase:YES
-                                          regex:NO
-                                    startingAtX:startX
-                                    startingAtY:startY
-                                     withOffset:1
-                                      inContext:&findContext_
-                                multipleResults:NO];
+            [textViewDataSource_ setFindString:findString_
+                              forwardDirection:NO
+                                  ignoringCase:YES
+                                         regex:NO
+                                   startingAtX:startX
+                                   startingAtY:startY
+                                    withOffset:1
+                                     inContext:&findContext_
+                               multipleResults:NO];
             findContext_.hasWrapped = YES;
         }
         now = [NSDate date];

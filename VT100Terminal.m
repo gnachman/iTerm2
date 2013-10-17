@@ -255,7 +255,7 @@ static int advanceAndEatControlChars(unsigned char **ppdata,
                 [SCREEN backSpace];
                 break;
             case VT100CC_HT:
-                [SCREEN setTab];
+                [SCREEN appendTabAtCursor];
                 break;
             case VT100CC_LF:
             case VT100CC_VT:
@@ -454,7 +454,7 @@ static int getCSIParam(unsigned char *datap,
                 case VT100CC_ENQ: break;
                 case VT100CC_BEL: [SCREEN activateBell]; break;
                 case VT100CC_BS:  [SCREEN backSpace]; break;
-                case VT100CC_HT:  [SCREEN setTab]; break;
+                case VT100CC_HT:  [SCREEN appendTabAtCursor]; break;
                 case VT100CC_LF:
                 case VT100CC_VT:
                 case VT100CC_FF:  [SCREEN linefeed]; break;
@@ -1046,7 +1046,7 @@ static VT100TCC decode_csi(unsigned char *datap,
                     SET_PARAM_DEFAULT(param,0,0);
                     break;
                 case 's':
-                    if (SCREEN.vsplitMode) {
+                    if (SCREEN.useColumnScrollRegion) {
                         result.type = VT100CSI_DECSLRM;
                         SET_PARAM_DEFAULT(param, 0, 1);
                         SET_PARAM_DEFAULT(param, 1, 1);
@@ -1363,7 +1363,7 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
                 SET_PARAM_DEFAULT(param,0,0);
                 break;
             case 's':
-                if (SCREEN.vsplitMode) {
+                if (SCREEN.useColumnScrollRegion) {
                     result.type = VT100CSI_DECSLRM;
                     SET_PARAM_DEFAULT(param, 0, 1);
                     SET_PARAM_DEFAULT(param, 1, 1);
@@ -2500,8 +2500,8 @@ static VT100TCC decode_string(unsigned char *datap,
     BG_COLORMODE = ColorModeAlternate;
     MOUSE_MODE = MOUSE_REPORTING_NONE;
     MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
-    [SCREEN mouseModeDidChange:MOUSE_MODE];
-    SCREEN.vsplitMode = NO;
+    [SCREEN setMouseMode:MOUSE_MODE];
+    SCREEN.useColumnScrollRegion = NO;
     REPORT_FOCUS = NO;
 
     TRACE = NO;
@@ -3308,7 +3308,7 @@ static VT100TCC decode_string(unsigned char *datap,
                     case 25: [SCREEN showCursor: mode]; break;
                     case 40: allowColumnMode = mode; break;
                     case 69:
-                        SCREEN.vsplitMode = mode;
+                        SCREEN.useColumnScrollRegion = mode;
                         break;
 
                     case 1049:
@@ -3358,7 +3358,7 @@ static VT100TCC decode_string(unsigned char *datap,
                         } else {
                             MOUSE_MODE = MOUSE_REPORTING_NONE;
                         }
-                        [SCREEN mouseModeDidChange:MOUSE_MODE];
+                        [SCREEN setMouseMode:MOUSE_MODE];
                         break;
                     case 1004:
                         REPORT_FOCUS = mode;
@@ -3689,7 +3689,7 @@ static VT100TCC decode_string(unsigned char *datap,
             [[SCREEN session] saveScrollPosition];
         } else if ([key isEqualToString:@"StealFocus"]) {
             [NSApp activateIgnoringOtherApps:YES];
-            [[[SCREEN display] window] makeKeyAndOrderFront:nil];
+            [[SCREEN delegate] screenRaise:YES];
         } else if ([key isEqualToString:@"ClearScrollback"]) {
             [SCREEN clearBuffer];
         } else if ([key isEqualToString:@"CurrentDir"]) {
@@ -3899,7 +3899,7 @@ static VT100TCC decode_string(unsigned char *datap,
 - (void)setMouseMode:(MouseMode)mode
 {
     MOUSE_MODE = mode;
-    [SCREEN mouseModeDidChange:MOUSE_MODE];
+    [SCREEN setMouseMode:MOUSE_MODE];
 }
 
 - (void)setMouseFormat:(MouseFormat)format
