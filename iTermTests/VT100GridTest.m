@@ -7,7 +7,6 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import <objc/runtime.h>
 #import "DVRBuffer.h"
 #import "LineBuffer.h"
 #import "VT100GridTest.h"
@@ -2365,24 +2364,3 @@ do { \
 
 @end
 
-int main(int argc, const char * argv[])
-{
-    VT100GridTest *test = [VT100GridTest new];
-
-    unsigned int methodCount;
-    Method *methods = class_copyMethodList([test class], &methodCount);
-    for (int i = 0; i < methodCount; i++) {
-        SEL name = method_getName(methods[i]);
-        NSString *stringName = NSStringFromSelector(name);
-        if ([stringName hasPrefix:@"test"]) {
-            [test setup];
-            NSLog(@"Running %@", stringName);
-            [test performSelector:name];
-            NSLog(@"Success!");
-        }
-    }
-    free(methods);
-
-    NSLog(@"All tests passed");
-    return 0;
-}
