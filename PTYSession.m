@@ -3699,6 +3699,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         }
         [self launchCoprocessWithCommand:keyBindingText];
         break;
+      case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
+        [self setXtermMouseReporting:![self xtermMouseReporting]];
+        break;
       case KEY_ACTION_SELECT_MENU_ITEM:
         [PTYSession selectMenuItem:keyBindingText];
         break;
