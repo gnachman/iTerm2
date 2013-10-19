@@ -26,16 +26,16 @@
                          ((c) >= 0xe0 && (c) <= 0xef))
 #define iseuckr(c)   ((c) >= 0xa1 && (c) <= 0xfe)
 
-#define isGBEncoding(e)     ((e)==0x80000019||(e)==0x80000421|| \
-                             (e)==0x80000631||(e)==0x80000632|| \
+#define isGBEncoding(e)     ((e)==0x80000019 || (e)==0x80000421|| \
+                             (e)==0x80000631 || (e)==0x80000632|| \
                              (e)==0x80000930)
-#define isBig5Encoding(e)   ((e)==0x80000002||(e)==0x80000423|| \
-                             (e)==0x80000931||(e)==0x80000a03|| \
+#define isBig5Encoding(e)   ((e)==0x80000002 || (e)==0x80000423|| \
+                             (e)==0x80000931 || (e)==0x80000a03|| \
                              (e)==0x80000a06)
-#define isJPEncoding(e)     ((e)==0x80000001||(e)==0x8||(e)==0x15)
-#define isSJISEncoding(e)   ((e)==0x80000628||(e)==0x80000a01)
-#define isKREncoding(e)     ((e)==0x80000422||(e)==0x80000003|| \
-                             (e)==0x80000840||(e)==0x80000940)
+#define isJPEncoding(e)     ((e)==0x80000001 || (e)==0x8||(e)==0x15)
+#define isSJISEncoding(e)   ((e)==0x80000628 || (e)==0x80000a01)
+#define isKREncoding(e)     ((e)==0x80000422 || (e)==0x80000003|| \
+                             (e)==0x80000840 || (e)==0x80000940)
 #define ESC  0x1b
 #define DEL  0x7f
 
