@@ -332,66 +332,65 @@ typedef enum {
 @interface VT100Terminal : NSObject <VT100GridDelegate>
 {
     NSString          *termType;
-    NSStringEncoding  ENCODING;
+    NSStringEncoding  encoding_;
     id<VT100TerminalDelegate> delegate_;
 
-    unsigned char     *STREAM;
+    unsigned char     *stream_;
     int               current_stream_length;
     int               total_stream_length;
 
-    BOOL LINE_MODE;         // YES=Newline, NO=Line feed
-    BOOL CURSOR_MODE;       // YES=Application, NO=Cursor
-    BOOL ANSI_MODE;         // YES=ANSI, NO=VT52
-    BOOL COLUMN_MODE;       // YES=132 Column, NO=80 Column
-    BOOL SCROLL_MODE;       // YES=Smooth, NO=Jump
-    BOOL SCREEN_MODE;       // YES=Reverse, NO=Normal
-    BOOL ORIGIN_MODE;       // YES=Relative, NO=Absolute
-    BOOL WRAPAROUND_MODE;   // YES=On, NO=Off
-    BOOL AUTOREPEAT_MODE;   // YES=On, NO=Off
-    BOOL KEYPAD_MODE;       // YES=Application, NO=Numeric
-    BOOL INSERT_MODE;       // YES=Insert, NO=Replace
-    int  CHARSET;           // G0...G3
-    BOOL XON;               // YES=XON, NO=XOFF. Not currently used.
-    BOOL numLock;           // YES=ON, NO=OFF, default=YES;
-    BOOL shouldBounceDockIcon; // YES=Bounce, NO=cancel;
-    MouseMode MOUSE_MODE;
-    MouseFormat MOUSE_FORMAT;
-    BOOL REPORT_FOCUS;
+    BOOL lineMode_;         // YES=Newline, NO=Line feed
+    BOOL cursorMode_;       // YES=Application, NO=Cursor
+    BOOL ansiMode_;         // YES=ANSI, NO=VT52
+    BOOL columnMode_;       // YES=132 Column, NO=80 Column
+    BOOL scrollMode_;       // YES=Smooth, NO=Jump
+    BOOL screenMode_;       // YES=Reverse, NO=Normal
+    BOOL originMode_;       // YES=Relative, NO=Absolute
+    BOOL wraparoundMode_;   // YES=On, NO=Off
+    BOOL autorepeatMode_;   // YES=On, NO=Off
+    BOOL keypadMode_;       // YES=Application, NO=Numeric
+    BOOL insertMode_;       // YES=Insert, NO=Replace
+    int  charset_;           // G0...G3
+    BOOL xon_;               // YES=XON, NO=XOFF. Not currently used.
+    BOOL numLock_;           // YES=ON, NO=OFF, default=YES;
+    MouseMode mouseMode_;
+    MouseFormat mouseFormat_;
+    BOOL reportFocus_;
 
-    int FG_COLORCODE;
-    int FG_GREEN;
-    int FG_BLUE;
-    ColorMode FG_COLORMODE;
-    int BG_COLORCODE;
-    int BG_GREEN;
-    int BG_BLUE;
-    ColorMode BG_COLORMODE;
-    int bold, italic, under, blink, reversed;
+    int fgColorCode_;
+    int fgGreen_;
+    int fgBlue_;
+    ColorMode fgColorMode_;
+    int bgColorCode_;
+    int bgGreen_;
+    int bgBlue_;
+    ColorMode bgColorMode_;
+    BOOL bold_, italic_, under_, blink_, reversed_;
 
-    int saveBold, saveItalic, saveUnder, saveBlink, saveReversed;
-    int saveCHARSET;
-    int saveForeground;
-    int saveFgGreen;
-    int saveFgBlue;
-    ColorMode saveFgColorMode;
-    int saveBackground;
-    int saveBgGreen;
-    int saveBgBlue;
-    ColorMode saveBgColorMode;
+    BOOL saveBold_, saveItalic_, saveUnder_, saveBlink_, saveReversed_;
+    int saveCharset_;
+    int saveForeground_;
+    int saveFgGreen_;
+    int saveFgBlue_;
+    ColorMode saveFgColorMode_;
+    int saveBackground_;
+    int saveBgGreen_;
+    int saveBgBlue_;
+    ColorMode saveBgColorMode_;
 
-    BOOL strictAnsiMode;
-    BOOL allowColumnMode;
+    BOOL strictAnsiMode_;
+    BOOL allowColumnMode_;
 
-    BOOL allowKeypadMode;
+    BOOL allowKeypadMode_;
 
-    int streamOffset;
+    int streamOffset_;
 
-    BOOL IS_ANSI;
-    BOOL disableSmcupRmcup;
-    BOOL useCanonicalParser;
+    BOOL isAnsi_;
+    BOOL disableSmcupRmcup_;
+    BOOL useCanonicalParser_;
 
     // Indexed by values in VT100TerminalTerminfoKeys. Gives strings to send for various special keys.
-    char *key_strings[TERMINFO_KEYS];
+    char *keyStrings_[TERMINFO_KEYS];
 
     // http://www.xfree86.org/current/ctlseqs.html#Bracketed%20Paste%20Mode
     BOOL bracketedPasteMode_;
