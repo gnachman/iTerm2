@@ -29,33 +29,28 @@
     screen_char_t *screenChars;
     NSMutableData *result = [NSMutableData data];
     [terminal putStreamData:[hist dataUsingEncoding:NSUTF8StringEncoding]];
-    VT100TCC token;
-    token = [terminal getNextToken];
-    while (token.type != VT100_WAIT &&
-           token.type != VT100CC_NULL) {
-        if (token.type != VT100_NOTSUPPORT) {
+
+    while ([terminal parseNextToken]) {
+        NSString *string = [terminal lastTokenString];
+        if (string) {
+            // Allocate double space in case they're all double-width characters.
+            screenChars = malloc(sizeof(screen_char_t) * 2 * string.length);
             int len = 0;
-            if (token.type == VT100_STRING ||
-                token.type == VT100_ASCIISTRING) {
-                    // Allocate double space in case they're all double-width characters.
-                    screenChars = malloc(sizeof(screen_char_t) * 2 * token.u.string.length);
-                    StringToScreenChars(token.u.string,
-                                        screenChars,
-                                        [terminal foregroundColorCode],
-                                        [terminal backgroundColorCode],
-                                        &len,
-                                        ambiguousIsDoubleWidth,
-                                        NULL);
-                    if (token.type == VT100_ASCIISTRING && [terminal charset]) {
-                        ConvertCharsToGraphicsCharset(screenChars, len);
-                    }
-                    [result appendBytes:screenChars
-                                 length:sizeof(screen_char_t) * len];
-                    free(screenChars);
-                    break;
+            StringToScreenChars(string,
+                                screenChars,
+                                [terminal foregroundColorCode],
+                                [terminal backgroundColorCode],
+                                &len,
+                                ambiguousIsDoubleWidth,
+                                NULL);
+            if ([terminal lastTokenWasASCII] && [terminal charset]) {
+                ConvertCharsToGraphicsCharset(screenChars, len);
             }
+            [result appendBytes:screenChars
+                         length:sizeof(screen_char_t) * len];
+            free(screenChars);
+            break;
         }
-        token = [terminal getNextToken];
     }
 
     return result;

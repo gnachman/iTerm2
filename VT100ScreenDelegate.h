@@ -171,6 +171,9 @@
 
 - (void)screenSetProfileToProfileNamed:(NSString *)value;
 - (void)screenSetPasteboard:(NSString *)value;
+- (BOOL)screenIsAppendingToPasteboard;
+- (void)screenAppendDataToPasteboard:(NSData *)data;
+
 - (void)screenRequestAttention:(BOOL)request;
 - (void)screenSetForegroundColor:(NSColor *)color;
 - (void)screenSetBackgroundColor:(NSColor *)color;

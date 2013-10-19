@@ -983,38 +983,13 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     [TERMINAL putStreamData:data];
 
-    VT100TCC token;
-
     // while loop to process all the tokens we can get
     while (!EXIT &&
            TERMINAL &&
            tmuxMode_ != TMUX_GATEWAY &&
-           ((token = [TERMINAL getNextToken]),
-            token.type != VT100_WAIT &&
-            token.type != VT100CC_NULL)) {
+           [TERMINAL parseNextToken]) {
         // process token
-        if (token.type != VT100_SKIP) {  // VT100_SKIP = there was no data to read
-            if (pasteboard_) {
-                // We are probably copying text to the clipboard until esc]50;EndCopy^G is received.
-                if (token.type != XTERMCC_SET_KVP || ![token.u.string hasPrefix:@"CopyToClipboard"]) {
-                    // Append text to clipboard except for initial command that turns on copying to
-                    // the clipboard.
-                    [pbtext_ appendData:[NSData dataWithBytes:token.position
-                                                       length:token.length]];
-                }
-
-                // Don't allow more than 100MB to be added to the pasteboard queue in case someone
-                // forgets to send the EndCopy command.
-                const int kMaxPasteboardBytes = 100 * 1024 * 1024;
-                if ([pbtext_ length] > kMaxPasteboardBytes) {
-                    [self setPasteboard:nil];
-                }
-            }
-
-            if (token.type != VT100_NOTSUPPORT) {
-                [TERMINAL executeToken:token];
-            }
-        }
+        [TERMINAL executeToken];
     }
 
     gettimeofday(&lastOutput, NULL);
@@ -4567,6 +4542,21 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     } else {
         NSLog(@"Clipboard access denied for CopyToClipboard");
     }
+}
+
+- (BOOL)screenIsAppendingToPasteboard {
+    return pasteboard_ != nil;
+}
+
+- (void)screenAppendDataToPasteboard:(NSData *)data {
+    // Don't allow more than 100MB to be added to the pasteboard queue in case someone
+    // forgets to send the EndCopy command.
+    const int kMaxPasteboardBytes = 100 * 1024 * 1024;
+    if ([pbtext_ length] + data.length > kMaxPasteboardBytes) {
+        [self setPasteboard:nil];
+    }
+
+    [pbtext_ appendData:data];
 }
 
 - (void)screenRequestAttention:(BOOL)request {

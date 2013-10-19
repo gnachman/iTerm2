@@ -1759,6 +1759,14 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     [delegate_ screenSetPasteboard:value];
 }
 
+- (BOOL)terminalIsAppendingToPasteboard {
+    return [delegate_ screenIsAppendingToPasteboard];
+}
+
+- (void)terminalAppendDataToPasteboard:(NSData *)data {
+    return [delegate_ screenAppendDataToPasteboard:data];
+}
+
 - (void)terminalRequestAttention:(BOOL)request {
     [delegate_ screenRequestAttention:request];
 }

@@ -237,6 +237,8 @@ typedef enum {
 } MouseButtonModifierFlag;
 
 
+#define VT100CSIPARAM_MAX    16  // Maximum number of CSI parameters in VT100TCC.u.csi.p.
+
 typedef struct {
     int p[VT100CSIPARAM_MAX];
     int count;
@@ -244,6 +246,169 @@ typedef struct {
     BOOL question; // used by old parser
     int modifier;  // used by old parser
 } CSIParam;
+
+typedef enum {
+    // Any control character between 0-0x1f inclusive can by a token type. For these, the value
+    // matters.
+    VT100CC_NULL = 0,
+    VT100CC_SOH = 1,   // Not used
+    VT100CC_STX = 2,   // Not used
+    VT100CC_ETX = 3,   // Not used
+    VT100CC_EOT = 4,   // Not used
+    VT100CC_ENQ = 5,   // Transmit ANSWERBACK message
+    VT100CC_ACK = 6,   // Not used
+    VT100CC_BEL = 7,   // Sound bell
+    VT100CC_BS = 8,    // Move cursor to the left
+    VT100CC_HT = 9,    // Move cursor to the next tab stop
+    VT100CC_LF = 10,   // line feed or new line operation
+    VT100CC_VT = 11,   // Same as <LF>.
+    VT100CC_FF = 12,   // Same as <LF>.
+    VT100CC_CR = 13,   // Move the cursor to the left margin
+    VT100CC_SO = 14,   // Invoke the G1 character set
+    VT100CC_SI = 15,   // Invoke the G0 character set
+    VT100CC_DLE = 16,  // Not used
+    VT100CC_DC1 = 17,  // Causes terminal to resume transmission (XON).
+    VT100CC_DC2 = 18,  // Not used
+    VT100CC_DC3 = 19,  // Causes terminal to stop transmitting all codes except XOFF and XON (XOFF).
+    VT100CC_DC4 = 20,  // Not used
+    VT100CC_NAK = 21,  // Not used
+    VT100CC_SYN = 22,  // Not used
+    VT100CC_ETB = 23,  // Not used
+    VT100CC_CAN = 24,  // Cancel a control sequence
+    VT100CC_EM = 25,   // Not used
+    VT100CC_SUB = 26,  // Same as <CAN>.
+    VT100CC_ESC = 27,  // Introduces a control sequence.
+    VT100CC_FS = 28,   // Not used
+    VT100CC_GS = 29,   // Not used
+    VT100CC_RS = 30,   // Not used
+    VT100CC_US = 31,   // Not used
+    VT100CC_DEL = 255, // Ignored on input; not stored in buffer.
+
+    VT100_WAIT = 1000,
+    VT100_NOTSUPPORT,
+    VT100_SKIP,
+    VT100_STRING,
+    VT100_ASCIISTRING,
+    VT100_UNKNOWNCHAR,
+    VT100_INVALID_SEQUENCE,
+
+    VT100CSI_CPR,                   // Cursor Position Report
+    VT100CSI_CUB,                   // Cursor Backward
+    VT100CSI_CUD,                   // Cursor Down
+    VT100CSI_CUF,                   // Cursor Forward
+    VT100CSI_CUP,                   // Cursor Position
+    VT100CSI_CUU,                   // Cursor Up
+    VT100CSI_DA,                    // Device Attributes
+    VT100CSI_DA2,                   // Secondary Device Attributes
+    VT100CSI_DECALN,                // Screen Alignment Display
+    VT100CSI_DECDHL,                // Double Height Line
+    VT100CSI_DECDWL,                // Double Width Line
+    VT100CSI_DECID,                 // Identify Terminal
+    VT100CSI_DECKPAM,               // Keypad Application Mode
+    VT100CSI_DECKPNM,               // Keypad Numeric Mode
+    VT100CSI_DECLL,                 // Load LEDS
+    VT100CSI_DECRC,                 // Restore Cursor
+    VT100CSI_DECREPTPARM,           // Report Terminal Parameters
+    VT100CSI_DECREQTPARM,           // Request Terminal Parameters
+    VT100CSI_DECRST,
+    VT100CSI_DECSC,                 // Save Cursor
+    VT100CSI_DECSET,
+    VT100CSI_DECSTBM,               // Set Top and Bottom Margins
+    VT100CSI_DECSWL,                // Single-width Line
+    VT100CSI_DECTST,                // Invoke Confidence Test
+    VT100CSI_DSR,                   // Device Status Report
+    VT100CSI_ED,                    // Erase In Display
+    VT100CSI_EL,                    // Erase In Line
+    VT100CSI_HTS,                   // Horizontal Tabulation Set
+    VT100CSI_HVP,                   // Horizontal and Vertical Position
+    VT100CSI_IND,                   // Index
+    VT100CSI_NEL,                   // Next Line
+    VT100CSI_RI,                    // Reverse Index
+    VT100CSI_RIS,                   // Reset To Initial State
+    VT100CSI_RM,                    // Reset Mode
+    VT100CSI_SCS,
+    VT100CSI_SCS0,                  // Select Character Set 0
+    VT100CSI_SCS1,                  // Select Character Set 1
+    VT100CSI_SCS2,                  // Select Character Set 2
+    VT100CSI_SCS3,                  // Select Character Set 3
+    VT100CSI_SGR,                   // Select Graphic Rendition
+    VT100CSI_SM,                    // Set Mode
+    VT100CSI_TBC,                   // Tabulation Clear
+    VT100CSI_DECSCUSR,              // Select the Style of the Cursor
+    VT100CSI_DECSTR,                // Soft reset
+    VT100CSI_DECDSR,                // Device Status Report (DEC specific)
+    VT100CSI_SET_MODIFIERS,         // CSI > Ps; Pm m (Whether to set modifiers for different kinds of key presses; no official name)
+    VT100CSI_RESET_MODIFIERS,       // CSI > Ps n (Set all modifiers values to -1, disabled)
+    VT100CSI_DECSLRM,               // Set left-right margin
+
+    // some xterm extensions
+    XTERMCC_WIN_TITLE,            // Set window title
+    XTERMCC_ICON_TITLE,
+    XTERMCC_WINICON_TITLE,
+    XTERMCC_INSBLNK,              // Insert blank
+    XTERMCC_INSLN,                // Insert lines
+    XTERMCC_DELCH,                // delete blank
+    XTERMCC_DELLN,                // delete lines
+    XTERMCC_WINDOWSIZE,           // (8,H,W) NK: added for Vim resizing window
+    XTERMCC_WINDOWSIZE_PIXEL,     // (8,H,W) NK: added for Vim resizing window
+    XTERMCC_WINDOWPOS,            // (3,Y,X) NK: added for Vim positioning window
+    XTERMCC_ICONIFY,
+    XTERMCC_DEICONIFY,
+    XTERMCC_RAISE,
+    XTERMCC_LOWER,
+    XTERMCC_SU,                  // scroll up
+    XTERMCC_SD,                  // scroll down
+    XTERMCC_REPORT_WIN_STATE,
+    XTERMCC_REPORT_WIN_POS,
+    XTERMCC_REPORT_WIN_PIX_SIZE,
+    XTERMCC_REPORT_WIN_SIZE,
+    XTERMCC_REPORT_SCREEN_SIZE,
+    XTERMCC_REPORT_ICON_TITLE,
+    XTERMCC_REPORT_WIN_TITLE,
+    XTERMCC_PUSH_TITLE,
+    XTERMCC_POP_TITLE,
+    XTERMCC_SET_RGB,
+    XTERMCC_PROPRIETARY_ETERM_EXT,
+    XTERMCC_SET_PALETTE,
+    XTERMCC_SET_KVP,
+    XTERMCC_PASTE64,
+
+    // Some ansi stuff
+    ANSICSI_CHA,     // Cursor Horizontal Absolute
+    ANSICSI_VPA,     // Vert Position Absolute
+    ANSICSI_VPR,     // Vert Position Relative
+    ANSICSI_ECH,     // Erase Character
+    ANSICSI_PRINT,   // Print to Ansi
+    ANSICSI_SCP,     // Save cursor position
+    ANSICSI_RCP,     // Restore cursor position
+    ANSICSI_CBT,     // Back tab
+
+    ANSI_RIS,        // Reset to initial state (there's also a CSI version)
+
+    // Toggle between ansi/vt52
+    STRICT_ANSI_MODE,
+
+    // iTerm extension
+    ITERM_GROWL,
+    DCS_TMUX,
+} VT100TerminalTokenType;
+
+// A parsed token.
+struct VT100TCC {
+    VT100TerminalTokenType type;
+    unsigned char *position;  // Pointer into stream of where this token's data began.
+    int length;  // Length of parsed data in stream.
+    union {
+        NSString *string;  // For VT100_STRING, VT100_ASCIISTRING
+        unsigned char code;  // For VT100_UNKNOWNCHAR and VT100CSI_SCS0...SCS3.
+        struct {  // For CSI codes.
+            int p[VT100CSIPARAM_MAX];  // Array of CSI parameters.
+            int count;  // Number of values in p.
+            BOOL question; // used by old parser
+            int modifier;  // used by old parser
+        } csi;
+    } u;
+};
 
 // functions
 static BOOL isCSI(unsigned char *, int);
@@ -2389,16 +2554,8 @@ static VT100TCC decode_string(unsigned char *datap,
     return result;
 }
 
-+ (void)initialize
-{
-}
-
 - (id)init
 {
-
-#if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
-#endif
     int i;
 
     self = [super init];
@@ -2453,6 +2610,7 @@ static VT100TCC decode_string(unsigned char *datap,
         streamOffset = 0;
 
         numLock = YES;
+        lastToken_ = malloc(sizeof(VT100TCC));
     }
     return self;
 }
@@ -2473,6 +2631,7 @@ static VT100TCC decode_string(unsigned char *datap,
         }
         key_strings[i] = NULL;
     }
+    free(lastToken_);
 
     [super dealloc];
 #if DEBUG_ALLOC
@@ -2707,23 +2866,18 @@ static VT100TCC decode_string(unsigned char *datap,
     assert(streamOffset >= 0);
 }
 
-- (VT100TCC)getNextToken
+- (BOOL)parseNextToken
 {
     unsigned char *datap;
     int datalen;
-    VT100TCC result;
-
-#if 0
-    NSLog(@"buffer data = %s", STREAM);
-#endif
 
     // get our current position in the stream
     datap = STREAM + streamOffset;
     datalen = current_stream_length - streamOffset;
 
     if (datalen == 0) {
-        result.type = VT100CC_NULL;
-        result.length = 0;
+        lastToken_->type = VT100CC_NULL;
+        lastToken_->length = 0;
         streamOffset = 0;
         current_stream_length = 0;
 
@@ -2737,42 +2891,38 @@ static VT100TCC decode_string(unsigned char *datap,
     } else {
         int rmlen = 0;
         if (*datap >= 0x20 && *datap <= 0x7f) {
-            result = decode_ascii_string(datap, datalen, &rmlen);
-            result.length = rmlen;
-            result.position = datap;
+            *lastToken_ = decode_ascii_string(datap, datalen, &rmlen);
+            lastToken_->length = rmlen;
+            lastToken_->position = datap;
         } else if (iscontrol(datap[0])) {
-            result = decode_control(datap, datalen, &rmlen, ENCODING, delegate_, useCanonicalParser);
-            result.length = rmlen;
-            result.position = datap;
-            [self _setMode:result];
-            [self _setCharAttr:result];
-            [self _setRGB:result];
+            *lastToken_ = decode_control(datap, datalen, &rmlen, ENCODING, delegate_, useCanonicalParser);
+            lastToken_->length = rmlen;
+            lastToken_->position = datap;
+            [self _setMode:*lastToken_];
+            [self _setCharAttr:*lastToken_];
+            [self _setRGB:*lastToken_];
         } else {
             if (isString(datap, ENCODING)) {
                 // If the encoding is UTF-8 then you get here only if *datap >= 0x80.
-                result = decode_string(datap, datalen, &rmlen, ENCODING);
-                if (result.type != VT100_WAIT && rmlen == 0) {
-                    result.type = VT100_UNKNOWNCHAR;
-                    result.u.code = datap[0];
+                *lastToken_ = decode_string(datap, datalen, &rmlen, ENCODING);
+                if (lastToken_->type != VT100_WAIT && rmlen == 0) {
+                    lastToken_->type = VT100_UNKNOWNCHAR;
+                    lastToken_->u.code = datap[0];
                     rmlen = 1;
                 }
             } else {
                 // If the encoding is UTF-8 you shouldn't get here.
-                result.type = VT100_UNKNOWNCHAR;
-                result.u.code = datap[0];
+                lastToken_->type = VT100_UNKNOWNCHAR;
+                lastToken_->u.code = datap[0];
                 rmlen = 1;
             }
-            result.length = rmlen;
-            result.position = datap;
+            lastToken_->length = rmlen;
+            lastToken_->position = datap;
         }
 
 
         if (rmlen > 0) {
             NSParameterAssert(current_stream_length >= streamOffset + rmlen);
-            if (TRACE && result.type == VT100_UNKNOWNCHAR) {
-                //      NSLog(@"INPUT-BUFFER %@, read %d byte, type %d",
-                //                      STREAM, rmlen, result.type);
-            }
             // mark our current position in the stream
             streamOffset += rmlen;
             assert(streamOffset >= 0);
@@ -2784,12 +2934,12 @@ static VT100TCC decode_string(unsigned char *datap,
         NSMutableString *ascii = [NSMutableString string];
         int i = 0;
         int start = 0;
-        while (i < result.length) {
+        while (i < lastToken_->length) {
             unsigned char c = datap[i];
             [loginfo appendFormat:@"%02x ", (int)c];
             [ascii appendFormat:@"%c", (c>=32 && c<128) ? c : '.'];
-            if (i == result.length - 1 || loginfo.length > 60) {
-                DebugLog([NSString stringWithFormat:@"Bytes %d-%d of %d: %@ (%@)", start, i, (int)result.length, loginfo, ascii]);
+            if (i == lastToken_->length - 1 || loginfo.length > 60) {
+                DebugLog([NSString stringWithFormat:@"Bytes %d-%d of %d: %@ (%@)", start, i, (int)lastToken_->length, loginfo, ascii]);
                 [loginfo setString:@""];
                 [ascii setString:@""];
                 start = i;
@@ -2798,7 +2948,7 @@ static VT100TCC decode_string(unsigned char *datap,
         }
     }
 
-    return result;
+    return lastToken_->type != VT100_WAIT && lastToken_->type != VT100CC_NULL;
 }
 
 - (NSData *)specialKey:(int)terminfo cursorMod:(char*)cursorMod cursorSet:(char*)cursorSet cursorReset:(char*)cursorReset modflag:(unsigned int)modflag
@@ -4103,13 +4253,27 @@ static VT100TCC decode_string(unsigned char *datap,
     return resultString;
 }
 
-- (void)executeToken:(VT100TCC)token
-{
+- (void)executeToken {
+    VT100TCC token = *lastToken_;
+    // First, handle sending input to pasteboard.
+    if (token.type != VT100_SKIP) {  // VT100_SKIP = there was no data to read
+        if ([delegate_ terminalIsAppendingToPasteboard]) {
+            // We are probably copying text to the clipboard until esc]50;EndCopy^G is received.
+            if (token.type != XTERMCC_SET_KVP ||
+                ![token.u.string hasPrefix:@"CopyToClipboard"]) {
+                // Append text to clipboard except for initial command that turns on copying to
+                // the clipboard.
+                [delegate_ terminalAppendDataToPasteboard:[NSData dataWithBytes:token.position
+                                                                         length:token.length]];
+            }
+        }
+    }
+
     switch (token.type) {
             // our special code
         case VT100_STRING:
         case VT100_ASCIISTRING:
-            [delegate_ terminalAppendString:token.u.string isAscii:token.type == VT100_ASCIISTRING];
+            [delegate_ terminalAppendString:token.u.string isAscii:lastToken_->type == VT100_ASCIISTRING];
             break;
 
         case VT100_UNKNOWNCHAR:
@@ -4573,6 +4737,19 @@ static VT100TCC decode_string(unsigned char *datap,
         default:
             NSLog(@"%s(%d): bug?? token.type = %d", __FILE__, __LINE__, token.type);
             break;
+    }
+}
+
+- (BOOL)lastTokenWasASCII {
+    return lastToken_->type == VT100_ASCIISTRING;
+}
+
+- (NSString *)lastTokenString {
+    if (lastToken_->type == VT100_STRING ||
+        lastToken_->type == VT100_ASCIISTRING) {
+        return lastToken_->u.string;
+    } else {
+        return nil;
     }
 }
 
