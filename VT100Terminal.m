@@ -1,49 +1,9 @@
-// -*- mode:objc -*-
-// $Id: VT100Terminal.m,v 1.136 2008-10-21 05:43:52 yfabian Exp $
-//
-/*
- **  VT100Terminal.m
- **
- **  Copyright (c) 2002, 2003
- **
- **  Author: Fabian, Ujwal S. Setlur
- **      Initial code by Kiichi Kusama
- **
- **  Project: iTerm
- **
- **  Description: Implements the model class VT100 terminal.
- **
- **  This program is free software; you can redistribute it and/or modify
- **  it under the terms of the GNU General Public License as published by
- **  the Free Software Foundation; either version 2 of the License, or
- **  (at your option) any later version.
- **
- **  This program is distributed in the hope that it will be useful,
- **  but WITHOUT ANY WARRANTY; without even the implied warranty of
- **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- **  GNU General Public License for more details.
- **
- **  You should have received a copy of the GNU General Public License
- **  along with this program; if not, write to the Free Software
- **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
 #import "VT100Terminal.h"
-#import "PTYSession.h"
-#import "NSStringITerm.h"
-#import "iTermApplicationDelegate.h"
-#import "ITAddressBookMgr.h"
-#import "PTYTab.h"
-#import "PseudoTerminal.h"
-#import "WindowControllerInterface.h"
-#include <term.h>
-#include <wchar.h>
+#import "DebugLogging.h"
 #import <apr-1/apr_base64.h>  // for xterm's base64 decoding (paste64)
+#include <term.h>
 
-#define DEBUG_ALLOC 0
-#define LOG_UNKNOWN 0
 #define STANDARD_STREAM_SIZE 100000
-#define MAX_BUFFER_LENGTH 1024
 
 @implementation VT100Terminal
 
@@ -51,15 +11,15 @@
 
 #define iscontrol(c)  ((c) <= 0x1f)
 
-/*
- Traditional Chinese (Big5)
- 1st   0xa1-0xfe
- 2nd   0x40-0x7e || 0xa1-0xfe
+// Code to detect if characters are properly encoded for each encoding.
 
- Simplifed Chinese (EUC_CN)
- 1st   0x81-0xfe
- 2nd   0x40-0x7e || 0x80-0xfe
- */
+// Traditional Chinese (Big5)
+// 1st   0xa1-0xfe
+// 2nd   0x40-0x7e || 0xa1-0xfe
+//
+// Simplifed Chinese (EUC_CN)
+// 1st   0x81-0xfe
+// 2nd   0x40-0x7e || 0x80-0xfe
 #define iseuccn(c)   ((c) >= 0x81 && (c) <= 0xfe)
 #define isbig5(c)    ((c) >= 0xa1 && (c) <= 0xfe)
 #define issjiskanji(c)  (((c) >= 0x81 && (c) <= 0x9f) ||  \
@@ -79,6 +39,7 @@
 #define ESC  0x1b
 #define DEL  0x7f
 
+// Codes to send for keypresses
 #define CURSOR_SET_DOWN      "\033OB"
 #define CURSOR_SET_UP        "\033OA"
 #define CURSOR_SET_RIGHT     "\033OC"
@@ -122,8 +83,7 @@
 #define ALT_KP_EQUALS   "\033OX"
 #define ALT_KP_ENTER    "\033OM"
 
-
-
+// Reporting formats
 #define KEY_FUNCTION_FORMAT  "\033[%d~"
 
 #define REPORT_POSITION      "\033[%d;%dR"
@@ -156,83 +116,56 @@
 #define VT100CHARATTR_POSITIVE      27
 
 typedef enum {
-    COLORCODE_BLACK=0,
-    COLORCODE_RED=1,
-    COLORCODE_GREEN=2,
-    COLORCODE_YELLOW=3,
-    COLORCODE_BLUE=4,
-    COLORCODE_PURPLE=5,
-    COLORCODE_WATER=6,
-    COLORCODE_WHITE=7,
-    COLORCODE_256=8,
+    COLORCODE_BLACK = 0,
+    COLORCODE_RED = 1,
+    COLORCODE_GREEN = 2,
+    COLORCODE_YELLOW = 3,
+    COLORCODE_BLUE = 4,
+    COLORCODE_PURPLE = 5,
+    COLORCODE_WATER = 6,
+    COLORCODE_WHITE = 7,
+    COLORCODE_256 = 8,
     COLORS
 } colorCode;
 
-// 8 color support
+// Color constants
+// Color codes for 8-color mode. Black and white are the limits; other codes can be constructed
+// similarly.
 #define VT100CHARATTR_FG_BASE  30
 #define VT100CHARATTR_BG_BASE  40
 
 #define VT100CHARATTR_FG_BLACK     (VT100CHARATTR_FG_BASE + COLORCODE_BLACK)
-#define VT100CHARATTR_FG_RED       (VT100CHARATTR_FG_BASE + COLORCODE_RED)
-#define VT100CHARATTR_FG_GREEN     (VT100CHARATTR_FG_BASE + COLORCODE_GREEN)
-#define VT100CHARATTR_FG_YELLOW    (VT100CHARATTR_FG_BASE + COLORCODE_YELLOW)
-#define VT100CHARATTR_FG_BLUE      (VT100CHARATTR_FG_BASE + COLORCODE_BLUE)
-#define VT100CHARATTR_FG_PURPLE    (VT100CHARATTR_FG_BASE + COLORCODE_PURPLE)
-#define VT100CHARATTR_FG_WATER     (VT100CHARATTR_FG_BASE + COLORCODE_WATER)
 #define VT100CHARATTR_FG_WHITE     (VT100CHARATTR_FG_BASE + COLORCODE_WHITE)
 #define VT100CHARATTR_FG_256       (VT100CHARATTR_FG_BASE + COLORCODE_256)
 #define VT100CHARATTR_FG_DEFAULT   (VT100CHARATTR_FG_BASE + 9)
 
 #define VT100CHARATTR_BG_BLACK     (VT100CHARATTR_BG_BASE + COLORCODE_BLACK)
-#define VT100CHARATTR_BG_RED       (VT100CHARATTR_BG_BASE + COLORCODE_RED)
-#define VT100CHARATTR_BG_GREEN     (VT100CHARATTR_BG_BASE + COLORCODE_GREEN)
-#define VT100CHARATTR_BG_YELLOW    (VT100CHARATTR_BG_BASE + COLORCODE_YELLOW)
-#define VT100CHARATTR_BG_BLUE      (VT100CHARATTR_BG_BASE + COLORCODE_BLUE)
-#define VT100CHARATTR_BG_PURPLE    (VT100CHARATTR_BG_BASE + COLORCODE_PURPLE)
-#define VT100CHARATTR_BG_WATER     (VT100CHARATTR_BG_BASE + COLORCODE_WATER)
 #define VT100CHARATTR_BG_WHITE     (VT100CHARATTR_BG_BASE + COLORCODE_WHITE)
 #define VT100CHARATTR_BG_256       (VT100CHARATTR_BG_BASE + COLORCODE_256)
 #define VT100CHARATTR_BG_DEFAULT   (VT100CHARATTR_BG_BASE + 9)
 
-// 16 color support
+// Color codes for 16-color mode. Black and white are the limits; other codes can be constructed
+// similarly.
 #define VT100CHARATTR_FG_HI_BASE  90
 #define VT100CHARATTR_BG_HI_BASE  100
 
 #define VT100CHARATTR_FG_HI_BLACK     (VT100CHARATTR_FG_HI_BASE + COLORCODE_BLACK)
-#define VT100CHARATTR_FG_HI_RED       (VT100CHARATTR_FG_HI_BASE + COLORCODE_RED)
-#define VT100CHARATTR_FG_HI_GREEN     (VT100CHARATTR_FG_HI_BASE + COLORCODE_GREEN)
-#define VT100CHARATTR_FG_HI_YELLOW    (VT100CHARATTR_FG_HI_BASE + COLORCODE_YELLOW)
-#define VT100CHARATTR_FG_HI_BLUE      (VT100CHARATTR_FG_HI_BASE + COLORCODE_BLUE)
-#define VT100CHARATTR_FG_HI_PURPLE    (VT100CHARATTR_FG_HI_BASE + COLORCODE_PURPLE)
-#define VT100CHARATTR_FG_HI_WATER     (VT100CHARATTR_FG_HI_BASE + COLORCODE_WATER)
 #define VT100CHARATTR_FG_HI_WHITE     (VT100CHARATTR_FG_HI_BASE + COLORCODE_WHITE)
 
 #define VT100CHARATTR_BG_HI_BLACK     (VT100CHARATTR_BG_HI_BASE + COLORCODE_BLACK)
-#define VT100CHARATTR_BG_HI_RED       (VT100CHARATTR_BG_HI_BASE + COLORCODE_RED)
-#define VT100CHARATTR_BG_HI_GREEN     (VT100CHARATTR_BG_HI_BASE + COLORCODE_GREEN)
-#define VT100CHARATTR_BG_HI_YELLOW    (VT100CHARATTR_BG_HI_BASE + COLORCODE_YELLOW)
-#define VT100CHARATTR_BG_HI_BLUE      (VT100CHARATTR_BG_HI_BASE + COLORCODE_BLUE)
-#define VT100CHARATTR_BG_HI_PURPLE    (VT100CHARATTR_BG_HI_BASE + COLORCODE_PURPLE)
-#define VT100CHARATTR_BG_HI_WATER     (VT100CHARATTR_BG_HI_BASE + COLORCODE_WATER)
 #define VT100CHARATTR_BG_HI_WHITE     (VT100CHARATTR_BG_HI_BASE + COLORCODE_WHITE)
 
 typedef enum {
-
-    // keyboard modifier flag
-    //  4 - shit
-    //  8 - meta
-    //  16 - ctrl
+    // Keyboard modifier flags
     MOUSE_BUTTON_SHIFT_FLAG = 4,
     MOUSE_BUTTON_META_FLAG = 8,
     MOUSE_BUTTON_CTRL_FLAG = 16,
 
     // scroll flag
-    //  64 - this is scroll event
-    MOUSE_BUTTON_SCROLL_FLAG = 64,
+    MOUSE_BUTTON_SCROLL_FLAG = 64,  // this is a scroll event
 
     // for SGR 1006 style, internal use only
-    //  128 - mouse button is released
-    MOUSE_BUTTON_SGR_RELEASE_FLAG = 128
+    MOUSE_BUTTON_SGR_RELEASE_FLAG = 128  // mouse button was released
 
 } MouseButtonModifierFlag;
 
@@ -246,6 +179,12 @@ typedef struct {
     BOOL question; // used by old parser
     int modifier;  // used by old parser
 } CSIParam;
+
+// Sets the |n|th parameter's value in CSIParam |pm| to |d|, but only if it's currently negative.
+// |pm|.count is incremented if necessary.
+#define SET_PARAM_DEFAULT(pm, n, d) \
+(((pm).p[(n)] = (pm).p[(n)] < 0 ? (d):(pm).p[(n)]), \
+ ((pm).count  = (pm).count > (n) + 1 ? (pm).count : (n) + 1 ))
 
 typedef enum {
     // Any control character between 0-0x1f inclusive can by a token type. For these, the value
@@ -410,6 +349,7 @@ struct VT100TCC {
     } u;
 };
 
+
 // functions
 static BOOL isCSI(unsigned char *, int);
 static BOOL isXTERM(unsigned char *, int);
@@ -469,33 +409,26 @@ static BOOL isString(unsigned char *code,
 {
     BOOL result = NO;
 
-    //    NSLog(@"%@",[NSString localizedNameOfStringEncoding:encoding]);
     if (encoding== NSUTF8StringEncoding) {
         if (*code >= 0x80) {
             result = YES;
         }
-    }
-    else if (isGBEncoding(encoding)) {
+    } else if (isGBEncoding(encoding)) {
         if (iseuccn(*code))
             result = YES;
-    }
-    else if (isBig5Encoding(encoding)) {
+    } else if (isBig5Encoding(encoding)) {
         if (isbig5(*code))
             result = YES;
-    }
-    else if (isJPEncoding(encoding)) {
+    } else if (isJPEncoding(encoding)) {
         if (*code ==0x8e || *code==0x8f|| (*code>=0xa1&&*code<=0xfe))
             result = YES;
-    }
-    else if (isSJISEncoding(encoding)) {
+    } else if (isSJISEncoding(encoding)) {
         if (*code >= 0x80)
             result = YES;
-    }
-    else if (isKREncoding(encoding)) {
+    } else if (isKREncoding(encoding)) {
         if (iseuckr(*code))
             result = YES;
-    }
-    else if (*code>=0x20) {
+    } else if (*code>=0x20) {
         result = YES;
     }
 
@@ -586,21 +519,17 @@ static int getCSIParam(unsigned char *datap,
         param->question = YES;
         datap ++;
         datalen --;
-    }
-    // check for secondsry device attribute modifier
-    else if (datalen > 0 && *datap == '>')
-    {
+    } else if (datalen > 0 && *datap == '>') {
+        // check for secondary device attribute modifier
         param->modifier = '>';
         param->question = NO;
         datap++;
         datalen--;
-    }
-    else
+    } else {
         param->question = NO;
-
+    }
 
     while (datalen > 0) {
-
         if (isdigit(*datap)) {
             int n = *datap - '0';
             datap++;
@@ -616,16 +545,15 @@ static int getCSIParam(unsigned char *datap,
                 datap++;
                 datalen--;
             }
-            if (param->count < VT100CSIPARAM_MAX)
+            if (param->count < VT100CSIPARAM_MAX) {
                 param->p[param->count] = n;
+            }
             // increment the parameter count
             param->count++;
 
             // set the numeric parameter flag
             readNumericParameter = YES;
-
-        }
-        else if (*datap == ';') {
+        } else if (*datap == ';') {
             datap++;
             datalen--;
 
@@ -634,14 +562,12 @@ static int getCSIParam(unsigned char *datap,
                 param->count++;
             // reset the parameter flag
             readNumericParameter = NO;
-        }
-        else if (isalpha(*datap)||*datap=='@') {
+        } else if (isalpha(*datap)||*datap=='@') {
             datalen--;
             param->cmd = unrecognized?0xff:*datap;
             datap++;
             break;
-        }
-        else if (*datap == ' ') {
+        } else if (*datap == ' ') {
             datap++;
             datalen--;
             switch (*datap) {
@@ -657,8 +583,7 @@ static int getCSIParam(unsigned char *datap,
                     param->cmd = 0xff;
                     break;
             }
-        }
-        else if (*datap=='\'') {
+        } else if (*datap=='\'') {
             datap++;
             datalen--;
             switch (*datap) {
@@ -678,8 +603,7 @@ static int getCSIParam(unsigned char *datap,
                     break;
             }
             break;
-        }
-        else if (*datap=='&') {
+        } else if (*datap=='&') {
             datap++;
             datalen--;
             switch (*datap) {
@@ -697,8 +621,7 @@ static int getCSIParam(unsigned char *datap,
                     break;
             }
             break;
-        }
-        else if (*datap == '!') {
+        } else if (*datap == '!') {
             datap++;
             datalen--;
             if (datalen == 0) {
@@ -716,8 +639,7 @@ static int getCSIParam(unsigned char *datap,
                     param->cmd=0xff;
                     break;
             }
-        }
-        else {
+        } else {
             switch (*datap) {
                 case VT100CC_ENQ:
                     break;
@@ -759,14 +681,17 @@ static int getCSIParam(unsigned char *datap,
                 datap++;
             }
         }
-        if (unrecognized) break;
+        if (unrecognized) {
+            break;
+        }
     }
     return datap - orgp;
 }
 
 static int getCSIParamCanonically(unsigned char *datap,
                                   int datalen,
-                                  CSIParam *param, id<VT100TerminalDelegate> delegate)
+                                  CSIParam *param,
+                                  id<VT100TerminalDelegate> delegate)
 {
     int i;
     BOOL unrecognized = NO;
@@ -1037,10 +962,6 @@ cancel:
     return datap - orgp;
 }
 
-#define SET_PARAM_DEFAULT(pm,n,d) \
-(((pm).p[(n)] = (pm).p[(n)] < 0 ? (d):(pm).p[(n)]), \
- ((pm).count  = (pm).count > (n) + 1 ? (pm).count : (n) + 1 ))
-
 static VT100TCC decode_ansi(unsigned char *datap,
                             int datalen,
                             int *rmlen,
@@ -1077,9 +998,8 @@ static VT100TCC decode_csi(unsigned char *datap,
     if (param.cmd == 0xff) {
         result.type = VT100_UNKNOWNCHAR;
         *rmlen = paramlen;
-    }
-    // process
-    else if (paramlen > 0 && param.cmd > 0) {
+    } else if (paramlen > 0 && param.cmd > 0) {
+        // process
         if (!param.question) {
             switch (param.cmd) {
                 case 'D':       // Cursor Backward
@@ -1136,13 +1056,9 @@ static VT100TCC decode_csi(unsigned char *datap,
                     break;
 
                 case 'y':
-                    if (param.count == 2)
+                    if (param.count == 2) {
                         result.type = VT100CSI_DECTST;
-                    else
-                    {
-#if LOG_UNKNOWN
-                        NSLog(@"1: Unknown token %c", param.cmd);
-#endif
+                    } else {
                         result.type = VT100_NOTSUPPORT;
                     }
                         break;
@@ -1180,7 +1096,6 @@ static VT100TCC decode_csi(unsigned char *datap,
                     }
                     for (i = 0; i < param.count; ++i) {
                         SET_PARAM_DEFAULT(param, i, 0);
-                        //                        NSLog(@"m[%d]=%d",i,param.p[i]);
                     }
                     break;
 
@@ -1295,37 +1210,36 @@ static VT100TCC decode_csi(unsigned char *datap,
                     if (param.count<2) {
                         result.type = XTERMCC_SD;
                         SET_PARAM_DEFAULT(param,0,1);
-                    }
-                    else
+                    } else {
                         result.type = VT100_NOTSUPPORT;
-
+                    }
                     break;
 
 
                     // ANSI
                 case 'Z':
                     result.type = ANSICSI_CBT;
-                    SET_PARAM_DEFAULT(param,0,1);
+                    SET_PARAM_DEFAULT(param, 0, 1);
                     break;
                 case 'G':
                     result.type = ANSICSI_CHA;
-                    SET_PARAM_DEFAULT(param,0,1);
+                    SET_PARAM_DEFAULT(param, 0, 1);
                     break;
                 case 'd':
                     result.type = ANSICSI_VPA;
-                    SET_PARAM_DEFAULT(param,0,1);
+                    SET_PARAM_DEFAULT(param, 0, 1);
                     break;
                 case 'e':
                     result.type = ANSICSI_VPR;
-                    SET_PARAM_DEFAULT(param,0,1);
+                    SET_PARAM_DEFAULT(param, 0, 1);
                     break;
                 case 'X':
                     result.type = ANSICSI_ECH;
-                    SET_PARAM_DEFAULT(param,0,1);
+                    SET_PARAM_DEFAULT(param, 0, 1);
                     break;
                 case 'i':
                     result.type = ANSICSI_PRINT;
-                    SET_PARAM_DEFAULT(param,0,0);
+                    SET_PARAM_DEFAULT(param, 0, 0);
                     break;
                 case 's':
                     if ([delegate terminalUseColumnScrollRegion]) {
@@ -1339,12 +1253,9 @@ static VT100TCC decode_csi(unsigned char *datap,
                     break;
                 case 'u':
                     result.type = ANSICSI_RCP;
-                    SET_PARAM_DEFAULT(param,0,0);
+                    SET_PARAM_DEFAULT(param, 0, 0);
                     break;
                 default:
-#if LOG_UNKNOWN
-                    NSLog(@"2: Unknown token (%c); %s", param.cmd, datap);
-#endif
                     result.type = VT100_NOTSUPPORT;
                     break;
             }
@@ -1360,9 +1271,6 @@ static VT100TCC decode_csi(unsigned char *datap,
                     SET_PARAM_DEFAULT(param, 0, 0);
                     break;
                 default:
-#if LOG_UNKNOWN
-                    NSLog(@"3: Unknown token %c", param.cmd);
-#endif
                     result.type = VT100_NOTSUPPORT;
                     break;
 
@@ -1370,8 +1278,9 @@ static VT100TCC decode_csi(unsigned char *datap,
         }
 
         // copy CSI parameter
-        for (i = 0; i < VT100CSIPARAM_MAX; ++i)
+        for (i = 0; i < VT100CSIPARAM_MAX; ++i) {
             result.u.csi.p[i] = param.p[i];
+        }
         result.u.csi.count = param.count;
         result.u.csi.question = param.question;
         result.u.csi.modifier = param.modifier;
@@ -1388,7 +1297,7 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
                                        id<VT100TerminalDelegate> delegate)
 {
     VT100TCC result;
-    CSIParam param={{0},0};
+    CSIParam param={ { 0 }, 0 };
     int paramlen;
     int i;
 
@@ -1399,9 +1308,8 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
     if (param.cmd == 0xff) {
         result.type = VT100_UNKNOWNCHAR;
         *rmlen = paramlen;
-    }
-    // process
-    else if (paramlen > 0 && param.cmd > 0) {
+    } else if (paramlen > 0 && param.cmd > 0) {
+        // process
         switch (param.cmd) {
             case 'D':       // Cursor Backward
                 result.type = VT100CSI_CUB;
@@ -1462,9 +1370,6 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
                     result.type = VT100CSI_DECTST;
                 else
                 {
-#if LOG_UNKNOWN
-                    NSLog(@"1: Unknown token %x", param.cmd);
-#endif
                     result.type = VT100_NOTSUPPORT;
                 }
                 break;
@@ -1537,19 +1442,19 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
             // these are xterm controls
             case '@':
                 result.type = XTERMCC_INSBLNK;
-                SET_PARAM_DEFAULT(param,0,1);
+                SET_PARAM_DEFAULT(param, 0, 1);
                 break;
             case 'L':
                 result.type = XTERMCC_INSLN;
-                SET_PARAM_DEFAULT(param,0,1);
+                SET_PARAM_DEFAULT(param, 0, 1);
                 break;
             case 'P':
                 result.type = XTERMCC_DELCH;
-                SET_PARAM_DEFAULT(param,0,1);
+                SET_PARAM_DEFAULT(param, 0, 1);
                 break;
             case 'M':
                 result.type = XTERMCC_DELLN;
-                SET_PARAM_DEFAULT(param,0,1);
+                SET_PARAM_DEFAULT(param, 0, 1);
                 break;
             case 't':
                 switch (param.p[0]) {
@@ -1608,12 +1513,12 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
                 break;
             case 'S':
                 result.type = XTERMCC_SU;
-                SET_PARAM_DEFAULT(param,0,1);
+                SET_PARAM_DEFAULT(param, 0, 1);
                 break;
             case 'T':
                 if (param.count < 2) {
                     result.type = XTERMCC_SD;
-                    SET_PARAM_DEFAULT(param,0,1);
+                    SET_PARAM_DEFAULT(param, 0, 1);
                 }
                 else
                     result.type = VT100_NOTSUPPORT;
@@ -1622,27 +1527,27 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
             // ANSI
             case 'Z':
                 result.type = ANSICSI_CBT;
-                SET_PARAM_DEFAULT(param,0,1);
+                SET_PARAM_DEFAULT(param, 0, 1);
                 break;
             case 'G':
                 result.type = ANSICSI_CHA;
-                SET_PARAM_DEFAULT(param,0,1);
+                SET_PARAM_DEFAULT(param, 0, 1);
                 break;
             case 'd':
                 result.type = ANSICSI_VPA;
-                SET_PARAM_DEFAULT(param,0,1);
+                SET_PARAM_DEFAULT(param, 0, 1);
                 break;
             case 'e':
                 result.type = ANSICSI_VPR;
-                SET_PARAM_DEFAULT(param,0,1);
+                SET_PARAM_DEFAULT(param, 0, 1);
                 break;
             case 'X':
                 result.type = ANSICSI_ECH;
-                SET_PARAM_DEFAULT(param,0,1);
+                SET_PARAM_DEFAULT(param, 0, 1);
                 break;
             case 'i':
                 result.type = ANSICSI_PRINT;
-                SET_PARAM_DEFAULT(param,0,0);
+                SET_PARAM_DEFAULT(param, 0, 0);
                 break;
             case 's':
                 if ([delegate terminalUseColumnScrollRegion]) {
@@ -1656,7 +1561,7 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
                 break;
             case 'u':
                 result.type = ANSICSI_RCP;
-                SET_PARAM_DEFAULT(param,0,0);
+                SET_PARAM_DEFAULT(param, 0, 0);
                 break;
             case PACK_CSI_COMMAND('?', 'h'):       // Dec private mode set
                 result.type = VT100CSI_DECSET;
@@ -1667,17 +1572,15 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
                 SET_PARAM_DEFAULT(param, 0, 0);
                 break;
             default:
-#if LOG_UNKNOWN
-                NSLog(@"3: Unknown token %x", param.cmd);
-#endif
                 result.type = VT100_NOTSUPPORT;
                 break;
 
         }
 
         // copy CSI parameter
-        for (i = 0; i < VT100CSIPARAM_MAX; ++i)
+        for (i = 0; i < VT100CSIPARAM_MAX; ++i) {
             result.u.csi.p[i] = param.p[i];
+        }
         result.u.csi.count = param.count;
 
         *rmlen = paramlen;
@@ -1717,7 +1620,9 @@ static VT100TCC decode_xterm(unsigned char *datap,
     int mode = 0;
     VT100TCC result;
     NSData *data;
-    char s[MAX_BUFFER_LENGTH] = { 0 }, *c = nil;
+    const int kMaxBufferLength = 1024;
+    char s[kMaxBufferLength] = { 0 };
+    char *c = NULL;
 
     assert(datap != NULL);
     assert(datalen >= 2);
@@ -1814,7 +1719,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
                     break;
                 }
             }
-            if (c - s < MAX_BUFFER_LENGTH) {
+            if (c - s < kMaxBufferLength) {
                 // if 0 <= mode <=2 and current *datap is a control character, replace it with '?'. 
                 if ((*datap < 0x20 || *datap == 0x7f) && (mode == 0 || mode == 1 || mode == 2)) {
                     *c = '?';
@@ -1884,7 +1789,6 @@ static VT100TCC decode_xterm(unsigned char *datap,
                 result.type = VT100_NOTSUPPORT;
                 break;
         }
-        //        NSLog(@"result: %d[%@],%d",result.type,result.u.string,*rmlen);
     }
 
     return result;
@@ -1919,9 +1823,6 @@ static VT100TCC decode_other(unsigned char *datap,
                 switch (c2) {
                     case '8': result.type=VT100CSI_DECALN; break;
                     default:
-#if LOG_UNKNOWN
-                        NSLog(@"4: Unknown token ESC # %c", c2);
-#endif
                         result.type = VT100_NOTSUPPORT;
                 }
                 *rmlen = 3;
@@ -2090,7 +1991,7 @@ static VT100TCC decode_other(unsigned char *datap,
             break;
 
         case ' ':
-            if (c2<0) {
+            if (c2 < 0) {
                 result.type = VT100_WAIT;
             } else {
                 switch (c2) {
@@ -2111,9 +2012,6 @@ static VT100TCC decode_other(unsigned char *datap,
             break;
 
         default:
-#if LOG_UNKNOWN
-            NSLog(@"5: Unknown token %c(%x)", c1, c1);
-#endif
             result.type = VT100_NOTSUPPORT;
             *rmlen = 2;
             break;
@@ -2137,7 +2035,7 @@ static VT100TCC decode_control(unsigned char *datap,
         } else {
             result = decode_csi(datap, datalen, rmlen, delegate);
         }
-    } else if (isXTERM(datap,datalen)) {
+    } else if (isXTERM(datap, datalen)) {
         result = decode_xterm(datap, datalen, rmlen, enc);
     } else if (isANSI(datap, datalen)) {
         result = decode_ansi(datap, datalen, rmlen, delegate);
@@ -2146,14 +2044,14 @@ static VT100TCC decode_control(unsigned char *datap,
     } else {
         NSCParameterAssert(datalen > 0);
 
-        switch ( *datap ) {
+        switch (*datap) {
             case VT100CC_NULL:
                 result.type = VT100_SKIP;
                 *rmlen = 0;
                 while (datalen > 0 && *datap == '\0') {
                     ++datap;
                     --datalen;
-                    ++ *rmlen;
+                    ++*rmlen;
                 }
                 break;
 
@@ -2229,27 +2127,26 @@ static VT100TCC decode_euccn(unsigned char *datap,
 
 
     while (len > 0) {
-        if (iseuccn(*p)&&len>1) {
+        if (iseuccn(*p) && len > 1) {
             if ((*(p+1) >= 0x40 &&
                  *(p+1) <= 0x7e) ||
                 (*(p+1) >= 0x80 &&
                  *(p+1) <= 0xfe)) {
                 p += 2;
                 len -= 2;
-            }
-            else {
+            } else {
                 *p = ONECHAR_UNKNOWN;
                 p++;
                 len--;
             }
+        } else {
+            break;
         }
-        else break;
     }
     if (len == datalen) {
         *rmlen = 0;
         result.type = VT100_WAIT;
-    }
-    else {
+    } else {
         *rmlen = datalen - len;
         result.type = VT100_STRING;
     }
@@ -2266,27 +2163,26 @@ static VT100TCC decode_big5(unsigned char *datap,
     int len = datalen;
 
     while (len > 0) {
-        if (isbig5(*p)&&len>1) {
+        if (isbig5(*p) && len > 1) {
             if ((*(p+1) >= 0x40 &&
                  *(p+1) <= 0x7e) ||
                 (*(p+1) >= 0xa1 &&
                  *(p+1)<=0xfe)) {
                 p += 2;
                 len -= 2;
-            }
-            else {
+            } else {
                 *p = ONECHAR_UNKNOWN;
                 p++;
                 len--;
             }
+        } else {
+            break;
         }
-        else break;
     }
     if (len == datalen) {
         *rmlen = 0;
         result.type = VT100_WAIT;
-    }
-    else {
+    } else {
         *rmlen = datalen - len;
         result.type = VT100_STRING;
     }
@@ -2306,22 +2202,20 @@ static VT100TCC decode_euc_jp(unsigned char *datap,
         if  (len > 1 && *p == 0x8e) {
             p += 2;
             len -= 2;
-        }
-        else if (len > 2  && *p == 0x8f ) {
+        } else if (len > 2  && *p == 0x8f ) {
             p += 3;
             len -= 3;
-        }
-        else if (len > 1 && *p >= 0xa1 && *p <= 0xfe ) {
+        } else if (len > 1 && *p >= 0xa1 && *p <= 0xfe ) {
             p += 2;
             len -= 2;
+        } else {
+            break;
         }
-        else break;
     }
     if (len == datalen) {
         *rmlen = 0;
         result.type = VT100_WAIT;
-    }
-    else {
+    } else {
         *rmlen = datalen - len;
         result.type = VT100_STRING;
     }
@@ -2339,15 +2233,15 @@ static VT100TCC decode_sjis(unsigned char *datap,
     int len = datalen;
 
     while (len > 0) {
-        if (issjiskanji(*p)&&len>1) {
+        if (issjiskanji(*p) && len > 1) {
             p += 2;
             len -= 2;
-        }
-        else if (*p>=0x80) {
+        } else if (*p>=0x80) {
             p++;
             len--;
+        } else {
+            break;
         }
-        else break;
     }
 
     if (len == datalen) {
@@ -2372,17 +2266,17 @@ static VT100TCC decode_euckr(unsigned char *datap,
     int len = datalen;
 
     while (len > 0) {
-        if (iseuckr(*p)&&len>1) {
+        if (iseuckr(*p) && len > 1) {
             p += 2;
             len -= 2;
+        } else {
+            break;
         }
-        else break;
     }
     if (len == datalen) {
         *rmlen = 0;
         result.type = VT100_WAIT;
-    }
-    else {
+    } else {
         *rmlen = datalen - len;
         result.type = VT100_STRING;
     }
@@ -2399,17 +2293,17 @@ static VT100TCC decode_other_enc(unsigned char *datap,
     int len = datalen;
 
     while (len > 0) {
-        if (*p>=0x80) {
+        if (*p >= 0x80) {
             p++;
             len--;
+        } else {
+            break;
         }
-        else break;
     }
     if (len == datalen) {
         *rmlen = 0;
         result.type = VT100_WAIT;
-    }
-    else {
+    } else {
         *rmlen = datalen - len;
         result.type = VT100_STRING;
     }
@@ -2442,18 +2336,15 @@ static VT100TCC decode_ascii_string(unsigned char *datap,
         result.type = VT100_ASCIISTRING;
     }
 
-    result.u.string =[[[NSString alloc]
-                                   initWithBytes:datap
-                                          length:*rmlen
-                                        encoding:NSASCIIStringEncoding]
-        autorelease];
+    result.u.string = [[[NSString alloc] initWithBytes:datap
+                                                length:*rmlen
+                                              encoding:NSASCIIStringEncoding] autorelease];
 
-    if (result.u.string==nil) {
+    if (result.u.string == nil) {
         *rmlen = 0;
         result.type = VT100_UNKNOWNCHAR;
         result.u.code = datap[0];
     }
-
 
     return result;
 }
@@ -2491,29 +2382,19 @@ static VT100TCC decode_string(unsigned char *datap,
     //    NSLog(@"data: %@",[NSData dataWithBytes:datap length:datalen]);
     if (encoding == NSUTF8StringEncoding) {
         result = decode_utf8(datap, datalen, rmlen);
-    }
-    else if (isGBEncoding(encoding)) {
-        //        NSLog(@"Chinese-GB!");
+    } else if (isGBEncoding(encoding)) {
+        // Chinese-GB
         result = decode_euccn(datap, datalen, rmlen);
-    }
-    else if (isBig5Encoding(encoding)) {
+    } else if (isBig5Encoding(encoding)) {
         result = decode_big5(datap, datalen, rmlen);
-    }
-    else if (isJPEncoding(encoding)) {
-        //        NSLog(@"decoding euc-jp");
+    } else if (isJPEncoding(encoding)) {
         result = decode_euc_jp(datap, datalen, rmlen);
-    }
-    else if (isSJISEncoding(encoding)) {
-        //        NSLog(@"decoding j-jis");
+    } else if (isSJISEncoding(encoding)) {
         result = decode_sjis(datap, datalen, rmlen);
-    }
-    else if (isKREncoding(encoding)) {
-        //        NSLog(@"decoding korean");
+    } else if (isKREncoding(encoding)) {
+        // korean
         result = decode_euckr(datap, datalen, rmlen);
-    }
-    else {
-        //        NSLog(@"%s(%d):decode_string()-support character encoding(%@d)",
-        //              __FILE__, __LINE__, [NSString localizedNameOfStringEncoding:encoding]);
+    } else {
         result = decode_other_enc(datap, datalen, rmlen);
     }
 
@@ -2523,27 +2404,23 @@ static VT100TCC decode_string(unsigned char *datap,
         result.u.string = ReplacementString();
         result.type = VT100_STRING;
     } else if (result.type != VT100_WAIT) {
-        /*data = [NSData dataWithBytes:datap length:*rmlen];
-        result.u.string = [[[NSString alloc]
-                                   initWithData:data
-                                       encoding:encoding]
-            autorelease]; */
-        result.u.string =[[[NSString alloc]
-                                   initWithBytes:datap
-                                          length:*rmlen
-                                       encoding:encoding]
-            autorelease];
+        result.u.string = [[[NSString alloc] initWithBytes:datap
+                                                    length:*rmlen
+                                                  encoding:encoding] autorelease];
 
         if (result.u.string == nil) {
+            // Invalid bytes, can't encode.
             int i;
             if (encoding == NSUTF8StringEncoding) {
                 unsigned char temp[*rmlen * 3];
                 memcpy(temp, datap, *rmlen);
                 int length = *rmlen;
+                // Replace every byte with unicode replacement char <?>.
                 for (i = *rmlen - 1; i >= 0 && !result.u.string; i--) {
                     result.u.string = SetReplacementCharInArray(temp, &length, i);
                 }
             } else {
+                // Repalce every byte with ?, the replacement char for non-unicode encodings.
                 for (i = *rmlen - 1; i >= 0 && !result.u.string; i--) {
                     datap[i] = ONECHAR_UNKNOWN;
                     result.u.string = [[[NSString alloc] initWithBytes:datap length:*rmlen encoding:encoding] autorelease];
@@ -2554,10 +2431,10 @@ static VT100TCC decode_string(unsigned char *datap,
     return result;
 }
 
+#pragma mark - Instance methods
+
 - (id)init
 {
-    int i;
-
     self = [super init];
     if (self) {
         encoding_ = NSASCIIStringEncoding;
@@ -2566,10 +2443,9 @@ static VT100TCC decode_string(unsigned char *datap,
         current_stream_length = 0;
 
         termType = nil;
-        for(i = 0; i < TERMINFO_KEYS; i ++) {
+        for (int i = 0; i < TERMINFO_KEYS; i ++) {
             keyStrings_[i] = NULL;
         }
-
 
         lineMode_ = NO;
         cursorMode_ = NO;
@@ -2614,15 +2490,10 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (void)dealloc
 {
-#if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
-#endif
-
     free(stream_);
     [termType release];
 
-    int i;
-    for(i = 0; i < TERMINFO_KEYS; i ++) {
+    for (int i = 0; i < TERMINFO_KEYS; i ++) {
         if (keyStrings_[i]) {
             free(keyStrings_[i]);
         }
@@ -2631,9 +2502,6 @@ static VT100TCC decode_string(unsigned char *datap,
     free(lastToken_);
 
     [super dealloc];
-#if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x, done", __PRETTY_FUNCTION__, self);
-#endif
 }
 
 - (NSString *)termtype
@@ -2650,14 +2518,13 @@ static VT100TCC decode_string(unsigned char *datap,
 
     allowKeypadMode_ = [termType rangeOfString:@"xterm"].location != NSNotFound;
 
-    int i;
     int r;
 
     setupterm((char *)[termtype UTF8String], fileno(stdout), &r);
 
     if (r != 1) {
         NSLog(@"Terminal type %s is not defined.\n",[termtype UTF8String]);
-        for (i = 0; i < TERMINFO_KEYS; i ++) {
+        for (int i = 0; i < TERMINFO_KEYS; i ++) {
             if (keyStrings_[i]) {
                 free(keyStrings_[i]);
             }
@@ -2681,7 +2548,7 @@ static VT100TCC decode_string(unsigned char *datap,
             key_help,
         };
 
-        for (i = 0; i < TERMINFO_KEYS; i ++) {
+        for (int i = 0; i < TERMINFO_KEYS; i ++) {
             if (keyStrings_[i]) {
                 free(keyStrings_[i]);
             }
@@ -2811,9 +2678,10 @@ static VT100TCC decode_string(unsigned char *datap,
     encoding_ = encoding;
 }
 
-- (void)putStreamData:(NSData*)data
+- (void)putStreamData:(NSData *)data
 {
     if (current_stream_length + [data length] > total_stream_length) {
+        // Grow the stream if needed.
         int n = ([data length] + current_stream_length) / STANDARD_STREAM_SIZE;
 
         total_stream_length += n * STANDARD_STREAM_SIZE;
@@ -2872,9 +2740,9 @@ static VT100TCC decode_string(unsigned char *datap,
             *lastToken_ = decode_control(datap, datalen, &rmlen, encoding_, delegate_, useCanonicalParser_);
             lastToken_->length = rmlen;
             lastToken_->position = datap;
-            [self _setMode:*lastToken_];
-            [self _setCharAttr:*lastToken_];
-            [self _setRGB:*lastToken_];
+            [self updateModesFromToken:*lastToken_];
+            [self updateCharacterAttributesFromToken:*lastToken_];
+            [self handleProprietaryToken:*lastToken_];
         } else {
             if (isString(datap, encoding_)) {
                 // If the encoding is UTF-8 then you get here only if *datap >= 0x80.
@@ -2925,7 +2793,11 @@ static VT100TCC decode_string(unsigned char *datap,
     return lastToken_->type != VT100_WAIT && lastToken_->type != VT100CC_NULL;
 }
 
-- (NSData *)specialKey:(int)terminfo cursorMod:(char*)cursorMod cursorSet:(char*)cursorSet cursorReset:(char*)cursorReset modflag:(unsigned int)modflag
+- (NSData *)specialKey:(int)terminfo
+             cursorMod:(char*)cursorMod
+             cursorSet:(char*)cursorSet
+           cursorReset:(char*)cursorReset
+               modflag:(unsigned int)modflag
 {
     NSData* prefix = nil;
     NSData* theSuffix;
@@ -2933,7 +2805,7 @@ static VT100TCC decode_string(unsigned char *datap,
         theSuffix = [NSData dataWithBytes:keyStrings_[terminfo]
                                    length:strlen(keyStrings_[terminfo])];
     } else {
-        int mod=0;
+        int mod = 0;
         static char buf[20];
         static int modValues[] = {
             0, 2, 5, 6, 9, 10, 13, 14
@@ -3068,7 +2940,7 @@ static VT100TCC decode_string(unsigned char *datap,
     }
     NSMutableData* data = [[[NSMutableData alloc] init] autorelease];
     if (modflag & NSAlternateKeyMask) {
-        char esc = 27;
+        char esc = ESC;
         [data appendData:[NSData dataWithBytes:&esc length:1]];
     }
     [data appendData:theSuffix];
@@ -3087,7 +2959,7 @@ static VT100TCC decode_string(unsigned char *datap,
     }
     NSMutableData* data = [[[NSMutableData alloc] init] autorelease];
     if (modflag & NSAlternateKeyMask) {
-        char esc = 27;
+        char esc = ESC;
         [data appendData:[NSData dataWithBytes:&esc length:1]];
     }
     [data appendData:theSuffix];
@@ -3381,7 +3253,6 @@ static VT100TCC decode_string(unsigned char *datap,
     return isAnsi_;
 }
 
-
 - (BOOL)autorepeatMode
 {
     return autorepeatMode_;
@@ -3511,7 +3382,7 @@ static VT100TCC decode_string(unsigned char *datap,
     cursorMode_ = mode;
 }
 
-- (void)_setMode:(VT100TCC)token
+- (void)updateModesFromToken:(VT100TCC)token
 {
     BOOL mode;
     int i;
@@ -3737,7 +3608,7 @@ static VT100TCC decode_string(unsigned char *datap,
     bgColorMode_ = ColorModeAlternate;
 }
 
-- (void)_setCharAttr:(VT100TCC)token
+- (void)updateCharacterAttributesFromToken:(VT100TCC)token
 {
     if (token.type == VT100CSI_SGR) {
         if (token.u.csi.count == 0) {
@@ -3870,7 +3741,6 @@ static VT100TCC decode_string(unsigned char *datap,
     }
 }
 
-
 - (NSColor *)colorForXtermCCSetPaletteString:(NSString *)argument colorNumberPtr:(int *)numberPtr {
     if ([argument length] == 7) {
         int n, r, g, b;
@@ -3913,7 +3783,7 @@ static VT100TCC decode_string(unsigned char *datap,
     return nil;
 }
 
-- (void)_setRGB:(VT100TCC)token
+- (void)handleProprietaryToken:(VT100TCC)token
 {
     if (token.type == XTERMCC_SET_RGB) {
         // The format of this command is "<index>;rgb:<redhex>/<greenhex>/<bluehex>", e.g. "105;rgb:00/cc/ff"
