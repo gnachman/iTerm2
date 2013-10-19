@@ -123,9 +123,6 @@ extern int kVT100ScreenMinRows;
 - (void)setSendModifiers:(int *)modifiers
                numValues:(int)numValues;
 
-// This should be called when the terminal's mouse mode changes.
-- (void)setMouseMode:(MouseMode)mouseMode;
-
 // Append a string to the screen at the current cursor position. The terminal's insert and wrap-
 // around modes are respected, the cursor is advanced, the screen may be scrolled, and the line
 // buffer may change.
@@ -142,10 +139,10 @@ extern int kVT100ScreenMinRows;
 - (void)deleteCharacters:(int)n;
 
 // Move the cursor back. It may wrap around to the previous line.
-- (void)backSpace;
+- (void)terminalBackSpace;
 
 // Move the cursor to the next tab stop, replacing chars along the way with tab/tab-fillers.
-- (void)appendTabAtCursor;
+- (void)terminalAppendTabAtCursor;
 
 // Move the line the cursor is on to the top of the screen and clear everything below.
 - (void)clearScreen;
@@ -156,13 +153,6 @@ extern int kVT100ScreenMinRows;
 // Moves the cursor to the left margin.
 - (void)carriageReturn;
 
-// Saves/Restores the cursor position.
-- (void)saveCursorAndCharsetFlags;
-- (void)restoreCursorAndCharsetFlags;
-
-// Causes the bell to ring, flash, notify, etc., as configured.
-- (void)activateBell;
-
 // Sets the primary grid's contents and scrollback history. |history| is an array of NSData
 // containing screen_char_t's. It contains a bizarre workaround for tmux bugs.
 - (void)setHistory:(NSArray *)history;
@@ -172,9 +162,6 @@ extern int kVT100ScreenMinRows;
 
 // Load state from tmux. The |state| dictionary has keys from the kStateDictXxx values.
 - (void)setTmuxState:(NSDictionary *)state;
-
-// Mark all cells dirty, causing them all to be redrawn when the next redraw timer fires.
-- (void)markAsNeedingCompleteRedraw;
 
 // Set the colors in the prototype char to all text on screen that matches the regex.
 // See kHighlightXxxColor constants at the top of this file for dict keys, values are NSColor*s.

@@ -267,6 +267,8 @@ typedef enum {
     NSMutableArray *eventQueue_;
     PasteViewController *pasteViewController_;
     PasteContext *pasteContext_;
+
+    NSInteger requestAttentionId_;  // Last request-attention identifier
 }
 
 // Return the current pasteboard value as a string.
@@ -532,9 +534,6 @@ typedef enum {
 
 - (void)setLastActiveAt:(NSDate*)date;
 - (NSDate*)lastActiveAt;
-
-// Save the current scroll position
-- (void)saveScrollPosition;
 
 // Jump to the saved scroll position
 - (void)jumpToSavedScrollPosition;

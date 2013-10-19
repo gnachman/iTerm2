@@ -1,279 +1,136 @@
-// -*- mode:objc -*-
-// $Id: VT100Terminal.h,v 1.35 2008-10-21 05:43:52 yfabian Exp $
-/*
- **  VT100Terminal.h
- **
- **  Copyright (c) 2002, 2003
- **
- **  Author: Fabian, Ujwal S. Setlur
- **      Initial code by Kiichi Kusama
- **
- **  Project: iTerm
- **
- **  Description: Implements the model class VT100 terminal.
- **
- **  This program is free software; you can redistribute it and/or modify
- **  it under the terms of the GNU General Public License as published by
- **  the Free Software Foundation; either version 2 of the License, or
- **  (at your option) any later version.
- **
- **  This program is distributed in the hope that it will be useful,
- **  but WITHOUT ANY WARRANTY; without even the implied warranty of
- **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- **  GNU General Public License for more details.
- **
- **  You should have received a copy of the GNU General Public License
- **  along with this program; if not, write to the Free Software
- **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
+// Parses input into escape codes, text, etc. Although it's called VT100Terminal, it's more of an
+// xterm emulator. The real work of acting on escape codes is handled by the delegate.
 
 #import <Cocoa/Cocoa.h>
 #import "ScreenChar.h"
 #import "VT100Grid.h"
 
-@class VT100Screen;
+typedef enum {
+    VT100_WAIT,
+    VT100_NOTSUPPORT,
+    VT100_SKIP,
+    VT100_STRING,
+    VT100_ASCIISTRING,
+    VT100_UNKNOWNCHAR,
+    VT100_INVALID_SEQUENCE,
 
-// VT100TCC types
-#define VT100CC_NULL        0
-#define VT100CC_ENQ         5    // Transmit ANSWERBACK message
-#define VT100CC_BEL         7    // Sound bell
-#define VT100CC_BS          8    // Move cursor to the left
-#define VT100CC_HT          9    // Move cursor to the next tab stop
-#define VT100CC_LF         10    // line feed or new line operation
-#define VT100CC_VT         11    // Same as <LF>.
-#define VT100CC_FF         12    // Same as <LF>.
-#define VT100CC_CR         13    // Move the cursor to the left margin
-#define VT100CC_SO         14    // Invoke the G1 character set
-#define VT100CC_SI         15    // Invoke the G0 character set
-#define VT100CC_DC1        17    // Causes terminal to resume transmission (XON).
-#define VT100CC_DC3        19    // Causes terminal to stop transmitting all codes except XOFF and XON (XOFF).
-#define VT100CC_CAN        24    // Cancel a control sequence
-#define VT100CC_SUB        26    // Same as <CAN>.
-#define VT100CC_ESC        27    // Introduces a control sequence.
-#define VT100CC_DEL       255    // Ignored on input; not stored in buffer.
+    VT100CSI_CPR,                   // Cursor Position Report
+    VT100CSI_CUB,                   // Cursor Backward
+    VT100CSI_CUD,                   // Cursor Down
+    VT100CSI_CUF,                   // Cursor Forward
+    VT100CSI_CUP,                   // Cursor Position
+    VT100CSI_CUU,                   // Cursor Up
+    VT100CSI_DA,                    // Device Attributes
+    VT100CSI_DA2,                   // Secondary Device Attributes
+    VT100CSI_DECALN,                // Screen Alignment Display
+    VT100CSI_DECDHL,                // Double Height Line
+    VT100CSI_DECDWL,                // Double Width Line
+    VT100CSI_DECID,                 // Identify Terminal
+    VT100CSI_DECKPAM,               // Keypad Application Mode
+    VT100CSI_DECKPNM,               // Keypad Numeric Mode
+    VT100CSI_DECLL,                 // Load LEDS
+    VT100CSI_DECRC,                 // Restore Cursor
+    VT100CSI_DECREPTPARM,           // Report Terminal Parameters
+    VT100CSI_DECREQTPARM,           // Request Terminal Parameters
+    VT100CSI_DECRST,
+    VT100CSI_DECSC,                 // Save Cursor
+    VT100CSI_DECSET,
+    VT100CSI_DECSTBM,               // Set Top and Bottom Margins
+    VT100CSI_DECSWL,                // Single-width Line
+    VT100CSI_DECTST,                // Invoke Confidence Test
+    VT100CSI_DSR,                   // Device Status Report
+    VT100CSI_ED,                    // Erase In Display
+    VT100CSI_EL,                    // Erase In Line
+    VT100CSI_HTS,                   // Horizontal Tabulation Set
+    VT100CSI_HVP,                   // Horizontal and Vertical Position
+    VT100CSI_IND,                   // Index
+    VT100CSI_NEL,                   // Next Line
+    VT100CSI_RI,                    // Reverse Index
+    VT100CSI_RIS,                   // Reset To Initial State
+    VT100CSI_RM,                    // Reset Mode
+    VT100CSI_SCS,
+    VT100CSI_SCS0,                  // Select Character Set 0
+    VT100CSI_SCS1,                  // Select Character Set 1
+    VT100CSI_SCS2,                  // Select Character Set 2
+    VT100CSI_SCS3,                  // Select Character Set 3
+    VT100CSI_SGR,                   // Select Graphic Rendition
+    VT100CSI_SM,                    // Set Mode
+    VT100CSI_TBC,                   // Tabulation Clear
+    VT100CSI_DECSCUSR,              // Select the Style of the Cursor
+    VT100CSI_DECSTR,                // Soft reset
+    VT100CSI_DECDSR,                // Device Status Report (DEC specific)
+    VT100CSI_SET_MODIFIERS,         // CSI > Ps; Pm m (Whether to set modifiers for different kinds of key presses; no official name)
+    VT100CSI_RESET_MODIFIERS,       // CSI > Ps n (Set all modifiers values to -1, disabled)
+    VT100CSI_DECSLRM,               // Set left-right margin
 
-#define VT100_WAIT          1000
-#define VT100_NOTSUPPORT    1001
-#define VT100_SKIP          1002
-#define VT100_STRING        1003       // string
-#define VT100_ASCIISTRING   1004       // only for ASCIIs
-#define VT100_UNKNOWNCHAR   1005
-#define VT100CSI_DECSET     1006
-#define VT100CSI_DECRST     1007
-#define VT100_INVALID_SEQUENCE  1008
+    // some xterm extensions
+    XTERMCC_WIN_TITLE,            // Set window title
+    XTERMCC_ICON_TITLE,
+    XTERMCC_WINICON_TITLE,
+    XTERMCC_INSBLNK,              // Insert blank
+    XTERMCC_INSLN,                // Insert lines
+    XTERMCC_DELCH,                // delete blank
+    XTERMCC_DELLN,                // delete lines
+    XTERMCC_WINDOWSIZE,           // (8,H,W) NK: added for Vim resizing window
+    XTERMCC_WINDOWSIZE_PIXEL,     // (8,H,W) NK: added for Vim resizing window
+    XTERMCC_WINDOWPOS,            // (3,Y,X) NK: added for Vim positioning window
+    XTERMCC_ICONIFY,
+    XTERMCC_DEICONIFY,
+    XTERMCC_RAISE,
+    XTERMCC_LOWER,
+    XTERMCC_SU,                  // scroll up
+    XTERMCC_SD,                  // scroll down
+    XTERMCC_REPORT_WIN_STATE,
+    XTERMCC_REPORT_WIN_POS,
+    XTERMCC_REPORT_WIN_PIX_SIZE,
+    XTERMCC_REPORT_WIN_SIZE,
+    XTERMCC_REPORT_SCREEN_SIZE,
+    XTERMCC_REPORT_ICON_TITLE,
+    XTERMCC_REPORT_WIN_TITLE,
+    XTERMCC_PUSH_TITLE,
+    XTERMCC_POP_TITLE,
+    XTERMCC_SET_RGB,
+    XTERMCC_PROPRIETARY_ETERM_EXT,
+    XTERMCC_SET_PALETTE,
+    XTERMCC_SET_KVP,
+    XTERMCC_PASTE64,
 
-#define VT100CSI_CPR         2000       // Cursor Position Report
-#define VT100CSI_CUB         2001       // Cursor Backward
-#define VT100CSI_CUD         2002       // Cursor Down
-#define VT100CSI_CUF         2003       // Cursor Forward
-#define VT100CSI_CUP         2004       // Cursor Position
-#define VT100CSI_CUU         2005       // Cursor Up
-#define VT100CSI_DA          2006       // Device Attributes
-#define VT100CSI_DA2         2007       // Secondary Device Attributes
-#define VT100CSI_DECALN      2008       // Screen Alignment Display
-#define VT100CSI_DECDHL      2013       // Double Height Line
-#define VT100CSI_DECDWL      2014       // Double Width Line
-#define VT100CSI_DECID       2015       // Identify Terminal
-#define VT100CSI_DECKPAM     2017       // Keypad Application Mode
-#define VT100CSI_DECKPNM     2018       // Keypad Numeric Mode
-#define VT100CSI_DECLL       2019       // Load LEDS
-#define VT100CSI_DECRC       2021       // Restore Cursor
-#define VT100CSI_DECREPTPARM 2022       // Report Terminal Parameters
-#define VT100CSI_DECREQTPARM 2023       // Request Terminal Parameters
-#define VT100CSI_DECSC       2024       // Save Cursor
-#define VT100CSI_DECSTBM     2027       // Set Top and Bottom Margins
-#define VT100CSI_DECSWL      2028       // Single-width Line
-#define VT100CSI_DECTST      2029       // Invoke Confidence Test
-#define VT100CSI_DSR         2030       // Device Status Report
-#define VT100CSI_ED          2031       // Erase In Display
-#define VT100CSI_EL          2032       // Erase In Line
-#define VT100CSI_HTS         2033       // Horizontal Tabulation Set
-#define VT100CSI_HVP         2034       // Horizontal and Vertical Position
-#define VT100CSI_IND         2035       // Index
-#define VT100CSI_NEL         2037       // Next Line
-#define VT100CSI_RI          2038       // Reverse Index
-#define VT100CSI_RIS         2039       // Reset To Initial State
-#define VT100CSI_RM          2040       // Reset Mode
-#define VT100CSI_SCS         2041
-#define VT100CSI_SCS0        2041       // Select Character Set 0
-#define VT100CSI_SCS1        2042       // Select Character Set 1
-#define VT100CSI_SCS2        2043       // Select Character Set 2
-#define VT100CSI_SCS3        2044       // Select Character Set 3
-#define VT100CSI_SGR         2045       // Select Graphic Rendition
-#define VT100CSI_SM          2046       // Set Mode
-#define VT100CSI_TBC         2047       // Tabulation Clear
-#define VT100CSI_DECSCUSR    2048       // Select the Style of the Cursor
-#define VT100CSI_DECSTR      2049       // Soft reset
-#define VT100CSI_DECDSR      2050       // Device Status Report (DEC specific)
-#define VT100CSI_SET_MODIFIERS 2051     // CSI > Ps; Pm m (Whether to set modifiers for different kinds of key presses; no official name)
-#define VT100CSI_RESET_MODIFIERS 2052     // CSI > Ps n (Set all modifiers values to -1, disabled)
-#define VT100CSI_DECSLRM     2053       // Set left-right margin
+    // Some ansi stuff
+    ANSICSI_CHA,     // Cursor Horizontal Absolute
+    ANSICSI_VPA,     // Vert Position Absolute
+    ANSICSI_VPR,     // Vert Position Relative
+    ANSICSI_ECH,     // Erase Character
+    ANSICSI_PRINT,   // Print to Ansi
+    ANSICSI_SCP,     // Save cursor position
+    ANSICSI_RCP,     // Restore cursor position
+    ANSICSI_CBT,     // Back tab
+    
+    ANSI_RIS,        // Reset to initial state (there's also a CSI version)
+    
+    // Toggle between ansi/vt52
+    STRICT_ANSI_MODE,
+    
+    // iTerm extension
+    ITERM_GROWL,
+    DCS_TMUX,
+} VT100TerminalTokenType;
 
-// some xterm extension
-#define XTERMCC_WIN_TITLE        86       // Set window title
-#define XTERMCC_ICON_TITLE       91
-#define XTERMCC_WINICON_TITLE    92
-#define XTERMCC_INSBLNK      87       // Insert blank
-#define XTERMCC_INSLN        88       // Insert lines
-#define XTERMCC_DELCH        89       // delete blank
-#define XTERMCC_DELLN        90       // delete lines
-#define XTERMCC_WINDOWSIZE   93       // (8,H,W) NK: added for Vim resizing window
-#define XTERMCC_WINDOWSIZE_PIXEL     94       // (8,H,W) NK: added for Vim resizing window
-#define XTERMCC_WINDOWPOS    95       // (3,Y,X) NK: added for Vim positioning window
-#define XTERMCC_ICONIFY      96
-#define XTERMCC_DEICONIFY    97
-#define XTERMCC_RAISE        98
-#define XTERMCC_LOWER        99
-#define XTERMCC_SU           100     // scroll up
-#define XTERMCC_SD           101     // scroll down
-#define XTERMCC_REPORT_WIN_STATE      102
-#define XTERMCC_REPORT_WIN_POS        103
-#define XTERMCC_REPORT_WIN_PIX_SIZE   104
-#define XTERMCC_REPORT_WIN_SIZE       105
-#define XTERMCC_REPORT_SCREEN_SIZE    106
-#define XTERMCC_REPORT_ICON_TITLE     107
-#define XTERMCC_REPORT_WIN_TITLE      108
-#define XTERMCC_PUSH_TITLE            109
-#define XTERMCC_POP_TITLE             110
-#define XTERMCC_SET_RGB               111
-#define XTERMCC_PROPRIETARY_ETERM_EXT 112
-#define XTERMCC_SET_PALETTE           113
-#define XTERMCC_SET_KVP               114
-#define XTERMCC_PASTE64               115
-
-// Some ansi stuff
-#define ANSICSI_CHA      3000   // Cursor Horizontal Absolute
-#define ANSICSI_VPA      3001   // Vert Position Absolute
-#define ANSICSI_VPR      3002   // Vert Position Relative
-#define ANSICSI_ECH      3003   // Erase Character
-#define ANSICSI_PRINT    3004   // Print to Ansi
-#define ANSICSI_SCP      3005   // Save cursor position
-#define ANSICSI_RCP      3006   // Restore cursor position
-#define ANSICSI_CBT      3007   // Back tab
-
-
-#define ANSI_RIS         3100   // Reset to initial state (there's also a CSI version)
-
-// Toggle between ansi/vt52
-#define STRICT_ANSI_MODE        4000
-
-// iTerm extension
-#define ITERM_GROWL     5000
-#define DCS_TMUX        5001
-
-#define VT100CSIPARAM_MAX    16
-#define NUM_MODIFIABLE_RESOURCES 5
-
+// A parsed token.
 typedef struct {
-    int type;
-    unsigned char *position;
-    int length;
+    VT100TerminalTokenType type;
+    unsigned char *position;  // Pointer into stream of where this token's data began.
+    int length;  // Length of parsed data in stream.
     union {
-    NSString *string;
-    unsigned char code;
-    struct {
-        int p[VT100CSIPARAM_MAX];
-        int count;
-        BOOL question; // used by old parser
-        int modifier;  // used by old parser
-    } csi;
+        NSString *string;  // For VT100_STRING, VT100_ASCIISTRING
+        unsigned char code;  // For VT100_UNKNOWNCHAR and VT100CSI_SCS0...SCS3.
+        struct {  // For CSI codes.
+            int p[VT100CSIPARAM_MAX];  // Array of CSI parameters.
+            int count;  // Number of values in p.
+            BOOL question; // used by old parser
+            int modifier;  // used by old parser
+        } csi;
     } u;
 } VT100TCC;
-
-// character attributes
-#define VT100CHARATTR_ALLOFF   0
-#define VT100CHARATTR_BOLD     1
-#define VT100CHARATTR_ITALIC   3
-#define VT100CHARATTR_UNDER    4
-#define VT100CHARATTR_BLINK    5
-#define VT100CHARATTR_REVERSE  7
-
-// xterm additions
-#define VT100CHARATTR_NORMAL        22
-#define VT100CHARATTR_NOT_ITALIC    23
-#define VT100CHARATTR_NOT_UNDER     24
-#define VT100CHARATTR_STEADY        25
-#define VT100CHARATTR_POSITIVE      27
-
-typedef enum {
-    COLORCODE_BLACK=0,
-    COLORCODE_RED=1,
-    COLORCODE_GREEN=2,
-    COLORCODE_YELLOW=3,
-    COLORCODE_BLUE=4,
-    COLORCODE_PURPLE=5,
-    COLORCODE_WATER=6,
-    COLORCODE_WHITE=7,
-    COLORCODE_256=8,
-    COLORS
-} colorCode;
-
-// 8 color support
-#define VT100CHARATTR_FG_BASE  30
-#define VT100CHARATTR_BG_BASE  40
-
-#define VT100CHARATTR_FG_BLACK     (VT100CHARATTR_FG_BASE + COLORCODE_BLACK)
-#define VT100CHARATTR_FG_RED       (VT100CHARATTR_FG_BASE + COLORCODE_RED)
-#define VT100CHARATTR_FG_GREEN     (VT100CHARATTR_FG_BASE + COLORCODE_GREEN)
-#define VT100CHARATTR_FG_YELLOW    (VT100CHARATTR_FG_BASE + COLORCODE_YELLOW)
-#define VT100CHARATTR_FG_BLUE      (VT100CHARATTR_FG_BASE + COLORCODE_BLUE)
-#define VT100CHARATTR_FG_PURPLE    (VT100CHARATTR_FG_BASE + COLORCODE_PURPLE)
-#define VT100CHARATTR_FG_WATER     (VT100CHARATTR_FG_BASE + COLORCODE_WATER)
-#define VT100CHARATTR_FG_WHITE     (VT100CHARATTR_FG_BASE + COLORCODE_WHITE)
-#define VT100CHARATTR_FG_256       (VT100CHARATTR_FG_BASE + COLORCODE_256)
-#define VT100CHARATTR_FG_DEFAULT   (VT100CHARATTR_FG_BASE + 9)
-
-#define VT100CHARATTR_BG_BLACK     (VT100CHARATTR_BG_BASE + COLORCODE_BLACK)
-#define VT100CHARATTR_BG_RED       (VT100CHARATTR_BG_BASE + COLORCODE_RED)
-#define VT100CHARATTR_BG_GREEN     (VT100CHARATTR_BG_BASE + COLORCODE_GREEN)
-#define VT100CHARATTR_BG_YELLOW    (VT100CHARATTR_BG_BASE + COLORCODE_YELLOW)
-#define VT100CHARATTR_BG_BLUE      (VT100CHARATTR_BG_BASE + COLORCODE_BLUE)
-#define VT100CHARATTR_BG_PURPLE    (VT100CHARATTR_BG_BASE + COLORCODE_PURPLE)
-#define VT100CHARATTR_BG_WATER     (VT100CHARATTR_BG_BASE + COLORCODE_WATER)
-#define VT100CHARATTR_BG_WHITE     (VT100CHARATTR_BG_BASE + COLORCODE_WHITE)
-#define VT100CHARATTR_BG_256       (VT100CHARATTR_BG_BASE + COLORCODE_256)
-#define VT100CHARATTR_BG_DEFAULT   (VT100CHARATTR_BG_BASE + 9)
-
-// 16 color support
-#define VT100CHARATTR_FG_HI_BASE  90
-#define VT100CHARATTR_BG_HI_BASE  100
-
-#define VT100CHARATTR_FG_HI_BLACK     (VT100CHARATTR_FG_HI_BASE + COLORCODE_BLACK)
-#define VT100CHARATTR_FG_HI_RED       (VT100CHARATTR_FG_HI_BASE + COLORCODE_RED)
-#define VT100CHARATTR_FG_HI_GREEN     (VT100CHARATTR_FG_HI_BASE + COLORCODE_GREEN)
-#define VT100CHARATTR_FG_HI_YELLOW    (VT100CHARATTR_FG_HI_BASE + COLORCODE_YELLOW)
-#define VT100CHARATTR_FG_HI_BLUE      (VT100CHARATTR_FG_HI_BASE + COLORCODE_BLUE)
-#define VT100CHARATTR_FG_HI_PURPLE    (VT100CHARATTR_FG_HI_BASE + COLORCODE_PURPLE)
-#define VT100CHARATTR_FG_HI_WATER     (VT100CHARATTR_FG_HI_BASE + COLORCODE_WATER)
-#define VT100CHARATTR_FG_HI_WHITE     (VT100CHARATTR_FG_HI_BASE + COLORCODE_WHITE)
-
-#define VT100CHARATTR_BG_HI_BLACK     (VT100CHARATTR_BG_HI_BASE + COLORCODE_BLACK)
-#define VT100CHARATTR_BG_HI_RED       (VT100CHARATTR_BG_HI_BASE + COLORCODE_RED)
-#define VT100CHARATTR_BG_HI_GREEN     (VT100CHARATTR_BG_HI_BASE + COLORCODE_GREEN)
-#define VT100CHARATTR_BG_HI_YELLOW    (VT100CHARATTR_BG_HI_BASE + COLORCODE_YELLOW)
-#define VT100CHARATTR_BG_HI_BLUE      (VT100CHARATTR_BG_HI_BASE + COLORCODE_BLUE)
-#define VT100CHARATTR_BG_HI_PURPLE    (VT100CHARATTR_BG_HI_BASE + COLORCODE_PURPLE)
-#define VT100CHARATTR_BG_HI_WATER     (VT100CHARATTR_BG_HI_BASE + COLORCODE_WATER)
-#define VT100CHARATTR_BG_HI_WHITE     (VT100CHARATTR_BG_HI_BASE + COLORCODE_WHITE)
-
-// terminfo stuff
-enum {
-    TERMINFO_KEY_LEFT, TERMINFO_KEY_RIGHT, TERMINFO_KEY_UP, TERMINFO_KEY_DOWN,
-    TERMINFO_KEY_HOME, TERMINFO_KEY_END, TERMINFO_KEY_PAGEDOWN, TERMINFO_KEY_PAGEUP,
-    TERMINFO_KEY_F0, TERMINFO_KEY_F1, TERMINFO_KEY_F2, TERMINFO_KEY_F3, TERMINFO_KEY_F4,
-    TERMINFO_KEY_F5, TERMINFO_KEY_F6, TERMINFO_KEY_F7, TERMINFO_KEY_F8, TERMINFO_KEY_F9,
-    TERMINFO_KEY_F10, TERMINFO_KEY_F11, TERMINFO_KEY_F12, TERMINFO_KEY_F13, TERMINFO_KEY_F14,
-    TERMINFO_KEY_F15, TERMINFO_KEY_F16, TERMINFO_KEY_F17, TERMINFO_KEY_F18, TERMINFO_KEY_F19,
-    TERMINFO_KEY_F20, TERMINFO_KEY_F21, TERMINFO_KEY_F22, TERMINFO_KEY_F23, TERMINFO_KEY_F24,
-    TERMINFO_KEY_F25, TERMINFO_KEY_F26, TERMINFO_KEY_F27, TERMINFO_KEY_F28, TERMINFO_KEY_F29,
-    TERMINFO_KEY_F30, TERMINFO_KEY_F31, TERMINFO_KEY_F32, TERMINFO_KEY_F33, TERMINFO_KEY_F34,
-    TERMINFO_KEY_F35,
-    TERMINFO_KEY_BACKSPACE, TERMINFO_KEY_BACK_TAB,
-    TERMINFO_KEY_TAB,
-    TERMINFO_KEY_DEL, TERMINFO_KEY_INS,
-    TERMINFO_KEY_HELP,
-    TERMINFO_KEYS
-};
 
 typedef enum {
     MOUSE_REPORTING_NONE = -1,
@@ -300,33 +157,285 @@ typedef enum {
     MOUSE_BUTTON_SCROLLUP = 5    // scroll up
 } MouseButtonNumber;
 
-typedef enum {
-
-    // keyboard modifier flag
-    //  4 - shit
-    //  8 - meta
-    //  16 - ctrl
-    MOUSE_BUTTON_SHIFT_FLAG = 4,
-    MOUSE_BUTTON_META_FLAG = 8,
-    MOUSE_BUTTON_CTRL_FLAG = 16,
-
-    // scroll flag
-    //  64 - this is scroll event
-    MOUSE_BUTTON_SCROLL_FLAG = 64,
-
-    // for SGR 1006 style, internal use only 
-    //  128 - mouse button is released
-    MOUSE_BUTTON_SGR_RELEASE_FLAG = 128
-
-} MouseButtonModifierFlag;
-
 #define NUM_CHARSETS 4  // G0...G3. Values returned from -charset go from 0 to this.
+
+@protocol VT100TerminalDelegate
+// Append a string at the cursor's position and advance the cursor, scrolling if necessary. If
+|ascii| is set then the string contains only ascii characters.
+- (void)terminalAppendString:(NSString *)string isAscii:(BOOL)isAscii;
+
+// Play/display the bell.
+- (void)terminalRingBell;
+
+// Move the cursor back, possibly wrapping around to the previous line.
+- (void)terminalBackspace;
+
+// Move the cursor to the next tab stop, erasing until that point.
+- (void)terminalAppendTabAtCursor;
+
+// Move the cursor down, scrolling if necessary.
+- (void)terminalLineFeed;
+
+// Move the cursor left one place.
+- (void)terminalCursorLeft:(int)n;
+
+// Move the cursor down one row.
+- (void)terminalCursorDown:(int)n;
+
+// Move the cursor right one place.
+- (void)terminalCursorRight:(int)n;
+
+// Move the cursor up one row.
+- (void)terminalCursorUp:(int)n;
+
+// Move the cursor to a 1-based coordinate.
+- (void)terminalMoveCursorToX:(int)x y:(int)y;
+
+// Returns if it's safe to send reports.
+- (BOOL)terminalShouldSendReport;
+
+// Sends a report.
+- (void)terminalSendReport:(NSData *)report;
+
+// Replaces the screen contents with a test pattern.
+- (void)terminalShowTestPattern;
+
+// Restores the cursor position and charset flags.
+- (void)terminalRestoreCursorAndCharsetFlags;
+
+// Saves the cursor position and charset flags.
+- (void)terminalSaveCursorAndCharsetFlags;
+
+// Returns the cursor's position relative to the scroll region's origin. 1-based.
+- (int)terminalRelativeCursorX;
+
+// Returns the cursor's position relative to the scroll region's origin. 1-based.
+- (int)terminalRelativeCursorY;
+
+// Reset the top/bottom scroll region.
+- (void)terminalResetTopBottomScrollRegion;
+
+// Set the top/bottom scrollr egion.
+- (void)terminalSetScrollRegionTop:(int)top bottom:(int)bottom;
+
+// Erase all characters before the cursor and/or after the cursor.
+- (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after;
+
+// Erase all lines before/after the cursor. If erasing both, the screen is copied into the
+// scrollback buffer.
+- (void)terminalEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after;
+
+// Set a tabstop at the current cursor column.
+- (void)terminalSetTabStopAtCursor;
+
+// Move the cursor to the left margin.
+- (void)terminalCarriageReturn;
+
+// Scroll down one line.
+- (void)terminalIndex;
+
+// Scroll up one line.
+- (void)terminalReverseIndex;
+
+// Clear the screen, preserving the cursor's line.
+- (void)terminalResetPreservingPrompt:(BOOL)preservePrompt;
+
+// Saves the cursor, resets the scroll region, and restores the cursor position and charset flags.
+- (void)terminalSoftReset;
+
+// Changes the cursor type.
+- (void)terminalSetCursorType:(ITermCursorType)cursorType;
+
+// Changes whether the cursor blinks.
+- (void)terminalScreenSetCursorBlinking:(BOOL)blinking;
+
+// Sets the left/right scroll region.
+- (void)terminalSetLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight;
+
+// Sets whether one charset is in linedrawing mode.
+- (void)terminalSetCharset:(int)charset toLineDrawingMode:(BOOL)lineDrawingMode;
+
+// Remove all tab stops.
+- (void)terminalRemoveTabStops;
+
+// Remove the tab stop at the cursor's current column.
+- (void)terminalRemoveTabStopAtCursor;
+
+// Tries to resize the screen to |width|.
+- (void)terminalSetWidth:(int)width;
+
+// Moves cursor to previous tab stop.
+- (void)terminalBackTab;
+
+// Sets the cursor's x coordinate. 1-based.
+- (void)terminalSetCursorX:(int)x;
+
+// Sets the cursor's y coordinate. 1-based.
+- (void)terminalSetCursorY:(int)y;
+
+// Erases some number of characters after the cursor, replacing them with blanks.
+- (void)terminalEraseCharactersAfterCursor:(int)j;
+
+// Send the current print buffer to the printer.
+- (void)terminalPrintBuffer;
+
+// Future input (linefeeds, carriage returns, and appended strings) should be saved for printing and not displayed.
+- (void)terminalBeginRedirectingToPrintBuffer;
+
+// Send the current screen contents to the printer.
+- (void)terminalPrintScreen;
+
+// Sets the window's title.
+- (void)terminalSetWindowTitle:(NSString *)title;
+
+// Sets the icon's title.
+- (void)terminalSetIconTitle:(NSString *)title;
+
+// Pastes a string to the shell.
+- (void)terminalPasteString:(NSString *)string;
+
+// Inserts |n| blank chars after the cursor, moving chars to the right of them over.
+- (void)terminalInsertEmptyCharAtCursor:(int)n;
+
+// Inserts |n| blank lines after the cursor, moving lines below them down.
+- (void)terminalInsertBlankLinesAfterCursor:(int)n;
+
+// Deletes |n| characters after the cursor, moving later chars left.
+- (void)terminalDeleteCharactersAtCursor:(int)n;
+
+// Deletes |n| lines after the cursor, moving later lines up.
+- (void)terminalDeleteLinesAtCursor:(int)n;
+
+// Tries to resize the screen to |rows| by |columns|.
+- (void)terminalSetRows:(int)rows columns:(int)columns;
+
+// Tries to resize the window to the given pixel size.
+- (void)terminalSetPixelWidth:(int)width height:(int)height;
+
+// Tries to move the window's top left coordinate to the given point.
+- (void)terminalMoveWindowTopLeftPointTo:(NSPoint)point;
+
+// Either miniaturizes or unminiaturizes, depending on |mini|.
+- (void)terminalMiniaturize:(BOOL)mini;
+
+// Either raises or iconfies, depending on |raise|.
+- (void)terminalRaise:(BOOL)raise;
+
+// Scroll the screen's scroll region up by |n| lines.
+- (void)terminalScrollUp:(int)n;
+
+// Scroll the screen's scroll region down by |n| lines.
+- (void)terminalScrollDown:(int)n;
+
+// Returns if the window is miniaturized.
+- (BOOL)terminalWindowIsMiniaturized;
+
+// Returns the top-left pixel coordinate of the window.
+- (NSPoint)terminalWindowTopLeftPixelCoordinate;
+
+// Returns the size of the window in rows/columns.
+- (int)terminalWindowWidth;
+- (int)terminalWindowHeight;
+
+// Returns the size of the screen the window is on in cells.
+- (int)terminalScreenHeightInCells;
+- (int)terminalScreenWidthInCells;
+
+// Returns the current icon (tab)/window title.
+- (NString *)terminalIconTitle;
+- (NSString *)terminalWindowTitle;
+
+// Saves the current window/icon (depending on isWindow) title in a stack.
+- (void)terminalPushCurrentTitleForWindow:(BOOL)isWindow;
+
+// Restores the window/icon (depending on isWindow) title from a stack.
+- (void)terminalPopCurrentTitleForWindow:(BOOL)isWindow;
+
+// Posts a message to Growl.
+- (void)terminalPostGrowlNotification:(NSString *)message;
+
+// Enters Tmux mode.
+- (void)terminalStartTmuxMode;
+
+// Returns the size of the terminal in cells.
+- (int)terminalWidth;
+- (int)terminalHeight;
+
+// Called when the mouse reporting mode changes.
+- (void)terminalMouseModeDidChangeTo:(MouseMode)mouseMode;
+
+// Called when the terminal needs to be redrawn.
+- (void)terminalNeedsRedraw;
+
+// Sets whether the left/right scroll region should be used.
+- (void)terminalSetUseColumnScrollRegion:(BOOL)use;
+
+// Switches the currently visible buffer.
+- (void)terminalShowAltBuffer;
+- (void)terminalShowPrimaryBuffer;
+
+// Clears the screen, preserving the wrapped line the cursor is on.
+- (void)terminalClearScreen;
+
+// Not quite sure, kind of a mess right now. See comment in -[PTYSession setSendModifiers:].
+- (void)terminalSendModifiersDidChangeTo:(int *)modifiers
+                               numValues:(int)numValues;
+
+// Sets a color table entry.
+- (void)terminalColorTableEntryAtIndex:(int)theIndex didChangeToColor:(NSColor *)theColor;
+
+// Saves the current scroll position in the window.
+- (void)terminalSaveScrollPosition;
+
+// Make the current terminal visible and give it keyboard focus.
+- (void)terminalStealFocus;
+
+// Erase the screen (preserving the line the cursor is on) and the scrollback buffer.
+- (void)terminalClearBuffer;
+
+// Called when the current directory may have changed.
+- (void)terminalCurrentDirectoryDidChangeTo:(NSString *)value;
+
+// The profile should change to one with the name |value|.
+- (void)terminalProfileShouldChangeTo:(NSString *)value;
+
+// Sets the current pasteboard. Legal values are ruler, find, and font. Other values, including
+// empty string, are treated as the default pasteboard.
+- (void)terminalSetPasteboard:(NSString *)value;
+
+// Signal the user that the terminal wants attention.
+- (void)terminalRequestAttention:(BOOL)request;
+
+// Set various colors.
+- (void)terminalSetForegroundColor:(NSColor *)color;
+- (void)terminalSetBackgroundGColor:(NSColor *)color;
+- (void)terminalSetBoldColor:(NSColor *)color;
+- (void)terminalSetSelectionColor:(NSColor *)color;
+- (void)terminalSetSelectedTextColor:(NSColor *)color;
+- (void)terminalSetCursorColor:(NSColor *)color;
+- (void)terminalSetCursorTextColor:(NSColor *)color;
+- (void)terminalSetColorTableEntryAtIndex:(int)n color:(NSColor *)color;
+
+// Change the color tint of the current tab.
+- (void)terminalSetCurrentTabColor:(NSColor *)color;
+- (void)terminalSetTabColorRedComponentTo:(CGFloat)color;
+- (void)terminalSetTabColorGreenComponentTo:(CGFloat)color;
+- (void)terminalSetTabColorBlueComponentTo:(CGFloat)color;
+
+// Returns the current cursor position.
+- (int)terminalCursorX;
+- (int)terminalCursorY;
+
+// Shows/hides the cursor.
+- (void)terminalSetCursorVisible:(BOOL)visible;
+
+@end
 
 @interface VT100Terminal : NSObject <VT100GridDelegate>
 {
     NSString          *termType;
     NSStringEncoding  ENCODING;
-    VT100Screen       *SCREEN;
+    id<VT100TerminalDelegate> delegate_;
 
     unsigned char     *STREAM;
     int               current_stream_length;
@@ -393,6 +502,8 @@ typedef enum {
     BOOL bracketedPasteMode_;
     int sendModifiers_[NUM_MODIFIABLE_RESOURCES];
 }
+
+@property(nonatomic, assign) id<VT100TerminalDelegate> delegate;
 
 + (void)initialize;
 
@@ -479,8 +590,6 @@ typedef enum {
 - (void)_setMode:(VT100TCC)token;
 - (void)_setCharAttr:(VT100TCC)token;
 - (void)_setRGB:(VT100TCC)token;
-
-- (void) setScreen:(VT100Screen *)sc;
 
 - (void)setDisableSmcupRmcup:(BOOL)value;
 - (void)setUseCanonicalParser:(BOOL)value;

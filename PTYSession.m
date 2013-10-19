@@ -459,7 +459,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     // assign terminal and task objects
     [SCREEN setShell:SHELL];
-    [TERMINAL setScreen: SCREEN];
+    TERMINAL.delegate = SCREEN;
     [SHELL setDelegate:self];
 
     // initialize the screen
@@ -833,7 +833,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [SCREEN setShell:nil];
     SCREEN.delegate = nil;
     [SCREEN setTerminal:nil];
-    [TERMINAL setScreen:nil];
+    TERMINAL.delegate = nil;
     if ([[view findViewController] delegate] == self) {
         [[view findViewController] setDelegate:nil];
     }
@@ -1012,7 +1012,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
             }
 
             if (token.type != VT100_NOTSUPPORT) {
-                [SCREEN putToken:token];
+                [TERMINAL executeToken:token];
             }
         }
     }
@@ -2955,13 +2955,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return lastActiveAt_;
 }
 
-// Save the current scroll position
-- (void)saveScrollPosition
-{
-    savedScrollPosition_ = [TEXTVIEW absoluteScrollPosition];
-    savedScrollHeight_ = [SCREEN height];
-}
-
 // Jump to the saved scroll position
 - (void)jumpToSavedScrollPosition
 {
@@ -4303,10 +4296,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self appendStringToTriggerLine:string];
 }
 
-- (void)screenSetCursorBlinking:(BOOL)blink
-                     cursorType:(ITermCursorType)type {
-    [[self TEXTVIEW] setBlinkingCursor:blink];
+- (void)screenSetCursorType:(ITermCursorType)type {
     [[self TEXTVIEW] setCursorType:type];
+}
+
+- (void)screenSetCursorBlinking:(BOOL)blink {
+    [[self TEXTVIEW] setBlinkingCursor:blink];
 }
 
 - (BOOL)screenShouldInitiateWindowResize {
@@ -4314,7 +4309,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenResizeToWidth:(int)width height:(int)height {
-    [[self tab] sessionInitiatedResize:self width:width height:height];
+    NSScreen *screen = [self screenWindowScreen];
+    if (screen) {
+        width = MIN(screen.visibleFrame.size.width, width);
+        height = MIN(screen.visibleFrame.size.height, height);
+        [[self tab] sessionInitiatedResize:self width:width height:height];
+    }
 }
 
 - (BOOL)screenShouldBeginPrinting {
@@ -4341,8 +4341,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self setName:theName];
 }
 
-- (void)screenLogWorkingDirectoryAtLine:(long long)lineNumber {
-    [[self TEXTVIEW] logWorkingDirectoryAtLine:lineNumber];
+- (void)screenLogWorkingDirectoryAtLine:(long long)lineNumber withDirectory:(NSString *)directory {
+    if (directory) {
+        [[self TEXTVIEW] logWorkingDirectoryAtLine:lineNumber withDirectory:directory];
+    } else {
+        [[self TEXTVIEW] logWorkingDirectoryAtLine:lineNumber];
+    }
 }
 
 - (BOOL)screenWindowIsFullscreen {
@@ -4519,6 +4523,129 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (BOOL)screenHasView {
     return TEXTVIEW != nil;
+}
+
+// Save the current scroll position
+- (void)screenSaveScrollPosition
+{
+    savedScrollPosition_ = [TEXTVIEW absoluteScrollPosition];
+    savedScrollHeight_ = [SCREEN height];
+}
+
+- (void)screenAcitvateWindow {
+    [NSApp activateIgnoringOtherApps:YES];
+}
+
+- (void)screenSetProfileToProfileNamed:(NSString *)profileName {
+    Profile *newProfile;
+    if ([value length]) {
+        newProfile = [[ProfileModel sharedInstance] bookmarkWithName:value];
+    } else {
+        newProfile = [[ProfileModel sharedInstance] defaultBookmark];
+    }
+    if (newProfile) {
+        NSString *name = [[[SCREEN session] addressBookEntry] objectForKey:KEY_NAME];
+        NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:newProfile];
+        [dict setObject:name forKey:KEY_NAME];
+        [self setAddressBookEntry:dict];
+        [self setPreferencesFromAddressBookEntry:dict];
+        [self remarry];
+    }
+}
+
+- (void)screenSetPasteboard:(NSString *)value {
+    if ([[PreferencePanel sharedInstance] allowClipboardAccess]) {
+        if ([value isEqualToString:@"ruler"]) {
+            [self setPasteboard:NSGeneralPboard];
+        } else if ([value isEqualToString:@"find"]) {
+            [self setPasteboard:NSFindPboard];
+        } else if ([value isEqualToString:@"font"]) {
+            [self setPasteboard:NSFontPboard];
+        } else {
+            [self setPasteboard:NSGeneralPboard];
+        }
+    } else {
+        NSLog(@"Clipboard access denied for CopyToClipboard");
+    }
+}
+
+- (void)screenRequestAttention:(BOOL)request {
+    if (request) {
+        requestAttentionId_ = [NSApp requestUserAttention:NSCriticalRequest];
+    } else {
+        [NSApp cancelUserAttentionRequest:requestAttentionId_];
+    }
+}
+
+- (void)screenSetForegroundColor:(NSColor *)color {
+    [TEXTVIEW setFGColor:color];
+}
+
+- (void)screenSetBackgroundGColor:(NSColor *)color {
+    [TEXTVIEW setBGColor:color];
+}
+
+- (void)screenSetBoldColor:(NSColor *)color {
+    [TEXTVIEW setBoldColor:color];
+}
+
+- (void)screenSetSelectionColor:(NSColor *)color {
+    [TEXTVIEW setSelectionColor:color];
+}
+
+- (void)screenSetSelectedTextColor:(NSColor *)color {
+    [TEXTVIEW setSelectedTextColor:color];
+}
+
+- (void)screenSetCursorColor:(NSColor *)color {
+    [TEXTVIEW setCursorColor:color];
+}
+
+- (void)screenSetCursorTextColor:(NSColor *)color {
+    [TEXTVIEW setCursorTextColor:color];
+}
+
+- (void)screenSetColorTableEntryAtIndex:(int)n color:(NSColor *)color {
+    [TEXTVIEW setColorTableEntryAtIndex:n color:color];
+}
+
+- (void)screenSetCurrentTabColor:(NSColor *)color {
+    NSTabViewItem* tabViewItem = [[self ptytab] tabViewItem];
+    id<WindowControllerInterface> term = [[self ptytab] parentWindow];
+    [term setTabColor:nil forTabViewItem:tabViewItem];
+}
+
+- (NSColor *)tabColor {
+    NSTabViewItem* tabViewItem = [[self ptytab] tabViewItem];
+    id<WindowControllerInterface> term = [[self ptytab] parentWindow];
+    return [term tabColorForTabViewItem:tabViewItem];
+}
+
+- (void)screenSetTabColorRedComponentTo:(CGFloat)color {
+    NSColor *curColor = [self tabColor];
+    [[[self ptytab] parentWindow] setTabColor:[NSColor colorWithCalibratedRed:numValue
+                                                                        green:[curColor greenComponent]
+                                                                         blue:[curColor blueComponent]
+                                                                        alpha:1]
+                               forTabViewItem:[[self ptytab] tabViewItem]];
+}
+
+- (void)screenSetTabColorGreenComponentTo:(CGFloat)color {
+    NSColor *curColor = [self tabColor];
+    [[[self ptytab] parentWindow] setTabColor:[NSColor colorWithCalibratedRed:[curColor redComponent]
+                                                                        green:color
+                                                                         blue:[curColor blueComponent]
+                                                                        alpha:1]
+                               forTabViewItem:[[self ptytab] tabViewItem]];
+}
+
+- (void)screenSetTabColorBlueComponentTo:(CGFloat)color {
+    NSColor *curColor = [self tabColor];
+    [[[self ptytab] parentWindow] setTabColor:[NSColor colorWithCalibratedRed:[curColor redComponent]
+                                                                        green:[curColor greenComponent]
+                                                                         blue:color
+                                                                        alpha:1]
+                               forTabViewItem:[[self ptytab] tabViewItem]];
 }
 
 @end

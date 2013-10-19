@@ -35,9 +35,8 @@
            token.type != VT100CC_NULL) {
         if (token.type != VT100_NOTSUPPORT) {
             int len = 0;
-            switch (token.type) {
-                case VT100_STRING:
-                case VT100_ASCIISTRING:
+            if (token.type == VT100_STRING ||
+                token.type == VT100_ASCIISTRING) {
                     // Allocate double space in case they're all double-width characters.
                     screenChars = malloc(sizeof(screen_char_t) * 2 * token.u.string.length);
                     StringToScreenChars(token.u.string,
@@ -53,13 +52,6 @@
                     [result appendBytes:screenChars
                                  length:sizeof(screen_char_t) * len];
                     free(screenChars);
-                    break;
-
-                case VT100CSI_SGR:
-                    break;
-                case VT100CC_SO:
-                    break;
-                case VT100CC_SI:
                     break;
             }
         }
