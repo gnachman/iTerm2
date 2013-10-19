@@ -63,7 +63,7 @@ extern int kVT100ScreenMinRows;
     long long savedFindContextAbsPos_;
 
     // Used for recording instant replay.
-    DVR* dvr;
+    DVR* dvr_;
     BOOL saveToScrollbackInAlternateScreen_;
 
     // OK to report window title?
