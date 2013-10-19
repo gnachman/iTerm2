@@ -18,7 +18,7 @@ extern int kVT100ScreenMinRows;
 
 @interface VT100Screen : NSObject <PTYTextViewDataSource, VT100TerminalDelegate>
 {
-    NSMutableSet* tabStops;
+    NSMutableSet* tabStops_;
     VT100Terminal *terminal_;
     PTYTask *shell_;
     id<VT100ScreenDelegate> delegate_;  // PTYSession implements this

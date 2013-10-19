@@ -57,7 +57,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
         currentGrid_ = primaryGrid_;
 
         maxScrollbackLines_ = kDefaultMaxScrollbackLines;
-        tabStops = [[NSMutableSet alloc] init];
+        tabStops_ = [[NSMutableSet alloc] init];
         [self setInitialTabStops];
         linebuffer_ = [[LineBuffer alloc] init];
 
@@ -73,7 +73,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 {
     [primaryGrid_ release];
     [altGrid_ release];
-    [tabStops release];
+    [tabStops_ release];
     [printBuffer_ release];
     [linebuffer_ release];
     [dvr release];
@@ -717,15 +717,15 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     primaryGrid_.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
     [self showCursor:[[state objectForKey:kStateDictCursorMode] boolValue]];
 
-    [tabStops removeAllObjects];
+    [tabStops_ removeAllObjects];
     int maxTab = 0;
     for (NSNumber *n in [state objectForKey:kStateDictTabstops]) {
-        [tabStops addObject:n];
+        [tabStops_ addObject:n];
         maxTab = MAX(maxTab, [n intValue]);
     }
     for (int i = 0; i < 1000; i += 8) {
         if (i > maxTab) {
-            [tabStops addObject:[NSNumber numberWithInt:i]];
+            [tabStops_ addObject:[NSNumber numberWithInt:i]];
         }
     }
 
@@ -1307,7 +1307,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
 - (void)terminalSetTabStopAtCursor {
     if (currentGrid_.cursorX < currentGrid_.size.width) {
-        [tabStops addObject:[NSNumber numberWithInt:currentGrid_.cursorX]];
+        [tabStops_ addObject:[NSNumber numberWithInt:currentGrid_.cursorX]];
     }
 }
 
@@ -1378,12 +1378,12 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 }
 
 - (void)terminalRemoveTabStops {
-    [tabStops removeAllObjects];
+    [tabStops_ removeAllObjects];
 }
 
 - (void)terminalRemoveTabStopAtCursor {
     if (currentGrid_.cursorX < currentGrid_.size.width) {
-        [tabStops removeObject:[NSNumber numberWithInt:currentGrid_.cursorX]];
+        [tabStops_ removeObject:[NSNumber numberWithInt:currentGrid_.cursorX]];
     }
 }
 
@@ -1827,10 +1827,10 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
 - (void)setInitialTabStops
 {
-    [tabStops removeAllObjects];
+    [tabStops_ removeAllObjects];
     const int kInitialTabWindow = 1000;
     for (int i = 0; i < kInitialTabWindow; i += kDefaultTabstopWidth) {
-        [tabStops addObject:[NSNumber numberWithInt:i]];
+        [tabStops_ addObject:[NSNumber numberWithInt:i]];
     }
 }
 
@@ -2147,7 +2147,7 @@ static void SwapInt(int *a, int *b) {
 }
 
 - (BOOL)haveTabStopBefore:(int)limit {
-    for (NSNumber *number in tabStops) {
+    for (NSNumber *number in tabStops_) {
         if ([number intValue] < limit) {
             return YES;
         }
