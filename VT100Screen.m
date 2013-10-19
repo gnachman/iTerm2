@@ -63,8 +63,8 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
         [iTermGrowlDelegate sharedInstance];
 
-        dvr = [DVR alloc];
-        [dvr initWithBufferCapacity:[[PreferencePanel sharedInstance] irMemory] * 1024 * 1024];
+        dvr_ = [DVR alloc];
+        [dvr_ initWithBufferCapacity:[[PreferencePanel sharedInstance] irMemory] * 1024 * 1024];
     }
     return self;
 }
@@ -76,7 +76,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     [tabStops_ release];
     [printBuffer_ release];
     [linebuffer_ release];
-    [dvr release];
+    [dvr_ release];
     [terminal_ release];
     [shell_ release];
     [super dealloc];
@@ -1012,7 +1012,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
 - (void)saveToDvr
 {
-    if (!dvr || ![[PreferencePanel sharedInstance] instantReplay]) {
+    if (!dvr_ || ![[PreferencePanel sharedInstance] instantReplay]) {
         return;
     }
 
@@ -1022,9 +1022,9 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     info.height = currentGrid_.size.height;
     info.width = currentGrid_.size.width;
 
-    [dvr appendFrame:currentGrid_.lines
-              length:sizeof(screen_char_t) * (currentGrid_.size.width + 1) * (currentGrid_.size.height)
-                info:&info];
+    [dvr_ appendFrame:currentGrid_.lines
+               length:sizeof(screen_char_t) * (currentGrid_.size.width + 1) * (currentGrid_.size.height)
+                 info:&info];
 }
 
 - (BOOL)shouldSendContentsChangedNotification
@@ -2203,7 +2203,7 @@ static void SwapInt(int *a, int *b) {
 
 - (BOOL)haveTabStopAt:(int)x
 {
-    return [tabStops containsObject:[NSNumber numberWithInt:x]];
+    return [tabStops_ containsObject:[NSNumber numberWithInt:x]];
 }
 
 - (void)doPrint
