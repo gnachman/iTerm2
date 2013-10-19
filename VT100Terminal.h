@@ -348,11 +348,10 @@ typedef enum {
     BOOL ORIGIN_MODE;       // YES=Relative, NO=Absolute
     BOOL WRAPAROUND_MODE;   // YES=On, NO=Off
     BOOL AUTOREPEAT_MODE;   // YES=On, NO=Off
-    BOOL INTERLACE_MODE;    // YES=On, NO=Off
     BOOL KEYPAD_MODE;       // YES=Application, NO=Numeric
     BOOL INSERT_MODE;       // YES=Insert, NO=Replace
     int  CHARSET;           // G0...G3
-    BOOL XON;               // YES=XON, NO=XOFF
+    BOOL XON;               // YES=XON, NO=XOFF. Not currently used.
     BOOL numLock;           // YES=ON, NO=OFF, default=YES;
     BOOL shouldBounceDockIcon; // YES=Bounce, NO=cancel;
     MouseMode MOUSE_MODE;
@@ -380,8 +379,6 @@ typedef enum {
     int saveBgBlue;
     ColorMode saveBgColorMode;
 
-    BOOL TRACE;
-
     BOOL strictAnsiMode;
     BOOL allowColumnMode;
 
@@ -408,36 +405,22 @@ typedef enum {
 - (id)init;
 - (void)dealloc;
 
-- (NSString *)termtype;
 - (void)setTermType:(NSString *)termtype;
-
-- (BOOL)trace;
-- (void)setTrace:(BOOL)flag;
-
-- (BOOL)strictAnsiMode;
-- (void)setStrictAnsiMode: (BOOL)flag;
-
-- (BOOL)allowColumnMode;
-- (void)setAllowColumnMode: (BOOL)flag;
 
 - (NSStringEncoding)encoding;
 - (void)setEncoding:(NSStringEncoding)encoding;
 
-- (void)cleanStream;
 - (void)putStreamData:(NSData*)data;
+
 // Returns true if a new token was parsed, false if there was nothing left to do.
 - (BOOL)parseNextToken;
 - (NSData *)streamData;
 - (void)clearStream;
 
-- (void)saveCursorAttributes;
-- (void)restoreCursorAttributes;
-
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem;
 - (void)setBackgroundColor:(int)bgColorCode alternateSemantics:(BOOL)altsem;
 
 - (void)resetCharset;
-- (void)reset;
 - (void)resetPreservingPrompt:(BOOL)preservePrompt;
 
 - (NSData *)keyArrowUp:(unsigned int)modflag;
@@ -454,26 +437,18 @@ typedef enum {
 - (NSData *)keyFunction:(int)no;
 - (NSData *)keypadData: (unichar) unicode keystr: (NSString *) keystr;
 
-- (char *)mouseReport:(int)button atX:(int)x Y:(int)y;
 - (BOOL)reportFocus;
 - (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
 - (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
 - (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
 
-- (BOOL)lineMode;
-- (BOOL)cursorMode;
-- (BOOL)columnMode;
-- (BOOL)scrollMode;
-- (BOOL)screenMode;
+- (BOOL)screenMode;  // Reversed text?
 - (BOOL)originMode;
 - (BOOL)wraparoundMode;
 - (BOOL)isAnsi;
 - (BOOL)autorepeatMode;
-- (BOOL)interlaceMode;
-- (BOOL)keypadMode;
 - (BOOL)insertMode;
 - (int)charset;
-- (BOOL)xon;
 - (MouseMode)mouseMode;
 
 - (screen_char_t)foregroundColorCode;
@@ -482,13 +457,6 @@ typedef enum {
 - (screen_char_t)backgroundColorCodeReal;
 
 - (NSData *)reportActivePositionWithX:(int)x Y:(int)y withQuestion:(BOOL)q;
-- (NSData *)reportStatus;
-- (NSData *)reportDeviceAttribute;
-- (NSData *)reportSecondaryDeviceAttribute;
-
-- (void)_setMode:(VT100TCC)token;
-- (void)_setCharAttr:(VT100TCC)token;
-- (void)_setRGB:(VT100TCC)token;
 
 - (void)setDisableSmcupRmcup:(BOOL)value;
 - (void)setUseCanonicalParser:(BOOL)value;

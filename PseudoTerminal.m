@@ -5180,7 +5180,6 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"setupSession - call setPreferencesFromAddressBookEntry");
         [aSession setPreferencesFromAddressBookEntry:tempPrefs];
         [aSession setBookmarkName:[tempPrefs objectForKey:KEY_NAME]];
-        [[aSession TERMINAL] setTrace:YES];    // debug vt100 escape sequence decode
 
         if (title) {
             [aSession setName:title];

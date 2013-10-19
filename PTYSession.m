@@ -2448,25 +2448,13 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)logStop
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession logStop:%@]",
-          __FILE__, __LINE__);
-#endif
     [SHELL loggingStop];
 }
 
 - (void)clearBuffer
 {
-    //char formFeed = 0x0c; // ^L
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession clearBuffer:...]", __FILE__, __LINE__);
-#endif
-    //[TERMINAL cleanStream];
-
     [SCREEN clearBuffer];
     [TEXTVIEW clearWorkingDirectories];
-    // tell the shell to clear the screen
-    //[self writeTask:[NSData dataWithBytes:&formFeed length:1]];
 }
 
 - (void)clearScrollbackBuffer

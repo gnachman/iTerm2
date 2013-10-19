@@ -2579,7 +2579,6 @@ static VT100TCC decode_string(unsigned char *datap,
         ORIGIN_MODE = NO;
         WRAPAROUND_MODE = YES;
         AUTOREPEAT_MODE = YES;
-        INTERLACE_MODE = NO;
         KEYPAD_MODE = NO;
         INSERT_MODE = NO;
         saveCHARSET=CHARSET = NO;
@@ -2600,8 +2599,6 @@ static VT100TCC decode_string(unsigned char *datap,
         saveBgColorMode = BG_COLORMODE;
         MOUSE_MODE = MOUSE_REPORTING_NONE;
         MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
-
-        TRACE = NO;
 
         strictAnsiMode = NO;
         allowColumnMode = NO;
@@ -2758,7 +2755,6 @@ static VT100TCC decode_string(unsigned char *datap,
     ORIGIN_MODE = NO;
     WRAPAROUND_MODE = YES;
     AUTOREPEAT_MODE = YES;
-    INTERLACE_MODE = NO;
     KEYPAD_MODE = NO;
     INSERT_MODE = NO;
     bracketedPasteMode_ = NO;
@@ -2780,26 +2776,9 @@ static VT100TCC decode_string(unsigned char *datap,
     [delegate_ terminalSetUseColumnScrollRegion:NO];
     REPORT_FOCUS = NO;
 
-    TRACE = NO;
-
     strictAnsiMode = NO;
     allowColumnMode = NO;
     [delegate_ terminalResetPreservingPrompt:preservePrompt];
-}
-
-- (void)reset
-{
-    [self resetPreservingPrompt:NO];
-}
-
-- (BOOL)trace
-{
-    return TRACE;
-}
-
-- (void)setTrace:(BOOL)flag
-{
-    TRACE = flag;
 }
 
 - (BOOL)strictAnsiMode
@@ -2830,11 +2809,6 @@ static VT100TCC decode_string(unsigned char *datap,
 - (void)setEncoding:(NSStringEncoding)encoding
 {
     ENCODING = encoding;
-}
-
-- (void)cleanStream
-{
-    current_stream_length = 0;
 }
 
 - (void)putStreamData:(NSData*)data
@@ -3413,11 +3387,6 @@ static VT100TCC decode_string(unsigned char *datap,
     return AUTOREPEAT_MODE;
 }
 
-- (BOOL)interlaceMode
-{
-    return INTERLACE_MODE;
-}
-
 - (BOOL)keypadMode
 {
     return KEYPAD_MODE;
@@ -3431,11 +3400,6 @@ static VT100TCC decode_string(unsigned char *datap,
 - (BOOL)insertMode
 {
     return INSERT_MODE;
-}
-
-- (BOOL) xon
-{
-    return XON;
 }
 
 - (int) charset
@@ -3589,7 +3553,7 @@ static VT100TCC decode_string(unsigned char *datap,
                         AUTOREPEAT_MODE = mode;
                         break;
                     case 9:
-                        INTERLACE_MODE  = mode;
+                        // TODO: This should send mouse x&y on button press.
                         break;
                     case 25:
                         [delegate_ terminalSetCursorVisible:mode];
