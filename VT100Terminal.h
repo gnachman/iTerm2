@@ -2,11 +2,48 @@
 // xterm emulator. The real work of acting on escape codes is handled by the delegate.
 
 #import <Cocoa/Cocoa.h>
+#import "iTermCursor.h"
 #import "ScreenChar.h"
 #import "VT100Grid.h"
 
 typedef enum {
-    VT100_WAIT,
+    // Any control character between 0-0x1f inclusive can by a token type. For these, the value
+    // matters.
+    VT100CC_NULL = 0,
+    VT100CC_SOH = 1,   // Not used
+    VT100CC_STX = 2,   // Not used
+    VT100CC_ETX = 3,   // Not used
+    VT100CC_EOT = 4,   // Not used
+    VT100CC_ENQ = 5,   // Transmit ANSWERBACK message
+    VT100CC_ACK = 6,   // Not used
+    VT100CC_BEL = 7,   // Sound bell
+    VT100CC_BS = 8,    // Move cursor to the left
+    VT100CC_HT = 9,    // Move cursor to the next tab stop
+    VT100CC_LF = 10,   // line feed or new line operation
+    VT100CC_VT = 11,   // Same as <LF>.
+    VT100CC_FF = 12,   // Same as <LF>.
+    VT100CC_CR = 13,   // Move the cursor to the left margin
+    VT100CC_SO = 14,   // Invoke the G1 character set
+    VT100CC_SI = 15,   // Invoke the G0 character set
+    VT100CC_DLE = 16,  // Not used
+    VT100CC_DC1 = 17,  // Causes terminal to resume transmission (XON).
+    VT100CC_DC2 = 18,  // Not used
+    VT100CC_DC3 = 19,  // Causes terminal to stop transmitting all codes except XOFF and XON (XOFF).
+    VT100CC_DC4 = 20,  // Not used
+    VT100CC_NAK = 21,  // Not used
+    VT100CC_SYN = 22,  // Not used
+    VT100CC_ETB = 23,  // Not used
+    VT100CC_CAN = 24,  // Cancel a control sequence
+    VT100CC_EM = 25,   // Not used
+    VT100CC_SUB = 26,  // Same as <CAN>.
+    VT100CC_ESC = 27,  // Introduces a control sequence.
+    VT100CC_FS = 28,   // Not used
+    VT100CC_GS = 29,   // Not used
+    VT100CC_RS = 30,   // Not used
+    VT100CC_US = 31,   // Not used
+    VT100CC_DEL = 255, // Ignored on input; not stored in buffer.
+
+    VT100_WAIT = 1000,
     VT100_NOTSUPPORT,
     VT100_SKIP,
     VT100_STRING,
@@ -115,6 +152,8 @@ typedef enum {
     DCS_TMUX,
 } VT100TerminalTokenType;
 
+#define VT100CSIPARAM_MAX    16  // Maximum number of CSI parameters in VT100TCC.u.csi.p.
+
 // A parsed token.
 typedef struct {
     VT100TerminalTokenType type;
@@ -157,11 +196,30 @@ typedef enum {
     MOUSE_BUTTON_SCROLLUP = 5    // scroll up
 } MouseButtonNumber;
 
+// Indexes into key_strings.
+typedef enum {
+    TERMINFO_KEY_LEFT, TERMINFO_KEY_RIGHT, TERMINFO_KEY_UP, TERMINFO_KEY_DOWN,
+    TERMINFO_KEY_HOME, TERMINFO_KEY_END, TERMINFO_KEY_PAGEDOWN,
+    TERMINFO_KEY_PAGEUP, TERMINFO_KEY_F0, TERMINFO_KEY_F1, TERMINFO_KEY_F2,
+    TERMINFO_KEY_F3, TERMINFO_KEY_F4, TERMINFO_KEY_F5, TERMINFO_KEY_F6,
+    TERMINFO_KEY_F7, TERMINFO_KEY_F8, TERMINFO_KEY_F9, TERMINFO_KEY_F10,
+    TERMINFO_KEY_F11, TERMINFO_KEY_F12, TERMINFO_KEY_F13, TERMINFO_KEY_F14,
+    TERMINFO_KEY_F15, TERMINFO_KEY_F16, TERMINFO_KEY_F17, TERMINFO_KEY_F18,
+    TERMINFO_KEY_F19, TERMINFO_KEY_F20, TERMINFO_KEY_F21, TERMINFO_KEY_F22,
+    TERMINFO_KEY_F23, TERMINFO_KEY_F24, TERMINFO_KEY_F25, TERMINFO_KEY_F26,
+    TERMINFO_KEY_F27, TERMINFO_KEY_F28, TERMINFO_KEY_F29, TERMINFO_KEY_F30,
+    TERMINFO_KEY_F31, TERMINFO_KEY_F32, TERMINFO_KEY_F33, TERMINFO_KEY_F34,
+    TERMINFO_KEY_F35, TERMINFO_KEY_BACKSPACE, TERMINFO_KEY_BACK_TAB,
+    TERMINFO_KEY_TAB, TERMINFO_KEY_DEL, TERMINFO_KEY_INS, TERMINFO_KEY_HELP,
+    TERMINFO_KEYS
+} VT100TerminalTerminfoKeys;
+
 #define NUM_CHARSETS 4  // G0...G3. Values returned from -charset go from 0 to this.
+#define NUM_MODIFIABLE_RESOURCES 5
 
 @protocol VT100TerminalDelegate
 // Append a string at the cursor's position and advance the cursor, scrolling if necessary. If
-|ascii| is set then the string contains only ascii characters.
+// |ascii| is set then the string contains only ascii characters.
 - (void)terminalAppendString:(NSString *)string isAscii:(BOOL)isAscii;
 
 // Play/display the bell.
@@ -247,7 +305,7 @@ typedef enum {
 - (void)terminalSetCursorType:(ITermCursorType)cursorType;
 
 // Changes whether the cursor blinks.
-- (void)terminalScreenSetCursorBlinking:(BOOL)blinking;
+- (void)terminalSetCursorBlinking:(BOOL)blinking;
 
 // Sets the left/right scroll region.
 - (void)terminalSetLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight;
@@ -307,7 +365,7 @@ typedef enum {
 - (void)terminalDeleteLinesAtCursor:(int)n;
 
 // Tries to resize the screen to |rows| by |columns|.
-- (void)terminalSetRows:(int)rows columns:(int)columns;
+- (void)terminalSetRows:(int)rows andColumns:(int)columns;
 
 // Tries to resize the window to the given pixel size.
 - (void)terminalSetPixelWidth:(int)width height:(int)height;
@@ -342,7 +400,7 @@ typedef enum {
 - (int)terminalScreenWidthInCells;
 
 // Returns the current icon (tab)/window title.
-- (NString *)terminalIconTitle;
+- (NSString *)terminalIconTitle;
 - (NSString *)terminalWindowTitle;
 
 // Saves the current window/icon (depending on isWindow) title in a stack.
@@ -369,6 +427,7 @@ typedef enum {
 
 // Sets whether the left/right scroll region should be used.
 - (void)terminalSetUseColumnScrollRegion:(BOOL)use;
+- (BOOL)terminalUseColumnScrollRegion;
 
 // Switches the currently visible buffer.
 - (void)terminalShowAltBuffer;
@@ -495,7 +554,7 @@ typedef enum {
     BOOL disableSmcupRmcup;
     BOOL useCanonicalParser;
 
-    //terminfo
+    // Indexed by values in VT100TerminalTerminfoKeys. Gives strings to send for various special keys.
     char *key_strings[TERMINFO_KEYS];
 
     // http://www.xfree86.org/current/ctlseqs.html#Bracketed%20Paste%20Mode
@@ -601,6 +660,9 @@ typedef enum {
 - (void)setKeypadMode:(BOOL)mode;
 - (void)setMouseMode:(MouseMode)mode;
 - (void)setMouseFormat:(MouseFormat)format;
+
+// Call appropriate delegate methods to handle token.
+- (void)executeToken:(VT100TCC)token;
 
 @end
 

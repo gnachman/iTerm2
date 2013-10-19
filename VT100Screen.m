@@ -1269,6 +1269,8 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
         yStart = currentGrid_.cursor.y;
         x2 = 0;
         y2 = currentGrid_.size.height;
+    } else {
+        return;
     }
 
     VT100GridRun theRun = VT100GridRunFromCoords(VT100GridCoordMake(x1, yStart),
@@ -1359,7 +1361,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     [delegate_ screenSetCursorType:cursorType];
 }
 
-- (void)terminalScreenSetCursorBlinking:(BOOL)blinking {
+- (void)terminalSetCursorBlinking:(BOOL)blinking {
     [delegate_ screenSetCursorBlinking:blinking];
 }
 
@@ -1390,9 +1392,9 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
         // set the column
         [delegate_ screenResizeToWidth:width
                                 height:currentGrid_.size.height];
-        [SCREEN terminalEraseInDisplayBeforeCursor:NO afterCursor:YES];  // erase the screen
-        [SCREEN terminalResetTopBottomScrollRegion];
-        [self setVsplitMode: NO];   // reset vertical scroll
+        [self terminalEraseInDisplayBeforeCursor:NO afterCursor:YES];  // erase the screen
+        [self terminalResetTopBottomScrollRegion];
+        [self setUseColumnScrollRegion:NO];
     }
 }
 
@@ -1419,7 +1421,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 - (void)terminalEraseCharactersAfterCursor:(int)j {
     if (currentGrid_.cursorX < currentGrid_.size.width) {
         if (j <= 0) {
-            break;
+            return;
         }
 
         int limit = MIN(currentGrid_.cursorX + j, currentGrid_.size.width);
@@ -1523,7 +1525,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     [delegate_ screenTriggerableChangeDidOccur];
 }
 
-- (void)terminalSetRows:(int)rows columns:(int)columns {
+- (void)terminalSetRows:(int)rows andColumns:(int)columns {
     if ([delegate_ screenShouldInitiateWindowResize] &&
         ![delegate_ screenWindowIsFullscreen]) {
         // set the column
@@ -1538,7 +1540,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
         ![delegate_ screenWindowIsFullscreen]) {
         // TODO: Only allow this if there is a single session in the tab.
         NSSize cellSize = [delegate_ screenCellSize];
-        [delegate_ screenResizeToWidth:width / cellSize.width,
+        [delegate_ screenResizeToWidth:width / cellSize.width
                                 height:height / cellSize.height];
     }
 }
@@ -1567,7 +1569,9 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 }
 
 - (void)terminalScrollUp:(int)n {
-    for (i = 0; i < MIN(MAX(currentGrid_.size.height, kMaxLinesToScrollAtOneTime), n); i++) {
+    for (int i = 0;
+         i < MIN(MAX(currentGrid_.size.height, kMaxLinesToScrollAtOneTime), n);
+         i++) {
         [self incrementOverflowBy:[currentGrid_ scrollUpIntoLineBuffer:linebuffer_
                                                    unlimitedScrollback:unlimitedScrollback_
                                                useScrollbackWithRegion:[self useScrollbackWithRegion]]];
@@ -1588,7 +1592,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 - (NSPoint)terminalWindowTopLeftPixelCoordinate {
     NSRect frame = [delegate_ screenWindowFrame];
     NSScreen *screen = [delegate_ screenWindowScreen];
-    return NSPointMake(frame.origin.x,
+    return NSMakePoint(frame.origin.x,
                        [screen frame].size.height - frame.origin.y - frame.size.height);
 }
 
@@ -1622,7 +1626,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     return (screenSize.size.width - wch - MARGIN * 2) / cellSize.width;
 }
 
-- (NString *)terminalIconTitle {
+- (NSString *)terminalIconTitle {
     if (allowTitleReporting_) {
         return [delegate_ screenWindowTitle] ? [delegate_ screenWindowTitle] : [delegate_ screenDefaultName];
     } else {
@@ -1689,6 +1693,10 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     self.useColumnScrollRegion = use;
 }
 
+- (BOOL)terminalUseColumnScrollRegion {
+    return self.useColumnScrollRegion;
+}
+
 - (void)terminalShowAltBuffer
 {
     if (currentGrid_ == altGrid_) {
@@ -1722,15 +1730,15 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 }
 
 - (void)terminalColorTableEntryAtIndex:(int)theIndex didChangeToColor:(NSColor *)theColor {
-    [delegate_ setColorTable:theIndex color:theColor];
+    [delegate_ screenSetColorTableEntryAtIndex:theIndex color:theColor];
 }
 
 - (void)terminalSaveScrollPosition {
-    [delegate_ saveScrollPosition];
+    [delegate_ screenSaveScrollPosition];
 }
 
 - (void)terminalStealFocus {
-    [delegate_ screenAcitvateWindow];
+    [delegate_ screenActivateWindow];
     [delegate_ screenRaise:YES];
 }
 
@@ -1819,7 +1827,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
 - (void)setInitialTabStops
 {
-    [self clearTabStop];
+    [tabStops removeAllObjects];
     const int kInitialTabWindow = 1000;
     for (int i = 0; i < kInitialTabWindow; i += kDefaultTabstopWidth) {
         [tabStops addObject:[NSNumber numberWithInt:i]];

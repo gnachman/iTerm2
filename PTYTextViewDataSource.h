@@ -1,4 +1,5 @@
 // DataSource for PTYTextView.
+#import "iTermCursor.h"
 #import "ScreenChar.h"
 #import "LineBuffer.h"
 
@@ -6,10 +7,6 @@
 typedef enum {
     FlashBell, FlashWrapToTop, FlashWrapToBottom
 } FlashImage;
-
-typedef enum {
-    CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX
-} ITermCursorType;
 
 @class PTYSession;
 @class PTYTask;

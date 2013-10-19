@@ -22,8 +22,8 @@
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string;
 
 // Change the cursor's appearance.
-- (void)screenSetCursorBlinking:(BOOL)blink
-                     cursorType:(ITermCursorType)type;
+- (void)screenSetCursorBlinking:(BOOL)blink;
+- (void)screenSetCursorType:(ITermCursorType)type;
 
 // Returns if the screen is permitted to resize the window.
 - (BOOL)screenShouldInitiateWindowResize;
@@ -56,8 +56,8 @@
 - (NSString *)screenWindowName;
 
 // The delegate should check the current working directory and associate it with |lineNumber|, since
-// it may have changed.
-- (void)screenLogWorkingDirectoryAtLine:(long long)lineNumber;
+// it may have changed. If |directory| is nil then the current directory is found and used.
+- (void)screenLogWorkingDirectoryAtLine:(long long)lineNumber withDirectory:(NSString *)directory;
 
 // Returns if the window is full-screen.
 - (BOOL)screenWindowIsFullscreen;
@@ -161,5 +161,27 @@
 
 // Returns if there is a view.
 - (BOOL)screenHasView;
+
+- (void)screenSetColorTableEntryAtIndex:(int)n color:(NSColor *)color;
+
+// Save the current scroll position
+- (void)screenSaveScrollPosition;
+
+- (void)screenActivateWindow;
+
+- (void)screenSetProfileToProfileNamed:(NSString *)value;
+- (void)screenSetPasteboard:(NSString *)value;
+- (void)screenRequestAttention:(BOOL)request;
+- (void)screenSetForegroundColor:(NSColor *)color;
+- (void)screenSetBackgroundColor:(NSColor *)color;
+- (void)screenSetBoldColor:(NSColor *)color;
+- (void)screenSetSelectionColor:(NSColor *)color;
+- (void)screenSetSelectedTextColor:(NSColor *)color;
+- (void)screenSetCursorColor:(NSColor *)color;
+- (void)screenSetCursorTextColor:(NSColor *)color;
+- (void)screenSetCurrentTabColor:(NSColor *)color;
+- (void)screenSetTabColorRedComponentTo:(CGFloat)color;
+- (void)screenSetTabColorGreenComponentTo:(CGFloat)color;
+- (void)screenSetTabColorBlueComponentTo:(CGFloat)color;
 
 @end

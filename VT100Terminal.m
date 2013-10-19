@@ -30,7 +30,6 @@
 
 #import "VT100Terminal.h"
 #import "PTYSession.h"
-#import "VT100Screen.h"
 #import "NSStringITerm.h"
 #import "iTermApplicationDelegate.h"
 #import "ITAddressBookMgr.h"
@@ -141,28 +140,6 @@
 #define PACK_CSI_COMMAND(first, second) ((first << 8) | second) // used by new parser
 #define ADVANCE(datap, datalen, rmlen) do { datap++; datalen--; (*rmlen)++; } while (0)
 
-// VT100TCC types
-#define VT100CC_NULL        0
-#define VT100CC_ENQ         5    // Transmit ANSWERBACK message
-#define VT100CC_BEL         7    // Sound bell
-#define VT100CC_BS          8    // Move cursor to the left
-#define VT100CC_HT          9    // Move cursor to the next tab stop
-#define VT100CC_LF         10    // line feed or new line operation
-#define VT100CC_VT         11    // Same as <LF>.
-#define VT100CC_FF         12    // Same as <LF>.
-#define VT100CC_CR         13    // Move the cursor to the left margin
-#define VT100CC_SO         14    // Invoke the G1 character set
-#define VT100CC_SI         15    // Invoke the G0 character set
-#define VT100CC_DC1        17    // Causes terminal to resume transmission (XON).
-#define VT100CC_DC3        19    // Causes terminal to stop transmitting all codes except XOFF and XON (XOFF).
-#define VT100CC_CAN        24    // Cancel a control sequence
-#define VT100CC_SUB        26    // Same as <CAN>.
-#define VT100CC_ESC        27    // Introduces a control sequence.
-#define VT100CC_DEL       255    // Ignored on input; not stored in buffer.
-
-#define VT100CSIPARAM_MAX    16
-#define NUM_MODIFIABLE_RESOURCES 5
-
 // character attributes
 #define VT100CHARATTR_ALLOFF   0
 #define VT100CHARATTR_BOLD     1
@@ -239,25 +216,6 @@ typedef enum {
 #define VT100CHARATTR_BG_HI_WATER     (VT100CHARATTR_BG_HI_BASE + COLORCODE_WATER)
 #define VT100CHARATTR_BG_HI_WHITE     (VT100CHARATTR_BG_HI_BASE + COLORCODE_WHITE)
 
-// terminfo stuff
-enum {
-    TERMINFO_KEY_LEFT, TERMINFO_KEY_RIGHT, TERMINFO_KEY_UP, TERMINFO_KEY_DOWN,
-    TERMINFO_KEY_HOME, TERMINFO_KEY_END, TERMINFO_KEY_PAGEDOWN, TERMINFO_KEY_PAGEUP,
-    TERMINFO_KEY_F0, TERMINFO_KEY_F1, TERMINFO_KEY_F2, TERMINFO_KEY_F3, TERMINFO_KEY_F4,
-    TERMINFO_KEY_F5, TERMINFO_KEY_F6, TERMINFO_KEY_F7, TERMINFO_KEY_F8, TERMINFO_KEY_F9,
-    TERMINFO_KEY_F10, TERMINFO_KEY_F11, TERMINFO_KEY_F12, TERMINFO_KEY_F13, TERMINFO_KEY_F14,
-    TERMINFO_KEY_F15, TERMINFO_KEY_F16, TERMINFO_KEY_F17, TERMINFO_KEY_F18, TERMINFO_KEY_F19,
-    TERMINFO_KEY_F20, TERMINFO_KEY_F21, TERMINFO_KEY_F22, TERMINFO_KEY_F23, TERMINFO_KEY_F24,
-    TERMINFO_KEY_F25, TERMINFO_KEY_F26, TERMINFO_KEY_F27, TERMINFO_KEY_F28, TERMINFO_KEY_F29,
-    TERMINFO_KEY_F30, TERMINFO_KEY_F31, TERMINFO_KEY_F32, TERMINFO_KEY_F33, TERMINFO_KEY_F34,
-    TERMINFO_KEY_F35,
-    TERMINFO_KEY_BACKSPACE, TERMINFO_KEY_BACK_TAB,
-    TERMINFO_KEY_TAB,
-    TERMINFO_KEY_DEL, TERMINFO_KEY_INS,
-    TERMINFO_KEY_HELP,
-    TERMINFO_KEYS
-};
-
 typedef enum {
 
     // keyboard modifier flag
@@ -291,14 +249,14 @@ typedef struct {
 static BOOL isCSI(unsigned char *, int);
 static BOOL isXTERM(unsigned char *, int);
 static BOOL isString(unsigned char *, NSStringEncoding);
-static int getCSIParam(unsigned char *, int, CSIParam *, VT100Screen *);
-static int getCSIParamCanonically(unsigned char *, int, CSIParam *, VT100Screen *);
-static VT100TCC decode_csi(unsigned char *, int, int *,VT100Screen *);
-static VT100TCC decode_csi_canonically(unsigned char *, int, int *,VT100Screen *);
+static int getCSIParam(unsigned char *, int, CSIParam *, id<VT100TerminalDelegate>);
+static int getCSIParamCanonically(unsigned char *, int, CSIParam *, id<VT100TerminalDelegate>);
+static VT100TCC decode_csi(unsigned char *, int, int *, id<VT100TerminalDelegate>);
+static VT100TCC decode_csi_canonically(unsigned char *, int, int *, id<VT100TerminalDelegate>);
 static VT100TCC decode_xterm(unsigned char *, int, int *,NSStringEncoding);
-static VT100TCC decode_ansi(unsigned char *,int, int *,VT100Screen *);
+static VT100TCC decode_ansi(unsigned char *,int, int *, id<VT100TerminalDelegate>);
 static VT100TCC decode_other(unsigned char *, int, int *, NSStringEncoding);
-static VT100TCC decode_control(unsigned char *, int, int *, NSStringEncoding, VT100Screen *, BOOL);
+static VT100TCC decode_control(unsigned char *, int, int *, NSStringEncoding, id<VT100TerminalDelegate>, BOOL);
 static VT100TCC decode_utf8(unsigned char *, int, int *);
 static VT100TCC decode_euccn(unsigned char *, int, int *);
 static VT100TCC decode_big5(unsigned char *,int, int *);
@@ -381,7 +339,7 @@ static BOOL isString(unsigned char *code,
 
 static int advanceAndEatControlChars(unsigned char **ppdata,
                                      int *pdatalen,
-                                     VT100Screen *SCREEN)
+                                     id<VT100TerminalDelegate> delegate)
 {
     // return value represent "continuous" state.
     // If it is YES, current control sequence parsing process was not canceled.
@@ -394,21 +352,21 @@ static int advanceAndEatControlChars(unsigned char **ppdata,
                 // TODO: send answerback if it is needed
                 break;
             case VT100CC_BEL:
-                [delegate_ terminalRingBell];
+                [delegate terminalRingBell];
                 break;
             case VT100CC_BS:
-                [delegate_ terminalBackspace];
+                [delegate terminalBackspace];
                 break;
             case VT100CC_HT:
-                [delegate_ terminalAppendTabAtCursor];
+                [delegate terminalAppendTabAtCursor];
                 break;
             case VT100CC_LF:
             case VT100CC_VT:
             case VT100CC_FF:
-                [delegate_ terminalLineFeed];
+                [delegate terminalLineFeed];
                 break;
             case VT100CC_CR:
-                [delegate_ terminalCarriageReturn];
+                [delegate terminalCarriageReturn];
                 break;
             case VT100CC_SO:
                 // TODO: ISO-2022 mode terminal should implement SO
@@ -425,7 +383,7 @@ static int advanceAndEatControlChars(unsigned char **ppdata,
             case VT100CC_ESC:
                 return NO;
             case VT100CC_DEL:
-                [delegate_ terminalDeleteCharactersAtCursor:1];
+                [delegate terminalDeleteCharactersAtCursor:1];
                 break;
             default:
                 if (**ppdata >= 0x20)
@@ -438,7 +396,7 @@ static int advanceAndEatControlChars(unsigned char **ppdata,
 
 static int getCSIParam(unsigned char *datap,
                        int datalen,
-                       CSIParam *param, VT100Screen *SCREEN)
+                       CSIParam *param, id<VT100TerminalDelegate> delegate)
 {
     int i;
     BOOL unrecognized=NO;
@@ -599,21 +557,21 @@ static int getCSIParam(unsigned char *datap,
                 case VT100CC_ENQ:
                     break;
                 case VT100CC_BEL:
-                    [delegate_ terminalRingBell];
+                    [delegate terminalRingBell];
                     break;
                 case VT100CC_BS:
-                    [delegate_ terminalBackspace];
+                    [delegate terminalBackspace];
                     break;
                 case VT100CC_HT:
-                    [delegate_ terminalAppendTabAtCursor];
+                    [delegate terminalAppendTabAtCursor];
                     break;
                 case VT100CC_LF:
                 case VT100CC_VT:
                 case VT100CC_FF:
-                    [delegate_ terminalLineFeed];
+                    [delegate terminalLineFeed];
                     break;
                 case VT100CC_CR:
-                    [delegate_ terminalCarriageReturn];
+                    [delegate terminalCarriageReturn];
                     break;
                 case VT100CC_SO:
                 case VT100CC_SI:
@@ -623,7 +581,7 @@ static int getCSIParam(unsigned char *datap,
                 case VT100CC_SUB:
                     break;
                 case VT100CC_DEL:
-                    [delegate_ terminalDeleteCharactersAtCursor:1];
+                    [delegate terminalDeleteCharactersAtCursor:1];
                     break;
                 default:
                     // Unrecognized escape sequence.
@@ -643,7 +601,7 @@ static int getCSIParam(unsigned char *datap,
 
 static int getCSIParamCanonically(unsigned char *datap,
                                   int datalen,
-                                  CSIParam *param, VT100Screen *SCREEN)
+                                  CSIParam *param, id<VT100TerminalDelegate> delegate)
 {
     int i;
     BOOL unrecognized = NO;
@@ -699,7 +657,7 @@ static int getCSIParamCanonically(unsigned char *datap,
 
     NSCParameterAssert(*datap == '[');
 
-    if (!advanceAndEatControlChars(&datap, &datalen, SCREEN)) {
+    if (!advanceAndEatControlChars(&datap, &datalen, delegate)) {
         goto cancel;
     }
 
@@ -743,7 +701,7 @@ static int getCSIParamCanonically(unsigned char *datap,
             case '>':
             case '?':
                 param->cmd = *datap;
-                if (!advanceAndEatControlChars(&datap, &datalen, SCREEN))
+                if (!advanceAndEatControlChars(&datap, &datalen, delegate))
                     goto cancel;
                 break;
             default:
@@ -774,7 +732,7 @@ static int getCSIParamCanonically(unsigned char *datap,
                         unrecognized = YES;
                     }
                     n = n * 10 + *datap - '0';
-                    if (!advanceAndEatControlChars(&datap, &datalen, SCREEN)) {
+                    if (!advanceAndEatControlChars(&datap, &datalen, delegate)) {
                         goto cancel;
                     }
                 }
@@ -798,7 +756,7 @@ static int getCSIParamCanonically(unsigned char *datap,
                 // reset the parameter flag
                 readNumericParameter = NO;
 
-                if (!advanceAndEatControlChars(&datap, &datalen, SCREEN)) {
+                if (!advanceAndEatControlChars(&datap, &datalen, delegate)) {
                     goto cancel;
                 }
                 break;
@@ -832,7 +790,7 @@ static int getCSIParamCanonically(unsigned char *datap,
                 // I think, at the time when we need sub-parameter, CSIParam should be extended.
                 // Now we ignore them by the reason of performance.
                 unrecognized = YES;
-                if (!advanceAndEatControlChars(&datap, &datalen, SCREEN)) {
+                if (!advanceAndEatControlChars(&datap, &datalen, delegate)) {
                     goto cancel;
                 }
                 break;
@@ -840,7 +798,7 @@ static int getCSIParamCanonically(unsigned char *datap,
             default:
                 // '<', '=', '>', or '?'
                 unrecognized = YES;
-                if (!advanceAndEatControlChars(&datap, &datalen, SCREEN)) {
+                if (!advanceAndEatControlChars(&datap, &datalen, delegate)) {
                     goto cancel;
                 }
                 break;
@@ -860,7 +818,7 @@ static int getCSIParamCanonically(unsigned char *datap,
             unrecognized = YES;
         }
         commandBytesCount++;
-        if (!advanceAndEatControlChars(&datap, &datalen, SCREEN)) {
+        if (!advanceAndEatControlChars(&datap, &datalen, delegate)) {
             goto cancel;
         }
     }
@@ -882,7 +840,7 @@ static int getCSIParamCanonically(unsigned char *datap,
                 // mark current sequence as "unrecognized".
                 unrecognized = YES;
             }
-            if (!advanceAndEatControlChars(&datap, &datalen, SCREEN)) {
+            if (!advanceAndEatControlChars(&datap, &datalen, delegate)) {
                 goto cancel;
             }
         }
@@ -921,7 +879,7 @@ cancel:
 static VT100TCC decode_ansi(unsigned char *datap,
                             int datalen,
                             int *rmlen,
-                            VT100Screen *SCREEN)
+                            id<VT100TerminalDelegate> delegate)
 {
     VT100TCC result;
     result.type = VT100_UNKNOWNCHAR;
@@ -940,14 +898,14 @@ static VT100TCC decode_ansi(unsigned char *datap,
 static VT100TCC decode_csi(unsigned char *datap,
                            int datalen,
                            int *rmlen,
-                           VT100Screen *SCREEN)
+                           id<VT100TerminalDelegate> delegate)
 {
     VT100TCC result;
     CSIParam param={{0},0};
     int paramlen;
     int i;
 
-    paramlen = getCSIParam(datap, datalen, &param, SCREEN);
+    paramlen = getCSIParam(datap, datalen, &param, delegate);
     result.type = VT100_WAIT;
 
     // Check for unkown
@@ -1009,7 +967,7 @@ static VT100TCC decode_csi(unsigned char *datap,
                 case 'r':
                     result.type = VT100CSI_DECSTBM;
                     SET_PARAM_DEFAULT(param, 0, 1);
-                    SET_PARAM_DEFAULT(param, 1, [delegate_ terminalHeight]);
+                    SET_PARAM_DEFAULT(param, 1, [delegate terminalHeight]);
                     break;
 
                 case 'y':
@@ -1205,7 +1163,7 @@ static VT100TCC decode_csi(unsigned char *datap,
                     SET_PARAM_DEFAULT(param,0,0);
                     break;
                 case 's':
-                    if (SCREEN.useColumnScrollRegion) {
+                    if ([delegate terminalUseColumnScrollRegion]) {
                         result.type = VT100CSI_DECSLRM;
                         SET_PARAM_DEFAULT(param, 0, 1);
                         SET_PARAM_DEFAULT(param, 1, 1);
@@ -1262,14 +1220,14 @@ static VT100TCC decode_csi(unsigned char *datap,
 static VT100TCC decode_csi_canonically(unsigned char *datap,
                                        int datalen,
                                        int *rmlen,
-                                       VT100Screen *SCREEN)
+                                       id<VT100TerminalDelegate> delegate)
 {
     VT100TCC result;
     CSIParam param={{0},0};
     int paramlen;
     int i;
 
-    paramlen = getCSIParamCanonically(datap, datalen, &param, SCREEN);
+    paramlen = getCSIParamCanonically(datap, datalen, &param, delegate);
     result.type = VT100_WAIT;
 
     // Check for unkown
@@ -1331,7 +1289,7 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
             case 'r':
                 result.type = VT100CSI_DECSTBM;
                 SET_PARAM_DEFAULT(param, 0, 1);
-                SET_PARAM_DEFAULT(param, 1, [delegate_ terminalHeight]);
+                SET_PARAM_DEFAULT(param, 1, [delegate terminalHeight]);
                 break;
 
             case 'y':
@@ -1522,7 +1480,7 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
                 SET_PARAM_DEFAULT(param,0,0);
                 break;
             case 's':
-                if (SCREEN.useColumnScrollRegion) {
+                if ([delegate terminalUseColumnScrollRegion]) {
                     result.type = VT100CSI_DECSLRM;
                     SET_PARAM_DEFAULT(param, 0, 1);
                     SET_PARAM_DEFAULT(param, 1, 1);
@@ -2003,21 +1961,21 @@ static VT100TCC decode_control(unsigned char *datap,
                                int datalen,
                                int *rmlen,
                                NSStringEncoding enc,
-                               VT100Screen *SCREEN,
+                               id<VT100TerminalDelegate> delegate,
                                BOOL canonical)
 {
     VT100TCC result;
 
     if (isCSI(datap, datalen)) {
         if (canonical) {
-            result = decode_csi_canonically(datap, datalen, rmlen, SCREEN);
+            result = decode_csi_canonically(datap, datalen, rmlen, delegate);
         } else {
-            result = decode_csi(datap, datalen, rmlen, SCREEN);
+            result = decode_csi(datap, datalen, rmlen, delegate);
         }
     } else if (isXTERM(datap,datalen)) {
         result = decode_xterm(datap, datalen, rmlen, enc);
     } else if (isANSI(datap, datalen)) {
-        result = decode_ansi(datap, datalen, rmlen, SCREEN);
+        result = decode_ansi(datap, datalen, rmlen, delegate);
     } else if (isDCS(datap, datalen)) {
         result = decode_dcs(datap, datalen, rmlen, enc);
     } else {
@@ -2783,7 +2741,7 @@ static VT100TCC decode_string(unsigned char *datap,
             result.length = rmlen;
             result.position = datap;
         } else if (iscontrol(datap[0])) {
-            result = decode_control(datap, datalen, &rmlen, ENCODING, SCREEN, useCanonicalParser);
+            result = decode_control(datap, datalen, &rmlen, ENCODING, delegate_, useCanonicalParser);
             result.length = rmlen;
             result.position = datap;
             [self _setMode:result];
@@ -3646,6 +3604,9 @@ static VT100TCC decode_string(unsigned char *datap,
                                               numValues:NUM_MODIFIABLE_RESOURCES];
             break;
         }
+
+        default:
+            break;
     }
 }
 
@@ -3931,9 +3892,9 @@ static VT100TCC decode_string(unsigned char *datap,
         }
     } else if (token.type == XTERMCC_SET_PALETTE) {
         int n;
-        NSColor *color = [self colorForXtermCCSetPaletteString:token.u.string
-                                                colorNumberPtr:&n];
-        if (color) {
+        NSColor *theColor = [self colorForXtermCCSetPaletteString:token.u.string
+                                                   colorNumberPtr:&n];
+        if (theColor) {
             switch (n) {
                 case 16:
                     [delegate_ terminalSetForegroundColor:theColor];
@@ -3991,7 +3952,7 @@ static VT100TCC decode_string(unsigned char *datap,
                     if ([class isEqualToString:@"bg"] &&
                         [color isEqualToString:@"*"] &&
                         [attribute isEqualToString:@"default"]) {
-                        [delegate_ terminalSetCurrentTabColor:nil]
+                        [delegate_ terminalSetCurrentTabColor:nil];
                     }
                 } else if ([parts count] == 5) {
                     NSString* class = [parts objectAtIndex:1];
@@ -4109,7 +4070,7 @@ static VT100TCC decode_string(unsigned char *datap,
     char *decodedBuffer = [data mutableBytes];
     int resultLength = apr_base64_decode(decodedBuffer, buffer);
     if (resultLength < 0) {
-        return;
+        return nil;
     }
 
     // sanitize buffer
@@ -4138,16 +4099,12 @@ static VT100TCC decode_string(unsigned char *datap,
     [data setLength:outputLength];
 
     NSString *resultString = [[[NSString alloc] initWithData:data
-                                                    encoding:[terminal_ encoding]] autorelease];
+                                                    encoding:[self encoding]] autorelease];
     return resultString;
 }
 
 - (void)executeToken:(VT100TCC)token
 {
-    NSString *newTitle;
-
-    int i, j;
-
     switch (token.type) {
             // our special code
         case VT100_STRING:
@@ -4240,7 +4197,7 @@ static VT100TCC decode_string(unsigned char *datap,
             break;
         case VT100CSI_DECSTBM:
             [delegate_ terminalSetScrollRegionTop:token.u.csi.p[0] == 0 ? 0 : token.u.csi.p[0] - 1
-                                           bottom:token.u.csi.p[1] == 0 ? SCREEN.height - 1 : token.u.csi.p[1] - 1];
+                                           bottom:token.u.csi.p[1] == 0 ? [delegate_ terminalHeight] - 1 : token.u.csi.p[1] - 1];
             break;
         case VT100CSI_DECSWL:
         case VT100CSI_DECTST:
@@ -4314,28 +4271,28 @@ static VT100TCC decode_string(unsigned char *datap,
             switch (token.u.csi.p[0]) {
                 case 0:
                 case 1:
-                    [delegate_ terminalScreenSetCursorBlinking:true];
-                    [delegate_ terminalScreenSetCursorType:CURSOR_BOX];
+                    [delegate_ terminalSetCursorBlinking:true];
+                    [delegate_ terminalSetCursorType:CURSOR_BOX];
                     break;
                 case 2:
-                    [delegate_ terminalScreenSetCursorBlinking:false];
-                    [delegate_ terminalScreenSetCursorType:CURSOR_BOX];
+                    [delegate_ terminalSetCursorBlinking:false];
+                    [delegate_ terminalSetCursorType:CURSOR_BOX];
                     break;
                 case 3:
-                    [delegate_ terminalScreenSetCursorBlinking:true];
-                    [delegate_ terminalScreenSetCursorType:CURSOR_UNDERLINE];
+                    [delegate_ terminalSetCursorBlinking:true];
+                    [delegate_ terminalSetCursorType:CURSOR_UNDERLINE];
                     break;
                 case 4:
-                    [delegate_ terminalScreenSetCursorBlinking:false];
-                    [delegate_ terminalScreenSetCursorType:CURSOR_UNDERLINE];
+                    [delegate_ terminalSetCursorBlinking:false];
+                    [delegate_ terminalSetCursorType:CURSOR_UNDERLINE];
                     break;
                 case 5:
-                    [delegate_ terminalScreenSetCursorBlinking:true];
-                    [delegate_ terminalScreenSetCursorType:CURSOR_VERTICAL];
+                    [delegate_ terminalSetCursorBlinking:true];
+                    [delegate_ terminalSetCursorType:CURSOR_VERTICAL];
                     break;
                 case 6:
-                    [delegate_ terminalScreenSetCursorBlinking:false];
-                    [delegate_ terminalScreenSetCursorType:CURSOR_VERTICAL];
+                    [delegate_ terminalSetCursorBlinking:false];
+                    [delegate_ terminalSetCursorType:CURSOR_VERTICAL];
                     break;
             }
             break;
@@ -4461,10 +4418,10 @@ static VT100TCC decode_string(unsigned char *datap,
             }
             break;
         case ANSICSI_SCP:
-            [self terminalSaveCursorAndCharsetFlags];
+            [delegate_ terminalSaveCursorAndCharsetFlags];
             break;
         case ANSICSI_RCP:
-            [self terminalRestoreCursorAndCharsetFlags];
+            [delegate_ terminalRestoreCursorAndCharsetFlags];
             break;
 
             // XTERM extensions
@@ -4499,7 +4456,7 @@ static VT100TCC decode_string(unsigned char *datap,
             break;
         case XTERMCC_WINDOWSIZE:
             [delegate_ terminalSetRows:MIN(token.u.csi.p[1], kMaxScreenRows)
-                               columns:MIN(token.u.csi.p[2], kMaxScreenColumns)];
+                            andColumns:MIN(token.u.csi.p[2], kMaxScreenColumns)];
             break;
         case XTERMCC_WINDOWSIZE_PIXEL:
             [delegate_ terminalSetPixelWidth:token.u.csi.p[2]

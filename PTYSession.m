@@ -4532,11 +4532,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     savedScrollHeight_ = [SCREEN height];
 }
 
-- (void)screenAcitvateWindow {
+- (void)screenActivateWindow {
     [NSApp activateIgnoringOtherApps:YES];
 }
 
-- (void)screenSetProfileToProfileNamed:(NSString *)profileName {
+- (void)screenSetProfileToProfileNamed:(NSString *)value {
     Profile *newProfile;
     if ([value length]) {
         newProfile = [[ProfileModel sharedInstance] bookmarkWithName:value];
@@ -4544,9 +4544,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         newProfile = [[ProfileModel sharedInstance] defaultBookmark];
     }
     if (newProfile) {
-        NSString *name = [[[SCREEN session] addressBookEntry] objectForKey:KEY_NAME];
+        NSString *theName = [[[SCREEN session] addressBookEntry] objectForKey:KEY_NAME];
         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:newProfile];
-        [dict setObject:name forKey:KEY_NAME];
+        [dict setObject:theName forKey:KEY_NAME];
         [self setAddressBookEntry:dict];
         [self setPreferencesFromAddressBookEntry:dict];
         [self remarry];
@@ -4581,7 +4581,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [TEXTVIEW setFGColor:color];
 }
 
-- (void)screenSetBackgroundGColor:(NSColor *)color {
+- (void)screenSetBackgroundColor:(NSColor *)color {
     [TEXTVIEW setBGColor:color];
 }
 
@@ -4606,7 +4606,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenSetColorTableEntryAtIndex:(int)n color:(NSColor *)color {
-    [TEXTVIEW setColorTableEntryAtIndex:n color:color];
+    [TEXTVIEW setColorTable:n color:color];
 }
 
 - (void)screenSetCurrentTabColor:(NSColor *)color {
@@ -4623,7 +4623,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color {
     NSColor *curColor = [self tabColor];
-    [[[self ptytab] parentWindow] setTabColor:[NSColor colorWithCalibratedRed:numValue
+    [[[self ptytab] parentWindow] setTabColor:[NSColor colorWithCalibratedRed:color
                                                                         green:[curColor greenComponent]
                                                                          blue:[curColor blueComponent]
                                                                         alpha:1]

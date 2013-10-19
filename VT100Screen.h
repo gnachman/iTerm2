@@ -1,7 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #import "PTYTextViewDataSource.h"
 #import "VT100ScreenDelegate.h"
-#import "VT100Terminal.h"  // TODO: Remove this after making screen a delegate of Terminal
+#import "VT100Terminal.h"
 
 @class DVR;
 @class iTermGrowlDelegate;
@@ -16,7 +16,7 @@ extern NSString * const kHighlightBackgroundColor;
 extern int kVT100ScreenMinColumns;
 extern int kVT100ScreenMinRows;
 
-@interface VT100Screen : NSObject <PTYTextViewDataSource>
+@interface VT100Screen : NSObject <PTYTextViewDataSource, VT100TerminalDelegate>
 {
     NSMutableSet* tabStops;
     VT100Terminal *terminal_;
@@ -106,22 +106,11 @@ extern int kVT100ScreenMinRows;
 
 - (void)showCursor:(BOOL)show;
 
-// Takes a parsed token from the terminal and modifies the screen accordingly.
-- (void)putToken:(VT100TCC)token;
-
 // Clears the screen and scrollback buffer.
 - (void)clearBuffer;
 
 // Clears the scrollback buffer, leaving screen contents alone.
 - (void)clearScrollbackBuffer;
-
-// Select which buffer is visible.
-- (void)showPrimaryBuffer;
-- (void)showAltBuffer;
-
-// This is currently a no-op. See the comment in -[PTYSession setSendModifiers] for details.
-- (void)setSendModifiers:(int *)modifiers
-               numValues:(int)numValues;
 
 // Append a string to the screen at the current cursor position. The terminal's insert and wrap-
 // around modes are respected, the cursor is advanced, the screen may be scrolled, and the line
@@ -138,20 +127,11 @@ extern int kVT100ScreenMinRows;
 // Delete characters in the current line at the cursor's position.
 - (void)deleteCharacters:(int)n;
 
-// Move the cursor back. It may wrap around to the previous line.
-- (void)terminalBackSpace;
-
-// Move the cursor to the next tab stop, replacing chars along the way with tab/tab-fillers.
-- (void)terminalAppendTabAtCursor;
-
 // Move the line the cursor is on to the top of the screen and clear everything below.
 - (void)clearScreen;
 
 // Set the cursor position. Respects the terminal's originmode.
 - (void)cursorToX:(int)x Y:(int)y;
-
-// Moves the cursor to the left margin.
-- (void)carriageReturn;
 
 // Sets the primary grid's contents and scrollback history. |history| is an array of NSData
 // containing screen_char_t's. It contains a bizarre workaround for tmux bugs.
