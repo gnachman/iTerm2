@@ -467,7 +467,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     int height = (aSize.height - VMARGIN*2) / [TEXTVIEW lineHeight];
     // NB: In the bad old days, this returned whether setup succeeded because it would allocate an
     // enormous amount of memory. That's no longer an issue.
-    [SCREEN setUpScreenWithWidth:width height:height];
+    [SCREEN destructivelySetScreenWidth:width height:height];
     [self setName:@"Shell"];
     [self setDefaultName:@"Shell"];
 

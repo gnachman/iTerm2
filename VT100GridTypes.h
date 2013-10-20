@@ -81,6 +81,13 @@ NS_INLINE VT100GridRect VT100GridRectMake(int x, int y, int width, int height) {
     return rect;
 }
 
+NS_INLINE BOOL VT100GridRectEquals(VT100GridRect a, VT100GridRect b) {
+    return (a.origin.x == b.origin.x &&
+            a.origin.y == b.origin.y &&
+            a.size.width == b.size.width &&
+            a.size.height == b.size.height);
+}
+
 NS_INLINE VT100GridRun VT100GridRunMake(int x, int y, int length) {
     VT100GridRun run;
     run.origin.x = x;

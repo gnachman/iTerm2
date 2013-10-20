@@ -45,11 +45,13 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 @synthesize unlimitedScrollback = unlimitedScrollback_;
 @synthesize saveToScrollbackInAlternateScreen = saveToScrollbackInAlternateScreen_;
 @synthesize dvr = dvr_;
+@synthesize delegate = delegate_;
 
 - (id)initWithTerminal:(VT100Terminal *)terminal
 {
     self = [super init];
     if (self) {
+        assert(terminal);
         terminal_ = [terminal retain];
         primaryGrid_ = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(kDefaultScreenColumns,
                                                                          kDefaultScreenRows)
@@ -89,7 +91,14 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
 #pragma mark - APIs
 
-- (void)setUpScreenWithWidth:(int)width height:(int)height
+- (void)setTerminal:(VT100Terminal *)terminal {
+    [terminal_ autorelease];
+    terminal_ = [terminal retain];
+    primaryGrid_.delegate = terminal;
+    altGrid_.delegate = terminal;
+}
+
+- (void)destructivelySetScreenWidth:(int)width height:(int)height
 {
     width = MAX(width, kVT100ScreenMinColumns);
     height = MAX(height, kVT100ScreenMinRows);
@@ -167,7 +176,8 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
                                          endPosition:&originalEndPos
                                  isFullLineSelection:&originalIsFullLine
                        selectionStartPositionIsValid:&ok1
-                          selectionEndPostionIsValid:&ok2];
+                          selectionEndPostionIsValid:&ok2
+                                        inLineBuffer:lineBufferWithAltScreen];
         hasSelection = ok1 && ok2;
     }
 
@@ -197,7 +207,8 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
                                                 toNewStartY:&newSelStartY
                                                   toNewEndX:&newSelEndX
                                                   toNewEndY:&newSelEndY
-                                      toIsFullLineSelection:&isFullLineSelection];
+                                      toIsFullLineSelection:&isFullLineSelection
+                                               inLineBuffer:linebuffer_];
     }
 
     VT100GridSize newSize = VT100GridSizeMake(new_width, new_height);
@@ -208,12 +219,20 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
                               withDefaultChar:[currentGrid_ defaultChar]
                             maxLinesToRestore:[linebuffer_ numLinesWithWidth:currentGrid_.size.width]];
 
-    // In alternate screen mode, the screen contents move up when a line wraps.
-    int linesMovedUp = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
-
     // If we're in the alternate screen, restore its contents from the temporary
     // linebuffer.
     if (wasShowingAltScreen) {
+        // In alternate screen mode, the screen contents move up when the screen gets smaller.
+        // For example, if your alt screen looks like this before:
+        //   abcd
+        //   ef..
+        // And then gets shrunk to 3 wide, it becomes
+        //   d..
+        //   ef.
+        // The "abc" line was lost, so "linesMovedUp" is 1. That's the number of lines at the top
+        // of the alt screen that were lost.
+        int linesMovedUp = [altScreenLineBuffer numLinesWithWidth:currentGrid_.size.width];
+        
         primaryGrid_.size = newSize;
         [primaryGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                                 to:VT100GridCoordMake(newSize.width - 1, newSize.height - 1)
@@ -230,7 +249,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
             // than might have been pushed, even if more is available). Note there's a little hack
             // here: we use saved_primary_buffer as the default line because it was just initialized with
             // default lines.
-            [currentGrid_ restoreScreenFromLineBuffer:realLineBuffer
+            [primaryGrid_ restoreScreenFromLineBuffer:realLineBuffer
                                       withDefaultChar:[primaryGrid_ defaultChar]
                                     maxLinesToRestore:new_height];
         }
@@ -290,14 +309,31 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
                                               toY:&newSelStartY];
             int numScrollbackLines = [realLineBuffer numLinesWithWidth:new_width];
             if (newSelStartY >= numScrollbackLines) {
-                newSelStartY -= linesMovedUp;
+                if (newSelStartY < numScrollbackLines + linesMovedUp) {
+                    // The selection started in one of the lines that was lost. Move it to the
+                    // first cell of the screen.
+                    newSelStartY = numScrollbackLines;
+                    newSelStartX = 0;
+                } else {
+                    // The selection starts on screen, so move it up by the number of lines by which
+                    // the alt screen shifted up.
+                    newSelStartY -= linesMovedUp;
+                }
             }
             [appendOnlyLineBuffer convertPosition:endPos
                                         withWidth:new_width
                                               toX:&newSelEndX
                                               toY:&newSelEndY];
             if (newSelEndY >= numScrollbackLines) {
-                newSelEndY -= linesMovedUp;
+                if (newSelEndY < numScrollbackLines + linesMovedUp) {
+                    // The selection ends in one of the lines that was lost. The whole selection is
+                    // gone.
+                    hasSelection = NO;
+                } else {
+                    // The selection ends on screen, so move it up by the number of lines by which
+                    // the alt screen shifted up.
+                    newSelEndY -= linesMovedUp;
+                }
             }
         }
     } else {
@@ -974,6 +1010,14 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     return [currentGrid_ debugString];
 }
 
+- (NSString *)compactLineDump {
+    return [currentGrid_ compactLineDump];
+}
+
+- (VT100Grid *)currentGrid {
+    return currentGrid_;
+}
+
 - (BOOL)isAllDirty
 {
     return currentGrid_.isAllDirty;
@@ -1022,7 +1066,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     info.height = currentGrid_.size.height;
     info.width = currentGrid_.size.width;
 
-    [dvr_ appendFrame:currentGrid_.lines
+    [dvr_ appendFrame:[currentGrid_ orderedLines]
                length:sizeof(screen_char_t) * (currentGrid_.size.width + 1) * (currentGrid_.size.height)
                  info:&info];
 }
@@ -1193,7 +1237,8 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     screen_char_t ch = [currentGrid_ defaultChar];
     ch.code = 'E';
     [currentGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
-                            to:VT100GridCoordMake(currentGrid_.size.width - 1, currentGrid_.size.height - 1)
+                            to:VT100GridCoordMake(currentGrid_.size.width - 1,
+                                                  currentGrid_.size.height - 1)
                         toChar:ch];
     [currentGrid_ resetScrollRegions];
     currentGrid_.cursor = VT100GridCoordMake(0, 0);
@@ -1921,7 +1966,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
             [grid appendLines:usedHeight toLineBuffer:lineBufferToUse];
         } else {
             // Screen is growing. New content may be brought in on top.
-            [grid appendLines:currentGrid_.size.height toLineBuffer:lineBufferToUse];
+            [grid appendLines:grid.size.height toLineBuffer:lineBufferToUse];
         }
     }
 }
@@ -1995,6 +2040,7 @@ static void SwapInt(int *a, int *b) {
                            isFullLineSelection:(BOOL *)isFullLineSelection
                  selectionStartPositionIsValid:(BOOL *)selectionStartPositionIsValid
                     selectionEndPostionIsValid:(BOOL *)selectionEndPostionIsValid
+                                  inLineBuffer:(LineBuffer *)lineBuffer
 {
     *startPos = -1;
     *endPos = -1;
@@ -2028,19 +2074,19 @@ static void SwapInt(int *a, int *b) {
         }
     }
     BOOL v;
-    v = [linebuffer_ convertCoordinatesAtX:nonNullStartX
-                                       atY:nonNullStartY
-                                 withWidth:currentGrid_.size.width
-                                toPosition:startPos
-                                    offset:0];
+    v = [lineBuffer convertCoordinatesAtX:nonNullStartX
+                                      atY:nonNullStartY
+                                withWidth:currentGrid_.size.width
+                               toPosition:startPos
+                                   offset:0];
     if (selectionStartPositionIsValid) {
         *selectionStartPositionIsValid = v;
     }
-    v = [linebuffer_ convertCoordinatesAtX:nonNullEndX
-                                       atY:nonNullEndY
-                                 withWidth:currentGrid_.size.width
-                                toPosition:endPos
-                                    offset:0];
+    v = [lineBuffer convertCoordinatesAtX:nonNullEndX
+                                      atY:nonNullEndY
+                                withWidth:currentGrid_.size.width
+                               toPosition:endPos
+                                   offset:0];
     if (selectionEndPostionIsValid) {
         *selectionEndPostionIsValid = v;
     }
@@ -2053,6 +2099,7 @@ static void SwapInt(int *a, int *b) {
                              toNewEndX:(int *)newEndXPtr
                              toNewEndY:(int *)newEndYPtr
                  toIsFullLineSelection:(BOOL *)isFullLineSelection
+                          inLineBuffer:(LineBuffer *)lineBuffer
 {
     int selectionStartPosition;
     int selectionEndPosition;
@@ -2062,24 +2109,25 @@ static void SwapInt(int *a, int *b) {
                                                          endPosition:&selectionEndPosition
                                                  isFullLineSelection:isFullLineSelection
                                        selectionStartPositionIsValid:&selectionStartPositionIsValid
-                                          selectionEndPostionIsValid:&selectionEndPostionIsValid];
+                                          selectionEndPostionIsValid:&selectionEndPostionIsValid
+                                                        inLineBuffer:lineBuffer];
 
     if (!hasSelection) {
         return NO;
     }
     if (selectionStartPositionIsValid) {
-        [linebuffer_ convertPosition:selectionStartPosition
-                           withWidth:newWidth
-                                 toX:newStartXPtr
-                                 toY:newStartYPtr];
+        [lineBuffer convertPosition:selectionStartPosition
+                          withWidth:newWidth
+                                toX:newStartXPtr
+                                toY:newStartYPtr];
         if (selectionEndPostionIsValid) {
-            [linebuffer_ convertPosition:selectionEndPosition
-                               withWidth:newWidth
-                                     toX:newEndXPtr
-                                     toY:newEndYPtr];
+            [lineBuffer convertPosition:selectionEndPosition
+                              withWidth:newWidth
+                                    toX:newEndXPtr
+                                    toY:newEndYPtr];
         } else {
             *newEndXPtr = currentGrid_.size.width;
-            *newEndYPtr = [linebuffer_ numLinesWithWidth:newWidth] + currentGrid_.size.height - 1;
+            *newEndYPtr = [lineBuffer numLinesWithWidth:newWidth] + currentGrid_.size.height - 1;
         }
     }
     return YES;

@@ -962,7 +962,7 @@ NSString *sessionsKey = @"sessions";
 // Save the current scroll position
 - (IBAction)saveScrollPosition:(id)sender
 {
-    [[self currentSession] saveScrollPosition];
+    [[self currentSession] screenSaveScrollPosition];
 }
 
 // Jump to the saved scroll position

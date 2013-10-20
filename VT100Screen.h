@@ -89,7 +89,7 @@ extern int kVT100ScreenMinRows;
 - (id)initWithTerminal:(VT100Terminal *)terminal;
 
 // Destructively sets the screen size.
-- (void)setUpScreenWithWidth:(int)width height:(int)height;
+- (void)destructivelySetScreenWidth:(int)width height:(int)height;
 
 // Resize the screen, preserving its contents, alt-grid's contents, and selection.
 - (void)resizeWidth:(int)new_width height:(int)height;
@@ -156,5 +156,10 @@ extern int kVT100ScreenMinRows;
 
 // Restore the saved position into a passed-in find context (see saveFindContextAbsPos and saveTerminalAbsPos).
 - (void)restoreSavedPositionToFindContext:(FindContext *)context;
+
+- (NSString *)compactLineDump;
+
+// This is provided for testing only.
+- (VT100Grid *)currentGrid;
 
 @end

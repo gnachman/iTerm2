@@ -4,6 +4,7 @@
 #include <term.h>
 
 #define STANDARD_STREAM_SIZE 100000
+#define MAX_XTERM_TEMP_BUFFER_LENGTH 1024
 
 @implementation VT100Terminal
 
@@ -1620,8 +1621,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
     int mode = 0;
     VT100TCC result;
     NSData *data;
-    const int kMaxBufferLength = 1024;
-    char s[kMaxBufferLength] = { 0 };
+    char s[MAX_XTERM_TEMP_BUFFER_LENGTH] = { 0 };
     char *c = NULL;
 
     assert(datap != NULL);
@@ -1719,7 +1719,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
                     break;
                 }
             }
-            if (c - s < kMaxBufferLength) {
+            if (c - s < MAX_XTERM_TEMP_BUFFER_LENGTH) {
                 // if 0 <= mode <=2 and current *datap is a control character, replace it with '?'. 
                 if ((*datap < 0x20 || *datap == 0x7f) && (mode == 0 || mode == 1 || mode == 2)) {
                     *c = '?';

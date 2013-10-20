@@ -12,8 +12,12 @@
 @implementation iTermTest
 @end
 
-@interface VT100GridTest : iTermTest
+#define DECLARE_TEST(t) \
+@interface t : iTermTest \
 @end
+
+DECLARE_TEST(VT100GridTest)
+DECLARE_TEST(VT100ScreenTest)
 
 static void RunTestsInObject(iTermTest *test) {
     NSLog(@"-- Begin tests in %@ --", [test class]);
@@ -39,7 +43,8 @@ static void RunTestsInObject(iTermTest *test) {
 }
 
 int main(int argc, const char * argv[]) {
-    RunTestsInObject([VT100GridTest new]);
+//    RunTestsInObject([VT100GridTest new]);
+    RunTestsInObject([VT100ScreenTest new]);
     NSLog(@"All tests passed");
     return 0;
 }

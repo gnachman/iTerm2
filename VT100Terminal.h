@@ -401,9 +401,6 @@ typedef enum {
 
 @property(nonatomic, assign) id<VT100TerminalDelegate> delegate;
 
-- (id)init;
-- (void)dealloc;
-
 - (void)setTermType:(NSString *)termtype;
 
 - (NSStringEncoding)encoding;

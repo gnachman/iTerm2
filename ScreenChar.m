@@ -348,14 +348,17 @@ void DumpScreenCharArray(screen_char_t* screenChars, int lineLength) {
 
 NSString* ScreenCharArrayToStringDebug(screen_char_t* screenChars,
                                        int lineLength) {
-  NSMutableString* result = [NSMutableString stringWithCapacity:lineLength];
-  for (int i = 0; i < lineLength; ++i) {
-    unichar c = screenChars[i].code;
-    if (c != DWC_RIGHT) {
-      [result appendString:ScreenCharToStr(&screenChars[i])];
+    while (lineLength > 0 && screenChars[lineLength - 1].code == 0) {
+        --lineLength;
     }
-  }
-  return result;
+    NSMutableString* result = [NSMutableString stringWithCapacity:lineLength];
+    for (int i = 0; i < lineLength; ++i) {
+        unichar c = screenChars[i].code;
+        if (c != DWC_RIGHT) {
+            [result appendString:ScreenCharToStr(&screenChars[i])];
+        }
+    }
+    return result;
 }
 
 int EffectiveLineLength(screen_char_t* theLine, int totalLength) {

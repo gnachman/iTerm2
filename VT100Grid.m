@@ -14,6 +14,10 @@
 #import "VT100GridTypes.h"
 #import "VT100Terminal.h"
 
+@interface VT100Grid ()
+@property(nonatomic, readonly) NSArray *lines;  // Warning: not in order found on screen!
+@end
+
 @implementation VT100Grid
 
 @synthesize size = size_;
@@ -157,6 +161,8 @@
 }
 
 - (int)appendLines:(int)numLines toLineBuffer:(LineBuffer *)lineBuffer {
+    assert(numLines <= size_.height);
+
     // Set numLines to the number of lines on the screen that are in use.
     int i;
 
@@ -1389,6 +1395,14 @@
     [self setCharsFrom:pos to:VT100GridCoordMake(pos.x + n - 1, pos.y) toChar:c];
 }
 
+- (NSArray *)orderedLines {
+    NSMutableArray *array = [NSMutableArray array];
+    for (int i = 0; i < size_.height; i++) {
+        [array addObject:[self lineDataAtLineNumber:i]];
+    }
+    return array;
+}
+
 #pragma mark - Private
 
 - (NSMutableArray *)linesWithSize:(VT100GridSize)size {
@@ -1757,11 +1771,11 @@ void DumpBuf(screen_char_t* p, int n) {
     [theCopy->lines_ release];
     theCopy->lines_ = [[NSMutableArray alloc] init];
     for (NSObject *line in lines_) {
-        [theCopy->lines_ addObject:line];
+        [theCopy->lines_ addObject:[[line mutableCopy] autorelease]];
     }
     theCopy->dirty_ = [[NSMutableArray alloc] init];
     for (NSObject *line in dirty_) {
-        [theCopy->dirty_ addObject:line];
+        [theCopy->dirty_ addObject:[[line mutableCopy] autorelease]];
     }
     theCopy->screenTop_ = screenTop_;
     theCopy.cursor = cursor_;

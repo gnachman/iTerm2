@@ -53,7 +53,6 @@
 @property(nonatomic, readonly) int rightMargin;
 @property(nonatomic, readonly) int topMargin;
 @property(nonatomic, readonly) int bottomMargin;
-@property(nonatomic, readonly) NSArray *lines;
 @property(nonatomic, assign) screen_char_t savedDefaultChar;
 @property(nonatomic, assign) id<VT100GridDelegate> delegate;
 
@@ -226,5 +225,8 @@
 
 // TODO: write a test for this
 - (void)insertChar:(screen_char_t)c at:(VT100GridCoord)pos times:(int)num;
+
+// Returns an array of NSData for lines in order (corresponding with lines on screen).
+- (NSArray *)orderedLines;
 
 @end
