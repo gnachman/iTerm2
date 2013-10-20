@@ -94,6 +94,9 @@ extern int kVT100ScreenMinRows;
 // Resize the screen, preserving its contents, alt-grid's contents, and selection.
 - (void)resizeWidth:(int)new_width height:(int)height;
 
+// Convert a run to one without nulls on either end.
+- (VT100GridRun)runByTrimmingNullsFromRun:(VT100GridRun)run;
+
 // Clear the screen, leaving the last line.
 - (void)resetPreservingPrompt:(BOOL)preservePrompt;
 

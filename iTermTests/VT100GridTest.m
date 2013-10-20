@@ -1306,47 +1306,6 @@ do { \
     assert(grid.cursorY == 1);
 }
 
-- (void)testRunByTrimmingNullsFromRun {
-    // Basic test
-    VT100Grid *grid = [self gridFromCompactLines:
-                       @"..1234\n"
-                       @"56789a\n"
-                       @"bc...."];
-    VT100GridRun run = VT100GridRunMake(1, 0, 16);
-    VT100GridRun trimmed = [grid runByTrimmingNullsFromRun:run];
-    assert(trimmed.origin.x == 2);
-    assert(trimmed.origin.y == 0);
-    assert(trimmed.length == 12);
-
-    // Test wrapping nulls around
-    grid = [self gridFromCompactLines:
-            @"......\n"
-            @".12345\n"
-            @"67....\n"
-            @"......\n"];
-    run = VT100GridRunMake(0, 0, 24);
-    trimmed = [grid runByTrimmingNullsFromRun:run];
-    assert(trimmed.origin.x == 1);
-    assert(trimmed.origin.y == 1);
-    assert(trimmed.length == 7);
-
-    // Test all nulls
-    grid = [self smallGrid];
-    run = VT100GridRunMake(0, 0, 4);
-    trimmed = [grid runByTrimmingNullsFromRun:run];
-    assert(trimmed.length == 0);
-
-    // Test no nulls
-    grid = [self gridFromCompactLines:
-                       @"1234\n"
-                       @"5678"];
-    run = VT100GridRunMake(1, 0, 6);
-    trimmed = [grid runByTrimmingNullsFromRun:run];
-    assert(trimmed.origin.x == 1);
-    assert(trimmed.origin.y == 0);
-    assert(trimmed.length == 6);
-}
-
 - (void)testClampCursorPositionToValid {
     // It's hard to test this method because the grid class keeps the cursor position valid.
     // However, it will allow the cursor to be in the width'th column, while clamp... keeps it

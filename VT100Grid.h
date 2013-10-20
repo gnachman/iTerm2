@@ -180,9 +180,6 @@
                     withDefaultChar:(screen_char_t)defaultChar
                   maxLinesToRestore:(int)maxLines;
 
-// Modify a run by removing nulls from both ends.
-- (VT100GridRun)runByTrimmingNullsFromRun:(VT100GridRun)run;
-
 // Ensure the cursor and savedCursor positions are valid.
 - (void)clampCursorPositionToValid;
 

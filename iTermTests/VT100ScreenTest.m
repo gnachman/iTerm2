@@ -737,7 +737,6 @@
     needsRedraw_ = 0;
     sizeDidChange_ = 0;
 
-
     // If lines get pushed into line buffer, excess are dropped
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     [screen setMaxScrollbackLines:1];
@@ -930,6 +929,72 @@
     assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefg"]);
     [screen resizeWidth:6 height:6];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
+}
+
+- (VT100Screen *)screenFromCompactLines:(NSString *)compactLines {
+    NSArray *lines = [compactLines componentsSeparatedByString:@"\n"];
+    VT100Screen *screen = [self screenWithWidth:[[lines objectAtIndex:0] length]
+                                         height:[lines count]];
+    int i = 0;
+    for (NSString *line in lines) {
+        screen_char_t *s = [screen getLineAtScreenIndex:i++];
+        for (int j = 0; j < [line length]; j++) {
+            unichar c = [line characterAtIndex:j];;
+            if (c == '.') c = 0;
+            if (c == '-') c = DWC_RIGHT;
+            if (j == [line length] - 1) {
+                if (c == '>') {
+                    c = DWC_SKIP;
+                    s[j+1].code = EOL_DWC;
+                } else {
+                    s[j+1].code = EOL_HARD;
+                }
+            }
+            s[j].code = c;
+        }
+    }
+    return screen;
+}
+
+- (void)testRunByTrimmingNullsFromRun {
+    // Basic test
+    VT100Screen *screen = [self screenFromCompactLines:
+                           @"..1234\n"
+                           @"56789a\n"
+                           @"bc...."];
+    VT100GridRun run = VT100GridRunMake(1, 0, 16);
+    VT100GridRun trimmed = [screen runByTrimmingNullsFromRun:run];
+    assert(trimmed.origin.x == 2);
+    assert(trimmed.origin.y == 0);
+    assert(trimmed.length == 12);
+
+    // Test wrapping nulls around
+    screen = [self screenFromCompactLines:
+              @"......\n"
+              @".12345\n"
+              @"67....\n"
+              @"......\n"];
+    run = VT100GridRunMake(0, 0, 24);
+    trimmed = [screen runByTrimmingNullsFromRun:run];
+    assert(trimmed.origin.x == 1);
+    assert(trimmed.origin.y == 1);
+    assert(trimmed.length == 7);
+
+    // Test all nulls
+    screen = [self screenWithWidth:4 height:4];
+    run = VT100GridRunMake(0, 0, 4);
+    trimmed = [screen runByTrimmingNullsFromRun:run];
+    assert(trimmed.length == 0);
+
+    // Test no nulls
+    screen = [self screenFromCompactLines:
+              @"1234\n"
+              @"5678"];
+    run = VT100GridRunMake(1, 0, 6);
+    trimmed = [screen runByTrimmingNullsFromRun:run];
+    assert(trimmed.origin.x == 1);
+    assert(trimmed.origin.y == 0);
+    assert(trimmed.length == 6);
 }
 
 /*
