@@ -158,6 +158,7 @@ extern int kVT100ScreenMinRows;
 - (void)restoreSavedPositionToFindContext:(FindContext *)context;
 
 - (NSString *)compactLineDump;
+- (NSString *)compactLineDumpWithHistory;
 
 // This is provided for testing only.
 - (VT100Grid *)currentGrid;

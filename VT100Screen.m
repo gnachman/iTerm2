@@ -159,6 +159,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     int originalStartPos = 0;
     int originalEndPos = 0;
     BOOL originalIsFullLine;
+    BOOL endExtends;
     BOOL wasShowingAltScreen = (currentGrid_ == altGrid_);
 
     if (hasSelection && wasShowingAltScreen) {
@@ -175,6 +176,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
         [self getNullCorrectedSelectionStartPosition:&originalStartPos
                                          endPosition:&originalEndPos
                                  isFullLineSelection:&originalIsFullLine
+                                     endExtendsToEOL:&endExtends
                        selectionStartPositionIsValid:&ok1
                           selectionEndPostionIsValid:&ok2
                                         inLineBuffer:lineBufferWithAltScreen];
@@ -279,6 +281,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
             int growth = newLastPos - originalLastPos;
             int startPos = originalStartPos;
             int endPos = originalEndPos;
+            int predecessorOfNewLastPos = MAX(0, newLastPos - 1);
             if (growth > 0) {
                 if (startPos >= originalLastPos) {
                     startPos += growth;
@@ -291,16 +294,18 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
                     // Started in deleted region
                     startPos = newLastPos;
                 } else if (startPos >= originalLastPos) {
+                    // Starts after deleted region
                     startPos += growth;
                 }
-                if (endPos >= newLastPos && endPos < originalLastPos) {
+                if (endPos >= predecessorOfNewLastPos &&
+                    endPos < originalLastPos) {
                     // Ended in deleted region
-                    endPos = newLastPos;
+                    endPos = predecessorOfNewLastPos;
                 } else if (endPos >= originalLastPos) {
                     endPos += growth;
                 }
             }
-            if (startPos == endPos) {
+            if (startPos >= endPos + 1) {
                 hasSelection = NO;
             }
             [appendOnlyLineBuffer convertPosition:startPos
@@ -335,6 +340,16 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
                     newSelEndY -= linesMovedUp;
                 }
             }
+            if (endExtends) {
+                newSelEndX = new_width;
+            } else {
+                // Move to the successor of newSelEndX, newSelEndY.
+                newSelEndX++;
+                if (newSelEndX > new_width) {
+                    newSelEndX -= new_width;
+                    newSelEndY++;
+                }
+            }
         }
     } else {
         [altGrid_ release];
@@ -350,7 +365,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     int linesDropped = 0;
     if (!unlimitedScrollback_) {
         linesDropped = [linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width];
-        [self incrementOverflowBy:linesDropped];  // TODO test this!
+        [self incrementOverflowBy:linesDropped];
     }
     int lines = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
     NSAssert(lines >= 0, @"Negative lines");
@@ -1008,6 +1023,13 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
 - (NSString *)debugString {
     return [currentGrid_ debugString];
+}
+
+- (NSString *)compactLineDumpWithHistory {
+    NSMutableString *string = [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:[self width]]];
+    [string appendString:@"\n"];
+    [string appendString:[currentGrid_ compactLineDump]];
+    return string;
 }
 
 - (NSString *)compactLineDump {
@@ -1987,6 +2009,48 @@ static void SwapInt(int *a, int *b) {
     *b = temp;
 }
 
+// It's kind of wrong to use VT100GridRun here, but I think it's harmless enough.
+- (VT100GridRun)runByTrimmingNullsFromRun:(VT100GridRun)run {
+    VT100GridRun result = run;
+    int x = result.origin.x;
+    int y = result.origin.y;
+    screen_char_t *line = [self getLineAtIndex:y];
+    int numberOfLines = [self numberOfLines];
+    int width = [self width];
+    while (result.length > 0 && line[x].code == 0 && y < numberOfLines) {
+        x++;
+        result.length--;
+        if (x == width) {
+            x = 0;
+            y++;
+            if (y == numberOfLines) {
+                // Run is all nulls
+                result.length = 0;
+                return result;
+            }
+            line = [self getLineAtIndex:y];
+        }
+    }
+    result.origin = VT100GridCoordMake(x, y);
+
+    VT100GridCoord end = VT100GridRunMax(run, width);
+    x = end.x;
+    y = end.y;
+    line = [self getLineAtIndex:y];
+    while (result.length > 0 && line[x].code == 0 && y < numberOfLines) {
+        x--;
+        result.length--;
+        if (x == -1) {
+            x = width - 1;
+            y--;
+            assert(y >= 0);
+            line = [self getLineAtIndex:y];
+        }
+    }
+
+    return result;
+}
+
 - (void)convertSelectionStartX:(int)actualStartX
                         startY:(int)actualStartY
                           endX:(int)actualEndX
@@ -2020,12 +2084,12 @@ static void SwapInt(int *a, int *b) {
         endX = 0;
         endY++;
     }
-
+    
     VT100GridRun run = VT100GridRunFromCoords(VT100GridCoordMake(startX, startY),
                                               VT100GridCoordMake(endX, endY),
                                               currentGrid_.size.width);
     assert(run.length >= 0);
-    run = [currentGrid_ runByTrimmingNullsFromRun:run];
+    run = [self runByTrimmingNullsFromRun:run];
     assert(run.length >= 0);
     VT100GridCoord max = VT100GridRunMax(run, currentGrid_.size.width);
 
@@ -2038,6 +2102,7 @@ static void SwapInt(int *a, int *b) {
 - (BOOL)getNullCorrectedSelectionStartPosition:(int *)startPos
                                    endPosition:(int *)endPos
                            isFullLineSelection:(BOOL *)isFullLineSelection
+                               endExtendsToEOL:(BOOL *)endExtends
                  selectionStartPositionIsValid:(BOOL *)selectionStartPositionIsValid
                     selectionEndPostionIsValid:(BOOL *)selectionEndPostionIsValid
                                   inLineBuffer:(LineBuffer *)lineBuffer
@@ -2049,6 +2114,26 @@ static void SwapInt(int *a, int *b) {
     int actualStartY = [delegate_ screenSelectionStartY];
     int actualEndX = [delegate_ screenSelectionEndX];
     int actualEndY = [delegate_ screenSelectionEndY];
+
+    // Use the predecessor of endx,endy so it will have a legal position in the line buffer.
+    if (actualEndX == [self width] && endExtends) {
+        screen_char_t *line = [self getLineAtIndex:actualEndY];
+        if (line[actualEndX - 1].code == 0 && line[actualEndX].code == EOL_HARD) {
+            // The selection goes all the way to the end of the line and there is a null at the
+            // end of the line, so it extends to the end of the line. The linebuffer can't recover
+            // this from its position because the trailing null in the line wouldn't be in the
+            // linebuffer.
+            *endExtends = YES;
+        }
+    }
+    actualEndX--;
+    if (actualEndX < 0) {
+        actualEndY--;
+        actualEndX = [self width] - 1;
+        if (actualEndY < 0) {
+            return NO;
+        }
+    }
 
     int nonNullStartX;
     int nonNullStartY;
@@ -2067,7 +2152,7 @@ static void SwapInt(int *a, int *b) {
         return NO;
     }
     if (isFullLineSelection) {
-        if (actualStartX == 0 && actualEndX == currentGrid_.size.width) {
+        if (actualStartX == 0 && actualEndX == currentGrid_.size.width - 1) {
             *isFullLineSelection = YES;
         } else {
             *isFullLineSelection = NO;
@@ -2105,9 +2190,11 @@ static void SwapInt(int *a, int *b) {
     int selectionEndPosition;
     BOOL selectionStartPositionIsValid;
     BOOL selectionEndPostionIsValid;
+    BOOL endExtends;
     BOOL hasSelection = [self getNullCorrectedSelectionStartPosition:&selectionStartPosition
                                                          endPosition:&selectionEndPosition
                                                  isFullLineSelection:isFullLineSelection
+                                                     endExtendsToEOL:&endExtends
                                        selectionStartPositionIsValid:&selectionStartPositionIsValid
                                           selectionEndPostionIsValid:&selectionEndPostionIsValid
                                                         inLineBuffer:lineBuffer];
@@ -2125,10 +2212,18 @@ static void SwapInt(int *a, int *b) {
                               withWidth:newWidth
                                     toX:newEndXPtr
                                     toY:newEndYPtr];
+            (*newEndXPtr)++;
+            if (*newEndXPtr > newWidth) {
+                (*newEndYPtr)++;
+                *newEndXPtr -= newWidth;
+            }
         } else {
             *newEndXPtr = currentGrid_.size.width;
             *newEndYPtr = [lineBuffer numLinesWithWidth:newWidth] + currentGrid_.size.height - 1;
         }
+    }
+    if (selectionEndPostionIsValid && endExtends) {
+        *newEndXPtr = newWidth;
     }
     return YES;
 }

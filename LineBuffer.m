@@ -1143,6 +1143,27 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
+- (NSString *)compactLineDumpWithWidth:(int)width {
+    NSMutableString *s = [NSMutableString string];
+    int n = [self numLinesWithWidth:width];
+    for (int i = 0; i < n; i++) {
+        ScreenCharArray *line = [self wrappedLineAtIndex:i width:width];
+        [s appendFormat:@"%@", ScreenCharArrayToStringDebug(line.line, line.length)];
+        for (int j = line.length; j < width; j++) {
+            [s appendString:@"."];
+        }
+        if (i < n - 1) {
+            [s appendString:@"\n"];
+        }
+    }
+    return s;
+}
+
+- (void)dumpWrappedToWidth:(int)width
+{
+    NSLog(@"%@", [self compactLineDumpWithWidth:width]);
+}
+
 - (LineBuffer*)init
 {
     // I picked 8k because it's a multiple of the page size and should hold about 100-200 lines
@@ -1632,6 +1653,19 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                     toX:(int*)x
                     toY:(int*)y
 {
+    if (position == [self lastPos]) {
+        *y = [self numLinesWithWidth:width] - 1;
+        ScreenCharArray *lastLine = [self wrappedLineAtIndex:*y width:width];
+        *x = lastLine.length;
+        if (*x == 0 && *y > 0) {
+            *y = *y - 1;
+            lastLine = [self wrappedLineAtIndex:*y width:width];
+            *x = lastLine.length;
+        } else if (*x < 0) {
+            return NO;
+        }
+        return YES;
+    }
     int i;
     int yoffset = 0;
     for (i = 0; position >= 0 && i < [blocks count]; ++i) {
@@ -1685,15 +1719,16 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             // pos = offset within block
             // offset = additional offset the user requested
             // but we need to see if the position actually exists after adding offset. If it can be
-            // converted to an x,y position the it's all right.
-            const BOOL positionIsValid = [self convertPosition:*position + pos + offset
+            // converted to an x,y position then it's all right.
+            int candidatePosition = *position + pos + offset;
+            const BOOL positionIsValid = [self convertPosition:candidatePosition
                                                      withWidth:width
                                                            toX:&tempx
                                                            toY:&tempy];
             if (positionIsValid &&
                 tempy >= 0 &&
                 tempx >= 0) {
-                *position += pos + offset;
+                *position = candidatePosition;
                 return YES;
             } else {
                 return NO;

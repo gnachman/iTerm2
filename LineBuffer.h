@@ -315,4 +315,7 @@ typedef struct FindContext {
                     inContext:(FindContext *)context;
 
 - (NSString *)debugString;
+- (void)dumpWrappedToWidth:(int)width;
+- (NSString *)compactLineDumpWithWidth:(int)width;
+
 @end

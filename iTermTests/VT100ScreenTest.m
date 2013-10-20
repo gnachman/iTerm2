@@ -6,6 +6,7 @@
 //
 //
 
+#import "iTermTests.h"
 #import "VT100ScreenTest.h"
 #import "VT100Screen.h"
 #import "DVR.h"
@@ -264,7 +265,11 @@
                 [s appendString:ScreenCharArrayToStringDebug(line + x, 1)];
             }
         }
-        if (x == [screen width] && line[x].code == EOL_HARD) {
+        if ((y == endY_ &&
+             endX_ == [screen width] &&
+             line[x - 1].code == 0 &&
+             line[x].code == EOL_HARD) ||  // Last line of selection gets a newline iff there's a null char at the end
+            (y < endY_ && x == [screen width] && line[x].code == EOL_HARD)) {  // No null required for other lines
             [s appendString:@"\n"];
         }
         sx = 0;
@@ -659,6 +664,80 @@
     needsRedraw_ = 0;
     sizeDidChange_ = 0;
 
+    // Starting in alt with selection and screen grows, pulling lines out of line buffer into
+    // primary grid.
+    screen = [self screenWithWidth:5 height:5];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    // abcde
+    // fgh..
+    // ijkl.
+    // mnopq
+    // rst..
+    // uvwxy
+    // z....
+    [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrst", @"uvwxyz"] toScreen:screen];
+    [self showAltAndUppercase:screen];
+    assert([[screen compactLineDump] isEqualToString:
+            @"MNOPQ\n"
+            @"RST..\n"
+            @"UVWXY\n"
+            @"Z....\n"
+            @"....."]);
+    // select everything
+    // TODO There's a bug when the selection is at the very end (5,6). It is deselected.
+    startX_ = 0;
+    startY_ = 0;
+    endX_ = 1;
+    endY_ = 6;
+    assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nijkl\nMNOPQRST\nUVWXYZ"]);
+    [screen resizeWidth:6 height:6];
+    assert([[screen compactLineDump] isEqualToString:
+            @"MNOPQR\n"
+            @"ST....\n"
+            @"UVWXYZ\n"
+            @"......\n"
+            @"......\n"
+            @"......"]);
+    assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nMNOPQRST\nUVWXYZ"]);
+    [screen terminalShowPrimaryBuffer];
+    assert([[screen compactLineDump] isEqualToString:
+            @"ijkl..\n"
+            @"mnopqr\n"
+            @"st....\n"
+            @"uvwxyz\n"
+            @"......\n"
+            @"......"]);
+
+    needsRedraw_ = 0;
+    sizeDidChange_ = 0;
+
+    // Starting in alt with selection and screen grows, pulling lines out of line buffer into
+    // primary grid. Selection goes to very end of screen
+    screen = [self screenWithWidth:5 height:5];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    // abcde
+    // fgh..
+    // ijkl.
+    // mnopq
+    // rst..
+    // uvwxy
+    // z....
+    [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrst", @"uvwxyz"] toScreen:screen];
+    [self showAltAndUppercase:screen];
+    // select everything
+    startX_ = 0;
+    startY_ = 0;
+    endX_ = 5;
+    endY_ = 6;
+    assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nijkl\nMNOPQRST\nUVWXYZ\n"]);
+    [screen resizeWidth:6 height:6];
+    ITERM_TEST_KNOWN_BUG([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nMNOPQRST\nUVWXYZ\n"],
+                         [[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nMNOPQRST\nUVWXYZ"]);
+
+    needsRedraw_ = 0;
+    sizeDidChange_ = 0;
+
+
     // If lines get pushed into line buffer, excess are dropped
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     [screen setMaxScrollbackLines:1];
@@ -721,14 +800,141 @@
     // TODO
     // This is kind of questionable. We strip nulls in -convertCurrentSelectionToWidth..., while it
     // would be better to preserve the selection.
+    ITERM_TEST_KNOWN_BUG([[self selectedStringInScreen:screen] isEqualToString:@"\nabcdef"],
+                         [[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
+
+    // In alt screen with selection that begins in history and ends in history just above the visible
+    // screen. The screen grows, moving lines from history into the primary screen. The end of the
+    // selection has to move back because some of the selected text is no longer around in the alt
+    // screen.
+    screen = [self screenWithWidth:5 height:5];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
+    assert([[screen compactLineDumpWithHistory] isEqualToString:
+            @"abcde\n"
+            @"fgh..\n"
+            @"ijklm\n"
+            @"nopqr\n" // top line of screen
+            @"st...\n"
+            @"uvwxy\n"
+            @"z....\n"
+            @"....."]);
+    [self showAltAndUppercase:screen];
+    startX_ = 0;
+    startY_ = 0;
+    endX_ = 2;
+    endY_ = 2;
+    assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nij"]);
+    [screen resizeWidth:6 height:6];
+    assert([[screen compactLineDumpWithHistory] isEqualToString:
+            @"abcdef\n"
+            @"NOPQRS\n"
+            @"T.....\n"
+            @"UVWXYZ\n"
+            @"......\n"
+            @"......\n"
+            @"......"]);
+    assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
+    [screen terminalShowPrimaryBuffer];
+    assert([[screen compactLineDumpWithHistory] isEqualToString:
+            @"abcdef\n"
+            @"gh....\n"
+            @"ijklmn\n"
+            @"opqrst\n"
+            @"uvwxyz\n"
+            @"......\n"
+            @"......"]);
+
+    // In alt screen with selection that begins in history just above the visible screen and ends
+    // onscreen. The screen grows, moving lines from history into the primary screen. The start of the
+    // selection has to move forward because some of the selected text is no longer around in the alt
+    // screen.
+    screen = [self screenWithWidth:5 height:5];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
+    [self showAltAndUppercase:screen];
+    startX_ = 1;
+    startY_ = 2;
+    endX_ = 2;
+    endY_ = 3;
+    assert([[self selectedStringInScreen:screen] isEqualToString:@"jklmNO"]);
+    [screen resizeWidth:6 height:6];
+    assert([[self selectedStringInScreen:screen] isEqualToString:@"NO"]);
+
+    // In alt screen with selection that begins and ends onscreen. The screen is grown and some history
+    // is deleted.
+    screen = [self screenWithWidth:5 height:5];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
+    [self showAltAndUppercase:screen];
+    startX_ = 0;
+    startY_ = 4;
+    endX_ = 2;
+    endY_ = 4;
+    assert([[self selectedStringInScreen:screen] isEqualToString:@"ST"]);
+    [screen resizeWidth:6 height:6];
+    assert([[self selectedStringInScreen:screen] isEqualToString:@"ST"]);
+
+    // In alt screen with selection that begins in history just above the visible screen and ends
+    // there too. The screen grows, moving lines from history into the primary screen. The
+    // selection is lost because none of its characters still exist.
+    screen = [self screenWithWidth:5 height:5];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
+    [self showAltAndUppercase:screen];
+    startX_ = 0;
+    startY_ = 2;
+    endX_ = 2;
+    endY_ = 2;
+    assert([[self selectedStringInScreen:screen] isEqualToString:@"ij"]);
+    [screen resizeWidth:6 height:6];
+    assert([self selectedStringInScreen:screen] == nil);
+
+    // In alt screen with selection that begins in history and ends in history just above the visible
+    // screen. The screen grows, moving lines from history into the primary screen. The end of the
+    // selection is exactly at the last character before those that are lost.
+    screen = [self screenWithWidth:5 height:5];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
+    [self showAltAndUppercase:screen];
+    startX_ = 0;
+    startY_ = 0;
+    endX_ = 1;
+    endY_ = 1;
+    assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
+    [screen resizeWidth:6 height:6];
+    assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
+
+    // End is one before previous test.
+    screen = [self screenWithWidth:5 height:5];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
+    [self showAltAndUppercase:screen];
+    startX_ = 0;
+    startY_ = 0;
+    endX_ = 5;
+    endY_ = 0;
+    assert([[self selectedStringInScreen:screen] isEqualToString:@"abcde"]);
+    [screen resizeWidth:6 height:6];
+    assert([[self selectedStringInScreen:screen] isEqualToString:@"abcde"]);
+
+    // End is two after previous test.
+    screen = [self screenWithWidth:5 height:5];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
+    [self showAltAndUppercase:screen];
+    startX_ = 0;
+    startY_ = 0;
+    endX_ = 2;
+    endY_ = 1;
+    assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefg"]);
+    [screen resizeWidth:6 height:6];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
 }
 
 /*
  METHODS LEFT TO TEST:
 
- // Resize the screen, preserving its contents, alt-grid's contents, and selection.
- - (void)resizeWidth:(int)new_width height:(int)height;
 
  // Clear the screen, leaving the last line.
  - (void)resetPreservingPrompt:(BOOL)preservePrompt;

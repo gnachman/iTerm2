@@ -1158,45 +1158,6 @@
 }
 
 
-- (VT100GridRun)runByTrimmingNullsFromRun:(VT100GridRun)run {
-    VT100GridRun result = run;
-    int x = result.origin.x;
-    int y = result.origin.y;
-    screen_char_t *line = [self screenCharsAtLineNumber:y];
-    while (result.length > 0 && line[x].code == 0 && y < size_.height) {
-        x++;
-        result.length--;
-        if (x == size_.width) {
-            x = 0;
-            y++;
-            if (y == size_.height) {
-                // Run is all nulls
-                result.length = 0;
-                return result;
-            }
-            line = [self screenCharsAtLineNumber:y];
-        }
-    }
-    result.origin = VT100GridCoordMake(x, y);
-
-    VT100GridCoord end = VT100GridRunMax(run, size_.width);
-    x = end.x;
-    y = end.y;
-    line = [self screenCharsAtLineNumber:y];
-    while (result.length > 0 && line[x].code == 0 && y < size_.height) {
-        x--;
-        result.length--;
-        if (x == -1) {
-            x = size_.width - 1;
-            y--;
-            assert(y >= 0);
-            line = [self screenCharsAtLineNumber:y];
-        }
-    }
-
-    return result;
-}
-
 - (void)clampCursorPositionToValid
 {
     if (cursor_.x >= size_.width) {
