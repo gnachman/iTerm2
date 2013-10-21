@@ -17,6 +17,8 @@
     int startX_, endX_, startY_, endY_;
     int needsRedraw_;
     int sizeDidChange_;
+    BOOL cursorVisible_;
+    int triggers_;
 }
 
 - (void)setup {
@@ -24,6 +26,8 @@
     startX_ = endX_ = startY_ = endY_ = -1;
     needsRedraw_ = 0;
     sizeDidChange_ = 0;
+    cursorVisible_ = YES;
+    triggers_ = 0;
 }
 
 - (VT100Screen *)screen {
@@ -80,7 +84,10 @@
     s = ScreenCharArrayToStringDebug(frame,
                                      [screen width]);
     assert([s isEqualToString:@"Line 1"]);
+    [self assertInitialTabStopsAreSetInScreen:screen];
+}
 
+- (void)assertInitialTabStopsAreSetInScreen:(VT100Screen *)screen {
     // Make sure tab stops are set up properly.
     [screen terminalCarriageReturn];
     int expected = 9;
@@ -244,7 +251,11 @@
 }
 
 - (void)screenTriggerableChangeDidOccur {
-    // TODO
+    ++triggers_;
+}
+
+- (void)screenSetCursorVisible:(BOOL)visible {
+    cursorVisible_ = visible;
 }
 
 - (NSString *)selectedStringInScreen:(VT100Screen *)screen {
@@ -997,12 +1008,71 @@
     assert(trimmed.length == 6);
 }
 
+- (void)testTerminalResetPreservingPrompt {
+    // Test with arg=yes
+    VT100Screen *screen = [self screenWithWidth:5 height:3];
+    cursorVisible_ = NO;
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen setMaxScrollbackLines:1];
+    [self appendLines:@[@"abcdefgh", @"ijkl"] toScreen:screen];
+    [screen terminalMoveCursorToX:5 y:2];
+    [screen terminalSetCharset:0 toLineDrawingMode:YES];
+    assert(![screen usingDefaultCharset]);
+    [screen terminalResetPreservingPrompt:YES];
+    assert([[screen compactLineDump] isEqualToString:
+            @"ijkl.\n"
+            @".....\n"
+            @"....."]);
+    assert([[screen compactLineDumpWithHistory] isEqualToString:
+            @"fgh..\n"
+            @"ijkl.\n"
+            @".....\n"
+            @"....."]);
+
+    assert(screen.cursorX == 5);
+    assert(screen.cursorY == 1);
+    assert(cursorVisible_);
+    assert(triggers_ > 0);
+    [self assertInitialTabStopsAreSetInScreen:screen];
+    assert(VT100GridRectEquals([[screen currentGrid] scrollRegionRect],
+                               VT100GridRectMake(0, 0, 5, 3)));
+    assert([screen usingDefaultCharset]);
+
+    // Test with arg=no
+    screen = [self screenWithWidth:5 height:3];
+    cursorVisible_ = NO;
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen setMaxScrollbackLines:1];
+    [self appendLines:@[@"abcdefgh", @"ijkl"] toScreen:screen];
+    [screen terminalMoveCursorToX:5 y:2];
+    [screen terminalSetCharset:0 toLineDrawingMode:YES];
+    assert(![screen usingDefaultCharset]);
+    [screen terminalResetPreservingPrompt:NO];
+    assert([[screen compactLineDump] isEqualToString:
+            @".....\n"
+            @".....\n"
+            @"....."]);
+    assert([[screen compactLineDumpWithHistory] isEqualToString:
+            @"ijkl.\n"
+            @".....\n"
+            @".....\n"
+            @"....."]);
+
+    assert(screen.cursorX == 1);
+    assert(screen.cursorY == 1);
+    assert(cursorVisible_);
+    assert(triggers_ > 0);
+    [self assertInitialTabStopsAreSetInScreen:screen];
+    assert(VT100GridRectEquals([[screen currentGrid] scrollRegionRect],
+                               VT100GridRectMake(0, 0, 5, 3)));
+    assert([screen usingDefaultCharset]);
+}
+
 /*
  METHODS LEFT TO TEST:
 
 
  // Clear the screen, leaving the last line.
- - (void)resetPreservingPrompt:(BOOL)preservePrompt;
 
  // Reset the line-drawing flags for all character sets.
  - (void)resetCharset;

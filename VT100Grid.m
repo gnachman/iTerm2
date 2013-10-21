@@ -313,10 +313,11 @@
 }
 
 - (int)resetWithLineBuffer:(LineBuffer *)lineBuffer
-        unlimitedScrollback:(BOOL)unlimitedScrollback {
+        unlimitedScrollback:(BOOL)unlimitedScrollback
+        leavingBehindLines:(int)leave {
     self.scrollRegionRows = VT100GridRangeMake(0, size_.height);
     self.scrollRegionCols = VT100GridRangeMake(0, size_.width);
-    int numLinesToScroll = [self lineNumberOfLastNonEmptyLine];
+    int numLinesToScroll = MAX(0, [self lineNumberOfLastNonEmptyLine] + 1 - leave);
     int numLinesDropped = 0;
     for (int i = 0; i < numLinesToScroll; i++) {
         numLinesDropped += [self scrollUpIntoLineBuffer:lineBuffer
@@ -325,6 +326,10 @@
     }
     self.savedCursor = VT100GridCoordMake(0, 0);
     self.cursor = VT100GridCoordMake(0, 0);
+
+    [self setCharsFrom:VT100GridCoordMake(0, leave)
+                    to:VT100GridCoordMake(size_.width - 1, size_.height - 1)
+                toChar:[self defaultChar]];
 
     return numLinesDropped;
 }
@@ -1493,6 +1498,7 @@
     return 0;
 }
 
+// NOTE: Returns -1 if there are no non-empty lines.
 - (int)lineNumberOfLastNonEmptyLine {
     int y;
     for (y = size_.height - 1; y >= 0; --y) {
@@ -1500,7 +1506,7 @@
             return y;
         }
     }
-    return 0;
+    return -1;
 }
 
 // Warning: does not set dirty.

@@ -126,9 +126,11 @@
 - (void)scrollDown;
 
 // Clear scroll region, clear screen, move cursor and saved cursor to origin, leaving only the last
-// non-empty line at the top of the screen.
+// non-empty line at the top of the screen. Some lines may be left behind by giving a positive value
+// for |leave|.
 - (int)resetWithLineBuffer:(LineBuffer *)lineBuffer
-       unlimitedScrollback:(BOOL)unlimitedScrollback;
+       unlimitedScrollback:(BOOL)unlimitedScrollback
+        leavingBehindLines:(int)leave;
 
 // Move the grid contents up, leaving only the whole wrapped line the cursor is on at the top.
 - (void)moveWrappedCursorLineToTopOfGrid;

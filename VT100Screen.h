@@ -97,9 +97,6 @@ extern int kVT100ScreenMinRows;
 // Convert a run to one without nulls on either end.
 - (VT100GridRun)runByTrimmingNullsFromRun:(VT100GridRun)run;
 
-// Clear the screen, leaving the last line.
-- (void)resetPreservingPrompt:(BOOL)preservePrompt;
-
 // Reset the line-drawing flags for all character sets.
 - (void)resetCharset;
 
@@ -109,7 +106,7 @@ extern int kVT100ScreenMinRows;
 
 - (void)showCursor:(BOOL)show;
 
-// Clears the screen and scrollback buffer.
+// Preserves the prompt, but erases screen and scrollback buffer.
 - (void)clearBuffer;
 
 // Clears the scrollback buffer, leaving screen contents alone.

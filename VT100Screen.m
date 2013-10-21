@@ -67,6 +67,9 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
         dvr_ = [DVR alloc];
         [dvr_ initWithBufferCapacity:[[PreferencePanel sharedInstance] irMemory] * 1024 * 1024];
+
+        charsetUsesLineDrawingMode_ = [[NSMutableArray alloc] init];
+        [self resetCharset];
     }
     return self;
 }
@@ -81,6 +84,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     [dvr_ release];
     [terminal_ release];
     [shell_ release];
+    [charsetUsesLineDrawingMode_ release];
     [super dealloc];
 }
 
@@ -388,18 +392,6 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     [delegate_ screenSizeDidChange];
 }
 
-- (void)resetPreservingPrompt:(BOOL)preservePrompt
-{
-    int savedCursorX = currentGrid_.cursorX;
-    if (preservePrompt) {
-        [self setCursorX:savedCursorX Y:currentGrid_.topMargin];
-    }
-    [self resetScreen];
-    if (preservePrompt) {
-        [self setCursorX:savedCursorX Y:0];
-    }
-}
-
 - (void)resetCharset {
     [charsetUsesLineDrawingMode_ removeAllObjects];
     for (int i = 0; i < NUM_CHARSETS; i++) {
@@ -426,9 +418,22 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
 - (void)clearBuffer
 {
-    [self clearScreen];
+    // Clear screen, moving line the cursor is on to the top.
+    [self clearAndResetScreenPreservingCursorLine];
     [self clearScrollbackBuffer];
     [delegate_ screenUpdateDisplay];
+}
+
+// This clears the screen, leaving the cursor's line at the top and preserves the cursor's x
+// coordinate. Scroll regions and the saved cursor position are reset.
+- (void)clearAndResetScreenPreservingCursorLine {
+    [delegate_ screenTriggerableChangeDidOccur];
+    // This clears the screen.
+    int x = currentGrid_.cursorX;
+    [self incrementOverflowBy:[currentGrid_ resetWithLineBuffer:linebuffer_
+                                            unlimitedScrollback:unlimitedScrollback_
+                                             leavingBehindLines:1]];
+    currentGrid_.cursorX = x;
 }
 
 - (void)clearScrollbackBuffer
@@ -608,10 +613,10 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     [currentGrid_ deleteChars:n startingAt:currentGrid_.cursor];
 }
 
+// Unconditionally clear the whole screen, regardless of cursor position
 - (void)clearScreen
 {
-    [currentGrid_ moveWrappedCursorLineToTopOfGrid];
-    [currentGrid_ setCharsFrom:VT100GridCoordMake(0, currentGrid_.cursor.y + 1)
+    [currentGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                             to:VT100GridCoordMake(currentGrid_.size.width - 1,
                                                   currentGrid_.size.height - 1)
                         toChar:[currentGrid_ defaultChar]];
@@ -1404,7 +1409,26 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 }
 
 - (void)terminalResetPreservingPrompt:(BOOL)preservePrompt {
-    [self resetPreservingPrompt:preservePrompt];
+    [delegate_ screenTriggerableChangeDidOccur];
+    if (preservePrompt) {
+        [self clearAndResetScreenPreservingCursorLine];
+    } else {
+        [self incrementOverflowBy:[currentGrid_ resetWithLineBuffer:linebuffer_
+                                                unlimitedScrollback:unlimitedScrollback_
+                                                 leavingBehindLines:0]];
+    }
+
+    [self setInitialTabStops];
+    altGrid_.savedCursor = VT100GridCoordMake(0, 0);
+
+    [savedCharsetUsesLineDrawingMode_ removeAllObjects];
+    [charsetUsesLineDrawingMode_ removeAllObjects];
+    for (int i = 0; i < NUM_CHARSETS; i++) {
+        [savedCharsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
+        [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
+    }
+
+    [self showCursor:YES];
 }
 
 - (void)terminalSoftReset {
@@ -2231,25 +2255,6 @@ static void SwapInt(int *a, int *b) {
 - (void)incrementOverflowBy:(int)overflowCount {
     scrollbackOverflow_ += overflowCount;
     cumulativeScrollbackOverflow_ += overflowCount;
-}
-
-- (void)resetScreen
-{
-    [delegate_ screenTriggerableChangeDidOccur];
-    [self incrementOverflowBy:[currentGrid_ resetWithLineBuffer:linebuffer_
-                                            unlimitedScrollback:unlimitedScrollback_]];
-    [self clearScreen];
-    [self setInitialTabStops];
-    altGrid_.savedCursor = VT100GridCoordMake(0, 0);
-
-    [savedCharsetUsesLineDrawingMode_ removeAllObjects];
-    [charsetUsesLineDrawingMode_ removeAllObjects];
-    for (int i = 0; i < NUM_CHARSETS; i++) {
-        [savedCharsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
-        [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
-    }
-
-    [self showCursor:YES];
 }
 
 // sets scrollback lines.
