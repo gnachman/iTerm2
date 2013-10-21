@@ -5536,7 +5536,7 @@ NSString *sessionsKey = @"sessions";
             result = NO;
         }
     } else if ([item action] == @selector(resetCharset:)) {
-        result = ![[[self currentSession] SCREEN] usingDefaultCharset];
+        result = ![[[self currentSession] SCREEN] allCharacterSetPropertiesHaveDefaultValues];
     }
     return result;
 }

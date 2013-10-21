@@ -69,7 +69,10 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
         [dvr_ initWithBufferCapacity:[[PreferencePanel sharedInstance] irMemory] * 1024 * 1024];
 
         charsetUsesLineDrawingMode_ = [[NSMutableArray alloc] init];
-        [self resetCharset];
+        [charsetUsesLineDrawingMode_ removeAllObjects];
+        for (int i = 0; i < NUM_CHARSETS; i++) {
+            [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
+        }
     }
     return self;
 }
@@ -392,14 +395,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     [delegate_ screenSizeDidChange];
 }
 
-- (void)resetCharset {
-    [charsetUsesLineDrawingMode_ removeAllObjects];
-    for (int i = 0; i < NUM_CHARSETS; i++) {
-        [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
-    }
-}
-
-- (BOOL)usingDefaultCharset {
+- (BOOL)allCharacterSetPropertiesHaveDefaultValues {
     for (int i = 0; i < NUM_CHARSETS; i++) {
         if ([[charsetUsesLineDrawingMode_ objectAtIndex:i] boolValue]) {
             return NO;
@@ -418,7 +414,6 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
 - (void)clearBuffer
 {
-    // Clear screen, moving line the cursor is on to the top.
     [self clearAndResetScreenPreservingCursorLine];
     [self clearScrollbackBuffer];
     [delegate_ screenUpdateDisplay];
@@ -432,7 +427,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     int x = currentGrid_.cursorX;
     [self incrementOverflowBy:[currentGrid_ resetWithLineBuffer:linebuffer_
                                             unlimitedScrollback:unlimitedScrollback_
-                                             leavingBehindLines:1]];
+                                             preserveCursorLine:YES]];
     currentGrid_.cursorX = x;
 }
 
@@ -1032,7 +1027,9 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
 - (NSString *)compactLineDumpWithHistory {
     NSMutableString *string = [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:[self width]]];
-    [string appendString:@"\n"];
+    if ([string length]) {
+        [string appendString:@"\n"];
+    }
     [string appendString:[currentGrid_ compactLineDump]];
     return string;
 }
@@ -1415,7 +1412,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     } else {
         [self incrementOverflowBy:[currentGrid_ resetWithLineBuffer:linebuffer_
                                                 unlimitedScrollback:unlimitedScrollback_
-                                                 leavingBehindLines:0]];
+                                                 preserveCursorLine:NO]];
     }
 
     [self setInitialTabStops];

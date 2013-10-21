@@ -1446,7 +1446,7 @@ do { \
     [lineBuffer setMaxLines:1];
     int dropped = [grid resetWithLineBuffer:lineBuffer
                         unlimitedScrollback:NO
-                         leavingBehindLines:0];
+                         preserveCursorLine:NO];
     assert(dropped == 2);
     assert([[grid compactLineDump] isEqualToString:
             @"....\n"
@@ -1469,7 +1469,7 @@ do { \
     [lineBuffer setMaxLines:1];
     dropped = [grid resetWithLineBuffer:lineBuffer
                     unlimitedScrollback:YES
-                     leavingBehindLines:0];
+                     preserveCursorLine:NO];
     assert(dropped == 0);
     assert([[grid compactLineDump] isEqualToString:
             @"....\n"
@@ -1484,7 +1484,7 @@ do { \
     [lineBuffer setMaxLines:1];
     dropped = [grid resetWithLineBuffer:lineBuffer
                     unlimitedScrollback:YES
-                     leavingBehindLines:0];
+                     preserveCursorLine:NO];
     assert(dropped == 0);
     assert([[grid compactLineDump] isEqualToString:
             @"..\n"
@@ -1492,7 +1492,8 @@ do { \
     assert([lineBuffer numLinesWithWidth:grid.size.width] == 0);
 }
 
-- (void)testResetWithLineBufferLeavingBehindOne {
+- (void)testResetWithLineBufferLeavingBehindCursorLine {
+    // Cursor below content
     VT100Grid *grid = [self gridFromCompactLines:@"0123\nabcd\nefgh\n...."];
     grid.scrollRegionRows = VT100GridRangeMake(1, 2);
     grid.scrollRegionCols = VT100GridRangeMake(2, 2);
@@ -1504,7 +1505,36 @@ do { \
     [lineBuffer setMaxLines:1];
     int dropped = [grid resetWithLineBuffer:lineBuffer
                         unlimitedScrollback:NO
-                         leavingBehindLines:1];
+                         preserveCursorLine:YES];
+    assert(dropped == 2);
+    assert([[grid compactLineDump] isEqualToString:
+            @"....\n"
+            @"....\n"
+            @"....\n"
+            @"...."]);
+    assert([[lineBuffer debugString] isEqualToString:@"efgh!"]);
+    assert(grid.scrollRegionRows.location == 0);
+    assert(grid.scrollRegionRows.length == 4);
+    assert(grid.scrollRegionCols.location == 0);
+    assert(grid.scrollRegionCols.length == 4);
+    assert(grid.cursor.x == 0);
+    assert(grid.cursor.y == 0);
+    assert(grid.savedCursor.x == 0);
+    assert(grid.savedCursor.y == 0);
+
+    // Cursor at end of content
+    grid = [self gridFromCompactLines:@"0123\nabcd\nefgh\n...."];
+    grid.scrollRegionRows = VT100GridRangeMake(1, 2);
+    grid.scrollRegionCols = VT100GridRangeMake(2, 2);
+    grid.cursorX = 2;
+    grid.cursorY = 2;
+    grid.savedCursor = grid.cursor;
+
+    lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    [lineBuffer setMaxLines:1];
+    dropped = [grid resetWithLineBuffer:lineBuffer
+                    unlimitedScrollback:NO
+                     preserveCursorLine:YES];
     assert(dropped == 1);
     assert([[grid compactLineDump] isEqualToString:
             @"efgh\n"
@@ -1521,20 +1551,50 @@ do { \
     assert(grid.savedCursor.x == 0);
     assert(grid.savedCursor.y == 0);
 
+    // Cursor within content
+    grid = [self gridFromCompactLines:@"0123\nabcd\nefgh\n...."];
+    grid.scrollRegionRows = VT100GridRangeMake(1, 2);
+    grid.scrollRegionCols = VT100GridRangeMake(2, 2);
+    grid.cursorX = 2;
+    grid.cursorY = 1;
+    grid.savedCursor = grid.cursor;
+
+    lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    [lineBuffer setMaxLines:1];
+    dropped = [grid resetWithLineBuffer:lineBuffer
+                    unlimitedScrollback:NO
+                     preserveCursorLine:YES];
+    assert(dropped == 0);
+    assert([[grid compactLineDump] isEqualToString:
+            @"abcd\n"
+            @"....\n"
+            @"....\n"
+            @"...."]);
+    assert([[lineBuffer debugString] isEqualToString:@"0123!"]);
+    assert(grid.scrollRegionRows.location == 0);
+    assert(grid.scrollRegionRows.length == 4);
+    assert(grid.scrollRegionCols.location == 0);
+    assert(grid.scrollRegionCols.length == 4);
+    assert(grid.cursor.x == 0);
+    assert(grid.cursor.y == 0);
+    assert(grid.savedCursor.x == 0);
+    assert(grid.savedCursor.y == 0);
+
     // Test unlimited scrollback --------------------------------------------------------------------
     grid = [self gridFromCompactLines:@"0123\nabcd\nefgh\n...."];
+    grid.cursor = VT100GridCoordMake(0, 3);
     lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
     [lineBuffer setMaxLines:1];
     dropped = [grid resetWithLineBuffer:lineBuffer
                     unlimitedScrollback:YES
-                     leavingBehindLines:1];
+                     preserveCursorLine:YES];
     assert(dropped == 0);
     assert([[grid compactLineDump] isEqualToString:
-            @"efgh\n"
+            @"....\n"
             @"....\n"
             @"....\n"
             @"...."]);
-    assert([[lineBuffer debugString] isEqualToString:@"0123!\nabcd!"]);
+    assert([[lineBuffer debugString] isEqualToString:@"0123!\nabcd!\nefgh!"]);
 
     // Test on empty screen ------------------------------------------------------------------------
     grid = [self smallGrid];
@@ -1542,7 +1602,7 @@ do { \
     [lineBuffer setMaxLines:1];
     dropped = [grid resetWithLineBuffer:lineBuffer
                     unlimitedScrollback:YES
-                     leavingBehindLines:1];
+                     preserveCursorLine:YES];
     assert(dropped == 0);
     assert([[grid compactLineDump] isEqualToString:
             @"..\n"

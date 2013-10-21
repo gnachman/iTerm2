@@ -97,12 +97,9 @@ extern int kVT100ScreenMinRows;
 // Convert a run to one without nulls on either end.
 - (VT100GridRun)runByTrimmingNullsFromRun:(VT100GridRun)run;
 
-// Reset the line-drawing flags for all character sets.
-- (void)resetCharset;
-
 // Indicates if line drawing mode is enabled for any character set, or if the current character set
 // is not G0.
-- (BOOL)usingDefaultCharset;
+- (BOOL)allCharacterSetPropertiesHaveDefaultValues;
 
 - (void)showCursor:(BOOL)show;
 

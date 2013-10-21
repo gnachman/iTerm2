@@ -1017,7 +1017,7 @@
     [self appendLines:@[@"abcdefgh", @"ijkl"] toScreen:screen];
     [screen terminalMoveCursorToX:5 y:2];
     [screen terminalSetCharset:0 toLineDrawingMode:YES];
-    assert(![screen usingDefaultCharset]);
+    assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
     [screen terminalResetPreservingPrompt:YES];
     assert([[screen compactLineDump] isEqualToString:
             @"ijkl.\n"
@@ -1036,7 +1036,7 @@
     [self assertInitialTabStopsAreSetInScreen:screen];
     assert(VT100GridRectEquals([[screen currentGrid] scrollRegionRect],
                                VT100GridRectMake(0, 0, 5, 3)));
-    assert([screen usingDefaultCharset]);
+    assert([screen allCharacterSetPropertiesHaveDefaultValues]);
 
     // Test with arg=no
     screen = [self screenWithWidth:5 height:3];
@@ -1046,7 +1046,7 @@
     [self appendLines:@[@"abcdefgh", @"ijkl"] toScreen:screen];
     [screen terminalMoveCursorToX:5 y:2];
     [screen terminalSetCharset:0 toLineDrawingMode:YES];
-    assert(![screen usingDefaultCharset]);
+    assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
     [screen terminalResetPreservingPrompt:NO];
     assert([[screen compactLineDump] isEqualToString:
             @".....\n"
@@ -1065,23 +1065,85 @@
     [self assertInitialTabStopsAreSetInScreen:screen];
     assert(VT100GridRectEquals([[screen currentGrid] scrollRegionRect],
                                VT100GridRectMake(0, 0, 5, 3)));
-    assert([screen usingDefaultCharset]);
+    assert([screen allCharacterSetPropertiesHaveDefaultValues]);
+}
+
+- (void)testAllCharacterSetPropertiesHaveDefaultValues {
+    VT100Screen *screen = [self screenWithWidth:5 height:3];
+    assert([screen allCharacterSetPropertiesHaveDefaultValues]);
+    [screen terminalSetCharset:0 toLineDrawingMode:YES];
+    assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
+
+    // Switch to charset 1
+    char shiftOut = 14;
+    char shiftIn = 15;
+    NSData *data = [NSData dataWithBytes:&shiftOut length:1];
+    [terminal_ putStreamData:data];
+    assert([terminal_ parseNextToken]);
+    [terminal_ executeToken];
+    assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
+    [screen terminalSetCharset:1 toLineDrawingMode:YES];
+    assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
+
+    [screen terminalResetPreservingPrompt:NO];
+    assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
+
+    data = [NSData dataWithBytes:&shiftIn length:1];
+    [terminal_ putStreamData:data];
+    assert([terminal_ parseNextToken]);
+    [terminal_ executeToken];
+    assert([screen allCharacterSetPropertiesHaveDefaultValues]);
+}
+
+- (void)testClearBuffer {
+    VT100Screen *screen;
+    screen = [self screenWithWidth:5 height:4];
+    [screen terminalSetScrollRegionTop:1 bottom:2];
+    [screen terminalSetLeftMargin:1 rightMargin:2];
+    [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSaveCursorAndCharsetFlags];
+    [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrstuvwxyz"] toScreen:screen];
+    [screen clearBuffer];
+    assert([[screen compactLineDumpWithHistory] isEqualToString:
+            @".....\n"
+            @".....\n"
+            @".....\n"
+            @"....."]);
+    assert(VT100GridRectEquals([[screen currentGrid] scrollRegionRect],
+                               VT100GridRectMake(0, 0, 5, 4)));
+    assert([[screen currentGrid] savedCursor].x == 0);
+    assert([[screen currentGrid] savedCursor].y == 0);
+
+    // Cursor on last nonempty line
+    screen = [self screenWithWidth:5 height:4];
+    [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrstuvwxyz"] toScreen:screen];
+    [screen terminalMoveCursorToX:4 y:3];
+    [screen clearBuffer];
+    assert([[screen compactLineDumpWithHistory] isEqualToString:
+            @"wxyz.\n"
+            @".....\n"
+            @".....\n"
+            @"....."]);
+    assert(screen.cursorX == 4);
+    assert(screen.cursorY == 1);
+
+
+    // Cursor in middle of content
+    screen = [self screenWithWidth:5 height:4];
+    [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrstuvwxyz"] toScreen:screen];
+    [screen terminalMoveCursorToX:4 y:2];
+    [screen clearBuffer];
+    assert([[screen compactLineDumpWithHistory] isEqualToString:
+            @"rstuv\n"
+            @".....\n"
+            @".....\n"
+            @"....."]);
+    assert(screen.cursorX == 4);
+    assert(screen.cursorY == 1);
 }
 
 /*
  METHODS LEFT TO TEST:
-
-
- // Clear the screen, leaving the last line.
-
- // Reset the line-drawing flags for all character sets.
- - (void)resetCharset;
-
- // Indicates if line drawing mode is enabled for any character set, or if the current character set
- // is not G0.
- - (BOOL)usingDefaultCharset;
-
- - (void)showCursor:(BOOL)show;
 
  // Clears the screen and scrollback buffer.
  - (void)clearBuffer;

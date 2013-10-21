@@ -130,7 +130,7 @@
 // for |leave|.
 - (int)resetWithLineBuffer:(LineBuffer *)lineBuffer
        unlimitedScrollback:(BOOL)unlimitedScrollback
-        leavingBehindLines:(int)leave;
+        preserveCursorLine:(BOOL)preserveCursorLine;
 
 // Move the grid contents up, leaving only the whole wrapped line the cursor is on at the top.
 - (void)moveWrappedCursorLineToTopOfGrid;

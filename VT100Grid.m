@@ -314,10 +314,15 @@
 
 - (int)resetWithLineBuffer:(LineBuffer *)lineBuffer
         unlimitedScrollback:(BOOL)unlimitedScrollback
-        leavingBehindLines:(int)leave {
+        preserveCursorLine:(BOOL)preserveCursorLine {
     self.scrollRegionRows = VT100GridRangeMake(0, size_.height);
     self.scrollRegionCols = VT100GridRangeMake(0, size_.width);
-    int numLinesToScroll = MAX(0, [self lineNumberOfLastNonEmptyLine] + 1 - leave);
+    int numLinesToScroll;
+    if (preserveCursorLine) {
+        numLinesToScroll = cursor_.y;
+    } else {
+        numLinesToScroll = [self lineNumberOfLastNonEmptyLine] + 1;
+    }
     int numLinesDropped = 0;
     for (int i = 0; i < numLinesToScroll; i++) {
         numLinesDropped += [self scrollUpIntoLineBuffer:lineBuffer
@@ -327,7 +332,7 @@
     self.savedCursor = VT100GridCoordMake(0, 0);
     self.cursor = VT100GridCoordMake(0, 0);
 
-    [self setCharsFrom:VT100GridCoordMake(0, leave)
+    [self setCharsFrom:VT100GridCoordMake(0, preserveCursorLine ? 1 : 0)
                     to:VT100GridCoordMake(size_.width - 1, size_.height - 1)
                 toChar:[self defaultChar]];
 
