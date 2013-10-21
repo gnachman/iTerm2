@@ -52,16 +52,16 @@
 // the right-hand cell.
 #define DWC_RIGHT 0xf003
 
+// The range of private codes we use, with specific instances defined
+// above here.
+#define ITERM2_PRIVATE_BEGIN 0xf000
+#define ITERM2_PRIVATE_END 0xf003
+
 // These codes go in the continuation character to the right of the
 // rightmost column.
 #define EOL_HARD 0 // Hard line break (explicit newline)
 #define EOL_SOFT 1 // Soft line break (a long line was wrapped)
 #define EOL_DWC  2 // Double-width character wrapped to next line
-
-// The range of private codes we use, with specific instances defined
-// above here.
-#define ITERM2_PRIVATE_BEGIN 0xf000
-#define ITERM2_PRIVATE_END 0xf003
 
 #define ONECHAR_UNKNOWN ('?')   // Relacement character for encodings other than utf-8.
 

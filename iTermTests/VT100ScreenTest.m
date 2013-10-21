@@ -19,6 +19,8 @@
     int sizeDidChange_;
     BOOL cursorVisible_;
     int triggers_;
+    BOOL highlightsCleared_;
+    BOOL ambiguousIsDoubleWidth_;
 }
 
 - (void)setup {
@@ -28,6 +30,8 @@
     sizeDidChange_ = 0;
     cursorVisible_ = YES;
     triggers_ = 0;
+    highlightsCleared_ = NO;
+    ambiguousIsDoubleWidth_ = NO;
 }
 
 - (VT100Screen *)screen {
@@ -286,6 +290,14 @@
         sx = 0;
     }
     return s;
+}
+
+- (void)screenClearHighlights {
+    highlightsCleared_ = YES;
+}
+
+- (BOOL)screenShouldTreatAmbiguousCharsAsDoubleWidth {
+    return ambiguousIsDoubleWidth_;
 }
 
 - (void)testResizeWidthHeight {
@@ -1142,14 +1154,219 @@
     assert(screen.cursorY == 1);
 }
 
+- (void)testClearScrollbackBuffer {
+    VT100Screen *screen = [self screenWithWidth:5 height:4];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    startX_ = startY_ = 1;
+    endX_ = endY_ = 1;
+    [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrstuvwxyz"] toScreen:screen];
+    assert([[screen compactLineDumpWithHistory] isEqualToString:
+            @"abcde\n"
+            @"fgh..\n"
+            @"ijkl.\n"
+            @"mnopq\n"
+            @"rstuv\n"
+            @"wxyz.\n"
+            @"....."]);
+    [screen clearScrollbackBuffer];
+    assert([[screen compactLineDumpWithHistory] isEqualToString:
+            @"mnopq\n"
+            @"rstuv\n"
+            @"wxyz.\n"
+            @"....."]);
+    assert(highlightsCleared_);
+    assert(startX_ == -1);
+    assert(startY_ == -1);
+    assert(endX_ == -1);
+    assert(endY_ == -1);
+    assert([screen isAllDirty]);
+}
+
+- (void)sendEscapeCodes:(NSString *)codes {
+    NSString *esc = [NSString stringWithFormat:@"%c", 27];
+    codes = [codes stringByReplacingOccurrencesOfString:@"^[" withString:esc];
+    NSData *data = [codes dataUsingEncoding:NSUTF8StringEncoding];
+    [terminal_ putStreamData:data];
+    while ([terminal_ parseNextToken]) {
+        [terminal_ executeToken];
+    }
+}
+
+// Most of the work is done by VT100Grid's appendCharsAtCursor, which is heavily tested already.
+// This only tests the extra work not included therein.
+- (void)testAppendStringAtCursorAscii {
+    // Make sure colors and attrs are set properly
+    VT100Screen *screen = [self screenWithWidth:5 height:4];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [terminal_ setForegroundColor:5 alternateSemantics:NO];
+    [terminal_ setBackgroundColor:6 alternateSemantics:NO];
+    [self sendEscapeCodes:@"^[[1m^[[3m^[[4m^[[5m"];  // Bold, italic, blink, underline
+    [screen appendStringAtCursor:@"Hello world" ascii:YES];
+
+    assert([[screen compactLineDump] isEqualToString:
+            @"Hello\n"
+            @" worl\n"
+            @"d....\n"
+            @"....."]);
+    screen_char_t *line = [screen getLineAtScreenIndex:0];
+    assert(line[0].foregroundColor == 5);
+    assert(line[0].foregroundColorMode == ColorModeNormal);
+    assert(line[0].bold);
+    assert(line[0].italic);
+    assert(line[0].blink);
+    assert(line[0].underline);
+    assert(line[0].backgroundColor == 6);
+    assert(line[0].backgroundColorMode == ColorModeNormal);
+}
+
+- (void)testAppendStringAtCursorNonAscii {
+    // Make sure colors and attrs are set properly
+    VT100Screen *screen = [self screenWithWidth:20 height:2];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [terminal_ setForegroundColor:5 alternateSemantics:NO];
+    [terminal_ setBackgroundColor:6 alternateSemantics:NO];
+    [self sendEscapeCodes:@"^[[1m^[[3m^[[4m^[[5m"];  // Bold, italic, blink, underline
+
+    unichar chars[] = {
+        0x301, //  standalone
+        'a',
+        0x301, //  a+accent
+        'a',
+        0x301,
+        0x327, //  a+accent+cedilla
+        0xD800, //  surrogate pair giving 𐅐
+        0xDD50,
+        0xff25, //  dwc E
+        0xf000, //  item private
+        0xfeff, //  zw-spaces..
+        0x200b,
+        0x200c,
+        0x200d,
+        'g',
+        0x142,  // ambiguous width
+    };
+
+    NSMutableString *s = [NSMutableString stringWithCharacters:chars
+                                                        length:sizeof(chars) / sizeof(unichar)];
+    [screen appendStringAtCursor:s ascii:NO];
+
+    screen_char_t *line = [screen getLineAtScreenIndex:0];
+    assert(line[0].foregroundColor == 5);
+    assert(line[0].foregroundColorMode == ColorModeNormal);
+    assert(line[0].bold);
+    assert(line[0].italic);
+    assert(line[0].blink);
+    assert(line[0].underline);
+    assert(line[0].backgroundColor == 6);
+    assert(line[0].backgroundColorMode == ColorModeNormal);
+
+    NSString *a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
+    NSString *e = [@"´" decomposedStringWithCompatibilityMapping];
+    assert([a isEqualToString:e]);
+
+    a = [ScreenCharToStr(line + 1) decomposedStringWithCompatibilityMapping];
+    e = [@"á" decomposedStringWithCompatibilityMapping];
+    assert([a isEqualToString:e]);
+
+    a = [ScreenCharToStr(line + 2) decomposedStringWithCompatibilityMapping];
+    e = [@"á̧" decomposedStringWithCompatibilityMapping];
+    assert([a isEqualToString:e]);
+
+    a = ScreenCharToStr(line + 3);
+    e = @"𐅐";
+    assert([a isEqualToString:e]);
+
+    assert([ScreenCharToStr(line + 4) isEqualToString:@"Ｅ"]);
+    assert(line[5].code == DWC_RIGHT);
+    assert([ScreenCharToStr(line + 6) isEqualToString:@"?"]);
+    assert([ScreenCharToStr(line + 7) isEqualToString:@"g"]);
+    assert([ScreenCharToStr(line + 8) isEqualToString:@"ł"]);
+    assert(line[9].code == 0);
+
+    // Toggle ambiguousIsDoubleWidth_ and see if it works.
+    screen = [self screenWithWidth:20 height:2];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    ambiguousIsDoubleWidth_ = YES;
+    s = [NSMutableString stringWithCharacters:chars
+                                       length:sizeof(chars) / sizeof(unichar)];
+    [screen appendStringAtCursor:s ascii:NO];
+
+    line = [screen getLineAtScreenIndex:0];
+
+    a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
+    e = [@"´" decomposedStringWithCompatibilityMapping];
+    assert([a isEqualToString:e]);
+
+    a = [ScreenCharToStr(line + 1) decomposedStringWithCompatibilityMapping];
+    e = [@"á" decomposedStringWithCompatibilityMapping];
+    assert([a isEqualToString:e]);
+    assert(line[2].code == DWC_RIGHT);
+
+    a = [ScreenCharToStr(line + 3) decomposedStringWithCompatibilityMapping];
+    e = [@"á̧" decomposedStringWithCompatibilityMapping];
+    assert([a isEqualToString:e]);
+    assert(line[4].code == DWC_RIGHT);
+    
+    a = ScreenCharToStr(line + 5);
+    e = @"𐅐";
+    assert([a isEqualToString:e]);
+
+    assert([ScreenCharToStr(line + 6) isEqualToString:@"Ｅ"]);
+    assert(line[7].code == DWC_RIGHT);
+    assert([ScreenCharToStr(line + 8) isEqualToString:@"?"]);
+    assert([ScreenCharToStr(line + 9) isEqualToString:@"g"]);
+    assert([ScreenCharToStr(line + 10) isEqualToString:@"ł"]);
+    assert(line[11].code == DWC_RIGHT);
+    assert(line[12].code == 0);
+
+    // Test modifying character already at cursor with combining mark
+    ambiguousIsDoubleWidth_ = NO;
+    screen = [self screenWithWidth:20 height:2];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen appendStringAtCursor:@"e" ascii:NO];
+    unichar combiningAcuteAccent = 0x301;
+    s = [NSString stringWithCharacters:&combiningAcuteAccent length:1];
+    [screen appendStringAtCursor:s ascii:NO];
+    line = [screen getLineAtScreenIndex:0];
+    a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
+    e = [@"é" decomposedStringWithCompatibilityMapping];
+    assert([a isEqualToString:e]);
+
+    // Test modifying character already at cursor with low surrogate
+    ambiguousIsDoubleWidth_ = NO;
+    screen = [self screenWithWidth:20 height:2];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    unichar highSurrogate = 0xD800;
+    unichar lowSurrogate = 0xDD50;
+    s = [NSString stringWithCharacters:&highSurrogate length:1];
+    [screen appendStringAtCursor:s ascii:NO];
+    s = [NSString stringWithCharacters:&lowSurrogate length:1];
+    [screen appendStringAtCursor:s ascii:NO];
+    line = [screen getLineAtScreenIndex:0];
+    a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
+    e = @"𐅐";
+    assert([a isEqualToString:e]);
+
+    // Test modifying character already at cursor with low surrogate, but it's not a high surrogate.
+    ambiguousIsDoubleWidth_ = NO;
+    screen = [self screenWithWidth:20 height:2];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen appendStringAtCursor:@"g" ascii:NO];
+    s = [NSString stringWithCharacters:&lowSurrogate length:1];
+    [screen appendStringAtCursor:s ascii:NO];
+    line = [screen getLineAtScreenIndex:0];
+
+    a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
+    e = @"g";
+    assert([a isEqualToString:e]);
+
+    a = [ScreenCharToStr(line + 1) decomposedStringWithCompatibilityMapping];
+    e = @"�";
+    assert([a isEqualToString:e]);
+}
+
 /*
  METHODS LEFT TO TEST:
-
- // Clears the screen and scrollback buffer.
- - (void)clearBuffer;
-
- // Clears the scrollback buffer, leaving screen contents alone.
- - (void)clearScrollbackBuffer;
 
  // Append a string to the screen at the current cursor position. The terminal's insert and wrap-
  // around modes are respected, the cursor is advanced, the screen may be scrolled, and the line

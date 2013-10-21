@@ -437,6 +437,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     linebuffer_ = [[LineBuffer alloc] init];
     [linebuffer_ setMaxLines:maxScrollbackLines_];
     [delegate_ screenClearHighlights];
+    [currentGrid_ markAllCharsDirty:YES];
 
     savedFindContextAbsPos_ = 0;
 
@@ -447,14 +448,12 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
 - (void)appendStringAtCursor:(NSString *)string ascii:(BOOL)ascii
 {
-    if (gDebugLogging) {
-        DLog(@"setString: %ld chars starting with %c at x=%d, y=%d, line=%d",
-             (unsigned long)[string length],
-             [string characterAtIndex:0],
-             currentGrid_.cursorX,
-             currentGrid_.cursorY,
-             currentGrid_.cursorY + [linebuffer_ numLinesWithWidth:currentGrid_.size.width]);
-    }
+    DLog(@"setString: %ld chars starting with %c at x=%d, y=%d, line=%d",
+         (unsigned long)[string length],
+         [string characterAtIndex:0],
+         currentGrid_.cursorX,
+         currentGrid_.cursorY,
+         currentGrid_.cursorY + [linebuffer_ numLinesWithWidth:currentGrid_.size.width]);
 
     int len = [string length];
     if (len < 1 || !string) {
@@ -559,8 +558,10 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
             }
         }
 
-        // Add DWC_RIGHT after each double-byte character.
         assert(terminal_);
+        // Add DWC_RIGHT after each double-byte character, build complex characters out of surrogates
+        // and combining marks, replace private codes with replacement characters, swallow zero-
+        // width spaces, and set fg/bg colors and attributes.
         StringToScreenChars(string,
                             buffer,
                             [terminal_ foregroundColorCode],

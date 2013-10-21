@@ -435,8 +435,12 @@ void StringToScreenChars(NSString *s,
             // some fonts use dwc's to add extra glyphs. It's kinda sketch, but it's better form to
             // render what you get than to try to be clever and break such edge cases.
             buf[j].code = '?';
-        } else if (sc[i] > 0xa0 && [NSString isDoubleWidthCharacter:sc[i]
-                                             ambiguousIsDoubleWidth:ambiguousIsDoubleWidth]) {
+        } else if (sc[i] > 0xa0 &&
+                   !IsCombiningMark(sc[i]) &&
+                   !IsLowSurrogate(sc[i]) &&
+                   !IsHighSurrogate(sc[i]) &&
+                   [NSString isDoubleWidthCharacter:sc[i]
+                             ambiguousIsDoubleWidth:ambiguousIsDoubleWidth]) {
             // This code path is for double-width characters in BMP only.
             j++;
             buf[j].code = DWC_RIGHT;
@@ -467,7 +471,15 @@ void StringToScreenChars(NSString *s,
             lastInitializedChar--;
         } else if (IsCombiningMark(sc[i]) || IsLowSurrogate(sc[i])) {
             if (j > 0) {
+                BOOL movedBackOverDwcRight = NO;
                 j--;
+                if (buf[j].code == DWC_RIGHT && j > 0 && IsCombiningMark(sc[i])) {
+                    // This happens easily with ambiguous-width characters, where something like
+                    // á is treated as double-width and a subsequent combining mark needs to modify
+                    // at the real code, not the DWC_RIGHT.
+                    j--;
+                    movedBackOverDwcRight = YES;
+                }
                 lastInitializedChar--;
                 if (buf[j].complexChar) {
                     // Adding a combining mark to a char that already has one or was
@@ -476,6 +488,9 @@ void StringToScreenChars(NSString *s,
                 } else {
                     buf[j].code = BeginComplexChar(buf[j].code, sc[i]);
                     buf[j].complexChar = YES;
+                }
+                if (movedBackOverDwcRight) {
+                    j++;
                 }
                 if (IsLowSurrogate(sc[i])) {
                     NSString* str = ComplexCharToStr(buf[j].code);

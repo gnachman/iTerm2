@@ -1588,8 +1588,11 @@
     int cx = coord.x;
     int cy = coord.y;
     screen_char_t* theLine = [self screenCharsAtLineNumber:cy];
-    if (theLine[cx].code == 0) {
-        // Not a real character.
+    if (theLine[cx].code == 0 ||
+        (theLine[cx].code >= ITERM2_PRIVATE_BEGIN && theLine[cx].code <= ITERM2_PRIVATE_END) ||
+        (IsLowSurrogate(combiningChar) && !IsHighSurrogate(theLine[cx].code)) ||
+        (!IsLowSurrogate(combiningChar) && IsHighSurrogate(theLine[cx].code))) {
+        // Unable to combine.
         return NO;
     }
     if (theLine[cx].complexChar) {
