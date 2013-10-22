@@ -1365,20 +1365,62 @@
     assert([a isEqualToString:e]);
 }
 
+- (void)testLinefeed {
+    // The guts of linefeed is tested in VT100GridTest.
+    VT100Screen *screen = [self screenWithWidth:5 height:5];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self appendLines:@[@"abcdefgh", @"ijkl", @"mnop"] toScreen:screen];
+    assert([[screen compactLineDump] isEqualToString:
+            @"abcde\n"
+            @"fgh..\n"
+            @"ijkl.\n"
+            @"mnop.\n"
+            @"....."]);
+    [screen terminalSetScrollRegionTop:1 bottom:3];
+    [screen terminalSetLeftMargin:1 rightMargin:3];
+    [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalMoveCursorToX:4 y:4];
+    [screen linefeed];
+    assert([[screen compactLineDump] isEqualToString:
+            @"abcde\n"
+            @"fjkl.\n"
+            @"inop.\n"
+            @"m....\n"
+            @"....."]);
+    assert([screen scrollbackOverflow] == 0);
+    assert([screen totalScrollbackOverflow] == 0);
+    assert([screen cursorX] == 4);
+
+    // Now test scrollback
+    screen = [self screenWithWidth:5 height:5];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen setMaxScrollbackLines:1];
+    [self appendLines:@[@"abcdefgh", @"ijkl", @"mnop"] toScreen:screen];
+    assert([[screen compactLineDump] isEqualToString:
+            @"abcde\n"
+            @"fgh..\n"
+            @"ijkl.\n"
+            @"mnop.\n"
+            @"....."]);
+    [screen terminalMoveCursorToX:4 y:5];
+    [screen linefeed];
+    [screen linefeed];
+    assert([[screen compactLineDump] isEqualToString:
+            @"ijkl.\n"
+            @"mnop.\n"
+            @".....\n"
+            @".....\n"
+            @"....."]);
+    assert([screen scrollbackOverflow] == 1);
+    assert([screen totalScrollbackOverflow] == 1);
+    assert([screen cursorX] == 4);
+    [screen resetScrollbackOverflow];
+    assert([screen scrollbackOverflow] == 0);
+    assert([screen totalScrollbackOverflow] == 1);
+}
+
 /*
  METHODS LEFT TO TEST:
-
- // Append a string to the screen at the current cursor position. The terminal's insert and wrap-
- // around modes are respected, the cursor is advanced, the screen may be scrolled, and the line
- // buffer may change.
- - (void)appendStringAtCursor:(NSString *)s ascii:(BOOL)ascii;
-
- // This is a hacky thing that moves the cursor to the next line, not respecting scroll regions.
- // It's used for the tmux status screen.
- - (void)crlf;
-
- // Move the cursor down one position, scrolling if needed. Scroll regions are respected.
- - (void)linefeed;
 
  // Delete characters in the current line at the cursor's position.
  - (void)deleteCharacters:(int)n;
