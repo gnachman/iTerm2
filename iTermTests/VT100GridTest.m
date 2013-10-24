@@ -998,7 +998,7 @@ do { \
     int o = 0;
     for (int y = 0; y < h; y++) {
         screen_char_t *line = [grid screenCharsAtLineNumber:y];
-        memmove(frame + o, line, sizeof(screen_char_t) * w);
+        memmove(frame + o, line, sizeof(screen_char_t) * (w + 1));
         o += w;
     }
 

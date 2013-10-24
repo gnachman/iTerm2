@@ -11,6 +11,7 @@
 #import "VT100Screen.h"
 #import "DVR.h"
 #import "DVRDecoder.h"
+#import "TmuxStateParser.h"
 
 @implementation VT100ScreenTest {
     VT100Terminal *terminal_;
@@ -1325,7 +1326,7 @@
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [screen appendStringAtCursor:@"e" ascii:NO];
     unichar combiningAcuteAccent = 0x301;
-    s = [NSString stringWithCharacters:&combiningAcuteAccent length:1];
+    s = [NSMutableString stringWithCharacters:&combiningAcuteAccent length:1];
     [screen appendStringAtCursor:s ascii:NO];
     line = [screen getLineAtScreenIndex:0];
     a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
@@ -1338,9 +1339,9 @@
     screen.delegate = (id<VT100ScreenDelegate>)self;
     unichar highSurrogate = 0xD800;
     unichar lowSurrogate = 0xDD50;
-    s = [NSString stringWithCharacters:&highSurrogate length:1];
+    s = [NSMutableString stringWithCharacters:&highSurrogate length:1];
     [screen appendStringAtCursor:s ascii:NO];
-    s = [NSString stringWithCharacters:&lowSurrogate length:1];
+    s = [NSMutableString stringWithCharacters:&lowSurrogate length:1];
     [screen appendStringAtCursor:s ascii:NO];
     line = [screen getLineAtScreenIndex:0];
     a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
@@ -1352,7 +1353,7 @@
     screen = [self screenWithWidth:20 height:2];
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [screen appendStringAtCursor:@"g" ascii:NO];
-    s = [NSString stringWithCharacters:&lowSurrogate length:1];
+    s = [NSMutableString stringWithCharacters:&lowSurrogate length:1];
     [screen appendStringAtCursor:s ascii:NO];
     line = [screen getLineAtScreenIndex:0];
 
@@ -1419,35 +1420,214 @@
     assert([screen totalScrollbackOverflow] == 1);
 }
 
+- (NSData *)screenCharLineForString:(NSString *)s {
+    NSMutableData *data = [NSMutableData dataWithLength:s.length * sizeof(screen_char_t)];
+    int len;
+    StringToScreenChars(s,
+                        (screen_char_t *)[data mutableBytes],
+                        [terminal_ foregroundColorCode],
+                        [terminal_ backgroundColorCode],
+                        &len,
+                        NO,
+                        NULL);
+    return data;
+}
+
+- (void)testSetHistory {
+    NSArray *lines = @[[self screenCharLineForString:@"abcdefghijkl"],
+                       [self screenCharLineForString:@"mnop"],
+                       [self screenCharLineForString:@"qrstuvwxyz"],
+                       [self screenCharLineForString:@"0123456  "],
+                       [self screenCharLineForString:@"ABC   "],
+                       [self screenCharLineForString:@"DEFGHIJKL   "],
+                       [self screenCharLineForString:@"MNOP  "]];
+    VT100Screen *screen = [self screenWithWidth:6 height:4];
+    [screen setHistory:lines];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcdef\n"
+            @"ghijkl\n"
+            @"mnop..\n"
+            @"qrstuv\n"
+            @"wxyz..\n"
+            @"012345\n"
+            @"6.....\n"
+            @"ABC...!\n"
+            @"DEFGHI+\n"
+            @"JKL...!\n"
+            @"MNOP..!"]);
+}
+
+- (void)testSetAltScreen {
+    NSArray *lines = @[[self screenCharLineForString:@"abcdefghijkl"],
+                       [self screenCharLineForString:@"mnop"],
+                       [self screenCharLineForString:@"qrstuvwxyz"],
+                       [self screenCharLineForString:@"0123456  "],
+                       [self screenCharLineForString:@"ABC   "],
+                       [self screenCharLineForString:@"DEFGHIJKL   "],
+                       [self screenCharLineForString:@"MNOP  "]];
+    VT100Screen *screen = [self screenWithWidth:6 height:4];
+    [screen terminalShowAltBuffer];
+    [screen setAltScreen:lines];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcdef+\n"
+            @"ghijkl!\n"
+            @"mnop..!\n"
+            @"qrstuv+"]);
+}
+
+- (void)testSetTmuxState {
+    NSDictionary *stateDict =
+      @{
+        kStateDictSavedCX: @(2),
+        kStateDictSavedCY: @(3),
+        kStateDictCursorX: @(4),
+        kStateDictCursorY: @(5),
+        kStateDictScrollRegionUpper: @(6),
+        kStateDictScrollRegionLower: @(7),
+        kStateDictCursorMode: @(NO),
+        kStateDictTabstops: @[@(4), @(8)]
+       };
+    VT100Screen *screen = [self screenWithWidth:10 height:10];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    cursorVisible_ = YES;
+    [screen setTmuxState:stateDict];
+    
+    assert(screen.cursorX == 5);
+    assert(screen.cursorY == 6);
+    [screen terminalRestoreCursorAndCharsetFlags];
+    assert(screen.cursorX == 3);
+    assert(screen.cursorY == 4);
+    assert([[screen currentGrid] topMargin] == 6);
+    assert([[screen currentGrid] bottomMargin] == 7);
+    assert(!cursorVisible_);
+    [screen terminalCarriageReturn];
+    [screen terminalAppendTabAtCursor];
+    assert(screen.cursorX == 5);
+    [screen terminalAppendTabAtCursor];
+    assert(screen.cursorX == 9);
+}
+
+- (void)assertScreen:(VT100Screen *)screen
+   matchesHighlights:(NSArray *)expectedHighlights
+         highlightFg:(int)hfg
+     highlightFgMode:(ColorMode)hfm
+         highlightBg:(int)hbg
+     highlightBgMode:(ColorMode)hbm {
+    int defaultFg = [terminal_ foregroundColorCode].foregroundColor;
+    int defaultBg = [terminal_ foregroundColorCode].backgroundColor;
+    for (int i = 0; i < screen.height; i++) {
+        screen_char_t *line = [screen getLineAtScreenIndex:i];
+        NSString *expected = expectedHighlights[i];
+        for (int j = 0; j < screen.width; j++) {
+            if ([expected characterAtIndex:j] == 'h') {
+                assert(line[j].foregroundColor == hfg &&
+                       line[j].foregroundColorMode ==  hfm&&
+                       line[j].backgroundColor == hbg &&
+                       line[j].backgroundColorMode == hbm);
+            } else {
+                assert(line[j].foregroundColor == defaultFg &&
+                       line[j].foregroundColorMode == ColorModeAlternate &&
+                       line[j].backgroundColor == defaultBg &&
+                       line[j].backgroundColorMode == ColorModeAlternate);
+            }
+        }
+    }
+    
+}
+
+- (void)testHighlightTextMatchingRegex {
+    NSArray *lines = @[@"rerex", @"xrere", @"xxrerexxxx", @"xxrererere"];
+    VT100Screen *screen = [self screenWithWidth:5 height:7];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self appendLines:lines toScreen:screen];
+    [screen highlightTextMatchingRegex:@"re" colors:@{ kHighlightForegroundColor: [NSColor blueColor],
+                                                       kHighlightBackgroundColor: [NSColor redColor] }];
+    NSArray *expectedHighlights =
+        @[ @"hhhh.",
+           @".hhhh",
+           @"..hhh",
+           @"h....",
+           @"..hhh",
+           @"hhhhh",
+           @"....." ];
+    int blue = 16 + 5;
+    int red = 16 + 5 * 36;
+    [self assertScreen:screen
+     matchesHighlights:expectedHighlights
+           highlightFg:blue
+      highlightFgMode:ColorModeNormal
+           highlightBg:red
+       highlightBgMode:ColorModeNormal];
+    
+    // Leave fg unaffected
+    screen = [self screenWithWidth:5 height:7];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self appendLines:lines toScreen:screen];
+    [screen highlightTextMatchingRegex:@"re" colors:@{ kHighlightBackgroundColor: [NSColor redColor] }];
+    int defaultFg = [terminal_ foregroundColorCode].foregroundColor;
+    [self assertScreen:screen
+     matchesHighlights:expectedHighlights
+           highlightFg:defaultFg
+      highlightFgMode:ColorModeAlternate
+           highlightBg:red
+       highlightBgMode:ColorModeNormal];
+    
+    // Leave bg unaffected
+    screen = [self screenWithWidth:5 height:7];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self appendLines:lines toScreen:screen];
+    [screen highlightTextMatchingRegex:@"re" colors:@{ kHighlightForegroundColor: [NSColor blueColor] }];
+    int defaultBg = [terminal_ foregroundColorCode].backgroundColor;
+    [self assertScreen:screen
+     matchesHighlights:expectedHighlights
+           highlightFg:blue
+      highlightFgMode:ColorModeNormal
+           highlightBg:defaultBg
+       highlightBgMode:ColorModeAlternate];
+}
+
+- (void)testSetFromFrame {
+    VT100Screen *source = [self fiveByFourScreenWithThreeLinesOneWrapped];
+    NSMutableData *data = [NSMutableData data];
+    for (int i = 0; i < source.height; i++) {
+        screen_char_t *line = [source getLineAtScreenIndex:i];
+        [data appendBytes:line length:(sizeof(screen_char_t) * (source.width + 1))];
+    }
+    
+    DVRFrameInfo info = {
+        .width = 5,
+        .height = 4,
+        .cursorX = 1,  // zero based
+        .cursorY = 2,
+        .timestamp = 0,
+        .frameType = DVRFrameTypeKeyFrame
+    };
+    VT100Screen *screen = [self screenWithWidth:5 height:4];
+    [screen setFromFrame:(screen_char_t *) data.mutableBytes
+                     len:data.length
+                    info:info];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcde+\n"
+            @"fgh..!\n"
+            @"ijkl.!\n"
+            @".....!"]);
+    assert(screen.cursorX == 2);
+    assert(screen.cursorY == 3);
+
+    // Try a screen smaller than the frame
+    screen = [self screenWithWidth:2 height:2];
+    [screen setFromFrame:(screen_char_t *) data.mutableBytes
+                     len:data.length
+                    info:info];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"ij!\n"
+            @"..!"]);
+    assert(screen.cursorX == 2);
+    assert(screen.cursorY == 1);
+}
+
 /*
  METHODS LEFT TO TEST:
-
- // Delete characters in the current line at the cursor's position.
- - (void)deleteCharacters:(int)n;
-
- // Move the line the cursor is on to the top of the screen and clear everything below.
- - (void)clearScreen;
-
- // Set the cursor position. Respects the terminal's originmode.
- - (void)cursorToX:(int)x Y:(int)y;
-
- // Sets the primary grid's contents and scrollback history. |history| is an array of NSData
- // containing screen_char_t's. It contains a bizarre workaround for tmux bugs.
- - (void)setHistory:(NSArray *)history;
-
- // Sets the alt grid's contents. |lines| is NSData with screen_char_t's.
- - (void)setAltScreen:(NSArray *)lines;
-
- // Load state from tmux. The |state| dictionary has keys from the kStateDictXxx values.
- - (void)setTmuxState:(NSDictionary *)state;
-
- // Set the colors in the prototype char to all text on screen that matches the regex.
- // See kHighlightXxxColor constants at the top of this file for dict keys, values are NSColor*s.
- - (void)highlightTextMatchingRegex:(NSString *)regex
- colors:(NSDictionary *)colors;
-
- // Load a frame from a dvr decoder.
- - (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info;
 
  // Save the position of the end of the scrollback buffer without the screen appeneded.
  - (void)saveTerminalAbsPos;

@@ -121,15 +121,6 @@ extern int kVT100ScreenMinRows;
 // Move the cursor down one position, scrolling if needed. Scroll regions are respected.
 - (void)linefeed;
 
-// Delete characters in the current line at the cursor's position.
-- (void)deleteCharacters:(int)n;
-
-// Move the line the cursor is on to the top of the screen and clear everything below.
-- (void)clearScreen;
-
-// Set the cursor position. Respects the terminal's originmode.
-- (void)cursorToX:(int)x Y:(int)y;
-
 // Sets the primary grid's contents and scrollback history. |history| is an array of NSData
 // containing screen_char_t's. It contains a bizarre workaround for tmux bugs.
 - (void)setHistory:(NSArray *)history;
@@ -156,6 +147,7 @@ extern int kVT100ScreenMinRows;
 
 - (NSString *)compactLineDump;
 - (NSString *)compactLineDumpWithHistory;
+- (NSString *)compactLineDumpWithHistoryAndContinuationMarks;
 
 // This is provided for testing only.
 - (VT100Grid *)currentGrid;

@@ -975,6 +975,10 @@
                     to:VT100GridCoordMake(size_.width - 1, size_.height - 1)
                 toChar:[self defaultChar]];
     int charsToCopyPerLine = MIN(size_.width, info.width);
+    if (size_.width == info.width) {
+        // Ok to copy continuation mark.
+        charsToCopyPerLine++;
+    }
     int sourceLineOffset = 0;
     if (info.height > size_.height) {
         sourceLineOffset = info.height - size_.height;
@@ -989,6 +993,7 @@
         screen_char_t *src = s + ((y + sourceLineOffset) * (info.width + 1));
         memmove(dest, src, sizeof(screen_char_t) * charsToCopyPerLine);
         if (size_.width != info.width) {
+            // Not copying continuation marks, set them all to hard.
             dest[size_.width].code = EOL_HARD;
         }
         if (charsToCopyPerLine < info.width && src[charsToCopyPerLine].code == DWC_RIGHT) {

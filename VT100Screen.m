@@ -604,20 +604,6 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
                                                                  useScrollbackWithRegion:[self useScrollbackWithRegion]]];
 }
 
-- (void)deleteCharacters:(int)n
-{
-    [currentGrid_ deleteChars:n startingAt:currentGrid_.cursor];
-}
-
-// Unconditionally clear the whole screen, regardless of cursor position
-- (void)clearScreen
-{
-    [currentGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
-                            to:VT100GridCoordMake(currentGrid_.size.width - 1,
-                                                  currentGrid_.size.height - 1)
-                        toChar:[currentGrid_ defaultChar]];
-}
-
 - (void)cursorToX:(int)x
 {
     int xPos;
@@ -804,11 +790,12 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
 - (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info
 {
-    assert(len == info.width * info.height * sizeof(screen_char_t));
+    assert(len == (info.width + 1) * info.height * sizeof(screen_char_t));
     [currentGrid_ setContentsFromDVRFrame:s info:info];
     [self resetScrollbackOverflow];
     savedFindContextAbsPos_ = 0;
     [delegate_ screenRemoveSelection];
+    [delegate_ screenNeedsRedraw];
     [currentGrid_ markAllCharsDirty:YES];
 }
 
@@ -1032,6 +1019,15 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
         [string appendString:@"\n"];
     }
     [string appendString:[currentGrid_ compactLineDump]];
+    return string;
+}
+
+- (NSString *)compactLineDumpWithHistoryAndContinuationMarks {
+    NSMutableString *string = [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:[self width]]];
+    if ([string length]) {
+        [string appendString:@"\n"];
+    }
+    [string appendString:[currentGrid_ compactLineDumpWithContinuationMarks]];
     return string;
 }
 
@@ -1806,7 +1802,15 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 }
 
 - (void)terminalClearScreen {
-    [self clearScreen];
+    // Unconditionally clear the whole screen, regardless of cursor position.
+    // This behavior changed in the Great VT100Grid Refactoring of 2013. Before, clearScreen
+    // used to move the cursor's wrapped line to the top of the screen. It's only used from
+    // DECSET 1049, and neither xterm nor terminal have this behavior, and I'm not sure why it
+    // would be desirable anyway. Like xterm (and unlike Terminal) we leave the cursor put.
+    [currentGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
+                            to:VT100GridCoordMake(currentGrid_.size.width - 1,
+                                                  currentGrid_.size.height - 1)
+                        toChar:[currentGrid_ defaultChar]];
 }
 
 - (void)terminalSendModifiersDidChangeTo:(int *)modifiers
