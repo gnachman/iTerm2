@@ -1747,12 +1747,25 @@
     assert([screen numberOfScrollbackLines] == 2);
 }
 
+- (void)testScrollbackOverflow {
+    VT100Screen *screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
+    [screen setMaxScrollbackLines:0];
+    assert([screen scrollbackOverflow] == 0);
+    [screen terminalLineFeed];
+    [screen terminalLineFeed];
+    assert([screen scrollbackOverflow] == 2);
+    assert([screen totalScrollbackOverflow] == 2);
+    [screen resetScrollbackOverflow];
+    assert([screen scrollbackOverflow] == 0);
+    assert([screen totalScrollbackOverflow] == 2);
+    [screen terminalLineFeed];
+    assert([screen scrollbackOverflow] == 1);
+    assert([screen totalScrollbackOverflow] == 3);
+}
+
+
 /*
  METHODS LEFT TO TEST:
- - (int)numberOfScrollbackLines;
- - (int)scrollbackOverflow;
- - (void)resetScrollbackOverflow;
- - (long long)totalScrollbackOverflow;
  - (long long)absoluteLineNumberOfCursor;
  - (BOOL)continueFindAllResults:(NSMutableArray*)results
  inContext:(FindContext*)context;
