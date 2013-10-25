@@ -1685,12 +1685,126 @@
     assert(range->absStartY == 8);
     assert(range->endX == 3);
     assert(range->absEndY == 8);
+}
 
-    
+#pragma mark - Tests for PTYTextViewDataSource methods
+
+- (void)testNumberOfLines {
+    VT100Screen *screen = [self screenWithWidth:5 height:2];
+    assert([screen numberOfLines] == 2);
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrstuvwxyz", @"012"] toScreen:screen];
+    /*
+     abcde
+     fgh..
+     ijkl.
+     mnopq
+     rstuv
+     wxyz.
+     012..
+     .....
+     */
+    assert([screen numberOfLines] == 8);
+}
+
+- (void)testCursorXY {
+    VT100Screen *screen = [self screenWithWidth:5 height:5];
+    assert([screen cursorX] == 1);
+    assert([screen cursorY] == 1);
+    [screen terminalMoveCursorToX:2 y:3];
+    assert([screen cursorX] == 2);
+    assert([screen cursorY] == 3);
+}
+
+- (void)testGetLineAtIndex {
+    VT100Screen *screen = [self screenFromCompactLines:
+                           @"abcde>\n"
+                           @"F-ghi.\n"];
+    [screen terminalMoveCursorToX:6 y:2];
+    screen_char_t *line = [screen getLineAtIndex:0];
+    assert(line[0].code == 'a');
+    assert(line[5].code == DWC_SKIP);
+    assert(line[6].code == EOL_DWC);
+
+    // Scroll the DWC_SPLIT off the screen. getLineAtIndex: will restore it, even though line buffers
+    // don't store those.
+    [self appendLines:@[@"jkl"] toScreen:screen];
+    line = [screen getLineAtIndex:0];
+    assert(line[0].code == 'a');
+    assert(line[5].code == DWC_SKIP);
+    assert(line[6].code == EOL_DWC);
+}
+
+- (void)testNumberOfScrollbackLines {
+    VT100Screen *screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
+    [screen setMaxScrollbackLines:2];
+    assert([screen numberOfScrollbackLines] == 0);
+    [screen terminalLineFeed];
+    assert([screen numberOfScrollbackLines] == 1);
+    [screen terminalLineFeed];
+    assert([screen numberOfScrollbackLines] == 2);
+    [screen terminalLineFeed];
+    assert([screen numberOfScrollbackLines] == 2);
 }
 
 /*
  METHODS LEFT TO TEST:
+ - (int)numberOfScrollbackLines;
+ - (int)scrollbackOverflow;
+ - (void)resetScrollbackOverflow;
+ - (long long)totalScrollbackOverflow;
+ - (long long)absoluteLineNumberOfCursor;
+ - (BOOL)continueFindAllResults:(NSMutableArray*)results
+ inContext:(FindContext*)context;
+ - (FindContext*)findContext;
+ 
+ // Find all matches to to the search in the provided context. Returns YES if it
+ // should be called again.
+ - (void)cancelFindInContext:(FindContext*)context;
+ 
+ // Initialize the find context.
+ - (void)setFindString:(NSString*)aString
+ forwardDirection:(BOOL)direction
+ ignoringCase:(BOOL)ignoreCase
+ regex:(BOOL)regex
+ startingAtX:(int)x
+ startingAtY:(int)y
+ withOffset:(int)offsetof
+ inContext:(FindContext*)context
+ multipleResults:(BOOL)multipleResults;
+ 
+ // Runs for a limited amount of time.
+ - (BOOL)continueFindResultAtStartX:(int*)startX
+ atStartY:(int*)startY
+ atEndX:(int*)endX
+ atEndY:(int*)endY
+ found:(BOOL*)found
+ inContext:(FindContext*)context;
+ 
+ // Save the position of the current find context (with the screen appended).
+ - (void)saveFindContextAbsPos;
+ - (PTYTask *)shell;
+ 
+ // Return a human-readable dump of the screen contents.
+ - (NSString*)debugString;
+ - (BOOL)isAllDirty;
+ - (void)resetAllDirty;
+ 
+ // Set the cursor dirty. Cursor coords are different because of how they handle
+ // being in the WIDTH'th column (it wraps to the start of the next line)
+ // whereas that wouldn't normally be a legal X value.
+ - (void)setCharDirtyAtCursorX:(int)x Y:(int)y;
+ 
+ // Check if any the character at x,y has been marked dirty.
+ - (BOOL)isDirtyAtX:(int)x Y:(int)y;
+ - (void)resetDirty;
+ 
+ // Save the current state to a new frame in the dvr.
+ - (void)saveToDvr;
+ 
+ // If this returns true then the textview will broadcast iTermTabContentsChanged
+ // when a dirty char is found.
+ - (BOOL)shouldSendContentsChangedNotification;
 
 */
 @end

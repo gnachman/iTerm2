@@ -823,6 +823,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     return (PTYSession *)delegate_;
 }
 
+// Returns the number of lines in scrollback plus screen height.
 - (int)numberOfLines
 {
     return [linebuffer_ numLinesWithWidth:currentGrid_.size.width] + currentGrid_.size.height;
