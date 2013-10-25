@@ -4143,7 +4143,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                                          repeats:NO];
     } else {
         // Update the saved position to just before the screen.
-        [SCREEN saveTerminalAbsPos];
+        [SCREEN storeLastPositionInLineBufferAsFindContextSavedPosition];
         tailFindTimer_ = nil;
     }
 }

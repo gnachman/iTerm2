@@ -140,9 +140,10 @@ extern int kVT100ScreenMinRows;
 - (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info;
 
 // Save the position of the end of the scrollback buffer without the screen appeneded.
-- (void)saveTerminalAbsPos;
+- (void)storeLastPositionInLineBufferAsFindContextSavedPosition;
 
-// Restore the saved position into a passed-in find context (see saveFindContextAbsPos and saveTerminalAbsPos).
+// Restore the saved position into a passed-in find context (see saveFindContextAbsPos and
+// storeLastPositionInLineBufferAsFindContextSavedPosition).
 - (void)restoreSavedPositionToFindContext:(FindContext *)context;
 
 - (NSString *)compactLineDump;

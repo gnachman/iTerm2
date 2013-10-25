@@ -799,7 +799,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     [currentGrid_ markAllCharsDirty:YES];
 }
 
-- (void)saveTerminalAbsPos
+- (void)storeLastPositionInLineBufferAsFindContextSavedPosition
 {
     savedFindContextAbsPos_ = [linebuffer_ absPositionForPosition:[linebuffer_ lastPos]];
 }

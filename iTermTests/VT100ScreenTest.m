@@ -7,6 +7,7 @@
 //
 
 #import "iTermTests.h"
+#import "SearchResult.h"
 #import "VT100ScreenTest.h"
 #import "VT100Screen.h"
 #import "DVR.h"
@@ -1626,14 +1627,70 @@
     assert(screen.cursorY == 1);
 }
 
+// Perform a search, append some stuff, and continue searching from the end of scrollback history
+// prior to the appending, finding a match in the stuff that was appended.
+- (void)testStoreLastPositionInLineBufferAsFindContextSavedPositionAndRestoreSavedPositionToFindContext {
+    VT100Screen *screen = [self screenWithWidth:5 height:2];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrstuvwxyz", @"012"] toScreen:screen];
+    /* abcde
+       fgh..
+       ijkl.
+       mnopq
+       rstuv
+       wxyz.
+       012..
+       .....
+     */
+    FindContext ctx;
+    [screen setFindString:@"wxyz"
+         forwardDirection:YES
+             ignoringCase:NO
+                    regex:NO
+              startingAtX:0
+              startingAtY:0
+               withOffset:0
+                inContext:&ctx
+          multipleResults:YES];
+    NSMutableArray *results = [NSMutableArray array];
+    assert(![screen continueFindAllResults:results
+                                 inContext:&ctx]);
+    assert(results.count == 1);
+    SearchResult *range = results[0];
+    assert(range->startX == 0);
+    assert(range->absStartY == 5);
+    assert(range->endX == 3);
+    assert(range->absEndY == 5);
+
+    [screen storeLastPositionInLineBufferAsFindContextSavedPosition];
+
+    // Now add some stuff to the bottom and search again from where we previously stopped.
+    [self appendLines:@[@"0123", @"wxyz"] toScreen:screen];
+    [screen setFindString:@"wxyz"
+         forwardDirection:YES
+             ignoringCase:NO
+                    regex:NO
+              startingAtX:0
+              startingAtY:7  // Past bottom of screen
+               withOffset:0
+                inContext:&ctx
+          multipleResults:YES];
+    [screen restoreSavedPositionToFindContext:&ctx];
+    results = [NSMutableArray array];
+    assert(![screen continueFindAllResults:results
+                                 inContext:&ctx]);
+    assert(results.count == 1);
+    range = results[0];
+    assert(range->startX == 0);
+    assert(range->absStartY == 8);
+    assert(range->endX == 3);
+    assert(range->absEndY == 8);
+
+    
+}
+
 /*
  METHODS LEFT TO TEST:
 
- // Save the position of the end of the scrollback buffer without the screen appeneded.
- - (void)saveTerminalAbsPos;
-
- // Restore the saved position into a passed-in find context (see saveFindContextAbsPos and saveTerminalAbsPos).
- - (void)restoreSavedPositionToFindContext:(FindContext *)context;
 */
-
 @end
