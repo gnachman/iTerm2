@@ -52,7 +52,7 @@ typedef enum {
                 regex:(BOOL)regex
           startingAtX:(int)x
           startingAtY:(int)y
-           withOffset:(int)offsetof
+           withOffset:(int)offsetof  // Offset in the direction of searching (offset=1 while searching backwards means start one char before x,y)
             inContext:(FindContext*)context
       multipleResults:(BOOL)multipleResults;
 

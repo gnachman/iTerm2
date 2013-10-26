@@ -23,6 +23,7 @@
     int triggers_;
     BOOL highlightsCleared_;
     BOOL ambiguousIsDoubleWidth_;
+    NSTimeInterval maxSearchTime_;
 }
 
 - (void)setup {
@@ -34,6 +35,7 @@
     triggers_ = 0;
     highlightsCleared_ = NO;
     ambiguousIsDoubleWidth_ = NO;
+    maxSearchTime_ = 0;
 }
 
 - (VT100Screen *)screen {
@@ -300,6 +302,10 @@
 
 - (BOOL)screenShouldTreatAmbiguousCharsAsDoubleWidth {
     return ambiguousIsDoubleWidth_;
+}
+
+- (NSTimeInterval)screenMaxTimeDurationToPerformFind {
+    return maxSearchTime_;
 }
 
 - (void)testResizeWidthHeight {
@@ -981,6 +987,45 @@
     return screen;
 }
 
+- (VT100Screen *)screenFromCompactLinesWithContinuationMarks:(NSString *)compactLines {
+    NSArray *lines = [compactLines componentsSeparatedByString:@"\n"];
+    VT100Screen *screen = [self screenWithWidth:[[lines objectAtIndex:0] length] - 1
+                                         height:[lines count]];
+    int i = 0;
+    for (NSString *line in lines) {
+        screen_char_t *s = [screen getLineAtScreenIndex:i++];
+        for (int j = 0; j < [line length] - 1; j++) {
+            unichar c = [line characterAtIndex:j];;
+            if (c == '.') c = 0;
+            if (c == '-') c = DWC_RIGHT;
+            if (j == [line length] - 1) {
+                if (c == '>') {
+                    c = DWC_SKIP;
+                }
+            }
+            s[j].code = c;
+        }
+        int j = [line length] - 1;
+        switch ([line characterAtIndex:j]) {
+            case '!':
+                s[j].code = EOL_HARD;
+                break;
+                
+            case '+':
+                s[j].code = EOL_SOFT;
+                break;
+                
+            case '>':
+                s[j].code = EOL_DWC;
+                break;
+                
+            default:
+                assert(false);  // bogus continution mark
+        }
+    }
+    return screen;
+}
+
 - (void)testRunByTrimmingNullsFromRun {
     // Basic test
     VT100Screen *screen = [self screenFromCompactLines:
@@ -1653,15 +1698,22 @@
                 inContext:&ctx
           multipleResults:YES];
     NSMutableArray *results = [NSMutableArray array];
-    assert(![screen continueFindAllResults:results
-                                 inContext:&ctx]);
+    // Should return true because it found  match
+    assert([screen continueFindAllResults:results
+                                inContext:&ctx]);
     assert(results.count == 1);
     SearchResult *range = results[0];
     assert(range->startX == 0);
     assert(range->absStartY == 5);
     assert(range->endX == 3);
     assert(range->absEndY == 5);
-
+    
+    // Make sure there's nothing else to find
+    [results removeAllObjects];
+    assert(![screen continueFindAllResults:results
+                                 inContext:&ctx]);
+    assert(results.count == 0);
+    
     [screen storeLastPositionInLineBufferAsFindContextSavedPosition];
 
     // Now add some stuff to the bottom and search again from where we previously stopped.
@@ -1677,14 +1729,20 @@
           multipleResults:YES];
     [screen restoreSavedPositionToFindContext:&ctx];
     results = [NSMutableArray array];
-    assert(![screen continueFindAllResults:results
-                                 inContext:&ctx]);
+    assert([screen continueFindAllResults:results
+                                inContext:&ctx]);
     assert(results.count == 1);
     range = results[0];
     assert(range->startX == 0);
     assert(range->absStartY == 8);
     assert(range->endX == 3);
     assert(range->absEndY == 8);
+
+    // Make sure there's nothing else to find
+    [results removeAllObjects];
+    assert(![screen continueFindAllResults:results
+                                 inContext:&ctx]);
+    assert(results.count == 0);
 }
 
 #pragma mark - Tests for PTYTextViewDataSource methods
@@ -1763,39 +1821,235 @@
     assert([screen totalScrollbackOverflow] == 3);
 }
 
+- (void)testAbsoluteLineNumberOfCursor {
+    VT100Screen *screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
+    assert([screen cursorY] == 4);
+    assert([screen absoluteLineNumberOfCursor] == 3);
+    [screen setMaxScrollbackLines:1];
+    [screen terminalLineFeed];
+    assert([screen absoluteLineNumberOfCursor] == 4);
+    [screen terminalLineFeed];
+    assert([screen absoluteLineNumberOfCursor] == 5);
+    [screen resetScrollbackOverflow];
+    assert([screen absoluteLineNumberOfCursor] == 5);
+    [screen clearScrollbackBuffer];
+    assert([screen absoluteLineNumberOfCursor] == 4);
+}
+
+- (void)assertSearchInScreenLines:(NSString *)compactLines
+                       forPattern:(NSString *)pattern
+                 forwardDirection:(BOOL)forward
+                     ignoringCase:(BOOL)ignoreCase
+                            regex:(BOOL)regex
+                      startingAtX:(int)startX
+                      startingAtY:(int)startY
+                       withOffset:(int)offset
+                   matchesResults:(NSArray *)expected {
+    VT100Screen *screen = [self screenFromCompactLinesWithContinuationMarks:compactLines];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen resizeWidth:screen.width height:2];
+    [screen setFindString:pattern
+         forwardDirection:forward
+             ignoringCase:ignoreCase
+                    regex:regex
+              startingAtX:startX
+              startingAtY:startY
+               withOffset:offset
+                inContext:[screen findContext]
+          multipleResults:YES];
+    NSMutableArray *results = [NSMutableArray array];
+    maxSearchTime_ = INFINITY;
+    assert(![screen continueFindAllResults:results inContext:[screen findContext]]);
+    assert(results.count == expected.count);
+    for (int i = 0; i < expected.count; i++) {
+        assert([expected[i] isEqualToSearchResult:results[i]]);
+    }
+}
+
+- (void)testFind {
+    NSString *lines =
+        @"abcd+\n"
+        @"efgc!\n"
+        @"de..!\n"
+        @"fgx>>\n"
+        @"Y-z.!";
+    NSArray *cdeResults = @[ [SearchResult searchResultFromX:2 y:0 toX:0 y:1] ];
+    // Search forward, wraps around a line, beginning from first char onscreen
+    [self assertSearchInScreenLines:lines
+                         forPattern:@"cde"
+                   forwardDirection:YES
+                       ignoringCase:NO
+                              regex:NO
+                        startingAtX:0
+                        startingAtY:0
+                         withOffset:0
+                     matchesResults:cdeResults];
+    
+    // Search backward
+    [self assertSearchInScreenLines:lines
+                         forPattern:@"cde"
+                   forwardDirection:NO
+                       ignoringCase:NO
+                              regex:NO
+                        startingAtX:2
+                        startingAtY:4
+                         withOffset:0
+                     matchesResults:cdeResults];
+
+    // Search from last char on screen
+    [self assertSearchInScreenLines:lines
+                         forPattern:@"cde"
+                   forwardDirection:NO
+                       ignoringCase:NO
+                              regex:NO
+                        startingAtX:2
+                        startingAtY:4
+                         withOffset:0
+                     matchesResults:cdeResults];
+
+    // Search from null after last char on screen
+    [self assertSearchInScreenLines:lines
+                         forPattern:@"cde"
+                   forwardDirection:NO
+                       ignoringCase:NO
+                              regex:NO
+                        startingAtX:3
+                        startingAtY:4
+                         withOffset:0
+                     matchesResults:cdeResults];
+    // Search from middle of screen
+    [self assertSearchInScreenLines:lines
+                         forPattern:@"cde"
+                   forwardDirection:NO
+                       ignoringCase:NO
+                              regex:NO
+                        startingAtX:3
+                        startingAtY:2
+                         withOffset:0
+                     matchesResults:cdeResults];
+
+    [self assertSearchInScreenLines:lines
+                         forPattern:@"cde"
+                   forwardDirection:NO
+                       ignoringCase:NO
+                              regex:NO
+                        startingAtX:1
+                        startingAtY:0
+                         withOffset:0
+                     matchesResults:@[]];
+
+    // Search ignoring case
+    [self assertSearchInScreenLines:lines
+                         forPattern:@"CDE"
+                   forwardDirection:YES
+                       ignoringCase:NO
+                              regex:NO
+                        startingAtX:0
+                        startingAtY:0
+                         withOffset:0
+                     matchesResults:@[]];
+
+    [self assertSearchInScreenLines:lines
+                         forPattern:@"CDE"
+                   forwardDirection:YES
+                       ignoringCase:YES
+                              regex:NO
+                        startingAtX:0
+                        startingAtY:0
+                         withOffset:0
+                     matchesResults:cdeResults];
+
+    // Search with regex
+    [self assertSearchInScreenLines:lines
+                         forPattern:@"c.e"
+                   forwardDirection:YES
+                       ignoringCase:NO
+                              regex:YES
+                        startingAtX:0
+                        startingAtY:0
+                         withOffset:0
+                     matchesResults:cdeResults];
+
+    [self assertSearchInScreenLines:lines
+                         forPattern:@"C.E"
+                   forwardDirection:YES
+                       ignoringCase:YES
+                              regex:YES
+                        startingAtX:0
+                        startingAtY:0
+                         withOffset:0
+                     matchesResults:cdeResults];
+    
+    // Search with offset=1
+    [self assertSearchInScreenLines:lines
+                         forPattern:@"de"
+                   forwardDirection:YES
+                       ignoringCase:NO
+                              regex:NO
+                        startingAtX:3
+                        startingAtY:0
+                         withOffset:0
+                     matchesResults:@[ [SearchResult searchResultFromX:3 y:0 toX:0 y:1],
+                                       [SearchResult searchResultFromX:0 y:2 toX:1 y:2] ]];
+
+    [self assertSearchInScreenLines:lines
+                         forPattern:@"de"
+                   forwardDirection:YES
+                       ignoringCase:NO
+                              regex:NO
+                        startingAtX:3
+                        startingAtY:0
+                         withOffset:1
+                     matchesResults:@[ [SearchResult searchResultFromX:0 y:2 toX:1 y:2] ]];
+
+    // Search with offset=-1
+    [self assertSearchInScreenLines:lines
+                         forPattern:@"de"
+                   forwardDirection:NO
+                       ignoringCase:NO
+                              regex:NO
+                        startingAtX:0
+                        startingAtY:2
+                         withOffset:0
+                     matchesResults:@[ [SearchResult searchResultFromX:0 y:2 toX:1 y:2],
+                                       [SearchResult searchResultFromX:3 y:0 toX:0 y:1] ]];
+    
+    [self assertSearchInScreenLines:lines
+                         forPattern:@"de"
+                   forwardDirection:NO
+                       ignoringCase:NO
+                              regex:NO
+                        startingAtX:0
+                        startingAtY:2
+                         withOffset:1
+                     matchesResults:@[ [SearchResult searchResultFromX:3 y:0 toX:0 y:1] ]];
+
+    // Search matching DWC
+    // Search matching text before DWC_SKIP and after it
+    // Search that searches multiple blocks
+    // Search multiple blocks in one call (set timeout high)
+    // Multiple results
+}
 
 /*
  METHODS LEFT TO TEST:
- - (long long)absoluteLineNumberOfCursor;
- - (BOOL)continueFindAllResults:(NSMutableArray*)results
- inContext:(FindContext*)context;
- - (FindContext*)findContext;
+
  
- // Find all matches to to the search in the provided context. Returns YES if it
- // should be called again.
  - (void)cancelFindInContext:(FindContext*)context;
  
- // Initialize the find context.
- - (void)setFindString:(NSString*)aString
- forwardDirection:(BOOL)direction
- ignoringCase:(BOOL)ignoreCase
- regex:(BOOL)regex
- startingAtX:(int)x
- startingAtY:(int)y
- withOffset:(int)offsetof
- inContext:(FindContext*)context
- multipleResults:(BOOL)multipleResults;
  
- // Runs for a limited amount of time.
+ // Search from middle of screen, wrapping around, going backwards
+ // Search from middle of screen, wrapping around, going forwards
+// Runs for a limited amount of time. Wraps around. Returns one result at a time.
  - (BOOL)continueFindResultAtStartX:(int*)startX
  atStartY:(int*)startY
  atEndX:(int*)endX
  atEndY:(int*)endY
  found:(BOOL*)found
  inContext:(FindContext*)context;
- 
- // Save the position of the current find context (with the screen appended).
  - (void)saveFindContextAbsPos;
+
+ // Save the position of the current find context (with the screen appended).
  - (PTYTask *)shell;
  
  // Return a human-readable dump of the screen contents.

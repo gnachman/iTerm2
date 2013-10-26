@@ -571,7 +571,7 @@ const int kMaxResultContextWords = 4;
             break;
         }
 
-        // Don't spend more than 100ms outside of event loop.
+        // Don't spend more than 150ms outside of event loop.
         struct timeval endtime;
         gettimeofday(&endtime, NULL);
         int ms_diff = (endtime.tv_sec - begintime.tv_sec) * 1000 +

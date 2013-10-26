@@ -926,17 +926,15 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
                      inContext:(FindContext*)context
 {
     context->hasWrapped = YES;
-
-    float MAX_TIME = 0.1;
+    float maxTime = [delegate_ screenMaxTimeDurationToPerformFind];
     NSDate* start = [NSDate date];
     BOOL keepSearching;
-    context->hasWrapped = YES;
     do {
         keepSearching = [self continueFindResultsInContext:context
-                                                   maxTime:0.1
+                                                   maxTime:maxTime
                                                    toArray:results];
     } while (keepSearching &&
-             [[NSDate date] timeIntervalSinceDate:start] < MAX_TIME);
+             [[NSDate date] timeIntervalSinceDate:start] < maxTime);
 
     return keepSearching;
 }
@@ -979,6 +977,9 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
         } else {
             startPos = [linebuffer_ lastPos] - 1;
         }
+    } else {
+        // lastPos or beyond can't be found in initFind:startingAt:options:withContext: below.
+        startPos = MIN(startPos, [linebuffer_ lastPos] - 1);
     }
 
     // Set up the options bitmask and call findSubstring.
@@ -2532,6 +2533,7 @@ static void SwapInt(int *a, int *b) {
     return keepSearching;
 }
 
+// This differs from continueFindAllResults because it will wrap around one time.
 - (BOOL)continueFindResultAtStartX:(int*)startX
                           atStartY:(int*)startY
                             atEndX:(int*)endX

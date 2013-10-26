@@ -10,6 +10,9 @@
     long long absStartY, absEndY;
 }
 
++ (SearchResult *)searchResultFromX:(int)x y:(long long)y toX:(int)endX y:(long long)endY;
+- (BOOL)isEqualToSearchResult:(SearchResult *)other;
+
 @end
 
 
