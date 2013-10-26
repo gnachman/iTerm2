@@ -1679,8 +1679,9 @@
 }
 
 // Perform a search, append some stuff, and continue searching from the end of scrollback history
-// prior to the appending, finding a match in the stuff that was appended.
-- (void)testStoreLastPositionInLineBufferAsFindContextSavedPositionAndRestoreSavedPositionToFindContext {
+// prior to the appending, finding a match in the stuff that was appended. This is what PTYSession
+// does for tail-find.
+- (void)testAPIsUsedByTailFind {
     VT100Screen *screen = [self screenWithWidth:5 height:2];
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrstuvwxyz", @"012"] toScreen:screen];
@@ -1749,6 +1750,76 @@
     assert(![screen continueFindAllResults:results
                                  inContext:ctx]);
     assert(results.count == 0);
+    
+    // Search backwards from the end. This is slower than searching
+    // forwards, but most searches are reverse searches begun at the end,
+    // so it will get a result sooner.
+    FindContext *myFindContext = [[[FindContext alloc] init] autorelease];
+    [screen setFindString:@"mnop"
+         forwardDirection:NO
+             ignoringCase:NO
+                    regex:NO
+              startingAtX:0
+              startingAtY:[screen numberOfLines] + 1 + [screen totalScrollbackOverflow]
+               withOffset:0
+                inContext:[screen findContext]
+          multipleResults:YES];
+    
+    [myFindContext copyFromFindContext:[screen findContext]];
+    myFindContext.results = nil;
+    [screen saveFindContextAbsPos];
+
+    [results removeAllObjects];
+    [screen continueFindAllResults:results inContext:[screen findContext]];
+    assert(results.count == 1);
+    SearchResult *actualResult = results[0];
+    SearchResult *expectedResult = [SearchResult searchResultFromX:0 y:3 toX:3 y:3];
+    assert([actualResult isEqualToSearchResult:expectedResult]);
+    // TODO test the result range
+    
+    // Do a tail find from the saved position.
+    FindContext *tailFindContext = [[[FindContext alloc] init] autorelease];
+    [screen setFindString:@"rst"
+         forwardDirection:YES
+             ignoringCase:NO
+                    regex:NO
+              startingAtX:0
+              startingAtY:0
+               withOffset:0
+                inContext:tailFindContext
+          multipleResults:YES];
+    
+    // Set the starting position to the block & offset that the backward search
+    // began at. Do a forward search from that location.
+    [screen restoreSavedPositionToFindContext:tailFindContext];
+    [results removeAllObjects];
+    [screen continueFindAllResults:results inContext:tailFindContext];
+    assert(results.count == 0);
+    
+    // Append a line and then do it again, this time finding the line.
+    [screen saveFindContextAbsPos];
+    [screen setMaxScrollbackLines:8];
+    [self appendLines:@[ @"rst" ]  toScreen:screen];
+    tailFindContext = [[[FindContext alloc] init] autorelease];
+    [screen setFindString:@"rst"
+         forwardDirection:YES
+             ignoringCase:NO
+                    regex:NO
+              startingAtX:0
+              startingAtY:0
+               withOffset:0
+                inContext:tailFindContext
+          multipleResults:YES];
+    
+    // Set the starting position to the block & offset that the backward search
+    // began at. Do a forward search from that location.
+    [screen restoreSavedPositionToFindContext:tailFindContext];
+    [results removeAllObjects];
+    [screen continueFindAllResults:results inContext:tailFindContext];
+    assert(results.count == 1);
+    actualResult = results[0];
+    expectedResult = [SearchResult searchResultFromX:0 y:9 toX:2 y:9];
+    assert([actualResult isEqualToSearchResult:expectedResult]);
 }
 
 #pragma mark - Tests for PTYTextViewDataSource methods
@@ -2140,27 +2211,13 @@
                     withOffset:0
                 matchesResults:@[ [SearchResult searchResultFromX:0 y:5 toX:3 y:5] ]
     callBlockBetweenIterations:^(VT100Screen *screen) {
-        NSLog(@"Searched this:\n%@", [screen compactLineDumpWithHistory]);
         [self appendLines:@[ @"FOO" ] toScreen:screen];
-        NSLog(@"After appending a line of foo:\n%@", [screen compactLineDumpWithHistory]);
     }];
 }
 
 /*
  METHODS LEFT TO TEST:
  
- // Search from middle of screen, wrapping around, going backwards
- // Search from middle of screen, wrapping around, going forwards
-// Runs for a limited amount of time. Wraps around. Returns one result at a time.
- - (BOOL)continueFindResultAtStartX:(int*)startX
- atStartY:(int*)startY
- atEndX:(int*)endX
- atEndY:(int*)endY
- found:(BOOL*)found
- inContext:(FindContext*)context;
- - (void)saveFindContextAbsPos;
-
- // Save the position of the current find context (with the screen appended).
  - (PTYTask *)shell;
  
  // Return a human-readable dump of the screen contents.
