@@ -1460,110 +1460,104 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (void)initFind:(NSString*)substring startingAt:(int)start options:(int)options withContext:(FindContext*)context
 {
-    context->substring = [[NSString alloc] initWithString:substring];
-    context->options = options;
+    context.substring = [[NSString alloc] initWithString:substring];
+    context.options = options;
     if (options & FindOptBackwards) {
-        context->dir = -1;
+        context.dir = -1;
     } else {
-        context->dir = 1;
+        context.dir = 1;
     }
-    if ([self _findPosition:start inBlock:&context->absBlockNum inOffset:&context->offset]) {
-        context->absBlockNum += num_dropped_blocks;
-        context->status = Searching;
+    int offset = context.offset;
+    int absBlockNum = context.absBlockNum;
+    if ([self _findPosition:start inBlock:&absBlockNum inOffset:&offset]) {
+        context.offset = offset;
+        context.absBlockNum = absBlockNum + num_dropped_blocks;
+        context.status = Searching;
     } else {
-        context->status = NotFound;
+        context.status = NotFound;
     }
-    context->results = [[NSMutableArray alloc] init];
-}
-
-- (void)releaseFind:(FindContext*)context
-{
-    if (context->substring) {
-        [context->substring release];
-        context->substring = nil;
-    }
-    [context->results release];
+    context.results = [NSMutableArray array];
 }
 
 - (void)findSubstring:(FindContext*)context stopAt:(int)stopAt
 {
-    if (context->dir > 0) {
+    if (context.dir > 0) {
         // Search forwards
-        if (context->absBlockNum < num_dropped_blocks) {
+        if (context.absBlockNum < num_dropped_blocks) {
             // The next block to search was dropped. Skip ahead to the first block.
             // NSLog(@"Next to search was dropped. Skip to start");
-            context->absBlockNum = num_dropped_blocks;
+            context.absBlockNum = num_dropped_blocks;
         }
-        if (context->absBlockNum - num_dropped_blocks >= [blocks count]) {
+        if (context.absBlockNum - num_dropped_blocks >= [blocks count]) {
             // Got to bottom
             // NSLog(@"Got to bottom");
-            context->status = NotFound;
+            context.status = NotFound;
             return;
         }
     } else {
         // Search backwards
-        if (context->absBlockNum < num_dropped_blocks) {
+        if (context.absBlockNum < num_dropped_blocks) {
             // Got to top
             // NSLog(@"Got to top");
-            context->status = NotFound;
+            context.status = NotFound;
             return;
         }
     }
 
-    NSAssert(context->absBlockNum - num_dropped_blocks >= 0, @"bounds check");
-    NSAssert(context->absBlockNum - num_dropped_blocks < [blocks count], @"bounds check");
-    LineBlock* block = [blocks objectAtIndex:context->absBlockNum - num_dropped_blocks];
+    NSAssert(context.absBlockNum - num_dropped_blocks >= 0, @"bounds check");
+    NSAssert(context.absBlockNum - num_dropped_blocks < [blocks count], @"bounds check");
+    LineBlock* block = [blocks objectAtIndex:context.absBlockNum - num_dropped_blocks];
 
-    if (context->absBlockNum - num_dropped_blocks == 0 &&
-        context->offset != -1 &&
-        context->offset < [block startOffset]) {
-        if (context->dir > 0) {
+    if (context.absBlockNum - num_dropped_blocks == 0 &&
+        context.offset != -1 &&
+        context.offset < [block startOffset]) {
+        if (context.dir > 0) {
             // Part of the first block has been dropped. Skip ahead to its
             // current beginning.
-            context->offset = [block startOffset];
+            context.offset = [block startOffset];
         } else {
             // This block has scrolled off.
-            // NSLog(@"offset=%d, block's startOffset=%d. give up", context->offset, [block startOffset]);
-            context->status = NotFound;
+            // NSLog(@"offset=%d, block's startOffset=%d. give up", context.offset, [block startOffset]);
+            context.status = NotFound;
             return;
         }
     }
 
-    // NSLog(@"search block %d starting at offset %d", context->absBlockNum - num_dropped_blocks, context->offset);
+    // NSLog(@"search block %d starting at offset %d", context.absBlockNum - num_dropped_blocks, context.offset);
 
-    [block findSubstring:context->substring
-                 options:context->options
-                atOffset:context->offset
-                 results:context->results
-         multipleResults:((context->options & FindMultipleResults) != 0)];
-    NSMutableArray* filtered = [NSMutableArray arrayWithCapacity:[context->results count]];
+    [block findSubstring:context.substring
+                 options:context.options
+                atOffset:context.offset
+                 results:context.results
+         multipleResults:((context.options & FindMultipleResults) != 0)];
+    NSMutableArray* filtered = [NSMutableArray arrayWithCapacity:[context.results count]];
     BOOL haveOutOfRangeResults = NO;
-    int blockPosition = [self _blockPosition:context->absBlockNum - num_dropped_blocks];
-    for (ResultRange* range in context->results) {
+    int blockPosition = [self _blockPosition:context.absBlockNum - num_dropped_blocks];
+    for (ResultRange* range in context.results) {
         range->position += blockPosition;
-        if (context->dir * (range->position - stopAt) > 0 ||
-            context->dir * (range->position + context->matchLength - stopAt) > 0) {
+        if (context.dir * (range->position - stopAt) > 0 ||
+            context.dir * (range->position + context.matchLength - stopAt) > 0) {
             // result was outside the range to be searched
             haveOutOfRangeResults = YES;
         } else {
             // Found a good result.
-            context->status = Matched;
+            context.status = Matched;
             [filtered addObject:range];
         }
     }
-    [context->results release];
-    context->results = [filtered retain];
+    [context.results release];
+    context.results = [filtered retain];
     if ([filtered count] == 0 && haveOutOfRangeResults) {
-        context->status = NotFound;
+        context.status = NotFound;
     }
 
     // Prepare to continue searching next block.
-    if (context->dir < 0) {
-        context->offset = -1;
+    if (context.dir < 0) {
+        context.offset = -1;
     } else {
-        context->offset = 0;
+        context.offset = 0;
     }
-    context->absBlockNum += context->dir;
+    context.absBlockNum = context.absBlockNum + context.dir;
 }
 
 // Returns an array of XRange values
@@ -1769,7 +1763,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return position;
 }
 
-- (long long)absPositionOfFindContext:(FindContext)findContext
+- (long long)absPositionOfFindContext:(FindContext *)findContext
 {
     long long offset = droppedChars + findContext.offset;
     int numBlocks = findContext.absBlockNum - num_dropped_blocks;
@@ -1827,9 +1821,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (void)storeLocationOfAbsPos:(long long)absPos
                     inContext:(FindContext *)context
 {
-    context->absBlockNum = [self absBlockNumberOfAbsPos:absPos];
-    long long absOffset = [self absPositionOfAbsBlock:context->absBlockNum];
-    context->offset = MAX(0, absPos - absOffset);
+    context.absBlockNum = [self absBlockNumberOfAbsPos:absPos];
+    long long absOffset = [self absPositionOfAbsBlock:context.absBlockNum];
+    context.offset = MAX(0, absPos - absOffset);
 }
 
 - (LineBuffer *)newAppendOnlyCopy {

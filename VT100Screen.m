@@ -73,6 +73,8 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
         for (int i = 0; i < NUM_CHARSETS; i++) {
             [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
         }
+        
+        findContext_ = [[FindContext alloc] init];
     }
     return self;
 }
@@ -88,6 +90,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
     [terminal_ release];
     [shell_ release];
     [charsetUsesLineDrawingMode_ release];
+    [findContext_ release];
     [super dealloc];
 }
 
@@ -925,7 +928,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 - (BOOL)continueFindAllResults:(NSMutableArray*)results
                      inContext:(FindContext*)context
 {
-    context->hasWrapped = YES;
+    context.hasWrapped = YES;
     float maxTime = [delegate_ screenMaxTimeDurationToPerformFind];
     NSDate* start = [NSDate date];
     BOOL keepSearching;
@@ -941,12 +944,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
 
 - (FindContext*)findContext
 {
-    return &findContext_;
-}
-
-- (void)cancelFindInContext:(FindContext*)context
-{
-    [linebuffer_ releaseFind:context];
+    return findContext_;
 }
 
 - (void)setFindString:(NSString*)aString
@@ -997,7 +995,7 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
         opts |= FindMultipleResults;
     }
     [linebuffer_ initFind:aString startingAt:startPos options:opts withContext:context];
-    context->hasWrapped = NO;
+    context.hasWrapped = NO;
     [self popScrollbackLines:linesPushed];
 }
 
@@ -2439,7 +2437,7 @@ static void SwapInt(int *a, int *b) {
 
     // Search one block.
     int stopAt;
-    if (context->dir > 0) {
+    if (context.dir > 0) {
         stopAt = [linebuffer_ lastPos];
     } else {
         stopAt = [linebuffer_ firstPos];
@@ -2451,19 +2449,19 @@ static void SwapInt(int *a, int *b) {
     int iterations = 0;
     int ms_diff = 0;
     do {
-        if (context->status == Searching) {
+        if (context.status == Searching) {
             [linebuffer_ findSubstring:context stopAt:stopAt];
         }
 
         // Handle the current state
-        switch (context->status) {
+        switch (context.status) {
             case Matched: {
                 // NSLog(@"matched");
                 // Found a match in the text.
-                NSArray *allPositions = [linebuffer_ convertPositions:context->results
+                NSArray *allPositions = [linebuffer_ convertPositions:context.results
                                                             withWidth:currentGrid_.size.width];
                 int k = 0;
-                for (ResultRange* currentResultRange in context->results) {
+                for (ResultRange* currentResultRange in context.results) {
                     SearchResult* result = [[SearchResult alloc] init];
 
                     XYRange* xyrange = [allPositions objectAtIndex:k++];
@@ -2475,15 +2473,15 @@ static void SwapInt(int *a, int *b) {
 
                     [results addObject:result];
                     [result release];
-                    if (!(context->options & FindMultipleResults)) {
-                        assert([context->results count] == 1);
-                        [linebuffer_ releaseFind:context];
+                    if (!(context.options & FindMultipleResults)) {
+                        assert([context.results count] == 1);
+                        [context reset];
                         keepSearching = NO;
                     } else {
                         keepSearching = YES;
                     }
                 }
-                [context->results removeAllObjects];
+                [context.results removeAllObjects];
                 break;
             }
 
@@ -2496,20 +2494,21 @@ static void SwapInt(int *a, int *b) {
             case NotFound:
                 // NSLog(@"not found");
                 // Reached stopAt point with no match.
-                if (context->hasWrapped) {
-                    [linebuffer_ releaseFind:context];
+                if (context.hasWrapped) {
+                    [context reset];
                     keepSearching = NO;
                 } else {
                     // NSLog(@"...wrapping");
                     // wrap around and resume search.
-                    FindContext temp;
+                    FindContext *tempFindContext = [[[FindContext alloc] init] autorelease];
                     [linebuffer_ initFind:findContext_.substring
                                startingAt:(findContext_.dir > 0 ? [linebuffer_ firstPos] : [linebuffer_ lastPos]-1)
                                   options:findContext_.options
-                              withContext:&temp];
-                    [linebuffer_ releaseFind:&findContext_];
-                    *context = temp;
-                    context->hasWrapped = YES;
+                              withContext:tempFindContext];
+                    [findContext_ reset];
+                    // TODO test this!
+                    [context copyFromFindContext:tempFindContext];
+                    context.hasWrapped = YES;
                     keepSearching = YES;
                 }
                 break;
@@ -2523,7 +2522,7 @@ static void SwapInt(int *a, int *b) {
             gettimeofday(&endtime, NULL);
             ms_diff = (endtime.tv_sec - begintime.tv_sec) * 1000 +
             (endtime.tv_usec - begintime.tv_usec) / 1000;
-            context->status = Searching;
+            context.status = Searching;
         }
         ++iterations;
     } while (keepSearching && ms_diff < maxTime*1000);

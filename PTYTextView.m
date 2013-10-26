@@ -326,6 +326,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     primaryFont = [[PTYFontInfo alloc] init];
     secondaryFont = [[PTYFontInfo alloc] init];
 
+    initialFindContext_ = [[FindContext alloc] init];
     if ([pointer_ viewShouldTrackTouches]) {
         DLog(@"Begin tracking touches in view %@", self);
         [self futureSetAcceptsTouchEvents:YES];
@@ -503,12 +504,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
     [workingDirectoryAtLines release];
     [trouter release];
-    [initialFindContext_.substring release];
 
     [pointer_ release];
     [cursor_ release];
     [threeFingerTapGestureRecognizer_ disconnectTarget];
     [threeFingerTapGestureRecognizer_ release];
+
+    [initialFindContext_ release];
 
     [super dealloc];
 }
@@ -5439,7 +5441,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (FindContext *)initialFindContext
 {
-    return &initialFindContext_;
+    return initialFindContext_;
 }
 
 // continueFind is called by a timer in the client until it returns NO. It does
@@ -5514,7 +5516,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     } else {
         // Begin a brand new search.
         if (_findInProgress) {
-            [dataSource cancelFindInContext:[dataSource findContext]];
+            [[dataSource findContext] reset];
         }
 
         lastFindStartX = lastFindEndX = 0;
@@ -5533,10 +5535,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         inContext:[dataSource findContext]
                   multipleResults:YES];
 
-        [initialFindContext_.substring release];
-        initialFindContext_ = *[dataSource findContext];
+        [initialFindContext_ copyFromFindContext:[dataSource findContext]];  // TODO test this
         initialFindContext_.results = nil;
-        initialFindContext_.substring = [initialFindContext_.substring copy];
         [dataSource saveFindContextAbsPos];
         _findInProgress = YES;
 

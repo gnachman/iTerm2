@@ -120,6 +120,9 @@
 		1D4AE8FE14343A760092EB49 /* TrouterPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */; };
 		1D4AE8FF14343A760092EB49 /* TrouterPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */; };
 		1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */; };
+		1D53FD15181C4B4B00524D4F /* FindContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D53FD13181C4B4B00524D4F /* FindContext.h */; };
+		1D53FD16181C4B4B00524D4F /* FindContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D53FD14181C4B4B00524D4F /* FindContext.m */; };
+		1D53FD17181C4B4B00524D4F /* FindContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D53FD14181C4B4B00524D4F /* FindContext.m */; };
 		1D5FDD411208E8F000C46BA3 /* NSStringITerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 872EBC5304E42E320073D10E /* NSStringITerm.h */; };
 		1D5FDD421208E8F000C46BA3 /* PTYTextView.h in Headers */ = {isa = PBXBuildFile; fileRef = 872EBC5404E42E320073D10E /* PTYTextView.h */; };
 		1D5FDD431208E8F000C46BA3 /* PTYTabView.h in Headers */ = {isa = PBXBuildFile; fileRef = 872EBC5704E42E320073D10E /* PTYTabView.h */; };
@@ -712,6 +715,8 @@
 		1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TrouterPrefsController.m; sourceTree = "<group>"; };
 		1D4F359F1813386600699FDF /* iTermCursor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCursor.h; sourceTree = "<group>"; };
 		1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultGlobalKeyMap.plist; sourceTree = "<group>"; };
+		1D53FD13181C4B4B00524D4F /* FindContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindContext.h; sourceTree = "<group>"; };
+		1D53FD14181C4B4B00524D4F /* FindContext.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FindContext.m; sourceTree = "<group>"; };
 		1D624BC71386E09E00111319 /* GTMCarbonEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GTMCarbonEvent.m; sourceTree = "<group>"; };
 		1D624BD81386E0B600111319 /* GTMCarbonEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMCarbonEvent.h; sourceTree = "<group>"; };
 		1D624BDC1386E0FA00111319 /* GTMDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMDefines.h; sourceTree = "<group>"; };
@@ -1085,6 +1090,8 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				1D53FD13181C4B4B00524D4F /* FindContext.h */,
+				1D53FD14181C4B4B00524D4F /* FindContext.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -1785,6 +1792,7 @@
 				1D5FDD4C1208E8F000C46BA3 /* FindCommandHandler.h in Headers */,
 				1D5FDD4D1208E8F000C46BA3 /* iTerm.h in Headers */,
 				1D5FDD4E1208E8F000C46BA3 /* charmaps.h in Headers */,
+				1D53FD15181C4B4B00524D4F /* FindContext.h in Headers */,
 				1D5FDD4F1208E8F000C46BA3 /* PseudoTerminal.h in Headers */,
 				1D5FDD501208E8F000C46BA3 /* PTToolbarController.h in Headers */,
 				1D5FDD511208E8F000C46BA3 /* ITAddressBookMgr.h in Headers */,
@@ -2225,6 +2233,7 @@
 				1D9A5597180FA87000B42CE9 /* PTYTab.m in Sources */,
 				1D9A556A180FA85000B42CE9 /* Popup.m in Sources */,
 				1D9A5530180FA70D00B42CE9 /* iTermController.m in Sources */,
+				1D53FD17181C4B4B00524D4F /* FindContext.m in Sources */,
 				1DD39B11180B817B004E56D5 /* VT100GridTypes.m in Sources */,
 				1D9A5564180FA84700B42CE9 /* NSDateFormatterExtras.m in Sources */,
 				1D9A5529180FA61700B42CE9 /* VT100ScreenTest.m in Sources */,
@@ -2330,6 +2339,7 @@
 				1D5FDDAE1208E93600C46BA3 /* PTYSession.m in Sources */,
 				1D5FDDAF1208E93600C46BA3 /* PTYTabView.m in Sources */,
 				1D5FDDB01208E93600C46BA3 /* PTYWindow.m in Sources */,
+				1D53FD16181C4B4B00524D4F /* FindContext.m in Sources */,
 				1D5FDDB21208E93600C46BA3 /* PTToolbarController.m in Sources */,
 				1D5FDDB31208E93600C46BA3 /* ITAddressBookMgr.m in Sources */,
 				1D5FDDB41208E93600C46BA3 /* ITViewLocalizer.m in Sources */,
@@ -3574,4 +3584,3 @@
 	};
 	rootObject = 0464AB0C006CD2EC7F000001 /* Project object */;
 }
-

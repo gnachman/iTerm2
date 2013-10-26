@@ -14,6 +14,18 @@
 #import "DVRDecoder.h"
 #import "TmuxStateParser.h"
 
+@interface VT100Screen (Testing)
+// It's only safe to use this on a newly created screen.
+- (void)setLineBuffer:(LineBuffer *)lineBuffer;
+@end
+
+@implementation VT100Screen (Testing)
+- (void)setLineBuffer:(LineBuffer *)lineBuffer {
+    [linebuffer_ release];
+    linebuffer_ = [lineBuffer retain];
+}
+@end
+
 @implementation VT100ScreenTest {
     VT100Terminal *terminal_;
     int startX_, endX_, startY_, endY_;
@@ -1687,7 +1699,7 @@
        012..
        .....
      */
-    FindContext ctx;
+    FindContext *ctx = [[[FindContext alloc] init] autorelease];
     [screen setFindString:@"wxyz"
          forwardDirection:YES
              ignoringCase:NO
@@ -1695,12 +1707,12 @@
               startingAtX:0
               startingAtY:0
                withOffset:0
-                inContext:&ctx
+                inContext:ctx
           multipleResults:YES];
     NSMutableArray *results = [NSMutableArray array];
     // Should return true because it found  match
     assert([screen continueFindAllResults:results
-                                inContext:&ctx]);
+                                inContext:ctx]);
     assert(results.count == 1);
     SearchResult *range = results[0];
     assert(range->startX == 0);
@@ -1711,7 +1723,7 @@
     // Make sure there's nothing else to find
     [results removeAllObjects];
     assert(![screen continueFindAllResults:results
-                                 inContext:&ctx]);
+                                 inContext:ctx]);
     assert(results.count == 0);
     
     [screen storeLastPositionInLineBufferAsFindContextSavedPosition];
@@ -1725,12 +1737,12 @@
               startingAtX:0
               startingAtY:7  // Past bottom of screen
                withOffset:0
-                inContext:&ctx
+                inContext:ctx
           multipleResults:YES];
-    [screen restoreSavedPositionToFindContext:&ctx];
+    [screen restoreSavedPositionToFindContext:ctx];
     results = [NSMutableArray array];
     assert([screen continueFindAllResults:results
-                                inContext:&ctx]);
+                                inContext:ctx]);
     assert(results.count == 1);
     range = results[0];
     assert(range->startX == 0);
@@ -1741,7 +1753,7 @@
     // Make sure there's nothing else to find
     [results removeAllObjects];
     assert(![screen continueFindAllResults:results
-                                 inContext:&ctx]);
+                                 inContext:ctx]);
     assert(results.count == 0);
 }
 
@@ -1836,16 +1848,16 @@
     assert([screen absoluteLineNumberOfCursor] == 4);
 }
 
-- (void)assertSearchInScreenLines:(NSString *)compactLines
-                       forPattern:(NSString *)pattern
-                 forwardDirection:(BOOL)forward
-                     ignoringCase:(BOOL)ignoreCase
-                            regex:(BOOL)regex
-                      startingAtX:(int)startX
-                      startingAtY:(int)startY
-                       withOffset:(int)offset
-                   matchesResults:(NSArray *)expected {
-    VT100Screen *screen = [self screenFromCompactLinesWithContinuationMarks:compactLines];
+- (void)assertSearchInScreen:(VT100Screen *)screen
+                  forPattern:(NSString *)pattern
+            forwardDirection:(BOOL)forward
+                ignoringCase:(BOOL)ignoreCase
+                       regex:(BOOL)regex
+                 startingAtX:(int)startX
+                 startingAtY:(int)startY
+                  withOffset:(int)offset
+              matchesResults:(NSArray *)expected
+  callBlockBetweenIterations:(void (^)(VT100Screen *))block {
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [screen resizeWidth:screen.width height:2];
     [screen setFindString:pattern
@@ -1858,12 +1870,37 @@
                 inContext:[screen findContext]
           multipleResults:YES];
     NSMutableArray *results = [NSMutableArray array];
-    maxSearchTime_ = INFINITY;
-    assert(![screen continueFindAllResults:results inContext:[screen findContext]]);
+    while ([screen continueFindAllResults:results inContext:[screen findContext]]) {
+        if (block) {
+            block(screen);
+        }
+    }
     assert(results.count == expected.count);
     for (int i = 0; i < expected.count; i++) {
         assert([expected[i] isEqualToSearchResult:results[i]]);
     }
+}
+
+- (void)assertSearchInScreenLines:(NSString *)compactLines
+                       forPattern:(NSString *)pattern
+                 forwardDirection:(BOOL)forward
+                     ignoringCase:(BOOL)ignoreCase
+                            regex:(BOOL)regex
+                      startingAtX:(int)startX
+                      startingAtY:(int)startY
+                       withOffset:(int)offset
+                   matchesResults:(NSArray *)expected {
+    VT100Screen *screen = [self screenFromCompactLinesWithContinuationMarks:compactLines];
+    [self assertSearchInScreen:screen
+                    forPattern:pattern
+              forwardDirection:forward
+                  ignoringCase:ignoreCase
+                         regex:regex
+                   startingAtX:startX
+                   startingAtY:startY
+                    withOffset:offset
+                matchesResults:expected
+    callBlockBetweenIterations:NULL];
 }
 
 - (void)testFind {
@@ -2025,18 +2062,97 @@
                      matchesResults:@[ [SearchResult searchResultFromX:3 y:0 toX:0 y:1] ]];
 
     // Search matching DWC
+    [self assertSearchInScreenLines:lines
+                         forPattern:@"Yz"
+                   forwardDirection:YES
+                       ignoringCase:NO
+                              regex:NO
+                        startingAtX:0
+                        startingAtY:0
+                         withOffset:0
+                     matchesResults:@[ [SearchResult searchResultFromX:0 y:4 toX:2 y:4] ]];
+
     // Search matching text before DWC_SKIP and after it
+    [self assertSearchInScreenLines:lines
+                         forPattern:@"xYz"
+                   forwardDirection:YES
+                       ignoringCase:NO
+                              regex:NO
+                        startingAtX:0
+                        startingAtY:0
+                         withOffset:0
+                     matchesResults:@[ [SearchResult searchResultFromX:2 y:3 toX:2 y:4] ]];
+
     // Search that searches multiple blocks
-    // Search multiple blocks in one call (set timeout high)
-    // Multiple results
+    VT100Screen *screen = [self screenWithWidth:5 height:2];
+    LineBuffer *smallBlockLineBuffer = [[[LineBuffer alloc] initWithBlockSize:10] autorelease];
+    [screen setLineBuffer:smallBlockLineBuffer];
+    [self appendLines:@[ @"abcdefghij",       // Block 0
+                         @"spam",             // Block 1
+                         @"bacon",
+                         @"eggs",             // Block 2
+                         @"spam",
+                         @"0123def456789",    // Block 3
+                         @"hello def world"]  // Block 4
+             toScreen:screen];
+    /*
+     abcde  0
+     fghij  1
+     spam   2
+     bacon  3
+     eggs   4
+     spam   5
+     0123d  6
+     ef456  7
+     789    8
+     hello  9
+      def   10
+     world  11
+            12
+     */
+    [self assertSearchInScreen:screen
+                    forPattern:@"def"
+              forwardDirection:NO
+                  ignoringCase:NO
+                         regex:NO
+                   startingAtX:0
+                   startingAtY:12
+                    withOffset:0
+                matchesResults:@[ [SearchResult searchResultFromX:1 y:10 toX:3 y:10],
+                                  [SearchResult searchResultFromX:4 y:6 toX:1 y:7],
+                                  [SearchResult searchResultFromX:3 y:0 toX:0 y:1]]
+    callBlockBetweenIterations:NULL];
+    // Search multiple blocks with a drop between calls to continueFindAllResults
+    screen = [self screenWithWidth:5 height:2];
+    smallBlockLineBuffer = [[[LineBuffer alloc] initWithBlockSize:10] autorelease];
+    [screen setLineBuffer:smallBlockLineBuffer];
+    [screen setMaxScrollbackLines:11];
+    [self appendLines:@[ @"abcdefghij",       // Block 0
+                         @"spam",             // Block 1
+                         @"bacon",
+                         @"eggs",             // Block 2
+                         @"spam",
+                         @"0123def456789",    // Block 3
+                         @"hello def world"]  // Block 4
+             toScreen:screen];
+    [self assertSearchInScreen:screen
+                    forPattern:@"spam"
+              forwardDirection:NO
+                  ignoringCase:NO
+                         regex:NO
+                   startingAtX:0
+                   startingAtY:12
+                    withOffset:0
+                matchesResults:@[ [SearchResult searchResultFromX:0 y:5 toX:3 y:5] ]
+    callBlockBetweenIterations:^(VT100Screen *screen) {
+        NSLog(@"Searched this:\n%@", [screen compactLineDumpWithHistory]);
+        [self appendLines:@[ @"FOO" ] toScreen:screen];
+        NSLog(@"After appending a line of foo:\n%@", [screen compactLineDumpWithHistory]);
+    }];
 }
 
 /*
  METHODS LEFT TO TEST:
-
- 
- - (void)cancelFindInContext:(FindContext*)context;
- 
  
  // Search from middle of screen, wrapping around, going backwards
  // Search from middle of screen, wrapping around, going forwards

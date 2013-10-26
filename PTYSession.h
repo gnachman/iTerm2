@@ -249,7 +249,7 @@ typedef enum {
     // Does the terminal think this session is focused?
     BOOL focused_;
 
-    FindContext tailFindContext_;
+    FindContext *tailFindContext_;
     NSTimer *tailFindTimer_;
 
     enum {

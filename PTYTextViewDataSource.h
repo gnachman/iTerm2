@@ -41,10 +41,6 @@ typedef enum {
                      inContext:(FindContext*)context;
 - (FindContext*)findContext;
 
-// Find all matches to to the search in the provided context. Returns YES if it
-// should be called again.
-- (void)cancelFindInContext:(FindContext*)context;
-
 // Initialize the find context.
 - (void)setFindString:(NSString*)aString
      forwardDirection:(BOOL)direction

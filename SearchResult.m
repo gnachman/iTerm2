@@ -15,4 +15,8 @@
     return startX == other->startX && endX == other->endX && absStartY == other->absStartY && absEndY == other->absEndY;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p %d,%lld to %d,%lld>",
+            [self class], self, startX, absStartY, endX, absEndY];
+}
 @end

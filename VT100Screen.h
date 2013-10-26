@@ -57,7 +57,7 @@ extern int kVT100ScreenMinRows;
     LineBuffer* linebuffer_;
 
     // Current find context.
-    FindContext findContext_;
+    FindContext *findContext_;
 
     // Where we left off searching.
     long long savedFindContextAbsPos_;

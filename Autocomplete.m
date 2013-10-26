@@ -78,6 +78,7 @@ const int kMaxResultContextWords = 4;
     context_ = [[NSMutableArray alloc] init];
     stack_ = [[NSMutableArray alloc] init];
     findResults_ = [[NSMutableArray alloc] init];
+    findContext_ = [[FindContext alloc] init];
     return self;
 }
 
@@ -90,6 +91,7 @@ const int kMaxResultContextWords = 4;
     [prefix_ release];
     [populateTimer_ invalidate];
     [populateTimer_ release];
+    [findContext_ release];
     [super dealloc];
 }
 
@@ -306,7 +308,7 @@ const int kMaxResultContextWords = 4;
               startingAtX:x_
               startingAtY:y_
                withOffset:1
-                inContext:&findContext_
+                inContext:findContext_
           multipleResults:YES];
 
     [self _doPopulateMore];
@@ -442,7 +444,7 @@ const int kMaxResultContextWords = 4;
             assert(more_);
             AcLog(@"Do another search");
             more_ = [screen continueFindAllResults:findResults_
-                                            inContext:&findContext_];
+                                            inContext:findContext_];
         }
         AcLog(@"This iteration found %d results in %lf sec", (int) [findResults_ count], [[NSDate date] timeIntervalSinceDate:cs]);
         NSDate* ps = [NSDate date];

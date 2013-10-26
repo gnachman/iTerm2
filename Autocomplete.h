@@ -51,7 +51,7 @@
     long long startY_;  // absolute coord
 
     // Context for searches while populating unfilteredModel.
-    FindContext findContext_;
+    FindContext *findContext_;
 
     // Timer for doing asynch seraches for prefix.
     NSTimer* populateTimer_;

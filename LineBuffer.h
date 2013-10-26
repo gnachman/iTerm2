@@ -28,6 +28,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ScreenChar.h"
+#import "FindContext.h"
 
 // When receiving search results, you'll get an array of this class. Positions
 // can be converted to x,y coordinates with -convertPosition:withWidth:toX:toY.
@@ -50,40 +51,6 @@
 }
 @end
 
-#define FindOptCaseInsensitive (1 << 0)
-#define FindOptBackwards       (1 << 1)
-#define FindOptRegex           (1 << 2)
-#define FindMultipleResults    (1 << 3)
-typedef struct FindContext {
-    // Current absolute block number being searched.
-    int absBlockNum;
-
-    // The substring to search for.
-    NSString* substring;
-
-    // A bitwise OR of the options defined above.
-    int options;
-
-    // 1: search forward. -1: search backward.
-    int dir;
-
-    // The offset within a block to begin searching. -1 means the end of the
-    // block.
-    int offset;
-
-    // The offset within a block at which to stop searching. No results
-    // with an offset at or beyond this position will be returned.
-    int stopAt;
-
-    // Searching: a search is in progress and this context can be used to search.
-    // Matched: At least one result has been found. This context can be used to
-    //   search again.
-    // NotFound: No results were found and the end of the buffer was reached.
-    enum { Searching, Matched, NotFound } status;
-    int matchLength;
-    NSMutableArray* results;  // used for multiple results
-    BOOL hasWrapped;   // for client use. Not read or written by LineBuffer.
-} FindContext;
 
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
@@ -283,7 +250,6 @@ typedef struct FindContext {
 // pass the result of a previous findSubstring result. The number of positions the result occupies will be set in *length (which would be different than the
 // length of the substring in the presence of double-width characters.
 - (void)initFind:(NSString*)substring startingAt:(int)start options:(int)options withContext:(FindContext*)context;
-- (void)releaseFind:(FindContext*)context;
 - (void)findSubstring:(FindContext*)context stopAt:(int)stopAt;
 
 // Convert a position (as returned by findSubstring) into an x,y position.
@@ -304,7 +270,7 @@ typedef struct FindContext {
 - (int) lastPos;
 
 // Convert the block,offset in a findcontext into an absolute position.
-- (long long)absPositionOfFindContext:(FindContext)findContext;
+- (long long)absPositionOfFindContext:(FindContext *)findContext;
 // Convert an absolute position into a position.
 - (int)positionForAbsPosition:(long long)absPosition;
 // Convert a position into an absolute position.

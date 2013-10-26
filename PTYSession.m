@@ -128,7 +128,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     slowPasteBuffer = [[NSMutableString alloc] init];
     creationDate_ = [[NSDate date] retain];
     tmuxSecureLogging_ = NO;
-
+    tailFindContext_ = [[FindContext alloc] init];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(windowResized)
                                                  name:@"iTermWindowDidResize"
@@ -189,7 +189,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     SCREEN = nil;
     [TERMINAL release];
     TERMINAL = nil;
-
+    [tailFindContext_ release];
+    
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (dvrDecoder_) {
@@ -3129,7 +3130,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     // and a search was performed in the find window (vs select+cmd-e+cmd-f).
     return !tailFindTimer_ &&
            ![[[view findViewController] view] isHidden] &&
-           [TEXTVIEW initialFindContext]->substring != nil;
+           [TEXTVIEW initialFindContext].substring != nil;
 }
 
 - (void)hideSession
@@ -4125,7 +4126,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSMutableArray *results = [NSMutableArray array];
     BOOL more;
     more = [SCREEN continueFindAllResults:results
-                                inContext:&tailFindContext_];
+                                inContext:tailFindContext_];
     for (SearchResult *r in results) {
         [TEXTVIEW addResultFromX:r->startX
                             absY:r->absStartY
@@ -4151,22 +4152,22 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)beginTailFind
 {
     FindContext *initialFindContext = [TEXTVIEW initialFindContext];
-    if (!initialFindContext->substring) {
+    if (!initialFindContext.substring) {
         return;
     }
-    [SCREEN setFindString:initialFindContext->substring
+    [SCREEN setFindString:initialFindContext.substring
          forwardDirection:YES
-             ignoringCase:!!(initialFindContext->options & FindOptCaseInsensitive)
-                    regex:!!(initialFindContext->options & FindOptRegex)
+             ignoringCase:!!(initialFindContext.options & FindOptCaseInsensitive)
+                    regex:!!(initialFindContext.options & FindOptRegex)
               startingAtX:0
               startingAtY:0
                withOffset:0
-                inContext:&tailFindContext_
+                inContext:tailFindContext_
           multipleResults:YES];
 
     // Set the starting position to the block & offset that the backward search
     // began at. Do a forward search from that location.
-    [SCREEN restoreSavedPositionToFindContext:&tailFindContext_];
+    [SCREEN restoreSavedPositionToFindContext:tailFindContext_];
     [self continueTailFind];
 }
 
@@ -4182,7 +4183,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)stopTailFind
 {
     if (tailFindTimer_) {
-        [SCREEN cancelFindInContext:&tailFindContext_];
+        tailFindContext_.substring = nil;
+        tailFindContext_.results = nil;
         [tailFindTimer_ invalidate];
         tailFindTimer_ = nil;
     }

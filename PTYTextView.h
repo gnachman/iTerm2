@@ -353,7 +353,7 @@ enum {
     BOOL useBackgroundIndicator_;
 
     // Find context just after initialization.
-    FindContext initialFindContext_;
+    FindContext *initialFindContext_;
 
     PointerController *pointer_;
 	NSCursor *cursor_;
