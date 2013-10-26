@@ -2215,13 +2215,60 @@
     }];
 }
 
+- (void)testScrollingInAltScreen {
+    // When in alt screen and scrolling and !saveToScrollbackInAlternateScreen_, then the whole
+    // screen must be marked dirty.
+    VT100Screen *screen = [self screenWithWidth:2 height:3];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen setMaxScrollbackLines:3];
+    [self appendLines:@[ @"0", @"1", @"2", @"3", @"4"] toScreen:screen];
+    [screen terminalShowAltBuffer];
+    screen.saveToScrollbackInAlternateScreen = YES;
+    [screen resetDirty];
+    startX_ = startY_ = 1;
+    endX_ = endY_ = 2;
+    [screen terminalLineFeed];
+    assert([screen scrollbackOverflow] == 1);
+    assert([[screen compactLineDumpWithHistory] isEqualToString:
+            @"1.\n"
+            @"2.\n"
+            @"3.\n"
+            @"4.\n"
+            @"..\n"
+            @".."]);
+    assert([[[screen currentGrid] compactDirtyDump] isEqualToString:
+            @"cc\n"
+            @"dc\n"
+            @"dd"]);
+    [screen resetScrollbackOverflow];
+    assert(startX_ == 1);
+
+    screen.saveToScrollbackInAlternateScreen = NO;
+    // scrollback overflow should be 0 and selection shoudn't be insane
+    startX_ = 1;
+    endX_ = 2;
+    startY_ = endY_ = 5;
+    [screen terminalLineFeed];
+    assert([screen scrollbackOverflow] == 0);
+    assert([[screen compactLineDumpWithHistory] isEqualToString:
+            @"1.\n"
+            @"2.\n"
+            @"3.\n"
+            @"..\n"
+            @"..\n"
+            @".."]);
+    assert([[[screen currentGrid] compactDirtyDump] isEqualToString:
+            @"dd\n"
+            @"dd\n"
+            @"dd"]);
+    ITERM_TEST_KNOWN_BUG(startY_ == 4, startY_ == -1);  // See comment in -linefeed about why this happens
+    // When this bug is fixed, also test truncation with and without scroll regions, as well
+    // as deselection because the whole selection scrolled off the top of the scroll region.
+}
+
 /*
  METHODS LEFT TO TEST:
  
- - (PTYTask *)shell;
- 
- // Return a human-readable dump of the screen contents.
- - (NSString*)debugString;
  - (BOOL)isAllDirty;
  - (void)resetAllDirty;
  

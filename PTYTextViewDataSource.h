@@ -54,7 +54,6 @@ typedef enum {
 
 // Save the position of the current find context (with the screen appended).
 - (void)saveFindContextAbsPos;
-- (PTYTask *)shell;
 
 // Return a human-readable dump of the screen contents.
 - (NSString*)debugString;

@@ -362,7 +362,7 @@
         DLog(@"moved cursor down by 1 line");
         return 0;
     } else {
-        // We are scrolling within a strict subset of the screen.
+        // We are scrolling within a subset of the screen.
         DebugLog(@"scrolled a subset or whole screen up by 1 line");
         return [self scrollUpIntoLineBuffer:lineBuffer
                         unlimitedScrollback:unlimitedScrollback
@@ -1462,7 +1462,6 @@
 // Returns number of lines dropped from line buffer because it exceeded its size (always 0 or 1).
 - (int)appendLineToLineBuffer:(LineBuffer *)lineBuffer
           unlimitedScrollback:(BOOL)unlimitedScrollback {
-    // TODO: Caller should set linebuffer to nil if showingAltScreen && !saveToScrollbackInAlternateScreen_
     if (!lineBuffer) {
         return 0;
     }

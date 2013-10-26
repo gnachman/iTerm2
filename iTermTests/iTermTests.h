@@ -12,8 +12,8 @@
 // true if the bug were fixed. Until then, the second expression unfortunately does evaluate to true.
 #define ITERM_TEST_KNOWN_BUG(expressionThatShouldBeTrue, expressionThatIsTrue) \
 do { \
-  assert(!expressionThatShouldBeTrue); \
-  assert(expressionThatIsTrue); \
+  assert(!(expressionThatShouldBeTrue)); \
+  assert((expressionThatIsTrue)); \
   NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, #expressionThatIsTrue); \
 } while(0)
 

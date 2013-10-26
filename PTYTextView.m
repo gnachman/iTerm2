@@ -8410,7 +8410,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)logWorkingDirectoryAtLine:(long long)line
 {
-    NSString *workingDirectory = [[dataSource shell] getWorkingDirectory];
+    NSString *workingDirectory = [[_delegate SHELL] getWorkingDirectory];
     [self logWorkingDirectoryAtLine:line withDirectory:workingDirectory];
 }
 
@@ -8431,7 +8431,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Return current directory if not able to log via XTERMCC_WINDOW_TITLE
     if ([workingDirectoryAtLines count] == 0) {
-        return [[dataSource shell] getWorkingDirectory];
+        return [[_delegate SHELL] getWorkingDirectory];
     }
 
     long long previousLine = [[[workingDirectoryAtLines lastObject] objectAtIndex:0] longLongValue];
@@ -8777,6 +8777,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         prevCursorY = currentCursorY;
     }
 
+    // TODO: This is awful. Endow VT100Screen with the ability to return an array of dirty rects and
+    // don't expose allDirty, which is a dumb hack.
     for (int y = lineStart; y < lineEnd; y++) {
         for (int x = 0; x < WIDTH; x++) {
             int dirtyFlags = allDirty || [dataSource isDirtyAtX:x Y:y-lineStart];

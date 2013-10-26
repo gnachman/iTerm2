@@ -73,6 +73,7 @@
 - (void)sendText:(NSString *)text;
 - (void)launchCoprocessWithCommand:(NSString *)command;
 - (void)insertText:(NSString *)string;
+- (PTYTask *)SHELL;
 
 @end
 
