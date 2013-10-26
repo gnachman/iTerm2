@@ -1066,7 +1066,6 @@ static const double kInterBellQuietPeriod = 0.1;
         yToMark++;
     }
     [currentGrid_ markCharDirty:YES at:VT100GridCoordMake(xToMark, yToMark)];
-    [self setCharDirtyAtX:xToMark Y:yToMark];
     if (xToMark < currentGrid_.size.width - 1) {
         // Just in case the cursor was over a double width character
         [currentGrid_ markCharDirty:YES at:VT100GridCoordMake(xToMark + 1, yToMark)];
@@ -1946,10 +1945,6 @@ static const double kInterBellQuietPeriod = 0.1;
 - (BOOL)isAnyCharDirty
 {
     return [currentGrid_ isAnyCharDirty];
-}
-
-- (void)setCharDirtyAtX:(int)x Y:(int)y {
-    [currentGrid_ markCharDirty:YES at:VT100GridCoordMake(x, y)];
 }
 
 - (void)setCursorX:(int)x Y:(int)y

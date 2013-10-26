@@ -62,7 +62,8 @@ typedef enum {
 
 // Set the cursor dirty. Cursor coords are different because of how they handle
 // being in the WIDTH'th column (it wraps to the start of the next line)
-// whereas that wouldn't normally be a legal X value.
+// whereas that wouldn't normally be a legal X value. If possible, the char to the right of the
+// cursor is also set dirty to handle DWCs.
 - (void)setCharDirtyAtCursorX:(int)x Y:(int)y;
 
 // Check if any the character at x,y has been marked dirty.

@@ -35,6 +35,7 @@
     int triggers_;
     BOOL highlightsCleared_;
     BOOL ambiguousIsDoubleWidth_;
+    int updates_;
 }
 
 - (void)setup {
@@ -46,6 +47,7 @@
     triggers_ = 0;
     highlightsCleared_ = NO;
     ambiguousIsDoubleWidth_ = NO;
+    updates_ = 0;
 }
 
 - (VT100Screen *)screen {
@@ -220,6 +222,10 @@
             line[x].code = c;
         }
     }
+}
+
+- (void)screenUpdateDisplay {
+    ++updates_;
 }
 
 - (BOOL)screenHasView {
@@ -1163,12 +1169,15 @@
 - (void)testClearBuffer {
     VT100Screen *screen;
     screen = [self screenWithWidth:5 height:4];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+
     [screen terminalSetScrollRegionTop:1 bottom:2];
     [screen terminalSetLeftMargin:1 rightMargin:2];
     [screen terminalSetUseColumnScrollRegion:YES];
     [screen terminalSaveCursorAndCharsetFlags];
     [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrstuvwxyz"] toScreen:screen];
     [screen clearBuffer];
+    assert(updates_ == 1);
     assert([[screen compactLineDumpWithHistory] isEqualToString:
             @".....\n"
             @".....\n"
@@ -1181,9 +1190,11 @@
 
     // Cursor on last nonempty line
     screen = [self screenWithWidth:5 height:4];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
     [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrstuvwxyz"] toScreen:screen];
     [screen terminalMoveCursorToX:4 y:3];
     [screen clearBuffer];
+    assert(updates_ == 2);
     assert([[screen compactLineDumpWithHistory] isEqualToString:
             @"wxyz.\n"
             @".....\n"
@@ -2266,16 +2277,60 @@
     // as deselection because the whole selection scrolled off the top of the scroll region.
 }
 
+- (void)testAllDirty {
+    // This is not a great test.
+    VT100Screen *screen = [self screenWithWidth:2 height:3];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    assert([screen isAllDirty]);
+    [screen resetAllDirty];
+    assert(![screen isAllDirty]);
+    [screen terminalLineFeed];
+    assert(![screen isAllDirty]);
+    [screen terminalNeedsRedraw];
+    assert([screen isAllDirty]);
+}
+
+- (void)testSetCharDirtyAtCursor {
+    VT100Screen *screen = [self screenWithWidth:2 height:3];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen resetDirty];
+    // Test normal case
+    [screen setCharDirtyAtCursorX:0 Y:0];
+    assert([[[screen currentGrid] compactDirtyDump] isEqualToString:
+            @"dd\n"
+            @"cc\n"
+            @"cc"]);
+    
+    // Test cursor in right margin
+    [screen resetDirty];
+    [screen setCharDirtyAtCursorX:2 Y:1];
+    assert([[[screen currentGrid] compactDirtyDump] isEqualToString:
+            @"cc\n"
+            @"cc\n"
+            @"dd"]);
+
+    // Test cursor in last column
+    [screen resetDirty];
+    [screen setCharDirtyAtCursorX:1 Y:1];
+    assert([[[screen currentGrid] compactDirtyDump] isEqualToString:
+            @"cc\n"
+            @"cd\n"
+            @"cc"]);
+}
+
+- (void)testIsDirtyAt {
+    VT100Screen *screen = [self screenWithWidth:2 height:3];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen resetDirty];
+    assert(![screen isDirtyAtX:0 Y:0]);
+    [screen appendStringAtCursor:@"x" ascii:YES];
+    assert([screen isDirtyAtX:0 Y:0]);
+    [screen clearBuffer];  // Marks everything dirty
+    assert([screen isDirtyAtX:1 Y:1]);
+}
+
 /*
  METHODS LEFT TO TEST:
- 
- - (BOOL)isAllDirty;
- - (void)resetAllDirty;
- 
- // Set the cursor dirty. Cursor coords are different because of how they handle
- // being in the WIDTH'th column (it wraps to the start of the next line)
- // whereas that wouldn't normally be a legal X value.
- - (void)setCharDirtyAtCursorX:(int)x Y:(int)y;
  
  // Check if any the character at x,y has been marked dirty.
  - (BOOL)isDirtyAtX:(int)x Y:(int)y;
