@@ -28,9 +28,6 @@ NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
 // Wait this long between calls to NSBeep().
 static const double kInterBellQuietPeriod = 0.1;
 
-// Max time for -continueFindResultAtStartX: to run for.
-static const NSTimeInterval kMaxTimeToSearch = 0.1;
-
 @implementation VT100Screen
 
 @synthesize terminal = terminal_;
@@ -929,15 +926,13 @@ static const NSTimeInterval kMaxTimeToSearch = 0.1;
                      inContext:(FindContext*)context
 {
     context.hasWrapped = YES;
-    float maxTime = [delegate_ screenMaxTimeDurationToPerformFind];
     NSDate* start = [NSDate date];
     BOOL keepSearching;
     do {
         keepSearching = [self continueFindResultsInContext:context
-                                                   maxTime:maxTime
                                                    toArray:results];
     } while (keepSearching &&
-             [[NSDate date] timeIntervalSinceDate:start] < maxTime);
+             [[NSDate date] timeIntervalSinceDate:start] < context.maxTime);
 
     return keepSearching;
 }
@@ -2427,7 +2422,6 @@ static void SwapInt(int *a, int *b) {
 }
 
 - (BOOL)continueFindResultsInContext:(FindContext*)context
-                             maxTime:(float)maxTime
                              toArray:(NSMutableArray*)results
 {
     // Append the screen contents to the scrollback buffer so they are included in the search.
@@ -2525,36 +2519,11 @@ static void SwapInt(int *a, int *b) {
             context.status = Searching;
         }
         ++iterations;
-    } while (keepSearching && ms_diff < maxTime*1000);
+    } while (keepSearching && ms_diff < context.maxTime * 1000);
     // NSLog(@"Did %d iterations in %dms. Average time per block was %dms", iterations, ms_diff, ms_diff/iterations);
 
     [self popScrollbackLines:linesPushed];
     return keepSearching;
-}
-
-// This differs from continueFindAllResults because it will wrap around one time.
-- (BOOL)continueFindResultAtStartX:(int*)startX
-                          atStartY:(int*)startY
-                            atEndX:(int*)endX
-                            atEndY:(int*)endY
-                             found:(BOOL*)found
-                         inContext:(FindContext*)context
-{
-    NSMutableArray* myArray = [NSMutableArray arrayWithCapacity:1];
-    BOOL rc = [self continueFindResultsInContext:context
-                                         maxTime:kMaxTimeToSearch
-                                         toArray:myArray];
-    if ([myArray count] > 0) {
-        SearchResult* result = [myArray objectAtIndex:0];
-        *startX = result->startX;
-        *startY = result->absStartY - [self totalScrollbackOverflow];
-        *endX = result->endX;
-        *endY = result->absEndY - [self totalScrollbackOverflow];
-        *found = YES;
-    } else {
-        *found = NO;
-    }
-    return rc;
 }
 
 @end

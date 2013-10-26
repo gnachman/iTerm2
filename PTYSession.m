@@ -4628,10 +4628,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                forTabViewItem:[[self ptytab] tabViewItem]];
 }
 
-- (NSTimeInterval)screenMaxTimeDurationToPerformFind {
-    return 0.1;
-}
-
 @end
 
 @implementation PTYSession (ScriptingSupport)

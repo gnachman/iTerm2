@@ -187,7 +187,4 @@
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color;
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color;
 
-// Max amount of time to perform a single iteration of "find on screen"
-- (NSTimeInterval)screenMaxTimeDurationToPerformFind;
-
 @end

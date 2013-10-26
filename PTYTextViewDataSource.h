@@ -52,14 +52,6 @@ typedef enum {
             inContext:(FindContext*)context
       multipleResults:(BOOL)multipleResults;
 
-// Runs for a limited amount of time.
-- (BOOL)continueFindResultAtStartX:(int*)startX
-                          atStartY:(int*)startY
-                            atEndX:(int*)endX
-                            atEndY:(int*)endY
-                             found:(BOOL*)found
-                         inContext:(FindContext*)context;
-
 // Save the position of the current find context (with the screen appended).
 - (void)saveFindContextAbsPos;
 - (PTYTask *)shell;

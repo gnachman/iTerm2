@@ -35,7 +35,6 @@
     int triggers_;
     BOOL highlightsCleared_;
     BOOL ambiguousIsDoubleWidth_;
-    NSTimeInterval maxSearchTime_;
 }
 
 - (void)setup {
@@ -47,7 +46,6 @@
     triggers_ = 0;
     highlightsCleared_ = NO;
     ambiguousIsDoubleWidth_ = NO;
-    maxSearchTime_ = 0;
 }
 
 - (VT100Screen *)screen {
@@ -314,10 +312,6 @@
 
 - (BOOL)screenShouldTreatAmbiguousCharsAsDoubleWidth {
     return ambiguousIsDoubleWidth_;
-}
-
-- (NSTimeInterval)screenMaxTimeDurationToPerformFind {
-    return maxSearchTime_;
 }
 
 - (void)testResizeWidthHeight {
@@ -1700,6 +1694,7 @@
        .....
      */
     FindContext *ctx = [[[FindContext alloc] init] autorelease];
+    ctx.maxTime = 0;
     [screen setFindString:@"wxyz"
          forwardDirection:YES
              ignoringCase:NO
@@ -1710,7 +1705,6 @@
                 inContext:ctx
           multipleResults:YES];
     NSMutableArray *results = [NSMutableArray array];
-    // Should return true because it found  match
     assert([screen continueFindAllResults:results
                                 inContext:ctx]);
     assert(results.count == 1);
@@ -1860,6 +1854,7 @@
   callBlockBetweenIterations:(void (^)(VT100Screen *))block {
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [screen resizeWidth:screen.width height:2];
+    [[screen findContext] setMaxTime:0];
     [screen setFindString:pattern
          forwardDirection:forward
              ignoringCase:ignoreCase

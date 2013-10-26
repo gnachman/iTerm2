@@ -30,6 +30,7 @@ typedef enum {
     int matchLength_;
     NSMutableArray* results_;
     BOOL hasWrapped_;
+    NSTimeInterval maxTime_;
 };
 
 // Current absolute block number being searched.
@@ -64,6 +65,8 @@ typedef enum {
 
 // for client use. Not read or written by LineBuffer.
 @property(nonatomic, assign) BOOL hasWrapped;
+
+@property(nonatomic, assign) NSTimeInterval maxTime;
 
 - (void)copyFromFindContext:(FindContext *)other;
 

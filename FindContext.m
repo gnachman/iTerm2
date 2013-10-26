@@ -8,6 +8,9 @@
 
 #import "FindContext.h"
 
+// Default max time per iteration of search.
+static const NSTimeInterval kDefaultMaxTime = 0.1;
+
 @implementation FindContext
 
 @synthesize absBlockNum = absBlockNum_;
@@ -20,6 +23,15 @@
 @synthesize matchLength = matchLength_;
 @synthesize results = results_;
 @synthesize hasWrapped = hasWrapped_;
+@synthesize maxTime = maxTime_;
+
+- (id)init {
+    self = [super init];
+    if (self) {
+        maxTime_ = kDefaultMaxTime;
+    }
+    return self;
+}
 
 - (void)dealloc {
     [results_ release];
@@ -38,6 +50,7 @@
     self.matchLength = other.matchLength;
     self.results = other.results;
     self.hasWrapped = other.hasWrapped;
+    self.maxTime = other.maxTime;
 }
 
 - (void)reset {
