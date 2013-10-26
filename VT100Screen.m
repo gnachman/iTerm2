@@ -1101,8 +1101,8 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (BOOL)shouldSendContentsChangedNotification
 {
-    return [[iTermExpose sharedInstance] isVisible] ||
-    [delegate_ screenShouldSendContentsChangedNotification];
+    return ([[iTermExpose sharedInstance] isVisible] ||
+            [delegate_ screenShouldSendContentsChangedNotification]);
 }
 
 #pragma mark - VT100TerminalDelegate

@@ -36,6 +36,7 @@
     BOOL highlightsCleared_;
     BOOL ambiguousIsDoubleWidth_;
     int updates_;
+    BOOL shouldSendContentsChangedNotification_;
 }
 
 - (void)setup {
@@ -48,6 +49,7 @@
     highlightsCleared_ = NO;
     ambiguousIsDoubleWidth_ = NO;
     updates_ = 0;
+    shouldSendContentsChangedNotification_ = NO;
 }
 
 - (VT100Screen *)screen {
@@ -94,16 +96,8 @@
     s = ScreenCharArrayToStringDebug([screen getLineAtIndex:0],
                                      [screen width]);
     assert([s isEqualToString:@"Line 0"]);
-
-    // Make sure the DVR is there and works.
-    [screen saveToDvr];
-    DVRDecoder *decoder = [screen.dvr getDecoder];
-    [decoder seek:0];
-    screen_char_t *frame = (screen_char_t *)[decoder decodedFrame];
-
-    s = ScreenCharArrayToStringDebug(frame,
-                                     [screen width]);
-    assert([s isEqualToString:@"Line 1"]);
+    
+    assert(screen.dvr);
     [self assertInitialTabStopsAreSetInScreen:screen];
 }
 
@@ -318,6 +312,10 @@
 
 - (BOOL)screenShouldTreatAmbiguousCharsAsDoubleWidth {
     return ambiguousIsDoubleWidth_;
+}
+
+- (BOOL)screenShouldSendContentsChangedNotification {
+    return shouldSendContentsChangedNotification_;
 }
 
 - (void)testResizeWidthHeight {
@@ -2329,19 +2327,38 @@
     assert([screen isDirtyAtX:1 Y:1]);
 }
 
-/*
- METHODS LEFT TO TEST:
- 
- // Check if any the character at x,y has been marked dirty.
- - (BOOL)isDirtyAtX:(int)x Y:(int)y;
- - (void)resetDirty;
- 
- // Save the current state to a new frame in the dvr.
- - (void)saveToDvr;
- 
- // If this returns true then the textview will broadcast iTermTabContentsChanged
- // when a dirty char is found.
- - (BOOL)shouldSendContentsChangedNotification;
+- (void)testSaveToDvr {
+    VT100Screen *screen = [self screenWithWidth:20 height:3];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self appendLines:@[ @"Line 1", @"Line 2"] toScreen:screen];
+    [screen saveToDvr];
+    
+    [self appendLines:@[ @"Line 3"] toScreen:screen];
+    [screen saveToDvr];
 
-*/
+    DVRDecoder *decoder = [screen.dvr getDecoder];
+    [decoder seek:0];
+    screen_char_t *frame = (screen_char_t *)[decoder decodedFrame];
+    NSString *s;
+    s = ScreenCharArrayToStringDebug(frame,
+                                     [screen width]);
+    assert([s isEqualToString:@"Line 1"]);
+
+    [decoder next];
+    frame = (screen_char_t *)[decoder decodedFrame];
+    
+    s = ScreenCharArrayToStringDebug(frame,
+                                     [screen width]);
+    assert([s isEqualToString:@"Line 2"]);
+}
+
+- (void)testContentsChangedNotification {
+    shouldSendContentsChangedNotification_ = NO;
+    VT100Screen *screen = [self screenWithWidth:20 height:3];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    assert(![screen shouldSendContentsChangedNotification]);
+    shouldSendContentsChangedNotification_ = YES;
+    assert([screen shouldSendContentsChangedNotification]);
+}
+
 @end
