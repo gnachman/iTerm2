@@ -43,6 +43,10 @@
     BOOL canResize_;
     BOOL isFullscreen_;
     VT100GridSize newSize_;
+    BOOL syncTitle_;
+    NSString *windowTitle_;
+    NSString *name_;
+    NSMutableArray *dirlog_;
 }
 
 - (void)setup {
@@ -61,6 +65,10 @@
     canResize_ = YES;
     isFullscreen_ = NO;
     newSize_ = VT100GridSizeMake(0, 0);
+    syncTitle_ = YES;
+    windowTitle_ = nil;
+    name_ = nil;
+    dirlog_ = [NSMutableArray array];
 }
 
 - (VT100Screen *)screen {
@@ -300,6 +308,22 @@
     cursorVisible_ = visible;
 }
 
+- (void)screenSetWindowTitle:(NSString *)newTitle {
+    windowTitle_ = [[newTitle copy] autorelease];
+}
+
+- (void)screenSetName:(NSString *)name {
+    name_ = [[name copy] autorelease];
+}
+
+- (NSString *)screenNameExcludingJob {
+    return @"joblessName";
+}
+
+- (void)screenLogWorkingDirectoryAtLine:(long long)line withDirectory:(NSString *)directory {
+    [dirlog_ addObject:@[ @(line), directory ? directory : [NSNull null] ]];
+}
+
 - (NSString *)selectedStringInScreen:(VT100Screen *)screen {
     if (startX_ < 0 ||
         startY_ < 0 ||
@@ -344,6 +368,10 @@
 
 - (BOOL)screenShouldBeginPrinting {
     return printingAllowed_;
+}
+
+- (BOOL)screenShouldSyncTitle {
+    return syncTitle_;
 }
 
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string {
@@ -3076,13 +3104,67 @@
           @"J-klm.....!"]);
 }
 
+- (void)testSetTitle {
+    VT100Screen *screen = [self screen];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen setMaxScrollbackLines:20];
+
+    // Should come back as joblessName test
+    syncTitle_ = YES;
+    [screen terminalSetWindowTitle:@"test"];
+    assert([windowTitle_ isEqualToString:@"joblessName: test"]);
+
+    // Should come back as just test2
+    syncTitle_ = NO;
+    [screen terminalSetWindowTitle:@"test2"];
+    assert([windowTitle_ isEqualToString:@"test2"]);
+
+    // Absolute cursor line number should be updated with nil directory.
+    [dirlog_ removeAllObjects];
+    [screen destructivelySetScreenWidth:10 height:10];
+    [screen terminalMoveCursorToX:1 y:5];
+    [screen terminalSetWindowTitle:@"test"];
+    assert(dirlog_.count == 1);
+    NSArray *entry = dirlog_[0];
+    assert([entry[0] intValue] == 4);
+    assert([entry[1] isKindOfClass:[NSNull class]]);
+
+    // Add some scrollback
+    for (int i = 0; i < 10; i++) {
+        [screen terminalLineFeed];
+    }
+    [dirlog_ removeAllObjects];
+    [screen terminalSetWindowTitle:@"test"];
+    assert(dirlog_.count == 1);
+    entry = dirlog_[0];
+    assert([entry[0] intValue] == 14);
+    assert([entry[1] isKindOfClass:[NSNull class]]);
+
+    // Make sure scrollback overflow is included.
+    for (int i = 0; i < 100; i++) {
+        [screen terminalLineFeed];
+    }
+    [dirlog_ removeAllObjects];
+    [screen terminalSetWindowTitle:@"test"];
+    assert(dirlog_.count == 1);
+    entry = dirlog_[0];
+    assert([entry[0] intValue] == 114);
+    assert([entry[1] isKindOfClass:[NSNull class]]);
+
+    // Test icon title, which is the same, but does not log the pwd.
+    syncTitle_ = YES;
+    [screen terminalSetIconTitle:@"test3"];
+    assert([name_ isEqualToString:@"joblessName: test3"]);
+
+    syncTitle_ = NO;
+    [screen terminalSetIconTitle:@"test4"];
+    assert([name_ isEqualToString:@"test4"]);
+}
+
 // Only non-trivial methods have tests.
 
 /*
  STILL TO TEST:
- - (void)terminalPrintBuffer {
- - (void)terminalBeginRedirectingToPrintBuffer {
- - (void)terminalPrintScreen {
  - (void)terminalSetWindowTitle:(NSString *)title {
  - (void)terminalInsertEmptyCharsAtCursor:(int)n {
  - (void)terminalInsertBlankLinesAfterCursor:(int)n {  what if cursor is outside scroll region?

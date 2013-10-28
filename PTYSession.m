@@ -4252,6 +4252,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (BOOL)screenShouldSyncTitle {
+    if (![[PreferencePanel sharedInstance] showBookmarkName]) {
+        return NO;
+    }
     return [[[self addressBookEntry] objectForKey:KEY_SYNC_TITLE] boolValue];
 }
 

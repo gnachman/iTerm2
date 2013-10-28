@@ -1561,7 +1561,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)terminalSetWindowTitle:(NSString *)title {
     NSString *newTitle = [[title copy] autorelease];
-    if ([self syncTitle]) {
+    if ([delegate_ screenShouldSyncTitle]) {
         newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
     }
     [delegate_ screenSetWindowTitle:newTitle];
@@ -1571,7 +1571,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)terminalSetIconTitle:(NSString *)title {
     NSString *newTitle = [[title copy] autorelease];
-    if ([self syncTitle]) {
+    if ([delegate_ screenShouldSyncTitle]) {
         newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
     }
     [delegate_ screenSetName:newTitle];
@@ -2274,16 +2274,6 @@ static void SwapInt(int *a, int *b) {
     if (!unlimitedScrollback_) {
         [linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width];
     }
-}
-
-// Should the profile name be inculded in the window/tab title? Requires both
-// a per-profile option to be on as well as the global option.
-- (BOOL)syncTitle
-{
-    if (![[PreferencePanel sharedInstance] showBookmarkName]) {
-        return NO;
-    }
-    return [delegate_ screenShouldSyncTitle];
 }
 
 - (BOOL)useScrollbackWithRegion

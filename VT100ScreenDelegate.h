@@ -196,4 +196,8 @@
 // Ok to write to shell?
 - (BOOL)screenShouldSendReport;
 
+// Should the profile name be inculded in the window/tab title? Requires both
+// a per-profile option to be on as well as the global option.
+- (BOOL)screenShouldSyncTitle;
+
 @end
