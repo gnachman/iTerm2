@@ -1391,7 +1391,13 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (void)terminalCarriageReturn {
-    [currentGrid_ moveCursorToLeftMargin];
+    if (currentGrid_.useScrollRegionCols && currentGrid_.cursorX == currentGrid_.leftMargin) {
+        // I observed that xterm will move the cursor to the first column when it gets a CR
+        // while the cursor is at the left margin of a vsplit. Not sure why.
+        currentGrid_.cursorX = 0;
+    } else {
+        [currentGrid_ moveCursorToLeftMargin];
+    }
     [delegate_ screenTriggerableChangeDidOccur];
 }
 

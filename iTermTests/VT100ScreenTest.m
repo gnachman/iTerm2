@@ -2775,12 +2775,94 @@
             @".........."]);
 }
 
+- (void)testIndex {
+    // We don't implement index separately from linefeed. As far as I can tell they are the same.
+    // Both respect vsplits.
+    
+    // Test simple indexing
+    VT100Screen *screen = [self screenWithWidth:10 height:4];
+    [self appendLines:@[ @"abcdefghij",
+                         @"klmnopqrst",
+                         @"0123456789" ] toScreen:screen];
+    [screen terminalMoveCursorToX:1 y:3];
+    [screen terminalLineFeed];
+    [screen terminalLineFeed];
+    assert([[screen compactLineDump] isEqualToString:
+            @"klmnopqrst\n"
+            @"0123456789\n"
+            @"..........\n"
+            @".........."]);
+
+
+    // With vsplit and hsplit
+    screen = [self screenWithWidth:10 height:4];
+    [self appendLines:@[ @"abcdefghij",
+                         @"klmnopqrst",
+                         @"0123456789" ] toScreen:screen];
+    [screen terminalSetScrollRegionTop:1 bottom:2];
+    [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSetLeftMargin:2 rightMargin:5];
+    [screen terminalMoveCursorToX:2 y:2];
+    assert(screen.cursorY == 2);
+    // top-left is c, bottom-right is p
+    [screen terminalLineFeed];
+    assert(screen.cursorY == 3);
+    [screen terminalLineFeed];
+    assert(screen.cursorY == 3);
+    assert([[screen compactLineDump] isEqualToString:
+            @"abcdefghij\n"
+            @"kl2345qrst\n"
+            @"01....6789\n"
+            @".........."]);
+
+    // Test simple reverse indexing
+    screen = [self screenWithWidth:10 height:4];
+    [self appendLines:@[ @"abcdefghij",
+                         @"klmnopqrst",
+                         @"0123456789" ] toScreen:screen];
+    [screen terminalMoveCursorToX:1 y:2];
+    [screen terminalReverseIndex];
+    assert(screen.cursorY == 1);
+    assert([[screen compactLineDump] isEqualToString:
+            @"abcdefghij\n"
+            @"klmnopqrst\n"
+            @"0123456789\n"
+            @".........."]);
+    
+    [screen terminalReverseIndex];
+    assert([[screen compactLineDump] isEqualToString:
+            @"..........\n"
+            @"abcdefghij\n"
+            @"klmnopqrst\n"
+            @"0123456789"]);
+    
+    
+    // Reverse index with vsplit and hsplit
+    screen = [self screenWithWidth:10 height:4];
+    [self appendLines:@[ @"abcdefghij",
+                         @"klmnopqrst",
+                         @"0123456789" ] toScreen:screen];
+    [screen terminalSetScrollRegionTop:1 bottom:2];
+    [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSetLeftMargin:2 rightMargin:5];
+    [screen terminalMoveCursorToX:2 y:3];
+    // top-left is c, bottom-right is p
+    assert(screen.cursorY == 3);
+    [screen terminalReverseIndex];
+    assert(screen.cursorY == 2);
+    [screen terminalReverseIndex];
+    assert(screen.cursorY == 2);
+    assert([[screen compactLineDump] isEqualToString:
+            @"abcdefghij\n"
+            @"kl....qrst\n"
+            @"01mnop6789\n"
+            @".........."]);
+}
+
 // Only non-trivial methods have tests.
 
 /*
  STILL TO TEST:
- - (void)terminalEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after   double check this is defined right
-- (void)terminalReverseIndex
  - (void)terminalResetPreservingPrompt:(BOOL)preservePrompt both values of argument
  - (void)terminalSoftReset {
  - (void)terminalSetWidth:(int)width {
