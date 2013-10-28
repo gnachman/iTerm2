@@ -1484,10 +1484,13 @@ static const double kInterBellQuietPeriod = 0.1;
 {
     // TODO: take a number argument
     // TODO: respect left-right margins
-    while (![self haveTabStopAt:currentGrid_.cursorX] && currentGrid_.cursorX > 0) {
+    if (currentGrid_.cursorX > 0) {
         currentGrid_.cursorX = currentGrid_.cursorX - 1;
+        while (![self haveTabStopAt:currentGrid_.cursorX] && currentGrid_.cursorX > 0) {
+            currentGrid_.cursorX = currentGrid_.cursorX - 1;
+        }
+        [delegate_ screenTriggerableChangeDidOccur];
     }
-    [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (void)terminalSetCursorX:(int)x {

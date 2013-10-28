@@ -2463,13 +2463,110 @@
     assert(screen.cursorY == 1);
 }
 
+- (NSArray *)tabStopsInScreen:(VT100Screen *)screen {
+    NSMutableArray *actual = [NSMutableArray array];
+    [screen terminalCarriageReturn];
+    int lastX = screen.cursorX;
+    while (1) {
+        [screen terminalAppendTabAtCursor];
+        if (screen.cursorX == lastX) {
+            return actual;
+        }
+        [actual addObject:@(screen.cursorX - 1)];
+    }
+}
+
+- (void)testTabStops {
+    VT100Screen *screen = [self screenWithWidth:20 height:3];
+    
+    // Test default tab stops
+    NSArray *expected = @[ @(8), @(16)];
+    assert([expected isEqualToArray:[self tabStopsInScreen:screen]]);
+    
+    // Add a tab stop
+    [screen terminalMoveCursorToX:10 y:1];
+    [screen terminalSetTabStopAtCursor];
+    expected = @[ @(8), @(9), @(16)];
+    assert([expected isEqualToArray:[self tabStopsInScreen:screen]]);
+    
+    // Remove a tab stop
+    [screen terminalMoveCursorToX:9 y:1];
+    [screen terminalRemoveTabStopAtCursor];
+    expected = @[ @(9), @(16)];
+    assert([expected isEqualToArray:[self tabStopsInScreen:screen]]);
+    
+    // Appending a tab should respect vsplits. (currently not implemented)
+    screen = [self screenWithWidth:20 height:3];
+    [screen terminalMoveCursorToX:1 y:1];
+    [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSetLeftMargin:0 rightMargin:7];
+    [screen terminalAppendTabAtCursor];
+    ITERM_TEST_KNOWN_BUG(screen.cursorX == 1, screen.cursorX == 9);
+    
+    // Tabbing over text doesn't change it
+    screen = [self screenWithWidth:20 height:3];
+    [screen appendStringAtCursor:@"0123456789" ascii:YES];
+    [screen terminalMoveCursorToX:1 y:1];
+    [screen terminalAppendTabAtCursor];
+    assert([ScreenCharArrayToStringDebug([screen getLineAtScreenIndex:0],
+                                         screen.width) isEqualToString:@"0123456789"]);
+
+    // Tabbing over all nils replaces them with tab fillers and a tab character at the end
+    screen = [self screenWithWidth:20 height:3];
+    [screen terminalAppendTabAtCursor];
+    screen_char_t *line = [screen getLineAtScreenIndex:0];
+    for (int i = 0; i < 7; i++) {
+        assert(line[i].code == TAB_FILLER);
+    }
+    assert(line[7].code == '\t');
+    
+    // If there is a single non-nil, then the cursor just moves.
+    screen = [self screenWithWidth:20 height:3];
+    [screen terminalMoveCursorToX:3 y:1];
+    [screen appendStringAtCursor:@"x" ascii:YES];
+    [screen terminalMoveCursorToX:1 y:1];
+    [screen terminalAppendTabAtCursor];
+    assert([ScreenCharArrayToStringDebug([screen getLineAtScreenIndex:0],
+                                         screen.width) isEqualToString:@"x"]);
+    assert(screen.cursorX == 9);
+    
+    // Wrapping around to the next line converts eol_hard to eol_soft.
+    screen = [self screenWithWidth:20 height:3];
+    [screen terminalAppendTabAtCursor];  // 9
+    [screen terminalAppendTabAtCursor];  // 15
+    [screen terminalAppendTabAtCursor];  // (newline) 1
+    assert(screen.cursorX == 1);
+    assert(screen.cursorY == 2);
+    line = [screen getLineAtScreenIndex:0];
+    assert(line[screen.width].code == EOL_SOFT);
+    
+    // Test backtab (it's simple, no wraparound)
+    screen = [self screenWithWidth:20 height:3];
+    [screen terminalMoveCursorToX:1 y:2];
+    [screen terminalAppendTabAtCursor];
+    [screen terminalAppendTabAtCursor];
+    assert(screen.cursorX == 17);
+    [screen terminalBackTab];
+    assert(screen.cursorX == 9);
+    [screen terminalBackTab];
+    assert(screen.cursorX == 1);
+    [screen terminalBackTab];
+    assert(screen.cursorX == 1);
+    assert(screen.cursorY == 2);
+    
+    // backtap should (but doesn't yet) respect vsplits.
+    screen = [self screenWithWidth:20 height:3];
+    [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSetLeftMargin:10 rightMargin:19];
+    [screen terminalMoveCursorToX:11 y:1];
+    [screen terminalBackTab];
+    ITERM_TEST_KNOWN_BUG(screen.cursorX == 11, screen.cursorX == 9);
+}
+
 // Only non-trivial methods have tests.
 
 /*
  STILL TO TEST:
- - (void)terminalBackspace  cursor in margin, wrap-around eol_soft, wrap-around dwc_skip
- - (void)terminalSetTabStopAtCursor {
- - (void)terminalAppendTabAtCursor known bug that vsplits aren't respected, no more tab stops, wrap around to next line converting eol_hard to soft, if all nulls were traversed convert them to tab fillers otherwise just move cursor
  - (void)terminalMoveCursorToX:(int)x y:(int)y  should respect origin mode
  - (void)terminalSaveCursorAndCharsetFlags
  - (void)terminalRestoreCursorAndCharsetFlags
@@ -2479,7 +2576,6 @@
 - (void)terminalReverseIndex
  - (void)terminalResetPreservingPrompt:(BOOL)preservePrompt both values of argument
  - (void)terminalSoftReset {
- - (void)terminalRemoveTabStopAtCursor {
  - (void)terminalSetWidth:(int)width {
  - (void)terminalBackTab
  - (void)terminalEraseCharactersAfterCursor:(int)j {

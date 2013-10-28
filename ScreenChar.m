@@ -354,7 +354,7 @@ NSString* ScreenCharArrayToStringDebug(screen_char_t* screenChars,
     NSMutableString* result = [NSMutableString stringWithCapacity:lineLength];
     for (int i = 0; i < lineLength; ++i) {
         unichar c = screenChars[i].code;
-        if (c != DWC_RIGHT) {
+        if (c != 0 && c != DWC_RIGHT) {
             [result appendString:ScreenCharToStr(&screenChars[i])];
         }
     }
