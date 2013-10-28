@@ -615,7 +615,6 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)cursorToX:(int)x
 {
-    // TODO What's the right thing to do if this is the right half of a DWC?
     int xPos;
     int leftMargin = [currentGrid_ leftMargin];
     int rightMargin = [currentGrid_ rightMargin];
@@ -2318,7 +2317,7 @@ static void SwapInt(int *a, int *b) {
 
     if ([terminal_ originMode]) {
         yPos += topMargin;
-        yPos = MIN(topMargin, MAX(bottomMargin, yPos));
+        yPos = MAX(topMargin, MIN(bottomMargin, yPos));
     }
     currentGrid_.cursorY = yPos;
 

@@ -130,11 +130,11 @@
 }
 
 - (void)setCursorX:(int)cursorX {
-    cursor_.x = MIN(size_.width + 1, MAX(0, cursorX));
+    cursor_.x = MIN(size_.width, MAX(0, cursorX));
 }
 
 - (void)setCursorY:(int)cursorY {
-    cursor_.y = MIN(size_.height, MAX(0, cursorY));
+    cursor_.y = MIN(size_.height - 1, MAX(0, cursorY));
 }
 
 - (void)setCursor:(VT100GridCoord)coord {

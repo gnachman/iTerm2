@@ -2563,6 +2563,30 @@
     ITERM_TEST_KNOWN_BUG(screen.cursorX == 11, screen.cursorX == 9);
 }
 
+- (void)testMoveCursor {
+    // When not in origin mode, scroll regions are ignored
+    VT100Screen *screen = [self screenWithWidth:20 height:20];
+    [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSetLeftMargin:5 rightMargin:15];
+    [screen terminalSetScrollRegionTop:5 bottom:15];
+    [screen terminalMoveCursorToX:1 y:1];
+    assert(screen.cursorX == 1);
+    assert(screen.cursorY == 1);
+    [screen terminalMoveCursorToX:100 y:100];
+    assert(screen.cursorX == 21);
+    assert(screen.cursorY == 20);
+    
+    // In origin mode, coord is relative to origin and cursor is forced inside scroll region
+    [self sendEscapeCodes:@"^[[?6h"];  // enter origin mode
+    [screen terminalMoveCursorToX:1 y:1];
+    assert(screen.cursorX == 6);
+    assert(screen.cursorY == 6);
+    
+    [screen terminalMoveCursorToX:100 y:100];
+    assert(screen.cursorX == 16);
+    assert(screen.cursorY == 16);
+}
+
 // Only non-trivial methods have tests.
 
 /*
