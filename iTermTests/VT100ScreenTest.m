@@ -37,6 +37,9 @@
     BOOL ambiguousIsDoubleWidth_;
     int updates_;
     BOOL shouldSendContentsChangedNotification_;
+    BOOL printingAllowed_;
+    NSMutableString *printed_;
+    NSMutableString *triggerLine_;
 }
 
 - (void)setup {
@@ -50,6 +53,8 @@
     ambiguousIsDoubleWidth_ = NO;
     updates_ = 0;
     shouldSendContentsChangedNotification_ = NO;
+    printingAllowed_ = YES;
+    triggerLine_ = [NSMutableString string];
 }
 
 - (VT100Screen *)screen {
@@ -270,6 +275,7 @@
 
 - (void)screenTriggerableChangeDidOccur {
     ++triggers_;
+    triggerLine_ = [NSMutableString string];
 }
 
 - (void)screenSetCursorVisible:(BOOL)visible {
@@ -316,6 +322,25 @@
 
 - (BOOL)screenShouldSendContentsChangedNotification {
     return shouldSendContentsChangedNotification_;
+}
+
+- (BOOL)screenShouldBeginPrinting {
+    return printingAllowed_;
+}
+
+- (void)screenDidAppendStringToCurrentLine:(NSString *)string {
+    [triggerLine_ appendString:string];
+}
+
+- (void)screenPrintString:(NSString *)s {
+    if (!printed_) {
+        printed_ = [NSMutableString string];
+    }
+    [printed_ appendString:s];
+}
+
+- (void)screenPrintVisibleArea {
+    [self screenPrintString:@"(screen dump)"];
 }
 
 - (void)testResizeWidthHeight {
@@ -2360,5 +2385,70 @@
     shouldSendContentsChangedNotification_ = YES;
     assert([screen shouldSendContentsChangedNotification]);
 }
+
+#pragma mark - Test for VT100TerminalDelegate methods
+
+- (void)testPrinting {
+    VT100Screen *screen = [self screenWithWidth:20 height:3];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    printingAllowed_ = YES;
+    [screen terminalBeginRedirectingToPrintBuffer];
+    [screen terminalAppendString:@"test" isAscii:YES];
+    [screen terminalLineFeed];
+    [screen terminalPrintBuffer];
+    assert([printed_ isEqualToString:@"test\n"]);
+    printed_ = nil;
+    
+    printingAllowed_ = NO;
+    [screen terminalBeginRedirectingToPrintBuffer];
+    [screen terminalAppendString:@"test" isAscii:YES];
+    assert([triggerLine_ isEqualToString:@"test"]);
+    [screen terminalLineFeed];
+    assert([triggerLine_ isEqualToString:@""]);
+    [screen terminalPrintBuffer];
+    assert(!printed_);
+    assert([ScreenCharArrayToStringDebug([screen getLineAtScreenIndex:0],
+                                         screen.width) isEqualToString:@"test"]);
+    
+    printed_ = nil;
+    printingAllowed_ = YES;
+    [screen terminalPrintScreen];
+    assert([printed_ isEqualToString:@"(screen dump)"]);
+}
+
+// Only non-trivial methods have tests.
+
+/*
+ STILL TO TEST:
+ - (void)terminalBackspace  cursor in margin, wrap-around eol_soft, wrap-around dwc_skip
+ - (void)terminalSetTabStopAtCursor {
+ - (void)terminalAppendTabAtCursor known bug that vsplits aren't respected, no more tab stops, wrap around to next line converting eol_hard to soft, if all nulls were traversed convert them to tab fillers otherwise just move cursor
+ - (void)terminalMoveCursorToX:(int)x y:(int)y  should respect origin mode
+ - (void)terminalSaveCursorAndCharsetFlags
+ - (void)terminalRestoreCursorAndCharsetFlags
+ - (void)terminalSetScrollRegionTop:(int)top bottom:(int)bottom // when origin mode is on, cursor moves to tl of region, else 0,
+ - (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after
+ - (void)terminalEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after   double check this is defined right
+- (void)terminalReverseIndex
+ - (void)terminalResetPreservingPrompt:(BOOL)preservePrompt both values of argument
+ - (void)terminalSoftReset {
+ - (void)terminalRemoveTabStopAtCursor {
+ - (void)terminalSetWidth:(int)width {
+ - (void)terminalBackTab
+ - (void)terminalEraseCharactersAfterCursor:(int)j {
+ - (void)terminalPrintBuffer {
+ - (void)terminalBeginRedirectingToPrintBuffer {
+ - (void)terminalPrintScreen {
+ - (void)terminalSetWindowTitle:(NSString *)title {
+ - (void)terminalInsertEmptyCharsAtCursor:(int)n {
+ - (void)terminalInsertBlankLinesAfterCursor:(int)n {  what if cursor is outside scroll region?
+ - (void)terminalDeleteLinesAtCursor:(int)n {
+ - (void)terminalSetPixelWidth:(int)width height:(int)height {
+ - (void)terminalScrollUp:(int)n {
+ - (void)terminalSendModifiersDidChangeTo:(int *)modifiers
+ numValues:(int)numValues {
+
+ 
+ */
 
 @end

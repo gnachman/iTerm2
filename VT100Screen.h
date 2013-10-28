@@ -20,7 +20,6 @@ extern int kVT100ScreenMinRows;
 {
     NSMutableSet* tabStops_;
     VT100Terminal *terminal_;
-    PTYTask *shell_;
     id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
     // BOOLs indicating, for each of the characters sets, which ones are in line-drawing mode.
@@ -71,7 +70,6 @@ extern int kVT100ScreenMinRows;
 }
 
 @property(nonatomic, retain) VT100Terminal *terminal;
-@property(nonatomic, retain) PTYTask *shell;
 @property(nonatomic, assign) BOOL audibleBell;
 @property(nonatomic, assign) BOOL showBellIndicator;
 @property(nonatomic, assign) BOOL flashBell;

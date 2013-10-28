@@ -15,8 +15,6 @@
 int kVT100ScreenMinColumns = 2;
 int kVT100ScreenMinRows = 2;
 
-static const int kMaxLinesToScrollAtOneTime = 1024;  // Prevents DOS by XTERMCC_SU/XTERMCC_SD
-
 static const int kDefaultScreenColumns = 80;
 static const int kDefaultScreenRows = 25;
 static const int kDefaultMaxScrollbackLines = 1000;
@@ -31,7 +29,6 @@ static const double kInterBellQuietPeriod = 0.1;
 @implementation VT100Screen
 
 @synthesize terminal = terminal_;
-@synthesize shell = shell_;
 @synthesize audibleBell = audibleBell_;
 @synthesize showBellIndicator = showBellIndicator_;
 @synthesize flashBell = flashBell_;
@@ -85,7 +82,6 @@ static const double kInterBellQuietPeriod = 0.1;
     [linebuffer_ release];
     [dvr_ release];
     [terminal_ release];
-    [shell_ release];
     [charsetUsesLineDrawingMode_ release];
     [findContext_ release];
     [super dealloc];
@@ -146,7 +142,7 @@ static const double kInterBellQuietPeriod = 0.1;
         (new_width == currentGrid_.size.width &&
          new_height == currentGrid_.size.height)) {
             return;
-        }
+    }
     VT100GridSize oldSize = currentGrid_.size;
     new_width = MAX(new_width, 1);
     new_height = MAX(new_height, 1);
@@ -619,6 +615,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)cursorToX:(int)x
 {
+    // TODO What's the right thing to do if this is the right half of a DWC?
     int xPos;
     int leftMargin = [currentGrid_ leftMargin];
     int rightMargin = [currentGrid_ rightMargin];
@@ -1250,12 +1247,12 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (BOOL)terminalShouldSendReport
 {
-    return shell_ != nil;
+    return [delegate_ screenShouldSendReport];
 }
 
 - (void)terminalSendReport:(NSData *)report
 {
-    if (shell_ && report) {
+    if ([delegate_ screenShouldSendReport] && report) {
         [delegate_ screenWriteDataToTask:report];
     }
 }
@@ -1309,7 +1306,6 @@ static const double kInterBellQuietPeriod = 0.1;
         bottom >= 0 &&
         bottom < currentGrid_.size.height &&
         bottom >= top) {
-        assert(bottom < currentGrid_.size.height);
         currentGrid_.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
 
         if ([terminal_ originMode]) {
@@ -1389,22 +1385,11 @@ static const double kInterBellQuietPeriod = 0.1;
     [delegate_ screenTriggerableChangeDidOccur];
 }
 
-- (void)terminalIndex {
-    if (currentGrid_.cursorY == currentGrid_.bottomMargin) {
-        [self incrementOverflowBy:[currentGrid_ scrollUpIntoLineBuffer:linebuffer_
-                                                   unlimitedScrollback:unlimitedScrollback_
-                                               useScrollbackWithRegion:[self useScrollbackWithRegion]]];
-    } else {
-        currentGrid_.cursorY = currentGrid_.cursorY + 1;
-    }
-    [delegate_ screenTriggerableChangeDidOccur];
-}
-
 - (void)terminalReverseIndex {
     if (currentGrid_.cursorY == currentGrid_.topMargin) {
         [currentGrid_ scrollDown];
     } else {
-        currentGrid_.cursorY = currentGrid_.cursorY - 1;
+        currentGrid_.cursorY = MAX(0, currentGrid_.cursorY - 1);
     }
     [delegate_ screenTriggerableChangeDidOccur];
 }
@@ -1480,7 +1465,8 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (void)terminalSetWidth:(int)width {
-    if (![delegate_ screenShouldInitiateWindowResize]) {
+    if ([delegate_ screenShouldInitiateWindowResize] &&
+        ![delegate_ screenWindowIsFullscreen]) {
         // set the column
         [delegate_ screenResizeToWidth:width
                                 height:currentGrid_.size.height];
@@ -1526,8 +1512,8 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (void)terminalPrintBuffer {
-    if ([delegate_ screenShouldBeginPrinting]) {
-        [self doPrint];  // TODO: I think this does the wrong thing if the buffer is empty (it prints the screen)
+    if ([delegate_ screenShouldBeginPrinting] && [printBuffer_ length] > 0) {
+        [self doPrint];  // TODO: Make sure other terminals don't print the screen when the buffer is empthy
     }
 }
 
@@ -1584,7 +1570,7 @@ static const double kInterBellQuietPeriod = 0.1;
     [thePasteboard setString:string forType:NSStringPboardType];
 }
 
-- (void)terminalInsertEmptyCharAtCursor:(int)n {
+- (void)terminalInsertEmptyCharsAtCursor:(int)n {
     [currentGrid_ insertChar:[currentGrid_ defaultChar]
                           at:currentGrid_.cursor
                        times:n];
@@ -1620,7 +1606,6 @@ static const double kInterBellQuietPeriod = 0.1;
 - (void)terminalSetRows:(int)rows andColumns:(int)columns {
     if ([delegate_ screenShouldInitiateWindowResize] &&
         ![delegate_ screenWindowIsFullscreen]) {
-        // set the column
         [delegate_ screenResizeToWidth:columns
                                 height:rows];
 
@@ -1641,7 +1626,6 @@ static const double kInterBellQuietPeriod = 0.1;
     if ([delegate_ screenShouldInitiateWindowResize] &&
         ![delegate_ screenWindowIsFullscreen]) {
         // TODO: Only allow this if there is a single session in the tab.
-        point.y = [[delegate_ screenWindowScreen] frame].size.height - point.y;
         [delegate_ screenMoveWindowTopLeftPointTo:point];
     }
 }
@@ -1662,7 +1646,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)terminalScrollUp:(int)n {
     for (int i = 0;
-         i < MIN(MAX(currentGrid_.size.height, kMaxLinesToScrollAtOneTime), n);
+         i < MIN(currentGrid_.size.height, n);
          i++) {
         [self incrementOverflowBy:[currentGrid_ scrollUpIntoLineBuffer:linebuffer_
                                                    unlimitedScrollback:unlimitedScrollback_
@@ -1673,7 +1657,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)terminalScrollDown:(int)n {
     [currentGrid_ scrollRect:[currentGrid_ scrollRegionRect]
-                      downBy:MIN(MAX(currentGrid_.size.height, kMaxLinesToScrollAtOneTime), n)];
+                      downBy:MIN(currentGrid_.size.height, n)];
     [delegate_ screenTriggerableChangeDidOccur];
 }
 
@@ -1682,40 +1666,35 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (NSPoint)terminalWindowTopLeftPixelCoordinate {
-    NSRect frame = [delegate_ screenWindowFrame];
-    NSScreen *screen = [delegate_ screenWindowScreen];
-    return NSMakePoint(frame.origin.x,
-                       [screen frame].size.height - frame.origin.y - frame.size.height);
+    return [delegate_ screenWindowTopLeftPixelCoordinate];
 }
 
-- (int)terminalWindowWidth {
+- (int)terminalWindowWidthInPixels {
     NSRect frame = [delegate_ screenWindowFrame];
     return frame.size.width;
 }
 
-- (int)terminalWindowHeight {
+- (int)terminalWindowHeightInPixels {
     NSRect frame = [delegate_ screenWindowFrame];
     return frame.size.height;
 }
 
 - (int)terminalScreenHeightInCells {
-    // TODO: This isn't really right since a window couldn't be made this large given the
-    // window decorations.
-    NSRect screenSize = [[delegate_ screenWindowScreen] frame];
     //  TODO: WTF do we do with panes here?
-    float nch = [delegate_ screenWindowFrame].size.height - [delegate_ screenSize].height;
+    NSRect screenFrame = [delegate_ screenWindowScreenFrame];
+    NSRect windowFrame = [delegate_ screenWindowFrame];
+    float roomToGrow = screenFrame.size.height - windowFrame.size.height;
     NSSize cellSize = [delegate_ screenCellSize];
-    return (screenSize.size.height - nch) / cellSize.height;
+    return [self height] + roomToGrow / cellSize.height;
 }
 
 - (int)terminalScreenWidthInCells {
-    // TODO: This isn't really right since a window couldn't be made this large given the
-    // window decorations.
-    NSRect screenSize = [[delegate_ screenWindowScreen] frame];
     //  TODO: WTF do we do with panes here?
-    float wch = [delegate_ screenWindowFrame].size.width - [delegate_ screenSize].width;
+    NSRect screenFrame = [delegate_ screenWindowScreenFrame];
+    NSRect windowFrame = [delegate_ screenWindowFrame];
+    float roomToGrow = screenFrame.size.width - windowFrame.size.width;
     NSSize cellSize = [delegate_ screenCellSize];
-    return (screenSize.size.width - wch - MARGIN * 2) / cellSize.width;
+    return [self width] + roomToGrow / cellSize.width;
 }
 
 - (NSString *)terminalIconTitle {
@@ -1799,6 +1778,8 @@ static const double kInterBellQuietPeriod = 0.1;
     }
     primaryGrid_.savedDefaultChar = [primaryGrid_ defaultChar];
     currentGrid_ = altGrid_;
+    [currentGrid_ markAllCharsDirty:YES];
+    [delegate_ screenNeedsRedraw];
 }
 
 - (void)terminalShowPrimaryBuffer
@@ -2144,6 +2125,10 @@ static void SwapInt(int *a, int *b) {
     int actualEndX = [delegate_ screenSelectionEndX];
     int actualEndY = [delegate_ screenSelectionEndY];
 
+    if (endExtends) {
+        // Initialize endExtends for predictable behavior.
+        *endExtends = NO;
+    }
     // Use the predecessor of endx,endy so it will have a legal position in the line buffer.
     if (actualEndX == [self width] && endExtends) {
         screen_char_t *line = [self getLineAtIndex:actualEndY];

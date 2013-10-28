@@ -717,6 +717,7 @@
 		1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultGlobalKeyMap.plist; sourceTree = "<group>"; };
 		1D53FD13181C4B4B00524D4F /* FindContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindContext.h; sourceTree = "<group>"; };
 		1D53FD14181C4B4B00524D4F /* FindContext.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FindContext.m; sourceTree = "<group>"; };
+		1D53FD18181C700B00524D4F /* VT100TerminalDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100TerminalDelegate.h; sourceTree = "<group>"; };
 		1D624BC71386E09E00111319 /* GTMCarbonEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GTMCarbonEvent.m; sourceTree = "<group>"; };
 		1D624BD81386E0B600111319 /* GTMCarbonEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMCarbonEvent.h; sourceTree = "<group>"; };
 		1D624BDC1386E0FA00111319 /* GTMDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMDefines.h; sourceTree = "<group>"; };
@@ -1090,6 +1091,7 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				1D53FD18181C700B00524D4F /* VT100TerminalDelegate.h */,
 				1D53FD13181C4B4B00524D4F /* FindContext.h */,
 				1D53FD14181C4B4B00524D4F /* FindContext.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,

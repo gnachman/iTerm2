@@ -62,6 +62,9 @@
 // Returns if the window is full-screen.
 - (BOOL)screenWindowIsFullscreen;
 
+// Returns the top left pixel coordinate of the window.
+- (NSPoint)screenWindowTopLeftPixelCoordinate;
+
 // Delegate should move the window's top left point to the given screen coordinate.
 - (void)screenMoveWindowTopLeftPointTo:(NSPoint)point;
 
@@ -79,6 +82,9 @@
 
 // Send input to the task.
 - (void)screenWriteDataToTask:(NSData *)data;
+
+// Returns the visible frame of the display the screen's window is in.
+- (NSRect)screenWindowScreenFrame;
 
 // Returns the frame of the window this screen is.
 - (NSRect)screenWindowFrame;
@@ -186,5 +192,8 @@
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color;
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color;
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color;
+
+// Ok to write to shell?
+- (BOOL)screenShouldSendReport;
 
 @end

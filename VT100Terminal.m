@@ -4245,7 +4245,7 @@ static VT100TCC decode_string(unsigned char *datap,
             [delegate_ terminalCarriageReturn];
             // fall through
         case VT100CSI_IND:
-            [delegate_ terminalIndex];
+            [delegate_ terminalLineFeed];  // TODO Make sure this is kosher. How does xterm handle index with scroll regions?
             break;
         case VT100CSI_RI:
             [delegate_ terminalReverseIndex];
@@ -4441,7 +4441,7 @@ static VT100TCC decode_string(unsigned char *datap,
             [delegate_ terminalSetIconTitle:token.u.string];
             break;
         case XTERMCC_INSBLNK:
-            [delegate_ terminalInsertEmptyCharAtCursor:token.u.csi.p[0]];
+            [delegate_ terminalInsertEmptyCharsAtCursor:token.u.csi.p[0]];
             break;
         case XTERMCC_INSLN:
             [delegate_ terminalInsertBlankLinesAfterCursor:token.u.csi.p[0]];
@@ -4498,8 +4498,8 @@ static VT100TCC decode_string(unsigned char *datap,
         case XTERMCC_REPORT_WIN_PIX_SIZE: {
             // TODO: Some kind of adjustment for panes?
             NSString *s = [NSString stringWithFormat:@"\033[4;%d;%dt",
-                           [delegate_ terminalWindowWidth],
-                           [delegate_ terminalWindowHeight]];
+                           [delegate_ terminalWindowWidthInPixels],
+                           [delegate_ terminalWindowHeightInPixels]];
             [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }

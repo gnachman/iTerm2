@@ -459,7 +459,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [TEXTVIEW release];
 
     // assign terminal and task objects
-    [SCREEN setShell:SHELL];
     TERMINAL.delegate = SCREEN;
     [SHELL setDelegate:self];
 
@@ -831,7 +830,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     TEXTVIEW = nil;
 
     [SHELL setDelegate:nil];
-    [SCREEN setShell:nil];
     SCREEN.delegate = nil;
     [SCREEN setTerminal:nil];
     TERMINAL.delegate = nil;
@@ -4274,12 +4272,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenResizeToWidth:(int)width height:(int)height {
-    NSScreen *screen = [self screenWindowScreen];
-    if (screen) {
-        width = MIN(screen.visibleFrame.size.width, width);
-        height = MIN(screen.visibleFrame.size.height, height);
-        [[self tab] sessionInitiatedResize:self width:width height:height];
-    }
+    [[self tab] sessionInitiatedResize:self width:width height:height];
 }
 
 - (BOOL)screenShouldBeginPrinting {
@@ -4319,11 +4312,19 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenMoveWindowTopLeftPointTo:(NSPoint)point {
+    point.y = [[self screenWindowScreen] frame].size.height - point.y;
     [[[self tab] parentWindow] windowSetFrameTopLeftPoint:point];
 }
 
-- (NSScreen *)screenWindowScreen {
-    return [[[self tab] parentWindow] windowScreen];
+- (NSRect)screenWindowScreenFrame {
+    return [[[[self tab] parentWindow] windowScreen] frame];
+}
+
+- (NSPoint)screenWindowTopLeftPixelCoordinate {
+    NSRect frame = [self screenWindowFrame];
+    NSRect screenFrame = [self screenWindowScreenFrame];
+    return NSMakePoint(frame.origin.x,
+                       screenFrame.size.height - frame.origin.y - frame.size.height);
 }
 
 // If flag is set, miniaturize; otherwise, deminiaturize.
@@ -4626,6 +4627,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                                                          blue:color
                                                                         alpha:1]
                                forTabViewItem:[[self ptytab] tabViewItem]];
+}
+
+- (BOOL)screenShouldSendReport {
+    return SHELL != nil;
 }
 
 @end
