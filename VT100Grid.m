@@ -54,6 +54,7 @@
 }
 
 - (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber {
+    assert(lineNumber >= 0);
     return [[lines_ objectAtIndex:(screenTop_ + lineNumber) % size_.height] mutableBytes];
 }
 

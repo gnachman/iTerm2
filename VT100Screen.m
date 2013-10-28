@@ -1126,12 +1126,14 @@ static const double kInterBellQuietPeriod = 0.1;
     int cursorY = currentGrid_.cursorY;
 
     if (cursorX > leftMargin) {
+        // Cursor can move back without hitting the left margin; easy and normal case.
         if (cursorX >= currentGrid_.size.width) {
             currentGrid_.cursorX = cursorX - 2;
         } else {
             currentGrid_.cursorX = cursorX - 1;
         }
     } else if (cursorX == 0 && cursorY > 0 && !currentGrid_.useScrollRegionCols) {
+        // Cursor is at the left margin and can wrap around.
         screen_char_t* aLine = [self getLineAtScreenIndex:cursorY - 1];
         if (aLine[currentGrid_.size.width].code == EOL_SOFT) {
             currentGrid_.cursor = VT100GridCoordMake(currentGrid_.size.width - 1, cursorY - 1);
@@ -1443,10 +1445,12 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (void)terminalSetLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight {
-    currentGrid_.scrollRegionCols = VT100GridRangeMake(scrollLeft,
-                                                       scrollRight - scrollLeft + 1);
-    // set cursor to the home position
-    [self cursorToX:1 Y:1];
+    if (currentGrid_.useScrollRegionCols) {
+        currentGrid_.scrollRegionCols = VT100GridRangeMake(scrollLeft,
+                                                           scrollRight - scrollLeft + 1);
+        // set cursor to the home position
+        [self cursorToX:1 Y:1];
+    }
 }
 
 - (void)terminalSetCharset:(int)charset toLineDrawingMode:(BOOL)lineDrawingMode {

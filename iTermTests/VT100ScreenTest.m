@@ -1195,8 +1195,8 @@
     screen.delegate = (id<VT100ScreenDelegate>)self;
 
     [screen terminalSetScrollRegionTop:1 bottom:2];
-    [screen terminalSetLeftMargin:1 rightMargin:2];
     [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSetLeftMargin:1 rightMargin:2];
     [screen terminalSaveCursorAndCharsetFlags];
     [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrstuvwxyz"] toScreen:screen];
     [screen clearBuffer];
@@ -1464,8 +1464,8 @@
             @"mnop.\n"
             @"....."]);
     [screen terminalSetScrollRegionTop:1 bottom:3];
-    [screen terminalSetLeftMargin:1 rightMargin:3];
     [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSetLeftMargin:1 rightMargin:3];
     [screen terminalMoveCursorToX:4 y:4];
     [screen linefeed];
     assert([[screen compactLineDump] isEqualToString:
@@ -2414,6 +2414,53 @@
     printingAllowed_ = YES;
     [screen terminalPrintScreen];
     assert([printed_ isEqualToString:@"(screen dump)"]);
+}
+
+- (void)testBackspace {
+    // Normal case
+    VT100Screen *screen = [self screenWithWidth:20 height:3];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen appendStringAtCursor:@"Hello" ascii:YES];
+    [screen terminalMoveCursorToX:5 y:1];
+    [screen terminalBackspace];
+    assert(screen.cursorX == 4);
+    assert(screen.cursorY == 1);
+
+    // Wrap around soft eol
+    screen = [self screenWithWidth:20 height:3];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen appendStringAtCursor:@"12345678901234567890Hello" ascii:YES];
+    [screen terminalMoveCursorToX:1 y:2];
+    [screen terminalBackspace];
+    assert(screen.cursorX == 20);
+    assert(screen.cursorY == 1);
+
+    // No wraparound for hard eol
+    screen = [self screenWithWidth:20 height:3];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen terminalMoveCursorToX:1 y:2];
+    [screen terminalBackspace];
+    assert(screen.cursorX == 1);
+    assert(screen.cursorY == 2);
+
+    // With vsplit, no wrap.
+    screen = [self screenWithWidth:20 height:3];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSetLeftMargin:2 rightMargin:10];
+    [screen terminalMoveCursorToX:3 y:2];
+    [screen terminalBackspace];
+    assert(screen.cursorX == 3);
+    assert(screen.cursorY == 2);
+    
+    // Over DWC_SKIP
+    screen = [self screenWithWidth:20 height:3];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen appendStringAtCursor:@"1234567890123456789Ｗ" ascii:NO];
+    [screen terminalMoveCursorToX:1 y:2];
+    [screen terminalBackspace];
+    assert(screen.cursorX == 19);
+    assert(screen.cursorY == 1);
 }
 
 // Only non-trivial methods have tests.
