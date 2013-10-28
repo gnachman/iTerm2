@@ -40,6 +40,9 @@
     BOOL printingAllowed_;
     NSMutableString *printed_;
     NSMutableString *triggerLine_;
+    BOOL canResize_;
+    BOOL isFullscreen_;
+    VT100GridSize newSize_;
 }
 
 - (void)setup {
@@ -55,6 +58,9 @@
     shouldSendContentsChangedNotification_ = NO;
     printingAllowed_ = YES;
     triggerLine_ = [NSMutableString string];
+    canResize_ = YES;
+    isFullscreen_ = NO;
+    newSize_ = VT100GridSizeMake(0, 0);
 }
 
 - (VT100Screen *)screen {
@@ -269,8 +275,20 @@
     sizeDidChange_++;
 }
 
+- (void)screenResizeToWidth:(int)newWidth height:(int)newHeight {
+    newSize_ = VT100GridSizeMake(newWidth, newHeight);
+}
+
 - (BOOL)screenShouldAppendToScrollbackWithStatusBar {
     return YES;
+}
+
+- (BOOL)screenShouldInitiateWindowResize {
+    return canResize_;
+}
+
+- (BOOL)screenWindowIsFullscreen {
+    return isFullscreen_;
 }
 
 - (void)screenTriggerableChangeDidOccur {
@@ -2964,12 +2982,38 @@
     [screen terminalSetCharset:1 toLineDrawingMode:NO];
     assert([screen allCharacterSetPropertiesHaveDefaultValues]);
 }
+
+- (void)testSetWidth {
+    canResize_ = YES;
+    isFullscreen_ = NO;
+    VT100Screen *screen = [self screenWithWidth:10 height:4];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen terminalSetWidth:6];
+    assert(newSize_.width == 6);
+    assert(newSize_.height == 4);
     
+    newSize_ = VT100GridSizeMake(0, 0);
+    canResize_ = NO;
+    screen = [self screenWithWidth:10 height:4];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen terminalSetWidth:6];
+    assert(newSize_.width == 0);
+    assert(newSize_.height == 0);
+    
+    newSize_ = VT100GridSizeMake(0, 0);
+    canResize_ = YES;
+    isFullscreen_ = YES;
+    screen = [self screenWithWidth:10 height:4];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen terminalSetWidth:6];
+    assert(newSize_.width == 0);
+    assert(newSize_.height == 0);
+}
+
 // Only non-trivial methods have tests.
 
 /*
  STILL TO TEST:
- - (void)terminalSoftReset {
  - (void)terminalSetWidth:(int)width {
  - (void)terminalBackTab
  - (void)terminalEraseCharactersAfterCursor:(int)j {

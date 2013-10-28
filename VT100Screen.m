@@ -1488,9 +1488,7 @@ static const double kInterBellQuietPeriod = 0.1;
         // set the column
         [delegate_ screenResizeToWidth:width
                                 height:currentGrid_.size.height];
-        [self terminalEraseInDisplayBeforeCursor:NO afterCursor:YES];  // erase the screen
-        [self terminalResetTopBottomScrollRegion];
-        [self setUseColumnScrollRegion:NO];
+        [self terminalEraseInDisplayBeforeCursor:YES afterCursor:YES];  // erase the screen
     }
 }
 
