@@ -2622,11 +2622,46 @@
 
 }
 
+- (void)testSetTopBottomScrollRegion {
+    VT100Screen *screen = [self screenWithWidth:20 height:20];
+    [screen terminalSetScrollRegionTop:5 bottom:15];
+    assert(screen.cursorX == 1);
+    assert(screen.cursorY == 1);
+    [screen terminalMoveCursorToX:5 y:16];
+    [screen terminalAppendString:@"Hello" isAscii:YES];
+    assert([ScreenCharArrayToStringDebug([screen getLineAtScreenIndex:15],
+                                         screen.width) isEqualToString:@"Hello"]);
+    [screen terminalLineFeed];
+    assert([ScreenCharArrayToStringDebug([screen getLineAtScreenIndex:14],
+                                         screen.width) isEqualToString:@"Hello"]);
+    
+    // When origin mode is on, cursor should move to top left of scroll region.
+    screen = [self screenWithWidth:20 height:20];
+    [self sendEscapeCodes:@"^[[?6h"];  // enter origin mode
+    [screen terminalSetScrollRegionTop:5 bottom:15];
+    assert(screen.cursorX == 1);
+    assert(screen.cursorY == 6);
+    [screen terminalMoveCursorToX:2 y:2];
+    assert(screen.cursorX == 2);
+    assert(screen.cursorY == 7);
+
+    // Now try with a vsplit, too.
+    screen = [self screenWithWidth:20 height:20];
+    [self sendEscapeCodes:@"^[[?6h"];  // enter origin mode
+    [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSetLeftMargin:5 rightMargin:15];
+    [screen terminalSetScrollRegionTop:5 bottom:15];
+    assert(screen.cursorX == 6);
+    assert(screen.cursorY == 6);
+    [screen terminalMoveCursorToX:2 y:2];
+    assert(screen.cursorX == 7);
+    assert(screen.cursorY == 7);
+}
+
 // Only non-trivial methods have tests.
 
 /*
  STILL TO TEST:
- - (void)terminalSetScrollRegionTop:(int)top bottom:(int)bottom // when origin mode is on, cursor moves to tl of region, else 0,
  - (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after
  - (void)terminalEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after   double check this is defined right
 - (void)terminalReverseIndex
