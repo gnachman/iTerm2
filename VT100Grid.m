@@ -1366,6 +1366,14 @@
         line[size_.width].code = line[size_.width - 1].code ? EOL_SOFT : EOL_HARD;
     }
 
+    if (size_.width > 0 &&
+        self.rightMargin == size_.width - 1 &&
+        line[size_.width].code == EOL_SOFT &&
+        line[size_.width - 1].code == 0) {
+        // If the last char becomes a null, convert to a hard line break.
+        line[size_.width].code = EOL_HARD;
+    }
+
     [self markCharsDirty:YES
               inRectFrom:VT100GridCoordMake(MIN(self.rightMargin - 1, pos.x), pos.y)
                       to:VT100GridCoordMake(self.rightMargin, pos.y)];

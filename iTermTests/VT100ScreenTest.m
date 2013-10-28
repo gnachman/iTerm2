@@ -3161,12 +3161,124 @@
     assert([name_ isEqualToString:@"test4"]);
 }
 
+- (void)testInsertEmptyCharsAtCursor {
+    // Insert 0 should do nothing
+    VT100Screen *screen = [self screenWithWidth:10 height:3];
+    [self appendLines:@[ @"abcdefghijklm" ] toScreen:screen];
+    [screen terminalMoveCursorToX:5 y:1];  // 'e'
+    [screen terminalInsertEmptyCharsAtCursor:0];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcdefghij+\n"
+            @"klm.......!\n"
+            @"..........!"]);
+
+    // Base case: insert 1
+    screen = [self screenWithWidth:10 height:3];
+    [self appendLines:@[ @"abcdefghijklm" ] toScreen:screen];
+    [screen terminalMoveCursorToX:5 y:1];  // 'e'
+    [screen terminalInsertEmptyCharsAtCursor:1];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd.efghi+\n"
+            @"klm.......!\n"
+            @"..........!"]);
+
+    // Insert 2
+    screen = [self screenWithWidth:10 height:3];
+    [self appendLines:@[ @"abcdefghijklm" ] toScreen:screen];
+    [screen terminalMoveCursorToX:5 y:1];  // 'e'
+    [screen terminalInsertEmptyCharsAtCursor:2];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd..efgh+\n"
+            @"klm.......!\n"
+            @"..........!"]);
+
+    // Insert to end of line, breaking EOL_SOFT
+    screen = [self screenWithWidth:10 height:3];
+    [self appendLines:@[ @"abcdefghijklm" ] toScreen:screen];
+    [screen terminalMoveCursorToX:5 y:1];  // 'e'
+    [screen terminalInsertEmptyCharsAtCursor:6];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd......!\n"
+            @"klm.......!\n"
+            @"..........!"]);
+
+    // Insert more than fits
+    screen = [self screenWithWidth:10 height:3];
+    [self appendLines:@[ @"abcdefghijklm" ] toScreen:screen];
+    [screen terminalMoveCursorToX:5 y:1];  // 'e'
+    [screen terminalInsertEmptyCharsAtCursor:100];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd......!\n"
+            @"klm.......!\n"
+            @"..........!"]);
+
+    // Insert 1, breaking DWC_SKIP
+    screen = [self screenFromCompactLinesWithContinuationMarks:
+              @"abcdefghi>>\n"
+              @"J-k.......!\n"
+              @"..........!"];
+    [screen terminalMoveCursorToX:5 y:1];  // 'e'
+    [screen terminalInsertEmptyCharsAtCursor:1];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd.efghi+\n"
+            @"J-k.......!\n"
+            @"..........!"]);
+
+    // Insert breaking DWC that would end at end of line
+    screen = [self screenFromCompactLinesWithContinuationMarks:
+              @"abcdefghI-+\n"
+              @"jkl.......!\n"
+              @"..........!"];
+    [screen terminalMoveCursorToX:5 y:1];  // 'e'
+    [screen terminalInsertEmptyCharsAtCursor:1];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd.efgh.!\n"
+            @"jkl.......!\n"
+            @"..........!"]);
+
+    // Insert breaking DWC at cursor, which is on left half of dwc
+    screen = [self screenFromCompactLinesWithContinuationMarks:
+              @"abcdE-fghi+\n"
+              @"jkl.......!\n"
+              @"..........!"];
+    [screen terminalMoveCursorToX:6 y:1];  // 'E'
+    [screen terminalInsertEmptyCharsAtCursor:1];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd...fgh+\n"
+            @"jkl.......!\n"
+            @"..........!"]);
+
+    // Insert breaking DWC at cursor, which is on right half of dwc
+    screen = [self screenFromCompactLinesWithContinuationMarks:
+              @"abcD-efghi+\n"
+              @"jkl.......!\n"
+              @"..........!"];
+    [screen terminalMoveCursorToX:5 y:1];  // '-'
+    [screen terminalInsertEmptyCharsAtCursor:1];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abc...efgh+\n"
+            @"jkl.......!\n"
+            @"..........!"]);
+
+    // With vsplit
+    screen = [self screenWithWidth:10 height:3];
+    [self appendLines:@[ @"abcdefghijklm" ] toScreen:screen];
+    [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSetLeftMargin:2 rightMargin:8];
+    [screen terminalMoveCursorToX:5 y:1];  // 'e'
+    [screen terminalInsertEmptyCharsAtCursor:1];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd.efghj+\n"
+            @"klm.......!\n"
+            @"..........!"]);
+
+    // There are a few more tests of insertChar in VT100GridTest, no sense duplicating them all here.
+}
+
 // Only non-trivial methods have tests.
 
 /*
  STILL TO TEST:
- - (void)terminalSetWindowTitle:(NSString *)title {
- - (void)terminalInsertEmptyCharsAtCursor:(int)n {
  - (void)terminalInsertBlankLinesAfterCursor:(int)n {  what if cursor is outside scroll region?
  - (void)terminalDeleteLinesAtCursor:(int)n {
  - (void)terminalSetPixelWidth:(int)width height:(int)height {
