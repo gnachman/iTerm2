@@ -4261,11 +4261,9 @@ static VT100TCC decode_string(unsigned char *datap,
             break;
         case VT100CSI_RM:
             break;
-        case VT100CSI_DECSTR: {
-            // VT100CSI_DECSC
+        case VT100CSI_DECSTR:
             [delegate_ terminalSoftReset];
             break;
-        }
         case VT100CSI_DECSCUSR:
             switch (token.u.csi.p[0]) {
                 case 0:

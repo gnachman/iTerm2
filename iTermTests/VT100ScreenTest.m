@@ -2933,11 +2933,42 @@
     assert(cursorVisible_);
 }
 
+- (void)testTerminalSoftReset {
+    // I really don't think this is the same as what xterm does.
+    // TODO Go through xterm's code and figure out what's supposed to happen.
+    // Save cursor and charset flags
+    // Reset scroll region
+    // restore cursor and charset flags
+    VT100Screen *screen = [self screenWithWidth:10 height:4];
+    [screen terminalSetScrollRegionTop:1 bottom:2];
+    [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSetLeftMargin:2 rightMargin:5];
+    [screen terminalMoveCursorToX:2 y:3];
+    [screen terminalSetCharset:1 toLineDrawingMode:YES];
+    [screen terminalSoftReset];
+    
+    assert([screen currentGrid].topMargin == 0);
+    assert([screen currentGrid].bottomMargin == 3);
+    assert([screen currentGrid].leftMargin == 0);
+    assert([screen currentGrid].rightMargin == 9);
+    assert(screen.cursorX == 2);
+    assert(screen.cursorY == 3);
+    assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
+    [screen terminalSetCharset:1 toLineDrawingMode:NO];
+    assert([screen allCharacterSetPropertiesHaveDefaultValues]);
+    
+    [screen terminalRestoreCursorAndCharsetFlags];
+    assert(screen.cursorX == 2);
+    assert(screen.cursorY == 3);
+    assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
+    [screen terminalSetCharset:1 toLineDrawingMode:NO];
+    assert([screen allCharacterSetPropertiesHaveDefaultValues]);
+}
+    
 // Only non-trivial methods have tests.
 
 /*
  STILL TO TEST:
- - (void)terminalResetPreservingPrompt:(BOOL)preservePrompt both values of argument
  - (void)terminalSoftReset {
  - (void)terminalSetWidth:(int)width {
  - (void)terminalBackTab

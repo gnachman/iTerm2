@@ -1440,7 +1440,7 @@ static const double kInterBellQuietPeriod = 0.1;
     [self terminalSaveCursorAndCharsetFlags];
 
     // reset scrolling margins
-    [self terminalResetTopBottomScrollRegion];
+    [currentGrid_ resetScrollRegions];
 
     // reset SGR (done in VT100Terminal)
     // reset wraparound mode (done in VT100Terminal)
