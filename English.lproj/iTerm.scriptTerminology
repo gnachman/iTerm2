@@ -240,6 +240,13 @@
 			<key>Name</key>
 			<string>terminate</string>
 		</dict>
+    <key>clear</key>
+    <dict>
+      <key>Description</key>
+      <string>Clears a session; same as Cmd+K in a session.</string>
+      <key>Name</key>
+      <string>clear</string>
+    </dict>
 		<key>write</key>
 		<dict>
 			<key>Arguments</key>
