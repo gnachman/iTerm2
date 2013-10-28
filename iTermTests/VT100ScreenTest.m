@@ -2859,6 +2859,80 @@
             @".........."]);
 }
 
+- (void)testResetPreservingPrompt {
+    // Preserve prompt
+    VT100Screen *screen = [self screenWithWidth:10 height:4];
+    [self appendLines:@[ @"abcdefghijklm" ] toScreen:screen];
+    [screen terminalMoveCursorToX:4 y:2];
+    [screen terminalResetPreservingPrompt:YES];
+    assert([[screen compactLineDump] isEqualToString:
+            @"klm.......\n"
+            @"..........\n"
+            @"..........\n"
+            @".........."]);
+    
+    // Don't preserve prompt
+    screen = [self screenWithWidth:10 height:4];
+    [self appendLines:@[ @"abcdefghijklm" ] toScreen:screen];
+    [screen terminalMoveCursorToX:4 y:2];
+    [screen terminalResetPreservingPrompt:NO];
+    assert([[screen compactLineDump] isEqualToString:
+            @"..........\n"
+            @"..........\n"
+            @"..........\n"
+            @".........."]);
+    
+    // Tab stops get reset
+    screen = [self screenWithWidth:20 height:4];
+    NSArray *defaultTabstops = @[ @(8), @(16) ];
+    NSArray *augmentedTabstops = @[ @(3), @(8), @(16) ];
+    assert([[self tabStopsInScreen:screen] isEqualToArray:defaultTabstops]);
+
+    [screen terminalMoveCursorToX:4 y:1];
+    [screen terminalSetTabStopAtCursor];
+
+    assert([[self tabStopsInScreen:screen] isEqualToArray:augmentedTabstops]);
+    [screen terminalResetPreservingPrompt:YES];
+    assert([[self tabStopsInScreen:screen] isEqualToArray:defaultTabstops]);
+
+    // Saved cursor gets reset to origin
+    screen = [self screenWithWidth:10 height:4];
+    [screen terminalMoveCursorToX:2 y:2];
+    [screen terminalSaveCursorAndCharsetFlags];
+    [screen terminalResetPreservingPrompt:YES];
+    [screen terminalRestoreCursorAndCharsetFlags];
+    assert(screen.cursorX == 1);
+    assert(screen.cursorY == 1);
+
+    // Charset flags get reset
+    screen = [self screenWithWidth:10 height:4];
+    [screen terminalSetCharset:0 toLineDrawingMode:YES];
+    [screen terminalSetCharset:1 toLineDrawingMode:YES];
+    [screen terminalSetCharset:2 toLineDrawingMode:YES];
+    [screen terminalSetCharset:3 toLineDrawingMode:YES];
+    [screen terminalResetPreservingPrompt:YES];
+    assert([screen allCharacterSetPropertiesHaveDefaultValues]);
+    
+    // Saved charset flags get reset
+    screen = [self screenWithWidth:10 height:4];
+    [screen terminalSetCharset:0 toLineDrawingMode:YES];
+    [screen terminalSetCharset:1 toLineDrawingMode:YES];
+    [screen terminalSetCharset:2 toLineDrawingMode:YES];
+    [screen terminalSetCharset:3 toLineDrawingMode:YES];
+    [screen terminalSaveCursorAndCharsetFlags];
+    [screen terminalResetPreservingPrompt:YES];
+    [screen terminalRestoreCursorAndCharsetFlags];
+    assert([screen allCharacterSetPropertiesHaveDefaultValues]);
+
+    // Cursor is made visible
+    screen = [self screenWithWidth:10 height:4];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen terminalSetCursorVisible:NO];
+    assert(!cursorVisible_);
+    [screen terminalResetPreservingPrompt:YES];
+    assert(cursorVisible_);
+}
+
 // Only non-trivial methods have tests.
 
 /*
