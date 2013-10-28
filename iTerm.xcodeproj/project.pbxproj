@@ -2647,7 +2647,7 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -2749,7 +2749,7 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 				VALID_ARCHS = "i386 x86_64";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -2860,7 +2860,7 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -3259,7 +3259,7 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 				SECTORDER_FLAGS = "";
 				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = (
@@ -3346,7 +3346,7 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 				VALID_ARCHS = "i386 x86_64";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -3436,7 +3436,7 @@
 				OTHER_REZFLAGS = "";
 				PRODUCT_NAME = iTerm;
 				REZ_EXECUTABLE = YES;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 				SECTORDER_FLAGS = "";
 				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = (

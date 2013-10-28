@@ -2587,13 +2587,45 @@
     assert(screen.cursorY == 16);
 }
 
+- (void)testSaveAndRestoreCursorAndCharset {
+    // Save then restore
+    VT100Screen *screen = [self screenWithWidth:20 height:20];
+    [screen terminalMoveCursorToX:4 y:5];
+    [screen terminalSetCharset:1 toLineDrawingMode:YES];
+    [screen terminalSetCharset:3 toLineDrawingMode:YES];
+    [screen terminalSaveCursorAndCharsetFlags];
+    [screen terminalMoveCursorToX:1 y:1];
+    [screen terminalSetCharset:1 toLineDrawingMode:NO];
+    [screen terminalSetCharset:3 toLineDrawingMode:NO];
+    assert([screen allCharacterSetPropertiesHaveDefaultValues]);
+
+    [screen terminalRestoreCursorAndCharsetFlags];
+    assert(screen.cursorX == 4);
+    assert(screen.cursorY == 5);
+    assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
+    [screen terminalSetCharset:1 toLineDrawingMode:NO];
+    assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
+    [screen terminalSetCharset:3 toLineDrawingMode:NO];
+    assert([screen allCharacterSetPropertiesHaveDefaultValues]);
+    
+    // Restore without saving. Should use default charsets and move cursor to origin.
+    // Terminal doesn't do anything in this case, but xterm does what we do.
+    screen = [self screenWithWidth:20 height:20];
+    for (int i = 0; i < 4; i++) {
+        [screen terminalSetCharset:i toLineDrawingMode:NO];
+    }
+    [screen terminalMoveCursorToX:5 y:5];
+    [screen terminalRestoreCursorAndCharsetFlags];
+    assert(screen.cursorX == 1);
+    assert(screen.cursorY == 1);
+    assert([screen allCharacterSetPropertiesHaveDefaultValues]);
+
+}
+
 // Only non-trivial methods have tests.
 
 /*
  STILL TO TEST:
- - (void)terminalMoveCursorToX:(int)x y:(int)y  should respect origin mode
- - (void)terminalSaveCursorAndCharsetFlags
- - (void)terminalRestoreCursorAndCharsetFlags
  - (void)terminalSetScrollRegionTop:(int)top bottom:(int)bottom // when origin mode is on, cursor moves to tl of region, else 0,
  - (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after
  - (void)terminalEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after   double check this is defined right

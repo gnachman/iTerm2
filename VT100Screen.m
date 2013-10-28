@@ -63,9 +63,10 @@ static const double kInterBellQuietPeriod = 0.1;
         [dvr_ initWithBufferCapacity:[[PreferencePanel sharedInstance] irMemory] * 1024 * 1024];
 
         charsetUsesLineDrawingMode_ = [[NSMutableArray alloc] init];
-        [charsetUsesLineDrawingMode_ removeAllObjects];
+        savedCharsetUsesLineDrawingMode_ = [[NSMutableArray alloc] init];
         for (int i = 0; i < NUM_CHARSETS; i++) {
             [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
+            [savedCharsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
         }
         
         findContext_ = [[FindContext alloc] init];
@@ -1272,6 +1273,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)terminalRestoreCursorAndCharsetFlags
 {
+    assert(savedCharsetUsesLineDrawingMode_.count == charsetUsesLineDrawingMode_.count);
     currentGrid_.cursor = currentGrid_.savedCursor;
     [charsetUsesLineDrawingMode_ removeAllObjects];
     [charsetUsesLineDrawingMode_ addObjectsFromArray:savedCharsetUsesLineDrawingMode_];
