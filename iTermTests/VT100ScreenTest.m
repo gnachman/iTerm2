@@ -3275,6 +3275,75 @@
     // There are a few more tests of insertChar in VT100GridTest, no sense duplicating them all here.
 }
 
+- (void)testInsertBlankLinesAfterCursor {
+    // 0 does nothing
+    VT100Screen *screen = [self screenWithWidth:4 height:4];
+    [self appendLines:@[ @"abcdefg", @"hij" ] toScreen:screen];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+    [screen terminalMoveCursorToX:5 y:2];  // 'f'
+    [screen terminalInsertBlankLinesAfterCursor:0];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+
+    // insert 1 blank line, breaking eol_soft
+    screen = [self screenWithWidth:4 height:4];
+    [self appendLines:@[ @"abcdefg", @"hij" ] toScreen:screen];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+    [screen terminalMoveCursorToX:5 y:2];  // 'f'
+    [screen terminalInsertBlankLinesAfterCursor:1];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd!\n"
+            @"....!\n"
+            @"efg.!\n"
+            @"hij.!"]);
+
+    // Insert outside scroll region does nothing
+    screen = [self screenWithWidth:4 height:4];
+    [screen terminalSetScrollRegionTop:2 bottom:3];
+    [self appendLines:@[ @"abcdefg", @"hij" ] toScreen:screen];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+    [screen terminalMoveCursorToX:1 y:1];  // outside region
+    [screen terminalInsertBlankLinesAfterCursor:1];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+
+    // Same but with vsplit
+    screen = [self screenWithWidth:4 height:4];
+    [self appendLines:@[ @"abcdefg", @"hij" ] toScreen:screen];
+    [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSetLeftMargin:2 rightMargin:3];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+    [screen terminalMoveCursorToX:1 y:1];  // outside region
+    [screen terminalInsertBlankLinesAfterCursor:1];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+}
+
 // Only non-trivial methods have tests.
 
 /*

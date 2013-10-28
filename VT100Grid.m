@@ -878,21 +878,22 @@
     [self scrollRect:[self scrollRegionRect] downBy:1];
 }
 
-- (void)scrollRect:(VT100GridRect)rect downBy:(int)direction {
+- (void)scrollRect:(VT100GridRect)rect downBy:(int)distance {
     DLog(@"scrollRect:%d,%d %dx%d downBy:%d",
-             rect.origin.x, rect.origin.y, rect.size.width, rect.size.height, direction);
-    if (direction == 0) {
+             rect.origin.x, rect.origin.y, rect.size.width, rect.size.height, distance);
+    if (distance == 0) {
         return;
     }
+    int direction = (distance > 0) ? 1 : -1;
 
     screen_char_t defaultChar = [self defaultChar];
 
     if (rect.size.width > 0 && rect.size.height > 0) {
         int rightIndex = rect.origin.x + rect.size.width - 1;
         int bottomIndex = rect.origin.y + rect.size.height - 1;
-        int sourceHeight = rect.size.height - abs(direction);
-        int sourceIndex = (direction > 0 ? bottomIndex - direction :
-                           rect.origin.y - direction);
+        int sourceHeight = rect.size.height - abs(distance);
+        int sourceIndex = (direction > 0 ? bottomIndex - distance :
+                           rect.origin.y - distance);
         int destIndex = direction > 0 ? bottomIndex : rect.origin.y;
         int continuation = (rightIndex == size_.width - 1) ? 1 : 0;
 
@@ -936,13 +937,45 @@
                   inRectFrom:rect.origin
                           to:VT100GridCoordMake(rightIndex, bottomIndex)];
 
+        int lineNumberAboveScrollRegion = rect.origin.y - 1;
+        // Fix up broken soft or dwc_skip continuation marks. It could occur on line just above
+        // the scroll region.
+        if (lineNumberAboveScrollRegion >= 0 &&
+            lineNumberAboveScrollRegion < size_.height &&
+            rect.origin.x == 0) {
+            // Affecting continuation marks on line above/below rect.
+            screen_char_t *pred =
+                [self screenCharsAtLineNumber:lineNumberAboveScrollRegion];
+            if (pred[size_.width].code == EOL_SOFT) {
+                pred[size_.width].code = EOL_HARD;
+            }
+        }
+        if (rect.origin.x + rect.size.width == size_.width) {
+            // Clean up continuation mark on last line inside scroll region when scrolling down,
+            // or last last preserved line when scrolling up.
+            int lastLineOfScrollRegion;
+            if (direction > 0) {
+                lastLineOfScrollRegion = rect.origin.y + rect.size.height - 1;
+            } else {
+                lastLineOfScrollRegion = rect.origin.y + rect.size.height - 1 + distance;
+            }
+            // Affecting continuation mark on first/last line in block
+            if (lastLineOfScrollRegion >= 0 && lastLineOfScrollRegion < size_.height) {
+                screen_char_t *lastLine =
+                    [self screenCharsAtLineNumber:lastLineOfScrollRegion];
+                if (lastLine[size_.width].code == EOL_SOFT) {
+                    lastLine[size_.width].code = EOL_HARD;
+                }
+            }
+        }
+
         // Clear region left over.
         if (direction > 0) {
             [self setCharsFrom:rect.origin
-                            to:VT100GridCoordMake(rightIndex, MIN(bottomIndex, rect.origin.y + direction - 1))
+                            to:VT100GridCoordMake(rightIndex, MIN(bottomIndex, rect.origin.y + distance - 1))
                         toChar:defaultChar];
         } else {
-            [self setCharsFrom:VT100GridCoordMake(rect.origin.x, MAX(rect.origin.y, bottomIndex + direction + 1))
+            [self setCharsFrom:VT100GridCoordMake(rect.origin.x, MAX(rect.origin.y, bottomIndex + distance + 1))
                             to:VT100GridCoordMake(rightIndex, bottomIndex)
                         toChar:defaultChar];
         }

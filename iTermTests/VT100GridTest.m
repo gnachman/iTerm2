@@ -988,6 +988,160 @@ do { \
             @"ddd\n"
             @"ccc"]);
 
+    // Test that continuation marks are cleaned up before the scrolled region with
+    // full width and scrolling down
+    VT100Grid *grid = [self gridFromCompactLinesWithContinuationMarks:
+                       @"abcd+\n"
+                       @"efgh+\n"
+                       @"ijkl+\n"
+                       @"mnop+\n"
+                       @"qrst!"];
+    [grid scrollRect:VT100GridRectMake(0, 1, 4, 3) downBy:1];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"abcd!\n"
+            @"....!\n"
+            @"efgh+\n"
+            @"ijkl!\n"
+            @"qrst!"]);
+
+    // Same but scroll by 2
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcd+\n"
+            @"efgh+\n"
+            @"ijkl+\n"
+            @"mnop+\n"
+            @"qrst!"];
+    [grid scrollRect:VT100GridRectMake(0, 1, 4, 3) downBy:2];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"abcd!\n"
+            @"....!\n"
+            @"....!\n"
+            @"efgh!\n"
+            @"qrst!"]);
+
+    // Test that continuation marks are cleaned up before the scrolled region with
+    // full width and scrolling up
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcd+\n"
+            @"efgh+\n"
+            @"ijkl+\n"
+            @"mnop+\n"
+            @"qrst!"];
+    [grid scrollRect:VT100GridRectMake(0, 1, 4, 3) downBy:-1];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"abcd!\n"
+            @"ijkl+\n"
+            @"mnop!\n"
+            @"....!\n"
+            @"qrst!"]);
+
+    // Same but scroll by 2
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcd+\n"
+            @"efgh+\n"
+            @"ijkl+\n"
+            @"mnop+\n"
+            @"qrst!"];
+    [grid scrollRect:VT100GridRectMake(0, 1, 4, 3) downBy:-2];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"abcd!\n"
+            @"mnop!\n"
+            @"....!\n"
+            @"....!\n"
+            @"qrst!"]);
+
+    // Test that continuation marks are cleaned up before the scrolled region with
+    // no first column and scrolling down
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcd+\n"
+            @"efgh+\n"
+            @"ijkl+\n"
+            @"mnop+\n"
+            @"qrst!"];
+    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:1];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"e...!\n"
+            @"ifgh+\n"
+            @"mjkl!\n"
+            @"qrst!"]);
+
+    // Same but scroll by 2
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcd+\n"
+            @"efgh+\n"
+            @"ijkl+\n"
+            @"mnop+\n"
+            @"qrst!"];
+    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:2];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"e...!\n"
+            @"i...!\n"
+            @"mfgh!\n"
+            @"qrst!"]);
+
+    // With DWC_SKIP
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcd+\n"
+            @"efgh+\n"
+            @"ijk>>\n"
+            @"M-op+\n"
+            @"qrst!"];
+    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:1];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"e...!\n"
+            @"ifgh+\n"
+            @".jk.!\n"
+            @"qrst!"]);
+
+    // Test that continuation marks are cleaned up before the scrolled region with
+    // no first column and scrolling up
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcd+\n"
+            @"efgh+\n"
+            @"ijkl+\n"
+            @"mnop+\n"
+            @"qrst!"];
+    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:-1];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"ejkl+\n"
+            @"inop!\n"
+            @"m...!\n"
+            @"qrst!"]);
+
+    // With DWC_SKIP
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abc>>\n"
+            @"E-gh+\n"
+            @"ijkl+\n"
+            @"mno>>\n"
+            @"Q-st!"];
+    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:-1];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"abc.!\n"
+            @".jkl+\n"
+            @"ino.!\n"
+            @"m...!\n"
+            @"Q-st!"]);
+
+    // Same but scroll by 2
+    grid = [self gridFromCompactLinesWithContinuationMarks:
+            @"abcd+\n"
+            @"efgh+\n"
+            @"ijkl+\n"
+            @"mnop+\n"
+            @"qrst!"];
+    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:-2];
+    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"enop!\n"
+            @"i...!\n"
+            @"m...!\n"
+            @"qrst!"]);
+
 }
 
 - (void)testSetContentsFromDVRFrame {

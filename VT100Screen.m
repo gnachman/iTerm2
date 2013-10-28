@@ -1596,10 +1596,24 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (void)terminalInsertBlankLinesAfterCursor:(int)n {
-    // TODO: I think the original code was buggy when the cursor was outside the scroll region.
-    [currentGrid_ scrollRect:[currentGrid_ scrollRegionRect]
-                      downBy:n];
-    [delegate_ screenTriggerableChangeDidOccur];
+    VT100GridRect scrollRegionRect = [currentGrid_ scrollRegionRect];
+    if (scrollRegionRect.origin.x + scrollRegionRect.size.width == currentGrid_.size.width) {
+        // Cursor can be in right margin and still be considered in the scroll region if the
+        // scroll region abuts the right margin.
+        scrollRegionRect.size.width++;
+    }
+    BOOL cursorInScrollRegion = VT100GridCoordInRect(currentGrid_.cursor, scrollRegionRect);
+    if (cursorInScrollRegion) {
+        // xterm appears to ignore INSLN if the cursor is outside the scroll region.
+        // See insln-* files in tests/.
+        int top = currentGrid_.cursorY;
+        int left = currentGrid_.leftMargin;
+        int width = currentGrid_.rightMargin - currentGrid_.leftMargin + 1;
+        int height = currentGrid_.bottomMargin - top + 1;
+        [currentGrid_ scrollRect:VT100GridRectMake(left, top, width, height)
+                          downBy:n];
+        [delegate_ screenTriggerableChangeDidOccur];
+    }
 }
 
 - (void)terminalDeleteCharactersAtCursor:(int)n {

@@ -112,6 +112,14 @@ NS_INLINE VT100GridCoord VT100GridRectMax(VT100GridRect rect) {
     return coord;
 }
 
+// Returns if the coord is within the rect.
+NS_INLINE BOOL VT100GridCoordInRect(VT100GridCoord coord, VT100GridRect rect) {
+    return (coord.x >= rect.origin.x &&
+            coord.y >= rect.origin.y &&
+            coord.x < rect.origin.x + rect.size.width &&
+            coord.y < rect.origin.y + rect.size.height);
+}
+
 // Creates a run between two coords, not inclusive of end.
 VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
                                     VT100GridCoord end,
