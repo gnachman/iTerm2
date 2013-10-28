@@ -4216,6 +4216,7 @@ static VT100TCC decode_string(unsigned char *datap,
                     [delegate_ terminalEraseInDisplayBeforeCursor:YES afterCursor:YES];
                     break;
 
+                // TODO: case 3 should erase history.
                 case 0:
                 default:
                     [delegate_ terminalEraseInDisplayBeforeCursor:NO afterCursor:YES];

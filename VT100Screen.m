@@ -1325,8 +1325,13 @@ static const double kInterBellQuietPeriod = 0.1;
     int x1, yStart, x2, y2;
 
     if (before && after) {
-        [currentGrid_ scrollWholeScreenUpIntoLineBuffer:linebuffer_
-                                    unlimitedScrollback:unlimitedScrollback_];
+        // Scroll the top lines of the screen into history, up to and including the last non-
+        // empty line.
+        const int n = [currentGrid_ numberOfLinesUsed];
+        for (int i = 0; i < n; i++) {
+            [currentGrid_ scrollWholeScreenUpIntoLineBuffer:linebuffer_
+                                        unlimitedScrollback:unlimitedScrollback_];
+        }
         x1 = 0;
         yStart = 0;
         x2 = 0;
@@ -1334,10 +1339,10 @@ static const double kInterBellQuietPeriod = 0.1;
     } else if (before) {
         x1 = 0;
         yStart = 0;
-        x2 = currentGrid_.cursor.x < currentGrid_.size.width ? currentGrid_.cursor.x + 1 : currentGrid_.size.width;
+        x2 = MIN(currentGrid_.cursor.x, currentGrid_.size.width - 1);
         y2 = currentGrid_.cursor.y;
     } else if (after) {
-        x1 = currentGrid_.cursor.x;
+        x1 = MIN(currentGrid_.cursor.x, currentGrid_.size.width - 1);
         yStart = currentGrid_.cursor.y;
         x2 = 0;
         y2 = currentGrid_.size.height;
@@ -1360,13 +1365,15 @@ static const double kInterBellQuietPeriod = 0.1;
 
     if (before && after) {
         x1 = 0;
-        x2 = currentGrid_.size.width;
+        x2 = currentGrid_.size.width - 1;
     } else if (before) {
         x1 = 0;
-        x2 = MIN(currentGrid_.cursor.x + 1, currentGrid_.size.width);  // TODO: Why x+1?
+        x2 = MIN(currentGrid_.cursor.x, currentGrid_.size.width - 1);
     } else if (after) {
         x1 = currentGrid_.cursor.x;
-        x2 = currentGrid_.size.width;
+        x2 = currentGrid_.size.width - 1;
+    } else {
+        return;
     }
 
     VT100GridRun theRun = VT100GridRunFromCoords(VT100GridCoordMake(x1, currentGrid_.cursor.y),

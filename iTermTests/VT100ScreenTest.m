@@ -2658,11 +2658,127 @@
     assert(screen.cursorY == 7);
 }
 
+- (VT100Screen *)screenForEraseInDisplay {
+    VT100Screen *screen = [self screenWithWidth:10 height:4];
+    [self appendLines:@[ @"abcdefghij",
+                         @"klmnopqrst",
+                         @"0123456789" ] toScreen:screen];
+    assert([[screen compactLineDump] isEqualToString:
+            @"abcdefghij\n"
+            @"klmnopqrst\n"
+            @"0123456789\n"
+            @".........."]);
+    [screen terminalMoveCursorToX:5 y:2];  // over the 'o'
+    return screen;
+}
+
+- (void)testEraseInDisplay {
+    // NOTE: The char the cursor is on always gets erased
+    
+    // Before and after should clear screen and move all nonempty lines into history
+    VT100Screen *screen = [self screenForEraseInDisplay];
+    [screen terminalEraseInDisplayBeforeCursor:YES afterCursor:YES];
+    assert([[screen compactLineDumpWithHistory] isEqualToString:
+            @"abcdefghij\n"
+            @"klmnopqrst\n"
+            @"0123456789\n"
+            @"..........\n"
+            @"..........\n"
+            @"..........\n"
+            @".........."]);
+    
+    // Before only should erase from origin to cursor, inclusive.
+    screen = [self screenForEraseInDisplay];
+    [screen terminalEraseInDisplayBeforeCursor:YES afterCursor:NO];
+    assert([[screen compactLineDump] isEqualToString:
+            @"..........\n"
+            @".....pqrst\n"
+            @"0123456789\n"
+            @".........."]);
+    
+    // Same but with curosr in the right margin
+    screen = [self screenForEraseInDisplay];
+    [screen terminalMoveCursorToX:11 y:2];
+    [screen terminalEraseInDisplayBeforeCursor:YES afterCursor:NO];
+    assert([[screen compactLineDump] isEqualToString:
+            @"..........\n"
+            @"..........\n"
+            @"0123456789\n"
+            @".........."]);
+    
+    // After only erases from cursor position inclusive to end of display
+    screen = [self screenForEraseInDisplay];
+    [screen terminalEraseInDisplayBeforeCursor:NO afterCursor:YES];
+    assert([[screen compactLineDump] isEqualToString:
+            @"abcdefghij\n"
+            @"klmn......\n"
+            @"..........\n"
+            @".........."]);
+
+    // Neither before nor after does nothing
+    screen = [self screenForEraseInDisplay];
+    [screen terminalEraseInDisplayBeforeCursor:NO afterCursor:NO];
+    assert([[screen compactLineDump] isEqualToString:
+            @"abcdefghij\n"
+            @"klmnopqrst\n"
+            @"0123456789\n"
+            @".........."]);
+}
+
+- (void)testEraseLine {
+    // NOTE: The char the cursor is on always gets erased
+    
+    // Before and after should clear the whole line
+    VT100Screen *screen = [self screenForEraseInDisplay];
+    [screen terminalEraseLineBeforeCursor:YES afterCursor:YES];
+    assert([[screen compactLineDump] isEqualToString:
+            @"abcdefghij\n"
+            @"..........\n"
+            @"0123456789\n"
+            @".........."]);
+    
+    // Before only should erase from start of line to cursor, inclusive.
+    screen = [self screenForEraseInDisplay];
+    [screen terminalEraseLineBeforeCursor:YES afterCursor:NO];
+    assert([[screen compactLineDump] isEqualToString:
+            @"abcdefghij\n"
+            @".....pqrst\n"
+            @"0123456789\n"
+            @".........."]);
+    
+    // Same but with curosr in the right margin
+    screen = [self screenForEraseInDisplay];
+    [screen terminalMoveCursorToX:11 y:2];
+    [screen terminalEraseLineBeforeCursor:YES afterCursor:NO];
+    assert([[screen compactLineDump] isEqualToString:
+            @"abcdefghij\n"
+            @"..........\n"
+            @"0123456789\n"
+            @".........."]);
+    
+    // After only erases from cursor position inclusive to end of line
+    screen = [self screenForEraseInDisplay];
+    [screen terminalEraseLineBeforeCursor:NO afterCursor:YES];
+    assert([[screen compactLineDump] isEqualToString:
+            @"abcdefghij\n"
+            @"klmn......\n"
+            @"0123456789\n"
+            @".........."]);
+    
+    // Neither before nor after does nothing
+    screen = [self screenForEraseInDisplay];
+    [screen terminalEraseLineBeforeCursor:NO afterCursor:NO];
+    assert([[screen compactLineDump] isEqualToString:
+            @"abcdefghij\n"
+            @"klmnopqrst\n"
+            @"0123456789\n"
+            @".........."]);
+}
+
 // Only non-trivial methods have tests.
 
 /*
  STILL TO TEST:
- - (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after
  - (void)terminalEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after   double check this is defined right
 - (void)terminalReverseIndex
  - (void)terminalResetPreservingPrompt:(BOOL)preservePrompt both values of argument
