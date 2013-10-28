@@ -2572,7 +2572,7 @@
     assert(screen.cursorX == 1);
     assert(screen.cursorY == 2);
     
-    // backtap should (but doesn't yet) respect vsplits.
+    // backtab should (but doesn't yet) respect vsplits.
     screen = [self screenWithWidth:20 height:3];
     [screen terminalSetUseColumnScrollRegion:YES];
     [screen terminalSetLeftMargin:10 rightMargin:19];
@@ -3010,13 +3010,76 @@
     assert(newSize_.height == 0);
 }
 
+- (void)testEraseCharactersAfterCursor {
+  // Delete 0 chars, should do nothing
+  VT100Screen *screen = [self screenWithWidth:10 height:3];
+  [self appendLines:@[ @"abcdefghijklm" ] toScreen:screen];
+  [screen terminalMoveCursorToX:5 y:1];  // 'e'
+  [screen terminalEraseCharactersAfterCursor:0];
+  assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+          @"abcdefghij+\n"
+          @"klm.......!\n"
+          @"..........!"]);
+
+  // Delete 2 chars
+  [screen terminalEraseCharactersAfterCursor:2];
+  assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+          @"abcd..ghij+\n"
+          @"klm.......!\n"
+          @"..........!"]);
+
+  // Delete just to end of line, change eol hard to eol soft.
+  [screen terminalEraseCharactersAfterCursor:6];
+  assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+          @"abcd......!\n"
+          @"klm.......!\n"
+          @"..........!"]);
+
+  // Delete way more than fits on line
+  screen = [self screenWithWidth:10 height:3];
+  [self appendLines:@[ @"abcdefghijklm" ] toScreen:screen];
+  [screen terminalMoveCursorToX:5 y:1];  // 'e'
+  [screen terminalEraseCharactersAfterCursor:100];
+  assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+          @"abcd......!\n"
+          @"klm.......!\n"
+          @"..........!"]);
+
+  // Break dwc before cursor
+  screen = [self screenFromCompactLinesWithContinuationMarks:
+            @"abcD-fghij+\n"
+            @"klm.......!"];
+  [screen terminalMoveCursorToX:5 y:1];  // '-'
+  [screen terminalEraseCharactersAfterCursor:2];
+  assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+          @"abc...ghij+\n"
+          @"klm.......!"]);
+
+  // Break dwc after cursor
+  screen = [self screenFromCompactLinesWithContinuationMarks:
+            @"abcdeF-hij+\n"
+            @"klm.......!"];
+  [screen terminalMoveCursorToX:5 y:1];  // 'e'
+  [screen terminalEraseCharactersAfterCursor:2];
+  assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+          @"abcd...hij+\n"
+          @"klm.......!"]);
+
+  // Break split dwc
+  screen = [self screenFromCompactLinesWithContinuationMarks:
+            @"abcdefghi>>\n"
+            @"J-klm.....!"];
+  [screen terminalMoveCursorToX:5 y:1];  // 'e'
+  [screen terminalEraseCharactersAfterCursor:6];
+  assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+          @"abcd......!\n"
+          @"J-klm.....!"]);
+}
+
 // Only non-trivial methods have tests.
 
 /*
  STILL TO TEST:
- - (void)terminalSetWidth:(int)width {
- - (void)terminalBackTab
- - (void)terminalEraseCharactersAfterCursor:(int)j {
  - (void)terminalPrintBuffer {
  - (void)terminalBeginRedirectingToPrintBuffer {
  - (void)terminalPrintScreen {
