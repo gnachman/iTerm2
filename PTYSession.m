@@ -4319,7 +4319,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenMoveWindowTopLeftPointTo:(NSPoint)point {
-    point.y = [[self screenWindowScreen] frame].size.height - point.y;
+    point.y = [self screenWindowScreenFrame].size.height - point.y;
     [[[self tab] parentWindow] windowSetFrameTopLeftPoint:point];
 }
 
