@@ -1,3 +1,9 @@
+/* Bugs found during testing
+ - Cmd-I>terminal>put cursor in "scrollback lines", close window. It goes from 100000 to 100.
+ - Attach to tmux that's running vimdiff. Open a new tmux tab, grow the window, and close the tab. vimdiff's display is messed up.
+ - Save/restore alt screen in tmux is broken. Test that it's restored correctly, and that cursor position is also loaded properly on connecting.
+ */
+
 #import "VT100Screen.h"
 
 #import "DebugLogging.h"
@@ -127,16 +133,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)resizeWidth:(int)new_width height:(int)new_height
 {
-#ifdef DEBUG_RESIZEDWIDTH
-    NSLog(@"Size before resizing is %dx%d", currentGrid_.size.width, currentGrid_.size.height);
-    [self dumpScreen];
-#endif
     DLog(@"Resize session to %d height", new_height);
-
-#ifdef DEBUG_RESIZEDWIDTH
-    NSLog(@"Resize from %dx%d to %dx%d\n", currentGrid_.size.width, currentGrid_.size.height, new_width, new_height);
-    [self dumpScreen];
-#endif
 
     if (currentGrid_.size.width == 0 ||
         currentGrid_.size.height == 0 ||
@@ -464,7 +461,7 @@ static const double kInterBellQuietPeriod = 0.1;
     screen_char_t *buffer;
     if (ascii) {
         // Only Unicode code points 0 through 127 occur in the string.
-        const int kStaticTempElements = 1024;
+        const int kStaticTempElements = kStaticBufferElements;
         unichar staticTemp[kStaticTempElements];
         unichar* dynamicTemp = 0;
         unichar *sc;
@@ -712,6 +709,10 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)setAltScreen:(NSArray *)lines
 {
+    if (!altGrid_) {
+        altGrid_ = [primaryGrid_ copy];
+    }
+
     // Initialize alternate screen to be empty
     [altGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                         to:VT100GridCoordMake(altGrid_.size.width - 1, altGrid_.size.height - 1)
@@ -824,6 +825,13 @@ static const double kInterBellQuietPeriod = 0.1;
                              inContext:context];
 
     [self popScrollbackLines:linesPushed];
+}
+
+- (void)resetCharset {
+    [charsetUsesLineDrawingMode_ removeAllObjects];
+    for (int i = 0; i < NUM_CHARSETS; i++) {
+        [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
+    }
 }
 
 #pragma mark - PTYTextViewDataSource
@@ -974,7 +982,7 @@ static const double kInterBellQuietPeriod = 0.1;
                                         toPosition:&startPos
                                             offset:offset * (direction ? 1 : -1)];
     if (!isOk) {
-        // NSLog(@"Couldn't convert %d,%d to position", x, y);
+        // x,y wasn't a real position in the line buffer, probably a null after the end.
         if (direction) {
             startPos = [linebuffer_ firstPos];
         } else {
@@ -1532,7 +1540,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)terminalPrintBuffer {
     if ([delegate_ screenShouldBeginPrinting] && [printBuffer_ length] > 0) {
-        [self doPrint];  // TODO: Make sure other terminals don't print the screen when the buffer is empthy
+        [self doPrint];
     }
 }
 

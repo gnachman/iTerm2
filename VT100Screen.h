@@ -151,4 +151,6 @@ extern int kVT100ScreenMinRows;
 // This is provided for testing only.
 - (VT100Grid *)currentGrid;
 
+- (void)resetCharset;
+
 @end
