@@ -4631,6 +4631,17 @@ NSString *sessionsKey = @"sessions";
                                             unset:flags];
 }
 
+- (void)setFrameSize:(NSSize)newSize
+{
+    NSSize size = [self windowWillResize:[self window] toSize:newSize];
+    NSRect frame = [[self window] frame];
+    [[self window] setFrame:NSMakeRect(frame.origin.x,
+                                       frame.origin.y,
+                                       size.width,
+                                       size.height)
+                    display:YES];
+}
+
 // Grow or shrink the tabview to make room for the find bar in fullscreen mode
 // and then fit sessions to new window size.
 - (void)adjustFullScreenWindowForBottomBarChange

@@ -411,6 +411,10 @@ NSWindowDelegate,
 // sessions to fit the new window size.
 - (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
 
+// Resize the window to a given pixel size. A nearby size will be used if possible, but minimum size
+// constraints will be respected.
+- (void)setFrameSize:(NSSize)newSize;
+
 // Open the session preference panel.
 - (void)editCurrentSession:(id)sender;
 - (void)editSession:(PTYSession*)session;

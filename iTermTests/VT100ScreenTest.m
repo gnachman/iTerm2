@@ -47,6 +47,7 @@
     NSString *windowTitle_;
     NSString *name_;
     NSMutableArray *dirlog_;
+    NSSize newPixelSize_;
 }
 
 - (void)setup {
@@ -69,6 +70,7 @@
     windowTitle_ = nil;
     name_ = nil;
     dirlog_ = [NSMutableArray array];
+    newPixelSize_ = NSMakeSize(0, 0);
 }
 
 - (VT100Screen *)screen {
@@ -287,6 +289,10 @@
     newSize_ = VT100GridSizeMake(newWidth, newHeight);
 }
 
+- (void)screenResizeToPixelWidth:(int)newWidth height:(int)newHeight {
+    newPixelSize_ = NSMakeSize(newWidth, newHeight);
+}
+
 - (BOOL)screenShouldAppendToScrollbackWithStatusBar {
     return YES;
 }
@@ -318,6 +324,14 @@
 
 - (NSString *)screenNameExcludingJob {
     return @"joblessName";
+}
+
+- (NSRect)screenWindowFrame {
+    return NSMakeRect(10, 20, 100, 200);
+}
+
+- (NSRect)screenWindowScreenFrame {
+    return NSMakeRect(30, 40, 1000, 2000);
 }
 
 - (void)screenLogWorkingDirectoryAtLine:(long long)line withDirectory:(NSString *)directory {
@@ -3412,11 +3426,27 @@
             @"hij.!\n"
             @"....!"]);
 }
+
+- (void)testTerminalSetPixelSize {
+    VT100Screen *screen = [self screen];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen terminalSetPixelWidth:-1 height:-1];
+    assert(newPixelSize_.width == 100);
+    assert(newPixelSize_.height == 200);
+    
+    [screen terminalSetPixelWidth:0 height:0];
+    assert(newPixelSize_.width == 1000);
+    assert(newPixelSize_.height == 2000);
+
+    [screen terminalSetPixelWidth:50 height:60];
+    assert(newPixelSize_.width == 50);
+    assert(newPixelSize_.height == 60);
+}
+
 // Only non-trivial methods have tests.
 
 /*
  STILL TO TEST:
- - (void)terminalDeleteLinesAtCursor:(int)n {
  - (void)terminalSetPixelWidth:(int)width height:(int)height {
  - (void)terminalScrollUp:(int)n {
  - (void)terminalSendModifiersDidChangeTo:(int *)modifiers

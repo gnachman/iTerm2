@@ -4278,6 +4278,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [[self tab] sessionInitiatedResize:self width:width height:height];
 }
 
+- (void)screenResizeToPixelWidth:(int)width height:(int)height {
+    [[[self tab] realParentWindow] setFrameSize:NSMakeSize(width, height)];
+}
+
 - (BOOL)screenShouldBeginPrinting {
     return ![[[self addressBookEntry] objectForKey:KEY_DISABLE_PRINTING] boolValue];
 }

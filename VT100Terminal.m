@@ -1154,8 +1154,6 @@ static VT100TCC decode_csi(unsigned char *datap,
                             break;
                         case 4:
                             result.type = XTERMCC_WINDOWSIZE_PIXEL;
-                            SET_PARAM_DEFAULT(param, 1, 0);     // columns or Y
-                            SET_PARAM_DEFAULT(param, 2, 0);     // rows or X
                             break;
                         case 2:
                             result.type = XTERMCC_ICONIFY;
@@ -1471,8 +1469,6 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
                         break;
                     case 4:
                         result.type = XTERMCC_WINDOWSIZE_PIXEL;
-                        SET_PARAM_DEFAULT(param, 1, 0);     // columns or Y
-                        SET_PARAM_DEFAULT(param, 2, 0);     // rows or X
                         break;
                     case 2:
                         result.type = XTERMCC_ICONIFY;

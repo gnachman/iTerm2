@@ -29,6 +29,7 @@
 - (BOOL)screenShouldInitiateWindowResize;
 
 // The delegate should resize the screen to the given size.
+- (void)screenResizeToPixelWidth:(int)width height:(int)height;
 - (void)screenResizeToWidth:(int)width height:(int)height;
 
 // Returns if terminal-initiated printing is permitted.

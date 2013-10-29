@@ -1655,9 +1655,19 @@ static const double kInterBellQuietPeriod = 0.1;
     if ([delegate_ screenShouldInitiateWindowResize] &&
         ![delegate_ screenWindowIsFullscreen]) {
         // TODO: Only allow this if there is a single session in the tab.
-        NSSize cellSize = [delegate_ screenCellSize];
-        [delegate_ screenResizeToWidth:width / cellSize.width
-                                height:height / cellSize.height];
+        NSRect frame = [delegate_ screenWindowFrame];
+        NSRect screenFrame = [delegate_ screenWindowScreenFrame];
+        if (width < 0) {
+            width = frame.size.width;
+        } else if (width == 0) {
+            width = screenFrame.size.width;
+        }
+        if (height < 0) {
+            height = frame.size.height;
+        } else if (height == 0) {
+            height = screenFrame.size.height;
+        }
+        [delegate_ screenResizeToPixelWidth:width height:height];
     }
 }
 
