@@ -1622,18 +1622,24 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (void)terminalDeleteLinesAtCursor:(int)n {
-    int num_lines_moved;
-
-    if (n + currentGrid_.cursorY <= currentGrid_.bottomMargin) {
-        // number of lines we can move down by n before we hit SCROLL_BOTTOM
-        num_lines_moved = currentGrid_.bottomMargin - (currentGrid_.cursorY + n);
+    if (n <= 0) {
+        return;
+    }
+    VT100GridRect scrollRegionRect = [currentGrid_ scrollRegionRect];
+    if (scrollRegionRect.origin.x + scrollRegionRect.size.width == currentGrid_.size.width) {
+        // Cursor can be in right margin and still be considered in the scroll region if the
+        // scroll region abuts the right margin.
+        scrollRegionRect.size.width++;
+    }
+    BOOL cursorInScrollRegion = VT100GridCoordInRect(currentGrid_.cursor, scrollRegionRect);
+    if (cursorInScrollRegion) {
         [currentGrid_ scrollRect:VT100GridRectMake(currentGrid_.leftMargin,
                                                    currentGrid_.cursorY,
                                                    currentGrid_.rightMargin - currentGrid_.leftMargin + 1,
-                                                   currentGrid_.cursorY + num_lines_moved + n)
+                                                   currentGrid_.bottomMargin - currentGrid_.topMargin + 1)
                           downBy:-n];
+        [delegate_ screenTriggerableChangeDidOccur];
     }
-    [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (void)terminalSetRows:(int)rows andColumns:(int)columns {

@@ -3344,11 +3344,78 @@
             @"....!"]);
 }
 
+- (void)testDeleteLinesAtCursor {
+    // Deleting 0 does nothing
+    VT100Screen *screen = [self screenWithWidth:4 height:4];
+    [self appendLines:@[ @"abcdefg", @"hij" ] toScreen:screen];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+    [screen terminalMoveCursorToX:5 y:2];  // 'f'
+    [screen terminalDeleteLinesAtCursor:0];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+
+    // Deleting 1
+    screen = [self screenWithWidth:4 height:4];
+    [self appendLines:@[ @"abcdefg", @"hij" ] toScreen:screen];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+    [screen terminalMoveCursorToX:5 y:2];  // 'f'
+    [screen terminalDeleteLinesAtCursor:1];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd!\n"
+            @"hij.!\n"
+            @"....!\n"
+            @"....!"]);
+    
+    // Outside region does nothing
+    screen = [self screenWithWidth:4 height:4];
+    [screen terminalSetScrollRegionTop:2 bottom:3];
+    [self appendLines:@[ @"abcdefg", @"hij" ] toScreen:screen];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+    [screen terminalMoveCursorToX:1 y:1];  // outside region
+    [screen terminalDeleteLinesAtCursor:1];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+
+    // Same but with vsplit
+    screen = [self screenWithWidth:4 height:4];
+    [self appendLines:@[ @"abcdefg", @"hij" ] toScreen:screen];
+    [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSetLeftMargin:2 rightMargin:3];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+    [screen terminalMoveCursorToX:1 y:1];  // outside region
+    [screen terminalDeleteLinesAtCursor:1];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+}
 // Only non-trivial methods have tests.
 
 /*
  STILL TO TEST:
- - (void)terminalInsertBlankLinesAfterCursor:(int)n {  what if cursor is outside scroll region?
  - (void)terminalDeleteLinesAtCursor:(int)n {
  - (void)terminalSetPixelWidth:(int)width height:(int)height {
  - (void)terminalScrollUp:(int)n {

@@ -921,7 +921,12 @@
         }
 
         // Move lines.
-        for (int iteration = 0; iteration < sourceHeight; iteration++) {
+        for (int iteration = 0; (iteration < sourceHeight &&
+                                 sourceIndex < size_.height &&
+                                 destIndex < size_.height &&
+                                 sourceIndex >= 0 &&
+                                 destIndex >= 0);
+             iteration++) {
             screen_char_t *sourceLine = [self screenCharsAtLineNumber:sourceIndex];
             screen_char_t *targetLine = [self screenCharsAtLineNumber:destIndex];
 
