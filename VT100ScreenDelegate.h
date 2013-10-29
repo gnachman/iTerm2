@@ -69,9 +69,6 @@
 // Delegate should move the window's top left point to the given screen coordinate.
 - (void)screenMoveWindowTopLeftPointTo:(NSPoint)point;
 
-// Returns the NSScreen the window is primarily in.
-- (NSScreen *)screenWindowScreen;
-
 // If flag is set, the window should be miniaturized; otherwise, deminiaturize.
 - (void)screenMiniaturizeWindow:(BOOL)flag;
 
