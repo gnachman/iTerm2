@@ -4562,7 +4562,10 @@ static VT100TCC decode_string(unsigned char *datap,
         case DCS_TMUX:
             [delegate_ terminalStartTmuxMode];
             break;
-            
+
+        case XTERMCC_SET_KVP:
+            break;
+
         default:
             NSLog(@"%s(%d): bug?? token.type = %d", __FILE__, __LINE__, token.type);
             break;
