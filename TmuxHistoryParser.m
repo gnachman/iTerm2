@@ -49,7 +49,6 @@
             [result appendBytes:screenChars
                          length:sizeof(screen_char_t) * len];
             free(screenChars);
-            break;
         }
     }
 
