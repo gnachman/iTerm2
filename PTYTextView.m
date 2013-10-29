@@ -8788,7 +8788,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 [resultMap_ removeObjectForKey:[NSNumber numberWithLongLong:y + totalScrollbackOverflow]];
 
                 // Compute the dirty rect for this line.
-                NSRect dirtyRect = [self visibleRect];
+                NSRect visibleRect = [self visibleRect];
+                NSRect dirtyRect = visibleRect;
                 dirtyRect.origin.y = y * lineHeight;
                 dirtyRect.size.height = lineHeight;
                 if (!allDirty) {
@@ -8800,6 +8801,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         }
                     }
                     dirtyRect.size.width = (maxX - x + 1) * charWidth;
+
+                    // Add a character on either side for glyphs that render unexpectedly wide.
+                    dirtyRect.origin.x -= charWidth;
+                    dirtyRect.size.width += 2 * charWidth;
                     DLog(@"Line %d is dirty from %d to %d, set rect %@ dirty",
                          y, x, maxX, [NSValue valueWithRect:dirtyRect]);
                 } else {
