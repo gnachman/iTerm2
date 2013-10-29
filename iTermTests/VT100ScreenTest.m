@@ -3443,12 +3443,78 @@
     assert(newPixelSize_.height == 60);
 }
 
+- (void)testScrollUp {
+    // Scroll by 0 does nothing
+    VT100Screen *screen = [self screenWithWidth:4 height:4];
+    [self appendLines:@[ @"abcdefg", @"hij" ] toScreen:screen];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+    [screen terminalScrollUp:0];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+    
+    // Scroll by 1
+    screen = [self screenWithWidth:4 height:4];
+    [self appendLines:@[ @"abcdefg", @"hij" ] toScreen:screen];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+    [screen terminalScrollUp:1];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!\n"
+            @"....!"]);
+
+    // Scroll by 2
+    screen = [self screenWithWidth:4 height:4];
+    [self appendLines:@[ @"abcdefg", @"hij" ] toScreen:screen];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+    [screen terminalScrollUp:2];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd\n"
+            @"efg.\n"
+            @"hij.!\n"
+            @"....!\n"
+            @"....!\n"
+            @"....!"]);
+
+    // Scroll with region
+    screen = [self screenWithWidth:4 height:4];
+    [self appendLines:@[ @"abcdefg", @"hij" ] toScreen:screen];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"....!"]);
+    [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSetLeftMargin:1 rightMargin:2];
+    [screen terminalSetScrollRegionTop:1 bottom:2];
+    [screen terminalScrollUp:1];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"eij.!\n"
+            @"h...!\n"
+            @"....!"]);
+}
+
 // Only non-trivial methods have tests.
 
 /*
  STILL TO TEST:
- - (void)terminalSetPixelWidth:(int)width height:(int)height {
- - (void)terminalScrollUp:(int)n {
  - (void)terminalSendModifiersDidChangeTo:(int *)modifiers
  numValues:(int)numValues {
 
