@@ -182,6 +182,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
         textViewDataSource_ = [textView dataSource];  // TODO: this is a weak ref. Be on the lookout for its death.
         theSession_ = [textViewDataSource_ session];
         label_ = [label retain];
+        findContext_ = [[FindContext alloc] init];
         [textViewDataSource_ setFindString:findString_
                           forwardDirection:NO
                               ignoringCase:YES
@@ -192,7 +193,6 @@ const double GLOBAL_SEARCH_MARGIN = 10;
                                  inContext:findContext_
                            multipleResults:NO];
         matchLocations_ = [[NSMutableSet alloc] init];
-        findContext_ = [[FindContext alloc] init];
         findContext_.maxTime = 0.01;
         findContext_.hasWrapped = YES;
     }
