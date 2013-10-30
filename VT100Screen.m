@@ -46,6 +46,7 @@ static const double kInterBellQuietPeriod = 0.1;
 @synthesize saveToScrollbackInAlternateScreen = saveToScrollbackInAlternateScreen_;
 @synthesize dvr = dvr_;
 @synthesize delegate = delegate_;
+@synthesize savedCursor = savedCursor_;
 
 - (id)initWithTerminal:(VT100Terminal *)terminal
 {
@@ -117,8 +118,7 @@ static const double kInterBellQuietPeriod = 0.1;
     altGrid_.size = VT100GridSizeMake(width, height);
     primaryGrid_.cursor = VT100GridCoordMake(0, 0);
     altGrid_.cursor = VT100GridCoordMake(0, 0);
-    primaryGrid_.savedCursor = VT100GridCoordMake(0, 0);
-    altGrid_.savedCursor = VT100GridCoordMake(0, 0);
+    savedCursor_ = VT100GridCoordMake(0, 0);
     [primaryGrid_ resetScrollRegions];
     [altGrid_ resetScrollRegions];
 
@@ -258,7 +258,6 @@ static const double kInterBellQuietPeriod = 0.1;
         }
 
         int newLastPos = [realLineBuffer lastPos];
-        primaryGrid_.savedCursor = primaryGrid_.cursor;
 
         ///////////////////////////////////////
         // Create a cheap append-only copy of the line buffer and add the
@@ -356,6 +355,9 @@ static const double kInterBellQuietPeriod = 0.1;
         [altGrid_ release];
         altGrid_ = nil;
     }
+
+    savedCursor_.x = MIN(new_width - 1, savedCursor_.x);
+    savedCursor_.y = MIN(new_height - 1, savedCursor_.y);
 
     [primaryGrid_ resetScrollRegions];
     [altGrid_ resetScrollRegions];
@@ -704,7 +706,8 @@ static const double kInterBellQuietPeriod = 0.1;
     [linebuffer_ setCursor:0];
     [currentGrid_ restoreScreenFromLineBuffer:linebuffer_
                               withDefaultChar:[currentGrid_ defaultChar]
-                            maxLinesToRestore:[linebuffer_ numLinesWithWidth:currentGrid_.size.width]];
+                            maxLinesToRestore:MIN([linebuffer_ numLinesWithWidth:currentGrid_.size.width],
+                                                  currentGrid_.size.height - numberOfConsecutiveEmptyLines)];
 }
 
 - (void)setAltScreen:(NSArray *)lines
@@ -739,31 +742,34 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)setTmuxState:(NSDictionary *)state
 {
-    int savedGrid = [[self objectInDictionary:state
-                             withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedGrid,
-                                               kStateDictInAlternateScreen,
-                                               nil]] intValue];
-    if (!savedGrid && altGrid_) {
-        [altGrid_ release];
-        altGrid_ = nil;
+    BOOL inAltScreen = [[self objectInDictionary:state
+                                withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedGrid,
+                                                  kStateDictSavedGrid,
+                                                  nil]] intValue];
+    if (inAltScreen) {
+        // Alt and primary have been populated with each other's content.
+        VT100Grid *temp = altGrid_;
+        altGrid_ = primaryGrid_;
+        primaryGrid_ = temp;
     }
-    // TODO(georgen): Get the alt screen contents and fill altGrid.
 
-    int scx = [[self objectInDictionary:state
-                       withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedCX,
-                                         kStateDictBaseCursorX,
-                                         nil]] intValue];
-    int scy = [[self objectInDictionary:state
-                       withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedCY,
-                                         kStateDictBaseCursorY,
-                                         nil]] intValue];
-    primaryGrid_.savedCursor = VT100GridCoordMake(scx, scy);
+    NSNumber *altSavedX = [state objectForKey:kStateDictAltSavedCX];
+    NSNumber *altSavedY = [state objectForKey:kStateDictAltSavedCY];
+    if (altSavedX && altSavedY && inAltScreen) {
+        primaryGrid_.cursor = VT100GridCoordMake([altSavedX intValue], [altSavedY intValue]);
+    }
 
-    primaryGrid_.cursorX = [[state objectForKey:kStateDictCursorX] intValue];
-    primaryGrid_.cursorY = [[state objectForKey:kStateDictCursorY] intValue];
+    NSNumber *savedX = [state objectForKey:kStateDictSavedCX];
+    NSNumber *savedY = [state objectForKey:kStateDictSavedCY];
+    if (savedX && savedY) {
+        savedCursor_ = VT100GridCoordMake([savedX intValue], [savedY intValue]);
+    }
+
+    currentGrid_.cursorX = [[state objectForKey:kStateDictCursorX] intValue];
+    currentGrid_.cursorY = [[state objectForKey:kStateDictCursorY] intValue];
     int top = [[state objectForKey:kStateDictScrollRegionUpper] intValue];
     int bottom = [[state objectForKey:kStateDictScrollRegionLower] intValue];
-    primaryGrid_.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
+    currentGrid_.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
     [self showCursor:[[state objectForKey:kStateDictCursorMode] boolValue]];
 
     [tabStops_ removeAllObjects];
@@ -778,13 +784,48 @@ static const double kInterBellQuietPeriod = 0.1;
         }
     }
 
-    // TODO: The way that tmux and iterm2 handle saving the cursor position is different and incompatible and only one of us is right.
-    // tmux saves the cursor position for DECSC in one location and for the non-alt screen in a separate location.
-    // iterm2 saves the cursor position for the base screen in one location and for the alternate screen in another location.
-    // At a minimum, we differ in how we handle DECSC.
-    // After resolving this confusion, do the right thing with these state fields:
-    // kStateDictDECSCCursorX;
-    // kStateDictDECSCCursorY;
+    NSNumber *cursorMode = [state objectForKey:kStateDictCursorMode];
+    if (cursorMode) {
+        [self terminalSetCursorVisible:!![cursorMode intValue]];
+    }
+
+    // Everything below this line needs testing
+    NSNumber *insertMode = [state objectForKey:kStateDictInsertMode];
+    if (insertMode) {
+        [terminal_ setInsertMode:!![insertMode intValue]];
+    }
+
+    NSNumber *applicationCursorKeys = [state objectForKey:kStateDictKCursorMode];
+    if (applicationCursorKeys) {
+        [terminal_ setCursorMode:!![applicationCursorKeys intValue]];
+    }
+
+    NSNumber *keypad = [state objectForKey:kStateDictKKeypadMode];
+    if (keypad) {
+        [terminal_ setKeypadMode:!![keypad boolValue]];
+    }
+    fjsdlkfjdsalkfjsdl
+    NSNumber *mouse = [state objectForKey:kStateDictMouseStandardMode];
+    if (mouse && [mouse intValue]) {
+        [terminal_ setMouseMode:MOUSE_REPORTING_NORMAL];
+    }
+    mouse = [state objectForKey:kStateDictMouseButtonMode];
+    if (mouse && [mouse intValue]) {
+        [terminal_ setMouseMode:MOUSE_REPORTING_BUTTON_MOTION];
+    }
+    mouse = [state objectForKey:kStateDictMouseButtonMode];
+    if (mouse && [mouse intValue]) {
+        [terminal_ setMouseMode:MOUSE_REPORTING_ALL_MOTION];
+    }
+    mouse = [state objectForKey:kStateDictMouseUTF8Mode];
+    if (mouse && [mouse intValue]) {
+        [terminal_ setMouseFormat:MOUSE_FORMAT_XTERM_EXT];
+    }
+
+    NSNumber *wrap = [state objectForKey:kStateDictWrapMode];
+    if (wrap) {
+        [terminal_ setWraparoundMode:!![wrap intValue]];
+    }
 }
 
 // Change color of text on screen that matches regex to the color of prototypechar.
@@ -1279,20 +1320,28 @@ static const double kInterBellQuietPeriod = 0.1;
     currentGrid_.cursor = VT100GridCoordMake(0, 0);
 }
 
-- (void)terminalRestoreCursorAndCharsetFlags
+- (void)terminalRestoreCursor
+{
+    currentGrid_.cursor = savedCursor_;
+}
+
+- (void)terminalRestoreCharsetFlags
 {
     assert(savedCharsetUsesLineDrawingMode_.count == charsetUsesLineDrawingMode_.count);
-    currentGrid_.cursor = currentGrid_.savedCursor;
     [charsetUsesLineDrawingMode_ removeAllObjects];
     [charsetUsesLineDrawingMode_ addObjectsFromArray:savedCharsetUsesLineDrawingMode_];
 
     [delegate_ screenTriggerableChangeDidOccur];
 }
 
-- (void)terminalSaveCursorAndCharsetFlags
+- (void)terminalSaveCursor
 {
     [currentGrid_ clampCursorPositionToValid];
-    currentGrid_.savedCursor = currentGrid_.cursor;
+    savedCursor_ = currentGrid_.cursor;
+}
+
+- (void)terminalSaveCharsetFlags
+{
     [savedCharsetUsesLineDrawingMode_ removeAllObjects];
     [savedCharsetUsesLineDrawingMode_ addObjectsFromArray:charsetUsesLineDrawingMode_];
 }
@@ -1427,9 +1476,9 @@ static const double kInterBellQuietPeriod = 0.1;
                                                 unlimitedScrollback:unlimitedScrollback_
                                                  preserveCursorLine:NO]];
     }
+    savedCursor_ = VT100GridCoordMake(0, 0);
 
     [self setInitialTabStops];
-    altGrid_.savedCursor = VT100GridCoordMake(0, 0);
 
     [savedCharsetUsesLineDrawingMode_ removeAllObjects];
     [charsetUsesLineDrawingMode_ removeAllObjects];
@@ -1445,7 +1494,8 @@ static const double kInterBellQuietPeriod = 0.1;
     // See note in xterm-terminfo.txt (search for DECSTR).
 
     // save cursor (fixes origin-mode side-effect)
-    [self terminalSaveCursorAndCharsetFlags];
+    [self terminalSaveCursor];
+    [self terminalSaveCharsetFlags];
 
     // reset scrolling margins
     [currentGrid_ resetScrollRegions];
@@ -1455,7 +1505,8 @@ static const double kInterBellQuietPeriod = 0.1;
     // reset application cursor keys (done in VT100Terminal)
     // reset origin mode (done in VT100Terminal)
     // restore cursor
-    [self terminalRestoreCursorAndCharsetFlags];
+    [self terminalRestoreCursor];
+    [self terminalRestoreCharsetFlags];
 }
 
 - (void)terminalSetCursorType:(ITermCursorType)cursorType {
@@ -1831,19 +1882,27 @@ static const double kInterBellQuietPeriod = 0.1;
         return;
     }
     if (!altGrid_) {
-        altGrid_ = [primaryGrid_ copy];
+        altGrid_ = [[VT100Grid alloc] initWithSize:primaryGrid_.size delegate:terminal_];
     }
+
     primaryGrid_.savedDefaultChar = [primaryGrid_ defaultChar];
     currentGrid_ = altGrid_;
+    currentGrid_.cursor = primaryGrid_.cursor;
     [currentGrid_ markAllCharsDirty:YES];
     [delegate_ screenNeedsRedraw];
 }
 
-- (void)terminalShowPrimaryBuffer
+- (void)terminalShowPrimaryBufferRestoringCursor:(BOOL)restore
 {
-    currentGrid_ = primaryGrid_;
-    [currentGrid_ markAllCharsDirty:YES];
-    [delegate_ screenNeedsRedraw];
+    if (currentGrid_ == altGrid_) {
+        currentGrid_ = primaryGrid_;
+        [currentGrid_ markAllCharsDirty:YES];
+        if (!restore) {
+            // Don't restore the cursor; instead, continue using the cursor position of the alt grid.
+            currentGrid_.cursor = altGrid_.cursor;
+        }
+        [delegate_ screenNeedsRedraw];
+    }
 }
 
 - (void)terminalClearScreen {

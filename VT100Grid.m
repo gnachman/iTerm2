@@ -24,7 +24,6 @@
 @synthesize scrollRegionRows = scrollRegionRows_;
 @synthesize scrollRegionCols = scrollRegionCols_;
 @synthesize useScrollRegionCols = useScrollRegionCols_;
-@synthesize savedCursor = savedCursor_;
 @synthesize allDirty = allDirty_;
 @synthesize lines = lines_;
 @synthesize savedDefaultChar = savedDefaultChar_;
@@ -330,7 +329,6 @@
                                     unlimitedScrollback:unlimitedScrollback
                                 useScrollbackWithRegion:NO];
     }
-    self.savedCursor = VT100GridCoordMake(0, 0);
     self.cursor = VT100GridCoordMake(0, 0);
 
     [self setCharsFrom:VT100GridCoordMake(0, preserveCursorLine ? 1 : 0)
@@ -1220,12 +1218,6 @@
     if (cursor_.y >= size_.height) {
         self.cursorY = size_.height - 1;
     }
-    if (savedCursor_.x >= size_.width) {
-        savedCursor_.x = size_.width - 1;
-    }
-    if (savedCursor_.y >= size_.height) {
-        savedCursor_.y = size_.height - 1;
-    }
 }
 
 - (screen_char_t *)resultLine {
@@ -1805,7 +1797,6 @@ void DumpBuf(screen_char_t* p, int n) {
     }
     theCopy->screenTop_ = screenTop_;
     theCopy.cursor = cursor_;
-    theCopy.savedCursor = savedCursor_;
     theCopy.scrollRegionRows = scrollRegionRows_;
     theCopy.scrollRegionCols = scrollRegionCols_;
     theCopy.useScrollRegionCols = useScrollRegionCols_;

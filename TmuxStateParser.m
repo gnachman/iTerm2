@@ -8,23 +8,44 @@
 
 #import "TmuxStateParser.h"
 
-NSString *kStateDictInAlternateScreen = @"in_alternate_screen";  // Deprecated: same as kStateDictSavedGrid below.
 NSString *kStateDictSavedGrid = @"alternate_on";
-NSString *kStateDictBaseCursorX = @"base_cursor_x";  // Deprecated: use saved_cx
-NSString *kStateDictBaseCursorY = @"base_cursor_y";  // Deprecated: use saved_cy
-NSString *kStateDictSavedCX = @"alternate_saved_x";
-NSString *kStateDictSavedCY = @"alternate_saved_y";
+// These are the cursor coords in the primary screen, valid only when in the alt screen.
+// CSI ? 1049 h saves to this, CSI ? 1049 h restores from it. CSI ? 1048 h/l is not supported by
+// tmux.
+NSString *kStateDictAltSavedCX = @"alternate_saved_x";
+NSString *kStateDictAltSavedCY = @"alternate_saved_y";
+
+// This is the current screen's cursor position.
 NSString *kStateDictCursorX = @"cursor_x";
 NSString *kStateDictCursorY = @"cursor_y";
 NSString *kStateDictScrollRegionUpper = @"scroll_region_upper";
 NSString *kStateDictScrollRegionLower = @"scroll_region_lower";
 NSString *kStateDictPaneId = @"pane_id";
 NSString *kStateDictTabstops = @"pane_tabs";
-NSString *kStateDictDECSCCursorX = @"saved_cursor_x";
-NSString *kStateDictDECSCCursorY = @"saved_cursor_y";
+
+// In tmux, the following codes save to these values:
+// ESC 7
+// CSI s
+// The following codes restore from them:
+// ESC 8
+// CSI r
+// Notably, CSI ? 1049 h and CSI ? 1048 h do not save from it and CSI ? 1049 l and CSI ? 1048 l
+// do not restore from it. Those go into alternated_saved_[xy] instead.
+// It doesn't seem to be reset when switching between primary and alt screen in tmux, so it applies
+// equally to both.
+NSString *kStateDictSavedCX = @"saved_cursor_x";
+NSString *kStateDictSavedCY = @"saved_cursor_y";
+
+// Cursor visible? (DECTCEM)
 NSString *kStateDictCursorMode = @"cursor_flag";
+
+// Insert mode?
 NSString *kStateDictInsertMode = @"insert_flag";
+
+// Application cursor mode (DECCKM)
 NSString *kStateDictKCursorMode = @"keypad_cursor_flag";
+
+// Corresponds to VT100Terminal's setKeypadMode:
 NSString *kStateDictKKeypadMode = @"keypad_flag";
 NSString *kStateDictWrapMode = @"wrap_flag";
 NSString *kStateDictMouseStandardMode = @"mouse_standard_flag";
@@ -72,10 +93,11 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
 + (NSString *)format {
     NSMutableString *format = [NSMutableString string];
     NSArray *theModes = [NSArray arrayWithObjects:
-                         kStateDictPaneId, kStateDictSavedGrid, kStateDictSavedCX, kStateDictSavedCY,
+                         kStateDictPaneId, kStateDictSavedGrid, kStateDictAltSavedCX,
+                         kStateDictAltSavedCY, kStateDictSavedCX, kStateDictSavedCY,
                          kStateDictCursorX, kStateDictCursorY, kStateDictScrollRegionUpper,
-                         kStateDictScrollRegionLower, kStateDictTabstops, kStateDictDECSCCursorX,
-                         kStateDictDECSCCursorY, kStateDictCursorMode, kStateDictInsertMode,
+                         kStateDictScrollRegionLower, kStateDictTabstops, kStateDictCursorMode,
+                         kStateDictInsertMode,
                          kStateDictKCursorMode, kStateDictKKeypadMode, kStateDictWrapMode,
                          kStateDictMouseStandardMode, kStateDictMouseButtonMode,
                          kStateDictMouseAnyMode, kStateDictMouseUTF8Mode, nil];
@@ -107,21 +129,29 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
     NSString *intlistType = @"intlistValue";
     NSString *paneIdNumberType = @"paneIdNumberValue";
 
+
+
     NSDictionary *fieldTypes = [NSDictionary dictionaryWithObjectsAndKeys:
-                                intType, kStateDictInAlternateScreen,
                                 intType, kStateDictSavedGrid,
-                                uintType, kStateDictBaseCursorX,
-                                uintType, kStateDictBaseCursorY,
-                                uintType, kStateDictSavedCX,
-                                uintType, kStateDictSavedCY,
-                                uintType, kStateDictCursorX,
-                                uintType, kStateDictCursorY,
+                                intType, kStateDictCursorX,
+                                intType, kStateDictCursorY,
+                                intType, kStateDictAltSavedCX,
+                                intType, kStateDictAltSavedCY,
+                                intType, kStateDictSavedCX,
+                                intType, kStateDictSavedCY,
+                                uintType, kStateDictCursorMode,
+                                uintType, kStateDictInsertMode,
+                                uintType, kStateDictKCursorMode,
+                                uintType, kStateDictKKeypadMode,
+                                uintType, kStateDictMouseStandardMode,
+                                uintType, kStateDictMouseButtonMode,
+                                uintType, kStateDictMouseAnyMode,
+                                uintType, kStateDictMouseUTF8Mode,
+                                uintType, kStateDictWrapMode,
                                 uintType, kStateDictScrollRegionUpper,
                                 uintType, kStateDictScrollRegionLower,
                                 paneIdNumberType, kStateDictPaneId,
                                 intlistType, kStateDictTabstops,
-                                intType, kStateDictDECSCCursorX,
-                                intType, kStateDictDECSCCursorY,
                                 nil];
 
     NSArray *fields = [state componentsSeparatedByString:@"\t"];

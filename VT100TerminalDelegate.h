@@ -58,10 +58,14 @@ typedef enum {
 - (void)terminalShowTestPattern;
 
 // Restores the cursor position and charset flags.
-- (void)terminalRestoreCursorAndCharsetFlags;
+- (void)terminalRestoreCursor;
+- (void)terminalRestoreCharsetFlags;
 
-// Saves the cursor position and charset flags.
-- (void)terminalSaveCursorAndCharsetFlags;
+// Saves the cursor position.
+- (void)terminalSaveCursor;
+
+// Save line-drawing-mode flags.
+- (void)terminalSaveCharsetFlags;
 
 // Returns the cursor's position relative to the scroll region's origin. 1-based.
 - (int)terminalRelativeCursorX;
@@ -227,7 +231,10 @@ typedef enum {
 
 // Switches the currently visible buffer.
 - (void)terminalShowAltBuffer;
-- (void)terminalShowPrimaryBuffer;
+
+// If restore is set, then the saved cursor position is used, otherwise the alt grid's cursor position
+// is used. Does nothing if already on the alt grid.
+- (void)terminalShowPrimaryBufferRestoringCursor:(BOOL)restore;
 
 // Clears the screen, preserving the wrapped line the cursor is on.
 - (void)terminalClearScreen;

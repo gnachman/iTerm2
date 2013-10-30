@@ -159,6 +159,7 @@ typedef enum {
 - (BOOL)screenMode;  // Reversed text?
 - (BOOL)originMode;
 - (BOOL)wraparoundMode;
+- (void)setWraparoundMode:(BOOL)mode;
 - (BOOL)isAnsi;
 - (BOOL)autorepeatMode;
 - (BOOL)insertMode;

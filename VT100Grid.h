@@ -29,7 +29,6 @@
     NSMutableArray *dirty_;  // Array of NSMutableData. Each data has size_.width char's.
     id<VT100GridDelegate> delegate_;
     VT100GridCoord cursor_;
-    VT100GridCoord savedCursor_;
     VT100GridRange scrollRegionRows_;
     VT100GridRange scrollRegionCols_;
     BOOL useScrollRegionCols_;
@@ -47,7 +46,6 @@
 @property(nonatomic, assign) VT100GridRange scrollRegionRows;
 @property(nonatomic, assign) VT100GridRange scrollRegionCols;
 @property(nonatomic, assign) BOOL useScrollRegionCols;
-@property(nonatomic, assign) VT100GridCoord savedCursor;
 @property(nonatomic, assign, getter=isAllDirty) BOOL allDirty;
 @property(nonatomic, readonly) int leftMargin;
 @property(nonatomic, readonly) int rightMargin;

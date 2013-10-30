@@ -2556,7 +2556,7 @@ static VT100TCC decode_string(unsigned char *datap,
                               options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location != NSNotFound;
 }
 
-- (void)saveCursorAttributes
+- (void)saveTextAttributes
 {
     saveBold_ = bold_;
     saveItalic_ = italic_;
@@ -2574,7 +2574,7 @@ static VT100TCC decode_string(unsigned char *datap,
     saveBgColorMode_ = bgColorMode_;
 }
 
-- (void)restoreCursorAttributes
+- (void)restoreTextAttributes
 {
     bold_ = saveBold_;
     italic_ = saveItalic_;
@@ -3244,6 +3244,11 @@ static VT100TCC decode_string(unsigned char *datap,
     return wraparoundMode_;
 }
 
+- (void)setWraparoundMode:(BOOL)mode
+{
+    wraparoundMode_ = mode;
+}
+
 - (BOOL)isAnsi
 {
     return isAnsi_;
@@ -3442,14 +3447,14 @@ static VT100TCC decode_string(unsigned char *datap,
                         // contents for select/paste operations.
                         if (!disableSmcupRmcup_) {
                             if (mode) {
-                                [self saveCursorAttributes];
-                                [delegate_ terminalSaveCursorAndCharsetFlags];
+                                [self saveTextAttributes];
+                                [delegate_ terminalSaveCharsetFlags];
                                 [delegate_ terminalShowAltBuffer];
                                 [delegate_ terminalClearScreen];
                             } else {
-                                [delegate_ terminalShowPrimaryBuffer];
-                                [self restoreCursorAttributes];
-                                [delegate_ terminalRestoreCursorAndCharsetFlags];
+                                [delegate_ terminalShowPrimaryBufferRestoringCursor:YES];
+                                [self restoreTextAttributes];
+                                [delegate_ terminalRestoreCharsetFlags];
                             }
                         }
                         break;
@@ -3465,7 +3470,7 @@ static VT100TCC decode_string(unsigned char *datap,
                             if (mode) {
                                 [delegate_ terminalShowAltBuffer];
                             } else {
-                                [delegate_ terminalShowPrimaryBuffer];
+                                [delegate_ terminalShowPrimaryBufferRestoringCursor:NO];
                             }
                         }
                         break;
@@ -3542,10 +3547,12 @@ static VT100TCC decode_string(unsigned char *datap,
             xon_ = NO;
             break;
         case VT100CSI_DECRC:
-            [self restoreCursorAttributes];
+            [self restoreTextAttributes];
+            [delegate_ terminalRestoreCursor];
             break;
         case VT100CSI_DECSC:
-            [self saveCursorAttributes];
+            [self saveTextAttributes];
+            [delegate_ terminalSaveCursor];
             break;
         case VT100CSI_DECSTR:
             wraparoundMode_ = YES;
@@ -4181,13 +4188,15 @@ static VT100TCC decode_string(unsigned char *datap,
         case VT100CSI_DECLL:
             break;
         case VT100CSI_DECRC:
-            [self restoreCursorAttributes];
+            [self restoreTextAttributes];
+            [delegate_ terminalRestoreCursor];
             break;
         case VT100CSI_DECREPTPARM:
         case VT100CSI_DECREQTPARM:
             break;
         case VT100CSI_DECSC:
-            [self saveCursorAttributes];
+            [self saveTextAttributes];
+            [delegate_ terminalSaveCursor];
             break;
         case VT100CSI_DECSTBM:
             [delegate_ terminalSetScrollRegionTop:token.u.csi.p[0] == 0 ? 0 : token.u.csi.p[0] - 1
@@ -4411,10 +4420,12 @@ static VT100TCC decode_string(unsigned char *datap,
             }
             break;
         case ANSICSI_SCP:
-            [delegate_ terminalSaveCursorAndCharsetFlags];
+            [delegate_ terminalSaveCursor];
+            [delegate_ terminalSaveCharsetFlags];
             break;
         case ANSICSI_RCP:
-            [delegate_ terminalRestoreCursorAndCharsetFlags];
+            [delegate_ terminalRestoreCursor];
+            [delegate_ terminalRestoreCharsetFlags];
             break;
 
             // XTERM extensions

@@ -489,7 +489,7 @@
             @"....."]);
     assert(screen.cursorX == 1);
     assert(screen.cursorY == 4);
-    [screen terminalShowPrimaryBuffer];
+    [screen terminalShowPrimaryBufferRestoringCursor:YES];
     assert([[screen compactLineDump] isEqualToString:
             @"abcde\n"
             @"fgh..\n"
@@ -509,7 +509,7 @@
             @"...."]);
     assert(screen.cursorX == 1);
     assert(screen.cursorY == 4);
-    [screen terminalShowPrimaryBuffer];
+    [screen terminalShowPrimaryBufferRestoringCursor:YES];
     assert([[screen compactLineDump] isEqualToString:
             @"abcd\n"
             @"efgh\n"
@@ -529,7 +529,7 @@
             @"........."]);
     assert(screen.cursorX == 1);
     assert(screen.cursorY == 3);
-    [screen terminalShowPrimaryBuffer];
+    [screen terminalShowPrimaryBufferRestoringCursor:YES];
     assert([[screen compactLineDump] isEqualToString:
             @"abcdefgh.\n"
             @"ijkl.....\n"
@@ -550,7 +550,7 @@
             @"....."]);
     assert(screen.cursorX == 1);
     assert(screen.cursorY == 4);
-    [screen terminalShowPrimaryBuffer];
+    [screen terminalShowPrimaryBufferRestoringCursor:YES];
     assert([[screen compactLineDump] isEqualToString:
             @"abcde\n"
             @"fgh..\n"
@@ -570,7 +570,7 @@
             @"......"]);
     assert(screen.cursorX == 1);
     assert(screen.cursorY == 4);
-    [screen terminalShowPrimaryBuffer];
+    [screen terminalShowPrimaryBufferRestoringCursor:YES];
     assert([[screen compactLineDump] isEqualToString:
             @"ijkl..\n"
             @"mnopqr\n"
@@ -590,7 +590,7 @@
             @"..."]);
     assert(screen.cursorX == 1);
     assert(screen.cursorY == 3);
-    [screen terminalShowPrimaryBuffer];
+    [screen terminalShowPrimaryBufferRestoringCursor:YES];
     assert([[screen compactLineDump] isEqualToString:
             @"ijk\n"
             @"l..\n"
@@ -825,7 +825,7 @@
             @"......\n"
             @"......"]);
     assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nMNOPQRST\nUVWXYZ"]);
-    [screen terminalShowPrimaryBuffer];
+    [screen terminalShowPrimaryBufferRestoringCursor:YES];
     assert([[screen compactLineDump] isEqualToString:
             @"ijkl..\n"
             @"mnopqr\n"
@@ -877,7 +877,7 @@
     s = ScreenCharArrayToStringDebug([screen getLineAtIndex:0],
                                      [screen width]);
     assert([s isEqualToString:@"gh"]);
-    [screen terminalShowPrimaryBuffer];
+    [screen terminalShowPrimaryBufferRestoringCursor:YES];
     assert([[screen compactLineDump] isEqualToString:
             @"ijk\n"
             @"l..\n"
@@ -960,7 +960,7 @@
             @"......\n"
             @"......"]);
     assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
-    [screen terminalShowPrimaryBuffer];
+    [screen terminalShowPrimaryBufferRestoringCursor:YES];
     assert([[screen compactLineDumpWithHistory] isEqualToString:
             @"abcdef\n"
             @"gh....\n"
@@ -1257,7 +1257,8 @@
     [screen terminalSetScrollRegionTop:1 bottom:2];
     [screen terminalSetUseColumnScrollRegion:YES];
     [screen terminalSetLeftMargin:1 rightMargin:2];
-    [screen terminalSaveCursorAndCharsetFlags];
+    [screen terminalSaveCursor];
+    [screen terminalSaveCharsetFlags];
     [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrstuvwxyz"] toScreen:screen];
     [screen clearBuffer];
     assert(updates_ == 1);
@@ -1268,8 +1269,8 @@
             @"....."]);
     assert(VT100GridRectEquals([[screen currentGrid] scrollRegionRect],
                                VT100GridRectMake(0, 0, 5, 4)));
-    assert([[screen currentGrid] savedCursor].x == 0);
-    assert([[screen currentGrid] savedCursor].y == 0);
+    assert(screen.savedCursor.x == 0);
+    assert(screen.savedCursor.y == 0);
 
     // Cursor on last nonempty line
     screen = [self screenWithWidth:5 height:4];
@@ -1640,7 +1641,8 @@
     
     assert(screen.cursorX == 5);
     assert(screen.cursorY == 6);
-    [screen terminalRestoreCursorAndCharsetFlags];
+    [screen terminalRestoreCursor];
+    [screen terminalRestoreCharsetFlags];
     assert(screen.cursorX == 3);
     assert(screen.cursorY == 4);
     assert([[screen currentGrid] topMargin] == 6);
@@ -2653,13 +2655,16 @@
     [screen terminalMoveCursorToX:4 y:5];
     [screen terminalSetCharset:1 toLineDrawingMode:YES];
     [screen terminalSetCharset:3 toLineDrawingMode:YES];
-    [screen terminalSaveCursorAndCharsetFlags];
+    [screen terminalSaveCursor];
+    [screen terminalSaveCharsetFlags];
     [screen terminalMoveCursorToX:1 y:1];
     [screen terminalSetCharset:1 toLineDrawingMode:NO];
     [screen terminalSetCharset:3 toLineDrawingMode:NO];
     assert([screen allCharacterSetPropertiesHaveDefaultValues]);
 
-    [screen terminalRestoreCursorAndCharsetFlags];
+    [screen terminalRestoreCursor];
+    [screen terminalRestoreCharsetFlags];
+
     assert(screen.cursorX == 4);
     assert(screen.cursorY == 5);
     assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
@@ -2675,7 +2680,9 @@
         [screen terminalSetCharset:i toLineDrawingMode:NO];
     }
     [screen terminalMoveCursorToX:5 y:5];
-    [screen terminalRestoreCursorAndCharsetFlags];
+    [screen terminalRestoreCursor];
+    [screen terminalRestoreCharsetFlags];
+
     assert(screen.cursorX == 1);
     assert(screen.cursorY == 1);
     assert([screen allCharacterSetPropertiesHaveDefaultValues]);
@@ -2958,9 +2965,13 @@
     // Saved cursor gets reset to origin
     screen = [self screenWithWidth:10 height:4];
     [screen terminalMoveCursorToX:2 y:2];
-    [screen terminalSaveCursorAndCharsetFlags];
+    [screen terminalSaveCursor];
+    [screen terminalSaveCharsetFlags];
+
     [screen terminalResetPreservingPrompt:YES];
-    [screen terminalRestoreCursorAndCharsetFlags];
+    [screen terminalRestoreCursor];
+    [screen terminalRestoreCharsetFlags];
+
     assert(screen.cursorX == 1);
     assert(screen.cursorY == 1);
 
@@ -2979,9 +2990,13 @@
     [screen terminalSetCharset:1 toLineDrawingMode:YES];
     [screen terminalSetCharset:2 toLineDrawingMode:YES];
     [screen terminalSetCharset:3 toLineDrawingMode:YES];
-    [screen terminalSaveCursorAndCharsetFlags];
+    [screen terminalSaveCursor];
+    [screen terminalSaveCharsetFlags];
+
     [screen terminalResetPreservingPrompt:YES];
-    [screen terminalRestoreCursorAndCharsetFlags];
+    [screen terminalRestoreCursor];
+    [screen terminalRestoreCharsetFlags];
+
     assert([screen allCharacterSetPropertiesHaveDefaultValues]);
 
     // Cursor is made visible
@@ -3017,7 +3032,9 @@
     [screen terminalSetCharset:1 toLineDrawingMode:NO];
     assert([screen allCharacterSetPropertiesHaveDefaultValues]);
     
-    [screen terminalRestoreCursorAndCharsetFlags];
+    [screen terminalRestoreCursor];
+    [screen terminalRestoreCharsetFlags];
+
     assert(screen.cursorX == 2);
     assert(screen.cursorY == 3);
     assert(![screen allCharacterSetPropertiesHaveDefaultValues]);

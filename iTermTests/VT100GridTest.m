@@ -1594,7 +1594,6 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(2, 2);
     grid.cursorX = 2;
     grid.cursorY = 3;
-    grid.savedCursor = grid.cursor;
 
     LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
     [lineBuffer setMaxLines:1];
@@ -1614,8 +1613,6 @@ do { \
     assert(grid.scrollRegionCols.length == 4);
     assert(grid.cursor.x == 0);
     assert(grid.cursor.y == 0);
-    assert(grid.savedCursor.x == 0);
-    assert(grid.savedCursor.y == 0);
 
     // Test unlimited scrollback --------------------------------------------------------------------
     grid = [self gridFromCompactLines:@"0123\nabcd\nefgh\n...."];
@@ -1653,7 +1650,6 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(2, 2);
     grid.cursorX = 2;
     grid.cursorY = 3;
-    grid.savedCursor = grid.cursor;
 
     LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
     [lineBuffer setMaxLines:1];
@@ -1673,8 +1669,6 @@ do { \
     assert(grid.scrollRegionCols.length == 4);
     assert(grid.cursor.x == 0);
     assert(grid.cursor.y == 0);
-    assert(grid.savedCursor.x == 0);
-    assert(grid.savedCursor.y == 0);
 
     // Cursor at end of content
     grid = [self gridFromCompactLines:@"0123\nabcd\nefgh\n...."];
@@ -1682,7 +1676,6 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(2, 2);
     grid.cursorX = 2;
     grid.cursorY = 2;
-    grid.savedCursor = grid.cursor;
 
     lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
     [lineBuffer setMaxLines:1];
@@ -1702,8 +1695,6 @@ do { \
     assert(grid.scrollRegionCols.length == 4);
     assert(grid.cursor.x == 0);
     assert(grid.cursor.y == 0);
-    assert(grid.savedCursor.x == 0);
-    assert(grid.savedCursor.y == 0);
 
     // Cursor within content
     grid = [self gridFromCompactLines:@"0123\nabcd\nefgh\n...."];
@@ -1711,7 +1702,6 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(2, 2);
     grid.cursorX = 2;
     grid.cursorY = 1;
-    grid.savedCursor = grid.cursor;
 
     lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
     [lineBuffer setMaxLines:1];
@@ -1731,8 +1721,6 @@ do { \
     assert(grid.scrollRegionCols.length == 4);
     assert(grid.cursor.x == 0);
     assert(grid.cursor.y == 0);
-    assert(grid.savedCursor.x == 0);
-    assert(grid.savedCursor.y == 0);
 
     // Test unlimited scrollback --------------------------------------------------------------------
     grid = [self gridFromCompactLines:@"0123\nabcd\nefgh\n...."];
