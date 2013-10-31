@@ -64,6 +64,20 @@ static long long now()
     [super dealloc];
 }
 
+- (NSString *)stringForFrameLines:(NSArray *)lines width:(int)width height:(int)height
+{
+    NSMutableString *s = [NSMutableString string];
+    int i = 0;
+    for (int y = 0; y < height; y++) {
+        screen_char_t *line = (screen_char_t*)[lines[y] mutableBytes];
+        for (int x = 0; x < width; x++) {
+            [s appendFormat:@"%c", line[x].code];
+        }
+        [s appendString:@"\n"];
+    }
+    return s;
+}
+
 - (void)appendFrame:(NSArray *)frameLines length:(int)length info:(DVRFrameInfo*)info
 {
     BOOL eligibleForDiff;
@@ -256,6 +270,7 @@ static long long now()
             memcpy(scratch + o, startDiff, diffCount);
             o += diffCount;
             [self debug:@"diff " buffer:startDiff length:diffCount];
+            diffCount = 0;
         }
         if (sameCount > 0) {
             if (o + 1 + sizeof(sameCount) > maxBytes) {
@@ -268,6 +283,7 @@ static long long now()
 #ifdef DVRDEBUG
             NSLog(@"%d the same", sameCount);
 #endif
+            sameCount = 0;
         }
     }
     return o;

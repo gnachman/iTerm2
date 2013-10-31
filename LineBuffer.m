@@ -838,8 +838,15 @@ static int Search(NSString* needle,
                                            &charHaystack,
                                            &deltas);
         int numUnichars = [haystack length];
+        const unsigned long long kMaxSaneStringLength = 1000000000LL;
         do {
             haystack = CharArrayToString(charHaystack, numUnichars);
+            if ([haystack length] >= kMaxSaneStringLength) {
+                // There's a bug in OS 10.9.0 (and possibly other versions) where the string
+                // @"a⃑" reports a length of 0x7fffffffffffffff, which causes this loop to never
+                // terminate.
+                break;
+            }
             tempPosition = CoreSearch(needle, rawline, raw_line_length, 0, limit, options,
                                       &tempResultLength, haystack, charHaystack, deltas, 0);
 

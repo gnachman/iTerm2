@@ -804,7 +804,7 @@ static const double kInterBellQuietPeriod = 0.1;
     if (keypad) {
         [terminal_ setKeypadMode:!![keypad boolValue]];
     }
-    fjsdlkfjdsalkfjsdl
+
     NSNumber *mouse = [state objectForKey:kStateDictMouseStandardMode];
     if (mouse && [mouse intValue]) {
         [terminal_ setMouseMode:MOUSE_REPORTING_NORMAL];

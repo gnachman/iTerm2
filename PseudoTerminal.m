@@ -509,7 +509,7 @@ NSString *sessionsKey = @"sessions";
           reducedTabviewFrame.size.height -= 1;
         }
         NSRect divisionViewFrame = NSMakeRect(reducedTabviewFrame.origin.x,
-                                              reducedTabviewFrame.size.height,
+                                              reducedTabviewFrame.size.height + reducedTabviewFrame.origin.y,
                                               reducedTabviewFrame.size.width,
                                               1);
         if (_divisionView) {
@@ -2946,8 +2946,8 @@ NSString *sessionsKey = @"sessions";
         [[aSession TEXTVIEW] setNeedsDisplay:YES];
         [aSession updateDisplay];
         [aSession scheduleUpdateIn:kFastTimerIntervalSec];
-		[self setDimmingForSession:aSession];
-		[[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
+                [self setDimmingForSession:aSession];
+                [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
     }
 
     for (PTYSession *session in [self sessions]) {
@@ -3018,8 +3018,8 @@ NSString *sessionsKey = @"sessions";
     NSLog(@"%s(%d):-[PseudoTerminal tabView:willRemoveTabViewItem]", __FILE__, __LINE__);
 #endif
     [self saveAffinitiesLater:[tabViewItem identifier]];
-	iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-	[itad updateBroadcastMenuState];
+        iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+        [itad updateBroadcastMenuState];
 }
 
 - (void)tabView:(NSTabView *)tabView willAddTabViewItem:(NSTabViewItem *)tabViewItem
@@ -3030,8 +3030,8 @@ NSString *sessionsKey = @"sessions";
 
     [self tabView:tabView willInsertTabViewItem:tabViewItem atIndex:[tabView numberOfTabViewItems]];
     [self saveAffinitiesLater:[tabViewItem identifier]];
-	iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-	[itad updateBroadcastMenuState];
+        iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+        [itad updateBroadcastMenuState];
 }
 
 - (void)tabView:(NSTabView *)tabView willInsertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(int)anIndex
@@ -3047,8 +3047,8 @@ NSString *sessionsKey = @"sessions";
       [[theTab tmuxController] setClientSize:[theTab tmuxSize]];
     }
     [self saveAffinitiesLater:[tabViewItem identifier]];
-	iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-	[itad updateBroadcastMenuState];
+        iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+        [itad updateBroadcastMenuState];
 }
 
 - (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem
@@ -4314,10 +4314,10 @@ NSString *sessionsKey = @"sessions";
 - (BroadcastMode)broadcastMode
 {
     if ([[self currentTab] isBroadcasting]) {
-		    return BROADCAST_TO_ALL_PANES;
-	} else {
-		    return broadcastMode_;
-	}
+                    return BROADCAST_TO_ALL_PANES;
+        } else {
+                    return broadcastMode_;
+        }
 }
 
 - (void)setBroadcastMode:(BroadcastMode)mode
@@ -4334,14 +4334,14 @@ NSString *sessionsKey = @"sessions";
             return;
         }
     }
-	if (mode == BROADCAST_TO_ALL_PANES) {
-		[[self currentTab] setBroadcasting:YES];
-		mode = BROADCAST_OFF;
-	} else {
-		[[self currentTab] setBroadcasting:NO];
-	}
+        if (mode == BROADCAST_TO_ALL_PANES) {
+                [[self currentTab] setBroadcasting:YES];
+                mode = BROADCAST_OFF;
+        } else {
+                [[self currentTab] setBroadcasting:NO];
+        }
     broadcastMode_ = mode;
-	[self setDimmingForSessions];
+        [self setDimmingForSessions];
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     [itad updateBroadcastMenuState];
 }
@@ -4484,9 +4484,9 @@ NSString *sessionsKey = @"sessions";
 
 - (void)setDimmingForSessions
 {
-	for (PTYSession *aSession in [self sessions]) {
-		[self setDimmingForSession:aSession];
-	}
+        for (PTYSession *aSession in [self sessions]) {
+                [self setDimmingForSession:aSession];
+        }
 }
 
 - (BOOL)anyTabIsTmuxTab

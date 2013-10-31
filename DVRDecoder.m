@@ -124,6 +124,22 @@
 
 @implementation DVRDecoder (Private)
 
+- (NSString *)stringForFrame
+{
+    NSMutableString *s = [NSMutableString string];
+    screen_char_t *lines = (screen_char_t *)frame_;
+    int i = 0;
+    for (int y = 0; y < info_.height; y++) {
+        for (int x = 0; x < info_.width; x++) {
+            screen_char_t c = lines[i++];
+            [s appendFormat:@"%c", c.code];
+        }
+        [s appendString:@"\n"];
+        i++;
+    }
+    return s;
+}
+
 - (void)debug:(NSString*)prefix buffer:(char*)buffer length:(int)length
 {
     char d[30000];
@@ -200,7 +216,7 @@
 - (void)_loadDiffFrameWithKey:(long long)key
 {
 #ifdef DVRDEBUG
-    NSLog(@"Load diff frame at index %d", theIndex);
+    NSLog(@"Load diff frame at index %lld", key);
 #endif
     DVRIndexEntry* entry = [buffer_ entryForKey:key];
     info_ = entry->info;
@@ -213,7 +229,7 @@
                 memcpy(&n, diff + i, sizeof(n));
                 i += sizeof(n);
 #ifdef DVRDEBUG
-                [self debug:@"same seq" buffer:frame_ + o length:n];
+                NSLog(@"%d bytes of sameness at offset %d", n, o);
 #endif
                 o += n;
                 break;
@@ -221,9 +237,10 @@
             case kDiffSequence:
                 memcpy(&n, diff + i, sizeof(n));
                 i += sizeof(n);
+                assert(o + n - 1 < length_);
                 memcpy(frame_ + o, diff + i, n);
 #ifdef DVRDEBUG
-                [self debug:@"diff seq" buffer:frame_ + o length:n];
+                NSLog(@"%d bytes of difference at offset %d", n, o);
 #endif
                 o += n;
                 i += n;
