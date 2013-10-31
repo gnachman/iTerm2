@@ -1195,9 +1195,24 @@ static const double kInterBellQuietPeriod = 0.1;
 - (void)terminalAppendTabAtCursor
 {
     // TODO: respect left-right margins
+    BOOL simulateTabStopAtMargins = NO;
     if (![self haveTabStopBefore:currentGrid_.size.width + 1]) {
-        // No legal tabstop so stop; otherwise the for loop would never exit.
-        return;
+        // No legal tabstop so pretend there's one on first and last column.
+        simulateTabStopAtMargins = YES;
+        if (currentGrid_.cursor.x == currentGrid_.size.width) {
+            // Cursor in right margin, wrap it around and we're done.
+            [self linefeed];
+            currentGrid_.cursorX = 0;
+            return;
+        } else if (currentGrid_.cursor.x == currentGrid_.size.width - 1) {
+            // Cursor in last column. If there's already a tab there, do nothing.
+            screen_char_t *line = [currentGrid_ screenCharsAtLineNumber:currentGrid_.cursorY];
+            if (currentGrid_.cursorX > 0 &&
+                line[currentGrid_.cursorX].code == 0 &&
+                line[currentGrid_.cursorX - 1].code == '\t') {
+                return;
+            }
+        }
     }
     screen_char_t* aLine = [currentGrid_ screenCharsAtLineNumber:currentGrid_.cursorY];
     int positions = 0;
@@ -1223,7 +1238,10 @@ static const double kInterBellQuietPeriod = 0.1;
             currentGrid_.cursorX = 0;
             aLine = [currentGrid_ screenCharsAtLineNumber:currentGrid_.cursorY];
         }
-        if ([self haveTabStopAt:currentGrid_.cursorX]) {
+        BOOL isFirstOrLastColumn = (currentGrid_.cursorX == 0 ||
+                                    currentGrid_.cursorX == currentGrid_.size.width - 1);
+        if ((simulateTabStopAtMargins && isFirstOrLastColumn) ||
+            [self haveTabStopAt:currentGrid_.cursorX]) {
             break;
         }
         if (aLine[currentGrid_.cursorX].code != 0) {
