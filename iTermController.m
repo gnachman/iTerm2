@@ -124,6 +124,26 @@ BOOL IsLionOrLater(void) {
     return result;
 }
 
+static BOOL UncachedIsMavericksOrLater(void) {
+    unsigned major;
+    unsigned minor;
+    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
+        return (major == 10 && minor >= 7) || (major > 10);
+    } else {
+        return NO;
+    }
+}
+
+BOOL IsMavericksOrLater(void) {
+    static BOOL result;
+    static BOOL initialized;
+    if (!initialized) {
+        initialized = YES;
+        result = UncachedIsMavericksOrLater();
+    }
+    return result;
+}
+
 BOOL IsSnowLeopardOrLater(void) {
     unsigned major;
     unsigned minor;
