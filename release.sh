@@ -35,7 +35,7 @@ NAME=$(echo $VERSION | sed -e "s/\\./_/g")
 SVNDIR=~/iterm2-website
 ORIG_DIR=`pwd`
 
-set -x
+#set -x
 ./sign.sh
 
 cd build/Deployment

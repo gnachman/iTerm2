@@ -80,8 +80,8 @@ release:
 	security unlock-keychain ~/Library/Keychains/login.keychain
 	cp release-iTerm.plist iTerm.plist
 	make Deployment
-	cp legacy-iTerm.plist iTerm.plist
-	make LeopardPPC
+	#cp legacy-iTerm.plist iTerm.plist
+	#make LeopardPPC
 	./release.sh RanFromMakefile
 
 force:
