@@ -1949,31 +1949,15 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 }
 
 - (NSString *)accessibilityMessageForHotkey {
-    if (IsMavericksOrLater()) {
-        return @"You have assigned a \"hotkey\" that opens iTerm2 at any time. "
-               @"To use it, you must add iTerm2 to the list of applications allowed to control your "
-               @"computer. Open System Preferences > Security & Privacy, select the Privacy tab, "
-               @"select \"Accessibility\" on the left, and drag iTerm2's icon from Finder into the "
-               @"area on the right.";
-    } else {
-        return @"You have assigned a \"hotkey\" that opens iTerm2 at any time. "
-               @"To use it, you must turn on \"access for assistive devices\" in the Universal "
-               @"Access preferences panel in System Preferences and restart iTerm2.";
-    }
+    return @"You have assigned a \"hotkey\" that opens iTerm2 at any time. "
+           @"To use it, you must turn on \"access for assistive devices\" in the Universal "
+           @"Access preferences panel in System Preferences and restart iTerm2.";
 }
 
 - (NSString *)accessibilityMessageForModifier {
-    if (IsMavericksOrLater()) {
-        return @"You have chosen to remap certain modifier keys. For this to work for all key "
-               @"combinations (such as cmd-tab), you must add iTerm2 to the list of applications allowed to control your "
-               @"computer. Open System Preferences > Security & Privacy, select the Privacy tab, "
-               @"select \"Accessibility\" on the left, and drag iTerm2's icon from Finder into the "
-               @"area on the right.";
-    } else {
-        return @"You have chosen to remap certain modifier keys. For this to work for all key "
-               @"combinations (such as cmd-tab), you must turn on \"access for assistive devices\" "
-               @"in the Universal Access preferences panel in System Preferences and restart iTerm2.";
-    }
+    return @"You have chosen to remap certain modifier keys. For this to work for all key "
+           @"combinations (such as cmd-tab), you must turn on \"access for assistive devices\" "
+           @"in the Universal Access preferences panel in System Preferences and restart iTerm2.";
 }
 
 - (void)openMavericksAccessibilityPane
@@ -2012,24 +1996,12 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 
 - (void)navigatePrefPane
 {
-    if (IsMavericksOrLater()) {
-        NSString *myPath = [[NSBundle mainBundle] bundlePath];
-        [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:[NSArray arrayWithObject:[NSURL fileURLWithPath:myPath]]];
-
-        [self performSelector:@selector(openMavericksAccessibilityPane)
-                   withObject:nil
-                   afterDelay:2];
-    } else {
-        [[NSWorkspace sharedWorkspace] openFile:@"/System/Library/PreferencePanes/UniversalAccessPref.prefPane"];
-    }
+    // NOTE: Pre-Mavericks only.
+    [[NSWorkspace sharedWorkspace] openFile:@"/System/Library/PreferencePanes/UniversalAccessPref.prefPane"];
 }
 
 - (NSString *)accessibilityActionMessage {
-    if (IsMavericksOrLater()) {
-        return @"Open System Prefs and Finder";
-    } else {
-        return @"Open System Preferences";
-    }
+    return @"Open System Preferences";
 }
 
 - (BOOL)registerHotkey:(int)keyCode modifiers:(int)modifiers
@@ -2041,6 +2013,10 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     hotkeyModifiers_ = modifiers & (NSCommandKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSShiftKeyMask);
 #ifdef USE_EVENT_TAP_FOR_HOTKEY
     if (![self startEventTap]) {
+        if (IsMavericksOrLater()) {
+            [self requestAccessibilityPermission];
+            return;
+        }
         switch (NSRunAlertPanel(@"Could not enable hotkey",
                                 [self accessibilityMessageForHotkey],
                                 @"OK",
@@ -2074,9 +2050,32 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     OnHotKeyEvent();
 }
 
+- (void)requestAccessibilityPermission {
+#ifndef BLOCKS_NOT_AVAILABLE
+    static int count;
+    NSDictionary *options = @{(id)kAXTrustedCheckOptionPrompt:@YES};
+    // Show a dialog prompting the user to open system prefs.
+    if (!AXIsProcessTrustedWithOptions((CFDictionaryRef)options)) {
+        if ((count % 3) == 1) {
+            [[NSAlert alertWithMessageText:@"You have to restart iTerm2 after granting accessibility permission."
+                             defaultButton:@"OK"
+                           alternateButton:nil
+                               otherButton:nil
+                 informativeTextWithFormat:@""] runModal];
+        }
+        ++count;
+        return;
+    }
+#endif
+}
+
 - (void)beginRemappingModifiers
 {
     if (![self startEventTap]) {
+        if (IsMavericksOrLater()) {
+            [self requestAccessibilityPermission];
+            return;
+        }
         switch (NSRunAlertPanel(@"Could not remap modifiers",
                                 [self accessibilityMessageForModifier],
                                 @"OK",
