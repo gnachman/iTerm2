@@ -104,7 +104,7 @@ static NSMutableArray *gTriggerClasses;
 - (NSArray *)triggers
 {
     Profile *bookmark = [self bookmark];
-    NSDictionary *triggers = [bookmark objectForKey:KEY_TRIGGERS];
+    NSArray *triggers = [bookmark objectForKey:KEY_TRIGGERS];
     return triggers ? triggers : [NSArray array];
 }
 
