@@ -2640,14 +2640,14 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/Growl.framework\"",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.8;
+				SDKROOT = macosx;
 				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -2742,14 +2742,14 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/Growl.framework\"",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.8;
+				SDKROOT = macosx;
 				VALID_ARCHS = "i386 x86_64";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -2853,14 +2853,14 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/Growl.framework\"",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.8;
+				SDKROOT = macosx;
 				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -3253,13 +3253,13 @@
 					"\"$(SRCROOT)/Growl.framework\"",
 				);
 				LINK_WITH_STANDARD_LIBRARIES = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.8;
+				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
 				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = (
@@ -3339,14 +3339,14 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/Growl.framework\"",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.8;
+				SDKROOT = macosx;
 				VALID_ARCHS = "i386 x86_64";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -3428,7 +3428,7 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/Growl.framework\"",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
@@ -3436,7 +3436,7 @@
 				OTHER_REZFLAGS = "";
 				PRODUCT_NAME = iTerm;
 				REZ_EXECUTABLE = YES;
-				SDKROOT = macosx10.8;
+				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
 				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = (
