@@ -48,6 +48,10 @@
     NSString *name_;
     NSMutableArray *dirlog_;
     NSSize newPixelSize_;
+    NSString *pasteboard_;
+    NSMutableData *pbData_;
+    BOOL pasted_;
+    NSMutableData *write_;
 }
 
 - (void)setup {
@@ -71,10 +75,16 @@
     name_ = nil;
     dirlog_ = [NSMutableArray array];
     newPixelSize_ = NSMakeSize(0, 0);
+    pasteboard_ = nil;
+    pbData_ = [NSMutableData data];
+    pasted_ = NO;
+    write_ = [NSMutableData data];
 }
 
 - (VT100Screen *)screen {
-    return [[[VT100Screen alloc] initWithTerminal:terminal_] autorelease];
+    VT100Screen *screen = [[[VT100Screen alloc] initWithTerminal:terminal_] autorelease];
+    terminal_.delegate = screen;
+    return screen;
 }
 
 - (void)testInit {
@@ -1336,7 +1346,9 @@
 
 - (void)sendEscapeCodes:(NSString *)codes {
     NSString *esc = [NSString stringWithFormat:@"%c", 27];
+    NSString *bel = [NSString stringWithFormat:@"%c", 7];
     codes = [codes stringByReplacingOccurrencesOfString:@"^[" withString:esc];
+    codes = [codes stringByReplacingOccurrencesOfString:@"^G" withString:bel];
     NSData *data = [codes dataUsingEncoding:NSUTF8StringEncoding];
     [terminal_ putStreamData:data];
     while ([terminal_ parseNextToken]) {
@@ -3532,14 +3544,58 @@
             @"....!"]);
 }
 
-// Only non-trivial methods have tests.
+#pragma mark - Regression tests
 
-/*
- STILL TO TEST:
- - (void)terminalSendModifiersDidChangeTo:(int *)modifiers
- numValues:(int)numValues {
+- (BOOL)screenIsAppendingToPasteboard {
+    return pasteboard_ != nil && !pasted_;
+}
 
- 
- */
+- (void)screenSetPasteboard:(NSString *)pasteboard {
+    pasteboard_ = [[pasteboard copy] autorelease];
+}
+
+- (void)screenAppendDataToPasteboard:(NSData *)data {
+    [pbData_ appendData:data];
+}
+
+- (void)screenCopyBufferToPasteboard {
+    pasted_ = YES;
+}
+
+- (BOOL)screenShouldSendReport {
+    return YES;
+}
+
+- (void)screenWriteDataToTask:(NSData *)data {
+    [write_ appendData:data];
+}
+
+- (void)testPasting {
+    VT100Screen *screen = [self screen];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self sendEscapeCodes:@"^[]50;CopyToClipboard=general^GHello world^[]50;EndCopy^G"];
+    assert([pasteboard_ isEqualToString:@"general"]);
+    assert(!memcmp(pbData_.mutableBytes, "Hello world", strlen("Hello world")));
+    assert(pasted_);
+}
+
+- (void)testCursorReporting {
+    VT100Screen *screen = [self screenWithWidth:20 height:20];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen terminalMoveCursorToX:2 y:3];
+    [self sendEscapeCodes:@"^[[6n"];
+
+    NSString *s = [[[NSString alloc] initWithData:write_ encoding:NSUTF8StringEncoding] autorelease];
+    assert([s isEqualToString:@"\033[3;2R"]);
+}
+
+- (void)testReportWindowSize {
+    VT100Screen *screen = [self screenWithWidth:30 height:20];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self sendEscapeCodes:@"^[[18t"];
+
+    NSString *s = [[[NSString alloc] initWithData:write_ encoding:NSUTF8StringEncoding] autorelease];
+    assert([s isEqualToString:@"\033[8;20;30t"]);
+}
 
 @end
