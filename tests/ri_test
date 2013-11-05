@@ -1,0 +1,1 @@
+cat set_left_right_margin set_top_bottom cursor_to_10x_10y x crlf ; sleep 1 ; cat reverse_index ; sleep 1 ; cat reverse_index ; sleep 1 ; cat reverse_index ; cat reverse_index ; sleep 1 ; cat reverse_index ; sleep 1 ; cat reverse_index x
