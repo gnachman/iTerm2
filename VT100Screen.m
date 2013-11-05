@@ -1372,11 +1372,6 @@ static const double kInterBellQuietPeriod = 0.1;
     return currentGrid_.cursorY - currentGrid_.topMargin + 1;
 }
 
-- (void)terminalResetTopBottomScrollRegion
-{
-    [self terminalSetScrollRegionTop:0 bottom:[self height] - 1];
-}
-
 - (void)terminalSetScrollRegionTop:(int)top bottom:(int)bottom
 {
     if (top >= 0 &&
@@ -1390,7 +1385,7 @@ static const double kInterBellQuietPeriod = 0.1;
             currentGrid_.cursor = VT100GridCoordMake(currentGrid_.leftMargin,
                                                      currentGrid_.topMargin);
         } else {
-            currentGrid_.cursor = VT100GridCoordMake(0, 0);
+           currentGrid_.cursor = VT100GridCoordMake(0, 0);
         }
     }
 }
@@ -1569,16 +1564,17 @@ static const double kInterBellQuietPeriod = 0.1;
     }
 }
 
-- (void)terminalBackTab
+- (void)terminalBackTab:(int)n
 {
-    // TODO: take a number argument
-    // TODO: respect left-right margins
-    if (currentGrid_.cursorX > 0) {
-        currentGrid_.cursorX = currentGrid_.cursorX - 1;
-        while (![self haveTabStopAt:currentGrid_.cursorX] && currentGrid_.cursorX > 0) {
+    for (int i = 0; i < n; i++) {
+        // TODO: respect left-right margins
+        if (currentGrid_.cursorX > 0) {
             currentGrid_.cursorX = currentGrid_.cursorX - 1;
+            while (![self haveTabStopAt:currentGrid_.cursorX] && currentGrid_.cursorX > 0) {
+                currentGrid_.cursorX = currentGrid_.cursorX - 1;
+            }
+            [delegate_ screenTriggerableChangeDidOccur];
         }
-        [delegate_ screenTriggerableChangeDidOccur];
     }
 }
 
@@ -1833,7 +1829,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (NSString *)terminalWindowTitle {
     if (allowTitleReporting_) {
-        return [delegate_ screenWindowName];
+        return [delegate_ screenWindowTitle] ? [delegate_ screenWindowTitle] : @"";
     } else {
         return @"";
     }
@@ -1972,6 +1968,10 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)terminalSetPasteboard:(NSString *)value {
     [delegate_ screenSetPasteboard:value];
+}
+
+- (void)terminalCopyBufferToPasteboard {
+    [delegate_ screenCopyBufferToPasteboard];
 }
 
 - (BOOL)terminalIsAppendingToPasteboard {

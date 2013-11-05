@@ -73,9 +73,6 @@ typedef enum {
 // Returns the cursor's position relative to the scroll region's origin. 1-based.
 - (int)terminalRelativeCursorY;
 
-// Reset the top/bottom scroll region.
-- (void)terminalResetTopBottomScrollRegion;
-
 // Set the top/bottom scrollr egion.
 - (void)terminalSetScrollRegionTop:(int)top bottom:(int)bottom;
 
@@ -123,7 +120,7 @@ typedef enum {
 - (void)terminalSetWidth:(int)width;
 
 // Moves cursor to previous tab stop.
-- (void)terminalBackTab;
+- (void)terminalBackTab:(int)n;
 
 // Sets the cursor's x coordinate. 1-based.
 - (void)terminalSetCursorX:(int)x;
@@ -264,6 +261,7 @@ typedef enum {
 // Sets the current pasteboard. Legal values are ruler, find, and font. Other values, including
 // empty string, are treated as the default pasteboard.
 - (void)terminalSetPasteboard:(NSString *)value;
+- (void)terminalCopyBufferToPasteboard;
 - (BOOL)terminalIsAppendingToPasteboard;
 - (void)terminalAppendDataToPasteboard:(NSData *)data;
 

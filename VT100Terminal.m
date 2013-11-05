@@ -3752,7 +3752,7 @@ static VT100TCC decode_string(unsigned char *datap,
         if (count == 0) {
             unichar c = [argument characterAtIndex:0];
             n = c - 'a' + 10;
-            // fg = 16
+            // fg = 16 ('g')
             // bg = 17
             // bold = 18
             // selection = 19
@@ -3873,7 +3873,7 @@ static VT100TCC decode_string(unsigned char *datap,
         } else if ([key isEqualToString:@"CopyToClipboard"]) {
             [delegate_ terminalSetPasteboard:value];
         } else if ([key isEqualToString:@"EndCopy"]) {
-            [delegate_ terminalSetPasteboard:nil];
+            [delegate_ terminalCopyBufferToPasteboard];
         } else if ([key isEqualToString:@"RequestAttention"]) {
             [delegate_ terminalRequestAttention:[value boolValue]];  // true: request, false: cancel
         }
@@ -4003,12 +4003,14 @@ static VT100TCC decode_string(unsigned char *datap,
 
             case 6: // Command from host -- Please report active position
                 if ([self originMode]) {
+                    // This is compatible with Terminal but not xterm :(. xterm seems to always do what
+                    // we do in the else clause.
                     [delegate_ terminalSendReport:[self reportActivePositionWithX:[delegate_ terminalRelativeCursorX]
                                                                                 Y:[delegate_ terminalRelativeCursorY]
                                                                      withQuestion:withQuestion]];
                 } else {
-                    [delegate_ terminalSendReport:[self reportActivePositionWithX:[delegate_ terminalCursorX] + 1
-                                                                                Y:[delegate_ terminalCursorY] + 1
+                    [delegate_ terminalSendReport:[self reportActivePositionWithX:[delegate_ terminalCursorX]
+                                                                                Y:[delegate_ terminalCursorY]
                                                                      withQuestion:withQuestion]];
                 }
                 break;
@@ -4388,7 +4390,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
             // ANSI CSI
         case ANSICSI_CBT:
-            [delegate_ terminalBackTab];
+            [delegate_ terminalBackTab:token.u.csi.p[0]];
             break;
         case ANSICSI_CHA:
             [delegate_ terminalSetCursorX:token.u.csi.p[0]];
@@ -4504,8 +4506,8 @@ static VT100TCC decode_string(unsigned char *datap,
         case XTERMCC_REPORT_WIN_PIX_SIZE: {
             // TODO: Some kind of adjustment for panes?
             NSString *s = [NSString stringWithFormat:@"\033[4;%d;%dt",
-                           [delegate_ terminalWindowWidthInPixels],
-                           [delegate_ terminalWindowHeightInPixels]];
+                           [delegate_ terminalWindowHeightInPixels],
+                           [delegate_ terminalWindowWidthInPixels]];
             [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
@@ -4577,8 +4579,37 @@ static VT100TCC decode_string(unsigned char *datap,
         case XTERMCC_SET_KVP:
             break;
 
+        case VT100CC_NULL:
+        case VT100CC_SOH:
+        case VT100_INVALID_SEQUENCE:
+        case VT100_SKIP:
+        case VT100_WAIT:
+        case VT100CC_ACK:
+        case VT100CC_DC2:
+        case VT100CC_DC4:
+        case VT100CC_DLE:
+        case VT100CC_EM:
+        case VT100CC_EOT:
+        case VT100CC_ESC:
+        case VT100CC_ETB:
+        case VT100CC_ETX:
+        case VT100CC_FS:
+        case VT100CC_GS:
+        case VT100CC_NAK:
+        case VT100CC_RS:
+        case VT100CC_STX:
+        case VT100CC_SYN:
+        case VT100CC_US:
+        case VT100CSI_RESET_MODIFIERS:
+        case VT100CSI_SCS:
+        case VT100CSI_SET_MODIFIERS:
+        case XTERMCC_PROPRIETARY_ETERM_EXT:
+        case XTERMCC_SET_PALETTE:
+        case XTERMCC_SET_RGB:
+            break;
+
         default:
-            NSLog(@"%s(%d): bug?? token.type = %d", __FILE__, __LINE__, token.type);
+            NSLog(@"Unexpected token type %d", (int)token.type);
             break;
     }
 }

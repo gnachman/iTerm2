@@ -4271,7 +4271,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (BOOL)screenShouldInitiateWindowResize {
-    return [[[self addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue];
+    return ![[[self addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue];
 }
 
 - (void)screenResizeToWidth:(int)width height:(int)height {
@@ -4307,7 +4307,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenLogWorkingDirectoryAtLine:(long long)lineNumber withDirectory:(NSString *)directory {
-    if (directory) {
+    if ([directory length]) {
         [[self TEXTVIEW] logWorkingDirectoryAtLine:lineNumber withDirectory:directory];
     } else {
         [[self TEXTVIEW] logWorkingDirectoryAtLine:lineNumber];
@@ -4319,19 +4319,21 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenMoveWindowTopLeftPointTo:(NSPoint)point {
-    point.y = [self screenWindowScreenFrame].size.height - point.y;
+    NSRect screenFrame = [self screenWindowScreenFrame];
+    point.x += screenFrame.origin.x;
+    point.y = screenFrame.origin.y + screenFrame.size.height - point.y;
     [[[self tab] parentWindow] windowSetFrameTopLeftPoint:point];
 }
 
 - (NSRect)screenWindowScreenFrame {
-    return [[[[self tab] parentWindow] windowScreen] frame];
+    return [[[[self tab] parentWindow] windowScreen] visibleFrame];
 }
 
 - (NSPoint)screenWindowTopLeftPixelCoordinate {
     NSRect frame = [self screenWindowFrame];
     NSRect screenFrame = [self screenWindowScreenFrame];
-    return NSMakePoint(frame.origin.x,
-                       screenFrame.size.height - frame.origin.y - frame.size.height);
+    return NSMakePoint(frame.origin.x - screenFrame.origin.x,
+                       (screenFrame.origin.y + screenFrame.size.height) - (frame.origin.y + frame.size.height));
 }
 
 // If flag is set, miniaturize; otherwise, deminiaturize.
@@ -4388,10 +4390,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (NSString *)screenName {
     return [self name];
-}
-
-- (NSString *)screenWindowName {
-    return [self screenWindowName];
 }
 
 - (int)screenNumber {
@@ -4539,6 +4537,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         }
     } else {
         NSLog(@"Clipboard access denied for CopyToClipboard");
+    }
+}
+
+- (void)screenCopyBufferToPasteboard {
+    if ([[PreferencePanel sharedInstance] allowClipboardAccess]) {
+        [self setPasteboard:nil];
+    } else {
+        [pasteboard_ release];
+        pasteboard_ = nil;
+        [pbtext_ release];
+        pbtext_ = nil;
     }
 }
 

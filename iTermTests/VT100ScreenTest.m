@@ -226,16 +226,20 @@
 }
 
 - (void)showAltAndUppercase:(VT100Screen *)screen {
+    VT100Grid *temp = [[[screen currentGrid] copy] autorelease];
     [screen terminalShowAltBuffer];
     for (int y = 0; y < screen.height; y++) {
-        screen_char_t *line = [screen getLineAtScreenIndex:y];
+        screen_char_t *lineIn = [temp screenCharsAtLineNumber:y];
+        screen_char_t *lineOut = [screen getLineAtScreenIndex:y];
         for (int x = 0; x < screen.width; x++) {
-            unichar c = line[x].code;
+            lineOut[x] = lineIn[x];
+            unichar c = lineIn[x].code;
             if (isalpha(c)) {
                 c -= 'a' - 'A';
             }
-            line[x].code = c;
+            lineOut[x].code = c;
         }
+        lineOut[screen.width] = lineIn[screen.width];
     }
 }
 
@@ -2318,7 +2322,7 @@
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [screen setMaxScrollbackLines:3];
     [self appendLines:@[ @"0", @"1", @"2", @"3", @"4"] toScreen:screen];
-    [screen terminalShowAltBuffer];
+    [self showAltAndUppercase:screen];
     screen.saveToScrollbackInAlternateScreen = YES;
     [screen resetDirty];
     startX_ = startY_ = 1;
@@ -2608,11 +2612,11 @@
     [screen terminalAppendTabAtCursor];
     [screen terminalAppendTabAtCursor];
     assert(screen.cursorX == 17);
-    [screen terminalBackTab];
+    [screen terminalBackTab:1];
     assert(screen.cursorX == 9);
-    [screen terminalBackTab];
+    [screen terminalBackTab:1];
     assert(screen.cursorX == 1);
-    [screen terminalBackTab];
+    [screen terminalBackTab:1];
     assert(screen.cursorX == 1);
     assert(screen.cursorY == 2);
     
@@ -2621,7 +2625,7 @@
     [screen terminalSetUseColumnScrollRegion:YES];
     [screen terminalSetLeftMargin:10 rightMargin:19];
     [screen terminalMoveCursorToX:11 y:1];
-    [screen terminalBackTab];
+    [screen terminalBackTab:1];
     ITERM_TEST_KNOWN_BUG(screen.cursorX == 11, screen.cursorX == 9);
 }
 

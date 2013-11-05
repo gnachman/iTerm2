@@ -53,9 +53,6 @@
 // Returns the session's current name
 - (NSString *)screenName;
 
-// Returns the window's current name
-- (NSString *)screenWindowName;
-
 // The delegate should check the current working directory and associate it with |lineNumber|, since
 // it may have changed. If |directory| is nil then the current directory is found and used.
 - (void)screenLogWorkingDirectoryAtLine:(long long)lineNumber withDirectory:(NSString *)directory;
@@ -175,6 +172,7 @@
 
 - (void)screenSetProfileToProfileNamed:(NSString *)value;
 - (void)screenSetPasteboard:(NSString *)value;
+- (void)screenCopyBufferToPasteboard;
 - (BOOL)screenIsAppendingToPasteboard;
 - (void)screenAppendDataToPasteboard:(NSData *)data;
 
