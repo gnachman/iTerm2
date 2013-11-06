@@ -32,27 +32,29 @@
 #define DEBUG_METHOD_TRACE    0
 
 #import "iTermController.h"
-#import "PreferencePanel.h"
-#import "PseudoTerminal.h"
-#import "PTYSession.h"
-#import "VT100Screen.h"
-#import "NSStringITerm.h"
-#import "ITAddressBookMgr.h"
-#import <iTermGrowlDelegate.h>
-#import "PasteboardHistory.h"
-#import <Carbon/Carbon.h>
-#import "iTermApplicationDelegate.h"
-#import "iTermApplication.h"
-#import "UKCrashReporter/UKCrashReporter.h"
-#import "PTYTab.h"
-#import "iTermKeyBindingMgr.h"
-#import "PseudoTerminal.h"
-#import "iTermExpose.h"
 #import "FutureMethods.h"
 #import "GTMCarbonEvent.h"
-#import "iTerm.h"
-#import "WindowArrangements.h"
+#import "ITAddressBookMgr.h"
+#import "NSStringITerm.h"
 #import "NSView+iTerm.h"
+#import "PTYSession.h"
+#import "PTYTab.h"
+#import "PasteboardHistory.h"
+#import "PreferencePanel.h"
+#import "PseudoTerminal.h"
+#import "PseudoTerminal.h"
+#import "SBSystemPreferences.h"
+#import "UKCrashReporter/UKCrashReporter.h"
+#import "VT100Screen.h"
+#import "WindowArrangements.h"
+#import "iTerm.h"
+#import "iTermApplication.h"
+#import "iTermApplicationDelegate.h"
+#import "iTermExpose.h"
+#import "iTermKeyBindingMgr.h"
+#import <Carbon/Carbon.h>
+#import <ScriptingBridge/ScriptingBridge.h>
+#import <iTermGrowlDelegate.h>
 #include <objc/runtime.h>
 
 //#define HOTKEY_WINDOW_VERBOSE_LOGGING
@@ -120,6 +122,26 @@ BOOL IsLionOrLater(void) {
     if (!initialized) {
         initialized = YES;
         result = UncachedIsLionOrLater();
+    }
+    return result;
+}
+
+static BOOL UncachedIsMavericksOrLater(void) {
+    unsigned major;
+    unsigned minor;
+    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
+        return (major == 10 && minor >= 7) || (major > 10);
+    } else {
+        return NO;
+    }
+}
+
+BOOL IsMavericksOrLater(void) {
+    static BOOL result;
+    static BOOL initialized;
+    if (!initialized) {
+        initialized = YES;
+        result = UncachedIsMavericksOrLater();
     }
     return result;
 }
@@ -1926,6 +1948,62 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     }
 }
 
+- (NSString *)accessibilityMessageForHotkey {
+    return @"You have assigned a \"hotkey\" that opens iTerm2 at any time. "
+           @"To use it, you must turn on \"access for assistive devices\" in the Universal "
+           @"Access preferences panel in System Preferences and restart iTerm2.";
+}
+
+- (NSString *)accessibilityMessageForModifier {
+    return @"You have chosen to remap certain modifier keys. For this to work for all key "
+           @"combinations (such as cmd-tab), you must turn on \"access for assistive devices\" "
+           @"in the Universal Access preferences panel in System Preferences and restart iTerm2.";
+}
+
+- (void)openMavericksAccessibilityPane
+{
+    [[NSWorkspace sharedWorkspace] openFile:@"/System/Library/PreferencePanes/Security.prefPane"];
+    SBSystemPreferencesApplication *systemPrefs =
+    [SBApplication applicationWithBundleIdentifier:@"com.apple.systempreferences"];
+    
+    [systemPrefs activate];
+    
+    SBElementArray *panes = [systemPrefs panes];
+    SBSystemPreferencesPane *speechPane = nil;
+    
+    for (SBSystemPreferencesPane *pane in panes) {
+        if ([[pane id] isEqualToString:@"com.apple.preference.security"]) {
+            speechPane = pane;
+            break;
+        }
+    }
+    [systemPrefs setCurrentPane:speechPane];
+    
+    SBElementArray *anchors = [speechPane anchors];
+    
+    for (SBSystemPreferencesAnchor *anchor in anchors) {
+        if ([anchor.name isEqualToString:@"Privacy"]) {
+            [anchor reveal];
+        }
+    }
+    
+    for (SBSystemPreferencesAnchor *anchor in anchors) {
+        if ([anchor.name isEqualToString:@"Privacy_Accessibility"]) {
+            [anchor reveal];
+        }
+    }
+}
+
+- (void)navigatePrefPane
+{
+    // NOTE: Pre-Mavericks only.
+    [[NSWorkspace sharedWorkspace] openFile:@"/System/Library/PreferencePanes/UniversalAccessPref.prefPane"];
+}
+
+- (NSString *)accessibilityActionMessage {
+    return @"Open System Preferences";
+}
+
 - (BOOL)registerHotkey:(int)keyCode modifiers:(int)modifiers
 {
     if (carbonHotKey_) {
@@ -1935,10 +2013,14 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     hotkeyModifiers_ = modifiers & (NSCommandKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSShiftKeyMask);
 #ifdef USE_EVENT_TAP_FOR_HOTKEY
     if (![self startEventTap]) {
+        if (IsMavericksOrLater()) {
+            [self requestAccessibilityPermission];
+            return;
+        }
         switch (NSRunAlertPanel(@"Could not enable hotkey",
-                                @"You have assigned a \"hotkey\" that opens iTerm2 at any time. To use it, you must turn on \"access for assistive devices\" in the Universal Access preferences panel in System Preferences and restart iTerm2.",
+                                [self accessibilityMessageForHotkey],
                                 @"OK",
-                                @"Open System Preferences",
+                                [self accessibilityActionMessage],
                                 @"Disable Hotkey",
                                 nil)) {
             case NSAlertOtherReturn:
@@ -1946,7 +2028,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
                 break;
 
             case NSAlertAlternateReturn:
-                [[NSWorkspace sharedWorkspace] openFile:@"/System/Library/PreferencePanes/UniversalAccessPref.prefPane"];
+                [self navigatePrefPane]
                 return NO;
         }
     }
@@ -1968,17 +2050,40 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     OnHotKeyEvent();
 }
 
+- (void)requestAccessibilityPermission {
+#ifndef BLOCKS_NOT_AVAILABLE
+    static int count;
+    NSDictionary *options = @{(id)kAXTrustedCheckOptionPrompt:@YES};
+    // Show a dialog prompting the user to open system prefs.
+    if (!AXIsProcessTrustedWithOptions((CFDictionaryRef)options)) {
+        if ((count % 3) == 1) {
+            [[NSAlert alertWithMessageText:@"You have to restart iTerm2 after granting accessibility permission."
+                             defaultButton:@"OK"
+                           alternateButton:nil
+                               otherButton:nil
+                 informativeTextWithFormat:@""] runModal];
+        }
+        ++count;
+        return;
+    }
+#endif
+}
+
 - (void)beginRemappingModifiers
 {
     if (![self startEventTap]) {
+        if (IsMavericksOrLater()) {
+            [self requestAccessibilityPermission];
+            return;
+        }
         switch (NSRunAlertPanel(@"Could not remap modifiers",
-                                @"You have chosen to remap certain modifier keys. For this to work for all key combinations (such as cmd-tab), you must turn on \"access for assistive devices\" in the Universal Access preferences panel in System Preferences and restart iTerm2.",
+                                [self accessibilityMessageForModifier],
                                 @"OK",
-                                @"Open System Preferences",
+                                [self accessibilityActionMessage],
                                 nil,
                                 nil)) {
             case NSAlertAlternateReturn:
-                [[NSWorkspace sharedWorkspace] openFile:@"/System/Library/PreferencePanes/UniversalAccessPref.prefPane"];
+                [self navigatePrefPane];
                 break;
         }
     }

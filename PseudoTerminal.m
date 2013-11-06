@@ -3389,6 +3389,9 @@ NSString *sessionsKey = @"sessions";
         newX = sf.origin.x;
     }
     [currentTime setFrameOrigin:NSMakePoint(newX, f.origin.y)];
+
+    [bottomBar setNeedsDisplay:YES];
+    [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
 }
 
 - (IBAction)irButton:(id)sender
@@ -4444,7 +4447,7 @@ NSString *sessionsKey = @"sessions";
         currentScreen = [NSScreen mainScreen];
     }
 
-    if (currentScreen == menubarScreen) {
+    if (currentScreen == menubarScreen || IsMavericksOrLater()) {
         int flags = NSApplicationPresentationAutoHideDock | NSApplicationPresentationAutoHideMenuBar;
         iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
         [itad setFutureApplicationPresentationOptions:flags unset:0];
