@@ -588,6 +588,7 @@ typedef enum {
 -(void)handleTerminateScriptCommand: (NSScriptCommand *)command;
 -(void)handleSelectScriptCommand: (NSScriptCommand *)command;
 -(void)handleWriteScriptCommand: (NSScriptCommand *)command;
+-(void)handleClearScriptCommand: (NSScriptCommand *)command;
 
 @end
 

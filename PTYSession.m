@@ -4353,6 +4353,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [[[[self tab] parentWindow] tabView] selectTabViewItemWithIdentifier:[self tab]];
 }
 
+-(void)handleClearScriptCommand:(NSScriptCommand *)command
+{
+    [self clearBuffer];
+}
+
 -(void)handleWriteScriptCommand:(NSScriptCommand *)command
 {
     // Get the command's arguments:
