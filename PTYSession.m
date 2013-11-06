@@ -4278,6 +4278,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [SCREEN setFromFrame:s len:len info:info];
     [[[self tab] realParentWindow] resetTempTitle];
     [[[self tab] realParentWindow] setWindowTitle];
+    [self scheduleUpdateIn:0];
 }
 
 - (void)continueTailFind
