@@ -80,8 +80,11 @@ release:
 	security unlock-keychain ~/Library/Keychains/login.keychain
 	cp release-iTerm.plist iTerm.plist
 	make Deployment
-	#cp legacy-iTerm.plist iTerm.plist
-	#make LeopardPPC
-	./release.sh RanFromMakefile
+
+legacy:
+	echo "You need to unlock your keychain for signing to work."
+	security unlock-keychain ~/Library/Keychains/login.keychain
+	cp legacy-iTerm.plist iTerm.plist
+	make LeopardPPC
 
 force:
