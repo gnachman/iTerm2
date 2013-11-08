@@ -5,6 +5,11 @@ function PrintUsageAndDie {
   exit
 }
 
+function die {
+  echo $1
+  exit
+}
+
 # Usage: SparkleSign testing.xml template.xml
 function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
@@ -29,14 +34,16 @@ function SparkleSign {
 # Third arg describes system requirements
 # Fourth arg is the default description for the build and can be longer.
 # Fifth arg is a prefix for sparkle files.
+# Sixth arg is extra args for codesign
 function Build {
   BUILDTYPE=$1
   NAME=$(echo $VERSION | sed -e "s/\\./_/g")$2
   SUMMARY=$3
   DESCRIPTION=$4
   SPARKLE_PREFIX=$5
-  codesign -s "Developer ID Application: GEORGE NACHMAN" -f build/$BUILDTYPE/iTerm.app
-  pushd build/$BUILDTYPE
+  codesign $6 -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm.app"
+  codesign --verify --verbose "build/$BUILDTYPE/iTerm.app" || die "Signature not verified"
+  pushd "build/$BUILDTYPE"
 
   # Create the zip file
   zip -ry iTerm2-${NAME}.zip iTerm.app
@@ -70,13 +77,13 @@ NEWFILES=""
 if [ "$1" = normal ]; then
     echo "Build deployment release"
     make release
-    Build Deployment "" "OS 10.6+, Intel-only" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers, plus some minor performance improvements." ""
+    Build Deployment "" "OS 10.6+, Intel-only" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers, plus some minor performance improvements." "" "--deep"
 fi
 
 if [ "$1" = legacy ]; then
     echo "Build legacy release"
     make legacy
-    Build "Leopard Deployment" "-LeopardPPC" "OS 10.5, Intel, PPC" "This build has a limited set of features but supports OS 10.5 and PowerPC. If you have an Intel Mac that runs OS 10.6 or newer, you don't want this." "legacy_"
+    Build "Leopard Deployment" "-LeopardPPC" "OS 10.5, Intel, PPC" "This build has a limited set of features but supports OS 10.5 and PowerPC. If you have an Intel Mac that runs OS 10.6 or newer, you don't want this." "legacy_" ""
 fi
 
 #set -x
