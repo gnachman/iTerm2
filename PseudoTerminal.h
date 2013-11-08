@@ -373,6 +373,8 @@ NSWindowDelegate,
 // Jump to the saved scroll position
 - (IBAction)jumpToSavedScrollPosition:(id)sender;
 
+- (IBAction)sendCommand:(id)sender;
+- (IBAction)closeWindow:(id)sender;
 // Is there a saved scroll position?
 - (BOOL)hasSavedScrollPosition;
 
@@ -840,6 +842,7 @@ NSWindowDelegate,
 
 // a class method to provide the keys for KVC:
 +(NSArray*)kvcKeys;
+
 
 @end
 
