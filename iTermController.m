@@ -1387,7 +1387,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
         return NO;
     }
     if (major) {
-        *major = [parts[0] intValue];
+        *major = [[parts objectAtIndex:0] intValue];
         if (*major < 10) {
             return NO;
         }
@@ -1395,13 +1395,13 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     if (minor) {
         *minor = 0;
         if (parts.count > 1) {
-            *minor = [parts[1] intValue];
+            *minor = [[parts objectAtIndex:1] intValue];
         }
     }
     if (bugFix) {
         *bugFix = 0;
         if (parts.count > 2) {
-            *bugFix = [parts[2] intValue];
+            *bugFix = [[parts objectAtIndex:2] intValue];
         }
     }
     return YES;
