@@ -130,7 +130,7 @@ static BOOL UncachedIsMavericksOrLater(void) {
     unsigned major;
     unsigned minor;
     if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
-        return (major == 10 && minor >= 7) || (major > 10);
+        return (major == 10 && minor >= 9) || (major > 10);
     } else {
         return NO;
     }
@@ -1376,6 +1376,37 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     [[term window] makeFirstResponder:[[term currentSession] TEXTVIEW]];
 }
 
++ (BOOL)getSystemVersionMajor2:(unsigned int *)major
+                         minor:(unsigned int *)minor
+                        bugFix:(unsigned int *)bugFix {
+    NSDictionary *version = [NSDictionary dictionaryWithContentsOfFile:@"/System/Library/CoreServices/SystemVersion.plist"];
+    NSString *productVersion = [version objectForKey:@"ProductVersion"];
+    DLog(@"product version is %@", productVersion);
+    NSArray *parts = [productVersion componentsSeparatedByString:@"."];
+    if (parts.count == 0) {
+        return NO;
+    }
+    if (major) {
+        *major = [parts[0] intValue];
+        if (*major < 10) {
+            return NO;
+        }
+    }
+    if (minor) {
+        *minor = 0;
+        if (parts.count > 1) {
+            *minor = [parts[1] intValue];
+        }
+    }
+    if (bugFix) {
+        *bugFix = 0;
+        if (parts.count > 2) {
+            *bugFix = [parts[2] intValue];
+        }
+    }
+    return YES;
+}
+
 // http://www.cocoadev.com/index.pl?DeterminingOSVersion
 + (BOOL)getSystemVersionMajor:(unsigned *)major
                         minor:(unsigned *)minor
@@ -1384,8 +1415,11 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     OSErr err;
     SInt32 systemVersion, versionMajor, versionMinor, versionBugFix;
     if ((err = Gestalt(gestaltSystemVersion, &systemVersion)) != noErr) {
+        DLog(@"Gestalt failed (1)");
+        return [self getSystemVersionMajor2:major minor:minor bugFix:bugFix];
         return NO;
     }
+    DLog(@"Old style system version is %x", (int)systemVersion);
     if (systemVersion < 0x1040) {
         if (major) {
             *major = ((systemVersion & 0xF000) >> 12) * 10 + ((systemVersion & 0x0F00) >> 8);
@@ -1398,14 +1432,18 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
         }
     } else {
         if ((err = Gestalt(gestaltSystemVersionMajor, &versionMajor)) != noErr) {
-            return NO;
+            DLog(@"Gestalt failed (2)");
+            return [self getSystemVersionMajor2:major minor:minor bugFix:bugFix];
         }
         if ((err = Gestalt(gestaltSystemVersionMinor, &versionMinor)) != noErr) {
-            return NO;
+            DLog(@"Gestalt failed (3)");
+            return [self getSystemVersionMajor2:major minor:minor bugFix:bugFix];
         }
         if ((err = Gestalt(gestaltSystemVersionBugFix, &versionBugFix)) != noErr) {
-            return NO;
+            DLog(@"Gestalt failed (4)");
+            return [self getSystemVersionMajor2:major minor:minor bugFix:bugFix];
         }
+        DLog(@"Gestalt succeeded. version is %d, %d", versionMajor, versionMinor);
         if (major) {
             *major = versionMajor;
         }
@@ -2052,18 +2090,14 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 
 - (void)requestAccessibilityPermission {
 #ifndef BLOCKS_NOT_AVAILABLE
-    static int count;
+    static BOOL alreadyAsked;
+    if (alreadyAsked) {
+        return;
+    }
+    alreadyAsked = YES;
     NSDictionary *options = @{(id)kAXTrustedCheckOptionPrompt:@YES};
     // Show a dialog prompting the user to open system prefs.
     if (!AXIsProcessTrustedWithOptions((CFDictionaryRef)options)) {
-        if ((count % 3) == 1) {
-            [[NSAlert alertWithMessageText:@"You have to restart iTerm2 after granting accessibility permission."
-                             defaultButton:@"OK"
-                           alternateButton:nil
-                               otherButton:nil
-                 informativeTextWithFormat:@""] runModal];
-        }
-        ++count;
         return;
     }
 #endif
