@@ -3699,6 +3699,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         }
         [self launchCoprocessWithCommand:keyBindingText];
         break;
+      case KEY_ACTION_NEXT_PROFILE:
+        [self loadNextProfile];
+        break;
+      case KEY_ACTION_PREV_PROFILE:
+        [self loadNextProfileWithDirectionReversed:YES];
+        break;
       case KEY_ACTION_SELECT_MENU_ITEM:
         [PTYSession selectMenuItem:keyBindingText];
         break;
@@ -4122,6 +4128,35 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)launchCoprocessWithCommand:(NSString *)command
 {
     [self launchCoprocessWithCommand:command mute:NO];
+}
+
+-(void)loadNextProfileWithDirectionReversed:(BOOL)reversed {
+    int currentIdx = [[ProfileModel sharedInstance]
+                        indexOfBookmarkWithName:[[self addressBookEntry]
+                                                 valueForKey:KEY_NAME]];
+    if (currentIdx == -1) {
+        currentIdx = 0;
+    }
+    int nextIdx;
+    if (!reversed) {
+        nextIdx = (currentIdx+1)%[ProfileModel sharedInstance].bookmarks.count;
+    } else {
+        nextIdx = (currentIdx-1)%[ProfileModel sharedInstance].bookmarks.count;
+        if (nextIdx < 0) {
+            nextIdx += [ProfileModel sharedInstance].bookmarks.count;
+        }
+    }
+    
+    Profile* next = [[[ProfileModel sharedInstance] bookmarks] objectAtIndex:nextIdx];
+    DLog(@"changing from profile %@ to %@",[[self addressBookEntry] valueForKey:KEY_NAME],
+         [next valueForKey:KEY_NAME]);
+    
+    [self setAddressBookEntry:next];
+    [self setPreferencesFromAddressBookEntry:next];
+    [self remarry];
+}
+-(void)loadNextProfile {
+    [self loadNextProfileWithDirectionReversed:NO];
 }
 
 - (NSString*)_getLocale

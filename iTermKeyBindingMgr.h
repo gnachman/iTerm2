@@ -117,6 +117,8 @@
 #define KEY_ACTION_MOVE_TAB_LEFT 33
 #define KEY_ACTION_MOVE_TAB_RIGHT 34
 #define KEY_ACTION_RUN_COPROCESS 35
+#define KEY_ACTION_NEXT_PROFILE 36
+#define KEY_ACTION_PREV_PROFILE 37
 
 @class PreferencePanel;
 @interface iTermKeyBindingMgr : NSObject {

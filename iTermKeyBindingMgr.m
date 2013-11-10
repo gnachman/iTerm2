@@ -391,7 +391,13 @@ static NSDictionary* globalKeyMap;
             break;
         case KEY_ACTION_RUN_COPROCESS:
             actionString = [NSString stringWithFormat:@"Run Coprocess \"%@\"",
-						    auxText];
+                auxText];
+            break;
+        case KEY_ACTION_NEXT_PROFILE:
+            actionString = @"Next Profile";
+            break;
+        case KEY_ACTION_PREV_PROFILE:
+            actionString = @"Previous Profile";
             break;
         case KEY_ACTION_SELECT_MENU_ITEM:
             actionString = [NSString stringWithFormat:@"%@ \"%@\"",
