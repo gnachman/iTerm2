@@ -406,6 +406,8 @@
 		9DB3D6F1176CCABE0071CCF8 /* PrefsArrangements@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */; };
 		A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */ = {isa = PBXBuildFile; fileRef = A073973D14C768E400786414 /* ColorsMenuItemView.h */; };
 		A073974014C7694600786414 /* ColorsMenuItemView.m in Sources */ = {isa = PBXBuildFile; fileRef = A073973F14C7694600786414 /* ColorsMenuItemView.m */; };
+		A6AA395C18275EB800A19BD5 /* SBSystemPreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AA395B18275EB800A19BD5 /* SBSystemPreferences.h */; };
+		A6AA395E18275EF200A19BD5 /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6AA395D18275EF200A19BD5 /* ScriptingBridge.framework */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = FB151F2903648AC401F955DB /* iTerm.strings */; };
@@ -746,6 +748,8 @@
 		9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PrefsArrangements@2x.png"; path = "images/PrefsArrangements@2x.png"; sourceTree = "<group>"; };
 		A073973D14C768E400786414 /* ColorsMenuItemView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ColorsMenuItemView.h; sourceTree = "<group>"; };
 		A073973F14C7694600786414 /* ColorsMenuItemView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ColorsMenuItemView.m; sourceTree = "<group>"; };
+		A6AA395B18275EB800A19BD5 /* SBSystemPreferences.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SBSystemPreferences.h; sourceTree = "<group>"; };
+		A6AA395D18275EF200A19BD5 /* ScriptingBridge.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScriptingBridge.framework; path = System/Library/Frameworks/ScriptingBridge.framework; sourceTree = SDKROOT; };
 		DD02572409CB9398008F320C /* PSMAquaTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMAquaTabStyle.h; sourceTree = "<group>"; };
 		DD02572509CB9398008F320C /* PSMAquaTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMAquaTabStyle.m; sourceTree = "<group>"; };
 		DD02572609CB9398008F320C /* PSMMetalTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMMetalTabStyle.h; sourceTree = "<group>"; };
@@ -849,6 +853,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6AA395E18275EF200A19BD5 /* ScriptingBridge.framework in Frameworks */,
 				874206530564169600CFC3F1 /* AppKit.framework in Frameworks */,
 				F6E2DEDA0AE2F67200D20B3B /* Sparkle.framework in Frameworks */,
 				1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */,
@@ -885,6 +890,7 @@
 				1DEB293D1288899A00B2CB9F /* Carbon.framework */,
 				1D94EAC712D641D3008225A9 /* AddressBook.framework */,
 				1DF0897013DBAF4C00A52AD8 /* Quartz.framework */,
+				A6AA395D18275EF200A19BD5 /* ScriptingBridge.framework */,
 			);
 			name = JTerminal;
 			sourceTree = "<group>";
@@ -892,6 +898,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				A6F6C520182765990077ADC2 /* ScriptingBridgeGeneratedCode */,
 				1D06E7D014BC04110097C0ED /* Profiles */,
 				1D06E7CF14BC03BE0097C0ED /* GTM */,
 				1D3D21921483142800FAC8E7 /* tmux */,
@@ -1376,6 +1383,14 @@
 			name = Categories;
 			sourceTree = "<group>";
 		};
+		A6F6C520182765990077ADC2 /* ScriptingBridgeGeneratedCode */ = {
+			isa = PBXGroup;
+			children = (
+				A6AA395B18275EB800A19BD5 /* SBSystemPreferences.h */,
+			);
+			name = ScriptingBridgeGeneratedCode;
+			sourceTree = "<group>";
+		};
 		DD02571D09CB9363008F320C /* PSMTabBarControl */ = {
 			isa = PBXGroup;
 			children = (
@@ -1644,6 +1659,7 @@
 				A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */,
 				1DA26AC015007507004B5792 /* BackgroundThread.h in Headers */,
 				1D2F3B3D1516BA470044C337 /* iTermFontPanel.h in Headers */,
+				A6AA395C18275EB800A19BD5 /* SBSystemPreferences.h in Headers */,
 				1D48B32316706FC3000046EE /* NSView+iTerm.h in Headers */,
 				1D48B379167E809D000046EE /* CharacterRun.h in Headers */,
 				1D70BA351680158700824B72 /* PTYFontInfo.h in Headers */,
@@ -2353,7 +2369,7 @@
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = "";
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_MISSING_PARENTHESES = YES;
@@ -2379,7 +2395,7 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.6;
+				SDKROOT = macosx;
 				VALID_ARCHS = "i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
@@ -2403,7 +2419,7 @@
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G4;
 				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = "";
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_MISSING_PARENTHESES = YES;

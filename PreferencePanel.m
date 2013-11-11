@@ -1262,7 +1262,10 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultLeftCommand = [prefs objectForKey:@"LeftCommand"] ? [[prefs objectForKey:@"LeftCommand"] intValue] : MOD_TAG_LEFT_COMMAND;
     defaultRightCommand = [prefs objectForKey:@"RightCommand"] ? [[prefs objectForKey:@"RightCommand"] intValue] : MOD_TAG_RIGHT_COMMAND;
     if ([self isAnyModifierRemapped]) {
-        [[iTermController sharedInstance] beginRemappingModifiers];
+        // Use a brief delay so windows have a chance to open before the dialog is shown.
+        [[iTermController sharedInstance] performSelector:@selector(beginRemappingModifiers)
+                                               withObject:nil
+                                               afterDelay:0.5];
     }
     defaultSwitchTabModifier = [prefs objectForKey:@"SwitchTabModifier"] ? [[prefs objectForKey:@"SwitchTabModifier"] intValue] : MOD_TAG_ANY_COMMAND;
     defaultSwitchWindowModifier = [prefs objectForKey:@"SwitchWindowModifier"] ? [[prefs objectForKey:@"SwitchWindowModifier"] intValue] : MOD_TAG_CMD_OPT;

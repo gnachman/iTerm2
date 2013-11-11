@@ -317,7 +317,10 @@ static BOOL hasBecomeActive = NO;
         [[iTermController sharedInstance] registerHotkey:[ppanel hotkeyCode] modifiers:[ppanel hotkeyModifiers]];
     }
     if ([ppanel isAnyModifierRemapped]) {
-        [[iTermController sharedInstance] beginRemappingModifiers];
+        // Use a brief delay so windows have a chance to open before the dialog is shown.
+        [[iTermController sharedInstance] performSelector:@selector(beginRemappingModifiers)
+                                               withObject:nil
+                                               afterDelay:0.5];
     }
     [self _updateArrangementsMenu:windowArrangements_];
 

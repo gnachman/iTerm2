@@ -342,6 +342,8 @@ enum {
     // Used by _drawCursorTo: to remember the last time the cursor moved to avoid drawing a blinked-out
     // cursor while it's moving.
     NSTimeInterval lastTimeCursorMoved_;
+
+    float _antiAliasedShift;  // Amount to shift anti-aliased text by horizontally to simulate bold
 }
 
 + (NSCursor *)textViewCursor;

@@ -169,6 +169,47 @@ NSString *sessionsKey = @"sessions";
 
 @class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
 
+@interface PseudoTerminal ()
+- (void)_updateToolbeltParentage;
+- (CGFloat)fullscreenToolbeltWidth;
+- (BOOL)_haveLeftBorder;
+- (BOOL)_haveRightBorder;
+- (void)fitBottomBarToWindow;
+- (void)repositionWidgets;
+- (int)_screenAtPoint:(NSPoint)p;
+- (void)copySettingsFrom:(PseudoTerminal*)other;
+- (void)fitTabsToWindow;
+- (BOOL)showCloseWindow;
+- (void)_loadFindStringFromSharedPasteboard;
+- (NSSize)windowDecorationSize;
+- (void)hideFullScreenTabControl;
+- (NSRect)maxFrame;
+- (void)_drawFullScreenBlackBackground;
+- (void)copySettingsFrom:(PseudoTerminal*)other;
+- (void)insertTab:(PTYTab*)aTab atIndex:(int)anIndex;
+- (void)fitTabsToWindow;
+- (BOOL)_haveBottomBorder;
+- (BOOL)_haveTopBorder;
+- (float)maxCharHeight:(int*)numChars;
+- (float)maxCharWidth:(int*)numChars;
+- (void)setFramePos;
+- (void)safelySetSessionSize:(PTYSession*)aSession
+                        rows:(int)rows
+                     columns:(int)columns;
+- (void)setInstantReplayBarVisible:(BOOL)visible;
+- (void)adjustFullScreenWindowForBottomBarChange;
+- (void)fitTabToWindow:(PTYTab*)aTab;
+- (void)setupSession:(PTYSession *)aSession
+               title:(NSString *)title
+            withSize:(NSSize*)size;
+- (long long)timestampForFraction:(float)f;
+- (PTYSession*)newSessionWithBookmark:(Profile*)bookmark;
+- (void)runCommandInSession:(PTYSession*)aSession
+                      inCwd:(NSString*)oldCWD
+              forObjectType:(iTermObjectType)objectType;
+- (void)_refreshTerminal:(NSNotification *)aNotification;
+@end
+
 @implementation BottomBarView
 - (void)drawRect:(NSRect)dirtyRect
 {
@@ -182,7 +223,6 @@ NSString *sessionsKey = @"sessions";
 }
 
 @end
-
 @implementation PseudoTerminal
 
 - (id)initWithSmartLayout:(BOOL)smartLayout
@@ -4447,7 +4487,7 @@ NSString *sessionsKey = @"sessions";
         currentScreen = [NSScreen mainScreen];
     }
 
-    if (currentScreen == menubarScreen) {
+    if (currentScreen == menubarScreen || IsMavericksOrLater()) {
         int flags = NSApplicationPresentationAutoHideDock | NSApplicationPresentationAutoHideMenuBar;
         iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
         [itad setFutureApplicationPresentationOptions:flags unset:0];

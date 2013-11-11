@@ -83,7 +83,7 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
                          defaultButton:@"OK"
                        alternateButton:nil
                            otherButton:nil
-             informativeTextWithFormat:nil] runModal];
+             informativeTextWithFormat:@""] runModal];
         return nil;
     }
 

@@ -36,6 +36,7 @@
 #define OSX_TIGERORLATER (floor(NSAppKitVersionNumber) > 743)
 #define OSX_LEOPARDORLATER (floor(NSAppKitVersionNumber) > 824)
 
+BOOL IsMavericksOrLater(void);
 BOOL IsMountainLionOrLater(void);
 BOOL IsLionOrLater(void);
 BOOL IsSnowLeopardOrLater(void);
