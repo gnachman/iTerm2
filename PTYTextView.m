@@ -266,6 +266,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"ThreeFingerTapEmulatesThreeFingerClick"];
 }
 
+- (void)viewDidChangeBackingProperties {
+    _antiAliasedShift = [[[self window] screen] futureBackingScaleFactor] > 1 ? 0.5 : 0;
+}
+
 - (id)initWithFrame:(NSRect)aRect
 {
     self = [super initWithFrame: aRect];
@@ -339,10 +343,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [self viewDidChangeBackingProperties];
 
     return self;
-}
-
-- (void)viewDidChangeBackingProperties {
-    _antiAliasedShift = [[[self window] screen] futureBackingScaleFactor] > 1 ? 0.5 : 0;
 }
 
 - (void)sendFakeThreeFingerClickDown:(BOOL)isDown basedOnEvent:(NSEvent *)event {
@@ -6402,6 +6402,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return firstMissingGlyph;
 }
 
+- (CGColorRef)cgColorForColor:(NSColor *)color {
+    const NSInteger numberOfComponents = [color numberOfComponents];
+    CGFloat components[numberOfComponents];
+    CGColorSpaceRef colorSpace = [[color colorSpace] CGColorSpace];
+
+    [color getComponents:(CGFloat *)&components];
+
+    return (CGColorRef)[(id)CGColorCreate(colorSpace, components) autorelease];
+}
+
 - (void)_advancedDrawString:(NSString *)str
                    fontInfo:(PTYFontInfo*)fontInfo
                       color:(NSColor*)color
@@ -6417,39 +6427,79 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
     [ctx saveGraphicsState];
     [ctx setCompositingOperation:NSCompositeSourceOver];
-    NSMutableAttributedString* attributedString =
-        [[[NSMutableAttributedString alloc] initWithString:str
-                                                attributes:attrs] autorelease];
-    // This code used to use -[NSAttributedString drawWithRect:options] but
-    // it does a lousy job rendering multiple combining marks. This is close
-    // to what WebKit does and appears to be the highest quality text
-    // rendering available.
+    if (IsLionOrLater()) {
+        CTFontDrawGlyphsFunction *drawGlyphsFunction = GetCTFontDrawGlyphsFunction();
+        assert(drawGlyphsFunction);
 
-    CTLineRef lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)attributedString);
-    CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
-    CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
-    CGContextSetFillColorWithColor(cgContext, [color CGColor]);
-    CGContextSetStrokeColorWithColor(cgContext, [color CGColor]);
-    CGContextSetTextPosition(cgContext, pos.x, pos.y + fontInfo.baselineOffset + lineHeight);
-    for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
-        CTRunRef run = CFArrayGetValueAtIndex(runs, j);
-        CFRange range;
-        range.length = 0;
-        range.location = 0;
-        size_t length = CTRunGetGlyphCount(run);
-        const CGGlyph *buffer = CTRunGetGlyphsPtr(run);
-        const CGPoint *positions = CTRunGetPositionsPtr(run);
-        CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
-        CTFontDrawGlyphs(runFont, buffer, positions, length, cgContext);
+        NSMutableAttributedString* attributedString =
+            [[[NSMutableAttributedString alloc] initWithString:str
+                                                    attributes:attrs] autorelease];
+        // This code used to use -[NSAttributedString drawWithRect:options] but
+        // it does a lousy job rendering multiple combining marks. This is close
+        // to what WebKit does and appears to be the highest quality text
+        // rendering available. However, this path is only available in 10.7+.
+
+        CTLineRef lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)attributedString);
+        CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
+        CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
+        CGContextSetFillColorWithColor(cgContext, [self cgColorForColor:color]);
+        CGContextSetStrokeColorWithColor(cgContext, [self cgColorForColor:color]);
+        CGContextSetTextPosition(cgContext, pos.x, pos.y + fontInfo.baselineOffset + lineHeight);
+        for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
+            CTRunRef run = CFArrayGetValueAtIndex(runs, j);
+            CFRange range;
+            range.length = 0;
+            range.location = 0;
+            size_t length = CTRunGetGlyphCount(run);
+            const CGGlyph *buffer = CTRunGetGlyphsPtr(run);
+            const CGPoint *positions = CTRunGetPositionsPtr(run);
+            CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
+            drawGlyphsFunction(runFont, buffer, (NSPoint *)positions, length, cgContext);
+            if (fakeBold) {
+                CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
+                drawGlyphsFunction(runFont, buffer, (NSPoint *)positions, length, cgContext);
+                CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+            }
+        }
+        CFRelease(lineRef);
+
+        [ctx restoreGraphicsState];
+    } else {
+        // Pre-10.7 path.
+
+        NSMutableAttributedString* attributedString = [[[NSMutableAttributedString alloc] initWithString:str
+                                                                                              attributes:attrs] autorelease];
+        // Note that drawInRect doesn't use the right baseline, but drawWithRect
+        // does.
+        //
+        // This technique was picked because it can find glyphs that aren't in the
+        // selected font (e.g., tests/radical.txt). It does a fairly nice job on
+        // laying out combining marks. For now, it fails in two known cases:
+        // 1. Enclosing marks (q in a circle shows as a q)
+        // 2. U+239d, a part of a paren for graphics drawing, doesn't quite render
+        //    right (though it appears to need to render in another char's cell).
+        // Other rejected approaches included using CTFontGetGlyphsForCharacters+
+        // CGContextShowGlyphsWithAdvances, which doesn't render thai characters
+        // correctly in UTF-8-demo.txt.
+        //
+        // We use width*2 so that wide characters that are not double width chars
+        // render properly. These are font-dependent. See tests/suits.txt for an
+        // example.
+        [attributedString drawWithRect:NSMakeRect(pos.x,
+                                                  pos.y + fontInfo.baselineOffset + lineHeight,
+                                                  width*2,
+                                                  lineHeight)
+                               options:0];  // NSStringDrawingUsesLineFragmentOrigin
         if (fakeBold) {
-            CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
-            CTFontDrawGlyphs(runFont, buffer, positions, length, cgContext);
-            CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+            // If anti-aliased, drawing twice at the same position makes the strokes thicker.
+            // If not anti-alised, draw one pixel to the right.
+            [attributedString drawWithRect:NSMakeRect(pos.x + (antiAlias ? 0 : 1),
+                                                      pos.y + fontInfo.baselineOffset + lineHeight,
+                                                      width*2,
+                                                      lineHeight)
+                                   options:0];  // NSStringDrawingUsesLineFragmentOrigin
         }
     }
-    CFRelease(lineRef);
-    
-    [ctx restoreGraphicsState];
 }
 
 - (void)drawRun:(CRun *)currentRun
