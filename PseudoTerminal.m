@@ -5446,7 +5446,6 @@ NSString *sessionsKey = @"sessions";
 - (IBAction)resetCharset:(id)sender
 {
     [[[self currentSession] TERMINAL] resetCharset];
-    [[[self currentSession] SCREEN] resetCharset];
 }
 
 // Clear the buffer of the current session.
