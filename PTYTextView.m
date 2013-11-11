@@ -162,6 +162,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return c;
 }
 
+- (NSString *)description {
+  return [NSString stringWithFormat:@"<%p: %@ %d,%d>", self, [self class], x, y];
+}
+
 @end
 
 @interface SmartMatch : NSObject
@@ -2190,6 +2194,7 @@ NSMutableArray* screens=0;
         free(backingStore);
 
         j++;
+        o++;
         if (i >= y && theLine[width].code == EOL_HARD) {
             if (rejectAtHardEol || theLine[width - 1].code == 0) {
                 [coords addObject:[Coord coordWithX:o
