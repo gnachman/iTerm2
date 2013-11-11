@@ -107,6 +107,7 @@ typedef NSInteger FutureNSScrollerStyle;
 
 @interface NSObject (Future)
 - (BOOL)performSelectorReturningBool:(SEL)selector withObjects:(NSArray *)objects;
+- (BOOL)performSelectorReturningCGFloat:(SEL)selector withObjects:(NSArray *)objects;
 @end
 
 @interface NSScroller (future)
@@ -119,4 +120,8 @@ CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFun
 // 10.7-only function.
 typedef void CTFontDrawGlyphsFunction(CTFontRef runFont, const CGGlyph *glyphs, NSPoint *positions, int glyphCount, CGContextRef ctx);
 CTFontDrawGlyphsFunction* GetCTFontDrawGlyphsFunction(void);
+
+@interface NSScreen (future)
+- (CGFloat)futureBackingScaleFactor;
+@end
 
