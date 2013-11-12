@@ -8768,9 +8768,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         prevCursorY != currentCursorY) {
         // Mark previous and current cursor position dirty
         DLog(@"Mark previous cursor position %d,%d dirty", prevCursorX, prevCursorY);
-        [dataSource setCharDirtyAtCursorX:prevCursorX Y:prevCursorY];
+        int maxX = [dataSource width] - 1;
+        [dataSource setCharDirtyAtCursorX:MIN(maxX, prevCursorX) Y:prevCursorY];
         DLog(@"Mark current cursor position %d,%d dirty", currentCursorX, currentCursorY);
-        [dataSource setCharDirtyAtCursorX:currentCursorX Y:currentCursorY];
+        [dataSource setCharDirtyAtCursorX:MIN(maxX, currentCursorX) Y:currentCursorY];
 
         // Set prevCursor[XY] to new cursor position
         prevCursorX = currentCursorX;

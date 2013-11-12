@@ -466,7 +466,7 @@ do { \
 
     grid.cursorX = 3;
     [grid moveCursorLeft:1];
-    assert(grid.cursorX == 3);  // I'm not persuaded this is sane. Check with saitoha.
+    assert(grid.cursorX == 2);
 }
 
 - (void)testMoveCursorRight {
@@ -474,13 +474,13 @@ do { \
     grid.cursorX = 2;
     grid.cursorY = 0;
     [grid moveCursorRight:1];
-    assert(grid.cursorX == 2 && grid.cursorY == 0);
+    assert(grid.cursorX == 3 && grid.cursorY == 0);
 
-    grid.scrollRegionCols = VT100GridRangeMake(2, 2);
+    grid.scrollRegionCols = VT100GridRangeMake(2, 1);
     grid.useScrollRegionCols = YES;
     grid.cursorX = 0;
     [grid moveCursorRight:1];
-    assert(grid.cursorX == 0);  // I'm not persuaded this is sane. Check with saitoha.
+    assert(grid.cursorX == 1);
 
     grid.cursorX = 1;
     [grid moveCursorRight:1];
@@ -488,7 +488,7 @@ do { \
 
     grid.cursorX = 2;
     [grid moveCursorRight:1];
-    assert(grid.cursorX == 2);  // Pretty sure this is wrong too.
+    assert(grid.cursorX == 2);
 }
 
 - (void)testMoveCursorUp {
@@ -2583,6 +2583,17 @@ do { \
     assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abC->>\n"
             @"E-fgh!"]);
+}
+
+#pragma mark - Regression tests
+
+- (void)moveCursorRightToMargin {
+    VT100Grid *grid = [self gridFromCompactLinesWithContinuationMarks:
+                       @"abcd+\n"
+                       @"efg.!"];
+    [grid setCursorX:1];
+    [grid moveCursorRight:99];
+    assert(grid.cursorX == grid.size.width - 1);
 }
 
 @end

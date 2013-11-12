@@ -372,27 +372,17 @@
 - (void)moveCursorLeft:(int)n {
     int x = cursor_.x - n;
     const int leftMargin = [self leftMargin];
-    const int rightMargin = [self rightMargin];
 
-    if (x < leftMargin) {
-        x = leftMargin;
-    }
-    if (x >= leftMargin && x < rightMargin) {
-        self.cursorX = x;
-    }
+    x = MAX(leftMargin, x);
+    self.cursorX = x;
 }
 
 - (void)moveCursorRight:(int)n {
     int x = cursor_.x + n;
-    const int leftMargin = [self leftMargin];
     const int rightMargin = [self rightMargin];
 
-    if (x >= rightMargin) {
-        x = rightMargin - 1;
-    }
-    if (x >= leftMargin && x < rightMargin) {
-        self.cursorX = x;
-    }
+    x = MIN(x, rightMargin);
+    self.cursorX = x;
 }
 
 - (void)moveCursorUp:(int)n {
