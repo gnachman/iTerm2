@@ -9,6 +9,52 @@
 #import "CharacterRun.h"
 #import "ScreenChar.h"
 
+// A mutable set that only uses pointer equality.
+@interface CRunSet : NSObject {
+    NSMutableDictionary *dict_;
+}
+
+- (void)addObject:(NSObject *)object;
+- (BOOL)containsObject:(NSObject *)object;
+- (NSArray *)values;
+
+@end
+
+@implementation CRunSet
+- (id)init {
+    self = [super init];
+    if (self) {
+        dict_ = [[NSMutableDictionary alloc] init];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [dict_ release];
+    [super dealloc];
+}
+
+- (NSNumber *)keyForObject:(NSObject *)object {
+    return [NSNumber numberWithLongLong:(long long)object];
+}
+
+- (void)addObject:(NSObject *)object {
+    NSNumber *key = [self keyForObject:object];
+    if (![dict_ objectForKey:key]) {
+        [dict_ setObject:object forKey:key];
+    }
+}
+
+- (BOOL)containsObject:(NSObject *)object {
+    return [dict_ objectForKey:[self keyForObject:object]] != nil;
+}
+
+- (NSArray *)values {
+    return [dict_ allValues];
+}
+
+@end
+
 @implementation CRunStorage : NSObject
 
 + (CRunStorage *)cRunStorageWithCapacity:(int)capacity {
@@ -23,7 +69,7 @@
         glyphs_ = malloc(sizeof(CGGlyph) * capacity);
         advances_ = malloc(sizeof(NSSize) * capacity);
         capacity_ = capacity;
-        colors_ = [[NSMutableSet alloc] init];
+        colors_ = [[CRunSet alloc] init];
         used_ = 0;
     }
     return self;
