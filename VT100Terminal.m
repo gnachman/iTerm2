@@ -172,11 +172,14 @@ typedef enum {
 
 
 #define VT100CSIPARAM_MAX    16  // Maximum number of CSI parameters in VT100TCC.u.csi.p.
+#define VT100CSISUBPARAM_MAX    16  // Maximum number of CSI sub-parameters in VT100TCC.u.csi.p.
 
 typedef struct {
     int p[VT100CSIPARAM_MAX];
     int count;
     int cmd;
+    int sub[VT100CSIPARAM_MAX][VT100CSISUBPARAM_MAX];
+    int subCount[VT100CSIPARAM_MAX];
     BOOL question; // used by old parser
     int modifier;  // used by old parser
 } CSIParam;
@@ -341,12 +344,7 @@ struct VT100TCC {
     union {
         NSString *string;  // For VT100_STRING, VT100_ASCIISTRING
         unsigned char code;  // For VT100_UNKNOWNCHAR and VT100CSI_SCS0...SCS3.
-        struct {  // For CSI codes.
-            int p[VT100CSIPARAM_MAX];  // Array of CSI parameters.
-            int count;  // Number of values in p.
-            BOOL question; // used by old parser
-            int modifier;  // used by old parser
-        } csi;
+        CSIParam csi;  // 'cmd' not used here.
     } u;
 };
 
@@ -801,9 +799,11 @@ static int getCSIParamCanonically(unsigned char *datap,
     }
 
     //     2. parse parameters
-    //        Typically, it consists of '0'-'9' or ';',
-    //        ':', '<', '=', '>', '?' should be ignored, but if current sequence contains them,
+    //        Typically, it consists of '0'-'9' or ';'. If there are sub parameters, they'll
+    //        be colon-delimited. <parameter>:<sub 1>:<sub 2>:<sub 3>...:<sub N>
+    //        '<', '=', '>', '?' should be ignored, but if current sequence contains them,
     //        this sequence should be mark as unrecognized.
+    BOOL isSub = NO;
     while (datalen > 0 && *datap >= 0x30 && *datap <= 0x3f) {
         switch (*datap) {
             case '0':
@@ -827,7 +827,16 @@ static int getCSIParamCanonically(unsigned char *datap,
                         goto cancel;
                     }
                 }
-                if (param->count < VT100CSIPARAM_MAX) {
+                
+                if (isSub) {
+                    const int paramNum = param->count - 1;
+                    assert(paramNum >= 0 && paramNum < VT100CSIPARAM_MAX);
+                    int subParamNum = param->subCount[paramNum];
+                    if (subParamNum < VT100CSISUBPARAM_MAX) {
+                        param->sub[paramNum][subParamNum] = n;
+                        param->subCount[paramNum]++;
+                    }
+                } else if (param->count < VT100CSIPARAM_MAX) {
                     param->p[param->count] = n;
                     // increment the parameter count
                     param->count++;
@@ -874,13 +883,10 @@ static int getCSIParamCanonically(unsigned char *datap,
                 // In other case, yaft proposes GWREPT(glyph width report, OSC 8900)
                 //
                 //   > OSC 8900 ; Ps ; Pt ; width : from : to ; width : from : to ; ... ST
-                //   http://www.nak.ics.keio.ac.jp/~haru/yaft/glyph_width_report.html
+                //   http://uobikiemukot.github.io/yaft/glyph_width_report.html
                 //
                 // In this usage, ":" are certainly treated as sub-parameter separators.
-                //
-                // I think, at the time when we need sub-parameter, CSIParam should be extended.
-                // Now we ignore them by the reason of performance.
-                unrecognized = YES;
+                isSub = YES;
                 if (!advanceAndEatControlChars(&datap, &datalen, delegate)) {
                     goto cancel;
                 }
@@ -988,7 +994,9 @@ static VT100TCC decode_csi(unsigned char *datap,
                            id<VT100TerminalDelegate> delegate)
 {
     VT100TCC result;
-    CSIParam param={{0},0};
+    CSIParam param;
+    memset(&param, 0, sizeof(param));
+    memset(&result, 0, sizeof(result));
     int paramlen;
     int i;
 
@@ -1296,7 +1304,9 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
                                        id<VT100TerminalDelegate> delegate)
 {
     VT100TCC result;
-    CSIParam param={ { 0 }, 0 };
+    CSIParam param;
+    memset(&param, 0, sizeof(param));
+    memset(&result, 0, sizeof(result));
     int paramlen;
     int i;
 
@@ -1577,6 +1587,10 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
         // copy CSI parameter
         for (i = 0; i < VT100CSIPARAM_MAX; ++i) {
             result.u.csi.p[i] = param.p[i];
+            result.u.csi.subCount[i] = param.subCount[i];
+            for (int j = 0; j < VT100CSISUBPARAM_MAX; j++) {
+                result.u.csi.sub[i][j] = param.sub[i][j];
+            }
         }
         result.u.csi.count = param.count;
 
@@ -2606,6 +2620,9 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (void)resetCharset {
     charset_ = NO;
+    for (int i = 0; i < NUM_CHARSETS; i++) {
+        [delegate_ terminalSetCharset:i toLineDrawingMode:NO];
+    }
 }
 
 - (void)resetPreservingPrompt:(BOOL)preservePrompt
@@ -3676,13 +3693,51 @@ static VT100TCC decode_string(unsigned char *datap,
                         bgColorMode_ = ColorModeAlternate;
                         break;
                     case VT100CHARATTR_FG_256:
-                        if (token.u.csi.count - i >= 3 && token.u.csi.p[i + 1] == 5) {
+                        /*
+                         First subparam means:   # additional subparams:  Accepts optional params:
+                         1: transparent          0                        NO
+                         2: RGB                  3                        YES
+                         3: CMY                  3                        YES
+                         4: CMYK                 4                        YES
+                         5: Indexed color        1                        NO
+                         
+                         Optional paramters go at position 7 and 8, and indicate toleranace as an
+                         integer; and color space (0=CIELUV, 1=CIELAB). Example:
+                         
+                         CSI 38:2:255:128:64:0:5:1 m
+                         
+                         Also accepted for xterm compatibility, but never with optional parameters:
+                         CSI 38;2;255;128;64 m
+                         
+                         Set the foreground color to red=255, green=128, blue=64 with a tolerance of
+                         5 in the CIELAB color space. The 0 at the 6th position has no meaning and
+                         is just a filler. */
+                        
+                        if (token.u.csi.subCount[i] > 0) {
+                            // Preferred syntax using colons to delimit subparameters
+                            if (token.u.csi.subCount[i] >= 2 && token.u.csi.sub[i][0] == 5) {
+                                // CSI 38:5:P m
+                                fgColorCode_ = token.u.csi.sub[i][1];
+                                fgGreen_ = 0;
+                                fgBlue_ = 0;
+                                fgColorMode_ = ColorModeNormal;
+                            } else if (token.u.csi.subCount[i] >= 4 && token.u.csi.sub[i][0] == 2) {
+                                // CSI 38:2:R:G:B m
+                                // 24-bit color
+                                fgColorCode_ = token.u.csi.sub[i][1];
+                                fgGreen_ = token.u.csi.sub[i][2];
+                                fgBlue_ = token.u.csi.sub[i][3];
+                                fgColorMode_ = ColorMode24bit;
+                            }
+                        } else if (token.u.csi.count - i >= 3 && token.u.csi.p[i + 1] == 5) {
+                            // CSI 38;5;P m
                             fgColorCode_ = token.u.csi.p[i + 2];
                             fgGreen_ = 0;
                             fgBlue_ = 0;
                             fgColorMode_ = ColorModeNormal;
                             i += 2;
                         } else if (token.u.csi.count - i >= 5 && token.u.csi.p[i + 1] == 2) {
+                            // CSI 38;2;R;G;B m
                             // 24-bit color support
                             fgColorCode_ = token.u.csi.p[i + 2];
                             fgGreen_ = token.u.csi.p[i + 3];
@@ -3692,14 +3747,32 @@ static VT100TCC decode_string(unsigned char *datap,
                         }
                         break;
                     case VT100CHARATTR_BG_256:
-                        if (token.u.csi.count - i >= 3 && token.u.csi.p[i + 1] == 5) {
+                        if (token.u.csi.subCount[i] > 0) {
+                            // Preferred syntax using colons to delimit subparameters
+                            if (token.u.csi.subCount[i] >= 2 && token.u.csi.sub[i][0] == 5) {
+                                // CSI 48:5:P m
+                                bgColorCode_ = token.u.csi.sub[i][1];
+                                bgGreen_ = 0;
+                                bgBlue_ = 0;
+                                bgColorMode_ = ColorModeNormal;
+                            } else if (token.u.csi.subCount[i] >= 4 && token.u.csi.sub[i][0] == 2) {
+                                // CSI 48:2:R:G:B m
+                                // 24-bit color
+                                bgColorCode_ = token.u.csi.sub[i][1];
+                                bgGreen_ = token.u.csi.sub[i][2];
+                                bgBlue_ = token.u.csi.sub[i][3];
+                                bgColorMode_ = ColorMode24bit;
+                            }
+                        } else if (token.u.csi.count - i >= 3 && token.u.csi.p[i + 1] == 5) {
+                            // CSI 48;5;P m
                             bgColorCode_ = token.u.csi.p[i + 2];
                             bgGreen_ = 0;
                             bgBlue_ = 0;
                             bgColorMode_ = ColorModeNormal;
                             i += 2;
                         } else if (token.u.csi.count - i >= 5 && token.u.csi.p[i + 1] == 2) {
-                            // 24-bit color support
+                            // CSI 48;2;R;G;B m
+                            // 24-bit color
                             bgColorCode_ = token.u.csi.p[i + 2];
                             bgGreen_ = token.u.csi.p[i + 3];
                             bgBlue_ = token.u.csi.p[i + 4];
