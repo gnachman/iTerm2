@@ -304,7 +304,7 @@ NSString *sessionsKey = @"sessions";
 
         case WINDOW_TYPE_FORCE_FULL_SCREEN:
             oldFrame_ = [[self window] frame];
-            initialFrame = [screen frame];
+            initialFrame = [self traditionalFullScreenFrameForScreen:screen];
             break;
 
         default:
@@ -1899,7 +1899,11 @@ NSString *sessionsKey = @"sessions";
             PtyLog(@"Window type = FULL SCREEN");
             if ([screen frame].size.width > 0) {
                 PtyLog(@"set window to screen's frame");
-                [[self window] setFrame:[screen frame] display:YES];
+                if (windowType_ == WINDOW_TYPE_FULL_SCREEN) {
+                    [[self window] setFrame:[self traditionalFullScreenFrameForScreen:screen] display:YES];
+                } else {
+                    [[self window] setFrame:[screen frame] display:YES];
+                }
             }
             break;
 
@@ -2237,6 +2241,31 @@ NSString *sessionsKey = @"sessions";
         ![self anyFullScreen]) {
         [self toggleFullScreenMode:nil];
     }
+}
+
+- (NSRect)traditionalFullScreenFrame {
+    return [self traditionalFullScreenFrameForScreen:self.window.screen];
+}
+
+- (NSRect)traditionalFullScreenFrameForScreen:(NSScreen *)screen {
+    NSRect screenFrame = [screen frame];
+    NSRect screenVisibleFrame = [screen visibleFrame];
+    NSRect frameMinusMenuBar = screenFrame;
+    frameMinusMenuBar.size.height -= [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
+    BOOL menuBarIsVisible = NO;
+    
+    if (![[PreferencePanel sharedInstance] hideMenuBarInFullscreen]) {
+        // Menu bar can show in fullscreen...
+        if (IsMavericksOrLater()) {
+            // There is a menu bar on all screens.
+            menuBarIsVisible = YES;
+        } else if ([[NSScreen screens] objectAtIndex:0] == screen) {
+            // There is a menu bar on the first screen and this window is on the first screen.
+            menuBarIsVisible = YES;
+        }
+    }
+    
+    return menuBarIsVisible ? frameMinusMenuBar : screenFrame;
 }
 
 // Like toggleTraditionalFullScreenMode but does nothing if it's already
@@ -4423,6 +4452,21 @@ NSString *sessionsKey = @"sessions";
 - (void)_refreshTerminal:(NSNotification *)aNotification
 {
     PtyLog(@"_refreshTerminal - calling fitWindowToTabs");
+    
+    // If hiding of menu bar changed.
+    if ([self fullScreen] && ![self lionFullScreen]) {
+        if ([[self window] isKeyWindow]) {
+            // In practice, this never happens because the prefs panel is
+            // always key when this notification is posted.
+            if ([[PreferencePanel sharedInstance] hideMenuBarInFullscreen]) {
+                [self showMenuBarHideDock];
+            } else {
+                [self hideMenuBar];
+            }
+        }
+        [self.window setFrame:[self traditionalFullScreenFrame] display:YES];
+    }
+
     [self fitWindowToTabs];
 
     // If tab style or position changed.
@@ -4488,10 +4532,20 @@ NSString *sessionsKey = @"sessions";
     }
 
     if (currentScreen == menubarScreen || IsMavericksOrLater()) {
-        int flags = NSApplicationPresentationAutoHideDock | NSApplicationPresentationAutoHideMenuBar;
+        int flags = NSApplicationPresentationAutoHideDock;
+        if ([[PreferencePanel sharedInstance] hideMenuBarInFullscreen]) {
+            flags |= NSApplicationPresentationAutoHideMenuBar;
+        }
         iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
         [itad setFutureApplicationPresentationOptions:flags unset:0];
     }
+}
+
+- (void)showMenuBarHideDock
+{
+    iTermApplicationDelegate *itad = [[iTermApplication sharedApplication] delegate];
+    [itad setFutureApplicationPresentationOptions:NSApplicationPresentationAutoHideDock
+                                            unset:NSApplicationPresentationAutoHideMenuBar];
 }
 
 - (void)showMenuBar
