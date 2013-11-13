@@ -1561,6 +1561,8 @@ static const double kInterBellQuietPeriod = 0.1;
         [delegate_ screenResizeToWidth:width
                                 height:currentGrid_.size.height];
         [self terminalEraseInDisplayBeforeCursor:YES afterCursor:YES];  // erase the screen
+        currentGrid_.cursorX = 0;
+        currentGrid_.cursorY = 0;
     }
 }
 
