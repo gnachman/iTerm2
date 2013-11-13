@@ -1218,6 +1218,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultUseCompactLabel = [prefs objectForKey:@"UseCompactLabel"]?[[prefs objectForKey:@"UseCompactLabel"] boolValue]: YES;
     defaultHideActivityIndicator = [prefs objectForKey:@"HideActivityIndicator"]?[[prefs objectForKey:@"HideActivityIndicator"] boolValue]: NO;
     defaultHighlightTabLabels = [prefs objectForKey:@"HighlightTabLabels"]?[[prefs objectForKey:@"HighlightTabLabels"] boolValue]: YES;
+    defaultHideMenuBarInFullscreen = [prefs objectForKey:@"HideMenuBarInFullscreen"]?[[prefs objectForKey:@"HideMenuBarInFullscreen"] boolValue] : YES;
     defaultAdvancedFontRendering = [prefs objectForKey:@"HiddenAdvancedFontRendering"]?[[prefs objectForKey:@"HiddenAdvancedFontRendering"] boolValue] : NO;
     defaultStrokeThickness = [prefs objectForKey:@"HiddenAFRStrokeThickness"] ? [[prefs objectForKey:@"HiddenAFRStrokeThickness"] floatValue] : 0;
     [defaultWordChars release];
@@ -1348,6 +1349,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setBool:defaultUseCompactLabel forKey:@"UseCompactLabel"];
     [prefs setBool:defaultHideActivityIndicator forKey:@"HideActivityIndicator"];
     [prefs setBool:defaultHighlightTabLabels forKey:@"HighlightTabLabels"];
+    [prefs setBool:defaultHideMenuBarInFullscreen forKey:@"HideMenuBarInFullscreen"];
     [prefs setBool:defaultAdvancedFontRendering forKey:@"HiddenAdvancedFontRendering"];
     [prefs setFloat:defaultStrokeThickness forKey:@"HiddenAFRStrokeThickness"];
     [prefs setObject:defaultWordChars forKey: @"WordCharacters"];
@@ -1441,6 +1443,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [useCompactLabel setState: defaultUseCompactLabel?NSOnState:NSOffState];
     [hideActivityIndicator setState:defaultHideActivityIndicator?NSOnState:NSOffState];
     [highlightTabLabels setState: defaultHighlightTabLabels?NSOnState:NSOffState];
+    [hideMenuBarInFullscreen setState:defaultHideMenuBarInFullscreen ? NSOnState:NSOffState];
     [advancedFontRendering setState: defaultAdvancedFontRendering?NSOnState:NSOffState];
     [strokeThickness setEnabled:defaultAdvancedFontRendering];
     [strokeThicknessLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
@@ -1659,6 +1662,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         sender == useCompactLabel ||
         sender == hideActivityIndicator ||
         sender == highlightTabLabels ||
+        sender == hideMenuBarInFullscreen ||
         sender == hideScrollbar ||
         sender == showPaneTitles ||
         sender == disableFullscreenTransparency ||
@@ -1680,6 +1684,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         defaultUseCompactLabel = ([useCompactLabel state] == NSOnState);
         defaultHideActivityIndicator = ([hideActivityIndicator state] == NSOnState);
         defaultHighlightTabLabels = ([highlightTabLabels state] == NSOnState);
+        defaultHideMenuBarInFullscreen = ([hideMenuBarInFullscreen state] == NSOnState);
         defaultShowPaneTitles = ([showPaneTitles state] == NSOnState);
         defaultAdvancedFontRendering = ([advancedFontRendering state] == NSOnState);
         [strokeThickness setEnabled:defaultAdvancedFontRendering];
@@ -2024,6 +2029,11 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 - (BOOL)highlightTabLabels
 {
     return defaultHighlightTabLabels;
+}
+
+- (BOOL)hideMenuBarInFullscreen
+{
+    return defaultHideMenuBarInFullscreen;
 }
 
 - (BOOL)openBookmark
