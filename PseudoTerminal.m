@@ -2501,6 +2501,8 @@ NSString *sessionsKey = @"sessions";
     }
     PtyLog(@"toggleFullScreenMode returning");
     togglingFullScreen_ = false;
+
+    [newTerminal.window performSelector:@selector(makeKeyAndOrderFront:) withObject:nil afterDelay:0];
     [self release];
 }
 
