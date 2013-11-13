@@ -4163,7 +4163,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         data = [aString dataUsingEncoding:[TERMINAL encoding]];
     }
 
-    if (data != nil && [SHELL pid] > 0) {
+    if (tmuxMode_ == TMUX_CLIENT) {
+        [self writeTask:data];
+    } else if (data != nil && [SHELL pid] > 0) {
         int i = 0;
         // wait here until we have had some output
         while ([SHELL hasOutput] == NO && i < 1000000) {

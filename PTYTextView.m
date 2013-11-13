@@ -162,6 +162,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return c;
 }
 
+- (NSString *)description {
+  return [NSString stringWithFormat:@"<%p: %@ %d,%d>", self, [self class], x, y];
+}
+
 @end
 
 @interface SmartMatch : NSObject
@@ -2157,9 +2161,22 @@ NSMutableArray* screens=0;
     xMin = 0;
     xMax = width;
 
+    // Any text preceding a hard line break on a line before |y| should not be considered.
     int j = 0;
+    int firstLine = y - numLines;
+    for (int i = y - numLines; i < y; i++) {
+        if (i < 0 || i >= [dataSource numberOfLines]) {
+            continue;
+        }
+        screen_char_t* theLine = [dataSource getLineAtIndex:i];
+        if (i < y && theLine[width].code == EOL_HARD) {
+            if (rejectAtHardEol || theLine[width - 1].code == 0) {
+                firstLine = i + 1;
+            }
+        }
+    }
 
-    for (int i = y - numLines; i <= y + numLines; i++) {
+    for (int i = firstLine; i <= y + numLines; i++) {
         if (i < 0 || i >= [dataSource numberOfLines]) {
             continue;
         }
@@ -2177,8 +2194,8 @@ NSMutableArray* screens=0;
                                                    &backingStore,
                                                    &deltas);
         int o = 0;
-        for (int k = 0; k < [string length]; k++, o++) {
-            o += deltas[k];
+        for (int k = 0; k < [string length]; k++) {
+            o = k + deltas[k];
             if (*targetOffset == -1 && i == y && o >= x) {
                 *targetOffset = k + [joinedLines length];
             }
@@ -2190,6 +2207,7 @@ NSMutableArray* screens=0;
         free(backingStore);
 
         j++;
+        o++;
         if (i >= y && theLine[width].code == EOL_HARD) {
             if (rejectAtHardEol || theLine[width - 1].code == 0) {
                 [coords addObject:[Coord coordWithX:o
