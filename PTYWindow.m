@@ -82,6 +82,14 @@
     return self;
 }
 
+- (NSString *)description
+{
+    return [NSString stringWithFormat:@"<%@: %p frame=%@>",
+            [self class],
+            self,
+            [NSValue valueWithRect:self.frame]];
+}
+
 - (void)encodeRestorableStateWithCoder:(NSCoder *)coder
 {
     // This gives a warning, but this method won't be called except in 10.7 where this
@@ -316,8 +324,8 @@
 
 end:
     [windows release];
-    PtyLog(@"set frame to %@", [NSValue valueWithPoint:bestFrame.origin]);
-    [super setFrameOrigin:bestFrame.origin];
+    PtyLog(@"set frame origin to %@", [NSValue valueWithPoint:bestFrame.origin]);
+    [self setFrameOrigin:bestFrame.origin];
 }
 
 - (void)setLayoutDone

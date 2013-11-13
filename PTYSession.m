@@ -3509,44 +3509,44 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 {
     NSFont* font;
     NSFont* nafont;
-        float hs, vs;
-        if (dir) {
+    float hs, vs;
+    if (dir) {
         // Grow or srhink
-                font = [self fontWithRelativeSize:dir from:[TEXTVIEW font]];
-                nafont = [self fontWithRelativeSize:dir from:[TEXTVIEW nafont]];
-                hs = [TEXTVIEW horizontalSpacing];
-                vs = [TEXTVIEW verticalSpacing];
-        } else {
+        font = [self fontWithRelativeSize:dir from:[TEXTVIEW font]];
+        nafont = [self fontWithRelativeSize:dir from:[TEXTVIEW nafont]];
+        hs = [TEXTVIEW horizontalSpacing];
+        vs = [TEXTVIEW verticalSpacing];
+    } else {
         // Restore original font size.
-                NSDictionary *abEntry = [self originalAddressBookEntry];
-                NSString* fontDesc = [abEntry objectForKey:KEY_NORMAL_FONT];
-                font = [ITAddressBookMgr fontWithDesc:fontDesc];
-                nafont = [ITAddressBookMgr fontWithDesc:[abEntry objectForKey:KEY_NON_ASCII_FONT]];
-                hs = [[abEntry objectForKey:KEY_HORIZONTAL_SPACING] floatValue];
-                vs = [[abEntry objectForKey:KEY_VERTICAL_SPACING] floatValue];
-        }
+        NSDictionary *abEntry = [self originalAddressBookEntry];
+        NSString* fontDesc = [abEntry objectForKey:KEY_NORMAL_FONT];
+        font = [ITAddressBookMgr fontWithDesc:fontDesc];
+        nafont = [ITAddressBookMgr fontWithDesc:[abEntry objectForKey:KEY_NON_ASCII_FONT]];
+        hs = [[abEntry objectForKey:KEY_HORIZONTAL_SPACING] floatValue];
+        vs = [[abEntry objectForKey:KEY_VERTICAL_SPACING] floatValue];
+    }
     [self setFont:font nafont:nafont horizontalSpacing:hs verticalSpacing:vs];
 
-        if (dir || isDivorced) {
-                // Move this bookmark into the sessions model.
-                NSString* guid = [self divorceAddressBookEntryFromPreferences];
+    if (dir || isDivorced) {
+        // Move this bookmark into the sessions model.
+        NSString* guid = [self divorceAddressBookEntryFromPreferences];
 
-                // Set the font in the bookmark dictionary
-                NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:addressBookEntry];
-                [temp setObject:[ITAddressBookMgr descFromFont:font] forKey:KEY_NORMAL_FONT];
-                [temp setObject:[ITAddressBookMgr descFromFont:nafont] forKey:KEY_NON_ASCII_FONT];
+        // Set the font in the bookmark dictionary
+        NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:addressBookEntry];
+        [temp setObject:[ITAddressBookMgr descFromFont:font] forKey:KEY_NORMAL_FONT];
+        [temp setObject:[ITAddressBookMgr descFromFont:nafont] forKey:KEY_NON_ASCII_FONT];
 
-                // Update this session's copy of the bookmark
-                [self setAddressBookEntry:[NSDictionary dictionaryWithDictionary:temp]];
+        // Update this session's copy of the bookmark
+        [self setAddressBookEntry:[NSDictionary dictionaryWithDictionary:temp]];
 
-                // Update the model's copy of the bookmark.
-                [[ProfileModel sessionsInstance] setBookmark:[self addressBookEntry] withGuid:guid];
+        // Update the model's copy of the bookmark.
+        [[ProfileModel sessionsInstance] setBookmark:[self addressBookEntry] withGuid:guid];
 
-                // Update an existing one-bookmark prefs dialog, if open.
-                if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
-                        [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
-                }
+        // Update an existing one-bookmark prefs dialog, if open.
+        if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
+            [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
         }
+    }
 }
 
 - (void)remarry

@@ -241,6 +241,12 @@ NSString *sessionsKey = @"sessions";
 
     self = [super initWithWindowNibName:@"PseudoTerminal"];
     NSAssert(self, @"initWithWindowNibName returned nil");
+    DLog(@"-[%p initWithSmartLayout:%@ windowType:%d screen:%d isHotkey:%@ ",
+         self,
+         smartLayout ? @"YES" : @"NO",
+         windowType,
+         screenNumber,
+         isHotkey ? @"YES" : @"NO");
 
     // Force the nib to load
     [self window];
@@ -256,8 +262,10 @@ NSString *sessionsKey = @"sessions";
         screenNumber == -1) {
         NSUInteger n = [[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]];
         if (n == NSNotFound) {
+            DLog(@"Convert default screen to screen number: No screen matches the window's screen so using main screen");
             screenNumber = 0;
         } else {
+            DLog(@"Convert default screen to screen number: System chose screen %d", n);
             screenNumber = n;
         }
     }
@@ -285,9 +293,12 @@ NSString *sessionsKey = @"sessions";
     NSScreen* screen;
     if (screenNumber < 0 || screenNumber >= [[NSScreen screens] count])  {
         screen = [[self window] screen];
+        DLog(@"Screen number %d is out of range [0,%d] so using 0",
+             screenNumber, (int)[[NSScreen screens] count]);
         screenNumber_ = 0;
         haveScreenPreference_ = NO;
     } else {
+        DLog(@"Selecting screen number %d", screenNumber);
         screen = [[NSScreen screens] objectAtIndex:screenNumber];
         screenNumber_ = screenNumber;
         haveScreenPreference_ = YES;
@@ -320,6 +331,7 @@ NSString *sessionsKey = @"sessions";
             // be overridden by smart window placement or a saved window location.
             initialFrame = [[self window] frame];
             if (screenNumber_ != 0) {
+                DLog(@"Moving fullscreen window to screen %d", screenNumber_);
                 // Move the frame to the desired screen
                 NSScreen* baseScreen = [[self window] deepestScreen];
                 NSPoint basePoint = [baseScreen visibleFrame].origin;
@@ -368,12 +380,14 @@ NSString *sessionsKey = @"sessions";
             break;
     }
 
+    DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
     myWindow = [[PTYWindow alloc] initWithContentRect:initialFrame
                                             styleMask:styleMask
                                               backing:NSBackingStoreBuffered
                                                 defer:NO];
-    if (windowType == WINDOW_TYPE_TOP || windowType == WINDOW_TYPE_BOTTOM
-        || windowType == WINDOW_TYPE_LEFT) {
+    if (windowType == WINDOW_TYPE_TOP ||
+        windowType == WINDOW_TYPE_BOTTOM ||
+        windowType == WINDOW_TYPE_LEFT) {
         [myWindow setHasShadow:YES];
     }
     [myWindow _setContentHasShadow:NO];
@@ -2155,6 +2169,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowDidMove:(NSNotification *)notification
 {
+    DLog(@"%@: Window %@ moved. Called from %@", self, self.window, [NSThread callStackSymbols]);
     [self saveTmuxWindowOrigins];
 }
 
@@ -2249,11 +2264,10 @@ NSString *sessionsKey = @"sessions";
 
 - (NSRect)traditionalFullScreenFrameForScreen:(NSScreen *)screen {
     NSRect screenFrame = [screen frame];
-    NSRect screenVisibleFrame = [screen visibleFrame];
     NSRect frameMinusMenuBar = screenFrame;
     frameMinusMenuBar.size.height -= [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
     BOOL menuBarIsVisible = NO;
-    
+
     if (![[PreferencePanel sharedInstance] hideMenuBarInFullscreen]) {
         // Menu bar can show in fullscreen...
         if (IsMavericksOrLater()) {
