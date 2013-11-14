@@ -66,6 +66,27 @@
 #define DEBUG_KEYDOWNDUMP     0
 #define ASK_ABOUT_OUTDATED_FORMAT @"AskAboutOutdatedKeyMappingForGuid%@"
 
+@interface NSView (RecursiveDescription)
+- (NSString *)iterm_recursiveDescription;
+@end
+
+@implementation NSView (RecursiveDescription)
+
+- (NSString *)recursiveDescriptionWithPrefix:(NSString *)prefix {
+    NSMutableString *s = [NSMutableString string];
+    [s appendFormat:@"%@%@ frame=%@\n", prefix, self, [NSValue valueWithRect:self.frame]];
+    for (NSView *view in [self subviews]) {
+        [s appendString:[view recursiveDescriptionWithPrefix:[prefix stringByAppendingString:@"|   "]]];
+    }
+    return s;
+}
+
+- (NSString *)iterm_recursiveDescription {
+    return [self recursiveDescriptionWithPrefix:@""];
+}
+
+@end
+
 @implementation PTYSession
 
 static NSString *TERM_ENVNAME = @"TERM";
@@ -199,6 +220,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 #if DEBUG_ALLOC
     NSLog(@"%s: 0x%x, done", __PRETTY_FUNCTION__, self);
 #endif
+}
+
+- (NSString *)description
+{
+    return [NSString stringWithFormat:@"<%@: %p %dx%d>", [self class], self, [SCREEN width], [SCREEN height]];
 }
 
 - (void)cancelTimers
@@ -536,6 +562,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)setWidth:(int)width height:(int)height
 {
+    DLog(@"Set session %@ to %dx%d", self, width, height);
     [SCREEN resizeWidth:width height:height];
     [SHELL setWidth:width height:height];
     [TEXTVIEW clearHighlights];
@@ -3428,13 +3455,19 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     horizontalSpacing:(float)horizontalSpacing
     verticalSpacing:(float)verticalSpacing
 {
+    DLog(@"setFont:%@ nafont:%@", font, nafont);
+    NSWindow *window = [[[self tab] realParentWindow] window];
+    DLog(@"Before:\n%@", [window.contentView iterm_recursiveDescription]);
+    DLog(@"Window frame: %@", window);
     if ([[TEXTVIEW font] isEqualTo:font] &&
         [[TEXTVIEW nafont] isEqualTo:nafont] &&
         [TEXTVIEW horizontalSpacing] == horizontalSpacing &&
         [TEXTVIEW verticalSpacing] == verticalSpacing) {
         return;
     }
+    DLog(@"Line height was %f", (float)[TEXTVIEW lineHeight]);
     [TEXTVIEW setFont:font nafont:nafont horizontalSpacing:horizontalSpacing verticalSpacing:verticalSpacing];
+    DLog(@"Line height is now %f", (float)[TEXTVIEW lineHeight]);
     if (![[[self tab] parentWindow] anyFullScreen]) {
         if ([[PreferencePanel sharedInstance] adjustWindowForFontSizeChange]) {
             [[[self tab] parentWindow] fitWindowToTab:[self tab]];
@@ -3447,6 +3480,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     } else {
         [[self tab] fitSessionToCurrentViewSize:self];
     }
+    DLog(@"After:\n%@", [window.contentView iterm_recursiveDescription]);
+    DLog(@"Window frame: %@", window);
 }
 
 - (void)synchronizeTmuxFonts:(NSNotification *)notification
@@ -3507,11 +3542,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)changeFontSizeDirection:(int)dir
 {
+    DLog(@"changeFontSizeDirection:%d", dir);
     NSFont* font;
     NSFont* nafont;
     float hs, vs;
     if (dir) {
-        // Grow or srhink
+        // Grow or shrink
+        DLog(@"grow/shrink");
         font = [self fontWithRelativeSize:dir from:[TEXTVIEW font]];
         nafont = [self fontWithRelativeSize:dir from:[TEXTVIEW nafont]];
         hs = [TEXTVIEW horizontalSpacing];
