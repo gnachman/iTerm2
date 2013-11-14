@@ -393,6 +393,10 @@ static NSDictionary* globalKeyMap;
             actionString = [NSString stringWithFormat:@"Run Coprocess \"%@\"",
 						    auxText];
             break;
+        case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
+            actionString = [NSString stringWithFormat:@"Toggle xTerm mouse reporting \"%@\"",
+						    auxText];
+            break;
         case KEY_ACTION_SELECT_MENU_ITEM:
             actionString = [NSString stringWithFormat:@"%@ \"%@\"",
                             NSLocalizedStringFromTableInBundle(@"Select Menu Item",
