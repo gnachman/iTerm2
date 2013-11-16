@@ -27,7 +27,6 @@ extern NSString * const kTriggerParameterKey;
 - (NSString *)action;
 // Subclasses should implement:
 - (NSString *)title;
-- (BOOL)takesParameter;
 - (NSString *)paramPlaceholder;
 // Returns true if this kind of action takes a parameter.
 - (BOOL)takesParameter;

@@ -25,23 +25,19 @@ install: | Deployment backup-old-iterm
 
 Development:
 	echo "Using PATH for build: $(PATH)"
-	xcodebuild -parallelizeTargets -alltargets -configuration Development && \
+	xcodebuild -parallelizeTargets -target iTerm -configuration Development && \
 	chmod -R go+rX build/Development
 
 Dep:
-	xcodebuild -parallelizeTargets -alltargets -configuration Deployment
-
-LeopardPPC:
-	xcodebuild -parallelizeTargets -alltargets -configuration "Leopard Deployment" && \
-	chmod -R go+rX build/"Leopard Deployment"
+	xcodebuild -parallelizeTargets -target iTerm -configuration Deployment
 
 Deployment:
-	xcodebuild -parallelizeTargets -alltargets -configuration Deployment && \
+	xcodebuild -parallelizeTargets -target iTerm -configuration Deployment && \
 	chmod -R go+rX build/Deployment
 
 Nightly: force
 	cp nightly-iTerm.plist iTerm.plist
-	xcodebuild -parallelizeTargets -alltargets -configuration Nightly && \
+	xcodebuild -parallelizeTargets -target iTerm -configuration Nightly && \
 	git checkout -- iTerm.plist
 	chmod -R go+rX build/Nightly
 
@@ -82,8 +78,6 @@ release:
 	security unlock-keychain ~/Library/Keychains/login.keychain
 	cp release-iTerm.plist iTerm.plist
 	make Deployment
-	cp legacy-iTerm.plist iTerm.plist
-	make LeopardPPC
 	./release.sh RanFromMakefile
 
 force:

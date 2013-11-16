@@ -25,7 +25,7 @@ function SparkleSign {
 
 
 set -x
-cd ~/nightly/iTerm2/
+cd ~/server/nightly/iTerm2/
 # todo: git pull origin master
 make Nightly || die "Nightly build failed"
 ./sign.sh
@@ -40,7 +40,7 @@ zip -ry iTerm2-${NAME}.zip iTerm.app
 
 SparkleSign nightly.xml nightly_template.xml
 
-scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@themcnachmans.com:iterm2.com/nightly/iTerm2-${NAME}.zip
-ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no gnachman@themcnachmans.com "./newnightly.sh iTerm2-${NAME}.zip"
+scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@iterm2.com:iterm2.com/nightly/iTerm2-${NAME}.zip
+ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no gnachman@iterm2.com "./newnightly.sh iTerm2-${NAME}.zip"
 
-scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SVNDIR/appcasts/nightly_changes.txt $SVNDIR/appcasts/nightly.xml gnachman@themcnachmans.com:iterm2.com/appcasts/
+scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SVNDIR/appcasts/nightly_changes.txt $SVNDIR/appcasts/nightly.xml gnachman@iterm2.com:iterm2.com/appcasts/
