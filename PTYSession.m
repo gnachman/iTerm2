@@ -4646,7 +4646,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (BOOL)screenShouldSendReport {
-    return SHELL != nil;
+    return (SHELL != nil) && (![self isTmuxClient]);
 }
 
 @end
