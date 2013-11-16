@@ -170,6 +170,7 @@ NSString *sessionsKey = @"sessions";
 @class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
 
 @interface PseudoTerminal ()
+- (NSRect)traditionalFullScreenFrameForScreen:(NSScreen *)screen;
 - (void)_updateToolbeltParentage;
 - (CGFloat)fullscreenToolbeltWidth;
 - (BOOL)_haveLeftBorder;
