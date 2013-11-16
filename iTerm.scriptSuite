@@ -104,6 +104,8 @@
 				<string>handleTerminateScriptCommand:</string>
 				<key>write</key>
 				<string>handleWriteScriptCommand:</string>
+				<key>clear</key>
+				<string>handleClearScriptCommand:</string>
 			</dict>
 			<key>ToOneRelationships</key>
 			<dict>
@@ -293,6 +295,15 @@
 			<string>ITRM</string>
 			<key>AppleEventCode</key>
 			<string>Strm</string>
+			<key>CommandClass</key>
+			<string>NSScriptCommand</string>
+		</dict>
+		<key>clear</key>
+		<dict>
+			<key>AppleEventClassCode</key>
+			<string>ITRM</string>
+			<key>AppleEventCode</key>
+			<string>Sclr</string>
 			<key>CommandClass</key>
 			<string>NSScriptCommand</string>
 		</dict>
