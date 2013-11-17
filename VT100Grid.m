@@ -204,7 +204,8 @@
         [lineBuffer appendLine:line
                         length:currentLineLength
                        partial:(continuation != EOL_HARD)
-                         width:size_.width];
+                         width:size_.width
+                     timestamp:[[self lineInfoAtLineNumber:i] timestamp]];
 #ifdef DEBUG_RESIZEDWIDTH
         NSLog(@"Appended a line. now have %d lines for width %d\n",
               [lineBuffer numLinesWithWidth:size_.width], size_.width);
@@ -1184,7 +1185,9 @@
             }
         }
         int cont;
-        [lineBuffer popAndCopyLastLineInto:dest width:size_.width includesEndOfLine:&cont];
+        NSTimeInterval timestamp;
+        assert([lineBuffer popAndCopyLastLineInto:dest width:size_.width includesEndOfLine:&cont timestamp:&timestamp]);
+        [[self lineInfoAtLineNumber:destLineNumber] setTimestamp:timestamp];
         if (cont && dest[size_.width - 1].code == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the
             // line below it starts with a DWC, it's safe to conclude that a DWC
@@ -1289,6 +1292,34 @@
             if (line[x].complexChar) c = 'U';
             [dump appendFormat:@"%c", c];
         }
+        if (y != size_.height - 1) {
+            [dump appendString:@"\n"];
+        }
+    }
+    return dump;
+}
+
+- (NSString *)compactLineDumpWithTimestamps {
+    NSMutableString *dump = [NSMutableString string];
+    NSDateFormatter *fmt = [[[NSDateFormatter alloc] init] autorelease];
+    [fmt setTimeStyle:kCFDateFormatterLongStyle];
+
+    for (int y = 0; y < size_.height; y++) {
+        screen_char_t *line = [self screenCharsAtLineNumber:y];
+        for (int x = 0; x < size_.width; x++) {
+            char c = line[x].code;
+            if (line[x].code == 0) c = '.';
+            if (line[x].code > 127) c = '?';
+            if (line[x].code == DWC_RIGHT) c = '-';
+            if (line[x].code == DWC_SKIP) {
+                assert(x == size_.width - 1);
+                c = '>';
+            }
+            if (line[x].complexChar) c = 'U';
+            [dump appendFormat:@"%c", c];
+        }
+        NSDate* date = [NSDate dateWithTimeIntervalSinceReferenceDate:[[self lineInfoAtLineNumber:y] timestamp]];
+        [dump appendFormat:@"  | %@", [fmt stringFromDate:date]];
         if (y != size_.height - 1) {
             [dump appendString:@"\n"];
         }
@@ -1509,7 +1540,8 @@
     [lineBuffer appendLine:line
                     length:len
                    partial:(continuationMark != EOL_HARD)
-                     width:size_.width];
+                     width:size_.width
+                 timestamp:[[self lineInfoAtLineNumber:0] timestamp]];
     int dropped;
     if (!unlimitedScrollback) {
         dropped = [lineBuffer dropExcessLinesWithWidth:size_.width];

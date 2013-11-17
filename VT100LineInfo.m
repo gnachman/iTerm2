@@ -15,6 +15,8 @@
     NSTimeInterval timestamp_;
 }
 
+@synthesize timestamp = timestamp_;
+
 - (id)initWithWidth:(int)width {
     self = [super init];
     if (self) {
@@ -39,7 +41,7 @@
 #endif
     if (dirty) {
         anyCharPossiblyDirty_ = YES;
-        timestamp_ = [NSDate timeIntervalSinceReferenceDate];
+        [self updateTimestamp];
     } else if (range.location == 0 && range.length == width_) {
         anyCharPossiblyDirty_ = NO;
     }
@@ -70,10 +72,6 @@
         anyCharPossiblyDirty_ = NO;
     }
     return range;
-}
-
-- (NSTimeInterval)timestamp {
-    return timestamp_;
 }
 
 - (void)updateTimestamp {

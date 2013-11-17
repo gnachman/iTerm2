@@ -665,13 +665,15 @@ static const double kInterBellQuietPeriod = 0.1;
     // line (excluding empty ones at the end) to the real line buffer.
     [self clearBuffer];
     LineBuffer *temp = [[[LineBuffer alloc] init] autorelease];
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     for (NSData *chars in history) {
         screen_char_t *line = (screen_char_t *) [chars bytes];
         const int len = [chars length] / sizeof(screen_char_t);
         [temp appendLine:line
                   length:len
                  partial:NO
-                   width:currentGrid_.size.width];
+                   width:currentGrid_.size.width
+               timestamp:now];
     }
     NSMutableArray *wrappedLines = [NSMutableArray array];
     int n = [temp numLinesWithWidth:currentGrid_.size.width];
@@ -695,7 +697,8 @@ static const double kInterBellQuietPeriod = 0.1;
         [linebuffer_ appendLine:line.line
                          length:line.length
                         partial:(line.eol != EOL_HARD)
-                          width:currentGrid_.size.width];
+                          width:currentGrid_.size.width
+                      timestamp:now];
     }
     if (!unlimitedScrollback_) {
         [linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width];
@@ -2511,7 +2514,8 @@ static void SwapInt(int *a, int *b) {
         int cont;
         BOOL isOk = [linebuffer_ popAndCopyLastLineInto:dummy
                                                   width:currentGrid_.size.width
-                                      includesEndOfLine:&cont];
+                                      includesEndOfLine:&cont
+                                              timestamp:NULL];
         NSAssert(isOk, @"Pop shouldn't fail");
     }
     free(dummy);

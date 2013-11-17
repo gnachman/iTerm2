@@ -52,6 +52,7 @@
         cll_capacity = 1 + size/80;
         cll_entries = 0;
         cumulative_line_lengths = (int*) malloc(sizeof(int) * cll_capacity);
+        timestamps_ = (NSTimeInterval *)malloc(sizeof(NSTimeInterval) * cll_capacity);
         is_partial = NO;
         cached_numlines_width = -1;
     }
@@ -65,6 +66,9 @@
     }
     if (cumulative_line_lengths) {
         free(cumulative_line_lengths);
+    }
+    if (timestamps_) {
+        free(timestamps_);
     }
     [super dealloc];
 }
@@ -81,6 +85,8 @@
     size_t cll_size = sizeof(int) * cll_capacity;
     theCopy->cumulative_line_lengths = (int*) malloc(cll_size);
     memmove(theCopy->cumulative_line_lengths, cumulative_line_lengths, cll_size);
+    theCopy->timestamps_ = (NSTimeInterval *) malloc(sizeof(NSTimeInterval) * cll_capacity);
+    memmove(theCopy->timestamps_, timestamps_, sizeof(NSTimeInterval) * cll_capacity);
     theCopy->cll_capacity = cll_capacity;
     theCopy->cll_entries = cll_entries;
     theCopy->is_partial = is_partial;
@@ -99,14 +105,16 @@
     }
 }
 
-- (void) _appendCumulativeLineLength: (int) cumulativeLength
+- (void)_appendCumulativeLineLength:(int)cumulativeLength timestamp:(NSTimeInterval)timestamp
 {
     if (cll_entries == cll_capacity) {
         cll_capacity *= 2;
         cll_capacity = MAX(1, cll_capacity);
         cumulative_line_lengths = (int*) realloc((void*) cumulative_line_lengths, cll_capacity * sizeof(int));
+        timestamps_ = (NSTimeInterval *)realloc((void *)timestamps_, cll_capacity * sizeof(NSTimeInterval));
     }
     cumulative_line_lengths[cll_entries] = cumulativeLength;
+    timestamps_[cll_entries] = timestamp;
     ++cll_entries;
 }
 
@@ -196,7 +204,7 @@ static int NumberOfFullLines(screen_char_t* buffer, int length, int width)
 }
 #endif
 
-- (BOOL) appendLine: (screen_char_t*) buffer length: (int) length partial:(BOOL) partial width: (int) width
+- (BOOL)appendLine:(screen_char_t*)buffer length:(int)length partial:(BOOL)partial width:(int)width timestamp:(NSTimeInterval)timestamp
 {
     const int space_used = [self rawSpaceUsed];
     const int free_space = buffer_size - space_used - start_offset;
@@ -230,12 +238,14 @@ static int NumberOfFullLines(screen_char_t* buffer, int length, int width)
         }
 
         cumulative_line_lengths[cll_entries - 1] += length;
+        timestamps_[cll_entries - 1] = timestamp;
 #ifdef TEST_LINEBUFFER_SANITY
         [self checkAndResetCachedNumlines:@"appendLine partial case" width: width];
 #endif
     } else {
         // add a new line
-        [self _appendCumulativeLineLength: (space_used + length)];
+        [self _appendCumulativeLineLength:(space_used + length)
+                                timestamp:timestamp];
         if (width != cached_numlines_width) {
             cached_numlines_width = -1;
         } else {
@@ -379,7 +389,7 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
     return cached_numlines_width == width;
 }
 
-- (BOOL) popLastLineInto: (screen_char_t**) ptr withLength: (int*) length upToWidth: (int) width
+- (BOOL)popLastLineInto:(screen_char_t**)ptr withLength:(int*)length upToWidth:(int)width timestamp:(NSTimeInterval *)timestampPtr
 {
     if (cll_entries == first_entry) {
         // There is no last line to pop.
@@ -390,6 +400,9 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
         start = 0;
     } else {
         start = cumulative_line_lengths[cll_entries - 2] - start_offset;
+    }
+    if (timestampPtr) {
+        *timestampPtr = timestamps_[cll_entries - 1];
     }
     const int end = cumulative_line_lengths[cll_entries - 1] - start_offset;
     const int available_len = end - start;
@@ -1183,7 +1196,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return [self initWithBlockSize:BLOCK_SIZE];
 }
 
-- (void) appendLine: (screen_char_t*) buffer length: (int) length partial: (BOOL) partial width:(int) width
+- (void)appendLine:(screen_char_t*)buffer length:(int)length partial:(BOOL)partial width:(int)width timestamp:(NSTimeInterval)timestamp
 {
 #ifdef LOG_MUTATIONS
     {
@@ -1203,20 +1216,22 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     LineBlock* block = [blocks objectAtIndex: ([blocks count] - 1)];
 
     int beforeLines = [block getNumLinesWithWrapWidth:width];
-    if (![block appendLine: buffer length: length partial: partial width: width]) {
+    if (![block appendLine:buffer length:length partial:partial width:width timestamp:timestamp]) {
         // It's going to be complicated. Invalidate the number of wrapped lines
         // cache.
         num_wrapped_lines_width = -1;
         int prefix_len = 0;
+        NSTimeInterval prefixTimestamp = 0;
         screen_char_t* prefix = NULL;
         if ([block hasPartial]) {
             // There is a line that's too long for the current block to hold.
             // Remove its prefix fromt he current block and later add the
             // concatenation of prefix + buffer to a larger block.
             screen_char_t* temp;
-            BOOL ok = [block popLastLineInto: &temp
-                                  withLength: &prefix_len
-                                   upToWidth: [block rawBufferSize]+1];
+            BOOL ok = [block popLastLineInto:&temp
+                                  withLength:&prefix_len
+                                   upToWidth:[block rawBufferSize]+1
+                                   timestamp:&prefixTimestamp];
             assert(ok);
             prefix = (screen_char_t*) malloc(MAX(1, prefix_len) * sizeof(screen_char_t));
             memcpy(prefix, temp, prefix_len * sizeof(screen_char_t));
@@ -1248,13 +1263,13 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         // Append the prefix if there is one (the prefix was a partial line that we're
         // moving out of the last block into the new block)
         if (prefix) {
-            BOOL ok = [block appendLine: prefix length: prefix_len partial: YES width: width];
+            BOOL ok = [block appendLine:prefix length:prefix_len partial:YES width:width timestamp:prefixTimestamp];
             NSAssert(ok, @"append can't fail here");
             free(prefix);
         }
         // Finally, append this line to the new block. We know it'll fit because we made
         // enough room for it.
-        BOOL ok = [block appendLine: buffer length: length partial: partial width: width];
+        BOOL ok = [block appendLine:buffer length:length partial:partial width:width timestamp:timestamp];
         NSAssert(ok, @"append can't fail here");
     } else if (num_wrapped_lines_width == width) {
         // Straightforward addition of a line to an existing block. Update the
@@ -1343,7 +1358,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return RawNumLines(self, width);
 }
 
-- (BOOL) popAndCopyLastLineInto: (screen_char_t*) ptr width: (int) width includesEndOfLine: (int*) includesEndOfLine;
+- (BOOL)popAndCopyLastLineInto:(screen_char_t*)ptr width:(int)width includesEndOfLine:(int*)includesEndOfLine timestamp:(NSTimeInterval *)timestampPtr
 {
     if ([self numLinesWithWidth: width] == 0) {
         return NO;
@@ -1359,7 +1374,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     // Pop the last up-to-width chars off the last line.
     int length;
     screen_char_t* temp;
-    BOOL ok = [block popLastLineInto: &temp withLength: &length upToWidth: width];
+    BOOL ok = [block popLastLineInto:&temp withLength:&length upToWidth:width timestamp:timestampPtr];
     NSAssert(ok, @"Unexpected empty block");
     NSAssert(length <= width, @"Length too large");
     NSAssert(length >= 0, @"Negative length");

@@ -1384,7 +1384,8 @@ do { \
         [lineBuffer appendLine:[self screenCharLineForString:string]
                         length:string.length
                        partial:i == strings.count - 1
-                         width:80];
+                         width:80
+                     timestamp:0];
         i++;
     }
     va_end(args);

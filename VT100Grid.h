@@ -211,6 +211,7 @@
 - (void)moveCursorToLeftMargin;
 
 - (NSString *)compactLineDump;
+- (NSString *)compactLineDumpWithTimestamps;
 - (NSString *)compactLineDumpWithContinuationMarks;
 - (NSString *)compactDirtyDump;
 
