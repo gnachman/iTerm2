@@ -8708,6 +8708,35 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setDimOnlyText:[[PreferencePanel sharedInstance] dimOnlyText]];
 }
 
+- (NSRect)gridRect {
+    NSRect visibleRect = [self visibleRect];
+    int lineStart = [dataSource numberOfLines] - [dataSource height];
+    int lineEnd = [dataSource numberOfLines];
+    return NSMakeRect(visibleRect.origin.x,
+                      lineStart * lineHeight,
+                      visibleRect.origin.x + visibleRect.size.width,
+                      (lineEnd - lineStart + 1) * lineHeight);
+}
+
+- (void)setNeedsDisplayOnLine:(int)y inRange:(VT100GridRange)range
+{
+    NSRect dirtyRect;
+    const int x = range.location;
+    const int maxX = range.location + range.length - 1;
+    
+    dirtyRect.origin.x = MARGIN + x * charWidth;
+    dirtyRect.origin.y = y * lineHeight;
+    dirtyRect.size.width = (maxX - x + 1) * charWidth;
+    dirtyRect.size.height = lineHeight;
+    
+    // Add a character on either side for glyphs that render unexpectedly wide.
+    dirtyRect.origin.x -= charWidth;
+    dirtyRect.size.width += 2 * charWidth;
+    DLog(@"Line %d is dirty from %d to %d, set rect %@ dirty",
+         y, x, maxX, [NSValue valueWithRect:dirtyRect]);
+    [self setNeedsDisplayInRect:dirtyRect];
+}
+
 // WARNING: Do not call this function directly. Call
 // -[refresh] instead, as it ensures scrollback overflow
 // is dealt with so that this function can dereference
@@ -8778,61 +8807,29 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         prevCursorY = currentCursorY;
     }
 
-    // TODO: This is awful. Endow VT100Screen with the ability to return an array of dirty rects and
-    // don't expose allDirty, which is a dumb hack.
-    for (int y = lineStart; y < lineEnd; y++) {
-        for (int x = 0; x < WIDTH; x++) {
-            int dirtyFlags = allDirty || [dataSource isDirtyAtX:x Y:y-lineStart];
-            if (dirtyFlags) {
-                foundDirty = YES;
-                // Remove highlighted search matches on this line.
-                [resultMap_ removeObjectForKey:[NSNumber numberWithLongLong:y + totalScrollbackOverflow]];
-
-                // Compute the dirty rect for this line.
-                NSRect visibleRect = [self visibleRect];
-                NSRect dirtyRect = visibleRect;
-                dirtyRect.origin.y = y * lineHeight;
-                dirtyRect.size.height = lineHeight;
-                if (!allDirty) {
-                    dirtyRect.origin.x = MARGIN + x * charWidth;
-                    int maxX;
-                    for (maxX = WIDTH - 1; maxX > x; maxX--) {
-                        if ([dataSource isDirtyAtX:maxX Y:y-lineStart]) {
-                            break;
-                        }
-                    }
-                    dirtyRect.size.width = (maxX - x + 1) * charWidth;
-
-                    // Add a character on either side for glyphs that render unexpectedly wide.
-                    dirtyRect.origin.x -= charWidth;
-                    dirtyRect.size.width += 2 * charWidth;
-                    DLog(@"Line %d is dirty from %d to %d, set rect %@ dirty",
-                         y, x, maxX, [NSValue valueWithRect:dirtyRect]);
-                } else {
-                    DLog(@"Mark all of line %d dirty bc allDirty is set", y);
-                }
-                [self setNeedsDisplayInRect:dirtyRect];
-
+    // Remove results from dirty lines and mark parts of the view as needing display.
+    if (allDirty) {
+        foundDirty = YES;
+        for (int y = lineStart; y < lineEnd; y++) {
+            [resultMap_ removeObjectForKey:[NSNumber numberWithLongLong:y + totalScrollbackOverflow]];
+        }
+        NSRect visibleRect = [self visibleRect];
+        [self setNeedsDisplayInRect:[self gridRect]];
 #ifdef DEBUG_DRAWING
-                char temp[WIDTH + 1];
-                screen_char_t* p = [dataSource getLineAtScreenIndex:screenindex];
-                for (int i = 0; i < WIDTH; ++i) {
-                    temp[i] = p[i].complexChar ? '#' : p[i].code;
-                }
-                temp[WIDTH] = 0;
-                [dirtyDebug appendFormat:@"set rect %d,%d %dx%d (line %d=%s) dirty\n",
-                 (int)dirtyRect.origin.x,
-                 (int)dirtyRect.origin.y,
-                 (int)dirtyRect.size.width,
-                 (int)dirtyRect.size.height,
-                 y, temp];
+        NSLog(@"allDirty is set, redraw the whole view");
 #endif
-                break;
+    } else {
+        for (int y = lineStart; y < lineEnd; y++) {
+            VT100GridRange range = [dataSource dirtyRangeForLine:y - lineStart];
+            if (range.length > 0) {
+                foundDirty = YES;
+                [resultMap_ removeObjectForKey:[NSNumber numberWithLongLong:y + totalScrollbackOverflow]];
+                [self setNeedsDisplayOnLine:y inRange:range];
+#ifdef DEBUG_DRAWING
+                NSLog(@"line %d has dirty characters", y);
+#endif
             }
         }
-#ifdef DEBUG_DRAWING
-        ++screenindex;
-#endif
     }
 
     // Always mark the IME as needing to be drawn to keep things simple.

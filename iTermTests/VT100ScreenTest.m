@@ -3458,6 +3458,25 @@
             @"efg.!\n"
             @"hij.!\n"
             @"....!"]);
+    
+    // Delete one inside scroll region
+    screen = [self screenWithWidth:4 height:5];
+    [self appendLines:@[ @"abcdefg", @"hij", @"klm" ] toScreen:screen];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd+\n"
+            @"efg.!\n"
+            @"hij.!\n"
+            @"klm.!\n"
+            @"....!"]);
+    [screen terminalSetScrollRegionTop:1 bottom:2];
+    [screen terminalMoveCursorToX:2 y:2];  // 'f'
+    [screen terminalDeleteLinesAtCursor:1];
+    assert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
+            @"abcd!\n"
+            @"hij.!\n"
+            @"....!\n"
+            @"klm.!\n"
+            @"....!"]);
 }
 
 - (void)testTerminalSetPixelSize {

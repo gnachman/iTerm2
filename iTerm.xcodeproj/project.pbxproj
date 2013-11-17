@@ -568,6 +568,9 @@
 		9DB3D6F1176CCABE0071CCF8 /* PrefsArrangements@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */; };
 		A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */ = {isa = PBXBuildFile; fileRef = A073973D14C768E400786414 /* ColorsMenuItemView.h */; };
 		A073974014C7694600786414 /* ColorsMenuItemView.m in Sources */ = {isa = PBXBuildFile; fileRef = A073973F14C7694600786414 /* ColorsMenuItemView.m */; };
+		A63F4090183948E4003A6A6D /* VT100LineInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F408E183948E4003A6A6D /* VT100LineInfo.h */; };
+		A63F4091183948E4003A6A6D /* VT100LineInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F408F183948E4003A6A6D /* VT100LineInfo.m */; };
+		A63F4092183962D3003A6A6D /* VT100LineInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F408F183948E4003A6A6D /* VT100LineInfo.m */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = FB151F2903648AC401F955DB /* iTerm.strings */; };
@@ -957,6 +960,8 @@
 		9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PrefsArrangements@2x.png"; path = "images/PrefsArrangements@2x.png"; sourceTree = "<group>"; };
 		A073973D14C768E400786414 /* ColorsMenuItemView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ColorsMenuItemView.h; sourceTree = "<group>"; };
 		A073973F14C7694600786414 /* ColorsMenuItemView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ColorsMenuItemView.m; sourceTree = "<group>"; };
+		A63F408E183948E4003A6A6D /* VT100LineInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100LineInfo.h; sourceTree = "<group>"; };
+		A63F408F183948E4003A6A6D /* VT100LineInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100LineInfo.m; sourceTree = "<group>"; };
 		DD02572409CB9398008F320C /* PSMAquaTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMAquaTabStyle.h; sourceTree = "<group>"; };
 		DD02572509CB9398008F320C /* PSMAquaTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMAquaTabStyle.m; sourceTree = "<group>"; };
 		DD02572609CB9398008F320C /* PSMMetalTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMMetalTabStyle.h; sourceTree = "<group>"; };
@@ -1091,6 +1096,8 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A63F408E183948E4003A6A6D /* VT100LineInfo.h */,
+				A63F408F183948E4003A6A6D /* VT100LineInfo.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -1836,6 +1843,7 @@
 				49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */,
 				1DCF3F4A1225F6F200AD56F1 /* BookmarkModel.h in Headers */,
 				1D6C50A71226EEFB00E0AA3E /* ProfileListView.h in Headers */,
+				A63F4090183948E4003A6A6D /* VT100LineInfo.h in Headers */,
 				1DE5EBE8122B892900C736B0 /* ProfilesWindow.h in Headers */,
 				1D93D33512695442007F741B /* DVR.h in Headers */,
 				1D93D3471269741B007F741B /* DVRBuffer.h in Headers */,
@@ -2228,6 +2236,7 @@
 				1D9A5565180FA84700B42CE9 /* NSFileManager+DirectoryLocations.m in Sources */,
 				1D9A5585180FA87000B42CE9 /* iTermKeyBindingMgr.m in Sources */,
 				1D9A5595180FA87000B42CE9 /* PTYSession.m in Sources */,
+				A63F4092183962D3003A6A6D /* VT100LineInfo.m in Sources */,
 				1D9A555E180FA83900B42CE9 /* PreferencePanel.m in Sources */,
 				1D9A558B180FA87000B42CE9 /* PasteEvent.m in Sources */,
 				1D9A556E180FA85900B42CE9 /* ToolJobs.m in Sources */,
@@ -2375,6 +2384,7 @@
 				1D7C1D1312772ECC00461E55 /* NSDateFormatterExtras.m in Sources */,
 				1DE214E2128212EE004E3ADF /* Autocomplete.m in Sources */,
 				1DD736421283C2FA009B7829 /* Popup.m in Sources */,
+				A63F4091183948E4003A6A6D /* VT100LineInfo.m in Sources */,
 				1D44218D1290B34500891504 /* TextViewWrapper.m in Sources */,
 				1D2E802F129DA45A00F3D71E /* PTYTab.m in Sources */,
 				1D2E813212A18F7500F3D71E /* SessionView.m in Sources */,
@@ -2931,6 +2941,7 @@
 				);
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				"OTHER_CFLAGS[arch=*]" = "-DITERM_DEBUG";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
@@ -3017,6 +3028,7 @@
 					"\"$(SRCROOT)/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				"OTHER_CFLAGS[arch=*]" = "";
 				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",

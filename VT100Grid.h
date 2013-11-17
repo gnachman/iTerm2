@@ -26,7 +26,7 @@
     VT100GridSize size_;
     int screenTop_;  // Index into lines_ and dirty_ of first line visible in the grid.
     NSMutableArray *lines_;  // Array of NSMutableData. Each data has size_.width+1 screen_char_t's.
-    NSMutableArray *dirty_;  // Array of NSMutableData. Each data has size_.width char's.
+    NSMutableArray *lineInfos_;  // Array of VT100LineInfo.
     id<VT100GridDelegate> delegate_;
     VT100GridCoord cursor_;
     VT100GridRange scrollRegionRows_;
@@ -70,6 +70,7 @@
 - (void)markAllCharsDirty:(BOOL)dirty;
 - (BOOL)isCharDirtyAt:(VT100GridCoord)coord;
 - (BOOL)isAnyCharDirty;
+- (VT100GridRange)dirtyRangeForLine:(int)y;
 
 // Returns the count of lines excluding totally empty lines at the bottom, and always including the
 // line the cursor is on.

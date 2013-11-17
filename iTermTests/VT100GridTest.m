@@ -1259,7 +1259,7 @@ do { \
     [grid setBackgroundColor:greenBg
              foregroundColor:invalidFg
                   inRectFrom:VT100GridCoordMake(0, 0)
-                          to:VT100GridCoordMake(4, 4)];
+                          to:VT100GridCoordMake(3, 3)];
     // Now should be green bg everywhere, red fg in center square
     for (int y = 0; y < 4; y++) {
         screen_char_t *line = [grid screenCharsAtLineNumber:y];
@@ -1281,7 +1281,7 @@ do { \
     [grid setBackgroundColor:invalidBg
              foregroundColor:foregroundColor_
                   inRectFrom:VT100GridCoordMake(0, 0)
-                          to:VT100GridCoordMake(4, 4)];
+                          to:VT100GridCoordMake(3, 3)];
     // Now should be default on green everywhere
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {

@@ -2,6 +2,7 @@
 #import "iTermCursor.h"
 #import "ScreenChar.h"
 #import "LineBuffer.h"
+#import "VT100GridTypes.h"
 
 // Images that the view can flash.
 typedef enum {
@@ -76,5 +77,9 @@ typedef enum {
 // If this returns true then the textview will broadcast iTermTabContentsChanged
 // when a dirty char is found.
 - (BOOL)shouldSendContentsChangedNotification;
+
+// Smallest range that contains all dirty chars for a line at a screen location.
+// NOTE: y is a grid index and cannot refer to scrollback history.
+- (VT100GridRange)dirtyRangeForLine:(int)y;
 
 @end

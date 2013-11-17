@@ -12,6 +12,7 @@
 #import "LineBuffer.h"
 #import "RegexKitLite.h"
 #import "VT100GridTypes.h"
+#import "VT100LineInfo.h"
 #import "VT100Terminal.h"
 
 @interface VT100Grid ()
@@ -43,7 +44,7 @@
 
 - (void)dealloc {
     [lines_ release];
-    [dirty_ release];
+    [lineInfos_ release];
     [cachedDefaultLine_ release];
     [super dealloc];
 }
@@ -57,26 +58,28 @@
     return [[lines_ objectAtIndex:(screenTop_ + lineNumber) % size_.height] mutableBytes];
 }
 
-- (char *)dirtyArrayAtLineNumber:(int)lineNumber {
-    return [[dirty_ objectAtIndex:(screenTop_ + lineNumber) % size_.height] mutableBytes];
+- (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber {
+#ifdef ITERM_DEBUG
+    assert(lineNumber >= 0 && lineNumber < size_.height);
+#endif
+    return [lineInfos_ objectAtIndex:(screenTop_ + lineNumber) % size_.height];
 }
 
 - (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord {
     if (!dirty) {
         allDirty_ = NO;
     }
-    char *dirtyArray = [self dirtyArrayAtLineNumber:coord.y];
-    dirtyArray[coord.x] = dirty ? 1 : 0;
+    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:coord.y];
+    [lineInfo setDirty:dirty inRange:VT100GridRangeMake(coord.x, 1)];
 }
 
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to {
     if (!dirty) {
         allDirty_ = NO;
     }
-    char c = dirty ? 1 : 0;
     for (int y = from.y; y <= to.y; y++) {
-        char *dirty = [self dirtyArrayAtLineNumber:y];
-        memset(dirty + from.x, c, to.x - from.x + 1);
+        VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:y];
+        [lineInfo setDirty:dirty inRange:VT100GridRangeMake(from.x, to.x - from.x + 1)];
     }
 }
 
@@ -101,8 +104,8 @@
     if (allDirty_) {
         return YES;
     }
-    char *dirty = [self dirtyArrayAtLineNumber:coord.y];
-    return dirty[coord.x];
+    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:coord.y];
+    return [lineInfo isDirtyAtOffset:coord.x];
 }
 
 - (BOOL)isAnyCharDirty {
@@ -110,14 +113,17 @@
         return YES;
     }
     for (int y = 0; y < size_.height; y++) {
-        char *dirty = [self dirtyArrayAtLineNumber:y];
-        for (int x = 0; x < size_.width; x++) {
-            if (dirty[x]) {
-                return YES;
-            }
+        VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:y];
+        if ([lineInfo anyCharIsDirty]) {
+            return YES;
         }
     }
     return NO;
+}
+
+- (VT100GridRange)dirtyRangeForLine:(int)y {
+    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:y];
+    return [lineInfo dirtyRange];
 }
 
 - (int)cursorX {
@@ -441,14 +447,14 @@
     } else {
         // Fill partial first line
         [self setCharsFrom:run.origin
-                        to:VT100GridCoordMake(size_.width, y)
+                        to:VT100GridCoordMake(size_.width - 1, y)
                     toChar:c];
         y++;
 
         if (y < max.y) {
             // Fill a bunch of full lines
             [self setCharsFrom:VT100GridCoordMake(0, y)
-                            to:VT100GridCoordMake(size_.width, max.y - 1)
+                            to:VT100GridCoordMake(size_.width - 1, max.y - 1)
                         toChar:c];
         }
 
@@ -714,7 +720,7 @@
                 memmove(dst, src, elements * sizeof(screen_char_t));
                 [self markCharsDirty:YES
                           inRectFrom:VT100GridCoordMake(cursor_.x, lineNumber)
-                                  to:VT100GridCoordMake(rightMargin, lineNumber)];
+                                  to:VT100GridCoordMake(rightMargin - 1, lineNumber)];
             }
         }
 
@@ -1418,10 +1424,10 @@
     return lines;
 }
 
-- (NSMutableArray *)dirtyBufferWithSize:(VT100GridSize)size {
-    NSMutableArray *dirty = [[[NSMutableArray alloc] init] autorelease];
+- (NSMutableArray *)lineInfosWithSize:(VT100GridSize)size {
+    NSMutableArray *dirty = [NSMutableArray array];
     for (int i = 0; i < size.height; i++) {
-        [dirty addObject:[NSMutableData dataWithLength:size_.width]];
+        [dirty addObject:[[[VT100LineInfo alloc] initWithWidth:size_.width] autorelease]];
     }
     return dirty;
 }
@@ -1552,9 +1558,9 @@
     if (newSize.width != size_.width || newSize.height != size_.height) {
         size_ = newSize;
         [lines_ release];
-        [dirty_ release];
+        [lineInfos_ release];
         lines_ = [[self linesWithSize:newSize] retain];
-        dirty_ = [[self dirtyBufferWithSize:newSize] retain];
+        lineInfos_ = [[self lineInfosWithSize:newSize] retain];
         scrollRegionRows_.location = MIN(scrollRegionRows_.location, size_.width - 1);
         scrollRegionRows_.length = MIN(scrollRegionRows_.length,
                                        size_.width - scrollRegionRows_.location);
@@ -1781,9 +1787,9 @@ void DumpBuf(screen_char_t* p, int n) {
     for (NSObject *line in lines_) {
         [theCopy->lines_ addObject:[[line mutableCopy] autorelease]];
     }
-    theCopy->dirty_ = [[NSMutableArray alloc] init];
-    for (NSObject *line in dirty_) {
-        [theCopy->dirty_ addObject:[[line mutableCopy] autorelease]];
+    theCopy->lineInfos_ = [[NSMutableArray alloc] init];
+    for (VT100LineInfo *line in lineInfos_) {
+        [theCopy->lineInfos_ addObject:[[line copy] autorelease]];
     }
     theCopy->screenTop_ = screenTop_;
     theCopy.cursor = cursor_;

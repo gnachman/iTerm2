@@ -1111,10 +1111,12 @@ static const double kInterBellQuietPeriod = 0.1;
         xToMark = 0;
         yToMark++;
     }
-    [currentGrid_ markCharDirty:YES at:VT100GridCoordMake(xToMark, yToMark)];
-    if (xToMark < currentGrid_.size.width - 1) {
-        // Just in case the cursor was over a double width character
-        [currentGrid_ markCharDirty:YES at:VT100GridCoordMake(xToMark + 1, yToMark)];
+    if (xToMark < currentGrid_.size.width && yToMark < currentGrid_.size.height) {
+        [currentGrid_ markCharDirty:YES at:VT100GridCoordMake(xToMark, yToMark)];
+        if (xToMark < currentGrid_.size.width - 1) {
+            // Just in case the cursor was over a double width character
+            [currentGrid_ markCharDirty:YES at:VT100GridCoordMake(xToMark + 1, yToMark)];
+        }
     }
 }
 
@@ -1149,6 +1151,10 @@ static const double kInterBellQuietPeriod = 0.1;
 {
     return ([[iTermExpose sharedInstance] isVisible] ||
             [delegate_ screenShouldSendContentsChangedNotification]);
+}
+
+- (VT100GridRange)dirtyRangeForLine:(int)y {
+    return [currentGrid_ dirtyRangeForLine:y];
 }
 
 #pragma mark - VT100TerminalDelegate
@@ -1404,8 +1410,8 @@ static const double kInterBellQuietPeriod = 0.1;
         }
         x1 = 0;
         yStart = 0;
-        x2 = 0;
-        y2 = currentGrid_.size.height;
+        x2 = currentGrid_.size.width - 1;
+        y2 = currentGrid_.size.height - 1;
     } else if (before) {
         x1 = 0;
         yStart = 0;
@@ -1414,8 +1420,8 @@ static const double kInterBellQuietPeriod = 0.1;
     } else if (after) {
         x1 = MIN(currentGrid_.cursor.x, currentGrid_.size.width - 1);
         yStart = currentGrid_.cursor.y;
-        x2 = 0;
-        y2 = currentGrid_.size.height;
+        x2 = currentGrid_.size.width - 1;
+        y2 = currentGrid_.size.height - 1;
     } else {
         return;
     }
@@ -1711,7 +1717,7 @@ static const double kInterBellQuietPeriod = 0.1;
         [currentGrid_ scrollRect:VT100GridRectMake(currentGrid_.leftMargin,
                                                    currentGrid_.cursorY,
                                                    currentGrid_.rightMargin - currentGrid_.leftMargin + 1,
-                                                   currentGrid_.bottomMargin - currentGrid_.topMargin + 1)
+                                                   currentGrid_.bottomMargin - currentGrid_.cursorY + 1)
                           downBy:-n];
         [delegate_ screenTriggerableChangeDidOccur];
     }
