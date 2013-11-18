@@ -3371,7 +3371,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [self _updateLogDirWarning];
     [self _updatePrefsDirWarning];
     [newDict setObject:[NSNumber numberWithUnsignedInt:[[characterEncoding selectedItem] tag]] forKey:KEY_CHARACTER_ENCODING];
-    [newDict setObject:[NSNumber numberWithInt:[[[scrollbackLines stringValue] stringByReplacingOccurrencesOfString:@"," withString:@""] intValue]] forKey:KEY_SCROLLBACK_LINES];
+    [newDict setObject:[NSNumber numberWithInt:[[[scrollbackLines stringValue] stringWithOnlyDigits] intValue]] forKey:KEY_SCROLLBACK_LINES];
     [newDict setObject:[NSNumber numberWithBool:([unlimitedScrollback state]==NSOnState)] forKey:KEY_UNLIMITED_SCROLLBACK];
     [scrollbackLines setEnabled:[unlimitedScrollback state]==NSOffState];
     if ([unlimitedScrollback state] == NSOnState) {
