@@ -6480,8 +6480,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         }
         CFRelease(lineRef);
-
-        [ctx restoreGraphicsState];
     } else {
         // Pre-10.7 path.
 
@@ -6518,6 +6516,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                    options:0];  // NSStringDrawingUsesLineFragmentOrigin
         }
     }
+    [ctx restoreGraphicsState];
 }
 
 - (void)drawRun:(CRun *)currentRun
