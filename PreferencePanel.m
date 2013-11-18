@@ -414,17 +414,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     NSMutableDictionary* theDict = [NSMutableDictionary dictionaryWithCapacity:24];
     int i = 0;
     for (NSString* colorKey in colorKeys) {
-        NSColor* theColor = [[wells[i++] color] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-        double r = [theColor redComponent];
-        double g = [theColor greenComponent];
-        double b = [theColor blueComponent];
-
-        NSDictionary* colorDict = [NSDictionary dictionaryWithObjectsAndKeys:
-                                   [NSNumber numberWithDouble:r], @"Red Component",
-                                   [NSNumber numberWithDouble:g], @"Green Component",
-                                   [NSNumber numberWithDouble:b], @"Blue Component",
-                                   nil];
-        [theDict setObject:colorDict forKey:colorKey];
+        [theDict setObject:[ITAddressBookMgr encodeColor:[wells[i++] color]] forKey:colorKey];
     }
     if (![theDict writeToFile:filename atomically:NO]) {
         NSRunAlertPanel(@"Save Failed.",
