@@ -56,6 +56,7 @@
 #import "PasteEvent.h"
 #import "PasteViewController.h"
 #import "TmuxWindowOpener.h"
+#import "NSView+RecursiveDescription.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -65,27 +66,6 @@
 #define DEBUG_METHOD_TRACE    0
 #define DEBUG_KEYDOWNDUMP     0
 #define ASK_ABOUT_OUTDATED_FORMAT @"AskAboutOutdatedKeyMappingForGuid%@"
-
-@interface NSView (RecursiveDescription)
-- (NSString *)iterm_recursiveDescription;
-@end
-
-@implementation NSView (RecursiveDescription)
-
-- (NSString *)recursiveDescriptionWithPrefix:(NSString *)prefix {
-    NSMutableString *s = [NSMutableString string];
-    [s appendFormat:@"%@%@ frame=%@\n", prefix, self, [NSValue valueWithRect:self.frame]];
-    for (NSView *view in [self subviews]) {
-        [s appendString:[view recursiveDescriptionWithPrefix:[prefix stringByAppendingString:@"|   "]]];
-    }
-    return s;
-}
-
-- (NSString *)iterm_recursiveDescription {
-    return [self recursiveDescriptionWithPrefix:@""];
-}
-
-@end
 
 @implementation PTYSession
 

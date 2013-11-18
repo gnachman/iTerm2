@@ -40,6 +40,7 @@
 #import "iTermExpose.h"
 #import "ColorsMenuItemView.h"
 #import "iTermFontPanel.h"
+#import "NSView+RecursiveDescription.h"
 #import "PseudoTerminalRestorer.h"
 #import "ToastWindowController.h"
 #include <unistd.h>
@@ -1047,6 +1048,51 @@ static void SwapDebugLog() {
         gDebugLogStr2 = temp;
 }
 
+static void WriteDebugLogHeader() {
+  NSMutableString *windows = [NSMutableString string];
+  for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
+    [windows appendFormat:@"\nWindow %@, frame=%@. isMain=%d  isKey=%d\n%@\n",
+     window,
+     [NSValue valueWithRect:window.frame],
+     (int)[window isMainWindow],
+     (int)[window isKeyWindow],
+     [window.contentView iterm_recursiveDescription]];
+  }
+  NSString *header = [NSString stringWithFormat:
+                      @"iTerm2 version: %@\n"
+                      @"Date: %@ (%lld)\n"
+                      @"Key window: %@\n"
+                      @"Windows: %@\n"
+                      @"------ END HEADER ------\n\n",
+                      [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"],
+                      [NSDate date],
+                      (long long)[[NSDate date] timeIntervalSince1970],
+                      [[NSApplication sharedApplication] keyWindow],
+                      windows];
+  NSData* data = [header dataUsingEncoding:NSUTF8StringEncoding];
+  int written = write(gDebugLogFile, [data bytes], [data length]);
+  assert(written == [data length]);
+}
+
+static void WriteDebugLogFooter() {
+  NSMutableString *windows = [NSMutableString string];
+  for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
+    [windows appendFormat:@"\nWindow %@, frame=%@. isMain=%d  isKey=%d\n%@\n",
+     window,
+     [NSValue valueWithRect:window.frame],
+     (int)[window isMainWindow],
+     (int)[window isKeyWindow],
+     [window.contentView iterm_recursiveDescription]];
+  }
+  NSString *header = [NSString stringWithFormat:
+                      @"------ BEGIN FOOTER -----\n"
+                      @"Windows: %@\n",
+                      windows];
+  NSData* data = [header dataUsingEncoding:NSUTF8StringEncoding];
+  int written = write(gDebugLogFile, [data bytes], [data length]);
+  assert(written == [data length]);
+}
+
 static void FlushDebugLog() {
         NSData* data = [gDebugLogStr dataUsingEncoding:NSUTF8StringEncoding];
         int written = write(gDebugLogFile, [data bytes], [data length]);
@@ -1117,10 +1163,11 @@ static void FlushDebugLog() {
 -(IBAction)debugLogging:(id)sender
 {
     if (!gDebugLogging) {
+        gDebugLogFile = open("/tmp/debuglog.txt", O_TRUNC | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+        WriteDebugLogHeader();
         NSRunAlertPanel(@"Debug Logging Enabled",
                         @"Writing to /tmp/debuglog.txt",
                         @"OK", nil, nil);
-        gDebugLogFile = open("/tmp/debuglog.txt", O_TRUNC | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
         gDebugLogStr = [[NSMutableString alloc] init];
         gDebugLogStr2 = [[NSMutableString alloc] init];
         gDebugLogging = !gDebugLogging;
@@ -1130,7 +1177,8 @@ static void FlushDebugLog() {
         FlushDebugLog();
         SwapDebugLog();
         FlushDebugLog();
-        
+        WriteDebugLogFooter();
+
         close(gDebugLogFile);
         gDebugLogFile=-1;
         NSRunAlertPanel(@"Debug Logging Stopped",

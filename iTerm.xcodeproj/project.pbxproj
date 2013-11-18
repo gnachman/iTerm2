@@ -331,6 +331,8 @@
 		1DAED5B212ECC485005E49ED /* FakeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D173858126C820A004622DC /* FakeWindow.m */; };
 		1DAED99212EDF923005E49ED /* iTermSearchField.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DAED99012EDF923005E49ED /* iTermSearchField.h */; };
 		1DAED99312EDF923005E49ED /* iTermSearchField.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DAED99112EDF923005E49ED /* iTermSearchField.m */; };
+		1DAF777B183A95E300D2EF0B /* NSView+RecursiveDescription.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DAF7779183A95E300D2EF0B /* NSView+RecursiveDescription.h */; };
+		1DAF777C183A95E300D2EF0B /* NSView+RecursiveDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DAF777A183A95E300D2EF0B /* NSView+RecursiveDescription.m */; };
 		1DB67CED14850D53005849A1 /* TmuxWindowOpener.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB67CEB14850D53005849A1 /* TmuxWindowOpener.h */; };
 		1DB67CEE14850D53005849A1 /* TmuxWindowOpener.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB67CEC14850D53005849A1 /* TmuxWindowOpener.m */; };
 		1DB67CF11485C578005849A1 /* TmuxHistoryParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB67CEF1485C578005849A1 /* TmuxHistoryParser.h */; };
@@ -647,6 +649,8 @@
 		1DAED28712E9395E005E49ED /* GlobalSearch.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GlobalSearch.m; sourceTree = "<group>"; };
 		1DAED99012EDF923005E49ED /* iTermSearchField.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSearchField.h; sourceTree = "<group>"; };
 		1DAED99112EDF923005E49ED /* iTermSearchField.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSearchField.m; sourceTree = "<group>"; };
+		1DAF7779183A95E300D2EF0B /* NSView+RecursiveDescription.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSView+RecursiveDescription.h"; sourceTree = "<group>"; };
+		1DAF777A183A95E300D2EF0B /* NSView+RecursiveDescription.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSView+RecursiveDescription.m"; sourceTree = "<group>"; };
 		1DB67CEB14850D53005849A1 /* TmuxWindowOpener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxWindowOpener.h; sourceTree = "<group>"; };
 		1DB67CEC14850D53005849A1 /* TmuxWindowOpener.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxWindowOpener.m; sourceTree = "<group>"; };
 		1DB67CEF1485C578005849A1 /* TmuxHistoryParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxHistoryParser.h; sourceTree = "<group>"; };
@@ -1370,6 +1374,8 @@
 		1D9DDE31142E73E300275650 /* Categories */ = {
 			isa = PBXGroup;
 			children = (
+				1DAF7779183A95E300D2EF0B /* NSView+RecursiveDescription.h */,
+				1DAF777A183A95E300D2EF0B /* NSView+RecursiveDescription.m */,
 				1D48B32116706FC3000046EE /* NSView+iTerm.h */,
 				1D48B32216706FC3000046EE /* NSView+iTerm.m */,
 				1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */,
@@ -1617,6 +1623,7 @@
 				1DEDC8FD1451F67D004F1615 /* SessionTitleView.h in Headers */,
 				5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */,
 				1D8255FC14687EE8007CAE78 /* PointerPrefsController.h in Headers */,
+				1DAF777B183A95E300D2EF0B /* NSView+RecursiveDescription.h in Headers */,
 				1D825600146881EC007CAE78 /* PointerController.h in Headers */,
 				1D825604146B258A007CAE78 /* EventMonitorView.h in Headers */,
 				1D3BBD6B14759D6C00FAB389 /* HighlightTrigger.h in Headers */,
@@ -1930,6 +1937,7 @@
 				1D988598135D23BD0072023F /* ProcessCache.m in Sources */,
 				1D624BC81386E09E00111319 /* GTMCarbonEvent.m in Sources */,
 				1DA8117F13CEA30A00CCA89A /* FontSizeEstimator.m in Sources */,
+				1DAF777C183A95E300D2EF0B /* NSView+RecursiveDescription.m in Sources */,
 				1DF0895C13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m in Sources */,
 				1DF0895E13DBAE1F00A52AD8 /* NSImage+CoreImage.m in Sources */,
 				1DCA5ED013EE507800B7725E /* WindowArrangements.m in Sources */,
