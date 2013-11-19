@@ -579,6 +579,8 @@ typedef enum {
 
 - (TmuxController *)tmuxController;
 
+- (void)toggleShowTimestamps;
+
 @end
 
 @interface PTYSession (ScriptingSupport)

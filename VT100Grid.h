@@ -62,8 +62,9 @@
 // may extend into the right edge (cursorX == size.width is allowed).
 - (void)setCursor:(VT100GridCoord)coord;
 
-// Mark a specific character dirty.
-- (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord;
+// Mark a specific character dirty. If updateTimestamp is set, then the line's last-modified time is
+// set to the current time.
+- (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord updateTimestamp:(BOOL)updateTimestamp;
 
 // Mark chars dirty in a rectangle, inclusive of endpoints.
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to;
@@ -209,6 +210,9 @@
 // Moves the cursor to the left margin (either 0 or scrollRegionCols.location, depending on
 // useScrollRegionCols).
 - (void)moveCursorToLeftMargin;
+
+// Returns the timestamp of a given line.
+- (NSTimeInterval)timestampForLine:(int)y;
 
 - (NSString *)compactLineDump;
 - (NSString *)compactLineDumpWithTimestamps;

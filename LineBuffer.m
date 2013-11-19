@@ -306,6 +306,27 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
     return i;
 }
 
+- (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width
+{
+    int prev = 0;
+    int length;
+    int i;
+    for (i = first_entry; i < cll_entries; ++i) {
+        int cll = cumulative_line_lengths[i] - start_offset;
+        length = cll - prev;
+        int spans = NumberOfFullLines(buffer_start + prev, length, width);
+        if (lineNum > spans) {
+            // Consume the entire raw line and keep looking for more.
+            int consume = spans + 1;
+            lineNum -= consume;
+        } else {  // *lineNum <= spans
+            return timestamps_[i];
+        }
+        prev = cll;
+    }
+    return 0;
+}
+
 - (screen_char_t*) getWrappedLineWithWrapWidth: (int) width
                                        lineNum: (int*) lineNum
                                     lineLength: (int*) lineLength
@@ -1280,6 +1301,28 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         // Width change. Invalidate the wrapped lines cache.
         num_wrapped_lines_width = -1;
     }
+}
+
+- (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width
+{
+    int line = lineNum;
+    int i;
+    for (i = 0; i < [blocks count]; ++i) {
+        LineBlock* block = [blocks objectAtIndex:i];
+        NSAssert(block, @"Null block");
+        
+        // getNumLinesWithWrapWidth caches its result for the last-used width so
+        // this is usually faster than calling getWrappedLineWithWrapWidth since
+        // most calls to the latter will just decrement line and return NULL.
+        int block_lines = [block getNumLinesWithWrapWidth:width];
+        if (block_lines < line) {
+            line -= block_lines;
+            continue;
+        }
+        
+        return [block timestampForLineNumber:line width:width];
+    }
+    return 0;
 }
 
 // Copy a line into the buffer. If the line is shorter than 'width' then only

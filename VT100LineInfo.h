@@ -14,7 +14,7 @@
 @property(nonatomic, assign) NSTimeInterval timestamp;
 
 - (id)initWithWidth:(int)width;
-- (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range;
+- (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestamp:(BOOL)updateTimestamp;
 - (BOOL)isDirtyAtOffset:(int)x;
 - (BOOL)anyCharIsDirty;
 - (VT100GridRange)dirtyRange;

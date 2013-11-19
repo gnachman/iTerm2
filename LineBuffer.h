@@ -147,6 +147,10 @@
 
 // NSLog the contents of the block. For debugging.
 - (void)dump:(int)rawOffset;
+
+// Returns the timestamp associated with a line when wrapped to the specified width.
+- (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width;
+
 @end
 
 // A LineBuffer represents an ordered collection of strings of screen_char_t. Each string forms a
@@ -213,6 +217,9 @@
 //
 // NOTE: This invalidates the cursor position.
 - (int) dropExcessLinesWithWidth: (int) width;
+
+// Returns the timestamp associated with a line when wrapped to the specified width.
+- (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width;
 
 // Copy a line into the buffer. If the line is shorter than 'width' then only the first 'width'
 // characters will be modified.

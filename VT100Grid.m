@@ -65,12 +65,14 @@
     return [lineInfos_ objectAtIndex:(screenTop_ + lineNumber) % size_.height];
 }
 
-- (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord {
+- (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord updateTimestamp:(BOOL)updateTimestamp {
     if (!dirty) {
         allDirty_ = NO;
     }
     VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:coord.y];
-    [lineInfo setDirty:dirty inRange:VT100GridRangeMake(coord.x, 1)];
+    [lineInfo setDirty:dirty
+               inRange:VT100GridRangeMake(coord.x, 1)
+       updateTimestamp:updateTimestamp];
 }
 
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to {
@@ -79,7 +81,9 @@
     }
     for (int y = from.y; y <= to.y; y++) {
         VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:y];
-        [lineInfo setDirty:dirty inRange:VT100GridRangeMake(from.x, to.x - from.x + 1)];
+        [lineInfo setDirty:dirty
+                   inRange:VT100GridRangeMake(from.x, to.x - from.x + 1)
+           updateTimestamp:YES];
     }
 }
 
@@ -215,6 +219,10 @@
     return numLines;
 }
 
+- (NSTimeInterval)timestampForLine:(int)y {
+    return [[self lineInfoAtLineNumber:y] timestamp];
+}
+
 - (int)lengthOfLineNumber:(int)lineNumber {
     screen_char_t *line = [self screenCharsAtLineNumber:lineNumber];
     return [self lengthOfLine:line];
@@ -254,7 +262,7 @@
                      unlimitedScrollback:(BOOL)unlimitedScrollback {
     // Mark the cursor's previous location dirty. This fixes a rare race condition where
     // the cursor is not erased.
-    [self markCharDirty:YES at:cursor_];
+    [self markCharDirty:YES at:cursor_ updateTimestamp:YES];
 
     // Add the top line to the scrollback
     int numLinesDropped = [self appendLineToLineBuffer:lineBuffer
@@ -736,8 +744,12 @@
             aLine[cursor_.x].complexChar = NO;
             aLine[cursor_.x-1].code = 0;
             aLine[cursor_.x-1].complexChar = NO;
-            [self markCharDirty:YES at:VT100GridCoordMake(cursor_.x, lineNumber)];
-            [self markCharDirty:YES at:VT100GridCoordMake(cursor_.x - 1, lineNumber)];
+            [self markCharDirty:YES
+                             at:VT100GridCoordMake(cursor_.x, lineNumber)
+                updateTimestamp:YES];
+            [self markCharDirty:YES
+                             at:VT100GridCoordMake(cursor_.x - 1, lineNumber)
+                updateTimestamp:YES];
         }
 
         // This is an ugly little optimization--if we're inserting just one character, see if it would
@@ -1705,8 +1717,12 @@ void DumpBuf(screen_char_t* p, int n) {
     if (offset >= 0 && offset < size_.width - 1 && aLine[offset + 1].code == DWC_RIGHT) {
         aLine[offset] = c;
         aLine[offset + 1] = c;
-        [self markCharDirty:YES at:VT100GridCoordMake(offset, lineNumber)];
-        [self markCharDirty:YES at:VT100GridCoordMake(offset + 1, lineNumber)];
+        [self markCharDirty:YES
+                         at:VT100GridCoordMake(offset, lineNumber)
+            updateTimestamp:YES];
+        [self markCharDirty:YES
+                         at:VT100GridCoordMake(offset + 1, lineNumber)
+            updateTimestamp:YES];
 
         if (offset == 0 && lineNumber > 0) {
             [self erasePossibleSplitDwcAtLineNumber:lineNumber - 1];

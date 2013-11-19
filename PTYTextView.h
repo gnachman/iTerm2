@@ -377,6 +377,9 @@ enum {
     // Used by _drawCursorTo: to remember the last time the cursor moved to avoid drawing a blinked-out
     // cursor while it's moving.
     NSTimeInterval lastTimeCursorMoved_;
+
+    // If set, the last-modified time of each line on the screen is shown on the right side of the display.
+    BOOL showTimestamps_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -532,6 +535,9 @@ enum {
 - (void)setLineHeight:(double)aLineHeight;
 - (double)charWidth;
 - (void)setCharWidth:(double)width;
+
+// Toggles whether line timestamps are displayed.
+- (void)toggleShowTimestamps;
 
 // Update the scroll position and schedule a redraw. Returns true if anything
 // onscreen is blinking.

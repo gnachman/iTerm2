@@ -1132,6 +1132,12 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     charWidth = width;
 }
 
+- (void)toggleShowTimestamps
+{
+    showTimestamps_ = !showTimestamps_;
+    [self setNeedsDisplay:YES];
+}
+
 #ifdef DEBUG_DRAWING
 NSMutableArray* screens=0;
 - (void)appendDebug:(NSString*)str
@@ -1982,6 +1988,89 @@ NSMutableArray* screens=0;
     }
 
     [self drawOutlineInRect:rect topOnly:NO];
+    
+    if (showTimestamps_) {
+        [self drawTimestamps];
+    }
+}
+
+- (void)drawTimestamps
+{
+    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+    
+    for (int y = visibleRect.origin.y / lineHeight;
+         y < (visibleRect.origin.y + visibleRect.size.height) / lineHeight && y < [dataSource numberOfLines];
+         y++) {
+        [self drawTimestampForLine:y];
+    }
+}
+
+- (void)drawTimestampForLine:(int)line
+{
+    NSDate *timestamp = [dataSource timestampForLine:line];
+    NSDateFormatter *fmt = [[[NSDateFormatter alloc] init] autorelease];
+    const NSTimeInterval day = -86400;
+    const NSTimeInterval timeDelta = [timestamp timeIntervalSinceNow];
+    if (timeDelta < day * 365) {
+        // More than a year ago: include year
+        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"yyyyMMMd hh:mm:ss"
+                                                           options:0
+                                                            locale:[NSLocale currentLocale]]];
+    } else if (timeDelta < day * 7) {
+        // 1 week to 1 year ago: include date without year
+        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"MMMd hh:mm:ss"
+                                                           options:0
+                                                            locale:[NSLocale currentLocale]]];
+    } else if (timeDelta < day) {
+        // 1 day to 1 week ago: include day of week
+        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"EEE hh:mm:ss"
+                                                           options:0
+                                                            locale:[NSLocale currentLocale]]];
+        
+    } else {
+        // In last 24 hours, just show time
+        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"hh:mm:ss"
+                                                           options:0
+                                                            locale:[NSLocale currentLocale]]];
+    }
+        
+    NSString *s = [fmt stringFromDate:timestamp];
+
+    NSSize size = [s sizeWithAttributes:@{ NSFontAttributeName: [NSFont systemFontOfSize:10] }];
+    int w = size.width + MARGIN;
+    int x = MAX(0, self.frame.size.width - w);
+    CGFloat y = line * lineHeight;
+    NSColor *bgColor = defaultBGColor;
+    NSColor *fgColor = defaultFGColor;
+    BOOL isDark = ([self perceivedBrightness:defaultFGColor] < kBackgroundConsideredDarkThreshold);
+    NSColor *shadowColor;
+    if (isDark) {
+        shadowColor = [NSColor whiteColor];
+    } else {
+        shadowColor = [NSColor blackColor];
+    }
+
+    const CGFloat alpha = 0.75;
+    NSGradient *gradient =
+        [[[NSGradient alloc] initWithStartingColor:[bgColor colorWithAlphaComponent:0]
+                                       endingColor:[bgColor colorWithAlphaComponent:alpha]] autorelease];
+    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
+    [gradient drawInRect:NSMakeRect(x - 20, y, 20, lineHeight) angle:0];
+
+    [[bgColor colorWithAlphaComponent:alpha] set];
+    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
+    NSRectFillUsingOperation(NSMakeRect(x, y, w, lineHeight), NSCompositeSourceOver);
+
+    NSShadow *shadow = [[[NSShadow alloc] init] autorelease];
+    shadow.shadowColor = shadowColor;
+    shadow.shadowBlurRadius = 0.2f;
+    shadow.shadowOffset = CGSizeMake(0.5, -0.5);
+
+    NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:10],
+                                  NSForegroundColorAttributeName: fgColor,
+                                  NSShadowAttributeName: shadow };
+    CGFloat offset = (lineHeight - size.height) / 2;
+    [s drawAtPoint:NSMakePoint(x, y + offset) withAttributes:attributes];
 }
 
 - (void)drawOutlineInRect:(NSRect)rect topOnly:(BOOL)topOnly
@@ -8729,6 +8818,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     dirtyRect.size.width = (maxX - x + 1) * charWidth;
     dirtyRect.size.height = lineHeight;
     
+    if (showTimestamps_) {
+        dirtyRect.size.width = self.visibleRect.size.width - dirtyRect.origin.x;
+    }
     // Add a character on either side for glyphs that render unexpectedly wide.
     dirtyRect.origin.x -= charWidth;
     dirtyRect.size.width += 2 * charWidth;

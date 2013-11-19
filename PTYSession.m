@@ -3237,6 +3237,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (void)toggleShowTimestamps {
+    [TEXTVIEW toggleShowTimestamps];
+}
+
 #pragma mark tmux gateway delegate methods
 // TODO (also, capture and throw away keyboard input)
 

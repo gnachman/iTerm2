@@ -1115,10 +1115,14 @@ static const double kInterBellQuietPeriod = 0.1;
         yToMark++;
     }
     if (xToMark < currentGrid_.size.width && yToMark < currentGrid_.size.height) {
-        [currentGrid_ markCharDirty:YES at:VT100GridCoordMake(xToMark, yToMark)];
+        [currentGrid_ markCharDirty:YES
+                                 at:VT100GridCoordMake(xToMark, yToMark)
+                    updateTimestamp:NO];
         if (xToMark < currentGrid_.size.width - 1) {
             // Just in case the cursor was over a double width character
-            [currentGrid_ markCharDirty:YES at:VT100GridCoordMake(xToMark + 1, yToMark)];
+            [currentGrid_ markCharDirty:YES
+                                     at:VT100GridCoordMake(xToMark + 1, yToMark)
+                        updateTimestamp:NO];
         }
     }
 }
@@ -1158,6 +1162,17 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (VT100GridRange)dirtyRangeForLine:(int)y {
     return [currentGrid_ dirtyRangeForLine:y];
+}
+
+- (NSDate *)timestampForLine:(int)y {
+    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    NSTimeInterval interval;
+    if (y >= numLinesInLineBuffer) {
+        interval = [currentGrid_ timestampForLine:y - numLinesInLineBuffer];
+    } else {
+        interval = [linebuffer_ timestampForLineNumber:y width:currentGrid_.size.width];
+    }
+    return [NSDate dateWithTimeIntervalSinceReferenceDate:interval];
 }
 
 #pragma mark - VT100TerminalDelegate

@@ -5530,6 +5530,8 @@ NSString *sessionsKey = @"sessions";
         result = [[self currentSession] canInstantReplayPrev];
     } else if ([item action] == @selector(irNext:)) {
         result = [[self currentSession] canInstantReplayNext];
+    } else if ([item action] == @selector(toggleShowTimestamps:)) {
+        result = ([self currentSession] != nil);
     } else if ([item action] == @selector(selectPaneUp:) ||
                [item action] == @selector(selectPaneDown:) ||
                [item action] == @selector(selectPaneLeft:) ||
@@ -5549,6 +5551,11 @@ NSString *sessionsKey = @"sessions";
         result = ![[[self currentSession] SCREEN] allCharacterSetPropertiesHaveDefaultValues];
     }
     return result;
+}
+
+- (IBAction)toggleShowTimestamps:(id)sender
+{
+    [[self currentSession] toggleShowTimestamps];
 }
 
 // Turn on/off sending of input to all sessions. This causes a bunch of UI

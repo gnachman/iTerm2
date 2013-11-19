@@ -22,7 +22,7 @@
     if (self) {
         width_ = width;
         dirty_ = realloc(dirty_, width);
-        [self setDirty:NO inRange:VT100GridRangeMake(0, width)];
+        [self setDirty:NO inRange:VT100GridRangeMake(0, width) updateTimestamp:YES];
         [self updateTimestamp];
     }
     return self;
@@ -33,7 +33,7 @@
     [super dealloc];
 }
 
-- (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range {
+- (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestamp:(BOOL)updateTimestamp {
 #ifdef ITERM_DEBUG
     assert(range.location >= 0);
     assert(range.length >= 0);
@@ -41,7 +41,9 @@
 #endif
     if (dirty) {
         anyCharPossiblyDirty_ = YES;
-        [self updateTimestamp];
+        if (updateTimestamp) {
+            [self updateTimestamp];
+        }
     } else if (range.location == 0 && range.length == width_) {
         anyCharPossiblyDirty_ = NO;
     }
