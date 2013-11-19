@@ -8,6 +8,7 @@
 
 #import "DebugLogging.h"
 #import "DVR.h"
+#import "PTYNoteViewController.h"
 #import "PTYTextView.h"
 #import "RegexKitLite.h"
 #import "SearchResult.h"
@@ -673,7 +674,8 @@ static const double kInterBellQuietPeriod = 0.1;
                   length:len
                  partial:NO
                    width:currentGrid_.size.width
-               timestamp:now];
+               timestamp:now
+                  object:nil];
     }
     NSMutableArray *wrappedLines = [NSMutableArray array];
     int n = [temp numLinesWithWidth:currentGrid_.size.width];
@@ -698,7 +700,8 @@ static const double kInterBellQuietPeriod = 0.1;
                          length:line.length
                         partial:(line.eol != EOL_HARD)
                           width:currentGrid_.size.width
-                      timestamp:now];
+                      timestamp:now
+                         object:nil];
     }
     if (!unlimitedScrollback_) {
         [linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width];
@@ -1173,6 +1176,26 @@ static const double kInterBellQuietPeriod = 0.1;
         interval = [linebuffer_ timestampForLineNumber:y width:currentGrid_.size.width];
     }
     return [NSDate dateWithTimeIntervalSinceReferenceDate:interval];
+}
+
+- (PTYNoteViewController *)noteForLine:(int)y {
+    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    NSTimeInterval interval;
+    if (y >= numLinesInLineBuffer) {
+        return (PTYNoteViewController *)[currentGrid_ objectForLine:y - numLinesInLineBuffer];
+    } else {
+        return (PTYNoteViewController *)[linebuffer_ objectForLineNumber:y width:currentGrid_.size.width];
+    }
+}
+
+- (void)setNote:(PTYNoteViewController *)note forLine:(int)y {
+    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    NSTimeInterval interval;
+    if (y >= numLinesInLineBuffer) {
+        [currentGrid_ setObject:note forLine:y - numLinesInLineBuffer];
+    } else {
+        [linebuffer_ setObject:note forLine:y width:currentGrid_.size.width];
+    }
 }
 
 #pragma mark - VT100TerminalDelegate
@@ -2530,7 +2553,8 @@ static void SwapInt(int *a, int *b) {
         BOOL isOk = [linebuffer_ popAndCopyLastLineInto:dummy
                                                   width:currentGrid_.size.width
                                       includesEndOfLine:&cont
-                                              timestamp:NULL];
+                                              timestamp:NULL
+                                                 object:NULL];
         NSAssert(isOk, @"Pop shouldn't fail");
     }
     free(dummy);

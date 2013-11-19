@@ -71,6 +71,7 @@ static const int kMaxSelectedTextLinesForCustomActions = 100;
 #import "FutureMethods.h"
 #import "MovingAverage.h"
 #import "SearchResult.h"
+#import "PTYNoteViewController.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -4500,6 +4501,27 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[dataSource session] clearBuffer];
 }
 
+- (void)addOrEditNoteForLine:(int)line
+{
+    PTYNoteViewController *note = [dataSource noteForLine:line];
+    if (!note) {
+        note = [[[PTYNoteViewController alloc] init] autorelease];
+        [dataSource setNote:note forLine:line];
+    }
+    [note.view removeFromSuperview];
+    note.view.frame = NSMakeRect(0,
+                                 line * lineHeight + lineHeight / 2, note.view.frame.size.width, note.view.frame.size.height);
+    [self addSubview:note.view];
+    [note beginEditing];
+}
+
+- (void)addNote:(id)sender
+{
+    if (startY >= 0) {
+        [self addOrEditNoteForLine:startY];
+    }
+}
+
 - (void)editTextViewSession:(id)sender
 {
     [[[[dataSource session] tab] realParentWindow] editSession:[dataSource session]];
@@ -4601,6 +4623,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([item action]==@selector(mail:) ||
         [item action]==@selector(browse:) ||
         [item action]==@selector(searchInBrowser:) ||
+        [item action]==@selector(addNote:) ||
         [item action]==@selector(copy:) ||
         [item action]==@selector(pasteSelection:) ||
         ([item action]==@selector(print:) && [item tag] == 1)) { // print selection
@@ -4821,6 +4844,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
+    // Make note
+    [theMenu addItemWithTitle:@"Add Note…"
+                       action:@selector(addNote:)
+                keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
 

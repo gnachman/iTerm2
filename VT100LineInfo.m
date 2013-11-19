@@ -13,9 +13,11 @@
     int width_;
     BOOL anyCharPossiblyDirty_;  // No means nothing is dirty. Yes means MAYBE something is dirty.
     NSTimeInterval timestamp_;
+    NSObject *object_;
 }
 
 @synthesize timestamp = timestamp_;
+@synthesize object = object_;
 
 - (id)initWithWidth:(int)width {
     self = [super init];

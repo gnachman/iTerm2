@@ -209,7 +209,8 @@
                         length:currentLineLength
                        partial:(continuation != EOL_HARD)
                          width:size_.width
-                     timestamp:[[self lineInfoAtLineNumber:i] timestamp]];
+                     timestamp:[[self lineInfoAtLineNumber:i] timestamp]
+                        object:[[self lineInfoAtLineNumber:i] object]];
 #ifdef DEBUG_RESIZEDWIDTH
         NSLog(@"Appended a line. now have %d lines for width %d\n",
               [lineBuffer numLinesWithWidth:size_.width], size_.width);
@@ -221,6 +222,14 @@
 
 - (NSTimeInterval)timestampForLine:(int)y {
     return [[self lineInfoAtLineNumber:y] timestamp];
+}
+
+- (NSObject *)objectForLine:(int)y {
+    return [[self lineInfoAtLineNumber:y] object];
+}
+
+- (void)setObject:(NSObject *)object forLine:(int)y {
+    [[self lineInfoAtLineNumber:y] setObject:object];
 }
 
 - (int)lengthOfLineNumber:(int)lineNumber {
@@ -1198,8 +1207,14 @@
         }
         int cont;
         NSTimeInterval timestamp;
-        assert([lineBuffer popAndCopyLastLineInto:dest width:size_.width includesEndOfLine:&cont timestamp:&timestamp]);
+        NSObject *object;
+        assert([lineBuffer popAndCopyLastLineInto:dest
+                                            width:size_.width
+                                includesEndOfLine:&cont
+                                        timestamp:&timestamp
+                                           object:&object]);
         [[self lineInfoAtLineNumber:destLineNumber] setTimestamp:timestamp];
+        [[self lineInfoAtLineNumber:destLineNumber] setObject:object];
         if (cont && dest[size_.width - 1].code == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the
             // line below it starts with a DWC, it's safe to conclude that a DWC
@@ -1553,7 +1568,8 @@
                     length:len
                    partial:(continuationMark != EOL_HARD)
                      width:size_.width
-                 timestamp:[[self lineInfoAtLineNumber:0] timestamp]];
+                 timestamp:[[self lineInfoAtLineNumber:0] timestamp]
+                    object:[[self lineInfoAtLineNumber:0] object]];
     int dropped;
     if (!unlimitedScrollback) {
         dropped = [lineBuffer dropExcessLinesWithWidth:size_.width];
