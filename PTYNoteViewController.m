@@ -22,6 +22,7 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
 @synthesize textView = textView_;
 @synthesize anchor = anchor_;
 @synthesize watchForUpdate = watchForUpdate_;
+@synthesize hidden = hidden_;
 
 - (void)dealloc {
     [noteView_ release];
@@ -143,6 +144,15 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     } else {
         [[NSNotificationCenter defaultCenter] removeObserver:self];
     }
+}
+
+- (void)setHidden:(BOOL)hidden {
+    hidden_ = hidden;
+    [noteView_ setHidden:hidden];
+}
+
+- (BOOL)isEmpty {
+    return [[textView_.string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] length] == 0;
 }
 
 @end

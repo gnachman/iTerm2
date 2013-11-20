@@ -3425,6 +3425,17 @@ NSMutableArray* screens=0;
     locationInWindow = [event locationInWindow];
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
+    if (numTouches_ <= 1) {
+        if (locationInTextView.x < MARGIN) {
+            PTYNoteViewController *note = [dataSource noteForLine:y];
+            if (note && !note.isEmpty) {
+                [dataSource toggleVisibilityOfNote:note];
+            }
+        } else {
+            [dataSource hideAllNotes];
+        }
+    }
+
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
 
     if ([event eventNumber] != firstMouseEventNumber_ &&   // Not first mouse in formerly non-key app
@@ -7297,6 +7308,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                              matches:matches
                              context:ctx];
     }
+
+    PTYNoteViewController *note = [dataSource noteForLine:line];
+    if (note.hidden && !note.isEmpty) {
+        [[NSColor yellowColor] set];
+        NSRectFill(NSMakeRect(1, line * lineHeight, MARGIN - 3, lineHeight));
+        [[NSColor colorWithCalibratedRed:.8 green:.8 blue:0 alpha:1] set];
+        NSRectFill(NSMakeRect(MARGIN - 3, line * lineHeight, 1, lineHeight));
+    }
+
     return anyBlinking;
 }
 

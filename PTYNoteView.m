@@ -10,6 +10,7 @@
 
 static const CGFloat kMinWidth = 50;
 static const CGFloat kMinHeight = 50;
+
 @implementation PTYNoteView
 
 @synthesize delegate = delegate_;

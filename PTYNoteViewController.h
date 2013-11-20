@@ -12,16 +12,22 @@
 // Post this when the note view's anchor has a chance to become centered.
 extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
 
+@protocol PTYNoteViewControllerDelegate
+@end
+
 @interface PTYNoteViewController : NSViewController <PTYNoteViewDelegate> {
     PTYNoteView *noteView_;
     NSTextView *textView_;
     NSPoint anchor_;
     BOOL watchForUpdate_;
+    BOOL hidden_;
 }
 
 @property(nonatomic, retain) PTYNoteView *noteView;
 @property(nonatomic, assign) NSPoint anchor;
+@property(nonatomic, assign) BOOL hidden;
 
 - (void)beginEditing;
+- (BOOL)isEmpty;
 
 @end
