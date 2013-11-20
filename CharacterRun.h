@@ -11,6 +11,8 @@
 #import <ApplicationServices/ApplicationServices.h>
 #import "ScreenChar.h"
 
+@class CRunSet;
+
 // Backing storage for CRuns.
 @interface CRunStorage : NSObject {
 	// There are |capacity_| elements in each of these, of which |used_|
@@ -24,7 +26,7 @@
     int used_;  // Number of elements in use.
 
     // Like an autorelease pool, but avoids multiple retain/release's per object.
-    NSMutableSet *colors_;
+    CRunSet *colors_;
 }
 
 // Create a new CRunStorage with space preallocated for |capacity| characters.

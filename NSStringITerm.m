@@ -646,4 +646,15 @@ int decode_utf8_char(const unsigned char *datap,
     return [self initWithData:utf16Data encoding:NSUTF16LittleEndianStringEncoding];
 }
 
+- (NSString *)stringWithOnlyDigits {
+  NSMutableString *s = [NSMutableString string];
+  for (int i = 0; i < self.length; i++) {
+    unichar c = [self characterAtIndex:i];
+    if (iswdigit(c)) {
+      [s appendFormat:@"%c", (char)c];
+    }
+  }
+  return s;
+}
+
 @end

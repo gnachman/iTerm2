@@ -87,7 +87,7 @@
     }
 }
 
-- (void)removeValue:(NSObject *)target
+- (void)removeValue:(NSObject<NSCopying> *)target
 {
     NSNumber *ec = [index_ objectForKey:target];
     if (!ec) {

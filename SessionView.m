@@ -594,8 +594,10 @@ static NSDate* lastResizeDate_;
 - (NSSize)maximumPossibleScrollViewContentSize
 {
     NSSize size = self.frame.size;
+    DLog(@"maximumPossibleScrollViewContentSize. size=%@", [NSValue valueWithSize:size]);
     if (showTitle_) {
         size.height -= kTitleHeight;
+        DLog(@"maximumPossibleScrollViewContentSize: sub title height. size=%@", [NSValue valueWithSize:size]);
     }
 
     Class verticalScrollerClass = [[[session_ SCROLLVIEW] verticalScroller] class];

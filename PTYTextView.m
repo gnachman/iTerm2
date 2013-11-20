@@ -162,6 +162,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return c;
 }
 
+- (NSString *)description {
+  return [NSString stringWithFormat:@"<%p: %@ %d,%d>", self, [self class], x, y];
+}
+
 @end
 
 @interface SmartMatch : NSObject
@@ -266,6 +270,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"ThreeFingerTapEmulatesThreeFingerClick"];
 }
 
+- (void)viewDidChangeBackingProperties {
+    _antiAliasedShift = [[[self window] screen] futureBackingScaleFactor] > 1 ? 0.5 : 0;
+}
+
 - (id)initWithFrame:(NSRect)aRect
 {
     self = [super initWithFrame: aRect];
@@ -343,6 +351,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         drawRectDuration_ = [[MovingAverage alloc] init];
         drawRectInterval_ = [[MovingAverage alloc] init];
     }
+    [self viewDidChangeBackingProperties];
 
     return self;
 }
@@ -2383,9 +2392,22 @@ NSMutableArray* screens=0;
     xMin = 0;
     xMax = width;
 
+    // Any text preceding a hard line break on a line before |y| should not be considered.
     int j = 0;
+    int firstLine = y - numLines;
+    for (int i = y - numLines; i < y; i++) {
+        if (i < 0 || i >= [dataSource numberOfLines]) {
+            continue;
+        }
+        screen_char_t* theLine = [dataSource getLineAtIndex:i];
+        if (i < y && theLine[width].code == EOL_HARD) {
+            if (rejectAtHardEol || theLine[width - 1].code == 0) {
+                firstLine = i + 1;
+            }
+        }
+    }
 
-    for (int i = y - numLines; i <= y + numLines; i++) {
+    for (int i = firstLine; i <= y + numLines; i++) {
         if (i < 0 || i >= [dataSource numberOfLines]) {
             continue;
         }
@@ -2403,8 +2425,8 @@ NSMutableArray* screens=0;
                                                    &backingStore,
                                                    &deltas);
         int o = 0;
-        for (int k = 0; k < [string length]; k++, o++) {
-            o += deltas[k];
+        for (int k = 0; k < [string length]; k++) {
+            o = k + deltas[k];
             if (*targetOffset == -1 && i == y && o >= x) {
                 *targetOffset = k + [joinedLines length];
             }
@@ -2416,6 +2438,7 @@ NSMutableArray* screens=0;
         free(backingStore);
 
         j++;
+        o++;
         if (i >= y && theLine[width].code == EOL_HARD) {
             if (rejectAtHardEol || theLine[width - 1].code == 0) {
                 [coords addObject:[Coord coordWithX:o
@@ -6738,12 +6761,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // If not anti-alised, draw one pixel to the right.
         CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
                                                           0.0, -1.0,
-                                                          x + (currentRun->attrs.antiAlias ? 0 : 1),
+                                                          x + (currentRun->attrs.antiAlias ? _antiAliasedShift : 1),
                                                           y));
 
         CGContextShowGlyphsWithAdvances(ctx, glyphs, advances, length);
     }
     return firstMissingGlyph;
+}
+
+- (CGColorRef)cgColorForColor:(NSColor *)color {
+    const NSInteger numberOfComponents = [color numberOfComponents];
+    CGFloat components[numberOfComponents];
+    CGColorSpaceRef colorSpace = [[color colorSpace] CGColorSpace];
+
+    [color getComponents:(CGFloat *)&components];
+
+    return (CGColorRef)[(id)CGColorCreate(colorSpace, components) autorelease];
 }
 
 - (void)_advancedDrawString:(NSString *)str
@@ -6761,37 +6794,76 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
     [ctx saveGraphicsState];
     [ctx setCompositingOperation:NSCompositeSourceOver];
-    NSMutableAttributedString* attributedString = [[[NSMutableAttributedString alloc] initWithString:str
-                                                                                          attributes:attrs] autorelease];
-    // Note that drawInRect doesn't use the right baseline, but drawWithRect
-    // does.
-    //
-    // This technique was picked because it can find glyphs that aren't in the
-    // selected font (e.g., tests/radical.txt). It does a fairly nice job on
-    // laying out combining marks. For now, it fails in two known cases:
-    // 1. Enclosing marks (q in a circle shows as a q)
-    // 2. U+239d, a part of a paren for graphics drawing, doesn't quite render
-    //    right (though it appears to need to render in another char's cell).
-    // Other rejected approaches included using CTFontGetGlyphsForCharacters+
-    // CGContextShowGlyphsWithAdvances, which doesn't render thai characters
-    // correctly in UTF-8-demo.txt.
-    //
-    // We use width*2 so that wide characters that are not double width chars
-    // render properly. These are font-dependent. See tests/suits.txt for an
-    // example.
-    [attributedString drawWithRect:NSMakeRect(pos.x,
-                                              pos.y + fontInfo.baselineOffset + lineHeight,
-                                              width*2,
-                                              lineHeight)
-                           options:0];  // NSStringDrawingUsesLineFragmentOrigin
-    if (fakeBold) {
-        // If anti-aliased, drawing twice at the same position makes the strokes thicker.
-        // If not anti-alised, draw one pixel to the right.
-        [attributedString drawWithRect:NSMakeRect(pos.x + (antiAlias ? 0 : 1),
+    if (IsLionOrLater()) {
+        CTFontDrawGlyphsFunction *drawGlyphsFunction = GetCTFontDrawGlyphsFunction();
+        assert(drawGlyphsFunction);
+
+        NSMutableAttributedString* attributedString =
+            [[[NSMutableAttributedString alloc] initWithString:str
+                                                    attributes:attrs] autorelease];
+        // This code used to use -[NSAttributedString drawWithRect:options] but
+        // it does a lousy job rendering multiple combining marks. This is close
+        // to what WebKit does and appears to be the highest quality text
+        // rendering available. However, this path is only available in 10.7+.
+
+        CTLineRef lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)attributedString);
+        CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
+        CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
+        CGContextSetFillColorWithColor(cgContext, [self cgColorForColor:color]);
+        CGContextSetStrokeColorWithColor(cgContext, [self cgColorForColor:color]);
+        CGContextSetTextPosition(cgContext, pos.x, pos.y + fontInfo.baselineOffset + lineHeight);
+        for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
+            CTRunRef run = CFArrayGetValueAtIndex(runs, j);
+            CFRange range;
+            range.length = 0;
+            range.location = 0;
+            size_t length = CTRunGetGlyphCount(run);
+            const CGGlyph *buffer = CTRunGetGlyphsPtr(run);
+            const CGPoint *positions = CTRunGetPositionsPtr(run);
+            CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
+            drawGlyphsFunction(runFont, buffer, (NSPoint *)positions, length, cgContext);
+            if (fakeBold) {
+                CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
+                drawGlyphsFunction(runFont, buffer, (NSPoint *)positions, length, cgContext);
+                CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+            }
+        }
+        CFRelease(lineRef);
+    } else {
+        // Pre-10.7 path.
+
+        NSMutableAttributedString* attributedString = [[[NSMutableAttributedString alloc] initWithString:str
+                                                                                              attributes:attrs] autorelease];
+        // Note that drawInRect doesn't use the right baseline, but drawWithRect
+        // does.
+        //
+        // This technique was picked because it can find glyphs that aren't in the
+        // selected font (e.g., tests/radical.txt). It does a fairly nice job on
+        // laying out combining marks. For now, it fails in two known cases:
+        // 1. Enclosing marks (q in a circle shows as a q)
+        // 2. U+239d, a part of a paren for graphics drawing, doesn't quite render
+        //    right (though it appears to need to render in another char's cell).
+        // Other rejected approaches included using CTFontGetGlyphsForCharacters+
+        // CGContextShowGlyphsWithAdvances, which doesn't render thai characters
+        // correctly in UTF-8-demo.txt.
+        //
+        // We use width*2 so that wide characters that are not double width chars
+        // render properly. These are font-dependent. See tests/suits.txt for an
+        // example.
+        [attributedString drawWithRect:NSMakeRect(pos.x,
                                                   pos.y + fontInfo.baselineOffset + lineHeight,
                                                   width*2,
                                                   lineHeight)
                                options:0];  // NSStringDrawingUsesLineFragmentOrigin
+        if (fakeBold) {
+            // If anti-aliased, drawing twice at the same position makes the strokes thicker.
+            // If not anti-alised, draw one pixel to the right.
+            [attributedString drawWithRect:NSMakeRect(pos.x + (antiAlias ? 0 : 1),
+                                                      pos.y + fontInfo.baselineOffset + lineHeight,
+                                                      width*2,
+                                                      lineHeight)
+                                   options:0];  // NSStringDrawingUsesLineFragmentOrigin
+        }
     }
     [ctx restoreGraphicsState];
 }

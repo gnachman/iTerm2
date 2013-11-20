@@ -24,44 +24,46 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import "iTerm.h"
 #import "PTYSession.h"
+
+#import "Coprocess.h"
+#import "FakeWindow.h"
+#import "ITAddressBookMgr.h"
+#import "MovePaneController.h"
+#import "MovePaneController.h"
+#import "NSStringITerm.h"
+#import "NSView+RecursiveDescription.h"
+#import "PTYScrollView.h"
+#import "PTYTab.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
-#import "PTYScrollView.h"
-#import "VT100Screen.h"
-#import "VT100Terminal.h"
-#import "PreferencePanel.h"
-#import "WindowControllerInterface.h"
-#import "iTermController.h"
-#import "PseudoTerminal.h"
-#import "FakeWindow.h"
-#import "NSStringITerm.h"
-#import "iTermKeyBindingMgr.h"
-#import "ITAddressBookMgr.h"
-#import "iTermGrowlDelegate.h"
-#import "iTermApplicationDelegate.h"
-#import "SessionView.h"
-#import "PTYTab.h"
-#import "ProcessCache.h"
-#import "MovePaneController.h"
-#import "Trigger.h"
-#import "Coprocess.h"
-#import "TmuxGateway.h"
-#import "TmuxController.h"
-#import "TmuxLayoutParser.h"
-#import "MovePaneController.h"
-#import "TmuxStateParser.h"
 #import "PasteContext.h"
 #import "PasteEvent.h"
 #import "PasteViewController.h"
-#import "TmuxWindowOpener.h"
+#import "PreferencePanel.h"
+#import "ProcessCache.h"
+#import "PseudoTerminal.h"
 #import "SearchResult.h"
+#import "SessionView.h"
+#import "TmuxController.h"
+#import "TmuxGateway.h"
+#import "TmuxLayoutParser.h"
+#import "TmuxStateParser.h"
+#import "TmuxWindowOpener.h"
+#import "Trigger.h"
+#import "VT100Screen.h"
+#import "VT100Terminal.h"
+#import "WindowControllerInterface.h"
+#import "iTerm.h"
+#import "iTermApplicationDelegate.h"
+#import "iTermController.h"
+#import "iTermGrowlDelegate.h"
+#import "iTermKeyBindingMgr.h"
 
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
 #include <sys/time.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
@@ -202,6 +204,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 #if DEBUG_ALLOC
     NSLog(@"%s: 0x%x, done", __PRETTY_FUNCTION__, self);
 #endif
+}
+
+- (NSString *)description
+{
+    return [NSString stringWithFormat:@"<%@: %p %dx%d>", [self class], self, [SCREEN width], [SCREEN height]];
 }
 
 - (void)cancelTimers
@@ -526,6 +533,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)setWidth:(int)width height:(int)height
 {
+    DLog(@"Set session %@ to %dx%d", self, width, height);
     [SCREEN resizeWidth:width height:height];
     [SHELL setWidth:width height:height];
     [TEXTVIEW clearHighlights];
@@ -2751,13 +2759,19 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     horizontalSpacing:(float)horizontalSpacing
     verticalSpacing:(float)verticalSpacing
 {
+    DLog(@"setFont:%@ nafont:%@", font, nafont);
+    NSWindow *window = [[[self tab] realParentWindow] window];
+    DLog(@"Before:\n%@", [window.contentView iterm_recursiveDescription]);
+    DLog(@"Window frame: %@", window);
     if ([[TEXTVIEW font] isEqualTo:font] &&
         [[TEXTVIEW nafont] isEqualTo:nafont] &&
         [TEXTVIEW horizontalSpacing] == horizontalSpacing &&
         [TEXTVIEW verticalSpacing] == verticalSpacing) {
         return;
     }
+    DLog(@"Line height was %f", (float)[TEXTVIEW lineHeight]);
     [TEXTVIEW setFont:font nafont:nafont horizontalSpacing:horizontalSpacing verticalSpacing:verticalSpacing];
+    DLog(@"Line height is now %f", (float)[TEXTVIEW lineHeight]);
     if (![[[self tab] parentWindow] anyFullScreen]) {
         if ([[PreferencePanel sharedInstance] adjustWindowForFontSizeChange]) {
             [[[self tab] parentWindow] fitWindowToTab:[self tab]];
@@ -2770,6 +2784,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     } else {
         [[self tab] fitSessionToCurrentViewSize:self];
     }
+    DLog(@"After:\n%@", [window.contentView iterm_recursiveDescription]);
+    DLog(@"Window frame: %@", window);
 }
 
 - (void)synchronizeTmuxFonts:(NSNotification *)notification
@@ -2823,46 +2839,48 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)changeFontSizeDirection:(int)dir
 {
+    DLog(@"changeFontSizeDirection:%d", dir);
     NSFont* font;
     NSFont* nafont;
-        float hs, vs;
-        if (dir) {
-        // Grow or srhink
-                font = [self fontWithRelativeSize:dir from:[TEXTVIEW font]];
-                nafont = [self fontWithRelativeSize:dir from:[TEXTVIEW nafont]];
-                hs = [TEXTVIEW horizontalSpacing];
-                vs = [TEXTVIEW verticalSpacing];
-        } else {
+    float hs, vs;
+    if (dir) {
+        // Grow or shrink
+        DLog(@"grow/shrink");
+        font = [self fontWithRelativeSize:dir from:[TEXTVIEW font]];
+        nafont = [self fontWithRelativeSize:dir from:[TEXTVIEW nafont]];
+        hs = [TEXTVIEW horizontalSpacing];
+        vs = [TEXTVIEW verticalSpacing];
+    } else {
         // Restore original font size.
-                NSDictionary *abEntry = [self originalAddressBookEntry];
-                NSString* fontDesc = [abEntry objectForKey:KEY_NORMAL_FONT];
-                font = [ITAddressBookMgr fontWithDesc:fontDesc];
-                nafont = [ITAddressBookMgr fontWithDesc:[abEntry objectForKey:KEY_NON_ASCII_FONT]];
-                hs = [[abEntry objectForKey:KEY_HORIZONTAL_SPACING] floatValue];
-                vs = [[abEntry objectForKey:KEY_VERTICAL_SPACING] floatValue];
-        }
+        NSDictionary *abEntry = [self originalAddressBookEntry];
+        NSString* fontDesc = [abEntry objectForKey:KEY_NORMAL_FONT];
+        font = [ITAddressBookMgr fontWithDesc:fontDesc];
+        nafont = [ITAddressBookMgr fontWithDesc:[abEntry objectForKey:KEY_NON_ASCII_FONT]];
+        hs = [[abEntry objectForKey:KEY_HORIZONTAL_SPACING] floatValue];
+        vs = [[abEntry objectForKey:KEY_VERTICAL_SPACING] floatValue];
+    }
     [self setFont:font nafont:nafont horizontalSpacing:hs verticalSpacing:vs];
 
-        if (dir || isDivorced) {
-                // Move this bookmark into the sessions model.
-                NSString* guid = [self divorceAddressBookEntryFromPreferences];
+    if (dir || isDivorced) {
+        // Move this bookmark into the sessions model.
+        NSString* guid = [self divorceAddressBookEntryFromPreferences];
 
-                // Set the font in the bookmark dictionary
-                NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:addressBookEntry];
-                [temp setObject:[ITAddressBookMgr descFromFont:font] forKey:KEY_NORMAL_FONT];
-                [temp setObject:[ITAddressBookMgr descFromFont:nafont] forKey:KEY_NON_ASCII_FONT];
+        // Set the font in the bookmark dictionary
+        NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:addressBookEntry];
+        [temp setObject:[ITAddressBookMgr descFromFont:font] forKey:KEY_NORMAL_FONT];
+        [temp setObject:[ITAddressBookMgr descFromFont:nafont] forKey:KEY_NON_ASCII_FONT];
 
-                // Update this session's copy of the bookmark
-                [self setAddressBookEntry:[NSDictionary dictionaryWithDictionary:temp]];
+        // Update this session's copy of the bookmark
+        [self setAddressBookEntry:[NSDictionary dictionaryWithDictionary:temp]];
 
-                // Update the model's copy of the bookmark.
-                [[ProfileModel sessionsInstance] setBookmark:[self addressBookEntry] withGuid:guid];
+        // Update the model's copy of the bookmark.
+        [[ProfileModel sessionsInstance] setBookmark:[self addressBookEntry] withGuid:guid];
 
-                // Update an existing one-bookmark prefs dialog, if open.
-                if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
-                        [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
-                }
+        // Update an existing one-bookmark prefs dialog, if open.
+        if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
+            [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
         }
+    }
 }
 
 - (void)remarry
@@ -4746,7 +4764,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         data = [aString dataUsingEncoding:[TERMINAL encoding]];
     }
 
-    if (data != nil && [SHELL pid] > 0) {
+    if (tmuxMode_ == TMUX_CLIENT) {
+        [self writeTask:data];
+    } else if (data != nil && [SHELL pid] > 0) {
         int i = 0;
         // wait here until we have had some output
         while ([SHELL hasOutput] == NO && i < 1000000) {
@@ -4757,7 +4777,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         [self writeTask:data];
     }
 }
-
 
 - (void)handleTerminateScriptCommand:(NSScriptCommand *)command
 {

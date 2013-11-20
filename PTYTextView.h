@@ -380,6 +380,7 @@ enum {
 
     // If set, the last-modified time of each line on the screen is shown on the right side of the display.
     BOOL showTimestamps_;
+    float _antiAliasedShift;  // Amount to shift anti-aliased text by horizontally to simulate bold
 }
 
 + (NSCursor *)textViewCursor;

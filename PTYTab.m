@@ -1758,6 +1758,7 @@ static NSString* FormatRect(NSRect r) {
     BOOL hasScrollbar = [parentWindow_ scrollbarShouldBeVisible];
     [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
     NSSize size = [[aSession view] maximumPossibleScrollViewContentSize];
+    DLog(@"Max size is %@", [NSValue valueWithSize:size]);
     int width = (size.width - MARGIN*2) / [[aSession TEXTVIEW] charWidth];
     int height = (size.height - VMARGIN*2) / [[aSession TEXTVIEW] lineHeight];
     PtyLog(@"fitSessionToCurrentViewSize %@ gives %d rows", [NSValue valueWithSize:size], height);
@@ -1778,6 +1779,7 @@ static NSString* FormatRect(NSRect r) {
 // containing view.
 - (BOOL)fitSessionToCurrentViewSize:(PTYSession*)aSession
 {
+    DLog(@"fitSessionToCurrentViewSize:%@", aSession);
     if ([aSession isTmuxClient]) {
         return NO;
     }
