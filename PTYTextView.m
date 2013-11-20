@@ -4532,10 +4532,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (!note) {
         note = [[[PTYNoteViewController alloc] init] autorelease];
         [dataSource setNote:note forLine:line];
+        [note.view removeFromSuperview];
+        [self addSubview:note.view];
+        note.anchor = NSMakePoint(0, line * lineHeight + lineHeight / 2);
+    } else if (note.hidden) {
+        [dataSource toggleVisibilityOfNote:note];
     }
-    [note.view removeFromSuperview];
-    [self addSubview:note.view];
-    note.anchor = NSMakePoint(0, line * lineHeight + lineHeight / 2);
     [note beginEditing];
 }
 
