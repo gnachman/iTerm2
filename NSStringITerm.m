@@ -28,6 +28,7 @@
 
 #define NSSTRINGJTERMINAL_CLASS_COMPILE
 #import "NSStringITerm.h"
+#import <wctype.h>
 
 #define AMB_CHAR_NUMBER (sizeof(ambiguous_chars) / sizeof(int))
 

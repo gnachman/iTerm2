@@ -210,7 +210,7 @@ NSString *sessionsKey = @"sessions";
                       inCwd:(NSString*)oldCWD
               forObjectType:(iTermObjectType)objectType;
 - (void)_refreshTerminal:(NSNotification *)aNotification;
->>>>>>> v2
+
 @end
 
 @implementation BottomBarView
@@ -276,7 +276,7 @@ NSString *sessionsKey = @"sessions";
             DLog(@"Convert default screen to screen number: No screen matches the window's screen so using main screen");
             screenNumber = 0;
         } else {
-            DLog(@"Convert default screen to screen number: System chose screen %d", n);
+            DLog(@"Convert default screen to screen number: System chose screen %lu", (unsigned long)n);
             screenNumber = n;
         }
     }

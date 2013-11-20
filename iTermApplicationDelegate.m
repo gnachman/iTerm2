@@ -1096,8 +1096,13 @@ static BOOL hasBecomeActive = NO;
     [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
 }
 
-/// About window
+// Debug logging
+- (IBAction)debugLogging:(id)sender
+{
+  ToggleDebugLogging();
+}
 
+// About window
 - (NSAttributedString *)_linkTo:(NSString *)urlString title:(NSString *)title
 {
     NSDictionary *linkAttributes = [NSDictionary dictionaryWithObject:[NSURL URLWithString:urlString]

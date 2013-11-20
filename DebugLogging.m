@@ -7,7 +7,9 @@
 //
 
 #import "DebugLogging.h"
+#import "NSView+RecursiveDescription.h"
 #import <Cocoa/Cocoa.h>
+
 #include <sys/time.h>
 
 NSMutableString* gDebugLogStr = nil;
