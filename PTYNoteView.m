@@ -57,4 +57,46 @@
     [path stroke];
 }
 
+- (void)mouseDown:(NSEvent *)theEvent {
+    const CGFloat horizontalRegionWidth = self.bounds.size.width - 5;
+    NSRect topDragRegion = NSMakeRect(0, self.bounds.size.height - 5, horizontalRegionWidth, 5);
+    NSRect topRightDragRegion = NSMakeRect(horizontalRegionWidth, self.bounds.size.height - 5, 5, 5);
+    NSRect rightDragRegion = NSMakeRect(horizontalRegionWidth, 5, 5, self.bounds.size.height - 10);
+    NSRect bottomRightDragRegion = NSMakeRect(horizontalRegionWidth, 0, 5, 5);
+    NSRect bottomDragRegion = NSMakeRect(0, 0, horizontalRegionWidth, 5);
+    struct {
+        NSRect rect;
+        BOOL horizontal;
+        BOOL bottom;
+    } regions[] = {
+        { rightDragRegion, YES, NO },
+        { bottomRightDragRegion, YES, YES },
+        { bottomDragRegion, NO, YES }
+    };
+    NSPoint pointInView = [self convertPoint:[theEvent locationInWindow] fromView:nil];
+    for (int i = 0; i < sizeof(regions) / sizeof(*regions); i++) {
+        if (NSPointInRect(pointInView, regions[i].rect)) {
+            NSLog(@"Ok to drag.");
+            dragHorizontal_ = regions[i].horizontal;
+            dragBottom_ = regions[i].bottom;
+            dragOrigin_ = [theEvent locationInWindow];
+            originalSize_ = self.frame.size;
+            break;
+        }
+    }
+}
+
+- (void)mouseDragged:(NSEvent *)theEvent {
+    NSPoint point = [theEvent locationInWindow];
+    CGFloat dw = dragHorizontal_ ? point.x - dragOrigin_.x : 0;
+    CGFloat dh = 0;
+    if (dragBottom_) {
+        dh = dragOrigin_.y - point.y;
+    }
+    self.frame = NSMakeRect(self.frame.origin.x,
+                            self.frame.origin.y,
+                            ceil(originalSize_.width + dw),
+                            ceil(originalSize_.height + dh));
+}
+
 @end
