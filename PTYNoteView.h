@@ -17,4 +17,6 @@
 
 @property(nonatomic, assign) id<PTYNoteViewDelegate> delegate;
 
+- (NSColor *)backgroundColor;
+
 @end

@@ -12,6 +12,13 @@
 
 @synthesize delegate = delegate_;
 
+- (NSColor *)backgroundColor {
+    return [NSColor colorWithCalibratedRed:252.0/255.0
+                                     green:250.0/255.0
+                                      blue:198.0/255.0
+                                     alpha:0.95];
+}
+
 - (void)drawRect:(NSRect)dirtyRect
 {
 	[super drawRect:dirtyRect];
@@ -42,7 +49,7 @@
     [path lineToPoint:NSMakePoint(offset + arrowWidth, yoffset + size.height - arrowHeight)];
     [path lineToPoint:NSMakePoint(offset + 0, yoffset + size.height)];
     
-	[[NSColor colorWithCalibratedRed:252.0/255.0 green:250.0/255.0 blue:198.0/255.0 alpha:0.95] set];
+	[[self backgroundColor] set];
     [path fill];
 
 	[[NSColor colorWithCalibratedRed:255.0/255.0 green:229.0/255.0 blue:114.0/255.0 alpha:0.95] set];

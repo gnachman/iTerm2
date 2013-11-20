@@ -11,7 +11,7 @@
 
 @interface PTYNoteViewController : NSViewController <PTYNoteViewDelegate> {
     PTYNoteView *noteView_;
-    NSTextField *textField_;
+    NSTextView *textView_;
 }
 
 @property(nonatomic, retain) PTYNoteView *noteView;
