@@ -13,7 +13,7 @@
 
 @interface PTYNoteView : NSView {
     id<PTYNoteViewDelegate> delegate_;
-    BOOL dragHorizontal_;
+    BOOL dragRight_;
     BOOL dragBottom_;
     NSPoint dragOrigin_;
     NSSize originalSize_;

@@ -262,6 +262,10 @@
 		1D7C1AD31276FD6E00461E55 /* PasteboardHistory.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */; };
 		1D7C1D1212772ECC00461E55 /* NSDateFormatterExtras.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */; };
 		1D7C1D1312772ECC00461E55 /* NSDateFormatterExtras.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */; };
+		1D81F0C9183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D81F0C7183D4DAB00910838 /* nw_se_resize_cursor.png */; };
+		1D81F0CA183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D81F0C7183D4DAB00910838 /* nw_se_resize_cursor.png */; };
+		1D81F0CB183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D81F0C8183D4DAB00910838 /* nw_se_resize_cursor@2x.png */; };
+		1D81F0CC183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D81F0C8183D4DAB00910838 /* nw_se_resize_cursor@2x.png */; };
 		1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8255F8146869D8007CAE78 /* DefaultPointerActions.plist */; };
 		1D8255FC14687EE8007CAE78 /* PointerPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */; };
 		1D8255FD14687EE8007CAE78 /* PointerPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8255FB14687EE8007CAE78 /* PointerPrefsController.m */; };
@@ -757,6 +761,8 @@
 		1D7C1AD21276FD6E00461E55 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/PasteboardHistory.xib; sourceTree = "<group>"; };
 		1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSDateFormatterExtras.h; sourceTree = "<group>"; };
 		1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSDateFormatterExtras.m; sourceTree = "<group>"; };
+		1D81F0C7183D4DAB00910838 /* nw_se_resize_cursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = nw_se_resize_cursor.png; path = images/nw_se_resize_cursor.png; sourceTree = "<group>"; };
+		1D81F0C8183D4DAB00910838 /* nw_se_resize_cursor@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "nw_se_resize_cursor@2x.png"; path = "images/nw_se_resize_cursor@2x.png"; sourceTree = "<group>"; };
 		1D8255F8146869D8007CAE78 /* DefaultPointerActions.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultPointerActions.plist; sourceTree = "<group>"; };
 		1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PointerPrefsController.h; sourceTree = "<group>"; };
 		1D8255FB14687EE8007CAE78 /* PointerPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PointerPrefsController.m; sourceTree = "<group>"; };
@@ -1456,6 +1462,8 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1D81F0C7183D4DAB00910838 /* nw_se_resize_cursor.png */,
+				1D81F0C8183D4DAB00910838 /* nw_se_resize_cursor@2x.png */,
 				9DB3D6E2176CB4D80071CCF8 /* PrefsProfile.png */,
 				9DB3D6E3176CB4D80071CCF8 /* PrefsProfile@2x.png */,
 				9DB3D6DE176C8F0B0071CCF8 /* PrefsAppearance.png */,
@@ -2066,9 +2074,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1D81F0CA183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */,
 				1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */,
 				1DD39AEF180B8118004E56D5 /* Images.xcassets in Resources */,
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
+				1D81F0CC183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2109,6 +2119,7 @@
 				1D5FDD9E1208E91100C46BA3 /* PseudoTerminal.xib in Resources */,
 				1D5FDDA01208E91100C46BA3 /* PreferencePanel.xib in Resources */,
 				1D5FDDA21208E91100C46BA3 /* ProfilesWindow.xib in Resources */,
+				1D81F0CB183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */,
 				8742064D0564169600CFC3F1 /* iTerm.icns in Resources */,
 				F6CDC4E70AE6D3E2005E7D4F /* folder.png in Resources */,
 				9325FF500FB54E00004EC67C /* MainMenu.xib in Resources */,
@@ -2156,6 +2167,7 @@
 				1D48B290165F3669000046EE /* AquaTabClose_Front.png in Resources */,
 				1D48B292165F405A000046EE /* important@2x.png in Resources */,
 				1D48B294165F4416000046EE /* star.png in Resources */,
+				1D81F0C9183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */,
 				1D48B2F9165F45BA000046EE /* star@2x.png in Resources */,
 				1D085F8916F030FB00B7FCE9 /* PasteView.xib in Resources */,
 				9D737D5F17495B4100B3334D /* PrefsGeneral.png in Resources */,
