@@ -11,6 +11,7 @@
 @implementation PTYNoteView
 
 @synthesize delegate = delegate_;
+@synthesize point = point_;
 
 - (NSColor *)backgroundColor {
     return [NSColor colorWithCalibratedRed:252.0/255.0
@@ -19,40 +20,83 @@
                                      alpha:0.95];
 }
 
+static NSPoint MakeNotePoint(NSSize maxSize, CGFloat x, CGFloat y)
+{
+    return NSMakePoint(0.5 + x, maxSize.height + 4.5 - y);
+}
+
+static NSPoint ModifyNotePoint(NSPoint p, CGFloat dx, CGFloat dy)
+{
+    return NSMakePoint(p.x + dx, p.y - dy);
+}
+
+- (NSRect)visibleFrame {
+    NSRect frame = self.frame;
+    frame.size.width -= 5;
+    frame.size.height -= 5;
+    return frame;
+}
+
 - (void)drawRect:(NSRect)dirtyRect
 {
-	[super drawRect:dirtyRect];
+        [super drawRect:dirtyRect];
 
     NSBezierPath* path = [[[NSBezierPath alloc] init] autorelease];
-    NSSize size = self.frame.size;
-    size.width -= 5;
-    size.height -= 5;
+    NSSize size = [self visibleFrame].size;
     CGFloat radius = 5;
     CGFloat arrowWidth = 10;
     CGFloat arrowHeight = 7;
-    CGFloat offset = 0.5;
-    CGFloat yoffset = 4.5;
 
-    [path moveToPoint:NSMakePoint(offset + 0, yoffset + size.height)];
-    [path lineToPoint:NSMakePoint(offset + size.width - radius, yoffset + size.height)];
-    [path curveToPoint:NSMakePoint(offset + size.width, yoffset + size.height - radius)
-         controlPoint1:NSMakePoint(offset + size.width, yoffset + size.height)
-         controlPoint2:NSMakePoint(offset + size.width, yoffset + size.height)];
-    [path lineToPoint:NSMakePoint(offset + size.width, yoffset + radius)];
-    [path curveToPoint:NSMakePoint(offset + size.width - radius, yoffset + 0)
-         controlPoint1:NSMakePoint(offset + size.width, yoffset + 0)
-         controlPoint2:NSMakePoint(offset + size.width, yoffset + 0)];
-    [path lineToPoint:NSMakePoint(offset + arrowWidth + radius, yoffset + 0)];
-    [path curveToPoint:NSMakePoint(offset + arrowWidth, yoffset + radius)
-         controlPoint1:NSMakePoint(offset + arrowWidth, yoffset + 0)
-         controlPoint2:NSMakePoint(offset + arrowWidth, yoffset + 0)];
-    [path lineToPoint:NSMakePoint(offset + arrowWidth, yoffset + size.height - arrowHeight)];
-    [path lineToPoint:NSMakePoint(offset + 0, yoffset + size.height)];
-    
-	[[self backgroundColor] set];
+    NSPoint arrowTip = MakeNotePoint(size, point_.x, point_.y);
+    NSPoint arrowBaseTop;
+    if (point_.y + arrowHeight / 2 > size.height) {
+        arrowBaseTop = MakeNotePoint(size,
+                                     point_.x + arrowWidth,
+                                     size.height - arrowHeight);
+    } else {
+        arrowBaseTop = MakeNotePoint(size,
+                                     point_.x + arrowWidth,
+                                     MAX(0, point_.y - arrowHeight / 2));
+    }
+    NSPoint topLeftCorner = MakeNotePoint(size, point_.x + arrowWidth, 0);
+    NSPoint topRightCorner = MakeNotePoint(size, size.width, 0);
+    NSPoint bottomRightCorner = MakeNotePoint(size, size.width, size.height);
+    NSPoint bottomLeftCorner = MakeNotePoint(size, point_.x + arrowWidth, size.height);
+    NSPoint arrowBaseBottom;
+    if (point_.y - arrowHeight / 2 < 0) {
+        arrowBaseBottom = MakeNotePoint(size, point_.x + arrowWidth, arrowHeight);
+    } else {
+        arrowBaseBottom = MakeNotePoint(size,
+                                        point_.x + arrowWidth,
+                                        MIN(size.height, point_.y + arrowHeight / 2));
+    }
+
+    // Point
+    [path moveToPoint:arrowTip];
+    [path lineToPoint:arrowBaseTop];
+    [path lineToPoint:ModifyNotePoint(topLeftCorner, 0, radius)];
+    [path curveToPoint:ModifyNotePoint(topLeftCorner, radius, 0)
+         controlPoint1:topLeftCorner
+         controlPoint2:topLeftCorner];
+    [path lineToPoint:ModifyNotePoint(topRightCorner, -radius, 0)];
+    [path curveToPoint:ModifyNotePoint(topRightCorner, 0, radius)
+         controlPoint1:topRightCorner
+         controlPoint2:topRightCorner];
+    [path lineToPoint:ModifyNotePoint(bottomRightCorner, 0, -radius)];
+    [path curveToPoint:ModifyNotePoint(bottomRightCorner, -radius, 0)
+         controlPoint1:bottomRightCorner
+         controlPoint2:bottomRightCorner];
+    [path lineToPoint:ModifyNotePoint(bottomLeftCorner, radius, 0)];
+    [path curveToPoint:ModifyNotePoint(bottomLeftCorner, 0, -radius)
+         controlPoint1:bottomLeftCorner
+         controlPoint2:bottomLeftCorner];
+    [path lineToPoint:arrowBaseBottom];
+    [path lineToPoint:arrowTip];
+
+    [[self backgroundColor] set];
     [path fill];
 
-	[[NSColor colorWithCalibratedRed:255.0/255.0 green:229.0/255.0 blue:114.0/255.0 alpha:0.95] set];
+        [[NSColor colorWithCalibratedRed:255.0/255.0 green:229.0/255.0 blue:114.0/255.0 alpha:0.95] set];
     [path setLineWidth:1];
     [path stroke];
 }
@@ -114,6 +158,11 @@
     [self addCursorRect:bottomDragRegion cursor:[NSCursor resizeUpDownCursor]];
     [self addCursorRect:bottomRightDragRegion cursor:topRightDragCursor];
     [self addCursorRect:rightDragRegion cursor:[NSCursor resizeLeftRightCursor]];
+}
+
+- (void)setPoint:(NSPoint)point {
+    point_ = point;
+    [self setNeedsDisplay:YES];
 }
 
 @end

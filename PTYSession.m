@@ -423,10 +423,10 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [SCROLLVIEW setAutoresizingMask: NSViewWidthSizable|NSViewHeightSizable];
 
     // assign the main view
-        [view addSubview:SCROLLVIEW];
-        if (![self isTmuxClient]) {
-                [view setAutoresizesSubviews:YES];
-        }
+    [view addSubview:SCROLLVIEW];
+    if (![self isTmuxClient]) {
+        [view setAutoresizesSubviews:YES];
+    }
     // TODO(georgen): I disabled setCopiesOnScroll because there is a vertical margin in the PTYTextView and
     // we would not want that copied. This is obviously bad for performance when scrolling, but it's unclear
     // whether the difference will ever be noticable. I believe it could be worked around (painfully) by

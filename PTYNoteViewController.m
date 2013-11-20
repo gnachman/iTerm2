@@ -17,6 +17,7 @@
 
 @synthesize noteView = noteView_;
 @synthesize textView = textView_;
+@synthesize anchor = anchor_;
 
 - (void)setNoteView:(PTYNoteView *)noteView {
     [noteView_ autorelease];
@@ -74,6 +75,41 @@
 
 - (void)beginEditing {
     [[textView_ window] makeFirstResponder:textView_];
+}
+
+- (void)setAnchor:(NSPoint)anchor {
+    anchor_ = anchor;
+
+    NSRect superViewFrame = noteView_.superview.frame;
+    CGFloat superViewMaxY = superViewFrame.origin.y + superViewFrame.size.height;
+
+    CGFloat height = noteView_.frame.size.height;
+    CGFloat visibleHeight = noteView_.visibleFrame.size.height;
+    CGFloat shadowHeight = height - visibleHeight;
+
+    if (anchor_.y - visibleHeight / 2 < 0) {
+        // Can't center the anchor because some of the note would be off the top of the view.
+        noteView_.frame = NSMakeRect(anchor_.x,
+                                     0,
+                                     noteView_.frame.size.width,
+                                     noteView_.frame.size.height);
+        noteView_.point = NSMakePoint(0, anchor_.y);
+    } else if (anchor_.y + visibleHeight / 2 + shadowHeight > superViewMaxY) {
+        // Can't center the anchor because some of the note would be off the bottom of the view.
+        const CGFloat shift = (superViewMaxY - height) - (anchor_.y - visibleHeight / 2);
+        noteView_.frame = NSMakeRect(anchor_.x,
+                                     superViewMaxY - height,
+                                     noteView_.frame.size.width,
+                                     noteView_.frame.size.height);
+        noteView_.point = NSMakePoint(0, visibleHeight / 2 - shift);
+    } else {
+        // Center the anchor
+        noteView_.frame = NSMakeRect(anchor_.x,
+                                     anchor_.y - visibleHeight / 2,
+                                     noteView_.frame.size.width,
+                                     noteView_.frame.size.height);
+        noteView_.point = NSMakePoint(0, visibleHeight / 2);
+    }
 }
 
 @end

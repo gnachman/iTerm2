@@ -1797,6 +1797,11 @@ NSMutableArray* screens=0;
         }
     }
 
+    // Not sure why this is needed, but for some reason this view draws over its subviews.
+    for (NSView *subview in [self subviews]) {
+        [subview setNeedsDisplay:YES];
+    }
+
     return [self updateDirtyRects] || [self _isCursorBlinking];
 }
 
@@ -1989,16 +1994,21 @@ NSMutableArray* screens=0;
     }
 
     [self drawOutlineInRect:rect topOnly:NO];
-    
+
     if (showTimestamps_) {
         [self drawTimestamps];
+    }
+
+    // Not sure why this is needed, but for some reason this view draws over its subviews.
+    for (NSView *subview in [self subviews]) {
+        [subview setNeedsDisplay:YES];
     }
 }
 
 - (void)drawTimestamps
 {
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    
+
     for (int y = visibleRect.origin.y / lineHeight;
          y < (visibleRect.origin.y + visibleRect.size.height) / lineHeight && y < [dataSource numberOfLines];
          y++) {
@@ -4509,9 +4519,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [dataSource setNote:note forLine:line];
     }
     [note.view removeFromSuperview];
-    note.view.frame = NSMakeRect(0,
-                                 line * lineHeight + lineHeight / 2, note.view.frame.size.width, note.view.frame.size.height);
     [self addSubview:note.view];
+    note.anchor = NSMakePoint(0, line * lineHeight + lineHeight / 2);
     [note beginEditing];
 }
 

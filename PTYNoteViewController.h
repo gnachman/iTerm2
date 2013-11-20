@@ -12,9 +12,11 @@
 @interface PTYNoteViewController : NSViewController <PTYNoteViewDelegate> {
     PTYNoteView *noteView_;
     NSTextView *textView_;
+    NSPoint anchor_;
 }
 
 @property(nonatomic, retain) PTYNoteView *noteView;
+@property(nonatomic, assign) NSPoint anchor;
 
 - (void)beginEditing;
 

@@ -17,10 +17,15 @@
     BOOL dragBottom_;
     NSPoint dragOrigin_;
     NSSize originalSize_;
+    NSPoint point_;
 }
 
 @property(nonatomic, assign) id<PTYNoteViewDelegate> delegate;
 
+// Location of arrow relative to top-left corner of this view.
+@property(nonatomic, assign) NSPoint point;
+
 - (NSColor *)backgroundColor;
+- (NSRect)visibleFrame;
 
 @end
