@@ -8,6 +8,8 @@
 
 #import "PTYNoteView.h"
 
+static const CGFloat kMinWidth = 50;
+static const CGFloat kMinHeight = 50;
 @implementation PTYNoteView
 
 @synthesize delegate = delegate_;
@@ -39,7 +41,7 @@ static NSPoint ModifyNotePoint(NSPoint p, CGFloat dx, CGFloat dy)
 
 - (void)drawRect:(NSRect)dirtyRect
 {
-        [super drawRect:dirtyRect];
+    [super drawRect:dirtyRect];
 
     NSBezierPath* path = [[[NSBezierPath alloc] init] autorelease];
     NSSize size = [self visibleFrame].size;
@@ -138,8 +140,8 @@ static NSPoint ModifyNotePoint(NSPoint p, CGFloat dx, CGFloat dy)
         }
         self.frame = NSMakeRect(self.frame.origin.x,
                                 self.frame.origin.y,
-                                ceil(originalSize_.width + dw),
-                                ceil(originalSize_.height + dh));
+                                MAX(kMinWidth, ceil(originalSize_.width + dw)),
+                                MAX(kMinHeight, ceil(originalSize_.height + dh)));
     }
 }
 

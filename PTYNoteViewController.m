@@ -9,8 +9,11 @@
 #import "PTYNoteViewController.h"
 #import "PTYNoteView.h"
 
+NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewControllerShouldUpdatePosition";
+
 @interface PTYNoteViewController ()
 @property(nonatomic, retain) NSTextView *textView;
+@property(nonatomic, assign) BOOL watchForUpdate;
 @end
 
 @implementation PTYNoteViewController
@@ -18,6 +21,14 @@
 @synthesize noteView = noteView_;
 @synthesize textView = textView_;
 @synthesize anchor = anchor_;
+@synthesize watchForUpdate = watchForUpdate_;
+
+- (void)dealloc {
+    [noteView_ release];
+    [textView_ release];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [super dealloc];
+}
 
 - (void)setNoteView:(PTYNoteView *)noteView {
     [noteView_ autorelease];
@@ -94,6 +105,7 @@
                                      noteView_.frame.size.width,
                                      noteView_.frame.size.height);
         noteView_.point = NSMakePoint(0, anchor_.y);
+        self.watchForUpdate = NO;
     } else if (anchor_.y + visibleHeight / 2 + shadowHeight > superViewMaxY) {
         // Can't center the anchor because some of the note would be off the bottom of the view.
         const CGFloat shift = (superViewMaxY - height) - (anchor_.y - visibleHeight / 2);
@@ -102,6 +114,7 @@
                                      noteView_.frame.size.width,
                                      noteView_.frame.size.height);
         noteView_.point = NSMakePoint(0, visibleHeight / 2 - shift);
+        self.watchForUpdate = YES;
     } else {
         // Center the anchor
         noteView_.frame = NSMakeRect(anchor_.x,
@@ -109,6 +122,26 @@
                                      noteView_.frame.size.width,
                                      noteView_.frame.size.height);
         noteView_.point = NSMakePoint(0, visibleHeight / 2);
+        self.watchForUpdate = NO;
+    }
+}
+
+- (void)checkForUpdate {
+    [self setAnchor:anchor_];
+}
+
+- (void)setWatchForUpdate:(BOOL)watchForUpdate {
+    if (watchForUpdate == watchForUpdate_) {
+        return;
+    }
+    watchForUpdate_ = watchForUpdate;
+    if (watchForUpdate) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(checkForUpdate)
+                                                     name:PTYNoteViewControllerShouldUpdatePosition
+                                                   object:nil];
+    } else {
+        [[NSNotificationCenter defaultCenter] removeObserver:self];
     }
 }
 
