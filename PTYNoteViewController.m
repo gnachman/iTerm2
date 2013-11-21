@@ -40,7 +40,6 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
 }
 
 - (void)loadView {
-    [super loadView];
     const CGFloat kWidth = 300;
     const CGFloat kHeight = 50;
     self.noteView = [[[PTYNoteView alloc] initWithFrame:NSMakeRect(0, 0, kWidth, kHeight)] autorelease];
