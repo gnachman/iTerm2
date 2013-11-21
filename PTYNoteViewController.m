@@ -22,10 +22,11 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
 @synthesize textView = textView_;
 @synthesize anchor = anchor_;
 @synthesize watchForUpdate = watchForUpdate_;
-@synthesize hidden = hidden_;
+@synthesize absLine = absLine_;
 
 - (void)dealloc {
     [noteView_ removeFromSuperview];
+    noteView_.noteViewController = nil;
     [noteView_ release];
     [textView_ release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -43,7 +44,7 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     const CGFloat kWidth = 300;
     const CGFloat kHeight = 50;
     self.noteView = [[[PTYNoteView alloc] initWithFrame:NSMakeRect(0, 0, kWidth, kHeight)] autorelease];
-    self.noteView.delegate = self;
+    self.noteView.noteViewController = self;
     NSShadow *shadow = [[[NSShadow alloc] init] autorelease];
     shadow.shadowColor = [NSColor blackColor];
     shadow.shadowOffset = NSMakeSize(1, -1);
@@ -166,6 +167,29 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
 
 - (BOOL)isEmpty {
     return [[textView_.string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] length] == 0;
+}
+
+- (void)setString:(NSString *)string {
+    [self view];  // Ensure textView exists.
+    textView_.string = string;
+}
+
+- (BOOL)isNoteHidden {
+    return hidden_;
+}
+
+- (void)noteViewPositionNeedsUpdate {
+    self.anchor = anchor_;
+}
+
+- (void)noteViewMoveBy:(NSSize)distance {
+    anchor_.x += distance.width;
+    anchor_.y += distance.height;
+    [self setAnchor:anchor_];
+}
+
+- (void)noteSetAnchor:(NSPoint)point {
+    anchor_ = point;
 }
 
 @end

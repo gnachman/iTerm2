@@ -15,19 +15,23 @@ extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
 @protocol PTYNoteViewControllerDelegate
 @end
 
-@interface PTYNoteViewController : NSViewController <PTYNoteViewDelegate> {
+@interface PTYNoteViewController : NSViewController {
     PTYNoteView *noteView_;
     NSTextView *textView_;
     NSPoint anchor_;
     BOOL watchForUpdate_;
     BOOL hidden_;
+    long long absLine_;
 }
 
 @property(nonatomic, retain) PTYNoteView *noteView;
 @property(nonatomic, assign) NSPoint anchor;
-@property(nonatomic, assign) BOOL hidden;
+@property(nonatomic, assign) long long absLine;
 
 - (void)beginEditing;
 - (BOOL)isEmpty;
+- (void)setString:(NSString *)string;
+- (void)setNoteHidden:(BOOL)hidden;
+- (BOOL)isNoteHidden;
 
 @end

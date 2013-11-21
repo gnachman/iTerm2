@@ -666,6 +666,9 @@ enum {
 
 - (NSString*)_allText;
 
+- (void)addViewForNoteOnLine:(int)line;
+- (void)updateNoteViewFrames;
+
 @end
 
 //

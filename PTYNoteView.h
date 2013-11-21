@@ -8,12 +8,10 @@
 
 #import <Cocoa/Cocoa.h>
 
-@protocol PTYNoteViewDelegate <NSObject>
-- (void)setNoteHidden:(BOOL)hidden;
-@end
+@class PTYNoteViewController;
 
 @interface PTYNoteView : NSView {
-    id<PTYNoteViewDelegate> delegate_;
+    PTYNoteViewController *noteViewController_;
     BOOL dragRight_;
     BOOL dragBottom_;
     NSPoint dragOrigin_;
@@ -21,7 +19,7 @@
     NSPoint point_;
 }
 
-@property(nonatomic, assign) id<PTYNoteViewDelegate> delegate;
+@property(nonatomic, assign) PTYNoteViewController *noteViewController;
 
 // Location of arrow relative to top-left corner of this view.
 @property(nonatomic, assign) NSPoint point;

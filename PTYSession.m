@@ -4428,6 +4428,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [[[self addressBookEntry] objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue];
 }
 
+- (void)screenDidChangeNumberOfScrollbackLines {
+    [TEXTVIEW updateNoteViewFrames];
+}
+
 - (void)screenShowBellIndicator {
     [self setBell:YES];
 }
@@ -4542,6 +4546,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     } else {
         NSLog(@"Clipboard access denied for CopyToClipboard");
     }
+}
+
+- (void)screenDidAddNoteOnLine:(int)line {
+    [TEXTVIEW addViewForNoteOnLine:line];
 }
 
 - (void)screenCopyBufferToPasteboard {

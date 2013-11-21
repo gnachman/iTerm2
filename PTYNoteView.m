@@ -13,7 +13,7 @@ static const CGFloat kMinHeight = 50;
 
 @implementation PTYNoteView
 
-@synthesize delegate = delegate_;
+@synthesize noteViewController = noteViewController_;
 @synthesize point = point_;
 
 - (NSColor *)backgroundColor {

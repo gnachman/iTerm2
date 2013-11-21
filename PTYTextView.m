@@ -1684,21 +1684,7 @@ NSMutableArray* screens=0;
     double excess = [self excess];
 
     if ((int)(height + excess + imeOffset * lineHeight) != (int)frame.size.height) {
-        // The old iTerm code had a comment about a hack at this location
-        // that worked around an (alleged) bug in NSClipView not respecting
-        // setCopiesOnScroll:YES and a gross workaround. The workaround caused
-        // drawing bugs on Snow Leopard. It was a performance optimization, but
-        // the penalty was too great.
-        //
-        // I believe the redraw errors occurred because they disabled drawing
-        // for the duration of the call. [drawRects] was called (in another thread?)
-        // and didn't redraw some invalid rects. Those rects never got another shot
-        // at being drawn. They had originally been invalidated because they had
-        // new content. The bug only happened when drawRect was called twice for
-        // the same screen (I guess because the timer fired while the screen was
-        // being updated).
-
-        // Resize the frame
+        // Grow the frame
         // Add VMARGIN to include top margin.
         frame.size.height = height + excess + imeOffset * lineHeight + VMARGIN;
         [[self superview] setFrame:frame];
@@ -1772,6 +1758,10 @@ NSMutableArray* screens=0;
                 [self setNeedsDisplayInRect:dr];
             }
         }
+
+        // Move subviews up
+        [self updateNoteViewFrames];
+
         NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
     }
 
@@ -3436,7 +3426,7 @@ NSMutableArray* screens=0;
             for (NSView *view in [self subviews]) {
                 if ([view isKindOfClass:[PTYNoteView class]]) {
                     PTYNoteView *noteView = (PTYNoteView *)view;
-                    [noteView.delegate setNoteHidden:YES];
+                    [noteView.noteViewController setNoteHidden:YES];
                 }
             }
         }
@@ -4532,17 +4522,29 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[dataSource session] clearBuffer];
 }
 
+- (void)addViewForNoteOnLine:(int)line
+{
+    // Make sure scrollback overflow is reset.
+    [self refresh];
+    PTYNoteViewController *note = [dataSource noteForLine:line];
+    if (note) {
+        [note.view removeFromSuperview];
+        [self addSubview:note.view];
+        note.anchor = NSMakePoint(0, line * lineHeight + lineHeight / 2);
+        note.absLine = line + [dataSource totalScrollbackOverflow];
+        [note setNoteHidden:NO];
+    }
+}
+
 - (void)addOrEditNoteForLine:(int)line
 {
     PTYNoteViewController *note = [dataSource noteForLine:line];
     if (!note) {
         note = [[[PTYNoteViewController alloc] init] autorelease];
         [dataSource setNote:note forLine:line];
-        [note.view removeFromSuperview];
-        [self addSubview:note.view];
-        note.anchor = NSMakePoint(0, line * lineHeight + lineHeight / 2);
-    } else if (note.hidden) {
-        note.hidden = NO;
+        [self addViewForNoteOnLine:line];
+    } else if (note.isNoteHidden) {
+        [note setNoteHidden:NO];
     }
     [note beginEditing];
 }
@@ -4551,6 +4553,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     if (startY >= 0) {
         [self addOrEditNoteForLine:startY];
+    }
+}
+
+- (void)updateNoteViewFrames
+{
+    for (NSView *view in [self subviews]) {
+        if ([view isKindOfClass:[PTYNoteView class]]) {
+            PTYNoteView *noteView = (PTYNoteView *)view;
+            PTYNoteViewController *note = (PTYNoteViewController *)noteView.noteViewController;
+            int line = (note.absLine - [dataSource totalScrollbackOverflow]);
+            [note setAnchor:NSMakePoint(0, line * lineHeight + lineHeight / 2)];
+        }
     }
 }
 
@@ -7318,7 +7332,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     PTYNoteViewController *note = [dataSource noteForLine:line];
-    if (note.hidden && !note.isEmpty) {
+    if (note.isNoteHidden && !note.isEmpty) {
         [[NSColor yellowColor] set];
         NSRectFill(NSMakeRect(1, line * lineHeight, MARGIN - 3, lineHeight));
         [[NSColor colorWithCalibratedRed:.8 green:.8 blue:0 alpha:1] set];

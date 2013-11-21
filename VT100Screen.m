@@ -2016,6 +2016,26 @@ static const double kInterBellQuietPeriod = 0.1;
     [delegate_ screenSetProfileToProfileNamed:value];
 }
 
+- (void)hideNoteAtAbsoluteLineNumber:(NSNumber *)absLine {
+    long long line = [absLine longLongValue] - [self totalScrollbackOverflow];
+    PTYNoteViewController *note = [self noteForLine:line];
+    [note setNoteHidden:YES];
+}
+
+- (void)terminalSetLineNoteAtCursor:(NSString *)value {
+    int line = [self numberOfScrollbackLines] + currentGrid_.cursorY;
+    PTYNoteViewController *note = [self noteForLine:line];
+    if (!note) {
+        note = [[[PTYNoteViewController alloc] init] autorelease];
+        [self setNote:note forLine:line];
+    }
+    [note setString:value];
+    [delegate_ screenDidAddNoteOnLine:line];
+    [self performSelector:@selector(hideNoteAtAbsoluteLineNumber:)
+               withObject:@(line + [self totalScrollbackOverflow])
+               afterDelay:2];
+}
+
 - (void)terminalSetPasteboard:(NSString *)value {
     [delegate_ screenSetPasteboard:value];
 }
@@ -2439,6 +2459,7 @@ static void SwapInt(int *a, int *b) {
     if (!unlimitedScrollback_) {
         [linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width];
     }
+    [delegate_ screenDidChangeNumberOfScrollbackLines];
 }
 
 - (BOOL)useScrollbackWithRegion
