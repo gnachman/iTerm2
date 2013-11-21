@@ -100,7 +100,6 @@ static BOOL hasBecomeActive = NO;
 
     [ToolbeltView populateMenu:toolbeltMenu];
     [self _updateToolbeltMenuItem];
-    [self setFutureApplicationPresentationOptions:NSApplicationPresentationFullScreen unset:0];
 }
 
 - (void)setFutureApplicationPresentationOptions:(int)flags unset:(int)antiflags
