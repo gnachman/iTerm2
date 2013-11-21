@@ -189,11 +189,13 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>iTermApplication</string>
+	<key>NSSupportsAutomaticGraphicsSwitching</key>
+	<true/>
 	<key>SUPublicDSAKeyFile</key>
 	<string>dsa_pub.pem</string>
 	<key>SUFeedURLForTesting</key>
-	<string>http://iterm2.com/appcasts/legacy_testing.xml</string>
+	<string>http://iterm2.com/appcasts/testing.xml</string>
 	<key>SUFeedURLForFinal</key>
-	<string>http://iterm2.com/appcasts/legacy_final.xml</string>
+	<string>http://iterm2.com/appcasts/final.xml</string>
 </dict>
 </plist>
