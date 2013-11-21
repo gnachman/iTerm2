@@ -496,7 +496,7 @@ error:
                 }
             }
             [delegate_ tmuxPrintLine:@"********************************************************************************"];
-        } else {
+        } else if ([command hasPrefix:@"%exit "]) {
             [delegate_ tmuxPrintLine:@"tmux exited unexpectedly."];
             [delegate_ tmuxPrintLine:command];
         }
