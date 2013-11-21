@@ -72,6 +72,7 @@ static const int kMaxSelectedTextLinesForCustomActions = 100;
 #import "MovingAverage.h"
 #import "SearchResult.h"
 #import "PTYNoteViewController.h"
+#import "PTYNoteView.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -3429,10 +3430,15 @@ NSMutableArray* screens=0;
         if (locationInTextView.x < MARGIN) {
             PTYNoteViewController *note = [dataSource noteForLine:y];
             if (note && !note.isEmpty) {
-                [dataSource toggleVisibilityOfNote:note];
+                [note setNoteHidden:NO];
             }
         } else {
-            [dataSource hideAllNotes];
+            for (NSView *view in [self subviews]) {
+                if ([view isKindOfClass:[PTYNoteView class]]) {
+                    PTYNoteView *noteView = (PTYNoteView *)view;
+                    [noteView.delegate setNoteHidden:YES];
+                }
+            }
         }
     }
 
@@ -4536,7 +4542,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self addSubview:note.view];
         note.anchor = NSMakePoint(0, line * lineHeight + lineHeight / 2);
     } else if (note.hidden) {
-        [dataSource toggleVisibilityOfNote:note];
+        note.hidden = NO;
     }
     [note beginEditing];
 }

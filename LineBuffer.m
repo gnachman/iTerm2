@@ -631,17 +631,21 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
             }
             buffer_start += prev + offset;
             start_offset = buffer_start - raw_buffer;
+            for (int j = first_entry; j < i; j++) {
+                [objects_ removeObjectForKey:@(j)];
+            }
             first_entry = i;
             *charsDropped = start_offset - initialOffset;
 
 #ifdef TEST_LINEBUFFER_SANITY
             [self checkAndResetCachedNumlines:"dropLines" width: width];
 #endif
-
             return orig_n;
         }
         prev = cll;
     }
+
+    [objects_ removeAllObjects];
     // Consumed the whole buffer.
     cached_numlines_width = -1;
     cll_entries = 0;

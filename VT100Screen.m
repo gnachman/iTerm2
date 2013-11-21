@@ -76,9 +76,8 @@ static const double kInterBellQuietPeriod = 0.1;
             [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
             [savedCharsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
         }
-        
+
         findContext_ = [[FindContext alloc] init];
-        visibleNotes_ = [[NSMutableSet alloc] init];
     }
     return self;
 }
@@ -94,7 +93,6 @@ static const double kInterBellQuietPeriod = 0.1;
     [terminal_ release];
     [charsetUsesLineDrawingMode_ release];
     [findContext_ release];
-    [visibleNotes_ release];
     [super dealloc];
 }
 
@@ -1191,35 +1189,13 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (void)setNote:(PTYNoteViewController *)note forLine:(int)y {
-    PTYNoteViewController *predecessor = [self noteForLine:y];
-    if (predecessor) {
-        [visibleNotes_ removeObject:predecessor];
-    }
+    assert(![self noteForLine:y]);
     int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
     NSTimeInterval interval;
     if (y >= numLinesInLineBuffer) {
         [currentGrid_ setObject:note forLine:y - numLinesInLineBuffer];
     } else {
         [linebuffer_ setObject:note forLine:y width:currentGrid_.size.width];
-    }
-    if (!note.hidden) {
-        [visibleNotes_ addObject:note];
-    }
-}
-
-- (void)hideAllNotes {
-    for (PTYNoteViewController *note in visibleNotes_) {
-        note.hidden = YES;
-    }
-    [visibleNotes_ removeAllObjects];
-}
-
-- (void)toggleVisibilityOfNote:(PTYNoteViewController *)note {
-    note.hidden = !note.hidden;
-    if (note.hidden) {
-        [visibleNotes_ removeObject:note];
-    } else {
-        [visibleNotes_ addObject:note];
     }
 }
 

@@ -282,6 +282,7 @@
 
     // Empty contents of last line on screen.
     [self clearLineData:[self lineDataAtLineNumber:(size_.height - 1)]];
+    [[self lineInfoAtLineNumber:(size_.height - 1)] setObject:nil];
 
     if (lineBuffer) {
         // Mark new line at bottom of screen dirty.

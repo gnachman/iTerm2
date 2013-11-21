@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 @protocol PTYNoteViewDelegate <NSObject>
+- (void)setNoteHidden:(BOOL)hidden;
 @end
 
 @interface PTYNoteView : NSView {

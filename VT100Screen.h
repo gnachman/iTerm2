@@ -70,8 +70,6 @@ extern int kVT100ScreenMinRows;
 
     // OK to report window title?
     BOOL allowTitleReporting_;
-
-    NSMutableSet *visibleNotes_;
 }
 
 @property(nonatomic, retain) VT100Terminal *terminal;

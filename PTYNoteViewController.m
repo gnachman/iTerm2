@@ -25,6 +25,7 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
 @synthesize hidden = hidden_;
 
 - (void)dealloc {
+    [noteView_ removeFromSuperview];
     [noteView_ release];
     [textView_ release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -151,7 +152,7 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     noteView_.alphaValue = hidden_ ? 0 : 1;
 }
 
-- (void)setHidden:(BOOL)hidden {
+- (void)setNoteHidden:(BOOL)hidden {
     if (hidden == hidden_) {
         return;
     }
