@@ -262,7 +262,10 @@
                      unlimitedScrollback:(BOOL)unlimitedScrollback {
     // Mark the cursor's previous location dirty. This fixes a rare race condition where
     // the cursor is not erased.
-    [self markCharDirty:YES at:cursor_ updateTimestamp:YES];
+    // TODO: I'm not sure this still exists post-refactoring.
+    if (cursor_.x < size_.width) {
+      [self markCharDirty:YES at:cursor_ updateTimestamp:YES];
+    }
 
     // Add the top line to the scrollback
     int numLinesDropped = [self appendLineToLineBuffer:lineBuffer
