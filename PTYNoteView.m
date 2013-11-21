@@ -9,7 +9,7 @@
 #import "PTYNoteView.h"
 
 static const CGFloat kMinWidth = 50;
-static const CGFloat kMinHeight = 50;
+static const CGFloat kMinHeight = 30;
 
 @implementation PTYNoteView
 
@@ -121,7 +121,6 @@ static NSPoint ModifyNotePoint(NSPoint p, CGFloat dx, CGFloat dy)
     NSPoint pointInView = [self convertPoint:[theEvent locationInWindow] fromView:nil];
     for (int i = 0; i < sizeof(regions) / sizeof(*regions); i++) {
         if (NSPointInRect(pointInView, regions[i].rect)) {
-            NSLog(@"Ok to drag.");
             dragRight_ = regions[i].horizontal;
             dragBottom_ = regions[i].bottom;
             dragOrigin_ = [theEvent locationInWindow];

@@ -4267,6 +4267,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenSizeDidChange {
     [self updateScroll];
+    [TEXTVIEW updateNoteViewFrames];
 }
 
 - (void)screenTriggerableChangeDidOccur {

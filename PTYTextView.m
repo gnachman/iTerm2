@@ -4585,6 +4585,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if ([view isKindOfClass:[PTYNoteView class]]) {
             PTYNoteView *noteView = (PTYNoteView *)view;
             PTYNoteViewController *note = (PTYNoteViewController *)noteView.noteViewController;
+            // TODO: This is wrong. If the note is in the scrollback buffer, then its absolute line
+            // number is subject to change when the width changes. The note should remember its
+            // position in the line buffer and dynamically compute its line from that given the
+            // current width. In other words, store a line number if it's onscreen and a linebuffer
+            // position if it's not. Ugh!
             int line = (note.absLine - [dataSource totalScrollbackOverflow]);
             [note setAnchor:NSMakePoint(0, line * lineHeight + lineHeight / 2)];
         }

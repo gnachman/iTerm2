@@ -388,7 +388,15 @@ static const double kInterBellQuietPeriod = 0.1;
     } else {
         [delegate_ screenRemoveSelection];
     }
-    
+
+    // Update absolute line numbers of notes.
+    for (int i = 0; i < currentGrid_.size.height; i++) {
+        NSObject *object = [currentGrid_ objectForLine:i];
+        if (object && [object isKindOfClass:[PTYNoteViewController class]]) {
+            PTYNoteViewController *note = (PTYNoteViewController *)object;
+            note.absLine = [self totalScrollbackOverflow] + [self numberOfScrollbackLines] + i;
+        }
+    }
     [delegate_ screenSizeDidChange];
 }
 

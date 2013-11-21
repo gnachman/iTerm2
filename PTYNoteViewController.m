@@ -41,7 +41,7 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
 
 - (void)loadView {
     const CGFloat kWidth = 300;
-    const CGFloat kHeight = 50;
+    const CGFloat kHeight = 30;
     self.noteView = [[[PTYNoteView alloc] initWithFrame:NSMakeRect(0, 0, kWidth, kHeight)] autorelease];
     self.noteView.noteViewController = self;
     NSShadow *shadow = [[[NSShadow alloc] init] autorelease];
