@@ -3285,6 +3285,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [tmuxController_ windowWasRenamedWithId:windowId to:newName];
 }
 
+- (void)tmuxPrintLine:(NSString *)line
+{
+    [SCREEN appendStringAtCursor:line ascii:NO];
+    [SCREEN crlf];
+}
+
 - (void)tmuxHostDisconnected
 {
     [tmuxController_ detach];

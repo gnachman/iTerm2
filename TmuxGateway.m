@@ -50,6 +50,7 @@ static NSString *kCommandIsLastInList = @"lastInList";
         state_ = CONTROL_STATE_READY;
         commandQueue_ = [[NSMutableArray alloc] init];
         stream_ = [[NSMutableData alloc] init];
+        strayMessages_ = [[NSMutableString alloc] init];
     }
     return self;
 }
@@ -61,6 +62,7 @@ static NSString *kCommandIsLastInList = @"lastInList";
     [currentCommand_ release];
     [currentCommandResponse_ release];
     [currentCommandData_ release];
+    [strayMessages_ release];
 
     [super dealloc];
 }
@@ -484,6 +486,20 @@ error:
     } else if ([command hasPrefix:@"%exit "] ||
                [command isEqualToString:@"%exit"]) {
         TmuxLog(@"tmux exit message: %@", command);
+        if ([strayMessages_ length] > 0) {
+            [delegate_ tmuxPrintLine:@""];
+            [delegate_ tmuxPrintLine:@"** ERROR **"];
+            [delegate_ tmuxPrintLine:@"tmux exited with message:"];
+            for (NSString *line in [strayMessages_ componentsSeparatedByString:@"\n"]) {
+                if ([line length] > 0) {
+                    [delegate_ tmuxPrintLine:line];
+                }
+            }
+            [delegate_ tmuxPrintLine:@"********************************************************************************"];
+        } else {
+            [delegate_ tmuxPrintLine:@"tmux exited unexpectedly."];
+            [delegate_ tmuxPrintLine:command];
+        }
         [self hostDisconnected];
     } else if ([command hasPrefix:@"%begin"]) {
         if (currentCommand_) {
@@ -496,6 +512,7 @@ error:
     } else {
         // We'll be tolerant of unrecognized commands.
         NSLog(@"Unrecognized command \"%@\"", command);
+        [strayMessages_ appendFormat:@"%@\n", command];
     }
 
     // Erase the just-handled command from the stream.

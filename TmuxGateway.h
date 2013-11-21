@@ -41,6 +41,7 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (NSSize)tmuxBookmarkSize;  // rows, cols
 - (int)tmuxNumHistoryLinesInBookmark;
 - (void)tmuxSetSecureLogging:(BOOL)secureLogging;
+- (void)tmuxPrintLine:(NSString *)line;
 
 @end
 
@@ -71,6 +72,7 @@ typedef enum {
 
     BOOL detachSent_;
     BOOL acceptNotifications_;  // Initially NO. When YES, respond to notifications.
+    NSMutableString *strayMessages_;
 }
 
 - (id)initWithDelegate:(NSObject<TmuxGatewayDelegate> *)delegate;
