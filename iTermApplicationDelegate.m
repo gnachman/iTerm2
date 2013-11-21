@@ -1058,20 +1058,16 @@ static void WriteDebugLogHeader() {
      (int)[window isKeyWindow],
      [window.contentView iterm_recursiveDescription]];
   }
-  NSString *header = [NSString stringWithFormat:
-                      @"iTerm2 version: %@\n"
-                      @"Date: %@ (%lld)\n"
-                      @"Key window: %@\n"
-                      @"Windows: %@\n"
-                      @"------ END HEADER ------\n\n",
-                      [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"],
-                      [NSDate date],
-                      (long long)[[NSDate date] timeIntervalSince1970],
-                      [[NSApplication sharedApplication] keyWindow],
-                      windows];
-  NSData* data = [header dataUsingEncoding:NSUTF8StringEncoding];
-  int written = write(gDebugLogFile, [data bytes], [data length]);
-  assert(written == [data length]);
+  DLog(@"iTerm2 version: %@\n"
+       @"Date: %@ (%lld)\n"
+       @"Key window: %@\n"
+       @"Windows: %@\n"
+       @"------ END HEADER ------\n\n",
+       [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"],
+       [NSDate date],
+       (long long)[[NSDate date] timeIntervalSince1970],
+       [[NSApplication sharedApplication] keyWindow],
+       windows);
 }
 
 static void WriteDebugLogFooter() {
@@ -1084,13 +1080,9 @@ static void WriteDebugLogFooter() {
      (int)[window isKeyWindow],
      [window.contentView iterm_recursiveDescription]];
   }
-  NSString *header = [NSString stringWithFormat:
-                      @"------ BEGIN FOOTER -----\n"
-                      @"Windows: %@\n",
-                      windows];
-  NSData* data = [header dataUsingEncoding:NSUTF8StringEncoding];
-  int written = write(gDebugLogFile, [data bytes], [data length]);
-  assert(written == [data length]);
+  DLog(@"------ BEGIN FOOTER -----\n"
+       @"Windows: %@\n",
+       windows);
 }
 
 static void FlushDebugLog() {
@@ -1159,26 +1151,35 @@ static void FlushDebugLog() {
     [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
 }
 
+- (void)logRD {
+    DLog(@"** BEGIN LOG RD **");
+    WriteDebugLogHeader();
+    DLog(@"** END LOG RD **");
+}
+
 // Debug logging
 -(IBAction)debugLogging:(id)sender
 {
     if (!gDebugLogging) {
         gDebugLogFile = open("/tmp/debuglog.txt", O_TRUNC | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
-        WriteDebugLogHeader();
-        NSRunAlertPanel(@"Debug Logging Enabled",
-                        @"Writing to /tmp/debuglog.txt",
-                        @"OK", nil, nil);
         gDebugLogStr = [[NSMutableString alloc] init];
         gDebugLogStr2 = [[NSMutableString alloc] init];
         gDebugLogging = !gDebugLogging;
+        WriteDebugLogHeader();
+        
+        t_ = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(logRD) userInfo:nil repeats:YES];
+        NSRunAlertPanel(@"Debug Logging Enabled",
+                        @"Writing to /tmp/debuglog.txt",
+                        @"OK", nil, nil);
     } else {
-        gDebugLogging = !gDebugLogging;
-        SwapDebugLog();
-        FlushDebugLog();
-        SwapDebugLog();
-        FlushDebugLog();
         WriteDebugLogFooter();
-
+        SwapDebugLog();
+        FlushDebugLog();
+        SwapDebugLog();
+        FlushDebugLog();
+        gDebugLogging = !gDebugLogging;
+        [t_ invalidate];
+        t_ = nil;
         close(gDebugLogFile);
         gDebugLogFile=-1;
         NSRunAlertPanel(@"Debug Logging Stopped",

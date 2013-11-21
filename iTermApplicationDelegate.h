@@ -104,6 +104,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     BOOL finishedLaunching_;
 
     BOOL userHasInteractedWithAnySession_;  // Disables min 10-second running time
+    NSTimer *t_;
 }
 
 - (void)awakeFromNib;
