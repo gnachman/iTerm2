@@ -8,6 +8,7 @@
 
 #import "DebugLogging.h"
 #import "DVR.h"
+#import "PTYNoteViewController.h"
 #import "PTYTextView.h"
 #import "RegexKitLite.h"
 #import "SearchResult.h"
@@ -75,7 +76,7 @@ static const double kInterBellQuietPeriod = 0.1;
             [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
             [savedCharsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
         }
-        
+
         findContext_ = [[FindContext alloc] init];
     }
     return self;
@@ -387,7 +388,15 @@ static const double kInterBellQuietPeriod = 0.1;
     } else {
         [delegate_ screenRemoveSelection];
     }
-    
+
+    // Update absolute line numbers of notes.
+    for (int i = 0; i < currentGrid_.size.height; i++) {
+        NSObject *object = [currentGrid_ objectForLine:i];
+        if (object && [object isKindOfClass:[PTYNoteViewController class]]) {
+            PTYNoteViewController *note = (PTYNoteViewController *)object;
+            note.absLine = [self totalScrollbackOverflow] + [self numberOfScrollbackLines] + i;
+        }
+    }
     [delegate_ screenSizeDidChange];
 }
 
@@ -673,7 +682,8 @@ static const double kInterBellQuietPeriod = 0.1;
                   length:len
                  partial:NO
                    width:currentGrid_.size.width
-               timestamp:now];
+               timestamp:now
+                  object:nil];
     }
     NSMutableArray *wrappedLines = [NSMutableArray array];
     int n = [temp numLinesWithWidth:currentGrid_.size.width];
@@ -698,7 +708,8 @@ static const double kInterBellQuietPeriod = 0.1;
                          length:line.length
                         partial:(line.eol != EOL_HARD)
                           width:currentGrid_.size.width
-                      timestamp:now];
+                      timestamp:now
+                         object:nil];
     }
     if (!unlimitedScrollback_) {
         [linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width];
@@ -1173,6 +1184,27 @@ static const double kInterBellQuietPeriod = 0.1;
         interval = [linebuffer_ timestampForLineNumber:y width:currentGrid_.size.width];
     }
     return [NSDate dateWithTimeIntervalSinceReferenceDate:interval];
+}
+
+- (PTYNoteViewController *)noteForLine:(int)y {
+    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    NSTimeInterval interval;
+    if (y >= numLinesInLineBuffer) {
+        return (PTYNoteViewController *)[currentGrid_ objectForLine:y - numLinesInLineBuffer];
+    } else {
+        return (PTYNoteViewController *)[linebuffer_ objectForLineNumber:y width:currentGrid_.size.width];
+    }
+}
+
+- (void)setNote:(PTYNoteViewController *)note forLine:(int)y {
+    assert(![self noteForLine:y]);
+    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    NSTimeInterval interval;
+    if (y >= numLinesInLineBuffer) {
+        [currentGrid_ setObject:note forLine:y - numLinesInLineBuffer];
+    } else {
+        [linebuffer_ setObject:note forLine:y width:currentGrid_.size.width];
+    }
 }
 
 #pragma mark - VT100TerminalDelegate
@@ -1992,6 +2024,26 @@ static const double kInterBellQuietPeriod = 0.1;
     [delegate_ screenSetProfileToProfileNamed:value];
 }
 
+- (void)hideNoteAtAbsoluteLineNumber:(NSNumber *)absLine {
+    long long line = [absLine longLongValue] - [self totalScrollbackOverflow];
+    PTYNoteViewController *note = [self noteForLine:line];
+    [note setNoteHidden:YES];
+}
+
+- (void)terminalSetLineNoteAtCursor:(NSString *)value {
+    int line = [self numberOfScrollbackLines] + currentGrid_.cursorY;
+    PTYNoteViewController *note = [self noteForLine:line];
+    if (!note) {
+        note = [[[PTYNoteViewController alloc] init] autorelease];
+        [self setNote:note forLine:line];
+    }
+    [note setString:value];
+    [delegate_ screenDidAddNoteOnLine:line];
+    [self performSelector:@selector(hideNoteAtAbsoluteLineNumber:)
+               withObject:@(line + [self totalScrollbackOverflow])
+               afterDelay:2];
+}
+
 - (void)terminalSetPasteboard:(NSString *)value {
     [delegate_ screenSetPasteboard:value];
 }
@@ -2415,6 +2467,7 @@ static void SwapInt(int *a, int *b) {
     if (!unlimitedScrollback_) {
         [linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width];
     }
+    [delegate_ screenDidChangeNumberOfScrollbackLines];
 }
 
 - (BOOL)useScrollbackWithRegion
@@ -2530,7 +2583,8 @@ static void SwapInt(int *a, int *b) {
         BOOL isOk = [linebuffer_ popAndCopyLastLineInto:dummy
                                                   width:currentGrid_.size.width
                                       includesEndOfLine:&cont
-                                              timestamp:NULL];
+                                              timestamp:NULL
+                                                 object:NULL];
         NSAssert(isOk, @"Pop shouldn't fail");
     }
     free(dummy);

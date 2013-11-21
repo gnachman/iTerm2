@@ -262,6 +262,14 @@
 		1D7C1AD31276FD6E00461E55 /* PasteboardHistory.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */; };
 		1D7C1D1212772ECC00461E55 /* NSDateFormatterExtras.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */; };
 		1D7C1D1312772ECC00461E55 /* NSDateFormatterExtras.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */; };
+		1D81F0BD183C3B0100910838 /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */; };
+		1D81F0C0183C3C2D00910838 /* NSView+RecursiveDescription.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D81F0BE183C3C2D00910838 /* NSView+RecursiveDescription.h */; };
+		1D81F0C1183C3C2D00910838 /* NSView+RecursiveDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */; };
+		1D81F0C3183C3CCD00910838 /* SBSystemPreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D81F0C2183C3CCD00910838 /* SBSystemPreferences.h */; };
+		1D81F0C9183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D81F0C7183D4DAB00910838 /* nw_se_resize_cursor.png */; };
+		1D81F0CA183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D81F0C7183D4DAB00910838 /* nw_se_resize_cursor.png */; };
+		1D81F0CB183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D81F0C8183D4DAB00910838 /* nw_se_resize_cursor@2x.png */; };
+		1D81F0CC183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D81F0C8183D4DAB00910838 /* nw_se_resize_cursor@2x.png */; };
 		1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8255F8146869D8007CAE78 /* DefaultPointerActions.plist */; };
 		1D8255FC14687EE8007CAE78 /* PointerPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */; };
 		1D8255FD14687EE8007CAE78 /* PointerPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8255FB14687EE8007CAE78 /* PointerPrefsController.m */; };
@@ -571,6 +579,12 @@
 		A63F4090183948E4003A6A6D /* VT100LineInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F408E183948E4003A6A6D /* VT100LineInfo.h */; };
 		A63F4091183948E4003A6A6D /* VT100LineInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F408F183948E4003A6A6D /* VT100LineInfo.m */; };
 		A63F4092183962D3003A6A6D /* VT100LineInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F408F183948E4003A6A6D /* VT100LineInfo.m */; };
+		A63F4095183B398C003A6A6D /* PTYNoteViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F4093183B398C003A6A6D /* PTYNoteViewController.h */; };
+		A63F4096183B398C003A6A6D /* PTYNoteViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4094183B398C003A6A6D /* PTYNoteViewController.m */; };
+		A63F4097183B398C003A6A6D /* PTYNoteViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4094183B398C003A6A6D /* PTYNoteViewController.m */; };
+		A63F409A183B3AA7003A6A6D /* PTYNoteView.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F4098183B3AA7003A6A6D /* PTYNoteView.h */; };
+		A63F409B183B3AA7003A6A6D /* PTYNoteView.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4099183B3AA7003A6A6D /* PTYNoteView.m */; };
+		A63F409C183B3AA7003A6A6D /* PTYNoteView.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4099183B3AA7003A6A6D /* PTYNoteView.m */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = FB151F2903648AC401F955DB /* iTerm.strings */; };
@@ -751,6 +765,12 @@
 		1D7C1AD21276FD6E00461E55 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/PasteboardHistory.xib; sourceTree = "<group>"; };
 		1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSDateFormatterExtras.h; sourceTree = "<group>"; };
 		1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSDateFormatterExtras.m; sourceTree = "<group>"; };
+		1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScriptingBridge.framework; path = System/Library/Frameworks/ScriptingBridge.framework; sourceTree = SDKROOT; };
+		1D81F0BE183C3C2D00910838 /* NSView+RecursiveDescription.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSView+RecursiveDescription.h"; sourceTree = "<group>"; };
+		1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSView+RecursiveDescription.m"; sourceTree = "<group>"; };
+		1D81F0C2183C3CCD00910838 /* SBSystemPreferences.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SBSystemPreferences.h; sourceTree = "<group>"; };
+		1D81F0C7183D4DAB00910838 /* nw_se_resize_cursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = nw_se_resize_cursor.png; path = images/nw_se_resize_cursor.png; sourceTree = "<group>"; };
+		1D81F0C8183D4DAB00910838 /* nw_se_resize_cursor@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "nw_se_resize_cursor@2x.png"; path = "images/nw_se_resize_cursor@2x.png"; sourceTree = "<group>"; };
 		1D8255F8146869D8007CAE78 /* DefaultPointerActions.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultPointerActions.plist; sourceTree = "<group>"; };
 		1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PointerPrefsController.h; sourceTree = "<group>"; };
 		1D8255FB14687EE8007CAE78 /* PointerPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PointerPrefsController.m; sourceTree = "<group>"; };
@@ -962,6 +982,10 @@
 		A073973F14C7694600786414 /* ColorsMenuItemView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ColorsMenuItemView.m; sourceTree = "<group>"; };
 		A63F408E183948E4003A6A6D /* VT100LineInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100LineInfo.h; sourceTree = "<group>"; };
 		A63F408F183948E4003A6A6D /* VT100LineInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100LineInfo.m; sourceTree = "<group>"; };
+		A63F4093183B398C003A6A6D /* PTYNoteViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYNoteViewController.h; sourceTree = "<group>"; };
+		A63F4094183B398C003A6A6D /* PTYNoteViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYNoteViewController.m; sourceTree = "<group>"; };
+		A63F4098183B3AA7003A6A6D /* PTYNoteView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYNoteView.h; sourceTree = "<group>"; };
+		A63F4099183B3AA7003A6A6D /* PTYNoteView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYNoteView.m; sourceTree = "<group>"; };
 		DD02572409CB9398008F320C /* PSMAquaTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMAquaTabStyle.h; sourceTree = "<group>"; };
 		DD02572509CB9398008F320C /* PSMAquaTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMAquaTabStyle.m; sourceTree = "<group>"; };
 		DD02572609CB9398008F320C /* PSMMetalTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMMetalTabStyle.h; sourceTree = "<group>"; };
@@ -1080,6 +1104,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1D81F0BD183C3B0100910838 /* ScriptingBridge.framework in Frameworks */,
 				874206530564169600CFC3F1 /* AppKit.framework in Frameworks */,
 				F6E2DEDA0AE2F67200D20B3B /* Sparkle.framework in Frameworks */,
 				1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */,
@@ -1096,6 +1121,10 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A63F4093183B398C003A6A6D /* PTYNoteViewController.h */,
+				A63F4094183B398C003A6A6D /* PTYNoteViewController.m */,
+				A63F4098183B3AA7003A6A6D /* PTYNoteView.h */,
+				A63F4099183B3AA7003A6A6D /* PTYNoteView.m */,
 				A63F408E183948E4003A6A6D /* VT100LineInfo.h */,
 				A63F408F183948E4003A6A6D /* VT100LineInfo.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
@@ -1153,6 +1182,7 @@
 				1DD6707514934ADE008E4361 /* PTYSplitView.h */,
 				1DD39B7C180F68BF004E56D5 /* PTYTextViewDataSource.h */,
 				1D085F9C16F137D900B7FCE9 /* RoundedRectView.h */,
+				1D81F0C2183C3CCD00910838 /* SBSystemPreferences.h */,
 				1DC393C317B59B08000EE0F2 /* SearchResult.h */,
 				1D8FC67917E673A400A82402 /* shell_launcher.h */,
 				1DC38816148E840600B89F7C /* SolidColorView.h */,
@@ -1160,6 +1190,8 @@
 				1D085FA016F138A000B7FCE9 /* ToastWindowController.h */,
 				1D8B8A121806038F00C2DC25 /* VT100Grid.h */,
 				1DD39ACD180B785A004E56D5 /* VT100GridTypes.h */,
+				A63F408E183948E4003A6A6D /* VT100LineInfo.h */,
+				A63F408F183948E4003A6A6D /* VT100LineInfo.m */,
 				1DD39B7D180F969E004E56D5 /* VT100ScreenDelegate.h */,
 				1D53FD18181C700B00524D4F /* VT100TerminalDelegate.h */,
 				1DA26ABF15007507004B5792 /* BackgroundThread.m */,
@@ -1357,35 +1389,35 @@
 		0464AB22006CD2EC7F000001 /* Interfaces */ = {
 			isa = PBXGroup;
 			children = (
-				1D085F8816F030FB00B7FCE9 /* PasteView.xib */,
-				9325FF4E0FB54E00004EC67C /* MainMenu.xib */,
-				9325FF3C0FB54DF1004EC67C /* PseudoTerminal.xib */,
-				9325FF400FB54DF1004EC67C /* PreferencePanel.xib */,
-				9325FF460FB54DF1004EC67C /* ProfilesWindow.xib */,
-				1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */,
-				1D237D8E131D8BEE004DD60C /* FindView.xib */,
-				1D844C8B13FD8B7700CD4F85 /* SplitPanel.xib */,
-				1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */,
-				1DE2154112821F1C004E3ADF /* Autocomplete.xib */,
-				1D99785112EEB3D600F0794D /* GlobalSearch.xib */,
-				E8EDCE69015E0A5703000001 /* iTerm.icns */,
-				FBBB8B60039FC04E01F955DB /* iTerm.png */,
-				DD9C1AE2051F45C000A8A065 /* iTerm-Aqua.jpg */,
 				FB094A14033D58AE01F955DB /* addressbook.png */,
+				1DE2154112821F1C004E3ADF /* Autocomplete.xib */,
 				FB094A16033D58B601F955DB /* close.png */,
 				FB754C5F036EFC5301F955DB /* config.png */,
 				F6DA0AFC0AF066EE0098EFEB /* edit.png */,
 				FB47BCC403686CAC01F955DB /* exec.png */,
+				1D237D8E131D8BEE004DD60C /* FindView.xib */,
 				F6CDC4E60AE6D3E2005E7D4F /* folder.png */,
-				FB094A18033D58BD01F955DB /* new.png */,
-				FB896717038D935801F955DB /* newwin.png */,
-				8786A96E052CEC220073D10E /* script.png */,
-				F6C9AFEF0EA70D0200D318A8 /* sort.png */,
+				1D99785112EEB3D600F0794D /* GlobalSearch.xib */,
+				DD9C1AE2051F45C000A8A065 /* iTerm-Aqua.jpg */,
+				E8EDCE69015E0A5703000001 /* iTerm.icns */,
+				DD57633605653C5F00F1905E /* iTerm.plist */,
+				FBBB8B60039FC04E01F955DB /* iTerm.png */,
 				DD48F1C703EBB1C400A8A065 /* iTerm.scriptSuite */,
 				DD48F1CC03EBB20500A8A065 /* iTerm.scriptTerminology */,
 				FB151F2903648AC401F955DB /* iTerm.strings */,
 				DD57633005653C2E00F1905E /* iTerm_Framework.plist */,
-				DD57633605653C5F00F1905E /* iTerm.plist */,
+				9325FF4E0FB54E00004EC67C /* MainMenu.xib */,
+				FB094A18033D58BD01F955DB /* new.png */,
+				FB896717038D935801F955DB /* newwin.png */,
+				1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */,
+				1D085F8816F030FB00B7FCE9 /* PasteView.xib */,
+				9325FF400FB54DF1004EC67C /* PreferencePanel.xib */,
+				9325FF460FB54DF1004EC67C /* ProfilesWindow.xib */,
+				9325FF3C0FB54DF1004EC67C /* PseudoTerminal.xib */,
+				8786A96E052CEC220073D10E /* script.png */,
+				F6C9AFEF0EA70D0200D318A8 /* sort.png */,
+				1D844C8B13FD8B7700CD4F85 /* SplitPanel.xib */,
+				1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */,
 			);
 			name = Interfaces;
 			sourceTree = "<group>";
@@ -1442,6 +1474,8 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1D81F0C7183D4DAB00910838 /* nw_se_resize_cursor.png */,
+				1D81F0C8183D4DAB00910838 /* nw_se_resize_cursor@2x.png */,
 				9DB3D6E2176CB4D80071CCF8 /* PrefsProfile.png */,
 				9DB3D6E3176CB4D80071CCF8 /* PrefsProfile@2x.png */,
 				9DB3D6DE176C8F0B0071CCF8 /* PrefsAppearance.png */,
@@ -1623,6 +1657,8 @@
 		1D9DDE31142E73E300275650 /* Categories */ = {
 			isa = PBXGroup;
 			children = (
+				1D81F0BE183C3C2D00910838 /* NSView+RecursiveDescription.h */,
+				1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */,
 				1D085F9416F04D0900B7FCE9 /* NSBezierPath+iTerm.h */,
 				1D48B32116706FC3000046EE /* NSView+iTerm.h */,
 				1D085F9516F04D0900B7FCE9 /* NSBezierPath+iTerm.m */,
@@ -1639,6 +1675,7 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */,
 				1D9A55B6180FA90700B42CE9 /* Sparkle */,
 				1D9A553A180FA7C500B42CE9 /* Growl */,
 				1DD39B7A180B8842004E56D5 /* libicucore.dylib */,
@@ -1805,6 +1842,7 @@
 				1D5FDD4F1208E8F000C46BA3 /* PseudoTerminal.h in Headers */,
 				1D5FDD501208E8F000C46BA3 /* PTToolbarController.h in Headers */,
 				1D5FDD511208E8F000C46BA3 /* ITAddressBookMgr.h in Headers */,
+				A63F4095183B398C003A6A6D /* PTYNoteViewController.h in Headers */,
 				1D5FDD521208E8F000C46BA3 /* ITViewLocalizer.h in Headers */,
 				1D5FDD541208E8F000C46BA3 /* iTermKeyBindingMgr.h in Headers */,
 				1D5FDD591208E8F000C46BA3 /* PSMAquaTabStyle.h in Headers */,
@@ -1814,6 +1852,7 @@
 				1D5FDD5D1208E8F000C46BA3 /* PSMRolloverButton.h in Headers */,
 				1D5FDD5E1208E8F000C46BA3 /* PSMTabBarCell.h in Headers */,
 				1D5FDD5F1208E8F000C46BA3 /* PSMTabBarControl.h in Headers */,
+				1D81F0C3183C3CCD00910838 /* SBSystemPreferences.h in Headers */,
 				1D5FDD601208E8F000C46BA3 /* PSMTabStyle.h in Headers */,
 				1D5FDD611208E8F000C46BA3 /* NSBezierPath_AMShading.h in Headers */,
 				1D5FDD621208E8F000C46BA3 /* PSMTabDragAssistant.h in Headers */,
@@ -1826,6 +1865,7 @@
 				1D5FDD6A1208E8F000C46BA3 /* CGSCIFilter.h in Headers */,
 				1D5FDD6B1208E8F000C46BA3 /* CGSConnection.h in Headers */,
 				1D5FDD6C1208E8F000C46BA3 /* CGSCursor.h in Headers */,
+				1D81F0C0183C3C2D00910838 /* NSView+RecursiveDescription.h in Headers */,
 				1D5FDD6D1208E8F000C46BA3 /* CGSDebug.h in Headers */,
 				1D5FDD6E1208E8F000C46BA3 /* CGSDisplays.h in Headers */,
 				1D5FDD6F1208E8F000C46BA3 /* CGSHotKeys.h in Headers */,
@@ -1883,6 +1923,7 @@
 				1DF0895B13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h in Headers */,
 				1DF0895D13DBAE1F00A52AD8 /* NSImage+CoreImage.h in Headers */,
 				1DCA5ECF13EE507800B7725E /* WindowArrangements.h in Headers */,
+				A63F409A183B3AA7003A6A6D /* PTYNoteView.h in Headers */,
 				1D2560AA13EE60E4006B35CD /* ArrangementPreviewView.h in Headers */,
 				1DF8AF5813FD781700C8A435 /* SplitPanel.h in Headers */,
 				1D29732714082676004C5DBE /* MovePaneController.h in Headers */,
@@ -2050,9 +2091,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1D81F0CA183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */,
 				1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */,
 				1DD39AEF180B8118004E56D5 /* Images.xcassets in Resources */,
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
+				1D81F0CC183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2093,6 +2136,7 @@
 				1D5FDD9E1208E91100C46BA3 /* PseudoTerminal.xib in Resources */,
 				1D5FDDA01208E91100C46BA3 /* PreferencePanel.xib in Resources */,
 				1D5FDDA21208E91100C46BA3 /* ProfilesWindow.xib in Resources */,
+				1D81F0CB183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */,
 				8742064D0564169600CFC3F1 /* iTerm.icns in Resources */,
 				F6CDC4E70AE6D3E2005E7D4F /* folder.png in Resources */,
 				9325FF500FB54E00004EC67C /* MainMenu.xib in Resources */,
@@ -2140,6 +2184,7 @@
 				1D48B290165F3669000046EE /* AquaTabClose_Front.png in Resources */,
 				1D48B292165F405A000046EE /* important@2x.png in Resources */,
 				1D48B294165F4416000046EE /* star.png in Resources */,
+				1D81F0C9183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */,
 				1D48B2F9165F45BA000046EE /* star@2x.png in Resources */,
 				1D085F8916F030FB00B7FCE9 /* PasteView.xib in Resources */,
 				9D737D5F17495B4100B3334D /* PrefsGeneral.png in Resources */,
@@ -2193,6 +2238,7 @@
 			files = (
 				1D9A557C180FA87000B42CE9 /* ColorsMenuItemView.m in Sources */,
 				1D9A552D180FA69900B42CE9 /* SearchResult.m in Sources */,
+				A63F409C183B3AA7003A6A6D /* PTYNoteView.m in Sources */,
 				1D9A55AB180FA8B700B42CE9 /* PSMProgressIndicator.m in Sources */,
 				1D9A5568180FA84700B42CE9 /* NSView+iTerm.m in Sources */,
 				1D9A5593180FA87000B42CE9 /* PTYFontInfo.m in Sources */,
@@ -2289,6 +2335,7 @@
 				1D9A556D180FA85900B42CE9 /* ToolWrapper.m in Sources */,
 				1D9A554A180FA82E00B42CE9 /* TmuxGateway.m in Sources */,
 				1D9A553C180FA7E600B42CE9 /* DVRIndexEntry.m in Sources */,
+				A63F4097183B398C003A6A6D /* PTYNoteViewController.m in Sources */,
 				1D9A555A180FA83900B42CE9 /* ArrangementPreviewView.m in Sources */,
 				1D9A55B2180FA8D400B42CE9 /* UKCrashReporter.m in Sources */,
 				1D9A55B4180FA8D400B42CE9 /* UKSystemInfo.m in Sources */,
@@ -2342,6 +2389,7 @@
 				1D5FDDA71208E93600C46BA3 /* PTYTextView.m in Sources */,
 				1D5FDDA81208E93600C46BA3 /* PTYTask.m in Sources */,
 				1D0AABC217B59B3D0072B5AF /* SearchResult.m in Sources */,
+				A63F4096183B398C003A6A6D /* PTYNoteViewController.m in Sources */,
 				1D5FDDA91208E93600C46BA3 /* VT100Screen.m in Sources */,
 				1D5FDDAA1208E93600C46BA3 /* VT100Terminal.m in Sources */,
 				1D5FDDAB1208E93600C46BA3 /* iTermController.m in Sources */,
@@ -2403,6 +2451,7 @@
 				1D988598135D23BD0072023F /* ProcessCache.m in Sources */,
 				1D624BC81386E09E00111319 /* GTMCarbonEvent.m in Sources */,
 				1DA8117F13CEA30A00CCA89A /* FontSizeEstimator.m in Sources */,
+				1D81F0C1183C3C2D00910838 /* NSView+RecursiveDescription.m in Sources */,
 				1DF0895C13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m in Sources */,
 				1DF0895E13DBAE1F00A52AD8 /* NSImage+CoreImage.m in Sources */,
 				1DCA5ED013EE507800B7725E /* WindowArrangements.m in Sources */,
@@ -2461,6 +2510,7 @@
 				1DA26AC115007507004B5792 /* BackgroundThread.m in Sources */,
 				1D2F3B3E1516BA470044C337 /* iTermFontPanel.m in Sources */,
 				1D48B32416706FC3000046EE /* NSView+iTerm.m in Sources */,
+				A63F409B183B3AA7003A6A6D /* PTYNoteView.m in Sources */,
 				1D48B37A167E809D000046EE /* CharacterRun.m in Sources */,
 				1D70BA361680158700824B72 /* PTYFontInfo.m in Sources */,
 				1D6944D8169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m in Sources */,

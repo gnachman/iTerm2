@@ -71,6 +71,8 @@ static const int kMaxSelectedTextLinesForCustomActions = 100;
 #import "FutureMethods.h"
 #import "MovingAverage.h"
 #import "SearchResult.h"
+#import "PTYNoteViewController.h"
+#import "PTYNoteView.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -160,6 +162,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     c->x = x;
     c->y = y;
     return c;
+}
+
+- (NSString *)description {
+  return [NSString stringWithFormat:@"<%p: %@ %d,%d>", self, [self class], x, y];
 }
 
 @end
@@ -266,6 +272,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"ThreeFingerTapEmulatesThreeFingerClick"];
 }
 
+- (void)viewDidChangeBackingProperties {
+    _antiAliasedShift = [[[self window] screen] futureBackingScaleFactor] > 1 ? 0.5 : 0;
+}
+
 - (id)initWithFrame:(NSRect)aRect
 {
     self = [super initWithFrame: aRect];
@@ -343,6 +353,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         drawRectDuration_ = [[MovingAverage alloc] init];
         drawRectInterval_ = [[MovingAverage alloc] init];
     }
+    [self viewDidChangeBackingProperties];
 
     return self;
 }
@@ -1682,21 +1693,7 @@ NSMutableArray* screens=0;
     double excess = [self excess];
 
     if ((int)(height + excess + imeOffset * lineHeight) != (int)frame.size.height) {
-        // The old iTerm code had a comment about a hack at this location
-        // that worked around an (alleged) bug in NSClipView not respecting
-        // setCopiesOnScroll:YES and a gross workaround. The workaround caused
-        // drawing bugs on Snow Leopard. It was a performance optimization, but
-        // the penalty was too great.
-        //
-        // I believe the redraw errors occurred because they disabled drawing
-        // for the duration of the call. [drawRects] was called (in another thread?)
-        // and didn't redraw some invalid rects. Those rects never got another shot
-        // at being drawn. They had originally been invalidated because they had
-        // new content. The bug only happened when drawRect was called twice for
-        // the same screen (I guess because the timer fired while the screen was
-        // being updated).
-
-        // Resize the frame
+        // Grow the frame
         // Add VMARGIN to include top margin.
         frame.size.height = height + excess + imeOffset * lineHeight + VMARGIN;
         [[self superview] setFrame:frame];
@@ -1770,6 +1767,10 @@ NSMutableArray* screens=0;
                 [self setNeedsDisplayInRect:dr];
             }
         }
+
+        // Move subviews up
+        [self updateNoteViewFrames];
+
         NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
     }
 
@@ -1793,6 +1794,15 @@ NSMutableArray* screens=0;
             viewRect.origin.y = [[NSScreen mainScreen] frame].size.height - (viewRect.origin.y + viewRect.size.height);
             selectedRect.origin.y = [[NSScreen mainScreen] frame].size.height - (selectedRect.origin.y + selectedRect.size.height);
             UAZoomChangeFocus(&viewRect, &selectedRect, kUAZoomFocusTypeInsertionPoint);
+        }
+    }
+
+    if ([[self subviews] count]) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:PTYNoteViewControllerShouldUpdatePosition
+                                                            object:nil];
+        // Not sure why this is needed, but for some reason this view draws over its subviews.
+        for (NSView *subview in [self subviews]) {
+            [subview setNeedsDisplay:YES];
         }
     }
 
@@ -1988,16 +1998,21 @@ NSMutableArray* screens=0;
     }
 
     [self drawOutlineInRect:rect topOnly:NO];
-    
+
     if (showTimestamps_) {
         [self drawTimestamps];
+    }
+
+    // Not sure why this is needed, but for some reason this view draws over its subviews.
+    for (NSView *subview in [self subviews]) {
+        [subview setNeedsDisplay:YES];
     }
 }
 
 - (void)drawTimestamps
 {
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    
+
     for (int y = visibleRect.origin.y / lineHeight;
          y < (visibleRect.origin.y + visibleRect.size.height) / lineHeight && y < [dataSource numberOfLines];
          y++) {
@@ -2383,9 +2398,22 @@ NSMutableArray* screens=0;
     xMin = 0;
     xMax = width;
 
+    // Any text preceding a hard line break on a line before |y| should not be considered.
     int j = 0;
+    int firstLine = y - numLines;
+    for (int i = y - numLines; i < y; i++) {
+        if (i < 0 || i >= [dataSource numberOfLines]) {
+            continue;
+        }
+        screen_char_t* theLine = [dataSource getLineAtIndex:i];
+        if (i < y && theLine[width].code == EOL_HARD) {
+            if (rejectAtHardEol || theLine[width - 1].code == 0) {
+                firstLine = i + 1;
+            }
+        }
+    }
 
-    for (int i = y - numLines; i <= y + numLines; i++) {
+    for (int i = firstLine; i <= y + numLines; i++) {
         if (i < 0 || i >= [dataSource numberOfLines]) {
             continue;
         }
@@ -2403,8 +2431,8 @@ NSMutableArray* screens=0;
                                                    &backingStore,
                                                    &deltas);
         int o = 0;
-        for (int k = 0; k < [string length]; k++, o++) {
-            o += deltas[k];
+        for (int k = 0; k < [string length]; k++) {
+            o = k + deltas[k];
             if (*targetOffset == -1 && i == y && o >= x) {
                 *targetOffset = k + [joinedLines length];
             }
@@ -2416,6 +2444,7 @@ NSMutableArray* screens=0;
         free(backingStore);
 
         j++;
+        o++;
         if (i >= y && theLine[width].code == EOL_HARD) {
             if (rejectAtHardEol || theLine[width - 1].code == 0) {
                 [coords addObject:[Coord coordWithX:o
@@ -3409,6 +3438,22 @@ NSMutableArray* screens=0;
 
     locationInWindow = [event locationInWindow];
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
+
+    if (numTouches_ <= 1) {
+        if (locationInTextView.x < MARGIN) {
+            PTYNoteViewController *note = [dataSource noteForLine:y];
+            if (note && !note.isEmpty) {
+                [note setNoteHidden:NO];
+            }
+        } else {
+            for (NSView *view in [self subviews]) {
+                if ([view isKindOfClass:[PTYNoteView class]]) {
+                    PTYNoteView *noteView = (PTYNoteView *)view;
+                    [noteView.noteViewController setNoteHidden:YES];
+                }
+            }
+        }
+    }
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
 
@@ -4500,6 +4545,57 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[dataSource session] clearBuffer];
 }
 
+- (void)addViewForNoteOnLine:(int)line
+{
+    // Make sure scrollback overflow is reset.
+    [self refresh];
+    PTYNoteViewController *note = [dataSource noteForLine:line];
+    if (note) {
+        [note.view removeFromSuperview];
+        [self addSubview:note.view];
+        note.anchor = NSMakePoint(0, line * lineHeight + lineHeight / 2);
+        note.absLine = line + [dataSource totalScrollbackOverflow];
+        [note setNoteHidden:NO];
+    }
+}
+
+- (void)addOrEditNoteForLine:(int)line
+{
+    PTYNoteViewController *note = [dataSource noteForLine:line];
+    if (!note) {
+        note = [[[PTYNoteViewController alloc] init] autorelease];
+        [dataSource setNote:note forLine:line];
+        [self addViewForNoteOnLine:line];
+    } else if (note.isNoteHidden) {
+        [note setNoteHidden:NO];
+    }
+    [note beginEditing];
+}
+
+- (void)addNote:(id)sender
+{
+    if (startY >= 0) {
+        [self addOrEditNoteForLine:startY];
+    }
+}
+
+- (void)updateNoteViewFrames
+{
+    for (NSView *view in [self subviews]) {
+        if ([view isKindOfClass:[PTYNoteView class]]) {
+            PTYNoteView *noteView = (PTYNoteView *)view;
+            PTYNoteViewController *note = (PTYNoteViewController *)noteView.noteViewController;
+            // TODO: This is wrong. If the note is in the scrollback buffer, then its absolute line
+            // number is subject to change when the width changes. The note should remember its
+            // position in the line buffer and dynamically compute its line from that given the
+            // current width. In other words, store a line number if it's onscreen and a linebuffer
+            // position if it's not. Ugh!
+            int line = (note.absLine - [dataSource totalScrollbackOverflow]);
+            [note setAnchor:NSMakePoint(0, line * lineHeight + lineHeight / 2)];
+        }
+    }
+}
+
 - (void)editTextViewSession:(id)sender
 {
     [[[[dataSource session] tab] realParentWindow] editSession:[dataSource session]];
@@ -4601,6 +4697,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([item action]==@selector(mail:) ||
         [item action]==@selector(browse:) ||
         [item action]==@selector(searchInBrowser:) ||
+        [item action]==@selector(addNote:) ||
         [item action]==@selector(copy:) ||
         [item action]==@selector(pasteSelection:) ||
         ([item action]==@selector(print:) && [item tag] == 1)) { // print selection
@@ -4821,6 +4918,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
+    // Make note
+    [theMenu addItemWithTitle:@"Add Note…"
+                       action:@selector(addNote:)
+                keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
 
@@ -6738,12 +6841,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // If not anti-alised, draw one pixel to the right.
         CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
                                                           0.0, -1.0,
-                                                          x + (currentRun->attrs.antiAlias ? 0 : 1),
+                                                          x + (currentRun->attrs.antiAlias ? _antiAliasedShift : 1),
                                                           y));
 
         CGContextShowGlyphsWithAdvances(ctx, glyphs, advances, length);
     }
     return firstMissingGlyph;
+}
+
+- (CGColorRef)cgColorForColor:(NSColor *)color {
+    const NSInteger numberOfComponents = [color numberOfComponents];
+    CGFloat components[numberOfComponents];
+    CGColorSpaceRef colorSpace = [[color colorSpace] CGColorSpace];
+
+    [color getComponents:(CGFloat *)&components];
+
+    return (CGColorRef)[(id)CGColorCreate(colorSpace, components) autorelease];
 }
 
 - (void)_advancedDrawString:(NSString *)str
@@ -6761,37 +6874,76 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
     [ctx saveGraphicsState];
     [ctx setCompositingOperation:NSCompositeSourceOver];
-    NSMutableAttributedString* attributedString = [[[NSMutableAttributedString alloc] initWithString:str
-                                                                                          attributes:attrs] autorelease];
-    // Note that drawInRect doesn't use the right baseline, but drawWithRect
-    // does.
-    //
-    // This technique was picked because it can find glyphs that aren't in the
-    // selected font (e.g., tests/radical.txt). It does a fairly nice job on
-    // laying out combining marks. For now, it fails in two known cases:
-    // 1. Enclosing marks (q in a circle shows as a q)
-    // 2. U+239d, a part of a paren for graphics drawing, doesn't quite render
-    //    right (though it appears to need to render in another char's cell).
-    // Other rejected approaches included using CTFontGetGlyphsForCharacters+
-    // CGContextShowGlyphsWithAdvances, which doesn't render thai characters
-    // correctly in UTF-8-demo.txt.
-    //
-    // We use width*2 so that wide characters that are not double width chars
-    // render properly. These are font-dependent. See tests/suits.txt for an
-    // example.
-    [attributedString drawWithRect:NSMakeRect(pos.x,
-                                              pos.y + fontInfo.baselineOffset + lineHeight,
-                                              width*2,
-                                              lineHeight)
-                           options:0];  // NSStringDrawingUsesLineFragmentOrigin
-    if (fakeBold) {
-        // If anti-aliased, drawing twice at the same position makes the strokes thicker.
-        // If not anti-alised, draw one pixel to the right.
-        [attributedString drawWithRect:NSMakeRect(pos.x + (antiAlias ? 0 : 1),
+    if (IsLionOrLater()) {
+        CTFontDrawGlyphsFunction *drawGlyphsFunction = GetCTFontDrawGlyphsFunction();
+        assert(drawGlyphsFunction);
+
+        NSMutableAttributedString* attributedString =
+            [[[NSMutableAttributedString alloc] initWithString:str
+                                                    attributes:attrs] autorelease];
+        // This code used to use -[NSAttributedString drawWithRect:options] but
+        // it does a lousy job rendering multiple combining marks. This is close
+        // to what WebKit does and appears to be the highest quality text
+        // rendering available. However, this path is only available in 10.7+.
+
+        CTLineRef lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)attributedString);
+        CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
+        CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
+        CGContextSetFillColorWithColor(cgContext, [self cgColorForColor:color]);
+        CGContextSetStrokeColorWithColor(cgContext, [self cgColorForColor:color]);
+        CGContextSetTextPosition(cgContext, pos.x, pos.y + fontInfo.baselineOffset + lineHeight);
+        for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
+            CTRunRef run = CFArrayGetValueAtIndex(runs, j);
+            CFRange range;
+            range.length = 0;
+            range.location = 0;
+            size_t length = CTRunGetGlyphCount(run);
+            const CGGlyph *buffer = CTRunGetGlyphsPtr(run);
+            const CGPoint *positions = CTRunGetPositionsPtr(run);
+            CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
+            drawGlyphsFunction(runFont, buffer, (NSPoint *)positions, length, cgContext);
+            if (fakeBold) {
+                CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
+                drawGlyphsFunction(runFont, buffer, (NSPoint *)positions, length, cgContext);
+                CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+            }
+        }
+        CFRelease(lineRef);
+    } else {
+        // Pre-10.7 path.
+
+        NSMutableAttributedString* attributedString = [[[NSMutableAttributedString alloc] initWithString:str
+                                                                                              attributes:attrs] autorelease];
+        // Note that drawInRect doesn't use the right baseline, but drawWithRect
+        // does.
+        //
+        // This technique was picked because it can find glyphs that aren't in the
+        // selected font (e.g., tests/radical.txt). It does a fairly nice job on
+        // laying out combining marks. For now, it fails in two known cases:
+        // 1. Enclosing marks (q in a circle shows as a q)
+        // 2. U+239d, a part of a paren for graphics drawing, doesn't quite render
+        //    right (though it appears to need to render in another char's cell).
+        // Other rejected approaches included using CTFontGetGlyphsForCharacters+
+        // CGContextShowGlyphsWithAdvances, which doesn't render thai characters
+        // correctly in UTF-8-demo.txt.
+        //
+        // We use width*2 so that wide characters that are not double width chars
+        // render properly. These are font-dependent. See tests/suits.txt for an
+        // example.
+        [attributedString drawWithRect:NSMakeRect(pos.x,
                                                   pos.y + fontInfo.baselineOffset + lineHeight,
                                                   width*2,
                                                   lineHeight)
                                options:0];  // NSStringDrawingUsesLineFragmentOrigin
+        if (fakeBold) {
+            // If anti-aliased, drawing twice at the same position makes the strokes thicker.
+            // If not anti-alised, draw one pixel to the right.
+            [attributedString drawWithRect:NSMakeRect(pos.x + (antiAlias ? 0 : 1),
+                                                      pos.y + fontInfo.baselineOffset + lineHeight,
+                                                      width*2,
+                                                      lineHeight)
+                                   options:0];  // NSStringDrawingUsesLineFragmentOrigin
+        }
     }
     [ctx restoreGraphicsState];
 }
@@ -7255,6 +7407,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                              matches:matches
                              context:ctx];
     }
+
+    PTYNoteViewController *note = [dataSource noteForLine:line];
+    if (note.isNoteHidden && !note.isEmpty) {
+        [[NSColor yellowColor] set];
+        NSRectFill(NSMakeRect(1, line * lineHeight, MARGIN - 3, lineHeight));
+        [[NSColor colorWithCalibratedRed:.8 green:.8 blue:0 alpha:1] set];
+        NSRectFill(NSMakeRect(MARGIN - 3, line * lineHeight, 1, lineHeight));
+    }
+
     return anyBlinking;
 }
 

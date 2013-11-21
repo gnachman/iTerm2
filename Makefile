@@ -78,6 +78,5 @@ release:
 	security unlock-keychain ~/Library/Keychains/login.keychain
 	cp release-iTerm.plist iTerm.plist
 	make Deployment
-	./release.sh RanFromMakefile
 
 force:

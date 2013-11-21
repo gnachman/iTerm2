@@ -118,6 +118,9 @@
 // to the line buffer.
 - (BOOL)screenShouldAppendToScrollbackWithStatusBar;
 
+// Number of scrollback lines changed.
+- (void)screenDidChangeNumberOfScrollbackLines;
+
 // Requests that the bell indicator be shown, notification be posted, etc.
 - (void)screenShowBellIndicator;
 
@@ -172,6 +175,7 @@
 
 - (void)screenSetProfileToProfileNamed:(NSString *)value;
 - (void)screenSetPasteboard:(NSString *)value;
+- (void)screenDidAddNoteOnLine:(int)line;
 - (void)screenCopyBufferToPasteboard;
 - (BOOL)screenIsAppendingToPasteboard;
 - (void)screenAppendDataToPasteboard:(NSData *)data;

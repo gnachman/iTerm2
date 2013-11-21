@@ -188,6 +188,10 @@
     IBOutlet NSButton *highlightTabLabels;
     BOOL defaultHighlightTabLabels;
 
+	// Hide menu bar in non-lion fullscreen
+	IBOutlet NSButton *hideMenuBarInFullscreen;
+	BOOL defaultHideMenuBarInFullscreen;
+	
     // Advanced font rendering
     IBOutlet NSButton* advancedFontRendering;
     BOOL defaultAdvancedFontRendering;
@@ -669,6 +673,7 @@ typedef enum {
 - (BOOL)useCompactLabel;
 - (BOOL)hideActivityIndicator;
 - (BOOL)highlightTabLabels;
+- (BOOL)hideMenuBarInFullscreen;
 - (BOOL)openBookmark;
 - (NSString *)wordChars;
 - (ITermCursorType)legacyCursorType;

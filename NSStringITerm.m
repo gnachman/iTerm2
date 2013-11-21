@@ -28,6 +28,7 @@
 
 #define NSSTRINGJTERMINAL_CLASS_COMPILE
 #import "NSStringITerm.h"
+#import <wctype.h>
 
 #define AMB_CHAR_NUMBER (sizeof(ambiguous_chars) / sizeof(int))
 
@@ -644,6 +645,17 @@ int decode_utf8_char(const unsigned char *datap,
     }
 
     return [self initWithData:utf16Data encoding:NSUTF16LittleEndianStringEncoding];
+}
+
+- (NSString *)stringWithOnlyDigits {
+  NSMutableString *s = [NSMutableString string];
+  for (int i = 0; i < self.length; i++) {
+    unichar c = [self characterAtIndex:i];
+    if (iswdigit(c)) {
+      [s appendFormat:@"%c", (char)c];
+    }
+  }
+  return s;
 }
 
 @end

@@ -79,4 +79,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // malformed utf-8 sequences.
 - (NSString *)initWithUTF8DataIgnoringErrors:(NSData *)data;
 
+// Returns a string containing only the digits.
+- (NSString *)stringWithOnlyDigits;
+
 @end
