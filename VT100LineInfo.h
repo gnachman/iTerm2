@@ -12,6 +12,7 @@
 @interface VT100LineInfo : NSObject <NSCopying>
 
 @property(nonatomic, assign) NSTimeInterval timestamp;
+@property(nonatomic, retain) NSObject *object;
 
 - (id)initWithWidth:(int)width;
 - (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestamp:(BOOL)updateTimestamp;

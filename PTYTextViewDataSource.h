@@ -9,6 +9,7 @@ typedef enum {
     FlashBell, FlashWrapToTop, FlashWrapToBottom
 } FlashImage;
 
+@class PTYNoteViewController;
 @class PTYSession;
 @class PTYTask;
 @class VT100Terminal;
@@ -84,5 +85,8 @@ typedef enum {
 
 // Returns the last modified date for a given line.
 - (NSDate *)timestampForLine:(int)y;
+
+- (PTYNoteViewController *)noteForLine:(int)y;
+- (void)setNote:(PTYNoteViewController *)note forLine:(int)y;
 
 @end

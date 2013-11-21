@@ -71,6 +71,8 @@ static const int kMaxSelectedTextLinesForCustomActions = 100;
 #import "FutureMethods.h"
 #import "MovingAverage.h"
 #import "SearchResult.h"
+#import "PTYNoteViewController.h"
+#import "PTYNoteView.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -1691,21 +1693,7 @@ NSMutableArray* screens=0;
     double excess = [self excess];
 
     if ((int)(height + excess + imeOffset * lineHeight) != (int)frame.size.height) {
-        // The old iTerm code had a comment about a hack at this location
-        // that worked around an (alleged) bug in NSClipView not respecting
-        // setCopiesOnScroll:YES and a gross workaround. The workaround caused
-        // drawing bugs on Snow Leopard. It was a performance optimization, but
-        // the penalty was too great.
-        //
-        // I believe the redraw errors occurred because they disabled drawing
-        // for the duration of the call. [drawRects] was called (in another thread?)
-        // and didn't redraw some invalid rects. Those rects never got another shot
-        // at being drawn. They had originally been invalidated because they had
-        // new content. The bug only happened when drawRect was called twice for
-        // the same screen (I guess because the timer fired while the screen was
-        // being updated).
-
-        // Resize the frame
+        // Grow the frame
         // Add VMARGIN to include top margin.
         frame.size.height = height + excess + imeOffset * lineHeight + VMARGIN;
         [[self superview] setFrame:frame];
@@ -1779,6 +1767,10 @@ NSMutableArray* screens=0;
                 [self setNeedsDisplayInRect:dr];
             }
         }
+
+        // Move subviews up
+        [self updateNoteViewFrames];
+
         NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
     }
 
@@ -1802,6 +1794,15 @@ NSMutableArray* screens=0;
             viewRect.origin.y = [[NSScreen mainScreen] frame].size.height - (viewRect.origin.y + viewRect.size.height);
             selectedRect.origin.y = [[NSScreen mainScreen] frame].size.height - (selectedRect.origin.y + selectedRect.size.height);
             UAZoomChangeFocus(&viewRect, &selectedRect, kUAZoomFocusTypeInsertionPoint);
+        }
+    }
+
+    if ([[self subviews] count]) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:PTYNoteViewControllerShouldUpdatePosition
+                                                            object:nil];
+        // Not sure why this is needed, but for some reason this view draws over its subviews.
+        for (NSView *subview in [self subviews]) {
+            [subview setNeedsDisplay:YES];
         }
     }
 
@@ -1997,16 +1998,21 @@ NSMutableArray* screens=0;
     }
 
     [self drawOutlineInRect:rect topOnly:NO];
-    
+
     if (showTimestamps_) {
         [self drawTimestamps];
+    }
+
+    // Not sure why this is needed, but for some reason this view draws over its subviews.
+    for (NSView *subview in [self subviews]) {
+        [subview setNeedsDisplay:YES];
     }
 }
 
 - (void)drawTimestamps
 {
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    
+
     for (int y = visibleRect.origin.y / lineHeight;
          y < (visibleRect.origin.y + visibleRect.size.height) / lineHeight && y < [dataSource numberOfLines];
          y++) {
@@ -3433,6 +3439,22 @@ NSMutableArray* screens=0;
     locationInWindow = [event locationInWindow];
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
+    if (numTouches_ <= 1) {
+        if (locationInTextView.x < MARGIN) {
+            PTYNoteViewController *note = [dataSource noteForLine:y];
+            if (note && !note.isEmpty) {
+                [note setNoteHidden:NO];
+            }
+        } else {
+            for (NSView *view in [self subviews]) {
+                if ([view isKindOfClass:[PTYNoteView class]]) {
+                    PTYNoteView *noteView = (PTYNoteView *)view;
+                    [noteView.noteViewController setNoteHidden:YES];
+                }
+            }
+        }
+    }
+
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
 
     if ([event eventNumber] != firstMouseEventNumber_ &&   // Not first mouse in formerly non-key app
@@ -4523,6 +4545,52 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[dataSource session] clearBuffer];
 }
 
+- (void)addViewForNoteOnLine:(int)line
+{
+    // Make sure scrollback overflow is reset.
+    [self refresh];
+    PTYNoteViewController *note = [dataSource noteForLine:line];
+    if (note) {
+        [note.view removeFromSuperview];
+        [self addSubview:note.view];
+        note.anchor = NSMakePoint(0, line * lineHeight + lineHeight / 2);
+        note.absLine = line + [dataSource totalScrollbackOverflow];
+        [note setNoteHidden:NO];
+    }
+}
+
+- (void)addOrEditNoteForLine:(int)line
+{
+    PTYNoteViewController *note = [dataSource noteForLine:line];
+    if (!note) {
+        note = [[[PTYNoteViewController alloc] init] autorelease];
+        [dataSource setNote:note forLine:line];
+        [self addViewForNoteOnLine:line];
+    } else if (note.isNoteHidden) {
+        [note setNoteHidden:NO];
+    }
+    [note beginEditing];
+}
+
+- (void)addNote:(id)sender
+{
+    if (startY >= 0) {
+        [self addOrEditNoteForLine:startY];
+    }
+}
+
+- (void)updateNoteViewFrames
+{
+    for (NSView *view in [self subviews]) {
+        if ([view isKindOfClass:[PTYNoteView class]]) {
+            PTYNoteView *noteView = (PTYNoteView *)view;
+            PTYNoteViewController *note = (PTYNoteViewController *)noteView.noteViewController;
+            int line = (note.absLine - [dataSource totalScrollbackOverflow]);
+            [note setAnchor:NSMakePoint(0, line * lineHeight + lineHeight / 2)];
+        }
+    }
+}
+
 - (void)editTextViewSession:(id)sender
 {
     [[[[dataSource session] tab] realParentWindow] editSession:[dataSource session]];
@@ -4624,6 +4692,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([item action]==@selector(mail:) ||
         [item action]==@selector(browse:) ||
         [item action]==@selector(searchInBrowser:) ||
+        [item action]==@selector(addNote:) ||
         [item action]==@selector(copy:) ||
         [item action]==@selector(pasteSelection:) ||
         ([item action]==@selector(print:) && [item tag] == 1)) { // print selection
@@ -4844,6 +4913,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
+    // Make note
+    [theMenu addItemWithTitle:@"Add Note…"
+                       action:@selector(addNote:)
+                keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
 
@@ -7327,6 +7402,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                              matches:matches
                              context:ctx];
     }
+
+    PTYNoteViewController *note = [dataSource noteForLine:line];
+    if (note.isNoteHidden && !note.isEmpty) {
+        [[NSColor yellowColor] set];
+        NSRectFill(NSMakeRect(1, line * lineHeight, MARGIN - 3, lineHeight));
+        [[NSColor colorWithCalibratedRed:.8 green:.8 blue:0 alpha:1] set];
+        NSRectFill(NSMakeRect(MARGIN - 3, line * lineHeight, 1, lineHeight));
+    }
+
     return anyBlinking;
 }
 

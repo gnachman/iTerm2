@@ -3943,6 +3943,8 @@ static VT100TCC decode_string(unsigned char *datap,
             [delegate_ terminalCurrentDirectoryDidChangeTo:value];
         } else if ([key isEqualToString:@"SetProfile"]) {
             [delegate_ terminalProfileShouldChangeTo:(NSString *)value];
+        } else if ([key isEqualToString:@"LineNote"]) {
+            [delegate_ terminalSetLineNoteAtCursor:(NSString *)value];
         } else if ([key isEqualToString:@"CopyToClipboard"]) {
             [delegate_ terminalSetPasteboard:value];
         } else if ([key isEqualToString:@"EndCopy"]) {

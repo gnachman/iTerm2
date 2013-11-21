@@ -213,6 +213,8 @@
 
 // Returns the timestamp of a given line.
 - (NSTimeInterval)timestampForLine:(int)y;
+- (NSObject *)objectForLine:(int)y;
+- (void)setObject:(NSObject *)object forLine:(int)y;
 
 - (NSString *)compactLineDump;
 - (NSString *)compactLineDumpWithTimestamps;

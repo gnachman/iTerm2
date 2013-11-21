@@ -70,6 +70,7 @@
     // cumulative_line_lengths[i-1] for i>0 or 0 for i==0.
     int* cumulative_line_lengths;
     NSTimeInterval *timestamps_;
+    NSMutableDictionary *objects_;
 
     // The number of elements allocated for cumulative_line_lengths.
     int cll_capacity;
@@ -95,7 +96,14 @@
 
 // Try to append a line to the end of the buffer. Returns false if it does not fit. If length > buffer_size it will never succeed.
 // Callers should split such lines into multiple pieces.
-- (BOOL)appendLine:(screen_char_t*)buffer length:(int)length partial:(BOOL)partial width:(int)width timestamp:(NSTimeInterval)timestamp;
+- (BOOL)appendLine:(screen_char_t*)buffer
+            length:(int)length
+           partial:(BOOL)partial
+             width:(int)width
+         timestamp:(NSTimeInterval)timestamp
+            object:(NSObject *)object;
+
+- (void)setObject:(NSObject *)object forLine:(int)line width:(int)width;
 
 // Try to get a line that is lineNum after the first line in this block after wrapping them to a given width.
 // If the line is present, return a pointer to its start and fill in *lineLength with the number of bytes in the line.
@@ -112,7 +120,11 @@
 - (BOOL) hasPartial;
 
 // Remove the last line. Returns false if there was none.
-- (BOOL)popLastLineInto:(screen_char_t**) ptr withLength:(int*)length upToWidth:(int)width timestamp:(NSTimeInterval *)timestampPtr;
+- (BOOL)popLastLineInto:(screen_char_t**)ptr
+             withLength:(int*)length
+              upToWidth:(int)width
+              timestamp:(NSTimeInterval *)timestampPtr
+                 object:(NSObject **)objectPtr;
 
 // Drop lines from the start of the buffer. Returns the number of lines actually dropped
 // (either n or the number of lines in the block).
@@ -140,7 +152,9 @@
 - (void) shrinkToFit;
 
 // Append a value to cumulativeLineLengths.
-- (void)_appendCumulativeLineLength:(int)cumulativeLength timestamp:(NSTimeInterval)timestamp;
+- (void)_appendCumulativeLineLength:(int)cumulativeLength
+                          timestamp:(NSTimeInterval)timestamp
+                             object:(NSObject *)object;
 
 // Return a raw line
 - (screen_char_t*) rawLine: (int) linenum;
@@ -150,6 +164,9 @@
 
 // Returns the timestamp associated with a line when wrapped to the specified width.
 - (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width;
+
+// Returns the object associated with a line.
+- (NSObject *)objectForLineNumber:(int)lineNum width:(int)width;
 
 @end
 
@@ -207,7 +224,14 @@
 // that is to say, this buffer contains only a prefix or infix of the entire line.
 //
 // NOTE: call dropExcessLinesWithWidth after this if you want to limit the buffer to max_lines.
-- (void)appendLine:(screen_char_t*)buffer length:(int)length partial:(BOOL)partial width:(int)width timestamp:(NSTimeInterval)timestamp;
+- (void)appendLine:(screen_char_t*)buffer
+            length:(int)length
+           partial:(BOOL)partial
+             width:(int)width
+         timestamp:(NSTimeInterval)timestamp
+            object:(NSObject *)object;
+
+- (void)setObject:(NSObject *)object forLine:(int)line width:(int)width;
 
 // If more lines are in the buffer than max_lines, call this function. It will adjust the count
 // of excess lines and try to free the first block(s) if they are unused. Because this could happen
@@ -220,6 +244,9 @@
 
 // Returns the timestamp associated with a line when wrapped to the specified width.
 - (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width;
+
+// Returns the object associated with a line when wrapped to the specified width.
+- (NSObject *)objectForLineNumber:(int)lineNum width:(int)width;
 
 // Copy a line into the buffer. If the line is shorter than 'width' then only the first 'width'
 // characters will be modified.
@@ -236,7 +263,11 @@
 // Copy up to width chars from the last line into *ptr. The last line will be removed or
 // truncated from the buffer. Sets *includesEndOfLine to true if this line should have a
 // continuation marker.
-- (BOOL)popAndCopyLastLineInto:(screen_char_t*)ptr width:(int)width includesEndOfLine:(int*)includesEndOfLine timestamp:(NSTimeInterval *)timestampPtr;
+- (BOOL)popAndCopyLastLineInto:(screen_char_t*)ptr
+                         width:(int)width
+             includesEndOfLine:(int*)includesEndOfLine
+                     timestamp:(NSTimeInterval *)timestampPtr
+                        object:(NSObject **)objectPtr;
 
 // Get the number of buffer lines at a given width.
 - (int) numLinesWithWidth: (int) width;
