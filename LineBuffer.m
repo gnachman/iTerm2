@@ -1704,10 +1704,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 }
 
-- (void)initFind:(NSString*)substring
-      startingAt:(LineBufferPosition *)start
-         options:(int)options
-     withContext:(FindContext*)context
+- (void)prepareToSearchFor:(NSString*)substring
+                startingAt:(LineBufferPosition *)start
+                   options:(int)options
+               withContext:(FindContext*)context
 {
     context.substring = [[NSString alloc] initWithString:substring];
     context.options = options;

@@ -299,13 +299,14 @@
 // Print the raw lines to the console for debugging.
 - (void) dump;
 
-// Search for a substring. If found, return the position of the hit. Otherwise return -1. Use 0 for the start to indicate the beginning of the buffer or
-// pass the result of a previous findSubstring result. The number of positions the result occupies will be set in *length (which would be different than the
-// length of the substring in the presence of double-width characters.
-- (void)initFind:(NSString*)substring
-      startingAt:(LineBufferPosition *)start
-         options:(int)options
-     withContext:(FindContext*)context;
+// Set up the find context. See FindContext.h for options bit values.
+- (void)prepareToSearchFor:(NSString*)substring
+                startingAt:(LineBufferPosition *)start
+                   options:(int)options
+               withContext:(FindContext*)context;
+
+// Performs a search. Use prepareToSearchFor:startingAt:options:withContext: to initialize
+// the FindContext prior to calling this.
 - (void)findSubstring:(FindContext*)context stopAt:(int)stopAt;
 
 // Convert a position (as returned by findSubstring) into an x,y position.

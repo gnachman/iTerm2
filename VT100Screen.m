@@ -1083,7 +1083,7 @@ static const double kInterBellQuietPeriod = 0.1;
     if (multipleResults) {
         opts |= FindMultipleResults;
     }
-    [linebuffer_ initFind:aString startingAt:startPos options:opts withContext:context];
+    [linebuffer_ prepareToSearchFor:aString startingAt:startPos options:opts withContext:context];
     context.hasWrapped = NO;
     [self popScrollbackLines:linesPushed];
 }
@@ -2699,10 +2699,10 @@ static void SwapInt(int *a, int *b) {
                     // NSLog(@"...wrapping");
                     // wrap around and resume search.
                     FindContext *tempFindContext = [[[FindContext alloc] init] autorelease];
-                    [linebuffer_ initFind:findContext_.substring
-                               startingAt:(findContext_.dir > 0 ? [linebuffer_ firstPosition] : [[linebuffer_ lastPosition] predecessor])
-                                  options:findContext_.options
-                              withContext:tempFindContext];
+                    [linebuffer_ prepareToSearchFor:findContext_.substring
+                                         startingAt:(findContext_.dir > 0 ? [linebuffer_ firstPosition] : [[linebuffer_ lastPosition] predecessor])
+                                            options:findContext_.options
+                                        withContext:tempFindContext];
                     [findContext_ reset];
                     // TODO test this!
                     [context copyFromFindContext:tempFindContext];

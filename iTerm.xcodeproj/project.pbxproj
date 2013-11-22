@@ -580,15 +580,15 @@
 		9DB3D6F1176CCABE0071CCF8 /* PrefsArrangements@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */; };
 		A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */ = {isa = PBXBuildFile; fileRef = A073973D14C768E400786414 /* ColorsMenuItemView.h */; };
 		A073974014C7694600786414 /* ColorsMenuItemView.m in Sources */ = {isa = PBXBuildFile; fileRef = A073973F14C7694600786414 /* ColorsMenuItemView.m */; };
-		A63F4090183948E4003A6A6D /* VT100LineInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F408E183948E4003A6A6D /* VT100LineInfo.h */; };
-		A63F4091183948E4003A6A6D /* VT100LineInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F408F183948E4003A6A6D /* VT100LineInfo.m */; };
-		A63F4092183962D3003A6A6D /* VT100LineInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F408F183948E4003A6A6D /* VT100LineInfo.m */; };
 		A63F4095183B398C003A6A6D /* PTYNoteViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F4093183B398C003A6A6D /* PTYNoteViewController.h */; };
 		A63F4096183B398C003A6A6D /* PTYNoteViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4094183B398C003A6A6D /* PTYNoteViewController.m */; };
 		A63F4097183B398C003A6A6D /* PTYNoteViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4094183B398C003A6A6D /* PTYNoteViewController.m */; };
 		A63F409A183B3AA7003A6A6D /* PTYNoteView.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F4098183B3AA7003A6A6D /* PTYNoteView.h */; };
 		A63F409B183B3AA7003A6A6D /* PTYNoteView.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4099183B3AA7003A6A6D /* PTYNoteView.m */; };
 		A63F409C183B3AA7003A6A6D /* PTYNoteView.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4099183B3AA7003A6A6D /* PTYNoteView.m */; };
+		A63F409F183F3AF5003A6A6D /* VT100LineInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F409D183F3AF5003A6A6D /* VT100LineInfo.h */; };
+		A63F40A0183F3AF5003A6A6D /* VT100LineInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F409E183F3AF5003A6A6D /* VT100LineInfo.m */; };
+		A63F40A1183F3AF5003A6A6D /* VT100LineInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F409E183F3AF5003A6A6D /* VT100LineInfo.m */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = FB151F2903648AC401F955DB /* iTerm.strings */; };
@@ -987,12 +987,12 @@
 		9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PrefsArrangements@2x.png"; path = "images/PrefsArrangements@2x.png"; sourceTree = "<group>"; };
 		A073973D14C768E400786414 /* ColorsMenuItemView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ColorsMenuItemView.h; sourceTree = "<group>"; };
 		A073973F14C7694600786414 /* ColorsMenuItemView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ColorsMenuItemView.m; sourceTree = "<group>"; };
-		A63F408E183948E4003A6A6D /* VT100LineInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100LineInfo.h; sourceTree = "<group>"; };
-		A63F408F183948E4003A6A6D /* VT100LineInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100LineInfo.m; sourceTree = "<group>"; };
 		A63F4093183B398C003A6A6D /* PTYNoteViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYNoteViewController.h; sourceTree = "<group>"; };
 		A63F4094183B398C003A6A6D /* PTYNoteViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYNoteViewController.m; sourceTree = "<group>"; };
 		A63F4098183B3AA7003A6A6D /* PTYNoteView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYNoteView.h; sourceTree = "<group>"; };
 		A63F4099183B3AA7003A6A6D /* PTYNoteView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYNoteView.m; sourceTree = "<group>"; };
+		A63F409D183F3AF5003A6A6D /* VT100LineInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100LineInfo.h; sourceTree = "<group>"; };
+		A63F409E183F3AF5003A6A6D /* VT100LineInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100LineInfo.m; sourceTree = "<group>"; };
 		DD02572409CB9398008F320C /* PSMAquaTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMAquaTabStyle.h; sourceTree = "<group>"; };
 		DD02572509CB9398008F320C /* PSMAquaTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMAquaTabStyle.m; sourceTree = "<group>"; };
 		DD02572609CB9398008F320C /* PSMMetalTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMMetalTabStyle.h; sourceTree = "<group>"; };
@@ -1129,15 +1129,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				1D78B55C183EE1C000014D49 /* LineBufferPosition.h */,
-				1D78B55D183EE1C000014D49 /* LineBufferPosition.m */,
-				1DB7188C183E8E3600ADC5DD /* TrackedObject.h */,
-				A63F4093183B398C003A6A6D /* PTYNoteViewController.h */,
-				A63F4094183B398C003A6A6D /* PTYNoteViewController.m */,
-				A63F4098183B3AA7003A6A6D /* PTYNoteView.h */,
-				A63F4099183B3AA7003A6A6D /* PTYNoteView.m */,
-				A63F408E183948E4003A6A6D /* VT100LineInfo.h */,
-				A63F408F183948E4003A6A6D /* VT100LineInfo.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -1184,12 +1175,18 @@
 				1D53FD13181C4B4B00524D4F /* FindContext.h */,
 				1D4F359F1813386600699FDF /* iTermCursor.h */,
 				1D2F3B3B1516BA460044C337 /* iTermFontPanel.h */,
+				1D78B55C183EE1C000014D49 /* LineBufferPosition.h */,
+				1D78B55D183EE1C000014D49 /* LineBufferPosition.m */,
 				1D9053C417A5CCF100A0B64E /* MovingAverage.h */,
 				1D085F8416F02E7400B7FCE9 /* PasteContext.h */,
 				1D085F9816F1135F00B7FCE9 /* PasteEvent.h */,
 				1D085F9016F03E5400B7FCE9 /* PasteView.h */,
 				1D085F8A16F0328B00B7FCE9 /* PasteViewController.h */,
 				1D70BA331680158700824B72 /* PTYFontInfo.h */,
+				A63F4098183B3AA7003A6A6D /* PTYNoteView.h */,
+				A63F4099183B3AA7003A6A6D /* PTYNoteView.m */,
+				A63F4093183B398C003A6A6D /* PTYNoteViewController.h */,
+				A63F4094183B398C003A6A6D /* PTYNoteViewController.m */,
 				1DD6707514934ADE008E4361 /* PTYSplitView.h */,
 				1DD39B7C180F68BF004E56D5 /* PTYTextViewDataSource.h */,
 				1D085F9C16F137D900B7FCE9 /* RoundedRectView.h */,
@@ -1199,10 +1196,11 @@
 				1DC38816148E840600B89F7C /* SolidColorView.h */,
 				1D6944D5169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h */,
 				1D085FA016F138A000B7FCE9 /* ToastWindowController.h */,
+				1DB7188C183E8E3600ADC5DD /* TrackedObject.h */,
 				1D8B8A121806038F00C2DC25 /* VT100Grid.h */,
 				1DD39ACD180B785A004E56D5 /* VT100GridTypes.h */,
-				A63F408E183948E4003A6A6D /* VT100LineInfo.h */,
-				A63F408F183948E4003A6A6D /* VT100LineInfo.m */,
+				A63F409D183F3AF5003A6A6D /* VT100LineInfo.h */,
+				A63F409E183F3AF5003A6A6D /* VT100LineInfo.m */,
 				1DD39B7D180F969E004E56D5 /* VT100ScreenDelegate.h */,
 				1D53FD18181C700B00524D4F /* VT100TerminalDelegate.h */,
 				1DA26ABF15007507004B5792 /* BackgroundThread.m */,
@@ -1880,6 +1878,7 @@
 				1D81F0C0183C3C2D00910838 /* NSView+RecursiveDescription.h in Headers */,
 				1D5FDD6D1208E8F000C46BA3 /* CGSDebug.h in Headers */,
 				1D5FDD6E1208E8F000C46BA3 /* CGSDisplays.h in Headers */,
+				A63F409F183F3AF5003A6A6D /* VT100LineInfo.h in Headers */,
 				1D5FDD6F1208E8F000C46BA3 /* CGSHotKeys.h in Headers */,
 				1D5FDD701208E8F000C46BA3 /* CGSInternal.h in Headers */,
 				1D5FDD711208E8F000C46BA3 /* CGSMisc.h in Headers */,
@@ -1895,7 +1894,6 @@
 				49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */,
 				1DCF3F4A1225F6F200AD56F1 /* BookmarkModel.h in Headers */,
 				1D6C50A71226EEFB00E0AA3E /* ProfileListView.h in Headers */,
-				A63F4090183948E4003A6A6D /* VT100LineInfo.h in Headers */,
 				1DE5EBE8122B892900C736B0 /* ProfilesWindow.h in Headers */,
 				1D93D33512695442007F741B /* DVR.h in Headers */,
 				1D93D3471269741B007F741B /* DVRBuffer.h in Headers */,
@@ -2263,6 +2261,7 @@
 				1D9A552E180FA69C00B42CE9 /* iTermExpose.m in Sources */,
 				1D9A554E180FA82E00B42CE9 /* TmuxStateParser.m in Sources */,
 				1D9A55AD180FA8B700B42CE9 /* PSMTabBarCell.m in Sources */,
+				A63F40A1183F3AF5003A6A6D /* VT100LineInfo.m in Sources */,
 				1D9A5577180FA85D00B42CE9 /* BounceTrigger.m in Sources */,
 				1D9A5545180FA81400B42CE9 /* ProfileTableView.m in Sources */,
 				1D9A556C180FA85900B42CE9 /* ToolbeltView.m in Sources */,
@@ -2295,7 +2294,6 @@
 				1D9A5565180FA84700B42CE9 /* NSFileManager+DirectoryLocations.m in Sources */,
 				1D9A5585180FA87000B42CE9 /* iTermKeyBindingMgr.m in Sources */,
 				1D9A5595180FA87000B42CE9 /* PTYSession.m in Sources */,
-				A63F4092183962D3003A6A6D /* VT100LineInfo.m in Sources */,
 				1D9A555E180FA83900B42CE9 /* PreferencePanel.m in Sources */,
 				1D9A558B180FA87000B42CE9 /* PasteEvent.m in Sources */,
 				1D9A556E180FA85900B42CE9 /* ToolJobs.m in Sources */,
@@ -2411,6 +2409,7 @@
 				1D5FDDAE1208E93600C46BA3 /* PTYSession.m in Sources */,
 				1D5FDDAF1208E93600C46BA3 /* PTYTabView.m in Sources */,
 				1D5FDDB01208E93600C46BA3 /* PTYWindow.m in Sources */,
+				A63F40A0183F3AF5003A6A6D /* VT100LineInfo.m in Sources */,
 				1D53FD16181C4B4B00524D4F /* FindContext.m in Sources */,
 				1D5FDDB21208E93600C46BA3 /* PTToolbarController.m in Sources */,
 				1D5FDDB31208E93600C46BA3 /* ITAddressBookMgr.m in Sources */,
@@ -2446,7 +2445,6 @@
 				1D7C1D1312772ECC00461E55 /* NSDateFormatterExtras.m in Sources */,
 				1DE214E2128212EE004E3ADF /* Autocomplete.m in Sources */,
 				1DD736421283C2FA009B7829 /* Popup.m in Sources */,
-				A63F4091183948E4003A6A6D /* VT100LineInfo.m in Sources */,
 				1D44218D1290B34500891504 /* TextViewWrapper.m in Sources */,
 				1D2E802F129DA45A00F3D71E /* PTYTab.m in Sources */,
 				1D2E813212A18F7500F3D71E /* SessionView.m in Sources */,
