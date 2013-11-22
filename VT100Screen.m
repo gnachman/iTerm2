@@ -396,14 +396,6 @@ static const double kInterBellQuietPeriod = 0.1;
         [delegate_ screenRemoveSelection];
     }
 
-    // Update absolute line numbers of notes.
-    for (int i = 0; i < currentGrid_.size.height; i++) {
-        NSObject *object = [currentGrid_ objectForLine:i];
-        if (object && [object isKindOfClass:[PTYNoteViewController class]]) {
-            PTYNoteViewController *note = (PTYNoteViewController *)object;
-            note.absLine = [self totalScrollbackOverflow] + [self numberOfScrollbackLines] + i;
-        }
-    }
     [delegate_ screenSizeDidChange];
 }
 
@@ -2054,12 +2046,6 @@ static const double kInterBellQuietPeriod = 0.1;
     [delegate_ screenSetProfileToProfileNamed:value];
 }
 
-- (void)hideNoteAtAbsoluteLineNumber:(NSNumber *)absLine {
-    long long line = [absLine longLongValue] - [self totalScrollbackOverflow];
-    PTYNoteViewController *note = [self noteForLine:line];
-    [note setNoteHidden:YES];
-}
-
 - (void)terminalSetLineNoteAtCursor:(NSString *)value {
     int line = [self numberOfScrollbackLines] + currentGrid_.cursorY;
     PTYNoteViewController *note = [self noteForLine:line];
@@ -2069,9 +2055,6 @@ static const double kInterBellQuietPeriod = 0.1;
     }
     [note setString:value];
     [delegate_ screenDidAddNoteOnLine:line];
-    [self performSelector:@selector(hideNoteAtAbsoluteLineNumber:)
-               withObject:@(line + [self totalScrollbackOverflow])
-               afterDelay:2];
 }
 
 - (void)terminalSetPasteboard:(NSString *)value {

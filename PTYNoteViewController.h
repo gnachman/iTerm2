@@ -30,7 +30,6 @@ extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
 
 @property(nonatomic, retain) PTYNoteView *noteView;
 @property(nonatomic, assign) NSPoint anchor;
-@property(nonatomic, assign) long long absLine;
 
 - (void)beginEditing;
 - (BOOL)isEmpty;

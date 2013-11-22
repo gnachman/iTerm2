@@ -854,7 +854,7 @@ DQ
                         <autoresizingMask key="autoresizingMask"/>
                         <clipView key="contentView" id="SLO-jw-GM5">
                             <rect key="frame" x="0.0" y="0.0" width="165" height="92"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <textView editable="NO" importsGraphics="NO" usesRuler="YES" usesFontPanel="YES" verticallyResizable="YES" spellingCorrection="YES" smartInsertDelete="YES" id="640">
                                     <rect key="frame" x="0.0" y="0.0" width="165" height="92"/>
@@ -920,7 +920,7 @@ DQ
                 <action selector="newWindow:" target="201" id="1443"/>
             </connections>
         </menuItem>
-        <sliderCell controlSize="small" state="on" alignment="left" maxValue="100" doubleValue="50" tickMarkPosition="above" sliderType="linear" id="1482"/>
+        <sliderCell controlSize="small" state="on" alignment="left" maxValue="100" doubleValue="50" tickMarkPosition="left" sliderType="linear" id="1482"/>
         <menuItem title="Paste Slowly" tag="2" id="1485">
             <modifierMask key="keyEquivalentModifierMask"/>
             <connections>
