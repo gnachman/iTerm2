@@ -2054,6 +2054,7 @@ static const double kInterBellQuietPeriod = 0.1;
         [self setNote:note forLine:line];
     }
     [note setString:value];
+    [note sizeToFit];
     [delegate_ screenDidAddNoteOnLine:line];
 }
 

@@ -11,8 +11,14 @@
 
 NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewControllerShouldUpdatePosition";
 
+static const CGFloat kLeftMargin = 15;
+static const CGFloat kRightMargin = 10;
+static const CGFloat kTopMargin = 10;
+static const CGFloat kBottomMargin = 5;
+
 @interface PTYNoteViewController ()
 @property(nonatomic, retain) NSTextView *textView;
+@property(nonatomic, retain) NSScrollView *scrollView;
 @property(nonatomic, assign) BOOL watchForUpdate;
 @end
 
@@ -20,6 +26,7 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
 
 @synthesize noteView = noteView_;
 @synthesize textView = textView_;
+@synthesize scrollView = scrollView_;
 @synthesize anchor = anchor_;
 @synthesize watchForUpdate = watchForUpdate_;
 @synthesize isInLineBuffer = isInLineBuffer_;
@@ -31,6 +38,7 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     noteView_.noteViewController = nil;
     [noteView_ release];
     [textView_ release];
+    [scrollView_ release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
 }
@@ -53,26 +61,23 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     self.noteView.wantsLayer = YES;
     self.noteView.shadow = shadow;
 
-
-    const CGFloat kLeftMargin = 15;
-    const CGFloat kRightMargin = 10;
-    const CGFloat kTopMargin = 10;
-    const CGFloat kBottomMargin = 5;
-
     NSSize size = NSMakeSize(kWidth - kLeftMargin - kRightMargin,
                              kHeight - kTopMargin - kBottomMargin);
     NSRect frame = NSMakeRect(kLeftMargin,
                               kTopMargin,
                               size.width,
                               size.height);
-    NSScrollView *scrollview = [[[NSScrollView alloc]
-                                 initWithFrame:frame] autorelease];
-    scrollview.drawsBackground = NO;
-    scrollview.hasVerticalScroller = YES;
-    scrollview.hasHorizontalScroller = NO;
-    scrollview.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    self.scrollView = [[[NSScrollView alloc] initWithFrame:frame] autorelease];
+    scrollView_.drawsBackground = NO;
+    scrollView_.hasVerticalScroller = YES;
+    scrollView_.hasHorizontalScroller = NO;
+    scrollView_.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 
-    self.textView = [[[NSTextView alloc] initWithFrame:frame] autorelease];
+    self.textView = [[[NSTextView alloc] initWithFrame:NSMakeRect(0,
+                                                                  0,
+                                                                  scrollView_.contentSize.width,
+                                                                  scrollView_.contentSize.height)]
+                     autorelease];
     textView_.allowsUndo = YES;
     textView_.minSize = size;
     textView_.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
@@ -83,9 +88,9 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     textView_.textContainer.containerSize = NSMakeSize(size.width, FLT_MAX);
     textView_.textContainer.widthTracksTextView = YES;
 
-    scrollview.documentView = textView_;
+    scrollView_.documentView = textView_;
 
-    [noteView_ addSubview:scrollview];
+    [noteView_ addSubview:scrollView_];
 }
 
 - (void)beginEditing {
@@ -191,6 +196,31 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
 
 - (void)noteSetAnchor:(NSPoint)point {
     anchor_ = point;
+}
+
+- (void)sizeToFit {
+    NSLayoutManager *layoutManager = textView_.layoutManager;
+    NSTextContainer *textContainer = textView_.textContainer;
+    [layoutManager ensureLayoutForTextContainer:textContainer];
+    NSRect usedRect = [layoutManager usedRectForTextContainer:textContainer];
+
+    NSSize scrollViewSize = [NSScrollView frameSizeForContentSize:usedRect.size
+                                          horizontalScrollerClass:[[scrollView_ horizontalScroller] class]
+                                            verticalScrollerClass:[[scrollView_ verticalScroller] class]
+                                                       borderType:NSNoBorder
+                                                      controlSize:NSRegularControlSize
+                                                    scrollerStyle:[scrollView_ scrollerStyle]];
+    noteView_.frame = NSMakeRect(0,
+                                 0,
+                                 kLeftMargin + kRightMargin + scrollViewSize.width,
+                                 kTopMargin + kBottomMargin + scrollViewSize.height);
+    
+    scrollView_.frame = NSMakeRect(kLeftMargin, kTopMargin, scrollViewSize.width, scrollViewSize.height);
+
+    textView_.minSize = usedRect.size;
+    textView_.frame = NSMakeRect(0, 0, usedRect.size.width, usedRect.size.height);
+    
+    [self setAnchor:anchor_];
 }
 
 @end
