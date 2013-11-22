@@ -302,7 +302,10 @@
 // Search for a substring. If found, return the position of the hit. Otherwise return -1. Use 0 for the start to indicate the beginning of the buffer or
 // pass the result of a previous findSubstring result. The number of positions the result occupies will be set in *length (which would be different than the
 // length of the substring in the presence of double-width characters.
-- (void)initFind:(NSString*)substring startingAt:(int)start options:(int)options withContext:(FindContext*)context;
+- (void)initFind:(NSString*)substring
+      startingAt:(LineBufferPosition *)start
+         options:(int)options
+     withContext:(FindContext*)context;
 - (void)findSubstring:(FindContext*)context stopAt:(int)stopAt;
 
 // Convert a position (as returned by findSubstring) into an x,y position.
@@ -312,19 +315,19 @@
 // Returns an array of XYRange values
 - (NSArray*)convertPositions:(NSArray*)resultRanges withWidth:(int)width;
 
-// Convert x,y coordinates (with y=0 being the first line) into a position. Offset is added to the position safely.
-// Returns TRUE if the conversion was successful, false, if out of bounds.
-// DEPRECATED. Use positionForCoordinate:width:offset:
-- (BOOL) convertCoordinatesAtX: (int) x atY: (int) y withWidth: (int) width toPosition: (int*) position offset:(int)offset;
-
 - (LineBufferPosition *)positionForCoordinate:(VT100GridCoord)coord width:(int)width offset:(int)offset;
 - (VT100GridCoord)coordinateForPosition:(LineBufferPosition *)position width:(int)width ok:(BOOL *)ok;
 
 // Returns the position at the stat of the buffer
+// DEPRECATED
 - (int) firstPos;
 
 // Returns the position at the end of the buffer
+// DEPRECATED
 - (int) lastPos;
+
+- (LineBufferPosition *)firstPosition;
+- (LineBufferPosition *)lastPosition;
 
 // Convert the block,offset in a findcontext into an absolute position.
 - (long long)absPositionOfFindContext:(FindContext *)findContext;

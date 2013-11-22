@@ -7,13 +7,14 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "LineBufferPosition.h"
 
 @protocol TrackedObject <NSObject>
 
 @property(nonatomic, assign) BOOL isInLineBuffer;
 
 // If in line buffer, this is the absolute position in the line buffer of the tracked object.
-@property(nonatomic, assign) long long absolutePosition;
+@property(nonatomic, retain) LineBufferPosition *lineBufferPosition;
 
 // If not line buffer, this is the absolute line number of the tracked object.
 @property(nonatomic, assign) long long absoluteLineNumber;

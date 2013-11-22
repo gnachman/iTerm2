@@ -25,7 +25,7 @@ extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
     BOOL hidden_;
 
     BOOL isInLineBuffer_;
-    long long absolutePosition_;
+    LineBufferPosition *lineBufferPosition_;
     long long absoluteLineNumber_;
 }
 

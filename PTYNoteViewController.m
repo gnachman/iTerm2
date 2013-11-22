@@ -30,8 +30,8 @@ static const CGFloat kBottomMargin = 5;
 @synthesize anchor = anchor_;
 @synthesize watchForUpdate = watchForUpdate_;
 @synthesize isInLineBuffer = isInLineBuffer_;
-@synthesize absolutePosition = absolutePosition_;
 @synthesize absoluteLineNumber = absoluteLineNumber_;
+@synthesize lineBufferPosition = lineBufferPosition_;
 
 - (void)dealloc {
     [noteView_ removeFromSuperview];

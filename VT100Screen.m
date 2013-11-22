@@ -1032,22 +1032,43 @@ static const double kInterBellQuietPeriod = 0.1;
                                     withObjects:NO];
 
     // Get the start position of (x,y)
-    int startPos;
-    BOOL isOk = [linebuffer_ convertCoordinatesAtX:x
-                                               atY:y
-                                         withWidth:currentGrid_.size.width
-                                        toPosition:&startPos
-                                            offset:offset * (direction ? 1 : -1)];
-    if (!isOk) {
+    LineBufferPosition *startPos;
+    startPos = [linebuffer_ positionForCoordinate:VT100GridCoordMake(x, y)
+                                            width:currentGrid_.size.width
+                                           offset:offset * (direction ? 1 : -1)];
+    if (!startPos) {
         // x,y wasn't a real position in the line buffer, probably a null after the end.
         if (direction) {
-            startPos = [linebuffer_ firstPos];
+            startPos = [linebuffer_ firstPosition];
         } else {
-            startPos = [linebuffer_ lastPos] - 1;
+            startPos = [[linebuffer_ lastPosition] predecessor];
         }
     } else {
-        // lastPos or beyond can't be found in initFind:startingAt:options:withContext: below.
-        startPos = MIN(startPos, [linebuffer_ lastPos] - 1);
+        // Make sure startPos is not at or after the last cell in the line buffer.
+        BOOL ok;
+        VT100GridCoord startPosCoord = [linebuffer_ coordinateForPosition:startPos
+                                                                    width:currentGrid_.size.width
+                                                                       ok:&ok];
+        LineBufferPosition *lastValidPosition = [[linebuffer_ lastPosition] predecessor];
+        if (!ok) {
+            startPos = lastValidPosition;
+        } else {
+            VT100GridCoord lastPositionCoord = [linebuffer_ coordinateForPosition:lastValidPosition
+                                                                            width:currentGrid_.size.width
+                                                                               ok:&ok];
+            assert(ok);
+            long long s = startPosCoord.y;
+            s *= currentGrid_.size.width;
+            s += startPosCoord.x;
+            
+            long long l = lastPositionCoord.y;
+            l *= currentGrid_.size.width;
+            l += lastPositionCoord.x;
+            
+            if (s >= l) {
+                startPos = lastValidPosition;
+            }
+        }
     }
 
     // Set up the options bitmask and call findSubstring.
@@ -1214,14 +1235,14 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (int)lineNumberOfNote:(PTYNoteViewController *)note {
     if (note.isInLineBuffer) {
-        int pos = [linebuffer_ positionForAbsPosition:note.absolutePosition];
-        int x;
-        int y;
-        if ([linebuffer_ convertPosition:pos withWidth:currentGrid_.size.width toX:&x toY:&y]) {
-            return y;
+        BOOL ok;
+        VT100GridCoord coord = [linebuffer_ coordinateForPosition:note.lineBufferPosition
+                                                            width:currentGrid_.size.width
+                                                               ok:&ok];
+        if (ok) {
+            return coord.y;
         } else {
-            NSLog(@"Failed to convert absolute position %lld (position %d)",
-                  note.absolutePosition, pos);
+            NSLog(@"Failed to convert position %@", note.lineBufferPosition);
             return -1;
         }
     } else {
@@ -2405,22 +2426,19 @@ static void SwapInt(int *a, int *b) {
             *isFullLineSelection = NO;
         }
     }
-    BOOL v;
-    v = [lineBuffer convertCoordinatesAtX:nonNullStartX
-                                      atY:nonNullStartY
-                                withWidth:currentGrid_.size.width
-                               toPosition:startPos
-                                   offset:0];
+    LineBufferPosition *startPosition = [lineBuffer positionForCoordinate:VT100GridCoordMake(nonNullStartX,
+                                                                                             nonNullStartY)
+                                                                    width:currentGrid_.size.width
+                                                                   offset:0];
     if (selectionStartPositionIsValid) {
-        *selectionStartPositionIsValid = v;
+        *selectionStartPositionIsValid = (startPosition != nil);
     }
-    v = [lineBuffer convertCoordinatesAtX:nonNullEndX
-                                      atY:nonNullEndY
-                                withWidth:currentGrid_.size.width
-                               toPosition:endPos
-                                   offset:0];
+    LineBufferPosition *endPosition = [lineBuffer positionForCoordinate:VT100GridCoordMake(nonNullEndX,
+                                                                                           nonNullEndY)
+                                                                  width:currentGrid_.size.width
+                                                                 offset:0];
     if (selectionEndPostionIsValid) {
-        *selectionEndPostionIsValid = v;
+        *selectionEndPostionIsValid = (endPosition != nil);
     }
     return YES;
 }
@@ -2716,7 +2734,7 @@ static void SwapInt(int *a, int *b) {
                     // wrap around and resume search.
                     FindContext *tempFindContext = [[[FindContext alloc] init] autorelease];
                     [linebuffer_ initFind:findContext_.substring
-                               startingAt:(findContext_.dir > 0 ? [linebuffer_ firstPos] : [linebuffer_ lastPos]-1)
+                               startingAt:(findContext_.dir > 0 ? [linebuffer_ firstPosition] : [[linebuffer_ lastPosition] predecessor])
                                   options:findContext_.options
                               withContext:tempFindContext];
                     [findContext_ reset];

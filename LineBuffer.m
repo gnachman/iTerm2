@@ -1349,7 +1349,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     if (object) {
         object.isInLineBuffer = YES;
-        object.absolutePosition = [self absPositionForPosition:[self lastPos]];
+        object.lineBufferPosition = [self lastPosition];
     }
     int beforeLines = [block getNumLinesWithWrapWidth:width];
     if (![block appendLine:buffer length:length partial:partial width:width timestamp:timestamp object:object]) {
@@ -1480,14 +1480,16 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             continue;
         }
 
-        int position;
-        if ([self convertCoordinatesAtX:0 atY:lineNum withWidth:width toPosition:&position offset:0]) {
+        LineBufferPosition *position = [self positionForCoordinate:VT100GridCoordMake(0, lineNum)
+                                                             width:width
+                                                            offset:0];
+        if (position) {
             [block setObject:object forLine:line width:width];
             object.isInLineBuffer = YES;
-            object.absolutePosition = [self absPositionForPosition:position];
+            object.lineBufferPosition = position;
         } else {
             NSLog(@"Couldn't convert line number %d with width %d to position, not adding object.",
-                  lineNum, position);
+                  lineNum, width);
         }
         return;
     }
@@ -1672,10 +1674,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return NO;
 }
 
-- (BOOL) _findPosition: (int) start inBlock: (int*) block_num inOffset: (int*) offset
+- (BOOL)_findPosition:(LineBufferPosition *)start inBlock:(int*)block_num inOffset:(int*)offset
 {
     int i;
-    int position = start;
+    int position = start.absolutePosition - droppedChars;
     for (i = 0; position >= 0 && i < [blocks count]; ++i) {
         LineBlock* block = [blocks objectAtIndex:i];
         int used = [block rawSpaceUsed];
@@ -1702,7 +1704,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 }
 
-- (void)initFind:(NSString*)substring startingAt:(int)start options:(int)options withContext:(FindContext*)context
+- (void)initFind:(NSString*)substring
+      startingAt:(LineBufferPosition *)start
+         options:(int)options
+     withContext:(FindContext*)context
 {
     context.substring = [[NSString alloc] initWithString:substring];
     context.options = options;
@@ -2011,25 +2016,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return VT100GridCoordMake(0, 0);
 }
 
-// Returns YES if the (x,y) coord exists within the scrollback buffer.
-// DEPRECATED
-- (BOOL)convertCoordinatesAtX:(int)x
-                          atY:(int)y
-                    withWidth:(int)width
-                   toPosition:(int*)position
-                       offset:(int)offset
-{
-    LineBufferPosition *result = [self positionForCoordinate:VT100GridCoordMake(x, y)
-                                                       width:width
-                                                      offset:offset];
-    if (!result) {
-        return NO;
-    } else {
-        *position = result.absolutePosition - droppedChars;
-        return YES;
-    }
-}
-
 - (int) firstPos
 {
     int i;
@@ -2058,6 +2044,24 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             position += [block rawSpaceUsed];
         }
     }
+    return position;
+}
+
+- (LineBufferPosition *)firstPosition {
+    LineBufferPosition *position = [LineBufferPosition position];
+    position.absolutePosition = droppedChars;
+    return position;
+}
+
+- (LineBufferPosition *)lastPosition {
+    LineBufferPosition *position = [LineBufferPosition position];
+
+    position.absolutePosition = droppedChars;
+    for (int i = 0; i < [blocks count]; ++i) {
+        LineBlock* block = [blocks objectAtIndex:i];
+        position.absolutePosition = position.absolutePosition + [block rawSpaceUsed];
+    }
+
     return position;
 }
 
