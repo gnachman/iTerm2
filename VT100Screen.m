@@ -157,9 +157,9 @@ static const double kInterBellQuietPeriod = 0.1;
     VT100Grid *copyOfAltGrid = [[altGrid_ copy] autorelease];
     LineBuffer *realLineBuffer = linebuffer_;
 
-    int originalLastPos = [linebuffer_ lastPos];
-    int originalStartPos = 0;
-    int originalEndPos = 0;
+    LineBufferPosition *originalLastPos = [linebuffer_ lastPosition];
+    LineBufferPosition *originalStartPos = nil;
+    LineBufferPosition *originalEndPos = nil;
     BOOL originalIsFullLine;
     BOOL endExtends;
     BOOL wasShowingAltScreen = (currentGrid_ == altGrid_);
@@ -264,7 +264,7 @@ static const double kInterBellQuietPeriod = 0.1;
                                        absoluteOffset:[self numberOfScrollbackLines] + [self totalScrollbackOverflow]];
         }
 
-        int newLastPos = [realLineBuffer lastPos];
+        LineBufferPosition *newLastPos = [realLineBuffer lastPosition];
 
         ///////////////////////////////////////
         // Create a cheap append-only copy of the line buffer and add the
@@ -286,40 +286,42 @@ static const double kInterBellQuietPeriod = 0.1;
             // Compute selection positions relative to the end of the line buffer, which may have
             // grown or shrunk.
 
-            int growth = newLastPos - originalLastPos;
-            int startPos = originalStartPos;
-            int endPos = originalEndPos;
-            int predecessorOfNewLastPos = MAX(0, newLastPos - 1);
+            int growth = newLastPos.absolutePosition - originalLastPos.absolutePosition;
+            LineBufferPosition *startPos = originalStartPos;
+            LineBufferPosition *endPos = originalEndPos;
+            LineBufferPosition *predecessorOfNewLastPos = [newLastPos predecessor];
             if (growth > 0) {
-                if (startPos >= originalLastPos) {
-                    startPos += growth;
+                if (startPos.absolutePosition >= originalLastPos.absolutePosition) {
+                    startPos.absolutePosition += growth;
                 }
-                if (endPos >= originalLastPos) {
-                    endPos += growth;
+                if (endPos.absolutePosition >= originalLastPos.absolutePosition) {
+                    endPos.absolutePosition += growth;
                 }
             } else if (growth < 0) {
-                if (startPos >= newLastPos && startPos < originalLastPos) {
+                if (startPos.absolutePosition >= newLastPos.absolutePosition &&
+                    startPos.absolutePosition < originalLastPos.absolutePosition) {
                     // Started in deleted region
                     startPos = newLastPos;
-                } else if (startPos >= originalLastPos) {
+                } else if (startPos.absolutePosition >= originalLastPos.absolutePosition) {
                     // Starts after deleted region
-                    startPos += growth;
+                    startPos.absolutePosition += growth;
                 }
-                if (endPos >= predecessorOfNewLastPos &&
-                    endPos < originalLastPos) {
+                if (endPos.absolutePosition >= predecessorOfNewLastPos.absolutePosition &&
+                    endPos.absolutePosition < originalLastPos.absolutePosition) {
                     // Ended in deleted region
                     endPos = predecessorOfNewLastPos;
-                } else if (endPos >= originalLastPos) {
-                    endPos += growth;
+                } else if (endPos.absolutePosition >= originalLastPos.absolutePosition) {
+                    endPos.absolutePosition += growth;
                 }
             }
-            if (startPos >= endPos + 1) {
+            if (startPos.absolutePosition >= endPos.absolutePosition + 1) {
                 hasSelection = NO;
             }
-            [appendOnlyLineBuffer convertPosition:startPos
-                                        withWidth:new_width
-                                              toX:&newSelStartX
-                                              toY:&newSelStartY];
+            VT100GridCoord newSelStart = [appendOnlyLineBuffer coordinateForPosition:startPos
+                                                                               width:new_width
+                                                                                  ok:NULL];
+            newSelStartX = newSelStart.x;
+            newSelStartY = newSelStart.y;
             int numScrollbackLines = [realLineBuffer numLinesWithWidth:new_width];
             if (newSelStartY >= numScrollbackLines) {
                 if (newSelStartY < numScrollbackLines + linesMovedUp) {
@@ -333,10 +335,12 @@ static const double kInterBellQuietPeriod = 0.1;
                     newSelStartY -= linesMovedUp;
                 }
             }
-            [appendOnlyLineBuffer convertPosition:endPos
-                                        withWidth:new_width
-                                              toX:&newSelEndX
-                                              toY:&newSelEndY];
+            
+            VT100GridCoord newSelEnd = [appendOnlyLineBuffer coordinateForPosition:endPos
+                                                                             width:new_width
+                                                                                ok:NULL];
+            newSelEndX = newSelEnd.x;
+            newSelEndY = newSelEnd.y;
             if (newSelEndY >= numScrollbackLines) {
                 if (newSelEndY < numScrollbackLines + linesMovedUp) {
                     // The selection ends in one of the lines that was lost. The whole selection is
@@ -2363,17 +2367,14 @@ static void SwapInt(int *a, int *b) {
     *nonNullEndY = max.y;
 }
 
-- (BOOL)getNullCorrectedSelectionStartPosition:(int *)startPos
-                                   endPosition:(int *)endPos
+- (BOOL)getNullCorrectedSelectionStartPosition:(LineBufferPosition **)startPos
+                                   endPosition:(LineBufferPosition **)endPos
                            isFullLineSelection:(BOOL *)isFullLineSelection
                                endExtendsToEOL:(BOOL *)endExtends
                  selectionStartPositionIsValid:(BOOL *)selectionStartPositionIsValid
                     selectionEndPostionIsValid:(BOOL *)selectionEndPostionIsValid
                                   inLineBuffer:(LineBuffer *)lineBuffer
 {
-    *startPos = -1;
-    *endPos = -1;
-
     int actualStartX = [delegate_ screenSelectionStartX];
     int actualStartY = [delegate_ screenSelectionStartY];
     int actualEndX = [delegate_ screenSelectionEndX];
@@ -2426,19 +2427,19 @@ static void SwapInt(int *a, int *b) {
             *isFullLineSelection = NO;
         }
     }
-    LineBufferPosition *startPosition = [lineBuffer positionForCoordinate:VT100GridCoordMake(nonNullStartX,
-                                                                                             nonNullStartY)
-                                                                    width:currentGrid_.size.width
-                                                                   offset:0];
+    *startPos = [lineBuffer positionForCoordinate:VT100GridCoordMake(nonNullStartX,
+                                                                     nonNullStartY)
+                                            width:currentGrid_.size.width
+                                           offset:0];
     if (selectionStartPositionIsValid) {
-        *selectionStartPositionIsValid = (startPosition != nil);
+        *selectionStartPositionIsValid = (*startPos != nil);
     }
-    LineBufferPosition *endPosition = [lineBuffer positionForCoordinate:VT100GridCoordMake(nonNullEndX,
-                                                                                           nonNullEndY)
-                                                                  width:currentGrid_.size.width
-                                                                 offset:0];
+    *endPos = [lineBuffer positionForCoordinate:VT100GridCoordMake(nonNullEndX,
+                                                                   nonNullEndY)
+                                          width:currentGrid_.size.width
+                                         offset:0];
     if (selectionEndPostionIsValid) {
-        *selectionEndPostionIsValid = (endPosition != nil);
+        *selectionEndPostionIsValid = (*endPos != nil);
     }
     return YES;
 }
@@ -2451,8 +2452,8 @@ static void SwapInt(int *a, int *b) {
                  toIsFullLineSelection:(BOOL *)isFullLineSelection
                           inLineBuffer:(LineBuffer *)lineBuffer
 {
-    int selectionStartPosition;
-    int selectionEndPosition;
+    LineBufferPosition *selectionStartPosition;
+    LineBufferPosition *selectionEndPosition;
     BOOL selectionStartPositionIsValid;
     BOOL selectionEndPostionIsValid;
     BOOL endExtends;
@@ -2468,20 +2469,18 @@ static void SwapInt(int *a, int *b) {
         return NO;
     }
     if (selectionStartPositionIsValid) {
-        [lineBuffer convertPosition:selectionStartPosition
-                          withWidth:newWidth
-                                toX:newStartXPtr
-                                toY:newStartYPtr];
+        VT100GridCoord newStart = [lineBuffer coordinateForPosition:selectionStartPosition width:newWidth ok:NULL];
+        *newStartXPtr = newStart.x;
+        *newStartYPtr = newStart.y;
         if (selectionEndPostionIsValid) {
-            [lineBuffer convertPosition:selectionEndPosition
-                              withWidth:newWidth
-                                    toX:newEndXPtr
-                                    toY:newEndYPtr];
-            (*newEndXPtr)++;
-            if (*newEndXPtr > newWidth) {
-                (*newEndYPtr)++;
-                *newEndXPtr -= newWidth;
+            VT100GridCoord newEnd = [lineBuffer coordinateForPosition:selectionEndPosition width:newWidth ok:NULL];
+            newEnd.x++;
+            if (newEnd.x > newWidth) {
+                newEnd.y++;
+                newEnd.x -= newWidth;
             }
+            *newEndXPtr = newEnd.x;
+            *newEndYPtr = newEnd.y;
         } else {
             *newEndXPtr = currentGrid_.size.width;
             *newEndYPtr = [lineBuffer numLinesWithWidth:newWidth] + currentGrid_.size.height - 1;
