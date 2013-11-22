@@ -160,8 +160,6 @@ static const double kInterBellQuietPeriod = 0.1;
     LineBufferPosition *originalLastPos = [linebuffer_ lastPosition];
     LineBufferPosition *originalStartPos = nil;
     LineBufferPosition *originalEndPos = nil;
-    BOOL originalIsFullLine;
-    BOOL endExtends;
     BOOL wasShowingAltScreen = (currentGrid_ == altGrid_);
 
     if (hasSelection && wasShowingAltScreen) {
@@ -178,8 +176,6 @@ static const double kInterBellQuietPeriod = 0.1;
                withObjects:NO];
         [self getNullCorrectedSelectionStartPosition:&originalStartPos
                                          endPosition:&originalEndPos
-                                 isFullLineSelection:&originalIsFullLine
-                                     endExtendsToEOL:&endExtends
                        selectionStartPositionIsValid:&ok1
                           selectionEndPostionIsValid:&ok2
                                         inLineBuffer:lineBufferWithAltScreen];
@@ -207,14 +203,12 @@ static const double kInterBellQuietPeriod = 0.1;
     int newSelStartY = -1;
     int newSelEndX = -1;
     int newSelEndY = -1;
-    BOOL isFullLineSelection = NO;
     if (!wasShowingAltScreen && hasSelection) {
         hasSelection = [self convertCurrentSelectionToWidth:new_width
                                                 toNewStartX:&newSelStartX
                                                 toNewStartY:&newSelStartY
                                                   toNewEndX:&newSelEndX
                                                   toNewEndY:&newSelEndY
-                                      toIsFullLineSelection:&isFullLineSelection
                                                inLineBuffer:linebuffer_];
     }
 
@@ -352,7 +346,7 @@ static const double kInterBellQuietPeriod = 0.1;
                     newSelEndY -= linesMovedUp;
                 }
             }
-            if (endExtends) {
+            if (originalEndPos.extendsToEndOfLine) {
                 newSelEndX = new_width;
             } else {
                 // Move to the successor of newSelEndX, newSelEndY.
@@ -2319,35 +2313,31 @@ static void SwapInt(int *a, int *b) {
     return result;
 }
 
-- (void)convertSelectionStartX:(int)actualStartX
-                        startY:(int)actualStartY
-                          endX:(int)actualEndX
-                          endY:(int)actualEndY
-                    toNonNullX:(int *)nonNullStartX
-                    toNonNullY:(int *)nonNullStartY
-                    toNonNullX:(int *)nonNullEndX
-                    toNonNullY:(int *)nonNullEndY
+- (void)trimSelectionFromStart:(VT100GridCoord)start
+                           end:(VT100GridCoord)end
+                      toStartX:(VT100GridCoord *)startPtr
+                        toEndX:(VT100GridCoord *)endPtr
 {
-    assert(actualStartX >= 0);
-    assert(actualEndX >= 0);
-    assert(actualStartY >= 0);
-    assert(actualEndY >= 0);
+    assert(start.x >= 0);
+    assert(end.x >= 0);
+    assert(start.y >= 0);
+    assert(end.y >= 0);
 
-    if (!XYIsBeforeXY(actualStartX, actualStartY, actualEndX, actualEndY)) {
-        SwapInt(&actualStartX, &actualEndX);
-        SwapInt(&actualStartY, &actualEndY);
+    if (!XYIsBeforeXY(start.x, start.y, end.x, end.y)) {
+        SwapInt(&start.x, &end.x);
+        SwapInt(&start.y, &end.y);
     }
 
     // Advance start position until it hits a non-null or equals the end position.
-    int startX = actualStartX;
-    int startY = actualStartY;
+    int startX = start.x;
+    int startY = start.y;
     if (startX == currentGrid_.size.width) {
         startX = 0;
         startY++;
     }
 
-    int endX = actualEndX;
-    int endY = actualEndY;
+    int endX = end.x;
+    int endY = end.y;
     if (endX == currentGrid_.size.width) {
         endX = 0;
         endY++;
@@ -2361,16 +2351,12 @@ static void SwapInt(int *a, int *b) {
     assert(run.length >= 0);
     VT100GridCoord max = VT100GridRunMax(run, currentGrid_.size.width);
 
-    *nonNullStartX = run.origin.x;
-    *nonNullStartY = run.origin.y;
-    *nonNullEndX = max.x;
-    *nonNullEndY = max.y;
+    *startPtr = run.origin;
+    *endPtr = max;
 }
 
 - (BOOL)getNullCorrectedSelectionStartPosition:(LineBufferPosition **)startPos
                                    endPosition:(LineBufferPosition **)endPos
-                           isFullLineSelection:(BOOL *)isFullLineSelection
-                               endExtendsToEOL:(BOOL *)endExtends
                  selectionStartPositionIsValid:(BOOL *)selectionStartPositionIsValid
                     selectionEndPostionIsValid:(BOOL *)selectionEndPostionIsValid
                                   inLineBuffer:(LineBuffer *)lineBuffer
@@ -2380,19 +2366,16 @@ static void SwapInt(int *a, int *b) {
     int actualEndX = [delegate_ screenSelectionEndX];
     int actualEndY = [delegate_ screenSelectionEndY];
 
-    if (endExtends) {
-        // Initialize endExtends for predictable behavior.
-        *endExtends = NO;
-    }
+    BOOL endExtends = NO;
     // Use the predecessor of endx,endy so it will have a legal position in the line buffer.
-    if (actualEndX == [self width] && endExtends) {
+    if (actualEndX == [self width]) {
         screen_char_t *line = [self getLineAtIndex:actualEndY];
         if (line[actualEndX - 1].code == 0 && line[actualEndX].code == EOL_HARD) {
             // The selection goes all the way to the end of the line and there is a null at the
             // end of the line, so it extends to the end of the line. The linebuffer can't recover
             // this from its position because the trailing null in the line wouldn't be in the
             // linebuffer.
-            *endExtends = YES;
+            endExtends = YES;
         }
     }
     actualEndX--;
@@ -2404,40 +2387,28 @@ static void SwapInt(int *a, int *b) {
         }
     }
 
-    int nonNullStartX;
-    int nonNullStartY;
-    int nonNullEndX;
-    int nonNullEndY;
-    [self convertSelectionStartX:actualStartX
-                          startY:actualStartY
-                            endX:actualEndX
-                            endY:actualEndY
-                      toNonNullX:&nonNullStartX
-                      toNonNullY:&nonNullStartY
-                      toNonNullX:&nonNullEndX
-                      toNonNullY:&nonNullEndY];
-    BOOL endsAfterStart = XYIsBeforeXY(nonNullStartX, nonNullStartY, nonNullEndX, nonNullEndY);
+    VT100GridCoord trimmedStart;
+    VT100GridCoord trimmedEnd;
+    [self trimSelectionFromStart:VT100GridCoordMake(actualStartX, actualStartY)
+                             end:VT100GridCoordMake(actualEndX, actualEndY)
+                        toStartX:&trimmedStart
+                          toEndX:&trimmedEnd];
+    BOOL endsAfterStart = XYIsBeforeXY(trimmedStart.x, trimmedStart.y, trimmedEnd.x, trimmedEnd.y);
     if (!endsAfterStart) {
         return NO;
     }
-    if (isFullLineSelection) {
-        if (actualStartX == 0 && actualEndX == currentGrid_.size.width - 1) {
-            *isFullLineSelection = YES;
-        } else {
-            *isFullLineSelection = NO;
-        }
-    }
-    *startPos = [lineBuffer positionForCoordinate:VT100GridCoordMake(nonNullStartX,
-                                                                     nonNullStartY)
+
+    *startPos = [lineBuffer positionForCoordinate:trimmedStart
                                             width:currentGrid_.size.width
                                            offset:0];
     if (selectionStartPositionIsValid) {
         *selectionStartPositionIsValid = (*startPos != nil);
     }
-    *endPos = [lineBuffer positionForCoordinate:VT100GridCoordMake(nonNullEndX,
-                                                                   nonNullEndY)
+    *endPos = [lineBuffer positionForCoordinate:trimmedEnd
                                           width:currentGrid_.size.width
                                          offset:0];
+    (*endPos).extendsToEndOfLine = endExtends;
+
     if (selectionEndPostionIsValid) {
         *selectionEndPostionIsValid = (*endPos != nil);
     }
@@ -2449,18 +2420,14 @@ static void SwapInt(int *a, int *b) {
                            toNewStartY:(int *)newStartYPtr
                              toNewEndX:(int *)newEndXPtr
                              toNewEndY:(int *)newEndYPtr
-                 toIsFullLineSelection:(BOOL *)isFullLineSelection
                           inLineBuffer:(LineBuffer *)lineBuffer
 {
     LineBufferPosition *selectionStartPosition;
     LineBufferPosition *selectionEndPosition;
     BOOL selectionStartPositionIsValid;
     BOOL selectionEndPostionIsValid;
-    BOOL endExtends;
     BOOL hasSelection = [self getNullCorrectedSelectionStartPosition:&selectionStartPosition
                                                          endPosition:&selectionEndPosition
-                                                 isFullLineSelection:isFullLineSelection
-                                                     endExtendsToEOL:&endExtends
                                        selectionStartPositionIsValid:&selectionStartPositionIsValid
                                           selectionEndPostionIsValid:&selectionEndPostionIsValid
                                                         inLineBuffer:lineBuffer];
@@ -2486,7 +2453,7 @@ static void SwapInt(int *a, int *b) {
             *newEndYPtr = [lineBuffer numLinesWithWidth:newWidth] + currentGrid_.size.height - 1;
         }
     }
-    if (selectionEndPostionIsValid && endExtends) {
+    if (selectionEndPostionIsValid && selectionEndPosition.extendsToEndOfLine) {
         *newEndXPtr = newWidth;
     }
     return YES;
