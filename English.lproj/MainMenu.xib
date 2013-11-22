@@ -920,7 +920,7 @@ DQ
                 <action selector="newWindow:" target="201" id="1443"/>
             </connections>
         </menuItem>
-        <sliderCell controlSize="small" state="on" alignment="left" maxValue="100" doubleValue="50" tickMarkPosition="above" sliderType="linear" id="1482"/>
+        <sliderCell controlSize="small" state="on" alignment="left" maxValue="100" doubleValue="50" tickMarkPosition="left" sliderType="linear" id="1482"/>
         <menuItem title="Paste Slowly" tag="2" id="1485">
             <modifierMask key="keyEquivalentModifierMask"/>
             <connections>

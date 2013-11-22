@@ -30,6 +30,7 @@
 #import "LineBuffer.h"
 #import "RegexKitLite/RegexKitLite.h"
 #import "BackgroundThread.h"
+#import "TrackedObject.h"
 
 @implementation ResultRange
 @end
@@ -108,7 +109,7 @@
     }
 }
 
-- (void)_appendCumulativeLineLength:(int)cumulativeLength timestamp:(NSTimeInterval)timestamp object:(NSObject *)object
+- (void)_appendCumulativeLineLength:(int)cumulativeLength timestamp:(NSTimeInterval)timestamp object:(id<TrackedObject>)object
 {
     if (cll_entries == cll_capacity) {
         cll_capacity *= 2;
@@ -217,7 +218,7 @@ static int NumberOfFullLines(screen_char_t* buffer, int length, int width)
            partial:(BOOL)partial
              width:(int)width
          timestamp:(NSTimeInterval)timestamp
-            object:(NSObject *)object
+            object:(id<TrackedObject>)object
 {
     const int space_used = [self rawSpaceUsed];
     const int free_space = buffer_size - space_used - start_offset;
@@ -278,18 +279,29 @@ static int NumberOfFullLines(screen_char_t* buffer, int length, int width)
     return YES;
 }
 
-- (int) getPositionOfLine: (int*)lineNum atX: (int) x withWidth: (int)width
+- (int)getPositionOfLine:(int*)lineNum
+                     atX:(int)x
+               withWidth:(int)width
+                 yOffset:(int *)yOffsetPtr
+                 extends:(BOOL *)extendsPtr
 {
     int length;
     int eol;
-    screen_char_t* p = [self getWrappedLineWithWrapWidth: width
-                                                 lineNum: lineNum
-                                              lineLength: &length
-                                       includesEndOfLine: &eol];
+    screen_char_t* p = [self getWrappedLineWithWrapWidth:width
+                                                 lineNum:lineNum
+                                              lineLength:&length
+                                       includesEndOfLine:&eol
+                                                 yOffset:yOffsetPtr];
     if (!p) {
         return -1;
     } else {
-        return p - raw_buffer + x;
+        if (x >= length) {
+            *extendsPtr = YES;
+            return p - raw_buffer + length;
+        } else {
+            *extendsPtr = NO;
+            return p - raw_buffer + x;
+        }
     }
 }
 
@@ -345,7 +357,7 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
     return 0;
 }
 
-- (NSObject *)objectForLineNumber:(int)lineNum width:(int)width
+- (id<TrackedObject>)objectForLineNumber:(int)lineNum width:(int)width
 {
     int prev = 0;
     int length;
@@ -366,7 +378,7 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
     return 0;
 }
 
-- (void)setObject:(NSObject *)object forLine:(int)lineNum width:(int)width {
+- (void)setObject:(id<TrackedObject>)object forLine:(int)lineNum width:(int)width {
     int prev = 0;
     int length;
     int i;
@@ -385,17 +397,36 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
     }
 }
 
-- (screen_char_t*) getWrappedLineWithWrapWidth: (int) width
-                                       lineNum: (int*) lineNum
-                                    lineLength: (int*) lineLength
-                             includesEndOfLine: (int*) includesEndOfLine
+- (screen_char_t*)getWrappedLineWithWrapWidth:(int)width
+                                      lineNum:(int*)lineNum
+                                   lineLength:(int*)lineLength
+                            includesEndOfLine:(int*)includesEndOfLine
+{
+    return [self getWrappedLineWithWrapWidth:width
+                                     lineNum:lineNum
+                                  lineLength:lineLength
+                           includesEndOfLine:includesEndOfLine
+                                     yOffset:NULL];
+}
+
+- (screen_char_t*)getWrappedLineWithWrapWidth:(int)width
+                                      lineNum:(int*)lineNum
+                                   lineLength:(int*)lineLength
+                            includesEndOfLine:(int*)includesEndOfLine
+                                      yOffset:(int*)yOffsetPtr
 {
     int prev = 0;
     int length;
     int i;
+    int numEmptyLines = 0;
     for (i = first_entry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - start_offset;
         length = cll - prev;
+        if (length == 0) {
+            ++numEmptyLines;
+        } else {
+            numEmptyLines = 0;
+        }
         int spans = NumberOfFullLines(buffer_start + prev, length, width);
         if (*lineNum > spans) {
             // Consume the entire raw line and keep looking for more.
@@ -429,6 +460,11 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
                 } else {
                     *includesEndOfLine = EOL_HARD;
                 }
+            }
+            if (yOffsetPtr) {
+                // Set *yOffsetPtr to the number of consecutive empty lines just before the requested
+                // line.
+                *yOffsetPtr = numEmptyLines;
             }
             return buffer_start + prev + offset;
         }
@@ -472,7 +508,7 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
              withLength:(int*)length
               upToWidth:(int)width
               timestamp:(NSTimeInterval *)timestampPtr
-                 object:(NSObject **)objectPtr
+                 object:(id<TrackedObject> *)objectPtr
 {
     if (cll_entries == first_entry) {
         // There is no last line to pop.
@@ -1292,7 +1328,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
            partial:(BOOL)partial
              width:(int)width
          timestamp:(NSTimeInterval)timestamp
-            object:(NSObject *)object
+            object:(id<TrackedObject>)object
 {
 #ifdef LOG_MUTATIONS
     {
@@ -1311,6 +1347,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     LineBlock* block = [blocks objectAtIndex: ([blocks count] - 1)];
 
+    if (object) {
+        object.isInLineBuffer = YES;
+        object.lineBufferPosition = [self lastPosition];
+    }
     int beforeLines = [block getNumLinesWithWrapWidth:width];
     if (![block appendLine:buffer length:length partial:partial width:width timestamp:timestamp object:object]) {
         // It's going to be complicated. Invalidate the number of wrapped lines
@@ -1318,7 +1358,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         num_wrapped_lines_width = -1;
         int prefix_len = 0;
         NSTimeInterval prefixTimestamp = 0;
-        NSObject *prefixObject = nil;
+        id<TrackedObject> prefixObject = nil;
         screen_char_t* prefix = NULL;
         if ([block hasPartial]) {
             // There is a line that's too long for the current block to hold.
@@ -1402,7 +1442,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return 0;
 }
 
-- (NSObject *)objectForLineNumber:(int)lineNum width:(int)width
+- (id<TrackedObject>)objectForLineNumber:(int)lineNum width:(int)width
 {
     int line = lineNum;
     int i;
@@ -1424,7 +1464,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return 0;
 }
 
-- (void)setObject:(NSObject *)object forLine:(int)lineNum width:(int)width {
+- (void)setObject:(id<TrackedObject>)object forLine:(int)lineNum width:(int)width {
     int line = lineNum;
     int i;
     for (i = 0; i < [blocks count]; ++i) {
@@ -1439,8 +1479,18 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             line -= block_lines;
             continue;
         }
-        
-        [block setObject:object forLine:line width:width];
+
+        LineBufferPosition *position = [self positionForCoordinate:VT100GridCoordMake(0, lineNum)
+                                                             width:width
+                                                            offset:0];
+        if (position) {
+            [block setObject:object forLine:line width:width];
+            object.isInLineBuffer = YES;
+            object.lineBufferPosition = position;
+        } else {
+            NSLog(@"Couldn't convert line number %d with width %d to position, not adding object.",
+                  lineNum, width);
+        }
         return;
     }
 }
@@ -1525,7 +1575,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                          width:(int)width
              includesEndOfLine:(int*)includesEndOfLine
                      timestamp:(NSTimeInterval *)timestampPtr
-                        object:(NSObject **)objectPtr
+                        object:(id<TrackedObject> *)objectPtr
 {
     if ([self numLinesWithWidth: width] == 0) {
         return NO;
@@ -1570,6 +1620,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         NSLog(@"Pop: %s\n", a);
     }
 #endif
+    if (objectPtr) {
+        (*objectPtr).isInLineBuffer = NO;
+    }
     return YES;
 }
 
@@ -1621,10 +1674,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return NO;
 }
 
-- (BOOL) _findPosition: (int) start inBlock: (int*) block_num inOffset: (int*) offset
+- (BOOL)_findPosition:(LineBufferPosition *)start inBlock:(int*)block_num inOffset:(int*)offset
 {
     int i;
-    int position = start;
+    int position = start.absolutePosition - droppedChars;
     for (i = 0; position >= 0 && i < [blocks count]; ++i) {
         LineBlock* block = [blocks objectAtIndex:i];
         int used = [block rawSpaceUsed];
@@ -1651,7 +1704,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 }
 
-- (void)initFind:(NSString*)substring startingAt:(int)start options:(int)options withContext:(FindContext*)context
+- (void)prepareToSearchFor:(NSString*)substring
+                startingAt:(LineBufferPosition *)start
+                   options:(int)options
+               withContext:(FindContext*)context
 {
     context.substring = [[NSString alloc] initWithString:substring];
     context.options = options;
@@ -1839,49 +1895,27 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                     toX:(int*)x
                     toY:(int*)y
 {
-    if (position == [self lastPos]) {
-        *y = [self numLinesWithWidth:width] - 1;
-        ScreenCharArray *lastLine = [self wrappedLineAtIndex:*y width:width];
-        *x = lastLine.length;
-        if (*x == 0 && *y > 0) {
-            *y = *y - 1;
-            lastLine = [self wrappedLineAtIndex:*y width:width];
-            *x = lastLine.length;
-        } else if (*x < 0) {
-            return NO;
-        }
-        return YES;
-    }
-    int i;
-    int yoffset = 0;
-    for (i = 0; position >= 0 && i < [blocks count]; ++i) {
-        LineBlock* block = [blocks objectAtIndex:i];
-        int used = [block rawSpaceUsed];
-        if (position >= used) {
-            position -= used;
-            yoffset += [block getNumLinesWithWrapWidth:width];
-        } else {
-            BOOL positionIsValid = [block convertPosition:position
-                                                withWidth:width
-                                                      toX:x
-                                                      toY:y];
-            *y += yoffset;
-            return positionIsValid;
-        }
-    }
-    return NO;
+    BOOL ok;
+    LineBufferPosition *lbp = [LineBufferPosition position];
+    lbp.absolutePosition = position + droppedChars;
+    lbp.yOffset = 0;
+    lbp.extendsToEndOfLine = NO;
+    VT100GridCoord coord = [self coordinateForPosition:lbp width:width ok:&ok];
+    *x = coord.x;
+    *y = coord.y;
+    return ok;
 }
 
-// Returns YES if the (x,y) coord exists within the scrollback buffer.
-- (BOOL)convertCoordinatesAtX:(int)x
-                          atY:(int)y
-                    withWidth:(int)width
-                   toPosition:(int*)position
-                       offset:(int)offset
+- (LineBufferPosition *)positionForCoordinate:(VT100GridCoord)coord
+                                        width:(int)width
+                                       offset:(int)offset
 {
+    int x = coord.x;
+    int y = coord.y;
+    long long absolutePosition = droppedChars;
+
     int line = y;
     int i;
-    *position = 0;
     for (i = 0; i < [blocks count]; ++i) {
         LineBlock* block = [blocks objectAtIndex: i];
         NSAssert(block, @"Null block");
@@ -1892,36 +1926,94 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         int block_lines = [block getNumLinesWithWrapWidth:width];
         if (block_lines <= line) {
             line -= block_lines;
-            *position += [block rawSpaceUsed];
+            absolutePosition += [block rawSpaceUsed];
             continue;
         }
 
         int pos;
-        pos = [block getPositionOfLine: &line atX: x withWidth: width];
+        int yOffset = 0;
+        BOOL extends = NO;
+        pos = [block getPositionOfLine:&line
+                                   atX:x
+                             withWidth:width
+                               yOffset:&yOffset
+                               extends:&extends];
         if (pos >= 0) {
-            int tempx=0, tempy=0;
-            // The correct position has been computed:
-            // *position = start of block
-            // pos = offset within block
-            // offset = additional offset the user requested
-            // but we need to see if the position actually exists after adding offset. If it can be
-            // converted to an x,y position then it's all right.
-            int candidatePosition = *position + pos + offset;
-            const BOOL positionIsValid = [self convertPosition:candidatePosition
-                                                     withWidth:width
-                                                           toX:&tempx
-                                                           toY:&tempy];
-            if (positionIsValid &&
-                tempy >= 0 &&
-                tempx >= 0) {
-                *position = candidatePosition;
-                return YES;
+            absolutePosition += pos + offset;
+            LineBufferPosition *result = [LineBufferPosition position];
+            result.absolutePosition = absolutePosition;
+            result.yOffset = yOffset;
+            result.extendsToEndOfLine = extends;
+
+            // Make sure position is valid (might not be because of offset).
+            BOOL ok;
+            [self coordinateForPosition:result width:width ok:&ok];
+            if (ok) {
+                return result;
             } else {
-                return NO;
+                return nil;
             }
         }
     }
-    return NO;
+    return nil;
+}
+
+- (VT100GridCoord)coordinateForPosition:(LineBufferPosition *)position
+                                  width:(int)width
+                                     ok:(BOOL *)ok
+{
+    if (position.absolutePosition == [self lastPos] + droppedChars) {
+        VT100GridCoord result;
+        result.y = [self numLinesWithWidth:width] - 1;
+        ScreenCharArray *lastLine = [self wrappedLineAtIndex:result.y width:width];
+        result.x = lastLine.length;
+        if (position.yOffset > 0) {
+            result.x = 0;
+            result.y += position.yOffset;
+        } else {
+            result.x = lastLine.length;
+        }
+        if (position.extendsToEndOfLine) {
+            result.x = width - 1;
+        }
+        if (ok) {
+            *ok = YES;
+        }
+        return result;
+    }
+    int i;
+    int yoffset = 0;
+    int p = position.absolutePosition - droppedChars;
+    for (i = 0; p >= 0 && i < [blocks count]; ++i) {
+        LineBlock* block = [blocks objectAtIndex:i];
+        int used = [block rawSpaceUsed];
+        if (p >= used) {
+            p -= used;
+            yoffset += [block getNumLinesWithWrapWidth:width];
+        } else {
+            int y;
+            int x;
+            BOOL positionIsValid = [block convertPosition:p
+                                                withWidth:width
+                                                      toX:&x
+                                                      toY:&y];
+            if (ok) {
+                *ok = positionIsValid;
+            }
+            if (position.yOffset > 0) {
+                x = 0;
+                y += position.yOffset;
+            }
+            if (position.extendsToEndOfLine) {
+                x = width - 1;
+            }
+            return VT100GridCoordMake(x, y + yoffset);
+        }
+    }
+    if (ok) {
+        *ok = NO;
+    }
+    return VT100GridCoordMake(0, 0);
 }
 
 - (int) firstPos
@@ -1952,6 +2044,24 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             position += [block rawSpaceUsed];
         }
     }
+    return position;
+}
+
+- (LineBufferPosition *)firstPosition {
+    LineBufferPosition *position = [LineBufferPosition position];
+    position.absolutePosition = droppedChars;
+    return position;
+}
+
+- (LineBufferPosition *)lastPosition {
+    LineBufferPosition *position = [LineBufferPosition position];
+
+    position.absolutePosition = droppedChars;
+    for (int i = 0; i < [blocks count]; ++i) {
+        LineBlock* block = [blocks objectAtIndex:i];
+        position.absolutePosition = position.absolutePosition + [block rawSpaceUsed];
+    }
+
     return position;
 }
 

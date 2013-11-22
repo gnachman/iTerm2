@@ -170,7 +170,9 @@
     return numberOfLinesUsed;
 }
 
-- (int)appendLines:(int)numLines toLineBuffer:(LineBuffer *)lineBuffer {
+- (int)appendLines:(int)numLines
+      toLineBuffer:(LineBuffer *)lineBuffer
+       withObjects:(BOOL)withObjects {
     assert(numLines <= size_.height);
 
     // Set numLines to the number of lines on the screen that are in use.
@@ -210,7 +212,10 @@
                        partial:(continuation != EOL_HARD)
                          width:size_.width
                      timestamp:[[self lineInfoAtLineNumber:i] timestamp]
-                        object:[[self lineInfoAtLineNumber:i] object]];
+                        object:withObjects ? [[self lineInfoAtLineNumber:i] object] : nil];
+        if (withObjects) {
+            [[self lineInfoAtLineNumber:i] setObject:nil];
+        }
 #ifdef DEBUG_RESIZEDWIDTH
         NSLog(@"Appended a line. now have %d lines for width %d\n",
               [lineBuffer numLinesWithWidth:size_.width], size_.width);
@@ -224,11 +229,15 @@
     return [[self lineInfoAtLineNumber:y] timestamp];
 }
 
-- (NSObject *)objectForLine:(int)y {
+- (id<TrackedObject>)objectForLine:(int)y {
     return [[self lineInfoAtLineNumber:y] object];
 }
 
-- (void)setObject:(NSObject *)object forLine:(int)y {
+- (void)setObject:(id<TrackedObject>)object
+          forLine:(int)y
+   absoluteOffset:(long long)absoluteOffset {
+    object.isInLineBuffer = NO;
+    object.absoluteLineNumber = y + absoluteOffset;
     [[self lineInfoAtLineNumber:y] setObject:object];
 }
 
@@ -1182,6 +1191,7 @@
 - (void)restoreScreenFromLineBuffer:(LineBuffer *)lineBuffer
                     withDefaultChar:(screen_char_t)defaultChar
                   maxLinesToRestore:(int)maxLines
+                     absoluteOffset:(long long)absoluteOffset
 {
     // Move scrollback lines into screen
     int numLinesInLineBuffer = [lineBuffer numLinesWithWidth:size_.width];
@@ -1198,6 +1208,7 @@
 
     BOOL foundCursor = NO;
     BOOL prevLineStartsWithDoubleWidth = NO;
+    int numPopped = 0;
     while (destLineNumber >= 0) {
         screen_char_t *dest = [self screenCharsAtLineNumber:destLineNumber];
         memcpy(dest, defaultLine, sizeof(screen_char_t) * size_.width);
@@ -1211,13 +1222,18 @@
         }
         int cont;
         NSTimeInterval timestamp;
-        NSObject *object;
+        id<TrackedObject> object;
+        ++numPopped;
         assert([lineBuffer popAndCopyLastLineInto:dest
                                             width:size_.width
                                 includesEndOfLine:&cont
                                         timestamp:&timestamp
                                            object:&object]);
         [[self lineInfoAtLineNumber:destLineNumber] setTimestamp:timestamp];
+        if (object) {
+            object.isInLineBuffer = NO;
+            object.absoluteLineNumber = destLineNumber + absoluteOffset;
+        }
         [[self lineInfoAtLineNumber:destLineNumber] setObject:object];
         if (cont && dest[size_.width - 1].code == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the
@@ -1236,6 +1252,15 @@
             dest[size_.width - 1].code = DWC_SKIP;
         }
         --destLineNumber;
+    }
+
+    // Fix up object line numbers where were wrong because the absoluteOffset included lines that
+    // were popped.
+    for (int i = 0; i < size_.height; i++) {
+        id<TrackedObject> object = [[self lineInfoAtLineNumber:i] object];
+        if (object) {
+            object.absoluteLineNumber = i + absoluteOffset - numPopped;
+        }
     }
 }
 

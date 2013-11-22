@@ -88,5 +88,6 @@ typedef enum {
 
 - (PTYNoteViewController *)noteForLine:(int)y;
 - (void)setNote:(PTYNoteViewController *)note forLine:(int)y;
+- (int)lineNumberOfNote:(PTYNoteViewController *)note;
 
 @end
