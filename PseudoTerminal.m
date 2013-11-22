@@ -5817,7 +5817,8 @@ NSString *sessionsKey = @"sessions";
                 [[iTermController sharedInstance] launchBookmark:bm
                                                       inTerminal:term
                                                          withURL:command
-                                                   forObjectType:term ? iTermTabObject : iTermWindowObject];
+                                                        isHotkey:NO
+                                                         makeKey:NO];
             } else {
                 [[NSWorkspace sharedWorkspace] openURL:url];
             }

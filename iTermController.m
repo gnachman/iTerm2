@@ -957,147 +957,26 @@ static BOOL initDone = NO;
     return term;
 }
 
-// Executes an addressbook command in new window or tab
-- (id)launchBookmark:(NSDictionary *)bookmarkData
-               inTerminal:(PseudoTerminal *)theTerm
-    disableLionFullscreen:(BOOL)disableLionFullscreen
-{
-    PseudoTerminal *term;
-    NSDictionary *aDict;
-
-    aDict = bookmarkData;
-    if (aDict == nil) {
-        aDict = [self defaultBookmark];
-    }
-
-    if (theTerm && [[aDict objectForKey:KEY_PREVENT_TAB] boolValue]) {
-        theTerm = nil;
-    }
-    // Where do we execute this command?
-    BOOL toggle = NO;
-    if (theTerm == nil || ![theTerm windowInited]) {
-        [iTermController switchToSpaceInBookmark:aDict];
-        int windowType = [self _windowTypeForBookmark:aDict];
-        if (windowType == WINDOW_TYPE_LION_FULL_SCREEN && disableLionFullscreen) {
-            windowType = WINDOW_TYPE_FULL_SCREEN;
-        }
-        if (windowType == WINDOW_TYPE_FULL_SCREEN && disableLionFullscreen) {
-            // This is a shortcut to make fullscreen hotkey windows open
-            // directly in fullscreen mode.
-            windowType = WINDOW_TYPE_FORCE_FULL_SCREEN;
-        }
-        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                 windowType:windowType
-                                                     screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
-                                                   isHotkey:disableLionFullscreen] autorelease];
-                if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
-                        [term hideAfterOpening];
-        }
-        [self addInTerminals:term];
-        if (disableLionFullscreen) {
-            // See comment above regarding hotkey windows.
-            toggle = NO;
-        } else {
-            toggle = ([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
-                     ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
-        }
-    } else {
-        term = theTerm;
-    }
-
-    PTYSession* session = [term addNewSession:aDict];
-    if (toggle) {
-        [term delayedEnterFullscreen];
-    }
-    // This function is activated from the dock icon's context menu so make sure
-    // that the new window is on top of all other apps' windows. For some reason,
-    // makeKeyAndOrderFront does nothing.
-    if (![[term window] isKeyWindow]) {
-        [NSApp activateIgnoringOtherApps:YES];
-        [[term window] makeKeyAndOrderFront:nil];
-        [NSApp arrangeInFront:self];
-    }
-
-    return session;
-}
-
 - (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm
 {
-    return [self launchBookmark:bookmarkData inTerminal:theTerm disableLionFullscreen:NO];
+    return [self launchBookmark:bookmarkData
+                     inTerminal:theTerm
+                        withURL:nil
+                       isHotkey:NO
+                        makeKey:YES];
 }
 
-// I don't think this function is ever called.
-- (id)launchBookmark:(NSDictionary *)bookmarkData
-          inTerminal:(PseudoTerminal *)theTerm
-         withCommand:(NSString *)command
+- (NSDictionary *)profile:(NSDictionary *)aDict
+        modifiedToOpenURL:(NSString *)url
+            forObjectType:(iTermObjectType)objectType
 {
-    PseudoTerminal *term;
-    NSDictionary *aDict;
-
-    aDict = bookmarkData;
-    if (aDict == nil) {
-        aDict = [[ProfileModel sharedInstance] defaultBookmark];
-        if (!aDict) {
-            NSMutableDictionary* temp = [[[NSMutableDictionary alloc] init] autorelease];
-            [ITAddressBookMgr setDefaultsInBookmark:temp];
-            [temp setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-            aDict = temp;
-        }
-    }
-
-    if (theTerm && [[aDict objectForKey:KEY_PREVENT_TAB] boolValue]) {
-        theTerm = nil;
-    }
-
-    // Where do we execute this command?
-    BOOL toggle = NO;
-    if (theTerm == nil || ![theTerm windowInited]) {
-        [iTermController switchToSpaceInBookmark:aDict];
-        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                 windowType:[self _windowTypeForBookmark:aDict]
-                                                     screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
-        if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
-            [term hideAfterOpening];
-        }
-        [self addInTerminals:term];
-        toggle = (([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
-                  ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN));
-    } else {
-        term = theTerm;
-    }
-
-    id result = [term addNewSession:aDict
-                        withCommand:command
-                      forObjectType:theTerm ? iTermTabObject : iTermWindowObject];
-    if (toggle) {
-        [term delayedEnterFullscreen];
-    }
-    return result;
-}
-
-- (id)launchBookmark:(NSDictionary *)bookmarkData
-          inTerminal:(PseudoTerminal *)theTerm
-             withURL:(NSString *)url
-       forObjectType:(iTermObjectType)objectType
-{
-    PseudoTerminal *term;
-    NSDictionary *aDict;
-
-    aDict = bookmarkData;
-    // Automatically fill in ssh command if command is exactly equal to $$ or it's a login shell.
     if (aDict == nil ||
         [[ITAddressBookMgr bookmarkCommand:aDict
                              forObjectType:objectType] isEqualToString:@"$$"] ||
         ![[aDict objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
         Profile* prototype = aDict;
         if (!prototype) {
-            prototype = [[ProfileModel sharedInstance] defaultBookmark];
-        }
-        if (!prototype) {
-            NSMutableDictionary* temp = [[[NSMutableDictionary alloc] init] autorelease];
-            [ITAddressBookMgr setDefaultsInBookmark:temp];
-            [temp setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-            prototype = temp;
+            prototype = [self defaultBookmark];
         }
 
         NSMutableDictionary *tempDict = [NSMutableDictionary dictionaryWithDictionary:prototype];
@@ -1141,32 +1020,86 @@ static BOOL initDone = NO;
         }
     }
 
+    return aDict;
+}
+
+- (id)launchBookmark:(NSDictionary *)bookmarkData
+          inTerminal:(PseudoTerminal *)theTerm
+             withURL:(NSString *)url
+            isHotkey:(BOOL)isHotkey
+             makeKey:(BOOL)makeKey
+{
+    PseudoTerminal *term;
+    NSDictionary *aDict;
+    const iTermObjectType objectType = theTerm ? iTermTabObject : iTermWindowObject;
+
+    aDict = bookmarkData;
+    if (aDict == nil) {
+        aDict = [self defaultBookmark];
+    }
+
+    if (url) {
+        // Automatically fill in ssh command if command is exactly equal to $$ or it's a login shell.
+        aDict = [self profile:aDict modifiedToOpenURL:url forObjectType:objectType];
+    }
     if (theTerm && [[aDict objectForKey:KEY_PREVENT_TAB] boolValue]) {
         theTerm = nil;
     }
 
     // Where do we execute this command?
     BOOL toggle = NO;
-    if (theTerm == nil) {
+    if (theTerm == nil || ![theTerm windowInited]) {
         [iTermController switchToSpaceInBookmark:aDict];
+        int windowType = [self _windowTypeForBookmark:aDict];
+        if (isHotkey) {
+            if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+                windowType = WINDOW_TYPE_FULL_SCREEN;
+            }
+            if (windowType == WINDOW_TYPE_FULL_SCREEN) {
+                // This is a shortcut to make fullscreen hotkey windows open
+                // directly in fullscreen mode.
+                windowType = WINDOW_TYPE_FORCE_FULL_SCREEN;
+            }
+        }
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                 windowType:[self _windowTypeForBookmark:aDict]
-                                                     screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
-                if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
-                        [term hideAfterOpening];
-                }
+                                                 windowType:windowType
+                                                     screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
+                                                   isHotkey:isHotkey] autorelease];
+        if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
+            [term hideAfterOpening];
+        }
         [self addInTerminals:term];
-        toggle = (([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
-                  ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN));
+        if (isHotkey) {
+            // See comment above regarding hotkey windows.
+            toggle = NO;
+        } else {
+            toggle = ([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
+                     ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
+        }
     } else {
         term = theTerm;
     }
 
-    id result = [term addNewSession:aDict withURL:url forObjectType:objectType];
+    PTYSession* session;
+
+    if (url) {
+        session = [term addNewSession:aDict withURL:url forObjectType:objectType];
+    } else {
+        session = [term addNewSession:aDict];
+    }
     if (toggle) {
         [term delayedEnterFullscreen];
     }
-    return result;
+    if (makeKey && ![[term window] isKeyWindow]) {
+        // When this function is activated from the dock icon's context menu so make sure
+        // that the new window is on top of all other apps' windows. For some reason,
+        // makeKeyAndOrderFront does nothing.
+        [NSApp activateIgnoringOtherApps:YES];
+        [[term window] makeKeyAndOrderFront:nil];
+        [NSApp arrangeInFront:self];
+    }
+
+    return session;
 }
 
 - (void)launchScript:(id)sender
@@ -1491,7 +1424,11 @@ static BOOL OpenHotkeyWindow()
                             forKey:KEY_WINDOW_TYPE];
             bookmark = replacement;
         }
-        PTYSession* session = [cont launchBookmark:bookmark inTerminal:nil disableLionFullscreen:YES];
+        PTYSession *session = [cont launchBookmark:bookmark
+                                        inTerminal:nil
+                                           withURL:nil
+                                          isHotkey:YES
+                                           makeKey:YES];
         PseudoTerminal* term = [[session tab] realParentWindow];
         [term setIsHotKeyWindow:YES];
 
