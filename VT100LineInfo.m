@@ -13,7 +13,7 @@
     int width_;
     BOOL anyCharPossiblyDirty_;  // No means nothing is dirty. Yes means MAYBE something is dirty.
     NSTimeInterval timestamp_;
-    NSObject *object_;
+    id<TrackedObject> object_;
 }
 
 @synthesize timestamp = timestamp_;

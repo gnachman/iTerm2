@@ -255,6 +255,10 @@
 		1D70BA351680158700824B72 /* PTYFontInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D70BA331680158700824B72 /* PTYFontInfo.h */; };
 		1D70BA361680158700824B72 /* PTYFontInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D70BA341680158700824B72 /* PTYFontInfo.m */; };
 		1D72439011F416F300BD4924 /* LineBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72438F11F416F300BD4924 /* LineBuffer.h */; };
+		1D78B55E183EE1C000014D49 /* LineBufferPosition.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D78B55C183EE1C000014D49 /* LineBufferPosition.h */; };
+		1D78B55F183EE1C000014D49 /* LineBufferPosition.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D78B55D183EE1C000014D49 /* LineBufferPosition.m */; };
+		1D78B560183EE1C000014D49 /* LineBufferPosition.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D78B55D183EE1C000014D49 /* LineBufferPosition.m */; };
+		1D78B561183EEB9700014D49 /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */; };
 		1D7B9A691491D82F003A2A22 /* IntervalMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7B9A671491D82F003A2A22 /* IntervalMap.h */; };
 		1D7B9A6A1491D82F003A2A22 /* IntervalMap.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7B9A681491D82F003A2A22 /* IntervalMap.m */; };
 		1D7C18811275D22900461E55 /* PasteboardHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7C187F1275D22900461E55 /* PasteboardHistory.h */; };
@@ -758,6 +762,8 @@
 		1D72438F11F416F300BD4924 /* LineBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBuffer.h; sourceTree = "<group>"; };
 		1D72477211F55E5700BD4924 /* LineBufferTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferTest.h; sourceTree = "<group>"; };
 		1D72477311F55E5700BD4924 /* LineBufferTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferTest.m; sourceTree = "<group>"; };
+		1D78B55C183EE1C000014D49 /* LineBufferPosition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferPosition.h; sourceTree = "<group>"; };
+		1D78B55D183EE1C000014D49 /* LineBufferPosition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferPosition.m; sourceTree = "<group>"; };
 		1D7B9A671491D82F003A2A22 /* IntervalMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntervalMap.h; sourceTree = "<group>"; };
 		1D7B9A681491D82F003A2A22 /* IntervalMap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalMap.m; sourceTree = "<group>"; };
 		1D7C187F1275D22900461E55 /* PasteboardHistory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PasteboardHistory.h; sourceTree = "<group>"; };
@@ -863,6 +869,7 @@
 		1DB67CF01485C578005849A1 /* TmuxHistoryParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxHistoryParser.m; sourceTree = "<group>"; };
 		1DB67CF31486BD3D005849A1 /* TmuxStateParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxStateParser.h; sourceTree = "<group>"; };
 		1DB67CF41486BD3D005849A1 /* TmuxStateParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxStateParser.m; sourceTree = "<group>"; };
+		1DB7188C183E8E3600ADC5DD /* TrackedObject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrackedObject.h; sourceTree = "<group>"; };
 		1DB72CF51396059200EB1005 /* xterm-terminfo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "xterm-terminfo.txt"; sourceTree = "<group>"; };
 		1DC38816148E840600B89F7C /* SolidColorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SolidColorView.h; sourceTree = "<group>"; };
 		1DC38817148E840700B89F7C /* SolidColorView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SolidColorView.m; sourceTree = "<group>"; };
@@ -1089,6 +1096,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1D78B561183EEB9700014D49 /* ScriptingBridge.framework in Frameworks */,
 				1D9A55BA180FAA1100B42CE9 /* Growl in Frameworks */,
 				1D9A55B9180FA93000B42CE9 /* AddressBook.framework in Frameworks */,
 				1D9A55B8180FA92100B42CE9 /* libncurses.dylib in Frameworks */,
@@ -1121,6 +1129,9 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				1D78B55C183EE1C000014D49 /* LineBufferPosition.h */,
+				1D78B55D183EE1C000014D49 /* LineBufferPosition.m */,
+				1DB7188C183E8E3600ADC5DD /* TrackedObject.h */,
 				A63F4093183B398C003A6A6D /* PTYNoteViewController.h */,
 				A63F4094183B398C003A6A6D /* PTYNoteViewController.m */,
 				A63F4098183B3AA7003A6A6D /* PTYNoteView.h */,
@@ -1838,6 +1849,7 @@
 				1D5FDD4C1208E8F000C46BA3 /* FindCommandHandler.h in Headers */,
 				1D5FDD4D1208E8F000C46BA3 /* iTerm.h in Headers */,
 				1D5FDD4E1208E8F000C46BA3 /* charmaps.h in Headers */,
+				1D78B55E183EE1C000014D49 /* LineBufferPosition.h in Headers */,
 				1D53FD15181C4B4B00524D4F /* FindContext.h in Headers */,
 				1D5FDD4F1208E8F000C46BA3 /* PseudoTerminal.h in Headers */,
 				1D5FDD501208E8F000C46BA3 /* PTToolbarController.h in Headers */,
@@ -2266,6 +2278,7 @@
 				1D9A555F180FA83900B42CE9 /* SmartSelectionController.m in Sources */,
 				1D9A55AA180FA8B700B42CE9 /* PSMOverflowPopUpButton.m in Sources */,
 				1D9A5560180FA83900B42CE9 /* TriggerController.m in Sources */,
+				1D78B560183EE1C000014D49 /* LineBufferPosition.m in Sources */,
 				1D9A5549180FA82E00B42CE9 /* TmuxDashboardController.m in Sources */,
 				1D9A5579180FA85D00B42CE9 /* ScriptTrigger.m in Sources */,
 				1D9A5551180FA82E00B42CE9 /* TSVParser.m in Sources */,
@@ -2413,6 +2426,7 @@
 				1D5FDDC21208E93600C46BA3 /* NSBezierPath_AMShading.m in Sources */,
 				1D5FDDC31208E93600C46BA3 /* PSMTabDragAssistant.m in Sources */,
 				1D5FDDC41208E93600C46BA3 /* PSMUnifiedTabStyle.m in Sources */,
+				1D78B55F183EE1C000014D49 /* LineBufferPosition.m in Sources */,
 				1D5FDDC51208E93600C46BA3 /* PSMAdiumTabStyle.m in Sources */,
 				1D5FDDC61208E93600C46BA3 /* PSMTabDragWindow.m in Sources */,
 				1D5FDDC71208E93600C46BA3 /* iTermGrowlDelegate.m in Sources */,

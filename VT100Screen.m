@@ -174,7 +174,8 @@ static const double kInterBellQuietPeriod = 0.1;
         [self appendScreen:currentGrid_
               toScrollback:lineBufferWithAltScreen
             withUsedHeight:usedHeight
-                 newHeight:new_height];
+                 newHeight:new_height
+               withObjects:NO];
         [self getNullCorrectedSelectionStartPosition:&originalStartPos
                                          endPosition:&originalEndPos
                                  isFullLineSelection:&originalIsFullLine
@@ -193,12 +194,14 @@ static const double kInterBellQuietPeriod = 0.1;
         [self appendScreen:altGrid_
               toScrollback:altScreenLineBuffer
             withUsedHeight:usedHeight
-                 newHeight:new_height];
+                 newHeight:new_height
+               withObjects:YES];
     }
     [self appendScreen:primaryGrid_
           toScrollback:linebuffer_
         withUsedHeight:[primaryGrid_ numberOfLinesUsed]
-             newHeight:new_height];
+             newHeight:new_height
+           withObjects:YES];
 
     int newSelStartX = -1;
     int newSelStartY = -1;
@@ -221,7 +224,8 @@ static const double kInterBellQuietPeriod = 0.1;
     // Restore the screen contents that were pushed onto the linebuffer.
     [currentGrid_ restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : linebuffer_
                               withDefaultChar:[currentGrid_ defaultChar]
-                            maxLinesToRestore:[linebuffer_ numLinesWithWidth:currentGrid_.size.width]];
+                            maxLinesToRestore:[linebuffer_ numLinesWithWidth:currentGrid_.size.width]
+                               absoluteOffset:[self numberOfScrollbackLines] + [self totalScrollbackOverflow]];
 
     // If we're in the alternate screen, restore its contents from the temporary
     // linebuffer.
@@ -247,7 +251,8 @@ static const double kInterBellQuietPeriod = 0.1;
             // line because it was just initialized with default lines.
             [primaryGrid_ restoreScreenFromLineBuffer:realLineBuffer
                                       withDefaultChar:[primaryGrid_ defaultChar]
-                                    maxLinesToRestore:oldSize.height];
+                                    maxLinesToRestore:oldSize.height
+                                       absoluteOffset:[self numberOfScrollbackLines] + [self totalScrollbackOverflow]];
         } else {
             // Shrinking (avoid pulling in stuff from scrollback, pull in no more
             // than might have been pushed, even if more is available). Note there's a little hack
@@ -255,7 +260,8 @@ static const double kInterBellQuietPeriod = 0.1;
             // default lines.
             [primaryGrid_ restoreScreenFromLineBuffer:realLineBuffer
                                       withDefaultChar:[primaryGrid_ defaultChar]
-                                    maxLinesToRestore:new_height];
+                                    maxLinesToRestore:new_height
+                                       absoluteOffset:[self numberOfScrollbackLines] + [self totalScrollbackOverflow]];
         }
 
         int newLastPos = [realLineBuffer lastPos];
@@ -273,7 +279,8 @@ static const double kInterBellQuietPeriod = 0.1;
         [self appendScreen:copyOfAltGrid
               toScrollback:appendOnlyLineBuffer
             withUsedHeight:usedHeight
-                 newHeight:new_height];
+                 newHeight:new_height
+               withObjects:NO];
 
         if (hasSelection) {
             // Compute selection positions relative to the end of the line buffer, which may have
@@ -721,7 +728,8 @@ static const double kInterBellQuietPeriod = 0.1;
     [currentGrid_ restoreScreenFromLineBuffer:linebuffer_
                               withDefaultChar:[currentGrid_ defaultChar]
                             maxLinesToRestore:MIN([linebuffer_ numLinesWithWidth:currentGrid_.size.width],
-                                                  currentGrid_.size.height - numberOfConsecutiveEmptyLines)];
+                                                  currentGrid_.size.height - numberOfConsecutiveEmptyLines)
+                               absoluteOffset:[self numberOfScrollbackLines] + [self totalScrollbackOverflow]];
 }
 
 - (void)setAltScreen:(NSArray *)lines
@@ -874,7 +882,8 @@ static const double kInterBellQuietPeriod = 0.1;
 {
     int linesPushed;
     linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
-                               toLineBuffer:linebuffer_];
+                               toLineBuffer:linebuffer_
+                                withObjects:NO];
 
     [linebuffer_ storeLocationOfAbsPos:savedFindContextAbsPos_
                              inContext:context];
@@ -1027,7 +1036,8 @@ static const double kInterBellQuietPeriod = 0.1;
 {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
-                                   toLineBuffer:linebuffer_];
+                                   toLineBuffer:linebuffer_
+                                    withObjects:NO];
 
     // Get the start position of (x,y)
     int startPos;
@@ -1071,7 +1081,8 @@ static const double kInterBellQuietPeriod = 0.1;
 {
     int linesPushed;
     linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
-                               toLineBuffer:linebuffer_];
+                               toLineBuffer:linebuffer_
+                                withObjects:NO];
 
     savedFindContextAbsPos_ = [self findContextAbsPosition];
     [self popScrollbackLines:linesPushed];
@@ -1201,9 +1212,28 @@ static const double kInterBellQuietPeriod = 0.1;
     int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
     NSTimeInterval interval;
     if (y >= numLinesInLineBuffer) {
-        [currentGrid_ setObject:note forLine:y - numLinesInLineBuffer];
+        [currentGrid_ setObject:note
+                        forLine:y - numLinesInLineBuffer
+                 absoluteOffset:[self numberOfScrollbackLines] + [self totalScrollbackOverflow]];
     } else {
         [linebuffer_ setObject:note forLine:y width:currentGrid_.size.width];
+    }
+}
+
+- (int)lineNumberOfNote:(PTYNoteViewController *)note {
+    if (note.isInLineBuffer) {
+        int pos = [linebuffer_ positionForAbsPosition:note.absolutePosition];
+        int x;
+        int y;
+        if ([linebuffer_ convertPosition:pos withWidth:currentGrid_.size.width toX:&x toY:&y]) {
+            return y;
+        } else {
+            NSLog(@"Failed to convert absolute position %lld (position %d)",
+                  note.absolutePosition, pos);
+            return -1;
+        }
+    } else {
+        return note.absoluteLineNumber - [self totalScrollbackOverflow];
     }
 }
 
@@ -2196,21 +2226,28 @@ static const double kInterBellQuietPeriod = 0.1;
         toScrollback:(LineBuffer *)lineBufferToUse
       withUsedHeight:(int)usedHeight
            newHeight:(int)newHeight
+         withObjects:(BOOL)withObjects
 {
     if (grid.size.height - newHeight >= usedHeight) {
         // Height is decreasing but pushing HEIGHT lines into the buffer would scroll all the used
         // lines off the top, leaving the cursor floating without any text. Keep all used lines that
         // fit onscreen.
-        [grid appendLines:MAX(usedHeight, newHeight) toLineBuffer:lineBufferToUse];
+        [grid appendLines:MAX(usedHeight, newHeight)
+             toLineBuffer:lineBufferToUse
+              withObjects:withObjects];
     } else {
         if (newHeight < grid.size.height) {
             // Screen is shrinking.
             // If possible, keep the last used line a fixed distance from the top of
             // the screen. If not, at least save all the used lines.
-            [grid appendLines:usedHeight toLineBuffer:lineBufferToUse];
+            [grid appendLines:usedHeight
+                 toLineBuffer:lineBufferToUse
+                  withObjects:withObjects];
         } else {
             // Screen is growing. New content may be brought in on top.
-            [grid appendLines:grid.size.height toLineBuffer:lineBufferToUse];
+            [grid appendLines:grid.size.height
+                 toLineBuffer:lineBufferToUse
+                  withObjects:withObjects];
         }
     }
 }
@@ -2625,7 +2662,8 @@ static void SwapInt(int *a, int *b) {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
     linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
-                               toLineBuffer:linebuffer_];
+                               toLineBuffer:linebuffer_
+                                withObjects:NO];
 
     // Search one block.
     int stopAt;

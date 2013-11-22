@@ -22,7 +22,9 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
 @synthesize textView = textView_;
 @synthesize anchor = anchor_;
 @synthesize watchForUpdate = watchForUpdate_;
-@synthesize absLine = absLine_;
+@synthesize isInLineBuffer = isInLineBuffer_;
+@synthesize absolutePosition = absolutePosition_;
+@synthesize absoluteLineNumber = absoluteLineNumber_;
 
 - (void)dealloc {
     [noteView_ removeFromSuperview];

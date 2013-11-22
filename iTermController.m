@@ -54,7 +54,7 @@
 #import "iTermKeyBindingMgr.h"
 #import <Carbon/Carbon.h>
 #import <ScriptingBridge/ScriptingBridge.h>
-#import <iTermGrowlDelegate.h>
+#import "iTermGrowlDelegate.h"
 #import <objc/runtime.h>
 #include <objc/runtime.h>
 

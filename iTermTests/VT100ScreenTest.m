@@ -3589,6 +3589,9 @@
     [write_ appendData:data];
 }
 
+- (void)screenDidChangeNumberOfScrollbackLines {
+}
+
 - (void)testPasting {
     VT100Screen *screen = [self screen];
     screen.delegate = (id<VT100ScreenDelegate>)self;

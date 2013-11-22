@@ -27,8 +27,11 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import "ScreenChar.h"
 #import "FindContext.h"
+#import "ScreenChar.h"
+#import "TrackedObject.h"
+#import "LineBufferPosition.h"
+#import "VT100GridTypes.h"
 
 // When receiving search results, you'll get an array of this class. Positions
 // can be converted to x,y coordinates with -convertPosition:withWidth:toX:toY.
@@ -101,14 +104,25 @@
            partial:(BOOL)partial
              width:(int)width
          timestamp:(NSTimeInterval)timestamp
-            object:(NSObject *)object;
+            object:(id<TrackedObject>)object;
 
-- (void)setObject:(NSObject *)object forLine:(int)line width:(int)width;
+- (void)setObject:(id<TrackedObject>)object forLine:(int)line width:(int)width;
 
 // Try to get a line that is lineNum after the first line in this block after wrapping them to a given width.
 // If the line is present, return a pointer to its start and fill in *lineLength with the number of bytes in the line.
 // If the line is not present, decrement *lineNum by the number of lines in this block and return NULL.
-- (screen_char_t*) getWrappedLineWithWrapWidth: (int) width lineNum: (int*) lineNum lineLength: (int*) lineLength includesEndOfLine: (int*) includesEndOfLine;
+- (screen_char_t*) getWrappedLineWithWrapWidth:(int)width
+                                       lineNum:(int*)lineNum
+                                    lineLength:(int*)lineLength
+                             includesEndOfLine:(int*)includesEndOfLine;
+
+// Sets *yOffsetPtr (if not null) to the number of consecutive empty lines just before |lineNum| because
+// there's no way for the returned pointer to indicate this.
+- (screen_char_t*)getWrappedLineWithWrapWidth:(int)width
+                                      lineNum:(int*)lineNum
+                                   lineLength:(int*)lineLength
+                            includesEndOfLine:(int*)includesEndOfLine
+                                      yOffset:(int*)yOffsetPtr;
 
 // Get the number of lines in this block at a given screen width.
 - (int) getNumLinesWithWrapWidth: (int) width;
@@ -124,7 +138,7 @@
              withLength:(int*)length
               upToWidth:(int)width
               timestamp:(NSTimeInterval *)timestampPtr
-                 object:(NSObject **)objectPtr;
+                 object:(id<TrackedObject>*)objectPtr;
 
 // Drop lines from the start of the buffer. Returns the number of lines actually dropped
 // (either n or the number of lines in the block).
@@ -154,7 +168,7 @@
 // Append a value to cumulativeLineLengths.
 - (void)_appendCumulativeLineLength:(int)cumulativeLength
                           timestamp:(NSTimeInterval)timestamp
-                             object:(NSObject *)object;
+                             object:(id<TrackedObject>)object;
 
 // Return a raw line
 - (screen_char_t*) rawLine: (int) linenum;
@@ -166,7 +180,7 @@
 - (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width;
 
 // Returns the object associated with a line.
-- (NSObject *)objectForLineNumber:(int)lineNum width:(int)width;
+- (id<TrackedObject>)objectForLineNumber:(int)lineNum width:(int)width;
 
 @end
 
@@ -229,9 +243,9 @@
            partial:(BOOL)partial
              width:(int)width
          timestamp:(NSTimeInterval)timestamp
-            object:(NSObject *)object;
+            object:(id<TrackedObject>)object;
 
-- (void)setObject:(NSObject *)object forLine:(int)line width:(int)width;
+- (void)setObject:(id<TrackedObject>)object forLine:(int)line width:(int)width;
 
 // If more lines are in the buffer than max_lines, call this function. It will adjust the count
 // of excess lines and try to free the first block(s) if they are unused. Because this could happen
@@ -246,7 +260,7 @@
 - (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width;
 
 // Returns the object associated with a line when wrapped to the specified width.
-- (NSObject *)objectForLineNumber:(int)lineNum width:(int)width;
+- (id<TrackedObject>)objectForLineNumber:(int)lineNum width:(int)width;
 
 // Copy a line into the buffer. If the line is shorter than 'width' then only the first 'width'
 // characters will be modified.
@@ -267,7 +281,7 @@
                          width:(int)width
              includesEndOfLine:(int*)includesEndOfLine
                      timestamp:(NSTimeInterval *)timestampPtr
-                        object:(NSObject **)objectPtr;
+                        object:(id<TrackedObject> *)objectPtr;
 
 // Get the number of buffer lines at a given width.
 - (int) numLinesWithWidth: (int) width;
@@ -300,7 +314,11 @@
 
 // Convert x,y coordinates (with y=0 being the first line) into a position. Offset is added to the position safely.
 // Returns TRUE if the conversion was successful, false, if out of bounds.
+// DEPRECATED. Use positionForCoordinate:width:offset:
 - (BOOL) convertCoordinatesAtX: (int) x atY: (int) y withWidth: (int) width toPosition: (int*) position offset:(int)offset;
+
+- (LineBufferPosition *)positionForCoordinate:(VT100GridCoord)coord width:(int)width offset:(int)offset;
+- (VT100GridCoord)coordinateForPosition:(LineBufferPosition *)position width:(int)width ok:(BOOL *)ok;
 
 // Returns the position at the stat of the buffer
 - (int) firstPos;

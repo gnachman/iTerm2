@@ -289,24 +289,24 @@ do { \
 - (void)testAppendLineToLineBuffer {
     VT100Grid *grid = [self gridFromCompactLines:@"abcd\nefgh\n....\n...."];
     LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
-    [grid appendLines:2 toLineBuffer:lineBuffer];
+    [grid appendLines:2 toLineBuffer:lineBuffer withObjects:NO];
     assert([[lineBuffer debugString] isEqualToString:@"abcd!\nefgh!"]);
 
     grid = [self gridFromCompactLinesWithContinuationMarks:@"abcd!\nefgh+\n....!\n....!"];
     lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
-    [grid appendLines:2 toLineBuffer:lineBuffer];
+    [grid appendLines:2 toLineBuffer:lineBuffer withObjects:NO];
     assert([[lineBuffer debugString] isEqualToString:@"abcd!\nefgh+"]);
 
     grid = [self gridFromCompactLinesWithContinuationMarks:@"abcd+\nefgh!\n....!\n....!"];
     lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
-    [grid appendLines:2 toLineBuffer:lineBuffer];
+    [grid appendLines:2 toLineBuffer:lineBuffer withObjects:NO];
     assert([[lineBuffer debugString] isEqualToString:@"abcdefgh!"]);
 
     grid = [self gridFromCompactLines:@"abcd\nefgh\n....\n...."];
     lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
     grid.cursorX = 2;
     grid.cursorY = 1;
-    [grid appendLines:2 toLineBuffer:lineBuffer];
+    [grid appendLines:2 toLineBuffer:lineBuffer withObjects:NO];
     int x;
     assert([lineBuffer getCursorInLastLineWithWidth:4 atX:&x]);
     assert(x == 2);
@@ -317,7 +317,7 @@ do { \
     lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
     grid.cursorX = 0;
     grid.cursorY = 2;
-    [grid appendLines:2 toLineBuffer:lineBuffer];
+    [grid appendLines:2 toLineBuffer:lineBuffer withObjects:NO];
     assert([lineBuffer getCursorInLastLineWithWidth:4 atX:&x]);
     assert(x == 4);
 }
@@ -1385,7 +1385,8 @@ do { \
                         length:string.length
                        partial:i == strings.count - 1
                          width:80
-                     timestamp:0];
+                     timestamp:0
+                        object:nil];
         i++;
     }
     va_end(args);
@@ -1398,7 +1399,8 @@ do { \
     LineBuffer *lineBuffer = [self lineBufferWithStrings:@"test", @"hello wor*ld", nil];
     [grid restoreScreenFromLineBuffer:lineBuffer
                       withDefaultChar:[grid defaultChar]
-                    maxLinesToRestore:1];
+                    maxLinesToRestore:1
+                       absoluteOffset:0];
     assert([[grid compactLineDump] isEqualToString:
             @"rld.....\n"
             @"........\n"
@@ -1415,7 +1417,8 @@ do { \
     lineBuffer = [self lineBufferWithStrings:@"test", @"hello wo*rld", nil];
     [grid restoreScreenFromLineBuffer:lineBuffer
                       withDefaultChar:[grid defaultChar]
-                    maxLinesToRestore:100];
+                    maxLinesToRestore:100
+                       absoluteOffset:0];
     assert([[grid compactLineDump] isEqualToString:
             @"test....\n"
             @"hello wo\n"
@@ -1435,7 +1438,8 @@ do { \
     dc.backgroundColorMode = ColorModeNormal;
     [grid restoreScreenFromLineBuffer:lineBuffer
                       withDefaultChar:dc
-                    maxLinesToRestore:100];
+                    maxLinesToRestore:100
+                       absoluteOffset:0];
     assert([[grid compactLineDump] isEqualToString:
             @"rl\n"
             @"d."]);
@@ -1451,7 +1455,8 @@ do { \
     lineBuffer = [self lineBufferWithStrings:@"abc*W-xy", nil];
     [grid restoreScreenFromLineBuffer:lineBuffer
                       withDefaultChar:[grid defaultChar]
-                    maxLinesToRestore:100];
+                    maxLinesToRestore:100
+                       absoluteOffset:0];
     assert([[grid compactLineDump] isEqualToString:
             @"abc>\n"
             @"W-xy\n"

@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "PTYNoteView.h"
+#import "TrackedObject.h"
 
 // Post this when the note view's anchor has a chance to become centered.
 extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
@@ -15,13 +16,16 @@ extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
 @protocol PTYNoteViewControllerDelegate
 @end
 
-@interface PTYNoteViewController : NSViewController {
+@interface PTYNoteViewController : NSViewController <TrackedObject> {
     PTYNoteView *noteView_;
     NSTextView *textView_;
     NSPoint anchor_;
     BOOL watchForUpdate_;
     BOOL hidden_;
-    long long absLine_;
+
+    BOOL isInLineBuffer_;
+    long long absolutePosition_;
+    long long absoluteLineNumber_;
 }
 
 @property(nonatomic, retain) PTYNoteView *noteView;
