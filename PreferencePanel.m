@@ -3978,10 +3978,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
     for (id colorName in settings) {
         NSDictionary* preset = [settings objectForKey:colorName];
-        float r = [[preset objectForKey:@"Red Component"] floatValue];
-        float g = [[preset objectForKey:@"Green Component"] floatValue];
-        float b = [[preset objectForKey:@"Blue Component"] floatValue];
-        NSColor* color = [NSColor colorWithCalibratedRed:r green:g blue:b alpha:1];
+        NSColor* color = [ITAddressBookMgr decodeColor:preset];
         NSAssert([newDict objectForKey:colorName], @"Missing color in existing dict");
         [newDict setObject:[ITAddressBookMgr encodeColor:color] forKey:colorName];
     }
