@@ -1515,10 +1515,15 @@ NSMutableArray* screens=0;
     return result;
 }
 
+- (BOOL)isInKeyWindow
+{
+    return ([[self window] isKeyWindow]);
+}
+
 - (BOOL)_isCursorBlinking
 {
     if ([self blinkingCursor] &&
-        [[self window] isKeyWindow] &&
+        [self isInKeyWindow] &&
         [[[dataSource session] tab] activeSession] == [dataSource session]) {
         return YES;
     } else {
@@ -2374,21 +2379,15 @@ NSMutableArray* screens=0;
         isFirstInteraction = NO;
     }
 
-    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
-
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown BEGIN %@", event);
-    }
-    DebugLog(@"PTYTextView keyDown");
+    DLog(@"PTYTextView keyDown BEGIN %@ on PTYTextView %@", event, self);
     id delegate = [self delegate];
     if ([delegate isPasting]) {
         [delegate queueKeyDown:event];
         return;
     }
     if ([[[[[self dataSource] session] tab] realParentWindow] inInstantReplay]) {
-        if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown: in instant replay, send to delegate");
-        }
+        DLog(@"PTYTextView keyDown: in instant replay, send to delegate");
+
         // Delegate has special handling for this case.
         [delegate keyDown:event];
         return;
@@ -2398,19 +2397,17 @@ NSMutableArray* screens=0;
     BOOL prev = [self hasMarkedText];
 
     keyIsARepeat = [event isARepeat];
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
-        NSLog(@"prev=%d", (int)prev);
-        NSLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
-        NSLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%d", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
-        NSLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
-        NSLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
-        NSLog(@"modflag & leftAlt == leftAlt && optionKey != NORMAL = %d", (int)((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
-        NSLog(@"modflag == alt && optionKey != NORMAL = %d", (int)(modflag == NSAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
-        NSLog(@"modflag & rightAlt == rightAlt && rightOptionKey != NORMAL = %d", (int)((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL));
-        NSLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
-        NSLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
-    }
+    DLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
+    DLog(@"prev=%d", (int)prev);
+    DLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
+    DLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%d", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
+    DLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
+    DLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
+    DLog(@"modflag & leftAlt == leftAlt && optionKey != NORMAL = %d", (int)((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
+    DLog(@"modflag == alt && optionKey != NORMAL = %d", (int)(modflag == NSAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
+    DLog(@"modflag & rightAlt == rightAlt && rightOptionKey != NORMAL = %d", (int)((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL));
+    DLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
+    DLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
 
     // Hide the cursor
     [NSCursor setHiddenUntilMouseMoves:YES];
@@ -2425,22 +2422,19 @@ NSMutableArray* screens=0;
            ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL))) ||
          ((modflag & NSControlKeyMask) &&                          // a few special cases
           (keyCode == 0x2c /* slash */ || keyCode == 0x2a /* backslash */)))) {
-        if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown: process in delegate");
-        }
+        DLog(@"PTYTextView keyDown: process in delegate");
+
         [delegate keyDown:event];
         return;
     }
 
-    if (debugKeyDown) {
-        NSLog(@"Test for command key");
-    }
+    DLog(@"Test for command key");
+
     if (modflag & NSCommandKeyMask) {
         // You pressed cmd+something but it's not handled by the delegate. Going further would
         // send the unmodified key to the terminal which doesn't make sense.
-        if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown You pressed cmd+something");
-        }
+        DLog(@"PTYTextView keyDown You pressed cmd+something");
+
         return;
     }
 
@@ -2449,9 +2443,8 @@ NSMutableArray* screens=0;
     BOOL workAroundControlBug = NO;
     if (!prev &&
         (modflag & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == NSControlKeyMask) {
-        if (debugKeyDown) {
-            NSLog(@"Special ctrl+key handler running");
-        }
+        DLog(@"Special ctrl+key handler running");
+
         NSString *unmodkeystr = [event charactersIgnoringModifiers];
         if ([unmodkeystr length] != 0) {
             unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
@@ -2473,9 +2466,8 @@ NSMutableArray* screens=0;
             }
             if (cc != 0xffff) {
                 [self insertText:[NSString stringWithCharacters:&cc length:1]];
-                if (debugKeyDown) {
-                    NSLog(@"PTYTextView keyDown work around control bug. cc=%d", (int)cc);
-                }
+                DLog(@"PTYTextView keyDown work around control bug. cc=%d", (int)cc);
+
                 workAroundControlBug = YES;
             }
         }
@@ -2484,24 +2476,24 @@ NSMutableArray* screens=0;
     if (!workAroundControlBug) {
         // Let the IME process key events
         IM_INPUT_INSERT = NO;
-        if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown send to IME");
-        }
+        DLog(@"PTYTextView keyDown send to IME");
+
         [self interpretKeyEvents:[NSArray arrayWithObject:event]];
 
+        DLog(@"prev=%d, IM_INPUT_INSERT=%d, hasMarkedText=%d",
+             (int)prev,
+             (int)IM_INPUT_INSERT,
+             (int)[self hasMarkedText]);
         // If the IME didn't want it, pass it on to the delegate
         if (!prev &&
             !IM_INPUT_INSERT &&
             ![self hasMarkedText]) {
-            if (debugKeyDown) {
-                NSLog(@"PTYTextView keyDown IME no, send to delegate");
-            }
+            DLog(@"PTYTextView keyDown IME no, send to delegate");
+
             [delegate keyDown:event];
         }
     }
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown END");
-    }
+    DLog(@"PTYTextView keyDown END");
 }
 
 - (BOOL)keyIsARepeat
@@ -2921,7 +2913,7 @@ NSMutableArray* screens=0;
         if (![obj disableFocusFollowsMouse]) {
             [[self window] makeKeyWindow];
         }
-        if ([[self window] isKeyWindow]) {
+        if ([self isInKeyWindow]) {
             [[[dataSource session] tab] setActiveSession:[dataSource session]];
         }
     }
@@ -3948,12 +3940,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event
 {
-    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
-
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
-    }
-    DebugLog(@"PTYTextView placeCursorOnCurrentLineWithEvent");
+    DLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
 
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
@@ -3993,14 +3980,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             i--;
         }
     }
-    if (debugKeyDown) {
-        NSLog(@"cursor at %d,%d (x,y) moved to %d,%d (x,y) [window width: %d]",
-              cursorX, cursorY, x, y, width);
-    }
-
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent END");
-    }
+    DLog(@"cursor at %d,%d (x,y) moved to %d,%d (x,y) [window width: %d]",
+         cursorX, cursorY, x, y, width);
+    DLog(@"PTYTextView placeCursorOnCurrentLineWithEvent END");
 }
 
 - (NSString*)contentInBoxFromX:(int)startx
@@ -4861,11 +4843,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)insertText:(id)aString
 {
+    DLog(@"PTYTextView insertText:%@", aString);
     if ([self hasMarkedText]) {
-        BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
-        if (debugKeyDown) {
-            NSLog(@"insertText: clear marked text");
-        }
+        DLog(@"insertText: clear marked text");
+
         IM_INPUT_MARKEDRANGE = NSMakeRange(0, 0);
         [markedText release];
         markedText=nil;
@@ -4881,6 +4862,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         else
             [super insertText:aString];
 
+        DLog(@"PTYTextView insertText set IM_INPUT_INSERT=YES");
         IM_INPUT_INSERT = YES;
     }
 
@@ -4898,10 +4880,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)setMarkedText:(id)aString selectedRange:(NSRange)selRange
 {
-    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
-    if (debugKeyDown) {
-        NSLog(@"set marked text to %@; range %@", aString, [NSValue valueWithRange:selRange]);
-    }
+    DLog(@"set marked text to %@; range %@", aString, [NSValue valueWithRange:selRange]);
+
     [markedText release];
     if ([aString isKindOfClass:[NSAttributedString class]]) {
         markedText = [[NSAttributedString alloc] initWithString:[aString string]
@@ -4939,10 +4919,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)unmarkText
 {
-    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
-    if (debugKeyDown) {
-        NSLog(@"clear marked text");
-    }
+    DLog(@"clear marked text");
+
     // As far as I can tell this is never called.
     IM_INPUT_MARKEDRANGE = NSMakeRange(0, 0);
     imeOffset = 0;
@@ -7268,7 +7246,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         lastTimeCursorMoved_ = now;
     }
     if ([self blinkingCursor] &&
-        [[self window] isKeyWindow] &&
+        [self isInKeyWindow] &&
         [[[dataSource session] tab] activeSession] == [dataSource session] &&
         now - lastTimeCursorMoved_ > 0.5) {
         // Allow the cursor to blink if it is configured, the window is key, this session is active
@@ -7366,7 +7344,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             switch (cursorType_) {
                 case CURSOR_BOX:
                     // draw the box
-                    if ([[self window] isKeyWindow] &&
+                    if ([self isInKeyWindow] &&
                         [[[dataSource session] tab] activeSession] == [dataSource session]) {
                         frameOnly = NO;
                         NSRectFill(NSMakeRect(curX,
@@ -7387,7 +7365,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             int fgColor;
                             BOOL fgAlt;
                                                         BOOL fgBold;
-                            if ([[self window] isKeyWindow]) {
+                            if ([self isInKeyWindow]) {
                                 // Draw a character in background color when
                                 // window is key.
                                 fgColor = screenChar.backgroundColor;
@@ -7405,7 +7383,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             int theColor;
                             BOOL alt;
                             BOOL isBold;
-                            if ([[self window] isKeyWindow]) {
+                            if ([self isInKeyWindow]) {
                                 theColor = screenChar.backgroundColor;
                                 alt = screenChar.alternateBackgroundSemantics;
                                 isBold = screenChar.bold;
@@ -7449,7 +7427,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             int theColor;
                             BOOL alt;
                             BOOL isBold;
-                            if ([[self window] isKeyWindow]) {
+                            if ([self isInKeyWindow]) {
                                 theColor = ALTSEM_CURSOR;
                                 alt = YES;
                                 isBold = screenChar.bold;
@@ -8722,7 +8700,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         redrawBlink = YES;
 
         if ([self blinkingCursor] &&
-            [[self window] isKeyWindow]) {
+            [self isInKeyWindow]) {
             // Blink flag flipped and there is a blinking cursor. Mark it dirty.
             [self markCursorAsDirty];
         }

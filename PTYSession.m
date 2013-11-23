@@ -872,21 +872,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)writeTaskImpl:(NSData *)data
 {
-    static BOOL checkedDebug;
-    static BOOL debugKeyDown;
-    if (!checkedDebug) {
-        debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
-        checkedDebug = YES;
-    }
-    if (debugKeyDown || gDebugLogging) {
+    if (gDebugLogging) {
         const char *bytes = [data bytes];
         for (int i = 0; i < [data length]; i++) {
-            if (debugKeyDown) {
-                NSLog(@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]);
-            }
-            if (gDebugLogging) {
-                DebugLog([NSString stringWithFormat:@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]]);
-            }
+            DLog(@"writeTask keydown %d: %d (%c) from %@",
+                 i, (int) bytes[i], bytes[i], [NSThread callStackSymbols]);
         }
     }
 
@@ -1327,7 +1317,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 // pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event
 {
-    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
     unsigned char *send_str = NULL;
     unsigned char *dataPtr = NULL;
     int dataLength = 0;
@@ -1354,15 +1343,13 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
     unicode = [keystr length] > 0 ? [keystr characterAtIndex:0] : 0;
     unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
-    if (debugKeyDown) {
-        NSLog(@"PTYSession keyDown modflag=%d keystr=%@ unmodkeystr=%@ unicode=%d unmodunicode=%d", (int)modflag, keystr, unmodkeystr, (int)unicode, (int)unmodunicode);
-    }
+    DLog(@"PTYSession keyDown modflag=%d keystr=%@ unmodkeystr=%@ unicode=%d unmodunicode=%d",
+         (int)modflag, keystr, unmodkeystr, (int)unicode, (int)unmodunicode);
     gettimeofday(&lastInput, NULL);
 
     if ([[[self tab] realParentWindow] inInstantReplay]) {
-        if (debugKeyDown) {
-            NSLog(@"PTYSession keyDown in IR");
-        }
+        DLog(@"PTYSession keyDown in IR");
+
         // Special key handling in IR mode, and keys never get sent to the live
         // session, even though it might be displayed.
         if (unicode == 27) {
@@ -1394,9 +1381,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
 
     unsigned short keycode = [event keyCode];
-    if (debugKeyDown) {
-        NSLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
-    }
+
     DebugLog([NSString stringWithFormat:@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask)]);
 
     // Check if we have a custom key mapping for this event
@@ -1406,10 +1391,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                                                 keyMappings:[[self addressBookEntry] objectForKey:KEY_KEYBOARD_MAP]];
 
     if (keyBindingAction >= 0) {
-        if (debugKeyDown) {
-            NSLog(@"PTYSession keyDown action=%d", keyBindingAction);
-        }
-        DebugLog([NSString stringWithFormat:@"keyBindingAction=%d", keyBindingAction]);
+        DLog(@"PTYSession keyDown action=%d", keyBindingAction);
         // A special action was bound to this key combination.
         NSString* temp;
         int profileAction = [iTermKeyBindingMgr localActionForKeyCode:unmodunicode
@@ -1599,20 +1581,14 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
             [self handleKeypressInTmuxGateway:unicode];
             return;
         }
-        if (debugKeyDown) {
-            NSLog(@"PTYSession keyDown no keybinding action");
-        }
-        DebugLog(@"No keybinding action");
+        DLog(@"PTYSession keyDown no keybinding action");
         if (EXIT) {
             DebugLog(@"Terminal already dead");
             return;
         }
         // No special binding for this key combination.
         if (modflag & NSFunctionKeyMask) {
-            if (debugKeyDown) {
-                NSLog(@"PTYSession keyDown is a function key");
-            }
-            DebugLog(@"Is a function key");
+            DLog(@"PTYSession keyDown is a function key");
             // Handle all "special" keys (arrows, etc.)
             NSData *data = nil;
 
@@ -1673,10 +1649,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                     ([self optionKey] != OPT_NORMAL)) ||  /// synergy
                    ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask &&
                     ([self rightOptionKey] != OPT_NORMAL))) {
-            if (debugKeyDown) {
-                NSLog(@"PTYSession keyDown opt + key -> modkey");
-            }
-            DebugLog(@"Option + key -> modified key");
+            DLog(@"PTYSession keyDown opt + key -> modkey");
             // A key was pressed while holding down option and the option key
             // is not behaving normally. Apply the modified behavior.
             int mode;  // The modified behavior based on which modifier is pressed.
@@ -1703,43 +1676,28 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                 }
             }
         } else {
-            if (debugKeyDown) {
-                NSLog(@"PTYSession keyDown regular path");
-            }
-            DebugLog(@"Regular path for keypress");
+            DLog(@"PTYSession keyDown regular path");
             // Regular path for inserting a character from a keypress.
             int max = [keystr length];
             NSData *data=nil;
 
             if (max != 1||[keystr characterAtIndex:0] > 0x7f) {
-                if (debugKeyDown) {
-                    NSLog(@"PTYSession keyDown non-ascii");
-                }
-                DebugLog(@"Non-ascii input");
+                DLog(@"PTYSession keyDown non-ascii");
                 data = [keystr dataUsingEncoding:[TERMINAL encoding]];
             } else {
-                if (debugKeyDown) {
-                    NSLog(@"PTYSession keyDown ascii");
-                }
-                DebugLog(@"ASCII input");
+                DLog(@"PTYSession keyDown ascii");
                 data = [keystr dataUsingEncoding:NSUTF8StringEncoding];
             }
 
             // Enter key is on numeric keypad, but not marked as such
             if (unicode == NSEnterCharacter && unmodunicode == NSEnterCharacter) {
                 modflag |= NSNumericPadKeyMask;
-                if (debugKeyDown) {
-                    NSLog(@"PTYSession keyDown enter key");
-                }
-                DebugLog(@"Enter key");
+                DLog(@"PTYSession keyDown enter key");
                 keystr = @"\015";  // Enter key -> 0x0d
             }
             // Check if we are in keypad mode
             if (modflag & NSNumericPadKeyMask) {
-                if (debugKeyDown) {
-                    NSLog(@"PTYSession keyDown numeric keyoad");
-                }
-                DebugLog(@"Numeric keypad mask");
+                DLog(@"PTYSession keyDown numeric keyoad");
                 data = [TERMINAL keypadData:unicode keystr:keystr];
             }
 
@@ -1752,29 +1710,21 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                 // fat-fingered switching of tabs/windows.
                 // Do not send anything for cmd+[shift]+enter if it wasn't
                 // caught by the menu.
-                DebugLog(@"Cmd + 0-9 or cmd + enter");
-                if (debugKeyDown) {
-                    NSLog(@"PTYSession keyDown cmd+0-9 or cmd+enter");
-                }
+                DLog(@"PTYSession keyDown cmd+0-9 or cmd+enter");
+
                 data = nil;
             }
             if (data != nil) {
                 send_str = (unsigned char *)[data bytes];
                 send_strlen = [data length];
-                DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
+                DLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
                           modflag, send_strlen, send_str[0], send_str[0]]);
-                if (debugKeyDown) {
-                    DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
-                              modflag, send_strlen, send_str[0], send_str[0]]);
-                }
             }
 
             if ((modflag & NSControlKeyMask) &&
                 send_strlen == 1 &&
                 send_str[0] == '|') {
-                if (debugKeyDown) {
-                    NSLog(@"PTYSession keyDown c-|");
-                }
+                DLog(@"PTYSession keyDown c-|");
                 // Control-| is sent as Control-backslash
                 send_str = (unsigned char*)"\034";
                 send_strlen = 1;
@@ -1782,27 +1732,24 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                        (modflag & NSShiftKeyMask) &&
                        send_strlen == 1 &&
                        send_str[0] == '/') {
-                if (debugKeyDown) {
-                    NSLog(@"PTYSession keyDown c-?");
-                }
+                DLog(@"PTYSession keyDown c-?");
+
                 // Control-shift-/ is sent as Control-?
                 send_str = (unsigned char*)"\177";
                 send_strlen = 1;
             } else if ((modflag & NSControlKeyMask) &&
                        send_strlen == 1 &&
                        send_str[0] == '/') {
-                if (debugKeyDown) {
-                    NSLog(@"PTYSession keyDown c-/");
-                }
+                DLog(@"PTYSession keyDown c-/");
+
                 // Control-/ is sent as Control-/, but needs some help to do so.
                 send_str = (unsigned char*)"\037"; // control-/
                 send_strlen = 1;
             } else if ((modflag & NSShiftKeyMask) &&
                        send_strlen == 1 &&
                        send_str[0] == '\031') {
-                if (debugKeyDown) {
-                    NSLog(@"PTYSession keyDown shift-tab -> esc[Z");
-                }
+                DLog(@"PTYSession keyDown shift-tab -> esc[Z");
+
                 // Shift-tab is sent as Esc-[Z (or "backtab")
                 send_str = (unsigned char*)"\033[Z";
                 send_strlen = 3;
@@ -1862,18 +1809,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         }
     }
 
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession insertText:%@]",
-          __FILE__, __LINE__, mstring);
-#endif
-
     data = [mstring dataUsingEncoding:[TERMINAL encoding]
                  allowLossyConversion:YES];
 
     if (data != nil) {
-        if (gDebugLogging) {
-            DebugLog([NSString stringWithFormat:@"writeTask:%@", data]);
-        }
+        DLog(@"PTYSession writeTask:%@", data);
         [self writeTask:data];
     }
 }
