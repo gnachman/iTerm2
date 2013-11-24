@@ -1510,6 +1510,7 @@
         }
     }
 }
+
 - (void)mouseUp:(NSEvent *)theEvent
 {
     if (_resizing) {

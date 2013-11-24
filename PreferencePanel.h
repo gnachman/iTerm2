@@ -602,12 +602,10 @@ typedef enum {
 + (void)populatePopUpButtonWithBookmarks:(NSPopUpButton*)button selectedGuid:(NSString*)selectedGuid;
 
 - (BOOL)loadPrefs;
-- (id)initWithDataSource:(ProfileModel*)model userDefaults:(NSUserDefaults*)userDefaults;
 
 - (void)triggerChanged:(TriggerController *)triggerController;
 - (void)smartSelectionChanged:(SmartSelectionController *)smartSelectionController;
 
-- (void)setOneBookmarkOnly;
 - (void)awakeFromNib;
 - (void)handleWindowWillCloseNotification:(NSNotification *)notification;
 - (void)genericCloseSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo;

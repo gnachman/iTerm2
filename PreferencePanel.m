@@ -58,8 +58,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
     if (!shared) {
         shared = [[self alloc] initWithDataSource:[ProfileModel sharedInstance]
-                                     userDefaults:[NSUserDefaults standardUserDefaults]];
-        shared->oneBookmarkMode = NO;
+                                     userDefaults:[NSUserDefaults standardUserDefaults]
+                                  oneBookmarkMode:NO];
     }
 
     return shared;
@@ -71,8 +71,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
     if (!shared) {
         shared = [[self alloc] initWithDataSource:[ProfileModel sessionsInstance]
-                                     userDefaults:nil];
-        shared->oneBookmarkMode = YES;
+                                     userDefaults:nil
+                                  oneBookmarkMode:YES];
     }
 
     return shared;
@@ -113,62 +113,57 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return (YES);
 }
 
-- (id)initWithDataSource:(ProfileModel*)model userDefaults:(NSUserDefaults*)userDefaults
+- (id)initWithDataSource:(ProfileModel*)model
+            userDefaults:(NSUserDefaults*)userDefaults
+         oneBookmarkMode:(BOOL)obMode
 {
-    unsigned int storedMajorVersion = 0, storedMinorVersion = 0, storedMicroVersion = 0;
-
     self = [super init];
-    dataSource = model;
-    prefs = userDefaults;
-    oneBookmarkOnly = NO;
-    if (userDefaults) {
-        [self loadPrefs];
+    if (self) {
+        dataSource = model;
+        prefs = userDefaults;
+        if (userDefaults) {
+            [self loadPrefs];
+        }
+        // Override smooth scrolling, which breaks various things (such as the
+        // assumption, when detectUserScroll is called, that scrolls happen
+        // immediately), and generally sucks with a terminal.
+        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"NSScrollAnimationEnabled"];
+
+        [self readPreferences];
+        if (defaultEnableBonjour == YES) {
+            [[ITAddressBookMgr sharedInstance] locateBonjourServices];
+        }
+
+        // get the version
+        NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
+
+        // sync the version number
+        if (prefs) {
+            [prefs setObject:[myDict objectForKey:@"CFBundleVersion"] forKey:@"iTerm Version"];
+        }
+        [toolbar setSelectedItemIdentifier:globalToolbarId];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(_reloadURLHandlers:)
+                                                     name:@"iTermReloadAddressBook"
+                                                   object:nil];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(_savedArrangementChanged:)
+                                                     name:@"iTermSavedArrangementChanged"
+                                                   object:nil];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(keyBindingsChanged)
+                                                     name:@"iTermKeyBindingsChanged"
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(rebuildColorPresetsMenu)
+                                                     name:kRebuildColorPresetsMenuNotification
+                                                   object:nil];
+        oneBookmarkMode = obMode;
     }
-    // Override smooth scrolling, which breaks various things (such as the
-    // assumption, when detectUserScroll is called, that scrolls happen
-    // immediately), and generally sucks with a terminal.
-    [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"NSScrollAnimationEnabled"];
-
-    [self readPreferences];
-    if (defaultEnableBonjour == YES) {
-        [[ITAddressBookMgr sharedInstance] locateBonjourServices];
-    }
-
-    // get the version
-    NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
-    if (prefs && [prefs objectForKey: @"iTerm Version"]) {
-        sscanf([[prefs objectForKey: @"iTerm Version"] cString], "%d.%d.%d", &storedMajorVersion, &storedMinorVersion, &storedMicroVersion);
-        // briefly, version 0.7.0 was stored as 0.70
-        if(storedMajorVersion == 0 && storedMinorVersion == 70)
-            storedMinorVersion = 7;
-    }
-    //NSLog(@"Stored version = %d.%d.%d", storedMajorVersion, storedMinorVersion, storedMicroVersion);
-
-    // sync the version number
-    if (prefs) {
-        [prefs setObject: [myDict objectForKey:@"CFBundleVersion"] forKey: @"iTerm Version"];
-    }
-    [toolbar setSelectedItemIdentifier:globalToolbarId];
-
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_reloadURLHandlers:)
-                                                 name:@"iTermReloadAddressBook"
-                                               object:nil];
-
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_savedArrangementChanged:)
-                                                 name:@"iTermSavedArrangementChanged"
-                                               object:nil];
-
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(keyBindingsChanged)
-                                                 name:@"iTermKeyBindingsChanged"
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(rebuildColorPresetsMenu)
-                                                 name:kRebuildColorPresetsMenuNotification
-                                               object:nil];
-    return (self);
+    return self;
 }
 
 - (void)_savedArrangementChanged:(id)sender
@@ -180,9 +175,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     }
 }
 
-- (void)setOneBookmarkOnly
+- (void)layoutSubviewsForSingleBookmarkMode
 {
-    oneBookmarkOnly = YES;
     [self showBookmarks];
     [toolbar setVisible:NO];
     [editAdvancedConfigButton setHidden:YES];
@@ -543,7 +537,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [screenButton setEnabled:NO];
         [screenLabel setTextColor:[NSColor disabledControlTextColor]];
         [screenButton selectItemWithTag:-1];
-    } else if (!oneBookmarkOnly) {
+    } else if (!oneBookmarkMode) {
         [screenButton setEnabled:YES];
         [screenLabel setTextColor:[NSColor blackColor]];
     }
@@ -600,7 +594,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                                              selector:@selector(handleWindowWillCloseNotification:)
                                                  name:NSWindowWillCloseNotification object: [self window]];
     if (oneBookmarkMode) {
-        [self setOneBookmarkOnly];
+        [self layoutSubviewsForSingleBookmarkMode];
     }
     [[tags cell] setDelegate:self];
     [tags setDelegate:self];
