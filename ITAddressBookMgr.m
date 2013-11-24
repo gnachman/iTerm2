@@ -153,10 +153,11 @@
 
     NSString *colorSpace = [plist objectForKey:@"Color Space"];
     if ([colorSpace isEqualToString:@"sRGB"]) {
-        return [NSColor colorWithSRGBRed:[[plist objectForKey:@"Red Component"] floatValue]
-                                   green:[[plist objectForKey:@"Green Component"] floatValue]
-                                    blue:[[plist objectForKey:@"Blue Component"] floatValue]
-                                   alpha:1.0];
+        NSColor *srgb = [NSColor colorWithSRGBRed:[[plist objectForKey:@"Red Component"] floatValue]
+                                            green:[[plist objectForKey:@"Green Component"] floatValue]
+                                             blue:[[plist objectForKey:@"Blue Component"] floatValue]
+                                            alpha:1.0];
+        return [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
     } else {
         return [NSColor colorWithCalibratedRed:[[plist objectForKey:@"Red Component"] floatValue]
                                          green:[[plist objectForKey:@"Green Component"] floatValue]
