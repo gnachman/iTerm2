@@ -1,4 +1,3 @@
-// $Id: PreferencePanel.m,v 1.162 2008-10-02 03:48:36 yfabian Exp $
 /*
  **  PreferencePanel.m
  **
@@ -79,10 +78,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 }
 
 
-/*
- Static method to copy old preferences file, iTerm.plist or net.sourceforge.iTerm.plist, to new
- preferences file, com.googlecode.iterm2.plist
- */
+// Class method to copy old preferences file, iTerm.plist or net.sourceforge.iTerm.plist, to new
+// preferences file, com.googlecode.iterm2.plist
 + (BOOL)migratePreferences
 {
     NSString *prefDir = [[NSHomeDirectory()
@@ -1115,12 +1112,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                                      arrangementsToolbarId,
                                      mouseToolbarId,
                                      nil];
-}
-
-- (void)dealloc
-{
-    [defaultWordChars release];
-    [super dealloc];
 }
 
 // Force the key binding for delete to be either ^H or absent.

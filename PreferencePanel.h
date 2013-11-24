@@ -628,7 +628,6 @@ typedef enum {
 - (NSArray *)toolbarAllowedItemIdentifiers:(NSToolbar *)toolbar;
 - (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar;
 - (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar;
-- (void)dealloc;
 - (void)readPreferences;
 - (void)savePreferences;
 - (void)run;
