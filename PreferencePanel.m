@@ -364,29 +364,29 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 - (void)_exportColorPresetToFile:(NSString*)filename
 {
     NSArray* colorKeys = [NSArray arrayWithObjects:
-                          @"Ansi 0 Color",
-                          @"Ansi 1 Color",
-                          @"Ansi 2 Color",
-                          @"Ansi 3 Color",
-                          @"Ansi 4 Color",
-                          @"Ansi 5 Color",
-                          @"Ansi 6 Color",
-                          @"Ansi 7 Color",
-                          @"Ansi 8 Color",
-                          @"Ansi 9 Color",
-                          @"Ansi 10 Color",
-                          @"Ansi 11 Color",
-                          @"Ansi 12 Color",
-                          @"Ansi 13 Color",
-                          @"Ansi 14 Color",
-                          @"Ansi 15 Color",
-                          @"Foreground Color",
-                          @"Background Color",
-                          @"Bold Color",
-                          @"Selection Color",
-                          @"Selected Text Color",
-                          @"Cursor Color",
-                          @"Cursor Text Color",
+                          KEY_ANSI_0_COLOR,
+                          KEY_ANSI_1_COLOR,
+                          KEY_ANSI_2_COLOR,
+                          KEY_ANSI_3_COLOR,
+                          KEY_ANSI_4_COLOR,
+                          KEY_ANSI_5_COLOR,
+                          KEY_ANSI_6_COLOR,
+                          KEY_ANSI_7_COLOR,
+                          KEY_ANSI_8_COLOR,
+                          KEY_ANSI_9_COLOR,
+                          KEY_ANSI_10_COLOR,
+                          KEY_ANSI_11_COLOR,
+                          KEY_ANSI_12_COLOR,
+                          KEY_ANSI_13_COLOR,
+                          KEY_ANSI_14_COLOR,
+                          KEY_ANSI_15_COLOR,
+                          KEY_FOREGROUND_COLOR,
+                          KEY_BACKGROUND_COLOR,
+                          KEY_BOLD_COLOR,
+                          KEY_SELECTION_COLOR,
+                          KEY_SELECTED_TEXT_COLOR,
+                          KEY_CURSOR_COLOR,
+                          KEY_CURSOR_TEXT_COLOR,
                           nil];
     NSColorWell* wells[] = {
         ansi0Color,
@@ -416,17 +416,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     NSMutableDictionary* theDict = [NSMutableDictionary dictionaryWithCapacity:24];
     int i = 0;
     for (NSString* colorKey in colorKeys) {
-        NSColor* theColor = [[wells[i++] color] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-        double r = [theColor redComponent];
-        double g = [theColor greenComponent];
-        double b = [theColor blueComponent];
-
-        NSDictionary* colorDict = [NSDictionary dictionaryWithObjectsAndKeys:
-                                   [NSNumber numberWithDouble:r], @"Red Component",
-                                   [NSNumber numberWithDouble:g], @"Green Component",
-                                   [NSNumber numberWithDouble:b], @"Blue Component",
-                                   nil];
-        [theDict setObject:colorDict forKey:colorKey];
+        [theDict setObject:[ITAddressBookMgr encodeColor:[wells[i++] color]] forKey:colorKey];
     }
     if (![theDict writeToFile:filename atomically:NO]) {
         NSRunAlertPanel(@"Save Failed.",
@@ -4003,10 +3993,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
     for (id colorName in settings) {
         NSDictionary* preset = [settings objectForKey:colorName];
-        float r = [[preset objectForKey:@"Red Component"] floatValue];
-        float g = [[preset objectForKey:@"Green Component"] floatValue];
-        float b = [[preset objectForKey:@"Blue Component"] floatValue];
-        NSColor* color = [NSColor colorWithCalibratedRed:r green:g blue:b alpha:1];
+        NSColor* color = [ITAddressBookMgr decodeColor:preset];
         NSAssert([newDict objectForKey:colorName], @"Missing color in existing dict");
         [newDict setObject:[ITAddressBookMgr encodeColor:color] forKey:colorName];
     }
