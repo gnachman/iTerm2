@@ -9084,7 +9084,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         for (int y = lineStart; y < lineEnd; y++) {
             [resultMap_ removeObjectForKey:[NSNumber numberWithLongLong:y + totalScrollbackOverflow]];
         }
-        NSRect visibleRect = [self visibleRect];
         [self setNeedsDisplayInRect:[self gridRect]];
 #ifdef DEBUG_DRAWING
         NSLog(@"allDirty is set, redraw the whole view");

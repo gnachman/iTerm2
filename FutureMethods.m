@@ -173,11 +173,13 @@ static FutureNSScrollerStyle GetScrollerStyle(id theObj)
     NSInvocation *myInvocation = [NSInvocation invocationWithMethodSignature:mySignature];
     [myInvocation setTarget:self];
     [myInvocation setSelector:selector];
-    void *pointers[objects.count];
-    for (int i = 0; i < objects.count; i++) {
-        pointers[i] = [objects objectAtIndex:i];
-        [myInvocation setArgument:&pointers[i]  // pointer to object
-                          atIndex:i];
+    if (objects.count > 0) {
+        void *pointers[objects.count];
+        for (int i = 0; i < objects.count; i++) {
+            pointers[i] = [objects objectAtIndex:i];
+            [myInvocation setArgument:&pointers[i]  // pointer to object
+                              atIndex:i];
+        }
     }
     [myInvocation invoke];
     BOOL result;
@@ -190,11 +192,13 @@ static FutureNSScrollerStyle GetScrollerStyle(id theObj)
     NSInvocation *myInvocation = [NSInvocation invocationWithMethodSignature:mySignature];
     [myInvocation setTarget:self];
     [myInvocation setSelector:selector];
-    void *pointers[objects.count];
-    for (int i = 0; i < objects.count; i++) {
-        pointers[i] = [objects objectAtIndex:i];
-        [myInvocation setArgument:&pointers[i]  // pointer to object
-                          atIndex:i];
+    if (objects.count > 0) {
+        void *pointers[objects.count];
+        for (int i = 0; i < objects.count; i++) {
+            pointers[i] = [objects objectAtIndex:i];
+            [myInvocation setArgument:&pointers[i]  // pointer to object
+                              atIndex:i];
+        }
     }
     [myInvocation invoke];
     CGFloat result;

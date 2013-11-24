@@ -662,7 +662,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             [filtered addObject:range];
         }
     }
-    context.results = [filtered retain];
+    context.results = filtered;
     if ([filtered count] == 0 && haveOutOfRangeResults) {
         context.status = NotFound;
     }

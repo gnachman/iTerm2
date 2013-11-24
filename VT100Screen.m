@@ -2204,8 +2204,8 @@ static const double kInterBellQuietPeriod = 0.1;
     int fgColorCode = [self colorCodeForColor:fgColor];
     int bgColorCode = [self colorCodeForColor:bgColor];
 
-    screen_char_t fg;
-    screen_char_t bg;
+    screen_char_t fg = { 0 };
+    screen_char_t bg = { 0 };
 
     fg.foregroundColor = fgColorCode;
     fg.foregroundColorMode = fgColor ? ColorModeNormal : ColorModeInvalid;
@@ -2484,14 +2484,12 @@ static void SwapInt(int *a, int *b) {
     int cursorX = currentGrid_.cursorX + 1;
     if (canOccupyLastSpace) {
         if (cursorX > currentGrid_.size.width) {
-            cursorX = currentGrid_.size.width;
             screen_char_t* aLine = [currentGrid_ screenCharsAtLineNumber:currentGrid_.cursorY];
             aLine[currentGrid_.size.width].code = EOL_SOFT;
             [self linefeed];
             cursorX = 0;
         }
     } else if (cursorX >= currentGrid_.size.width) {
-        cursorX = currentGrid_.size.width;
         [self linefeed];
         cursorX = 0;
     }
