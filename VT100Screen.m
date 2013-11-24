@@ -1210,7 +1210,6 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (PTYNoteViewController *)noteForLine:(int)y {
     int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
-    NSTimeInterval interval;
     if (y >= numLinesInLineBuffer) {
         return (PTYNoteViewController *)[currentGrid_ objectForLine:y - numLinesInLineBuffer];
     } else {
@@ -1221,7 +1220,6 @@ static const double kInterBellQuietPeriod = 0.1;
 - (void)setNote:(PTYNoteViewController *)note forLine:(int)y {
     assert(![self noteForLine:y]);
     int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
-    NSTimeInterval interval;
     if (y >= numLinesInLineBuffer) {
         [currentGrid_ setObject:note
                         forLine:y - numLinesInLineBuffer
