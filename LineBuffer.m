@@ -577,7 +577,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                    options:(int)options
                withContext:(FindContext*)context
 {
-    context.substring = [[NSString alloc] initWithString:substring];
+    context.substring = substring;
     context.options = options;
     if (options & FindOptBackwards) {
         context.dir = -1;
