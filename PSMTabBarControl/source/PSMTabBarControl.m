@@ -29,7 +29,9 @@
 
     // accessors
 - (NSEvent *)lastMouseDownEvent;
+- (NSEvent *)lastMiddleMouseDownEvent;
 - (void)setLastMouseDownEvent:(NSEvent *)event;
+- (void)setLastMiddleMouseDownEvent:(NSEvent *)event;
 
     // contents
 - (void)addTabViewItem:(NSTabViewItem *)item;
@@ -204,6 +206,7 @@
     [_addTabButton release];
     [partnerView release];
     [_lastMouseDownEvent release];
+    [_lastMiddleMouseDownEvent release];
     [style release];
 
     [self unregisterDraggedTypes];
@@ -243,6 +246,18 @@
     [event retain];
     [_lastMouseDownEvent release];
     _lastMouseDownEvent = event;
+}
+
+- (NSEvent *)lastMiddleMouseDownEvent
+{
+    return _lastMiddleMouseDownEvent;
+}
+
+- (void)setLastMiddleMouseDownEvent:(NSEvent *)event
+{
+    [event retain];
+    [_lastMiddleMouseDownEvent release];
+    _lastMiddleMouseDownEvent = event;
 }
 
 - (id)delegate
@@ -1374,6 +1389,12 @@
     return YES;
 }
 
+- (void)otherMouseDown:(NSEvent *)theEvent {
+    if ([theEvent buttonNumber] == 2) {
+        [self setLastMiddleMouseDownEvent:theEvent];
+    }
+}
+
 - (void)mouseDown:(NSEvent *)theEvent
 {
     _didDrag = NO;
@@ -1474,6 +1495,21 @@
     }
 }
 
+- (void)otherMouseUp:(NSEvent *)theEvent
+{
+    // Middle click closes a tab, even if the click is not on the close button.
+    if ([theEvent buttonNumber] == 2 && !_resizing) {
+        NSPoint mousePt = [self convertPoint:[theEvent locationInWindow] fromView:nil];
+        NSRect cellFrame;
+        PSMTabBarCell *cell = [self cellForPoint:mousePt cellFrame:&cellFrame];
+        NSRect mouseDownCellFrame;
+        PSMTabBarCell *mouseDownCell = [self cellForPoint:[self convertPoint:[[self lastMiddleMouseDownEvent] locationInWindow] fromView:nil]
+                                                cellFrame:&mouseDownCellFrame];
+        if (cell && cell == mouseDownCell) {
+            [self closeTabClick:cell];
+        }
+    }
+}
 - (void)mouseUp:(NSEvent *)theEvent
 {
     if (_resizing) {
@@ -2016,6 +2052,7 @@
         [aCoder encodeObject:partnerView forKey:@"PSMpartnerView"];
         [aCoder encodeBool:_awakenedFromNib forKey:@"PSMawakenedFromNib"];
         [aCoder encodeObject:_lastMouseDownEvent forKey:@"PSMlastMouseDownEvent"];
+        [aCoder encodeObject:_lastMiddleMouseDownEvent forKey:@"PSMlastMiddleMouseDownEvent"];
         [aCoder encodeObject:delegate forKey:@"PSMdelegate"];
         [aCoder encodeBool:_useOverflowMenu forKey:@"PSMuseOverflowMenu"];
         [aCoder encodeBool:_automaticallyAnimates forKey:@"PSMautomaticallyAnimates"];
@@ -2051,6 +2088,7 @@
             partnerView = [[aDecoder decodeObjectForKey:@"PSMpartnerView"] retain];
             _awakenedFromNib = [aDecoder decodeBoolForKey:@"PSMawakenedFromNib"];
             _lastMouseDownEvent = [[aDecoder decodeObjectForKey:@"PSMlastMouseDownEvent"] retain];
+            _lastMiddleMouseDownEvent = [[aDecoder decodeObjectForKey:@"PSMlastMiddleMouseDownEvent"] retain];
             _useOverflowMenu = [aDecoder decodeBoolForKey:@"PSMuseOverflowMenu"];
             _automaticallyAnimates = [aDecoder decodeBoolForKey:@"PSMautomaticallyAnimates"];
             delegate = [[aDecoder decodeObjectForKey:@"PSMdelegate"] retain];
