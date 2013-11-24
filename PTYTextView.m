@@ -1631,10 +1631,34 @@ NSMutableArray* screens=0;
     return result;
 }
 
+// This exists to work around an apparent OS bug described in issue 2690. Under some circumstances
+// (which I cannot reproduce) the key window will be an NSToolbarFullScreenWindow and the PTYWindow
+// will be one of the main windows. NSToolbarFullScreenWindow doesn't appear to handle keystrokes,
+// so they fall through to the main window. We'd like the cursor to blink and have other key-
+// window behaviors in this case.
+- (BOOL)isInKeyWindow
+{
+    if ([[self window] isKeyWindow]) {
+        DLog(@"%@ is key window", self);
+        return YES;
+    }
+    NSWindow *theKeyWindow = [[NSApplication sharedApplication] keyWindow];
+    if (!theKeyWindow) {
+        DLog(@"There is no key window");
+        return NO;
+    }
+    if (!strcmp("NSToolbarFullScreenWindow", object_getClassName(theKeyWindow))) {
+        DLog(@"key window is a NSToolbarFullScreenWindow, using my main window status of %d as key status",
+             (int)self.window.isMainWindow);
+        return [[self window] isMainWindow];
+    }
+    return NO;
+}
+
 - (BOOL)_isCursorBlinking
 {
     if ([self blinkingCursor] &&
-        [[self window] isKeyWindow] &&
+        [self isInKeyWindow] &&
         [[[dataSource session] tab] activeSession] == [dataSource session]) {
         return YES;
     } else {
@@ -3231,7 +3255,7 @@ NSMutableArray* screens=0;
         if (![obj disableFocusFollowsMouse]) {
             [[self window] makeKeyWindow];
         }
-        if ([[self window] isKeyWindow]) {
+        if ([self isInKeyWindow]) {
             [[[dataSource session] tab] setActiveSession:[dataSource session]];
         }
     }
@@ -7804,7 +7828,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         lastTimeCursorMoved_ = now;
     }
     if ([self blinkingCursor] &&
-        [[self window] isKeyWindow] &&
+        [self isInKeyWindow] &&
         [[[dataSource session] tab] activeSession] == [dataSource session] &&
         now - lastTimeCursorMoved_ > 0.5) {
         // Allow the cursor to blink if it is configured, the window is key, this session is active
@@ -7912,7 +7936,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 case CURSOR_BOX:
                     // draw the box
                     DLog(@"draw cursor box at %f,%f size %fx%f", (float)curX, (float)curY, (float)ceil(cursorWidth * (double_width ? 2 : 1)), cursorHeight);
-                    if ([[self window] isKeyWindow] &&
+                    if ([self isInKeyWindow] &&
                         [[[dataSource session] tab] activeSession] == [dataSource session]) {
                         frameOnly = NO;
                         NSRectFill(NSMakeRect(curX,
@@ -7938,7 +7962,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             BOOL fgBold;
                             BOOL isBold;
                             NSColor* overrideColor = nil;
-                            if ([[self window] isKeyWindow]) {
+                            if ([self isInKeyWindow]) {
                                 // Draw a character in background color when
                                 // window is key.
                                 fgColor = screenChar.backgroundColor;
@@ -7997,7 +8021,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             int theBlue;
                             ColorMode theMode;
                             BOOL isBold;
-                            if ([[self window] isKeyWindow]) {
+                            if ([self isInKeyWindow]) {
                                 theColor = ALTSEM_CURSOR;
                                 theGreen = 0;
                                 theBlue = 0;
@@ -9326,7 +9350,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         redrawBlink = YES;
 
         if ([self blinkingCursor] &&
-            [[self window] isKeyWindow]) {
+            [self isInKeyWindow]) {
             // Blink flag flipped and there is a blinking cursor. Make it redraw.
             [self setCursorNeedsDisplay];
         }
