@@ -25,50 +25,30 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <stdlib.h>
 #import "PreferencePanel.h"
-#import "NSStringITerm.h"
-#import "iTermController.h"
+
 #import "ITAddressBookMgr.h"
-#import "iTermKeyBindingMgr.h"
+#import "NSFileManager+DirectoryLocations.h"
+#import "NSStringITerm.h"
 #import "PTYSession.h"
-#import "PseudoTerminal.h"
-#import "ProfileModel.h"
 #import "PasteboardHistory.h"
-#import "SessionView.h"
-#import "WindowArrangements.h"
-#import "TriggerController.h"
-#import "SmartSelectionController.h"
-#import "TrouterPrefsController.h"
 #import "PointerPrefsController.h"
+#import "ProfileModel.h"
+#import "PseudoTerminal.h"
+#import "SessionView.h"
+#import "SmartSelectionController.h"
+#import "TriggerController.h"
+#import "TrouterPrefsController.h"
+#import "WindowArrangements.h"
+#import "iTermController.h"
 #import "iTermFontPanel.h"
+#import "iTermKeyBindingMgr.h"
+#include <stdlib.h>
 
-#define CUSTOM_COLOR_PRESETS @"Custom Color Presets"
-#define HOTKEY_WINDOW_GENERATED_PROFILE_NAME @"Hotkey Window"
-NSString* kDeleteKeyString = @"0x7f-0x0";
-
-static float versionNumber;
+static NSString * const kCustomColorPresetsKey = @"Custom Color Presets";
+static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
+static NSString * const kDeleteKeyString = @"0x7f-0x0";
 static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
-
-@interface NSFileManager (TemporaryDirectory)
-
-- (NSString *)temporaryDirectory;
-
-@end
-@implementation NSFileManager (TemporaryDirectory)
-
-- (NSString *)temporaryDirectory
-{
-    // Create a unique directory in the system temporary directory
-    NSString *guid = [[NSProcessInfo processInfo] globallyUniqueString];
-    NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:guid];
-    if (![self createDirectoryAtPath:path withIntermediateDirectories:NO attributes:nil error:nil]) {
-        return nil;
-    }
-    return path;
-}
-
-@end
 
 @implementation PreferencePanel
 
@@ -156,7 +136,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
     // get the version
     NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
-    versionNumber = [(NSNumber *)[myDict objectForKey:@"CFBundleVersion"] floatValue];
     if (prefs && [prefs objectForKey: @"iTerm Version"]) {
         sscanf([[prefs objectForKey: @"iTerm Version"] cString], "%d.%d.%d", &storedMajorVersion, &storedMinorVersion, &storedMicroVersion);
         // briefly, version 0.7.0 was stored as 0.70
@@ -274,7 +253,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
     [self _addColorPresetsInDict:presetsDict toMenu:presetsMenu];
 
-    NSDictionary* customPresets = [[NSUserDefaults standardUserDefaults] objectForKey:CUSTOM_COLOR_PRESETS];
+    NSDictionary* customPresets = [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
     if (customPresets && [customPresets count] > 0) {
         [presetsMenu addItem:[NSMenuItem separatorItem]];
         [self _addColorPresetsInDict:customPresets toMenu:presetsMenu];
@@ -297,7 +276,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (void)_addColorPreset:(NSString*)presetName withColors:(NSDictionary*)theDict
 {
-    NSMutableDictionary* customPresets = [NSMutableDictionary dictionaryWithDictionary:[[NSUserDefaults standardUserDefaults] objectForKey:CUSTOM_COLOR_PRESETS]];
+    NSMutableDictionary* customPresets = [NSMutableDictionary dictionaryWithDictionary:[[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey]];
     if (!customPresets) {
         customPresets = [NSMutableDictionary dictionaryWithCapacity:1];
     }
@@ -308,7 +287,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         temp = [NSString stringWithFormat:@"%@ (%d)", presetName, i];
     }
     [customPresets setObject:theDict forKey:temp];
-    [[NSUserDefaults standardUserDefaults] setObject:customPresets forKey:CUSTOM_COLOR_PRESETS];
+    [[NSUserDefaults standardUserDefaults] setObject:customPresets forKey:kCustomColorPresetsKey];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kRebuildColorPresetsMenuNotification
                                                         object:nil];
@@ -451,7 +430,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (void)deleteColorPreset:(id)sender
 {
-    NSDictionary* customPresets = [[NSUserDefaults standardUserDefaults] objectForKey:CUSTOM_COLOR_PRESETS];
+    NSDictionary* customPresets = [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
     if (!customPresets || [customPresets count] == 0) {
         NSRunAlertPanel(@"No deletable color presets.",
                         @"You cannot erase the built-in presets and no custom presets have been imported.",
@@ -478,7 +457,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         NSMutableDictionary* newCustom = [NSMutableDictionary dictionaryWithDictionary:customPresets];
         [newCustom removeObjectForKey:[[pub selectedItem] title]];
         [[NSUserDefaults standardUserDefaults] setObject:newCustom
-                                                  forKey:CUSTOM_COLOR_PRESETS];
+                                                  forKey:kCustomColorPresetsKey];
         [[NSNotificationCenter defaultCenter] postNotificationName:kRebuildColorPresetsMenuNotification
                                                             object:nil];
     }
@@ -1602,7 +1581,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [dict setObject:[NSNumber numberWithInt:-1] forKey:KEY_SCREEN];
     [dict setObject:[NSNumber numberWithInt:-1] forKey:KEY_SPACE];
     [dict setObject:@"" forKey:KEY_SHORTCUT];
-    [dict setObject:HOTKEY_WINDOW_GENERATED_PROFILE_NAME forKey:KEY_NAME];
+    [dict setObject:kHotkeyWindowGeneratedProfileNameKey forKey:KEY_NAME];
     [dict removeObjectForKey:KEY_TAGS];
     [dict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
     [dict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
@@ -1735,13 +1714,13 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     } else {
         if (sender == hotkeyTogglesWindow &&
             [hotkeyTogglesWindow state] == NSOnState &&
-            ![[ProfileModel sharedInstance] bookmarkWithName:HOTKEY_WINDOW_GENERATED_PROFILE_NAME]) {
+            ![[ProfileModel sharedInstance] bookmarkWithName:kHotkeyWindowGeneratedProfileNameKey]) {
             // User's turning on hotkey window. There is no bookmark with the autogenerated name.
             [self _generateHotkeyWindowProfile];
-            [hotkeyBookmark selectItemWithTitle:HOTKEY_WINDOW_GENERATED_PROFILE_NAME];
+            [hotkeyBookmark selectItemWithTitle:kHotkeyWindowGeneratedProfileNameKey];
             NSRunAlertPanel(@"Set Up Hotkey Window",
                             [NSString stringWithFormat:@"A new profile called \"%@\" was created for you. It is tuned to work well for the Hotkey Window feature, but you can change it in the Profiles tab.",
-                             HOTKEY_WINDOW_GENERATED_PROFILE_NAME],
+                             kHotkeyWindowGeneratedProfileNameKey],
                             @"OK",
                             nil,
                             nil,
@@ -3994,7 +3973,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
     NSDictionary* settings = [presetsDict objectForKey:presetName];
     if (!settings) {
-        presetsDict = [[NSUserDefaults standardUserDefaults] objectForKey:CUSTOM_COLOR_PRESETS];
+        presetsDict = [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
         settings = [presetsDict objectForKey:presetName];
     }
     NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:[dataSource bookmarkWithGuid:guid]];

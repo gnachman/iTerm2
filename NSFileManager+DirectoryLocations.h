@@ -33,4 +33,6 @@
 	error:(NSError **)errorOut;
 - (NSString *)applicationSupportDirectory;
 
+- (NSString *)temporaryDirectory;
+
 @end

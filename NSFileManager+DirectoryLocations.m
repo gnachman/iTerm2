@@ -152,4 +152,15 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 	return result;
 }
 
+- (NSString *)temporaryDirectory
+{
+    // Create a unique directory in the system temporary directory
+    NSString *guid = [[NSProcessInfo processInfo] globallyUniqueString];
+    NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:guid];
+    if (![self createDirectoryAtPath:path withIntermediateDirectories:NO attributes:nil error:nil]) {
+        return nil;
+    }
+    return path;
+}
+
 @end
