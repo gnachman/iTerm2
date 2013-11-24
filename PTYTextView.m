@@ -111,6 +111,7 @@ static double gSmartCursorFgThreshold = 0.75;
 // avoid dangling references.
 static NSString *const kHostnameLookupFailed = @"kHostnameLookupFailed";
 static NSString *const kHostnameLookupSucceeded = @"kHostnameLookupSucceeded";
+static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
 
 @implementation FindCursorView
 
@@ -2832,7 +2833,14 @@ NSMutableArray* screens=0;
         if (debugKeyDown) {
             NSLog(@"PTYTextView keyDown send to IME");
         }
+        
+        // In issue 2743, it is revealed that in OS 10.9 this sometimes calls -insertText on the
+        // wrong instnace of PTYTextView. We work around the issue by using a global variable to
+        // track the instance of PTYTextView that is currently handling a key event and rerouting
+        // calls as needed in -insertText and -doCommandBySelector.
+        gCurrentKeyEventTextView = [[self retain] autorelease];
         [self interpretKeyEvents:[NSArray arrayWithObject:event]];
+        gCurrentKeyEventTextView = nil;
 
         // If the IME didn't want it, pass it on to the delegate
         if (!prev &&
@@ -5685,14 +5693,32 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)doCommandBySelector:(SEL)aSelector
 {
-    // doCommandBySelector isn't safe for us to implement blindly. For example, the standard
-    // key bindings make Enter send insertNewline:, which does the wrong thing when called on our
-    // delegate (it sends 0xa instead of 0xd). TODO: Find a list of useful selectors that could be
-    // whitelisted here.
+    if (gCurrentKeyEventTextView && self != gCurrentKeyEventTextView) {
+        // See comment in -keyDown:
+        DLog(@"Rerouting doCommandBySelector from %@ to %@", self, gCurrentKeyEventTextView);
+        [gCurrentKeyEventTextView doCommandBySelector:aSelector];
+        return;
+    }
+    DLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
+
+#if GREED_KEYDOWN == 0
+    id delegate = [self delegate];
+
+    if ([delegate respondsToSelector:aSelector]) {
+        [delegate performSelector:aSelector withObject:nil];
+    }
+#endif
 }
 
 - (void)insertText:(id)aString
 {
+    if (gCurrentKeyEventTextView && self != gCurrentKeyEventTextView) {
+        // See comment in -keyDown:
+        DLog(@"Rerouting insertText from %@ to %@", self, gCurrentKeyEventTextView);
+        [gCurrentKeyEventTextView insertText:aString];
+        return;
+    }
+    DLog(@"PTYTextView insertText:%@", aString);
     if ([self hasMarkedText]) {
         BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
         if (debugKeyDown) {
