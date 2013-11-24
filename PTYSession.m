@@ -875,8 +875,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     if (gDebugLogging) {
         const char *bytes = [data bytes];
         for (int i = 0; i < [data length]; i++) {
-            DLog(@"writeTask keydown %d: %d (%c) from %@",
-                 i, (int) bytes[i], bytes[i], [NSThread callStackSymbols]);
+            DLog(@"%@: writeTask keydown %d: %d (%c) from %@",
+                 self, i, (int) bytes[i], bytes[i], [NSThread callStackSymbols]);
+            DLog(@"This session's TEXTVIEW is %@", TEXTVIEW);
         }
     }
 

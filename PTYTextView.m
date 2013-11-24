@@ -2476,7 +2476,7 @@ NSMutableArray* screens=0;
     if (!workAroundControlBug) {
         // Let the IME process key events
         IM_INPUT_INSERT = NO;
-        DLog(@"PTYTextView keyDown send to IME");
+        DLog(@"PTYTextView keyDown send to IME, self=%@", self);
 
         [self interpretKeyEvents:[NSArray arrayWithObject:event]];
 
@@ -4843,7 +4843,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)insertText:(id)aString
 {
-    DLog(@"PTYTextView insertText:%@", aString);
+    DLog(@"PTYTextView insertText:%@ self=%@", aString, self);
     if ([self hasMarkedText]) {
         DLog(@"insertText: clear marked text");
 
