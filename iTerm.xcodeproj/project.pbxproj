@@ -225,8 +225,8 @@
 		1D624BF61386E3B400111319 /* GTMTypeCasting.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BF51386E3B400111319 /* GTMTypeCasting.h */; };
 		1D67AAA914284BF300D5DA4E /* ToolNotes.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D67AAA714284BF300D5DA4E /* ToolNotes.h */; };
 		1D67AAAA14284BF300D5DA4E /* ToolNotes.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D67AAA814284BF300D5DA4E /* ToolNotes.m */; };
-		1D67ABAB14285D6000D5DA4E /* NSFileManager+DirectoryLocations.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D67ABA914285D6000D5DA4E /* NSFileManager+DirectoryLocations.h */; };
-		1D67ABAC14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D67ABAA14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m */; };
+		1D67ABAB14285D6000D5DA4E /* NSFileManager+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D67ABA914285D6000D5DA4E /* NSFileManager+iTerm.h */; };
+		1D67ABAC14285D6000D5DA4E /* NSFileManager+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D67ABAA14285D6000D5DA4E /* NSFileManager+iTerm.m */; };
 		1D6944D7169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6944D5169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h */; };
 		1D6944D8169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */; };
 		1D699BC417CABC060094F0C1 /* CharacterRunInline.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D699BC317CABC060094F0C1 /* CharacterRunInline.h */; };
@@ -347,7 +347,7 @@
 		1D9A5562180FA83900B42CE9 /* WindowArrangements.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DCA5ECE13EE507800B7725E /* WindowArrangements.m */; };
 		1D9A5563180FA84700B42CE9 /* NSBezierPath+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9516F04D0900B7FCE9 /* NSBezierPath+iTerm.m */; };
 		1D9A5564180FA84700B42CE9 /* NSDateFormatterExtras.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */; };
-		1D9A5565180FA84700B42CE9 /* NSFileManager+DirectoryLocations.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D67ABAA14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m */; };
+		1D9A5565180FA84700B42CE9 /* NSFileManager+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D67ABAA14285D6000D5DA4E /* NSFileManager+iTerm.m */; };
 		1D9A5566180FA84700B42CE9 /* NSImage+CoreImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF0895A13DBAE1F00A52AD8 /* NSImage+CoreImage.m */; };
 		1D9A5567180FA84700B42CE9 /* NSStringITerm.m in Sources */ = {isa = PBXBuildFile; fileRef = E8E901A202743CA303A80106 /* NSStringITerm.m */; };
 		1D9A5568180FA84700B42CE9 /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D48B32216706FC3000046EE /* NSView+iTerm.m */; };
@@ -734,8 +734,8 @@
 		1D624BF51386E3B400111319 /* GTMTypeCasting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMTypeCasting.h; sourceTree = "<group>"; };
 		1D67AAA714284BF300D5DA4E /* ToolNotes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolNotes.h; sourceTree = "<group>"; };
 		1D67AAA814284BF300D5DA4E /* ToolNotes.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolNotes.m; sourceTree = "<group>"; };
-		1D67ABA914285D6000D5DA4E /* NSFileManager+DirectoryLocations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSFileManager+DirectoryLocations.h"; sourceTree = "<group>"; };
-		1D67ABAA14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSFileManager+DirectoryLocations.m"; sourceTree = "<group>"; };
+		1D67ABA914285D6000D5DA4E /* NSFileManager+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSFileManager+iTerm.h"; sourceTree = "<group>"; };
+		1D67ABAA14285D6000D5DA4E /* NSFileManager+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSFileManager+iTerm.m"; sourceTree = "<group>"; };
 		1D6944D5169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreeFingerTapGestureRecognizer.h; sourceTree = "<group>"; };
 		1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ThreeFingerTapGestureRecognizer.m; sourceTree = "<group>"; };
 		1D699BC317CABC060094F0C1 /* CharacterRunInline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CharacterRunInline.h; sourceTree = "<group>"; };
@@ -1244,7 +1244,7 @@
 				1D085F9416F04D0900B7FCE9 /* NSBezierPath+iTerm.h */,
 				1DF0895713DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h */,
 				1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */,
-				1D67ABA914285D6000D5DA4E /* NSFileManager+DirectoryLocations.h */,
+				1D67ABA914285D6000D5DA4E /* NSFileManager+iTerm.h */,
 				1DF0895913DBAE1F00A52AD8 /* NSImage+CoreImage.h */,
 				1D407A2914BABE8700BD5035 /* NSStringITerm.h */,
 				1D48B32116706FC3000046EE /* NSView+iTerm.h */,
@@ -1606,7 +1606,7 @@
 				1D085F9516F04D0900B7FCE9 /* NSBezierPath+iTerm.m */,
 				1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */,
 				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
-				1D67ABAA14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m */,
+				1D67ABAA14285D6000D5DA4E /* NSFileManager+iTerm.m */,
 				1DF0895A13DBAE1F00A52AD8 /* NSImage+CoreImage.m */,
 				E8E901A202743CA303A80106 /* NSStringITerm.m */,
 				1D48B32216706FC3000046EE /* NSView+iTerm.m */,
@@ -1896,7 +1896,7 @@
 				1DE8DF361415799700F83147 /* ToolWrapper.h in Headers */,
 				1D19C71414171F1D00617E08 /* ToolJobs.h in Headers */,
 				1D67AAA914284BF300D5DA4E /* ToolNotes.h in Headers */,
-				1D67ABAB14285D6000D5DA4E /* NSFileManager+DirectoryLocations.h in Headers */,
+				1D67ABAB14285D6000D5DA4E /* NSFileManager+iTerm.h in Headers */,
 				1D31BC65142D33CA001F7ECB /* TriggerController.h in Headers */,
 				1D9DCBFE142D7BA60016228A /* Trigger.h in Headers */,
 				1D9DCC04142D7E570016228A /* GrowlTrigger.h in Headers */,
@@ -2244,7 +2244,7 @@
 				1D9A557F180FA87000B42CE9 /* FindViewController.m in Sources */,
 				1D9A5584180FA87000B42CE9 /* iTermFontPanel.m in Sources */,
 				1D9A5578180FA85D00B42CE9 /* GrowlTrigger.m in Sources */,
-				1D9A5565180FA84700B42CE9 /* NSFileManager+DirectoryLocations.m in Sources */,
+				1D9A5565180FA84700B42CE9 /* NSFileManager+iTerm.m in Sources */,
 				1D9A5585180FA87000B42CE9 /* iTermKeyBindingMgr.m in Sources */,
 				1D9A5595180FA87000B42CE9 /* PTYSession.m in Sources */,
 				1D9A555E180FA83900B42CE9 /* PreferencePanel.m in Sources */,
@@ -2434,7 +2434,7 @@
 				1DE8DF371415799700F83147 /* ToolWrapper.m in Sources */,
 				1D19C71514171F1D00617E08 /* ToolJobs.m in Sources */,
 				1D67AAAA14284BF300D5DA4E /* ToolNotes.m in Sources */,
-				1D67ABAC14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m in Sources */,
+				1D67ABAC14285D6000D5DA4E /* NSFileManager+iTerm.m in Sources */,
 				1D8B8A151806038F00C2DC25 /* VT100Grid.m in Sources */,
 				1D31BC66142D33CA001F7ECB /* TriggerController.m in Sources */,
 				1D9DCBFF142D7BA60016228A /* Trigger.m in Sources */,

@@ -27,7 +27,7 @@
 #import "PreferencePanel.h"
 
 #import "ITAddressBookMgr.h"
-#import "NSFileManager+DirectoryLocations.h"
+#import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "PTYSession.h"
 #import "PasteboardHistory.h"
@@ -163,6 +163,14 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return self;
 }
 
+#pragma mark Notification handlers
+
+- (void)_reloadURLHandlers:(NSNotification *)aNotification
+{
+    // TODO: maybe something here for the current bookmark?
+    [self _populateHotKeyBookmarksMenu];
+}
+
 - (void)_savedArrangementChanged:(id)sender
 {
     [openArrangementAtStartup setState:defaultOpenArrangementAtStartup ? NSOnState : NSOffState];
@@ -172,65 +180,9 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     }
 }
 
-- (void)layoutSubviewsForSingleBookmarkMode
+- (void)keyBindingsChanged
 {
-    [self showBookmarks];
-    [toolbar setVisible:NO];
-    [editAdvancedConfigButton setHidden:YES];
-    [bookmarksTableView setHidden:YES];
-    [addBookmarkButton setHidden:YES];
-    [removeBookmarkButton setHidden:YES];
-    [bookmarksPopup setHidden:YES];
-    [bookmarkDirectory setHidden:YES];
-    [bookmarkShortcutKeyLabel setHidden:YES];
-    [bookmarkShortcutKeyModifiersLabel setHidden:YES];
-    [bookmarkTagsLabel setHidden:YES];
-    [bookmarkCommandLabel setHidden:YES];
-    [initialTextLabel setHidden:YES];
-    [bookmarkDirectoryLabel setHidden:YES];
-    [bookmarkShortcutKey setHidden:YES];
-    [tags setHidden:YES];
-    [bookmarkCommandType setHidden:YES];
-    [bookmarkCommand setHidden:YES];
-    [initialText setHidden:YES];
-    [bookmarkDirectoryType setHidden:YES];
-    [bookmarkDirectory setHidden:YES];
-    [bookmarkUrlSchemes setHidden:YES];
-    [bookmarkUrlSchemesHeaderLabel setHidden:YES];
-    [bookmarkUrlSchemesLabel setHidden:YES];
-    [copyToProfileButton setHidden:NO];
-    [setProfileLabel setHidden:NO];
-    [setProfileBookmarkListView setHidden:NO];
-    [changeProfileButton setHidden:NO];
-
-    [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
-    [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
-    [columnsField setEnabled:NO];
-    [rowsField setEnabled:NO];
-    [windowTypeButton setEnabled:NO];
-    [screenLabel setTextColor:[NSColor disabledControlTextColor]];
-    [screenButton setEnabled:NO];
-    [spaceButton setEnabled:NO];
-    [spaceLabel setTextColor:[NSColor disabledControlTextColor]];
-    [windowTypeLabel setTextColor:[NSColor disabledControlTextColor]];
-    [newWindowttributesHeader setTextColor:[NSColor disabledControlTextColor]];
-
-    NSRect newFrame = [bookmarksSettingsTabViewParent frame];
-    newFrame.origin.x = 0;
-    [bookmarksSettingsTabViewParent setFrame:newFrame];
-
-    newFrame = [[self window] frame];
-    newFrame.size.width = [bookmarksSettingsTabViewParent frame].size.width + 26;
-    [[self window] setFrame:newFrame display:YES];
-}
-
-- (void)_addColorPresetsInDict:(NSDictionary*)presetsDict toMenu:(NSMenu*)theMenu
-{
-    for (NSString* key in  [[presetsDict allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
-        NSMenuItem* presetItem = [[NSMenuItem alloc] initWithTitle:key action:@selector(loadColorPreset:) keyEquivalent:@""];
-        [theMenu addItem:presetItem];
-        [presetItem release];
-    }
+    [keyMappings reloadData];
 }
 
 - (void)rebuildColorPresetsMenu
@@ -263,6 +215,17 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [presetsMenu addItem:[[[NSMenuItem alloc] initWithTitle:@"Visit Online Gallery"
                                                      action:@selector(visitGallery:)
                                               keyEquivalent:@""] autorelease]];
+}
+
+#pragma mark - Color Presets
+
+- (void)_addColorPresetsInDict:(NSDictionary*)presetsDict toMenu:(NSMenu*)theMenu
+{
+    for (NSString* key in  [[presetsDict allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
+        NSMenuItem* presetItem = [[NSMenuItem alloc] initWithTitle:key action:@selector(loadColorPreset:) keyEquivalent:@""];
+        [theMenu addItem:presetItem];
+        [presetItem release];
+    }
 }
 
 - (void)_addColorPreset:(NSString*)presetName withColors:(NSDictionary*)theDict
@@ -460,28 +423,62 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:COLOR_GALLERY_URL]];
 }
 
-- (BOOL)_dirIsWritable:(NSString *)dir
-{
-    if ([[dir stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] length] == 0) {
-        return NO;
-    }
 
-    NSString *filename = [NSString stringWithFormat:@"%@/.testwritable.%d", dir, (int)getpid()];
-    NSError *error = nil;
-    [@"test" writeToFile:filename
-              atomically:YES
-                encoding:NSUTF8StringEncoding
-                   error:&error];
-    if (error) {
-        return NO;
-    }
-    unlink([filename UTF8String]);
-    return YES;
+- (void)layoutSubviewsForSingleBookmarkMode
+{
+    [self showBookmarks];
+    [toolbar setVisible:NO];
+    [editAdvancedConfigButton setHidden:YES];
+    [bookmarksTableView setHidden:YES];
+    [addBookmarkButton setHidden:YES];
+    [removeBookmarkButton setHidden:YES];
+    [bookmarksPopup setHidden:YES];
+    [bookmarkDirectory setHidden:YES];
+    [bookmarkShortcutKeyLabel setHidden:YES];
+    [bookmarkShortcutKeyModifiersLabel setHidden:YES];
+    [bookmarkTagsLabel setHidden:YES];
+    [bookmarkCommandLabel setHidden:YES];
+    [initialTextLabel setHidden:YES];
+    [bookmarkDirectoryLabel setHidden:YES];
+    [bookmarkShortcutKey setHidden:YES];
+    [tags setHidden:YES];
+    [bookmarkCommandType setHidden:YES];
+    [bookmarkCommand setHidden:YES];
+    [initialText setHidden:YES];
+    [bookmarkDirectoryType setHidden:YES];
+    [bookmarkDirectory setHidden:YES];
+    [bookmarkUrlSchemes setHidden:YES];
+    [bookmarkUrlSchemesHeaderLabel setHidden:YES];
+    [bookmarkUrlSchemesLabel setHidden:YES];
+    [copyToProfileButton setHidden:NO];
+    [setProfileLabel setHidden:NO];
+    [setProfileBookmarkListView setHidden:NO];
+    [changeProfileButton setHidden:NO];
+
+    [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
+    [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
+    [columnsField setEnabled:NO];
+    [rowsField setEnabled:NO];
+    [windowTypeButton setEnabled:NO];
+    [screenLabel setTextColor:[NSColor disabledControlTextColor]];
+    [screenButton setEnabled:NO];
+    [spaceButton setEnabled:NO];
+    [spaceLabel setTextColor:[NSColor disabledControlTextColor]];
+    [windowTypeLabel setTextColor:[NSColor disabledControlTextColor]];
+    [newWindowttributesHeader setTextColor:[NSColor disabledControlTextColor]];
+
+    NSRect newFrame = [bookmarksSettingsTabViewParent frame];
+    newFrame.origin.x = 0;
+    [bookmarksSettingsTabViewParent setFrame:newFrame];
+
+    newFrame = [[self window] frame];
+    newFrame.size.width = [bookmarksSettingsTabViewParent frame].size.width + 26;
+    [[self window] setFrame:newFrame display:YES];
 }
 
 - (BOOL)_logDirIsWritable
 {
-    return [self _dirIsWritable:[logDir stringValue]];
+    return [[NSFileManager defaultManager] directoryIsWritable:[logDir stringValue]];
 }
 
 - (void)_updateLogDirWarning
@@ -491,7 +488,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (BOOL)_prefsDirIsWritable
 {
-    return [self _dirIsWritable:[defaultPrefsCustomFolder stringByExpandingTildeInPath]];
+    return [[NSFileManager defaultManager] directoryIsWritable:[defaultPrefsCustomFolder stringByExpandingTildeInPath]];
 }
 
 - (BOOL)_stringIsUrlLike:(NSString *)theString {
@@ -659,7 +656,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
     [self setAdvancedBookmarkMatrix:awdsWindowDirectoryType
                           withValue:[bookmark objectForKey:KEY_AWDS_WIN_OPTION]];
-    [self safelySetStringValue:[bookmark objectForKey:KEY_AWDS_WIN_DIRECTORY] 
+    [self safelySetStringValue:[bookmark objectForKey:KEY_AWDS_WIN_DIRECTORY]
                             in:awdsWindowDirectory];
 
     [self setAdvancedBookmarkMatrix:awdsTabDirectoryType
@@ -2533,11 +2530,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return [iTermKeyBindingMgr formatAction:[self keyInfoAtIndex:rowIndex originator:originator]];
 }
 
-- (void)keyBindingsChanged
-{
-    [keyMappings reloadData];
-}
-
 - (void)tableView:(NSTableView *)aTableView
    setObjectValue:(id)anObject
    forTableColumn:(NSTableColumn *)aTableColumn
@@ -2902,7 +2894,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [allowTitleReporting setState:[[dict objectForKey:KEY_ALLOW_TITLE_REPORTING] boolValue] ? NSOnState : NSOffState];
     [disablePrinting setState:[[dict objectForKey:KEY_DISABLE_PRINTING] boolValue] ? NSOnState : NSOffState];
     [scrollbackWithStatusBar setState:[[dict objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue] ? NSOnState : NSOffState];
-    [scrollbackInAlternateScreen setState:[dict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] ? 
+    [scrollbackInAlternateScreen setState:[dict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] ?
          ([[dict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] boolValue] ? NSOnState : NSOffState) : NSOnState];
     [bookmarkGrowlNotifications setState:[[dict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue] ? NSOnState : NSOffState];
     [setLocaleVars setState:[dict objectForKey:KEY_SET_LOCALE_VARS] ? ([[dict objectForKey:KEY_SET_LOCALE_VARS] boolValue] ? NSOnState : NSOffState) : NSOnState];
@@ -3209,7 +3201,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         for (int i = 0; i < [dataSource numberOfBookmarks]; ++i) {
             Profile* temp = [dataSource profileAtIndex:i];
             NSString* existingShortcut = [temp objectForKey:KEY_SHORTCUT];
-            if ([shortcut length] > 0 && 
+            if ([shortcut length] > 0 &&
                 [existingShortcut isEqualToString:shortcut] &&
                 temp != origBookmark) {
                 [dataSource setObject:nil forKey:KEY_SHORTCUT inBookmark:temp];
@@ -3354,7 +3346,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     } else if (sender == unlimitedScrollback) {
         [scrollbackLines setStringValue:@"10000"];
     }
-    
+
     [newDict setObject:[terminalType stringValue] forKey:KEY_TERMINAL_TYPE];
     [newDict setObject:[NSNumber numberWithBool:([sendCodeWhenIdle state]==NSOnState)] forKey:KEY_SEND_CODE_WHEN_IDLE];
     [newDict setObject:[NSNumber numberWithInt:[idleCode intValue]] forKey:KEY_IDLE_CODE];
@@ -4435,12 +4427,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 - (void)smartSelectionChanged:(SmartSelectionController *)smartSelectionController
 {
     [self bookmarkSettingChanged:nil];
-}
-
-- (void)_reloadURLHandlers:(NSNotification *)aNotification
-{
-    // TODO: maybe something here for the current bookmark?
-    [self _populateHotKeyBookmarksMenu];
 }
 
 @end

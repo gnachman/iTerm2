@@ -7,7 +7,7 @@
 //
 
 #import "ToolNotes.h"
-#import "NSFileManager+DirectoryLocations.h"
+#import "NSFileManager+iTerm.h"
 
 static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification";
 
