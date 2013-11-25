@@ -540,8 +540,8 @@ NSString *sessionsKey = @"sessions";
     [self _updateToolbeltParentage];
 
     wellFormed_ = YES;
-    [[self window] futureSetRestorable:YES];
-    [[self window] futureSetRestorationClass:[PseudoTerminalRestorer class]];
+    [[self window] setRestorable:YES];
+    [[self window] setRestorationClass:[PseudoTerminalRestorer class]];
     terminalGuid_ = [[NSString stringWithFormat:@"pty-%@", [ProfileModel freshGuid]] retain];
 
     return self;
@@ -2225,9 +2225,9 @@ NSString *sessionsKey = @"sessions";
     return proposedFrameSize;
 }
 
-- (void)futureInvalidateRestorableState
+- (void)invalidateRestorableState
 {
-    [[self window] futureInvalidateRestorableState];
+    [[self window] invalidateRestorableState];
 }
 
 - (NSArray *)uniqueTmuxControllers
@@ -2323,7 +2323,7 @@ NSString *sessionsKey = @"sessions";
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowDidResize"
                                                         object:self
                                                       userInfo:nil];
-    [self futureInvalidateRestorableState];
+    [self invalidateRestorableState];
 }
 
 // PTYWindowDelegateProtocol
@@ -2700,7 +2700,7 @@ NSString *sessionsKey = @"sessions";
     // Set scrollbars appropriately
     [self updateSessionScrollbars];
     [self fitTabsToWindow];
-    [self futureInvalidateRestorableState];
+    [self invalidateRestorableState];
     [self notifyTmuxOfWindowResize];
     for (PTYTab *aTab in [self tabs]) {
         [aTab notifyWindowChanged];
@@ -2736,7 +2736,7 @@ NSString *sessionsKey = @"sessions";
     [self updateSessionScrollbars];
     [self fitTabsToWindow];
     [self repositionWidgets];
-    [self futureInvalidateRestorableState];
+    [self invalidateRestorableState];
     [self _updateToolbeltParentage];
     // TODO this is only ok because top, bottom, and non-lion fullscreen windows
     // can't become lion fullscreen windows:
@@ -3326,7 +3326,7 @@ NSString *sessionsKey = @"sessions";
     [self _updateTabObjectCounts];
 
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
-    [self futureInvalidateRestorableState];
+    [self invalidateRestorableState];
 }
 
 - (NSMenu *)tabView:(NSTabView *)tabView menuForTabViewItem:(NSTabViewItem *)tabViewItem

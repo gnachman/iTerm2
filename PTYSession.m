@@ -537,7 +537,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [SCREEN resizeWidth:width height:height];
     [SHELL setWidth:width height:height];
     [TEXTVIEW clearHighlights];
-    [[tab_ realParentWindow] futureInvalidateRestorableState];
+    [[tab_ realParentWindow] invalidateRestorableState];
 }
 
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode
@@ -1801,7 +1801,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
         verticalSpacing:[[aDict objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [SCREEN setSaveToScrollbackInAlternateScreen:[aDict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] ? [[aDict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] boolValue] : YES];
-    [[tab_ realParentWindow] futureInvalidateRestorableState];
+    [[tab_ realParentWindow] invalidateRestorableState];
 }
 
 - (NSString *)uniqueID
@@ -2526,7 +2526,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
     [addressBookEntry release];
     addressBookEntry = [dict retain];
-    [[tab_ realParentWindow] futureInvalidateRestorableState];
+    [[tab_ realParentWindow] invalidateRestorableState];
 }
 
 - (NSDictionary *)addressBookEntry

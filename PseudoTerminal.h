@@ -353,7 +353,7 @@ NSWindowDelegate,
 
 - (void)toggleFullScreenTabBar;
 
-- (void)futureInvalidateRestorableState;
+- (void)invalidateRestorableState;
 
 - (void)closeSessionWithConfirmation:(PTYSession *)aSession;
 

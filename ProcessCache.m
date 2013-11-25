@@ -65,7 +65,6 @@
  */
 
 #import "ProcessCache.h"
-#import "FutureMethods.h"
 #import "iTerm.h"
 #include <libproc.h>
 #include <sys/sysctl.h>
@@ -173,12 +172,12 @@ NSString *PID_INFO_NAME = @"name";
 + (pid_t)ppidForPid:(pid_t)thePid
 {
   if (IsLionOrLater()) {
-    struct future_proc_bsdshortinfo taskShortInfo;
+    struct proc_bsdshortinfo taskShortInfo;
     memset(&taskShortInfo, 0, sizeof(taskShortInfo));
     int rc;
     @synchronized ([ProcessCache class]) {
       rc = proc_pidinfo(thePid,
-                        FUTURE_PROC_PIDT_SHORTBSDINFO,
+                        PROC_PIDT_SHORTBSDINFO,
                         0,
                         &taskShortInfo,
                         sizeof(taskShortInfo));

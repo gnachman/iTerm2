@@ -488,7 +488,7 @@
     } else if ([attribute isEqualToString:NSAccessibilityPositionAttribute] || [attribute isEqualToString:NSAccessibilitySizeAttribute]) {
         NSRect rect = [self frame];
         rect = [[self controlView] convertRect:rect toView:nil];
-        rect = [[self controlView] futureConvertRectToScreen:rect];
+        rect = [[self controlView] convertRectToScreen:rect];
         if ([attribute isEqualToString:NSAccessibilityPositionAttribute]) {
             attributeValue = [NSValue valueWithPoint:rect.origin];
         } else {

@@ -339,8 +339,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     initialFindContext_ = [[FindContext alloc] init];
     if ([pointer_ viewShouldTrackTouches]) {
         DLog(@"Begin tracking touches in view %@", self);
-        [self futureSetAcceptsTouchEvents:YES];
-        [self futureSetWantsRestingTouches:YES];
+        [self setAcceptsTouchEvents:YES];
+        [self setWantsRestingTouches:YES];
         if ([self useThreeFingerTapGestureRecognizer]) {
             threeFingerTapGestureRecognizer_ = [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
                                                                                               selector:@selector(threeFingerTap:)];
@@ -398,7 +398,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)touchesBeganWithEvent:(NSEvent *)ev
 {
-    numTouches_ = [[ev futureTouchesMatchingPhase:1 | (1 << 2)/*NSTouchPhasesBegan | NSTouchPhasesStationary*/
+    numTouches_ = [[ev touchesMatchingPhase:NSTouchPhaseBegan | NSTouchPhaseStationary
                                            inView:self] count];
     [threeFingerTapGestureRecognizer_ touchesBeganWithEvent:ev];
     DLog(@"%@ Begin touch. numTouches_ -> %d", self, numTouches_);
@@ -406,8 +406,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)touchesEndedWithEvent:(NSEvent *)ev
 {
-    numTouches_ = [[ev futureTouchesMatchingPhase:(1 << 2)/*NSTouchPhasesStationary*/
-                                           inView:self] count];
+    numTouches_ = [[ev touchesMatchingPhase:NSTouchPhaseStationary
+                                     inView:self] count];
     [threeFingerTapGestureRecognizer_ touchesEndedWithEvent:ev];
     DLog(@"%@ End touch. numTouches_ -> %d", self, numTouches_);
 }
@@ -1462,7 +1462,7 @@ NSMutableArray* screens=0;
                                        screenPosition.y,
                                        0,
                                        0);
-        NSRect windowRect = [self futureConvertRectFromScreen:screenRect];
+        NSRect windowRect = [self.window convertRectFromScreen:screenRect];
         NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView:nil];
         NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
         int x = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
@@ -1498,7 +1498,7 @@ NSMutableArray* screens=0;
                                    MAX(0, (xMax - xMin) * charWidth),
                                    MAX(0, (yMax - yMin + 1) * lineHeight));
         result = [self convertRect:result toView:nil];
-        result = [self futureConvertRectToScreen:result];
+        result = [self.window convertRectToScreen:result];
         return [NSValue valueWithRect:result];
     } else if ([attribute isEqualToString:NSAccessibilityAttributedStringForRangeParameterizedAttribute]) {
         //(NSAttributedString *) - substring; param:(NSValue * - rangeValue)
@@ -1813,8 +1813,8 @@ NSMutableArray* screens=0;
         accX = [dataSource cursorX];
         accY = absCursorY;
         if (UAZoomEnabled()) {
-            CGRect viewRect = NSRectToCGRect([self futureConvertRectToScreen:[self convertRect:[self visibleRect] toView:nil]]);
-            CGRect selectedRect = NSRectToCGRect([self futureConvertRectToScreen:[self convertRect:[self cursorRect] toView:nil]]);
+            CGRect viewRect = NSRectToCGRect([self.window convertRectToScreen:[self convertRect:[self visibleRect] toView:nil]]);
+            CGRect selectedRect = NSRectToCGRect([self.window convertRectToScreen:[self convertRect:[self cursorRect] toView:nil]]);
             viewRect.origin.y = [[NSScreen mainScreen] frame].size.height - (viewRect.origin.y + viewRect.size.height);
             selectedRect.origin.y = [[NSScreen mainScreen] frame].size.height - (selectedRect.origin.y + selectedRect.size.height);
             UAZoomChangeFocus(&viewRect, &selectedRect, kUAZoomFocusTypeInsertionPoint);
@@ -8954,8 +8954,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)_pointerSettingsChanged:(NSNotification *)notification
 {
     BOOL track = [pointer_ viewShouldTrackTouches];
-    [self futureSetAcceptsTouchEvents:track];
-    [self futureSetWantsRestingTouches:track];
+    [self setAcceptsTouchEvents:track];
+    [self setWantsRestingTouches:track];
     [threeFingerTapGestureRecognizer_ release];
     threeFingerTapGestureRecognizer_ = nil;
     if (track) {
