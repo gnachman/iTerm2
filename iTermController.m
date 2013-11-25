@@ -975,7 +975,7 @@ static BOOL initDone = NO;
     }
     // Where do we execute this command?
     BOOL toggle = NO;
-    if (theTerm == nil) {
+    if (theTerm == nil || ![theTerm windowInited]) {
         [iTermController switchToSpaceInBookmark:aDict];
         int windowType = [self _windowTypeForBookmark:aDict];
         if (windowType == WINDOW_TYPE_LION_FULL_SCREEN && disableLionFullscreen) {
@@ -1051,14 +1051,14 @@ static BOOL initDone = NO;
 
     // Where do we execute this command?
     BOOL toggle = NO;
-    if (theTerm == nil) {
+    if (theTerm == nil || ![theTerm windowInited]) {
         [iTermController switchToSpaceInBookmark:aDict];
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                  windowType:[self _windowTypeForBookmark:aDict]
                                                      screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
-                if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
-                        [term hideAfterOpening];
-                }
+        if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
+            [term hideAfterOpening];
+        }
         [self addInTerminals:term];
         toggle = (([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
                   ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN));
@@ -2248,7 +2248,7 @@ NSString *terminalsKey = @"terminals";
 
     [terminalWindows insertObject:object atIndex:theIndex];
     [self updateWindowTitles];
-    assert([object isInitialized]);
+//    assert([object isInitialized]);
 }
 
 - (void)removeFromTerminalsAtIndex:(unsigned)theIndex

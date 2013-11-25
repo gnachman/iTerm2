@@ -229,10 +229,10 @@ NSString *sessionsKey = @"sessions";
 @implementation PseudoTerminal
 
 - (id)init {
-    NSLog(@"Plain old init called");
-    return [self initWithSmartLayout:YES
-                          windowType:WINDOW_TYPE_NORMAL
-                              screen:-1];
+    // This is invoked by Applescript's "make new terminal" and must be followed by a command like
+    // launch session "Profile Name"
+    // which invokes handleLaunchScriptCommand, which in turn calls initWithSmartLayotu:windowType:screen:isHotkey:
+    return [super init];
 }
 
 
@@ -6424,32 +6424,7 @@ NSString *sessionsKey = @"sessions";
         abEntry = aDict;
     }
 
-    // If we have not set up a window, do it now
-    BOOL toggle = NO;
-    if ([self windowInited] == NO) {
-        int windowType = [abEntry objectForKey:KEY_WINDOW_TYPE] ? [[abEntry objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL;
-        if (windowType == WINDOW_TYPE_FULL_SCREEN) {
-            windowType = WINDOW_TYPE_NORMAL;
-            // TODO: this should work with fullscreen
-        }
-        [iTermController switchToSpaceInBookmark:abEntry];
-        [self initWithSmartLayout:NO
-                       windowType:windowType
-                           screen:-1];
-                if ([[abEntry objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
-                        [self hideAfterOpening];
-                }
-        toggle = ([self windowType] == WINDOW_TYPE_FULL_SCREEN) ||
-                 ([self windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
-    }
-
-    // launch the session!
-    id rv = [[iTermController sharedInstance] launchBookmark:abEntry
-                                                 inTerminal:self];
-    if (toggle) {
-        [self delayedEnterFullscreen];
-    }
-    return rv;
+    return [[iTermController sharedInstance] launchBookmark:abEntry inTerminal:self];
 }
 
 @end
