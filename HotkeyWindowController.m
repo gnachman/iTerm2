@@ -753,7 +753,6 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 }
 
 - (void)requestAccessibilityPermissionMavericks {
-#ifndef BLOCKS_NOT_AVAILABLE
     static BOOL alreadyAsked;
     if (alreadyAsked) {
         return;
@@ -766,7 +765,6 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     if (!AXIsProcessTrustedWithOptions((CFDictionaryRef)options)) {
         return;
     }
-#endif
 #endif
 }
 

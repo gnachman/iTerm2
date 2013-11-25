@@ -9,46 +9,6 @@
 // This is for the args to CGSSetWindowBackgroundBlurRadiusFunction, which is used for window-blurring using undocumented APIs.
 #import "CGSInternal.h"
 
-#ifdef BLOCKS_NOT_AVAILABLE
-// OS 10.5 Compatibility
-
-@protocol NSControlTextEditingDelegate
-@end
-
-@protocol NSMenuDelegate
-@end
-
-@protocol NSNetServiceBrowserDelegate
-@end
-
-@protocol NSNetServiceDelegate
-@end
-
-@protocol NSSplitViewDelegate
-@end
-
-@protocol NSTableViewDataSource
-@end
-
-@protocol NSTableViewDelegate
-@end
-
-@protocol NSTextFieldDelegate
-@end
-
-@protocol NSTextViewDelegate
-@end
-
-@protocol NSTokenFieldDelegate
-@end
-
-@protocol NSToolbarDelegate
-@end
-
-@protocol NSWindowDelegate
-@end
-
-#endif
 
 // From proc_info.h, available on 10.7 and 10.8 only.
 #define FUTURE_PROC_PIDT_SHORTBSDINFO		13
