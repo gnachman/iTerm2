@@ -161,9 +161,7 @@ static BOOL OpenHotkeyWindow()
                 rect.origin.x = -rect.size.width;
             }
             if (IsSnowLeopardOrLater() && !IsLionOrLater()) {
-                // TODO: When upgrading to the 10.6 SDK, remove the conditional and the
-                // const below:
-                [[term window] setCollectionBehavior:[[term window] collectionBehavior] | FutureNSWindowCollectionBehaviorStationary];
+                [[term window] setCollectionBehavior:[[term window] collectionBehavior] | NSWindowCollectionBehaviorStationary];
             }
             if (IsLionOrLater()) {
                 [[term window] setCollectionBehavior:[[term window] collectionBehavior] & ~NSWindowCollectionBehaviorFullScreenPrimary];

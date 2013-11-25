@@ -273,7 +273,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 }
 
 - (void)viewDidChangeBackingProperties {
-    _antiAliasedShift = [[[self window] screen] futureBackingScaleFactor] > 1 ? 0.5 : 0;
+    _antiAliasedShift = [[[self window] screen] backingScaleFactor] > 1 ? 0.5 : 0;
 }
 
 - (id)initWithFrame:(NSRect)aRect
@@ -6893,9 +6893,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [ctx saveGraphicsState];
     [ctx setCompositingOperation:NSCompositeSourceOver];
     if (IsLionOrLater()) {
-        CTFontDrawGlyphsFunction *drawGlyphsFunction = GetCTFontDrawGlyphsFunction();
-        assert(drawGlyphsFunction);
-
         NSMutableAttributedString* attributedString =
             [[[NSMutableAttributedString alloc] initWithString:str
                                                     attributes:attrs] autorelease];
@@ -6919,10 +6916,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             const CGGlyph *buffer = CTRunGetGlyphsPtr(run);
             const CGPoint *positions = CTRunGetPositionsPtr(run);
             CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
-            drawGlyphsFunction(runFont, buffer, (NSPoint *)positions, length, cgContext);
+            CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
             if (fakeBold) {
                 CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
-                drawGlyphsFunction(runFont, buffer, (NSPoint *)positions, length, cgContext);
+                CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
                 CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
             }
         }
