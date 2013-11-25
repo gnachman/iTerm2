@@ -29,12 +29,13 @@
  */
 
 #import "iTermApplication.h"
-#import "iTermController.h"
-#import "PTYWindow.h"
-#import "PseudoTerminal.h"
+#import "HotkeyWindowController.h"
 #import "PTYSession.h"
-#import "PreferencePanel.h"
 #import "PTYTextView.h"
+#import "PTYWindow.h"
+#import "PreferencePanel.h"
+#import "PseudoTerminal.h"
+#import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
 
 @implementation iTermApplication
@@ -88,15 +89,15 @@
         }
 #endif
         PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
-        if ([prefPanel isAnyModifierRemapped] && 
-            (IsSecureEventInputEnabled() || ![cont haveEventTap])) {
+        if ([prefPanel isAnyModifierRemapped] &&
+            (IsSecureEventInputEnabled() || ![[HotkeyWindowController sharedInstance] haveEventTap])) {
             // The event tap is not working, but we can still remap modifiers for non-system
             // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
             // the event tap performs the remapping.
             event = [iTermKeyBindingMgr remapModifiers:event prefPanel:prefPanel];
         }
         if (IsSecureEventInputEnabled() &&
-            [cont eventIsHotkey:event]) {
+            [[HotkeyWindowController sharedInstance] eventIsHotkey:event]) {
             // User pressed the hotkey while secure input is enabled so the event
             // tap won't get it. Do what the event tap would do in this case.
             OnHotKeyEvent();
@@ -118,7 +119,7 @@
                 PseudoTerminal* termWithNumber = [cont terminalWithNumber:(digit - 1)];
                 if (termWithNumber) {
                     if ([termWithNumber isHotKeyWindow] && [[termWithNumber window] alphaValue] < 1) {
-                        [[iTermController sharedInstance] showHotKeyWindow];
+                        [[HotkeyWindowController sharedInstance] showHotKeyWindow];
                     } else {
                         [[termWithNumber window] makeKeyAndOrderFront:self];
                     }

@@ -1,3 +1,4 @@
+
 /*
  **  PreferencePanel.m
  **
@@ -26,6 +27,7 @@
 
 #import "PreferencePanel.h"
 
+#import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
@@ -607,7 +609,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                 // Hotkey was enabled but might be unassigned; give it a default value if needed.
                 [self sanityCheckHotKey];
             } else {
-                [[iTermController sharedInstance] unregisterHotkey];
+                [[HotkeyWindowController sharedInstance] unregisterHotkey];
             }
         }
         [hotkeyField setEnabled:defaultHotkey];
@@ -634,8 +636,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultLeftCommand = [leftCommandButton selectedTag];
     defaultRightCommand = [rightCommandButton selectedTag];
     if ((!wasAnyModifierRemapped && [self isAnyModifierRemapped]) ||
-        ([self isAnyModifierRemapped] && ![[iTermController sharedInstance] haveEventTap])) {
-        [[iTermController sharedInstance] beginRemappingModifiers];
+        ([self isAnyModifierRemapped] && ![[HotkeyWindowController sharedInstance] haveEventTap])) {
+        [[HotkeyWindowController sharedInstance] beginRemappingModifiers];
     }
     
     int rowIndex = [globalKeyMappings selectedRow];
@@ -2514,9 +2516,9 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultRightCommand = [prefs objectForKey:@"RightCommand"] ? [[prefs objectForKey:@"RightCommand"] intValue] : MOD_TAG_RIGHT_COMMAND;
     if ([self isAnyModifierRemapped]) {
         // Use a brief delay so windows have a chance to open before the dialog is shown.
-        [[iTermController sharedInstance] performSelector:@selector(beginRemappingModifiers)
-                                               withObject:nil
-                                               afterDelay:0.5];
+        [[HotkeyWindowController sharedInstance] performSelector:@selector(beginRemappingModifiers)
+                                                      withObject:nil
+                                                      afterDelay:0.5];
     }
     defaultSwitchTabModifier = [prefs objectForKey:@"SwitchTabModifier"] ? [[prefs objectForKey:@"SwitchTabModifier"] intValue] : MOD_TAG_ANY_COMMAND;
     defaultSwitchWindowModifier = [prefs objectForKey:@"SwitchWindowModifier"] ? [[prefs objectForKey:@"SwitchWindowModifier"] intValue] : MOD_TAG_CMD_OPT;
@@ -2957,7 +2959,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     BOOL oldDefaultHotkey = defaultHotkey;
     defaultHotkey = NO;
     if (defaultHotkey != oldDefaultHotkey) {
-        [[iTermController sharedInstance] unregisterHotkey];
+        [[HotkeyWindowController sharedInstance] unregisterHotkey];
     }
     [self savePreferences];
 }
@@ -3006,7 +3008,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (void)setHotKey
 {
-    [[iTermController sharedInstance] registerHotkey:defaultHotkeyCode modifiers:defaultHotkeyModifiers];
+    [[HotkeyWindowController sharedInstance] registerHotkey:defaultHotkeyCode modifiers:defaultHotkeyModifiers];
 }
 
 #pragma mark - Accessors

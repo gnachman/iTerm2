@@ -26,11 +26,12 @@
  */
 
 #import "iTermExpose.h"
-#import "iTermController.h"
-#import "PseudoTerminal.h"
-#import "PTYTab.h"
-#import "GlobalSearch.h"
 #import "FutureMethods.h"
+#import "GlobalSearch.h"
+#import "HotkeyWindowController.h"
+#import "PTYTab.h"
+#import "PseudoTerminal.h"
+#import "iTermController.h"
 
 static const float THUMB_MARGIN = 25;
 /*
@@ -398,7 +399,7 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
         iTermController* controller = [iTermController sharedInstance];
         PseudoTerminal* terminal = [[controller terminals] objectAtIndex:windowIndex_];
         if ([terminal isHotKeyWindow]) {
-            [[iTermController sharedInstance] showHotKeyWindow];
+            [[HotkeyWindowController sharedInstance] showHotKeyWindow];
         } else {
             [controller setCurrentTerminal:terminal];
             [[terminal window] makeKeyAndOrderFront:self];
@@ -1554,8 +1555,8 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
 - (void)_toggleOn
 {
     iTermController* controller = [iTermController sharedInstance];
-    if ([controller isHotKeyWindowOpen]) {
-        [controller fastHideHotKeyWindow];
+    if ([[HotkeyWindowController sharedInstance] isHotKeyWindowOpen]) {
+        [[HotkeyWindowController sharedInstance] fastHideHotKeyWindow];
     }
 
     // Crete parallel arrays with info needed to create subviews.
@@ -1608,7 +1609,7 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     [window_ setBackgroundColor:[[NSColor blackColor] colorWithAlphaComponent:0]];
     [window_ setOpaque:NO];
 
-    PseudoTerminal* hotKeyWindow = [controller hotKeyWindow];
+    PseudoTerminal* hotKeyWindow = [[HotkeyWindowController sharedInstance] hotKeyWindow];
     BOOL isHot = NO;
     if (hotKeyWindow) {
         isHot = [hotKeyWindow isHotKeyWindow];

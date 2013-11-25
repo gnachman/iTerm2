@@ -26,26 +26,28 @@
  */
 
 #import "iTermApplicationDelegate.h"
-#import "iTermController.h"
-#import "ITAddressBookMgr.h"
-#import "PreferencePanel.h"
-#import "PseudoTerminal.h"
-#import "PTYSession.h"
-#import "VT100Terminal.h"
-#import "PTYWindow.h"
-#import "PTYTextView.h"
-#import "NSStringITerm.h"
-#import "ProfilesWindow.h"
-#import "PTYTab.h"
-#import "iTermExpose.h"
+
 #import "ColorsMenuItemView.h"
-#import "iTermFontPanel.h"
+#import "HotkeyWindowController.h"
+#import "ITAddressBookMgr.h"
+#import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
+#import "PTYSession.h"
+#import "PTYTab.h"
+#import "PTYTextView.h"
+#import "PTYWindow.h"
+#import "PreferencePanel.h"
+#import "ProfilesWindow.h"
+#import "PseudoTerminal.h"
 #import "PseudoTerminalRestorer.h"
 #import "ToastWindowController.h"
-#include <unistd.h>
-#include <sys/stat.h>
+#import "VT100Terminal.h"
+#import "iTermController.h"
+#import "iTermExpose.h"
+#import "iTermFontPanel.h"
 #import <objc/runtime.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 static NSString *APP_SUPPORT_DIR = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
@@ -310,13 +312,13 @@ static BOOL hasBecomeActive = NO;
     PreferencePanel* ppanel = [PreferencePanel sharedInstance];
     // Code could be 0 (e.g., A on an American keyboard) and char is also sometimes 0 (seen in bug 2501).
     if ([ppanel hotkey] && ([ppanel hotkeyCode] || [ppanel hotkeyChar])) {
-        [[iTermController sharedInstance] registerHotkey:[ppanel hotkeyCode] modifiers:[ppanel hotkeyModifiers]];
+        [[HotkeyWindowController sharedInstance] registerHotkey:[ppanel hotkeyCode] modifiers:[ppanel hotkeyModifiers]];
     }
     if ([ppanel isAnyModifierRemapped]) {
         // Use a brief delay so windows have a chance to open before the dialog is shown.
-        [[iTermController sharedInstance] performSelector:@selector(beginRemappingModifiers)
-                                               withObject:nil
-                                               afterDelay:0.5];
+        [[HotkeyWindowController sharedInstance] performSelector:@selector(beginRemappingModifiers)
+                                                      withObject:nil
+                                                      afterDelay:0.5];
     }
     [self _updateArrangementsMenu:windowArrangements_];
 
@@ -371,7 +373,7 @@ static BOOL hasBecomeActive = NO;
     }
 
     // Ensure [iTermController dealloc] is called before prefs are saved
-    [[iTermController sharedInstance] stopEventTap];
+    [[HotkeyWindowController sharedInstance] stopEventTap];
     [iTermController sharedInstanceRelease];
 
     // save preferences
@@ -443,7 +445,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification
 {
-    [[iTermController sharedInstance] stopEventTap];
+    [[HotkeyWindowController sharedInstance] stopEventTap];
 }
 
 - (PseudoTerminal *)terminalToOpenFileIn
@@ -538,20 +540,20 @@ static BOOL hasBecomeActive = NO;
     if ([prefPanel hotkey] &&
         [prefPanel hotkeyTogglesWindow]) {
         // The hotkey window is configured.
-        PseudoTerminal* hotkeyTerm = [[iTermController sharedInstance] hotKeyWindow];
+        PseudoTerminal* hotkeyTerm = [[HotkeyWindowController sharedInstance] hotKeyWindow];
         if (hotkeyTerm) {
             // Hide the existing window or open it if enabled by preference.
             if ([[hotkeyTerm window] alphaValue] == 1) {
-                [[iTermController sharedInstance] hideHotKeyWindow:hotkeyTerm];
+                [[HotkeyWindowController sharedInstance] hideHotKeyWindow:hotkeyTerm];
                 return NO;
             } else if ([prefPanel dockIconTogglesWindow]) {
-                [[iTermController sharedInstance] showHotKeyWindow];
+                [[HotkeyWindowController sharedInstance] showHotKeyWindow];
                 return NO;
             }
         } else if ([prefPanel dockIconTogglesWindow]) {
             // No existing hotkey window but preference is to toggle it by dock icon so open a new
             // one.
-            [[iTermController sharedInstance] showHotKeyWindow];
+            [[HotkeyWindowController sharedInstance] showHotKeyWindow];
             return NO;
         }
     }

@@ -37,47 +37,49 @@
 // #define HIDE_IR_WHEN_LIVE_VIEW_ENTERED
 #define WINDOW_NAME @"iTerm Window %d"
 
-#import "iTerm.h"
 #import "PseudoTerminal.h"
-#import "PTYScrollView.h"
-#import "NSStringITerm.h"
-#import "PTYSession.h"
-#import "VT100Screen.h"
-#import "PTYTabView.h"
-#import "PreferencePanel.h"
-#import "iTermController.h"
-#import "PTYTask.h"
-#import "PTYTextView.h"
-#import "PseudoTerminal.h"
-#import "VT100Terminal.h"
-#import "VT100Screen.h"
-#import "PTYSession.h"
-#import "PTToolbarController.h"
-#import "ITAddressBookMgr.h"
-#import "iTermApplicationDelegate.h"
+
+#import "ColorsMenuItemView.h"
+#import "Coprocess.h"
 #import "FakeWindow.h"
+#import "FindViewController.h"
+#import "FutureMethods.h"
+#import "FutureMethods.h"
+#import "HotkeyWindowController.h"
+#import "ITAddressBookMgr.h"
+#import "MovePaneController.h"
+#import "NSStringITerm.h"
 #import "PSMTabBarControl.h"
 #import "PSMTabStyle.h"
+#import "PTToolbarController.h"
+#import "PTYScrollView.h"
+#import "PTYSession.h"
+#import "PTYSession.h"
+#import "PTYTab.h"
+#import "PTYTabView.h"
+#import "PTYTask.h"
+#import "PTYTextView.h"
+#import "PasteboardHistory.h"
+#import "PreferencePanel.h"
+#import "ProcessCache.h"
+#import "ProfilesWindow.h"
+#import "PseudoTerminal.h"
+#import "PseudoTerminalRestorer.h"
+#import "SessionView.h"
+#import "SplitPanel.h"
+#import "TmuxDashboardController.h"
+#import "TmuxLayoutParser.h"
+#import "ToolbeltView.h"
+#import "VT100Screen.h"
+#import "VT100Screen.h"
+#import "VT100Terminal.h"
+#import "iTerm.h"
+#import "iTermApplication.h"
+#import "iTermApplicationDelegate.h"
+#import "iTermController.h"
+#import "iTermFontPanel.h"
 #import "iTermGrowlDelegate.h"
 #include <unistd.h>
-#import "PasteboardHistory.h"
-#import "PTYTab.h"
-#import "SessionView.h"
-#import "iTermApplication.h"
-#import "ProfilesWindow.h"
-#import "FindViewController.h"
-#import "SplitPanel.h"
-#import "ProcessCache.h"
-#import "MovePaneController.h"
-#import "ToolbeltView.h"
-#import "FutureMethods.h"
-#import "PseudoTerminalRestorer.h"
-#import "TmuxLayoutParser.h"
-#import "TmuxDashboardController.h"
-#import "Coprocess.h"
-#import "ColorsMenuItemView.h"
-#import "iTermFontPanel.h"
-#import "FutureMethods.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 
@@ -2041,7 +2043,7 @@ NSString *sessionsKey = @"sessions";
     PtyLog(@"PseudoTerminal windowDidResignKey");
     if ([[self window] alphaValue] > 0 &&
         [self isHotKeyWindow] &&
-        ![[iTermController sharedInstance] rollingInHotkeyTerm]) {
+        ![[HotkeyWindowController sharedInstance] rollingInHotkeyTerm]) {
         PtyLog(@"windowDidResignKey: is hotkey");
         // We want to dismiss the hotkey window when some other window
         // becomes key. Note that if a popup closes this function shouldn't
@@ -2052,9 +2054,9 @@ NSString *sessionsKey = @"sessions";
             ![[[NSApp keyWindow] windowController] isKindOfClass:[PreferencePanel class]]) {
             PtyLog(@"windowDidResignKey: new key window isn't popup so hide myself");
             if ([[[NSApp keyWindow] windowController] isKindOfClass:[PseudoTerminal class]]) {
-                [[iTermController sharedInstance] doNotOrderOutWhenHidingHotkeyWindow];
+                [[HotkeyWindowController sharedInstance] doNotOrderOutWhenHidingHotkeyWindow];
             }
-            [[iTermController sharedInstance] hideHotKeyWindow:self];
+            [[HotkeyWindowController sharedInstance] hideHotKeyWindow:self];
         }
     }
     if (togglingFullScreen_) {

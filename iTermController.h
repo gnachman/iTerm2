@@ -28,7 +28,6 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import <Carbon/Carbon.h>
 #import "ITAddressBookMgr.h"
 
 #define kApplicationDidFinishLaunchingNotification @"kApplicationDidFinishLaunchingNotification"
@@ -47,17 +46,7 @@
     id FRONT;
     ItermGrowlDelegate *gd;
 
-    // App-wide hotkey
-    int hotkeyCode_;
-    int hotkeyModifiers_;
-
-    GTMCarbonHotKey* carbonHotKey_;
-
-    CFMachPortRef machPortRef;
-    CFRunLoopSourceRef eventSrc;
     int keyWindowIndexMemo_;
-    BOOL itermWasActiveWhenHotkeyOpened;
-    BOOL rollingIn_;
 
     // For restoring previously active app when exiting hotkey window
     NSNumber *previouslyActiveAppPID_;
@@ -71,7 +60,6 @@
                        bugFix:(unsigned *)bugFix;
 
 + (void)switchToSpaceInBookmark:(NSDictionary*)aDict;
-- (BOOL)rollingInHotkeyTerm;
 
 // actions are forwarded from application
 - (IBAction)newWindow:(id)sender;
@@ -89,17 +77,8 @@
 - (BOOL)haveTmuxConnection;
 - (PTYSession *)anyTmuxSession;
 
-- (void)stopEventTap;
-
 - (int)keyWindowIndexMemo;
 - (void)setKeyWindowIndexMemo:(int)i;
-- (void)showHotKeyWindow;
-- (void)doNotOrderOutWhenHidingHotkeyWindow;
-- (void)fastHideHotKeyWindow;
-- (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm;
-- (BOOL)isHotKeyWindowOpen;
-- (void)showNonHotKeyWindowsAndSetAlphaTo:(float)a;
-- (PseudoTerminal*)hotKeyWindow;
 
 - (PseudoTerminal*)terminalWithNumber:(int)n;
 - (int)allocateWindowNumber;
@@ -127,12 +106,10 @@
 - (void)irAdvance:(int)dir;
 - (NSUInteger)indexOfTerminal:(PseudoTerminal*)terminal;
 
-- (BOOL)eventIsHotkey:(NSEvent*)e;
-- (void)unregisterHotkey;
-- (BOOL)haveEventTap;
-- (BOOL)registerHotkey:(int)keyCode modifiers:(int)modifiers;
-- (void)beginRemappingModifiers;
 - (void)dumpViewHierarchy;
+
+- (void)storePreviouslyActiveApp;
+- (void)restorePreviouslyActiveApp;
 
 @end
 

@@ -33,6 +33,7 @@
 #import "PTYTab.h"
 #import "iTermController.h"
 #import "PseudoTerminal.h"
+#import "HotkeyWindowController.h"
 #import "Growl.framework/Headers/GrowlApplicationBridge.h"
 
 /**
@@ -178,7 +179,7 @@
     }
 
     if ([terminal isHotKeyWindow]) {
-        [controller showHotKeyWindow];
+        [[HotkeyWindowController sharedInstance] showHotKeyWindow];
     } else {
         [controller setCurrentTerminal:terminal];
         [[terminal window] makeKeyAndOrderFront:self];
