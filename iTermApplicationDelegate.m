@@ -793,7 +793,8 @@ static BOOL hasBecomeActive = NO;
         [[iTermController sharedInstance] launchBookmark:bm
                                               inTerminal:term
                                                  withURL:urlStr
-                                           forObjectType:term ? iTermTabObject : iTermWindowObject];
+                                                isHotkey:NO
+                                                 makeKey:NO];
     }
 }
 

@@ -116,14 +116,11 @@
 - (void)addBookmarksToMenu:(NSMenu *)aMenu withSelector:(SEL)selector openAllSelector:(SEL)openAllSelector startingAt:(int)startingAt;
 - (PseudoTerminal *)openWindow;
 - (id)launchBookmark:(NSDictionary *)bookmarkData
-               inTerminal:(PseudoTerminal *)theTerm
-    disableLionFullscreen:(BOOL)disableLionFullscreen;
+          inTerminal:(PseudoTerminal *)theTerm
+             withURL:(NSString *)url
+            isHotkey:(BOOL)isHotkey
+             makeKey:(BOOL)makeKey;
 - (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm;
-- (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm withCommand:(NSString *)command;
-- (id)launchBookmark:(NSDictionary*)bookmarkData
-          inTerminal:(PseudoTerminal*)theTerm
-             withURL:(NSString*)url
-       forObjectType:(iTermObjectType)objectType;
 - (PTYTextView*)frontTextView;
 - (int)numberOfTerminals;
 - (PseudoTerminal*)terminalAtIndex:(int)i;

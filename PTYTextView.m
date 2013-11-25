@@ -8833,7 +8833,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [[iTermController sharedInstance] launchBookmark:bm
                                               inTerminal:term
                                                  withURL:trimmedURLString
-                                           forObjectType:term ? iTermTabObject : iTermWindowObject];
+                                                isHotkey:NO
+                                                 makeKey:NO];
     } else {
         [self openURL:url inBackground:background];
     }
