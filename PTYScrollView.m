@@ -64,12 +64,10 @@
 }
 
 - (void)setHasDarkBackground:(BOOL)value {
-    if (IsLionOrLater()) {
-        // Values copied from NSScroller.h to avoid 10.7 SDK dependency.
-        const int defaultStyle = NSScrollerKnobStyleDefault;
-        const int lightStyle = NSScrollerKnobStyleLight;
-        [self setKnobStyle:value ? lightStyle : defaultStyle];
-    }
+    const int defaultStyle = NSScrollerKnobStyleDefault;
+    const int lightStyle = NSScrollerKnobStyleLight;
+    [self setKnobStyle:value ? lightStyle : defaultStyle];
+
     hasDarkBackground_ = value;
 }
 

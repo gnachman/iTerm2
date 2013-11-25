@@ -292,17 +292,12 @@ static NSDate* lastResizeDate_;
     // in any subview!
     NSPoint p = [NSEvent mouseLocation];
     NSPoint pointInSessionView;
-    if (IsLionOrLater()) {
-        NSRect windowRect = [self.window convertRectFromScreen:NSMakeRect(p.x, p.y, 0, 0)];
-        pointInSessionView = [self convertRect:windowRect fromView:nil].origin;
-        DLog(@"Point in screen coords=%@, point in window coords=%@, point in session view=%@",
-             NSStringFromPoint(p),
-             NSStringFromPoint(windowRect.origin),
-             NSStringFromPoint(pointInSessionView));
-    } else {
-        NSPoint basePoint = [[self window] convertScreenToBase:p];
-        pointInSessionView = [self convertPointFromBase:basePoint];
-    }
+    NSRect windowRect = [self.window convertRectFromScreen:NSMakeRect(p.x, p.y, 0, 0)];
+    pointInSessionView = [self convertRect:windowRect fromView:nil].origin;
+    DLog(@"Point in screen coords=%@, point in window coords=%@, point in session view=%@",
+         NSStringFromPoint(p),
+         NSStringFromPoint(windowRect.origin),
+         NSStringFromPoint(pointInSessionView));
     if (title_ && NSPointInRect(pointInSessionView, [title_ frame])) {
         [title_ mouseDown:event];
         --inme;

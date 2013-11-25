@@ -38,9 +38,6 @@
 
 BOOL IsMavericksOrLater(void);
 BOOL IsMountainLionOrLater(void);
-BOOL IsLionOrLater(void);
-BOOL IsSnowLeopardOrLater(void);
-BOOL IsLeopard(void);
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
 static const int NSWindowCollectionBehaviorFullScreenPrimary = 1 << 7;

@@ -223,11 +223,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [[tags cell] setDelegate:self];
     [tags setDelegate:self];
     
-    if (IsLionOrLater()) {
-        [lionStyleFullscreen setHidden:NO];
-    } else {
-        [lionStyleFullscreen setHidden:YES];
-    }
+    [lionStyleFullscreen setHidden:NO];
     [initialText setContinuous:YES];
     [blurRadius setContinuous:YES];
     [transparency setContinuous:YES];
@@ -3392,11 +3388,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (BOOL)lionStyleFullscreen
 {
-    if (IsLionOrLater()) {
-        return defaultLionStyleFullscreen;
-    } else {
-        return NO;
-    }
+    return defaultLionStyleFullscreen;
 }
 
 - (BOOL)checkTestRelease

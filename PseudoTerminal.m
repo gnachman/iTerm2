@@ -520,16 +520,14 @@ NSString *sessionsKey = @"sessions";
 
     [self updateDivisionView];
 
-    if (IsLionOrLater()) {
-        if (isHotkey) {
-            // This allows the hotkey window to be in the same space as a Lion fullscreen iTerm2 window.
-            [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenAuxiliary];
-        } else {
-            // This allows the window to enter Lion fullscreen.
-            [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenPrimary];
-        }
+    if (isHotkey) {
+        // This allows the hotkey window to be in the same space as a Lion fullscreen iTerm2 window.
+        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenAuxiliary];
+    } else {
+        // This allows the window to enter Lion fullscreen.
+        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenPrimary];
     }
-    if (isHotkey && IsSnowLeopardOrLater()) {
+    if (isHotkey) {
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorIgnoresCycle];
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];
     }
@@ -1296,11 +1294,7 @@ NSString *sessionsKey = @"sessions";
             [[arrangement objectForKey:TERMINAL_ARRANGEMENT_FULLSCREEN] boolValue]) {
             windowType = WINDOW_TYPE_FULL_SCREEN;
         } else if ([[arrangement objectForKey:TERMINAL_ARRANGEMENT_LION_FULLSCREEN] boolValue]) {
-            if (IsLionOrLater() || ![[PreferencePanel sharedInstance] lionStyleFullscreen]) {
-                windowType = WINDOW_TYPE_LION_FULL_SCREEN;
-            } else {
-                windowType = WINDOW_TYPE_FULL_SCREEN;
-            }
+            windowType = WINDOW_TYPE_LION_FULL_SCREEN;
         } else {
             windowType = WINDOW_TYPE_NORMAL;
         }
@@ -2407,7 +2401,6 @@ NSString *sessionsKey = @"sessions";
 {
     if ([self lionFullScreen] ||
         (windowType_ != WINDOW_TYPE_FULL_SCREEN &&
-         IsLionOrLater() &&
          !isHotKeyWindow_ &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
          [[PreferencePanel sharedInstance] lionStyleFullscreen])) {
         // Is 10.7 Lion or later.
@@ -2426,8 +2419,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)delayedEnterFullscreen
 {
-    if (IsLionOrLater() &&
-        windowType_ == WINDOW_TYPE_LION_FULL_SCREEN &&
+    if (windowType_ == WINDOW_TYPE_LION_FULL_SCREEN &&
         [[PreferencePanel sharedInstance] lionStyleFullscreen]) {
         if (![[[iTermController sharedInstance] keyTerminalWindow] lionFullScreen]) {
             // call enter(Traditional)FullScreenMode instead of toggle... because
@@ -2749,15 +2741,14 @@ NSString *sessionsKey = @"sessions";
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame
 {
-    if (IsLionOrLater()) {
-        // Disable redrawing during zoom-initiated live resize.
-        zooming_ = YES;
-        if (togglingLionFullScreen_) {
-            // Tell it to use the whole screen when entering Lion fullscreen.
-            // This is actually called twice in a row when entering fullscreen.
-            return defaultFrame;
-        }
+    // Disable redrawing during zoom-initiated live resize.
+    zooming_ = YES;
+    if (togglingLionFullScreen_) {
+        // Tell it to use the whole screen when entering Lion fullscreen.
+        // This is actually called twice in a row when entering fullscreen.
+        return defaultFrame;
     }
+
     // This function attempts to size the window to fit the screen with exactly
     // MARGIN/VMARGIN-sized margins for the current session. If there are split
     // panes then the margins probably won't turn out perfect. If other tabs have

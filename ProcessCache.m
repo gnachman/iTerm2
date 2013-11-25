@@ -171,7 +171,6 @@ NSString *PID_INFO_NAME = @"name";
 // Returns 0 on failure. Not reliable before OS 10.7.
 + (pid_t)ppidForPid:(pid_t)thePid
 {
-  if (IsLionOrLater()) {
     struct proc_bsdshortinfo taskShortInfo;
     memset(&taskShortInfo, 0, sizeof(taskShortInfo));
     int rc;
@@ -187,24 +186,6 @@ NSString *PID_INFO_NAME = @"name";
     } else {
       return taskShortInfo.pbsi_ppid;
     }
-  } else {
-    // Fallback to way that fails on setuid processes but works on 10.5 and 10.6.
-    struct proc_taskallinfo taskAllInfo;
-    memset(&taskAllInfo, 0, sizeof(taskAllInfo));
-    int rc;
-    @synchronized ([ProcessCache class]) {
-      rc = proc_pidinfo(thePid,
-                        PROC_PIDTASKALLINFO,
-                        0,
-                        &taskAllInfo,
-                        sizeof(taskAllInfo));
-    }
-    if (rc <= 0) {
-      return 0;
-    } else {
-      return taskAllInfo.pbsd.pbi_ppid;
-    }
-  }
 }
 
 - (NSDictionary *)dictionaryOfTaskInfoForPid:(pid_t)thePid

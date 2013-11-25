@@ -328,11 +328,7 @@
                                              ofType:@"plist"];
     NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile: plistFile];
     [aDict addEntriesFromDictionary:presetsDict];
-    // Override the terminal type if it's Lion so those users get the best
-    // experience.
-    if (IsLionOrLater()) {
-        [aDict setObject:@"xterm-256color" forKey:KEY_TERMINAL_TYPE];
-    }
+    [aDict setObject:@"xterm-256color" forKey:KEY_TERMINAL_TYPE];
 
     NSString *aName;
 

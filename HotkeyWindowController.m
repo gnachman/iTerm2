@@ -160,12 +160,7 @@ static BOOL OpenHotkeyWindow()
                 rect.origin.y = -rect.size.height;
                 rect.origin.x = -rect.size.width;
             }
-            if (IsSnowLeopardOrLater() && !IsLionOrLater()) {
-                [[term window] setCollectionBehavior:[[term window] collectionBehavior] | NSWindowCollectionBehaviorStationary];
-            }
-            if (IsLionOrLater()) {
-                [[term window] setCollectionBehavior:[[term window] collectionBehavior] & ~NSWindowCollectionBehaviorFullScreenPrimary];
-            }
+            [[term window] setCollectionBehavior:[[term window] collectionBehavior] & ~NSWindowCollectionBehaviorFullScreenPrimary];
         }
         RollInHotkeyTerm(term);
         return YES;
