@@ -50,7 +50,11 @@
 }
 
 - (NSMutableData *)lineDataAtLineNumber:(int)lineNumber {
-    return [lines_ objectAtIndex:(screenTop_ + lineNumber) % size_.height];
+    if (lineNumber >= 0 && lineNumber < size_.height) {
+        [lines_ objectAtIndex:(screenTop_ + lineNumber) % size_.height];
+    } else {
+        return nil;
+    }
 }
 
 - (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber {
@@ -59,10 +63,11 @@
 }
 
 - (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber {
-#ifdef ITERM_DEBUG
-    assert(lineNumber >= 0 && lineNumber < size_.height);
-#endif
-    return [lineInfos_ objectAtIndex:(screenTop_ + lineNumber) % size_.height];
+    if (lineNumber >= 0 && lineNumber < size_.height) {
+        return [lineInfos_ objectAtIndex:(screenTop_ + lineNumber) % size_.height];
+    } else {
+        return nil;
+    }
 }
 
 - (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord updateTimestamp:(BOOL)updateTimestamp {
