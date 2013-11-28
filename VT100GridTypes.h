@@ -33,6 +33,11 @@ typedef struct {
     int length;
 } VT100GridRun;
 
+typedef struct {
+  VT100GridCoord start;
+  VT100GridCoord end;
+} VT100GridCoordRange;
+
 @interface NSValue (VT100Grid)
 
 + (NSValue *)valueWithGridCoord:(VT100GridCoord)coord;
@@ -40,12 +45,14 @@ typedef struct {
 + (NSValue *)valueWithGridRange:(VT100GridRange)range;
 + (NSValue *)valueWithGridRect:(VT100GridRect)rect;
 + (NSValue *)valueWithGridRun:(VT100GridRun)run;
++ (NSValue *)valueWithGridCoordRange:(VT100GridCoordRange)coordRange;
 
 - (VT100GridCoord)gridCoordValue;
 - (VT100GridSize)gridSizeValue;
 - (VT100GridRange)gridRangeValue;
 - (VT100GridRect)gridRectValue;
 - (VT100GridRun)gridRunValue;
+- (VT100GridCoordRange)gridCoordRangeValue;
 
 @end
 
@@ -94,6 +101,15 @@ NS_INLINE VT100GridRun VT100GridRunMake(int x, int y, int length) {
     run.origin.y = y;
     run.length = length;
     return run;
+}
+
+NS_INLINE VT100GridCoordRange VT100GridCoordRangeMake(int startX, int startY, int endX, int endY) {
+    VT100GridCoordRange coordRange;
+    coordRange.start.x = startX;
+    coordRange.start.y = startY;
+    coordRange.end.x = endX;
+    coordRange.end.y = endY;
+    return coordRange;
 }
 
 // Returns the coord of the last char inside the run.

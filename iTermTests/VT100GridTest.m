@@ -289,24 +289,24 @@ do { \
 - (void)testAppendLineToLineBuffer {
     VT100Grid *grid = [self gridFromCompactLines:@"abcd\nefgh\n....\n...."];
     LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
-    [grid appendLines:2 toLineBuffer:lineBuffer withObjects:NO];
+    [grid appendLines:2 toLineBuffer:lineBuffer];
     assert([[lineBuffer debugString] isEqualToString:@"abcd!\nefgh!"]);
 
     grid = [self gridFromCompactLinesWithContinuationMarks:@"abcd!\nefgh+\n....!\n....!"];
     lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
-    [grid appendLines:2 toLineBuffer:lineBuffer withObjects:NO];
+    [grid appendLines:2 toLineBuffer:lineBuffer];
     assert([[lineBuffer debugString] isEqualToString:@"abcd!\nefgh+"]);
 
     grid = [self gridFromCompactLinesWithContinuationMarks:@"abcd+\nefgh!\n....!\n....!"];
     lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
-    [grid appendLines:2 toLineBuffer:lineBuffer withObjects:NO];
+    [grid appendLines:2 toLineBuffer:lineBuffer];
     assert([[lineBuffer debugString] isEqualToString:@"abcdefgh!"]);
 
     grid = [self gridFromCompactLines:@"abcd\nefgh\n....\n...."];
     lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
     grid.cursorX = 2;
     grid.cursorY = 1;
-    [grid appendLines:2 toLineBuffer:lineBuffer withObjects:NO];
+    [grid appendLines:2 toLineBuffer:lineBuffer];
     int x;
     assert([lineBuffer getCursorInLastLineWithWidth:4 atX:&x]);
     assert(x == 2);
@@ -317,7 +317,7 @@ do { \
     lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
     grid.cursorX = 0;
     grid.cursorY = 2;
-    [grid appendLines:2 toLineBuffer:lineBuffer withObjects:NO];
+    [grid appendLines:2 toLineBuffer:lineBuffer];
     assert([lineBuffer getCursorInLastLineWithWidth:4 atX:&x]);
     assert(x == 4);
 }
@@ -1385,8 +1385,7 @@ do { \
                         length:string.length
                        partial:i == strings.count - 1
                          width:80
-                     timestamp:0
-                        object:nil];
+                     timestamp:0];
         i++;
     }
     va_end(args);

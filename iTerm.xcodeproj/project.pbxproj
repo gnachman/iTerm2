@@ -577,6 +577,10 @@
 		A63F40A9183F3CED003A6A6D /* LineBufferHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */; };
 		A63F40AA183F3CED003A6A6D /* LineBufferHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F40A8183F3CED003A6A6D /* LineBufferHelpers.m */; };
 		A63F40AB183F3CED003A6A6D /* LineBufferHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F40A8183F3CED003A6A6D /* LineBufferHelpers.m */; };
+		A6C4E8E01846E13800CFAA77 /* IntervalTree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */; };
+		A6C4E8E11846E13800CFAA77 /* IntervalTree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */; };
+		A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
+		A6C4E8E81846E32700CFAA77 /* IntervalTreeTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = FB151F2903648AC401F955DB /* iTerm.strings */; };
@@ -968,6 +972,10 @@
 		A63F40A3183F3B78003A6A6D /* LineBlock.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBlock.m; sourceTree = "<group>"; };
 		A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferHelpers.h; sourceTree = "<group>"; };
 		A63F40A8183F3CED003A6A6D /* LineBufferHelpers.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferHelpers.m; sourceTree = "<group>"; };
+		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; };
+		A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntervalTree.h; sourceTree = "<group>"; };
+		A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IntervalTreeTest.m; path = iTermTests/IntervalTreeTest.m; sourceTree = "<group>"; };
+		A6C4E8E71846E32600CFAA77 /* IntervalTreeTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IntervalTreeTest.h; path = iTermTests/IntervalTreeTest.h; sourceTree = "<group>"; };
 		DD02572409CB9398008F320C /* PSMAquaTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMAquaTabStyle.h; sourceTree = "<group>"; };
 		DD02572509CB9398008F320C /* PSMAquaTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMAquaTabStyle.m; sourceTree = "<group>"; };
 		DD02572609CB9398008F320C /* PSMMetalTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMMetalTabStyle.h; sourceTree = "<group>"; };
@@ -1156,6 +1164,8 @@
 				1DB9D8F0183FE9EF0029F0B5 /* HotkeyWindowController.h */,
 				1DB9D8F1183FE9EF0029F0B5 /* HotkeyWindowController.m */,
 				1D7B9A681491D82F003A2A22 /* IntervalMap.m */,
+				A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */,
+				A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */,
 				1DDBC61D12E2BCDC00BC3868 /* iTermExpose.m */,
 				1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */,
 				F69E788C0AB7AC6D001EC0FF /* iTermGrowlDelegate.m */,
@@ -1249,7 +1259,6 @@
 				1D67ABA914285D6000D5DA4E /* NSFileManager+iTerm.h */,
 				1DF0895913DBAE1F00A52AD8 /* NSImage+CoreImage.h */,
 				1D407A2914BABE8700BD5035 /* NSStringITerm.h */,
-				1D48B32116706FC3000046EE /* NSView+iTerm.h */,
 				1D81F0BE183C3C2D00910838 /* NSView+RecursiveDescription.h */,
 				1D7C187F1275D22900461E55 /* PasteboardHistory.h */,
 				1D085F8416F02E7400B7FCE9 /* PasteContext.h */,
@@ -1510,6 +1519,8 @@
 		1D5FD9AD11F61CA900C46BA3 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */,
+				A6C4E8E71846E32600CFAA77 /* IntervalTreeTest.h */,
 				1D9A5521180FA46100B42CE9 /* iTermTests.m */,
 				1D9A5522180FA46100B42CE9 /* iTermTests.h */,
 				1D72477211F55E5700BD4924 /* LineBufferTest.h */,
@@ -1827,6 +1838,7 @@
 				1D5FDD691208E8F000C46BA3 /* CGSAccessibility.h in Headers */,
 				1D5FDD6A1208E8F000C46BA3 /* CGSCIFilter.h in Headers */,
 				1D5FDD6B1208E8F000C46BA3 /* CGSConnection.h in Headers */,
+				A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */,
 				1D5FDD6C1208E8F000C46BA3 /* CGSCursor.h in Headers */,
 				1D81F0C0183C3C2D00910838 /* NSView+RecursiveDescription.h in Headers */,
 				1D5FDD6D1208E8F000C46BA3 /* CGSDebug.h in Headers */,
@@ -2213,6 +2225,7 @@
 				1D9A55A4180FA87000B42CE9 /* Trouter.m in Sources */,
 				1D9A552E180FA69C00B42CE9 /* iTermExpose.m in Sources */,
 				1D9A554E180FA82E00B42CE9 /* TmuxStateParser.m in Sources */,
+				A6C4E8E11846E13800CFAA77 /* IntervalTree.m in Sources */,
 				1D9A55AD180FA8B700B42CE9 /* PSMTabBarCell.m in Sources */,
 				A63F40A1183F3AF5003A6A6D /* VT100LineInfo.m in Sources */,
 				1D9A5577180FA85D00B42CE9 /* BounceTrigger.m in Sources */,
@@ -2260,6 +2273,7 @@
 				1D9A5564180FA84700B42CE9 /* NSDateFormatterExtras.m in Sources */,
 				1D9A5529180FA61700B42CE9 /* VT100ScreenTest.m in Sources */,
 				A63F40A6183F3B78003A6A6D /* LineBlock.m in Sources */,
+				A6C4E8E81846E32700CFAA77 /* IntervalTreeTest.m in Sources */,
 				1D9A5586180FA87000B42CE9 /* iTermSearchField.m in Sources */,
 				1DD39B1F180B841C004E56D5 /* RegexKitLite.m in Sources */,
 				1D9A55A2180FA87000B42CE9 /* ThreeFingerTapGestureRecognizer.m in Sources */,
@@ -2363,6 +2377,7 @@
 				1D5FDDAC1208E93600C46BA3 /* NSStringITerm.m in Sources */,
 				1D5FDDAD1208E93600C46BA3 /* PreferencePanel.m in Sources */,
 				1D5FDDAE1208E93600C46BA3 /* PTYSession.m in Sources */,
+				A6C4E8E01846E13800CFAA77 /* IntervalTree.m in Sources */,
 				1D5FDDAF1208E93600C46BA3 /* PTYTabView.m in Sources */,
 				1D5FDDB01208E93600C46BA3 /* PTYWindow.m in Sources */,
 				A63F40A0183F3AF5003A6A6D /* VT100LineInfo.m in Sources */,

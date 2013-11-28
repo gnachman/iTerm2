@@ -9,7 +9,6 @@
 #import <Foundation/Foundation.h>
 #import "DVRIndexEntry.h"
 #import "ScreenChar.h"
-#import "TrackedObject.h"
 #import "VT100GridTypes.h"
 
 @class LineBuffer;
@@ -79,11 +78,8 @@
 - (int)numberOfLinesUsed;
 
 // Append the first numLines to the given line buffer. Returns the number of lines appended.
-// If |withObjects| is set then tracked objects are placed in the line buffer and removed from the
-// grid. If unset, they are left in the grid and not placed in the line buffer.
 - (int)appendLines:(int)numLines
-      toLineBuffer:(LineBuffer *)lineBuffer
-       withObjects:(BOOL)withObjects;
+      toLineBuffer:(LineBuffer *)lineBuffer;
 
 // Number of used chars in line at lineNumber.
 - (int)lengthOfLineNumber:(int)lineNumber;
@@ -219,10 +215,6 @@
 
 // Returns the timestamp of a given line.
 - (NSTimeInterval)timestampForLine:(int)y;
-- (id<TrackedObject>)objectForLine:(int)y;
-- (void)setObject:(id<TrackedObject>)object
-          forLine:(int)y
-   absoluteOffset:(long long)absoluteOffset;
 
 - (NSString *)compactLineDump;
 - (NSString *)compactLineDumpWithTimestamps;

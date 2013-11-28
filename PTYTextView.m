@@ -193,6 +193,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 @interface PTYTextView ()
 - (NSRect)cursorRect;
+- (NSString*)_getURLForX:(int)x
+                       y:(int)y
+  respectingHardNewlines:(BOOL)respectHardNewlines
+    charsTakenFromPrefix:(int*)charsTakenFromPrefixPtr;
 @end
 
 
@@ -3465,9 +3469,10 @@ NSMutableArray* screens=0;
 
     if (numTouches_ <= 1) {
         if (locationInTextView.x < MARGIN) {
-            PTYNoteViewController *note = [dataSource noteForLine:y];
-            if (note && !note.isEmpty) {
+            for (PTYNoteViewController *note in [dataSource notesOnLine:y]) {
+              if (note && !note.isEmpty) {
                 [note setNoteHidden:NO];
+              }
             }
         } else {
             for (NSView *view in [self subviews]) {
@@ -4573,32 +4578,32 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     // Make sure scrollback overflow is reset.
     [self refresh];
-    PTYNoteViewController *note = [dataSource noteForLine:line];
-    if (note) {
-        [note.view removeFromSuperview];
-        [self addSubview:note.view];
-        note.anchor = NSMakePoint(0, line * lineHeight + lineHeight / 2);
-        [note setNoteHidden:NO];
+    for (PTYNoteViewController *note in [dataSource notesOnLine:line]) {
+      if (note && note.view.superview != self) {
+          [note.view removeFromSuperview];
+          [self addSubview:note.view];
+          note.anchor = NSMakePoint(0, line * lineHeight + lineHeight / 2);
+          [note setNoteHidden:NO];
+      }
     }
 }
 
-- (void)addOrEditNoteForLine:(int)line
-{
-    PTYNoteViewController *note = [dataSource noteForLine:line];
-    if (!note) {
-        note = [[[PTYNoteViewController alloc] init] autorelease];
-        [dataSource setNote:note forLine:line];
-        [self addViewForNoteOnLine:line];
-    } else if (note.isNoteHidden) {
-        [note setNoteHidden:NO];
-    }
-    [note beginEditing];
-}
 
 - (void)addNote:(id)sender
 {
     if (startY >= 0) {
-        [self addOrEditNoteForLine:startY];
+      PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+      [dataSource addNote:note
+                     from:VT100GridCoordMake(startX, startY)
+                       to:VT100GridCoordMake(endX, endY)];
+
+      // Make sure scrollback overflow is reset.
+      [self refresh];
+      [note.view removeFromSuperview];
+      [self addSubview:note.view];
+      note.anchor = NSMakePoint(0, startY * lineHeight + lineHeight / 2);
+      [note setNoteHidden:NO];
+      [note beginEditing];
     }
 }
 
@@ -4608,8 +4613,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if ([view isKindOfClass:[PTYNoteView class]]) {
             PTYNoteView *noteView = (PTYNoteView *)view;
             PTYNoteViewController *note = (PTYNoteViewController *)noteView.noteViewController;
-            int line = [dataSource lineNumberOfNote:note];
-            [note setAnchor:NSMakePoint(0, line * lineHeight + lineHeight / 2)];
+            VT100GridCoordRange coordRange = [dataSource coordRangeOfNote:note];
+            [note setAnchor:NSMakePoint(0, coordRange.start.y * lineHeight + lineHeight / 2)];
         }
     }
 }
@@ -7386,12 +7391,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                              context:ctx];
     }
 
-    PTYNoteViewController *note = [dataSource noteForLine:line];
-    if (note.isNoteHidden && !note.isEmpty) {
-        [[NSColor yellowColor] set];
-        NSRectFill(NSMakeRect(1, line * lineHeight, MARGIN - 3, lineHeight));
-        [[NSColor colorWithCalibratedRed:.8 green:.8 blue:0 alpha:1] set];
-        NSRectFill(NSMakeRect(MARGIN - 3, line * lineHeight, 1, lineHeight));
+    for (PTYNoteViewController *note in [dataSource notesOnLine:line]) {
+      // TODO: Highlight range
+      if (note.isNoteHidden && !note.isEmpty) {
+          [[NSColor yellowColor] set];
+          NSRectFill(NSMakeRect(1, line * lineHeight, MARGIN - 3, lineHeight));
+          [[NSColor colorWithCalibratedRed:.8 green:.8 blue:0 alpha:1] set];
+          NSRectFill(NSMakeRect(MARGIN - 3, line * lineHeight, 1, lineHeight));
+          break;
+      }
     }
 
     return anyBlinking;

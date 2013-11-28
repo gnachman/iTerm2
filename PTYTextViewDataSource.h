@@ -86,8 +86,11 @@ typedef enum {
 // Returns the last modified date for a given line.
 - (NSDate *)timestampForLine:(int)y;
 
-- (PTYNoteViewController *)noteForLine:(int)y;
-- (void)setNote:(PTYNoteViewController *)note forLine:(int)y;
-- (int)lineNumberOfNote:(PTYNoteViewController *)note;
+- (void)addNote:(PTYNoteViewController *)note
+           from:(VT100GridCoord)start
+             to:(VT100GridCoord)end;
+
+- (NSArray *)notesOnLine:(int)line;
+- (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note;
 
 @end

@@ -8,6 +8,7 @@
 
 #import "DebugLogging.h"
 #import "DVR.h"
+//#import "MutableIntervalMap.h"
 #import "PTYNoteViewController.h"
 #import "PTYTextView.h"
 #import "RegexKitLite.h"
@@ -78,6 +79,7 @@ static const double kInterBellQuietPeriod = 0.1;
         }
 
         findContext_ = [[FindContext alloc] init];
+//        notes_ = [[MutableIntervalMap alloc] init];
     }
     return self;
 }
@@ -93,6 +95,7 @@ static const double kInterBellQuietPeriod = 0.1;
     [terminal_ release];
     [charsetUsesLineDrawingMode_ release];
     [findContext_ release];
+    [notes_ release];
     [super dealloc];
 }
 
@@ -172,8 +175,7 @@ static const double kInterBellQuietPeriod = 0.1;
         [self appendScreen:currentGrid_
               toScrollback:lineBufferWithAltScreen
             withUsedHeight:usedHeight
-                 newHeight:new_height
-               withObjects:NO];
+                 newHeight:new_height];
         [self getNullCorrectedSelectionStartPosition:&originalStartPos
                                          endPosition:&originalEndPos
                        selectionStartPositionIsValid:&ok1
@@ -190,14 +192,12 @@ static const double kInterBellQuietPeriod = 0.1;
         [self appendScreen:altGrid_
               toScrollback:altScreenLineBuffer
             withUsedHeight:usedHeight
-                 newHeight:new_height
-               withObjects:YES];
+                 newHeight:new_height];
     }
     [self appendScreen:primaryGrid_
           toScrollback:linebuffer_
         withUsedHeight:[primaryGrid_ numberOfLinesUsed]
-             newHeight:new_height
-           withObjects:YES];
+             newHeight:new_height];
 
     int newSelStartX = -1;
     int newSelStartY = -1;
@@ -273,8 +273,7 @@ static const double kInterBellQuietPeriod = 0.1;
         [self appendScreen:copyOfAltGrid
               toScrollback:appendOnlyLineBuffer
             withUsedHeight:usedHeight
-                 newHeight:new_height
-               withObjects:NO];
+                 newHeight:new_height];
 
         if (hasSelection) {
             // Compute selection positions relative to the end of the line buffer, which may have
@@ -679,8 +678,7 @@ static const double kInterBellQuietPeriod = 0.1;
                   length:len
                  partial:NO
                    width:currentGrid_.size.width
-               timestamp:now
-                  object:nil];
+               timestamp:now];
     }
     NSMutableArray *wrappedLines = [NSMutableArray array];
     int n = [temp numLinesWithWidth:currentGrid_.size.width];
@@ -705,8 +703,7 @@ static const double kInterBellQuietPeriod = 0.1;
                          length:line.length
                         partial:(line.eol != EOL_HARD)
                           width:currentGrid_.size.width
-                      timestamp:now
-                         object:nil];
+                      timestamp:now];
     }
     if (!unlimitedScrollback_) {
         [linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width];
@@ -872,8 +869,7 @@ static const double kInterBellQuietPeriod = 0.1;
 {
     int linesPushed;
     linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
-                               toLineBuffer:linebuffer_
-                                withObjects:NO];
+                               toLineBuffer:linebuffer_];
 
     [linebuffer_ storeLocationOfAbsPos:savedFindContextAbsPos_
                              inContext:context];
@@ -1026,8 +1022,7 @@ static const double kInterBellQuietPeriod = 0.1;
 {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
-                                   toLineBuffer:linebuffer_
-                                    withObjects:NO];
+                                   toLineBuffer:linebuffer_];
 
     // Get the start position of (x,y)
     LineBufferPosition *startPos;
@@ -1092,8 +1087,7 @@ static const double kInterBellQuietPeriod = 0.1;
 {
     int linesPushed;
     linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
-                               toLineBuffer:linebuffer_
-                                withObjects:NO];
+                               toLineBuffer:linebuffer_];
 
     savedFindContextAbsPos_ = [self findContextAbsPosition];
     [self popScrollbackLines:linesPushed];
@@ -1208,42 +1202,20 @@ static const double kInterBellQuietPeriod = 0.1;
     return [NSDate dateWithTimeIntervalSinceReferenceDate:interval];
 }
 
-- (PTYNoteViewController *)noteForLine:(int)y {
-    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
-    if (y >= numLinesInLineBuffer) {
-        return (PTYNoteViewController *)[currentGrid_ objectForLine:y - numLinesInLineBuffer];
-    } else {
-        return (PTYNoteViewController *)[linebuffer_ objectForLineNumber:y width:currentGrid_.size.width];
-    }
+- (void)addNote:(PTYNoteViewController *)note
+           from:(VT100GridCoord)start
+             to:(VT100GridCoord)end {
+    // TODO
+    [delegate_ screenDidAddNoteOnLine:start.y];
 }
 
-- (void)setNote:(PTYNoteViewController *)note forLine:(int)y {
-    assert(![self noteForLine:y]);
-    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
-    if (y >= numLinesInLineBuffer) {
-        [currentGrid_ setObject:note
-                        forLine:y - numLinesInLineBuffer
-                 absoluteOffset:[self numberOfScrollbackLines] + [self totalScrollbackOverflow]];
-    } else {
-        [linebuffer_ setObject:note forLine:y width:currentGrid_.size.width];
-    }
+- (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note {
+  // TODO
+  return VT100GridCoordRangeMake(0,0,0,0);
 }
 
-- (int)lineNumberOfNote:(PTYNoteViewController *)note {
-    if (note.isInLineBuffer) {
-        BOOL ok;
-        VT100GridCoord coord = [linebuffer_ coordinateForPosition:note.lineBufferPosition
-                                                            width:currentGrid_.size.width
-                                                               ok:&ok];
-        if (ok) {
-            return coord.y;
-        } else {
-            NSLog(@"Failed to convert position %@", note.lineBufferPosition);
-            return -1;
-        }
-    } else {
-        return note.absoluteLineNumber - [self totalScrollbackOverflow];
-    }
+- (NSArray *)notesOnLine:(int)line {
+  return nil;  // TODO
 }
 
 #pragma mark - VT100TerminalDelegate
@@ -2065,14 +2037,13 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)terminalSetLineNoteAtCursor:(NSString *)value {
     int line = [self numberOfScrollbackLines] + currentGrid_.cursorY;
-    PTYNoteViewController *note = [self noteForLine:line];
-    if (!note) {
-        note = [[[PTYNoteViewController alloc] init] autorelease];
-        [self setNote:note forLine:line];
-    }
+    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
     [note setString:value];
     [note sizeToFit];
-    [delegate_ screenDidAddNoteOnLine:line];
+    [self addNote:note
+             from:VT100GridCoordMake(0, currentGrid_.cursorY)
+               to:VT100GridCoordMake(currentGrid_.size.width,
+                                     currentGrid_.cursorY)];
 }
 
 - (void)terminalSetPasteboard:(NSString *)value {
@@ -2227,28 +2198,24 @@ static const double kInterBellQuietPeriod = 0.1;
         toScrollback:(LineBuffer *)lineBufferToUse
       withUsedHeight:(int)usedHeight
            newHeight:(int)newHeight
-         withObjects:(BOOL)withObjects
 {
     if (grid.size.height - newHeight >= usedHeight) {
         // Height is decreasing but pushing HEIGHT lines into the buffer would scroll all the used
         // lines off the top, leaving the cursor floating without any text. Keep all used lines that
         // fit onscreen.
         [grid appendLines:MAX(usedHeight, newHeight)
-             toLineBuffer:lineBufferToUse
-              withObjects:withObjects];
+             toLineBuffer:lineBufferToUse];
     } else {
         if (newHeight < grid.size.height) {
             // Screen is shrinking.
             // If possible, keep the last used line a fixed distance from the top of
             // the screen. If not, at least save all the used lines.
             [grid appendLines:usedHeight
-                 toLineBuffer:lineBufferToUse
-                  withObjects:withObjects];
+                 toLineBuffer:lineBufferToUse];
         } else {
             // Screen is growing. New content may be brought in on top.
             [grid appendLines:grid.size.height
-                 toLineBuffer:lineBufferToUse
-                  withObjects:withObjects];
+                 toLineBuffer:lineBufferToUse];
         }
     }
 }
@@ -2584,8 +2551,7 @@ static void SwapInt(int *a, int *b) {
         BOOL isOk = [linebuffer_ popAndCopyLastLineInto:dummy
                                                   width:currentGrid_.size.width
                                       includesEndOfLine:&cont
-                                              timestamp:NULL
-                                                 object:NULL];
+                                              timestamp:NULL];
         NSAssert(isOk, @"Pop shouldn't fail");
     }
     free(dummy);
@@ -2626,8 +2592,7 @@ static void SwapInt(int *a, int *b) {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
     linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
-                               toLineBuffer:linebuffer_
-                                withObjects:NO];
+                               toLineBuffer:linebuffer_];
 
     // Search one block.
     int stopAt;

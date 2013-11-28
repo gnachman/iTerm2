@@ -18,6 +18,7 @@
 
 DECLARE_TEST(VT100GridTest)
 DECLARE_TEST(VT100ScreenTest)
+DECLARE_TEST(IntervalTreeTest)
 
 static void RunTestsInObject(iTermTest *test) {
     NSLog(@"-- Begin tests in %@ --", [test class]);
@@ -45,6 +46,7 @@ static void RunTestsInObject(iTermTest *test) {
 int main(int argc, const char * argv[]) {
     RunTestsInObject([VT100GridTest new]);
     RunTestsInObject([VT100ScreenTest new]);
+    RunTestsInObject([IntervalTreeTest new]);
     NSLog(@"All tests passed");
     return 0;
 }

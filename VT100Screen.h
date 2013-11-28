@@ -6,6 +6,7 @@
 @class DVR;
 @class iTermGrowlDelegate;
 @class LineBuffer;
+@class MutableIntervalMap;
 @class PTYTask;
 @class VT100Grid;
 @class VT100Terminal;
@@ -36,7 +37,7 @@ extern int kVT100ScreenMinRows;
     VT100Grid *primaryGrid_;
     VT100Grid *altGrid_;  // may be nil
     VT100Grid *currentGrid_;  // Weak reference. Points to either primaryGrid or altGrid.
-    
+
     // Max size of scrollback buffer
     unsigned int maxScrollbackLines_;
     // This flag overrides maxScrollbackLines_:
@@ -70,6 +71,8 @@ extern int kVT100ScreenMinRows;
 
     // OK to report window title?
     BOOL allowTitleReporting_;
+
+    MutableIntervalMap *notes_;
 }
 
 @property(nonatomic, retain) VT100Terminal *terminal;

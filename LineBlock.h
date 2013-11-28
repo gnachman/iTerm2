@@ -8,7 +8,6 @@
 
 #import <Foundation/Foundation.h>
 #import "ScreenChar.h"
-#import "TrackedObject.h"
 
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
@@ -28,7 +27,6 @@
     // cumulative_line_lengths[i-1] for i>0 or 0 for i==0.
     int* cumulative_line_lengths;
     NSTimeInterval *timestamps_;
-    NSMutableDictionary *objects_;
     
     // The number of elements allocated for cumulative_line_lengths.
     int cll_capacity;
@@ -58,10 +56,7 @@
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
-         timestamp:(NSTimeInterval)timestamp
-            object:(id<TrackedObject>)object;
-
-- (void)setObject:(id<TrackedObject>)object forLine:(int)line width:(int)width;
+         timestamp:(NSTimeInterval)timestamp;
 
 // Try to get a line that is lineNum after the first line in this block after wrapping them to a given width.
 // If the line is present, return a pointer to its start and fill in *lineLength with the number of bytes in the line.
@@ -92,8 +87,7 @@
 - (BOOL)popLastLineInto:(screen_char_t**)ptr
              withLength:(int*)length
               upToWidth:(int)width
-              timestamp:(NSTimeInterval *)timestampPtr
-                 object:(id<TrackedObject>*)objectPtr;
+              timestamp:(NSTimeInterval *)timestampPtr;
 
 // Drop lines from the start of the buffer. Returns the number of lines actually dropped
 // (either n or the number of lines in the block).
@@ -122,8 +116,7 @@
 
 // Append a value to cumulativeLineLengths.
 - (void)_appendCumulativeLineLength:(int)cumulativeLength
-                          timestamp:(NSTimeInterval)timestamp
-                             object:(id<TrackedObject>)object;
+                          timestamp:(NSTimeInterval)timestamp;
 
 // Return a raw line
 - (screen_char_t *)rawLine: (int) linenum;
@@ -133,9 +126,6 @@
 
 // Returns the timestamp associated with a line when wrapped to the specified width.
 - (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width;
-
-// Returns the object associated with a line.
-- (id<TrackedObject>)objectForLineNumber:(int)lineNum width:(int)width;
 
 // Appends the contents of the block to |s|.
 - (void)appendToDebugString:(NSMutableString *)s;
