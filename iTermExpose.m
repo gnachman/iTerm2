@@ -797,8 +797,7 @@ static NSScreen *ExposeScreen() {
         NSGradient* aGradient = [[[NSGradient alloc]
                                   initWithStartingColor:[[NSColor blackColor] colorWithAlphaComponent:0.1]
                                   endingColor:[[NSColor blackColor] colorWithAlphaComponent:0.7]] autorelease];
-        [aGradient drawInRect:[self frame]
-       relativeCenterPosition:NSMakePoint(0, 0)];
+        [aGradient drawInRect:[self frame] relativeCenterPosition:NSMakePoint(0, 0)];
         [cache_ unlockFocus];
     }
 

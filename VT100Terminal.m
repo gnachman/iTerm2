@@ -3934,7 +3934,7 @@ static VT100TCC decode_string(unsigned char *datap,
                 [delegate_ terminalSetCursorType:shapeMap[shape]];
             }
         } else if ([key isEqualToString:@"SetMark"]) {
-            [delegate_ terminalSaveScrollPosition];
+            [delegate_ terminalSaveScrollPositionWithArgument:value];
         } else if ([key isEqualToString:@"StealFocus"]) {
             [delegate_ terminalStealFocus];
         } else if ([key isEqualToString:@"ClearScrollback"]) {
@@ -3943,8 +3943,10 @@ static VT100TCC decode_string(unsigned char *datap,
             [delegate_ terminalCurrentDirectoryDidChangeTo:value];
         } else if ([key isEqualToString:@"SetProfile"]) {
             [delegate_ terminalProfileShouldChangeTo:(NSString *)value];
-        } else if ([key isEqualToString:@"LineNote"]) {
-            [delegate_ terminalSetLineNoteAtCursor:(NSString *)value];
+        } else if ([key isEqualToString:@"AddNote"]) {
+            [delegate_ terminalAddNote:(NSString *)value show:YES];
+        } else if ([key isEqualToString:@"AddHiddenNote"]) {
+            [delegate_ terminalAddNote:(NSString *)value show:NO];
         } else if ([key isEqualToString:@"CopyToClipboard"]) {
             [delegate_ terminalSetPasteboard:value];
         } else if ([key isEqualToString:@"EndCopy"]) {

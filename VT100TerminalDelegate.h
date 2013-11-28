@@ -244,7 +244,7 @@ typedef enum {
 - (void)terminalColorTableEntryAtIndex:(int)theIndex didChangeToColor:(NSColor *)theColor;
 
 // Saves the current scroll position in the window.
-- (void)terminalSaveScrollPosition;
+- (void)terminalSaveScrollPositionWithArgument:(NSString *)argument;
 
 // Make the current terminal visible and give it keyboard focus.
 - (void)terminalStealFocus;
@@ -258,8 +258,8 @@ typedef enum {
 // The profile should change to one with the name |value|.
 - (void)terminalProfileShouldChangeTo:(NSString *)value;
 
-// Set the line's note.
-- (void)terminalSetLineNoteAtCursor:(NSString *)value;
+// Set a note. Value is message or length|message or x|y|length|message
+- (void)terminalAddNote:(NSString *)value show:(BOOL)show;
 
 // Sets the current pasteboard. Legal values are ruler, find, and font. Other values, including
 // empty string, are treated as the default pasteboard.

@@ -469,6 +469,45 @@ DQ
                                     <action selector="jumpToSavedScrollPosition:" target="-1" id="1248"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Previous mark/note" keyEquivalent="[" id="sZa-7I-YDa">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="previousMarkOrNote:" target="-1" id="Qrg-Y8-KM2"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Next mark/note" keyEquivalent="]" id="mcu-LX-9Aj">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="nextMarkOrNote:" target="-1" id="HSR-a4-u0F"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="5a1-MJ-4uR">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                <menu key="submenu" id="tEw-W0-CB4">
+                                    <items>
+                                        <menuItem title="Item 1" enabled="NO" id="A6D-EZ-4C7">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        </menuItem>
+                                        <menuItem title="Item 2" enabled="NO" id="4fq-WI-27g">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        </menuItem>
+                                        <menuItem title="Item 3" enabled="NO" id="U95-Js-BA7">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        </menuItem>
+                                    </items>
+                                </menu>
+                            </menuItem>
+                            <menuItem title="Add note at cursor" keyEquivalent="m" id="Fna-Ng-9y6">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="addNoteAtCursor:" target="-1" id="B5P-c8-bDe"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Show/Hide notes" keyEquivalent="\" id="pAu-j3-wEC">
+                                <connections>
+                                    <action selector="showHideNotes:" target="-1" id="bWx-ZS-6aE"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="1238">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                 <menu key="submenu" id="1239">
@@ -920,7 +959,7 @@ DQ
                 <action selector="newWindow:" target="201" id="1443"/>
             </connections>
         </menuItem>
-        <sliderCell controlSize="small" state="on" alignment="left" maxValue="100" doubleValue="50" tickMarkPosition="left" sliderType="linear" id="1482"/>
+        <sliderCell controlSize="small" state="on" alignment="left" maxValue="100" doubleValue="50" tickMarkPosition="below" sliderType="linear" id="1482"/>
         <menuItem title="Paste Slowly" tag="2" id="1485">
             <modifierMask key="keyEquivalentModifierMask"/>
             <connections>
@@ -931,6 +970,11 @@ DQ
             <modifierMask key="keyEquivalentModifierMask"/>
             <connections>
                 <action selector="paste:" target="-1" id="1488"/>
+            </connections>
+        </menuItem>
+        <menuItem title="Show/Hide notes" keyEquivalent="\" id="Dat-IK-oIH">
+            <connections>
+                <action selector="jumpToSavedScrollPosition:" target="-1" id="1KQ-rp-6ZM"/>
             </connections>
         </menuItem>
     </objects>

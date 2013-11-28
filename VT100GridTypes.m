@@ -13,6 +13,14 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     return run;
 }
 
+NSString *VT100GridCoordRangeDescription(VT100GridCoordRange range) {
+    return [NSString stringWithFormat:@"((%d, %d) to (%d, %d))",
+            range.start.x,
+            range.start.y,
+            range.end.x,
+            range.end.y];
+}
+
 @implementation NSValue (VT100Grid)
 
 + (NSValue *)valueWithGridCoord:(VT100GridCoord)coord {
@@ -33,6 +41,10 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
 
 + (NSValue *)valueWithGridRun:(VT100GridRun)run {
     return [[[NSValue alloc] initWithBytes:&run objCType:@encode(VT100GridRun)] autorelease];
+}
+
++ (NSValue *)valueWithGridCoordRange:(VT100GridCoordRange)coordRange {
+    return [[[NSValue alloc] initWithBytes:&coordRange objCType:@encode(VT100GridCoordRange)] autorelease];
 }
 
 - (VT100GridCoord)gridCoordValue {
@@ -63,6 +75,12 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     VT100GridRun run;
     [self getValue:&run];
     return run;
+}
+
+- (VT100GridCoordRange)gridCoordRangeValue {
+  VT100GridCoordRange coordRange;
+  [self getValue:&coordRange];
+  return coordRange;
 }
 
 @end

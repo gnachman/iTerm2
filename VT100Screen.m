@@ -8,11 +8,13 @@
 
 #import "DebugLogging.h"
 #import "DVR.h"
+#import "IntervalTree.h"
 #import "PTYNoteViewController.h"
 #import "PTYTextView.h"
 #import "RegexKitLite.h"
 #import "SearchResult.h"
 #import "TmuxStateParser.h"
+#import "VT100ScreenMark.h"
 #import "iTermExpose.h"
 #import "iTermGrowlDelegate.h"
 
@@ -78,6 +80,9 @@ static const double kInterBellQuietPeriod = 0.1;
         }
 
         findContext_ = [[FindContext alloc] init];
+        savedMarksAndNotes_ = [[IntervalTree alloc] init];
+        marksAndNotes_ = [[IntervalTree alloc] init];
+        markCache_ = [[NSMutableSet alloc] init];
     }
     return self;
 }
@@ -93,6 +98,8 @@ static const double kInterBellQuietPeriod = 0.1;
     [terminal_ release];
     [charsetUsesLineDrawingMode_ release];
     [findContext_ release];
+    [marksAndNotes_ release];
+    [markCache_ release];
     [super dealloc];
 }
 
@@ -130,6 +137,155 @@ static const double kInterBellQuietPeriod = 0.1;
 
     [primaryGrid_ markAllCharsDirty:YES];
     [altGrid_ markAllCharsDirty:YES];
+}
+
+- (VT100GridCoordRange)coordRangeForCurrentSelection {
+    return VT100GridCoordRangeMake([delegate_ screenSelectionStartX],
+                                   [delegate_ screenSelectionStartY],
+                                   [delegate_ screenSelectionEndX],
+                                   [delegate_ screenSelectionEndY]);
+}
+
+// This is used for a very specific case. It's used when you have some history, optionally followed
+// by lines pulled from the primary grid, followed by the alternate grid, all stuffed into a line
+// buffer. Given a pair of positions, it converts them to a range. If a position is between
+// originalLastPos and newLastPos, it's invalid. Likewise, if a position is in the first
+// |linesMovedUp| lines of the screen, it's invalid.
+// NOTE: This assumes that linebuffer_ contains the history plus lines from the primary grid.
+// Returns YES if the range is valid, NO if it could not be converted (e.g., because it was entirely
+// in the area of dropped lines).
+/*
+ * 0 History      }                                                                     }
+ * 1 History      } These lines were in history before resizing began                   }
+ * 2 History      }                    <- originalLimit                                 } equal to linebuffer_
+ * 3 Line from primary grid            <- limit (pushed into history due to resize)     }
+ * 4 Line to be lost from alt grid     <- linesMovedUp = 1 because this one line will be lost
+ * 5 Line from alt grid                }
+ * 6 Line from alt grid                } These lines will be restored to the alt grid later
+ */
+- (BOOL)computeRangeFromOriginalLimit:(LineBufferPosition *)originalLimit
+                        limitPosition:(LineBufferPosition *)limit
+                        startPosition:(LineBufferPosition *)startPos
+                          endPosition:(LineBufferPosition *)endPos
+                             newWidth:(int)newWidth
+                           lineBuffer:(LineBuffer *)lineBuffer  // NOTE: May be append-only
+                                range:(VT100GridCoordRange *)resultRangePtr
+                         linesMovedUp:(int)linesMovedUp
+{
+    BOOL result = YES;
+    // Compute selection positions relative to the end of the line buffer, which may have
+    // grown or shrunk.
+    int growth = limit.absolutePosition - originalLimit.absolutePosition;
+    LineBufferPosition *savedEndPos = endPos;
+    LineBufferPosition *predecessorOfLimit = [limit predecessor];
+    if (growth > 0) {
+        /*
+            +--------------------+
+            |                    |
+            |  Original History  |
+            |                    |
+            +....................+ <------- originalLimit
+            | Lines pushed from  | ^
+            | primary into       | |- growth = number of lines in this section
+            | history            | V
+            +--------------------+ <------- limit
+            |                    |
+            | Alt screen         |
+            |                    |
+            +--------------------+
+         */
+        if (startPos.absolutePosition >= originalLimit.absolutePosition) {
+            // Start position was on alt screen originally. Move it down by the number of lines
+            // pulled in from the primary screen.
+            startPos.absolutePosition += growth;
+        }
+        if (endPos.absolutePosition >= originalLimit.absolutePosition) {
+            // End position was on alt screen originally. Move it down by the number of lines
+            // pulled in from the primary screen.
+            endPos.absolutePosition += growth;
+        }
+    } else if (growth < 0) {
+        /*
+                                   +--------------------+
+                                   |                    |
+                                   | Original history   |
+                                   |                    |
+            +--------------------+ +....................+ <------- limit
+            | Current alt screen | | Lines pulled back  | ^
+            |                    | | into primary from  | |- growth = -(number of lines in this section)
+            +--------------------+ | history            | V
+                                   +--------------------+ <------- originalLimit
+                                   | Original           |
+                                   | Alt screen         |
+                                   +--------------------+
+         */
+        if (startPos.absolutePosition >= limit.absolutePosition &&
+            startPos.absolutePosition < originalLimit.absolutePosition) {
+            // Started in history in the region pulled into primary screen. Advance start to
+            // new beginning of alt screen
+            startPos = limit;
+        } else if (startPos.absolutePosition >= originalLimit.absolutePosition) {
+            // Starts after deleted region. Move start position up by number of deleted lines so
+            // it refers to the same cell.
+            startPos.absolutePosition += growth;
+        }
+        if (endPos.absolutePosition >= predecessorOfLimit.absolutePosition &&
+            endPos.absolutePosition < originalLimit.absolutePosition) {
+            // Ended in deleted region. Move end point to just before current alt screen.
+            endPos = predecessorOfLimit;
+        } else if (endPos.absolutePosition >= originalLimit.absolutePosition) {
+            // Ends in alt screen. Move it up to refer to the same cell.
+            endPos.absolutePosition += growth;
+        }
+    }
+    if (startPos.absolutePosition >= endPos.absolutePosition + 1) {
+        result = NO;
+    }
+    resultRangePtr->start = [lineBuffer coordinateForPosition:startPos
+                                                        width:newWidth
+                                                           ok:NULL];
+    int numScrollbackLines = [linebuffer_ numLinesWithWidth:newWidth];
+
+    // |linesMovedUp| wrapped lines will not be restored into the alt grid later on starting at |limit|
+    if (resultRangePtr->start.y >= numScrollbackLines) {
+        if (resultRangePtr->start.y < numScrollbackLines + linesMovedUp) {
+            // The selection started in one of the lines that was lost. Move it to the
+            // first cell of the screen.
+            resultRangePtr->start.y = numScrollbackLines;
+            resultRangePtr->start.x = 0;
+        } else {
+            // The selection starts on screen, so move it up by the number of lines by which
+            // the alt screen shifted up.
+            resultRangePtr->start.y -= linesMovedUp;
+        }
+    }
+    
+    resultRangePtr->end = [lineBuffer coordinateForPosition:endPos
+                                                      width:newWidth
+                                                         ok:NULL];
+    if (resultRangePtr->end.y >= numScrollbackLines) {
+        if (resultRangePtr->end.y < numScrollbackLines + linesMovedUp) {
+            // The selection ends in one of the lines that was lost. The whole selection is
+            // gone.
+            result = NO;
+        } else {
+            // The selection ends on screen, so move it up by the number of lines by which
+            // the alt screen shifted up.
+            resultRangePtr->end.y -= linesMovedUp;
+        }
+    }
+    if (savedEndPos.extendsToEndOfLine) {
+        resultRangePtr->end.x = newWidth;
+    } else {
+        // Move to the successor of newSelection.end.x, newSelection.end.y.
+        resultRangePtr->end.x++;
+        if (resultRangePtr->end.x > newWidth) {
+            resultRangePtr->end.x -= newWidth;
+            resultRangePtr->end.y++;
+        }
+    }
+    
+    return result;
 }
 
 - (void)resizeWidth:(int)new_width height:(int)new_height
@@ -172,13 +328,15 @@ static const double kInterBellQuietPeriod = 0.1;
         [self appendScreen:currentGrid_
               toScrollback:lineBufferWithAltScreen
             withUsedHeight:usedHeight
-                 newHeight:new_height
-               withObjects:NO];
+                 newHeight:new_height];
+        VT100GridCoordRange selection = [self coordRangeForCurrentSelection];
+
         [self getNullCorrectedSelectionStartPosition:&originalStartPos
                                          endPosition:&originalEndPos
                        selectionStartPositionIsValid:&ok1
                           selectionEndPostionIsValid:&ok2
-                                        inLineBuffer:lineBufferWithAltScreen];
+                                        inLineBuffer:lineBufferWithAltScreen
+                                            forRange:selection];
         hasSelection = ok1 && ok2;
     }
 
@@ -190,36 +348,113 @@ static const double kInterBellQuietPeriod = 0.1;
         [self appendScreen:altGrid_
               toScrollback:altScreenLineBuffer
             withUsedHeight:usedHeight
-                 newHeight:new_height
-               withObjects:YES];
+                 newHeight:new_height];
     }
+
+    // If non-nil, contains 3-tuples NSArray*s of
+    // [ PTYNoteViewController*,
+    //   LineBufferPosition* for start of range,
+    //   LineBufferPosition* for end of range ]
+    // These will be re-added to marksAndNotes_ later on.
+    NSMutableArray *altScreenNotes = nil;
+
+    if (wasShowingAltScreen && [marksAndNotes_ count]) {
+        // Add notes that were on the alt grid to altScreenNotes, leaving notes in history alone.
+        VT100GridCoordRange screenCoordRange =
+        VT100GridCoordRangeMake(0,
+                                [self numberOfScrollbackLines],
+                                0,
+                                [self numberOfScrollbackLines] + self.height);
+        NSArray *notesAtLeastPartiallyOnScreen =
+            [marksAndNotes_ objectsInInterval:[self intervalForGridCoordRange:screenCoordRange]];
+        
+        LineBuffer *appendOnlyLineBuffer = [[realLineBuffer newAppendOnlyCopy] autorelease];
+        [self appendScreen:altGrid_
+              toScrollback:appendOnlyLineBuffer
+            withUsedHeight:usedHeight
+                 newHeight:new_height];
+        altScreenNotes = [NSMutableArray array];
+        
+        for (id<IntervalTreeObject> note in notesAtLeastPartiallyOnScreen) {
+            VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
+            [[note retain] autorelease];
+            [marksAndNotes_ removeObject:note];
+            
+            BOOL ok1, ok2;
+            LineBufferPosition *startPosition = nil;
+            LineBufferPosition *endPosition = nil;
+            
+            [self getNullCorrectedSelectionStartPosition:&startPosition
+                                             endPosition:&endPosition
+                           selectionStartPositionIsValid:&ok1
+                              selectionEndPostionIsValid:&ok2
+                                            inLineBuffer:appendOnlyLineBuffer
+                                                forRange:range];
+            NSLog(@"Add note on alt screen at %@ (position %@ to %@) to altScreenNotes",
+                  VT100GridCoordRangeDescription(range),
+                  startPosition,
+                  endPosition);
+            [altScreenNotes addObject:@[ note, startPosition, endPosition ]];
+        }
+    }
+    
+    if (wasShowingAltScreen) {
+      currentGrid_ = primaryGrid_;
+      // Move savedMarksAndNotes_ into marksAndNotes_. This should leave savedMarksAndNotes_ empty.
+      [self swapNotes];
+      currentGrid_ = altGrid_;
+    }
+
+    // Append primary grid to line buffer.
     [self appendScreen:primaryGrid_
           toScrollback:linebuffer_
         withUsedHeight:[primaryGrid_ numberOfLinesUsed]
-             newHeight:new_height
-           withObjects:YES];
+             newHeight:new_height];
 
-    int newSelStartX = -1;
-    int newSelStartY = -1;
-    int newSelEndX = -1;
-    int newSelEndY = -1;
+    VT100GridCoordRange newSelection;
     if (!wasShowingAltScreen && hasSelection) {
-        hasSelection = [self convertCurrentSelectionToWidth:new_width
-                                                toNewStartX:&newSelStartX
-                                                toNewStartY:&newSelStartY
-                                                  toNewEndX:&newSelEndX
-                                                  toNewEndY:&newSelEndY
-                                               inLineBuffer:linebuffer_];
+        hasSelection = [self convertRange:[self coordRangeForCurrentSelection]
+                                  toWidth:new_width
+                                       to:&newSelection
+                             inLineBuffer:linebuffer_];
     }
+    
+    if ([marksAndNotes_ count]) {
+        // Fix up the intervals for the primary grid.
+        if (wasShowingAltScreen) {
+            // Temporarily swap in primary grid so convertRange: will do the right thing.
+            currentGrid_ = primaryGrid_;
+        }
 
+        // Convert ranges of notes to their new coordinates and replace the interval tree.
+        IntervalTree *replacementTree = [[IntervalTree alloc] init];
+        for (id<IntervalTreeObject> note in [marksAndNotes_ allObjects]) {
+            VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
+            VT100GridCoordRange newRange;
+            if ([self convertRange:noteRange toWidth:new_width to:&newRange inLineBuffer:linebuffer_]) {
+                Interval *newInterval = [self intervalForGridCoordRange:newRange
+                                                                  width:new_width
+                                                            linesOffset:[self totalScrollbackOverflow]];
+                [[note retain] autorelease];
+                [marksAndNotes_ removeObject:note];
+                [replacementTree addObject:note withInterval:newInterval];
+            }
+        }
+        [marksAndNotes_ release];
+        marksAndNotes_ = replacementTree;
+        
+        if (wasShowingAltScreen) {
+            // Return to alt grid.
+            currentGrid_ = altGrid_;
+        }
+    }
     VT100GridSize newSize = VT100GridSizeMake(new_width, new_height);
     currentGrid_.size = newSize;
 
     // Restore the screen contents that were pushed onto the linebuffer.
     [currentGrid_ restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : linebuffer_
                               withDefaultChar:[currentGrid_ defaultChar]
-                            maxLinesToRestore:[linebuffer_ numLinesWithWidth:currentGrid_.size.width]
-                               absoluteOffset:[self numberOfScrollbackLines] + [self totalScrollbackOverflow]];
+                            maxLinesToRestore:[linebuffer_ numLinesWithWidth:currentGrid_.size.width]];
 
     // If we're in the alternate screen, restore its contents from the temporary
     // linebuffer.
@@ -245,8 +480,7 @@ static const double kInterBellQuietPeriod = 0.1;
             // line because it was just initialized with default lines.
             [primaryGrid_ restoreScreenFromLineBuffer:realLineBuffer
                                       withDefaultChar:[primaryGrid_ defaultChar]
-                                    maxLinesToRestore:oldSize.height
-                                       absoluteOffset:[self numberOfScrollbackLines] + [self totalScrollbackOverflow]];
+                                    maxLinesToRestore:oldSize.height];
         } else {
             // Shrinking (avoid pulling in stuff from scrollback, pull in no more
             // than might have been pushed, even if more is available). Note there's a little hack
@@ -254,9 +488,13 @@ static const double kInterBellQuietPeriod = 0.1;
             // default lines.
             [primaryGrid_ restoreScreenFromLineBuffer:realLineBuffer
                                       withDefaultChar:[primaryGrid_ defaultChar]
-                                    maxLinesToRestore:new_height
-                                       absoluteOffset:[self numberOfScrollbackLines] + [self totalScrollbackOverflow]];
+                                    maxLinesToRestore:new_height];
         }
+
+        // Any onscreen notes in primary grid get moved to savedMarksAndNotes_.
+        currentGrid_ = primaryGrid_;
+        [self swapNotes];
+        currentGrid_ = altGrid_;
 
         LineBufferPosition *newLastPos = [realLineBuffer lastPosition];
 
@@ -265,7 +503,7 @@ static const double kInterBellQuietPeriod = 0.1;
         // screen to it. This sets up the current state so that if there is a
         // selection, linebuffer has the configuration that the user actually
         // sees (history + the alt screen contents). That'll make
-        // convertCurrentSelectionToWidth:... happy (the selection's Y values
+        // convertRange:toWidth:... happy (the selection's Y values
         // will be able to be looked up) and then after that's done we can swap
         // back to the tempLineBuffer.
         LineBuffer *appendOnlyLineBuffer = [[realLineBuffer newAppendOnlyCopy] autorelease];
@@ -273,93 +511,93 @@ static const double kInterBellQuietPeriod = 0.1;
         [self appendScreen:copyOfAltGrid
               toScrollback:appendOnlyLineBuffer
             withUsedHeight:usedHeight
-                 newHeight:new_height
-               withObjects:NO];
+                 newHeight:new_height];
 
         if (hasSelection) {
-            // Compute selection positions relative to the end of the line buffer, which may have
-            // grown or shrunk.
-
-            int growth = newLastPos.absolutePosition - originalLastPos.absolutePosition;
-            LineBufferPosition *startPos = originalStartPos;
-            LineBufferPosition *endPos = originalEndPos;
-            LineBufferPosition *predecessorOfNewLastPos = [newLastPos predecessor];
-            if (growth > 0) {
-                if (startPos.absolutePosition >= originalLastPos.absolutePosition) {
-                    startPos.absolutePosition += growth;
-                }
-                if (endPos.absolutePosition >= originalLastPos.absolutePosition) {
-                    endPos.absolutePosition += growth;
-                }
-            } else if (growth < 0) {
-                if (startPos.absolutePosition >= newLastPos.absolutePosition &&
-                    startPos.absolutePosition < originalLastPos.absolutePosition) {
-                    // Started in deleted region
-                    startPos = newLastPos;
-                } else if (startPos.absolutePosition >= originalLastPos.absolutePosition) {
-                    // Starts after deleted region
-                    startPos.absolutePosition += growth;
-                }
-                if (endPos.absolutePosition >= predecessorOfNewLastPos.absolutePosition &&
-                    endPos.absolutePosition < originalLastPos.absolutePosition) {
-                    // Ended in deleted region
-                    endPos = predecessorOfNewLastPos;
-                } else if (endPos.absolutePosition >= originalLastPos.absolutePosition) {
-                    endPos.absolutePosition += growth;
-                }
-            }
-            if (startPos.absolutePosition >= endPos.absolutePosition + 1) {
-                hasSelection = NO;
-            }
-            VT100GridCoord newSelStart = [appendOnlyLineBuffer coordinateForPosition:startPos
-                                                                               width:new_width
-                                                                                  ok:NULL];
-            newSelStartX = newSelStart.x;
-            newSelStartY = newSelStart.y;
-            int numScrollbackLines = [realLineBuffer numLinesWithWidth:new_width];
-            if (newSelStartY >= numScrollbackLines) {
-                if (newSelStartY < numScrollbackLines + linesMovedUp) {
-                    // The selection started in one of the lines that was lost. Move it to the
-                    // first cell of the screen.
-                    newSelStartY = numScrollbackLines;
-                    newSelStartX = 0;
-                } else {
-                    // The selection starts on screen, so move it up by the number of lines by which
-                    // the alt screen shifted up.
-                    newSelStartY -= linesMovedUp;
-                }
-            }
-            
-            VT100GridCoord newSelEnd = [appendOnlyLineBuffer coordinateForPosition:endPos
-                                                                             width:new_width
-                                                                                ok:NULL];
-            newSelEndX = newSelEnd.x;
-            newSelEndY = newSelEnd.y;
-            if (newSelEndY >= numScrollbackLines) {
-                if (newSelEndY < numScrollbackLines + linesMovedUp) {
-                    // The selection ends in one of the lines that was lost. The whole selection is
-                    // gone.
-                    hasSelection = NO;
-                } else {
-                    // The selection ends on screen, so move it up by the number of lines by which
-                    // the alt screen shifted up.
-                    newSelEndY -= linesMovedUp;
-                }
-            }
-            if (originalEndPos.extendsToEndOfLine) {
-                newSelEndX = new_width;
+            hasSelection = [self computeRangeFromOriginalLimit:originalLastPos
+                                                 limitPosition:newLastPos
+                                                 startPosition:originalStartPos
+                                                   endPosition:originalEndPos
+                                                      newWidth:new_width
+                                                    lineBuffer:appendOnlyLineBuffer
+                                                         range:&newSelection
+                                                  linesMovedUp:linesMovedUp];
+        }
+        NSLog(@"Original limit=%@", originalLastPos);
+        NSLog(@"New limit=%@", newLastPos);
+        for (NSArray *tuple in altScreenNotes) {
+            id<IntervalTreeObject> note = tuple[0];
+            LineBufferPosition *start = tuple[1];
+            LineBufferPosition *end = tuple[2];
+            VT100GridCoordRange newRange;
+            NSLog(@"  Note positions=%@ to %@", start, end);
+            BOOL ok = [self computeRangeFromOriginalLimit:originalLastPos
+                                            limitPosition:newLastPos
+                                            startPosition:start
+                                              endPosition:end
+                                                 newWidth:new_width
+                                               lineBuffer:appendOnlyLineBuffer
+                                                    range:&newRange
+                                             linesMovedUp:linesMovedUp];
+            if (ok) {
+                NSLog(@"  New range=%@", VT100GridCoordRangeDescription(newRange));
+                Interval *interval = [self intervalForGridCoordRange:newRange
+                                                               width:new_width
+                                                         linesOffset:[self totalScrollbackOverflow]];
+                [marksAndNotes_ addObject:note withInterval:interval];
             } else {
-                // Move to the successor of newSelEndX, newSelEndY.
-                newSelEndX++;
-                if (newSelEndX > new_width) {
-                    newSelEndX -= new_width;
-                    newSelEndY++;
-                }
+                NSLog(@"  *FAILED TO CONVERT*");
             }
         }
     } else {
-        [altGrid_ release];
-        altGrid_ = nil;
+        // Was showing primary grid. Fix up notes in the alt screen.
+
+        // Append alt screen to empty line buffer
+        altScreenLineBuffer = [[[LineBuffer alloc] init] autorelease];
+        [self appendScreen:altGrid_
+              toScrollback:altScreenLineBuffer
+            withUsedHeight:[altGrid_ numberOfLinesUsed]
+                 newHeight:new_height];
+        int numLinesThatWillBeRestored = MIN([altScreenLineBuffer numLinesWithWidth:new_width],
+                                             new_height);
+        int numLinesDroppedFromTop = [altScreenLineBuffer numLinesWithWidth:new_width] - numLinesThatWillBeRestored;
+        
+        // Convert note ranges to new coords, dropping or truncating as needed
+        currentGrid_ = altGrid_;  // Swap to alt grid temporarily for convertRange:toWidth:to:inLineBuffer:
+        IntervalTree *replacementTree = [[IntervalTree alloc] init];
+        for (PTYNoteViewController *note in [savedMarksAndNotes_ allObjects]) {
+            VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
+            NSLog(@"Found note at %@", VT100GridCoordRangeDescription(noteRange));
+            VT100GridCoordRange newRange;
+            if ([self convertRange:noteRange toWidth:new_width to:&newRange inLineBuffer:altScreenLineBuffer]) {
+                // Anticipate the lines that will be dropped when the alt grid is restored.
+                newRange.start.y += [self totalScrollbackOverflow] - numLinesDroppedFromTop;
+                newRange.end.y += [self totalScrollbackOverflow] - numLinesDroppedFromTop;
+                if (newRange.start.y < 0) {
+                    newRange.start.y = 0;
+                    newRange.start.x = 0;
+                }
+                NSLog(@"  Its new range is %@ including %d lines dropped from top", VT100GridCoordRangeDescription(noteRange), numLinesDroppedFromTop);
+                [savedMarksAndNotes_ removeObject:note];
+                if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
+                    Interval *newInterval = [self intervalForGridCoordRange:newRange
+                                                                      width:new_width
+                                                                linesOffset:0];
+                    [replacementTree addObject:note withInterval:newInterval];
+                } else {
+                    NSLog(@"Failed to convert");
+                }
+            }
+        }
+        [savedMarksAndNotes_ release];
+        savedMarksAndNotes_ = replacementTree;
+        currentGrid_ = primaryGrid_;  // Swap back to primary grid
+        
+        // Restore alt screen with new width
+        altGrid_.size = VT100GridSizeMake(new_width, new_height);
+        [altGrid_ restoreScreenFromLineBuffer:altScreenLineBuffer
+                              withDefaultChar:[altGrid_ defaultChar]
+                            maxLinesToRestore:[altScreenLineBuffer numLinesWithWidth:currentGrid_.size.width]];
     }
 
     savedCursor_.x = MIN(new_width - 1, savedCursor_.x);
@@ -384,17 +622,28 @@ static const double kInterBellQuietPeriod = 0.1;
     DebugLog(@"resizeWidth setDirty");
     [delegate_ screenNeedsRedraw];
     if (hasSelection &&
-        newSelStartY >= linesDropped &&
-        newSelEndY >= linesDropped) {
-        [delegate_ screenSetSelectionFromX:newSelStartX
-                                     fromY:newSelStartY - linesDropped
-                                       toX:newSelEndX
-                                       toY:newSelEndY - linesDropped];
+        newSelection.start.y >= linesDropped &&
+        newSelection.end.y >= linesDropped) {
+        [delegate_ screenSetSelectionFromX:newSelection.start.x
+                                     fromY:newSelection.start.y - linesDropped
+                                       toX:newSelection.end.x
+                                       toY:newSelection.end.y - linesDropped];
     } else {
         [delegate_ screenRemoveSelection];
     }
 
+    [self reloadMarkCache];
     [delegate_ screenSizeDidChange];
+}
+
+- (void)reloadMarkCache {
+    [markCache_ removeAllObjects];
+    for (id<IntervalTreeObject> obj in [marksAndNotes_ allObjects]) {
+        if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+            VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
+            [markCache_ addObject:@(range.end.y)];
+        }
+    }
 }
 
 - (BOOL)allCharacterSetPropertiesHaveDefaultValues {
@@ -446,6 +695,9 @@ static const double kInterBellQuietPeriod = 0.1;
     [self resetScrollbackOverflow];
     [delegate_ screenRemoveSelection];
     [currentGrid_ markAllCharsDirty:YES];
+    [marksAndNotes_ release];
+    marksAndNotes_ = [[IntervalTree alloc] init];
+    [self reloadMarkCache];
 }
 
 - (void)appendStringAtCursor:(NSString *)string ascii:(BOOL)ascii
@@ -679,8 +931,7 @@ static const double kInterBellQuietPeriod = 0.1;
                   length:len
                  partial:NO
                    width:currentGrid_.size.width
-               timestamp:now
-                  object:nil];
+               timestamp:now];
     }
     NSMutableArray *wrappedLines = [NSMutableArray array];
     int n = [temp numLinesWithWidth:currentGrid_.size.width];
@@ -705,8 +956,7 @@ static const double kInterBellQuietPeriod = 0.1;
                          length:line.length
                         partial:(line.eol != EOL_HARD)
                           width:currentGrid_.size.width
-                      timestamp:now
-                         object:nil];
+                      timestamp:now];
     }
     if (!unlimitedScrollback_) {
         [linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width];
@@ -718,8 +968,7 @@ static const double kInterBellQuietPeriod = 0.1;
     [currentGrid_ restoreScreenFromLineBuffer:linebuffer_
                               withDefaultChar:[currentGrid_ defaultChar]
                             maxLinesToRestore:MIN([linebuffer_ numLinesWithWidth:currentGrid_.size.width],
-                                                  currentGrid_.size.height - numberOfConsecutiveEmptyLines)
-                               absoluteOffset:[self numberOfScrollbackLines] + [self totalScrollbackOverflow]];
+                                                  currentGrid_.size.height - numberOfConsecutiveEmptyLines)];
 }
 
 - (void)setAltScreen:(NSArray *)lines
@@ -872,8 +1121,7 @@ static const double kInterBellQuietPeriod = 0.1;
 {
     int linesPushed;
     linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
-                               toLineBuffer:linebuffer_
-                                withObjects:NO];
+                               toLineBuffer:linebuffer_];
 
     [linebuffer_ storeLocationOfAbsPos:savedFindContextAbsPos_
                              inContext:context];
@@ -1026,8 +1274,7 @@ static const double kInterBellQuietPeriod = 0.1;
 {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
-                                   toLineBuffer:linebuffer_
-                                    withObjects:NO];
+                                   toLineBuffer:linebuffer_];
 
     // Get the start position of (x,y)
     LineBufferPosition *startPos;
@@ -1092,8 +1339,7 @@ static const double kInterBellQuietPeriod = 0.1;
 {
     int linesPushed;
     linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
-                               toLineBuffer:linebuffer_
-                                withObjects:NO];
+                               toLineBuffer:linebuffer_];
 
     savedFindContextAbsPos_ = [self findContextAbsPosition];
     [self popScrollbackLines:linesPushed];
@@ -1208,42 +1454,196 @@ static const double kInterBellQuietPeriod = 0.1;
     return [NSDate dateWithTimeIntervalSinceReferenceDate:interval];
 }
 
-- (PTYNoteViewController *)noteForLine:(int)y {
-    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
-    if (y >= numLinesInLineBuffer) {
-        return (PTYNoteViewController *)[currentGrid_ objectForLine:y - numLinesInLineBuffer];
-    } else {
-        return (PTYNoteViewController *)[linebuffer_ objectForLineNumber:y width:currentGrid_.size.width];
+- (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range
+                                  width:(int)width
+                            linesOffset:(long long)linesOffset
+{
+    VT100GridCoord start = range.start;
+    VT100GridCoord end = range.end;
+    long long si = start.y;
+    si += linesOffset;
+    si *= (width + 1);
+    si += start.x;
+    long long ei = end.y;
+    ei += linesOffset;
+    ei *= (width + 1);
+    ei += end.x;
+    if (ei < si) {
+        long long temp = ei;
+        ei = si;
+        si = temp;
     }
+    return [Interval intervalWithLocation:si length:ei - si];
 }
 
-- (void)setNote:(PTYNoteViewController *)note forLine:(int)y {
-    assert(![self noteForLine:y]);
-    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
-    if (y >= numLinesInLineBuffer) {
-        [currentGrid_ setObject:note
-                        forLine:y - numLinesInLineBuffer
-                 absoluteOffset:[self numberOfScrollbackLines] + [self totalScrollbackOverflow]];
-    } else {
-        [linebuffer_ setObject:note forLine:y width:currentGrid_.size.width];
-    }
+- (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range {
+    return [self intervalForGridCoordRange:range
+                                     width:self.width
+                               linesOffset:[self totalScrollbackOverflow]];
 }
 
-- (int)lineNumberOfNote:(PTYNoteViewController *)note {
-    if (note.isInLineBuffer) {
-        BOOL ok;
-        VT100GridCoord coord = [linebuffer_ coordinateForPosition:note.lineBufferPosition
-                                                            width:currentGrid_.size.width
-                                                               ok:&ok];
-        if (ok) {
-            return coord.y;
-        } else {
-            NSLog(@"Failed to convert position %@", note.lineBufferPosition);
-            return -1;
+- (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval {
+    VT100GridCoordRange result;
+    const int w = self.width + 1;
+    result.start.y = interval.location / w - [self totalScrollbackOverflow];
+    result.start.x = interval.location % w;
+    result.end.y = interval.limit / w - [self totalScrollbackOverflow];
+    result.end.x = interval.limit % w;
+    
+    if (result.start.y < 0) {
+        result.start.y = 0;
+        result.start.x = 0;
+    }
+    return result;
+}
+
+- (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord {
+    coord.x--;
+    while (coord.x < 0) {
+        coord.x += self.width;
+        coord.y--;
+        if (coord.y < 0) {
+            coord.y = 0;
+            return coord;
         }
-    } else {
-        return note.absoluteLineNumber - [self totalScrollbackOverflow];
     }
+    return coord;
+}
+
+- (void)addNote:(PTYNoteViewController *)note
+        inRange:(VT100GridCoordRange)range {
+    [marksAndNotes_ addObject:note withInterval:[self intervalForGridCoordRange:range]];
+    [currentGrid_ markCharsDirty:YES inRectFrom:range.start to:[self predecessorOfCoord:range.end]];
+    note.delegate = self;
+    [delegate_ screenDidAddNote:note];
+}
+
+- (void)removeInaccessibleNotes {
+    long long lastDeadLocation = [self totalScrollbackOverflow] * (self.width + 1);
+    if (lastDeadLocation > 0) {
+        Interval *deadInterval = [Interval intervalWithLocation:0 length:lastDeadLocation + 1];
+        for (id<IntervalTreeObject> obj in [marksAndNotes_ objectsInInterval:deadInterval]) {
+            if ([obj.entry.interval limit] <= lastDeadLocation) {
+                if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+                    [markCache_ removeObject:@([self coordRangeForInterval:obj.entry.interval].end.y)];
+                }
+                [marksAndNotes_ removeObject:obj];
+            }
+        }
+    }
+}
+
+- (BOOL)markIsValid:(VT100ScreenMark *)mark {
+    return [marksAndNotes_ containsObject:mark];
+}
+
+- (VT100ScreenMark *)addMarkStartingAtAbsoluteLine:(long long)line oneLine:(BOOL)oneLine {
+    VT100ScreenMark *mark = [[[VT100ScreenMark alloc] init] autorelease];
+    int nonAbsoluteLine = line - [self totalScrollbackOverflow];
+    VT100GridCoordRange range;
+    if (oneLine) {
+        range = VT100GridCoordRangeMake(0, nonAbsoluteLine, self.width, nonAbsoluteLine);
+    } else {
+        // Interval is whole screen
+        int limit = nonAbsoluteLine + self.height - 1;
+        if (limit >= [self numberOfScrollbackLines] + [currentGrid_ numberOfLinesUsed]) {
+            limit = [self numberOfScrollbackLines] + [currentGrid_ numberOfLinesUsed] - 1;
+        }
+        range = VT100GridCoordRangeMake(0,
+                                        nonAbsoluteLine,
+                                        self.width,
+                                        limit);
+    }
+    [markCache_ addObject:@(range.end.y)];
+    [marksAndNotes_ addObject:mark withInterval:[self intervalForGridCoordRange:range]];
+    [delegate_ screenNeedsRedraw];
+    return mark;
+}
+
+- (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note {
+    return [self coordRangeForInterval:note.entry.interval];
+}
+
+- (NSArray *)charactersWithNotesOnLine:(int)line {
+    NSMutableArray *result = [NSMutableArray array];
+    Interval *interval = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
+                                                                                 line,
+                                                                                 0,
+                                                                                 line + 1)];
+    NSArray *objects = [marksAndNotes_ objectsInInterval:interval];
+    for (id<IntervalTreeObject> note in objects) {
+        if ([note isKindOfClass:[PTYNoteViewController class]]) {
+            VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
+            VT100GridRange gridRange;
+            if (range.start.y < line) {
+                gridRange.location = 0;
+            } else {
+                gridRange.location = range.start.x;
+            }
+            if (range.end.y > line) {
+                gridRange.length = self.width + 1 - gridRange.location;
+            } else {
+                gridRange.length = range.end.x - gridRange.location;
+            }
+            [result addObject:[NSValue valueWithGridRange:gridRange]];
+        }
+    }
+    return result;
+}
+
+- (NSArray *)notesInRange:(VT100GridCoordRange)range {
+    Interval *interval = [self intervalForGridCoordRange:range];
+    NSArray *objects = [marksAndNotes_ objectsInInterval:interval];
+    NSMutableArray *notes = [NSMutableArray array];
+    for (id<IntervalTreeObject> o in objects) {
+        if ([o isKindOfClass:[PTYNoteViewController class]]) {
+            [notes addObject:o];
+        }
+    }
+    return notes;
+}
+
+- (VT100ScreenMark *)lastMark {
+    NSEnumerator *enumerator = [marksAndNotes_ reverseLimitEnumerator];
+    NSArray *objects = [enumerator nextObject];
+    while (objects) {
+        for (id<IntervalTreeObject> obj in objects) {
+            if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+                return obj;
+            }
+        }
+        objects = [enumerator nextObject];
+    }
+    return nil;
+}
+
+- (BOOL)hasMarkOnLine:(int)line {
+    return [markCache_ containsObject:@(line)];
+}
+
+- (NSArray *)lastMarksOrNotes {
+    return [marksAndNotes_ objectsWithLargestLimit];
+}
+
+- (NSArray *)firstMarksOrNotes {
+    return [marksAndNotes_ objectsWithSmallestLimit];
+}
+
+- (NSArray *)marksOrNotesBefore:(Interval *)location {
+    NSEnumerator *enumerator = [marksAndNotes_ reverseLimitEnumeratorAt:location.limit];
+    NSArray *objects = [enumerator nextObject];
+    return objects;
+}
+
+- (NSArray *)marksOrNotesAfter:(Interval *)location {
+    NSEnumerator *enumerator = [marksAndNotes_ forwardLimitEnumeratorAt:location.limit];
+    NSArray *objects = [enumerator nextObject];
+    return objects;
+}
+
+- (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval {
+    VT100GridCoordRange range = [self coordRangeForInterval:interval];
+    return VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
 }
 
 #pragma mark - VT100TerminalDelegate
@@ -1494,8 +1894,8 @@ static const double kInterBellQuietPeriod = 0.1;
         // empty line.
         const int n = [currentGrid_ numberOfLinesUsed];
         for (int i = 0; i < n; i++) {
-            [currentGrid_ scrollWholeScreenUpIntoLineBuffer:linebuffer_
-                                        unlimitedScrollback:unlimitedScrollback_];
+            [self incrementOverflowBy:[currentGrid_ scrollWholeScreenUpIntoLineBuffer:linebuffer_
+                                                                  unlimitedScrollback:unlimitedScrollback_]];
         }
         x1 = 0;
         yStart = 0;
@@ -1987,6 +2387,54 @@ static const double kInterBellQuietPeriod = 0.1;
     return self.useColumnScrollRegion;
 }
 
+// offset is added to intervals before inserting into interval tree.
+- (void)moveNotesOnScreenFrom:(IntervalTree *)source
+                           to:(IntervalTree *)dest
+                       offset:(long long)offset
+                 screenOrigin:(int)screenOrigin
+{
+    VT100GridCoordRange screenRange =
+        VT100GridCoordRangeMake(0,
+                                screenOrigin,
+                                [self width],
+                                screenOrigin + self.height);
+    NSLog(@"  moveNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
+    Interval *interval = [self intervalForGridCoordRange:screenRange];
+    for (id<IntervalTreeObject> obj in [source objectsInInterval:interval]) {
+        Interval *interval = [[obj.entry.interval retain] autorelease];
+        [[obj retain] autorelease];
+        NSLog(@"  found note with interval %@", interval);
+        [source removeObject:obj];
+        interval.location = interval.location + offset;
+        NSLog(@"  new interval is %@", interval);
+        [dest addObject:obj withInterval:interval];
+    }
+}
+
+// Swap onscreen notes between marksAndNotes_ and savedMarksAndNotes_.
+// IMPORTANT: Call -reloadMarkCache after this.
+- (void)swapNotes
+{
+    int historyLines = [self numberOfScrollbackLines];
+    Interval *origin = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
+                                                                               historyLines,
+                                                                               1,
+                                                                               historyLines)];
+    IntervalTree *temp = [[IntervalTree alloc] init];
+    NSLog(@"swapNotes: moving onscreen notes into savedNotes");
+    [self moveNotesOnScreenFrom:marksAndNotes_
+                             to:temp
+                         offset:-origin.location
+                   screenOrigin:[self numberOfScrollbackLines]];
+    NSLog(@"swapNotes: moving onscreen savedNotes into notes");
+    [self moveNotesOnScreenFrom:savedMarksAndNotes_
+                             to:marksAndNotes_
+                         offset:origin.location
+                   screenOrigin:0];
+    [savedMarksAndNotes_ release];
+    savedMarksAndNotes_ = temp;
+}
+
 - (void)terminalShowAltBuffer
 {
     if (currentGrid_ == altGrid_) {
@@ -1997,16 +2445,44 @@ static const double kInterBellQuietPeriod = 0.1;
     }
 
     primaryGrid_.savedDefaultChar = [primaryGrid_ defaultChar];
+    [self hideOnScreenNotesAndTruncateSpanners];
     currentGrid_ = altGrid_;
     currentGrid_.cursor = primaryGrid_.cursor;
+
+    [self swapNotes];
+    [self reloadMarkCache];
+
     [currentGrid_ markAllCharsDirty:YES];
     [delegate_ screenNeedsRedraw];
 }
 
+- (void)hideOnScreenNotesAndTruncateSpanners
+{
+    int screenOrigin = [self numberOfScrollbackLines];
+    VT100GridCoordRange screenRange =
+        VT100GridCoordRangeMake(0,
+                                screenOrigin,
+                                [self width],
+                                screenOrigin + self.height);
+    Interval *screenInterval = [self intervalForGridCoordRange:screenRange];
+    for (id<IntervalTreeObject> note in [marksAndNotes_ objectsInInterval:screenInterval]) {
+        if (note.entry.interval.location < screenInterval.location) {
+            // Truncate note so that it ends just before screen.
+            note.entry.interval.length = screenInterval.location - note.entry.interval.location;
+        }
+        if ([note isKindOfClass:[PTYNoteViewController class]]) {
+            [(PTYNoteViewController *)note setNoteHidden:YES];
+        }
+    }
+}
 - (void)terminalShowPrimaryBufferRestoringCursor:(BOOL)restore
 {
     if (currentGrid_ == altGrid_) {
+        [self hideOnScreenNotesAndTruncateSpanners];
         currentGrid_ = primaryGrid_;
+        [self swapNotes];
+        [self reloadMarkCache];
+
         [currentGrid_ markAllCharsDirty:YES];
         if (!restore) {
             // Don't restore the cursor; instead, continue using the cursor position of the alt grid.
@@ -2041,8 +2517,19 @@ static const double kInterBellQuietPeriod = 0.1;
     [delegate_ screenSetColorTableEntryAtIndex:theIndex color:theColor];
 }
 
-- (void)terminalSaveScrollPosition {
-    [delegate_ screenSaveScrollPosition];
+- (void)terminalSaveScrollPositionWithArgument:(NSString *)argument {
+    // The difference between an argument of saveScrollPosition and saveCursorLine (the default) is
+    // subtle. When saving the scroll position, the entire region of visible lines is recorded and
+    // will be restored exactly. When saving only the line the cursor is on, when restored, that
+    // line will be made visible but no other aspect of the scroll position must be restored. This
+    // is often preferable because when setting a mark as part of the prompt, we wouldn't want the
+    // prompt to be the last line on the screen (such lines are scrolled to the center of
+    // the screen).
+    if ([argument isEqualToString:@"saveScrollPosition"]) {
+        [delegate_ screenSaveScrollPosition];
+    } else {  // implicitly "saveCursorLine"
+        [delegate_ screenAddMarkOnLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+    }
 }
 
 - (void)terminalStealFocus {
@@ -2063,16 +2550,44 @@ static const double kInterBellQuietPeriod = 0.1;
     [delegate_ screenSetProfileToProfileNamed:value];
 }
 
-- (void)terminalSetLineNoteAtCursor:(NSString *)value {
-    int line = [self numberOfScrollbackLines] + currentGrid_.cursorY;
-    PTYNoteViewController *note = [self noteForLine:line];
-    if (!note) {
-        note = [[[PTYNoteViewController alloc] init] autorelease];
-        [self setNote:note forLine:line];
+- (void)terminalAddNote:(NSString *)value show:(BOOL)show {
+    NSArray *parts = [value componentsSeparatedByString:@"|"];
+    VT100GridCoord location = currentGrid_.cursor;
+    NSString *message = nil;
+    int length = currentGrid_.size.width - currentGrid_.cursorX - 1;
+    if (parts.count == 1) {
+        message = parts[0];
+    } else if (parts.count == 2) {
+        message = parts[1];
+        length = [parts[0] intValue];
+    } else if (parts.count >= 4) {
+        location.x = MIN(MAX(0, [parts[0] intValue]), location.x);
+        location.y = MIN(MAX(0, [parts[1] intValue]), location.y);
+        length = [parts[2] intValue];
+        message = parts[3];
     }
-    [note setString:value];
-    [note sizeToFit];
-    [delegate_ screenDidAddNoteOnLine:line];
+    VT100GridCoord end = location;
+    end.x += length;
+    end.y += end.x / self.width;
+    end.x %= self.width;
+    
+    int endVal = end.x + end.y * self.width;
+    int maxVal = self.width - 1 + (self.height - 1) * self.width;
+    if (length > 0 &&
+        message.length > 0 &&
+        endVal <= maxVal) {
+        PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+        [note setString:message];
+        [note sizeToFit];
+        [self addNote:note
+              inRange:VT100GridCoordRangeMake(location.x,
+                                              location.y + [self numberOfScrollbackLines],
+                                              end.x,
+                                              end.y + [self numberOfScrollbackLines])];
+        if (!show) {
+            [note setNoteHidden:YES];
+        }
+    }
 }
 
 - (void)terminalSetPasteboard:(NSString *)value {
@@ -2222,35 +2737,33 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 // This assumes the window's height is going to change to newHeight but currentGrid_.size.height
-// is still the "old" height.
-- (void)appendScreen:(VT100Grid *)grid
+// is still the "old" height. Returns the number of lines appended.
+- (int)appendScreen:(VT100Grid *)grid
         toScrollback:(LineBuffer *)lineBufferToUse
       withUsedHeight:(int)usedHeight
            newHeight:(int)newHeight
-         withObjects:(BOOL)withObjects
 {
+    int n;
     if (grid.size.height - newHeight >= usedHeight) {
         // Height is decreasing but pushing HEIGHT lines into the buffer would scroll all the used
         // lines off the top, leaving the cursor floating without any text. Keep all used lines that
         // fit onscreen.
-        [grid appendLines:MAX(usedHeight, newHeight)
-             toLineBuffer:lineBufferToUse
-              withObjects:withObjects];
+        n = MAX(usedHeight, newHeight);
     } else {
         if (newHeight < grid.size.height) {
             // Screen is shrinking.
             // If possible, keep the last used line a fixed distance from the top of
             // the screen. If not, at least save all the used lines.
-            [grid appendLines:usedHeight
-                 toLineBuffer:lineBufferToUse
-                  withObjects:withObjects];
+            n = usedHeight;
         } else {
-            // Screen is growing. New content may be brought in on top.
-            [grid appendLines:grid.size.height
-                 toLineBuffer:lineBufferToUse
-                  withObjects:withObjects];
+            // Screen is not shrinking in height. New content may be brought in on top.
+            n = grid.size.height;
         }
     }
+    [grid appendLines:n
+         toLineBuffer:lineBufferToUse];
+
+    return n;
 }
 
 static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
@@ -2358,11 +2871,12 @@ static void SwapInt(int *a, int *b) {
                  selectionStartPositionIsValid:(BOOL *)selectionStartPositionIsValid
                     selectionEndPostionIsValid:(BOOL *)selectionEndPostionIsValid
                                   inLineBuffer:(LineBuffer *)lineBuffer
+                                      forRange:(VT100GridCoordRange)range
 {
-    int actualStartX = [delegate_ screenSelectionStartX];
-    int actualStartY = [delegate_ screenSelectionStartY];
-    int actualEndX = [delegate_ screenSelectionEndX];
-    int actualEndY = [delegate_ screenSelectionEndY];
+    int actualStartX = range.start.x;
+    int actualStartY = range.start.y;
+    int actualEndX = range.end.x;
+    int actualEndY = range.end.y;
 
     BOOL endExtends = NO;
     // Use the predecessor of endx,endy so it will have a legal position in the line buffer.
@@ -2413,30 +2927,31 @@ static void SwapInt(int *a, int *b) {
     return YES;
 }
 
-- (BOOL)convertCurrentSelectionToWidth:(int)newWidth
-                           toNewStartX:(int *)newStartXPtr
-                           toNewStartY:(int *)newStartYPtr
-                             toNewEndX:(int *)newEndXPtr
-                             toNewEndY:(int *)newEndYPtr
-                          inLineBuffer:(LineBuffer *)lineBuffer
+- (BOOL)convertRange:(VT100GridCoordRange)range
+             toWidth:(int)newWidth
+                  to:(VT100GridCoordRange *)resultPtr
+        inLineBuffer:(LineBuffer *)lineBuffer
 {
     LineBufferPosition *selectionStartPosition;
     LineBufferPosition *selectionEndPosition;
     BOOL selectionStartPositionIsValid;
     BOOL selectionEndPostionIsValid;
+    
+    // Temporarily swap in the passed-in linebuffer so the call below can access lines in the right line buffer.
+    LineBuffer *savedLineBuffer = linebuffer_;
+    linebuffer_ = lineBuffer;
     BOOL hasSelection = [self getNullCorrectedSelectionStartPosition:&selectionStartPosition
                                                          endPosition:&selectionEndPosition
                                        selectionStartPositionIsValid:&selectionStartPositionIsValid
                                           selectionEndPostionIsValid:&selectionEndPostionIsValid
-                                                        inLineBuffer:lineBuffer];
-
+                                                        inLineBuffer:lineBuffer
+                                                            forRange:range];
+    linebuffer_ = savedLineBuffer;
     if (!hasSelection) {
         return NO;
     }
     if (selectionStartPositionIsValid) {
-        VT100GridCoord newStart = [lineBuffer coordinateForPosition:selectionStartPosition width:newWidth ok:NULL];
-        *newStartXPtr = newStart.x;
-        *newStartYPtr = newStart.y;
+        resultPtr->start = [lineBuffer coordinateForPosition:selectionStartPosition width:newWidth ok:NULL];
         if (selectionEndPostionIsValid) {
             VT100GridCoord newEnd = [lineBuffer coordinateForPosition:selectionEndPosition width:newWidth ok:NULL];
             newEnd.x++;
@@ -2444,15 +2959,14 @@ static void SwapInt(int *a, int *b) {
                 newEnd.y++;
                 newEnd.x -= newWidth;
             }
-            *newEndXPtr = newEnd.x;
-            *newEndYPtr = newEnd.y;
+            resultPtr->end = newEnd;
         } else {
-            *newEndXPtr = currentGrid_.size.width;
-            *newEndYPtr = [lineBuffer numLinesWithWidth:newWidth] + currentGrid_.size.height - 1;
+            resultPtr->end.x = currentGrid_.size.width;
+            resultPtr->end.y = [lineBuffer numLinesWithWidth:newWidth] + currentGrid_.size.height - 1;
         }
     }
     if (selectionEndPostionIsValid && selectionEndPosition.extendsToEndOfLine) {
-        *newEndXPtr = newWidth;
+        resultPtr->end.x = newWidth;
     }
     return YES;
 }
@@ -2468,7 +2982,7 @@ static void SwapInt(int *a, int *b) {
     maxScrollbackLines_ = lines;
     [linebuffer_ setMaxLines: lines];
     if (!unlimitedScrollback_) {
-        [linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width];
+        [self incrementOverflowBy:[linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width]];
     }
     [delegate_ screenDidChangeNumberOfScrollbackLines];
 }
@@ -2584,8 +3098,7 @@ static void SwapInt(int *a, int *b) {
         BOOL isOk = [linebuffer_ popAndCopyLastLineInto:dummy
                                                   width:currentGrid_.size.width
                                       includesEndOfLine:&cont
-                                              timestamp:NULL
-                                                 object:NULL];
+                                              timestamp:NULL];
         NSAssert(isOk, @"Pop shouldn't fail");
     }
     free(dummy);
@@ -2626,8 +3139,7 @@ static void SwapInt(int *a, int *b) {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
     linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
-                               toLineBuffer:linebuffer_
-                                withObjects:NO];
+                               toLineBuffer:linebuffer_];
 
     // Search one block.
     int stopAt;
@@ -2724,6 +3236,22 @@ static void SwapInt(int *a, int *b) {
 
     [self popScrollbackLines:linesPushed];
     return keepSearching;
+}
+
+#pragma mark - PTYNoteViewControllerDelegate
+
+- (void)noteDidRequestRemoval:(PTYNoteViewController *)note {
+    if ([marksAndNotes_ containsObject:note]) {
+        [marksAndNotes_ removeObject:note];
+    } else if ([savedMarksAndNotes_ containsObject:note]) {
+        [savedMarksAndNotes_ removeObject:note];
+    }
+    [delegate_ screenNeedsRedraw];
+    [delegate_ screenDidEndEditingNote];
+}
+
+- (void)noteDidEndEditing:(PTYNoteViewController *)note {
+    [delegate_ screenDidEndEditingNote];
 }
 
 @end

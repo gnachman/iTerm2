@@ -32,7 +32,6 @@
 #import "BackgroundThread.h"
 #import "LineBlock.h"
 #import "RegexKitLite/RegexKitLite.h"
-#import "TrackedObject.h"
 
 @implementation LineBuffer
 
@@ -40,7 +39,7 @@
 - (LineBlock*) _addBlockOfSize: (int) size
 {
     LineBlock* block = [[LineBlock alloc] initWithRawBufferSize: size];
-    [blocks addObject: block];
+    [blocks addObject:block];
     [block release];
     return block;
 }
@@ -196,7 +195,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
            partial:(BOOL)partial
              width:(int)width
          timestamp:(NSTimeInterval)timestamp
-            object:(id<TrackedObject>)object
 {
 #ifdef LOG_MUTATIONS
     {
@@ -215,18 +213,13 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     LineBlock* block = [blocks objectAtIndex: ([blocks count] - 1)];
 
-    if (object) {
-        object.isInLineBuffer = YES;
-        object.lineBufferPosition = [self lastPosition];
-    }
     int beforeLines = [block getNumLinesWithWrapWidth:width];
-    if (![block appendLine:buffer length:length partial:partial width:width timestamp:timestamp object:object]) {
+    if (![block appendLine:buffer length:length partial:partial width:width timestamp:timestamp]) {
         // It's going to be complicated. Invalidate the number of wrapped lines
         // cache.
         num_wrapped_lines_width = -1;
         int prefix_len = 0;
         NSTimeInterval prefixTimestamp = 0;
-        id<TrackedObject> prefixObject = nil;
         screen_char_t* prefix = NULL;
         if ([block hasPartial]) {
             // There is a line that's too long for the current block to hold.
@@ -236,8 +229,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             BOOL ok = [block popLastLineInto:&temp
                                   withLength:&prefix_len
                                    upToWidth:[block rawBufferSize]+1
-                                   timestamp:&prefixTimestamp
-                                      object:&prefixObject];
+                                   timestamp:&prefixTimestamp];
             assert(ok);
             prefix = (screen_char_t*) malloc(MAX(1, prefix_len) * sizeof(screen_char_t));
             memcpy(prefix, temp, prefix_len * sizeof(screen_char_t));
@@ -269,13 +261,13 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         // Append the prefix if there is one (the prefix was a partial line that we're
         // moving out of the last block into the new block)
         if (prefix) {
-            BOOL ok = [block appendLine:prefix length:prefix_len partial:YES width:width timestamp:prefixTimestamp object:prefixObject];
+            BOOL ok = [block appendLine:prefix length:prefix_len partial:YES width:width timestamp:prefixTimestamp];
             NSAssert(ok, @"append can't fail here");
             free(prefix);
         }
         // Finally, append this line to the new block. We know it'll fit because we made
         // enough room for it.
-        BOOL ok = [block appendLine:buffer length:length partial:partial width:width timestamp:timestamp object:object];
+        BOOL ok = [block appendLine:buffer length:length partial:partial width:width timestamp:timestamp];
         NSAssert(ok, @"append can't fail here");
     } else if (num_wrapped_lines_width == width) {
         // Straightforward addition of a line to an existing block. Update the
@@ -308,59 +300,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         return [block timestampForLineNumber:line width:width];
     }
     return 0;
-}
-
-- (id<TrackedObject>)objectForLineNumber:(int)lineNum width:(int)width
-{
-    int line = lineNum;
-    int i;
-    for (i = 0; i < [blocks count]; ++i) {
-        LineBlock* block = [blocks objectAtIndex:i];
-        NSAssert(block, @"Null block");
-        
-        // getNumLinesWithWrapWidth caches its result for the last-used width so
-        // this is usually faster than calling getWrappedLineWithWrapWidth since
-        // most calls to the latter will just decrement line and return NULL.
-        int block_lines = [block getNumLinesWithWrapWidth:width];
-        if (block_lines < line) {
-            line -= block_lines;
-            continue;
-        }
-        
-        return [block objectForLineNumber:line width:width];
-    }
-    return 0;
-}
-
-- (void)setObject:(id<TrackedObject>)object forLine:(int)lineNum width:(int)width {
-    int line = lineNum;
-    int i;
-    for (i = 0; i < [blocks count]; ++i) {
-        LineBlock* block = [blocks objectAtIndex:i];
-        NSAssert(block, @"Null block");
-        
-        // getNumLinesWithWrapWidth caches its result for the last-used width so
-        // this is usually faster than calling getWrappedLineWithWrapWidth since
-        // most calls to the latter will just decrement line and return NULL.
-        int block_lines = [block getNumLinesWithWrapWidth:width];
-        if (block_lines < line) {
-            line -= block_lines;
-            continue;
-        }
-
-        LineBufferPosition *position = [self positionForCoordinate:VT100GridCoordMake(0, lineNum)
-                                                             width:width
-                                                            offset:0];
-        if (position) {
-            [block setObject:object forLine:line width:width];
-            object.isInLineBuffer = YES;
-            object.lineBufferPosition = position;
-        } else {
-            NSLog(@"Couldn't convert line number %d with width %d to position, not adding object.",
-                  lineNum, width);
-        }
-        return;
-    }
 }
 
 // Copy a line into the buffer. If the line is shorter than 'width' then only
@@ -443,7 +382,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                          width:(int)width
              includesEndOfLine:(int*)includesEndOfLine
                      timestamp:(NSTimeInterval *)timestampPtr
-                        object:(id<TrackedObject> *)objectPtr
 {
     if ([self numLinesWithWidth: width] == 0) {
         return NO;
@@ -462,8 +400,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     BOOL ok = [block popLastLineInto:&temp
                           withLength:&length
                            upToWidth:width
-                           timestamp:timestampPtr
-                              object:objectPtr];
+                           timestamp:timestampPtr];
     NSAssert(ok, @"Unexpected empty block");
     NSAssert(length <= width, @"Length too large");
     NSAssert(length >= 0, @"Negative length");
@@ -488,9 +425,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         NSLog(@"Pop: %s\n", a);
     }
 #endif
-    if (objectPtr) {
-        (*objectPtr).isInLineBuffer = NO;
-    }
     return YES;
 }
 

@@ -7,30 +7,34 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "IntervalTree.h"
 #import "PTYNoteView.h"
-#import "TrackedObject.h"
 
 // Post this when the note view's anchor has a chance to become centered.
 extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
 
+@class PTYNoteViewController;
+
 @protocol PTYNoteViewControllerDelegate
+- (void)noteDidRequestRemoval:(PTYNoteViewController *)note;
+- (void)noteDidEndEditing:(PTYNoteViewController *)note;
 @end
 
-@interface PTYNoteViewController : NSViewController <TrackedObject> {
+@interface PTYNoteViewController : NSViewController <
+  IntervalTreeObject,
+  NSTextViewDelegate,
+  PTYNoteViewDelegate> {
     PTYNoteView *noteView_;
     NSTextView *textView_;
     NSScrollView *scrollView_;
     NSPoint anchor_;
     BOOL watchForUpdate_;
     BOOL hidden_;
-
-    BOOL isInLineBuffer_;
-    LineBufferPosition *lineBufferPosition_;
-    long long absoluteLineNumber_;
 }
 
 @property(nonatomic, retain) PTYNoteView *noteView;
 @property(nonatomic, assign) NSPoint anchor;
+@property(nonatomic, assign) id<PTYNoteViewControllerDelegate> delegate;
 
 - (void)beginEditing;
 - (BOOL)isEmpty;
@@ -38,5 +42,7 @@ extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
 - (void)setNoteHidden:(BOOL)hidden;
 - (BOOL)isNoteHidden;
 - (void)sizeToFit;
+- (void)makeFirstResponder;
+- (void)highlight;
 
 @end

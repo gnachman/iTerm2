@@ -7,13 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "TrackedObject.h"
 #import "VT100GridTypes.h"
 
 @interface VT100LineInfo : NSObject <NSCopying>
 
 @property(nonatomic, assign) NSTimeInterval timestamp;
-@property(nonatomic, retain) id<TrackedObject> object;
 
 - (id)initWithWidth:(int)width;
 - (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestamp:(BOOL)updateTimestamp;

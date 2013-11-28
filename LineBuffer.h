@@ -29,7 +29,6 @@
 #import <Cocoa/Cocoa.h>
 #import "FindContext.h"
 #import "ScreenChar.h"
-#import "TrackedObject.h"
 #import "LineBufferPosition.h"
 #import "LineBufferHelpers.h"
 #import "VT100GridTypes.h"
@@ -92,10 +91,7 @@
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
-         timestamp:(NSTimeInterval)timestamp
-            object:(id<TrackedObject>)object;
-
-- (void)setObject:(id<TrackedObject>)object forLine:(int)line width:(int)width;
+         timestamp:(NSTimeInterval)timestamp;
 
 // If more lines are in the buffer than max_lines, call this function. It will adjust the count
 // of excess lines and try to free the first block(s) if they are unused. Because this could happen
@@ -108,9 +104,6 @@
 
 // Returns the timestamp associated with a line when wrapped to the specified width.
 - (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width;
-
-// Returns the object associated with a line when wrapped to the specified width.
-- (id<TrackedObject>)objectForLineNumber:(int)lineNum width:(int)width;
 
 // Copy a line into the buffer. If the line is shorter than 'width' then only the first 'width'
 // characters will be modified.
@@ -130,8 +123,7 @@
 - (BOOL)popAndCopyLastLineInto:(screen_char_t*)ptr
                          width:(int)width
              includesEndOfLine:(int*)includesEndOfLine
-                     timestamp:(NSTimeInterval *)timestampPtr
-                        object:(id<TrackedObject> *)objectPtr;
+                     timestamp:(NSTimeInterval *)timestampPtr;
 
 // Get the number of buffer lines at a given width.
 - (int) numLinesWithWidth: (int) width;

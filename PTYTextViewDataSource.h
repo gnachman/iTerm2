@@ -86,8 +86,14 @@ typedef enum {
 // Returns the last modified date for a given line.
 - (NSDate *)timestampForLine:(int)y;
 
-- (PTYNoteViewController *)noteForLine:(int)y;
-- (void)setNote:(PTYNoteViewController *)note forLine:(int)y;
-- (int)lineNumberOfNote:(PTYNoteViewController *)note;
+- (void)addNote:(PTYNoteViewController *)note inRange:(VT100GridCoordRange)range;
+- (void)removeInaccessibleNotes;
+
+// Returns all notes in a range of cells.
+- (NSArray *)notesInRange:(VT100GridCoordRange)range;
+
+- (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note;
+- (NSArray *)charactersWithNotesOnLine:(int)line;
+- (BOOL)hasMarkOnLine:(int)line;
 
 @end

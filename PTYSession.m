@@ -52,6 +52,7 @@
 #import "TmuxWindowOpener.h"
 #import "Trigger.h"
 #import "VT100Screen.h"
+#import "VT100ScreenMark.h"
 #import "VT100Terminal.h"
 #import "WindowControllerInterface.h"
 #import "iTerm.h"
@@ -69,6 +70,10 @@
 #define DEBUG_METHOD_TRACE    0
 #define DEBUG_KEYDOWNDUMP     0
 #define ASK_ABOUT_OUTDATED_FORMAT @"AskAboutOutdatedKeyMappingForGuid%@"
+
+@interface PTYSession ()
+@property(nonatomic, retain) Interval *currentMarkOrNotePosition;
+@end
 
 @implementation PTYSession
 
@@ -105,7 +110,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     lastOutput = lastInput;
     lastUpdate = lastInput;
     EXIT=NO;
-    savedScrollPosition_ = -1;
     updateTimer = nil;
     antiIdleTimer = nil;
     addressBookEntry = nil;
@@ -192,7 +196,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [TERMINAL release];
     TERMINAL = nil;
     [tailFindContext_ release];
-    
+    _currentMarkOrNotePosition = nil;
+    [lastMark_ release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (dvrDecoder_) {
@@ -961,6 +966,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         }
         return;
     }
+    self.currentMarkOrNotePosition = nil;
     [self writeTaskImpl:data];
 }
 
@@ -2938,18 +2944,33 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 // Jump to the saved scroll position
 - (void)jumpToSavedScrollPosition
 {
-    assert(savedScrollPosition_ != -1);
-    if (savedScrollPosition_ < [SCREEN totalScrollbackOverflow]) {
-        NSBeep();
+    VT100ScreenMark *mark = nil;
+    if (lastMark_ && [SCREEN markIsValid:lastMark_]) {
+        mark = lastMark_;
     } else {
-        [TEXTVIEW scrollToAbsoluteOffset:savedScrollPosition_ height:savedScrollHeight_];
+        mark = [SCREEN lastMark];
+    }
+    Interval *interval = mark.entry.interval;
+    if (!interval) {
+        NSBeep();
+        return;
+    }
+    VT100GridRange range = [SCREEN lineNumberRangeOfInterval:interval];
+    long long offset = range.location;
+    if (offset < 0) {
+        NSBeep();  // This really shouldn't ever happen
+    } else {
+        self.currentMarkOrNotePosition = [mark.entry.interval retain];
+        offset += [SCREEN totalScrollbackOverflow];
+        [TEXTVIEW scrollToAbsoluteOffset:offset height:[SCREEN height]];
+        [TEXTVIEW highlightMarkOnLine:VT100GridRangeMax(range)];
     }
 }
 
 // Is there a saved scroll position?
 - (BOOL)hasSavedScrollPosition
 {
-    return savedScrollPosition_ != -1;
+    return [SCREEN lastMark] != nil;
 }
 
 - (void)useStringForFind:(NSString*)string
@@ -3257,6 +3278,122 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)toggleShowTimestamps {
     [TEXTVIEW toggleShowTimestamps];
+}
+
+- (VT100GridCoordRange)smartSelectionRangeAt:(VT100GridCoord)coord {
+    if (coord.x < 0 || coord.y < 0 || coord.x >= SCREEN.width || coord.y >= SCREEN.height) {
+        return VT100GridCoordRangeMake(0, 0, 0, 0);
+    }
+    int startX, startY, endX, endY;
+    [TEXTVIEW smartSelectAtX:coord.x
+                           y:coord.y + [SCREEN numberOfScrollbackLines]
+                    toStartX:&startX
+                    toStartY:&startY
+                      toEndX:&endX
+                      toEndY:&endY
+            ignoringNewlines:NO];
+    return [TEXTVIEW rangeByTrimmingNullsFromRange:VT100GridCoordRangeMake(startX,
+                                                                           startY,
+                                                                           endX,
+                                                                           endY)
+                                        trimSpaces:YES];
+}
+
+- (void)addNoteAtCursor {
+    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+    VT100GridCoordRange rangeAtCursor = [self smartSelectionRangeAt:VT100GridCoordMake(SCREEN.cursorX - 1,
+                                                                                       SCREEN.cursorY - 1)];
+    VT100GridCoordRange rangeBeforeCursor = [self smartSelectionRangeAt:VT100GridCoordMake(SCREEN.cursorX - 2,
+                                                                                           SCREEN.cursorY - 1)];
+    VT100GridCoordRange rangeAfterCursor = [self smartSelectionRangeAt:VT100GridCoordMake(SCREEN.cursorX,
+                                                                                          SCREEN.cursorY - 1)];
+    if (VT100GridCoordRangeLength(rangeAtCursor, SCREEN.width) > 0) {
+        [SCREEN addNote:note inRange:rangeAtCursor];
+    } else if (VT100GridCoordRangeLength(rangeAfterCursor, SCREEN.width) > 0) {
+        [SCREEN addNote:note inRange:rangeAfterCursor];
+    } else if (VT100GridCoordRangeLength(rangeBeforeCursor, SCREEN.width) > 0) {
+        [SCREEN addNote:note inRange:rangeBeforeCursor];
+    } else {
+        int y = SCREEN.cursorY - 1 + [SCREEN numberOfScrollbackLines];
+        [SCREEN addNote:note inRange:VT100GridCoordRangeMake(0, y, SCREEN.width, y)];
+    }
+    [note makeFirstResponder];
+}
+
+- (void)showHideNotes {
+    VT100GridCoordRange range = VT100GridCoordRangeMake(0,
+                                                        0,
+                                                        SCREEN.width,
+                                                        SCREEN.height + [SCREEN numberOfScrollbackLines]);
+    NSArray *notes = [SCREEN notesInRange:range];
+    BOOL anyNoteIsVisible = NO;
+    for (PTYNoteViewController *note in notes) {
+        if (!note.view.isHidden) {
+            anyNoteIsVisible = YES;
+            break;
+        }
+    }
+    for (PTYNoteViewController *note in notes) {
+        [note setNoteHidden:anyNoteIsVisible];
+    }
+}
+
+- (void)highlightMarkOrNote:(id<IntervalTreeObject>)obj {
+    if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+        [TEXTVIEW highlightMarkOnLine:VT100GridRangeMax([SCREEN lineNumberRangeOfInterval:obj.entry.interval])];
+    } else {
+        PTYNoteViewController *note = (PTYNoteViewController *)obj;
+        [note setNoteHidden:NO];
+        [note highlight];
+    }
+}
+
+- (void)previousMarkOrNote {
+    NSArray *objects = nil;
+    if (self.currentMarkOrNotePosition == nil) {
+        objects = [SCREEN lastMarksOrNotes];
+    } else {
+        objects = [SCREEN marksOrNotesBefore:self.currentMarkOrNotePosition];
+        if (!objects.count) {
+            objects = [SCREEN lastMarksOrNotes];
+            if (objects.count) {
+                [TEXTVIEW beginFlash:FlashWrapToBottom];
+            }
+        }
+    }
+    if (objects.count) {
+        id<IntervalTreeObject> obj = objects[0];
+        self.currentMarkOrNotePosition = obj.entry.interval;
+        VT100GridRange range = [SCREEN lineNumberRangeOfInterval:self.currentMarkOrNotePosition];
+        [TEXTVIEW scrollLineNumberRangeIntoView:range];
+        for (obj in objects) {
+            [self highlightMarkOrNote:obj];
+        }
+    }
+}
+
+- (void)nextMarkOrNote {
+    NSArray *objects = nil;
+    if (self.currentMarkOrNotePosition == nil) {
+        objects = [SCREEN firstMarksOrNotes];
+    } else {
+        objects = [SCREEN marksOrNotesAfter:self.currentMarkOrNotePosition];
+        if (!objects.count) {
+            objects = [SCREEN firstMarksOrNotes];
+            if (objects.count) {
+                [TEXTVIEW beginFlash:FlashWrapToTop];
+            }
+        }
+    }
+    if (objects.count) {
+        id<IntervalTreeObject> obj = objects[0];
+        self.currentMarkOrNotePosition = obj.entry.interval;
+        VT100GridRange range = [SCREEN lineNumberRangeOfInterval:self.currentMarkOrNotePosition];
+        [TEXTVIEW scrollLineNumberRangeIntoView:range];
+        for (obj in objects) {
+            [self highlightMarkOrNote:obj];
+        }
+    }
 }
 
 #pragma mark tmux gateway delegate methods
@@ -4265,6 +4402,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenNeedsRedraw {
     [self refreshAndStartTimerIfNeeded];
+    [TEXTVIEW updateNoteViewFrames];
+    [TEXTVIEW setNeedsDisplay:YES];
 }
 
 - (void)screenUpdateDisplay {
@@ -4529,11 +4668,22 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return TEXTVIEW != nil;
 }
 
+- (void)screenAddMarkOnLine:(int)line {
+    [TEXTVIEW refresh];  // In case text was appended
+    [lastMark_ release];
+    lastMark_ = [[SCREEN addMarkStartingAtAbsoluteLine:[SCREEN totalScrollbackOverflow] + line
+                                               oneLine:YES] retain];
+    self.currentMarkOrNotePosition = lastMark_.entry.interval;
+}
+
 // Save the current scroll position
 - (void)screenSaveScrollPosition
 {
-    savedScrollPosition_ = [TEXTVIEW absoluteScrollPosition];
-    savedScrollHeight_ = [SCREEN height];
+    [TEXTVIEW refresh];  // In case text was appended
+    [lastMark_ release];
+    lastMark_ = [[SCREEN addMarkStartingAtAbsoluteLine:[TEXTVIEW absoluteScrollPosition]
+                                               oneLine:NO] retain];
+    self.currentMarkOrNotePosition = lastMark_.entry.interval;
 }
 
 - (void)screenActivateWindow {
@@ -4573,8 +4723,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
-- (void)screenDidAddNoteOnLine:(int)line {
-    [TEXTVIEW addViewForNoteOnLine:line];
+- (void)screenDidAddNote:(PTYNoteViewController *)note {
+    [TEXTVIEW addViewForNote:note];
+    [TEXTVIEW setNeedsDisplay:YES];
+}
+
+- (void)screenDidEndEditingNote {
+    [TEXTVIEW.window makeFirstResponder:TEXTVIEW];
 }
 
 - (void)screenCopyBufferToPasteboard {
