@@ -179,7 +179,9 @@
 - (NSRange)randomInterval {
   NSRange range;
   range.location = rand() % 255;
-  range.length = 1 + \rand() % (256 - range.location);
+  do {
+    range.length = rand() % (256 - range.location);
+  } while (range.length == 0);
   return range;
 }
 
