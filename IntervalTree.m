@@ -1,138 +1,73 @@
 #import "IntervalTree.h"
 
+@implementation Interval
+
++ (Interval *)intervalWithLocation:(long long)location length:(long long)length {
+  Interval *interval = [[[Interval alloc] init] autorelease];
+  interval.location = location;
+  interval.length = length;
+  return interval;
+}
+
++ (Interval *)maxInterval {
+  Interval *interval = [[[Interval alloc] init] autorelease];
+  interval.location = -1;
+  interval.length = LLONG_MAX;
+  return interval;
+}
+
+- (long long)limit {
+  return _location + _length;
+}
+
+- (BOOL)intersects:(Interval *)other {
+  return MAX(self.location, other.location) < MIN(self.limit, other.limit);
+}
+
+- (NSString *)description {
+  return [NSString stringWithFormat:@"<%@: %p [%lld, %lld)>",
+         self.class, self, self.location, self.limit];
+}
+@end
+
 @implementation IntervalTreeEntry
 
++ (IntervalTreeEntry *)entryWithInterval:(Interval *)interval
+                                  object:(id<IntervalTreeObject>)object {
+  IntervalTreeEntry *entry = [[[IntervalTreeEntry alloc] init] autorelease];
+  entry.interval = interval;
+  entry.object = object;
+  return entry;
+}
+
 - (void)dealloc {
+  [_interval release];
   [_object release];
   [super dealloc];
 }
 
 - (NSString *)description {
-  return [NSString stringWithFormat:@"<%p:%@ interval=%@ object=%@ >",
-          self,
-          [self class],
-          [NSValue valueWithRange:_interval],
-          _object];
+  return [NSString stringWithFormat:@"<%@: %p interval=%@ object=%@>",
+         self.class, self, self.interval, self.object];
 }
-
 @end
 
-@implementation IntervalTreeNode
+@implementation IntervalTreeValue
 
-- (id)initWithInterval:(NSRange)interval {
+- (NSString *)description {
+  NSMutableString *entriesString = [NSMutableString string];
+  for (IntervalTreeEntry *entry in _entries) {
+    [entriesString appendFormat:@"%@, ", entry];
+  }
+  return [NSString stringWithFormat:@"<%@: %p maxLimitAtSubtree=%lld entries=[%@]>",
+          self.class,
+          self,
+          self.maxLimitAtSubtree,
+          entriesString];
+}
+
+- (id)init {
   self = [super init];
-  if (self) {
-    _interval = interval;
-  }
-  return self;
-}
-
-- (void)dealloc {
-  [super dealloc];
-}
-
-- (NSArray *)entriesInInterval:(NSRange)interval {
-  // Subclass should implement this.
-  assert(false);
-}
-
-- (void)addEntry:(IntervalTreeEntry *)entry {
-  // Subclass should implement this.
-  assert(false);
-}
-
-- (BOOL)shouldSplitOnInterval:(NSRange)interval {
-    // Subclass should implement this.
-    assert(false);
-}
-
-- (NSString *)debugStringWithPrefix:(NSString *)prefix {
-  // Subclass should implement this
-  assert(false);
-}
-
-@end
-
-@implementation IntervalTreeIntermediateNode
-
-- (void)dealloc {
-  [_left release];
-  [_right release];
-  [super dealloc];
-}
-
-- (BOOL)intervalInLeftSubtree:(NSRange)interval {
-  return (NSIntersectionRange(interval, _left.interval).length > 0);
-}
-
-- (BOOL)intervalInRightSubtree:(NSRange)interval {
-  return (NSIntersectionRange(interval, _right.interval).length > 0);
-}
-
-- (NSArray *)entriesInInterval:(NSRange)interval {
-  NSArray *leftEntries = nil;
-  NSArray *rightEntries = nil;
-  if ([self intervalInLeftSubtree:interval]) {
-    leftEntries = [_left entriesInInterval:interval];
-  }
-  if ([self intervalInRightSubtree:interval]) {
-    rightEntries = [_right entriesInInterval:interval];
-  }
-  NSMutableArray *results = [NSMutableArray array];
-  if (leftEntries) {
-    [results addObjectsFromArray:leftEntries];
-  }
-  if (rightEntries) {
-    // This makes the algorithm quadratic in the worst case, but in practice it
-    // won't matter because these trees tend to be sparse.
-    for (IntervalTreeEntry *entry in rightEntries) {
-      if (![results containsObject:entry]) {
-        [results addObject:entry];
-      }
-    }
-  }
-  return results;
-}
-
-- (void)addEntry:(IntervalTreeEntry *)entry {
-  if ([self intervalInLeftSubtree:entry.interval]) {
-    if ([_left shouldSplitOnInterval:entry.interval]) {
-      _left = [(IntervalTreeLeafNode *)_left subtreeAfterSplittingOnInterval:entry.interval];
-    }
-    [_left addEntry:entry];
-  }
-  if ([self intervalInRightSubtree:entry.interval]) {
-    if ([_right shouldSplitOnInterval:entry.interval]) {
-      _right = [(IntervalTreeLeafNode *)_right subtreeAfterSplittingOnInterval:entry.interval];
-    }
-    [_right addEntry:entry];
-  }
-}
-
-- (BOOL)shouldSplitOnInterval:(NSRange)interval {
-    return NO;
-}
-
-- (NSString *)debugStringWithPrefix:(NSString *)prefix {
-  return [NSString stringWithFormat:
-          @"<%p:%@ interval=%@\n"
-           "%@left: %@\n"
-           "%@right: %@>",
-          self,
-          [self class],
-          [NSValue valueWithRange:self.interval],
-          prefix,
-          [_left debugStringWithPrefix:[prefix stringByAppendingString:@"  "]],
-          prefix,
-          [_right debugStringWithPrefix:[prefix stringByAppendingString:@"  "]]];
-}
-
-@end
-
-@implementation IntervalTreeLeafNode
-
-- (id)initWithInterval:(NSRange)interval {
-  self = [super initWithInterval:interval];
   if (self) {
     _entries = [[NSMutableArray alloc] init];
   }
@@ -144,149 +79,173 @@
   [super dealloc];
 }
 
-- (NSArray *)entriesInInterval:(NSRange)interval {
-  return _entries;
-}
-
-- (void)addEntry:(IntervalTreeEntry *)entry {
-  assert(_entries);
-  [_entries addObject:entry];
-}
-
-- (NSString *)debugStringWithPrefix:(NSString *)prefix {
-  return [NSString stringWithFormat:@"%@<%p:%@ interval=%@ entries=%@>",
-          prefix,
-          self,
-          [self class],
-          [NSValue valueWithRange:self.interval],
-           _entries];
-}
-
-- (BOOL)shouldSplitOnInterval:(NSRange)interval {
-  // Consider only the portion of |interval| that's contained in this node.
-  interval = NSIntersectionRange(interval, self.interval);
-
-  // If it's not the same, then we must split.
-  return !NSEqualRanges(interval, self.interval);
-}
-
-- (IntervalTreeIntermediateNode *)subtreeSplitWithLeftInterval:(NSRange)leftInterval
-                                                 rightInterval:(NSRange)rightInterval {
-  IntervalTreeIntermediateNode *myReplacement =
-      [[[IntervalTreeIntermediateNode alloc] initWithInterval:self.interval] autorelease];
-  myReplacement.left =
-      [[[IntervalTreeLeafNode alloc] initWithInterval:leftInterval] autorelease];
-  myReplacement.right =
-      [[[IntervalTreeLeafNode alloc] initWithInterval:rightInterval] autorelease];
+- (long long)maxLimit {
+  long long max = -1;
   for (IntervalTreeEntry *entry in _entries) {
-    [myReplacement.left addEntry:entry];
-    [myReplacement.right addEntry:entry];
+    max = MAX(max, [entry.interval limit]);
   }
-  return myReplacement;
+  return max;
 }
 
-- (IntervalTreeIntermediateNode *)subtreeAfterSplittingOnInterval:(NSRange)interval {
-  interval = NSIntersectionRange(interval, self.interval);
-  assert(interval.length > 0);
-  assert(self.interval.length > 0);
-  NSUInteger myStart = self.interval.location;
-  NSUInteger myEnd = NSMaxRange(self.interval);
-  NSUInteger argStart = interval.location;
-  NSUInteger argEnd = NSMaxRange(interval);
-  assert(myStart <= argStart);
-  assert(myEnd >= argEnd);
+- (long long)location {
+  long long location = ((IntervalTreeEntry *)_entries[0]).interval.location;
+  return location;
+}
 
-  IntervalTreeIntermediateNode *myReplacement = nil;
-  if (argStart > myStart && argEnd < myEnd) {
-    // mmmmmmm
-    //   aaa
-    // Need to split in three. Split in two, then recurse on the right subtree.
-    assert(argStart >= myStart);
-    assert(myEnd >= argStart);
-    NSRange leftInterval = NSMakeRange(myStart, argStart - myStart);
-    NSRange rightInterval = NSMakeRange(argStart, myEnd - argStart);
-    myReplacement = [self subtreeSplitWithLeftInterval:leftInterval
-                                         rightInterval:rightInterval];
-    NSRange rightSplit = NSMakeRange(argEnd, myEnd - argEnd);
-    assert([myReplacement.right isKindOfClass:[IntervalTreeLeafNode class]]);
-    myReplacement.right = [(IntervalTreeLeafNode *)myReplacement.right subtreeAfterSplittingOnInterval:rightSplit];
-    return myReplacement;
-  } else if (argEnd < myEnd) {
-    // mmmmmmm
-    // aaaa
-    assert(argStart == myStart);
-    NSRange leftInterval = interval;
-    NSRange rightInterval = NSMakeRange(argEnd, myEnd - argEnd);
-    myReplacement = [self subtreeSplitWithLeftInterval:leftInterval
-                                         rightInterval:rightInterval];
-  } else if (argStart > myStart) {
-    // mmmmmmm
-    //    aaaa
-    assert(argEnd == myEnd);
-    NSRange leftInterval = NSMakeRange(myStart, argStart - myStart);
-    NSRange rightInterval = interval;
-    myReplacement = [self subtreeSplitWithLeftInterval:leftInterval
-                                         rightInterval:rightInterval];
-  } else {
-    assert(false);  // Bogus interval to split on
-  }
-  return myReplacement;
+- (Interval *)spanningInterval {
+  return [Interval intervalWithLocation:self.location length:[self maxLimit] - self.location];
 }
 
 @end
 
 @implementation IntervalTree
 
-- (id)initWithInterval:(NSRange)interval {
+- (id)init {
   self = [super init];
   if (self) {
-    _interval = interval;
-    _root = [[IntervalTreeLeafNode alloc] initWithInterval:interval];
+    _tree = [[AATree alloc] initWithKeyComparator:^(NSNumber *key1, NSNumber *key2) {
+                return [key1 compare:key2];
+              }];
+    assert(_tree);
+    _tree.delegate = self;
   }
   return self;
 }
 
 - (void)dealloc {
-  [_root release];
+  for (IntervalTreeValue *value in [self objectsInInterval:[Interval maxInterval]]) {
+    for (IntervalTreeEntry *entry in value.entries) {
+      entry.object.entry = nil;
+    }
+  }
+  _tree.delegate = nil;
+  [_tree release];
   [super dealloc];
 }
 
-+ (id)intervalTreeWithInterval:(NSRange)interval {
-  return [[[self alloc] initWithInterval:interval] autorelease];
+- (void)addObject:(id<IntervalTreeObject>)object withInterval:(Interval *)interval {
+  IntervalTreeEntry *entry = [IntervalTreeEntry entryWithInterval:interval
+                                                           object:object];
+  IntervalTreeValue *value = [_tree objectForKey:@(interval.location)];
+  if (!value) {
+    IntervalTreeValue *value = [[[IntervalTreeValue alloc] init] autorelease];
+    [value.entries addObject:entry];
+    [_tree setObject:value forKey:@(interval.location)];
+  } else {
+    [value.entries addObject:entry];
+    [_tree notifyValueChangedForKey:@(interval.location)];
+  }
+  object.entry = entry;
 }
 
-- (void)addEntryWithInterval:(NSRange)interval object:(NSObject *)object {
-  IntervalTreeEntry *entry = [[[IntervalTreeEntry alloc] init] autorelease];
-  entry.interval = interval;
-  entry.object = object;
-  [self addEntry:entry];
-}
-
-- (void)addEntry:(IntervalTreeEntry *)entry {
-  if ([_root isKindOfClass:[IntervalTreeLeafNode class]]) {
-    if ([_root shouldSplitOnInterval:entry.interval]) {
-      [_root autorelease];
-      _root = [(IntervalTreeLeafNode *)_root subtreeAfterSplittingOnInterval:entry.interval];
+- (void)removeObject:(id<IntervalTreeObject>)object {
+  Interval *interval = object.entry.interval;
+  IntervalTreeValue *value = [_tree objectForKey:interval];
+  NSMutableArray *entries = value.entries;
+  int i;
+  for (i = 0; i < entries.count; i++) {
+    if ([((IntervalTreeEntry *)entries[i]).object isEqual:object]) {
+      break;
     }
   }
-  [_root addEntry:entry];
-}
-
-- (NSArray *)objectsInInterval:(NSRange)interval {
-  NSArray *entries = [_root entriesInInterval:interval];
-  NSMutableArray *objects = [NSMutableArray array];
-  for (IntervalTreeEntry *entry in entries) {
-    [objects addObject:entry.object];
+  if (i < entries.count) {
+    [entries removeObjectAtIndex:i];
   }
-  return objects;
+  if (entries.count == 0) {
+    [_tree removeObjectForKey:@(interval.location)];
+  } else {
+    [_tree notifyValueChangedForKey:@(interval.location)];
+  }
+  object.entry = nil;
 }
 
-- (NSArray *)entriesInInterval:(NSRange)interval {
-  return [_root entriesInInterval:interval];
+#pragma mark - Private
+
+- (void)recalculateMaxLimitInSubtreeAtNode:(AATreeNode *)node
+                     removeFromToVisitList:(NSMutableSet *)toVisit {
+  IntervalTreeValue *value = (IntervalTreeValue *)node.data;
+  if (![toVisit containsObject:node]) {
+    return;
+  }
+
+  [toVisit removeObject:node];
+  long long max = [value maxLimit];
+  if (node.left) {
+    if ([toVisit containsObject:node.left]) {
+      [self recalculateMaxLimitInSubtreeAtNode:node.left
+                         removeFromToVisitList:toVisit];
+    }
+    IntervalTreeValue *leftValue = (IntervalTreeValue *)node.left.data;
+    max = MAX(max, leftValue.maxLimitAtSubtree);
+  }
+  if (node.right) {
+    if ([toVisit containsObject:node.right]) {
+      [self recalculateMaxLimitInSubtreeAtNode:node.right
+                         removeFromToVisitList:toVisit];
+    }
+    IntervalTreeValue *rightValue = (IntervalTreeValue *)node.right.data;
+    max = MAX(max, rightValue.maxLimitAtSubtree);
+  }
+  value.maxLimitAtSubtree = max;
 }
 
-- (NSString *)debugString {
-    return [_root debugStringWithPrefix:@""];
+#pragma mark - AATreeDelegate
+
+- (void)aaTree:(AATree *)tree didChangeSubtreesAtNodes:(NSSet *)changedNodes {
+  NSMutableSet *toVisit = [changedNodes mutableCopy];
+  for (AATreeNode *node in changedNodes) {
+    if ([toVisit containsObject:node]) {
+      [self recalculateMaxLimitInSubtreeAtNode:node
+                         removeFromToVisitList:toVisit];
+    }
+  }
+}
+
+- (void)aaTree:(AATree *)tree didChangeValueAtNode:(AATreeNode *)node {
+  NSArray *parents = [tree pathFromNode:node];
+  NSMutableSet *parentSet = [NSMutableSet setWithArray:parents];
+  for (AATreeNode *node in parents) {
+    [self recalculateMaxLimitInSubtreeAtNode:node
+                       removeFromToVisitList:parentSet];
+  }
+}
+
+- (void)addObjectsInInterval:(Interval *)interval
+                     toArray:(NSMutableArray *)result
+                    fromNode:(AATreeNode *)node {
+  IntervalTreeValue *nodeValue = (IntervalTreeValue *)node.data;
+  if (nodeValue.maxLimitAtSubtree <= interval.location) {
+    // The whole subtree has intervals that end before the requested |interval|.
+    return;
+  }
+  
+  Interval *nodeInterval = [nodeValue spanningInterval];
+  if ([nodeInterval intersects:interval]) {
+    // An entry at this node could possibly intersect the desired interval.
+    for (IntervalTreeEntry *entry in nodeValue.entries) {
+      if ([entry.interval intersects:interval]) {
+        [result addObject:entry.object];
+      }
+    }
+  }
+  if (node.left) {
+    // The requested interval includes points before this node's interval so we must search
+    // intervals that start before this node.
+    [self addObjectsInInterval:interval
+                       toArray:result
+                      fromNode:node.left];
+  }
+  if (interval.limit > nodeInterval.location && node.right) {
+    [self addObjectsInInterval:interval
+                       toArray:result
+                      fromNode:node.right];
+  }
+}
+
+- (NSArray *)objectsInInterval:(Interval *)interval {
+  NSMutableArray *array = [NSMutableArray array];
+  [self addObjectsInInterval:interval toArray:array fromNode:_tree.root];
+  return array;
 }
 
 @end

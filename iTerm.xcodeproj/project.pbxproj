@@ -562,6 +562,12 @@
 		9DB3D6F1176CCABE0071CCF8 /* PrefsArrangements@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */; };
 		A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */ = {isa = PBXBuildFile; fileRef = A073973D14C768E400786414 /* ColorsMenuItemView.h */; };
 		A073974014C7694600786414 /* ColorsMenuItemView.m in Sources */ = {isa = PBXBuildFile; fileRef = A073973F14C7694600786414 /* ColorsMenuItemView.m */; };
+		A6358646184BEA57009ED690 /* AATree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358642184BEA57009ED690 /* AATree.h */; };
+		A6358647184BEA57009ED690 /* AATree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358643184BEA57009ED690 /* AATree.m */; };
+		A6358648184BEA57009ED690 /* AATree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358643184BEA57009ED690 /* AATree.m */; };
+		A6358649184BEA57009ED690 /* AATreeNode.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358644184BEA57009ED690 /* AATreeNode.h */; };
+		A635864A184BEA57009ED690 /* AATreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358645184BEA57009ED690 /* AATreeNode.m */; };
+		A635864B184BEA57009ED690 /* AATreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358645184BEA57009ED690 /* AATreeNode.m */; };
 		A63F4095183B398C003A6A6D /* PTYNoteViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F4093183B398C003A6A6D /* PTYNoteViewController.h */; };
 		A63F4096183B398C003A6A6D /* PTYNoteViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4094183B398C003A6A6D /* PTYNoteViewController.m */; };
 		A63F4097183B398C003A6A6D /* PTYNoteViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4094183B398C003A6A6D /* PTYNoteViewController.m */; };
@@ -962,6 +968,10 @@
 		9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PrefsArrangements@2x.png"; path = "images/PrefsArrangements@2x.png"; sourceTree = "<group>"; };
 		A073973D14C768E400786414 /* ColorsMenuItemView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ColorsMenuItemView.h; sourceTree = "<group>"; };
 		A073973F14C7694600786414 /* ColorsMenuItemView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ColorsMenuItemView.m; sourceTree = "<group>"; };
+		A6358642184BEA57009ED690 /* AATree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AATree.h; path = "objc-aatree-master/AATree.h"; sourceTree = "<group>"; };
+		A6358643184BEA57009ED690 /* AATree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AATree.m; path = "objc-aatree-master/AATree.m"; sourceTree = "<group>"; };
+		A6358644184BEA57009ED690 /* AATreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AATreeNode.h; path = "objc-aatree-master/AATreeNode.h"; sourceTree = "<group>"; };
+		A6358645184BEA57009ED690 /* AATreeNode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AATreeNode.m; path = "objc-aatree-master/AATreeNode.m"; sourceTree = "<group>"; };
 		A63F4093183B398C003A6A6D /* PTYNoteViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYNoteViewController.h; sourceTree = "<group>"; };
 		A63F4094183B398C003A6A6D /* PTYNoteViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYNoteViewController.m; sourceTree = "<group>"; };
 		A63F4098183B3AA7003A6A6D /* PTYNoteView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYNoteView.h; sourceTree = "<group>"; };
@@ -1140,6 +1150,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				A6358641184BEA47009ED690 /* AATree */,
 				A63F40AC1842988A003A6A6D /* Core */,
 				1D9DDE31142E73E300275650 /* Categories */,
 				1D9DDE2F142E735900275650 /* DVR */,
@@ -1670,6 +1681,17 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		A6358641184BEA47009ED690 /* AATree */ = {
+			isa = PBXGroup;
+			children = (
+				A6358642184BEA57009ED690 /* AATree.h */,
+				A6358643184BEA57009ED690 /* AATree.m */,
+				A6358644184BEA57009ED690 /* AATreeNode.h */,
+				A6358645184BEA57009ED690 /* AATreeNode.m */,
+			);
+			name = AATree;
+			sourceTree = "<group>";
+		};
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
@@ -1847,6 +1869,8 @@
 				1D5FDD6F1208E8F000C46BA3 /* CGSHotKeys.h in Headers */,
 				1D5FDD701208E8F000C46BA3 /* CGSInternal.h in Headers */,
 				1D5FDD711208E8F000C46BA3 /* CGSMisc.h in Headers */,
+				A6358649184BEA57009ED690 /* AATreeNode.h in Headers */,
+				A6358646184BEA57009ED690 /* AATree.h in Headers */,
 				1D5FDD721208E8F000C46BA3 /* CGSNotifications.h in Headers */,
 				1D5FDD731208E8F000C46BA3 /* CGSRegion.h in Headers */,
 				1D5FDD741208E8F000C46BA3 /* CGSSession.h in Headers */,
@@ -2230,6 +2254,7 @@
 				A63F40A1183F3AF5003A6A6D /* VT100LineInfo.m in Sources */,
 				1D9A5577180FA85D00B42CE9 /* BounceTrigger.m in Sources */,
 				1D9A5545180FA81400B42CE9 /* ProfileTableView.m in Sources */,
+				A6358648184BEA57009ED690 /* AATree.m in Sources */,
 				1DB9D8F4183FE9EF0029F0B5 /* HotkeyWindowController.m in Sources */,
 				1D9A556C180FA85900B42CE9 /* ToolbeltView.m in Sources */,
 				1D9A558E180FA87000B42CE9 /* PointerController.m in Sources */,
@@ -2346,6 +2371,7 @@
 				1D9A556B180FA85500B42CE9 /* FakeWindow.m in Sources */,
 				1D9A557D180FA87000B42CE9 /* Coprocess.m in Sources */,
 				1D9A55AE180FA8B700B42CE9 /* PSMTabBarControl.m in Sources */,
+				A635864B184BEA57009ED690 /* AATreeNode.m in Sources */,
 				1D9A5543180FA81400B42CE9 /* ProfileTableRow.m in Sources */,
 				1D9A5588180FA87000B42CE9 /* MovePaneController.m in Sources */,
 				1D9A5587180FA87000B42CE9 /* ITViewLocalizer.m in Sources */,
@@ -2414,6 +2440,7 @@
 				1D93D35A1269778C007F741B /* DVRBuffer.m in Sources */,
 				1D93D3B112697D53007F741B /* DVRIndexEntry.m in Sources */,
 				1D7C18821275D22900461E55 /* PasteboardHistory.m in Sources */,
+				A635864A184BEA57009ED690 /* AATreeNode.m in Sources */,
 				1D7C1D1312772ECC00461E55 /* NSDateFormatterExtras.m in Sources */,
 				1DE214E2128212EE004E3ADF /* Autocomplete.m in Sources */,
 				1DD736421283C2FA009B7829 /* Popup.m in Sources */,
@@ -2488,6 +2515,7 @@
 				1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */,
 				1D0B613D14A7C76500C57C33 /* TmuxWindowsTable.m in Sources */,
 				1DAE714E14AAF24200DA144B /* EquivalenceClassSet.m in Sources */,
+				A6358647184BEA57009ED690 /* AATree.m in Sources */,
 				1D06E7D414BC04510097C0ED /* ProfileTableRow.m in Sources */,
 				1D06E7D814BC04E20097C0ED /* ProfileModelWrapper.m in Sources */,
 				1D06E7DC14BC05DB0097C0ED /* ProfileTableView.m in Sources */,

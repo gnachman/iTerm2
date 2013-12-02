@@ -1,46 +1,51 @@
 #import <Foundation/Foundation.h>
+#import "AATree.h"
 
+@class IntervalTreeEntry;
+
+@interface Interval : NSObject
+// Negative locations have special meaning. Don't use them.
+@property(nonatomic, assign) long long location;
+@property(nonatomic, assign) long long length;
+
+// One more than the largest value in the interval.
++ (Interval *)maxInterval;
+- (long long)limit;
+- (BOOL)intersects:(Interval *)other;
+
+@end
+
+@protocol IntervalTreeObject <NSObject>
+@property(nonatomic, assign) IntervalTreeEntry *entry;
+@end
+
+// A node in the interval tree will contain one or more entries, each of which has an interval and an object. All intervals should have the same location.
 @interface IntervalTreeEntry : NSObject
-@property(nonatomic, assign) NSRange interval;
-@property(nonatomic, retain) id object;
+@property(nonatomic, retain) Interval *interval;
+@property(nonatomic, retain) id<IntervalTreeObject> object;
+
++ (IntervalTreeEntry *)entryWithInterval:(Interval *)interval object:(id<IntervalTreeObject>)object;
 @end
 
-// Contains links to nodes. Leaf nodes contain a list of IntervalTreeEntry entries.
-@interface IntervalTreeNode : NSObject
-@property(nonatomic, assign) NSRange interval;
+@interface IntervalTreeValue : NSObject
+@property(nonatomic, assign) long long maxLimitAtSubtree;
+@property(nonatomic, retain) NSMutableArray *entries;
 
-// This is the designated initializer.
-- (id)initWithInterval:(NSRange)interval;
-- (NSArray *)entriesInInterval:(NSRange)interval;
-- (void)addEntry:(IntervalTreeEntry *)entry;
-- (BOOL)shouldSplitOnInterval:(NSRange)interval;
-- (NSString *)debugStringWithPrefix:(NSString *)prefix;
-@end
+// Largest limit of all entries
+- (long long)maxLimit;
 
-// Intermediate node in an Interval Tree. Its interval must be at least 2 large.
-@interface IntervalTreeIntermediateNode : IntervalTreeNode
-@property(nonatomic, retain) IntervalTreeNode *left;
-@property(nonatomic, retain) IntervalTreeNode *right;
+// Interval including intervals of all entries at this entry exactly
+- (Interval *)spanningInterval;
 
 @end
 
-// Leaf node in an interval tree.
-@interface IntervalTreeLeafNode : IntervalTreeNode
-@property(nonatomic, readonly) NSMutableArray *entries;
-
-- (IntervalTreeIntermediateNode *)subtreeAfterSplittingOnInterval:(NSRange)interval;
-
-@end
-
-@interface IntervalTree : NSObject {
-  IntervalTreeNode *_root;
-  NSRange _interval;
+@interface IntervalTree : NSObject <AATreeDelegate> {
+  AATree *_tree;
 }
 
-+ (id)intervalTreeWithInterval:(NSRange)interval;
-- (void)addEntryWithInterval:(NSRange)interval object:(NSObject *)object;
-- (void)addEntry:(IntervalTreeEntry *)entry;
-- (NSArray *)objectsInInterval:(NSRange)interval;
-- (NSArray *)entriesInInterval:(NSRange)interval;
+// |object| should implement -hash.
+- (void)addObject:(id<IntervalTreeObject>)object withInterval:(Interval *)interval;
+- (void)removeObject:(id<IntervalTreeObject>)object;
+- (NSArray *)objectsInInterval:(Interval *)interval;
 
 @end
