@@ -7,6 +7,7 @@
 //
 
 #import "PTYNoteViewController.h"
+#import "IntervalTree.h"
 #import "PTYNoteView.h"
 
 NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewControllerShouldUpdatePosition";
@@ -29,6 +30,7 @@ static const CGFloat kBottomMargin = 5;
 @synthesize scrollView = scrollView_;
 @synthesize anchor = anchor_;
 @synthesize watchForUpdate = watchForUpdate_;
+@synthesize entry;
 
 - (void)dealloc {
     [noteView_ removeFromSuperview];
@@ -98,6 +100,18 @@ static const CGFloat kBottomMargin = 5;
     anchor_ = anchor;
 
     NSRect superViewFrame = noteView_.superview.frame;
+    CGFloat xOffset = 0;
+    if (anchor_.x + noteView_.frame.size.width > superViewFrame.size.width) {
+        xOffset = anchor_.x + noteView_.frame.size.width - superViewFrame.size.width;
+    }
+    noteView_.frame = NSMakeRect(anchor_.x - xOffset,
+                                 anchor_.y,
+                                 noteView_.frame.size.width,
+                                 noteView_.frame.size.height);
+    noteView_.point = NSMakePoint(xOffset, 0);
+#if 0
+    
+    
     CGFloat superViewMaxY = superViewFrame.origin.y + superViewFrame.size.height;
 
     CGFloat height = noteView_.frame.size.height;
@@ -106,30 +120,32 @@ static const CGFloat kBottomMargin = 5;
 
     if (anchor_.y - visibleHeight / 2 < 0) {
         // Can't center the anchor because some of the note would be off the top of the view.
-        noteView_.frame = NSMakeRect(anchor_.x,
+        noteView_.frame = NSMakeRect(anchor_.x - xOffset,
                                      0,
                                      noteView_.frame.size.width,
                                      noteView_.frame.size.height);
-        noteView_.point = NSMakePoint(0, anchor_.y);
+        noteView_.point = NSMakePoint(xOffset, anchor_.y);
         self.watchForUpdate = NO;
     } else if (anchor_.y + visibleHeight / 2 + shadowHeight > superViewMaxY) {
         // Can't center the anchor because some of the note would be off the bottom of the view.
         const CGFloat shift = (superViewMaxY - height) - (anchor_.y - visibleHeight / 2);
-        noteView_.frame = NSMakeRect(anchor_.x,
+        noteView_.frame = NSMakeRect(anchor_.x - xOffset,
                                      superViewMaxY - height,
                                      noteView_.frame.size.width,
                                      noteView_.frame.size.height);
-        noteView_.point = NSMakePoint(0, visibleHeight / 2 - shift);
+        noteView_.point = NSMakePoint(xOffset, visibleHeight / 2 - shift);
         self.watchForUpdate = YES;
     } else {
         // Center the anchor
-        noteView_.frame = NSMakeRect(anchor_.x,
+        noteView_.frame = NSMakeRect(anchor_.x - xOffset,
                                      anchor_.y - visibleHeight / 2,
                                      noteView_.frame.size.width,
                                      noteView_.frame.size.height);
-        noteView_.point = NSMakePoint(0, visibleHeight / 2);
+        noteView_.point = NSMakePoint(xOffset, visibleHeight / 2);
         self.watchForUpdate = NO;
     }
+    anchor_.x += xOffset;
+#endif
 }
 
 - (void)checkForUpdate {

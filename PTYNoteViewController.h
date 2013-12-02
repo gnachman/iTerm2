@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "IntervalTree.h"
 #import "PTYNoteView.h"
 
 // Post this when the note view's anchor has a chance to become centered.
@@ -15,7 +16,7 @@ extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
 @protocol PTYNoteViewControllerDelegate
 @end
 
-@interface PTYNoteViewController : NSViewController {
+@interface PTYNoteViewController : NSViewController  <IntervalTreeObject> {
     PTYNoteView *noteView_;
     NSTextView *textView_;
     NSScrollView *scrollView_;

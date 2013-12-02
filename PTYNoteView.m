@@ -49,57 +49,54 @@ static NSPoint ModifyNotePoint(NSPoint p, CGFloat dx, CGFloat dy)
     CGFloat radius = 5;
     CGFloat arrowWidth = 10;
     CGFloat arrowHeight = 7;
+    CGFloat topOffset = arrowHeight;
+    CGFloat bottomOffset = 0;
+    
+    CGFloat height = self.frame.size.height;
 
-    NSPoint arrowTip = MakeNotePoint(size, point_.x, point_.y);
-    NSPoint arrowBaseTop;
-    if (point_.y + arrowHeight / 2 > size.height) {
-        arrowBaseTop = MakeNotePoint(size,
-                                     point_.x + arrowWidth,
-                                     size.height - arrowHeight);
-    } else {
-        arrowBaseTop = MakeNotePoint(size,
-                                     point_.x + arrowWidth,
-                                     MAX(0, point_.y - arrowHeight / 2));
+    [path appendBezierPathWithRoundedRect:NSMakeRect(0,
+                                                     bottomOffset + 5,
+                                                     size.width,
+                                                     size.height - (topOffset + bottomOffset))
+                                  xRadius:radius
+                                  yRadius:radius];
+    [[self backgroundColor] set];
+    [path fill];
+    
+    [[NSColor colorWithCalibratedRed:255.0/255.0 green:229.0/255.0 blue:114.0/255.0 alpha:0.95] set];
+    [path setLineWidth:1];
+    [path stroke];
+
+    NSPoint base1;
+    NSPoint base2;
+    NSPoint tip;
+    
+    base1 = NSMakePoint(point_.x - arrowWidth / 2, height - arrowHeight - 1);
+    base2 = NSMakePoint(point_.x + arrowWidth / 2, height - arrowHeight - 1);
+    if (base2.x > size.width - radius) {
+        CGFloat overage = base2.x - (size.width - radius);
+        base1.x -= overage;
+        base2.x -= overage;
     }
-    NSPoint topLeftCorner = MakeNotePoint(size, point_.x + arrowWidth, 0);
-    NSPoint topRightCorner = MakeNotePoint(size, size.width, 0);
-    NSPoint bottomRightCorner = MakeNotePoint(size, size.width, size.height);
-    NSPoint bottomLeftCorner = MakeNotePoint(size, point_.x + arrowWidth, size.height);
-    NSPoint arrowBaseBottom;
-    if (point_.y - arrowHeight / 2 < 0) {
-        arrowBaseBottom = MakeNotePoint(size, point_.x + arrowWidth, arrowHeight);
-    } else {
-        arrowBaseBottom = MakeNotePoint(size,
-                                        point_.x + arrowWidth,
-                                        MIN(size.height, point_.y + arrowHeight / 2));
+    if (base1.x < radius) {
+        base1.x += radius;
+        base2.x += radius;
     }
-
-    // Point
-    [path moveToPoint:arrowTip];
-    [path lineToPoint:arrowBaseTop];
-    [path lineToPoint:ModifyNotePoint(topLeftCorner, 0, radius)];
-    [path curveToPoint:ModifyNotePoint(topLeftCorner, radius, 0)
-         controlPoint1:topLeftCorner
-         controlPoint2:topLeftCorner];
-    [path lineToPoint:ModifyNotePoint(topRightCorner, -radius, 0)];
-    [path curveToPoint:ModifyNotePoint(topRightCorner, 0, radius)
-         controlPoint1:topRightCorner
-         controlPoint2:topRightCorner];
-    [path lineToPoint:ModifyNotePoint(bottomRightCorner, 0, -radius)];
-    [path curveToPoint:ModifyNotePoint(bottomRightCorner, -radius, 0)
-         controlPoint1:bottomRightCorner
-         controlPoint2:bottomRightCorner];
-    [path lineToPoint:ModifyNotePoint(bottomLeftCorner, radius, 0)];
-    [path curveToPoint:ModifyNotePoint(bottomLeftCorner, 0, -radius)
-         controlPoint1:bottomLeftCorner
-         controlPoint2:bottomLeftCorner];
-    [path lineToPoint:arrowBaseBottom];
-    [path lineToPoint:arrowTip];
-
+    tip = NSMakePoint(point_.x, height - point_.y);
+    
+    path = [[[NSBezierPath alloc] init] autorelease];
+    [path moveToPoint:base1];
+    [path lineToPoint:tip];
+    [path lineToPoint:base2];
+    [path lineToPoint:base1];
     [[self backgroundColor] set];
     [path fill];
 
-        [[NSColor colorWithCalibratedRed:255.0/255.0 green:229.0/255.0 blue:114.0/255.0 alpha:0.95] set];
+    path = [[[NSBezierPath alloc] init] autorelease];
+    [path moveToPoint:base1];
+    [path lineToPoint:tip];
+    [path lineToPoint:base2];
+    [[NSColor colorWithCalibratedRed:255.0/255.0 green:229.0/255.0 blue:114.0/255.0 alpha:0.95] set];
     [path setLineWidth:1];
     [path stroke];
 }

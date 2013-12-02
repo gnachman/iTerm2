@@ -8,8 +8,9 @@
 @property(nonatomic, assign) long long location;
 @property(nonatomic, assign) long long length;
 
-// One more than the largest value in the interval.
++ (Interval *)intervalWithLocation:(long long)location length:(long long)length;
 + (Interval *)maxInterval;
+// One more than the largest value in the interval.
 - (long long)limit;
 - (BOOL)intersects:(Interval *)other;
 

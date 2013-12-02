@@ -3468,18 +3468,10 @@ NSMutableArray* screens=0;
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
     if (numTouches_ <= 1) {
-        if (locationInTextView.x < MARGIN) {
-            for (PTYNoteViewController *note in [dataSource notesOnLine:y]) {
-              if (note && !note.isEmpty) {
-                [note setNoteHidden:NO];
-              }
-            }
-        } else {
-            for (NSView *view in [self subviews]) {
-                if ([view isKindOfClass:[PTYNoteView class]]) {
-                    PTYNoteView *noteView = (PTYNoteView *)view;
-                    [noteView.noteViewController setNoteHidden:YES];
-                }
+        for (NSView *view in [self subviews]) {
+            if ([view isKindOfClass:[PTYNoteView class]]) {
+                PTYNoteView *noteView = (PTYNoteView *)view;
+                [noteView.noteViewController setNoteHidden:YES];
             }
         }
     }
@@ -4574,36 +4566,37 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[dataSource session] clearBuffer];
 }
 
-- (void)addViewForNoteOnLine:(int)line
+- (void)addViewForNote:(PTYNoteViewController *)note onLine:(int)line
 {
     // Make sure scrollback overflow is reset.
     [self refresh];
-    for (PTYNoteViewController *note in [dataSource notesOnLine:line]) {
-      if (note && note.view.superview != self) {
-          [note.view removeFromSuperview];
-          [self addSubview:note.view];
-          note.anchor = NSMakePoint(0, line * lineHeight + lineHeight / 2);
-          [note setNoteHidden:NO];
-      }
-    }
+    [note.view removeFromSuperview];
+    [self addSubview:note.view];
+    note.anchor = NSMakePoint(0, line * lineHeight + lineHeight / 2);
+    [note setNoteHidden:NO];
 }
 
 
 - (void)addNote:(id)sender
 {
     if (startY >= 0) {
-      PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-      [dataSource addNote:note
-                     from:VT100GridCoordMake(startX, startY)
-                       to:VT100GridCoordMake(endX, endY)];
+        PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+        [dataSource addNote:note inRange:VT100GridCoordRangeMake(startX, startY, endX, endY)];
+        
+        // Make sure scrollback overflow is reset.
+        [self refresh];
+        [note.view removeFromSuperview];
+        [self addSubview:note.view];
+        [self updateNoteViewFrames];
+        [note setNoteHidden:NO];
+        [note beginEditing];
+    }
+}
 
-      // Make sure scrollback overflow is reset.
-      [self refresh];
-      [note.view removeFromSuperview];
-      [self addSubview:note.view];
-      note.anchor = NSMakePoint(0, startY * lineHeight + lineHeight / 2);
-      [note setNoteHidden:NO];
-      [note beginEditing];
+- (void)showNotes:(id)sender
+{
+    for (PTYNoteViewController *note in [dataSource notesInRange:VT100GridCoordRangeMake(startX, startY, endX, endY)]) {
+        [note setNoteHidden:NO];
     }
 }
 
@@ -4614,7 +4607,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             PTYNoteView *noteView = (PTYNoteView *)view;
             PTYNoteViewController *note = (PTYNoteViewController *)noteView.noteViewController;
             VT100GridCoordRange coordRange = [dataSource coordRangeOfNote:note];
-            [note setAnchor:NSMakePoint(0, coordRange.start.y * lineHeight + lineHeight / 2)];
+            [note setAnchor:NSMakePoint(coordRange.end.x * charWidth + MARGIN,
+                                        (1 + coordRange.end.y) * lineHeight)];
         }
     }
 }
@@ -4726,6 +4720,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         ([item action]==@selector(print:) && [item tag] == 1)) { // print selection
         // These commands are allowed only if there is a selection.
         return startX > -1;
+    }
+    if ([item action]==@selector(showNotes:)) {
+        return startX > -1 && [[dataSource notesInRange:VT100GridCoordRangeMake(startX, startY, endX, endY)] count] > 0;
     }
     SEL theSel = [item action];
     if ([NSStringFromSelector(theSel) hasPrefix:@"contextMenuAction"]) {
@@ -4947,6 +4944,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
     
+    [theMenu addItemWithTitle:@"Show Notes"
+                       action:@selector(showNotes:)
+                keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
 
@@ -7391,15 +7393,26 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                              context:ctx];
     }
 
-    for (PTYNoteViewController *note in [dataSource notesOnLine:line]) {
-      // TODO: Highlight range
-      if (note.isNoteHidden && !note.isEmpty) {
-          [[NSColor yellowColor] set];
-          NSRectFill(NSMakeRect(1, line * lineHeight, MARGIN - 3, lineHeight));
-          [[NSColor colorWithCalibratedRed:.8 green:.8 blue:0 alpha:1] set];
-          NSRectFill(NSMakeRect(MARGIN - 3, line * lineHeight, 1, lineHeight));
-          break;
-      }
+    BOOL isDark = ([self perceivedBrightness:defaultBGColor] < kBackgroundConsideredDarkThreshold);
+    if (isDark) {
+        [[NSColor yellowColor] set];
+    } else {
+        [[NSColor orangeColor] set];
+    }
+    for (NSValue *value in [dataSource charactersWithNotesOnLine:line]) {
+        VT100GridRange range = [value gridRangeValue];
+        NSBezierPath *path = [NSBezierPath bezierPath];
+        CGFloat x = range.location * charWidth + MARGIN;
+        CGFloat y = (line + 1) * lineHeight - 1;
+        [path moveToPoint:NSMakePoint(x, y)];
+        CGFloat offset = -1;
+        for (int i = 0; i < range.length; i++) {
+            x += charWidth;
+            y += offset;
+            offset = -offset;
+            [path lineToPoint:NSMakePoint(x, y)];
+        }
+        [path stroke];
     }
 
     return anyBlinking;

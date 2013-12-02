@@ -6,7 +6,7 @@
 @class DVR;
 @class iTermGrowlDelegate;
 @class LineBuffer;
-@class MutableIntervalMap;
+@class IntervalTree;
 @class PTYTask;
 @class VT100Grid;
 @class VT100Terminal;
@@ -72,7 +72,7 @@ extern int kVT100ScreenMinRows;
     // OK to report window title?
     BOOL allowTitleReporting_;
 
-    MutableIntervalMap *notes_;
+    IntervalTree *notes_;
 }
 
 @property(nonatomic, retain) VT100Terminal *terminal;

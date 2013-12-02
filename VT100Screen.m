@@ -8,7 +8,7 @@
 
 #import "DebugLogging.h"
 #import "DVR.h"
-//#import "MutableIntervalMap.h"
+#import "IntervalTree.h"
 #import "PTYNoteViewController.h"
 #import "PTYTextView.h"
 #import "RegexKitLite.h"
@@ -79,7 +79,7 @@ static const double kInterBellQuietPeriod = 0.1;
         }
 
         findContext_ = [[FindContext alloc] init];
-//        notes_ = [[MutableIntervalMap alloc] init];
+        notes_ = [[IntervalTree alloc] init];
     }
     return self;
 }
@@ -1202,20 +1202,71 @@ static const double kInterBellQuietPeriod = 0.1;
     return [NSDate dateWithTimeIntervalSinceReferenceDate:interval];
 }
 
+- (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range {
+    VT100GridCoord start = range.start;
+    VT100GridCoord end = range.end;
+    long long si = start.y;
+    si *= (self.width + 1);
+    si += start.x;
+    long long ei = end.y;
+    ei *= (self.width + 1);
+    ei += end.x;
+    if (ei < si) {
+        long long temp = ei;
+        ei = si;
+        si = temp;
+    }
+    return [Interval intervalWithLocation:si length:ei - si];
+}
+
+- (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval {
+    VT100GridCoordRange result;
+    const int w = self.width + 1;
+    result.start.y = interval.location / w;
+    result.start.x = interval.location % w;
+    result.end.y = interval.limit / w;
+    result.end.x = interval.limit % w;
+    return result;
+}
+
 - (void)addNote:(PTYNoteViewController *)note
-           from:(VT100GridCoord)start
-             to:(VT100GridCoord)end {
-    // TODO
-    [delegate_ screenDidAddNoteOnLine:start.y];
+        inRange:(VT100GridCoordRange)range {
+    [notes_ addObject:note withInterval:[self intervalForGridCoordRange:range]];
+    [delegate_ screenDidAddNote:note startingAtLine:range.start.y];
 }
 
 - (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note {
-  // TODO
-  return VT100GridCoordRangeMake(0,0,0,0);
+    return [self coordRangeForInterval:note.entry.interval];
 }
 
-- (NSArray *)notesOnLine:(int)line {
-  return nil;  // TODO
+- (NSArray *)charactersWithNotesOnLine:(int)line {
+    NSMutableArray *result = [NSMutableArray array];
+    Interval *interval = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
+                                                                                 line,
+                                                                                 0,
+                                                                                 line + 1)];
+    NSArray *notes = [notes_ objectsInInterval:interval];
+    for (PTYNoteViewController *note in notes) {
+        VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
+        VT100GridRange gridRange;
+        if (range.start.y < line) {
+            gridRange.location = 0;
+        } else {
+            gridRange.location = range.start.x;
+        }
+        if (range.end.y > line) {
+            gridRange.length = self.width + 1 - gridRange.location;
+        } else {
+            gridRange.length = range.end.x - gridRange.location;
+        }
+        [result addObject:[NSValue valueWithGridRange:gridRange]];
+    }
+    return result;
+}
+
+- (NSArray *)notesInRange:(VT100GridCoordRange)range {
+    Interval *interval = [self intervalForGridCoordRange:range];
+    return [notes_ objectsInInterval:interval];
 }
 
 #pragma mark - VT100TerminalDelegate
@@ -2036,14 +2087,14 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (void)terminalSetLineNoteAtCursor:(NSString *)value {
-    int line = [self numberOfScrollbackLines] + currentGrid_.cursorY;
     PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
     [note setString:value];
     [note sizeToFit];
     [self addNote:note
-             from:VT100GridCoordMake(0, currentGrid_.cursorY)
-               to:VT100GridCoordMake(currentGrid_.size.width,
-                                     currentGrid_.cursorY)];
+          inRange:VT100GridCoordRangeMake(0,
+                                          currentGrid_.cursorY,
+                                          currentGrid_.size.width,
+                                          currentGrid_.cursorY)];
 }
 
 - (void)terminalSetPasteboard:(NSString *)value {

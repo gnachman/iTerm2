@@ -667,7 +667,7 @@ enum {
 
 - (NSString*)_allText;
 
-- (void)addViewForNoteOnLine:(int)line;
+- (void)addViewForNote:(PTYNoteViewController *)note onLine:(int)line;
 - (void)updateNoteViewFrames;
 
 @end
