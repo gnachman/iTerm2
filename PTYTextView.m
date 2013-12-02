@@ -4573,6 +4573,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [note.view removeFromSuperview];
     [self addSubview:note.view];
     note.anchor = NSMakePoint(0, line * lineHeight + lineHeight / 2);
+    [note sizeToFit];
     [note setNoteHidden:NO];
 }
 

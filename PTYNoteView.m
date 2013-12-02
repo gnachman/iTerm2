@@ -21,18 +21,12 @@ static const CGFloat kRadius = 5;
 static const CGFloat kPointerBase = 7;
 static const CGFloat kPointerLength = 7;
 
-typedef enum {
-    kPTYNoteViewTipEdgeLeft,
-    kPTYNoteViewTipEdgeTop,
-    kPTYNoteViewTipEdgeRight,
-    kPTYNoteViewTipEdgeBottom
-} PTYNoteViewTipEdge;
-
 @implementation PTYNoteView
 
 @synthesize noteViewController = noteViewController_;
 @synthesize point = point_;
 @synthesize contentView = contentView_;
+@synthesize tipEdge = tipEdge_;
 
 - (void)dealloc {
     [contentView_ release];
@@ -289,10 +283,6 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
     return path;
 }
 
-- (PTYNoteViewTipEdge)tipEdge {
-    return kPTYNoteViewTipEdgeTop;
-}
-
 - (void)drawRect:(NSRect)dirtyRect
 {
     [super drawRect:dirtyRect];
@@ -399,6 +389,22 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
                                                  bubbleFrame.size.width - kLeftMargin - kRightMargin,
                                                  bubbleFrame.size.height - kTopMargin - kBottomMargin),
                                       self.frame.size.height);
+}
+
+- (NSSize)sizeThatFitsContentView {
+    switch (tipEdge_) {
+        case kPTYNoteViewTipEdgeBottom:
+        case kPTYNoteViewTipEdgeTop:
+            return NSMakeSize(contentView_.frame.size.width + kLeftMargin + kRightMargin + kInset + 1,
+                              contentView_.frame.size.height + kBottomMargin + kTopMargin + kPointerLength + kInset + 1);
+
+        case kPTYNoteViewTipEdgeLeft:
+        case kPTYNoteViewTipEdgeRight:
+            return NSMakeSize(contentView_.frame.size.width + kLeftMargin + kRightMargin + kPointerLength + kInset + 1,
+                              contentView_.frame.size.height + kBottomMargin + kTopMargin + kInset + 1);
+    }
+    assert(false);
+    return NSMakeSize(0, 0);
 }
 
 @end

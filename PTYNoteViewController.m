@@ -45,7 +45,7 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
 
 - (void)loadView {
     const CGFloat kWidth = 300;
-    const CGFloat kHeight = 30;
+    const CGFloat kHeight = 10;
     self.noteView = [[[PTYNoteView alloc] initWithFrame:NSMakeRect(0, 0, kWidth, kHeight)] autorelease];
     self.noteView.autoresizesSubviews = YES;
     self.noteView.noteViewController = self;
@@ -80,10 +80,10 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     textView_.drawsBackground = NO;
     textView_.textContainer.containerSize = NSMakeSize(scrollView_.frame.size.width, FLT_MAX);
     textView_.textContainer.widthTracksTextView = YES;
-
     scrollView_.documentView = textView_;
 
     noteView_.contentView = scrollView_;
+    [self sizeToFit];
 }
 
 - (void)beginEditing {
@@ -98,16 +98,28 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     if (anchor_.x + noteView_.frame.size.width > superViewFrame.size.width) {
         xOffset = anchor_.x + noteView_.frame.size.width - superViewFrame.size.width;
     }
+    NSSize size = [noteView_ sizeThatFitsContentView];
     noteView_.point = NSMakePoint(xOffset, 0);
+    noteView_.tipEdge = kPTYNoteViewTipEdgeTop;
     noteView_.frame = NSMakeRect(anchor_.x - xOffset,
                                  anchor_.y,
-                                 noteView_.frame.size.width,
-                                 noteView_.frame.size.height);
+                                 size.width,
+                                 size.height);
 
+    CGFloat superViewMaxY = superViewFrame.origin.y + superViewFrame.size.height;
+    if (NSMaxY(noteView_.frame) > superViewMaxY) {
+        noteView_.tipEdge = kPTYNoteViewTipEdgeBottom;
+        noteView_.point = NSMakePoint(xOffset, noteView_.frame.size.height - 1);
+        noteView_.frame = NSMakeRect(anchor_.x - xOffset,
+                                     anchor_.y - noteView_.frame.size.height,
+                                     size.width,
+                                     size.height);
+    }
+
+    [noteView_ layoutSubviews];
 #if 0
     
     
-    CGFloat superViewMaxY = superViewFrame.origin.y + superViewFrame.size.height;
 
     CGFloat height = noteView_.frame.size.height;
     CGFloat visibleHeight = noteView_.visibleFrame.size.height;
@@ -211,6 +223,9 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     NSTextContainer *textContainer = textView_.textContainer;
     [layoutManager ensureLayoutForTextContainer:textContainer];
     NSRect usedRect = [layoutManager usedRectForTextContainer:textContainer];
+
+    const CGFloat kMinTextViewWidth = 75;
+    usedRect.size.width = MAX(usedRect.size.width, kMinTextViewWidth);
 
     NSSize scrollViewSize = [NSScrollView frameSizeForContentSize:usedRect.size
                                           horizontalScrollerClass:[[scrollView_ horizontalScroller] class]
