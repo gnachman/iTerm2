@@ -1237,8 +1237,14 @@ static const double kInterBellQuietPeriod = 0.1;
     [delegate_ screenDidAddNote:note startingAtLine:range.start.y];
 }
 
-- (void)removeNote:(PTYNoteViewController *)note {
-    [notes_ removeObject:note];
+- (void)removeInaccessibleNotes {
+    long long lastDeadLocation = [self totalScrollbackOverflow] * (self.width + 1);
+    if (lastDeadLocation > 0) {
+        Interval *deadInterval = [Interval intervalWithLocation:0 length:lastDeadLocation + 1];
+        for (PTYNoteViewController *note in [notes_ objectsInInterval:deadInterval]) {
+            [notes_ removeObject:note];
+        }
+    }
 }
 
 - (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note {

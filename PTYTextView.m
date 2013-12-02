@@ -4603,24 +4603,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)updateNoteViewFrames
 {
-    NSMutableArray *notesToRemove = [NSMutableArray array];
     for (NSView *view in [self subviews]) {
         if ([view isKindOfClass:[PTYNoteView class]]) {
             PTYNoteView *noteView = (PTYNoteView *)view;
             PTYNoteViewController *note = (PTYNoteViewController *)noteView.noteViewController;
             VT100GridCoordRange coordRange = [dataSource coordRangeOfNote:note];
-            if (coordRange.end.y < 0) {
-                [notesToRemove addObject:note];
-            } else {
+            if (coordRange.end.y >= 0) {
                 [note setAnchor:NSMakePoint(coordRange.end.x * charWidth + MARGIN,
                                             (1 + coordRange.end.y) * lineHeight)];
             }
         }
     }
-    for (PTYNoteViewController *note in notesToRemove) {
-        [note.view removeFromSuperview];
-        [dataSource removeNote:note];
-    }
+    [dataSource removeInaccessibleNotes];
 }
 
 - (void)editTextViewSession:(id)sender
