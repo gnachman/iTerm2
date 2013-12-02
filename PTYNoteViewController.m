@@ -224,7 +224,7 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     [layoutManager ensureLayoutForTextContainer:textContainer];
     NSRect usedRect = [layoutManager usedRectForTextContainer:textContainer];
 
-    const CGFloat kMinTextViewWidth = 75;
+    const CGFloat kMinTextViewWidth = 250;
     usedRect.size.width = MAX(usedRect.size.width, kMinTextViewWidth);
 
     NSSize scrollViewSize = [NSScrollView frameSizeForContentSize:usedRect.size

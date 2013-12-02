@@ -113,10 +113,8 @@
 }
 
 - (void)dealloc {
-  for (IntervalTreeValue *value in [self objectsInInterval:[Interval maxInterval]]) {
-    for (IntervalTreeEntry *entry in value.entries) {
-      entry.object.entry = nil;
-    }
+  for (id<IntervalTreeObject> obj in [self objectsInInterval:[Interval maxInterval]]) {
+    obj.entry = nil;
   }
   _tree.delegate = nil;
   [_tree release];
@@ -124,6 +122,8 @@
 }
 
 - (void)addObject:(id<IntervalTreeObject>)object withInterval:(Interval *)interval {
+  assert(interval.location >= 0);
+  assert(interval.location < LLONG_MAX - 1 - interval.length);  // Only maxInterval can go up to LLONG_MAX.
   IntervalTreeEntry *entry = [IntervalTreeEntry entryWithInterval:interval
                                                            object:object];
   IntervalTreeValue *value = [_tree objectForKey:@(interval.location)];

@@ -1206,9 +1206,11 @@ static const double kInterBellQuietPeriod = 0.1;
     VT100GridCoord start = range.start;
     VT100GridCoord end = range.end;
     long long si = start.y;
+    si += [self totalScrollbackOverflow];
     si *= (self.width + 1);
     si += start.x;
     long long ei = end.y;
+    ei += [self totalScrollbackOverflow];
     ei *= (self.width + 1);
     ei += end.x;
     if (ei < si) {
@@ -1222,9 +1224,9 @@ static const double kInterBellQuietPeriod = 0.1;
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval {
     VT100GridCoordRange result;
     const int w = self.width + 1;
-    result.start.y = interval.location / w;
+    result.start.y = interval.location / w - [self totalScrollbackOverflow];
     result.start.x = interval.location % w;
-    result.end.y = interval.limit / w;
+    result.end.y = interval.limit / w - [self totalScrollbackOverflow];
     result.end.x = interval.limit % w;
     return result;
 }

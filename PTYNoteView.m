@@ -392,6 +392,8 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
 }
 
 - (NSSize)sizeThatFitsContentView {
+    // The +1's below are to account for the 0.5 inset on all edges that's applied to make the
+    // path's stroke look nice.
     switch (tipEdge_) {
         case kPTYNoteViewTipEdgeBottom:
         case kPTYNoteViewTipEdgeTop:
