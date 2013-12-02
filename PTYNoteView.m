@@ -11,6 +11,16 @@
 static const CGFloat kMinWidth = 50;
 static const CGFloat kMinHeight = 30;
 
+static const CGFloat kLeftMargin = 5;
+static const CGFloat kRightMargin = 5;
+static const CGFloat kTopMargin = 2;
+static const CGFloat kBottomMargin = 2;
+
+static const CGFloat kInset = 5;
+static const CGFloat kRadius = 5;
+static const CGFloat kPointerBase = 7;
+static const CGFloat kPointerLength = 7;
+
 typedef enum {
     kPTYNoteViewTipEdgeLeft,
     kPTYNoteViewTipEdgeTop,
@@ -22,6 +32,12 @@ typedef enum {
 
 @synthesize noteViewController = noteViewController_;
 @synthesize point = point_;
+@synthesize contentView = contentView_;
+
+- (void)dealloc {
+    [contentView_ release];
+    [super dealloc];
+}
 
 - (NSColor *)backgroundColor {
     return [NSColor colorWithCalibratedRed:252.0/255.0
@@ -47,15 +63,12 @@ static NSPoint ModifyNotePoint(NSPoint p, CGFloat dx, CGFloat dy)
     return NSMakePoint(p.x + dx, p.y - dy);
 }
 
-- (NSRect)visibleFrame {
-    NSRect frame = self.frame;
-    frame.size.width -= 5;
-    frame.size.height -= 5;
-    return frame;
-}
-
 static NSPoint FlipPoint(NSPoint p, CGFloat height) {
     return NSMakePoint(p.x, height - p.y);
+}
+
+static NSRect FlipRect(NSRect rect, CGFloat height) {
+    return NSMakeRect(rect.origin.x, height - NSMaxY(rect), rect.size.width, rect.size.height);
 }
 
 - (NSPoint)leadingCornerOfRoundedRect:(NSRect)frame
@@ -141,13 +154,10 @@ static NSPoint FlipPoint(NSPoint p, CGFloat height) {
     }
 }
 
-- (NSBezierPath *)roundedRectangleWithPointerInRect:(NSRect)frame
-                                              inset:(CGFloat)inset
-                                             radius:(CGFloat)radius
-                                        pointerBase:(CGFloat)pointerBase
-                                      pointerLength:(CGFloat)pointerLength
-                                       pointerTipAt:(NSPoint)tipPoint
-                                          tipOnEdge:(PTYNoteViewTipEdge)tipEdge {
+- (NSRect)bubbleFrameInRect:(NSRect)frame
+                      inset:(CGFloat)inset
+              pointerLength:(CGFloat)pointerLength
+                  tipOnEdge:(PTYNoteViewTipEdge)tipEdge {
     CGFloat left = frame.origin.x + 0.5;
     CGFloat top = frame.origin.y + 0.5;
     CGFloat right = NSMaxX(frame) - inset - 0.5;
@@ -170,41 +180,43 @@ static NSPoint FlipPoint(NSPoint p, CGFloat height) {
             top += pointerLength;
             break;
     }
-
-    CGFloat height = self.frame.size.height;
-
-    NSPoint controlPoint;
     NSRect bubbleFrame = NSMakeRect(left, top, right - left, bottom - top);
+    return bubbleFrame;
+}
+
+- (NSBezierPath *)roundedRectangleWithPointerInRect:(NSRect)frame
+                                              inset:(CGFloat)inset
+                                             radius:(CGFloat)radius
+                                        pointerBase:(CGFloat)pointerBase
+                                      pointerLength:(CGFloat)pointerLength
+                                       pointerTipAt:(NSPoint)tipPoint
+                                          tipOnEdge:(PTYNoteViewTipEdge)tipEdge {
+    CGFloat height = self.frame.size.height;
+    NSPoint controlPoint;
+    NSRect bubbleFrame = [self bubbleFrameInRect:frame
+                                           inset:inset
+                                   pointerLength:pointerLength
+                                       tipOnEdge:tipEdge];
     NSBezierPath *path = [[[NSBezierPath alloc] init] autorelease];
 
-    NSPoint p;
-    PTYNoteViewTipEdge firstEdge;
-    if (tipEdge == kPTYNoteViewTipEdgeLeft) {
-        p = NSMakePoint((left + right) / 2, top);
-        firstEdge = kPTYNoteViewTipEdgeTop;
-    } else {
-        p = NSMakePoint(left, (top + bottom) / 2);
-        firstEdge = kPTYNoteViewTipEdgeLeft;
-    }
-
-    // Start on the middle of a side that doesn't have the arrow (either the left of the top).
+    // start on the left edge
+    NSPoint p = [self trailingCornerOfRoundedRect:bubbleFrame radius:radius dx:-1 dy:0];
     [path moveToPoint:FlipPoint(p, height)];
-    NSPoint initialPoint = p;
 
     struct {
         int dx, dy;
     } directions[4] = {
-        { 0, -1 },
-        { 1, 0 },
-        { 0, 1 },
-        { -1, 0 }
+        { 0, -1 },  // left
+        { 1, 0 },   // top
+        { 0, 1 },   // right
+        { -1, 0 }   // bottom
     };
 
     // Walk each side...
     for (int i = 0; i < 4; i++) {
-        PTYNoteViewTipEdge edge = (i + firstEdge) % 4;
-        int dx = directions[edge].dx;
-        int dy = directions[edge].dy;
+        PTYNoteViewTipEdge edge = (PTYNoteViewTipEdge)i;
+        int dx = directions[i].dx;
+        int dy = directions[i].dy;
 
         // Get the location of the point just before the rounded rect at the end of this edge
         p = [self leadingCornerOfRoundedRect:bubbleFrame
@@ -273,22 +285,25 @@ static NSPoint FlipPoint(NSPoint p, CGFloat height) {
              controlPoint1:FlipPoint(controlPoint, height)
              controlPoint2:FlipPoint(controlPoint, height)];
     }
-    [path lineToPoint:initialPoint];
 
     return path;
+}
+
+- (PTYNoteViewTipEdge)tipEdge {
+    return kPTYNoteViewTipEdgeTop;
 }
 
 - (void)drawRect:(NSRect)dirtyRect
 {
     [super drawRect:dirtyRect];
 
-    NSBezierPath *path = [self roundedRectangleWithPointerInRect:[self visibleRect]
-                                                           inset:5
-                                                          radius:5
-                                                     pointerBase:7
-                                                   pointerLength:7
+    NSBezierPath *path = [self roundedRectangleWithPointerInRect:self.bounds
+                                                           inset:kInset
+                                                          radius:kRadius
+                                                     pointerBase:kPointerBase
+                                                   pointerLength:kPointerLength
                                                     pointerTipAt:point_
-                                                       tipOnEdge:kPTYNoteViewTipEdgeTop];
+                                                       tipOnEdge:[self tipEdge]];
 
     [[self backgroundColor] set];
     [path fill];
@@ -359,6 +374,31 @@ static NSPoint FlipPoint(NSPoint p, CGFloat height) {
 - (void)setPoint:(NSPoint)point {
     point_ = point;
     [self setNeedsDisplay:YES];
+}
+
+- (void)setContentView:(NSView *)contentView {
+    [contentView_ removeFromSuperview];
+    [contentView_ autorelease];
+    contentView_ = [contentView retain];
+    [self addSubview:contentView_];
+    [self layoutSubviews];
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [self layoutSubviews];
+}
+
+- (void)layoutSubviews {
+    NSRect frameRect = [self bounds];
+    NSRect bubbleFrame = [self bubbleFrameInRect:self.bounds
+                                           inset:kInset
+                                   pointerLength:kPointerLength
+                                       tipOnEdge:[self tipEdge]];
+    self.contentView.frame = FlipRect(NSMakeRect(NSMinX(bubbleFrame) + kLeftMargin,
+                                                 NSMinY(bubbleFrame) + kTopMargin,
+                                                 bubbleFrame.size.width - kLeftMargin - kRightMargin,
+                                                 bubbleFrame.size.height - kTopMargin - kBottomMargin),
+                                      self.frame.size.height);
 }
 
 @end

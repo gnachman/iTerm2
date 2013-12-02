@@ -12,11 +12,6 @@
 
 NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewControllerShouldUpdatePosition";
 
-static const CGFloat kLeftMargin = 15;
-static const CGFloat kRightMargin = 10;
-static const CGFloat kTopMargin = 10;
-static const CGFloat kBottomMargin = 5;
-
 @interface PTYNoteViewController ()
 @property(nonatomic, retain) NSTextView *textView;
 @property(nonatomic, retain) NSScrollView *scrollView;
@@ -52,6 +47,7 @@ static const CGFloat kBottomMargin = 5;
     const CGFloat kWidth = 300;
     const CGFloat kHeight = 30;
     self.noteView = [[[PTYNoteView alloc] initWithFrame:NSMakeRect(0, 0, kWidth, kHeight)] autorelease];
+    self.noteView.autoresizesSubviews = YES;
     self.noteView.noteViewController = self;
     NSShadow *shadow = [[[NSShadow alloc] init] autorelease];
     shadow.shadowColor = [NSColor blackColor];
@@ -60,12 +56,10 @@ static const CGFloat kBottomMargin = 5;
     self.noteView.wantsLayer = YES;
     self.noteView.shadow = shadow;
 
-    NSSize size = NSMakeSize(kWidth - kLeftMargin - kRightMargin,
-                             kHeight - kTopMargin - kBottomMargin);
-    NSRect frame = NSMakeRect(kLeftMargin,
-                              kTopMargin,
-                              size.width,
-                              size.height);
+    NSRect frame = NSMakeRect(0,
+                              0,
+                              kWidth,
+                              kHeight);
     self.scrollView = [[[NSScrollView alloc] initWithFrame:frame] autorelease];
     scrollView_.drawsBackground = NO;
     scrollView_.hasVerticalScroller = YES;
@@ -78,18 +72,18 @@ static const CGFloat kBottomMargin = 5;
                                                                   scrollView_.contentSize.height)]
                      autorelease];
     textView_.allowsUndo = YES;
-    textView_.minSize = size;
+    textView_.minSize = scrollView_.frame.size;
     textView_.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
     textView_.verticallyResizable = YES;
     textView_.horizontallyResizable = NO;
     textView_.autoresizingMask = NSViewWidthSizable;
     textView_.drawsBackground = NO;
-    textView_.textContainer.containerSize = NSMakeSize(size.width, FLT_MAX);
+    textView_.textContainer.containerSize = NSMakeSize(scrollView_.frame.size.width, FLT_MAX);
     textView_.textContainer.widthTracksTextView = YES;
 
     scrollView_.documentView = textView_;
 
-    [noteView_ addSubview:scrollView_];
+    noteView_.contentView = scrollView_;
 }
 
 - (void)beginEditing {
@@ -104,11 +98,12 @@ static const CGFloat kBottomMargin = 5;
     if (anchor_.x + noteView_.frame.size.width > superViewFrame.size.width) {
         xOffset = anchor_.x + noteView_.frame.size.width - superViewFrame.size.width;
     }
+    noteView_.point = NSMakePoint(xOffset, 0);
     noteView_.frame = NSMakeRect(anchor_.x - xOffset,
                                  anchor_.y,
                                  noteView_.frame.size.width,
                                  noteView_.frame.size.height);
-    noteView_.point = NSMakePoint(xOffset, 0);
+
 #if 0
     
     
@@ -223,12 +218,10 @@ static const CGFloat kBottomMargin = 5;
                                                        borderType:NSNoBorder
                                                       controlSize:NSRegularControlSize
                                                     scrollerStyle:[scrollView_ scrollerStyle]];
-    noteView_.frame = NSMakeRect(0,
-                                 0,
-                                 kLeftMargin + kRightMargin + scrollViewSize.width,
-                                 kTopMargin + kBottomMargin + scrollViewSize.height);
-    
-    scrollView_.frame = NSMakeRect(kLeftMargin, kTopMargin, scrollViewSize.width, scrollViewSize.height);
+    scrollView_.frame = NSMakeRect(NSMinX(scrollView_.frame),
+                                   NSMinY(scrollView_.frame),
+                                   scrollViewSize.width,
+                                   scrollViewSize.height);
 
     textView_.minSize = usedRect.size;
     textView_.frame = NSMakeRect(0, 0, usedRect.size.width, usedRect.size.height);
