@@ -11,6 +11,13 @@
 static const CGFloat kMinWidth = 50;
 static const CGFloat kMinHeight = 30;
 
+typedef enum {
+    kPTYNoteViewTipEdgeLeft,
+    kPTYNoteViewTipEdgeTop,
+    kPTYNoteViewTipEdgeRight,
+    kPTYNoteViewTipEdgeBottom
+} PTYNoteViewTipEdge;
+
 @implementation PTYNoteView
 
 @synthesize noteViewController = noteViewController_;
@@ -20,6 +27,13 @@ static const CGFloat kMinHeight = 30;
     return [NSColor colorWithCalibratedRed:252.0/255.0
                                      green:250.0/255.0
                                       blue:198.0/255.0
+                                     alpha:0.95];
+}
+
+- (NSColor *)borderColor {
+    return [NSColor colorWithCalibratedRed:255.0/255.0
+                                     green:229.0/255.0
+                                      blue:114.0/255.0
                                      alpha:0.95];
 }
 
@@ -40,63 +54,246 @@ static NSPoint ModifyNotePoint(NSPoint p, CGFloat dx, CGFloat dy)
     return frame;
 }
 
+static NSPoint FlipPoint(NSPoint p, CGFloat height) {
+    return NSMakePoint(p.x, height - p.y);
+}
+
+- (NSPoint)leadingCornerOfRoundedRect:(NSRect)frame
+                               radius:(CGFloat)radius
+                                   dx:(int)dx
+                                   dy:(int)dy {
+    assert(dx == 0 || dy == 0);
+    assert((dx == 0) ^ (dy == 0));
+    NSPoint p;
+    if (dx > 0) {
+        p.x = NSMaxX(frame) - radius;
+        p.y = NSMinY(frame);
+    } else if (dx < 0) {
+        p.x = NSMinX(frame) + radius;
+        p.y = NSMaxY(frame);
+    } else if (dy > 0) {
+        p.x = NSMaxX(frame);
+        p.y = NSMaxY(frame) - radius;
+    } else if (dy < 0) {
+        p.x = NSMinX(frame);
+        p.y = NSMinY(frame) + radius;
+    }
+
+    return p;
+}
+
+- (NSPoint)trailingCornerOfRoundedRect:(NSRect)frame
+                                radius:(CGFloat)radius
+                                    dx:(int)dx
+                                    dy:(int)dy {
+    assert(dx == 0 || dy == 0);
+    assert((dx == 0) ^ (dy == 0));
+
+    NSPoint p;
+    if (dx > 0) {
+        p.x = NSMaxX(frame);
+        p.y = NSMinY(frame) + radius;
+    } else if (dx < 0) {
+        p.x = NSMinX(frame);
+        p.y = NSMaxY(frame) - radius;
+    } else if (dy > 0) {
+        p.x = NSMaxX(frame) - radius;
+        p.y = NSMaxY(frame);
+    } else if (dy < 0) {
+        p.x = NSMinX(frame) + radius;
+        p.y = NSMinY(frame);
+    }
+    return p;
+}
+
+- (NSPoint)controlPointOfRect:(NSRect)rect forDx:(int)dx dy:(int)dy {
+    if (dx == 0 && dy == -1) {
+        return rect.origin;
+    } else if (dx == 1 && dy == 0) {
+        return NSMakePoint(NSMaxX(rect), NSMinY(rect));
+    } else if (dx == 0 && dy == 1) {
+        return NSMakePoint(NSMaxX(rect), NSMaxY(rect));
+    } else if (dx == -1 && dy == 0) {
+        return NSMakePoint(NSMinX(rect), NSMaxY(rect));
+    } else {
+        assert(false);
+    }
+}
+
+- (NSPoint)projectionOfPoint:(NSPoint)p
+                    ontoEdge:(PTYNoteViewTipEdge)edge
+                     ofFrame:(NSRect)frame {
+    switch (edge) {
+        case kPTYNoteViewTipEdgeTop:
+            return NSMakePoint(p.x, NSMinY(frame));
+
+        case kPTYNoteViewTipEdgeLeft:
+            return NSMakePoint(NSMinX(frame), p.y);
+
+        case kPTYNoteViewTipEdgeBottom:
+            return NSMakePoint(p.x, NSMaxY(frame));
+
+        case kPTYNoteViewTipEdgeRight:
+            return NSMakePoint(NSMaxX(frame), p.y);
+
+        default:
+            assert(false);
+    }
+}
+
+- (NSBezierPath *)roundedRectangleWithPointerInRect:(NSRect)frame
+                                              inset:(CGFloat)inset
+                                             radius:(CGFloat)radius
+                                        pointerBase:(CGFloat)pointerBase
+                                      pointerLength:(CGFloat)pointerLength
+                                       pointerTipAt:(NSPoint)tipPoint
+                                          tipOnEdge:(PTYNoteViewTipEdge)tipEdge {
+    CGFloat left = frame.origin.x + 0.5;
+    CGFloat top = frame.origin.y + 0.5;
+    CGFloat right = NSMaxX(frame) - inset - 0.5;
+    CGFloat bottom = NSMaxY(frame) - inset - 0.5;
+
+    switch (tipEdge) {
+        case kPTYNoteViewTipEdgeRight:
+            right -= pointerLength;
+            break;
+
+        case kPTYNoteViewTipEdgeLeft:
+            left += pointerLength;
+            break;
+
+        case kPTYNoteViewTipEdgeBottom:
+            bottom -= pointerLength;
+            break;
+
+        case kPTYNoteViewTipEdgeTop:
+            top += pointerLength;
+            break;
+    }
+
+    CGFloat height = self.frame.size.height;
+
+    NSPoint controlPoint;
+    NSRect bubbleFrame = NSMakeRect(left, top, right - left, bottom - top);
+    NSBezierPath *path = [[[NSBezierPath alloc] init] autorelease];
+
+    NSPoint p;
+    PTYNoteViewTipEdge firstEdge;
+    if (tipEdge == kPTYNoteViewTipEdgeLeft) {
+        p = NSMakePoint((left + right) / 2, top);
+        firstEdge = kPTYNoteViewTipEdgeTop;
+    } else {
+        p = NSMakePoint(left, (top + bottom) / 2);
+        firstEdge = kPTYNoteViewTipEdgeLeft;
+    }
+
+    // Start on the middle of a side that doesn't have the arrow (either the left of the top).
+    [path moveToPoint:FlipPoint(p, height)];
+    NSPoint initialPoint = p;
+
+    struct {
+        int dx, dy;
+    } directions[4] = {
+        { 0, -1 },
+        { 1, 0 },
+        { 0, 1 },
+        { -1, 0 }
+    };
+
+    // Walk each side...
+    for (int i = 0; i < 4; i++) {
+        PTYNoteViewTipEdge edge = (i + firstEdge) % 4;
+        int dx = directions[edge].dx;
+        int dy = directions[edge].dy;
+
+        // Get the location of the point just before the rounded rect at the end of this edge
+        p = [self leadingCornerOfRoundedRect:bubbleFrame
+                                      radius:radius
+                                          dx:dx
+                                          dy:dy];
+
+        if (edge == tipEdge) {
+            // This edge has the arrow. Compute the points where the arrow's base intersects
+            // the edge.
+            NSPoint baseCenter = [self projectionOfPoint:tipPoint
+                                                ontoEdge:edge
+                                                 ofFrame:bubbleFrame];
+            NSPoint bases[2];
+            bases[0] = NSMakePoint(baseCenter.x - dx * pointerBase / 2,
+                                   baseCenter.y - dy * pointerBase / 2);
+            bases[1] = NSMakePoint(baseCenter.x + dx * pointerBase / 2,
+                                   baseCenter.y + dy * pointerBase / 2);
+
+            // If the base is over the radius, scoot it away from the corner.
+            for (int j = 0; j < 2; j++) {
+                if (edge == kPTYNoteViewTipEdgeTop || edge == kPTYNoteViewTipEdgeBottom) {
+                    if (bases[j].x < NSMinX(bubbleFrame) + radius) {
+                        CGFloat error = NSMinX(bubbleFrame) + radius - bases[j].x;
+                        bases[0].x += error;
+                        bases[1].x += error;
+                    }
+                    if (bases[j].x > NSMaxX(bubbleFrame) - radius) {
+                        CGFloat error = bases[j].x - (NSMaxX(bubbleFrame) - radius);
+                        bases[0].x -= error;
+                        bases[1].x -= error;
+                    }
+                } else {
+                    // Left or right edge
+                    if (bases[j].y < NSMinY(bubbleFrame) + radius) {
+                        CGFloat error = NSMinY(bubbleFrame) + radius - bases[j].y;
+                        bases[0].y += error;
+                        bases[1].y += error;
+                    }
+                    if (bases[j].y > NSMaxY(bubbleFrame) - radius) {
+                        CGFloat error = bases[j].y - (NSMaxY(bubbleFrame) - radius);
+                        bases[0].y -= error;
+                        bases[1].y -= error;
+                    }
+                }
+            }
+
+            // Draw the arrow
+            [path lineToPoint:FlipPoint(bases[0], height)];
+            [path lineToPoint:FlipPoint(tipPoint, height)];
+            [path lineToPoint:FlipPoint(bases[1], height)];
+        }
+
+        // Line to just before the arc
+        [path lineToPoint:FlipPoint(p, height)];
+
+        // The control point is the corner of the bubbleFrame near the arc.
+        controlPoint = [self controlPointOfRect:bubbleFrame forDx:dx dy:dy];
+        p = [self trailingCornerOfRoundedRect:bubbleFrame
+                                       radius:radius
+                                           dx:dx
+                                           dy:dy];
+
+        // Draw the arc in the corner
+        [path curveToPoint:FlipPoint(p, height)
+             controlPoint1:FlipPoint(controlPoint, height)
+             controlPoint2:FlipPoint(controlPoint, height)];
+    }
+    [path lineToPoint:initialPoint];
+
+    return path;
+}
+
 - (void)drawRect:(NSRect)dirtyRect
 {
     [super drawRect:dirtyRect];
 
-    NSBezierPath* path = [[[NSBezierPath alloc] init] autorelease];
-    NSSize size = [self visibleFrame].size;
-    CGFloat radius = 5;
-    CGFloat arrowWidth = 10;
-    CGFloat arrowHeight = 7;
-    CGFloat topOffset = arrowHeight;
-    CGFloat bottomOffset = 0;
-    
-    CGFloat height = self.frame.size.height;
+    NSBezierPath *path = [self roundedRectangleWithPointerInRect:[self visibleRect]
+                                                           inset:5
+                                                          radius:5
+                                                     pointerBase:7
+                                                   pointerLength:7
+                                                    pointerTipAt:point_
+                                                       tipOnEdge:kPTYNoteViewTipEdgeTop];
 
-    [path appendBezierPathWithRoundedRect:NSMakeRect(0,
-                                                     bottomOffset + 5,
-                                                     size.width,
-                                                     size.height - (topOffset + bottomOffset))
-                                  xRadius:radius
-                                  yRadius:radius];
-    [[self backgroundColor] set];
-    [path fill];
-    
-    [[NSColor colorWithCalibratedRed:255.0/255.0 green:229.0/255.0 blue:114.0/255.0 alpha:0.95] set];
-    [path setLineWidth:1];
-    [path stroke];
-
-    NSPoint base1;
-    NSPoint base2;
-    NSPoint tip;
-    
-    base1 = NSMakePoint(point_.x - arrowWidth / 2, height - arrowHeight - 1);
-    base2 = NSMakePoint(point_.x + arrowWidth / 2, height - arrowHeight - 1);
-    if (base2.x > size.width - radius) {
-        CGFloat overage = base2.x - (size.width - radius);
-        base1.x -= overage;
-        base2.x -= overage;
-    }
-    if (base1.x < radius) {
-        base1.x += radius;
-        base2.x += radius;
-    }
-    tip = NSMakePoint(point_.x, height - point_.y);
-    
-    path = [[[NSBezierPath alloc] init] autorelease];
-    [path moveToPoint:base1];
-    [path lineToPoint:tip];
-    [path lineToPoint:base2];
-    [path lineToPoint:base1];
     [[self backgroundColor] set];
     [path fill];
 
-    path = [[[NSBezierPath alloc] init] autorelease];
-    [path moveToPoint:base1];
-    [path lineToPoint:tip];
-    [path lineToPoint:base2];
-    [[NSColor colorWithCalibratedRed:255.0/255.0 green:229.0/255.0 blue:114.0/255.0 alpha:0.95] set];
+    [[self borderColor] set];
     [path setLineWidth:1];
     [path stroke];
 }
