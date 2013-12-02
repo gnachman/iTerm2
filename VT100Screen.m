@@ -1237,6 +1237,10 @@ static const double kInterBellQuietPeriod = 0.1;
     [delegate_ screenDidAddNote:note startingAtLine:range.start.y];
 }
 
+- (void)removeNote:(PTYNoteViewController *)note {
+    [notes_ removeObject:note];
+}
+
 - (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note {
     return [self coordRangeForInterval:note.entry.interval];
 }

@@ -140,7 +140,8 @@
 
 - (void)removeObject:(id<IntervalTreeObject>)object {
   Interval *interval = object.entry.interval;
-  IntervalTreeValue *value = [_tree objectForKey:interval];
+  long long theLocation = interval.location;
+  IntervalTreeValue *value = [_tree objectForKey:@(interval.location)];
   NSMutableArray *entries = value.entries;
   int i;
   for (i = 0; i < entries.count; i++) {
@@ -152,9 +153,9 @@
     [entries removeObjectAtIndex:i];
   }
   if (entries.count == 0) {
-    [_tree removeObjectForKey:@(interval.location)];
+    [_tree removeObjectForKey:@(theLocation)];
   } else {
-    [_tree notifyValueChangedForKey:@(interval.location)];
+    [_tree notifyValueChangedForKey:@(theLocation)];
   }
   object.entry = nil;
 }

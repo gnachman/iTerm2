@@ -87,6 +87,7 @@ typedef enum {
 - (NSDate *)timestampForLine:(int)y;
 
 - (void)addNote:(PTYNoteViewController *)note inRange:(VT100GridCoordRange)range;
+- (void)removeNote:(PTYNoteViewController *)note;
 
 // Returns all notes in a range of cells.
 - (NSArray *)notesInRange:(VT100GridCoordRange)range;
