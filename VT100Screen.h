@@ -72,8 +72,8 @@ extern int kVT100ScreenMinRows;
     // OK to report window title?
     BOOL allowTitleReporting_;
 
-    IntervalTree *savedNotes_;  // Holds notes on alt/primary grid (the one we're not in)
-    IntervalTree *notes_;  // All currently visible notes.
+    IntervalTree *savedNotes_;  // Holds notes on alt/primary grid (the one we're not in). The origin is the top-left of the grid.
+    IntervalTree *notes_;  // All currently visible notes.  The origin is the top left of absolute scrollback history.
 }
 
 @property(nonatomic, retain) VT100Terminal *terminal;

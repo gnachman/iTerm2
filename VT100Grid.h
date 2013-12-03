@@ -181,8 +181,7 @@
 // popping, lines to be modified will first be filled with defaultChar.
 - (void)restoreScreenFromLineBuffer:(LineBuffer *)lineBuffer
                     withDefaultChar:(screen_char_t)defaultChar
-                  maxLinesToRestore:(int)maxLines
-                     absoluteOffset:(long long)absoluteOffset;
+                  maxLinesToRestore:(int)maxLines;
 
 // Ensure the cursor and savedCursor positions are valid.
 - (void)clampCursorPositionToValid;

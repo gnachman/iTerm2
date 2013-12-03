@@ -379,7 +379,6 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
 }
 
 - (void)layoutSubviews {
-    NSRect frameRect = [self bounds];
     NSRect bubbleFrame = [self bubbleFrameInRect:self.bounds
                                            inset:kInset
                                    pointerLength:kPointerLength

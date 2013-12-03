@@ -1069,6 +1069,40 @@
     assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefg"]);
     [screen resizeWidth:6 height:6];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
+    
+    // Starting in primary but with content on the alt screen. It is properly restored.
+    screen = [self screenWithWidth:5 height:5];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
+    assert([[screen compactLineDump] isEqualToString:
+            @"nopqr\n"
+            @"st...\n"
+            @"uvwxy\n"
+            @"z....\n"
+            @"....."]);
+    [self showAltAndUppercase:screen];
+    assert([[screen compactLineDump] isEqualToString:
+            @"NOPQR\n"
+            @"ST...\n"
+            @"UVWXY\n"
+            @"Z....\n"
+            @"....."]);
+    [screen resizeWidth:6 height:6];
+    assert([[screen compactLineDump] isEqualToString:
+            @"NOPQRS\n"
+            @"T.....\n"
+            @"UVWXYZ\n"
+            @"......\n"
+            @"......\n"
+            @"......"]);
+    [screen terminalShowPrimaryBufferRestoringCursor:YES];
+    assert([[screen compactLineDump] isEqualToString:
+            @"gh....\n"
+            @"ijklmn\n"
+            @"opqrst\n"
+            @"uvwxyz\n"
+            @"......\n"
+            @"......"]);
 }
 
 - (VT100Screen *)screenFromCompactLines:(NSString *)compactLines {

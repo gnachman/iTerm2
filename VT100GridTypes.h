@@ -56,6 +56,8 @@ typedef struct {
 
 @end
 
+NSString *VT100GridCoordRangeDescription(VT100GridCoordRange range);
+
 NS_INLINE VT100GridCoord VT100GridCoordMake(int x, int y) {
     VT100GridCoord coord;
     coord.x = x;

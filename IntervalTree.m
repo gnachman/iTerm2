@@ -124,6 +124,7 @@
 - (void)addObject:(id<IntervalTreeObject>)object withInterval:(Interval *)interval {
   assert(interval.location >= 0);
   assert(interval.location < LLONG_MAX - 1 - interval.length);  // Only maxInterval can go up to LLONG_MAX.
+  assert(object.entry == nil);  // Object must not belong to another tree
   IntervalTreeEntry *entry = [IntervalTreeEntry entryWithInterval:interval
                                                            object:object];
   IntervalTreeValue *value = [_tree objectForKey:@(interval.location)];
@@ -151,15 +152,14 @@
       break;
     }
   }
-  if (entry) {
-    [entries removeObjectAtIndex:i];
-  }
+  assert(entry);  // No entry implies the object was not in this tree
+  assert(object.entry == entry);  // Was object added to another tree before being removed from this one?
+  [entries removeObjectAtIndex:i];
   if (entries.count == 0) {
     [_tree removeObjectForKey:@(theLocation)];
   } else {
     [_tree notifyValueChangedForKey:@(theLocation)];
   }
-  assert(object.entry == entry);
   object.entry = nil;
 }
 
@@ -258,6 +258,10 @@
 
 - (NSInteger)count {
     return [_tree count];
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p tree=%@>", self.class, self, _tree];
 }
 
 @end

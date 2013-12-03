@@ -1398,8 +1398,7 @@ do { \
     LineBuffer *lineBuffer = [self lineBufferWithStrings:@"test", @"hello wor*ld", nil];
     [grid restoreScreenFromLineBuffer:lineBuffer
                       withDefaultChar:[grid defaultChar]
-                    maxLinesToRestore:1
-                       absoluteOffset:0];
+                    maxLinesToRestore:1];
     assert([[grid compactLineDump] isEqualToString:
             @"rld.....\n"
             @"........\n"
@@ -1416,8 +1415,7 @@ do { \
     lineBuffer = [self lineBufferWithStrings:@"test", @"hello wo*rld", nil];
     [grid restoreScreenFromLineBuffer:lineBuffer
                       withDefaultChar:[grid defaultChar]
-                    maxLinesToRestore:100
-                       absoluteOffset:0];
+                    maxLinesToRestore:100];
     assert([[grid compactLineDump] isEqualToString:
             @"test....\n"
             @"hello wo\n"
@@ -1437,8 +1435,7 @@ do { \
     dc.backgroundColorMode = ColorModeNormal;
     [grid restoreScreenFromLineBuffer:lineBuffer
                       withDefaultChar:dc
-                    maxLinesToRestore:100
-                       absoluteOffset:0];
+                    maxLinesToRestore:100];
     assert([[grid compactLineDump] isEqualToString:
             @"rl\n"
             @"d."]);
@@ -1454,8 +1451,7 @@ do { \
     lineBuffer = [self lineBufferWithStrings:@"abc*W-xy", nil];
     [grid restoreScreenFromLineBuffer:lineBuffer
                       withDefaultChar:[grid defaultChar]
-                    maxLinesToRestore:100
-                       absoluteOffset:0];
+                    maxLinesToRestore:100];
     assert([[grid compactLineDump] isEqualToString:
             @"abc>\n"
             @"W-xy\n"

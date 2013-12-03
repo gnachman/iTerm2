@@ -13,6 +13,14 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
     return run;
 }
 
+NSString *VT100GridCoordRangeDescription(VT100GridCoordRange range) {
+    return [NSString stringWithFormat:@"((%d, %d) to (%d, %d))",
+            range.start.x,
+            range.start.y,
+            range.end.x,
+            range.end.y];
+}
+
 @implementation NSValue (VT100Grid)
 
 + (NSValue *)valueWithGridCoord:(VT100GridCoord)coord {
