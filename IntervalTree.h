@@ -48,5 +48,7 @@
 - (void)addObject:(id<IntervalTreeObject>)object withInterval:(Interval *)interval;
 - (void)removeObject:(id<IntervalTreeObject>)object;
 - (NSArray *)objectsInInterval:(Interval *)interval;
+- (NSArray *)allObjects;
+- (NSInteger)count;
 
 @end

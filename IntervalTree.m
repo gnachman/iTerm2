@@ -143,13 +143,15 @@
   long long theLocation = interval.location;
   IntervalTreeValue *value = [_tree objectForKey:@(interval.location)];
   NSMutableArray *entries = value.entries;
+  IntervalTreeEntry *entry = nil;
   int i;
   for (i = 0; i < entries.count; i++) {
     if ([((IntervalTreeEntry *)entries[i]).object isEqual:object]) {
+      entry = entries[i];
       break;
     }
   }
-  if (i < entries.count) {
+  if (entry) {
     [entries removeObjectAtIndex:i];
   }
   if (entries.count == 0) {
@@ -157,6 +159,7 @@
   } else {
     [_tree notifyValueChangedForKey:@(theLocation)];
   }
+  assert(object.entry == entry);
   object.entry = nil;
 }
 
@@ -247,6 +250,14 @@
   NSMutableArray *array = [NSMutableArray array];
   [self addObjectsInInterval:interval toArray:array fromNode:_tree.root];
   return array;
+}
+
+- (NSArray *)allObjects {
+    return [self objectsInInterval:[Interval maxInterval]];
+}
+
+- (NSInteger)count {
+    return [_tree count];
 }
 
 @end

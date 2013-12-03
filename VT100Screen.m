@@ -79,6 +79,7 @@ static const double kInterBellQuietPeriod = 0.1;
         }
 
         findContext_ = [[FindContext alloc] init];
+        savedNotes_ = [[IntervalTree alloc] init];
         notes_ = [[IntervalTree alloc] init];
     }
     return self;
@@ -135,6 +136,13 @@ static const double kInterBellQuietPeriod = 0.1;
     [altGrid_ markAllCharsDirty:YES];
 }
 
+- (VT100GridCoordRange)coordRangeForCurrentSelection {
+    return VT100GridCoordRangeMake([delegate_ screenSelectionStartX],
+                                   [delegate_ screenSelectionStartY],
+                                   [delegate_ screenSelectionEndX],
+                                   [delegate_ screenSelectionEndY]);
+}
+
 - (void)resizeWidth:(int)new_width height:(int)new_height
 {
     DLog(@"Resize session to %d height", new_height);
@@ -176,12 +184,34 @@ static const double kInterBellQuietPeriod = 0.1;
               toScrollback:lineBufferWithAltScreen
             withUsedHeight:usedHeight
                  newHeight:new_height];
+        VT100GridCoordRange selection = [self coordRangeForCurrentSelection];
+
         [self getNullCorrectedSelectionStartPosition:&originalStartPos
                                          endPosition:&originalEndPos
                        selectionStartPositionIsValid:&ok1
                           selectionEndPostionIsValid:&ok2
-                                        inLineBuffer:lineBufferWithAltScreen];
+                                        inLineBuffer:lineBufferWithAltScreen
+                                            forRange:selection];
         hasSelection = ok1 && ok2;
+    }
+
+    // Contains array 3-tuples of LineBufferPosition*s with the start, end, and
+    // PTYNoteViewController of each note.
+    NSMutableArray *altScreenNoteTuples = [NSMutableArray array];
+    if ([notes_ count] && wasShowingAltScreen) {
+        for (id<IntervalTreeObject> obj in [notes_ allObjects]) {
+            LineBufferPosition *noteStart, *noteEnd;
+
+            [self getNullCorrectedSelectionStartPosition:&noteStart
+                                             endPosition:&noteEnd
+                           selectionStartPositionIsValid:&ok1
+                              selectionEndPostionIsValid:&ok2
+                                            inLineBuffer:lineBufferWithAltScreen
+                                                forRange:[self coordRangeForInterval:obj.entry.interval]];
+            if (ok1 && ok2) {
+                [altScreenNoteTuples addObject:@[noteStart, noteEnd, obj]];
+            }
+        }
     }
 
     // If we're in the alternate screen, create a temporary linebuffer and append
@@ -204,12 +234,32 @@ static const double kInterBellQuietPeriod = 0.1;
     int newSelEndX = -1;
     int newSelEndY = -1;
     if (!wasShowingAltScreen && hasSelection) {
-        hasSelection = [self convertCurrentSelectionToWidth:new_width
-                                                toNewStartX:&newSelStartX
-                                                toNewStartY:&newSelStartY
-                                                  toNewEndX:&newSelEndX
-                                                  toNewEndY:&newSelEndY
-                                               inLineBuffer:linebuffer_];
+        hasSelection = [self convertRange:[self coordRangeForCurrentSelection]
+                                  toWidth:new_width
+                              toNewStartX:&newSelStartX
+                              toNewStartY:&newSelStartY
+                                toNewEndX:&newSelEndX
+                                toNewEndY:&newSelEndY
+                             inLineBuffer:linebuffer_];
+    }
+
+    // Contains tuples of [NSValue(gridCoordRange), PTYNoteViewController]
+    NSMutableArray *primaryScreenNoteTuples = [NSMutableArray array];
+    if ([notes_ count] && !wasShowingAltScreen) {
+        for (id<IntervalTreeObject> obj in [notes_ allObjects]) {
+            VT100GridCoordRange newRange;
+            BOOL ok = [self convertRange:[self coordRangeForInterval:obj.entry.interval]
+                                 toWidth:new_width
+                             toNewStartX:&newRange.start.x
+                             toNewStartY:&newRange.start.y
+                               toNewEndX:&newRange.end.x
+                               toNewEndY:&newRange.end.y
+                            inLineBuffer:linebuffer_];
+            if (ok) {
+                [primaryScreenNoteTuples addObject:@[ [NSValue valueWithGridCoordRange:newRange],
+                                                      obj ]];
+            }
+        }
     }
 
     VT100GridSize newSize = VT100GridSizeMake(new_width, new_height);
@@ -265,7 +315,7 @@ static const double kInterBellQuietPeriod = 0.1;
         // screen to it. This sets up the current state so that if there is a
         // selection, linebuffer has the configuration that the user actually
         // sees (history + the alt screen contents). That'll make
-        // convertCurrentSelectionToWidth:... happy (the selection's Y values
+        // convertRange:toWidth:... happy (the selection's Y values
         // will be able to be looked up) and then after that's done we can swap
         // back to the tempLineBuffer.
         LineBuffer *appendOnlyLineBuffer = [[realLineBuffer newAppendOnlyCopy] autorelease];
@@ -2022,6 +2072,33 @@ static const double kInterBellQuietPeriod = 0.1;
     return self.useColumnScrollRegion;
 }
 
+- (void)moveNotesOnScreenFrom:(IntervalTree *)source
+                           to:(IntervalTree *)dest
+{
+    VT100GridCoordRange screenRange =
+        VT100GridCoordRangeMake(0,
+                                [self numberOfScrollbackLines],
+                                [self width],
+                                [self numberOfScrollbackLines] + self.height);
+    Interval *interval = [self intervalForGridCoordRange:screenRange];
+    for (id<IntervalTreeObject> obj in [source objectsInInterval:interval]) {
+        [[obj retain] autorelease];
+        Interval *interval = [[obj.entry.interval retain] autorelease];
+        [source removeObject:obj];
+        [dest addObject:obj withInterval:interval];
+    }
+}
+
+// Swap onscreen notes between notes_ and savedNotes_.
+- (void)swapNotes
+{
+    IntervalTree *temp = [[IntervalTree alloc] init];
+    [self moveNotesOnScreenFrom:notes_ to:temp];
+    [self moveNotesOnScreenFrom:savedNotes_ to:notes_];
+    [savedNotes_ release];
+    savedNotes_ = temp;
+}
+
 - (void)terminalShowAltBuffer
 {
     if (currentGrid_ == altGrid_) {
@@ -2034,6 +2111,9 @@ static const double kInterBellQuietPeriod = 0.1;
     primaryGrid_.savedDefaultChar = [primaryGrid_ defaultChar];
     currentGrid_ = altGrid_;
     currentGrid_.cursor = primaryGrid_.cursor;
+
+    [self swapNotes];
+
     [currentGrid_ markAllCharsDirty:YES];
     [delegate_ screenNeedsRedraw];
 }
@@ -2042,6 +2122,8 @@ static const double kInterBellQuietPeriod = 0.1;
 {
     if (currentGrid_ == altGrid_) {
         currentGrid_ = primaryGrid_;
+        [self swapNotes];
+
         [currentGrid_ markAllCharsDirty:YES];
         if (!restore) {
             // Don't restore the cursor; instead, continue using the cursor position of the alt grid.
@@ -2388,11 +2470,12 @@ static void SwapInt(int *a, int *b) {
                  selectionStartPositionIsValid:(BOOL *)selectionStartPositionIsValid
                     selectionEndPostionIsValid:(BOOL *)selectionEndPostionIsValid
                                   inLineBuffer:(LineBuffer *)lineBuffer
+                                      forRange:(VT100GridCoordRange)range
 {
-    int actualStartX = [delegate_ screenSelectionStartX];
-    int actualStartY = [delegate_ screenSelectionStartY];
-    int actualEndX = [delegate_ screenSelectionEndX];
-    int actualEndY = [delegate_ screenSelectionEndY];
+    int actualStartX = range.start.x;
+    int actualStartY = range.start.y;
+    int actualEndX = range.end.x;
+    int actualEndY = range.end.y;
 
     BOOL endExtends = NO;
     // Use the predecessor of endx,endy so it will have a legal position in the line buffer.
@@ -2443,12 +2526,13 @@ static void SwapInt(int *a, int *b) {
     return YES;
 }
 
-- (BOOL)convertCurrentSelectionToWidth:(int)newWidth
-                           toNewStartX:(int *)newStartXPtr
-                           toNewStartY:(int *)newStartYPtr
-                             toNewEndX:(int *)newEndXPtr
-                             toNewEndY:(int *)newEndYPtr
-                          inLineBuffer:(LineBuffer *)lineBuffer
+- (BOOL)convertRange:(VT100GridCoordRange)range
+             toWidth:(int)newWidth
+         toNewStartX:(int *)newStartXPtr
+         toNewStartY:(int *)newStartYPtr
+           toNewEndX:(int *)newEndXPtr
+           toNewEndY:(int *)newEndYPtr
+        inLineBuffer:(LineBuffer *)lineBuffer
 {
     LineBufferPosition *selectionStartPosition;
     LineBufferPosition *selectionEndPosition;
@@ -2458,7 +2542,8 @@ static void SwapInt(int *a, int *b) {
                                                          endPosition:&selectionEndPosition
                                        selectionStartPositionIsValid:&selectionStartPositionIsValid
                                           selectionEndPostionIsValid:&selectionEndPostionIsValid
-                                                        inLineBuffer:lineBuffer];
+                                                        inLineBuffer:lineBuffer
+                                                            forRange:range];
 
     if (!hasSelection) {
         return NO;

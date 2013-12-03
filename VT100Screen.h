@@ -72,7 +72,8 @@ extern int kVT100ScreenMinRows;
     // OK to report window title?
     BOOL allowTitleReporting_;
 
-    IntervalTree *notes_;
+    IntervalTree *savedNotes_;  // Holds notes on alt/primary grid (the one we're not in)
+    IntervalTree *notes_;  // All currently visible notes.
 }
 
 @property(nonatomic, retain) VT100Terminal *terminal;
