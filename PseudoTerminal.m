@@ -4261,6 +4261,22 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (IBAction)addNoteAtCursor:(id)sender {
+    [[self currentSession] addNoteAtCursor];
+}
+
+- (IBAction)showHideNotes:(id)sender {
+    
+}
+
+- (IBAction)nextMarkOrNote:(id)sender {
+    
+}
+
+- (IBAction)previousMarkOrNote:(id)sender {
+    
+}
+
 - (void)sessionWasRemoved
 {
     // This works around an apparent bug in NSSplitView that causes dividers'

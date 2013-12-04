@@ -3259,6 +3259,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [TEXTVIEW toggleShowTimestamps];
 }
 
+- (void)addNoteAtCursor {
+    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+    VT100GridCoordRange range = VT100GridCoordRangeMake(TODO, <#int startY#>, <#int endX#>, <#int endY#>)
+    [SCREEN addNote:note inRange:range];
+}
 #pragma mark tmux gateway delegate methods
 // TODO (also, capture and throw away keyboard input)
 
