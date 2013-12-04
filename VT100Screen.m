@@ -1480,6 +1480,7 @@ static const double kInterBellQuietPeriod = 0.1;
 - (void)addNote:(PTYNoteViewController *)note
         inRange:(VT100GridCoordRange)range {
     [notes_ addObject:note withInterval:[self intervalForGridCoordRange:range]];
+    [currentGrid_ markCharsDirty:YES inRectFrom:range.start to:range.end];
     [delegate_ screenDidAddNote:note];
 }
 
