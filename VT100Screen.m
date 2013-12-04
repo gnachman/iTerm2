@@ -242,14 +242,8 @@ static const double kInterBellQuietPeriod = 0.1;
                                                         width:newWidth
                                                            ok:NULL];
     int numScrollbackLines = [linebuffer_ numLinesWithWidth:newWidth];
-    // TODO: I think the problem is that linesMovedUp is the wrong thing to do. You can lose a partial
-    // line, as when the width changes. For ex, an alt screen like this:
-    //   abcd
-    //   efgh
-    // when resized to 4x2 becomes:
-    //   def
-    //   gh.
-    // What was lost was 3 characters, not a whole line.
+
+    // |linesMovedUp| wrapped lines will not be restored into the alt grid later on starting at |limit|
     if (resultRangePtr->start.y >= numScrollbackLines) {
         if (resultRangePtr->start.y < numScrollbackLines + linesMovedUp) {
             // The selection started in one of the lines that was lost. Move it to the

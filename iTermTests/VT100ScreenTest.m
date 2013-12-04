@@ -3865,10 +3865,10 @@
   assert(notes.count == 1);
   assert(notes[0] == note);
   VT100GridCoordRange range = [screen coordRangeOfNote:note];
-  assert(range.start.x == 0);
-  assert(range.start.y == 3);
+  assert(range.start.x == 2);  // fgh\nijkl\nHELLO
+  assert(range.start.y == 1);
   assert(range.end.x == 2);
-  assert(range.end.y == 4);
+  assert(range.end.y == 6);
 }
 
 @end
