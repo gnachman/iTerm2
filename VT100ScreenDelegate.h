@@ -176,6 +176,7 @@
 - (void)screenSetProfileToProfileNamed:(NSString *)value;
 - (void)screenSetPasteboard:(NSString *)value;
 - (void)screenDidAddNote:(PTYNoteViewController *)note;
+- (void)screenDidEndEditingNote;
 - (void)screenCopyBufferToPasteboard;
 - (BOOL)screenIsAppendingToPasteboard;
 - (void)screenAppendDataToPasteboard:(NSData *)data;

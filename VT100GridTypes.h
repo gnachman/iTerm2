@@ -97,6 +97,10 @@ NS_INLINE BOOL VT100GridRectEquals(VT100GridRect a, VT100GridRect b) {
             a.size.height == b.size.height);
 }
 
+NS_INLINE BOOL VT100GridCoordEquals(VT100GridCoord a, VT100GridCoord b) {
+    return a.x == b.x && a.y == b.y;
+}
+
 NS_INLINE VT100GridRun VT100GridRunMake(int x, int y, int length) {
     VT100GridRun run;
     run.origin.x = x;
@@ -112,6 +116,18 @@ NS_INLINE VT100GridCoordRange VT100GridCoordRangeMake(int startX, int startY, in
     coordRange.end.x = endX;
     coordRange.end.y = endY;
     return coordRange;
+}
+
+NS_INLINE int VT100GridCoordRangeLength(VT100GridCoordRange range, int gridWidth) {
+    long long end = range.end.y;
+    end *= gridWidth;
+    end += range.end.x;
+
+    long long start = range.start.y;
+    start *= gridWidth;
+    start += range.start.x;
+
+    return end - start;
 }
 
 // Returns the coord of the last char inside the run.

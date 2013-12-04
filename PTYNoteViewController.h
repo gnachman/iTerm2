@@ -17,9 +17,13 @@ extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
 
 @protocol PTYNoteViewControllerDelegate
 - (void)noteDidRequestRemoval:(PTYNoteViewController *)note;
+- (void)noteDidEndEditing:(PTYNoteViewController *)note;
 @end
 
-@interface PTYNoteViewController : NSViewController  <IntervalTreeObject, PTYNoteViewDelegate> {
+@interface PTYNoteViewController : NSViewController <
+  IntervalTreeObject,
+  NSTextViewDelegate,
+  PTYNoteViewDelegate> {
     PTYNoteView *noteView_;
     NSTextView *textView_;
     NSScrollView *scrollView_;
@@ -38,5 +42,6 @@ extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
 - (void)setNoteHidden:(BOOL)hidden;
 - (BOOL)isNoteHidden;
 - (void)sizeToFit;
+- (void)makeFirstResponder;
 
 @end

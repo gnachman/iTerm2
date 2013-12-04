@@ -580,6 +580,8 @@ typedef enum {
 - (TmuxController *)tmuxController;
 
 - (void)toggleShowTimestamps;
+- (void)addNoteAtCursor;
+- (void)showHideNotes;
 
 @end
 

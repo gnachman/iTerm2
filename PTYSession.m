@@ -3259,11 +3259,64 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [TEXTVIEW toggleShowTimestamps];
 }
 
+- (VT100GridCoordRange)smartSelectionRangeAt:(VT100GridCoord)coord {
+    if (coord.x < 0 || coord.y < 0 || coord.x >= SCREEN.width || coord.y >= SCREEN.height) {
+        return VT100GridCoordRangeMake(0, 0, 0, 0);
+    }
+    int startX, startY, endX, endY;
+    [TEXTVIEW smartSelectAtX:coord.x
+                           y:coord.y + [SCREEN numberOfScrollbackLines]
+                    toStartX:&startX
+                    toStartY:&startY
+                      toEndX:&endX
+                      toEndY:&endY
+            ignoringNewlines:NO];
+    return [TEXTVIEW rangeByTrimmingNullsFromRange:VT100GridCoordRangeMake(startX,
+                                                                           startY,
+                                                                           endX,
+                                                                           endY)
+                                        trimSpaces:YES];
+}
+
 - (void)addNoteAtCursor {
     PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-    VT100GridCoordRange range = VT100GridCoordRangeMake(TODO, <#int startY#>, <#int endX#>, <#int endY#>)
-    [SCREEN addNote:note inRange:range];
+    VT100GridCoordRange rangeAtCursor = [self smartSelectionRangeAt:VT100GridCoordMake(SCREEN.cursorX - 1,
+                                                                                       SCREEN.cursorY - 1)];
+    VT100GridCoordRange rangeBeforeCursor = [self smartSelectionRangeAt:VT100GridCoordMake(SCREEN.cursorX - 2,
+                                                                                           SCREEN.cursorY - 1)];
+    VT100GridCoordRange rangeAfterCursor = [self smartSelectionRangeAt:VT100GridCoordMake(SCREEN.cursorX,
+                                                                                          SCREEN.cursorY - 1)];
+    if (VT100GridCoordRangeLength(rangeAtCursor, SCREEN.width) > 0) {
+        [SCREEN addNote:note inRange:rangeAtCursor];
+    } else if (VT100GridCoordRangeLength(rangeAfterCursor, SCREEN.width) > 0) {
+        [SCREEN addNote:note inRange:rangeAfterCursor];
+    } else if (VT100GridCoordRangeLength(rangeBeforeCursor, SCREEN.width) > 0) {
+        [SCREEN addNote:note inRange:rangeBeforeCursor];
+    } else {
+        int y = SCREEN.cursorY - 1 + [SCREEN numberOfScrollbackLines];
+        [SCREEN addNote:note inRange:VT100GridCoordRangeMake(0, y, SCREEN.width, y)];
+    }
+    [note makeFirstResponder];
 }
+
+- (void)showHideNotes {
+    VT100GridCoordRange range = VT100GridCoordRangeMake(0,
+                                                        0,
+                                                        SCREEN.width,
+                                                        SCREEN.height + [SCREEN numberOfScrollbackLines]);
+    NSArray *notes = [SCREEN notesInRange:range];
+    BOOL anyNoteIsVisible = NO;
+    for (PTYNoteViewController *note in notes) {
+        if (!note.view.isHidden) {
+            anyNoteIsVisible = YES;
+            break;
+        }
+    }
+    for (PTYNoteViewController *note in notes) {
+        [note setNoteHidden:anyNoteIsVisible];
+    }
+}
+
 #pragma mark tmux gateway delegate methods
 // TODO (also, capture and throw away keyboard input)
 
@@ -4582,6 +4635,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenDidAddNote:(PTYNoteViewController *)note {
     [TEXTVIEW addViewForNote:note];
+    [TEXTVIEW setNeedsDisplay:YES];
+}
+
+- (void)screenDidEndEditingNote {
+    [TEXTVIEW.window makeFirstResponder:TEXTVIEW];
 }
 
 - (void)screenCopyBufferToPasteboard {

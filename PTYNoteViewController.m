@@ -81,6 +81,7 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     textView_.drawsBackground = NO;
     textView_.textContainer.containerSize = NSMakeSize(scrollView_.frame.size.width, FLT_MAX);
     textView_.textContainer.widthTracksTextView = YES;
+    textView_.delegate = self;
     scrollView_.documentView = textView_;
 
     noteView_.contentView = scrollView_;
@@ -205,8 +206,12 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
 
     textView_.minSize = usedRect.size;
     textView_.frame = NSMakeRect(0, 0, usedRect.size.width, usedRect.size.height);
-    
+
     [self setAnchor:anchor_];
+}
+
+- (void)makeFirstResponder {
+    [self.view.window makeFirstResponder:textView_];
 }
 
 #pragma mark - PTYNoteViewDelegate
@@ -217,6 +222,16 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
 
 - (void)killNote {
     [self.delegate noteDidRequestRemoval:self];
+}
+
+#pragma mark - NSControlTextEditingDelegate
+
+- (BOOL)textView:(NSTextView *)aTextView doCommandBySelector:(SEL)aSelector {
+    if (aSelector == @selector(cancelOperation:)) {
+        [self.delegate noteDidEndEditing:self];
+        return YES;
+    }
+    return NO;
 }
 
 @end

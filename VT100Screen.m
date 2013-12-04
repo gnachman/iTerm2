@@ -3136,6 +3136,11 @@ static void SwapInt(int *a, int *b) {
         [savedNotes_ removeObject:note];
     }
     [delegate_ screenNeedsRedraw];
+    [delegate_ screenDidEndEditingNote];
+}
+
+- (void)noteDidEndEditing:(PTYNoteViewController *)note {
+    [delegate_ screenDidEndEditingNote];
 }
 
 @end

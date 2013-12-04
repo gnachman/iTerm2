@@ -4395,6 +4395,57 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
+- (VT100GridCoordRange)rangeByTrimmingNullsFromRange:(VT100GridCoordRange)range
+                                          trimSpaces:(BOOL)trimSpaces
+{
+    VT100GridCoordRange result = range;
+    int width = [dataSource width];
+    screen_char_t *line = nil;
+    int lineY = -1;
+    while (!VT100GridCoordEquals(result.start, range.end)) {
+        if (lineY != result.start.y) {
+            lineY = result.start.y;
+            line = [dataSource getLineAtIndex:lineY];
+        }
+        unichar code = line[result.start.x].code;
+        BOOL trim = (code == 0);
+        trim = trim || (trimSpaces && (code == ' ' || code == '\t' || code == TAB_FILLER));
+        if (trim) {
+            result.start.x++;
+            if (result.start.x == width) {
+                result.start.x = 0;
+                result.start.y++;
+            }
+        } else {
+            break;
+        }
+    }
+
+    while (!VT100GridCoordEquals(result.end, result.start)) {
+        // x,y is the predecessor of result.end and is the cell to test.
+        int x = result.end.x - 1;
+        int y = result.end.y;
+        if (x < 0) {
+            x = width - 1;
+            y = result.end.y - 1;
+        }
+        if (lineY != y) {
+            lineY = y;
+            line = [dataSource getLineAtIndex:y];
+        }
+        unichar code = line[x].code;
+        BOOL trim = (code == 0);
+        trim = trim || (trimSpaces && (code == ' ' || code == '\t' || code == TAB_FILLER));
+        if (line[x].code == 0) {
+            result.end = VT100GridCoordMake(x, y);
+        } else {
+            break;
+        }
+    }
+
+    return result;
+}
+
 - (NSString *)contentFromX:(int)startx
                          Y:(int)starty
                        ToX:(int)nonInclusiveEndx
@@ -7402,7 +7453,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (noteRanges.count) {
         NSGradient *grad;
         grad = [[[NSGradient alloc] initWithStartingColor:[[NSColor yellowColor] colorWithAlphaComponent:0.3]
-                                              endingColor:[[NSColor yellowColor] colorWithAlphaComponent:0.1]] autorelease];
+                                              endingColor:[[NSColor yellowColor] colorWithAlphaComponent:0.0]] autorelease];
         [[NSGraphicsContext currentContext] saveGraphicsState];
         [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
         for (NSValue *value in noteRanges) {
@@ -7410,8 +7461,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             CGFloat x = range.location * charWidth + MARGIN;
             CGFloat y = line * lineHeight;
             [grad drawInRect:NSMakeRect(x, y, range.length * charWidth, lineHeight) angle:-90.0];
+            [[NSColor yellowColor] set];
+            NSRectFill(NSMakeRect(x, y + lineHeight - 1, range.length * charWidth, 1));
         }
         [[NSGraphicsContext currentContext] restoreGraphicsState];
+
     }
 
     return anyBlinking;

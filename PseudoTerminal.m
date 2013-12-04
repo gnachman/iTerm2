@@ -4266,11 +4266,11 @@ NSString *sessionsKey = @"sessions";
 }
 
 - (IBAction)showHideNotes:(id)sender {
-    
+    [[self currentSession] showHideNotes];
 }
 
 - (IBAction)nextMarkOrNote:(id)sender {
-    
+    // TODO
 }
 
 - (IBAction)previousMarkOrNote:(id)sender {
