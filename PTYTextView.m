@@ -1095,6 +1095,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     NSScrollView* scrollview = [self enclosingScrollView];
     [scrollview setLineScroll:[self lineHeight]];
     [scrollview setPageScroll:2 * [self lineHeight]];
+    [self updateNoteViewFrames];
     [_delegate textViewFontDidChange];
 }
 
@@ -4566,14 +4567,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[dataSource session] clearBuffer];
 }
 
-- (void)addViewForNote:(PTYNoteViewController *)note onLine:(int)line
+- (void)addViewForNote:(PTYNoteViewController *)note
 {
     // Make sure scrollback overflow is reset.
     [self refresh];
     [note.view removeFromSuperview];
     [self addSubview:note.view];
-    note.anchor = NSMakePoint(0, line * lineHeight + lineHeight / 2);
-    [note sizeToFit];
+    [self updateNoteViewFrames];
     [note setNoteHidden:NO];
 }
 

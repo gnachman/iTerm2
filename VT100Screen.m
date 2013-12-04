@@ -1480,7 +1480,7 @@ static const double kInterBellQuietPeriod = 0.1;
 - (void)addNote:(PTYNoteViewController *)note
         inRange:(VT100GridCoordRange)range {
     [notes_ addObject:note withInterval:[self intervalForGridCoordRange:range]];
-    [delegate_ screenDidAddNote:note startingAtLine:range.start.y];
+    [delegate_ screenDidAddNote:note];
 }
 
 - (void)removeInaccessibleNotes {
@@ -2415,15 +2415,44 @@ static const double kInterBellQuietPeriod = 0.1;
     [delegate_ screenSetProfileToProfileNamed:value];
 }
 
-- (void)terminalSetLineNoteAtCursor:(NSString *)value {
-    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-    [note setString:value];
-    [note sizeToFit];
-    [self addNote:note
-          inRange:VT100GridCoordRangeMake(0,
-                                          currentGrid_.cursorY,
-                                          currentGrid_.size.width,
-                                          currentGrid_.cursorY)];
+- (void)terminalAddNote:(NSString *)value show:(BOOL)show {
+    NSArray *parts = [value componentsSeparatedByString:@"|"];
+    VT100GridCoord location = currentGrid_.cursor;
+    NSString *message = nil;
+    int length = currentGrid_.size.width - currentGrid_.cursorX - 1;
+    if (parts.count == 1) {
+        message = parts[0];
+    } else if (parts.count == 2) {
+        message = parts[1];
+        length = [parts[0] intValue];
+    } else if (parts.count >= 4) {
+        location.x = MIN(MAX(0, [parts[0] intValue]), location.x);
+        location.y = MIN(MAX(0, [parts[1] intValue]), location.y);
+        length = [parts[2] intValue];
+        message = parts[3];
+    }
+    VT100GridCoord end = location;
+    end.x += length;
+    end.y += end.x / self.width;
+    end.x %= self.width;
+    
+    int endVal = end.x + end.y * self.width;
+    int maxVal = self.width - 1 + (self.height - 1) * self.width;
+    if (length > 0 &&
+        message.length > 0 &&
+        endVal <= maxVal) {
+        PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+        [note setString:message];
+        [note sizeToFit];
+        [self addNote:note
+              inRange:VT100GridCoordRangeMake(location.x,
+                                              location.y + [self numberOfScrollbackLines],
+                                              end.x,
+                                              end.y + [self numberOfScrollbackLines])];
+        if (!show) {
+            [note setNoteHidden:YES];
+        }
+    }
 }
 
 - (void)terminalSetPasteboard:(NSString *)value {

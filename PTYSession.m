@@ -4574,8 +4574,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
-- (void)screenDidAddNote:(PTYNoteViewController *)note startingAtLine:(int)line {
-    [TEXTVIEW addViewForNote:note onLine:line];
+- (void)screenDidAddNote:(PTYNoteViewController *)note {
+    [TEXTVIEW addViewForNote:note];
 }
 
 - (void)screenCopyBufferToPasteboard {
