@@ -13,10 +13,13 @@
 // Post this when the note view's anchor has a chance to become centered.
 extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
 
+@class PTYNoteViewController;
+
 @protocol PTYNoteViewControllerDelegate
+- (void)noteDidRequestRemoval:(PTYNoteViewController *)note;
 @end
 
-@interface PTYNoteViewController : NSViewController  <IntervalTreeObject> {
+@interface PTYNoteViewController : NSViewController  <IntervalTreeObject, PTYNoteViewDelegate> {
     PTYNoteView *noteView_;
     NSTextView *textView_;
     NSScrollView *scrollView_;
@@ -27,6 +30,7 @@ extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
 
 @property(nonatomic, retain) PTYNoteView *noteView;
 @property(nonatomic, assign) NSPoint anchor;
+@property(nonatomic, assign) id<PTYNoteViewControllerDelegate> delegate;
 
 - (void)beginEditing;
 - (BOOL)isEmpty;

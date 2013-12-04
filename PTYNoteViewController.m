@@ -26,10 +26,11 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
 @synthesize anchor = anchor_;
 @synthesize watchForUpdate = watchForUpdate_;
 @synthesize entry;
+@synthesize delegate;
 
 - (void)dealloc {
     [noteView_ removeFromSuperview];
-    noteView_.noteViewController = nil;
+    noteView_.delegate = nil;
     [noteView_ release];
     [textView_ release];
     [scrollView_ release];
@@ -48,7 +49,7 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     const CGFloat kHeight = 10;
     self.noteView = [[[PTYNoteView alloc] initWithFrame:NSMakeRect(0, 0, kWidth, kHeight)] autorelease];
     self.noteView.autoresizesSubviews = YES;
-    self.noteView.noteViewController = self;
+    self.noteView.delegate = self;
     NSShadow *shadow = [[[NSShadow alloc] init] autorelease];
     shadow.shadowColor = [NSColor blackColor];
     shadow.shadowOffset = NSMakeSize(1, -1);
@@ -117,42 +118,6 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     }
 
     [noteView_ layoutSubviews];
-#if 0
-    
-    
-
-    CGFloat height = noteView_.frame.size.height;
-    CGFloat visibleHeight = noteView_.visibleFrame.size.height;
-    CGFloat shadowHeight = height - visibleHeight;
-
-    if (anchor_.y - visibleHeight / 2 < 0) {
-        // Can't center the anchor because some of the note would be off the top of the view.
-        noteView_.frame = NSMakeRect(anchor_.x - xOffset,
-                                     0,
-                                     noteView_.frame.size.width,
-                                     noteView_.frame.size.height);
-        noteView_.point = NSMakePoint(xOffset, anchor_.y);
-        self.watchForUpdate = NO;
-    } else if (anchor_.y + visibleHeight / 2 + shadowHeight > superViewMaxY) {
-        // Can't center the anchor because some of the note would be off the bottom of the view.
-        const CGFloat shift = (superViewMaxY - height) - (anchor_.y - visibleHeight / 2);
-        noteView_.frame = NSMakeRect(anchor_.x - xOffset,
-                                     superViewMaxY - height,
-                                     noteView_.frame.size.width,
-                                     noteView_.frame.size.height);
-        noteView_.point = NSMakePoint(xOffset, visibleHeight / 2 - shift);
-        self.watchForUpdate = YES;
-    } else {
-        // Center the anchor
-        noteView_.frame = NSMakeRect(anchor_.x - xOffset,
-                                     anchor_.y - visibleHeight / 2,
-                                     noteView_.frame.size.width,
-                                     noteView_.frame.size.height);
-        noteView_.point = NSMakePoint(xOffset, visibleHeight / 2);
-        self.watchForUpdate = NO;
-    }
-    anchor_.x += xOffset;
-#endif
 }
 
 - (void)checkForUpdate {
@@ -242,6 +207,16 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     textView_.frame = NSMakeRect(0, 0, usedRect.size.width, usedRect.size.height);
     
     [self setAnchor:anchor_];
+}
+
+#pragma mark - PTYNoteViewDelegate
+
+- (PTYNoteViewController *)noteViewController {
+    return self;
+}
+
+- (void)killNote {
+    [self.delegate noteDidRequestRemoval:self];
 }
 
 @end

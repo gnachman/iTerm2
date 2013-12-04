@@ -12,7 +12,7 @@ static const CGFloat kMinWidth = 50;
 static const CGFloat kMinHeight = 30;
 
 static const CGFloat kLeftMargin = 5;
-static const CGFloat kRightMargin = 5;
+static const CGFloat kRightMargin = 14;
 static const CGFloat kTopMargin = 2;
 static const CGFloat kBottomMargin = 2;
 
@@ -21,12 +21,35 @@ static const CGFloat kRadius = 5;
 static const CGFloat kPointerBase = 7;
 static const CGFloat kPointerLength = 7;
 
+static const CGFloat kButtonSize = 17;
+
+const CGFloat kDragAreaSize = 5;
+
 @implementation PTYNoteView
 
-@synthesize noteViewController = noteViewController_;
 @synthesize point = point_;
 @synthesize contentView = contentView_;
 @synthesize tipEdge = tipEdge_;
+@synthesize delegate = delegate_;
+
+- (id)initWithFrame:(NSRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        NSImage *closeImage = [[[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"closebutton"
+                                                                                                       ofType:@"tif"]] autorelease];
+        killButton_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, kButtonSize, kButtonSize)];
+        [killButton_ setButtonType:NSMomentaryPushInButton];
+        [killButton_ setImage:closeImage];
+        [killButton_ setTarget:self];
+        [killButton_ setAction:@selector(kill:)];
+        [killButton_ setBordered:NO];
+        [[killButton_ cell] setHighlightsBy:NSContentsCellMask];
+        [killButton_ setTitle:@""];
+        [self addSubview:killButton_];
+        [killButton_ release];
+    }
+    return self;
+}
 
 - (void)dealloc {
     [contentView_ release];
@@ -304,10 +327,9 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
 }
 
 - (void)mouseDown:(NSEvent *)theEvent {
-    const CGFloat horizontalRegionWidth = self.bounds.size.width - 10;
-    NSRect rightDragRegion = NSMakeRect(horizontalRegionWidth, 5, 10, self.bounds.size.height - 10);
-    NSRect bottomRightDragRegion = NSMakeRect(horizontalRegionWidth, 0, 10, 5);
-    NSRect bottomDragRegion = NSMakeRect(0, 0, horizontalRegionWidth, 5);
+    NSRect rightDragRegion = [self rightDragRect];
+    NSRect bottomRightDragRegion = [self bottomRightDragRect];
+    NSRect bottomDragRegion = [self bottomDragRect];
     struct {
         NSRect rect;
         BOOL horizontal;
@@ -344,11 +366,46 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
     }
 }
 
+- (NSRect)rightDragRect {
+    NSRect bubbleFrame = [self bubbleFrameInRect:self.bounds
+                                           inset:0
+                                   pointerLength:kPointerLength
+                                       tipOnEdge:self.tipEdge];
+    return FlipRect(NSMakeRect(NSMaxX(bubbleFrame) - kDragAreaSize,
+                               NSMinY(bubbleFrame) + kDragAreaSize,
+                               kDragAreaSize,
+                               NSHeight(bubbleFrame) - 2 * kDragAreaSize),
+                    self.frame.size.height);
+}
+
+- (NSRect)bottomRightDragRect {
+    NSRect bubbleFrame = [self bubbleFrameInRect:self.bounds
+                                           inset:0
+                                   pointerLength:kPointerLength
+                                       tipOnEdge:self.tipEdge];
+    return FlipRect(NSMakeRect(NSMaxX(bubbleFrame) - kDragAreaSize,
+                               NSMaxY(bubbleFrame) - kDragAreaSize,
+                               kDragAreaSize,
+                               kDragAreaSize),
+                    self.frame.size.height);
+}
+
+- (NSRect)bottomDragRect {
+    NSRect bubbleFrame = [self bubbleFrameInRect:self.bounds
+                                           inset:0
+                                   pointerLength:kPointerLength
+                                       tipOnEdge:self.tipEdge];
+    return FlipRect(NSMakeRect(NSMinX(bubbleFrame),
+                               NSMaxY(bubbleFrame) - kDragAreaSize,
+                               NSWidth(bubbleFrame) - kDragAreaSize,
+                               kDragAreaSize),
+                    self.frame.size.height);
+}
+
 - (void)resetCursorRects {
-    const CGFloat horizontalRegionWidth = self.bounds.size.width - 10;
-    NSRect rightDragRegion = NSMakeRect(horizontalRegionWidth, 5, 10, self.bounds.size.height - 10);
-    NSRect bottomRightDragRegion = NSMakeRect(horizontalRegionWidth, 0, 10, 5);
-    NSRect bottomDragRegion = NSMakeRect(0, 0, horizontalRegionWidth, 5);
+    NSRect rightDragRegion = [self rightDragRect];
+    NSRect bottomRightDragRegion = [self bottomRightDragRect];
+    NSRect bottomDragRegion = [self bottomDragRect];
 
     NSImage* image = [NSImage imageNamed:@"nw_se_resize_cursor"];
     static NSCursor *topRightDragCursor;
@@ -359,6 +416,7 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
     [self addCursorRect:bottomDragRegion cursor:[NSCursor resizeUpDownCursor]];
     [self addCursorRect:bottomRightDragRegion cursor:topRightDragCursor];
     [self addCursorRect:rightDragRegion cursor:[NSCursor resizeLeftRightCursor]];
+    [self addCursorRect:killButton_.frame cursor:[NSCursor arrowCursor]];
 }
 
 - (void)setPoint:(NSPoint)point {
@@ -388,6 +446,12 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
                                                  bubbleFrame.size.width - kLeftMargin - kRightMargin,
                                                  bubbleFrame.size.height - kTopMargin - kBottomMargin),
                                       self.frame.size.height);
+    killButton_.frame = FlipRect(NSMakeRect(NSMaxX(bubbleFrame) - kButtonSize,
+                                            NSMinY(bubbleFrame) + 1,
+                                            kButtonSize,
+                                            kButtonSize),
+                                 self.frame.size.height);
+    [self.window invalidateCursorRectsForView:self];
 }
 
 - (NSSize)sizeThatFitsContentView {
@@ -406,6 +470,10 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
     }
     assert(false);
     return NSMakeSize(0, 0);
+}
+
+- (void)kill:(id)sender {
+    [delegate_ killNote];
 }
 
 @end

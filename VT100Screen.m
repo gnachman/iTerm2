@@ -1501,6 +1501,7 @@ static const double kInterBellQuietPeriod = 0.1;
         inRange:(VT100GridCoordRange)range {
     [notes_ addObject:note withInterval:[self intervalForGridCoordRange:range]];
     [currentGrid_ markCharsDirty:YES inRectFrom:range.start to:[self predecessorOfCoord:range.end]];
+    note.delegate = self;
     [delegate_ screenDidAddNote:note];
 }
 
@@ -3124,6 +3125,17 @@ static void SwapInt(int *a, int *b) {
 
     [self popScrollbackLines:linesPushed];
     return keepSearching;
+}
+
+#pragma mark - PTYNoteViewControllerDelegate
+
+- (void)noteDidRequestRemoval:(PTYNoteViewController *)note {
+    if ([notes_ containsObject:note]) {
+        [notes_ removeObject:note];
+    } else if ([savedNotes_ containsObject:note]) {
+        [savedNotes_ removeObject:note];
+    }
+    [delegate_ screenNeedsRedraw];
 }
 
 @end

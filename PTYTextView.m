@@ -3472,7 +3472,7 @@ NSMutableArray* screens=0;
         for (NSView *view in [self subviews]) {
             if ([view isKindOfClass:[PTYNoteView class]]) {
                 PTYNoteView *noteView = (PTYNoteView *)view;
-                [noteView.noteViewController setNoteHidden:YES];
+                [noteView.delegate.noteViewController setNoteHidden:YES];
             }
         }
     }
@@ -4606,7 +4606,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     for (NSView *view in [self subviews]) {
         if ([view isKindOfClass:[PTYNoteView class]]) {
             PTYNoteView *noteView = (PTYNoteView *)view;
-            PTYNoteViewController *note = (PTYNoteViewController *)noteView.noteViewController;
+            PTYNoteViewController *note =
+                (PTYNoteViewController *)noteView.delegate.noteViewController;
             VT100GridCoordRange coordRange = [dataSource coordRangeOfNote:note];
             if (coordRange.end.y >= 0) {
                 [note setAnchor:NSMakePoint(coordRange.end.x * charWidth + MARGIN,

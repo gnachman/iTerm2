@@ -1,4 +1,5 @@
 #import <Cocoa/Cocoa.h>
+#import "PTYNoteViewController.h"
 #import "PTYTextViewDataSource.h"
 #import "VT100ScreenDelegate.h"
 #import "VT100Terminal.h"
@@ -17,7 +18,10 @@ extern NSString * const kHighlightBackgroundColor;
 extern int kVT100ScreenMinColumns;
 extern int kVT100ScreenMinRows;
 
-@interface VT100Screen : NSObject <PTYTextViewDataSource, VT100TerminalDelegate>
+@interface VT100Screen : NSObject <
+    PTYNoteViewControllerDelegate,
+    PTYTextViewDataSource,
+    VT100TerminalDelegate>
 {
     NSMutableSet* tabStops_;
     VT100Terminal *terminal_;

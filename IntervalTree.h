@@ -50,5 +50,6 @@
 - (NSArray *)objectsInInterval:(Interval *)interval;
 - (NSArray *)allObjects;
 - (NSInteger)count;
+- (BOOL)containsObject:(id<IntervalTreeObject>)object;
 
 @end

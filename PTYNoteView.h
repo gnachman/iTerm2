@@ -17,6 +17,10 @@ typedef enum {
     kPTYNoteViewTipEdgeBottom
 } PTYNoteViewTipEdge;
 
+@protocol PTYNoteViewDelegate
+- (PTYNoteViewController *)noteViewController;
+- (void)killNote;
+@end
 
 @interface PTYNoteView : NSView {
     PTYNoteViewController *noteViewController_;  // weak
@@ -27,9 +31,11 @@ typedef enum {
     NSPoint point_;
     NSView *contentView_;
     PTYNoteViewTipEdge tipEdge_;
+    id<PTYNoteViewDelegate> delegate_;
+    NSButton *killButton_;
 }
 
-@property(nonatomic, assign) PTYNoteViewController *noteViewController;
+@property(nonatomic, assign) id<PTYNoteViewDelegate> delegate;
 
 // Location of arrow relative to top-left corner of this view.
 @property(nonatomic, assign) NSPoint point;
