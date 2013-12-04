@@ -7398,26 +7398,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                              context:ctx];
     }
 
-    BOOL isDark = ([self perceivedBrightness:defaultBGColor] < kBackgroundConsideredDarkThreshold);
-    if (isDark) {
-        [[NSColor yellowColor] set];
-    } else {
-        [[NSColor orangeColor] set];
-    }
-    for (NSValue *value in [dataSource charactersWithNotesOnLine:line]) {
-        VT100GridRange range = [value gridRangeValue];
-        NSBezierPath *path = [NSBezierPath bezierPath];
-        CGFloat x = range.location * charWidth + MARGIN;
-        CGFloat y = (line + 1) * lineHeight - 1;
-        [path moveToPoint:NSMakePoint(x, y)];
-        CGFloat offset = -1;
-        for (int i = 0; i < range.length; i++) {
-            x += charWidth;
-            y += offset;
-            offset = -offset;
-            [path lineToPoint:NSMakePoint(x, y)];
+    NSArray *noteRanges = [dataSource charactersWithNotesOnLine:line];
+    if (noteRanges.count) {
+        NSGradient *grad;
+        grad = [[[NSGradient alloc] initWithStartingColor:[[NSColor yellowColor] colorWithAlphaComponent:0.3]
+                                              endingColor:[[NSColor yellowColor] colorWithAlphaComponent:0.1]] autorelease];
+        [[NSGraphicsContext currentContext] saveGraphicsState];
+        [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
+        for (NSValue *value in noteRanges) {
+            VT100GridRange range = [value gridRangeValue];
+            CGFloat x = range.location * charWidth + MARGIN;
+            CGFloat y = line * lineHeight;
+            [grad drawInRect:NSMakeRect(x, y, range.length * charWidth, lineHeight) angle:-90.0];
         }
-        [path stroke];
+        [[NSGraphicsContext currentContext] restoreGraphicsState];
     }
 
     return anyBlinking;
