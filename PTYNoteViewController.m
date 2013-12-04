@@ -98,9 +98,9 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     if (anchor_.x + noteView_.frame.size.width > superViewFrame.size.width) {
         xOffset = anchor_.x + noteView_.frame.size.width - superViewFrame.size.width;
     }
+    noteView_.tipEdge = kPTYNoteViewTipEdgeTop;
     NSSize size = [noteView_ sizeThatFitsContentView];
     noteView_.point = NSMakePoint(xOffset, 0);
-    noteView_.tipEdge = kPTYNoteViewTipEdgeTop;
     noteView_.frame = NSMakeRect(anchor_.x - xOffset,
                                  anchor_.y,
                                  size.width,
