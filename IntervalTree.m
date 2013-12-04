@@ -166,15 +166,16 @@ static const long long kMaxLimit = kMinLocation + LLONG_MAX;
       break;
     }
   }
-  assert(entry);  // No entry implies the object was not in this tree
-  assert(object.entry == entry);  // Was object added to another tree before being removed from this one?
-  [entries removeObjectAtIndex:i];
-  if (entries.count == 0) {
-    [_tree removeObjectForKey:@(theLocation)];
-  } else {
-    [_tree notifyValueChangedForKey:@(theLocation)];
+  if (entry) {
+    assert(object.entry == entry);  // Was object added to another tree before being removed from this one?
+    object.entry = nil;
+    [entries removeObjectAtIndex:i];
+    if (entries.count == 0) {
+      [_tree removeObjectForKey:@(theLocation)];
+    } else {
+      [_tree notifyValueChangedForKey:@(theLocation)];
+    }
   }
-  object.entry = nil;
 }
 
 #pragma mark - Private
@@ -276,6 +277,16 @@ static const long long kMaxLimit = kMinLocation + LLONG_MAX;
 
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p tree=%@>", self.class, self, _tree];
+}
+
+- (BOOL)containsObject:(id<IntervalTreeObject>)object {
+    IntervalTreeValue *value = [_tree objectForKey:@(object.entry.interval.location)];
+    for (IntervalTreeEntry *entry in value.entries) {
+        if (entry.object == object) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 @end
