@@ -2282,8 +2282,8 @@ static const double kInterBellQuietPeriod = 0.1;
     NSLog(@"  moveNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
     Interval *interval = [self intervalForGridCoordRange:screenRange];
     for (id<IntervalTreeObject> obj in [source objectsInInterval:interval]) {
-        [[obj retain] autorelease];
         Interval *interval = [[obj.entry.interval retain] autorelease];
+        [[obj retain] autorelease];
         NSLog(@"  found note with interval %@", interval);
         [source removeObject:obj];
         interval.location = interval.location + offset;
@@ -2325,6 +2325,7 @@ static const double kInterBellQuietPeriod = 0.1;
     }
 
     primaryGrid_.savedDefaultChar = [primaryGrid_ defaultChar];
+    [self hideOnScreenNotesAndTruncateSpanners];
     currentGrid_ = altGrid_;
     currentGrid_.cursor = primaryGrid_.cursor;
 
@@ -2334,9 +2335,27 @@ static const double kInterBellQuietPeriod = 0.1;
     [delegate_ screenNeedsRedraw];
 }
 
+- (void)hideOnScreenNotesAndTruncateSpanners
+{
+    int screenOrigin = [self numberOfScrollbackLines];
+    VT100GridCoordRange screenRange =
+        VT100GridCoordRangeMake(0,
+                                screenOrigin,
+                                [self width],
+                                screenOrigin + self.height);
+    Interval *screenInterval = [self intervalForGridCoordRange:screenRange];
+    for (PTYNoteViewController *note in [notes_ objectsInInterval:screenInterval]) {
+        if (note.entry.interval.location < screenInterval.location) {
+            // Truncate note so that it ends just before screen.
+            note.entry.interval.length = screenInterval.location - note.entry.interval.location;
+        }
+        [note setNoteHidden:YES];
+    }
+}
 - (void)terminalShowPrimaryBufferRestoringCursor:(BOOL)restore
 {
     if (currentGrid_ == altGrid_) {
+        [self hideOnScreenNotesAndTruncateSpanners];
         currentGrid_ = primaryGrid_;
         [self swapNotes];
 

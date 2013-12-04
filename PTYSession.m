@@ -4265,6 +4265,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenNeedsRedraw {
     [self refreshAndStartTimerIfNeeded];
+    [TEXTVIEW updateNoteViewFrames];
 }
 
 - (void)screenUpdateDisplay {

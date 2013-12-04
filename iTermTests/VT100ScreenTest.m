@@ -3801,7 +3801,7 @@
   assert(range.end.y == 6);
 }
 
-- (void)testResizeNoteInPrimaryWhileInAltAndPullingSomeHistoryIncludingPartOfNoteIntoPrimary {
+- (void)testNoteTruncatedOnSwitchingToAlt {
   VT100Screen *screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
   [self appendLinesNoNewline:@[ @"hello world" ] toScreen:screen];
   assert([[screen compactLineDumpWithHistory] isEqualToString:
@@ -3814,27 +3814,16 @@
   PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
   [screen addNote:note inRange:VT100GridCoordRangeMake(0, 1, 5, 3)];  // fgh\nijkl\nhello
   [screen terminalShowAltBuffer];
-  [screen resizeWidth:6 height:6];
   [screen terminalShowPrimaryBufferRestoringCursor:YES];
 
-  // TODO: This is bogus. It should be able to pull the whole history into the primary buffer,
-  // but we get an extra line.
-  assert([[screen compactLineDumpWithHistory] isEqualToString:
-          @"abcdef\n"
-          @"gh....\n"
-          @"ijkl..\n"
-          @"hello \n"
-          @"world.\n"
-          @"......\n"
-          @"......"]);
   NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 8, 3)];
   assert(notes.count == 1);
   assert(notes[0] == note);
   VT100GridCoordRange range = [screen coordRangeOfNote:note];
-  assert(range.start.x == 5);
-  assert(range.start.y == 0);
-  assert(range.end.x == 5);
-  assert(range.end.y == 3);
+  assert(range.start.x == 0);
+  assert(range.start.y == 1);
+  assert(range.end.x == 0);
+  assert(range.end.y == 2);
 }
 
 - (void)testResizeNoteInAlternateThatGetsTruncatedByShrinkage {
