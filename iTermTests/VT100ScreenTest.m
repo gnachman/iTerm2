@@ -7,12 +7,13 @@
 //
 
 #import "iTermTests.h"
-#import "SearchResult.h"
-#import "VT100ScreenTest.h"
-#import "VT100Screen.h"
 #import "DVR.h"
 #import "DVRDecoder.h"
+#import "PTYNoteViewController.h"
+#import "SearchResult.h"
 #import "TmuxStateParser.h"
+#import "VT100ScreenTest.h"
+#import "VT100Screen.h"
 
 @interface VT100Screen (Testing)
 // It's only safe to use this on a newly created screen.
@@ -198,6 +199,19 @@
         [screen terminalLineFeed];
     }
 }
+
+- (void)appendLinesNoNewline:(NSArray *)lines toScreen:(VT100Screen *)screen {
+  int i = 0;
+  for (int i = 0; i < lines.count; i++) {
+    NSString *line = lines[i];
+    [screen appendStringAtCursor:line ascii:YES];
+    if (i + 1 != lines.count) {
+      [screen terminalCarriageReturn];
+      [screen terminalLineFeed];
+    }
+  }
+}
+
 // abcde+
 // fgh..!
 // ijkl.!
@@ -3652,6 +3666,209 @@
 
     NSString *s = [[[NSString alloc] initWithData:write_ encoding:NSUTF8StringEncoding] autorelease];
     assert([s isEqualToString:@"\033[8;20;30t"]);
+}
+
+- (void)testResizeNotes {
+  // Put a note on the primary grid, switch to alt, resize width, swap back to primary. Note should
+  // still be there.
+  VT100Screen *screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
+  assert([[screen compactLineDump] isEqualToString:
+          @"abcde\n"
+          @"fgh..\n"
+          @"ijkl.\n"
+          @"....."]);
+  PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+  [screen addNote:note inRange:VT100GridCoordRangeMake(0, 1, 2, 1)];  // fg
+  [screen terminalShowAltBuffer];
+  [screen resizeWidth:4 height:4];
+  [screen terminalShowPrimaryBufferRestoringCursor:YES];
+  assert([[screen compactLineDump] isEqualToString:
+          @"abcd\n"
+          @"efgh\n"
+          @"ijkl\n"
+          @"...."]);
+  NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 5, 3)];
+  assert(notes.count == 1);
+  assert(notes[0] == note);
+  VT100GridCoordRange range = [screen coordRangeOfNote:note];
+  assert(range.start.x == 1);
+  assert(range.start.y == 1);
+  assert(range.end.x == 3);
+  assert(range.end.y == 1);
+}
+
+- (void)testResizeNoteInPrimaryWhileInAltAndSomeHistory {
+  // Put a note on the primary grid, switch to alt, resize width, swap back to primary. Note should
+  // still be there.
+  VT100Screen *screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
+  [self appendLinesNoNewline:@[ @"hello world" ] toScreen:screen];
+  assert([[screen compactLineDumpWithHistory] isEqualToString:
+          @"abcde\n"   // history
+          @"fgh..\n"   // history
+          @"ijkl.\n"
+          @"hello\n"
+          @" worl\n"
+          @"d...."]);
+  PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+  [screen addNote:note inRange:VT100GridCoordRangeMake(0, 2, 2, 2)];  // ij
+  [screen terminalShowAltBuffer];
+  [screen resizeWidth:4 height:4];
+  [screen terminalShowPrimaryBufferRestoringCursor:YES];
+  assert([[screen compactLineDumpWithHistory] isEqualToString:
+          @"abcd\n"  // history
+          @"efgh\n"  // history
+          @"ijkl\n"
+          @"hell\n"
+          @"o wo\n"
+          @"rld."]);
+  NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 5, 3)];
+  assert(notes.count == 1);
+  assert(notes[0] == note);
+  VT100GridCoordRange range = [screen coordRangeOfNote:note];
+  assert(range.start.x == 0);
+  assert(range.start.y == 2);
+  assert(range.end.x == 2);
+  assert(range.end.y == 2);
+}
+
+- (void)testResizeNoteInPrimaryWhileInAltAndPushingSomePrimaryIncludingWholeNoteIntoHistory {
+  VT100Screen *screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
+  [self appendLinesNoNewline:@[ @"hello world" ] toScreen:screen];
+  assert([[screen compactLineDumpWithHistory] isEqualToString:
+          @"abcde\n"   // history
+          @"fgh..\n"   // history
+          @"ijkl.\n"
+          @"hello\n"
+          @" worl\n"
+          @"d...."]);
+  PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+  [screen addNote:note inRange:VT100GridCoordRangeMake(0, 2, 2, 2)];  // ij
+  [screen terminalShowAltBuffer];
+  [screen resizeWidth:3 height:4];
+  [screen terminalShowPrimaryBufferRestoringCursor:YES];
+  assert([[screen compactLineDumpWithHistory] isEqualToString:
+          @"abc\n"
+          @"def\n"
+          @"gh.\n"
+          @"ijk\n"
+          @"l..\n"
+          @"hel\n"
+          @"lo \n"
+          @"wor\n"
+          @"ld."]);
+  NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 8, 3)];
+  assert(notes.count == 1);
+  assert(notes[0] == note);
+  VT100GridCoordRange range = [screen coordRangeOfNote:note];
+  assert(range.start.x == 0);
+  assert(range.start.y == 3);
+  assert(range.end.x == 2);
+  assert(range.end.y == 3);
+}
+
+- (void)testResizeNoteInPrimaryWhileInAltAndPushingSomePrimaryIncludingPartOfNoteIntoHistory {
+  VT100Screen *screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
+  [self appendLinesNoNewline:@[ @"hello world" ] toScreen:screen];
+  assert([[screen compactLineDumpWithHistory] isEqualToString:
+          @"abcde\n"   // history
+          @"fgh..\n"   // history
+          @"ijkl.\n"
+          @"hello\n"
+          @" worl\n"
+          @"d...."]);
+  PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+  [screen addNote:note inRange:VT100GridCoordRangeMake(0, 2, 5, 3)];  // ijkl\nhello
+  [screen terminalShowAltBuffer];
+  [screen resizeWidth:3 height:4];
+  [screen terminalShowPrimaryBufferRestoringCursor:YES];
+  assert([[screen compactLineDumpWithHistory] isEqualToString:
+          @"abc\n"
+          @"def\n"
+          @"gh.\n"
+          @"ijk\n"
+          @"l..\n"
+          @"hel\n"
+          @"lo \n"
+          @"wor\n"
+          @"ld."]);
+  NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 8, 3)];
+  assert(notes.count == 1);
+  assert(notes[0] == note);
+  VT100GridCoordRange range = [screen coordRangeOfNote:note];
+  assert(range.start.x == 0);
+  assert(range.start.y == 3);
+  assert(range.end.x == 2);
+  assert(range.end.y == 6);
+}
+
+- (void)testResizeNoteInPrimaryWhileInAltAndPullingSomeHistoryIncludingPartOfNoteIntoPrimary {
+  VT100Screen *screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
+  [self appendLinesNoNewline:@[ @"hello world" ] toScreen:screen];
+  assert([[screen compactLineDumpWithHistory] isEqualToString:
+          @"abcde\n"   // history
+          @"fgh..\n"   // history
+          @"ijkl.\n"
+          @"hello\n"
+          @" worl\n"
+          @"d...."]);
+  PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+  [screen addNote:note inRange:VT100GridCoordRangeMake(0, 1, 5, 3)];  // fgh\nijkl\nhello
+  [screen terminalShowAltBuffer];
+  [screen resizeWidth:6 height:6];
+  [screen terminalShowPrimaryBufferRestoringCursor:YES];
+
+  // TODO: This is bogus. It should be able to pull the whole history into the primary buffer,
+  // but we get an extra line.
+  assert([[screen compactLineDumpWithHistory] isEqualToString:
+          @"abcdef\n"
+          @"gh....\n"
+          @"ijkl..\n"
+          @"hello \n"
+          @"world.\n"
+          @"......\n"
+          @"......"]);
+  NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 8, 3)];
+  assert(notes.count == 1);
+  assert(notes[0] == note);
+  VT100GridCoordRange range = [screen coordRangeOfNote:note];
+  assert(range.start.x == 5);
+  assert(range.start.y == 0);
+  assert(range.end.x == 5);
+  assert(range.end.y == 3);
+}
+
+- (void)testResizeNoteInAlternateThatGetsTruncatedByShrinkage {
+  VT100Screen *screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
+  [self appendLinesNoNewline:@[ @"hello world" ] toScreen:screen];
+  assert([[screen compactLineDumpWithHistory] isEqualToString:
+          @"abcde\n"   // history
+          @"fgh..\n"   // history
+          @"ijkl.\n"
+          @"hello\n"
+          @" worl\n"
+          @"d...."]);
+  [self showAltAndUppercase:screen];
+  PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+  [screen addNote:note inRange:VT100GridCoordRangeMake(0, 1, 5, 3)];  // fgh\nIJKL\nHELLO
+  [screen resizeWidth:3 height:4];
+  assert([[screen compactLineDumpWithHistory] isEqualToString:
+          @"abc\n"
+          @"def\n"
+          @"gh.\n"
+          @"ijk\n"
+          @"l..\n"  // last line of history (all pulled from primary)
+          @"HEL\n"
+          @"LO \n"
+          @"WOR\n"
+          @"LD."]);
+  NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 3, 6)];
+  assert(notes.count == 1);
+  assert(notes[0] == note);
+  VT100GridCoordRange range = [screen coordRangeOfNote:note];
+  assert(range.start.x == 0);
+  assert(range.start.y == 3);
+  assert(range.end.x == 2);
+  assert(range.end.y == 4);
 }
 
 @end

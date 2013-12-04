@@ -1,18 +1,22 @@
 #import "IntervalTree.h"
 
+static const long long kMinLocation = LLONG_MIN / 2;
+static const long long kMaxLimit = kMinLocation + LLONG_MAX;
+
 @implementation Interval
 
 + (Interval *)intervalWithLocation:(long long)location length:(long long)length {
   Interval *interval = [[[Interval alloc] init] autorelease];
   interval.location = location;
   interval.length = length;
+  [interval boundsCheck];
   return interval;
 }
 
 + (Interval *)maxInterval {
   Interval *interval = [[[Interval alloc] init] autorelease];
-  interval.location = -1;
-  interval.length = LLONG_MAX;
+  interval.location = kMinLocation;
+  interval.length = kMaxLimit - kMinLocation ;
   return interval;
 }
 
@@ -28,6 +32,17 @@
   return [NSString stringWithFormat:@"<%@: %p [%lld, %lld)>",
          self.class, self, self.location, self.limit];
 }
+
+- (void)boundsCheck {
+  assert(_location >= kMinLocation);
+  assert(_length >= 0);
+  if (_location > 0) {
+    assert(_location < kMaxLimit - _length);
+  } else {
+    assert(_location + _length < kMaxLimit);
+  }
+}
+
 @end
 
 @implementation IntervalTreeEntry
@@ -122,8 +137,7 @@
 }
 
 - (void)addObject:(id<IntervalTreeObject>)object withInterval:(Interval *)interval {
-  assert(interval.location >= 0);
-  assert(interval.location < LLONG_MAX - 1 - interval.length);  // Only maxInterval can go up to LLONG_MAX.
+  [interval boundsCheck];
   assert(object.entry == nil);  // Object must not belong to another tree
   IntervalTreeEntry *entry = [IntervalTreeEntry entryWithInterval:interval
                                                            object:object];
