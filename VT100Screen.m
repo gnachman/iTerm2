@@ -683,6 +683,8 @@ static const double kInterBellQuietPeriod = 0.1;
     [self resetScrollbackOverflow];
     [delegate_ screenRemoveSelection];
     [currentGrid_ markAllCharsDirty:YES];
+    [notes_ release];
+    notes_ = [[IntervalTree alloc] init];
 }
 
 - (void)appendStringAtCursor:(NSString *)string ascii:(BOOL)ascii
@@ -1474,13 +1476,31 @@ static const double kInterBellQuietPeriod = 0.1;
     result.start.x = interval.location % w;
     result.end.y = interval.limit / w - [self totalScrollbackOverflow];
     result.end.x = interval.limit % w;
+    
+    if (result.start.y < 0) {
+        result.start.y = 0;
+        result.start.x = 0;
+    }
     return result;
+}
+
+- (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord {
+    coord.x--;
+    while (coord.x < 0) {
+        coord.x += self.width;
+        coord.y--;
+        if (coord.y < 0) {
+            coord.y = 0;
+            return coord;
+        }
+    }
+    return coord;
 }
 
 - (void)addNote:(PTYNoteViewController *)note
         inRange:(VT100GridCoordRange)range {
     [notes_ addObject:note withInterval:[self intervalForGridCoordRange:range]];
-    [currentGrid_ markCharsDirty:YES inRectFrom:range.start to:range.end];
+    [currentGrid_ markCharsDirty:YES inRectFrom:range.start to:[self predecessorOfCoord:range.end]];
     [delegate_ screenDidAddNote:note];
 }
 
@@ -1489,7 +1509,9 @@ static const double kInterBellQuietPeriod = 0.1;
     if (lastDeadLocation > 0) {
         Interval *deadInterval = [Interval intervalWithLocation:0 length:lastDeadLocation + 1];
         for (PTYNoteViewController *note in [notes_ objectsInInterval:deadInterval]) {
-            [notes_ removeObject:note];
+            if ([note.entry.interval limit] <= lastDeadLocation) {
+                [notes_ removeObject:note];
+            }
         }
     }
 }
@@ -1776,8 +1798,8 @@ static const double kInterBellQuietPeriod = 0.1;
         // empty line.
         const int n = [currentGrid_ numberOfLinesUsed];
         for (int i = 0; i < n; i++) {
-            [currentGrid_ scrollWholeScreenUpIntoLineBuffer:linebuffer_
-                                        unlimitedScrollback:unlimitedScrollback_];
+            [self incrementOverflowBy:[currentGrid_ scrollWholeScreenUpIntoLineBuffer:linebuffer_
+                                                                  unlimitedScrollback:unlimitedScrollback_]];
         }
         x1 = 0;
         yStart = 0;
@@ -2848,7 +2870,7 @@ static void SwapInt(int *a, int *b) {
     maxScrollbackLines_ = lines;
     [linebuffer_ setMaxLines: lines];
     if (!unlimitedScrollback_) {
-        [linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width];
+        [self incrementOverflowBy:[linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width]];
     }
     [delegate_ screenDidChangeNumberOfScrollbackLines];
 }
