@@ -269,6 +269,7 @@ typedef enum {
     PasteContext *pasteContext_;
 
     NSInteger requestAttentionId_;  // Last request-attention identifier
+    Interval *currentMarkOrNotePosition_; 
 }
 
 // Return the current pasteboard value as a string.
@@ -582,6 +583,8 @@ typedef enum {
 - (void)toggleShowTimestamps;
 - (void)addNoteAtCursor;
 - (void)showHideNotes;
+- (void)previousMarkOrNote;
+- (void)nextMarkOrNote;
 
 @end
 

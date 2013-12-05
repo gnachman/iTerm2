@@ -4270,11 +4270,11 @@ NSString *sessionsKey = @"sessions";
 }
 
 - (IBAction)nextMarkOrNote:(id)sender {
-    // TODO
+    [[self currentSession] nextMarkOrNote];
 }
 
 - (IBAction)previousMarkOrNote:(id)sender {
-    
+    [[self currentSession] previousMarkOrNote];
 }
 
 - (void)sessionWasRemoved

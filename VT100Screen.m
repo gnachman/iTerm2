@@ -372,7 +372,7 @@ static const double kInterBellQuietPeriod = 0.1;
                  newHeight:new_height];
         altScreenNotes = [NSMutableArray array];
         
-        for (PTYNoteViewController *note in notesAtLeastPartiallyOnScreen) {
+        for (id<IntervalTreeObject> note in notesAtLeastPartiallyOnScreen) {
             VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
             [[note retain] autorelease];
             [notes_ removeObject:note];
@@ -425,7 +425,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
         // Convert ranges of notes to their new coordinates and replace the interval tree.
         IntervalTree *replacementTree = [[IntervalTree alloc] init];
-        for (PTYNoteViewController *note in [notes_ allObjects]) {
+        for (id<IntervalTreeObject> note in [notes_ allObjects]) {
             VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
             VT100GridCoordRange newRange;
             if ([self convertRange:noteRange toWidth:new_width to:&newRange inLineBuffer:linebuffer_]) {
@@ -524,7 +524,7 @@ static const double kInterBellQuietPeriod = 0.1;
         NSLog(@"Original limit=%@", originalLastPos);
         NSLog(@"New limit=%@", newLastPos);
         for (NSArray *tuple in altScreenNotes) {
-            PTYNoteViewController *note = tuple[0];
+            id<IntervalTreeObject> note = tuple[0];
             LineBufferPosition *start = tuple[1];
             LineBufferPosition *end = tuple[2];
             VT100GridCoordRange newRange;
@@ -1509,7 +1509,7 @@ static const double kInterBellQuietPeriod = 0.1;
     long long lastDeadLocation = [self totalScrollbackOverflow] * (self.width + 1);
     if (lastDeadLocation > 0) {
         Interval *deadInterval = [Interval intervalWithLocation:0 length:lastDeadLocation + 1];
-        for (PTYNoteViewController *note in [notes_ objectsInInterval:deadInterval]) {
+        for (id<IntervalTreeObject> note in [notes_ objectsInInterval:deadInterval]) {
             if ([note.entry.interval limit] <= lastDeadLocation) {
                 [notes_ removeObject:note];
             }
@@ -1528,7 +1528,7 @@ static const double kInterBellQuietPeriod = 0.1;
                                                                                  0,
                                                                                  line + 1)];
     NSArray *notes = [notes_ objectsInInterval:interval];
-    for (PTYNoteViewController *note in notes) {
+    for (id<IntervalTreeObject> note in notes) {
         VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
         VT100GridRange gridRange;
         if (range.start.y < line) {
@@ -1548,7 +1548,39 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (NSArray *)notesInRange:(VT100GridCoordRange)range {
     Interval *interval = [self intervalForGridCoordRange:range];
-    return [notes_ objectsInInterval:interval];
+    NSArray *objects = [notes_ objectsInInterval:interval];
+    NSMutableArray *notes = [NSMutableArray array];
+    for (id<IntervalTreeObject> o in objects) {
+        if ([o isKindOfClass:[PTYNoteViewController class]]) {
+            [notes addObject:o];
+        }
+    }
+    return notes;
+}
+
+- (Interval *)intervalOfLastMarkOrNote {
+    return [notes_ lastObject].entry.interval;
+}
+
+- (Interval *)intervalOfFirstMarkOrNote {
+    return [notes_ firstObject].entry.interval;
+}
+
+- (Interval *)intervalOfMarkOrNoteBefore:(Interval *)location {
+    NSEnumerator *enumerator = [notes_ reverseEnumeratorAt:location];
+    id<IntervalTreeObject> pred = [enumerator nextObject];
+    return pred.entry.interval;
+}
+
+- (Interval *)intervalOfMarkOrNoteAfter:(Interval *)location {
+    NSEnumerator *enumerator = [notes_ forwardEnumeratorAt:location];
+    id<IntervalTreeObject> pred = [enumerator nextObject];
+    return pred.entry.interval;
+}
+
+- (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval {
+    VT100GridCoordRange range = [self coordRangeForInterval:interval];
+    return VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
 }
 
 #pragma mark - VT100TerminalDelegate
@@ -2368,12 +2400,14 @@ static const double kInterBellQuietPeriod = 0.1;
                                 [self width],
                                 screenOrigin + self.height);
     Interval *screenInterval = [self intervalForGridCoordRange:screenRange];
-    for (PTYNoteViewController *note in [notes_ objectsInInterval:screenInterval]) {
+    for (id<IntervalTreeObject> note in [notes_ objectsInInterval:screenInterval]) {
         if (note.entry.interval.location < screenInterval.location) {
             // Truncate note so that it ends just before screen.
             note.entry.interval.length = screenInterval.location - note.entry.interval.location;
         }
-        [note setNoteHidden:YES];
+        if ([note isKindOfClass:[PTYNoteViewController class]]) {
+            [(PTYNoteViewController *)note setNoteHidden:YES];
+        }
     }
 }
 - (void)terminalShowPrimaryBufferRestoringCursor:(BOOL)restore

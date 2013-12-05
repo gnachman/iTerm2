@@ -585,6 +585,7 @@ enum {
 
 // Scrolling control
 - (NSRect)adjustScroll:(NSRect)proposedVisibleRect;
+- (void)scrollLineNumberRangeIntoView:(VT100GridRange)range;
 - (void)scrollLineUp:(id)sender;
 - (void)scrollLineDown:(id)sender;
 - (void)scrollPageUp:(id)sender;

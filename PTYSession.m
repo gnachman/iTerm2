@@ -192,7 +192,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [TERMINAL release];
     TERMINAL = nil;
     [tailFindContext_ release];
-    
+    [currentMarkOrNotePosition_ release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (dvrDecoder_) {
@@ -3315,6 +3315,26 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     for (PTYNoteViewController *note in notes) {
         [note setNoteHidden:anyNoteIsVisible];
     }
+}
+
+- (void)previousMarkOrNote {
+    if (currentMarkOrNotePosition_ == nil) {
+        currentMarkOrNotePosition_ = [SCREEN intervalOfLastMarkOrNote];
+    } else {
+        currentMarkOrNotePosition_ = [SCREEN intervalOfMarkOrNoteBefore:currentMarkOrNotePosition_];
+    }
+    VT100GridRange range = [SCREEN lineNumberRangeOfInterval:currentMarkOrNotePosition_];
+    [TEXTVIEW scrollLineNumberRangeIntoView:range];
+}
+
+- (void)nextMarkOrNote {
+    if (currentMarkOrNotePosition_ == nil) {
+        currentMarkOrNotePosition_ = [SCREEN intervalOfFirstMarkOrNote];
+    } else {
+        currentMarkOrNotePosition_ = [SCREEN intervalOfMarkOrNoteAfter:currentMarkOrNotePosition_];
+    }
+    VT100GridRange range = [SCREEN lineNumberRangeOfInterval:currentMarkOrNotePosition_];
+    [TEXTVIEW scrollLineNumberRangeIntoView:range];
 }
 
 #pragma mark tmux gateway delegate methods

@@ -13,6 +13,7 @@
 // One more than the largest value in the interval.
 - (long long)limit;
 - (BOOL)intersects:(Interval *)other;
+- (BOOL)isEqualToInterval:(Interval *)interval;
 
 @end
 
@@ -51,5 +52,17 @@
 - (NSArray *)allObjects;
 - (NSInteger)count;
 - (BOOL)containsObject:(id<IntervalTreeObject>)object;
+
+// Returns the object with the highest limit
+- (id<IntervalTreeObject>)lastObject;
+
+// Returns the object with the smallest limit
+- (id<IntervalTreeObject>)firstObject;
+
+- (id<IntervalTreeObject>)objectWithLargestLimitBefore:(long long)limit;
+- (id<IntervalTreeObject>)objectWithSmallestLimitAfter:(long long)limit;
+
+- (NSEnumerator *)reverseEnumeratorAt:(Interval *)start;
+- (NSEnumerator *)forwardEnumeratorAt:(Interval *)start;
 
 @end
