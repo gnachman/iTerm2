@@ -1249,7 +1249,6 @@
 				1D67ABA914285D6000D5DA4E /* NSFileManager+iTerm.h */,
 				1DF0895913DBAE1F00A52AD8 /* NSImage+CoreImage.h */,
 				1D407A2914BABE8700BD5035 /* NSStringITerm.h */,
-				1D48B32116706FC3000046EE /* NSView+iTerm.h */,
 				1D81F0BE183C3C2D00910838 /* NSView+RecursiveDescription.h */,
 				1D7C187F1275D22900461E55 /* PasteboardHistory.h */,
 				1D085F8416F02E7400B7FCE9 /* PasteContext.h */,
