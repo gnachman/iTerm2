@@ -42,7 +42,8 @@
 @end
 
 @interface IntervalTree : NSObject <AATreeDelegate> {
-  AATree *_tree;
+    AATree *_tree;
+    int _count;
 }
 
 // |object| should implement -hash.
@@ -54,15 +55,20 @@
 - (BOOL)containsObject:(id<IntervalTreeObject>)object;
 
 // Returns the object with the highest limit
-- (id<IntervalTreeObject>)lastObject;
+- (NSArray *)objectsWithLargestLimit;
 
 // Returns the object with the smallest limit
-- (id<IntervalTreeObject>)firstObject;
+- (NSArray *)objectsWithSmallestLimit;
 
-- (id<IntervalTreeObject>)objectWithLargestLimitBefore:(long long)limit;
-- (id<IntervalTreeObject>)objectWithSmallestLimitAfter:(long long)limit;
+- (NSArray *)objectsWithLargestLimitBefore:(long long)limit;
+- (NSArray *)objectsWithSmallestLimitAfter:(long long)limit;
 
-- (NSEnumerator *)reverseEnumeratorAt:(Interval *)start;
-- (NSEnumerator *)forwardEnumeratorAt:(Interval *)start;
+- (NSEnumerator *)reverseLimitEnumeratorAt:(long long)start;
+- (NSEnumerator *)forwardLimitEnumeratorAt:(long long)start;
+- (NSEnumerator *)reverseLimitEnumerator;
+- (NSEnumerator *)forwardLimitEnumerator;
+
+- (void)sanityCheck;
+- (NSString *)debugString;
 
 @end

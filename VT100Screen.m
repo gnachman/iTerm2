@@ -1559,23 +1559,27 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (Interval *)intervalOfLastMarkOrNote {
-    return [notes_ lastObject].entry.interval;
+    id<IntervalTreeObject> obj = [notes_ objectsWithLargestLimit][0];
+    return obj.entry.interval;
 }
 
 - (Interval *)intervalOfFirstMarkOrNote {
-    return [notes_ firstObject].entry.interval;
+    id<IntervalTreeObject> obj = [notes_ objectsWithSmallestLimit][0];
+    return obj.entry.interval;
 }
 
 - (Interval *)intervalOfMarkOrNoteBefore:(Interval *)location {
-    NSEnumerator *enumerator = [notes_ reverseEnumeratorAt:location];
-    id<IntervalTreeObject> pred = [enumerator nextObject];
-    return pred.entry.interval;
+    NSEnumerator *enumerator = [notes_ reverseLimitEnumeratorAt:location.limit];
+    NSArray *objects = [enumerator nextObject];
+    id<IntervalTreeObject> obj = objects[0];
+    return obj.entry.interval;
 }
 
 - (Interval *)intervalOfMarkOrNoteAfter:(Interval *)location {
-    NSEnumerator *enumerator = [notes_ forwardEnumeratorAt:location];
-    id<IntervalTreeObject> pred = [enumerator nextObject];
-    return pred.entry.interval;
+    NSEnumerator *enumerator = [notes_ forwardLimitEnumeratorAt:location.limit];
+    NSArray *objects = [enumerator nextObject];
+    id<IntervalTreeObject> obj = objects[0];
+    return obj.entry.interval;
 }
 
 - (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval {

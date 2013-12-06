@@ -201,7 +201,6 @@
 }
 
 - (void)appendLinesNoNewline:(NSArray *)lines toScreen:(VT100Screen *)screen {
-  int i = 0;
   for (int i = 0; i < lines.count; i++) {
     NSString *line = lines[i];
     [screen appendStringAtCursor:line ascii:YES];

@@ -41,7 +41,7 @@
 - (void) addKeyToArray:(NSMutableArray *)anArray {
 	
 	[left addKeyToArray:anArray];
-	[anArray addObject:[key copy]];
+	[anArray addObject:[[key copy] autorelease]];
 	[right addKeyToArray:anArray];
 }
 
@@ -49,8 +49,8 @@
 - (id) copyWithZone:(NSZone *)zone {
 	
 	AATreeNode *copy = [[AATreeNode alloc] initWithData:data boundToKey:key];
-	copy.left = [left copy];
-	copy.right = [right copy];
+	copy.left = [[left copy] autorelease];
+	copy.right = [[right copy] autorelease];
 	copy.level = level;
 	return copy;
 }
@@ -75,6 +75,8 @@
 	[right release];
 	[data release];
 	[key release];
+    data = nil;
+    key = nil;
 	[super dealloc];
 }
 
