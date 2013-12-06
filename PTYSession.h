@@ -224,10 +224,6 @@ typedef enum {
     // Last time this session became active
     NSDate* lastActiveAt_;
 
-    // saved scroll position or -1
-    long long savedScrollPosition_;
-    int savedScrollHeight_;
-
     // Time session was created
     NSDate* creationDate_;
 

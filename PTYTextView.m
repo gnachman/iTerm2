@@ -7451,20 +7451,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     NSArray *noteRanges = [dataSource charactersWithNotesOnLine:line];
     if (noteRanges.count) {
-        NSGradient *grad;
-        grad = [[[NSGradient alloc] initWithStartingColor:[[NSColor yellowColor] colorWithAlphaComponent:0.3]
-                                              endingColor:[[NSColor yellowColor] colorWithAlphaComponent:0.15]] autorelease];
-        [[NSGraphicsContext currentContext] saveGraphicsState];
-        [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
         for (NSValue *value in noteRanges) {
             VT100GridRange range = [value gridRangeValue];
             CGFloat x = range.location * charWidth + MARGIN;
             CGFloat y = line * lineHeight;
-            [grad drawInRect:NSMakeRect(x, y, range.length * charWidth, lineHeight) angle:-90.0];
             [[NSColor yellowColor] set];
+            NSRectFill(NSMakeRect(x, y + lineHeight - 1.5, range.length * charWidth, 1));
+            [[NSColor orangeColor] set];
             NSRectFill(NSMakeRect(x, y + lineHeight - 1, range.length * charWidth, 1));
         }
-        [[NSGraphicsContext currentContext] restoreGraphicsState];
 
     }
 
@@ -8155,6 +8150,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         aFrame.size.height = [dataSource height] * lineHeight;
         [self scrollRectToVisible:aFrame];
     }
+    [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
 }
 
 - (BOOL)_haveHardNewlineAtY:(int)y

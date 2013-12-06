@@ -14,6 +14,7 @@
 #import "RegexKitLite.h"
 #import "SearchResult.h"
 #import "TmuxStateParser.h"
+#import "VT100ScreenMark.h"
 #import "iTermExpose.h"
 #import "iTermGrowlDelegate.h"
 
@@ -1517,6 +1518,16 @@ static const double kInterBellQuietPeriod = 0.1;
     }
 }
 
+- (void)addMarkStartingAtAbsoluteLine:(long long)line {
+    VT100ScreenMark *mark = [[[VT100ScreenMark alloc] init] autorelease];
+    int nonAbsoluteLine = line - [self totalScrollbackOverflow];
+    VT100GridCoordRange range = VT100GridCoordRangeMake(0,
+                                                        nonAbsoluteLine,
+                                                        self.width,
+                                                        nonAbsoluteLine + self.height);
+    [notes_ addObject:mark withInterval:[self intervalForGridCoordRange:range]];
+}
+
 - (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note {
     return [self coordRangeForInterval:note.entry.interval];
 }
@@ -1527,21 +1538,23 @@ static const double kInterBellQuietPeriod = 0.1;
                                                                                  line,
                                                                                  0,
                                                                                  line + 1)];
-    NSArray *notes = [notes_ objectsInInterval:interval];
-    for (id<IntervalTreeObject> note in notes) {
-        VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
-        VT100GridRange gridRange;
-        if (range.start.y < line) {
-            gridRange.location = 0;
-        } else {
-            gridRange.location = range.start.x;
+    NSArray *objects = [notes_ objectsInInterval:interval];
+    for (id<IntervalTreeObject> note in objects) {
+        if ([note isKindOfClass:[PTYNoteViewController class]]) {
+            VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
+            VT100GridRange gridRange;
+            if (range.start.y < line) {
+                gridRange.location = 0;
+            } else {
+                gridRange.location = range.start.x;
+            }
+            if (range.end.y > line) {
+                gridRange.length = self.width + 1 - gridRange.location;
+            } else {
+                gridRange.length = range.end.x - gridRange.location;
+            }
+            [result addObject:[NSValue valueWithGridRange:gridRange]];
         }
-        if (range.end.y > line) {
-            gridRange.length = self.width + 1 - gridRange.location;
-        } else {
-            gridRange.length = range.end.x - gridRange.location;
-        }
-        [result addObject:[NSValue valueWithGridRange:gridRange]];
     }
     return result;
 }
@@ -1556,6 +1569,20 @@ static const double kInterBellQuietPeriod = 0.1;
         }
     }
     return notes;
+}
+
+- (Interval *)intervalOfLastMark {
+    NSEnumerator *enumerator = [notes_ reverseLimitEnumerator];
+    NSArray *objects = [enumerator nextObject];
+    while (objects) {
+        for (id<IntervalTreeObject> obj in objects) {
+            if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+                return obj.entry.interval;
+            }
+        }
+        objects = [enumerator nextObject];
+    }
+    return nil;
 }
 
 - (Interval *)intervalOfLastMarkOrNote {

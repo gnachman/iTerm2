@@ -404,6 +404,9 @@ static const long long kMaxLimit = kMinLocation + LLONG_MAX;
 }
 
 - (NSArray *)objectsWithLargestLimitFromNode:(AATreeNode *)node {
+    if (!node) {
+        return nil;
+    }
     long long myMaxLimit = ((IntervalTreeValue *)node.data).maxLimit;
     long long leftMaxLimit = ((IntervalTreeValue *)node.left.data).maxLimitAtSubtree;
     long long rightMaxLimit = ((IntervalTreeValue *)node.right.data).maxLimitAtSubtree;
@@ -433,6 +436,9 @@ static const long long kMaxLimit = kMinLocation + LLONG_MAX;
 }
 
 - (NSArray *)objectsWithSmallestLimitFromNode:(AATreeNode *)node {
+    if (!node) {
+        return nil;
+    }
     // Searching for the smallest limit among node, node.left subtree, and node.right subtree
     // If node's key >= node.left's first object, don't search right subtree
 
@@ -499,6 +505,9 @@ static const long long kMaxLimit = kMinLocation + LLONG_MAX;
 }
 
 - (NSArray *)objectsWithSmallestLimitAfter:(long long)bound fromNode:(AATreeNode *)node {
+    if (!node) {
+        return nil;
+    }
     // we can ignore all subtrees whose maxLimitAtSubtree is <= bound
     Interval *nodeInterval = nil;
     // Set nodeInterval to the best interval in this node's value.
@@ -574,6 +583,9 @@ static const long long kMaxLimit = kMinLocation + LLONG_MAX;
 }
 
 - (NSArray *)objectsWithLargestLimitBelow:(long long)bound fromNode:(AATreeNode *)node {
+    if (!node) {
+        return nil;
+    }
     Interval *nodeInterval = nil;
     long long thisLocation = [node.key longLongValue];
     

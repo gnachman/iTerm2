@@ -105,7 +105,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     lastOutput = lastInput;
     lastUpdate = lastInput;
     EXIT=NO;
-    savedScrollPosition_ = -1;
     updateTimer = nil;
     antiIdleTimer = nil;
     addressBookEntry = nil;
@@ -2938,18 +2937,25 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 // Jump to the saved scroll position
 - (void)jumpToSavedScrollPosition
 {
-    assert(savedScrollPosition_ != -1);
-    if (savedScrollPosition_ < [SCREEN totalScrollbackOverflow]) {
+    Interval *interval = [SCREEN intervalOfLastMark];
+    if (!interval) {
         NSBeep();
+        return;
+    }
+    VT100GridRange range = [SCREEN lineNumberRangeOfInterval:interval];
+    long long offset = range.location;
+    if (offset < 0) {
+        NSBeep();  // This really shouldn't ever happen
     } else {
-        [TEXTVIEW scrollToAbsoluteOffset:savedScrollPosition_ height:savedScrollHeight_];
+        offset += [SCREEN totalScrollbackOverflow];
+        [TEXTVIEW scrollToAbsoluteOffset:offset height:[SCREEN height]];
     }
 }
 
 // Is there a saved scroll position?
 - (BOOL)hasSavedScrollPosition
 {
-    return savedScrollPosition_ != -1;
+    return [SCREEN intervalOfLastMark] != nil;
 }
 
 - (void)useStringForFind:(NSString*)string
@@ -4612,8 +4618,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 // Save the current scroll position
 - (void)screenSaveScrollPosition
 {
-    savedScrollPosition_ = [TEXTVIEW absoluteScrollPosition];
-    savedScrollHeight_ = [SCREEN height];
+    [SCREEN addMarkStartingAtAbsoluteLine:[TEXTVIEW absoluteScrollPosition]];
 }
 
 - (void)screenActivateWindow {

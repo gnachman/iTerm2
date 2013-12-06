@@ -237,7 +237,7 @@ static Interval *MakeInterval(long long location, long long length) {
     assert(objects.count == 2);
 }
 
-#if 1
+#if 0
 // Commented out because this is very slow.
 - (void)testRandomTree {
     const int ITERATIONS = 1000;

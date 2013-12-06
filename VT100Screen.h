@@ -165,10 +165,13 @@ extern int kVT100ScreenMinRows;
 
 - (void)resetCharset;
 
+- (Interval *)intervalOfLastMark;
 - (Interval *)intervalOfLastMarkOrNote;
 - (Interval *)intervalOfFirstMarkOrNote;
 - (Interval *)intervalOfMarkOrNoteBefore:(Interval *)location;
 - (Interval *)intervalOfMarkOrNoteAfter:(Interval *)location;
 - (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval;
+
+- (void)addMarkStartingAtAbsoluteLine:(long long)line;
 
 @end
