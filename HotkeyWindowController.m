@@ -760,8 +760,12 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     }
     alreadyAsked = YES;
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
-erm        return;
-    }
+   NSDictionary *options = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
+                                                       forKey:(NSString *)kAXTrustedCheckOptionPrompt];
+   // Show a dialog prompting the user to open system prefs.
+   if (!AXIsProcessTrustedWithOptions((CFDictionaryRef)options)) {
+       return;
+   }
 #endif
 #endif
 }
