@@ -382,6 +382,10 @@ enum {
     BOOL showTimestamps_;
     float _antiAliasedShift;  // Amount to shift anti-aliased text by horizontally to simulate bold
     NSImage *markImage_;
+
+    // Point clicked, valid only during -validateMenuItem and calls made from
+    // the context menu and if x and y are nonnegative.
+    VT100GridCoord validationClickPoint_;
 }
 
 + (NSCursor *)textViewCursor;

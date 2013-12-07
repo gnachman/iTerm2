@@ -4183,7 +4183,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
     NSMenu *menu = [self menuForEvent:nil];
     openingContextMenu_ = YES;
+    
+    // Slowly moving away from using NSPoint for integer coordinates.
+    validationClickPoint_ = VT100GridCoordMake(clickPoint.x, clickPoint.y);
     [NSMenu popUpContextMenu:menu withEvent:event forView:self];
+    validationClickPoint_ = VT100GridCoordMake(-1, -1);
     openingContextMenu_ = NO;
 }
 
@@ -4648,7 +4652,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)showNotes:(id)sender
 {
-    for (PTYNoteViewController *note in [dataSource notesInRange:VT100GridCoordRangeMake(startX, startY, endX, endY)]) {
+    for (PTYNoteViewController *note in [dataSource notesInRange:VT100GridCoordRangeMake(validationClickPoint_.x,
+                                                                                         validationClickPoint_.y,
+                                                                                         validationClickPoint_.x + 1,
+                                                                                         validationClickPoint_.y)]) {
         [note setNoteHidden:NO];
     }
 }
@@ -4779,7 +4786,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return startX > -1;
     }
     if ([item action]==@selector(showNotes:)) {
-        return startX > -1 && [[dataSource notesInRange:VT100GridCoordRangeMake(startX, startY, endX, endY)] count] > 0;
+        return validationClickPoint_.x >= 0 &&
+               [[dataSource notesInRange:VT100GridCoordRangeMake(validationClickPoint_.x,
+                                                                 validationClickPoint_.y,
+                                                                 validationClickPoint_.x + 1,
+                                                                 validationClickPoint_.y)] count] > 0;
     }
     SEL theSel = [item action];
     if ([NSStringFromSelector(theSel) hasPrefix:@"contextMenuAction"]) {
@@ -7476,9 +7487,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             CGFloat x = range.location * charWidth + MARGIN;
             CGFloat y = line * lineHeight;
             [[NSColor yellowColor] set];
-            NSRectFill(NSMakeRect(x, y + lineHeight - 1.5, range.length * charWidth, 1));
+            
+            CGFloat maxX = MIN(self.bounds.size.width - MARGIN, range.length * charWidth + x);
+            CGFloat w = maxX - x;
+            NSRectFill(NSMakeRect(x, y + lineHeight - 1.5, w, 1));
             [[NSColor orangeColor] set];
-            NSRectFill(NSMakeRect(x, y + lineHeight - 1, range.length * charWidth, 1));
+            NSRectFill(NSMakeRect(x, y + lineHeight - 1, w, 1));
         }
 
     }
