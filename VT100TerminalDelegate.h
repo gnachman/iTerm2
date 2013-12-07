@@ -244,7 +244,7 @@ typedef enum {
 - (void)terminalColorTableEntryAtIndex:(int)theIndex didChangeToColor:(NSColor *)theColor;
 
 // Saves the current scroll position in the window.
-- (void)terminalSaveScrollPosition;
+- (void)terminalSaveScrollPositionWithArgument:(NSString *)argument;
 
 // Make the current terminal visible and give it keyboard focus.
 - (void)terminalStealFocus;

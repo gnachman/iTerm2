@@ -4668,12 +4668,21 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return TEXTVIEW != nil;
 }
 
+- (void)screenAddMarkOnLine:(int)line {
+    [TEXTVIEW refresh];  // In case text was appended
+    [lastMark_ release];
+    lastMark_ = [[SCREEN addMarkStartingAtAbsoluteLine:[SCREEN totalScrollbackOverflow] + line
+                                               oneLine:YES] retain];
+    self.currentMarkOrNotePosition = lastMark_.entry.interval;
+}
+
 // Save the current scroll position
 - (void)screenSaveScrollPosition
 {
     [TEXTVIEW refresh];  // In case text was appended
     [lastMark_ release];
-    lastMark_ = [[SCREEN addMarkStartingAtAbsoluteLine:[TEXTVIEW absoluteScrollPosition]] retain];
+    lastMark_ = [[SCREEN addMarkStartingAtAbsoluteLine:[TEXTVIEW absoluteScrollPosition]
+                                               oneLine:NO] retain];
     self.currentMarkOrNotePosition = lastMark_.entry.interval;
 }
 

@@ -3934,7 +3934,7 @@ static VT100TCC decode_string(unsigned char *datap,
                 [delegate_ terminalSetCursorType:shapeMap[shape]];
             }
         } else if ([key isEqualToString:@"SetMark"]) {
-            [delegate_ terminalSaveScrollPosition];
+            [delegate_ terminalSaveScrollPositionWithArgument:value];
         } else if ([key isEqualToString:@"StealFocus"]) {
             [delegate_ terminalStealFocus];
         } else if ([key isEqualToString:@"ClearScrollback"]) {

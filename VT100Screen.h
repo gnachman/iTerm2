@@ -77,8 +77,17 @@ extern int kVT100ScreenMinRows;
     // OK to report window title?
     BOOL allowTitleReporting_;
 
-    IntervalTree *savedNotes_;  // Holds notes on alt/primary grid (the one we're not in). The origin is the top-left of the grid.
-    IntervalTree *notes_;  // All currently visible notes.  The origin is the top left of absolute scrollback history.
+    // Holds notes on alt/primary grid (the one we're not in). The origin is the top-left of the
+    // grid.
+    IntervalTree *savedMarksAndNotes_;
+
+    // All currently visible marks and notes. Maps an interval of
+    //   (startx + absstarty * (width+1)) to (endx + absendy * (width+1))
+    // to an id<IntervalTreeObject>, which is either PTYNoteViewController or VT100ScreenMark.
+    IntervalTree *marksAndNotes_;
+    
+    NSMutableSet *markCache_;
+    VT100GridCoordRange markCacheRange_;
 }
 
 @property(nonatomic, retain) VT100Terminal *terminal;
@@ -170,7 +179,7 @@ extern int kVT100ScreenMinRows;
 
 - (VT100ScreenMark *)lastMark;
 - (BOOL)markIsValid:(VT100ScreenMark *)mark;
-- (VT100ScreenMark *)addMarkStartingAtAbsoluteLine:(long long)line;
+- (VT100ScreenMark *)addMarkStartingAtAbsoluteLine:(long long)line oneLine:(BOOL)oneLine;
 - (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval;
 
 // These methods normally only return one object, but if there is a tie, all of the equally-positioned marks/notes are returned.

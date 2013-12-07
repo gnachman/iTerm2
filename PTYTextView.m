@@ -8158,6 +8158,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self scrollRectToVisible:aFrame];
 }
 
+- (void)scrollBottomOfRectToBottomOfVisibleArea:(NSRect)rect {
+    NSPoint p = rect.origin;
+    p.y += rect.size.height;
+    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+    visibleRect.size.height -= [self excess];
+    visibleRect.size.height -= VMARGIN;
+    p.y -= visibleRect.size.height;
+    p.y = MAX(0, p.y);
+    [[[self enclosingScrollView] contentView] scrollToPoint:p];
+}
+
 - (void)scrollLineNumberRangeIntoView:(VT100GridRange)range {
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
     int firstVisibleLine = visibleRect.origin.y / lineHeight;
@@ -8171,10 +8182,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     } else {
         NSRect aFrame;
         aFrame.origin.x = 0;
-        aFrame.origin.y = VMARGIN + range.location * lineHeight;
+        aFrame.origin.y = range.location * lineHeight;
         aFrame.size.width = [self frame].size.width;
         aFrame.size.height = range.length * lineHeight;
-        [self scrollRectToVisible:aFrame];
+
+        [self scrollBottomOfRectToBottomOfVisibleArea:aFrame];
     }
     [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
 }
