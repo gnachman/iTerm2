@@ -5007,12 +5007,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
     // Make note
-    [theMenu addItemWithTitle:@"Add Note…"
+    [theMenu addItemWithTitle:@"Annotate Selection"
                        action:@selector(addNote:)
                 keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
     
-    [theMenu addItemWithTitle:@"Show Notes"
+    [theMenu addItemWithTitle:@"Show Note"
                        action:@selector(showNotes:)
                 keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
