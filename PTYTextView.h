@@ -798,5 +798,7 @@ typedef enum {
 // Returns true if any onscreen char is blinking.
 - (BOOL)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width;
 
+- (void)highlightMarkOnLine:(int)line;
+
 @end
 

@@ -43,5 +43,6 @@ extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
 - (BOOL)isNoteHidden;
 - (void)sizeToFit;
 - (void)makeFirstResponder;
+- (void)highlight;
 
 @end

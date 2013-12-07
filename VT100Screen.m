@@ -1518,14 +1518,24 @@ static const double kInterBellQuietPeriod = 0.1;
     }
 }
 
-- (void)addMarkStartingAtAbsoluteLine:(long long)line {
+- (BOOL)markIsValid:(VT100ScreenMark *)mark {
+    return [notes_ containsObject:mark];
+}
+
+- (VT100ScreenMark *)addMarkStartingAtAbsoluteLine:(long long)line {
     VT100ScreenMark *mark = [[[VT100ScreenMark alloc] init] autorelease];
     int nonAbsoluteLine = line - [self totalScrollbackOverflow];
+    int limit = nonAbsoluteLine + self.height - 1;
+    if (limit >= [self numberOfScrollbackLines] + [currentGrid_ numberOfLinesUsed]) {
+        limit = [self numberOfScrollbackLines] + [currentGrid_ numberOfLinesUsed] - 1;
+    }
     VT100GridCoordRange range = VT100GridCoordRangeMake(0,
                                                         nonAbsoluteLine,
                                                         self.width,
-                                                        nonAbsoluteLine + self.height - 1);
+                                                        limit);
     [notes_ addObject:mark withInterval:[self intervalForGridCoordRange:range]];
+    [delegate_ screenNeedsRedraw];
+    return mark;
 }
 
 - (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note {
@@ -1571,13 +1581,13 @@ static const double kInterBellQuietPeriod = 0.1;
     return notes;
 }
 
-- (Interval *)intervalOfLastMark {
+- (VT100ScreenMark *)lastMark {
     NSEnumerator *enumerator = [notes_ reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
     while (objects) {
         for (id<IntervalTreeObject> obj in objects) {
             if ([obj isKindOfClass:[VT100ScreenMark class]]) {
-                return obj.entry.interval;
+                return obj;
             }
         }
         objects = [enumerator nextObject];
@@ -1590,7 +1600,6 @@ static const double kInterBellQuietPeriod = 0.1;
   VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, self.width, line);
   NSArray *objects = [notes_ objectsInInterval:[self intervalForGridCoordRange:range]];
   for (id<IntervalTreeObject> obj in objects) {
-    Interval *interval = obj.entry.interval;
     if ([obj isKindOfClass:[VT100ScreenMark class]]) {
       if ([self coordRangeForInterval:obj.entry.interval].end.y == line) {
         return YES;
@@ -1600,29 +1609,24 @@ static const double kInterBellQuietPeriod = 0.1;
   return NO;
 }
 
-- (Interval *)intervalOfLastMarkOrNote {
-    id<IntervalTreeObject> obj = [notes_ objectsWithLargestLimit][0];
-    return obj.entry.interval;
+- (NSArray *)lastMarksOrNotes {
+    return [notes_ objectsWithLargestLimit];
 }
 
-- (Interval *)intervalOfFirstMarkOrNote {
-    id<IntervalTreeObject> obj = [notes_ objectsWithSmallestLimit][0];
-    return obj.entry.interval;
+- (NSArray *)firstMarksOrNotes {
+    return [notes_ objectsWithSmallestLimit];
 }
 
-- (Interval *)intervalOfMarkOrNoteBefore:(Interval *)location {
-  NSLog(@"%@", [notes_ debugString]);
+- (NSArray *)marksOrNotesBefore:(Interval *)location {
     NSEnumerator *enumerator = [notes_ reverseLimitEnumeratorAt:location.limit];
     NSArray *objects = [enumerator nextObject];
-    id<IntervalTreeObject> obj = objects[0];
-    return obj.entry.interval;
+    return objects;
 }
 
-- (Interval *)intervalOfMarkOrNoteAfter:(Interval *)location {
+- (NSArray *)marksOrNotesAfter:(Interval *)location {
     NSEnumerator *enumerator = [notes_ forwardLimitEnumeratorAt:location.limit];
     NSArray *objects = [enumerator nextObject];
-    id<IntervalTreeObject> obj = objects[0];
-    return obj.entry.interval;
+    return objects;
 }
 
 - (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval {

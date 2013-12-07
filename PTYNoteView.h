@@ -33,6 +33,7 @@ typedef enum {
     PTYNoteViewTipEdge tipEdge_;
     id<PTYNoteViewDelegate> delegate_;
     NSButton *killButton_;
+    NSColor *backgroundColor_;
 }
 
 @property(nonatomic, assign) id<PTYNoteViewDelegate> delegate;
@@ -41,8 +42,9 @@ typedef enum {
 @property(nonatomic, assign) NSPoint point;
 @property(nonatomic, retain) NSView *contentView;
 @property(nonatomic, assign) PTYNoteViewTipEdge tipEdge;
+@property(nonatomic, retain) NSColor *backgroundColor;
 
-- (NSColor *)backgroundColor;
+- (NSColor *)defaultBackgroundColor;
 - (void)layoutSubviews;
 - (NSSize)sizeThatFitsContentView;
 

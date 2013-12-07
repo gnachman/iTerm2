@@ -31,10 +31,12 @@ const CGFloat kDragAreaSize = 5;
 @synthesize contentView = contentView_;
 @synthesize tipEdge = tipEdge_;
 @synthesize delegate = delegate_;
+@synthesize backgroundColor = backgroundColor_;
 
 - (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
+        backgroundColor_ = [[self defaultBackgroundColor] retain];
         NSImage *closeImage = [[[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"closebutton"
                                                                                                        ofType:@"tif"]] autorelease];
         killButton_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, kButtonSize, kButtonSize)];
@@ -53,14 +55,15 @@ const CGFloat kDragAreaSize = 5;
 
 - (void)dealloc {
     [contentView_ release];
+    [backgroundColor_ release];
     [super dealloc];
 }
 
-- (NSColor *)backgroundColor {
+- (NSColor *)defaultBackgroundColor {
     return [NSColor colorWithCalibratedRed:252.0/255.0
                                      green:250.0/255.0
                                       blue:198.0/255.0
-                                     alpha:0.95];
+                                     alpha:1];
 }
 
 - (NSColor *)borderColor {

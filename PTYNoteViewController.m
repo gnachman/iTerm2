@@ -18,7 +18,9 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
 @property(nonatomic, assign) BOOL watchForUpdate;
 @end
 
-@implementation PTYNoteViewController
+@implementation PTYNoteViewController {
+    NSTimeInterval highlightStartTime_;
+}
 
 @synthesize noteView = noteView_;
 @synthesize textView = textView_;
@@ -232,6 +234,39 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
         return YES;
     }
     return NO;
+}
+
+- (void)updateBackgroundColor {
+    if (self.noteView.superview == nil) {
+        self.noteView.backgroundColor = [self.noteView defaultBackgroundColor];
+        return;
+    }
+    NSTimeInterval elapsed = [NSDate timeIntervalSinceReferenceDate] - highlightStartTime_;
+    const NSTimeInterval duration = 0.75;
+    // Alpha counts from 0 to 1.
+    float alpha = 1.0 - MIN(MAX(0, (duration - elapsed) / duration), 1);
+    
+    // Square alpha so it spends more time in the highlighted end of the range.
+    alpha = alpha * alpha;
+    
+    NSColor *defaultBg = [self.noteView defaultBackgroundColor];
+    CGFloat highlightComponents[] = { 0.9, 0.8, 0 };
+    CGFloat components[3] = {
+        [defaultBg redComponent] * alpha + (1 - alpha) * highlightComponents[0],
+        [defaultBg greenComponent] * alpha + (1 - alpha) * highlightComponents[1],
+        [defaultBg blueComponent] * alpha + (1 - alpha) * highlightComponents[2]
+    };
+    self.noteView.backgroundColor = [NSColor colorWithCalibratedRed:components[0] green:components[1] blue:components[2] alpha:1];
+    [self.noteView setNeedsDisplay:YES];
+    if (alpha < 1) {
+        [self performSelector:@selector(updateBackgroundColor) withObject:nil afterDelay:1/30.0];
+    }
+}
+
+- (void)highlight {
+    highlightStartTime_ = [NSDate timeIntervalSinceReferenceDate];
+    [self performSelector:@selector(updateBackgroundColor) withObject:nil afterDelay:1/30.0];
+    [self.noteView setNeedsDisplay:YES];
 }
 
 @end

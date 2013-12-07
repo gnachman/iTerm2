@@ -10,6 +10,7 @@
 @class IntervalTree;
 @class PTYTask;
 @class VT100Grid;
+@class VT100ScreenMark;
 @class VT100Terminal;
 
 // Dictionary keys for -highlightTextMatchingRegex:
@@ -165,13 +166,18 @@ extern int kVT100ScreenMinRows;
 
 - (void)resetCharset;
 
-- (Interval *)intervalOfLastMark;
-- (Interval *)intervalOfLastMarkOrNote;
-- (Interval *)intervalOfFirstMarkOrNote;
-- (Interval *)intervalOfMarkOrNoteBefore:(Interval *)location;
-- (Interval *)intervalOfMarkOrNoteAfter:(Interval *)location;
+#pragma mark - Marks and notes
+
+- (VT100ScreenMark *)lastMark;
+- (BOOL)markIsValid:(VT100ScreenMark *)mark;
+- (VT100ScreenMark *)addMarkStartingAtAbsoluteLine:(long long)line;
 - (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval;
 
-- (void)addMarkStartingAtAbsoluteLine:(long long)line;
+// These methods normally only return one object, but if there is a tie, all of the equally-positioned marks/notes are returned.
+- (NSArray *)lastMarksOrNotes;
+- (NSArray *)firstMarksOrNotes;
+- (NSArray *)marksOrNotesBefore:(Interval *)location;
+- (NSArray *)marksOrNotesAfter:(Interval *)location;
+
 
 @end

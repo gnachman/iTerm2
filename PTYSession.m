@@ -52,6 +52,7 @@
 #import "TmuxWindowOpener.h"
 #import "Trigger.h"
 #import "VT100Screen.h"
+#import "VT100ScreenMark.h"
 #import "VT100Terminal.h"
 #import "WindowControllerInterface.h"
 #import "iTerm.h"
@@ -69,6 +70,10 @@
 #define DEBUG_METHOD_TRACE    0
 #define DEBUG_KEYDOWNDUMP     0
 #define ASK_ABOUT_OUTDATED_FORMAT @"AskAboutOutdatedKeyMappingForGuid%@"
+
+@interface PTYSession ()
+@property(nonatomic, retain) Interval *currentMarkOrNotePosition;
+@end
 
 @implementation PTYSession
 
@@ -191,7 +196,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [TERMINAL release];
     TERMINAL = nil;
     [tailFindContext_ release];
-    [currentMarkOrNotePosition_ release];
+    _currentMarkOrNotePosition = nil;
+    [lastMark_ release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (dvrDecoder_) {
@@ -960,8 +966,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         }
         return;
     }
-    [currentMarkOrNotePosition_ release];
-    currentMarkOrNotePosition_ = nil;
+    self.currentMarkOrNotePosition = nil;
     [self writeTaskImpl:data];
 }
 
@@ -2939,7 +2944,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 // Jump to the saved scroll position
 - (void)jumpToSavedScrollPosition
 {
-    Interval *interval = [SCREEN intervalOfLastMark];
+    VT100ScreenMark *mark = nil;
+    if (lastMark_ && [SCREEN markIsValid:lastMark_]) {
+        mark = lastMark_;
+    } else {
+        mark = [SCREEN lastMark];
+    }
+    Interval *interval = mark.entry.interval;
     if (!interval) {
         NSBeep();
         return;
@@ -2949,15 +2960,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (offset < 0) {
         NSBeep();  // This really shouldn't ever happen
     } else {
+        self.currentMarkOrNotePosition = [mark.entry.interval retain];
         offset += [SCREEN totalScrollbackOverflow];
         [TEXTVIEW scrollToAbsoluteOffset:offset height:[SCREEN height]];
+        [TEXTVIEW highlightMarkOnLine:VT100GridRangeMax(range)];
     }
 }
 
 // Is there a saved scroll position?
 - (BOOL)hasSavedScrollPosition
 {
-    return [SCREEN intervalOfLastMark] != nil;
+    return [SCREEN lastMark] != nil;
 }
 
 - (void)useStringForFind:(NSString*)string
@@ -3325,40 +3338,62 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
-- (void)previousMarkOrNote {
-    [currentMarkOrNotePosition_ autorelease];
-    if (currentMarkOrNotePosition_ == nil) {
-        currentMarkOrNotePosition_ = [[SCREEN intervalOfLastMarkOrNote] retain];
+- (void)highlightMarkOrNote:(id<IntervalTreeObject>)obj {
+    if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+        [TEXTVIEW highlightMarkOnLine:VT100GridRangeMax([SCREEN lineNumberRangeOfInterval:obj.entry.interval])];
     } else {
-        currentMarkOrNotePosition_ =
-            [[SCREEN intervalOfMarkOrNoteBefore:currentMarkOrNotePosition_] retain];
-        if (!currentMarkOrNotePosition_) {
-            currentMarkOrNotePosition_ = [[SCREEN intervalOfLastMarkOrNote] retain];
-            if (currentMarkOrNotePosition_) {
+        PTYNoteViewController *note = (PTYNoteViewController *)obj;
+        [note setNoteHidden:NO];
+        [note highlight];
+    }
+}
+
+- (void)previousMarkOrNote {
+    NSArray *objects = nil;
+    if (self.currentMarkOrNotePosition == nil) {
+        objects = [SCREEN lastMarksOrNotes];
+    } else {
+        objects = [SCREEN marksOrNotesBefore:self.currentMarkOrNotePosition];
+        if (!objects.count) {
+            objects = [SCREEN lastMarksOrNotes];
+            if (objects.count) {
                 [TEXTVIEW beginFlash:FlashWrapToBottom];
             }
         }
     }
-    VT100GridRange range = [SCREEN lineNumberRangeOfInterval:currentMarkOrNotePosition_];
-    [TEXTVIEW scrollLineNumberRangeIntoView:range];
+    if (objects.count) {
+        id<IntervalTreeObject> obj = objects[0];
+        self.currentMarkOrNotePosition = obj.entry.interval;
+        VT100GridRange range = [SCREEN lineNumberRangeOfInterval:self.currentMarkOrNotePosition];
+        [TEXTVIEW scrollLineNumberRangeIntoView:range];
+        for (obj in objects) {
+            [self highlightMarkOrNote:obj];
+        }
+    }
 }
 
 - (void)nextMarkOrNote {
-    [currentMarkOrNotePosition_ autorelease];
-    if (currentMarkOrNotePosition_ == nil) {
-        currentMarkOrNotePosition_ = [[SCREEN intervalOfFirstMarkOrNote] retain];
+    NSArray *objects = nil;
+    if (self.currentMarkOrNotePosition == nil) {
+        objects = [SCREEN firstMarksOrNotes];
     } else {
-        currentMarkOrNotePosition_ =
-            [[SCREEN intervalOfMarkOrNoteAfter:currentMarkOrNotePosition_] retain];
-        if (!currentMarkOrNotePosition_) {
-            currentMarkOrNotePosition_ = [[SCREEN intervalOfFirstMarkOrNote] retain];
-            if (currentMarkOrNotePosition_) {
+        objects = [SCREEN marksOrNotesAfter:self.currentMarkOrNotePosition];
+        if (!objects.count) {
+            objects = [SCREEN firstMarksOrNotes];
+            if (objects.count) {
                 [TEXTVIEW beginFlash:FlashWrapToTop];
             }
         }
     }
-    VT100GridRange range = [SCREEN lineNumberRangeOfInterval:currentMarkOrNotePosition_];
-    [TEXTVIEW scrollLineNumberRangeIntoView:range];
+    if (objects.count) {
+        id<IntervalTreeObject> obj = objects[0];
+        self.currentMarkOrNotePosition = obj.entry.interval;
+        VT100GridRange range = [SCREEN lineNumberRangeOfInterval:self.currentMarkOrNotePosition];
+        [TEXTVIEW scrollLineNumberRangeIntoView:range];
+        for (obj in objects) {
+            [self highlightMarkOrNote:obj];
+        }
+    }
 }
 
 #pragma mark tmux gateway delegate methods
@@ -4636,7 +4671,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 // Save the current scroll position
 - (void)screenSaveScrollPosition
 {
-    [SCREEN addMarkStartingAtAbsoluteLine:[TEXTVIEW absoluteScrollPosition]];
+    [TEXTVIEW refresh];  // In case text was appended
+    [lastMark_ release];
+    lastMark_ = [[SCREEN addMarkStartingAtAbsoluteLine:[TEXTVIEW absoluteScrollPosition]] retain];
+    self.currentMarkOrNotePosition = lastMark_.entry.interval;
 }
 
 - (void)screenActivateWindow {

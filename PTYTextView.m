@@ -358,7 +358,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         drawRectInterval_ = [[MovingAverage alloc] init];
     }
     [self viewDidChangeBackingProperties];
-
+    markImage_ = [NSImage imageNamed:@"mark"];
+    
     return self;
 }
 
@@ -5985,6 +5986,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
+- (void)highlightMarkOnLine:(int)line {
+    CGFloat y = line * lineHeight;
+    SolidColorView *blue = [[[SolidColorView alloc] initWithFrame:NSMakeRect(0, y, self.frame.size.width, lineHeight) color:[NSColor blueColor]] autorelease];
+    blue.alphaValue = 0;
+    [self addSubview:blue];
+    [[NSAnimationContext currentContext] setDuration:0.5];
+    blue.animator.alphaValue = 0.75;
+    [blue performSelector:@selector(removeFromSuperview) withObject:nil afterDelay:0.75];
+}
+
 - (NSRect)cursorRect
 {
     NSRect frame = [self visibleRect];
@@ -7328,6 +7339,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Indicate marks in margin --
     if ([dataSource hasMarkOnLine:line]) {
+        CGFloat offset = (lineHeight - markImage_.size.height) / 2.0;
         [markImage_ drawAtPoint:NSMakePoint(leftMargin.origin.x,
                                             leftMargin.origin.y + offset)
                        fromRect:NSMakeRect(0, 0, markImage_.size.width, markImage_.size.height)
@@ -8161,7 +8173,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         aFrame.origin.x = 0;
         aFrame.origin.y = VMARGIN + range.location * lineHeight;
         aFrame.size.width = [self frame].size.width;
-        aFrame.size.height = (range.length + 1) * lineHeight;
+        aFrame.size.height = range.length * lineHeight;
         [self scrollRectToVisible:aFrame];
     }
     [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
