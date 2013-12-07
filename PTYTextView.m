@@ -8139,6 +8139,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)scrollLineNumberRangeIntoView:(VT100GridRange)range {
+    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+    int firstVisibleLine = visibleRect.origin.y / lineHeight;
+    int lastVisibleLine = firstVisibleLine + [dataSource height];
+    if (range.location >= firstVisibleLine && range.location + range.length - 1 <= lastVisibleLine) {
+      // Already visible
+      return;
+    }
     if (range.length < [dataSource height]) {
         [self _scrollToCenterLine:range.location + range.length / 2];
     } else {

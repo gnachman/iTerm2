@@ -1596,6 +1596,7 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (Interval *)intervalOfMarkOrNoteBefore:(Interval *)location {
+  NSLog(@"%@", [notes_ debugString]);
     NSEnumerator *enumerator = [notes_ reverseLimitEnumeratorAt:location.limit];
     NSArray *objects = [enumerator nextObject];
     id<IntervalTreeObject> obj = objects[0];

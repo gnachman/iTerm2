@@ -960,6 +960,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         }
         return;
     }
+    [currentMarkOrNotePosition_ release];
+    currentMarkOrNotePosition_ = nil;
     [self writeTaskImpl:data];
 }
 
@@ -3324,20 +3326,36 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)previousMarkOrNote {
+    [currentMarkOrNotePosition_ autorelease];
     if (currentMarkOrNotePosition_ == nil) {
-        currentMarkOrNotePosition_ = [SCREEN intervalOfLastMarkOrNote];
+        currentMarkOrNotePosition_ = [[SCREEN intervalOfLastMarkOrNote] retain];
     } else {
-        currentMarkOrNotePosition_ = [SCREEN intervalOfMarkOrNoteBefore:currentMarkOrNotePosition_];
+        currentMarkOrNotePosition_ =
+            [[SCREEN intervalOfMarkOrNoteBefore:currentMarkOrNotePosition_] retain];
+        if (!currentMarkOrNotePosition_) {
+            currentMarkOrNotePosition_ = [[SCREEN intervalOfLastMarkOrNote] retain];
+            if (currentMarkOrNotePosition_) {
+                [TEXTVIEW beginFlash:FlashWrapToBottom];
+            }
+        }
     }
     VT100GridRange range = [SCREEN lineNumberRangeOfInterval:currentMarkOrNotePosition_];
     [TEXTVIEW scrollLineNumberRangeIntoView:range];
 }
 
 - (void)nextMarkOrNote {
+    [currentMarkOrNotePosition_ autorelease];
     if (currentMarkOrNotePosition_ == nil) {
-        currentMarkOrNotePosition_ = [SCREEN intervalOfFirstMarkOrNote];
+        currentMarkOrNotePosition_ = [[SCREEN intervalOfFirstMarkOrNote] retain];
     } else {
-        currentMarkOrNotePosition_ = [SCREEN intervalOfMarkOrNoteAfter:currentMarkOrNotePosition_];
+        currentMarkOrNotePosition_ =
+            [[SCREEN intervalOfMarkOrNoteAfter:currentMarkOrNotePosition_] retain];
+        if (!currentMarkOrNotePosition_) {
+            currentMarkOrNotePosition_ = [[SCREEN intervalOfFirstMarkOrNote] retain];
+            if (currentMarkOrNotePosition_) {
+                [TEXTVIEW beginFlash:FlashWrapToTop];
+            }
+        }
     }
     VT100GridRange range = [SCREEN lineNumberRangeOfInterval:currentMarkOrNotePosition_];
     [TEXTVIEW scrollLineNumberRangeIntoView:range];

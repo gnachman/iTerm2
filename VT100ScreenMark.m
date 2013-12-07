@@ -12,7 +12,8 @@
 @synthesize entry;
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p entry=%@>", self.class, self, self.entry];
+    return [NSString stringWithFormat:@"<%@: %p interval=%@>",
+            self.class, self, self.entry.interval];
 }
 
 @end
