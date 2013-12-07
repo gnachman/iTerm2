@@ -7326,6 +7326,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     }
 
+    // Indicate marks in margin --
+    if ([dataSource hasMarkOnLine:line]) {
+        [markImage_ drawAtPoint:NSMakePoint(leftMargin.origin.x,
+                                            leftMargin.origin.y + offset)
+                       fromRect:NSMakeRect(0, 0, markImage_.size.width, markImage_.size.height)
+                      operation:NSCompositeSourceOver
+                       fraction:1.0];
+    }
     // Draw text and background --------------------------------------------------------------------
     // Contiguous sections of background with the same colour
     // are combined into runs and draw as one operation
@@ -8142,7 +8150,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
     int firstVisibleLine = visibleRect.origin.y / lineHeight;
     int lastVisibleLine = firstVisibleLine + [dataSource height];
-    if (range.location >= firstVisibleLine && range.location + range.length - 1 <= lastVisibleLine) {
+    if (range.location >= firstVisibleLine && range.location + range.length <= lastVisibleLine) {
       // Already visible
       return;
     }
@@ -8150,11 +8158,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self _scrollToCenterLine:range.location + range.length / 2];
     } else {
         NSRect aFrame;
-        int line = range.location + range.length - 1;
         aFrame.origin.x = 0;
-        aFrame.origin.y = (line - [dataSource height]) * lineHeight;
+        aFrame.origin.y = VMARGIN + range.location * lineHeight;
         aFrame.size.width = [self frame].size.width;
-        aFrame.size.height = [dataSource height] * lineHeight;
+        aFrame.size.height = (range.length + 1) * lineHeight;
         [self scrollRectToVisible:aFrame];
     }
     [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];

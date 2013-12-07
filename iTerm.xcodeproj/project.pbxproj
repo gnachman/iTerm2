@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1D01609B1852AA6F0014D26A /* mark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D0160991852AA6F0014D26A /* mark@2x.png */; };
+		1D01609C1852AA6F0014D26A /* mark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D0160991852AA6F0014D26A /* mark@2x.png */; };
+		1D01609D1852AA6F0014D26A /* mark.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D01609A1852AA6F0014D26A /* mark.png */; };
+		1D01609E1852AA6F0014D26A /* mark.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D01609A1852AA6F0014D26A /* mark.png */; };
 		1D06A050134CDBED00C414EF /* Trouter.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06A04F134CDBED00C414EF /* Trouter.m */; };
 		1D06A052134CDBF800C414EF /* Trouter.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06A051134CDBF800C414EF /* Trouter.h */; };
 		1D06E7D314BC04510097C0ED /* ProfileTableRow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D114BC04510097C0ED /* ProfileTableRow.h */; };
@@ -624,6 +628,8 @@
 
 /* Begin PBXFileReference section */
 		0464AB2F006CD2EC7F000001 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
+		1D0160991852AA6F0014D26A /* mark@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "mark@2x.png"; path = "images/mark@2x.png"; sourceTree = "<group>"; };
+		1D01609A1852AA6F0014D26A /* mark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = mark.png; path = images/mark.png; sourceTree = "<group>"; };
 		1D06A04F134CDBED00C414EF /* Trouter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Trouter.m; sourceTree = "<group>"; };
 		1D06A051134CDBF800C414EF /* Trouter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Trouter.h; sourceTree = "<group>"; };
 		1D06E7D114BC04510097C0ED /* ProfileTableRow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileTableRow.h; sourceTree = "<group>"; };
@@ -1456,6 +1462,8 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1D0160991852AA6F0014D26A /* mark@2x.png */,
+				1D01609A1852AA6F0014D26A /* mark.png */,
 				1D81F0C7183D4DAB00910838 /* nw_se_resize_cursor.png */,
 				1D81F0C8183D4DAB00910838 /* nw_se_resize_cursor@2x.png */,
 				9DB3D6E2176CB4D80071CCF8 /* PrefsProfile.png */,
@@ -2099,8 +2107,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				1D81F0CA183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */,
+				1D01609E1852AA6F0014D26A /* mark.png in Resources */,
 				1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */,
 				1DD39AEF180B8118004E56D5 /* Images.xcassets in Resources */,
+				1D01609C1852AA6F0014D26A /* mark@2x.png in Resources */,
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
 				1D81F0CC183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */,
 			);
@@ -2132,11 +2142,13 @@
 				1D5FDD901208E91100C46BA3 /* AquaTabsSeparator.png in Resources */,
 				1D5FDD911208E91100C46BA3 /* AquaTabsSeparatorDown.png in Resources */,
 				1D5FDD921208E91100C46BA3 /* overflowImage.tiff in Resources */,
+				1D01609D1852AA6F0014D26A /* mark.png in Resources */,
 				1D5FDD931208E91100C46BA3 /* overflowImagePressed.tif in Resources */,
 				1D5FDD941208E91100C46BA3 /* pi.png in Resources */,
 				1D5FDD981208E91100C46BA3 /* TabNewMetal.png in Resources */,
 				1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */,
 				1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */,
+				1D01609B1852AA6F0014D26A /* mark@2x.png in Resources */,
 				1D5FDD9B1208E91100C46BA3 /* Warning.png in Resources */,
 				1D5FDD9C1208E91100C46BA3 /* edit.png in Resources */,
 				1D5FDD9D1208E91100C46BA3 /* sort.png in Resources */,

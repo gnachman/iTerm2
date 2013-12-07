@@ -1524,7 +1524,7 @@ static const double kInterBellQuietPeriod = 0.1;
     VT100GridCoordRange range = VT100GridCoordRangeMake(0,
                                                         nonAbsoluteLine,
                                                         self.width,
-                                                        nonAbsoluteLine + self.height);
+                                                        nonAbsoluteLine + self.height - 1);
     [notes_ addObject:mark withInterval:[self intervalForGridCoordRange:range]];
 }
 
@@ -1583,6 +1583,21 @@ static const double kInterBellQuietPeriod = 0.1;
         objects = [enumerator nextObject];
     }
     return nil;
+}
+
+- (BOOL)hasMarkOnLine:(int)line {
+  // TODO: Cache this, freeing the cache on resize or any change to notes_.
+  VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, self.width, line);
+  NSArray *objects = [notes_ objectsInInterval:[self intervalForGridCoordRange:range]];
+  for (id<IntervalTreeObject> obj in objects) {
+    Interval *interval = obj.entry.interval;
+    if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+      if ([self coordRangeForInterval:obj.entry.interval].end.y == line) {
+        return YES;
+      }
+    }
+  }
+  return NO;
 }
 
 - (Interval *)intervalOfLastMarkOrNote {
