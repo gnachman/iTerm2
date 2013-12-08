@@ -29,7 +29,7 @@
 // Debug option
 #define DEBUG_ALLOC         0
 #define DEBUG_METHOD_TRACE  0
-#define PtyTaskDebugLog(fmt, ...)
+#define PtyTaskDebugLog DLog
 // Use this instead to debug this module:
 // #define PtyTaskDebugLog NSLog
 
@@ -56,6 +56,7 @@
 #include <stdlib.h>
 #include <string.h>
 #import "Coprocess.h"
+#import "iTermApplicationDelegate.h"
 
 NSString *kCoprocessStatusChangeNotification = @"kCoprocessStatusChangeNotification";
 
@@ -225,18 +226,20 @@ static TaskNotifier* taskNotifier = nil;
                 PtyTaskDebugLog(@"wait on %d", [pid intValue]);
                 if (waitpid([pid intValue], &statLoc, WNOHANG) < 0) {
                     if (errno != ECHILD) {
-                        PtyTaskDebugLog(@"  wait failed with %d (%s), adding back to deadpool", errno, strerror(errno));
+                        PtyTaskDebugLog(@"  wait on %d failed with %d (%s), adding back to deadpool",  [pid intValue], errno, strerror(errno));
                         [newDeadpool addObject:pid];
                     } else {
-                        PtyTaskDebugLog(@"  wait failed with ECHILD, I guess we already waited on it.");
+                        PtyTaskDebugLog(@"  wait on %d failed with ECHILD, I guess we already waited on it.", [pid intValue]);
                     }
+                } else {
+                    DLog(@" wait ok on %d", [pid intValue]);
                 }
             }
             [deadpool release];
             deadpool = [newDeadpool retain];
         }
 
-        PtyTaskDebugLog(@"Begin enumeration over %d tasks\n", [tasks count]);
+        DLog(@"Begin enumeration over %d tasks\n", [tasks count]);
         iter = [tasks objectEnumerator];
         int i = 0;
         // FIXME: this can be converted to ObjC 2.0.
@@ -294,6 +297,11 @@ static TaskNotifier* taskNotifier = nil;
         [tasksLock unlock];
 
         // Poll...
+        for (int q=0; q < highfd+1; q++) {
+            if (FD_ISSET(q, &efds)) {
+                DLog(@"Look for error on fd %d", q);
+            }
+        }
         if (select(highfd+1, &rfds, &wfds, &efds, NULL) <= 0) {
             switch(errno) {
                 case EAGAIN:
@@ -624,6 +632,7 @@ static void reapchild(int n)
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
     pid = forkpty(&fd, theTtyname, &term, &win);
+    DLog(@"Forked pty %s to fd %d, pid=%d", theTtyname, fd, (int)pid);
     if (pid == (pid_t)0) {
         // Do not start the new process with a signal handler.
         signal(SIGCHLD, SIG_DFL);
@@ -657,6 +666,7 @@ static void reapchild(int n)
         }
         return;
     }
+    assert(fcntl(fd, F_SETFD, FD_CLOEXEC) != -1);
 
     tty = [[NSString stringWithUTF8String:theTtyname] retain];
     NSParameterAssert(tty != nil);
