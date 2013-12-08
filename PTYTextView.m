@@ -1403,10 +1403,10 @@ NSMutableArray* screens=0;
 
 - (id)accessibilityAttributeValue:(NSString *)attribute forParameter:(id)parameter
 {
-    // NSLog(@"accessibilityAttributeValue:%@ forParameter:%@", attribute, parameter);
+    // DLog(@"accessibilityAttributeValue:%@ forParameter:%@", attribute, parameter);
     id result = [self _accessibilityAttributeValue:attribute forParameter:parameter];
-    // NSLog(@"  returns %@", result);
-    // NSLog(@"%@(%@) = %@", attribute, parameter, result);
+    // DLog(@"  returns %@", result);
+    // DLog(@"%@(%@) = %@", attribute, parameter, result);
     return result;
 }
 
@@ -1510,10 +1510,10 @@ NSMutableArray* screens=0;
 }
 
 - (id)accessibilityAttributeValue:(NSString *)attribute {
-    // NSLog(@"accessibilityAttributeValue:%@", attribute);
+    // DLog(@"accessibilityAttributeValue:%@", attribute);
     id result = [self _accessibilityAttributeValue:attribute];
-    // NSLog(@"  returns %@", result);
-    // NSLog(@"%@ = %@", attribute, result);
+    // DLog(@"  returns %@", result);
+    // DLog(@"%@ = %@", attribute, result);
     return result;
 }
 
@@ -1922,7 +1922,7 @@ NSMutableArray* screens=0;
     static BOOL prevBad=NO;
     ++iteration;
     if (prevBad) {
-        NSLog(@"Last was bad.");
+        DLog(@"Last was bad.");
         prevBad = NO;
     }
     DebugLog([NSString stringWithFormat:@"%s(0x%x): rect=(%f,%f,%f,%f) frameRect=(%f,%f,%f,%f)]",
@@ -2250,14 +2250,14 @@ NSMutableArray* screens=0;
 
     BOOL debug = [SmartSelectionController logDebugInfo];
     if (debug) {
-        NSLog(@"Perform smart selection on text: %@", textWindow);
+        DLog(@"Perform smart selection on text: %@", textWindow);
     }
     for (int j = 0; j < numRules; j++) {
         NSDictionary *rule = [rulesArray objectAtIndex:j];
         NSString *regex = [SmartSelectionController regexInRule:rule];
         double precision = [SmartSelectionController precisionInRule:rule];
         if (debug) {
-            NSLog(@"Try regex %@", regex);
+            DLog(@"Try regex %@", regex);
         }
         for (int i = 0; i <= targetOffset; i++) {
             NSString* substring = [textWindow substringWithRange:NSMakeRange(i, [textWindow length] - i)];
@@ -2284,7 +2284,7 @@ NSMutableArray* screens=0;
                         [matches setObject:match forKey:result];
 
                         if (debug) {
-                            NSLog(@"Add result %@ at %d,%lld -> %d,%lld with score %lf", result, match->startX, match->absStartY, match->endX, match->absEndY, match->score);
+                            DLog(@"Add result %@ at %d,%lld -> %d,%lld with score %lf", result, match->startX, match->absStartY, match->endX, match->absEndY, match->score);
                         }
                     }
                     i += temp.location + temp.length - 1;
@@ -2301,7 +2301,7 @@ NSMutableArray* screens=0;
         NSArray* sortedMatches = [[matches allValues] sortedArrayUsingSelector:@selector(compare:)];
         SmartMatch* bestMatch = [sortedMatches lastObject];
         if (debug) {
-            NSLog(@"Select match with score %lf", bestMatch->score);
+            DLog(@"Select match with score %lf", bestMatch->score);
         }
         *X1 = bestMatch->startX;
         *Y1 = bestMatch->absStartY - [dataSource totalScrollbackOverflow];
@@ -2310,7 +2310,7 @@ NSMutableArray* screens=0;
         return YES;
     } else {
         if (debug) {
-            NSLog(@"No matches. Fall back on word selection.");
+            DLog(@"No matches. Fall back on word selection.");
         }
         // Fall back on word selection
         [self getWordForX:x
@@ -2376,10 +2376,10 @@ NSMutableArray* screens=0;
         isFirstInteraction = NO;
     }
 
-    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+    BOOL debugKeyDown = YES;
 
     if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown BEGIN %@", event);
+        DLog(@"PTYTextView keyDown BEGIN %@", event);
     }
     DebugLog(@"PTYTextView keyDown");
     id delegate = [self delegate];
@@ -2389,7 +2389,7 @@ NSMutableArray* screens=0;
     }
     if ([[[[[self dataSource] session] tab] realParentWindow] inInstantReplay]) {
         if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown: in instant replay, send to delegate");
+            DLog(@"PTYTextView keyDown: in instant replay, send to delegate");
         }
         // Delegate has special handling for this case.
         [delegate keyDown:event];
@@ -2400,19 +2400,18 @@ NSMutableArray* screens=0;
     BOOL prev = [self hasMarkedText];
 
     keyIsARepeat = [event isARepeat];
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
-        NSLog(@"prev=%d", (int)prev);
-        NSLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
-        NSLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%d", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
-        NSLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
-        NSLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
-        NSLog(@"modflag & leftAlt == leftAlt && optionKey != NORMAL = %d", (int)((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
-        NSLog(@"modflag == alt && optionKey != NORMAL = %d", (int)(modflag == NSAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
-        NSLog(@"modflag & rightAlt == rightAlt && rightOptionKey != NORMAL = %d", (int)((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL));
-        NSLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
-        NSLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
-    }
+    DLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
+    DLog(@"self=%@ delegate=%@", self, delegate);
+    DLog(@"prev=%d", (int)prev);
+    DLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
+    DLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%d", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
+    DLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
+    DLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
+    DLog(@"modflag & leftAlt == leftAlt && optionKey != NORMAL = %d", (int)((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
+    DLog(@"modflag == alt && optionKey != NORMAL = %d", (int)(modflag == NSAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
+    DLog(@"modflag & rightAlt == rightAlt && rightOptionKey != NORMAL = %d", (int)((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL));
+    DLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
+    DLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
 
     // Hide the cursor
     [NSCursor setHiddenUntilMouseMoves:YES];
@@ -2428,20 +2427,20 @@ NSMutableArray* screens=0;
          ((modflag & NSControlKeyMask) &&                          // a few special cases
           (keyCode == 0x2c /* slash */ || keyCode == 0x2a /* backslash */)))) {
         if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown: process in delegate");
+            DLog(@"PTYTextView keyDown: process in delegate");
         }
         [delegate keyDown:event];
         return;
     }
 
     if (debugKeyDown) {
-        NSLog(@"Test for command key");
+        DLog(@"Test for command key");
     }
     if (modflag & NSCommandKeyMask) {
         // You pressed cmd+something but it's not handled by the delegate. Going further would
         // send the unmodified key to the terminal which doesn't make sense.
         if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown You pressed cmd+something");
+            DLog(@"PTYTextView keyDown You pressed cmd+something");
         }
         return;
     }
@@ -2452,7 +2451,7 @@ NSMutableArray* screens=0;
     if (!prev &&
         (modflag & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == NSControlKeyMask) {
         if (debugKeyDown) {
-            NSLog(@"Special ctrl+key handler running");
+            DLog(@"Special ctrl+key handler running");
         }
         NSString *unmodkeystr = [event charactersIgnoringModifiers];
         if ([unmodkeystr length] != 0) {
@@ -2476,7 +2475,7 @@ NSMutableArray* screens=0;
             if (cc != 0xffff) {
                 [self insertText:[NSString stringWithCharacters:&cc length:1]];
                 if (debugKeyDown) {
-                    NSLog(@"PTYTextView keyDown work around control bug. cc=%d", (int)cc);
+                    DLog(@"PTYTextView keyDown work around control bug. cc=%d", (int)cc);
                 }
                 workAroundControlBug = YES;
             }
@@ -2487,7 +2486,7 @@ NSMutableArray* screens=0;
         // Let the IME process key events
         IM_INPUT_INSERT = NO;
         if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown send to IME");
+            DLog(@"PTYTextView keyDown send to IME");
         }
         
         // In issue 2743, it is revealed that in OS 10.9 this sometimes calls -insertText on the
@@ -2503,13 +2502,13 @@ NSMutableArray* screens=0;
             !IM_INPUT_INSERT &&
             ![self hasMarkedText]) {
             if (debugKeyDown) {
-                NSLog(@"PTYTextView keyDown IME no, send to delegate");
+                DLog(@"PTYTextView keyDown IME no, send to delegate");
             }
             [delegate keyDown:event];
         }
     }
     if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown END");
+        DLog(@"PTYTextView keyDown END");
     }
 }
 
@@ -3957,10 +3956,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event
 {
-    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+    BOOL debugKeyDown = YES;
 
     if (debugKeyDown) {
-        NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
+        DLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
     }
     DebugLog(@"PTYTextView placeCursorOnCurrentLineWithEvent");
 
@@ -4003,12 +4002,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     }
     if (debugKeyDown) {
-        NSLog(@"cursor at %d,%d (x,y) moved to %d,%d (x,y) [window width: %d]",
+        DLog(@"cursor at %d,%d (x,y) moved to %d,%d (x,y) [window width: %d]",
               cursorX, cursorY, x, y, width);
     }
 
     if (debugKeyDown) {
-        NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent END");
+        DLog(@"PTYTextView placeCursorOnCurrentLineWithEvent END");
     }
 }
 
@@ -4358,7 +4357,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                        range:NSMakeRange(0, [substring length])
                                                                        error:&regexError];
             if (components.count) {
-                NSLog(@"Components for %@ are %@", regex, components);
+                DLog(@"Components for %@ are %@", regex, components);
                 NSArray *actions = [SmartSelectionController actionsInRule:rule];
                 for (NSDictionary *action in actions) {
                     SEL mySelector;
@@ -4400,7 +4399,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)contextMenuActionOpenFile:(id)sender
 {
-    NSLog(@"Open file: '%@'", [sender representedObject]);
+    DLog(@"Open file: '%@'", [sender representedObject]);
     [[NSWorkspace sharedWorkspace] openFile:[[sender representedObject] stringByExpandingTildeInPath]];
 }
 
@@ -4408,17 +4407,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     NSURL *url = [NSURL URLWithString:[sender representedObject]];
     if (url) {
-        NSLog(@"Open URL: %@", [sender representedObject]);
+        DLog(@"Open URL: %@", [sender representedObject]);
         [[NSWorkspace sharedWorkspace] openURL:url];
     } else {
-        NSLog(@"%@ is not a URL", [sender representedObject]);
+        DLog(@"%@ is not a URL", [sender representedObject]);
     }
 }
 
 - (void)contextMenuActionRunCommand:(id)sender
 {
     NSString *command = [sender representedObject];
-    NSLog(@"Run command: %@", command);
+    DLog(@"Run command: %@", command);
     [NSThread detachNewThreadSelector:@selector(runCommand:)
                              toTarget:[self class]
                            withObject:command];
@@ -4435,7 +4434,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)contextMenuActionRunCoprocess:(id)sender
 {
     NSString *command = [sender representedObject];
-    NSLog(@"Run coprocess: %@", command);
+    DLog(@"Run coprocess: %@", command);
     [_delegate launchCoprocessWithCommand:command];
 }
 
@@ -4884,9 +4883,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     DLog(@"PTYTextView insertText:%@", aString);
     if ([self hasMarkedText]) {
-        BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+        BOOL debugKeyDown = YES;
         if (debugKeyDown) {
-            NSLog(@"insertText: clear marked text");
+            DLog(@"insertText: clear marked text");
         }
         IM_INPUT_MARKEDRANGE = NSMakeRange(0, 0);
         [markedText release];
@@ -4920,9 +4919,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)setMarkedText:(id)aString selectedRange:(NSRange)selRange
 {
-    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+    BOOL debugKeyDown = YES;
     if (debugKeyDown) {
-        NSLog(@"set marked text to %@; range %@", aString, [NSValue valueWithRange:selRange]);
+        DLog(@"set marked text to %@; range %@", aString, [NSValue valueWithRange:selRange]);
     }
     [markedText release];
     if ([aString isKindOfClass:[NSAttributedString class]]) {
@@ -4961,9 +4960,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)unmarkText
 {
-    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+    BOOL debugKeyDown = YES;
     if (debugKeyDown) {
-        NSLog(@"clear marked text");
+        DLog(@"clear marked text");
     }
     // As far as I can tell this is never called.
     IM_INPUT_MARKEDRANGE = NSMakeRange(0, 0);
@@ -6316,7 +6315,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 if (!thisCharString) {
                     // A bug that's happened more than once is that code gets
                     // set to 0 but complexChar is left set to true.
-                    NSLog(@"No complex char for code %d", (int)theLine[i].code);
+                    DLog(@"No complex char for code %d", (int)theLine[i].code);
                     thisCharString = @"";
                     drawable = NO;
                 } else {
