@@ -6467,7 +6467,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
     [ctx saveGraphicsState];
     [ctx setCompositingOperation:NSCompositeSourceOver];
-    if (IsLionOrLater()) {
+    if (0) {
         CTFontDrawGlyphsFunction *drawGlyphsFunction = GetCTFontDrawGlyphsFunction();
         assert(drawGlyphsFunction);
 
