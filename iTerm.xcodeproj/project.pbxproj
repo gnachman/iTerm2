@@ -566,6 +566,9 @@
 		9DB3D6F1176CCABE0071CCF8 /* PrefsArrangements@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */; };
 		A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */ = {isa = PBXBuildFile; fileRef = A073973D14C768E400786414 /* ColorsMenuItemView.h */; };
 		A073974014C7694600786414 /* ColorsMenuItemView.m in Sources */ = {isa = PBXBuildFile; fileRef = A073973F14C7694600786414 /* ColorsMenuItemView.m */; };
+		A60014F618550F3900CE38D8 /* NSMutableAttributedString+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60014F418550F3900CE38D8 /* NSMutableAttributedString+iTerm.h */; };
+		A60014F718550F3900CE38D8 /* NSMutableAttributedString+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */; };
+		A60014F818550F3900CE38D8 /* NSMutableAttributedString+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */; };
 		A6358646184BEA57009ED690 /* AATree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358642184BEA57009ED690 /* AATree.h */; };
 		A6358647184BEA57009ED690 /* AATree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358643184BEA57009ED690 /* AATree.m */; };
 		A6358648184BEA57009ED690 /* AATree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358643184BEA57009ED690 /* AATree.m */; };
@@ -977,6 +980,8 @@
 		9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PrefsArrangements@2x.png"; path = "images/PrefsArrangements@2x.png"; sourceTree = "<group>"; };
 		A073973D14C768E400786414 /* ColorsMenuItemView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ColorsMenuItemView.h; sourceTree = "<group>"; };
 		A073973F14C7694600786414 /* ColorsMenuItemView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ColorsMenuItemView.m; sourceTree = "<group>"; };
+		A60014F418550F3900CE38D8 /* NSMutableAttributedString+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableAttributedString+iTerm.h"; sourceTree = "<group>"; };
+		A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableAttributedString+iTerm.m"; sourceTree = "<group>"; };
 		A6358642184BEA57009ED690 /* AATree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AATree.h; path = "objc-aatree-master/AATree.h"; sourceTree = "<group>"; };
 		A6358643184BEA57009ED690 /* AATree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AATree.m; path = "objc-aatree-master/AATree.m"; sourceTree = "<group>"; };
 		A6358644184BEA57009ED690 /* AATreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AATreeNode.h; path = "objc-aatree-master/AATreeNode.h"; sourceTree = "<group>"; };
@@ -1648,6 +1653,8 @@
 				1D67ABAA14285D6000D5DA4E /* NSFileManager+iTerm.m */,
 				1DF0895A13DBAE1F00A52AD8 /* NSImage+CoreImage.m */,
 				E8E901A202743CA303A80106 /* NSStringITerm.m */,
+				A60014F418550F3900CE38D8 /* NSMutableAttributedString+iTerm.h */,
+				A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -1961,6 +1968,7 @@
 				1D9DDD9C142E5FBB00275650 /* Coprocess.h in Headers */,
 				1D24C284142EF334006B246F /* SendTextTrigger.h in Headers */,
 				1D24C2C5142FEACF006B246F /* SmartSelectionController.h in Headers */,
+				A60014F618550F3900CE38D8 /* NSMutableAttributedString+iTerm.h in Headers */,
 				1D4AE8FE14343A760092EB49 /* TrouterPrefsController.h in Headers */,
 				1DEDC8FD1451F67D004F1615 /* SessionTitleView.h in Headers */,
 				5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */,
@@ -2319,6 +2327,7 @@
 				1D9A5564180FA84700B42CE9 /* NSDateFormatterExtras.m in Sources */,
 				1D9A5529180FA61700B42CE9 /* VT100ScreenTest.m in Sources */,
 				A63F40A6183F3B78003A6A6D /* LineBlock.m in Sources */,
+				A60014F818550F3900CE38D8 /* NSMutableAttributedString+iTerm.m in Sources */,
 				A6C4E8E81846E32700CFAA77 /* IntervalTreeTest.m in Sources */,
 				1D9A5586180FA87000B42CE9 /* iTermSearchField.m in Sources */,
 				1DD39B1F180B841C004E56D5 /* RegexKitLite.m in Sources */,
@@ -2416,6 +2425,7 @@
 				1D5FDDA71208E93600C46BA3 /* PTYTextView.m in Sources */,
 				1D5FDDA81208E93600C46BA3 /* PTYTask.m in Sources */,
 				1D0AABC217B59B3D0072B5AF /* SearchResult.m in Sources */,
+				A60014F718550F3900CE38D8 /* NSMutableAttributedString+iTerm.m in Sources */,
 				A63F4096183B398C003A6A6D /* PTYNoteViewController.m in Sources */,
 				1D5FDDA91208E93600C46BA3 /* VT100Screen.m in Sources */,
 				1D5FDDAA1208E93600C46BA3 /* VT100Terminal.m in Sources */,
