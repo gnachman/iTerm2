@@ -650,8 +650,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     selectMode = isBox ? SELECT_BOX : SELECT_CHAR;
 }
 
+- (void)traceSetColor:(NSColor *)color {
+    DLog(@"setcolor: color=%@ trace=%@", color, [NSThread callStackSymbols]);
+}
+
 - (void)setFGColor:(NSColor*)color
 {
+    [self traceSetColor:color];
     [defaultFGColor release];
     [color retain];
     defaultFGColor = color;
@@ -661,6 +666,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setBGColor:(NSColor*)color
 {
+    [self traceSetColor:color];
     [defaultBGColor release];
     [color retain];
     defaultBGColor = color;
@@ -676,6 +682,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setBoldColor:(NSColor*)color
 {
+    [self traceSetColor:color];
     [defaultBoldColor release];
     [color retain];
     defaultBoldColor = color;
@@ -685,6 +692,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setCursorColor:(NSColor*)color
 {
+    [self traceSetColor:color];
     [defaultCursorColor release];
     [color retain];
     defaultCursorColor = color;
@@ -694,6 +702,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setSelectedTextColor:(NSColor *)aColor
 {
+    [self traceSetColor:aColor];
     [selectedTextColor release];
     [aColor retain];
     selectedTextColor = aColor;
@@ -703,6 +712,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setCursorTextColor:(NSColor*)aColor
 {
+    [self traceSetColor:aColor];
     [cursorTextColor release];
     [aColor retain];
     cursorTextColor = aColor;
@@ -742,6 +752,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setColorTable:(int)theIndex color:(NSColor*)origColor
 {
+    [self traceSetColor:origColor];
     NSColor* theColor = [origColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
     [colorTable[theIndex] release];
     [theColor retain];
@@ -881,6 +892,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setSelectionColor:(NSColor *)aColor
 {
+    [self traceSetColor:aColor];
     [selectionColor release];
     [aColor retain];
     selectionColor = aColor;

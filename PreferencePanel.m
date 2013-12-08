@@ -42,6 +42,7 @@
 #import "TrouterPrefsController.h"
 #import "PointerPrefsController.h"
 #import "iTermFontPanel.h"
+#import "iTermApplicationDelegate.h"
 
 #define CUSTOM_COLOR_PRESETS @"Custom Color Presets"
 #define HOTKEY_WINDOW_GENERATED_PROFILE_NAME @"Hotkey Window"
@@ -646,9 +647,11 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (void)handleWindowWillCloseNotification:(NSNotification *)notification
 {
+    DLog(@"handleWindowWillCloseNotification");
     // This is so tags get saved because Cocoa doesn't notify you that the
     // field changed unless the user presses enter twice in it (!).
     [self bookmarkSettingChanged:nil];
+    DLog(@"Returned from bookmarkSettingChanged");
 }
 
 - (void)genericCloseSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo
@@ -3417,6 +3420,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [newDict setObject:[trouterPrefController_ prefs] forKey:KEY_TROUTER];
 
     // Epilogue
+    DLog(@"newDict: %@", newDict);
     [dataSource setBookmark:newDict withGuid:guid];
     [bookmarksTableView reloadData];
     if (reloadKeyMappings) {
