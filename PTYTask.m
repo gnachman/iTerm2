@@ -980,11 +980,7 @@ static void reapchild(int n)
 
         pid_t ppid = taskAllInfo.pbsd.pbi_ppid;
         if (ppid == parentPid) {
-#ifdef BLOCKS_NOT_AVAILABLE  // OS 10.5
-            long long birthday = taskAllInfo.pbsd.pbi_start.tv_sec * 1000000 + taskAllInfo.pbsd.pbi_start.tv_usec;
-#else  // OS 10.6+
             long long birthday = taskAllInfo.pbsd.pbi_start_tvsec * 1000000 + taskAllInfo.pbsd.pbi_start_tvusec;
-#endif
             if (birthday < oldestTime || oldestTime == 0) {
                 oldestTime = birthday;
                 oldestPid = pids[i];

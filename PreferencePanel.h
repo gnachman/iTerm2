@@ -602,12 +602,10 @@ typedef enum {
 + (void)populatePopUpButtonWithBookmarks:(NSPopUpButton*)button selectedGuid:(NSString*)selectedGuid;
 
 - (BOOL)loadPrefs;
-- (id)initWithDataSource:(ProfileModel*)model userDefaults:(NSUserDefaults*)userDefaults;
 
 - (void)triggerChanged:(TriggerController *)triggerController;
 - (void)smartSelectionChanged:(SmartSelectionController *)smartSelectionController;
 
-- (void)setOneBookmarkOnly;
 - (void)awakeFromNib;
 - (void)handleWindowWillCloseNotification:(NSNotification *)notification;
 - (void)genericCloseSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo;
@@ -625,12 +623,6 @@ typedef enum {
 - (BOOL)keySheetIsOpen;
 - (WindowArrangements *)arrangements;
 - (IBAction)closeKeyMapping:(id)sender;
-- (BOOL)validateToolbarItem:(NSToolbarItem *)theItem;
-- (NSToolbarItem *)toolbar:(NSToolbar *)toolbar itemForItemIdentifier:(NSString *)itemIdentifier willBeInsertedIntoToolbar:(BOOL)flag;
-- (NSArray *)toolbarAllowedItemIdentifiers:(NSToolbar *)toolbar;
-- (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar;
-- (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar;
-- (void)dealloc;
 - (void)readPreferences;
 - (void)savePreferences;
 - (void)run;
@@ -722,7 +714,6 @@ typedef enum {
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(int)rowIndex;
 - (void)_updateFontsDisplay;
 - (void)updateBookmarkFields:(NSDictionary *)dict  ;
-- (void)_commonDisplaySelectFont:(id)sender;
 - (IBAction)displaySelectFont:(id)sender;
 - (void)changeFont:(id)fontManager;
 - (NSString*)_chooseBackgroundImage;
@@ -746,7 +737,6 @@ typedef enum {
 - (IBAction)closeWindow:(id)sender;
 - (IBAction)selectLogDir:(id)sender;
 - (void)controlTextDidChange:(NSNotification *)aNotification;
-- (void)textDidChange:(NSNotification *)aNotification;
 - (BOOL)onScreen;
 - (NSTextField*)shortcutKeyTextField;
 - (void)shortcutKeyDown:(NSEvent*)event;
@@ -800,9 +790,6 @@ typedef enum {
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename;
 
-@end
-
-@interface PreferencePanel (KeyValueCoding)
 - (BOOL)haveJobsForCurrentBookmark;
 - (void)setHaveJobsForCurrentBookmark:(BOOL)value;
 

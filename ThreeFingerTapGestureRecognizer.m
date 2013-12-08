@@ -31,8 +31,8 @@ static const NSTimeInterval kDelay = 0.35;  // Just a bit longer than the system
 {
     fired_ = NO;
     DLog(@"fired->NO");
-    int touches = [[ev futureTouchesMatchingPhase:1 | (1 << 2)/*NSTouchPhasesBegan | NSTouchPhasesStationary*/
-                                           inView:target_] count];
+    int touches = [[ev touchesMatchingPhase:NSTouchPhaseBegan | NSTouchPhaseStationary
+                                     inView:target_] count];
     if (numTouches_ == 0 && touches > 0) {
         DLog(@"Set first touch time");
         firstTouchTime_ = [NSDate timeIntervalSinceReferenceDate];
@@ -56,7 +56,7 @@ static const NSTimeInterval kDelay = 0.35;  // Just a bit longer than the system
 
 - (void)touchesEndedWithEvent:(NSEvent *)ev
 {
-    numTouches_ = [[ev futureTouchesMatchingPhase:(1 << 2)/*NSTouchPhasesStationary*/
+    numTouches_ = [[ev touchesMatchingPhase:NSTouchPhaseStationary
                                            inView:target_] count];
     const NSTimeInterval maxTimeForSimulatedThreeFingerTap = 1;
     if (numTouches_ == 0 &&

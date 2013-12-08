@@ -50,7 +50,11 @@
 }
 
 - (NSMutableData *)lineDataAtLineNumber:(int)lineNumber {
-    return [lines_ objectAtIndex:(screenTop_ + lineNumber) % size_.height];
+    if (lineNumber >= 0 && lineNumber < size_.height) {
+        return [lines_ objectAtIndex:(screenTop_ + lineNumber) % size_.height];
+    } else {
+        return nil;
+    }
 }
 
 - (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber {
@@ -59,10 +63,11 @@
 }
 
 - (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber {
-#ifdef ITERM_DEBUG
-    assert(lineNumber >= 0 && lineNumber < size_.height);
-#endif
-    return [lineInfos_ objectAtIndex:(screenTop_ + lineNumber) % size_.height];
+    if (lineNumber >= 0 && lineNumber < size_.height) {
+        return [lineInfos_ objectAtIndex:(screenTop_ + lineNumber) % size_.height];
+    } else {
+        return nil;
+    }
 }
 
 - (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord updateTimestamp:(BOOL)updateTimestamp {
@@ -171,8 +176,7 @@
 }
 
 - (int)appendLines:(int)numLines
-      toLineBuffer:(LineBuffer *)lineBuffer
-       withObjects:(BOOL)withObjects {
+      toLineBuffer:(LineBuffer *)lineBuffer {
     assert(numLines <= size_.height);
 
     // Set numLines to the number of lines on the screen that are in use.
@@ -211,11 +215,7 @@
                         length:currentLineLength
                        partial:(continuation != EOL_HARD)
                          width:size_.width
-                     timestamp:[[self lineInfoAtLineNumber:i] timestamp]
-                        object:withObjects ? [[self lineInfoAtLineNumber:i] object] : nil];
-        if (withObjects) {
-            [[self lineInfoAtLineNumber:i] setObject:nil];
-        }
+                     timestamp:[[self lineInfoAtLineNumber:i] timestamp]];
 #ifdef DEBUG_RESIZEDWIDTH
         NSLog(@"Appended a line. now have %d lines for width %d\n",
               [lineBuffer numLinesWithWidth:size_.width], size_.width);
@@ -227,18 +227,6 @@
 
 - (NSTimeInterval)timestampForLine:(int)y {
     return [[self lineInfoAtLineNumber:y] timestamp];
-}
-
-- (id<TrackedObject>)objectForLine:(int)y {
-    return [[self lineInfoAtLineNumber:y] object];
-}
-
-- (void)setObject:(id<TrackedObject>)object
-          forLine:(int)y
-   absoluteOffset:(long long)absoluteOffset {
-    object.isInLineBuffer = NO;
-    object.absoluteLineNumber = y + absoluteOffset;
-    [[self lineInfoAtLineNumber:y] setObject:object];
 }
 
 - (int)lengthOfLineNumber:(int)lineNumber {
@@ -294,7 +282,6 @@
 
     // Empty contents of last line on screen.
     [self clearLineData:[self lineDataAtLineNumber:(size_.height - 1)]];
-    [[self lineInfoAtLineNumber:(size_.height - 1)] setObject:nil];
 
     if (lineBuffer) {
         // Mark new line at bottom of screen dirty.
@@ -1191,7 +1178,6 @@
 - (void)restoreScreenFromLineBuffer:(LineBuffer *)lineBuffer
                     withDefaultChar:(screen_char_t)defaultChar
                   maxLinesToRestore:(int)maxLines
-                     absoluteOffset:(long long)absoluteOffset
 {
     // Move scrollback lines into screen
     int numLinesInLineBuffer = [lineBuffer numLinesWithWidth:size_.width];
@@ -1222,19 +1208,12 @@
         }
         int cont;
         NSTimeInterval timestamp;
-        id<TrackedObject> object;
         ++numPopped;
         assert([lineBuffer popAndCopyLastLineInto:dest
                                             width:size_.width
                                 includesEndOfLine:&cont
-                                        timestamp:&timestamp
-                                           object:&object]);
+                                        timestamp:&timestamp]);
         [[self lineInfoAtLineNumber:destLineNumber] setTimestamp:timestamp];
-        if (object) {
-            object.isInLineBuffer = NO;
-            object.absoluteLineNumber = destLineNumber + absoluteOffset;
-        }
-        [[self lineInfoAtLineNumber:destLineNumber] setObject:object];
         if (cont && dest[size_.width - 1].code == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the
             // line below it starts with a DWC, it's safe to conclude that a DWC
@@ -1252,15 +1231,6 @@
             dest[size_.width - 1].code = DWC_SKIP;
         }
         --destLineNumber;
-    }
-
-    // Fix up object line numbers where were wrong because the absoluteOffset included lines that
-    // were popped.
-    for (int i = 0; i < size_.height; i++) {
-        id<TrackedObject> object = [[self lineInfoAtLineNumber:i] object];
-        if (object) {
-            object.absoluteLineNumber = i + absoluteOffset - numPopped;
-        }
     }
 }
 
@@ -1597,8 +1567,7 @@
                     length:len
                    partial:(continuationMark != EOL_HARD)
                      width:size_.width
-                 timestamp:[[self lineInfoAtLineNumber:0] timestamp]
-                    object:[[self lineInfoAtLineNumber:0] object]];
+                 timestamp:[[self lineInfoAtLineNumber:0] timestamp]];
     int dropped;
     if (!unlimitedScrollback) {
         dropped = [lineBuffer dropExcessLinesWithWidth:size_.width];

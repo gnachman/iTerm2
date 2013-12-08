@@ -27,7 +27,6 @@
         cll_entries = 0;
         cumulative_line_lengths = (int*) malloc(sizeof(int) * cll_capacity);
         timestamps_ = (NSTimeInterval *)malloc(sizeof(NSTimeInterval) * cll_capacity);
-        objects_ = [[NSMutableDictionary alloc] init];
         is_partial = NO;
         cached_numlines_width = -1;
     }
@@ -45,7 +44,6 @@
     if (timestamps_) {
         free(timestamps_);
     }
-    [objects_ release];
     [super dealloc];
 }
 
@@ -63,7 +61,6 @@
     memmove(theCopy->cumulative_line_lengths, cumulative_line_lengths, cll_size);
     theCopy->timestamps_ = (NSTimeInterval *) malloc(sizeof(NSTimeInterval) * cll_capacity);
     memmove(theCopy->timestamps_, timestamps_, sizeof(NSTimeInterval) * cll_capacity);
-    theCopy->objects_ = [objects_ mutableCopy];
     theCopy->cll_capacity = cll_capacity;
     theCopy->cll_entries = cll_entries;
     theCopy->is_partial = is_partial;
@@ -82,7 +79,7 @@
     }
 }
 
-- (void)_appendCumulativeLineLength:(int)cumulativeLength timestamp:(NSTimeInterval)timestamp object:(id<TrackedObject>)object
+- (void)_appendCumulativeLineLength:(int)cumulativeLength timestamp:(NSTimeInterval)timestamp
 {
     if (cll_entries == cll_capacity) {
         cll_capacity *= 2;
@@ -92,11 +89,6 @@
     }
     cumulative_line_lengths[cll_entries] = cumulativeLength;
     timestamps_[cll_entries] = timestamp;
-    if (object) {
-        [objects_ setObject:object forKey:@(cll_entries)];
-    } else {
-        [objects_ removeObjectForKey:@(cll_entries)];
-    }
     ++cll_entries;
 }
 
@@ -182,7 +174,6 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width)
            partial:(BOOL)partial
              width:(int)width
          timestamp:(NSTimeInterval)timestamp
-            object:(id<TrackedObject>)object
 {
     const int space_used = [self rawSpaceUsed];
     const int free_space = buffer_size - space_used - start_offset;
@@ -217,19 +208,13 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width)
         
         cumulative_line_lengths[cll_entries - 1] += length;
         timestamps_[cll_entries - 1] = timestamp;
-        if (object) {
-            [objects_ setObject:object forKey:@(cll_entries - 1)];
-        } else {
-            [objects_ removeObjectForKey:@(cll_entries - 1)];
-        }
 #ifdef TEST_LINEBUFFER_SANITY
         [self checkAndResetCachedNumlines:@"appendLine partial case" width: width];
 #endif
     } else {
         // add a new line
         [self _appendCumulativeLineLength:(space_used + length)
-                                timestamp:timestamp
-                                   object:object];
+                                timestamp:timestamp];
         if (width != cached_numlines_width) {
             cached_numlines_width = -1;
         } else {
@@ -306,46 +291,6 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
         prev = cll;
     }
     return 0;
-}
-
-- (id<TrackedObject>)objectForLineNumber:(int)lineNum width:(int)width
-{
-    int prev = 0;
-    int length;
-    int i;
-    for (i = first_entry; i < cll_entries; ++i) {
-        int cll = cumulative_line_lengths[i] - start_offset;
-        length = cll - prev;
-        int spans = NumberOfFullLines(buffer_start + prev, length, width);
-        if (lineNum > spans) {
-            // Consume the entire raw line and keep looking for more.
-            int consume = spans + 1;
-            lineNum -= consume;
-        } else {  // *lineNum <= spans
-            return objects_[@(i)];
-        }
-        prev = cll;
-    }
-    return 0;
-}
-
-- (void)setObject:(id<TrackedObject>)object forLine:(int)lineNum width:(int)width {
-    int prev = 0;
-    int length;
-    int i;
-    for (i = first_entry; i < cll_entries; ++i) {
-        int cll = cumulative_line_lengths[i] - start_offset;
-        length = cll - prev;
-        int spans = NumberOfFullLines(buffer_start + prev, length, width);
-        if (lineNum > spans) {
-            // Consume the entire raw line and keep looking for more.
-            int consume = spans + 1;
-            lineNum -= consume;
-        } else {  // *lineNum <= spans
-            [objects_ setObject:object forKey:@(i)];
-        }
-        prev = cll;
-    }
 }
 
 - (screen_char_t*)getWrappedLineWithWrapWidth:(int)width
@@ -459,7 +404,6 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
              withLength:(int*)length
               upToWidth:(int)width
               timestamp:(NSTimeInterval *)timestampPtr
-                 object:(id<TrackedObject> *)objectPtr
 {
     if (cll_entries == first_entry) {
         // There is no last line to pop.
@@ -474,10 +418,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
     if (timestampPtr) {
         *timestampPtr = timestamps_[cll_entries - 1];
     }
-    if (objectPtr) {
-        *objectPtr = objects_[@(cll_entries - 1)];
-    }
-    
+
     const int end = cumulative_line_lengths[cll_entries - 1] - start_offset;
     const int available_len = end - start;
     if (available_len > width) {
@@ -618,9 +559,6 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
             }
             buffer_start += prev + offset;
             start_offset = buffer_start - raw_buffer;
-            for (int j = first_entry; j < i; j++) {
-                [objects_ removeObjectForKey:@(j)];
-            }
             first_entry = i;
             *charsDropped = start_offset - initialOffset;
             
@@ -631,8 +569,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
         }
         prev = cll;
     }
-    
-    [objects_ removeAllObjects];
+
     // Consumed the whole buffer.
     cached_numlines_width = -1;
     cll_entries = 0;

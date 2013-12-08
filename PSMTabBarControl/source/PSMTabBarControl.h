@@ -105,6 +105,7 @@ enum {
 
     // drag and drop
     NSEvent                     *_lastMouseDownEvent;      // keep this for dragging reference
+    NSEvent                     *_lastMiddleMouseDownEvent;
     BOOL                        _didDrag;
     BOOL                        _closeClicked;
 

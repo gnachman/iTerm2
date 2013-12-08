@@ -19,7 +19,7 @@
 //     distribution.
 //
 
-#import "NSFileManager+DirectoryLocations.h"
+#import "NSFileManager+iTerm.h"
 
 enum
 {
@@ -29,7 +29,7 @@ enum
 	
 NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 
-@implementation NSFileManager (DirectoryLocations)
+@implementation NSFileManager (iTerm)
 
 //
 // findOrCreateDirectory:inDomain:appendPathComponent:error:
@@ -150,6 +150,36 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 		NSLog(@"Unable to find or create application support directory:\n%@", error);
 	}
 	return result;
+}
+
+- (NSString *)temporaryDirectory
+{
+    // Create a unique directory in the system temporary directory
+    NSString *guid = [[NSProcessInfo processInfo] globallyUniqueString];
+    NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:guid];
+    if (![self createDirectoryAtPath:path withIntermediateDirectories:NO attributes:nil error:nil]) {
+        return nil;
+    }
+    return path;
+}
+
+- (BOOL)directoryIsWritable:(NSString *)dir
+{
+    if ([[dir stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] length] == 0) {
+        return NO;
+    }
+    
+    NSString *filename = [NSString stringWithFormat:@"%@/.testwritable.%d", dir, (int)getpid()];
+    NSError *error = nil;
+    [@"test" writeToFile:filename
+              atomically:YES
+                encoding:NSUTF8StringEncoding
+                   error:&error];
+    if (error) {
+        return NO;
+    }
+    unlink([filename UTF8String]);
+    return YES;
 }
 
 @end

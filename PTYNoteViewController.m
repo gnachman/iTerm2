@@ -7,14 +7,10 @@
 //
 
 #import "PTYNoteViewController.h"
+#import "IntervalTree.h"
 #import "PTYNoteView.h"
 
 NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewControllerShouldUpdatePosition";
-
-static const CGFloat kLeftMargin = 15;
-static const CGFloat kRightMargin = 10;
-static const CGFloat kTopMargin = 10;
-static const CGFloat kBottomMargin = 5;
 
 @interface PTYNoteViewController ()
 @property(nonatomic, retain) NSTextView *textView;
@@ -22,20 +18,21 @@ static const CGFloat kBottomMargin = 5;
 @property(nonatomic, assign) BOOL watchForUpdate;
 @end
 
-@implementation PTYNoteViewController
+@implementation PTYNoteViewController {
+    NSTimeInterval highlightStartTime_;
+}
 
 @synthesize noteView = noteView_;
 @synthesize textView = textView_;
 @synthesize scrollView = scrollView_;
 @synthesize anchor = anchor_;
 @synthesize watchForUpdate = watchForUpdate_;
-@synthesize isInLineBuffer = isInLineBuffer_;
-@synthesize absoluteLineNumber = absoluteLineNumber_;
-@synthesize lineBufferPosition = lineBufferPosition_;
+@synthesize entry;
+@synthesize delegate;
 
 - (void)dealloc {
     [noteView_ removeFromSuperview];
-    noteView_.noteViewController = nil;
+    noteView_.delegate = nil;
     [noteView_ release];
     [textView_ release];
     [scrollView_ release];
@@ -51,22 +48,21 @@ static const CGFloat kBottomMargin = 5;
 
 - (void)loadView {
     const CGFloat kWidth = 300;
-    const CGFloat kHeight = 30;
+    const CGFloat kHeight = 10;
     self.noteView = [[[PTYNoteView alloc] initWithFrame:NSMakeRect(0, 0, kWidth, kHeight)] autorelease];
-    self.noteView.noteViewController = self;
+    self.noteView.autoresizesSubviews = YES;
+    self.noteView.delegate = self;
     NSShadow *shadow = [[[NSShadow alloc] init] autorelease];
-    shadow.shadowColor = [NSColor blackColor];
+    shadow.shadowColor = [[NSColor blackColor] colorWithAlphaComponent:0.5];
     shadow.shadowOffset = NSMakeSize(1, -1);
     shadow.shadowBlurRadius = 1.0;
     self.noteView.wantsLayer = YES;
     self.noteView.shadow = shadow;
 
-    NSSize size = NSMakeSize(kWidth - kLeftMargin - kRightMargin,
-                             kHeight - kTopMargin - kBottomMargin);
-    NSRect frame = NSMakeRect(kLeftMargin,
-                              kTopMargin,
-                              size.width,
-                              size.height);
+    NSRect frame = NSMakeRect(0,
+                              0,
+                              kWidth,
+                              kHeight);
     self.scrollView = [[[NSScrollView alloc] initWithFrame:frame] autorelease];
     scrollView_.drawsBackground = NO;
     scrollView_.hasVerticalScroller = YES;
@@ -79,18 +75,19 @@ static const CGFloat kBottomMargin = 5;
                                                                   scrollView_.contentSize.height)]
                      autorelease];
     textView_.allowsUndo = YES;
-    textView_.minSize = size;
+    textView_.minSize = scrollView_.frame.size;
     textView_.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
     textView_.verticallyResizable = YES;
     textView_.horizontallyResizable = NO;
     textView_.autoresizingMask = NSViewWidthSizable;
     textView_.drawsBackground = NO;
-    textView_.textContainer.containerSize = NSMakeSize(size.width, FLT_MAX);
+    textView_.textContainer.containerSize = NSMakeSize(scrollView_.frame.size.width, FLT_MAX);
     textView_.textContainer.widthTracksTextView = YES;
-
+    textView_.delegate = self;
     scrollView_.documentView = textView_;
 
-    [noteView_ addSubview:scrollView_];
+    noteView_.contentView = scrollView_;
+    [self sizeToFit];
 }
 
 - (void)beginEditing {
@@ -101,38 +98,29 @@ static const CGFloat kBottomMargin = 5;
     anchor_ = anchor;
 
     NSRect superViewFrame = noteView_.superview.frame;
-    CGFloat superViewMaxY = superViewFrame.origin.y + superViewFrame.size.height;
-
-    CGFloat height = noteView_.frame.size.height;
-    CGFloat visibleHeight = noteView_.visibleFrame.size.height;
-    CGFloat shadowHeight = height - visibleHeight;
-
-    if (anchor_.y - visibleHeight / 2 < 0) {
-        // Can't center the anchor because some of the note would be off the top of the view.
-        noteView_.frame = NSMakeRect(anchor_.x,
-                                     0,
-                                     noteView_.frame.size.width,
-                                     noteView_.frame.size.height);
-        noteView_.point = NSMakePoint(0, anchor_.y);
-        self.watchForUpdate = NO;
-    } else if (anchor_.y + visibleHeight / 2 + shadowHeight > superViewMaxY) {
-        // Can't center the anchor because some of the note would be off the bottom of the view.
-        const CGFloat shift = (superViewMaxY - height) - (anchor_.y - visibleHeight / 2);
-        noteView_.frame = NSMakeRect(anchor_.x,
-                                     superViewMaxY - height,
-                                     noteView_.frame.size.width,
-                                     noteView_.frame.size.height);
-        noteView_.point = NSMakePoint(0, visibleHeight / 2 - shift);
-        self.watchForUpdate = YES;
-    } else {
-        // Center the anchor
-        noteView_.frame = NSMakeRect(anchor_.x,
-                                     anchor_.y - visibleHeight / 2,
-                                     noteView_.frame.size.width,
-                                     noteView_.frame.size.height);
-        noteView_.point = NSMakePoint(0, visibleHeight / 2);
-        self.watchForUpdate = NO;
+    CGFloat xOffset = 0;
+    if (anchor_.x + noteView_.frame.size.width > superViewFrame.size.width) {
+        xOffset = anchor_.x + noteView_.frame.size.width - superViewFrame.size.width;
     }
+    noteView_.tipEdge = kPTYNoteViewTipEdgeTop;
+    NSSize size = [noteView_ sizeThatFitsContentView];
+    noteView_.point = NSMakePoint(xOffset, 0);
+    noteView_.frame = NSMakeRect(anchor_.x - xOffset,
+                                 anchor_.y,
+                                 size.width,
+                                 size.height);
+
+    CGFloat superViewMaxY = superViewFrame.origin.y + superViewFrame.size.height;
+    if (NSMaxY(noteView_.frame) > superViewMaxY) {
+        noteView_.tipEdge = kPTYNoteViewTipEdgeBottom;
+        noteView_.point = NSMakePoint(xOffset, noteView_.frame.size.height - 1);
+        noteView_.frame = NSMakeRect(anchor_.x - xOffset,
+                                     anchor_.y - noteView_.frame.size.height,
+                                     size.width,
+                                     size.height);
+    }
+
+    [noteView_ layoutSubviews];
 }
 
 - (void)checkForUpdate {
@@ -204,23 +192,81 @@ static const CGFloat kBottomMargin = 5;
     [layoutManager ensureLayoutForTextContainer:textContainer];
     NSRect usedRect = [layoutManager usedRectForTextContainer:textContainer];
 
+    const CGFloat kMinTextViewWidth = 250;
+    usedRect.size.width = MAX(usedRect.size.width, kMinTextViewWidth);
+
     NSSize scrollViewSize = [NSScrollView frameSizeForContentSize:usedRect.size
                                           horizontalScrollerClass:[[scrollView_ horizontalScroller] class]
                                             verticalScrollerClass:[[scrollView_ verticalScroller] class]
                                                        borderType:NSNoBorder
                                                       controlSize:NSRegularControlSize
                                                     scrollerStyle:[scrollView_ scrollerStyle]];
-    noteView_.frame = NSMakeRect(0,
-                                 0,
-                                 kLeftMargin + kRightMargin + scrollViewSize.width,
-                                 kTopMargin + kBottomMargin + scrollViewSize.height);
-    
-    scrollView_.frame = NSMakeRect(kLeftMargin, kTopMargin, scrollViewSize.width, scrollViewSize.height);
+    scrollView_.frame = NSMakeRect(NSMinX(scrollView_.frame),
+                                   NSMinY(scrollView_.frame),
+                                   scrollViewSize.width,
+                                   scrollViewSize.height);
 
     textView_.minSize = usedRect.size;
     textView_.frame = NSMakeRect(0, 0, usedRect.size.width, usedRect.size.height);
-    
+
     [self setAnchor:anchor_];
+}
+
+- (void)makeFirstResponder {
+    [self.view.window makeFirstResponder:textView_];
+}
+
+#pragma mark - PTYNoteViewDelegate
+
+- (PTYNoteViewController *)noteViewController {
+    return self;
+}
+
+- (void)killNote {
+    [self.delegate noteDidRequestRemoval:self];
+}
+
+#pragma mark - NSControlTextEditingDelegate
+
+- (BOOL)textView:(NSTextView *)aTextView doCommandBySelector:(SEL)aSelector {
+    if (aSelector == @selector(cancelOperation:)) {
+        [self.delegate noteDidEndEditing:self];
+        return YES;
+    }
+    return NO;
+}
+
+- (void)updateBackgroundColor {
+    if (self.noteView.superview == nil) {
+        self.noteView.backgroundColor = [self.noteView defaultBackgroundColor];
+        return;
+    }
+    NSTimeInterval elapsed = [NSDate timeIntervalSinceReferenceDate] - highlightStartTime_;
+    const NSTimeInterval duration = 0.75;
+    // Alpha counts from 0 to 1.
+    float alpha = 1.0 - MIN(MAX(0, (duration - elapsed) / duration), 1);
+    
+    // Square alpha so it spends more time in the highlighted end of the range.
+    alpha = alpha * alpha;
+    
+    NSColor *defaultBg = [self.noteView defaultBackgroundColor];
+    CGFloat highlightComponents[] = { 0.9, 0.8, 0 };
+    CGFloat components[3] = {
+        [defaultBg redComponent] * alpha + (1 - alpha) * highlightComponents[0],
+        [defaultBg greenComponent] * alpha + (1 - alpha) * highlightComponents[1],
+        [defaultBg blueComponent] * alpha + (1 - alpha) * highlightComponents[2]
+    };
+    self.noteView.backgroundColor = [NSColor colorWithCalibratedRed:components[0] green:components[1] blue:components[2] alpha:1];
+    [self.noteView setNeedsDisplay:YES];
+    if (alpha < 1) {
+        [self performSelector:@selector(updateBackgroundColor) withObject:nil afterDelay:1/30.0];
+    }
+}
+
+- (void)highlight {
+    highlightStartTime_ = [NSDate timeIntervalSinceReferenceDate];
+    [self performSelector:@selector(updateBackgroundColor) withObject:nil afterDelay:1/30.0];
+    [self.noteView setNeedsDisplay:YES];
 }
 
 @end

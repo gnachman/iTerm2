@@ -353,7 +353,7 @@ NSWindowDelegate,
 
 - (void)toggleFullScreenTabBar;
 
-- (void)futureInvalidateRestorableState;
+- (void)invalidateRestorableState;
 
 - (void)closeSessionWithConfirmation:(PTYSession *)aSession;
 
@@ -790,7 +790,10 @@ NSWindowDelegate,
 - (IBAction)selectPaneRight:(id)sender;
 - (IBAction)selectPaneUp:(id)sender;
 - (IBAction)selectPaneDown:(id)sender;
-
+- (IBAction)addNoteAtCursor:(id)sender;
+- (IBAction)showHideNotes:(id)sender;
+- (IBAction)nextMarkOrNote:(id)sender;
+- (IBAction)previousMarkOrNote:(id)sender;
 @end
 
 @interface PseudoTerminal (KeyValueCoding)

@@ -24,10 +24,6 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <Foundation/Foundation.h>
-#import <AppKit/AppKit.h>
-#include <sys/time.h>
-
 #import "DVR.h"
 #import "FindViewController.h"
 #import "ITAddressBookMgr.h"
@@ -38,8 +34,12 @@
 #import "TextViewWrapper.h"
 #import "TmuxController.h"
 #import "TmuxGateway.h"
-#import "WindowControllerInterface.h"
 #import "VT100Screen.h"
+#import "VT100ScreenMark.h"
+#import "WindowControllerInterface.h"
+#import <AppKit/AppKit.h>
+#import <Foundation/Foundation.h>
+#include <sys/time.h>
 
 #define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
 #define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
@@ -224,10 +224,6 @@ typedef enum {
     // Last time this session became active
     NSDate* lastActiveAt_;
 
-    // saved scroll position or -1
-    long long savedScrollPosition_;
-    int savedScrollHeight_;
-
     // Time session was created
     NSDate* creationDate_;
 
@@ -269,6 +265,7 @@ typedef enum {
     PasteContext *pasteContext_;
 
     NSInteger requestAttentionId_;  // Last request-attention identifier
+    VT100ScreenMark *lastMark_;
 }
 
 // Return the current pasteboard value as a string.
@@ -580,6 +577,10 @@ typedef enum {
 - (TmuxController *)tmuxController;
 
 - (void)toggleShowTimestamps;
+- (void)addNoteAtCursor;
+- (void)showHideNotes;
+- (void)previousMarkOrNote;
+- (void)nextMarkOrNote;
 
 @end
 

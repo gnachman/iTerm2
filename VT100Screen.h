@@ -1,4 +1,5 @@
 #import <Cocoa/Cocoa.h>
+#import "PTYNoteViewController.h"
 #import "PTYTextViewDataSource.h"
 #import "VT100ScreenDelegate.h"
 #import "VT100Terminal.h"
@@ -6,8 +7,10 @@
 @class DVR;
 @class iTermGrowlDelegate;
 @class LineBuffer;
+@class IntervalTree;
 @class PTYTask;
 @class VT100Grid;
+@class VT100ScreenMark;
 @class VT100Terminal;
 
 // Dictionary keys for -highlightTextMatchingRegex:
@@ -16,7 +19,10 @@ extern NSString * const kHighlightBackgroundColor;
 extern int kVT100ScreenMinColumns;
 extern int kVT100ScreenMinRows;
 
-@interface VT100Screen : NSObject <PTYTextViewDataSource, VT100TerminalDelegate>
+@interface VT100Screen : NSObject <
+    PTYNoteViewControllerDelegate,
+    PTYTextViewDataSource,
+    VT100TerminalDelegate>
 {
     NSMutableSet* tabStops_;
     VT100Terminal *terminal_;
@@ -36,7 +42,7 @@ extern int kVT100ScreenMinRows;
     VT100Grid *primaryGrid_;
     VT100Grid *altGrid_;  // may be nil
     VT100Grid *currentGrid_;  // Weak reference. Points to either primaryGrid or altGrid.
-    
+
     // Max size of scrollback buffer
     unsigned int maxScrollbackLines_;
     // This flag overrides maxScrollbackLines_:
@@ -70,6 +76,18 @@ extern int kVT100ScreenMinRows;
 
     // OK to report window title?
     BOOL allowTitleReporting_;
+
+    // Holds notes on alt/primary grid (the one we're not in). The origin is the top-left of the
+    // grid.
+    IntervalTree *savedMarksAndNotes_;
+
+    // All currently visible marks and notes. Maps an interval of
+    //   (startx + absstarty * (width+1)) to (endx + absendy * (width+1))
+    // to an id<IntervalTreeObject>, which is either PTYNoteViewController or VT100ScreenMark.
+    IntervalTree *marksAndNotes_;
+    
+    NSMutableSet *markCache_;
+    VT100GridCoordRange markCacheRange_;
 }
 
 @property(nonatomic, retain) VT100Terminal *terminal;
@@ -156,5 +174,19 @@ extern int kVT100ScreenMinRows;
 - (VT100Grid *)currentGrid;
 
 - (void)resetCharset;
+
+#pragma mark - Marks and notes
+
+- (VT100ScreenMark *)lastMark;
+- (BOOL)markIsValid:(VT100ScreenMark *)mark;
+- (VT100ScreenMark *)addMarkStartingAtAbsoluteLine:(long long)line oneLine:(BOOL)oneLine;
+- (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval;
+
+// These methods normally only return one object, but if there is a tie, all of the equally-positioned marks/notes are returned.
+- (NSArray *)lastMarksOrNotes;
+- (NSArray *)firstMarksOrNotes;
+- (NSArray *)marksOrNotesBefore:(Interval *)location;
+- (NSArray *)marksOrNotesAfter:(Interval *)location;
+
 
 @end

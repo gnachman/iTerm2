@@ -160,14 +160,7 @@ static BOOL OpenHotkeyWindow()
                 rect.origin.y = -rect.size.height;
                 rect.origin.x = -rect.size.width;
             }
-            if (IsSnowLeopardOrLater() && !IsLionOrLater()) {
-                // TODO: When upgrading to the 10.6 SDK, remove the conditional and the
-                // const below:
-                [[term window] setCollectionBehavior:[[term window] collectionBehavior] | FutureNSWindowCollectionBehaviorStationary];
-            }
-            if (IsLionOrLater()) {
-                [[term window] setCollectionBehavior:[[term window] collectionBehavior] & ~NSWindowCollectionBehaviorFullScreenPrimary];
-            }
+            [[term window] setCollectionBehavior:[[term window] collectionBehavior] & ~NSWindowCollectionBehaviorFullScreenPrimary];
         }
         RollInHotkeyTerm(term);
         return YES;
@@ -753,20 +746,18 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 }
 
 - (void)requestAccessibilityPermissionMavericks {
-#ifndef BLOCKS_NOT_AVAILABLE
     static BOOL alreadyAsked;
     if (alreadyAsked) {
         return;
     }
     alreadyAsked = YES;
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
-   NSDictionary *options = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
-                                                       forKey:(NSString *)kAXTrustedCheckOptionPrompt];
-   // Show a dialog prompting the user to open system prefs.
-   if (!AXIsProcessTrustedWithOptions((CFDictionaryRef)options)) {
-       return;
-   }
-#endif
+    NSDictionary *options = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
+                                                        forKey:(NSString *)kAXTrustedCheckOptionPrompt];
+    // Show a dialog prompting the user to open system prefs.
+    if (!AXIsProcessTrustedWithOptions((CFDictionaryRef)options)) {
+        return;
+    }
 #endif
 }
 

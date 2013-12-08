@@ -67,7 +67,6 @@ static long long now()
 - (NSString *)stringForFrameLines:(NSArray *)lines width:(int)width height:(int)height
 {
     NSMutableString *s = [NSMutableString string];
-    int i = 0;
     for (int y = 0; y < height; y++) {
         screen_char_t *line = (screen_char_t*)[lines[y] mutableBytes];
         for (int x = 0; x < width; x++) {

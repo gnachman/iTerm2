@@ -381,6 +381,11 @@ enum {
     // If set, the last-modified time of each line on the screen is shown on the right side of the display.
     BOOL showTimestamps_;
     float _antiAliasedShift;  // Amount to shift anti-aliased text by horizontally to simulate bold
+    NSImage *markImage_;
+
+    // Point clicked, valid only during -validateMenuItem and calls made from
+    // the context menu and if x and y are nonnegative.
+    VT100GridCoord validationClickPoint_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -420,6 +425,15 @@ enum {
 - (void)openTargetInBackgroundWithEvent:(NSEvent *)event;
 - (void)smartSelectWithEvent:(NSEvent *)event;
 - (void)smartSelectIgnoringNewlinesWithEvent:(NSEvent *)event;
+- (BOOL)smartSelectAtX:(int)x
+                     y:(int)y
+              toStartX:(int*)X1
+              toStartY:(int*)Y1
+                toEndX:(int*)X2
+                toEndY:(int*)Y2
+      ignoringNewlines:(BOOL)ignoringNewlines;
+- (VT100GridCoordRange)rangeByTrimmingNullsFromRange:(VT100GridCoordRange)range
+                                          trimSpaces:(BOOL)trimSpaces;
 - (void)openContextMenuWithEvent:(NSEvent *)event;
 - (void)nextTabWithEvent:(NSEvent *)event;
 - (void)previousTabWithEvent:(NSEvent *)event;
@@ -576,6 +590,7 @@ enum {
 
 // Scrolling control
 - (NSRect)adjustScroll:(NSRect)proposedVisibleRect;
+- (void)scrollLineNumberRangeIntoView:(VT100GridRange)range;
 - (void)scrollLineUp:(id)sender;
 - (void)scrollLineDown:(id)sender;
 - (void)scrollPageUp:(id)sender;
@@ -667,7 +682,7 @@ enum {
 
 - (NSString*)_allText;
 
-- (void)addViewForNoteOnLine:(int)line;
+- (void)addViewForNote:(PTYNoteViewController *)note;
 - (void)updateNoteViewFrames;
 
 @end
@@ -786,6 +801,8 @@ typedef enum {
 - (BOOL) _updateBlink;
 // Returns true if any onscreen char is blinking.
 - (BOOL)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width;
+
+- (void)highlightMarkOnLine:(int)line;
 
 @end
 

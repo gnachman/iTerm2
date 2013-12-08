@@ -170,12 +170,14 @@
 
 // Save the current scroll position
 - (void)screenSaveScrollPosition;
+- (void)screenAddMarkOnLine:(int)line;
 
 - (void)screenActivateWindow;
 
 - (void)screenSetProfileToProfileNamed:(NSString *)value;
 - (void)screenSetPasteboard:(NSString *)value;
-- (void)screenDidAddNoteOnLine:(int)line;
+- (void)screenDidAddNote:(PTYNoteViewController *)note;
+- (void)screenDidEndEditingNote;
 - (void)screenCopyBufferToPasteboard;
 - (BOOL)screenIsAppendingToPasteboard;
 - (void)screenAppendDataToPasteboard:(NSData *)data;

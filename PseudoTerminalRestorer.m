@@ -16,7 +16,6 @@ typedef void (^VoidBlock)(void);
 
 @implementation PseudoTerminalRestorer
 
-#ifndef BLOCKS_NOT_AVAILABLE
 + (BOOL)willOpenWindows
 {
     return queuedBlocks.count > 0;
@@ -82,15 +81,6 @@ typedef void (^VoidBlock)(void);
         completionHandler(nil, nil);
     }
 }
-
-#else  // BLOCKS_NOT_AVAILABLE
-
-+ (BOOL)willOpenWindows
-{
-    return NO;
-}
-
-#endif  // BLOCKS_NOT_AVAILABLE
 
 @end
 

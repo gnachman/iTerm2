@@ -64,12 +64,10 @@
 }
 
 - (void)setHasDarkBackground:(BOOL)value {
-    if (IsLionOrLater()) {
-        // Values copied from NSScroller.h to avoid 10.7 SDK dependency.
-        const int defaultStyle = 0;  // NSScrollerKnobStyleDefault
-        const int lightStyle = 2;  // NSScrollerKnobStyleLight
-        [self futureSetKnobStyle:value ? lightStyle : defaultStyle];
-    }
+    const int defaultStyle = NSScrollerKnobStyleDefault;
+    const int lightStyle = NSScrollerKnobStyleLight;
+    [self setKnobStyle:value ? lightStyle : defaultStyle];
+
     hasDarkBackground_ = value;
 }
 
@@ -123,7 +121,7 @@
 
 - (BOOL)isLegacyScroller
 {
-    return [(NSScroller*)self futureScrollerStyle] == FutureNSScrollerStyleLegacy;
+    return [(NSScroller*)self scrollerStyle] == NSScrollerStyleLegacy;
 }
 
 @end
@@ -285,7 +283,7 @@
 
 - (BOOL)isLegacyScroller
 {
-    return [(NSScrollView*)self futureScrollerStyle] == FutureNSScrollerStyleLegacy;
+    return [(NSScrollView*)self scrollerStyle] == NSScrollerStyleLegacy;
 }
 
 - (void)setHasVerticalScroller:(BOOL)flag

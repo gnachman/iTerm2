@@ -92,26 +92,6 @@ BOOL IsMountainLionOrLater(void) {
     return result;
 }
 
-static BOOL UncachedIsLionOrLater(void) {
-    unsigned major;
-    unsigned minor;
-    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
-        return (major == 10 && minor >= 7) || (major > 10);
-    } else {
-        return NO;
-    }
-}
-
-BOOL IsLionOrLater(void) {
-    static BOOL result;
-    static BOOL initialized;
-    if (!initialized) {
-        initialized = YES;
-        result = UncachedIsLionOrLater();
-    }
-    return result;
-}
-
 static BOOL UncachedIsMavericksOrLater(void) {
     unsigned major;
     unsigned minor;
@@ -132,25 +112,6 @@ BOOL IsMavericksOrLater(void) {
     return result;
 }
 
-BOOL IsSnowLeopardOrLater(void) {
-    unsigned major;
-    unsigned minor;
-    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
-        return (major == 10 && minor >= 6) || (major > 10);
-    } else {
-        return NO;
-    }
-}
-
-BOOL IsLeopard(void) {
-    unsigned major;
-    unsigned minor;
-    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
-        return (major == 10 && minor == 5);
-    } else {
-        return NO;
-    }
-}
 
 @implementation iTermController
 
@@ -632,61 +593,48 @@ static BOOL initDone = NO;
 
 - (void)storePreviouslyActiveApp
 {
-    if (IsLeopard()) {
-        // Visor has a 10.5 path, but it is very hacky and apparently has a crash. 10.5 is moribund
-        // so I'm going to omit it.
-        return;
-    } else {
-        // 10.6+ path
-        NSDictionary *activeAppDict = [[NSWorkspace sharedWorkspace] activeApplication];
-        [previouslyActiveAppPID_ release];
-        previouslyActiveAppPID_ = nil;
-        if (![[activeAppDict objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:@"com.googlecode.iterm2"]) {
-            previouslyActiveAppPID_ = [[activeAppDict objectForKey:@"NSApplicationProcessIdentifier"] copy];
-        }
+    NSDictionary *activeAppDict = [[NSWorkspace sharedWorkspace] activeApplication];
+    [previouslyActiveAppPID_ release];
+    previouslyActiveAppPID_ = nil;
+    if (![[activeAppDict objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:@"com.googlecode.iterm2"]) {
+        previouslyActiveAppPID_ = [[activeAppDict objectForKey:@"NSApplicationProcessIdentifier"] copy];
     }
 }
 
 - (void)restorePreviouslyActiveApp
 {
-    if (IsLeopard()) {
-        // See note in storePreviouslyActiveApp.
+    if (!previouslyActiveAppPID_) {
         return;
-    } else {
-        // 10.6+ path
-        if (!previouslyActiveAppPID_) {
-            return;
-        }
-
-        id app;
-        // NSInvocation hackery because we need to build against the 10.5 sdk and call a
-        // 10.6 function.
-
-        // app = [runningApplicationClass_ runningApplicationWithProcessIdentifier:[previouslyActiveAppPID_ intValue]];
-        NSMethodSignature *sig = [object_getClass(runningApplicationClass_) instanceMethodSignatureForSelector:@selector(runningApplicationWithProcessIdentifier:)];
-        NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
-        [inv setTarget:runningApplicationClass_];
-        [inv setSelector:@selector(runningApplicationWithProcessIdentifier:)];
-        int appId = [previouslyActiveAppPID_ intValue];
-        [inv setArgument:&appId atIndex:2];
-        [inv invoke];
-        [inv getReturnValue:&app];
-
-        if (app) {
-            DLog(@"Restore app %@", app);
-            //[app activateWithOptions:0];
-            sig = [[app class] instanceMethodSignatureForSelector:@selector(activateWithOptions:)];
-            assert(sig);
-            inv = [NSInvocation invocationWithMethodSignature:sig];
-            [inv setTarget:app];
-            [inv setSelector:@selector(activateWithOptions:)];
-            int opts = 0;
-            [inv setArgument:&opts atIndex:2];
-            [inv invoke];
-        }
-        [previouslyActiveAppPID_ release];
-        previouslyActiveAppPID_ = nil;
     }
+
+    id app;
+    // NSInvocation hackery because we need to build against the 10.5 sdk and call a
+    // 10.6 function.
+
+    // app = [runningApplicationClass_ runningApplicationWithProcessIdentifier:[previouslyActiveAppPID_ intValue]];
+    NSMethodSignature *sig = [object_getClass(runningApplicationClass_) instanceMethodSignatureForSelector:@selector(runningApplicationWithProcessIdentifier:)];
+    NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+    [inv setTarget:runningApplicationClass_];
+    [inv setSelector:@selector(runningApplicationWithProcessIdentifier:)];
+    int appId = [previouslyActiveAppPID_ intValue];
+    [inv setArgument:&appId atIndex:2];
+    [inv invoke];
+    [inv getReturnValue:&app];
+
+    if (app) {
+        DLog(@"Restore app %@", app);
+        //[app activateWithOptions:0];
+        sig = [[app class] instanceMethodSignatureForSelector:@selector(activateWithOptions:)];
+        assert(sig);
+        inv = [NSInvocation invocationWithMethodSignature:sig];
+        [inv setTarget:app];
+        [inv setSelector:@selector(activateWithOptions:)];
+        int opts = 0;
+        [inv setArgument:&opts atIndex:2];
+        [inv invoke];
+    }
+    [previouslyActiveAppPID_ release];
+    previouslyActiveAppPID_ = nil;
 }
 
 // Build sorted list of encodings
@@ -958,7 +906,6 @@ static BOOL initDone = NO;
     if ([aDict objectForKey:KEY_WINDOW_TYPE]) {
         int windowType = [[aDict objectForKey:KEY_WINDOW_TYPE] intValue];
         if (windowType == WINDOW_TYPE_FULL_SCREEN &&
-            IsLionOrLater() &&
             [[PreferencePanel sharedInstance] lionStyleFullscreen]) {
             return WINDOW_TYPE_LION_FULL_SCREEN;
         } else {

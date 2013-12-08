@@ -146,7 +146,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     if ([self updatePaneTitles] && [self isTmuxTab]) {
         [tmuxController_ windowDidResize:realParentWindow_];
     }
-    [realParentWindow_ futureInvalidateRestorableState];
+    [realParentWindow_ invalidateRestorableState];
 }
 
 - (void)appendSessionViewToViewOrder:(SessionView*)sessionView
@@ -368,7 +368,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 
     --preserveOrder_;
-    [realParentWindow_ futureInvalidateRestorableState];
+    [realParentWindow_ invalidateRestorableState];
 }
 
 - (void)setActiveSession:(PTYSession*)session
@@ -2961,7 +2961,7 @@ static NSString* FormatRect(NSRect r) {
     [temp release];
 
     [[root_ window] makeFirstResponder:[activeSession_ TEXTVIEW]];
-    [realParentWindow_ futureInvalidateRestorableState];
+    [realParentWindow_ invalidateRestorableState];
 }
 
 - (void)unmaximize
@@ -2994,7 +2994,7 @@ static NSString* FormatRect(NSRect r) {
     isMaximized_ = NO;
 
     [[root_ window] makeFirstResponder:[activeSession_ TEXTVIEW]];
-    [realParentWindow_ futureInvalidateRestorableState];
+    [realParentWindow_ invalidateRestorableState];
 }
 
 - (BOOL)promptOnClose
