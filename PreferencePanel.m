@@ -42,6 +42,7 @@
 #import "TrouterPrefsController.h"
 #import "PointerPrefsController.h"
 #import "iTermFontPanel.h"
+#import "iTermApplicationDelegate.h"
 
 #define CUSTOM_COLOR_PRESETS @"Custom Color Presets"
 #define HOTKEY_WINDOW_GENERATED_PROFILE_NAME @"Hotkey Window"
@@ -2938,10 +2939,13 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [changeLogDir setEnabled:[autoLog state] == NSOnState];
     [self _updateLogDirWarning];
     [characterEncoding setTitle:[NSString localizedNameOfStringEncoding:[[dict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]]];
+    DLog(@"updateBookmarkFields: profile=%@ set scrollbackLines to %@ from dictionary (%d as int value)", name,
+         [dict objectForKey:KEY_SCROLLBACK_LINES], [[dict objectForKey:KEY_SCROLLBACK_LINES] intValue]);
     [scrollbackLines setIntValue:[[dict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
     [unlimitedScrollback setState:[[dict objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue] ? NSOnState : NSOffState];
     [scrollbackLines setEnabled:[unlimitedScrollback state] == NSOffState];
     if ([unlimitedScrollback state] == NSOnState) {
+        DLog(@"nil out scrollbackLines in updateBookmarkFileds");
         [scrollbackLines setStringValue:@""];
     }
     [terminalType setStringValue:[dict objectForKey:KEY_TERMINAL_TYPE]];
@@ -3371,12 +3375,15 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [self _updateLogDirWarning];
     [self _updatePrefsDirWarning];
     [newDict setObject:[NSNumber numberWithUnsignedInt:[[characterEncoding selectedItem] tag]] forKey:KEY_CHARACTER_ENCODING];
+    DLog(@"bookmarkSettingChanged for profile %@. scrollbacklines=%@, onlydigits=%@, intvalue=%d", name, [scrollbackLines stringValue], [[scrollbackLines stringValue] stringWithOnlyDigits], [[[scrollbackLines stringValue] stringWithOnlyDigits] intValue]);
     [newDict setObject:[NSNumber numberWithInt:[[[scrollbackLines stringValue] stringWithOnlyDigits] intValue]] forKey:KEY_SCROLLBACK_LINES];
     [newDict setObject:[NSNumber numberWithBool:([unlimitedScrollback state]==NSOnState)] forKey:KEY_UNLIMITED_SCROLLBACK];
     [scrollbackLines setEnabled:[unlimitedScrollback state]==NSOffState];
     if ([unlimitedScrollback state] == NSOnState) {
+        DLog(@"nil out scrollbackLines");
         [scrollbackLines setStringValue:@""];
     } else if (sender == unlimitedScrollback) {
+        DLog(@"force scrollbackLines to 10k");
         [scrollbackLines setStringValue:@"10000"];
     }
     
