@@ -1132,10 +1132,10 @@ NSString *sessionsKey = @"sessions";
     }
 
     if ([[PreferencePanel sharedInstance] windowNumber]) {
-        [[self window] setTitle:[NSString stringWithFormat:@"%d. %@", number_+1, title]];
-    } else {
-        [[self window] setTitle:title];
+        title = [NSString stringWithFormat:@"%d. %@", number_+1, title];
     }
+    
+    [[self window] performSelector:@selector(setTitle:) withObject:title afterDelay:0.1];
 }
 
 - (BOOL)tempTitle
@@ -2861,11 +2861,11 @@ NSString *sessionsKey = @"sessions";
         [[PreferencePanel sharedInstance] hideTab] &&
         newTabColor) {
         // Draw colored title bar (and tab bar, and tab bar background).
-        [[self window] setBackgroundColor:newTabColor];
+//        [[self window] setBackgroundColor:newTabColor];
         [background_ setColor:newTabColor];
     } else {
         // Draw normal title bar.
-        [[self window] setBackgroundColor:nil];
+//        [[self window] setBackgroundColor:nil];
         [background_ setColor:normalBackgroundColor];
     }
 }
@@ -3171,14 +3171,14 @@ NSString *sessionsKey = @"sessions";
         NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:[tabView tabViewItemAtIndex:0]];
         if ([[PreferencePanel sharedInstance] hideTab] && newTabColor) {
             // Draw colored title bar (and tab bar, and tab bar background).
-            [[self window] setBackgroundColor:newTabColor];
+//            [[self window] setBackgroundColor:newTabColor];
             [background_ setColor:newTabColor];
             setWindowBackground = YES;
         }
     }
     if (!setWindowBackground) {
         // Draw normal title bar.
-        [[self window] setBackgroundColor:nil];
+//        [[self window] setBackgroundColor:nil];
         [background_ setColor:normalBackgroundColor];
     }
 
@@ -3343,10 +3343,10 @@ NSString *sessionsKey = @"sessions";
         if ([TABVIEW numberOfTabViewItems] == 1 &&
             [[PreferencePanel sharedInstance] hideTab] &&
             newTabColor) {
-            [[self window] setBackgroundColor:newTabColor];
+//            [[self window] setBackgroundColor:newTabColor];
             [background_ setColor:newTabColor];
         } else {
-              [[self window] setBackgroundColor:nil];
+//              [[self window] setBackgroundColor:nil];
               [background_ setColor:normalBackgroundColor];
         }
     }
@@ -5588,10 +5588,10 @@ NSString *sessionsKey = @"sessions";
         if ([TABVIEW numberOfTabViewItems] == 1 &&
             [[PreferencePanel sharedInstance] hideTab] &&
             newTabColor) {
-            [[self window] setBackgroundColor:newTabColor];
+//            [[self window] setBackgroundColor:newTabColor];
             [background_ setColor:newTabColor];
         } else {
-            [[self window] setBackgroundColor:nil];
+//            [[self window] setBackgroundColor:nil];
             [background_ setColor:normalBackgroundColor];
         }
     }
