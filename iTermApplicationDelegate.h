@@ -35,21 +35,21 @@
 #define DebugLog(args...) DebugLogImpl(__FILE__, __LINE__, __FUNCTION__, args)
 
 //#define GENERAL_VERBOSE_LOGGING
-#ifdef GENERAL_VERBOSE_LOGGING
-#define DLog NSLog
-#else
 #define DLog(args...) \
     do { \
+    } while (0)
+#define DLog2(args...) \
+    do { \
         if (gDebugLogging) { \
-            DebugLogImpl(__FILE__, __LINE__, __FUNCTION__, [NSString stringWithFormat:args]); \
+            DebugLogImpl2(__FILE__, __LINE__, __FUNCTION__, [NSString stringWithFormat:args]); \
         } \
     } while (0)
-#endif
 
 @class PseudoTerminal;
 extern BOOL gDebugLogging;
 extern NSString *kUseBackgroundPatternIndicatorChangedNotification;
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
+int DebugLogImpl2(const char *file, int line, const char *function, NSString* value);
 
 @interface iTermAboutWindow : NSPanel
 {

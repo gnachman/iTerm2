@@ -29,7 +29,7 @@
 // Debug option
 #define DEBUG_ALLOC         0
 #define DEBUG_METHOD_TRACE  0
-#define PtyTaskDebugLog DLog
+#define PtyTaskDebugLog DLog2
 // Use this instead to debug this module:
 // #define PtyTaskDebugLog NSLog
 
@@ -232,14 +232,14 @@ static TaskNotifier* taskNotifier = nil;
                         PtyTaskDebugLog(@"  wait on %d failed with ECHILD, I guess we already waited on it.", [pid intValue]);
                     }
                 } else {
-                    DLog(@" wait ok on %d", [pid intValue]);
+                    PtyTaskDebugLog(@" wait ok on %d", [pid intValue]);
                 }
             }
             [deadpool release];
             deadpool = [newDeadpool retain];
         }
 
-        DLog(@"Begin enumeration over %d tasks\n", [tasks count]);
+        PtyTaskDebugLog(@"Begin enumeration over %d tasks\n", [tasks count]);
         iter = [tasks objectEnumerator];
         int i = 0;
         // FIXME: this can be converted to ObjC 2.0.
@@ -299,7 +299,7 @@ static TaskNotifier* taskNotifier = nil;
         // Poll...
         for (int q=0; q < highfd+1; q++) {
             if (FD_ISSET(q, &efds)) {
-                DLog(@"Look for error on fd %d", q);
+                PtyTaskDebugLog(@"Look for error on fd %d", q);
             }
         }
         if (select(highfd+1, &rfds, &wfds, &efds, NULL) <= 0) {
@@ -373,6 +373,7 @@ static TaskNotifier* taskNotifier = nil;
                     [tasksLock unlock];
                     // brokenPipe will call deregisterTask and add the pid to
                     // deadpool.
+                    PtyTaskDebugLog(@"Calling brokenPipe because of error fds on task with fd %d", [task fd]);
                     [task brokenPipe];
                     PtyTaskDebugLog(@"run/brokenPipe: lock");
                     [tasksLock lock];
@@ -535,6 +536,7 @@ setup_tty_param(
 #if DEBUG_ALLOC
     PtyTaskDebugLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
 #endif
+    PtyTaskDebugLog(@"dealloc: deregister task with fd %d", fd);
     [[TaskNotifier sharedInstance] deregisterTask:self];
 
     if (pid > 0) {
@@ -632,7 +634,7 @@ static void reapchild(int n)
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
     pid = forkpty(&fd, theTtyname, &term, &win);
-    DLog(@"Forked pty %s to fd %d, pid=%d", theTtyname, fd, (int)pid);
+    PtyTaskDebugLog(@"Forked pty %s to fd %d, pid=%d", theTtyname, fd, (int)pid);
     if (pid == (pid_t)0) {
         // Do not start the new process with a signal handler.
         signal(SIGCHLD, SIG_DFL);
@@ -714,6 +716,7 @@ static void reapchild(int n)
             // There was a read error.
             if (errno != EAGAIN && errno != EINTR) {
                 // It was a serious error.
+                PtyTaskDebugLog(@"calling brokenPipe because of read error on fd %d", fd);
                 [self brokenPipe];
                 return;
             } else {
@@ -761,6 +764,7 @@ static void reapchild(int n)
 
     // No data?
     if ((written < 0) && (!(errno == EAGAIN || errno == EINTR))) {
+        PtyTaskDebugLog(@"calling brokenPipe because of write error on fd %d", fd);
         [self brokenPipe];
     } else if (written > 0) {
         // Shrink the writeBuffer
@@ -834,6 +838,7 @@ static void reapchild(int n)
 - (void)brokenPipe
 {
     brokenPipe_ = YES;
+    PtyTaskDebugLog(@"brokenPipe: deregister task with fd %d", self.fd);
     [[TaskNotifier sharedInstance] deregisterTask:self];
     if ([delegate respondsToSelector:@selector(brokenPipe)]) {
         [delegate performSelectorOnMainThread:@selector(brokenPipe)

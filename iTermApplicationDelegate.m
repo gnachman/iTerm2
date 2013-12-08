@@ -1189,7 +1189,7 @@ static void FlushDebugLog() {
     }
 }
 
-int DebugLogImpl(const char *file, int line, const char *function, NSString* value)
+int DebugLogImpl2(const char *file, int line, const char *function, NSString* value)
 {
     if (gDebugLogging) {
         struct timeval tv;
@@ -1203,6 +1203,10 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
             [gDebugLogStr2 setString:@""];
         }
     }
+    return 1;
+}
+int DebugLogImpl(const char *file, int line, const char *function, NSString* value)
+{
     return 1;
 }
 
