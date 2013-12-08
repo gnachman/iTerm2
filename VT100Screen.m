@@ -4875,8 +4875,6 @@ void DumpBuf(screen_char_t* p, int n) {
         dropped = 0;
     }
 
-    assert(dropped == 0 || dropped == 1);
-
     return dropped;
 }
 
