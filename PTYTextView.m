@@ -2951,7 +2951,9 @@ NSMutableArray* screens=0;
 - (NSPoint)clickPoint:(NSEvent *)event
 {
     NSPoint locationInWindow = [event locationInWindow];
+    DLog(@"clickPoint translates event %@ to location in window %@", event, [NSValue valueWithPoint:locationInWindow]);
     NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
+    DLog(@"clickPoint translates locationInWindow %@ to locationInTextView %@", [NSValue valueWithPoint:locationInWindow], [NSValue valueWithPoint:locationInTextView]);
     int x, y;
     int width = [dataSource width];
 
@@ -2965,6 +2967,7 @@ NSMutableArray* screens=0;
         x = width  - 1;
     }
 
+    DLog(@"clickPoint resolves x,y is %d,%d given charwidth=%lf, lineheight=%lf, MARGIN=%lf", x, y, (double)charWidth, (double)lineHeight, (double)MARGIN);
     return NSMakePoint(x, y);
 }
 
@@ -3137,6 +3140,7 @@ NSMutableArray* screens=0;
     }
 
     NSPoint locationInWindow, locationInTextView;
+    DLog(@"Mouse down with event %@", event);
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
     int y = clickPoint.y;
@@ -3228,6 +3232,7 @@ NSMutableArray* screens=0;
         } else if (!cmdPressed || altPressed) {
             // start a new selection
             DLog(@"start new selection at %d, %d", (int)x, (int)y);
+            DLog(@"This line's contents are: %@", [self contentFromX:0 Y:y ToX:[dataSource width] - 1 Y:y pad:NO includeLastNewline:NO trimTrailingWhitespace:NO]);
             endX = startX = x;
             endY = startY = y;
             [self setSelectionTime];
@@ -3558,6 +3563,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (x >= width) {
         x = width - 1;
     }
+    DLog(@"Drag to logicalX=%lf giving x=%d", logicalX, x);
 
     y = locationInTextView.y / lineHeight;
 
