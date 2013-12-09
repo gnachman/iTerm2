@@ -5329,6 +5329,7 @@ NSString *sessionsKey = @"sessions";
         [self safelySetSessionSize:aSession rows:rows columns:columns];
         PtyLog(@"setupSession - call setPreferencesFromAddressBookEntry");
         [aSession setPreferencesFromAddressBookEntry:tempPrefs];
+        [aSession loadInitialColorTable];
         [aSession setBookmarkName:[tempPrefs objectForKey:KEY_NAME]];
 
         if (title) {
