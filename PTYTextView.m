@@ -29,7 +29,6 @@
 
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
-#define GREED_KEYDOWN         1
 static const int MAX_WORKING_DIR_COUNT = 50;
 static const int kMaxSelectedTextLengthForCustomActions = 8192;
 static const int kMaxSelectedTextLinesForCustomActions = 100;
@@ -43,39 +42,39 @@ static const int kMaxSelectedTextLinesForCustomActions = 100;
 
 #define SWAPINT(a, b) { int temp; temp = a; a = b; b = temp; }
 
-#import "iTerm.h"
-#import "PTYTextView.h"
-#import "PseudoTerminal.h"
-#import "PreferencePanel.h"
-#import "PTYScrollView.h"
-#import "PTYTask.h"
-#import "iTermController.h"
-#import "NSStringITerm.h"
-#import "iTermApplicationDelegate.h"
-#import "PreferencePanel.h"
-#import "PasteboardHistory.h"
-#import "PTYTab.h"
-#import "iTermExpose.h"
-#import "RegexKitLite/RegexKitLite.h"
-#import "NSStringITerm.h"
-#import "FontSizeEstimator.h"
-#import "MovePaneController.h"
-#import "FutureMethods.h"
-#import "SmartSelectionController.h"
-#import "ITAddressBookMgr.h"
-#import "PointerController.h"
-#import "PointerPrefsController.h"
 #import "CharacterRun.h"
 #import "CharacterRunInline.h"
-#import "ThreeFingerTapGestureRecognizer.h"
+#import "FontSizeEstimator.h"
 #import "FutureMethods.h"
+#import "FutureMethods.h"
+#import "ITAddressBookMgr.h"
+#import "MovePaneController.h"
 #import "MovingAverage.h"
-#import "SearchResult.h"
-#import "PTYNoteViewController.h"
+#import "NSMutableAttributedString+iTerm.h"
+#import "NSStringITerm.h"
 #import "PTYNoteView.h"
-
-#include <sys/time.h>
+#import "PTYNoteViewController.h"
+#import "PTYScrollView.h"
+#import "PTYTab.h"
+#import "PTYTask.h"
+#import "PTYTextView.h"
+#import "PasteboardHistory.h"
+#import "PointerController.h"
+#import "PointerPrefsController.h"
+#import "PreferencePanel.h"
+#import "PreferencePanel.h"
+#import "PseudoTerminal.h"
+#import "RegexKitLite/RegexKitLite.h"
+#import "SearchResult.h"
+#import "SmartSelectionController.h"
+#import "ThreeFingerTapGestureRecognizer.h"
+#import "iTerm.h"
+#import "iTermApplicationDelegate.h"
+#import "iTermController.h"
+#import "iTermExpose.h"
+#import "iTermNSKeyBindingEmulator.h"
 #include <math.h>
+#include <sys/time.h>
 
 // When performing the "find cursor" action, a gray window is shown with a
 // transparent "hole" around the cursor. This is the radius of that hole in
@@ -258,6 +257,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             gSmartCursorFgThreshold = d;
         }
     }
+    
+    [iTermNSKeyBindingEmulator sharedInstance];  // Load and parse DefaultKeyBindings.dict if needed.
 }
 
 - (BOOL)xtermMouseReporting
@@ -2687,6 +2688,12 @@ NSMutableArray* screens=0;
     
     // Hide the cursor
     [NSCursor setHiddenUntilMouseMoves:YES];
+    
+    if ([[iTermNSKeyBindingEmulator sharedInstance] handlesEvent:event]) {
+        DLog(@"iTermNSKeyBindingEmulator reports that event is handled, sending to interpretKeyEvents.");
+        [self interpretKeyEvents:@[ event ]];
+        return;
+    }
 
     // Should we process the event immediately in the delegate?
     if ((!prev) &&
@@ -3164,6 +3171,16 @@ NSMutableArray* screens=0;
     [self updateTrackingAreas];  // Cause mouseMoved to be (not) called on movement if cmd is down (up).
 }
 
+- (BOOL)respectHardNewlinesForURLs {
+    static BOOL initialized;
+    static BOOL respect;
+    if (!initialized) {
+        respect = ![[NSUserDefaults standardUserDefaults] boolForKey:@"IgnoreHardNewlinesInURLs"];
+        initialized = YES;
+    }
+    return respect;
+}
+
 // Update range of underlined chars indicating cmd-clicakble url.
 - (void)updateUnderlinedURLs:(NSEvent *)event
 {
@@ -3188,7 +3205,7 @@ NSMutableArray* screens=0;
             int charsTakenFromPrefix;
             NSString *url = [self _getURLForX:x
                                             y:y
-                                respectingHardNewlines:NO
+                                respectingHardNewlines:[self respectHardNewlinesForURLs]
                                   charsTakenFromPrefix:&charsTakenFromPrefix];
             if ([url length] > 0) {
                 _underlineStartX = x - charsTakenFromPrefix;
@@ -3809,7 +3826,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (startX > -1 && _delegate) {
         // if we want to copy our selection, do so
         if ([[PreferencePanel sharedInstance] copySelection]) {
-            [self copy:self];
+            [self copySelectionAccordingToUserPreferences];
         }
     }
 
@@ -4138,7 +4155,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (startX > -1 && _delegate) {
         // if we want to copy our selection, do so
         if ([[PreferencePanel sharedInstance] copySelection]) {
-            [self copy:self];
+            [self copySelectionAccordingToUserPreferences];
         }
     }
 }
@@ -4584,6 +4601,29 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
+- (NSAttributedString *)selectedAttributedTextWithPad:(BOOL)pad
+{
+    if (startX <= -1) {
+        DLog(@"startx < 0 so there is no selected text");
+        return nil;
+    }
+    if (selectMode == SELECT_BOX) {
+        DLog(@"find selected text in box");
+        return [self attributedContentInBoxFromX:startX
+                                               Y:startY
+                                             ToX:endX
+                                               Y:endY
+                                             pad:pad];
+    } else {
+        DLog(@"find selected text in normal region");
+        return [self attributedContentFromX:startX
+                                          Y:startY
+                                        ToX:endX
+                                          Y:endY
+                                        pad:pad];
+    }
+}
+
 - (NSString *)content
 {
     return [self contentFromX:0
@@ -4692,6 +4732,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[[[dataSource session] tab] realParentWindow] closeSessionWithConfirmation:[dataSource session]];
 }
 
+- (void)copySelectionAccordingToUserPreferences
+{
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"CopyWithStylesByDefault"]) {
+        [self copyWithStyles:self];
+    } else {
+        [self copy:self];
+    }
+}
+
 - (void)copy:(id)sender
 {
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
@@ -4706,6 +4755,160 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     [[PasteboardHistory sharedInstance] save:copyString];
+}
+
+- (IBAction)copyWithStyles:(id)sender
+{
+    NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+    
+    DLog(@"-[PTYTextView copyWithStyles:] called");
+    NSString *copyString = [self selectedText];
+    NSAttributedString *copyAttributedString = [self selectedAttributedTextWithPad:NO];
+    DLog(@"Have selected text of length %d. startX=%d, startY=%d, endX=%d, endY=%d", (int)[copyString length], startX, startY, endX, endY);
+    NSMutableArray *types = [NSMutableArray array];
+    if (copyString) {
+        [types addObject:NSStringPboardType];
+    }
+    if (copyAttributedString) {
+        [types addObject:NSRTFPboardType];
+    }
+    [pboard declareTypes:types owner:self];
+    if (copyString) {
+        [pboard setString:copyString forType:NSStringPboardType];
+    }
+    if (copyAttributedString) {
+        NSData *RTFData = [copyAttributedString RTFFromRange:NSMakeRange(0, [copyAttributedString length])
+                                          documentAttributes:nil];
+        [pboard setData:RTFData forType:NSRTFPboardType];
+    }
+    
+    [[PasteboardHistory sharedInstance] save:copyString];
+}
+
+- (NSAttributedString*)attributedContentInBoxFromX:(int)startx
+                                                 Y:(int)starty
+                                               ToX:(int)nonInclusiveEndx
+                                                 Y:(int)endy
+                                               pad:(BOOL)pad
+{
+    int i;
+    NSMutableAttributedString* result = [[[NSMutableAttributedString alloc] init] autorelease];
+    for (i = starty; i < endy; ++i) {
+        NSAttributedString* line = [self attributedContentFromX:startx
+                                                              Y:i
+                                                            ToX:nonInclusiveEndx
+                                                              Y:i
+                                                            pad:pad];
+        [result appendAttributedString:line];
+        if (i < endy - 1) {
+            [result iterm_appendString:@"\n"];
+        }
+    }
+    return result;
+}
+
+// Returns a dictionary to pass to NSAttributedString.
+- (NSDictionary *)charAttributes:(screen_char_t)c
+{
+    BOOL isBold = c.bold;
+    NSColor *fgColor = [self colorForCode:c.foregroundColor
+                                    green:c.fgGreen
+                                     blue:c.fgBlue
+                                colorMode:c.foregroundColorMode
+                                     bold:isBold
+                             isBackground:NO];
+    NSColor *bgColor = [self colorForCode:c.backgroundColor
+                                    green:c.bgGreen
+                                     blue:c.bgBlue
+                                colorMode:c.backgroundColorMode
+                                     bold:NO
+                             isBackground:YES];
+
+    int underlineStyle = c.underline ? (NSUnderlineStyleSingle | NSUnderlineByWordMask) : 0;
+
+    PTYFontInfo *fontInfo = [self getFontForChar:c.code
+                                       isComplex:c.complexChar
+                                      renderBold:&isBold
+                                    renderItalic:c.italic];
+
+    return @{ NSForegroundColorAttributeName: fgColor,
+              NSBackgroundColorAttributeName: bgColor,
+              NSFontAttributeName: fontInfo.font,
+              NSUnderlineStyleAttributeName: @(underlineStyle) };
+}
+
+
+- (NSAttributedString *)attributedContentFromX:(int)startx
+                                             Y:(int)starty
+                                           ToX:(int)nonInclusiveEndx
+                                             Y:(int)endy
+                                           pad:(BOOL)pad
+{
+    int endx = nonInclusiveEndx - 1;
+    int width = [dataSource width];
+    NSMutableAttributedString* result = [[[NSMutableAttributedString alloc] init] autorelease];
+    int y, x1, x2;
+    screen_char_t *theLine;
+    BOOL endOfLine;
+    int i;
+
+    for (y = starty; y <= endy; y++) {
+        theLine = [dataSource getLineAtIndex:y];
+
+        x1 = y == starty ? startx : 0;
+        x2 = y == endy ? endx : width-1;
+        for ( ; x1 <= x2; x1++) {
+            screen_char_t c = theLine[x1];
+            if (c.code == TAB_FILLER) {
+                // Convert orphan tab fillers (those without a subsequent
+                // tab character) into spaces.
+                if ([self isTabFillerOrphanAtX:x1 Y:y]) {
+                    [result iterm_appendString:@" " withAttributes:[self charAttributes:c]];
+                }
+            } else if (c.code != DWC_RIGHT &&
+                       c.code != DWC_SKIP) {
+                if (c.code == 0) { // end of line?
+                    // If there is no text after this, insert a hard line break.
+                    endOfLine = YES;
+                    for (i = x1 + 1; i <= x2 && endOfLine; i++) {
+                        if (theLine[i].code != 0) {
+                            endOfLine = NO;
+                        }
+                    }
+                    if (endOfLine) {
+                        if (pad) {
+                            for (i = x1; i <= x2; i++) {
+                                [result iterm_appendString:@" "
+                                            withAttributes:[self charAttributes:theLine[i]]];
+                            }
+                        }
+                        if (y < endy && theLine[width].code == EOL_HARD) {
+                            [result iterm_appendString:@"\n"
+                                        withAttributes:[self charAttributes:theLine[width - 1]]];
+                        }
+                        break;
+                    } else {
+                        // replace mid-line null char with space
+                        [result iterm_appendString:@" " withAttributes:[self charAttributes:c]];
+                    }
+                } else if (x1 == x2 &&
+                           y < endy &&
+                           theLine[width].code == EOL_HARD) {
+                    // Hard line break
+                    [result iterm_appendString:ScreenCharToStr(&c)
+                                withAttributes:[self charAttributes:c]];
+                    [result iterm_appendString:@"\n"
+                                withAttributes:[self charAttributes:theLine[width - 1]]];
+                } else {
+                    // Normal character
+                    [result iterm_appendString:ScreenCharToStr(&c)
+                                withAttributes:[self charAttributes:c]];
+                }
+            }
+        }
+    }
+
+    return result;
 }
 
 - (void)paste:(id)sender
@@ -4780,6 +4983,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [item action]==@selector(searchInBrowser:) ||
         [item action]==@selector(addNote:) ||
         [item action]==@selector(copy:) ||
+        [item action]==@selector(copyWithStyles:) ||
         [item action]==@selector(pasteSelection:) ||
         ([item action]==@selector(print:) && [item tag] == 1)) { // print selection
         // These commands are allowed only if there is a selection.
@@ -5328,18 +5532,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [tempView release];
 }
 
-/// NSTextInput stuff
+#pragma mark - NSTextInput
+
 - (void)doCommandBySelector:(SEL)aSelector
 {
-    //NSLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
-
-#if GREED_KEYDOWN == 0
-    id delegate = [self delegate];
-
-    if ([delegate respondsToSelector:aSelector]) {
-        [delegate performSelector:aSelector withObject:nil];
-    }
-#endif
+    // doCommandBySelector isn't safe for us to implement blindly. For example, the standard
+    // key bindings make Enter send insertNewline:, which does the wrong thing when called on our
+    // delegate (it sends 0xa instead of 0xd). TODO: Find a list of useful selectors that could be
+    // whitelisted here.
 }
 
 - (void)insertText:(id)aString
@@ -8467,6 +8667,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         } else if ([curChar isEqualToString:@"\\"] && x == maxX) {
             // Ignore backslash in last position of line
         } else {
+            // This is the normal case. Append or prepend the character at (x,y) to s.
             NSString *value = nil;
             if (theLine[x].code == TAB_FILLER) {
                 if ([self isTabFillerOrphanAtX:x Y:y]) {
@@ -8488,20 +8689,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         }
 
+        // Advance x and then wrap around to the next/previous line if possible.
         x += dir;
         if (x < minX) {
+            // We've gone off the left edge and would like to move to the right edge of the previous line.
             x = maxX;
             --y;
             if (respectHardNewlines && y >= minY && minX == 0 && [self _haveHardNewlineAtY:y]) {
+                // Can't wrap because there is a hard newline in the way.
                 break;
             }
             if (y >= 0) {
                 theLine = [dataSource getLineAtIndex:y];
             }
         } else if (x > maxX) {
+            // We've gone off the right edge and would like to move to the left edge of the next line.
             x = minX;
             ++y;
-            if (respectHardNewlines && y <= maxY && maxX == w - 1 && [self _haveHardNewlineAtY:y]) {
+            if (respectHardNewlines && y <= maxY && maxX == w - 1 && [self _haveHardNewlineAtY:y-1]) {
+                // Can't wrap because there is a hard newline in the way.
                 break;
             }
             if (y < h) {
@@ -8540,7 +8746,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             *charsTakenFromPrefixPtr = offset - start;
         }
     } else if (charsTakenFromPrefixPtr) {
-        *charsTakenFromPrefixPtr = 0;
+        *charsTakenFromPrefixPtr = offset;
     }
 
     if (lastBadCharRange.location != NSNotFound) {
@@ -8604,7 +8810,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     // I tried respecting hard newlines if that is a legal URL, but that's such a broad definition
     // that it doesn't work well. Hard EOLs mid-url are very common. Let's try always ignoring them.
-    return [self _getURLForX:x y:y respectingHardNewlines:NO charsTakenFromPrefix:charsTakenFromPrefixPtr];
+    return [self _getURLForX:x
+                           y:y
+               respectingHardNewlines:[self respectHardNewlinesForURLs]
+               charsTakenFromPrefix:charsTakenFromPrefixPtr];
 }
 
 - (BOOL) _findMatchingParenthesis: (NSString *) parenthesis withX:(int)X Y:(int)Y

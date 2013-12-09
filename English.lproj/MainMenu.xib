@@ -333,6 +333,12 @@ DQ
                                     <action selector="copy:" target="-1" id="1327"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Copy with Styles" keyEquivalent="c" id="n4U-yI-y7D">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="copyWithStyles:" target="-1" id="B2X-kC-nrq"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Paste" keyEquivalent="v" id="213">
                                 <connections>
                                     <action selector="paste:" target="-1" id="215"/>

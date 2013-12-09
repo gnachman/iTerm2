@@ -1588,7 +1588,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 #endif
 
     if ([[PreferencePanel sharedInstance] copySelection]) {
-        [TEXTVIEW copy:self];
+        [TEXTVIEW copySelectionAccordingToUserPreferences];
     }
 }
 
@@ -3055,7 +3055,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)copySelection
 {
-    return [TEXTVIEW copy:self];
+    return [TEXTVIEW copySelectionAccordingToUserPreferences];
 }
 
 - (void)takeFocus

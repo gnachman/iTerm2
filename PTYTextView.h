@@ -468,7 +468,10 @@ enum {
 - (NSString *)selectedText;
 - (NSString *)selectedTextWithPad: (BOOL) pad;
 - (NSString *)content;
+// Copy with or without styles, as set by user defaults. Not for use when a copy item in the menu is invoked.
+- (void)copySelectionAccordingToUserPreferences;
 - (void)copy:(id)sender;
+- (IBAction)copyWithStyles:(id)sender;
 - (void)paste:(id)sender;
 - (void)pasteSelection:(id)sender;
 - (BOOL)validateMenuItem:(NSMenuItem *)item;
@@ -625,7 +628,6 @@ enum {
 - (NSRange)selectedRange;
 - (NSArray *)validAttributesForMarkedText;
 - (NSAttributedString *)attributedSubstringFromRange:(NSRange)theRange;
-- (void)doCommandBySelector:(SEL)aSelector;
 - (unsigned int)characterIndexForPoint:(NSPoint)thePoint;
 - (long)conversationIdentifier;
 - (NSRect)firstRectForCharacterRange:(NSRange)theRange;
