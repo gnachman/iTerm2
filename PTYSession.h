@@ -335,6 +335,7 @@ typedef enum {
 
 // Preferences
 - (void)setPreferencesFromAddressBookEntry: (NSDictionary *)aePrefs;
+- (void)loadInitialColorTable;
 
 // PTYTask
 - (void)writeTask:(NSData*)data;
