@@ -331,3 +331,5 @@ void StringToScreenChars(NSString *s,
 // complex characters.
 void ConvertCharsToGraphicsCharset(screen_char_t *s, int len);
 
+// Indicates if s contains any combining marks.
+BOOL StringContainsCombiningMark(NSString *s);

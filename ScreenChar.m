@@ -198,6 +198,35 @@ int BeginComplexChar(unichar initialCodePoint, unichar combiningChar)
     return GetOrSetComplexChar([NSString stringWithCharacters:temp length:2]);
 }
 
+BOOL StringContainsCombiningMark(NSString *s)
+{
+    if (s.length < 2) return NO;
+    UTF32Char value = 0;
+    unichar high = 0;
+    for (int i = 0; i < s.length; i++) {
+        unichar c = [s characterAtIndex:i];
+        if (high) {
+            if (IsLowSurrogate(c)) {
+                value = DecodeSurrogatePair(high, c);
+                high = 0;
+            } else {
+                high = 0;
+                continue;
+            }
+        } else if (IsHighSurrogate(c)) {
+            high = c;
+            continue;
+        } else {
+            value = c;
+        }
+        if (IsCombiningMark(value)) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+
 BOOL IsCombiningMark(UTF32Char c)
 {
     static NSCharacterSet* combiningMarks;
