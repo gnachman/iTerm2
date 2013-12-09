@@ -3171,6 +3171,16 @@ NSMutableArray* screens=0;
     [self updateTrackingAreas];  // Cause mouseMoved to be (not) called on movement if cmd is down (up).
 }
 
+- (BOOL)respectHardNewlinesForURLs {
+    static BOOL initialized;
+    static BOOL respect;
+    if (!initialized) {
+        respect = ![[NSUserDefaults standardUserDefaults] boolForKey:@"IgnoreHardNewlinesInURLs"];
+        initialized = YES;
+    }
+    return respect;
+}
+
 // Update range of underlined chars indicating cmd-clicakble url.
 - (void)updateUnderlinedURLs:(NSEvent *)event
 {
@@ -3195,7 +3205,7 @@ NSMutableArray* screens=0;
             int charsTakenFromPrefix;
             NSString *url = [self _getURLForX:x
                                             y:y
-                                respectingHardNewlines:NO
+                                respectingHardNewlines:[self respectHardNewlinesForURLs]
                                   charsTakenFromPrefix:&charsTakenFromPrefix];
             if ([url length] > 0) {
                 _underlineStartX = x - charsTakenFromPrefix;
@@ -8730,7 +8740,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             *charsTakenFromPrefixPtr = offset - start;
         }
     } else if (charsTakenFromPrefixPtr) {
-        *charsTakenFromPrefixPtr = 0;
+        *charsTakenFromPrefixPtr = offset;
     }
 
     if (lastBadCharRange.location != NSNotFound) {
@@ -8794,7 +8804,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     // I tried respecting hard newlines if that is a legal URL, but that's such a broad definition
     // that it doesn't work well. Hard EOLs mid-url are very common. Let's try always ignoring them.
-    return [self _getURLForX:x y:y respectingHardNewlines:NO charsTakenFromPrefix:charsTakenFromPrefixPtr];
+    return [self _getURLForX:x
+                           y:y
+               respectingHardNewlines:[self respectHardNewlinesForURLs]
+               charsTakenFromPrefix:charsTakenFromPrefixPtr];
 }
 
 - (BOOL) _findMatchingParenthesis: (NSString *) parenthesis withX:(int)X Y:(int)Y
