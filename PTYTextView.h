@@ -628,7 +628,6 @@ enum {
 - (NSRange)selectedRange;
 - (NSArray *)validAttributesForMarkedText;
 - (NSAttributedString *)attributedSubstringFromRange:(NSRange)theRange;
-- (void)doCommandBySelector:(SEL)aSelector;
 - (unsigned int)characterIndexForPoint:(NSPoint)thePoint;
 - (long)conversationIdentifier;
 - (NSRect)firstRectForCharacterRange:(NSRange)theRange;

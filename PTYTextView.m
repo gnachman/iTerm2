@@ -29,7 +29,6 @@
 
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
-#define GREED_KEYDOWN         1
 static const int MAX_WORKING_DIR_COUNT = 50;
 static const int kMaxSelectedTextLengthForCustomActions = 8192;
 static const int kMaxSelectedTextLinesForCustomActions = 100;
@@ -73,6 +72,7 @@ static const int kMaxSelectedTextLinesForCustomActions = 100;
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermExpose.h"
+#import "iTermNSKeyBindingEmulator.h"
 #include <math.h>
 #include <sys/time.h>
 
@@ -257,6 +257,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             gSmartCursorFgThreshold = d;
         }
     }
+    
+    [iTermNSKeyBindingEmulator sharedInstance];  // Load and parse DefaultKeyBindings.dict if needed.
 }
 
 - (BOOL)xtermMouseReporting
@@ -2686,6 +2688,12 @@ NSMutableArray* screens=0;
     
     // Hide the cursor
     [NSCursor setHiddenUntilMouseMoves:YES];
+    
+    if ([[iTermNSKeyBindingEmulator sharedInstance] handlesEvent:event]) {
+        DLog(@"iTermNSKeyBindingEmulator reports that event is handled, sending to interpretKeyEvents.");
+        [self interpretKeyEvents:@[ event ]];
+        return;
+    }
 
     // Should we process the event immediately in the delegate?
     if ((!prev) &&
@@ -5514,18 +5522,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [tempView release];
 }
 
-/// NSTextInput stuff
+#pragma mark - NSTextInput
+
 - (void)doCommandBySelector:(SEL)aSelector
 {
-    //NSLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
-
-#if GREED_KEYDOWN == 0
-    id delegate = [self delegate];
-
-    if ([delegate respondsToSelector:aSelector]) {
-        [delegate performSelector:aSelector withObject:nil];
-    }
-#endif
+    // doCommandBySelector isn't safe for us to implement blindly. For example, the standard
+    // key bindings make Enter send insertNewline:, which does the wrong thing when called on our
+    // delegate (it sends 0xa instead of 0xd). TODO: Find a list of useful selectors that could be
+    // whitelisted here.
 }
 
 - (void)insertText:(id)aString
