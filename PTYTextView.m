@@ -6484,7 +6484,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
         CGContextSetFillColorWithColor(cgContext, [self cgColorForColor:color]);
         CGContextSetStrokeColorWithColor(cgContext, [self cgColorForColor:color]);
-        CGContextSetTextPosition(cgContext, pos.x, pos.y + fontInfo.baselineOffset + lineHeight);
+
+        // Many Bothans died to bring us this information: the text matrix is not initialized when
+        // you get a CGGraphicsContext. We flip it to make up for the view being flipped and then
+        // transform to place the text in the right spot. The translation is in lieu of making a
+        // call to CGContextSetTextPosition.
+        CGAffineTransform flipTransform = CGAffineTransformMakeScale(1, -1);
+        CGAffineTransform translateTransform =
+            CGAffineTransformMakeTranslation(pos.x, pos.y + fontInfo.baselineOffset + lineHeight);
+        CGAffineTransform textMatrix = CGAffineTransformConcat(flipTransform, translateTransform);
+        CGContextSetTextMatrix(cgContext, textMatrix);
+
         for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
             CTRunRef run = CFArrayGetValueAtIndex(runs, j);
             CFRange range;
