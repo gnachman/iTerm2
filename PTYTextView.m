@@ -6468,50 +6468,56 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [ctx saveGraphicsState];
     [ctx setCompositingOperation:NSCompositeSourceOver];
     if (IsLionOrLater()) {
-        CTFontDrawGlyphsFunction *drawGlyphsFunction = GetCTFontDrawGlyphsFunction();
-        assert(drawGlyphsFunction);
+        int max = 1;
+        if (gDebugLogging) max = 100;
+        for (int iter = 0; iter < max; iter++) {
+            CTFontDrawGlyphsFunction *drawGlyphsFunction = GetCTFontDrawGlyphsFunction();
+            assert(drawGlyphsFunction);
 
-        NSMutableAttributedString* attributedString =
-            [[[NSMutableAttributedString alloc] initWithString:str
-                                                    attributes:attrs] autorelease];
-        // This code used to use -[NSAttributedString drawWithRect:options] but
-        // it does a lousy job rendering multiple combining marks. This is close
-        // to what WebKit does and appears to be the highest quality text
-        // rendering available. However, this path is only available in 10.7+.
+            NSMutableAttributedString* attributedString =
+                [[[NSMutableAttributedString alloc] initWithString:str
+                                                        attributes:attrs] autorelease];
+            // This code used to use -[NSAttributedString drawWithRect:options] but
+            // it does a lousy job rendering multiple combining marks. This is close
+            // to what WebKit does and appears to be the highest quality text
+            // rendering available. However, this path is only available in 10.7+.
 
-        CTLineRef lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)attributedString);
-        CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
-        CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
-        CGContextSetFillColorWithColor(cgContext, [self cgColorForColor:color]);
-        CGContextSetStrokeColorWithColor(cgContext, [self cgColorForColor:color]);
+            CTLineRef lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)attributedString);
+            CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
+            CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
+            CGContextSetFillColorWithColor(cgContext, [self cgColorForColor:color]);
+            CGContextSetStrokeColorWithColor(cgContext, [self cgColorForColor:color]);
 
-        // Many Bothans died to bring us this information: the text matrix is not initialized when
-        // you get a CGGraphicsContext. We flip it to make up for the view being flipped and then
-        // transform to place the text in the right spot. The translation is in lieu of making a
-        // call to CGContextSetTextPosition.
-        CGAffineTransform flipTransform = CGAffineTransformMakeScale(1, -1);
-        CGAffineTransform translateTransform =
-            CGAffineTransformMakeTranslation(pos.x, pos.y + fontInfo.baselineOffset + lineHeight);
-        CGAffineTransform textMatrix = CGAffineTransformConcat(flipTransform, translateTransform);
-        CGContextSetTextMatrix(cgContext, textMatrix);
+            // Many Bothans died to bring us this information: the text matrix is not initialized when
+            // you get a CGGraphicsContext. We flip it to make up for the view being flipped and then
+            // transform to place the text in the right spot. The translation is in lieu of making a
+            // call to CGContextSetTextPosition.
+            CGAffineTransform flipTransform = CGAffineTransformMakeScale(1, -1);
+            CGAffineTransform translateTransform =
+                CGAffineTransformMakeTranslation(pos.x, pos.y + fontInfo.baselineOffset + lineHeight);
+            CGAffineTransform textMatrix = CGAffineTransformConcat(flipTransform, translateTransform);
+            CGContextSetTextMatrix(cgContext, textMatrix);
 
-        for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
-            CTRunRef run = CFArrayGetValueAtIndex(runs, j);
-            CFRange range;
-            range.length = 0;
-            range.location = 0;
-            size_t length = CTRunGetGlyphCount(run);
-            const CGGlyph *buffer = CTRunGetGlyphsPtr(run);
-            const CGPoint *positions = CTRunGetPositionsPtr(run);
-            CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
-            drawGlyphsFunction(runFont, buffer, (NSPoint *)positions, length, cgContext);
-            if (fakeBold) {
-                CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
+            DLog(@"Have %d runs", (int)CFArrayGetCount(runs));
+            for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
+                CTRunRef run = CFArrayGetValueAtIndex(runs, j);
+                CFRange range;
+                range.length = 0;
+                range.location = 0;
+                size_t length = CTRunGetGlyphCount(run);
+                const CGGlyph *buffer = CTRunGetGlyphsPtr(run);
+                const CGPoint *positions = CTRunGetPositionsPtr(run);
+                CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
                 drawGlyphsFunction(runFont, buffer, (NSPoint *)positions, length, cgContext);
-                CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+                if (fakeBold) {
+                    CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
+                    drawGlyphsFunction(runFont, buffer, (NSPoint *)positions, length, cgContext);
+                    CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+                }
             }
+            DLog(@"Finished drawing runs");
+            CFRelease(lineRef);
         }
-        CFRelease(lineRef);
     } else {
         // Pre-10.7 path.
 
