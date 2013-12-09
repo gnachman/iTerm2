@@ -6445,7 +6445,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
     [ctx saveGraphicsState];
     [ctx setCompositingOperation:NSCompositeSourceOver];
-    if (IsLionOrLater()) {
+    if (IsLionOrLater() && StringContainsCombiningMark(str)) {
+        // This renders characters with combining marks better but is slower.
         CTFontDrawGlyphsFunction *drawGlyphsFunction = GetCTFontDrawGlyphsFunction();
         assert(drawGlyphsFunction);
 
@@ -6462,6 +6463,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
         CGContextSetFillColorWithColor(cgContext, [self cgColorForColor:color]);
         CGContextSetStrokeColorWithColor(cgContext, [self cgColorForColor:color]);
+        CGAffineTransform t = CGContextGetTextMatrix(cgContext);
+        t.a = 1;
+        t.b = t.c = 0;
+        t.d = -1;
+        CGContextSetTextMatrix(cgContext, t);
         CGContextSetTextPosition(cgContext, pos.x, pos.y + fontInfo.baselineOffset + lineHeight);
         for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
             CTRunRef run = CFArrayGetValueAtIndex(runs, j);

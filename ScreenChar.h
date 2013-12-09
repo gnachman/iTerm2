@@ -262,3 +262,6 @@ NSString* ScreenCharArrayToStringDebug(screen_char_t* screenChars,
 NSString* CharArrayToString(unichar* charHaystack, int o);
 
 void DumpScreenCharArray(screen_char_t* screenChars, int lineLength);
+
+// Indicates if s contains any combining marks.
+BOOL StringContainsCombiningMark(NSString *s);
