@@ -1741,7 +1741,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     [self setCursorX:0 Y:0];
     SAVE_CURSOR_Y = 0;
     ALT_SAVE_CURSOR_Y = 0;
-
+    [SESSION loadInitialColorTable];
     for (int i = 0; i < 4; i++) {
         saveCharset[i] = charset[i] = 0;
     }
@@ -4874,8 +4874,6 @@ void DumpBuf(screen_char_t* p, int n) {
     } else {
         dropped = 0;
     }
-
-    assert(dropped == 0 || dropped == 1);
 
     return dropped;
 }

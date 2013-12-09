@@ -345,6 +345,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [aSession setSizeFromArrangement:arrangement];
     }
     [aSession setPreferencesFromAddressBookEntry:theBookmark];
+    [aSession loadInitialColorTable];
     [[aSession SCREEN] setDisplay:[aSession TEXTVIEW]];
     [aSession setName:[theBookmark objectForKey:KEY_NAME]];
     [aSession setBookmarkName:[theBookmark objectForKey:KEY_NAME]];
@@ -2276,6 +2277,21 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     return ([[NSString alloc] initWithFormat:@"%d;%d", fgNum, bgNum]);
 }
 
+- (void)loadInitialColorTable
+{
+    int i;
+    for (i = 0; i < 216; i++) {
+        [self setColorTable:i+16
+                      color:[NSColor colorWithCalibratedRed:(i/36) ? ((i/36)*40+55)/255.0 : 0
+                                                      green:(i%36)/6 ? (((i%36)/6)*40+55)/255.0:0
+                                                       blue:(i%6) ?((i%6)*40+55)/255.0:0
+                                                      alpha:1]];
+    }
+    for (i = 0; i < 24; i++) {
+        [self setColorTable:i+232 color:[NSColor colorWithCalibratedWhite:(i*10+8)/255.0 alpha:1]];
+    }
+}
+
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs
 {
     NSColor *colorTable[2][8];
@@ -2320,16 +2336,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     for(i = 0; i < 8; i++) {
         [self setColorTable:i color:colorTable[0][i]];
         [self setColorTable:i+8 color:colorTable[1][i]];
-    }
-    for (i = 0; i < 216; i++) {
-        [self setColorTable:i+16
-                      color:[NSColor colorWithCalibratedRed:(i/36) ? ((i/36)*40+55)/255.0 : 0
-                                                      green:(i%36)/6 ? (((i%36)/6)*40+55)/255.0:0
-                                                       blue:(i%6) ?((i%6)*40+55)/255.0:0
-                                                      alpha:1]];
-    }
-    for (i = 0; i < 24; i++) {
-        [self setColorTable:i+232 color:[NSColor colorWithCalibratedWhite:(i*10+8)/255.0 alpha:1]];
     }
 
     // background image

@@ -91,6 +91,8 @@ static double gSmartCursorBgThreshold = 0.5;
 // B/W text mode is triggered. 0 means always trigger, 1 means never trigger.
 static double gSmartCursorFgThreshold = 0.75;
 
+static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
+
 @implementation FindCursorView
 
 @synthesize cursor;
@@ -2487,7 +2489,14 @@ NSMutableArray* screens=0;
         if (debugKeyDown) {
             NSLog(@"PTYTextView keyDown send to IME");
         }
+        
+        // In issue 2743, it is revealed that in OS 10.9 this sometimes calls -insertText on the
+        // wrong instnace of PTYTextView. We work around the issue by using a global variable to
+        // track the instance of PTYTextView that is currently handling a key event and rerouting
+        // calls as needed in -insertText and -doCommandBySelector.
+        gCurrentKeyEventTextView = [[self retain] autorelease];
         [self interpretKeyEvents:[NSArray arrayWithObject:event]];
+        gCurrentKeyEventTextView = nil;
 
         // If the IME didn't want it, pass it on to the delegate
         if (!prev &&
@@ -4848,7 +4857,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 /// NSTextInput stuff
 - (void)doCommandBySelector:(SEL)aSelector
 {
-    //NSLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
+    if (gCurrentKeyEventTextView && self != gCurrentKeyEventTextView) {
+        // See comment in -keyDown:
+        DLog(@"Rerouting doCommandBySelector from %@ to %@", self, gCurrentKeyEventTextView);
+        [gCurrentKeyEventTextView doCommandBySelector:aSelector];
+        return;
+    }
+    DLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
 
 #if GREED_KEYDOWN == 0
     id delegate = [self delegate];
@@ -4861,6 +4876,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)insertText:(id)aString
 {
+    if (gCurrentKeyEventTextView && self != gCurrentKeyEventTextView) {
+        // See comment in -keyDown:
+        DLog(@"Rerouting insertText from %@ to %@", self, gCurrentKeyEventTextView);
+        [gCurrentKeyEventTextView insertText:aString];
+        return;
+    }
+    DLog(@"PTYTextView insertText:%@", aString);
     if ([self hasMarkedText]) {
         BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
         if (debugKeyDown) {
@@ -6463,12 +6485,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
         CGContextSetFillColorWithColor(cgContext, [self cgColorForColor:color]);
         CGContextSetStrokeColorWithColor(cgContext, [self cgColorForColor:color]);
-        CGAffineTransform t = CGContextGetTextMatrix(cgContext);
-        t.a = 1;
-        t.b = t.c = 0;
-        t.d = -1;
-        CGContextSetTextMatrix(cgContext, t);
-        CGContextSetTextPosition(cgContext, pos.x, pos.y + fontInfo.baselineOffset + lineHeight);
+
+        // Many Bothans died to bring us this information: the text matrix is not initialized when
+        // you get a CGGraphicsContext. We flip it to make up for the view being flipped and then
+        // transform to place the text in the right spot. The translation is in lieu of making a
+        // call to CGContextSetTextPosition.
+        CGAffineTransform flipTransform = CGAffineTransformMakeScale(1, -1);
+        CGAffineTransform translateTransform =
+            CGAffineTransformMakeTranslation(pos.x, pos.y + fontInfo.baselineOffset + lineHeight);
+        CGAffineTransform textMatrix = CGAffineTransformConcat(flipTransform, translateTransform);
+        CGContextSetTextMatrix(cgContext, textMatrix);
+
         for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
             CTRunRef run = CFArrayGetValueAtIndex(runs, j);
             CFRange range;

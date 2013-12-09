@@ -1555,7 +1555,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
             break;
 
         case WINDOW_TYPE_BOTTOM:
-            rect.origin.y = screenFrame.origin.y-rect.size.height;
+            rect.origin.y = screenFrame.origin.y - rect.size.height;
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
             [[[term window] animator] setFrame:rect display:YES];
             [[[term window] animator] setAlphaValue:0];
