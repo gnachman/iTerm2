@@ -8667,6 +8667,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         } else if ([curChar isEqualToString:@"\\"] && x == maxX) {
             // Ignore backslash in last position of line
         } else {
+            // This is the normal case. Append or prepend the character at (x,y) to s.
             NSString *value = nil;
             if (theLine[x].code == TAB_FILLER) {
                 if ([self isTabFillerOrphanAtX:x Y:y]) {
@@ -8688,20 +8689,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         }
 
+        // Advance x and then wrap around to the next/previous line if possible.
         x += dir;
         if (x < minX) {
+            // We've gone off the left edge and would like to move to the right edge of the previous line.
             x = maxX;
             --y;
             if (respectHardNewlines && y >= minY && minX == 0 && [self _haveHardNewlineAtY:y]) {
+                // Can't wrap because there is a hard newline in the way.
                 break;
             }
             if (y >= 0) {
                 theLine = [dataSource getLineAtIndex:y];
             }
         } else if (x > maxX) {
+            // We've gone off the right edge and would like to move to the left edge of the next line.
             x = minX;
             ++y;
             if (respectHardNewlines && y <= maxY && maxX == w - 1 && [self _haveHardNewlineAtY:y-1]) {
+                // Can't wrap because there is a hard newline in the way.
                 break;
             }
             if (y < h) {
