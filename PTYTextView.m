@@ -8701,7 +8701,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         } else if (x > maxX) {
             x = minX;
             ++y;
-            if (respectHardNewlines && y <= maxY && maxX == w - 1 && [self _haveHardNewlineAtY:y]) {
+            if (respectHardNewlines && y <= maxY && maxX == w - 1 && [self _haveHardNewlineAtY:y-1]) {
                 break;
             }
             if (y < h) {
