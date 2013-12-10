@@ -3197,6 +3197,25 @@ NSMutableArray* screens=0;
     return NO;
 }
 
+- (BOOL)canOpenURL:(NSString *)aURLString onLine:(int)line
+{
+    // A URL is openable if Trouter can handle it or if it looks enough like a web URL to pass
+    // muster.
+    NSString* trimmedURLString;
+
+    NSCharacterSet *charsToTrim = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    trimmedURLString = [aURLString stringByTrimmingCharactersInSet:charsToTrim];
+
+    NSString *workingDirectory = [self getWorkingDirectoryAtLine:line];
+    if ([trouter canOpenPath:trimmedURLString workingDirectory:workingDirectory]) {
+        return YES;
+    }
+
+    // If it has a slash and is limited to the URL character set, it could be a URL.
+    return ([self _stringLooksLikeURL:aURLString] &&
+            [aURLString rangeOfString:@"/"].length > 0);
+}
+
 // Update range of underlined chars indicating cmd-clicakble url.
 - (void)updateUnderlinedURLs:(NSEvent *)event
 {
@@ -3228,7 +3247,7 @@ NSMutableArray* screens=0;
                                             y:y
                                 respectingHardNewlines:[self respectHardNewlinesForURLs]
                                   charsTakenFromPrefix:&charsTakenFromPrefix];
-            if ([url length] > 0) {
+            if ([url length] > 0 && [self canOpenURL:url onLine:y]) {
                 _underlineStartX = x - charsTakenFromPrefix;
                 _underlineStartY = y;
                 _underlineEndX = x + [url length] - charsTakenFromPrefix - 1;
@@ -4040,7 +4059,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Drag a file handle (only possible when there is no selection).
         NSString *path = [self _getURLForX:x y:y charsTakenFromPrefix:nil];
         path = [trouter getFullPath:path
-                   workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
+                   workingDirectory:[self getWorkingDirectoryAtLine:y]
                          lineNumber:nil];
         if (path == nil) {
             DLog(@"path is nil");
@@ -4129,11 +4148,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                             y:y
                                           dir:1
                           respectHardNewlines:NO];
-    [self _openSemanticHistoryForUrl:url
-                              atLine:y + 1
-                        inBackground:openInBackground
-                              prefix:prefix
-                              suffix:suffix];
+    if ([self canOpenURL:url onLine:y]) {
+        [self _openSemanticHistoryForUrl:url
+                                  atLine:y
+                            inBackground:openInBackground
+                                  prefix:prefix
+                                  suffix:suffix];
+    }
 }
 
 - (void)openTargetWithEvent:(NSEvent *)event
@@ -9010,10 +9031,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)logWorkingDirectoryAtLine:(long long)line withDirectory:(NSString *)workingDirectory
 {
-    [workingDirectoryAtLines addObject:[NSArray arrayWithObjects:
-          [NSNumber numberWithLongLong:line],
-          workingDirectory,
-          nil]];
+    [workingDirectoryAtLines addObject:@[ @(line), workingDirectory ]];
     if ([workingDirectoryAtLines count] > MAX_WORKING_DIR_COUNT) {
         [workingDirectoryAtLines removeObjectAtIndex:0];
     }
@@ -9031,11 +9049,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     long long previousLine = [[[workingDirectoryAtLines lastObject] objectAtIndex:0] longLongValue];
     long long currentLine;
 
-    for (int i = [workingDirectoryAtLines count] - 2; i != -1; i--) {
+    for (int i = [workingDirectoryAtLines count] - 1; i >= 0; i--) {
 
         currentLine = [[[workingDirectoryAtLines objectAtIndex:i] objectAtIndex: 0] longLongValue];
 
-        if (currentLine < line && line <= previousLine) {
+        if (currentLine <= line && line <= previousLine) {
             return [[workingDirectoryAtLines objectAtIndex:i] lastObject];
         }
 

@@ -125,6 +125,10 @@
     path = [[path stringByReplacingOccurrencesOfRegex:@":\\d*(?::.*)?$"
                                            withString:@""]
                stringByExpandingTildeInPath];
+    if ([path length] == 0) {
+        // Everything was stripped out, meaning we'd try to open the working directory.
+        return nil;
+    }
     if ([path rangeOfRegex:@"^/"].location == NSNotFound) {
         path = [NSString stringWithFormat:@"%@/%@", workingDirectory, path];
     }
@@ -214,6 +218,13 @@
     return YES;
 }
 
+- (BOOL)canOpenPath:(NSString *)path workingDirectory:(NSString *)workingDirectory
+{
+    NSString *fullPath = [self getFullPath:path
+                          workingDirectory:workingDirectory
+                                lineNumber:NULL];
+    return [fileManager fileExistsAtPath:fullPath];
+}
 
 - (BOOL)openPath:(NSString *)path
     workingDirectory:(NSString *)workingDirectory
