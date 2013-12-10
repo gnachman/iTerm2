@@ -189,6 +189,8 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>iTermApplication</string>
+	<key>NSSupportsAutomaticGraphicsSwitching</key>
+	<true/>
 	<key>SUPublicDSAKeyFile</key>
 	<string>dsa_pub.pem</string>
 	<key>SUFeedURLForTesting</key>
