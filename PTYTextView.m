@@ -3181,9 +3181,30 @@ NSMutableArray* screens=0;
     return respect;
 }
 
+- (BOOL)reportingMouseClicks {
+    if ([self xtermMouseReporting]) {
+        VT100Terminal *terminal = [dataSource terminal];
+        switch ([terminal mouseMode]) {
+            case MOUSE_REPORTING_NORMAL:
+            case MOUSE_REPORTING_BUTTON_MOTION:
+            case MOUSE_REPORTING_ALL_MOTION:
+                return YES;
+
+            default:
+                break;
+        }
+    }
+    return NO;
+}
+
 // Update range of underlined chars indicating cmd-clicakble url.
 - (void)updateUnderlinedURLs:(NSEvent *)event
 {
+    if ([self reportingMouseClicks] && !([event modifierFlags] & NSAlternateKeyMask)) {
+        // Mouse reporting takes precendence over URL opening.
+        [self removeUnderline];
+        return;
+    }
     if ([event modifierFlags] & NSCommandKeyMask) {
         NSPoint screenPoint = [NSEvent mouseLocation];
         NSRect windowRect = [[self window] convertRectFromScreen:NSMakeRect(screenPoint.x,
