@@ -50,6 +50,7 @@
          workingDirectory:(NSString *)workingDirectory
                lineNumber:(NSString **)lineNumber;
 - (BOOL)openFileInEditor:(NSString *) path lineNumber:(NSString *)lineNumber;
+- (BOOL)canOpenPath:(NSString *)path workingDirectory:(NSString *)workingDirectory;
 - (BOOL)openPath:(NSString *)path
     workingDirectory:(NSString *)workingDirectory
     prefix:(NSString *)prefix
