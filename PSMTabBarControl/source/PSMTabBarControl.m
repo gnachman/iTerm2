@@ -1528,7 +1528,8 @@
 
             if ((NSMouseInRect(mousePt, iconRect,[self isFlipped])) && ![self disableTabClose] && [mouseDownCell closeButtonPressed]) {
                 [self performSelector:@selector(closeTabClick:) withObject:cell];
-            } else if (NSMouseInRect(mousePt, 
+            } else if ([theEvent clickCount] != 2 &&
+                       NSMouseInRect(mousePt,
                                      mouseDownCellFrame,
                                      [self isFlipped]) &&
                        (!NSMouseInRect(trackingStartPoint,

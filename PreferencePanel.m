@@ -474,7 +474,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                sender == openTmuxWindows ||
                sender == threeFingerEmulatesMiddle ||
                sender == autoHideTmuxClientSession ||
-               sender == showWindowBorder) {
+               sender == showWindowBorder ||
+               sender == dblClkCloneSession) {
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
         defaultOpenTmuxWindowsIn = [[openTmuxWindows selectedItem] tag];
         defaultAutoHideTmuxClientSession = ([autoHideTmuxClientSession state] == NSOnState);
@@ -497,6 +498,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         defaultDimOnlyText = ([dimOnlyText state] == NSOnState);
         defaultDimmingAmount = [dimmingAmount floatValue];
         defaultShowWindowBorder = ([showWindowBorder state] == NSOnState);
+        defaultDblClkCloneSession = ([dblClkCloneSession state] == NSOnState);
         defaultThreeFingerEmulatesMiddle=([threeFingerEmulatesMiddle state] == NSOnState);
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
         defaultDisableFullscreenTransparency = ([disableFullscreenTransparency state] == NSOnState);
@@ -2501,6 +2503,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultDimOnlyText = [prefs objectForKey:@"DimOnlyText"]?[[prefs objectForKey:@"DimOnlyText"] boolValue]: NO;
     defaultDimmingAmount = [prefs objectForKey:@"SplitPaneDimmingAmount"] ? [[prefs objectForKey:@"SplitPaneDimmingAmount"] floatValue] : 0.4;
     defaultShowWindowBorder = [[prefs objectForKey:@"UseBorder"] boolValue];
+    defaultDblClkCloneSession = [[prefs objectForKey:@"DblClkCloneSession"] boolValue];
     defaultLionStyleFullscreen = [prefs objectForKey:@"UseLionStyleFullscreen"] ? [[prefs objectForKey:@"UseLionStyleFullscreen"] boolValue] : YES;
     defaultLoadPrefsFromCustomFolder = [prefs objectForKey:@"LoadPrefsFromCustomFolder"] ? [[prefs objectForKey:@"LoadPrefsFromCustomFolder"] boolValue] : NO;
     defaultPrefsCustomFolder = [prefs objectForKey:@"PrefsCustomFolder"] ? [prefs objectForKey:@"PrefsCustomFolder"] : @"";
@@ -2631,6 +2634,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setFloat:defaultDimmingAmount forKey:@"SplitPaneDimmingAmount"];
     [prefs setBool:defaultShowWindowBorder forKey:@"UseBorder"];
     [prefs setBool:defaultLionStyleFullscreen forKey:@"UseLionStyleFullscreen"];
+    [prefs setBool:defaultDblClkCloneSession forKey:@"DblClkCloneSession"];
     [prefs setBool:defaultLoadPrefsFromCustomFolder forKey:@"LoadPrefsFromCustomFolder"];
     [prefs setObject:defaultPrefsCustomFolder forKey:@"PrefsCustomFolder"];
 
@@ -3391,6 +3395,11 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return defaultLionStyleFullscreen;
 }
 
+- (BOOL)dblClkCloneSession
+{
+    return defaultDblClkCloneSession;
+}
+
 - (BOOL)checkTestRelease
 {
     return defaultCheckTestRelease;
@@ -3674,6 +3683,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [dimmingAmount setFloatValue:defaultDimmingAmount];
     [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];
     [lionStyleFullscreen setState:defaultLionStyleFullscreen?NSOnState:NSOffState];
+    [dblClkCloneSession setState:defaultDblClkCloneSession?NSOnState:NSOffState];
     [loadPrefsFromCustomFolder setState:defaultLoadPrefsFromCustomFolder?NSOnState:NSOffState];
     [prefsCustomFolder setStringValue:defaultPrefsCustomFolder ? defaultPrefsCustomFolder : @""];
     

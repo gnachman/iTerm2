@@ -3442,8 +3442,13 @@ NSString *sessionsKey = @"sessions";
 
 - (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem
 {
-    [tabView selectTabViewItem:tabViewItem];
-    [self editCurrentSession:self];
+    if (![[PreferencePanel sharedInstance] dblClkCloneSession]) {
+        [tabView selectTabViewItem:tabViewItem];
+        [self editCurrentSession:self];
+    } else {
+        Profile *bookmark = [[self currentSession] addressBookEntry];
+        PTYSession *session = [self addNewSession:bookmark];
+    }
 }
 
 - (void)tabViewDoubleClickTabBar:(NSTabView *)tabView

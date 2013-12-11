@@ -250,6 +250,10 @@
     // Lion-style fullscreen
     IBOutlet NSButton* lionStyleFullscreen;
     BOOL defaultLionStyleFullscreen;
+    
+    // Doubleclick clones session
+    IBOutlet NSButton* dblClkCloneSession;
+    BOOL defaultDblClkCloneSession;
 
     // Open tmux dashboard if there are more than N windows
     IBOutlet NSTextField *tmuxDashboardLimit;
@@ -689,6 +693,7 @@ typedef enum {
 
 - (BOOL)showWindowBorder;
 - (BOOL)lionStyleFullscreen;
+- (BOOL)dblClkCloneSession;
 - (NSString *)loadPrefsFromCustomFolder;
 - (BOOL)dimInactiveSplitPanes;
 - (BOOL)dimBackgroundWindows;
