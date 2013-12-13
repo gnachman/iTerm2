@@ -36,7 +36,8 @@ static struct {
     { '^', NSControlKeyMask },
     { '~', NSAlternateKeyMask },
     { '$', NSShiftKeyMask },
-    { '#', NSNumericPadKeyMask }
+    { '#', NSNumericPadKeyMask },
+    { '@', NSCommandKeyMask }
 };
 
 @implementation iTermNSKeyBindingEmulator
@@ -100,7 +101,7 @@ static struct {
         DLog(@"Entered multi-keystroke binding with key: %@", theKey);
         return YES;
     }
-    
+
     // Not (or no longer) in a multi-keystroke binding. Move to the root of the tree.
     self.currentDict = _rootDict;
     DLog(@"Default key binding is %@", obj);
@@ -166,7 +167,7 @@ static struct {
 - (BOOL)stringIsOneUpperCaseAsciiCharacter:(NSString *)s {
     return (s.length == 1 && iswascii([s characterAtIndex:0]) && iswupper([s characterAtIndex:0]));
 }
-                                      
+
 // Returns a version of |input| with normalized keys. Each key will consist of 0 or more special
 // characters in the prescribed order followed by [code %d] where %d is a decimal value for the
 // keystroke ignoring modifiers. There's a known bug here for nonascii keystrokes modified with
@@ -187,8 +188,8 @@ static struct {
         NSString *normalizedKey = [self dictionaryKeyForCharacters:characters
                                                           andFlags:flags];
         if (!normalizedKey) {
-            NSLog(@"Bogus key in key bindings dictionary: %@",
-                  [key dataUsingEncoding:NSUTF16BigEndianStringEncoding]);
+            NSLog(@"Bogus key in key bindings dictionary: %@ %@",
+                  key, [key dataUsingEncoding:NSUTF16BigEndianStringEncoding]);
         } else if ([value isKindOfClass:[NSDictionary class]]) {
             NSDictionary *subDict = (NSDictionary *)value;
             output[normalizedKey] = [self keyBindingDictionaryByNormalizingModifiersInKeys:subDict];
