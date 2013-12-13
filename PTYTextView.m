@@ -33,6 +33,19 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 static const int kMaxSelectedTextLengthForCustomActions = 8192;
 static const int kMaxSelectedTextLinesForCustomActions = 100;
 
+// This defines the fraction of a character's width on its right side that is used to
+// select the NEXT character.
+//        |   A rightward drag beginning left of the bar selects G.
+//        <-> kCharWidthFractionOffset * charWidth
+//  <-------> Character width
+//   .-----.  .      :
+//  ;         :      :
+//  :         :      :
+//  :    ---- :------:
+//  '       : :      :
+//   `-----'  :      :
+static const double kCharWidthFractionOffset = 0.35;
+
 //#define DEBUG_DRAWING
 
 // Constants for converting RGB to luma.
@@ -3330,7 +3343,7 @@ NSMutableArray* screens=0;
     int x, y;
     int width = [dataSource width];
 
-    x = (locationInTextView.x - MARGIN + charWidth/2)/charWidth;
+    x = (locationInTextView.x - MARGIN + charWidth * kCharWidthFractionOffset)/charWidth;
     if (x < 0) {
         x = 0;
     }
@@ -3937,7 +3950,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int x, y;
     int width = [dataSource width];
 
-    double logicalX = locationInTextView.x - MARGIN - charWidth/2;
+    double logicalX = locationInTextView.x - MARGIN + charWidth * kCharWidthFractionOffset - charWidth;
     if (logicalX >= 0) {
         x = logicalX / charWidth;
     } else {
