@@ -49,4 +49,9 @@
     }
 }
 
+- (PTYFontInfo *)computedBoldItalicVersion {
+    PTYFontInfo *temp = [self computedBoldVersion];
+    return [temp computedItalicVersion];
+}
+
 @end

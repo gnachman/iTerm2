@@ -54,6 +54,7 @@ typedef struct {
     BOOL antiAlias;           // Use anti-aliasing?
     NSColor *color;           // Foreground color. Do not assign directly to this. Use CRunAttrsSetColor().
     BOOL fakeBold;            // Should bold text be rendered by drawing text twice with a 1px shift?
+    BOOL fakeItalic;          // Should text be skewed?
     BOOL underline;
     PTYFontInfo *fontInfo;    // Font to use. WEAK.
 } CAttrs;
