@@ -767,7 +767,7 @@ typedef enum {
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
                      isComplex:(BOOL)complex
                     renderBold:(BOOL*)renderBold
-                  renderItalic:(BOOL)renderItalic;
+                  renderItalic:(BOOL*)renderItalic;
 
 // Returns true if any onscreen text is blinking
 - (BOOL)updateDirtyRects;

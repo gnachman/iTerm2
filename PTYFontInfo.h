@@ -20,6 +20,7 @@
 @property (nonatomic, assign) double baselineOffset;
 @property (nonatomic, retain) PTYFontInfo *boldVersion;
 @property (nonatomic, retain) PTYFontInfo *italicVersion;
+@property (nonatomic, retain) PTYFontInfo *boldItalicVersion;
 
 + (PTYFontInfo *)fontInfoWithFont:(NSFont *)font baseline:(double)baseline;
 
@@ -30,5 +31,10 @@
 // Returns a new autorelased PTYFontInfo with a bold version of this font (or
 // nil if none is available).
 - (PTYFontInfo *)computedItalicVersion;
+
+
+// Returns a new autorelased PTYFontInfo with a bold and italic version of this font (or nil if none
+// is available).
+- (PTYFontInfo *)computedBoldItalicVersion;
 
 @end

@@ -33,6 +33,19 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 static const int kMaxSelectedTextLengthForCustomActions = 8192;
 static const int kMaxSelectedTextLinesForCustomActions = 100;
 
+// This defines the fraction of a character's width on its right side that is used to
+// select the NEXT character.
+//        |   A rightward drag beginning left of the bar selects G.
+//        <-> kCharWidthFractionOffset * charWidth
+//  <-------> Character width
+//   .-----.  .      :
+//  ;         :      :
+//  :         :      :
+//  :    ---- :------:
+//  '       : :      :
+//   `-----'  :      :
+static const double kCharWidthFractionOffset = 0.35;
+
 //#define DEBUG_DRAWING
 
 // Constants for converting RGB to luma.
@@ -1061,11 +1074,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     primaryFont.baselineOffset = baseline;
     primaryFont.boldVersion = [primaryFont computedBoldVersion];
     primaryFont.italicVersion = [primaryFont computedItalicVersion];
-
+    primaryFont.boldItalicVersion = [primaryFont computedBoldItalicVersion];
+    
     secondaryFont.font = naFont;
     secondaryFont.baselineOffset = baseline;
     secondaryFont.boldVersion = [secondaryFont computedBoldVersion];
     secondaryFont.italicVersion = [secondaryFont computedItalicVersion];
+    secondaryFont.boldItalicVersion = [secondaryFont computedBoldItalicVersion];
 
     // Force the secondary font to use the same baseline as the primary font.
     secondaryFont.baselineOffset = primaryFont.baselineOffset;
@@ -3330,7 +3345,7 @@ NSMutableArray* screens=0;
     int x, y;
     int width = [dataSource width];
 
-    x = (locationInTextView.x - MARGIN + charWidth/2)/charWidth;
+    x = (locationInTextView.x - MARGIN + charWidth * kCharWidthFractionOffset)/charWidth;
     if (x < 0) {
         x = 0;
     }
@@ -3937,7 +3952,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int x, y;
     int width = [dataSource width];
 
-    double logicalX = locationInTextView.x - MARGIN - charWidth/2;
+    double logicalX = locationInTextView.x - MARGIN + charWidth * kCharWidthFractionOffset - charWidth;
     if (logicalX >= 0) {
         x = logicalX / charWidth;
     } else {
@@ -4868,10 +4883,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     int underlineStyle = c.underline ? (NSUnderlineStyleSingle | NSUnderlineByWordMask) : 0;
 
+    BOOL isItalic = c.italic;
     PTYFontInfo *fontInfo = [self getFontForChar:c.code
                                        isComplex:c.complexChar
                                       renderBold:&isBold
-                                    renderItalic:c.italic];
+                                    renderItalic:&isItalic];
 
     return @{ NSForegroundColorAttributeName: fgColor,
               NSBackgroundColorAttributeName: bgColor,
@@ -6692,43 +6708,42 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
                      isComplex:(BOOL)complex
                     renderBold:(BOOL*)renderBold
-                  renderItalic:(BOOL)renderItalic
+                  renderItalic:(BOOL*)renderItalic
 {
     BOOL isBold = *renderBold && useBoldFont;
-    BOOL isItalic = renderItalic && useItalicFont;
+    BOOL isItalic = *renderItalic && useItalicFont;
     *renderBold = NO;
+    *renderItalic = NO;
     PTYFontInfo* theFont;
     BOOL usePrimary = !complex && (ch < 128);
 
-    if (usePrimary) {
-        if (isBold) {
-            theFont = primaryFont.boldVersion;
-            if (!theFont) {
-                theFont = primaryFont;
-                *renderBold = YES;
-            }
-        } else if (isItalic) {
-            theFont = primaryFont.italicVersion;
-            if (!theFont) {
-                theFont = primaryFont;
-            }
-        } else {
-            theFont = primaryFont;
+    PTYFontInfo *rootFontInfo = usePrimary ? primaryFont : secondaryFont;
+    theFont = rootFontInfo;
+
+    if (isBold && isItalic) {
+        theFont = rootFontInfo.boldItalicVersion;
+        if (!theFont && rootFontInfo.boldVersion) {
+            theFont = rootFontInfo.boldVersion;
+            *renderItalic = YES;
+        } else if (!theFont && rootFontInfo.italicVersion) {
+            theFont = rootFontInfo.italicVersion;
+            *renderBold = YES;
+        } else if (!theFont) {
+            theFont = rootFontInfo;
+            *renderBold = YES;
+            *renderItalic = YES;
         }
-    } else {
-        if (isBold) {
-            theFont = secondaryFont.boldVersion;
-            if (!theFont) {
-                theFont = secondaryFont;
-                *renderBold = YES;
-            }
-        } else if (isItalic) {
-            theFont = secondaryFont.italicVersion;
-            if (!theFont) {
-                theFont = secondaryFont;
-            }
-        } else {
-            theFont = secondaryFont;
+    } else if (isBold) {
+        theFont = rootFontInfo.boldVersion;
+        if (!theFont) {
+            theFont = rootFontInfo;
+            *renderBold = YES;
+        }
+    } else if (isItalic) {
+        theFont = rootFontInfo.italicVersion;
+        if (!theFont) {
+            theFont = rootFontInfo;
+            *renderItalic = YES;
         }
     }
 
@@ -7103,11 +7118,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         if (drawable) {
             BOOL fakeBold = theLine[i].bold;
+            BOOL fakeItalic = theLine[i].italic;
             attrs.fontInfo = [self getFontForChar:theLine[i].code
                                         isComplex:theLine[i].complexChar
                                        renderBold:&fakeBold
-                                     renderItalic:theLine[i].italic];
+                                     renderItalic:&fakeItalic];
             attrs.fakeBold = fakeBold;
+            attrs.fakeItalic = fakeItalic;
             attrs.underline = theLine[i].underline || inUnderlinedRange;
             if (inUnderlinedRange && theLine[i].underline) {
                 attrs.color = [NSColor blueColor];
@@ -7126,6 +7143,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 CRunTerminate(currentRun);
             }
             attrs.fakeBold = NO;
+            attrs.fakeItalic = NO;
             attrs.fontInfo = nil;
         }
 
@@ -7174,9 +7192,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     double y = initialPoint.y + lineHeight + currentRun->attrs.fontInfo.baselineOffset;
     int x = initialPoint.x + currentRun->x;
     // Flip vertically and translate to (x, y).
+    NSAffineTransformStruct transformStruct = [[currentRun->attrs.fontInfo.font textTransform] transformStruct];
+    CGFloat m21 = 0.0;
+    if (currentRun->attrs.fakeItalic) {
+        m21 = 0.2;
+    }
     CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
-                                                      0.0, -1.0,
-                                                      x,    y));
+                                                      m21, -1.0,
+                                                      x, y));
 
     void *advances = CRunGetAdvances(currentRun);
     CGContextShowGlyphsWithAdvances(ctx, glyphs, advances, length);
@@ -7185,7 +7208,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // If anti-aliased, drawing twice at the same position makes the strokes thicker.
         // If not anti-alised, draw one pixel to the right.
         CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
-                                                          0.0, -1.0,
+                                                          m21, -1.0,
                                                           x + (currentRun->attrs.antiAlias ? _antiAliasedShift : 1),
                                                           y));
 
@@ -7210,6 +7233,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                          at:(NSPoint)pos
                       width:(CGFloat)width
                    fakeBold:(BOOL)fakeBold
+                 fakeItalic:(BOOL)fakeItalic
                   antiAlias:(BOOL)antiAlias {
     NSDictionary* attrs;
     attrs = [NSDictionary dictionaryWithObjectsAndKeys:
@@ -7232,7 +7256,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
     CGContextSetFillColorWithColor(cgContext, [self cgColorForColor:color]);
     CGContextSetStrokeColorWithColor(cgContext, [self cgColorForColor:color]);
-    CGContextSetTextPosition(cgContext, pos.x, pos.y + fontInfo.baselineOffset + lineHeight);
+    NSAffineTransformStruct transformStruct = [[fontInfo.font textTransform] transformStruct];
+
+    CGFloat m21 = 0.0;
+    if (fakeItalic) {
+        m21 = 0.2;
+    }
+
+    CGAffineTransform textMatrix = CGAffineTransformMake(1.0,  0.0,
+                                                         m21, -1.0,
+                                                         pos.x, pos.y + fontInfo.baselineOffset + lineHeight);
+    CGContextSetTextMatrix(cgContext, textMatrix);
+
     for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
         CTRunRef run = CFArrayGetValueAtIndex(runs, j);
         CFRange range;
@@ -7275,6 +7310,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                    at:NSMakePoint(initialPoint.x + complexRun->x, initialPoint.y)
                                 width:CRunGetAdvances(complexRun)[0].width
                              fakeBold:complexRun->attrs.fakeBold
+                           fakeItalic:complexRun->attrs.fakeItalic
                             antiAlias:complexRun->attrs.antiAlias];
             CRunFree(complexRun);
         }
@@ -7286,6 +7322,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                at:NSMakePoint(initialPoint.x + currentRun->x, initialPoint.y)
                             width:CRunGetAdvances(currentRun)[0].width
                          fakeBold:currentRun->attrs.fakeBold
+                       fakeItalic:currentRun->attrs.fakeItalic
                         antiAlias:currentRun->attrs.antiAlias];
     }
 
