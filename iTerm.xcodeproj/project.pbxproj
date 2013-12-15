@@ -600,6 +600,12 @@
 		A6C4E8E11846E13800CFAA77 /* IntervalTree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */; };
 		A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
 		A6C4E8E81846E32700CFAA77 /* IntervalTreeTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */; };
+		A6CFDAD2185D2587005DC94B /* URLAction.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CFDAD0185D2587005DC94B /* URLAction.h */; };
+		A6CFDAD3185D2587005DC94B /* URLAction.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD1185D2587005DC94B /* URLAction.m */; };
+		A6CFDAD4185D2587005DC94B /* URLAction.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD1185D2587005DC94B /* URLAction.m */; };
+		A6CFDAD7185D53C2005DC94B /* AsyncHostLookupController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */; };
+		A6CFDAD8185D53C2005DC94B /* AsyncHostLookupController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD6185D53C2005DC94B /* AsyncHostLookupController.m */; };
+		A6CFDAD9185D53C2005DC94B /* AsyncHostLookupController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD6185D53C2005DC94B /* AsyncHostLookupController.m */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = FB151F2903648AC401F955DB /* iTerm.strings */; };
@@ -1007,6 +1013,10 @@
 		A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntervalTree.h; sourceTree = "<group>"; };
 		A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IntervalTreeTest.m; path = iTermTests/IntervalTreeTest.m; sourceTree = "<group>"; };
 		A6C4E8E71846E32600CFAA77 /* IntervalTreeTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IntervalTreeTest.h; path = iTermTests/IntervalTreeTest.h; sourceTree = "<group>"; };
+		A6CFDAD0185D2587005DC94B /* URLAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = URLAction.h; sourceTree = "<group>"; };
+		A6CFDAD1185D2587005DC94B /* URLAction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = URLAction.m; sourceTree = "<group>"; };
+		A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AsyncHostLookupController.h; sourceTree = "<group>"; };
+		A6CFDAD6185D53C2005DC94B /* AsyncHostLookupController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AsyncHostLookupController.m; sourceTree = "<group>"; };
 		DD02572409CB9398008F320C /* PSMAquaTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMAquaTabStyle.h; sourceTree = "<group>"; };
 		DD02572509CB9398008F320C /* PSMAquaTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMAquaTabStyle.m; sourceTree = "<group>"; };
 		DD02572609CB9398008F320C /* PSMMetalTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMMetalTabStyle.h; sourceTree = "<group>"; };
@@ -1182,6 +1192,7 @@
 				1D3D21921483142800FAC8E7 /* tmux */,
 				1D9DDE2E142E733100275650 /* Toolbelt */,
 				1D9DDE2D142E730700275650 /* Triggers */,
+				A6CFDAD6185D53C2005DC94B /* AsyncHostLookupController.m */,
 				1DA26ABF15007507004B5792 /* BackgroundThread.m */,
 				1D48B378167E809D000046EE /* CharacterRun.m */,
 				A073973F14C7694600786414 /* ColorsMenuItemView.m */,
@@ -1193,11 +1204,9 @@
 				1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */,
 				1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */,
 				1DAED28712E9395E005E49ED /* GlobalSearch.m */,
-				1DB9D8F0183FE9EF0029F0B5 /* HotkeyWindowController.h */,
 				1DB9D8F1183FE9EF0029F0B5 /* HotkeyWindowController.m */,
 				1D7B9A681491D82F003A2A22 /* IntervalMap.m */,
 				A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */,
-				A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */,
 				1DDBC61D12E2BCDC00BC3868 /* iTermExpose.m */,
 				1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */,
 				F69E788C0AB7AC6D001EC0FF /* iTermGrowlDelegate.m */,
@@ -1224,10 +1233,9 @@
 				1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */,
 				1D085FA116F138A000B7FCE9 /* ToastWindowController.m */,
 				1D06A04F134CDBED00C414EF /* Trouter.m */,
-				A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */,
 				A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */,
-				A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */,
 				A60014FA18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m */,
+				A6CFDAD1185D2587005DC94B /* URLAction.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -1238,6 +1246,12 @@
 				1D9DCC14142D7FC10016228A /* AlertTrigger.h */,
 				1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */,
 				1DE214DF128212EE004E3ADF /* Autocomplete.h */,
+				A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */,
+				1DB9D8F0183FE9EF0029F0B5 /* HotkeyWindowController.h */,
+				A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */,
+				A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */,
+				A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */,
+				A6CFDAD0185D2587005DC94B /* URLAction.h */,
 				1DA26ABE15007507004B5792 /* BackgroundThread.h */,
 				1D9DCC0C142D7F5F0016228A /* BellTrigger.h */,
 				1D9DCC08142D7F300016228A /* BounceTrigger.h */,
@@ -1864,6 +1878,8 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6CFDAD2185D2587005DC94B /* URLAction.h in Headers */,
+				A6CFDAD7185D53C2005DC94B /* AsyncHostLookupController.h in Headers */,
 				1D78B55E183EE1C000014D49 /* LineBufferPosition.h in Headers */,
 				1D53FD15181C4B4B00524D4F /* FindContext.h in Headers */,
 				1D5FDD501208E8F000C46BA3 /* PTToolbarController.h in Headers */,
@@ -2279,6 +2295,7 @@
 				1D9A5546180FA82E00B42CE9 /* EquivalenceClassSet.m in Sources */,
 				A693395E1851A61D00EBEA20 /* VT100ScreenMark.m in Sources */,
 				1D9A5571180FA85900B42CE9 /* ToolProfiles.m in Sources */,
+				A6CFDAD9185D53C2005DC94B /* AsyncHostLookupController.m in Sources */,
 				1D9A555C180FA83900B42CE9 /* EventMonitorView.m in Sources */,
 				1D9A555B180FA83900B42CE9 /* ContextMenuActionPrefsController.m in Sources */,
 				A63F40AB183F3CED003A6A6D /* LineBufferHelpers.m in Sources */,
@@ -2336,6 +2353,7 @@
 				1D9A5529180FA61700B42CE9 /* VT100ScreenTest.m in Sources */,
 				A63F40A6183F3B78003A6A6D /* LineBlock.m in Sources */,
 				A60014F818550F3900CE38D8 /* NSMutableAttributedString+iTerm.m in Sources */,
+				A6CFDAD4185D2587005DC94B /* URLAction.m in Sources */,
 				A6C4E8E81846E32700CFAA77 /* IntervalTreeTest.m in Sources */,
 				1D9A5586180FA87000B42CE9 /* iTermSearchField.m in Sources */,
 				A60014FD18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m in Sources */,
@@ -2449,6 +2467,7 @@
 				A63F40A0183F3AF5003A6A6D /* VT100LineInfo.m in Sources */,
 				1D53FD16181C4B4B00524D4F /* FindContext.m in Sources */,
 				1D5FDDB21208E93600C46BA3 /* PTToolbarController.m in Sources */,
+				A6CFDAD3185D2587005DC94B /* URLAction.m in Sources */,
 				1DB9D8F3183FE9EF0029F0B5 /* HotkeyWindowController.m in Sources */,
 				1D5FDDB31208E93600C46BA3 /* ITAddressBookMgr.m in Sources */,
 				1D5FDDB41208E93600C46BA3 /* ITViewLocalizer.m in Sources */,
@@ -2456,6 +2475,7 @@
 				1D5FDDBB1208E93600C46BA3 /* PSMAquaTabStyle.m in Sources */,
 				1D5FDDBC1208E93600C46BA3 /* PSMMetalTabStyle.m in Sources */,
 				1D5FDDBD1208E93600C46BA3 /* PSMOverflowPopUpButton.m in Sources */,
+				A6CFDAD8185D53C2005DC94B /* AsyncHostLookupController.m in Sources */,
 				1D5FDDBE1208E93600C46BA3 /* PSMProgressIndicator.m in Sources */,
 				1D5FDDBF1208E93600C46BA3 /* PSMRolloverButton.m in Sources */,
 				1D5FDDC01208E93600C46BA3 /* PSMTabBarCell.m in Sources */,

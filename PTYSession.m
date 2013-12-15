@@ -3291,7 +3291,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                     toStartY:&startY
                       toEndX:&endX
                       toEndY:&endY
-            ignoringNewlines:NO];
+            ignoringNewlines:NO
+              actionRequired:NO];
     return [TEXTVIEW rangeByTrimmingNullsFromRange:VT100GridCoordRangeMake(startX,
                                                                            startY,
                                                                            endX,
