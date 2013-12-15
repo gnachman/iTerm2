@@ -2342,15 +2342,29 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)terminalPostGrowlNotification:(NSString *)message {
     if (postGrowlNotifications_) {
+        // Use a non-printable control character (RECORD SEPARATOR)
+        // to allow the user to specify both the alert title and text,
+        // if it's not present treat the whole message as the message
+        // as in previous versions. Ignore more than two "records" for
+        // future use.
+        NSArray *split = [message componentsSeparatedByString:@"\036"];
+        NSString *description = message;
+        NSString *title = nil;
+        if ([split count] > 1) {
+            title = [split objectAtIndex:0];
+            description = [split objectAtIndex:1];
+        } else {
+            title = NSLocalizedStringFromTableInBundle(@"Alert",
+                                                       @"iTerm",
+                                                       [NSBundle bundleForClass:[self class]],
+                                                       @"Growl Alerts");
+        }
         [[iTermGrowlDelegate sharedInstance]
-         growlNotify:NSLocalizedStringFromTableInBundle(@"Alert",
-                                                        @"iTerm",
-                                                        [NSBundle bundleForClass:[self class]],
-                                                        @"Growl Alerts")
+         growlNotify:title
          withDescription:[NSString stringWithFormat:@"Session %@ #%d: %@",
                           [delegate_ screenName],
                           [delegate_ screenNumber],
-                          message]
+                          description]
          andNotification:@"Customized Message"
          windowIndex:[delegate_ screenWindowIndex]
          tabIndex:[delegate_ screenTabIndex]
