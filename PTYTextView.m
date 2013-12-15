@@ -54,7 +54,7 @@ static const double kCharWidthFractionOffset = 0.35;
 #define BLUE_COEFFICIENT   0.11
 
 #define SWAPINT(a, b) { int temp; temp = a; a = b; b = temp; }
-
+#import "AsyncHostLookupController.h"
 #import "CharacterRun.h"
 #import "CharacterRunInline.h"
 #import "FontSizeEstimator.h"
@@ -105,6 +105,11 @@ static double gSmartCursorBgThreshold = 0.5;
 // background. If the brightness difference is below a threshold then the
 // B/W text mode is triggered. 0 means always trigger, 1 means never trigger.
 static double gSmartCursorFgThreshold = 0.75;
+
+// Notifications posted when hostname lookups finish. Notifications are used to
+// avoid dangling references.
+static NSString *const kHostnameLookupFailed = @"kHostnameLookupFailed";
+static NSString *const kHostnameLookupSucceeded = @"kHostnameLookupSucceeded";
 
 @implementation FindCursorView
 
@@ -206,6 +211,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 @end
 
 @interface PTYTextView ()
+// Set the hostname this view is currently waiting for AsyncHostLookupController to finish looking
+// up.
+@property(nonatomic, copy) NSString *currentUnderlineHostname;
+
 - (NSRect)cursorRect;
 - (URLAction *)urlActionForClickAtX:(int)x
                                   y:(int)y
@@ -339,7 +348,15 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                              selector:@selector(flagsChangedNotification:)
                                                  name:@"iTermFlagsChanged"
                                                object:nil];
-
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(hostnameLookupFailed:)
+                                                 name:kHostnameLookupFailed
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(hostnameLookupSucceeded:)
+                                                 name:kHostnameLookupSucceeded
+                                               object:nil];
+    
     advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
     imeOffset = 0;
@@ -542,6 +559,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [threeFingerTapGestureRecognizer_ release];
 
     [initialFindContext_ release];
+    if (self.currentUnderlineHostname) {
+        [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
+    }
+    [_currentUnderlineHostname release];
 
     [super dealloc];
 }
@@ -3190,6 +3211,10 @@ NSMutableArray* screens=0;
 - (void)removeUnderline
 {
     _underlineStartX = _underlineStartY = _underlineEndX = _underlineEndY = -1;
+    if (self.currentUnderlineHostname) {
+        [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
+    }
+    self.currentUnderlineHostname = nil;
     [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
     [self updateTrackingAreas];  // Cause mouseMoved to be (not) called on movement if cmd is down (up).
 }
@@ -3272,6 +3297,33 @@ NSMutableArray* screens=0;
                 _underlineStartY = action.range.start.y;
                 _underlineEndX = action.range.end.x;
                 _underlineEndY = action.range.end.y;
+                
+                if (action.actionType == kURLActionOpenURL) {
+                    NSURL *url = [NSURL URLWithString:action.string];
+                    if (![url.host isEqualToString:self.currentUnderlineHostname]) {
+                        if (self.currentUnderlineHostname) {
+                            [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
+                        }
+                        if (url && url.host) {
+                            self.currentUnderlineHostname = url.host;
+                            [[AsyncHostLookupController sharedInstance] getAddressForHost:url.host
+                                                                               completion:^(BOOL ok, NSString *hostname) {
+                                                                                   if (!ok) {
+                                                                                       [[NSNotificationCenter defaultCenter] postNotificationName:kHostnameLookupFailed
+                                                                                                                                           object:hostname];
+                                                                                   } else {
+                                                                                       [[NSNotificationCenter defaultCenter] postNotificationName:kHostnameLookupSucceeded
+                                                                                                                                           object:hostname];
+                                                                                   }
+                                                                               }];
+                        }
+                    }
+                } else {
+                    if (self.currentUnderlineHostname) {
+                        [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
+                    }
+                    self.currentUnderlineHostname = nil;
+                }
             } else {
                 [self removeUnderline];
                 return;
@@ -7130,7 +7182,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             attrs.fakeBold = fakeBold;
             attrs.fakeItalic = fakeItalic;
             attrs.underline = theLine[i].underline || inUnderlinedRange;
-            if (inUnderlinedRange) {
+            if (inUnderlinedRange && !self.currentUnderlineHostname) {
                 attrs.color = [NSColor colorWithCalibratedRed:0.023 green:0.270 blue:0.678 alpha:1];
             }
             if (!currentRun) {
@@ -8599,7 +8651,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([s length] == 0) {
         return NO;
     }
-    return ([s rangeOfString:@"/"].length > 0);  // Must contain a slash
+    
+    NSRange slashRange = [s rangeOfString:@"/"];
+    return (slashRange.length > 0 && slashRange.location > 0);  // Must contain a slash, but must not start with it.
 }
 
 // Any sequence of words separated by spaces or tabs could be a filename. Search the neighborhood
@@ -8641,7 +8695,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [possiblePath appendString:[afterChunks objectAtIndex:j]];
             if ([trouter getFullPath:possiblePath workingDirectory:workingDirectory lineNumber:NULL]) {
                 if (charsTakenFromPrefixPtr) {
-                    *charsTakenFromPrefixPtr = [beforeChunk length];
+                    *charsTakenFromPrefixPtr = left.length;
                 }
                 return possiblePath;
             }
@@ -8895,7 +8949,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                               workingDirectory:workingDirectory
                                           charsTakenFromPrefix:&fileCharsTaken];
     
-    if (filename) {
+    // Don't consider / to be a valid filename because it's useless and single/double slashes are
+    // pretty common.
+    if (filename && ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
         // If you clicked on an existing filename, use it.
         URLAction *action = [URLAction urlActionToOpenExistingFile:filename];
         action.range = [self coordRangeFromCoord:VT100GridCoordMake(x, y)
@@ -8969,6 +9025,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return action;
     } else {
         return nil;
+    }
+}
+
+- (void)hostnameLookupFailed:(NSNotification *)notification {
+    if ([[notification object] isEqualToString:self.currentUnderlineHostname]) {
+        self.currentUnderlineHostname = nil;
+        _underlineStartX = _underlineStartY = _underlineEndX = _underlineEndY = -1;
+        [self setNeedsDisplay:YES];
+    }
+}
+
+- (void)hostnameLookupSucceeded:(NSNotification *)notification {
+    if ([[notification object] isEqualToString:self.currentUnderlineHostname]) {
+        self.currentUnderlineHostname = nil;
+        [self setNeedsDisplay:YES];
     }
 }
 
