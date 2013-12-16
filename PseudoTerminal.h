@@ -287,6 +287,10 @@ NSWindowDelegate,
                windowType:(int)windowType
                    screen:(int)screenNumber
                  isHotkey:(BOOL)isHotkey;
+- (void)finishInitializationWithSmartLayout:(BOOL)smartLayout
+                                 windowType:(int)windowType
+                                     screen:(int)screenNumber
+                                   isHotkey:(BOOL)isHotkey;
 
 - (PseudoTerminal *)terminalDraggedFromAnotherWindowAtPoint:(NSPoint)point;
 
