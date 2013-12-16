@@ -234,7 +234,18 @@ NSString *sessionsKey = @"sessions";
     // This is invoked by Applescript's "make new terminal" and must be followed by a command like
     // launch session "Profile Name"
     // which invokes handleLaunchScriptCommand, which in turn calls initWithSmartLayotu:windowType:screen:isHotkey:
-    return [super init];
+    // Alternatively, a script like this:
+    /
+    // tell application "iTerm"
+    //   activate
+    //   set myterm to (make new terminal)
+    //   tell myterm
+    //     set mysession to (make new session at the end of sessions)
+    //
+    // Causes insertInSessions:atIndex: to be called.
+    // A followup call to finishInitializationWithSmartLayout:windowType:screen:isHotkey:
+    // finishes intialization. -windowInited will return NO until that is done.
+    return [super initWithWindowNibName:@"PseudoTerminal"];
 }
 
 
@@ -250,11 +261,23 @@ NSString *sessionsKey = @"sessions";
                    screen:(int)screenNumber
                  isHotkey:(BOOL)isHotkey
 {
-    PTYWindow *myWindow;
-
     self = [super initWithWindowNibName:@"PseudoTerminal"];
     NSAssert(self, @"initWithWindowNibName returned nil");
-    DLog(@"-[%p initWithSmartLayout:%@ windowType:%d screen:%d isHotkey:%@ ",
+    if (self) {
+        [self finishInitializationWithSmartLayout:smartLayout
+                                       windowType:windowType
+                                           screen:screenNumber
+                                         isHotkey:isHotkey];
+    }
+    return self;
+}
+
+- (void)finishInitializationWithSmartLayout:(BOOL)smartLayout
+                                 windowType:(int)windowType
+                                     screen:(int)screenNumber
+                                   isHotkey:(BOOL)isHotkey
+{
+    DLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d isHotkey:%@ ",
          self,
          smartLayout ? @"YES" : @"NO",
          windowType,
@@ -372,7 +395,7 @@ NSString *sessionsKey = @"sessions";
     }
     preferredOrigin_ = initialFrame.origin;
 
-    PtyLog(@"initWithSmartLayout - initWithContentRect");
+    PtyLog(@"finishInitializationWithSmartLayout - initWithContentRect");
     // create the window programmatically with appropriate style mask
     NSUInteger styleMask = NSTitledWindowMask |
                            NSClosableWindowMask |
@@ -393,6 +416,7 @@ NSString *sessionsKey = @"sessions";
     }
 
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
+    PTYWindow *myWindow;
     myWindow = [[PTYWindow alloc] initWithContentRect:initialFrame
                                             styleMask:styleMask
                                               backing:NSBackingStoreBuffered
@@ -405,7 +429,7 @@ NSString *sessionsKey = @"sessions";
     }
     [myWindow _setContentHasShadow:NO];
 
-    PtyLog(@"initWithSmartLayout - new window is at %p", myWindow);
+    PtyLog(@"finishInitializationWithSmartLayout - new window is at %p", myWindow);
     [self setWindow:myWindow];
     [myWindow release];
 
@@ -541,8 +565,6 @@ NSString *sessionsKey = @"sessions";
     [[self window] setRestorable:YES];
     [[self window] setRestorationClass:[PseudoTerminalRestorer class]];
     terminalGuid_ = [[NSString stringWithFormat:@"pty-%@", [ProfileModel freshGuid]] retain];
-
-    return self;
 }
 
 - (void)updateDivisionView {
@@ -6340,12 +6362,30 @@ NSString *sessionsKey = @"sessions";
 -(void)insertInSessions:(PTYSession *)object atIndex:(unsigned)anIndex
 {
     PtyLog(@"PseudoTerminal: -insertInSessions: %p atIndex: %d", object, anIndex);
-    // TODO: test this
+    BOOL toggle = NO;
+    if (![self windowInited]) {
+        // call initWithSmartLayout:YES, etc, like this:
+        Profile *aDict = [object addressBookEntry];
+        [self finishInitializationWithSmartLayout:YES
+                                       windowType:[[iTermController sharedInstance] windowTypeForBookmark:aDict]
+                                           screen:aDict[KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
+                                         isHotkey:NO];
+        if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
+            [self hideAfterOpening];
+        }
+        [[iTermController sharedInstance] addInTerminals:self];
+        toggle = ([self windowType] == WINDOW_TYPE_FULL_SCREEN) ||
+                 ([self windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
+    }
+
     [self setupSession:object title:nil withSize:nil];
     if ([object SCREEN]) {  // screen initialized ok
         [self insertSession:object atIndex:anIndex];
     }
     [[self currentTab] numberOfSessionsDidChange];
+    if (toggle) {
+        [self delayedEnterFullscreen];
+    }
 }
 
 -(void)removeFromSessionsAtIndex:(unsigned)anIndex

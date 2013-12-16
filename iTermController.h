@@ -110,6 +110,7 @@
 
 - (void)storePreviouslyActiveApp;
 - (void)restorePreviouslyActiveApp;
+- (int)windowTypeForBookmark:(Profile*)aDict;
 
 @end
 

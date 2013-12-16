@@ -901,7 +901,7 @@ static BOOL initDone = NO;
     }
 }
 
-- (int)_windowTypeForBookmark:(Profile*)aDict
+- (int)windowTypeForBookmark:(Profile*)aDict
 {
     if ([aDict objectForKey:KEY_WINDOW_TYPE]) {
         int windowType = [[aDict objectForKey:KEY_WINDOW_TYPE] intValue];
@@ -1037,7 +1037,7 @@ static BOOL initDone = NO;
     BOOL toggle = NO;
     if (theTerm == nil || ![theTerm windowInited]) {
         [iTermController switchToSpaceInBookmark:aDict];
-        int windowType = [self _windowTypeForBookmark:aDict];
+        int windowType = [self windowTypeForBookmark:aDict];
         if (isHotkey) {
             if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
                 windowType = WINDOW_TYPE_FULL_SCREEN;
@@ -1048,10 +1048,18 @@ static BOOL initDone = NO;
                 windowType = WINDOW_TYPE_FORCE_FULL_SCREEN;
             }
         }
-        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                 windowType:windowType
-                                                     screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
-                                                   isHotkey:isHotkey] autorelease];
+        if (theTerm) {
+            term = theTerm;
+            [term finishInitializationWithSmartLayout:YES
+                                           windowType:windowType
+                                               screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
+                                             isHotkey:isHotkey];
+        } else {
+            term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
+                                                     windowType:windowType
+                                                         screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
+                                                       isHotkey:isHotkey] autorelease];
+        }
         if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
             [term hideAfterOpening];
         }
