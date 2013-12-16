@@ -123,5 +123,6 @@ CTFontDrawGlyphsFunction* GetCTFontDrawGlyphsFunction(void);
 
 @interface NSScreen (future)
 - (CGFloat)futureBackingScaleFactor;
++ (BOOL)futureScreensHaveSeparateSpaces;
 @end
 
