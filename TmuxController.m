@@ -40,7 +40,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     "#{window_layout}\t"
     "#{?window_active,1,0}\"";
 
-@interface TmuxController (Private)
+@interface TmuxController ()
 
 - (int)windowIdFromString:(NSString *)s;
 - (void)retainWindow:(int)window withTab:(PTYTab *)tab;
@@ -915,9 +915,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
          responseSelector:@selector(listSessionsResponse:)];
 }
 
-@end
-
-@implementation TmuxController (Private)
+#pragma mark - Private
 
 - (void)getOriginsResponse:(NSString *)result
 {

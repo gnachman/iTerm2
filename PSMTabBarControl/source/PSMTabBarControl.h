@@ -42,13 +42,22 @@
 @protocol PSMTabStyle;
 @protocol PTYTabViewDelegateProtocol;
 
+// These methods are KVO-observed.
+@protocol PSMTabBarControlRepresentedObjectIdentifierProtocol <NSObject>
+@optional
+- (BOOL)isProcessing;
+- (void)setIsProcessing:(BOOL)processing;
+- (NSImage *)icon;
+- (void)setIcon:(NSImage *)icon;
+- (int)objectCount;
+- (void)setObjectCount:(int)objectCount;
+@end
+
 @protocol PSMTabBarControlDelegate <NSTabViewDelegate>
 @optional
 - (NSDragOperation)tabView:(NSTabView *)aTabView
     draggingEnteredTabBarForSender:(id<NSDraggingInfo>)tabView;
 - (BOOL)tabView:(NSTabView *)tabView shouldAcceptDragFromSender:(id<NSDraggingInfo>)sender;
-
-
 
 //Standard NSTabView methods
 - (BOOL)tabView:(NSTabView *)aTabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem;

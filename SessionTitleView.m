@@ -51,7 +51,7 @@ static const CGFloat kButtonSize = 17;
 
         x += closeButton_.frame.size.width + kMargin;
         menuButton_ = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, 0, 42, 16.0) pullsDown:YES];
-        [(NSPopUpButtonCell *)[menuButton_ cell] setBezelStyle:NSSmallIconButtonBezelStyle];
+        [(NSPopUpButtonCell *)[menuButton_ cell] setBezeled:NO];
         [[menuButton_ cell] setArrowPosition:NSPopUpArrowAtBottom];
         [menuButton_ setBordered:NO];
         [menuButton_ addItemWithTitle:@""];

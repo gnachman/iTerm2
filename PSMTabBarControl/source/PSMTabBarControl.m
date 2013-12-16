@@ -1656,7 +1656,7 @@
 {
     // validate the drag operation only if there's a valid tab bar to drop into
     BOOL badType = [[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] == NSNotFound;
-    if (badType && [[self delegate] respondsToSelector:@selector(tabView:shouldAcceptDragFromSender:sender:)] &&
+    if (badType && [[self delegate] respondsToSelector:@selector(tabView:shouldAcceptDragFromSender:)] &&
         ![[self delegate] tabView:tabView shouldAcceptDragFromSender:sender]) {
         badType = YES;
     }

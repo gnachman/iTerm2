@@ -69,6 +69,10 @@
 - (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux;
 - (IBAction) previousTerminal:(id)sender;
 - (IBAction) nextTerminal:(id)sender;
+- (void)newSessionsInWindow:(id)sender;
+- (void)newSessionsInNewWindow:(id)sender;
+- (void)launchScript:(id)sender;
+
 - (void)arrangeHorizontally;
 - (void)newSessionInTabAtIndex:(id)sender;
 - (void)newSessionInWindowAtIndex:(id)sender;
