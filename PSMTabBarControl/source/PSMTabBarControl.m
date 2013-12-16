@@ -260,12 +260,12 @@
     _lastMiddleMouseDownEvent = event;
 }
 
-- (id)delegate
+- (id<PSMTabBarControlDelegate>)delegate
 {
     return delegate;
 }
 
-- (void)setDelegate:(id)object
+- (void)setDelegate:(id<PSMTabBarControlDelegate>)object
 {
     delegate = object;
 
@@ -867,13 +867,13 @@
     NSTabViewItem *theItem = [tabView tabViewItemAtIndex:sourceIndex];
     BOOL reselect = ([tabView selectedTabViewItem] == theItem);
 
-    id tempDelegate = [tabView delegate];
+    id<NSTabViewDelegate> tempDelegate = [tabView delegate];
     [tabView setDelegate:nil];
     [theItem retain];
     [tabView removeTabViewItem:theItem];
     [tabView insertTabViewItem:theItem atIndex:destIndex];
     [theItem release];
-    
+
     id cell = [_cells objectAtIndex:sourceIndex];
     [cell retain];
     [_cells removeObjectAtIndex:sourceIndex];
@@ -1723,7 +1723,7 @@
 
     [item retain];
     if(([self delegate]) && ([[self delegate] respondsToSelector:@selector(closeTab:)])){
-        [(id<PTYTaskDelegate>)[self delegate] closeTab:[item identifier]];
+        [[self delegate] closeTab:[item identifier]];
     }
 
     [item release];

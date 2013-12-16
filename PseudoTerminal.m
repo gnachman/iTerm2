@@ -502,10 +502,10 @@ NSString *sessionsKey = @"sessions";
     [[[self window] contentView] addSubview:bottomBar];
 
     // assign tabview and delegates
-    [tabBarControl setTabView: TABVIEW];
+    [tabBarControl setTabView:TABVIEW];
     [TABVIEW setDelegate:tabBarControl];
-    [tabBarControl setDelegate: self];
-    [tabBarControl setHideForSingleTab: NO];
+    [tabBarControl setDelegate:self];
+    [tabBarControl setHideForSingleTab:NO];
 
     // set the style of tabs to match window style
     [self setTabBarStyle];
@@ -3193,7 +3193,7 @@ NSString *sessionsKey = @"sessions";
 - (void)tabView:(NSTabView*)aTabView didDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)aTabBarControl
 {
     PTYTab *aTab = [tabViewItem identifier];
-    PseudoTerminal *term = [aTabBarControl delegate];
+    PseudoTerminal *term = (PseudoTerminal *)[aTabBarControl delegate];
 
     if ([term numberOfTabs] == 1) {
         [term fitWindowToTabs];

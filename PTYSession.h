@@ -28,6 +28,7 @@
 #import "FindViewController.h"
 #import "ITAddressBookMgr.h"
 #import "LineBuffer.h"
+#import "PTYTask.h"
 #import "PTYTextView.h"
 #import "PasteViewController.h"
 #import "ProfileModel.h"
@@ -78,6 +79,7 @@ typedef enum {
 @interface PTYSession : NSResponder <
     FindViewControllerDelegate,
     PasteViewControllerDelegate,
+    PTYTaskDelegate,
     PTYTextViewDelegate,
     TmuxGatewayDelegate,
     VT100ScreenDelegate>

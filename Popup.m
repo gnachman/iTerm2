@@ -27,11 +27,12 @@
  */
 
 #import "Popup.h"
-#import "VT100Screen.h"
-#import "PTYTextView.h"
-#include <wctype.h>
-#import "iTermApplicationDelegate.h"
+#import "PseudoTerminal.h"
 #import "PTYTab.h"
+#import "PTYTextView.h"
+#import "VT100Screen.h"
+#import "iTermApplicationDelegate.h"
+#include <wctype.h>
 
 #ifdef POPUP_VERBOSE_LOGGING
 #define PopLog NSLog

@@ -14,7 +14,7 @@
 #import "PTYTab.h"
 #import "PseudoTerminal.h"
 
-@interface TmuxDashboardController (Private)
+@interface TmuxDashboardController ()
 
 - (void)tmuxControllerDetached:(NSNotification *)notification;
 - (TmuxController *)tmuxController;
@@ -239,9 +239,7 @@
     return [sessionsTable_ selectedSessionName];
 }
 
-@end
-
-@implementation TmuxDashboardController (Private)
+#pragma mark - Private
 
 - (void)tmuxControllerDetached:(NSNotification *)notification
 {
