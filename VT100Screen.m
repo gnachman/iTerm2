@@ -2342,17 +2342,23 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)terminalPostGrowlNotification:(NSString *)message {
     if (postGrowlNotifications_) {
-        // Use a non-printable control character (RECORD SEPARATOR)
-        // to allow the user to specify both the alert title and text,
-        // if it's not present treat the whole message as the message
-        // as in previous versions. Ignore more than two "records" for
-        // future use.
-        NSArray *split = [message componentsSeparatedByString:@"\036"];
+        // If there's any newlines in the message string, treat the first line as
+        // the alert title and the remainder as the actual message. Ignore cases
+        // where there's really only a single line that begins and/or ends with newlines.
+        // Various things between the client and here can and will expand \n to \r\n, so
+        // use -getLineStart:end:contentsEnd:forRange: to reliably do what the user would
+        // expect here and not leave unintended dangling control characters for growl.
         NSString *description = message;
         NSString *title = nil;
-        if ([split count] > 1) {
-            title = [split objectAtIndex:0];
-            description = [split objectAtIndex:1];
+        NSUInteger endIndex, contentsIndex;
+        [message getLineStart:NULL
+                 end:&endIndex
+                 contentsEnd:&contentsIndex
+                 forRange:NSMakeRange(0, 0)];
+        if (endIndex < [message length]-1 &&
+            contentsIndex > 0) {
+            title = [message substringToIndex:contentsIndex];
+            description = [message substringFromIndex:endIndex];
         } else {
             title = NSLocalizedStringFromTableInBundle(@"Alert",
                                                        @"iTerm",
