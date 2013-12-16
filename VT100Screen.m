@@ -1646,6 +1646,13 @@ static const double kInterBellQuietPeriod = 0.1;
     return VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
 }
 
+- (void)requestUserAttentionWithMessage:(NSString *)message {
+    if (![self terminalPostGrowlNotification:message]) {
+        [self activateBell];
+    }
+    [NSApp requestUserAttention:NSCriticalRequest];
+}
+
 #pragma mark - VT100TerminalDelegate
 
 - (void)terminalAppendString:(NSString *)string isAscii:(BOOL)isAscii
@@ -2340,21 +2347,22 @@ static const double kInterBellQuietPeriod = 0.1;
     [delegate_ screenPopCurrentTitleForWindow:isWindow];
 }
 
-- (void)terminalPostGrowlNotification:(NSString *)message {
+- (BOOL)terminalPostGrowlNotification:(NSString *)message {
     if (postGrowlNotifications_) {
-        [[iTermGrowlDelegate sharedInstance]
-         growlNotify:NSLocalizedStringFromTableInBundle(@"Alert",
-                                                        @"iTerm",
-                                                        [NSBundle bundleForClass:[self class]],
-                                                        @"Growl Alerts")
-         withDescription:[NSString stringWithFormat:@"Session %@ #%d: %@",
-                          [delegate_ screenName],
-                          [delegate_ screenNumber],
-                          message]
-         andNotification:@"Customized Message"
-         windowIndex:[delegate_ screenWindowIndex]
-         tabIndex:[delegate_ screenTabIndex]
-         viewIndex:[delegate_ screenViewIndex]];
+        NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
+                                    [delegate_ screenName],
+                                    [delegate_ screenNumber],
+                                    message];
+        BOOL sent = [[iTermGrowlDelegate sharedInstance]
+                        growlNotify:@"Alert"
+                        withDescription:description
+                        andNotification:@"Customized Message"
+                            windowIndex:[delegate_ screenWindowIndex]
+                               tabIndex:[delegate_ screenTabIndex]
+                              viewIndex:[delegate_ screenViewIndex]];
+        return sent;
+    } else {
+        return NO;
     }
 }
 

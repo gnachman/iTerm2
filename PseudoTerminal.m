@@ -4299,6 +4299,11 @@ NSString *sessionsKey = @"sessions";
     [[self currentSession] previousMarkOrNote];
 }
 
+- (IBAction)toggleAlertOnNextMark:(id)sender {
+    PTYSession *currentSession = [self currentSession];
+    currentSession.alertOnNextMark = !currentSession.alertOnNextMark;
+}
+
 - (void)sessionWasRemoved
 {
     // This works around an apparent bug in NSSplitView that causes dividers'
@@ -5663,6 +5668,12 @@ NSString *sessionsKey = @"sessions";
         result = [[self currentSession] canInstantReplayNext];
     } else if ([item action] == @selector(toggleShowTimestamps:)) {
         result = ([self currentSession] != nil);
+    } else if ([item action] == @selector(toggleAlertOnNextMark:)) {
+        PTYSession *currentSession = [self currentSession];
+        if ([item respondsToSelector:@selector(setState:)]) {
+            [item setState:currentSession.alertOnNextMark ? NSOnState : NSOffState];
+        }
+        result = (currentSession != nil);
     } else if ([item action] == @selector(selectPaneUp:) ||
                [item action] == @selector(selectPaneDown:) ||
                [item action] == @selector(selectPaneLeft:) ||

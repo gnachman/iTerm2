@@ -268,6 +268,8 @@ typedef enum {
     VT100ScreenMark *lastMark_;
 }
 
+@property(nonatomic, assign) BOOL alertOnNextMark;
+
 // Return the current pasteboard value as a string.
 + (NSString*)pasteboardString;
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;

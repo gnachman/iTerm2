@@ -798,6 +798,8 @@ NSWindowDelegate,
 - (IBAction)showHideNotes:(id)sender;
 - (IBAction)nextMarkOrNote:(id)sender;
 - (IBAction)previousMarkOrNote:(id)sender;
+- (IBAction)toggleAlertOnNextMark:(id)sender;
+
 @end
 
 @interface PseudoTerminal (KeyValueCoding)
