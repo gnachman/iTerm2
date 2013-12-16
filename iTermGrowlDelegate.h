@@ -66,7 +66,9 @@
                             @"New Output",      \
                             @"Customized Message"
 
-@interface iTermGrowlDelegate : NSObject <GrowlApplicationBridgeDelegate> {
+@interface iTermGrowlDelegate : NSObject <
+  GrowlApplicationBridgeDelegate,
+  NSUserNotificationCenterDelegate> {
     BOOL enabled;
     NSArray * notifications;
 }

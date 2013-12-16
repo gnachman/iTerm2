@@ -74,7 +74,10 @@
             NSLog(@"Could not load Growl.framework");
         }
 
-//        [GrowlApplicationBridge setGrowlDelegate:self];
+        if (IsMountainLionOrLater()) {
+            [[NSUserNotificationCenter defaultUserNotificationCenter] setDelegate:self];
+        }
+
         [self registrationDictionaryForGrowl];
         [self setEnabled:YES];
 
@@ -136,27 +139,32 @@
            tabIndex:(int)tabIndex
           viewIndex:(int)viewIndex
 {
-    if (![self isEnabled]) {
-        return;
-    }
 
     NSDictionary *context = nil;
     if (windowIndex >= 0) {
-        context = [[[NSDictionary alloc] initWithObjectsAndKeys:
-                    [NSNumber numberWithInt:windowIndex], @"win",
-                    [NSNumber numberWithInt:tabIndex], @"tab",
-                    [NSNumber numberWithInt:viewIndex], @"view",
-                    nil] autorelease];
+        context = @{ @"win": @(windowIndex),
+                     @"tab": @(tabIndex),
+                     @"view": @(viewIndex) };
     }
 
     if ([[PreferencePanel sharedInstance] enableGrowl]) {
-        [GrowlApplicationBridge notifyWithTitle:title
-                                    description:description
-                               notificationName:notification
-                                       iconData:nil
-                                       priority:0
-                                       isSticky:NO
-                                   clickContext:context];
+        if ([self isEnabled]) {
+            [GrowlApplicationBridge notifyWithTitle:title
+                                        description:description
+                                   notificationName:notification
+                                           iconData:nil
+                                           priority:0
+                                           isSticky:NO
+                                       clickContext:context];
+        } else if (IsMountainLionOrLater()) {
+            // Fall back to notification center.
+            NSUserNotification *notification = [[[NSUserNotification alloc] init] autorelease];
+            notification.title = title;
+            notification.informativeText = description;
+            notification.soundName = NSUserNotificationDefaultSoundName;
+            notification.userInfo = context;
+            [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
+        }
     }
 }
 
@@ -208,6 +216,20 @@
 - (void) growlIsReady
 {
     NSLog(@"Growl is ready");
+}
+
+#pragma mark - NSUserNotificationCenterDelegate
+
+- (BOOL)userNotificationCenter:(NSUserNotificationCenter *)center
+     shouldPresentNotification:(NSUserNotification *)notification
+{
+    return YES;
+}
+
+- (void)userNotificationCenter:(NSUserNotificationCenter *)center
+       didActivateNotification:(NSUserNotification *)notification
+{
+    [self growlNotificationWasClicked:notification.userInfo];
 }
 
 @end

@@ -235,7 +235,7 @@ NSString *sessionsKey = @"sessions";
     // launch session "Profile Name"
     // which invokes handleLaunchScriptCommand, which in turn calls initWithSmartLayotu:windowType:screen:isHotkey:
     // Alternatively, a script like this:
-    /
+    //
     // tell application "iTerm"
     //   activate
     //   set myterm to (make new terminal)
