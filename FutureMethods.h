@@ -15,6 +15,9 @@ CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFun
 
 @interface NSOpenPanel (Utility)
 - (NSArray *)legacyFilenames;
+
+@interface NSScreen (future)
++ (BOOL)futureScreensHaveSeparateSpaces;
 @end
 
 @interface NSSavePanel (Utility)

@@ -4745,7 +4745,8 @@ NSString *sessionsKey = @"sessions";
         currentScreen = [NSScreen mainScreen];
     }
 
-    if (currentScreen == menubarScreen || IsMavericksOrLater()) {
+    // If screens have separate spaces (only applicable in Mavericks and later) then all screens have a menu bar.
+    if (currentScreen == menubarScreen || (IsMavericksOrLater() && [NSScreen futureScreensHaveSeparateSpaces])) {
         int flags = NSApplicationPresentationAutoHideDock;
         if ([[PreferencePanel sharedInstance] hideMenuBarInFullscreen]) {
             flags |= NSApplicationPresentationAutoHideMenuBar;
