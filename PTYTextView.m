@@ -151,6 +151,7 @@ static const int kDragThreshold = 3;
 static const double kBackgroundConsideredDarkThreshold = 0.5;
 static const int kBroadcastMargin = 4;
 static const int kCoprocessMargin = 4;
+static const int kAlertMargin = 4;
 
 static NSCursor* textViewCursor;
 static NSCursor* xmrCursor;
@@ -159,6 +160,7 @@ static NSImage* wrapToTopImage;
 static NSImage* wrapToBottomImage;
 static NSImage* broadcastInputImage;
 static NSImage* coprocessImage;
+static NSImage* alertImage;
 
 static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
@@ -265,6 +267,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                                     ofType:@"png"];
     coprocessImage = [[NSImage alloc] initWithContentsOfFile:coprocessFile];
     [coprocessImage setFlipped:YES];
+
+    alertImage = [NSImage imageNamed:@"Alert"];
+    [alertImage setFlipped:YES];
 
     if ([[NSUserDefaults standardUserDefaults] objectForKey:@"SmartCursorColorBgThreshold"]) {
         // Override the default.
@@ -2039,6 +2044,14 @@ NSMutableArray* screens=0;
                                 fromRect:NSMakeRect(0, 0, size.width, size.height)
                                operation:NSCompositeSourceOver
                                 fraction:0.5];
+    }
+    if ([_delegate alertOnNextMark]) {
+        NSSize size = [alertImage size];
+        x -= size.width + kAlertMargin;
+        [alertImage drawAtPoint:NSMakePoint(x, frame.origin.y + kAlertMargin)
+                           fromRect:NSMakeRect(0, 0, size.width, size.height)
+                          operation:NSCompositeSourceOver
+                           fraction:0.5];
     }
 
     if (flashing_ > 0) {

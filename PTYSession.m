@@ -4771,6 +4771,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [pbtext_ appendData:data];
 }
 
+- (void)setAlertOnNextMark:(BOOL)alertOnNextMark {
+    _alertOnNextMark = alertOnNextMark;
+    [TEXTVIEW setNeedsDisplay:YES];
+}
+
 - (void)screenRequestAttention:(BOOL)request {
     if (request) {
         requestAttentionId_ = [NSApp requestUserAttention:NSCriticalRequest];
