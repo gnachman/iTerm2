@@ -58,8 +58,6 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
         case WINDOW_TYPE_NORMAL:
             rect.origin.x = -rect.size.width;
             rect.origin.y = -rect.size.height;
-            [[term window] setFrame:rect display:NO];
-
             rect.origin.x = screenFrame.origin.x + (screenFrame.size.width - rect.size.width) / 2;
             rect.origin.y = screenFrame.origin.y + (screenFrame.size.height - rect.size.height) / 2;
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
@@ -201,38 +199,27 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
     NSRect rect = [[term window] frame];
     switch ([term windowType]) {
         case WINDOW_TYPE_NORMAL:
-            rect.origin.x = -rect.size.width;
-            rect.origin.y = -rect.size.height;
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[term window] setFrame:rect display:YES animate:YES];
             [[[term window] animator] setAlphaValue:0];
             break;
 
         case WINDOW_TYPE_TOP:
-            rect.origin.y = screenFrame.size.height;
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[term window] setFrame:rect display:YES animate:YES];
             [[[term window] animator] setAlphaValue:0];
             break;
 
         case WINDOW_TYPE_BOTTOM:
-            rect.origin.y = screenFrame.origin.y - rect.size.height;
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[term window] setFrame:rect display:YES animate:YES];
             [[[term window] animator] setAlphaValue:0];
             break;
 
         case WINDOW_TYPE_LEFT:
-            rect.origin.x = -rect.size.width;
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[term window] setFrame:rect display:YES animate:YES];
             [[[term window] animator] setAlphaValue:0];
             break;
 
         case WINDOW_TYPE_RIGHT:
-            rect.origin.x = screenFrame.origin.x + screenFrame.size.width;
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[term window] setFrame:rect display:YES animate:YES];
             [[[term window] animator] setAlphaValue:0];
             break;
 
