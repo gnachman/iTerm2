@@ -1830,7 +1830,7 @@ NSString *sessionsKey = @"sessions";
 
     // update the cursor
     if ([[[self currentSession] TEXTVIEW] refresh]) {
-        [[self currentSession] scheduleUpdateIn:kBlinkTimerIntervalSec];
+        [[self currentSession] scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
     }
     [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
     [self _loadFindStringFromSharedPasteboard];

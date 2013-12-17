@@ -2455,7 +2455,7 @@ NSMutableArray* screens=0;
         // The user might have used the scroll wheel to cause blinking text to become
         // visible. Make sure the timer is running if anything onscreen is
         // blinking.
-        [[dataSource session] scheduleUpdateIn:kBlinkTimerIntervalSec];
+        [[dataSource session] scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
     }
     [selectedFont_ release];
     selectedFont_ = nil;
@@ -9943,9 +9943,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     struct timeval now;
     BOOL redrawBlink = NO;
     gettimeofday(&now, NULL);
-    long long nowTenths = now.tv_sec * 10 + now.tv_usec / 100000;
-    long long lastBlinkTenths = lastBlink.tv_sec * 10 + lastBlink.tv_usec / 100000;
-    if (nowTenths >= lastBlinkTenths + 7) {
+    double timeDelta = now.tv_sec - lastBlink.tv_sec;
+    timeDelta += (now.tv_usec - lastBlink.tv_usec) / 1000000.0;
+    if (timeDelta >= [[PreferencePanel sharedInstance] timeBetweenBlinks]) {
         blinkShow = !blinkShow;
         lastBlink = now;
         redrawBlink = YES;

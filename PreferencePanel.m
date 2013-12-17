@@ -3449,6 +3449,17 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return [prefs boolForKey:@"dockIconTogglesWindow"];
 }
 
+- (NSTimeInterval)timeBetweenBlinks
+{
+    static NSTimeInterval timeBetweenBlinks;
+    if (!timeBetweenBlinks) {
+        timeBetweenBlinks = [[NSUserDefaults standardUserDefaults] doubleForKey:@"TimeBetweenBlinks"];
+        if (!timeBetweenBlinks) {
+            timeBetweenBlinks = 0.5;
+        }
+    }
+    return timeBetweenBlinks;
+}
 
 #pragma mark - URL Handler
 
