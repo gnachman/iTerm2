@@ -297,7 +297,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 }
 
 - (BOOL)useThreeFingerTapGestureRecognizer {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"ThreeFingerTapEmulatesThreeFingerClick"];
+    // This used to be guarded by [[NSUserDefaults standardUserDefaults] boolForKey:@"ThreeFingerTapEmulatesThreeFingerClick"];
+    // but I'm going to turn it on by default and see if anyone complains. 12/16/13
+    return YES;
 }
 
 - (void)viewDidChangeBackingProperties {
