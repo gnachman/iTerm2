@@ -162,7 +162,7 @@
             NSUserNotification *notification = [[[NSUserNotification alloc] init] autorelease];
             notification.title = title;
             notification.informativeText = description;
-            notification.soundName = NSUserNotificationDefaultSoundName;
+            notification.soundName = nil;
             notification.userInfo = context;
             [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
             return YES;
