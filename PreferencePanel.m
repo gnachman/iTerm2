@@ -1528,17 +1528,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     NSMutableDictionary* theDict = [NSMutableDictionary dictionaryWithCapacity:24];
     int i = 0;
     for (NSString* colorKey in colorKeys) {
-        NSColor* theColor = [[wells[i++] color] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-        double r = [theColor redComponent];
-        double g = [theColor greenComponent];
-        double b = [theColor blueComponent];
-
-        NSDictionary* colorDict = [NSDictionary dictionaryWithObjectsAndKeys:
-                                   [NSNumber numberWithDouble:r], @"Red Component",
-                                   [NSNumber numberWithDouble:g], @"Green Component",
-                                   [NSNumber numberWithDouble:b], @"Blue Component",
-                                   nil];
-        [theDict setObject:colorDict forKey:colorKey];
+        [theDict setObject:[ITAddressBookMgr encodeColor:[wells[i++] color]] forKey:colorKey];
     }
     if (![theDict writeToFile:filename atomically:NO]) {
         NSRunAlertPanel(@"Save Failed.",
@@ -1621,10 +1611,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
     for (id colorName in settings) {
         NSDictionary* preset = [settings objectForKey:colorName];
-        float r = [[preset objectForKey:@"Red Component"] floatValue];
-        float g = [[preset objectForKey:@"Green Component"] floatValue];
-        float b = [[preset objectForKey:@"Blue Component"] floatValue];
-        NSColor* color = [NSColor colorWithCalibratedRed:r green:g blue:b alpha:1];
+        NSColor* color = [ITAddressBookMgr decodeColor:preset];
         NSAssert([newDict objectForKey:colorName], @"Missing color in existing dict");
         [newDict setObject:[ITAddressBookMgr encodeColor:color] forKey:colorName];
     }
@@ -3462,6 +3449,17 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return [prefs boolForKey:@"dockIconTogglesWindow"];
 }
 
+- (NSTimeInterval)timeBetweenBlinks
+{
+    static NSTimeInterval timeBetweenBlinks;
+    if (!timeBetweenBlinks) {
+        timeBetweenBlinks = [[NSUserDefaults standardUserDefaults] doubleForKey:@"TimeBetweenBlinks"];
+        if (!timeBetweenBlinks) {
+            timeBetweenBlinks = 0.5;
+        }
+    }
+    return timeBetweenBlinks;
+}
 
 #pragma mark - URL Handler
 

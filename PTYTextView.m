@@ -302,7 +302,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 }
 
 - (BOOL)useThreeFingerTapGestureRecognizer {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"ThreeFingerTapEmulatesThreeFingerClick"];
+    // This used to be guarded by [[NSUserDefaults standardUserDefaults] boolForKey:@"ThreeFingerTapEmulatesThreeFingerClick"];
+    // but I'm going to turn it on by default and see if anyone complains. 12/16/13
+    return YES;
 }
 
 - (void)viewDidChangeBackingProperties {
@@ -2453,7 +2455,7 @@ NSMutableArray* screens=0;
         // The user might have used the scroll wheel to cause blinking text to become
         // visible. Make sure the timer is running if anything onscreen is
         // blinking.
-        [[dataSource session] scheduleUpdateIn:kBlinkTimerIntervalSec];
+        [[dataSource session] scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
     }
     [selectedFont_ release];
     selectedFont_ = nil;
@@ -3279,11 +3281,6 @@ NSMutableArray* screens=0;
 // Update range of underlined chars indicating cmd-clicakble url.
 - (void)updateUnderlinedURLs:(NSEvent *)event
 {
-    if ([self reportingMouseClicks] && !([event modifierFlags] & NSAlternateKeyMask)) {
-        // Mouse reporting takes precendence over URL opening.
-        [self removeUnderline];
-        return;
-    }
     if ([event modifierFlags] & NSCommandKeyMask) {
         NSPoint screenPoint = [NSEvent mouseLocation];
         NSRect windowRect = [[self window] convertRectFromScreen:NSMakeRect(screenPoint.x,
@@ -3835,6 +3832,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint locationInWindow = [event locationInWindow];
     NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
+    BOOL haveReverseSelection = (startY > endY ||
+                                 (startY == endY && startX > endX));
+    BOOL isUnshiftedSingleClick = ([event clickCount] < 2 &&
+                                   !mouseDragged &&
+                                   !([event modifierFlags] & NSShiftKeyMask));
+    BOOL willFollowLink = (!haveReverseSelection &&
+                           isUnshiftedSingleClick &&
+                           cmdPressed &&
+                           [[PreferencePanel sharedInstance] cmdSelection]);
+
     // Send mouse up event to host if xterm mouse reporting is on
     if (frontTextView == self &&
         [self xtermMouseReporting] &&
@@ -3864,8 +3871,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                             withModifiers:[event modifierFlags]
                                                       atX:rx
                                                         Y:ry]];
+                if (willFollowLink) {
+                    // This is a special case. Cmd-click is treated like alt-click at the protocol
+                    // level (because we use alt to disable mouse reporting, unfortunately). Few
+                    // apps interpret alt-clicks specially, and we really want to handle cmd-click
+                    // on links even when mouse reporting is on. Link following has to be done on
+                    // mouse up to allow the user to drag links and to cancel accidental clicks (by
+                    // doing mouseUp far away from mouseDown). So we report the cmd-click as an
+                    // alt-click and then open the link. Note that cmd-alt-click isn't handled here
+                    // because you won't get here if alt is pressed. Note that openTargetWithEvent:
+                    // may not do anything if the pointer isn't over a clickable string.
+                    [self openTargetWithEvent:event];
+                }
                 return;
-                break;
 
             case MOUSE_REPORTING_NONE:
             case MOUSE_REPORTING_HILITE:
@@ -3888,17 +3906,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // make sure we have key focus
     [[self window] makeFirstResponder:self];
 
-    if (startY > endY ||
-        (startY == endY && startX > endX)) {
+    if (haveReverseSelection) {
         // Make sure the start is before the end.
         DLog(@"swap selection start and end");
         int t;
         t = startY; startY = endY; endY = t;
         t = startX; startX = endX; endX = t;
         [self setSelectionTime];
-    } else if ([event clickCount] < 2 &&
-               !mouseDragged &&
-               !([event modifierFlags] & NSShiftKeyMask)) {
+    } else if (isUnshiftedSingleClick) {
         // Just a click in the window.
         DLog(@"is a click in the window");
 
@@ -3923,8 +3938,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
 
         startX=-1;
-        if (cmdPressed &&
-            [[PreferencePanel sharedInstance] cmdSelection]) {
+        if (willFollowLink) {
             if (altPressed) {
                 [self openTargetInBackgroundWithEvent:event];
             } else {
@@ -4220,23 +4234,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                           respectHardNewlines:NO];
 
     URLAction *action = [self urlActionForClickAtX:x y:y];
-    switch (action.actionType) {
-        case kURLActionOpenExistingFile:
-            if (![trouter openPath:action.string
-                  workingDirectory:action.workingDirectory
-                            prefix:prefix
-                            suffix:suffix]) {
+    if (action) {
+        switch (action.actionType) {
+            case kURLActionOpenExistingFile:
+                if (![trouter openPath:action.string
+                      workingDirectory:action.workingDirectory
+                                prefix:prefix
+                                suffix:suffix]) {
+                    [self _findUrlInString:action.string andOpenInBackground:openInBackground];
+                }
+                break;
+                
+            case kURLActionOpenURL:
                 [self _findUrlInString:action.string andOpenInBackground:openInBackground];
+                break;
+                
+            case kURLActionSmartSelectionAction: {
+                [self performSelector:action.selector withObject:action];
+                break;
             }
-            break;
-            
-        case kURLActionOpenURL:
-            [self _findUrlInString:action.string andOpenInBackground:openInBackground];
-            break;
-            
-        case kURLActionSmartSelectionAction: {
-            [self performSelector:action.selector withObject:action];
-            break;
         }
     }
 }
@@ -9927,9 +9943,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     struct timeval now;
     BOOL redrawBlink = NO;
     gettimeofday(&now, NULL);
-    long long nowTenths = now.tv_sec * 10 + now.tv_usec / 100000;
-    long long lastBlinkTenths = lastBlink.tv_sec * 10 + lastBlink.tv_usec / 100000;
-    if (nowTenths >= lastBlinkTenths + 7) {
+    double timeDelta = now.tv_sec - lastBlink.tv_sec;
+    timeDelta += (now.tv_usec - lastBlink.tv_usec) / 1000000.0;
+    if (timeDelta >= [[PreferencePanel sharedInstance] timeBetweenBlinks]) {
         blinkShow = !blinkShow;
         lastBlink = now;
         redrawBlink = YES;

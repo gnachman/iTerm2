@@ -138,22 +138,34 @@
     NSColor* color = [origColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
     CGFloat red, green, blue, alpha;
     [color getRed:&red green:&green blue:&blue alpha:&alpha];
-    return [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithFloat:red], @"Red Component",
-                                                      [NSNumber numberWithFloat:green], @"Green Component",
-                                                      [NSNumber numberWithFloat:blue], @"Blue Component",
-                                                      nil];
+    return @{ @"Color Space": @"Calibrated",
+              @"Red Component": @(red),
+              @"Green Component": @(green),
+              @"Blue Component": @(blue) };
 }
 
+// This method always returns a color in the calibrated color space. If the
+// color space in the plist is not calibrated, it is converted (which preserves
+// the actual color values).
 + (NSColor*)decodeColor:(NSDictionary*)plist
 {
-    if ([plist count] != 3) {
-        return [NSColor blackColor];
+    if ([plist count] < 3) {
+        return [NSColor colorWithCalibratedRed:0.0 green:0.0 blue:0.0 alpha:1.0];
     }
 
-    return [NSColor colorWithCalibratedRed:[[plist objectForKey:@"Red Component"] floatValue]
-                                     green:[[plist objectForKey:@"Green Component"] floatValue]
-                                      blue:[[plist objectForKey:@"Blue Component"] floatValue]
-                                     alpha:1.0];
+    NSString *colorSpace = plist[@"Color Space"];
+    if ([colorSpace isEqualToString:@"sRGB"]) {
+        NSColor *srgb = [NSColor colorWithSRGBRed:[[plist objectForKey:@"Red Component"] floatValue]
+                                            green:[[plist objectForKey:@"Green Component"] floatValue]
+                                             blue:[[plist objectForKey:@"Blue Component"] floatValue]
+                                            alpha:1.0];
+        return [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+    } else {
+        return [NSColor colorWithCalibratedRed:[[plist objectForKey:@"Red Component"] floatValue]
+                                         green:[[plist objectForKey:@"Green Component"] floatValue]
+                                          blue:[[plist objectForKey:@"Blue Component"] floatValue]
+                                         alpha:1.0];
+    }
 }
 
 - (void)copyProfileToBookmark:(NSMutableDictionary *)dict

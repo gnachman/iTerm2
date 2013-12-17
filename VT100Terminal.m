@@ -3161,7 +3161,7 @@ static VT100TCC decode_string(unsigned char *datap,
     if (modflag & NSShiftKeyMask) {
         cb |= MOUSE_BUTTON_SHIFT_FLAG;
     }
-    if (modflag & NSAlternateKeyMask) {
+    if (modflag & NSCommandKeyMask) {
         cb |= MOUSE_BUTTON_META_FLAG;
     }
     char *buf = [self mouseReport:cb atX:(x + 1) Y:(y + 1)];
@@ -3187,7 +3187,7 @@ static VT100TCC decode_string(unsigned char *datap,
     if (modflag & NSShiftKeyMask) {
         cb |= MOUSE_BUTTON_SHIFT_FLAG;
     }
-    if (modflag & NSAlternateKeyMask) {
+    if (modflag & NSCommandKeyMask) {
         cb |= MOUSE_BUTTON_META_FLAG;
     }
     char *buf = [self mouseReport:cb atX:(x + 1) Y:(y + 1)];
@@ -3213,7 +3213,7 @@ static VT100TCC decode_string(unsigned char *datap,
     if (modflag & NSShiftKeyMask) {
         cb |= MOUSE_BUTTON_SHIFT_FLAG;
     }
-    if (modflag & NSAlternateKeyMask) {
+    if (modflag & NSCommandKeyMask) {
         cb |= MOUSE_BUTTON_META_FLAG;
     }
     char *buf = [self mouseReport:(32 + cb) atX:(x + 1) Y:(y + 1)];

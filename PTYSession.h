@@ -57,8 +57,7 @@
 @class iTermController;
 @class iTermGrowlDelegate;
 
-// Timer period when all we have to do is update blinking text/cursor.
-static const float kBlinkTimerIntervalSec = 1.0 / 2.0;
+// The time period for just blinking is in -[PreferencePanel timeBetweenBlinks].
 // Timer period when receiving lots of data.
 static const float kSlowTimerIntervalSec = 1.0 / 10.0;
 // Timer period for interactive use.

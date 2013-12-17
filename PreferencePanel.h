@@ -786,6 +786,8 @@ typedef enum {
 - (BOOL)remappingDisabledTemporarily;
 - (BOOL)hotkeyTogglesWindow;
 - (BOOL)dockIconTogglesWindow;
+- (NSTimeInterval)timeBetweenBlinks;
+
 - (Profile*)hotkeyBookmark;
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename;

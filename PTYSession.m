@@ -2673,7 +2673,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
     if (anotherUpdateNeeded) {
         if ([[[self tab] parentWindow] currentTab] == [self tab]) {
-            [self scheduleUpdateIn:kBlinkTimerIntervalSec];
+            [self scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
         } else {
             [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
         }
@@ -2691,7 +2691,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)refreshAndStartTimerIfNeeded
 {
     if ([TEXTVIEW refresh]) {
-        [self scheduleUpdateIn:kBlinkTimerIntervalSec];
+        [self scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
     }
 }
 
