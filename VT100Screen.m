@@ -2349,10 +2349,33 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (BOOL)terminalPostGrowlNotification:(NSString *)message {
     if (postGrowlNotifications_) {
-        NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
+        // If there's any newlines in the message string, treat the first line as
+        // the alert title and the remainder as the actual message. Ignore cases
+        // where there's really only a single line that begins and/or ends with newlines.
+        // Various things between the client and here can and will expand \n to \r\n, so
+        // use -getLineStart:end:contentsEnd:forRange: to reliably do what the user would
+        // expect here and not leave unintended dangling control characters for growl.
+        NSString *description = message;
+        NSString *title = nil;
+        NSUInteger endIndex, contentsIndex;
+        [message getLineStart:NULL
+                 end:&endIndex
+                 contentsEnd:&contentsIndex
+                 forRange:NSMakeRange(0, 0)];
+        if (endIndex < [message length]-1 &&
+            contentsIndex > 0) {
+            title = [message substringToIndex:contentsIndex];
+            description = [message substringFromIndex:endIndex];
+        } else {
+            title = NSLocalizedStringFromTableInBundle(@"Alert",
+                                                       @"iTerm",
+                                                       [NSBundle bundleForClass:[self class]],
+                                                       @"Growl Alerts");
+        }
+        description = [NSString stringWithFormat:@"Session %@ #%d: %@",
                                     [delegate_ screenName],
                                     [delegate_ screenNumber],
-                                    message];
+                                    description];
         BOOL sent = [[iTermGrowlDelegate sharedInstance]
                         growlNotify:@"Alert"
                         withDescription:description
