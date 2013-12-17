@@ -58,7 +58,7 @@ static void GTMAssertSelectorNilOrImplementedWithReturnTypeAndArguments(id obj, 
         const char *foundArgType = [sig getArgumentTypeAtIndex:argCount];
           
         _GTMDevAssert(0 == strncmp(foundArgType, expectedArgType, strlen(expectedArgType)),
-                      @"\"%@\" selector \"%@\" argument %d should be type %s", 
+                      @"\"%@\" selector \"%@\" argument %lu should be type %s", 
                       NSStringFromClass([obj class]), 
                       NSStringFromSelector(sel),
                       (argCount - 2),
@@ -69,7 +69,7 @@ static void GTMAssertSelectorNilOrImplementedWithReturnTypeAndArguments(id obj, 
       
     // check that the proper number of arguments are present in the selector
     _GTMDevAssert(argCount == [sig numberOfArguments],
-                  @"\"%@\" selector \"%@\" should have %d arguments",
+                  @"\"%@\" selector \"%@\" should have %lu arguments",
                   NSStringFromClass([obj class]), 
                   NSStringFromSelector(sel),
                   (argCount - 2));

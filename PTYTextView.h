@@ -74,6 +74,7 @@
 - (void)launchCoprocessWithCommand:(NSString *)command;
 - (void)insertText:(NSString *)string;
 - (PTYTask *)SHELL;
+- (BOOL)alertOnNextMark;
 
 @end
 
@@ -425,13 +426,14 @@ enum {
 - (void)openTargetInBackgroundWithEvent:(NSEvent *)event;
 - (void)smartSelectWithEvent:(NSEvent *)event;
 - (void)smartSelectIgnoringNewlinesWithEvent:(NSEvent *)event;
-- (BOOL)smartSelectAtX:(int)x
-                     y:(int)y
-              toStartX:(int*)X1
-              toStartY:(int*)Y1
-                toEndX:(int*)X2
-                toEndY:(int*)Y2
-      ignoringNewlines:(BOOL)ignoringNewlines;
+- (NSDictionary *)smartSelectAtX:(int)x
+                               y:(int)y
+                        toStartX:(int*)X1
+                        toStartY:(int*)Y1
+                          toEndX:(int*)X2
+                          toEndY:(int*)Y2
+                ignoringNewlines:(BOOL)ignoringNewlines
+                  actionRequired:(BOOL)actionRequred;
 - (VT100GridCoordRange)rangeByTrimmingNullsFromRange:(VT100GridCoordRange)range
                                           trimSpaces:(BOOL)trimSpaces;
 - (void)openContextMenuWithEvent:(NSEvent *)event;

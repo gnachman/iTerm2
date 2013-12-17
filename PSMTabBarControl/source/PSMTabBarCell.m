@@ -105,6 +105,10 @@
     return _controlView;
 }
 
+- (id<PSMTabBarControlProtocol>)psmTabControlView {
+    return (id<PSMTabBarControlProtocol>)_controlView;
+}
+
 - (void)setControlView:(id)view
 {
     // no retain release pattern, as this simply switches a tab to another view.
@@ -527,7 +531,8 @@
 - (void)accessibilityPerformAction:(NSString *)action {
     if ([action isEqualToString:NSAccessibilityPressAction]) {
         // this tab was selected
-        [_controlView performSelector:@selector(tabClick:) withObject:self];
+        [[self psmTabControlView] performSelector:@selector(tabClick:)
+                                       withObject:self];
     }
 }
 

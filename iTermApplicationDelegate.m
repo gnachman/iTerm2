@@ -83,14 +83,6 @@ static BOOL hasBecomeActive = NO;
 // NSApplication delegate methods
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification
 {
-    // Check the system version for minimum requirements.
-    SInt32 gSystemVersion;
-    Gestalt(gestaltSystemVersion, &gSystemVersion);
-    if (gSystemVersion < 0x1050) {
-        NSRunAlertPanel(@"Sorry", @"iTerm2 requires OS 10.5 or newer.", @"OK", nil, nil);
-        [NSApp terminate: self];
-    }
-
     // set the TERM_PROGRAM environment variable
     putenv("TERM_PROGRAM=iTerm.app");
 

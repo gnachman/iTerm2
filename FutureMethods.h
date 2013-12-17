@@ -13,3 +13,13 @@
 typedef CGError CGSSetWindowBackgroundBlurRadiusFunction(CGSConnectionID cid, CGSWindowID wid, NSUInteger blur);
 CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFunction(void);
 
+@interface NSOpenPanel (Utility)
+- (NSArray *)legacyFilenames;
+@end
+
+@interface NSSavePanel (Utility)
+- (NSInteger)legacyRunModalForDirectory:(NSString *)path file:(NSString *)name types:(NSArray *)fileTypes;
+- (NSInteger)legacyRunModalForDirectory:(NSString *)path file:(NSString *)name;
+- (NSString *)legacyFilename;
+- (NSString *)legacyDirectory;
+@end

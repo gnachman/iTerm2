@@ -28,6 +28,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "PSMTabBarControl.h"
 #import "PTYTabView.h"
 #import "PTYWindow.h"
 #import "ProfileListView.h"
@@ -63,6 +64,7 @@ typedef enum {
 // or window-initiated).
 // OS 10.5 doesn't support window delegates
 @interface PseudoTerminal : NSWindowController <
+    PSMTabBarControlDelegate,
     PTYTabViewDelegateProtocol,
     PTYWindowDelegateProtocol,
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
@@ -287,6 +289,10 @@ NSWindowDelegate,
                windowType:(int)windowType
                    screen:(int)screenNumber
                  isHotkey:(BOOL)isHotkey;
+- (void)finishInitializationWithSmartLayout:(BOOL)smartLayout
+                                 windowType:(int)windowType
+                                     screen:(int)screenNumber
+                                   isHotkey:(BOOL)isHotkey;
 
 - (PseudoTerminal *)terminalDraggedFromAnotherWindowAtPoint:(NSPoint)point;
 
@@ -794,6 +800,10 @@ NSWindowDelegate,
 - (IBAction)showHideNotes:(id)sender;
 - (IBAction)nextMarkOrNote:(id)sender;
 - (IBAction)previousMarkOrNote:(id)sender;
+- (IBAction)toggleAlertOnNextMark:(id)sender;
+- (void)changeTabColorToMenuAction:(id)sender;
+- (void)moveSessionToWindow:(id)sender;
+
 @end
 
 @interface PseudoTerminal (KeyValueCoding)

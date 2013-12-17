@@ -30,6 +30,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "WindowControllerInterface.h"
+#import "PSMTabBarControl.h"
 #import "PTYSplitView.h"
 #import "FutureMethods.h"
 
@@ -42,7 +43,10 @@
 
 // This implements NSSplitViewDelegate but it was an informal protocol in 10.5. If 10.5 support
 // is eventually dropped, change this to make it official.
-@interface PTYTab : NSObject <NSSplitViewDelegate, PTYSplitViewDelegate> {
+@interface PTYTab : NSObject <
+  NSSplitViewDelegate,
+  PTYSplitViewDelegate,
+  PSMTabBarControlRepresentedObjectIdentifierProtocol> {
     PTYSession* activeSession_;
 
     // Owning tab view item

@@ -7,6 +7,7 @@
 //
 
 #import "ToastWindowController.h"
+#import "PseudoTerminal.h"
 #import "RoundedRectView.h"
 #import "iTermController.h"
 

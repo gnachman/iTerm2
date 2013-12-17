@@ -1646,6 +1646,13 @@ static const double kInterBellQuietPeriod = 0.1;
     return VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
 }
 
+- (void)requestUserAttentionWithMessage:(NSString *)message {
+    if (![self terminalPostGrowlNotification:message]) {
+        [self activateBell];
+    }
+    [NSApp requestUserAttention:NSCriticalRequest];
+}
+
 #pragma mark - VT100TerminalDelegate
 
 - (void)terminalAppendString:(NSString *)string isAscii:(BOOL)isAscii
@@ -2340,7 +2347,7 @@ static const double kInterBellQuietPeriod = 0.1;
     [delegate_ screenPopCurrentTitleForWindow:isWindow];
 }
 
-- (void)terminalPostGrowlNotification:(NSString *)message {
+- (BOOL)terminalPostGrowlNotification:(NSString *)message {
     if (postGrowlNotifications_) {
         // If there's any newlines in the message string, treat the first line as
         // the alert title and the remainder as the actual message. Ignore cases
@@ -2365,16 +2372,20 @@ static const double kInterBellQuietPeriod = 0.1;
                                                        [NSBundle bundleForClass:[self class]],
                                                        @"Growl Alerts");
         }
-        [[iTermGrowlDelegate sharedInstance]
-         growlNotify:title
-         withDescription:[NSString stringWithFormat:@"Session %@ #%d: %@",
-                          [delegate_ screenName],
-                          [delegate_ screenNumber],
-                          description]
-         andNotification:@"Customized Message"
-         windowIndex:[delegate_ screenWindowIndex]
-         tabIndex:[delegate_ screenTabIndex]
-         viewIndex:[delegate_ screenViewIndex]];
+        description = [NSString stringWithFormat:@"Session %@ #%d: %@",
+                                    [delegate_ screenName],
+                                    [delegate_ screenNumber],
+                                    description];
+        BOOL sent = [[iTermGrowlDelegate sharedInstance]
+                        growlNotify:@"Alert"
+                        withDescription:description
+                        andNotification:@"Customized Message"
+                            windowIndex:[delegate_ screenWindowIndex]
+                               tabIndex:[delegate_ screenTabIndex]
+                              viewIndex:[delegate_ screenViewIndex]];
+        return sent;
+    } else {
+        return NO;
     }
 }
 

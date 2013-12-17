@@ -901,7 +901,7 @@ static BOOL initDone = NO;
     }
 }
 
-- (int)_windowTypeForBookmark:(Profile*)aDict
+- (int)windowTypeForBookmark:(Profile*)aDict
 {
     if ([aDict objectForKey:KEY_WINDOW_TYPE]) {
         int windowType = [[aDict objectForKey:KEY_WINDOW_TYPE] intValue];
@@ -1037,7 +1037,7 @@ static BOOL initDone = NO;
     BOOL toggle = NO;
     if (theTerm == nil || ![theTerm windowInited]) {
         [iTermController switchToSpaceInBookmark:aDict];
-        int windowType = [self _windowTypeForBookmark:aDict];
+        int windowType = [self windowTypeForBookmark:aDict];
         if (isHotkey) {
             if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
                 windowType = WINDOW_TYPE_FULL_SCREEN;
@@ -1048,10 +1048,18 @@ static BOOL initDone = NO;
                 windowType = WINDOW_TYPE_FORCE_FULL_SCREEN;
             }
         }
-        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                 windowType:windowType
-                                                     screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
-                                                   isHotkey:isHotkey] autorelease];
+        if (theTerm) {
+            term = theTerm;
+            [term finishInitializationWithSmartLayout:YES
+                                           windowType:windowType
+                                               screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
+                                             isHotkey:isHotkey];
+        } else {
+            term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
+                                                     windowType:windowType
+                                                         screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
+                                                       isHotkey:isHotkey] autorelease];
+        }
         if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
             [term hideAfterOpening];
         }
@@ -1156,9 +1164,10 @@ static BOOL initDone = NO;
     return nil;
 }
 
-+ (BOOL)getSystemVersionMajor2:(unsigned int *)major
-                         minor:(unsigned int *)minor
-                        bugFix:(unsigned int *)bugFix {
+// http://cocoadev.com/DeterminingOSVersion
++ (BOOL)getSystemVersionMajor:(unsigned int *)major
+                        minor:(unsigned int *)minor
+                       bugFix:(unsigned int *)bugFix {
     NSDictionary *version = [NSDictionary dictionaryWithContentsOfFile:@"/System/Library/CoreServices/SystemVersion.plist"];
     NSString *productVersion = [version objectForKey:@"ProductVersion"];
     DLog(@"product version is %@", productVersion);
@@ -1184,57 +1193,6 @@ static BOOL initDone = NO;
             *bugFix = [[parts objectAtIndex:2] intValue];
         }
     }
-    return YES;
-}
-
-// http://www.cocoadev.com/index.pl?DeterminingOSVersion
-+ (BOOL)getSystemVersionMajor:(unsigned *)major
-                        minor:(unsigned *)minor
-                       bugFix:(unsigned *)bugFix;
-{
-    OSErr err;
-    SInt32 systemVersion, versionMajor, versionMinor, versionBugFix;
-    if ((err = Gestalt(gestaltSystemVersion, &systemVersion)) != noErr) {
-        DLog(@"Gestalt failed (1)");
-        return [self getSystemVersionMajor2:major minor:minor bugFix:bugFix];
-        return NO;
-    }
-    DLog(@"Old style system version is %x", (int)systemVersion);
-    if (systemVersion < 0x1040) {
-        if (major) {
-            *major = ((systemVersion & 0xF000) >> 12) * 10 + ((systemVersion & 0x0F00) >> 8);
-        }
-        if (minor) {
-            *minor = (systemVersion & 0x00F0) >> 4;
-        }
-        if (bugFix) {
-            *bugFix = (systemVersion & 0x000F);
-        }
-    } else {
-        if ((err = Gestalt(gestaltSystemVersionMajor, &versionMajor)) != noErr) {
-            DLog(@"Gestalt failed (2)");
-            return [self getSystemVersionMajor2:major minor:minor bugFix:bugFix];
-        }
-        if ((err = Gestalt(gestaltSystemVersionMinor, &versionMinor)) != noErr) {
-            DLog(@"Gestalt failed (3)");
-            return [self getSystemVersionMajor2:major minor:minor bugFix:bugFix];
-        }
-        if ((err = Gestalt(gestaltSystemVersionBugFix, &versionBugFix)) != noErr) {
-            DLog(@"Gestalt failed (4)");
-            return [self getSystemVersionMajor2:major minor:minor bugFix:bugFix];
-        }
-        DLog(@"Gestalt succeeded. version is %d, %d", versionMajor, versionMinor);
-        if (major) {
-            *major = versionMajor;
-        }
-        if (minor) {
-            *minor = versionMinor;
-        }
-        if (bugFix) {
-            *bugFix = versionBugFix;
-        }
-    }
-
     return YES;
 }
 

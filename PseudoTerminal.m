@@ -189,9 +189,7 @@ NSString *sessionsKey = @"sessions";
 - (void)hideFullScreenTabControl;
 - (NSRect)maxFrame;
 - (void)_drawFullScreenBlackBackground;
-- (void)copySettingsFrom:(PseudoTerminal*)other;
 - (void)insertTab:(PTYTab*)aTab atIndex:(int)anIndex;
-- (void)fitTabsToWindow;
 - (BOOL)_haveBottomBorder;
 - (BOOL)_haveTopBorder;
 - (float)maxCharHeight:(int*)numChars;
@@ -234,7 +232,18 @@ NSString *sessionsKey = @"sessions";
     // This is invoked by Applescript's "make new terminal" and must be followed by a command like
     // launch session "Profile Name"
     // which invokes handleLaunchScriptCommand, which in turn calls initWithSmartLayotu:windowType:screen:isHotkey:
-    return [super init];
+    // Alternatively, a script like this:
+    //
+    // tell application "iTerm"
+    //   activate
+    //   set myterm to (make new terminal)
+    //   tell myterm
+    //     set mysession to (make new session at the end of sessions)
+    //
+    // Causes insertInSessions:atIndex: to be called.
+    // A followup call to finishInitializationWithSmartLayout:windowType:screen:isHotkey:
+    // finishes intialization. -windowInited will return NO until that is done.
+    return [super initWithWindowNibName:@"PseudoTerminal"];
 }
 
 
@@ -250,11 +259,23 @@ NSString *sessionsKey = @"sessions";
                    screen:(int)screenNumber
                  isHotkey:(BOOL)isHotkey
 {
-    PTYWindow *myWindow;
-
     self = [super initWithWindowNibName:@"PseudoTerminal"];
     NSAssert(self, @"initWithWindowNibName returned nil");
-    DLog(@"-[%p initWithSmartLayout:%@ windowType:%d screen:%d isHotkey:%@ ",
+    if (self) {
+        [self finishInitializationWithSmartLayout:smartLayout
+                                       windowType:windowType
+                                           screen:screenNumber
+                                         isHotkey:isHotkey];
+    }
+    return self;
+}
+
+- (void)finishInitializationWithSmartLayout:(BOOL)smartLayout
+                                 windowType:(int)windowType
+                                     screen:(int)screenNumber
+                                   isHotkey:(BOOL)isHotkey
+{
+    DLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d isHotkey:%@ ",
          self,
          smartLayout ? @"YES" : @"NO",
          windowType,
@@ -372,7 +393,7 @@ NSString *sessionsKey = @"sessions";
     }
     preferredOrigin_ = initialFrame.origin;
 
-    PtyLog(@"initWithSmartLayout - initWithContentRect");
+    PtyLog(@"finishInitializationWithSmartLayout - initWithContentRect");
     // create the window programmatically with appropriate style mask
     NSUInteger styleMask = NSTitledWindowMask |
                            NSClosableWindowMask |
@@ -393,6 +414,7 @@ NSString *sessionsKey = @"sessions";
     }
 
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
+    PTYWindow *myWindow;
     myWindow = [[PTYWindow alloc] initWithContentRect:initialFrame
                                             styleMask:styleMask
                                               backing:NSBackingStoreBuffered
@@ -405,7 +427,7 @@ NSString *sessionsKey = @"sessions";
     }
     [myWindow _setContentHasShadow:NO];
 
-    PtyLog(@"initWithSmartLayout - new window is at %p", myWindow);
+    PtyLog(@"finishInitializationWithSmartLayout - new window is at %p", myWindow);
     [self setWindow:myWindow];
     [myWindow release];
 
@@ -478,10 +500,10 @@ NSString *sessionsKey = @"sessions";
     [[[self window] contentView] addSubview:bottomBar];
 
     // assign tabview and delegates
-    [tabBarControl setTabView: TABVIEW];
+    [tabBarControl setTabView:TABVIEW];
     [TABVIEW setDelegate:tabBarControl];
-    [tabBarControl setDelegate: self];
-    [tabBarControl setHideForSingleTab: NO];
+    [tabBarControl setDelegate:self];
+    [tabBarControl setHideForSingleTab:NO];
 
     // set the style of tabs to match window style
     [self setTabBarStyle];
@@ -541,8 +563,6 @@ NSString *sessionsKey = @"sessions";
     [[self window] setRestorable:YES];
     [[self window] setRestorationClass:[PseudoTerminalRestorer class]];
     terminalGuid_ = [[NSString stringWithFormat:@"pty-%@", [ProfileModel freshGuid]] retain];
-
-    return self;
 }
 
 - (void)updateDivisionView {
@@ -3171,7 +3191,7 @@ NSString *sessionsKey = @"sessions";
 - (void)tabView:(NSTabView*)aTabView didDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)aTabBarControl
 {
     PTYTab *aTab = [tabViewItem identifier];
-    PseudoTerminal *term = [aTabBarControl delegate];
+    PseudoTerminal *term = (PseudoTerminal *)[aTabBarControl delegate];
 
     if ([term numberOfTabs] == 1) {
         [term fitWindowToTabs];
@@ -4275,6 +4295,11 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)previousMarkOrNote:(id)sender {
     [[self currentSession] previousMarkOrNote];
+}
+
+- (IBAction)toggleAlertOnNextMark:(id)sender {
+    PTYSession *currentSession = [self currentSession];
+    currentSession.alertOnNextMark = !currentSession.alertOnNextMark;
 }
 
 - (void)sessionWasRemoved
@@ -5607,7 +5632,7 @@ NSString *sessionsKey = @"sessions";
           __FILE__, __LINE__, item );
 #endif
 
-    if ([item action] == @selector(detachTmux) ||
+    if ([item action] == @selector(detachTmux:) ||
         [item action] == @selector(newTmuxWindow:) ||
         [item action] == @selector(newTmuxTab:) ||
         [item action] == @selector(openDashboard:)) {
@@ -5641,18 +5666,24 @@ NSString *sessionsKey = @"sessions";
         result = [[self currentSession] canInstantReplayNext];
     } else if ([item action] == @selector(toggleShowTimestamps:)) {
         result = ([self currentSession] != nil);
+    } else if ([item action] == @selector(toggleAlertOnNextMark:)) {
+        PTYSession *currentSession = [self currentSession];
+        if ([item respondsToSelector:@selector(setState:)]) {
+            [item setState:currentSession.alertOnNextMark ? NSOnState : NSOffState];
+        }
+        result = (currentSession != nil);
     } else if ([item action] == @selector(selectPaneUp:) ||
                [item action] == @selector(selectPaneDown:) ||
                [item action] == @selector(selectPaneLeft:) ||
                [item action] == @selector(selectPaneRight:)) {
         result = ([[[self currentTab] sessions] count] > 1);
-    } else if ([item action] == @selector(closecurrentsession:)) {
+    } else if ([item action] == @selector(closeCurrentSession:)) {
         NSWindowController* controller = [[NSApp keyWindow] windowController];
         if (controller) {
             // Any object whose window controller implements this selector is closed by
             // cmd-w: pseudoterminal (closes a pane), preferences, bookmarks
             // window. Notably, not expose, various modal windows, etc.
-            result = [controller respondsToSelector:@selector(closecurrentsession:)];
+            result = [controller respondsToSelector:@selector(closeCurrentSession:)];
         } else {
             result = NO;
         }
@@ -6340,12 +6371,30 @@ NSString *sessionsKey = @"sessions";
 -(void)insertInSessions:(PTYSession *)object atIndex:(unsigned)anIndex
 {
     PtyLog(@"PseudoTerminal: -insertInSessions: %p atIndex: %d", object, anIndex);
-    // TODO: test this
+    BOOL toggle = NO;
+    if (![self windowInited]) {
+        // call initWithSmartLayout:YES, etc, like this:
+        Profile *aDict = [object addressBookEntry];
+        [self finishInitializationWithSmartLayout:YES
+                                       windowType:[[iTermController sharedInstance] windowTypeForBookmark:aDict]
+                                           screen:aDict[KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
+                                         isHotkey:NO];
+        if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
+            [self hideAfterOpening];
+        }
+        [[iTermController sharedInstance] addInTerminals:self];
+        toggle = ([self windowType] == WINDOW_TYPE_FULL_SCREEN) ||
+                 ([self windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
+    }
+
     [self setupSession:object title:nil withSize:nil];
     if ([object SCREEN]) {  // screen initialized ok
         [self insertSession:object atIndex:anIndex];
     }
     [[self currentTab] numberOfSessionsDidChange];
+    if (toggle) {
+        [self delayedEnterFullscreen];
+    }
 }
 
 -(void)removeFromSessionsAtIndex:(unsigned)anIndex

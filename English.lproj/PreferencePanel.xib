@@ -1454,7 +1454,7 @@ Gw
                                                 <tabViewItem label="General" identifier="1" id="2101">
                                                     <view key="view" id="2104">
                                                         <rect key="frame" x="10" y="33" width="559" height="404"/>
-                                                        <autoresizingMask key="autoresizingMask"/>
+                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                         <subviews>
                                                             <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" id="2190">
                                                                 <rect key="frame" x="50" y="79" width="240" height="78"/>
@@ -1796,7 +1796,7 @@ Gw
                                                 <tabViewItem label="Colors" identifier="2" id="2102">
                                                     <view key="view" id="2103">
                                                         <rect key="frame" x="10" y="33" width="559" height="404"/>
-                                                        <autoresizingMask key="autoresizingMask"/>
+                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                         <subviews>
                                                             <colorWell tag="18" id="2272">
                                                                 <rect key="frame" x="193" y="279" width="32" height="21"/>
@@ -2829,7 +2829,7 @@ Gw
                                                 <tabViewItem label="Terminal" identifier="Item 2" id="2107">
                                                     <view key="view" id="2108">
                                                         <rect key="frame" x="10" y="33" width="559" height="404"/>
-                                                        <autoresizingMask key="autoresizingMask"/>
+                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                         <subviews>
                                                             <popUpButton verticalHuggingPriority="750" id="2390">
                                                                 <rect key="frame" x="172" y="245" width="332" height="26"/>
@@ -2939,9 +2939,9 @@ Gw
                                                                 </connections>
                                                             </button>
                                                             <button id="2404">
-                                                                <rect key="frame" x="26" y="85" width="188" height="18"/>
+                                                                <rect key="frame" x="26" y="85" width="258" height="18"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Enable Growl Notifications" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2413">
+                                                                <buttonCell key="cell" type="check" title="Send Growl/Notification Center alerts" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2413">
                                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
@@ -3106,14 +3106,14 @@ Gw
                                                 <tabViewItem label="Session" identifier="Item 6" id="5652">
                                                     <view key="view" id="5653">
                                                         <rect key="frame" x="10" y="33" width="559" height="404"/>
-                                                        <autoresizingMask key="autoresizingMask"/>
+                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                         <subviews>
                                                             <scrollView autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="5658">
                                                                 <rect key="frame" x="29" y="172" width="513" height="116"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <clipView key="contentView" id="ArV-0K-qze">
                                                                     <rect key="frame" x="1" y="1" width="511" height="114"/>
-                                                                    <autoresizingMask key="autoresizingMask"/>
+                                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                     <subviews>
                                                                         <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                                                             <rect key="frame" x="0.0" y="0.0" width="511" height="114"/>
@@ -3760,7 +3760,7 @@ Gw
                             <tabViewItem label="Keys" identifier="Keys" id="3656" userLabel="Selected Tab View Item (Keyboard)">
                                 <view key="view" id="3657">
                                     <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
-                                    <autoresizingMask key="autoresizingMask"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <textField verticalHuggingPriority="750" id="3658">
                                             <rect key="frame" x="-3" y="416" width="146" height="17"/>
@@ -4024,11 +4024,11 @@ Gw
                                             <rect key="frame" x="363" y="30" width="508" height="379"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <clipView key="contentView" id="Dzn-LP-RyA">
-                                                <rect key="frame" x="1" y="17" width="490" height="361"/>
-                                                <autoresizingMask key="autoresizingMask"/>
+                                                <rect key="frame" x="1" y="17" width="506" height="361"/>
+                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveName="KeyBingingTable" headerView="3855" id="3852">
-                                                        <rect key="frame" x="0.0" y="0.0" width="490" height="361"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="506" height="361"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -4048,7 +4048,7 @@ Gw
                                                                 </textFieldCell>
                                                                 <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                                             </tableColumn>
-                                                            <tableColumn identifier="1" editable="NO" width="286.101" minWidth="42.10107" maxWidth="1000" id="3856">
+                                                            <tableColumn identifier="1" editable="NO" width="302.101" minWidth="42.10107" maxWidth="1000" id="3856">
                                                                 <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
                                                                     <font key="font" metaFont="smallSystem"/>
                                                                     <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -4079,7 +4079,7 @@ Gw
                                                 <autoresizingMask key="autoresizingMask"/>
                                             </scroller>
                                             <tableHeaderView key="headerView" id="3855">
-                                                <rect key="frame" x="0.0" y="0.0" width="490" height="17"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="506" height="17"/>
                                                 <autoresizingMask key="autoresizingMask"/>
                                             </tableHeaderView>
                                             <connections>
@@ -4258,7 +4258,7 @@ Gw
                             <tabViewItem label="Mouse" identifier="Mouse" id="6059">
                                 <view key="view" id="6060">
                                     <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
-                                    <autoresizingMask key="autoresizingMask"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <button id="6062">
                                             <rect key="frame" x="271" y="58" width="154" height="18"/>
@@ -4303,10 +4303,10 @@ Gw
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <clipView key="contentView" id="2zv-hI-Vxj">
                                                 <rect key="frame" x="1" y="17" width="849" height="228"/>
-                                                <autoresizingMask key="autoresizingMask"/>
+                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
-                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="229"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -5646,7 +5646,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <clipView key="contentView" id="Moz-RU-iUF">
                             <rect key="frame" x="1" y="17" width="526" height="114"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6284" id="6283">
                                     <rect key="frame" x="0.0" y="0.0" width="526" height="114"/>
@@ -5719,7 +5719,7 @@ DQ
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                         <tableHeaderView key="headerView" id="6284">
-                            <rect key="frame" x="0.0" y="0.0" width="526.5" height="17"/>
+                            <rect key="frame" x="0.0" y="0.0" width="526" height="17"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </tableHeaderView>
                     </scrollView>

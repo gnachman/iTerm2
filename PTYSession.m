@@ -86,6 +86,7 @@ static NSString *PWD_ENVVALUE = @"~";
 static NSString* SESSION_ARRANGEMENT_COLUMNS = @"Columns";
 static NSString* SESSION_ARRANGEMENT_ROWS = @"Rows";
 static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
+static NSString* SESSION_ARRANGEMENT_BOOKMARK_NAME = @"Bookmark Name";
 static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 static NSString* SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
 static NSString* SESSION_ARRANGEMENT_TMUX_HISTORY = @"Tmux History";
@@ -355,7 +356,12 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
     [aSession setPreferencesFromAddressBookEntry:theBookmark];
     [aSession setName:[theBookmark objectForKey:KEY_NAME]];
-    [aSession setBookmarkName:[theBookmark objectForKey:KEY_NAME]];
+    NSString *arrangementBookmarkName = arrangement[SESSION_ARRANGEMENT_BOOKMARK_NAME];
+    if (arrangementBookmarkName) {
+        [aSession setBookmarkName:arrangementBookmarkName];
+    } else {
+        [aSession setBookmarkName:[theBookmark objectForKey:KEY_NAME]];
+    }
     if ([[[[theTab realParentWindow] window] title] compare:@"Window"] == NSOrderedSame) {
         [[theTab realParentWindow] setWindowTitle];
     }
@@ -2450,9 +2456,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     panel = [NSSavePanel savePanel];
     // Session could end before panel is dismissed.
     [[self retain] autorelease];
-    sts = [panel runModalForDirectory:NSHomeDirectory() file:@""];
+    panel.directoryURL = [NSURL fileURLWithPath:NSHomeDirectory()];
+    panel.nameFieldStringValue = @"";
+    sts = [panel runModal];
     if (sts == NSOKButton) {
-        BOOL logsts = [SHELL loggingStartWithPath:[panel filename]];
+        BOOL logsts = [SHELL loggingStartWithPath:panel.URL.path];
         if (logsts == NO) {
             NSBeep();
         }
@@ -2571,6 +2579,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [result setObject:[NSNumber numberWithInt:[SCREEN width]] forKey:SESSION_ARRANGEMENT_COLUMNS];
     [result setObject:[NSNumber numberWithInt:[SCREEN height]] forKey:SESSION_ARRANGEMENT_ROWS];
     [result setObject:addressBookEntry forKey:SESSION_ARRANGEMENT_BOOKMARK];
+    result[SESSION_ARRANGEMENT_BOOKMARK_NAME] = bookmarkName;
     NSString* pwd = [SHELL getWorkingDirectory];
     [result setObject:pwd ? pwd : @"" forKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY];
     return result;
@@ -2583,6 +2592,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [result setObject:[parseNode objectForKey:kLayoutDictWidthKey] forKey:SESSION_ARRANGEMENT_COLUMNS];
     [result setObject:[parseNode objectForKey:kLayoutDictHeightKey] forKey:SESSION_ARRANGEMENT_ROWS];
     [result setObject:bookmark forKey:SESSION_ARRANGEMENT_BOOKMARK];
+    result[SESSION_ARRANGEMENT_BOOKMARK_NAME] = [bookmark objectForKey:KEY_NAME];
     [result setObject:@"" forKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY];
     [result setObject:[parseNode objectForKey:kLayoutDictWindowPaneKey] forKey:SESSION_ARRANGEMENT_TMUX_PANE];
     NSObject *value = [parseNode objectForKey:kLayoutDictHistoryKey];
@@ -3291,7 +3301,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                     toStartY:&startY
                       toEndX:&endX
                       toEndY:&endY
-            ignoringNewlines:NO];
+            ignoringNewlines:NO
+              actionRequired:NO];
     return [TEXTVIEW rangeByTrimmingNullsFromRange:VT100GridCoordRangeMake(startX,
                                                                            startY,
                                                                            endX,
@@ -4674,6 +4685,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     lastMark_ = [[SCREEN addMarkStartingAtAbsoluteLine:[SCREEN totalScrollbackOverflow] + line
                                                oneLine:YES] retain];
     self.currentMarkOrNotePosition = lastMark_.entry.interval;
+    if (self.alertOnNextMark) {
+        [SCREEN requestUserAttentionWithMessage:@"Your attention is requested!"];
+        self.alertOnNextMark = NO;
+    }
 }
 
 // Save the current scroll position
@@ -4756,6 +4771,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 
     [pbtext_ appendData:data];
+}
+
+- (void)setAlertOnNextMark:(BOOL)alertOnNextMark {
+    _alertOnNextMark = alertOnNextMark;
+    [TEXTVIEW setNeedsDisplay:YES];
 }
 
 - (void)screenRequestAttention:(BOOL)request {
