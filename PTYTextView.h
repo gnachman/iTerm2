@@ -74,6 +74,7 @@
 - (void)launchCoprocessWithCommand:(NSString *)command;
 - (void)insertText:(NSString *)string;
 - (PTYTask *)SHELL;
+- (BOOL)alertOnNextMark;
 
 @end
 

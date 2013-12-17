@@ -2456,9 +2456,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     panel = [NSSavePanel savePanel];
     // Session could end before panel is dismissed.
     [[self retain] autorelease];
-    sts = [panel runModalForDirectory:NSHomeDirectory() file:@""];
+    panel.directoryURL = [NSURL fileURLWithPath:NSHomeDirectory()];
+    panel.nameFieldStringValue = @"";
+    sts = [panel runModal];
     if (sts == NSOKButton) {
-        BOOL logsts = [SHELL loggingStartWithPath:[panel filename]];
+        BOOL logsts = [SHELL loggingStartWithPath:panel.URL.path];
         if (logsts == NO) {
             NSBeep();
         }
@@ -4683,6 +4685,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     lastMark_ = [[SCREEN addMarkStartingAtAbsoluteLine:[SCREEN totalScrollbackOverflow] + line
                                                oneLine:YES] retain];
     self.currentMarkOrNotePosition = lastMark_.entry.interval;
+    if (self.alertOnNextMark) {
+        [SCREEN requestUserAttentionWithMessage:@"Your attention is requested!"];
+        self.alertOnNextMark = NO;
+    }
 }
 
 // Save the current scroll position
@@ -4765,6 +4771,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 
     [pbtext_ appendData:data];
+}
+
+- (void)setAlertOnNextMark:(BOOL)alertOnNextMark {
+    _alertOnNextMark = alertOnNextMark;
+    [TEXTVIEW setNeedsDisplay:YES];
 }
 
 - (void)screenRequestAttention:(BOOL)request {

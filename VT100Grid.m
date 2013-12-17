@@ -1328,7 +1328,7 @@
 - (NSString *)compactLineDumpWithTimestamps {
     NSMutableString *dump = [NSMutableString string];
     NSDateFormatter *fmt = [[[NSDateFormatter alloc] init] autorelease];
-    [fmt setTimeStyle:kCFDateFormatterLongStyle];
+    [fmt setTimeStyle:NSDateFormatterLongStyle];
 
     for (int y = 0; y < size_.height; y++) {
         screen_char_t *line = [self screenCharsAtLineNumber:y];

@@ -644,13 +644,11 @@ static void reapchild(int n)
         _exit(-1);
     } else if (pid < (pid_t)0) {
         PtyTaskDebugLog(@"%@ %s", progpath, strerror(errno));
-        NSRunCriticalAlertPanel(NSLocalizedStringFromTableInBundle(@"Unable to Fork!",@"iTerm", [NSBundle bundleForClass: [self class]], @"Fork Error"),
-                                NSLocalizedStringFromTableInBundle(@"iTerm cannot launch the program for this session.",@"iTerm", [NSBundle bundleForClass: [self class]], @"Fork Error"),
-                                NSLocalizedStringFromTableInBundle(@"Close Session",@"iTerm", [NSBundle bundleForClass: [self class]], @"Fork Error"),
-                                nil,nil);
-        if ([delegate respondsToSelector:@selector(closeSession:)]) {
-            [delegate performSelector:@selector(closeSession:) withObject:delegate];
-        }
+        NSRunCriticalAlertPanel(@"Unable to Fork!",
+                                @"iTerm cannot launch the program for this session.",
+                                @"Ok",
+                                nil,
+                                nil);
         return;
     }
 
@@ -793,9 +791,10 @@ static void reapchild(int n)
         // This waitsUntilDone because otherwise we can read data from a child process faster than
         // we can parse it. The main thread will quickly end up overloaded with calls to readTask:,
         // never catching up, and never having a chance to draw or respond to input.
-        [delegate performSelectorOnMainThread:@selector(readTask:)
-                                   withObject:data 
-                                waitUntilDone:YES];
+        NSObject *delegateObj = delegate;
+        [delegateObj performSelectorOnMainThread:@selector(readTask:)
+                                      withObject:data
+                                   waitUntilDone:YES];
     }
 
     @synchronized (self) {
@@ -822,8 +821,10 @@ static void reapchild(int n)
     brokenPipe_ = YES;
     [[TaskNotifier sharedInstance] deregisterTask:self];
     if ([delegate respondsToSelector:@selector(brokenPipe)]) {
-        [delegate performSelectorOnMainThread:@selector(brokenPipe)
-                  withObject:nil waitUntilDone:YES];
+        NSObject *delegateObj = delegate;
+        [delegateObj performSelectorOnMainThread:@selector(brokenPipe)
+                                      withObject:nil
+                                   waitUntilDone:YES];
     }
 }
 

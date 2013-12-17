@@ -151,6 +151,7 @@ static const int kDragThreshold = 3;
 static const double kBackgroundConsideredDarkThreshold = 0.5;
 static const int kBroadcastMargin = 4;
 static const int kCoprocessMargin = 4;
+static const int kAlertMargin = 4;
 
 static NSCursor* textViewCursor;
 static NSCursor* xmrCursor;
@@ -159,6 +160,7 @@ static NSImage* wrapToTopImage;
 static NSImage* wrapToBottomImage;
 static NSImage* broadcastInputImage;
 static NSImage* coprocessImage;
+static NSImage* alertImage;
 
 static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
@@ -265,6 +267,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                                     ofType:@"png"];
     coprocessImage = [[NSImage alloc] initWithContentsOfFile:coprocessFile];
     [coprocessImage setFlipped:YES];
+
+    alertImage = [NSImage imageNamed:@"Alert"];
+    [alertImage setFlipped:YES];
 
     if ([[NSUserDefaults standardUserDefaults] objectForKey:@"SmartCursorColorBgThreshold"]) {
         // Override the default.
@@ -2041,6 +2046,14 @@ NSMutableArray* screens=0;
                                 fromRect:NSMakeRect(0, 0, size.width, size.height)
                                operation:NSCompositeSourceOver
                                 fraction:0.5];
+    }
+    if ([_delegate alertOnNextMark]) {
+        NSSize size = [alertImage size];
+        x -= size.width + kAlertMargin;
+        [alertImage drawAtPoint:NSMakePoint(x, frame.origin.y + kAlertMargin)
+                           fromRect:NSMakeRect(0, 0, size.width, size.height)
+                          operation:NSCompositeSourceOver
+                           fraction:0.5];
     }
 
     if (flashing_ > 0) {
@@ -5237,9 +5250,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         BOOL addedItem = NO;
         NSString *text = [self selectedText];
         if ([text intValue]) {
-            [theMenu addItemWithTitle:[NSString stringWithFormat:@"%d = 0x%x", [text intValue], [text intValue]]
-                               action:@selector(bogusSelector)
-                        keyEquivalent:@""];
+            NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
+            theItem.title = [NSString stringWithFormat:@"%d = 0x%x", [text intValue], [text intValue]];
+            [theMenu addItem:theItem];
             addedItem = YES;
         } else if ([text hasPrefix:@"0x"] && [text length] <= 10) {
             NSScanner *scanner = [NSScanner scannerWithString:text];
@@ -5248,14 +5261,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             unsigned result;
             if ([scanner scanHexInt:&result]) {
                 if ((int)result >= 0) {
-                    [theMenu addItemWithTitle:[NSString stringWithFormat:@"0x%x = %d", result, result]
-                                       action:@selector(bogusSelector)
-                                keyEquivalent:@""];
+                    NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
+                    theItem.title = [NSString stringWithFormat:@"0x%x = %d", result, result];
+                    [theMenu addItem:theItem];
                     addedItem = YES;
                 } else {
-                    [theMenu addItemWithTitle:[NSString stringWithFormat:@"0x%x = %d or %u", result, result, result]
-                                       action:@selector(bogusSelector)
-                                keyEquivalent:@""];
+                    NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
+                    theItem.title = [NSString stringWithFormat:@"0x%x = %d or %u", result, result, result];
+                    [theMenu addItem:theItem];
                     addedItem = YES;
                 }
             }
@@ -5567,7 +5580,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // initialize a save panel
     aSavePanel = [NSSavePanel savePanel];
     [aSavePanel setAccessoryView:nil];
-    [aSavePanel setRequiredFileType:@""];
+
     NSString *path = @"";
     NSArray *searchPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,
                                                                NSUserDomainMask,
@@ -5580,8 +5593,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                            timeZone:nil
                                                              locale:[[NSUserDefaults standardUserDefaults] dictionaryRepresentation]];
 
-    if ([aSavePanel runModalForDirectory:path file:nowStr] == NSFileHandlingPanelOKButton) {
-        if (![aData writeToFile:[aSavePanel filename] atomically:YES]) {
+    if ([aSavePanel legacyRunModalForDirectory:path file:nowStr] == NSFileHandlingPanelOKButton) {
+        if (![aData writeToFile:[aSavePanel legacyFilename] atomically:YES]) {
             NSBeep();
         }
     }
@@ -7250,7 +7263,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     double y = initialPoint.y + lineHeight + currentRun->attrs.fontInfo.baselineOffset;
     int x = initialPoint.x + currentRun->x;
     // Flip vertically and translate to (x, y).
-    NSAffineTransformStruct transformStruct = [[currentRun->attrs.fontInfo.font textTransform] transformStruct];
     CGFloat m21 = 0.0;
     if (currentRun->attrs.fakeItalic) {
         m21 = 0.2;
@@ -7314,7 +7326,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
     CGContextSetFillColorWithColor(cgContext, [self cgColorForColor:color]);
     CGContextSetStrokeColorWithColor(cgContext, [self cgColorForColor:color]);
-    NSAffineTransformStruct transformStruct = [[fontInfo.font textTransform] transformStruct];
 
     CGFloat m21 = 0.0;
     if (fakeItalic) {
@@ -9313,7 +9324,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // in |aURLString|.
 - (NSString *)urlInString:(NSString *)aURLString offset:(int *)offset length:(int *)length
 {
-    NSURL *url;
     NSString* trimmedURLString;
     
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];

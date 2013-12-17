@@ -216,7 +216,9 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 {
     NSArray *names = [[ToolbeltView allTools] sortedArrayUsingSelector:@selector(compare:)];
     for (NSString *theName in names) {
-        NSMenuItem *i = [[[NSMenuItem alloc] initWithTitle:theName action:@selector(toggleToolbeltTool:) keyEquivalent:@""] autorelease];
+        NSMenuItem *i = [[[NSMenuItem alloc] initWithTitle:theName
+                                                    action:@selector(toggleToolbeltTool:)
+                                             keyEquivalent:@""] autorelease];
         [i setState:[ToolbeltView shouldShowTool:theName] ? NSOnState : NSOffState];
         [menu addItem:i];
     }

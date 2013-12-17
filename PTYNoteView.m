@@ -73,16 +73,6 @@ const CGFloat kDragAreaSize = 5;
                                      alpha:0.95];
 }
 
-static NSPoint MakeNotePoint(NSSize maxSize, CGFloat x, CGFloat y)
-{
-    return NSMakePoint(0.5 + x, maxSize.height + 4.5 - y);
-}
-
-static NSPoint ModifyNotePoint(NSPoint p, CGFloat dx, CGFloat dy)
-{
-    return NSMakePoint(p.x + dx, p.y - dy);
-}
-
 static NSPoint FlipPoint(NSPoint p, CGFloat height) {
     return NSMakePoint(p.x, height - p.y);
 }
