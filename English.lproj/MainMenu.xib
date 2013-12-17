@@ -660,6 +660,13 @@ DQ
                                     <action selector="irNext:" target="-1" id="983"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="EVO-dm-gjK"/>
+                            <menuItem title="Enter Full Screen" keyEquivalent="f" id="gTf-8L-8y1">
+                                <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                <connections>
+                                    <action selector="toggleFullScreen:" target="-1" id="2K5-vH-iam"/>
+                                </connections>
+                            </menuItem>
                         </items>
                     </menu>
                 </menuItem>
