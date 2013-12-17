@@ -234,6 +234,14 @@ static FutureNSScrollerStyle GetScrollerStyle(id theObj)
     }
 }
 
++ (BOOL)futureScreensHaveSeparateSpaces {
+    if ([self respondsToSelector:@selector(screensHaveSeparateSpaces)]) {
+        return [self screensHaveSeparateSpaces];
+    } else {
+        return NO;
+    }
+}
+
 @end
 
 static void *GetFunctionByName(NSString *library, char *func) {
