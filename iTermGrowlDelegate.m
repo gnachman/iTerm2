@@ -132,7 +132,7 @@
               viewIndex:-1];
 }
 
-- (void)growlNotify:(NSString *)title
+- (BOOL)growlNotify:(NSString *)title
     withDescription:(NSString *)description
     andNotification:(NSString *)notification
         windowIndex:(int)windowIndex
@@ -156,16 +156,20 @@
                                            priority:0
                                            isSticky:NO
                                        clickContext:context];
+            return YES;
         } else if (IsMountainLionOrLater()) {
             // Fall back to notification center.
             NSUserNotification *notification = [[[NSUserNotification alloc] init] autorelease];
             notification.title = title;
             notification.informativeText = description;
-            notification.soundName = NSUserNotificationDefaultSoundName;
+            notification.soundName = nil;
             notification.userInfo = context;
             [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
+            return YES;
         }
     }
+
+    return NO;
 }
 
 - (void)growlNotificationWasClicked:(id)clickContext

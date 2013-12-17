@@ -12,6 +12,11 @@
 @class PSMTabBarControl;
 @class PSMProgressIndicator;
 
+@protocol PSMTabBarControlProtocol <NSObject>
+@optional
+- (void)tabClick:(id)sender;
+@end
+
 @interface PSMTabBarCell : NSActionCell {
     // sizing
     NSRect              _frame;

@@ -179,14 +179,14 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     keyboardToolbarId = [keyboardToolbarItem itemIdentifier];
     arrangementsToolbarId = [arrangementsToolbarItem itemIdentifier];
     mouseToolbarId = [mouseToolbarItem itemIdentifier];
-    
+
     [globalToolbarItem setEnabled:YES];
     [toolbar setSelectedItemIdentifier:globalToolbarId];
-    
+
     // add list of encodings
     NSEnumerator *anEnumerator;
     NSNumber *anEncoding;
-    
+
     [characterEncoding removeAllItems];
     anEnumerator = [[[iTermController sharedInstance] sortedEncodingList] objectEnumerator];
     while ((anEncoding = [anEnumerator nextObject]) != NULL) {
@@ -194,16 +194,16 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [[characterEncoding lastItem] setTag:[anEncoding unsignedIntValue]];
     }
     [self setScreens];
-    
+
     [keyMappings setDoubleAction:@selector(editKeyMapping:)];
     [globalKeyMappings setDoubleAction:@selector(editKeyMapping:)];
     keyString = nil;
-    
+
     [copyTo allowMultipleSelections];
-    
+
     // Add presets to preset color selection.
     [self rebuildColorPresetsMenu];
-    
+
     // Add preset keybindings to button-popup-list.
     NSArray* presetArray = [iTermKeyBindingMgr presetKeyMappingsNames];
     if (presetArray != nil) {
@@ -213,7 +213,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [presetsErrorLabel setFont:[NSFont boldSystemFontOfSize:12]];
         [presetsErrorLabel setStringValue:@"PresetKeyMappings.plist failed to load"];
     }
-    
+
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(handleWindowWillCloseNotification:)
                                                  name:NSWindowWillCloseNotification object: [self window]];
@@ -222,7 +222,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     }
     [[tags cell] setDelegate:self];
     [tags setDelegate:self];
-    
+
     [lionStyleFullscreen setHidden:NO];
     [initialText setContinuous:YES];
     [blurRadius setContinuous:YES];
@@ -230,7 +230,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [blend setContinuous:YES];
     [dimmingAmount setContinuous:YES];
     [minimumContrast setContinuous:YES];
-    
+
     [prefsCustomFolder setEnabled:defaultLoadPrefsFromCustomFolder];
     [browseCustomFolder setEnabled:defaultLoadPrefsFromCustomFolder];
     [pushToCustomFolder setEnabled:defaultLoadPrefsFromCustomFolder];
@@ -267,7 +267,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [setProfileLabel setHidden:NO];
     [setProfileBookmarkListView setHidden:NO];
     [changeProfileButton setHidden:NO];
-    
+
     [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
     [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
     [columnsField setEnabled:NO];
@@ -279,11 +279,11 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [spaceLabel setTextColor:[NSColor disabledControlTextColor]];
     [windowTypeLabel setTextColor:[NSColor disabledControlTextColor]];
     [newWindowttributesHeader setTextColor:[NSColor disabledControlTextColor]];
-    
+
     NSRect newFrame = [bookmarksSettingsTabViewParent frame];
     newFrame.origin.x = 0;
     [bookmarksSettingsTabViewParent setFrame:newFrame];
-    
+
     newFrame = [[self window] frame];
     newFrame.size.width = [bookmarksSettingsTabViewParent frame].size.width + 26;
     [[self window] setFrame:newFrame display:YES];
@@ -542,7 +542,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                             nil,
                             nil);
         }
-        
+
         defaultFsTabDelay = [fsTabDelay floatValue];
         defaultAllowClipboardAccess = ([allowClipboardAccessFromTerminal state]==NSOnState);
         defaultCopySelection = ([selectionCopiesText state]==NSOnState);
@@ -562,7 +562,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                 [[ITAddressBookMgr sharedInstance] locateBonjourServices];
             } else {
                 [[ITAddressBookMgr sharedInstance] stopLocatingBonjourServices];
-                
+
                 // Remove existing bookmarks with the "bonjour" tag. Even if
                 // network browsing is re-enabled, these bookmarks would never
                 // be automatically removed.
@@ -577,7 +577,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                 }
             }
         }
-        
+
         defaultCmdSelection = ([cmdSelection state] == NSOnState);
         defaultOptionClickMovesCursor = ([optionClickMovesCursor state] == NSOnState);
         defaultPassOnControlLeftClick = ([controlLeftClickActsLikeRightClick state] == NSOffState);
@@ -596,7 +596,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
             [[PasteboardHistory sharedInstance] eraseHistory];
         }
         defaultOpenArrangementAtStartup = ([openArrangementAtStartup state] == NSOnState);
-        
+
         defaultIrMemory = [irMemory intValue];
         BOOL oldDefaultHotkey = defaultHotkey;
         defaultHotkey = ([hotkey state] == NSOnState);
@@ -612,18 +612,18 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [hotkeyLabel setTextColor:defaultHotkey ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
         [hotkeyTogglesWindow setEnabled:defaultHotkey];
         [hotkeyBookmark setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
-        
+
         if (prefs &&
             defaultCheckTestRelease != ([checkTestRelease state] == NSOnState)) {
             defaultCheckTestRelease = ([checkTestRelease state] == NSOnState);
-            
+
             NSString *appCast = defaultCheckTestRelease ?
             [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
             [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForFinal"];
             [prefs setObject: appCast forKey:@"SUFeedURL"];
         }
     }
-    
+
     // Keyboard tab
     BOOL wasAnyModifierRemapped = [self isAnyModifierRemapped];
     defaultControl = [controlButton selectedTag];
@@ -635,7 +635,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         ([self isAnyModifierRemapped] && ![[HotkeyWindowController sharedInstance] haveEventTap])) {
         [[HotkeyWindowController sharedInstance] beginRemappingModifiers];
     }
-    
+
     int rowIndex = [globalKeyMappings selectedRow];
     if (rowIndex >= 0) {
         [globalRemoveMappingButton setEnabled:YES];
@@ -674,16 +674,16 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [copyOfSource removeObjectForKey:KEY_ORIGINAL_GUID];
         [copyOfSource setObject:[destination objectForKey:KEY_NAME] forKey:KEY_NAME];
         [[ProfileModel sharedInstance] setBookmark:copyOfSource withGuid:profileGuid];
-        
+
         [[PreferencePanel sharedInstance] profileTableSelectionDidChange:[PreferencePanel sharedInstance]->bookmarksTableView];
-        
+
         // Update existing sessions
         int n = [[iTermController sharedInstance] numberOfTerminals];
         for (int i = 0; i < n; ++i) {
             PseudoTerminal* pty = [[iTermController sharedInstance] terminalAtIndex:i];
             [pty reloadBookmarks];
         }
-        
+
         // Update user defaults
         [[NSUserDefaults standardUserDefaults] setObject:[[ProfileModel sharedInstance] rawData]
                                                   forKey: @"New Bookmarks"];
@@ -703,14 +703,14 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 - (IBAction)pushToCustomFolder:(id)sender
 {
     [[NSUserDefaults standardUserDefaults] synchronize];
-    
+
     NSString *folder = [prefs objectForKey:@"PrefsCustomFolder"] ? [[prefs objectForKey:@"PrefsCustomFolder"] stringByExpandingTildeInPath] : @"";
     NSString *filename = [self _prefsFilenameWithBaseDir:folder];
     NSFileManager *mgr = [NSFileManager defaultManager];
-    
+
     // Copy fails if the destination exists.
     [mgr removeItemAtPath:filename error:nil];
-    
+
     [self savePreferences];
     NSDictionary *myDict = [[NSUserDefaults standardUserDefaults] persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
     BOOL isOk;
@@ -737,16 +737,16 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     NSOpenPanel *panel;
     int sts;
     NSString *filename = nil;
-    
+
     panel = [NSOpenPanel openPanel];
     [panel setAllowsMultipleSelection: NO];
-    
-    sts = [panel runModalForDirectory: NSHomeDirectory() file:@"" types: [NSImage imageFileTypes]];
+
+    sts = [panel legacyRunModalForDirectory: NSHomeDirectory() file:@"" types: [NSImage imageFileTypes]];
     if (sts == NSOKButton) {
-        if ([[panel filenames] count] > 0) {
-            filename = [[panel filenames] objectAtIndex: 0];
+        if ([[panel legacyFilenames] count] > 0) {
+            filename = [[panel legacyFilenames] objectAtIndex: 0];
         }
-        
+
         if ([filename length] > 0) {
             NSImage *anImage = [[NSImage alloc] initWithContentsOfFile: filename];
             if (anImage != nil) {
@@ -775,29 +775,29 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         text = @"";
     }
     NSString* dir = [bookmarkDirectory stringValue];
-    
+
     NSString* customCommand = [[bookmarkCommandType selectedCell] tag] == 0 ? @"Yes" : @"No";
     NSString* customDir;
     switch ([[bookmarkDirectoryType selectedCell] tag]) {
         case 0:
             customDir = @"Yes";
             break;
-            
+
         case 2:
             customDir = @"Recycle";
             break;
-            
+
         case 3:
             customDir = @"Advanced";
             break;
-            
+
         case 1:
         default:
             customDir = @"No";
             break;
     }
     [editAdvancedConfigButton setEnabled:[customDir isEqualToString:@"Advanced"]];
-    
+
     if (sender == optionKeySends && [[optionKeySends selectedCell] tag] == OPT_META) {
         [self _maybeWarnAboutMeta];
     } else if (sender == rightOptionKeySends && [[rightOptionKeySends selectedCell] tag] == OPT_META) {
@@ -838,7 +838,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                 [dataSource setObject:nil forKey:KEY_SHORTCUT inBookmark:temp];
             }
         }
-        
+
         [newDict setObject:shortcut forKey:KEY_SHORTCUT];
     }
     [newDict setObject:command forKey:KEY_COMMAND];
@@ -846,7 +846,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [newDict setObject:dir forKey:KEY_WORKING_DIRECTORY];
     [newDict setObject:customCommand forKey:KEY_CUSTOM_COMMAND];
     [newDict setObject:customDir forKey:KEY_CUSTOM_DIRECTORY];
-    
+
     // Just copy over advanced working dir settings
     NSArray *valuesToCopy = [NSArray arrayWithObjects:
                              KEY_AWDS_WIN_OPTION,
@@ -862,7 +862,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
             [newDict setObject:value forKey:key];
         }
     }
-    
+
     // Colors tab
     [newDict setObject:[ITAddressBookMgr encodeColor:[ansi0Color color]] forKey:KEY_ANSI_0_COLOR];
     [newDict setObject:[ITAddressBookMgr encodeColor:[ansi1Color color]] forKey:KEY_ANSI_1_COLOR];
@@ -889,13 +889,13 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [newDict setObject:[ITAddressBookMgr encodeColor:[cursorTextColor color]] forKey:KEY_CURSOR_TEXT_COLOR];
     [newDict setObject:[NSNumber numberWithBool:[checkColorInvertedCursor state]] forKey:KEY_SMART_CURSOR_COLOR];
     [newDict setObject:[NSNumber numberWithFloat:[minimumContrast floatValue]] forKey:KEY_MINIMUM_CONTRAST];
-    
+
     [cursorColor setEnabled:[checkColorInvertedCursor state] == NSOffState];
     [cursorColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
-    
+
     [cursorTextColor setEnabled:[checkColorInvertedCursor state] == NSOffState];
     [cursorTextColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
-    
+
     // Display tab
     int rows, cols;
     rows = [rowsField intValue];
@@ -929,7 +929,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [newDict setObject:[NSNumber numberWithBool:([asciiAntiAliased state]==NSOnState)] forKey:KEY_ASCII_ANTI_ALIASED];
     [newDict setObject:[NSNumber numberWithBool:([nonasciiAntiAliased state]==NSOnState)] forKey:KEY_NONASCII_ANTI_ALIASED];
     [self _updateFontsDisplay];
-    
+
     if (sender == backgroundImage) {
         NSString* filename = nil;
         if ([sender state] == NSOnState) {
@@ -943,7 +943,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     }
     [newDict setObject:backgroundImageFilename forKey:KEY_BACKGROUND_IMAGE_LOCATION];
     [newDict setObject:[NSNumber numberWithBool:([backgroundImageTiled state]==NSOnState)] forKey:KEY_BACKGROUND_IMAGE_TILED];
-    
+
     // Terminal tab
     [newDict setObject:[NSNumber numberWithBool:([disableWindowResizing state]==NSOnState)] forKey:KEY_DISABLE_WINDOW_RESIZING];
     [newDict setObject:[NSNumber numberWithBool:([preventTab state]==NSOnState)] forKey:KEY_PREVENT_TAB];
@@ -977,18 +977,18 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     } else if (sender == unlimitedScrollback) {
         [scrollbackLines setStringValue:@"10000"];
     }
-    
+
     [newDict setObject:[terminalType stringValue] forKey:KEY_TERMINAL_TYPE];
     [newDict setObject:[NSNumber numberWithBool:([sendCodeWhenIdle state]==NSOnState)] forKey:KEY_SEND_CODE_WHEN_IDLE];
     [newDict setObject:[NSNumber numberWithInt:[idleCode intValue]] forKey:KEY_IDLE_CODE];
     [newDict setObject:[NSNumber numberWithBool:([useCanonicalParser state]==NSOnState)] forKey:KEY_USE_CANONICAL_PARSER];
-    
+
     // Keyboard tab
     [newDict setObject:[origBookmark objectForKey:KEY_KEYBOARD_MAP] forKey:KEY_KEYBOARD_MAP];
     [newDict setObject:[NSNumber numberWithInt:[[optionKeySends selectedCell] tag]] forKey:KEY_OPTION_KEY_SENDS];
     [newDict setObject:[NSNumber numberWithInt:[[rightOptionKeySends selectedCell] tag]] forKey:KEY_RIGHT_OPTION_KEY_SENDS];
     [newDict setObject:[tags objectValue] forKey:KEY_TAGS];
-    
+
     BOOL reloadKeyMappings = NO;
     if (sender == deleteSendsCtrlHButton) {
         // Resolve any conflict between key mappings and delete sends ^h by
@@ -1002,28 +1002,28 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         BOOL sendCH = [self _deleteSendsCtrlHInBookmark:newDict];
         [deleteSendsCtrlHButton setState:sendCH ? NSOnState : NSOffState];
     }
-    
+
     // Session tab
     [newDict setObject:[NSNumber numberWithInt:[[promptBeforeClosing_ selectedCell] tag]]
                 forKey:KEY_PROMPT_CLOSE];
     [newDict setObject:[origBookmark objectForKey:KEY_JOBS] ? [origBookmark objectForKey:KEY_JOBS] : [NSArray array]
                 forKey:KEY_JOBS];
-    
+
     // Advanced tab
     [newDict setObject:[triggerWindowController_ triggers] forKey:KEY_TRIGGERS];
     [newDict setObject:[smartSelectionWindowController_ rules] forKey:KEY_SMART_SELECTION_RULES];
     [newDict setObject:[trouterPrefController_ prefs] forKey:KEY_TROUTER];
-    
+
     // Epilogue
     [dataSource setBookmark:newDict withGuid:guid];
     [bookmarksTableView reloadData];
     if (reloadKeyMappings) {
         [keyMappings reloadData];
     }
-    
+
     // Selectively update form fields.
     [self updateShortcutTitles];
-    
+
     // Update existing sessions
     int n = [[iTermController sharedInstance] numberOfTerminals];
     for (int i = 0; i < n; ++i) {
@@ -1040,7 +1040,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     NSURL *appURL = nil;
     OSStatus err;
     BOOL set = YES;
-    
+
     err = LSGetApplicationForURL(
                                  (CFURLRef)[NSURL URLWithString:[scheme stringByAppendingString:@":"]],
                                  kLSRolesAll, NULL, (CFURLRef *)&appURL);
@@ -1060,7 +1060,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                               @"Cancel",
                               nil) == NSAlertDefaultReturn;
     }
-    
+
     if (set) {
         [urlHandlersByGuid setObject:guid
                               forKey:scheme];
@@ -1114,7 +1114,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     // it tries to dereference the deleted cell. There doesn't seem to be an
     // API that explicitly ends editing.
     [jobsTable_ reloadData];
-    
+
     NSInteger selectedIndex = [jobsTable_ selectedRow];
     if (selectedIndex < 0) {
         return;
@@ -1127,7 +1127,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     NSArray *jobNames = [bookmark objectForKey:KEY_JOBS];
     NSMutableArray *mod = [NSMutableArray arrayWithArray:jobNames];
     [mod removeObjectAtIndex:selectedIndex];
-    
+
     [dataSource setObject:mod forKey:KEY_JOBS inBookmark:bookmark];
     [jobsTable_ reloadData];
     [self setHaveJobsForCurrentBookmark:[self haveJobsForCurrentBookmark]];
@@ -1175,9 +1175,9 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [panel setCanChooseFiles:NO];
     [panel setCanChooseDirectories:YES];
     [panel setAllowsMultipleSelection:NO];
-    
+
     if ([panel runModal] == NSOKButton) {
-        [logDir setStringValue:[panel directory]];
+        [logDir setStringValue:[panel legacyDirectory]];
     }
     [self _updateLogDirWarning];
 }
@@ -1205,12 +1205,12 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
     [dict setObject:theName forKey:KEY_NAME];
     [dict setObject:origGuid forKey:KEY_GUID];
-    
+
     // Change the dict in the sessions bookmarks so that if you copy it back, it gets copied to
     // the new profile.
     [dict setObject:guid forKey:KEY_ORIGINAL_GUID];
     [dataSource setBookmark:dict withGuid:origGuid];
-    
+
     [self updateBookmarkFields:dict];
     [self bookmarkSettingChanged:nil];
 }
@@ -1329,7 +1329,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     Profile* bookmark = [dataSource bookmarkWithGuid:guid];
     NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
     NSString* newName = [NSString stringWithFormat:@"Copy of %@", [newDict objectForKey:KEY_NAME]];
-    
+
     [newDict setObject:newName forKey:KEY_NAME];
     [newDict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
     [newDict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
@@ -1358,18 +1358,18 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         NSBeep();
         return;
     }
-    
+
     NSSet* destGuids = [copyTo selectedGuids];
     for (NSString* destGuid in destGuids) {
         if ([destGuid isEqualToString:srcGuid]) {
             continue;
         }
-        
+
         if (![dataSource bookmarkWithGuid:destGuid]) {
             NSLog(@"Selected bookmark %@ doesn't exist", destGuid);
             continue;
         }
-        
+
         if ([copyColors state] == NSOnState) {
             [self copyAttributes:BulkCopyColors fromBookmark:srcGuid toBookmark:destGuid];
         }
@@ -1466,10 +1466,10 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
     // Display the dialog.  If the OK button was pressed,
     // process the files.
-    if ([openDlg runModalForDirectory:nil file:nil] == NSOKButton) {
+    if ([openDlg legacyRunModalForDirectory:nil file:nil] == NSOKButton) {
         // Get an array containing the full filenames of all
         // files and directories selected.
-        for (NSString* filename in [openDlg filenames]) {
+        for (NSString* filename in [openDlg legacyFilenames]) {
             [self importColorPresetFromFile:filename];
         }
     }
@@ -1528,17 +1528,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     NSMutableDictionary* theDict = [NSMutableDictionary dictionaryWithCapacity:24];
     int i = 0;
     for (NSString* colorKey in colorKeys) {
-        NSColor* theColor = [[wells[i++] color] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-        double r = [theColor redComponent];
-        double g = [theColor greenComponent];
-        double b = [theColor blueComponent];
-
-        NSDictionary* colorDict = [NSDictionary dictionaryWithObjectsAndKeys:
-                                   [NSNumber numberWithDouble:r], @"Red Component",
-                                   [NSNumber numberWithDouble:g], @"Green Component",
-                                   [NSNumber numberWithDouble:b], @"Blue Component",
-                                   nil];
-        [theDict setObject:colorDict forKey:colorKey];
+        [theDict setObject:[ITAddressBookMgr encodeColor:[wells[i++] color]] forKey:colorKey];
     }
     if (![theDict writeToFile:filename atomically:NO]) {
         NSRunAlertPanel(@"Save Failed.",
@@ -1558,8 +1548,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     // Set options.
     [saveDlg setAllowedFileTypes:[NSArray arrayWithObject:@"itermcolors"]];
 
-    if ([saveDlg runModalForDirectory:nil file:nil] == NSOKButton) {
-        [self _exportColorPresetToFile:[saveDlg filename]];
+    if ([saveDlg legacyRunModalForDirectory:nil file:nil] == NSOKButton) {
+        [self _exportColorPresetToFile:[saveDlg legacyFilename]];
     }
 }
 
@@ -1608,7 +1598,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 {
     NSString* guid = [bookmarksTableView selectedGuid];
     NSAssert(guid, @"Null guid unexpected here");
-    
+
     NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"ColorPresets"
                                                                             ofType:@"plist"];
     NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
@@ -1618,17 +1608,14 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         settings = [presetsDict objectForKey:presetName];
     }
     NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:[dataSource bookmarkWithGuid:guid]];
-    
+
     for (id colorName in settings) {
         NSDictionary* preset = [settings objectForKey:colorName];
-        float r = [[preset objectForKey:@"Red Component"] floatValue];
-        float g = [[preset objectForKey:@"Green Component"] floatValue];
-        float b = [[preset objectForKey:@"Blue Component"] floatValue];
-        NSColor* color = [NSColor colorWithCalibratedRed:r green:g blue:b alpha:1];
+        NSColor* color = [ITAddressBookMgr decodeColor:preset];
         NSAssert([newDict objectForKey:colorName], @"Missing color in existing dict");
         [newDict setObject:[ITAddressBookMgr encodeColor:color] forKey:colorName];
     }
-    
+
     [dataSource setBookmark:newDict withGuid:guid];
     [self updateBookmarkFields:newDict];
     [self bookmarkSettingChanged:self];  // this causes existing sessions to be updated
@@ -1676,9 +1663,9 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [panel setCanChooseFiles:NO];
     [panel setCanChooseDirectories:YES];
     [panel setAllowsMultipleSelection:NO];
-    
+
     if ([panel runModal] == NSOKButton) {
-        [prefsCustomFolder setStringValue:[panel directory]];
+        [prefsCustomFolder setStringValue:[panel legacyDirectory]];
         [self settingChanged:prefsCustomFolder];
         return YES;
     }  else {
@@ -1729,7 +1716,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                                          timeoutInterval:kFetchTimeout];
         NSURLResponse *response = nil;
         NSError *error = nil;
-        
+
         NSData *data = [NSURLConnection sendSynchronousRequest:req
                                              returningResponse:&response
                                                          error:&error];
@@ -1741,7 +1728,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                  informativeTextWithFormat:@"HTTP request failed: %@", [error description] ? [error description] : @"unknown error"] runModal];
             return NO;
         }
-        
+
         // Write it to disk
         NSFileManager *mgr = [NSFileManager defaultManager];
         NSString *tempDir = [mgr temporaryDirectory];
@@ -1755,9 +1742,9 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                  informativeTextWithFormat:@"Error on file %@: %@", tempFile, [error localizedFailureReason]] runModal];
             return NO;
         }
-        
+
         remotePrefs = [NSDictionary dictionaryWithContentsOfFile:tempFile];
-        
+
         [mgr removeItemAtPath:tempFile error:nil];
         [mgr removeItemAtPath:tempDir error:nil];
     } else {
@@ -1791,13 +1778,13 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         return YES;
     }
     done = YES;
-    
+
     BOOL doLoad = [PreferencePanel loadingPrefsFromCustomFolder];
     if (!doLoad) {
         return YES;
     }
     NSDictionary *remotePrefs = [self _remotePrefs];
-    
+
     if (remotePrefs && [remotePrefs count]) {
         NSDictionary *localPrefs = [NSDictionary dictionaryWithContentsOfFile:[self _prefsFilename]];
         // Empty out the current prefs
@@ -1806,7 +1793,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
             }
         }
-        
+
         for (NSString *key in remotePrefs) {
             if ([self preferenceKeyIsSyncable:key]) {
                 [[NSUserDefaults standardUserDefaults] setObject:[remotePrefs objectForKey:key]
@@ -1841,7 +1828,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                 return YES;
             }
         }
-        
+
         for (NSString *key in remotePrefs) {
             if ([self preferenceKeyIsSyncable:key] &&
                 ![[remotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
@@ -2299,7 +2286,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [valueToSend setStringValue:@""];
     [self updateValueToSend];
     newMapping = YES;
-    
+
     modifyMappingOriginator = info;
     [NSApp beginSheet:editKeyMappingWindow
        modalForWindow:[self window]
@@ -2655,13 +2642,13 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     switch (tag) {
         case MOD_TAG_ANY_COMMAND:
             return NSCommandKeyMask;
-            
+
         case MOD_TAG_CMD_OPT:
             return NSCommandKeyMask | NSAlternateKeyMask;
-            
+
         case MOD_TAG_OPTION:
             return NSAlternateKeyMask;
-            
+
         default:
             NSLog(@"Unexpected value for modifierTagToMask: %d", tag);
             return NSCommandKeyMask | NSAlternateKeyMask;
@@ -2672,7 +2659,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 - (int)intForString:(NSString *)s inRange:(NSRange)range
 {
     NSString *i = [s stringWithOnlyDigits];
-    
+
     int val = 0;
     if ([i length]) {
         val = [i intValue];
@@ -2844,7 +2831,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         KEY_SEND_CODE_WHEN_IDLE,
         KEY_IDLE_CODE,
     };
-    
+
     NSString* keyboardKeys[] = {
         KEY_KEYBOARD_MAP,
         KEY_OPTION_KEY_SENDS,
@@ -2881,7 +2868,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
             NSLog(@"Unexpected copy attribute %d", (int)attributes);
             return;
     }
-    
+
     for (int i = 0; keys[i]; ++i) {
         id srcValue = [src objectForKey:keys[i]];
         if (srcValue) {
@@ -2890,7 +2877,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
             [newDict removeObjectForKey:keys[i]];
         }
     }
-    
+
     [dataSource setBookmark:newDict withGuid:[dest objectForKey:KEY_GUID]];
 }
 
@@ -2906,16 +2893,16 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     unsigned int keyMods;
     unsigned short keyCode;
     NSString *unmodkeystr;
-    
+
     keyMods = [event modifierFlags];
     unmodkeystr = [event charactersIgnoringModifiers];
     keyCode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
-    
+
     // turn off all the other modifier bits we don't care about
     unsigned int theModifiers = keyMods &
     (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask |
      NSCommandKeyMask | NSNumericPadKeyMask);
-    
+
     // on some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
     if (keyCode >= NSUpArrowFunctionKey &&
         keyCode <= NSRightArrowFunctionKey) {
@@ -2926,7 +2913,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     }
     keyString = [[NSString stringWithFormat:@"0x%x-0x%x", keyCode,
                   theModifiers] retain];
-    
+
     [keyPress setStringValue:[iTermKeyBindingMgr formatKeyCombination:keyString]];
 }
 
@@ -2993,12 +2980,12 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 {
     unsigned int keyMods;
     NSString *unmodkeystr;
-    
+
     keyMods = [event modifierFlags];
     unmodkeystr = [event charactersIgnoringModifiers];
     unsigned short keyChar = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
     unsigned int keyCode = [event keyCode];
-    
+
     [self setHotKeyChar:keyChar code:keyCode mods:keyMods];
 }
 
@@ -3462,6 +3449,17 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return [prefs boolForKey:@"dockIconTogglesWindow"];
 }
 
+- (NSTimeInterval)timeBetweenBlinks
+{
+    static NSTimeInterval timeBetweenBlinks;
+    if (!timeBetweenBlinks) {
+        timeBetweenBlinks = [[NSUserDefaults standardUserDefaults] doubleForKey:@"TimeBetweenBlinks"];
+        if (!timeBetweenBlinks) {
+            timeBetweenBlinks = 0.5;
+        }
+    }
+    return timeBetweenBlinks;
+}
 
 #pragma mark - URL Handler
 
@@ -3497,7 +3495,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         }
         [bookmarkUrlSchemes setTitle:@"Select URL Schemes…"];
     }
-    
+
     NSString* guid = [dict objectForKey:KEY_GUID];
     [[bookmarkUrlSchemes menu] setAutoenablesItems:YES];
     [[bookmarkUrlSchemes menu] setDelegate:self];
@@ -3596,11 +3594,11 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     if ([self window] == nil) {
         [self initWithWindowNibName:@"PreferencePanel"];
     }
-    
+
     [[self window] setDelegate: self]; // also forces window to load
-    
+
     [wordChars setDelegate: self];
-    
+
     [windowStyle selectItemAtIndex: defaultWindowStyle];
     [openTmuxWindows selectItemAtIndex: defaultOpenTmuxWindowsIn];
     [autoHideTmuxClientSession setState:defaultAutoHideTmuxClientSession?NSOnState:NSOffState];
@@ -3634,7 +3632,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [strokeThicknessMaxLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
     [strokeThickness setFloatValue:defaultStrokeThickness];
     [fsTabDelay setFloatValue:defaultFsTabDelay];
-    
+
     [openBookmark setState: defaultOpenBookmark?NSOnState:NSOffState];
     [wordChars setStringValue: ([defaultWordChars length] > 0)?defaultWordChars:@""];
     [tmuxDashboardLimit setIntValue:defaultTmuxDashboardLimit];
@@ -3664,7 +3662,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [hotkeyLabel setTextColor:defaultHotkey ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
     [hotkeyTogglesWindow setEnabled:defaultHotkey];
     [hotkeyBookmark setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
-    
+
     [irMemory setIntValue:defaultIrMemory];
     [checkTestRelease setState:defaultCheckTestRelease?NSOnState:NSOffState];
     [dimInactiveSplitPanes setState:defaultDimInactiveSplitPanes?NSOnState:NSOffState];
@@ -3676,7 +3674,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [lionStyleFullscreen setState:defaultLionStyleFullscreen?NSOnState:NSOffState];
     [loadPrefsFromCustomFolder setState:defaultLoadPrefsFromCustomFolder?NSOnState:NSOffState];
     [prefsCustomFolder setStringValue:defaultPrefsCustomFolder ? defaultPrefsCustomFolder : @""];
-    
+
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];
     NSString* guid = [bookmarksTableView selectedGuid];
@@ -3696,20 +3694,20 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         }
         [self updateBookmarkFields:nil];
     }
-    
+
     if (![bookmarksTableView selectedGuid] && [bookmarksTableView numberOfRows]) {
         [bookmarksTableView selectRowIndex:0];
     }
-    
+
     [controlButton selectItemWithTag:defaultControl];
     [leftOptionButton selectItemWithTag:defaultLeftOption];
     [rightOptionButton selectItemWithTag:defaultRightOption];
     [leftCommandButton selectItemWithTag:defaultLeftCommand];
     [rightCommandButton selectItemWithTag:defaultRightCommand];
-    
+
     [switchTabModifierButton selectItemWithTag:defaultSwitchTabModifier];
     [switchWindowModifierButton selectItemWithTag:defaultSwitchWindowModifier];
-    
+
     int rowIndex = [globalKeyMappings selectedRow];
     if (rowIndex >= 0) {
         [globalRemoveMappingButton setEnabled:YES];
@@ -3717,7 +3715,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [globalRemoveMappingButton setEnabled:NO];
     }
     [globalKeyMappings reloadData];
-    
+
     // Show the window.
     [[self window] makeKeyAndOrderFront:self];
 }
@@ -3763,7 +3761,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         fontName = @"Unknown Font";
     }
     [normalFontField setStringValue: fontName];
-    
+
     if (nonAsciiFont != nil) {
         fontName = [NSString stringWithFormat: @"%gpt %@", [nonAsciiFont pointSize], [nonAsciiFont displayName]];
     } else {
@@ -3821,7 +3819,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         NSMenuItem* item = [bookmarkShortcutKey itemAtIndex:i];
         [item setTitle:[self shortcutKeyForTag:[item tag]]];
     }
-    
+
     // Add bookmark names to shortcuts that are bound.
     for (int i = 0; i < [dataSource numberOfBookmarks]; ++i) {
         Profile* temp = [dataSource profileAtIndex:i];
@@ -4201,7 +4199,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         case NSAlertOtherReturn:
             return NO;
     }
-    
+
     return YES;
 }
 
@@ -4224,7 +4222,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         case NSAlertOtherReturn:
             return NO;
     }
-    
+
     return YES;
 }
 
@@ -4247,7 +4245,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         case NSAlertOtherReturn:
             return NO;
     }
-    
+
     return YES;
 }
 
@@ -4271,7 +4269,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     if (lastQuell && (now - lastQuell) < 600) {
         return YES;
     }
-    
+
     NSAlert *alert;
     alert = [NSAlert alertWithMessageText:@"Confirm Deletion"
                             defaultButton:@"Delete"

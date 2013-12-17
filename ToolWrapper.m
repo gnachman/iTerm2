@@ -54,8 +54,6 @@ static const CGFloat kButtonSize = 17;
                                                                frame.size.height - kTitleHeight - kMargin - kBottomMargin)] autorelease];
         [container_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [self addSubview:container_];
-
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(someWrapperDidClose:) name:@"iTermToolWrapperDidClose" object:nil];
     }
     return self;
 }
@@ -98,13 +96,6 @@ static const CGFloat kButtonSize = 17;
 	} else {
 		[delegate_ toggleShowToolWithName:self.name];
 	}
-}
-
-- (void)someWrapperDidClose
-{
-    if ([[[self superview] subviews] count] == 1) {
-        [closeButton_ setEnabled:NO];
-    }
 }
 
 - (void)setName:(NSString *)theName

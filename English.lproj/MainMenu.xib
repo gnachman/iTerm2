@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="4514" systemVersion="13A2093" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="4514" systemVersion="13A603" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment defaultVersion="1070" identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="4514"/>
@@ -485,6 +485,12 @@ DQ
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="nextMarkOrNote:" target="-1" id="HSR-a4-u0F"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Alert on next mark" keyEquivalent="a" id="Qj6-xH-l9X">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="toggleAlertOnNextMark:" target="-1" id="hTO-Iy-yuC"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="5a1-MJ-4uR">

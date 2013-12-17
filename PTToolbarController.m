@@ -38,7 +38,7 @@ NSString *CloseToolbarItem = @"Close";
 NSString *ConfigToolbarItem = @"Info";
 NSString *CommandToolbarItem = @"Command";
 
-@interface PTToolbarController (Private)
+@interface PTToolbarController ()
 - (void)setupToolbar;
 - (void)buildToolbarItemPopUpMenu:(NSToolbarItem *)toolbarItem forToolbar:(NSToolbar *)toolbar;
 - (NSToolbarItem*)toolbarItemWithIdentifier:(NSString*)identifier;
@@ -192,9 +192,7 @@ NSString *CommandToolbarItem = @"Command";
     [[ProfilesWindow sharedInstance] showWindow:self];
 }
 
-@end
-
-@implementation PTToolbarController (Private)
+#pragma mark - Private
 
 - (void)setupToolbar;
 {

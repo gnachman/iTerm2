@@ -8,6 +8,7 @@
 
 #import "SplitPanel.h"
 #import "ProfileListView.h"
+#import "PseudoTerminal.h"
 
 @implementation SplitPanel
 

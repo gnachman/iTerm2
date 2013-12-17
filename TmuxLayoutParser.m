@@ -29,7 +29,7 @@ NSString *kLayoutDictHistoryKey = @"history";
 NSString *kLayoutDictAltHistoryKey = @"alt-history";
 NSString *kLayoutDictStateKey = @"state";
 
-@interface TmuxLayoutParser (Private)
+@interface TmuxLayoutParser ()
 
 - (LayoutNodeType)nodeTypeInLayout:(NSString *)layout range:(NSRange)range;
 - (NSMutableDictionary *)dictForLeafNodeInLayout:(NSString *)layout range:(NSRange)range;
@@ -148,9 +148,7 @@ NSString *kLayoutDictStateKey = @"state";
     return result;
 }
 
-@end
-
-@implementation TmuxLayoutParser (Private)
+#pragma mark - Private
 
 - (LayoutNodeType)nodeTypeInLayout:(NSString *)layout range:(NSRange)range
 {

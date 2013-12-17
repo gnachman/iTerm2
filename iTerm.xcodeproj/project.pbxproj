@@ -308,7 +308,6 @@
 		1D9A552F180FA6A100B42CE9 /* iTermGrowlDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = F69E788C0AB7AC6D001EC0FF /* iTermGrowlDelegate.m */; };
 		1D9A5530180FA70D00B42CE9 /* iTermController.m in Sources */ = {isa = PBXBuildFile; fileRef = E8A66F030272453F03A80106 /* iTermController.m */; };
 		1D9A5531180FA73300B42CE9 /* FutureMethods.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */; };
-		1D9A5532180FA74500B42CE9 /* NSBitmapImageRep+CoreImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */; };
 		1D9A5533180FA77900B42CE9 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DEB293D1288899A00B2CB9F /* Carbon.framework */; };
 		1D9A5534180FA77F00B42CE9 /* Quartz.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF0897013DBAF4C00A52AD8 /* Quartz.framework */; };
 		1D9A5535180FA78B00B42CE9 /* DVRBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D93D3591269778C007F741B /* DVRBuffer.m */; };
@@ -350,7 +349,6 @@
 		1D9A5563180FA84700B42CE9 /* NSBezierPath+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9516F04D0900B7FCE9 /* NSBezierPath+iTerm.m */; };
 		1D9A5564180FA84700B42CE9 /* NSDateFormatterExtras.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */; };
 		1D9A5565180FA84700B42CE9 /* NSFileManager+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D67ABAA14285D6000D5DA4E /* NSFileManager+iTerm.m */; };
-		1D9A5566180FA84700B42CE9 /* NSImage+CoreImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF0895A13DBAE1F00A52AD8 /* NSImage+CoreImage.m */; };
 		1D9A5567180FA84700B42CE9 /* NSStringITerm.m in Sources */ = {isa = PBXBuildFile; fileRef = E8E901A202743CA303A80106 /* NSStringITerm.m */; };
 		1D9A5569180FA85000B42CE9 /* Autocomplete.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE214E0128212EE004E3ADF /* Autocomplete.m */; };
 		1D9A556A180FA85000B42CE9 /* Popup.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD736401283C2FA009B7829 /* Popup.m */; };
@@ -533,10 +531,10 @@
 		1DE8DF371415799700F83147 /* ToolWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DF351415799700F83147 /* ToolWrapper.m */; };
 		1DEDC8FD1451F67D004F1615 /* SessionTitleView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DEDC8FB1451F67D004F1615 /* SessionTitleView.h */; };
 		1DEDC8FE1451F67D004F1615 /* SessionTitleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */; };
-		1DF0895B13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF0895713DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h */; };
-		1DF0895C13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */; };
-		1DF0895D13DBAE1F00A52AD8 /* NSImage+CoreImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF0895913DBAE1F00A52AD8 /* NSImage+CoreImage.h */; };
-		1DF0895E13DBAE1F00A52AD8 /* NSImage+CoreImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF0895A13DBAE1F00A52AD8 /* NSImage+CoreImage.m */; };
+		1DEF5E6D185F889600300319 /* Alert.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEF5E6B185F889600300319 /* Alert.png */; };
+		1DEF5E6E185F889600300319 /* Alert.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEF5E6B185F889600300319 /* Alert.png */; };
+		1DEF5E6F185F889600300319 /* Alert@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEF5E6C185F889600300319 /* Alert@2x.png */; };
+		1DEF5E70185F889600300319 /* Alert@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEF5E6C185F889600300319 /* Alert@2x.png */; };
 		1DF0897113DBAF4C00A52AD8 /* Quartz.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF0897013DBAF4C00A52AD8 /* Quartz.framework */; };
 		1DF8AF5813FD781700C8A435 /* SplitPanel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8AF5613FD781700C8A435 /* SplitPanel.h */; };
 		1DF8AF5913FD781700C8A435 /* SplitPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF8AF5713FD781700C8A435 /* SplitPanel.m */; };
@@ -948,10 +946,8 @@
 		1DEB293D1288899A00B2CB9F /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		1DEDC8FB1451F67D004F1615 /* SessionTitleView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SessionTitleView.h; sourceTree = "<group>"; };
 		1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SessionTitleView.m; sourceTree = "<group>"; };
-		1DF0895713DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSBitmapImageRep+CoreImage.h"; sourceTree = "<group>"; };
-		1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSBitmapImageRep+CoreImage.m"; sourceTree = "<group>"; };
-		1DF0895913DBAE1F00A52AD8 /* NSImage+CoreImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSImage+CoreImage.h"; sourceTree = "<group>"; };
-		1DF0895A13DBAE1F00A52AD8 /* NSImage+CoreImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSImage+CoreImage.m"; sourceTree = "<group>"; };
+		1DEF5E6B185F889600300319 /* Alert.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Alert.png; path = images/Alert.png; sourceTree = "<group>"; };
+		1DEF5E6C185F889600300319 /* Alert@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Alert@2x.png"; path = "images/Alert@2x.png"; sourceTree = "<group>"; };
 		1DF0897013DBAF4C00A52AD8 /* Quartz.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Quartz.framework; path = System/Library/Frameworks/Quartz.framework; sourceTree = SDKROOT; };
 		1DF8AF5613FD781700C8A435 /* SplitPanel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SplitPanel.h; sourceTree = "<group>"; };
 		1DF8AF5713FD781700C8A435 /* SplitPanel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SplitPanel.m; sourceTree = "<group>"; };
@@ -1304,10 +1300,8 @@
 				1D29732514082676004C5DBE /* MovePaneController.h */,
 				1D9053C417A5CCF100A0B64E /* MovingAverage.h */,
 				1D085F9416F04D0900B7FCE9 /* NSBezierPath+iTerm.h */,
-				1DF0895713DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h */,
 				1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */,
 				1D67ABA914285D6000D5DA4E /* NSFileManager+iTerm.h */,
-				1DF0895913DBAE1F00A52AD8 /* NSImage+CoreImage.h */,
 				1D407A2914BABE8700BD5035 /* NSStringITerm.h */,
 				1D81F0BE183C3C2D00910838 /* NSView+RecursiveDescription.h */,
 				1D7C187F1275D22900461E55 /* PasteboardHistory.h */,
@@ -1488,6 +1482,8 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1DEF5E6B185F889600300319 /* Alert.png */,
+				1DEF5E6C185F889600300319 /* Alert@2x.png */,
 				1D0160991852AA6F0014D26A /* mark@2x.png */,
 				1D01609A1852AA6F0014D26A /* mark.png */,
 				1D81F0C7183D4DAB00910838 /* nw_se_resize_cursor.png */,
@@ -1669,10 +1665,8 @@
 			children = (
 				1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */,
 				1D085F9516F04D0900B7FCE9 /* NSBezierPath+iTerm.m */,
-				1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */,
 				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
 				1D67ABAA14285D6000D5DA4E /* NSFileManager+iTerm.m */,
-				1DF0895A13DBAE1F00A52AD8 /* NSImage+CoreImage.m */,
 				E8E901A202743CA303A80106 /* NSStringITerm.m */,
 				A60014F418550F3900CE38D8 /* NSMutableAttributedString+iTerm.h */,
 				A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */,
@@ -1965,8 +1959,6 @@
 				1D624BF61386E3B400111319 /* GTMTypeCasting.h in Headers */,
 				1DA8117E13CEA30A00CCA89A /* FontSizeEstimator.h in Headers */,
 				1D8B8A141806038F00C2DC25 /* VT100Grid.h in Headers */,
-				1DF0895B13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h in Headers */,
-				1DF0895D13DBAE1F00A52AD8 /* NSImage+CoreImage.h in Headers */,
 				1DCA5ECF13EE507800B7725E /* WindowArrangements.h in Headers */,
 				A63F409A183B3AA7003A6A6D /* PTYNoteView.h in Headers */,
 				1D2560AA13EE60E4006B35CD /* ArrangementPreviewView.h in Headers */,
@@ -2142,9 +2134,11 @@
 				1D01609E1852AA6F0014D26A /* mark.png in Resources */,
 				1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */,
 				1DD39AEF180B8118004E56D5 /* Images.xcassets in Resources */,
+				1DEF5E6E185F889600300319 /* Alert.png in Resources */,
 				1D01609C1852AA6F0014D26A /* mark@2x.png in Resources */,
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
 				1D81F0CC183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */,
+				1DEF5E70185F889600300319 /* Alert@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2237,11 +2231,13 @@
 				1D48B294165F4416000046EE /* star.png in Resources */,
 				1D81F0C9183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */,
 				1D48B2F9165F45BA000046EE /* star@2x.png in Resources */,
+				1DEF5E6F185F889600300319 /* Alert@2x.png in Resources */,
 				1D085F8916F030FB00B7FCE9 /* PasteView.xib in Resources */,
 				9D737D5F17495B4100B3334D /* PrefsGeneral.png in Resources */,
 				9D737D6017495B4100B3334D /* PrefsGeneral@2x.png in Resources */,
 				9DB3D6E0176C8F0B0071CCF8 /* PrefsAppearance.png in Resources */,
 				9DB3D6E1176C8F0B0071CCF8 /* PrefsAppearance@2x.png in Resources */,
+				1DEF5E6D185F889600300319 /* Alert.png in Resources */,
 				9DB3D6E4176CB4D80071CCF8 /* PrefsProfile.png in Resources */,
 				9DB3D6E5176CB4D80071CCF8 /* PrefsProfile@2x.png in Resources */,
 				9DB3D6E8176CBC0C0071CCF8 /* PrefsKeyboard.png in Resources */,
@@ -2314,7 +2310,6 @@
 				1D9A558E180FA87000B42CE9 /* PointerController.m in Sources */,
 				1D9A5596180FA87000B42CE9 /* PTYSplitView.m in Sources */,
 				1D9A55A3180FA87000B42CE9 /* ToastWindowController.m in Sources */,
-				1D9A5532180FA74500B42CE9 /* NSBitmapImageRep+CoreImage.m in Sources */,
 				1D9A5575180FA85D00B42CE9 /* BellTrigger.m in Sources */,
 				1D9A55A7180FA8B700B42CE9 /* PSMAdiumTabStyle.m in Sources */,
 				1D9A559E180FA87000B42CE9 /* SolidColorView.m in Sources */,
@@ -2376,7 +2371,6 @@
 				1D9A5580180FA87000B42CE9 /* FontSizeEstimator.m in Sources */,
 				1D9A5561180FA83900B42CE9 /* TrouterPrefsController.m in Sources */,
 				1D9A556F180FA85900B42CE9 /* ToolNotes.m in Sources */,
-				1D9A5566180FA84700B42CE9 /* NSImage+CoreImage.m in Sources */,
 				1D9A55A6180FA8B700B42CE9 /* NSBezierPath_AMShading.m in Sources */,
 				1D9A5581180FA87000B42CE9 /* IntervalMap.m in Sources */,
 				1D9A557A180FA85D00B42CE9 /* SendTextTrigger.m in Sources */,
@@ -2525,8 +2519,6 @@
 				1D624BC81386E09E00111319 /* GTMCarbonEvent.m in Sources */,
 				1DA8117F13CEA30A00CCA89A /* FontSizeEstimator.m in Sources */,
 				1D81F0C1183C3C2D00910838 /* NSView+RecursiveDescription.m in Sources */,
-				1DF0895C13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m in Sources */,
-				1DF0895E13DBAE1F00A52AD8 /* NSImage+CoreImage.m in Sources */,
 				1DCA5ED013EE507800B7725E /* WindowArrangements.m in Sources */,
 				1D2560AB13EE60E4006B35CD /* ArrangementPreviewView.m in Sources */,
 				1DF8AF5913FD781700C8A435 /* SplitPanel.m in Sources */,

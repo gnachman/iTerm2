@@ -27,13 +27,6 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/*
-    Delegate
-        readTask:
-        brokenPipe
-        closeSession:
-*/
-
 #import <Foundation/Foundation.h>
 
 extern NSString *kCoprocessStatusChangeNotification;
@@ -42,8 +35,9 @@ extern NSString *kCoprocessStatusChangeNotification;
 @class PTYTab;
 @class Coprocess;
 
-@protocol PTYTaskDelegate
-- (void)closeTab:(PTYTab*)aSession;
+@protocol PTYTaskDelegate <NSObject>
+- (void)readTask:(NSData *)data;
+- (void)brokenPipe;
 @end
 
 @interface PTYTask : NSObject
@@ -51,7 +45,7 @@ extern NSString *kCoprocessStatusChangeNotification;
     pid_t pid;
     int fd;
     int status;
-    id delegate;
+    id<PTYTaskDelegate> delegate;
     NSString* tty;
     NSString* path;
     BOOL hasOutput;
@@ -80,8 +74,8 @@ extern NSString *kCoprocessStatusChangeNotification;
 
 - (NSString*)currentJob:(BOOL)forceRefresh;
 
-- (void)setDelegate:(id)object;
-- (id)delegate;
+- (void)setDelegate:(id<PTYTaskDelegate>)object;
+- (id<PTYTaskDelegate>)delegate;
 - (void)readTask:(NSData*)data;
 - (void)writeTask:(NSData*)data;
 

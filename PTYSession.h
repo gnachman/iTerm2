@@ -28,6 +28,7 @@
 #import "FindViewController.h"
 #import "ITAddressBookMgr.h"
 #import "LineBuffer.h"
+#import "PTYTask.h"
 #import "PTYTextView.h"
 #import "PasteViewController.h"
 #import "ProfileModel.h"
@@ -56,8 +57,7 @@
 @class iTermController;
 @class iTermGrowlDelegate;
 
-// Timer period when all we have to do is update blinking text/cursor.
-static const float kBlinkTimerIntervalSec = 1.0 / 2.0;
+// The time period for just blinking is in -[PreferencePanel timeBetweenBlinks].
 // Timer period when receiving lots of data.
 static const float kSlowTimerIntervalSec = 1.0 / 10.0;
 // Timer period for interactive use.
@@ -78,6 +78,7 @@ typedef enum {
 @interface PTYSession : NSResponder <
     FindViewControllerDelegate,
     PasteViewControllerDelegate,
+    PTYTaskDelegate,
     PTYTextViewDelegate,
     TmuxGatewayDelegate,
     VT100ScreenDelegate>
@@ -267,6 +268,8 @@ typedef enum {
     NSInteger requestAttentionId_;  // Last request-attention identifier
     VT100ScreenMark *lastMark_;
 }
+
+@property(nonatomic, assign) BOOL alertOnNextMark;
 
 // Return the current pasteboard value as a string.
 + (NSString*)pasteboardString;

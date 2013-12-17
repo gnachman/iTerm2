@@ -10,7 +10,8 @@
  **
  **  Project: iTerm
  **
- **  Description: Implements the delegate for Growl notifications.
+ **  Description: Implements the delegate for Growl notifications. When
+ **      available, Notifiation Center is used as a fallback.
  **
  **  Usage:
  **      In your class header file, add the following @class directive
@@ -109,8 +110,10 @@
   /**
    **  Generate a 'full' Growl message with a specified notification type,
    **  associated with a particular window/tab/view.
+   **
+   **  Retrns YES if the notification was posted.
    **/
-- (void)growlNotify:(NSString *)title
+- (BOOL)growlNotify:(NSString *)title
     withDescription:(NSString *)description
     andNotification:(NSString *)notification
         windowIndex:(int)windowIndex
