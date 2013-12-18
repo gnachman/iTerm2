@@ -286,13 +286,16 @@ static struct {
 }
 
 // Return the unshifted character in a keypress event (e.g., . for shift+.i
-// (which produces ">") on a US keyboard).
+// (which produces ">") on a US keyboard). This may return nil.
 - (NSString *)charactersIgnoringAllModifiersInEvent:(NSEvent *)event
 {
     CGKeyCode keyCode = [event keyCode];
     TISInputSourceRef keyboard = TISCopyCurrentKeyboardInputSource();
     CFDataRef layoutData = TISGetInputSourceProperty(keyboard,
                                                      kTISPropertyUnicodeKeyLayoutData);
+    if (!layoutData) {
+        return nil;
+    }
     const UCKeyboardLayout *keyboardLayout = (const UCKeyboardLayout *)CFDataGetBytePtr(layoutData);
     UInt32 deadKeyState = 0;
     UniChar unicodeString[4];
@@ -334,7 +337,8 @@ static struct {
     }
 
     NSString *charactersIgnoringAllModifiers = [self charactersIgnoringAllModifiersInEvent:event];
-    if ((flags & NSShiftKeyMask) &&
+    if (charactersIgnoringAllModifiers &&
+        (flags & NSShiftKeyMask) &&
         [charactersIgnoringAllModifiers isEqualToString:charactersIgnoringAllModifiers]) {
         // The shifted version differs from the unshifted version (e.g., A vs a) so add
         // "A" since we already have "$A" ("A" is a lower priority than "$A").

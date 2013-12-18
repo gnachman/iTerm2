@@ -82,6 +82,7 @@ static const double kCharWidthFractionOffset = 0.35;
 #import "SmartSelectionController.h"
 #import "ThreeFingerTapGestureRecognizer.h"
 #import "URLAction.h"
+#import "charmaps.h"
 #import "iTerm.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
@@ -7219,7 +7220,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 CRunInitialize(currentRun, &attrs, storage, curX);
             }
             if (thisCharString) {
-                currentRun = CRunAppendString(currentRun, &attrs, thisCharString, thisCharAdvance, curX);
+                currentRun = CRunAppendString(currentRun,
+                                              &attrs,
+                                              thisCharString,
+                                              theLine[i].code,
+                                              thisCharAdvance,
+                                              curX);
             } else {
                 currentRun = CRunAppend(currentRun, &attrs, thisCharUnichar, thisCharAdvance, curX);
             }
@@ -7311,20 +7317,111 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return (CGColorRef)[(id)CGColorCreate(colorSpace, components) autorelease];
 }
 
-- (void)_advancedDrawString:(NSString *)str
-                   fontInfo:(PTYFontInfo*)fontInfo
-                      color:(NSColor*)color
-                         at:(NSPoint)pos
-                      width:(CGFloat)width
-                   fakeBold:(BOOL)fakeBold
-                 fakeItalic:(BOOL)fakeItalic
-                  antiAlias:(BOOL)antiAlias {
+- (NSBezierPath *)bezierPathForBoxDrawingCode:(int)code {
+    //  0 1 2
+    //  3 4 5
+    //  6 7 8
+    NSArray *points = nil;
+    // The points array is a series of numbers from the above grid giving the
+    // sequence of points to move the pen to.
+    switch (code) {
+        case ITERM_BOX_DRAWINGS_LIGHT_UP_AND_LEFT:  // ┘
+            points = @[ @(3), @(4), @(1) ];
+            break;
+        case ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_LEFT:  // ┐
+            points = @[ @(3), @(4), @(7) ];
+            break;
+        case ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT:  // ┌
+            points = @[ @(7), @(4), @(5) ];
+            break;
+        case ITERM_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT:  // └
+            points = @[ @(1), @(4), @(5) ];
+            break;
+        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_HORIZONTAL:  // ┼
+            points = @[ @(3), @(5), @(4), @(1), @(7) ];
+            break;
+        case ITERM_BOX_DRAWINGS_LIGHT_HORIZONTAL:  // ─
+            points = @[ @(3), @(5) ];
+            break;
+        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_RIGHT:  // ├
+            points = @[ @(1), @(4), @(5), @(4), @(7) ];
+            break;
+        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_LEFT:  // ┤
+            points = @[ @(1), @(4), @(3), @(4), @(7) ];
+            break;
+        case ITERM_BOX_DRAWINGS_LIGHT_UP_AND_HORIZONTAL:  // ┴
+            points = @[ @(3), @(4), @(1), @(4), @(5) ];
+            break;
+        case ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_HORIZONTAL:  // ┬
+            points = @[ @(3), @(4), @(7), @(4), @(5) ];
+            break;
+        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL:  // │
+            points = @[ @(1), @(7) ];
+            break;
+        default:
+            break;
+    }
+    CGFloat xs[] = { 0, charWidth / 2, charWidth };
+    CGFloat ys[] = { 0, lineHeight / 2, lineHeight };
+    NSBezierPath *path = [NSBezierPath bezierPath];
+    BOOL first = YES;
+    for (NSNumber *n in points) {
+        CGFloat x = xs[n.intValue % 3];
+        CGFloat y = ys[n.intValue / 3];
+        NSPoint p = NSMakePoint(x, y);
+        if (first) {
+            [path moveToPoint:p];
+            first = NO;
+        } else {
+            [path lineToPoint:p];
+        }
+    }
+    return path;
+}
+
+- (void)_advancedDrawRun:(CRun *)complexRun at:(NSPoint)pos
+{
+    NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
+    NSColor *color = complexRun->attrs.color;
+
+    switch (complexRun->key) {
+        case ITERM_BOX_DRAWINGS_LIGHT_UP_AND_LEFT:
+        case ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_LEFT:
+        case ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT:
+        case ITERM_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT:
+        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_HORIZONTAL:
+        case ITERM_BOX_DRAWINGS_LIGHT_HORIZONTAL:
+        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_RIGHT:
+        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_LEFT:
+        case ITERM_BOX_DRAWINGS_LIGHT_UP_AND_HORIZONTAL:
+        case ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_HORIZONTAL:
+        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL: {
+            NSBezierPath *path = [self bezierPathForBoxDrawingCode:complexRun->key];
+            [ctx saveGraphicsState];
+            NSAffineTransform *transform = [NSAffineTransform transform];
+            [transform translateXBy:pos.x yBy:pos.y];
+            [transform concat];
+            [color set];
+            [path stroke];
+            [ctx restoreGraphicsState];
+            return;
+        }
+
+        default:
+            break;
+    }
+    NSString *str = complexRun->string;
+    PTYFontInfo *fontInfo = complexRun->attrs.fontInfo;
+    CGFloat width = CRunGetAdvances(complexRun)[0].width;
+    BOOL fakeBold = complexRun->attrs.fakeBold;
+    BOOL fakeItalic = complexRun->attrs.fakeItalic;
+    BOOL antiAlias = complexRun->attrs.antiAlias;
+
     NSDictionary* attrs;
     attrs = [NSDictionary dictionaryWithObjectsAndKeys:
                 fontInfo.font, NSFontAttributeName,
                 color, NSForegroundColorAttributeName,
                 nil];
-    NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
     [ctx saveGraphicsState];
     [ctx setCompositingOperation:NSCompositeSourceOver];
     NSMutableAttributedString* attributedString =
@@ -7399,26 +7496,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 break;
             }
             CRun *complexRun = CRunSplit(currentRun, firstComplexGlyph);
-            [self _advancedDrawString:complexRun->string
-                             fontInfo:complexRun->attrs.fontInfo
-                                color:complexRun->attrs.color
-                                   at:NSMakePoint(initialPoint.x + complexRun->x, initialPoint.y)
-                                width:CRunGetAdvances(complexRun)[0].width
-                             fakeBold:complexRun->attrs.fakeBold
-                           fakeItalic:complexRun->attrs.fakeItalic
-                            antiAlias:complexRun->attrs.antiAlias];
+            [self _advancedDrawRun:complexRun
+                                at:NSMakePoint(initialPoint.x + complexRun->x, initialPoint.y)];
             CRunFree(complexRun);
         }
     } else {
         // Complex
-        [self _advancedDrawString:currentRun->string
-                         fontInfo:currentRun->attrs.fontInfo
-                            color:currentRun->attrs.color
-                               at:NSMakePoint(initialPoint.x + currentRun->x, initialPoint.y)
-                            width:CRunGetAdvances(currentRun)[0].width
-                         fakeBold:currentRun->attrs.fakeBold
-                       fakeItalic:currentRun->attrs.fakeItalic
-                        antiAlias:currentRun->attrs.antiAlias];
+        [self _advancedDrawRun:currentRun
+                            at:NSMakePoint(initialPoint.x + currentRun->x, initialPoint.y)];
     }
 
     // Draw underline

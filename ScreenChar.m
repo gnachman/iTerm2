@@ -48,12 +48,28 @@ static BOOL hasWrapped = NO;
 @synthesize eol = _eol;
 @end
 
+static void CreateComplexCharMapIfNeeded() {
+    if (!complexCharMap) {
+        complexCharMap = [[NSMutableDictionary alloc] initWithCapacity:1000];
+        // Add box-drawing chars, which are reserved. They are drawn using
+        // bezier paths but it's important that the keys refer to an existing
+        // string for general correctness.
+        for (int i = 0; i < 256; i++) {
+            if (lineDrawingCharFlags[i]) {
+                complexCharMap[@(charmap[i])] = [NSString stringWithFormat:@"%C", charmap[i]];
+            }
+        }
+        inverseComplexCharMap = [[NSMutableDictionary alloc] initWithCapacity:1000];
+    }
+}
+
 NSString* ComplexCharToStr(int key)
 {
     if (key == UNICODE_REPLACEMENT_CHAR) {
         return ReplacementString();
     }
 
+    CreateComplexCharMapIfNeeded();
     return [complexCharMap objectForKey:[NSNumber numberWithInt:key]];
 }
 
@@ -102,28 +118,48 @@ UTF32Char CharToLongChar(unichar code, BOOL isComplex)
     }
 }
 
+static BOOL ComplexCharKeyIsReserved(int k) {
+    switch (k) {
+        case ITERM_BOX_DRAWINGS_LIGHT_UP_AND_LEFT:
+        case ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_LEFT:
+        case ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT:
+        case ITERM_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT:
+        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_HORIZONTAL:
+        case ITERM_BOX_DRAWINGS_LIGHT_HORIZONTAL:
+        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_RIGHT:
+        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_LEFT:
+        case ITERM_BOX_DRAWINGS_LIGHT_UP_AND_HORIZONTAL:
+        case ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_HORIZONTAL:
+        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL:
+            return YES;
+
+        default:
+            return NO;
+    }
+}
+
 int GetOrSetComplexChar(NSString* str)
 {
-    if (!complexCharMap) {
-        complexCharMap = [[NSMutableDictionary alloc] initWithCapacity:1000];
-        inverseComplexCharMap = [[NSMutableDictionary alloc] initWithCapacity:1000];
-    }
+    CreateComplexCharMapIfNeeded();
     NSNumber* number = [inverseComplexCharMap objectForKey:str];
     if (number) {
         return [number intValue];
     }
 
-    int newKey = ccmNextKey++;
-    number = [NSNumber numberWithInt:newKey];
+    int newKey;
+    do {
+        newKey = ccmNextKey++;
+    } while (ComplexCharKeyIsReserved(newKey));
+
+    number = @(newKey);
     if (hasWrapped) {
-        NSString* oldStr = [complexCharMap objectForKey:number];
+        NSString* oldStr = complexCharMap[number];
         if (oldStr) {
             [inverseComplexCharMap removeObjectForKey:oldStr];
         }
     }
-    [complexCharMap setObject:str
-                       forKey:number];
-    [inverseComplexCharMap setObject:number forKey:str];
+    complexCharMap[number] = str;
+    inverseComplexCharMap[str] = number;
     if (ccmNextKey == 0xf000) {
         ccmNextKey = 1;
         hasWrapped = YES;
@@ -539,6 +575,7 @@ void ConvertCharsToGraphicsCharset(screen_char_t *s, int len)
 
     for (i = 0; i < len; i++) {
         assert(!s[i].complexChar);
+        s[i].complexChar = lineDrawingCharFlags[(int)(s[i].code)];
         s[i].code = charmap[(int)(s[i].code)];
     }
 }

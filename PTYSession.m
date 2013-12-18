@@ -2908,7 +2908,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 {
     Profile* bookmark = [self addressBookEntry];
     NSString* guid = [bookmark objectForKey:KEY_GUID];
-    if (isDivorced) {
+    if (isDivorced && [[ProfileModel sessionsInstance] bookmarkWithGuid:guid]) {
+        // Once, I saw a case where an already-divorced bookmark's guid was missing from
+        // sessionsInstance. I don't know why, but if that's the case, just create it there
+        // again. :(
         return guid;
     }
     isDivorced = YES;
