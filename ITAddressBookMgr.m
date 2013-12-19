@@ -145,10 +145,6 @@
 
 + (NSColor*)decodeColor:(NSDictionary*)plist
 {
-    if ([plist count] != 3) {
-        return [NSColor blackColor];
-    }
-
     return [NSColor colorWithCalibratedRed:[[plist objectForKey:@"Red Component"] floatValue]
                                      green:[[plist objectForKey:@"Green Component"] floatValue]
                                       blue:[[plist objectForKey:@"Blue Component"] floatValue]
