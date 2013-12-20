@@ -1667,6 +1667,8 @@ NSString *sessionsKey = @"sessions";
     NSLog(@"%s(%d):-[PseudoTerminal windowDidDeminiaturize:%@]",
           __FILE__, __LINE__, aNotification);
 #endif
+    [self.window.dockTile setBadgeLabel:@""];
+    [self.window.dockTile setShowsApplicationBadge:NO];
     if ([[self currentTab] blur]) {
         [self enableBlur:[[self currentTab] blurRadius]];
     } else {
@@ -1804,7 +1806,8 @@ NSString *sessionsKey = @"sessions";
 - (void)windowDidBecomeKey:(NSNotification *)aNotification
 {
     isOrderedOut_ = NO;
-
+    [[[NSApplication sharedApplication] dockTile] setBadgeLabel:@""];
+    [[[NSApplication sharedApplication] dockTile] setShowsApplicationBadge:NO];
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PseudoTerminal windowDidBecomeKey:%@]",
           __FILE__, __LINE__, aNotification);
@@ -6019,6 +6022,23 @@ NSString *sessionsKey = @"sessions";
 - (NSUInteger)validModesForFontPanel:(NSFontPanel *)fontPanel
 {
     return kValidModesForFontPanel;
+}
+
+- (void)incrementBadge
+{
+    NSDockTile *dockTile;
+    if (self.window.isMiniaturized) {
+      dockTile = self.window.dockTile;
+    } else {
+      if ([[NSApplication sharedApplication] isActive]) {
+        return;
+      }
+      dockTile = [[NSApplication sharedApplication] dockTile];
+    }
+    int count = [[dockTile badgeLabel] intValue];
+    ++count;
+    [dockTile setBadgeLabel:[NSString stringWithFormat:@"%d", count]];
+    [self.window.dockTile setShowsApplicationBadge:YES];
 }
 
 @end

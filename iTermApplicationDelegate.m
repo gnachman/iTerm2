@@ -577,55 +577,55 @@ static BOOL hasBecomeActive = NO;
 - (id)init
 {
     self = [super init];
+    if (self) {
+        // Add ourselves as an observer for notifications.
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(reloadMenus:)
+                                                     name:@"iTermWindowBecameKey"
+                                                   object:nil];
 
-    // Add ourselves as an observer for notifications.
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(reloadMenus:)
-                                                 name:@"iTermWindowBecameKey"
-                                               object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver: self
+                                                 selector: @selector(updateAddressBookMenu:)
+                                                     name: @"iTermReloadAddressBook"
+                                                   object: nil];
 
-    [[NSNotificationCenter defaultCenter] addObserver: self
-                                             selector: @selector(updateAddressBookMenu:)
-                                                 name: @"iTermReloadAddressBook"
-                                               object: nil];
+        [[NSNotificationCenter defaultCenter] addObserver: self
+                                                 selector: @selector(buildSessionSubmenu:)
+                                                     name: @"iTermNumberOfSessionsDidChange"
+                                                   object: nil];
 
-    [[NSNotificationCenter defaultCenter] addObserver: self
-                                             selector: @selector(buildSessionSubmenu:)
-                                                 name: @"iTermNumberOfSessionsDidChange"
-                                               object: nil];
+        [[NSNotificationCenter defaultCenter] addObserver: self
+                                                 selector: @selector(buildSessionSubmenu:)
+                                                     name: @"iTermNameOfSessionDidChange"
+                                                   object: nil];
 
-    [[NSNotificationCenter defaultCenter] addObserver: self
-                                             selector: @selector(buildSessionSubmenu:)
-                                                 name: @"iTermNameOfSessionDidChange"
-                                               object: nil];
+        [[NSNotificationCenter defaultCenter] addObserver: self
+                                                 selector: @selector(reloadSessionMenus:)
+                                                     name: @"iTermSessionBecameKey"
+                                                   object: nil];
 
-    [[NSNotificationCenter defaultCenter] addObserver: self
-                                             selector: @selector(reloadSessionMenus:)
-                                                 name: @"iTermSessionBecameKey"
-                                               object: nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(nonTerminalWindowBecameKey:)
+                                                     name:@"nonTerminalWindowBecameKey"
+                                                   object:nil];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(nonTerminalWindowBecameKey:)
-                                                 name:@"nonTerminalWindowBecameKey"
-                                               object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowArrangementsDidChange:)
+                                                     name:@"iTermSavedArrangementChanged"
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(toolDidToggle:)
+                                                     name:@"iTermToolToggled"
+                                                   object:nil];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(windowArrangementsDidChange:)
-                                                 name:@"iTermSavedArrangementChanged"
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(toolDidToggle:)
-                                                 name:@"iTermToolToggled"
-                                               object:nil];
+        [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self
+                                                           andSelector:@selector(getUrl:withReplyEvent:)
+                                                         forEventClass:kInternetEventClass
+                                                            andEventID:kAEGetURL];
 
-    [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self
-                                                       andSelector:@selector(getUrl:withReplyEvent:)
-                                                     forEventClass:kInternetEventClass
-                                                        andEventID:kAEGetURL];
-
-    aboutController = nil;
-    launchTime_ = [[NSDate date] retain];
-
+        aboutController = nil;
+        launchTime_ = [[NSDate date] retain];
+    }
     return self;
 }
 
