@@ -3,6 +3,7 @@
 #import "DebugLogging.h"
 #import "GTMCarbonEvent.h"
 #import "iTermApplication.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
 #import "PseudoTerminal.h"
@@ -448,6 +449,10 @@ void OnHotKeyEvent(void)
  */
 static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon)
 {
+    iTermApplicationDelegate *ad = [[NSApplication sharedApplication] delegate];
+    if (!ad.workspaceSessionActive) {
+        return event;
+    }
     HotkeyWindowController* cont = refcon;
     if (type == kCGEventTapDisabledByTimeout) {
         NSLog(@"kCGEventTapDisabledByTimeout");
@@ -588,6 +593,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
                               kCFRunLoopCommonModes);
         CFMachPortInvalidate(machPortRef_); // switches off the event tap;
         CFRelease(machPortRef_);
+        machPortRef_ = 0;
     }
 }
 
@@ -729,6 +735,10 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 
 - (void)carbonHotkeyPressed
 {
+    iTermApplicationDelegate *ad = [[NSApplication sharedApplication] delegate];
+    if (!ad.workspaceSessionActive) {
+        return;
+    }
     OnHotKeyEvent();
 }
 
