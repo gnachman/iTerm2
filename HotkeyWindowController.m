@@ -586,6 +586,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
                               kCFRunLoopCommonModes);
         CFMachPortInvalidate(machPortRef_); // switches off the event tap;
         CFRelease(machPortRef_);
+        machPortRef_ = 0;
     }
 }
 
