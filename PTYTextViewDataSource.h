@@ -95,5 +95,6 @@ typedef enum {
 - (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note;
 - (NSArray *)charactersWithNotesOnLine:(int)line;
 - (BOOL)hasMarkOnLine:(int)line;
+- (NSString *)workingDirectoryOnLine:(int)line;
 
 @end

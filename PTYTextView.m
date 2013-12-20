@@ -29,7 +29,6 @@
 
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
-static const int MAX_WORKING_DIR_COUNT = 50;
 static const int kMaxSelectedTextLengthForCustomActions = 8192;
 static const int kMaxSelectedTextLinesForCustomActions = 100;
 
@@ -373,7 +372,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     trouter = [[Trouter alloc] init];
     trouter.delegate = self;
     trouterDragged = NO;
-    workingDirectoryAtLines = [[NSMutableArray alloc] init];
 
     pointer_ = [[PointerController alloc] init];
     pointer_.delegate = self;
@@ -558,7 +556,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
     [selectionScrollTimer release];
 
-    [workingDirectoryAtLines release];
     [trouter release];
 
     [pointer_ release];
@@ -3270,7 +3267,7 @@ NSMutableArray* screens=0;
     NSCharacterSet *charsToTrim = [NSCharacterSet whitespaceAndNewlineCharacterSet];
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:charsToTrim];
 
-    NSString *workingDirectory = [self getWorkingDirectoryAtLine:line];
+    NSString *workingDirectory = [dataSource workingDirectoryOnLine:line];
     if ([trouter canOpenPath:trimmedURLString workingDirectory:workingDirectory]) {
         return YES;
     }
@@ -4795,10 +4792,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)movePane:(id)sender
 {
     [[MovePaneController sharedInstance] movePane:[dataSource session]];
-}
-
-- (void)clearWorkingDirectories {
-    [workingDirectoryAtLines removeAllObjects];
 }
 
 - (void)clearTextViewBuffer:(id)sender
@@ -9053,13 +9046,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     int fileCharsTaken = 0;
 
-    NSString *workingDirectory = [self getWorkingDirectoryAtLine:y];
+    NSString *workingDirectory = [dataSource workingDirectoryOnLine:y];
     // First, try to locate an existing filename at this location.
     NSString *filename = [self _bruteforcePathFromBeforeString:[[possibleFilePart1 mutableCopy] autorelease]
                                                    afterString:[[possibleFilePart2 mutableCopy] autorelease]
                                               workingDirectory:workingDirectory
                                           charsTakenFromPrefix:&fileCharsTaken];
-    
+
     // Don't consider / to be a valid filename because it's useless and single/double slashes are
     // pretty common.
     if (filename && ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
@@ -9328,46 +9321,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 
-- (void)logWorkingDirectoryAtLine:(long long)line
-{
-    NSString *workingDirectory = [[_delegate SHELL] getWorkingDirectory];
-    [self logWorkingDirectoryAtLine:line withDirectory:workingDirectory];
-}
-
-- (void)logWorkingDirectoryAtLine:(long long)line withDirectory:(NSString *)workingDirectory
-{
-    [workingDirectoryAtLines addObject:@[ @(line), workingDirectory ]];
-    if ([workingDirectoryAtLines count] > MAX_WORKING_DIR_COUNT) {
-        [workingDirectoryAtLines removeObjectAtIndex:0];
-    }
-}
-
-- (NSString *)getWorkingDirectoryAtLine:(long long)line
-{
-    // TODO: use a binary search if we make MAX_WORKING_DIR_COUNT large.
-
-    // Return current directory if not able to log via XTERMCC_WINDOW_TITLE
-    if ([workingDirectoryAtLines count] == 0) {
-        return [[_delegate SHELL] getWorkingDirectory];
-    }
-
-    long long previousLine = [[[workingDirectoryAtLines lastObject] objectAtIndex:0] longLongValue];
-    long long currentLine;
-
-    for (int i = [workingDirectoryAtLines count] - 1; i >= 0; i--) {
-
-        currentLine = [[[workingDirectoryAtLines objectAtIndex:i] objectAtIndex: 0] longLongValue];
-
-        if (currentLine <= line && line <= previousLine) {
-            return [[workingDirectoryAtLines objectAtIndex:i] lastObject];
-        }
-
-        previousLine = currentLine;
-    }
-
-    return [[workingDirectoryAtLines lastObject] lastObject];
-}
-
 - (void)_openSemanticHistoryForUrl:(NSString *)aURLString
                             atLine:(long long)line
                       inBackground:(BOOL)background
@@ -9378,7 +9331,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
-    NSString *workingDirectory = [self getWorkingDirectoryAtLine:line];
+    NSString *workingDirectory = [dataSource workingDirectoryOnLine:line];
     if (![trouter openPath:trimmedURLString
               workingDirectory:workingDirectory
                     prefix:prefix

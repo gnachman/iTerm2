@@ -53,10 +53,6 @@
 // Returns the session's current name
 - (NSString *)screenName;
 
-// The delegate should check the current working directory and associate it with |lineNumber|, since
-// it may have changed. If |directory| is nil then the current directory is found and used.
-- (void)screenLogWorkingDirectoryAtLine:(long long)lineNumber withDirectory:(NSString *)directory;
-
 // Returns if the window is full-screen.
 - (BOOL)screenWindowIsFullscreen;
 
@@ -162,6 +158,7 @@
 
 - (void)screenIncrementBadge;
 - (void)screenRequestUserAttention:(BOOL)isCritical;
+- (NSString *)screenCurrentWorkingDirectory;
 
 // Show/hide the cursor.
 - (void)screenSetCursorVisible:(BOOL)visible;

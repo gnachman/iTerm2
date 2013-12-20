@@ -191,5 +191,7 @@ extern int kVT100ScreenMinRows;
 - (NSArray *)marksOrNotesBefore:(Interval *)location;
 - (NSArray *)marksOrNotesAfter:(Interval *)location;
 
+- (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line;
+- (NSString *)workingDirectoryOnLine:(int)line;
 
 @end

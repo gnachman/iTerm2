@@ -10,6 +10,7 @@
 #import "SearchResult.h"
 #import "TmuxStateParser.h"
 #import "VT100ScreenMark.h"
+#import "VT100WorkingDirectory.h"
 #import "iTermExpose.h"
 #import "iTermGrowlDelegate.h"
 
@@ -1240,6 +1241,11 @@ static const double kInterBellQuietPeriod = 0.1;
     return [self totalScrollbackOverflow] + [self numberOfLines] - [self height] + currentGrid_.cursorY;
 }
 
+- (int)lineNumberOfCursor
+{
+    return [self numberOfLines] - [self height] + currentGrid_.cursorY;
+}
+
 - (BOOL)continueFindAllResults:(NSMutableArray*)results
                      inContext:(FindContext*)context
 {
@@ -1506,6 +1512,39 @@ static const double kInterBellQuietPeriod = 0.1;
         }
     }
     return coord;
+}
+
+- (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line {
+    VT100WorkingDirectory *workingDirectoryObj = [[[VT100WorkingDirectory alloc] init] autorelease];
+    if (!workingDirectory) {
+        workingDirectory = [delegate_ screenCurrentWorkingDirectory];
+    }
+    if (workingDirectory.length) {
+        workingDirectoryObj.workingDirectory = workingDirectory;
+        VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, self.width, line);
+        [intervalTree_ addObject:workingDirectoryObj
+                    withInterval:[self intervalForGridCoordRange:range]];
+    }
+}
+
+- (NSString *)workingDirectoryOnLine:(int)line {
+    long long pos = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
+                                                                            line,
+                                                                            0,
+                                                                            line)].limit;
+    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumeratorAt:pos];
+    NSArray *objects;
+    int count;
+    do {
+        objects = [enumerator nextObject];
+        objects = [objects objectsOfClasses:@[ [VT100WorkingDirectory class] ]];
+    } while (objects && !objects.count);
+    if (objects.count) {
+        VT100WorkingDirectory *workingDirectory = objects[0];
+        return workingDirectory.workingDirectory;
+    } else {
+        return nil;
+    }
 }
 
 - (void)addNote:(PTYNoteViewController *)note
@@ -2166,8 +2205,7 @@ static const double kInterBellQuietPeriod = 0.1;
         newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
     }
     [delegate_ screenSetWindowTitle:newTitle];
-    long long lineNumber = [self absoluteLineNumberOfCursor];
-    [delegate_ screenLogWorkingDirectoryAtLine:lineNumber withDirectory:nil];
+    [self setWorkingDirectory:nil onLine:[self lineNumberOfCursor]];
 }
 
 - (void)terminalSetIconTitle:(NSString *)title {
@@ -2575,8 +2613,14 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (void)terminalCurrentDirectoryDidChangeTo:(NSString *)value {
-    long long lineNumber = [self absoluteLineNumberOfCursor];
-    [delegate_ screenLogWorkingDirectoryAtLine:lineNumber withDirectory:value];
+    int cursorLine = [self numberOfLines] - [self height] + currentGrid_.cursorY;
+    NSString *dir = value;
+    if (!dir.length) {
+        dir = [delegate_ screenCurrentWorkingDirectory];
+    }
+    if (dir.length) {
+        [self setWorkingDirectory:dir onLine:cursorLine];
+    }
 }
 
 - (void)terminalProfileShouldChangeTo:(NSString *)value {

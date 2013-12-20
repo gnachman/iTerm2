@@ -2475,13 +2475,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (void)clearBuffer
 {
     [SCREEN clearBuffer];
-    [TEXTVIEW clearWorkingDirectories];
 }
 
 - (void)clearScrollbackBuffer
 {
     [SCREEN clearScrollbackBuffer];
-    [TEXTVIEW clearWorkingDirectories];
 }
 
 - (BOOL)exited
@@ -4492,14 +4490,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self setName:theName];
 }
 
-- (void)screenLogWorkingDirectoryAtLine:(long long)lineNumber withDirectory:(NSString *)directory {
-    if ([directory length]) {
-        [[self TEXTVIEW] logWorkingDirectoryAtLine:lineNumber withDirectory:directory];
-    } else {
-        [[self TEXTVIEW] logWorkingDirectoryAtLine:lineNumber];
-    }
-}
-
 - (BOOL)screenWindowIsFullscreen {
     return [[[self tab] parentWindow] anyFullScreen];
 }
@@ -4680,6 +4670,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenRequestUserAttention:(BOOL)isCritical {
   [NSApp requestUserAttention:isCritical ? NSCriticalRequest : NSInformationalRequest];
+}
+
+- (NSString *)screenCurrentWorkingDirectory {
+    return [SHELL getWorkingDirectory];
 }
 
 - (void)screenSetCursorVisible:(BOOL)visible {
