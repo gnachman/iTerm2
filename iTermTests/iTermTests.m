@@ -44,9 +44,9 @@ static void RunTestsInObject(iTermTest *test) {
 }
 
 int main(int argc, const char * argv[]) {
-    RunTestsInObject([VT100GridTest new]);
-    RunTestsInObject([VT100ScreenTest new]);
-    RunTestsInObject([IntervalTreeTest new]);
+    RunTestsInObject([[VT100GridTest new] autorelease]);
+    RunTestsInObject([[VT100ScreenTest new] autorelease]);
+    RunTestsInObject([[IntervalTreeTest new] autorelease]);
     NSLog(@"All tests passed");
     return 0;
 }

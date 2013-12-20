@@ -4565,16 +4565,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     VT100GridCoordRange result = range;
     int width = [dataSource width];
-    screen_char_t *line = nil;
-    int lineY = -1;
+    int lineY = result.start.y;
+    screen_char_t *line = [dataSource getLineAtIndex:lineY];
     while (!VT100GridCoordEquals(result.start, range.end)) {
         if (lineY != result.start.y) {
             lineY = result.start.y;
             line = [dataSource getLineAtIndex:lineY];
         }
         unichar code = line[result.start.x].code;
-        BOOL trim = (code == 0);
-        trim = trim || (trimSpaces && (code == ' ' || code == '\t' || code == TAB_FILLER));
+        BOOL trim = ((code == 0) ||
+                     (trimSpaces && (code == ' ' || code == '\t' || code == TAB_FILLER)));
         if (trim) {
             result.start.x++;
             if (result.start.x == width) {
@@ -4599,9 +4599,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             line = [dataSource getLineAtIndex:y];
         }
         unichar code = line[x].code;
-        BOOL trim = (code == 0);
-        trim = trim || (trimSpaces && (code == ' ' || code == '\t' || code == TAB_FILLER));
-        if (line[x].code == 0) {
+        BOOL trim = ((code == 0) ||
+                     (trimSpaces && (code == ' ' || code == '\t' || code == TAB_FILLER)));
+        if (trim) {
             result.end = VT100GridCoordMake(x, y);
         } else {
             break;

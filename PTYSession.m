@@ -3315,12 +3315,15 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)addNoteAtCursor {
     PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-    VT100GridCoordRange rangeAtCursor = [self smartSelectionRangeAt:VT100GridCoordMake(SCREEN.cursorX - 1,
-                                                                                       SCREEN.cursorY - 1)];
-    VT100GridCoordRange rangeBeforeCursor = [self smartSelectionRangeAt:VT100GridCoordMake(SCREEN.cursorX - 2,
-                                                                                           SCREEN.cursorY - 1)];
-    VT100GridCoordRange rangeAfterCursor = [self smartSelectionRangeAt:VT100GridCoordMake(SCREEN.cursorX,
-                                                                                          SCREEN.cursorY - 1)];
+    VT100GridCoordRange rangeAtCursor =
+        [self smartSelectionRangeAt:VT100GridCoordMake(SCREEN.cursorX - 1,
+                                                       SCREEN.cursorY - 1)];
+    VT100GridCoordRange rangeBeforeCursor =
+        [self smartSelectionRangeAt:VT100GridCoordMake(SCREEN.cursorX - 2,
+                                                       SCREEN.cursorY - 1)];
+    VT100GridCoordRange rangeAfterCursor =
+        [self smartSelectionRangeAt:VT100GridCoordMake(SCREEN.cursorX,
+                                                       SCREEN.cursorY - 1)];
     if (VT100GridCoordRangeLength(rangeAtCursor, SCREEN.width) > 0) {
         [SCREEN addNote:note inRange:rangeAtCursor];
     } else if (VT100GridCoordRangeLength(rangeAfterCursor, SCREEN.width) > 0) {
@@ -3335,10 +3338,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)showHideNotes {
-    VT100GridCoordRange range = VT100GridCoordRangeMake(0,
-                                                        0,
-                                                        SCREEN.width,
-                                                        SCREEN.height + [SCREEN numberOfScrollbackLines]);
+    VT100GridCoordRange range =
+        VT100GridCoordRangeMake(0,
+                                0,
+                                SCREEN.width,
+                                SCREEN.height + [SCREEN numberOfScrollbackLines]);
     NSArray *notes = [SCREEN notesInRange:range];
     BOOL anyNoteIsVisible = NO;
     for (PTYNoteViewController *note in notes) {
