@@ -4670,6 +4670,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [TEXTVIEW beginFlash:image];
 }
 
+- (void)screenIncrementBadge {
+    [[tab_ realParentWindow] incrementBadge];
+}
+
+- (void)screenRequestUserAttention:(BOOL)isCritical {
+  [NSApp requestUserAttention:isCritical ? NSCriticalRequest : NSInformationalRequest];
+}
+
 - (void)screenSetCursorVisible:(BOOL)visible {
     if (visible) {
         [TEXTVIEW showCursor];

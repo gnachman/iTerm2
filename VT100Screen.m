@@ -888,7 +888,7 @@ static const double kInterBellQuietPeriod = 0.1;
     currentGrid_.cursorX = xPos;
 
     DebugLog(@"cursorToX");
-    
+
 }
 
 - (void)activateBell
@@ -912,6 +912,8 @@ static const double kInterBellQuietPeriod = 0.1;
     if (flashBell_) {
         [delegate_ screenFlashImage:FlashBell];
     }
+    [delegate_ screenIncrementBadge];
+    [delegate_ screenRequestUserAttention:NO];
 }
 
 - (void)setHistory:(NSArray *)history
@@ -1652,7 +1654,7 @@ static const double kInterBellQuietPeriod = 0.1;
     if (![self terminalPostGrowlNotification:message]) {
         [self activateBell];
     }
-    [NSApp requestUserAttention:NSCriticalRequest];
+    [delegate_ screenRequestUserAttention:YES];
 }
 
 #pragma mark - VT100TerminalDelegate
@@ -2351,6 +2353,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (BOOL)terminalPostGrowlNotification:(NSString *)message {
     if (postGrowlNotifications_) {
+        [delegate_ screenIncrementBadge];
         NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
                                     [delegate_ screenName],
                                     [delegate_ screenNumber],
