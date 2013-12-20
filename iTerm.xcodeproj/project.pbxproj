@@ -519,6 +519,9 @@
 		1DE214E1128212EE004E3ADF /* Autocomplete.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE214DF128212EE004E3ADF /* Autocomplete.h */; };
 		1DE214E2128212EE004E3ADF /* Autocomplete.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE214E0128212EE004E3ADF /* Autocomplete.m */; };
 		1DE2154312821F1C004E3ADF /* Autocomplete.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DE2154112821F1C004E3ADF /* Autocomplete.xib */; };
+		1DE306A41864EF040044583A /* NSArray+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE306A21864EF030044583A /* NSArray+iTerm.h */; };
+		1DE306A51864EF040044583A /* NSArray+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE306A31864EF040044583A /* NSArray+iTerm.m */; };
+		1DE306A61864EF040044583A /* NSArray+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE306A31864EF040044583A /* NSArray+iTerm.m */; };
 		1DE5EBE8122B892900C736B0 /* ProfilesWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE5EBE6122B892900C736B0 /* ProfilesWindow.h */; };
 		1DE5EBE9122B892900C736B0 /* ProfilesWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE5EBE7122B892900C736B0 /* ProfilesWindow.m */; };
 		1DE8DC891415513A00F83147 /* ToolbeltView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC871415513A00F83147 /* ToolbeltView.h */; };
@@ -931,6 +934,8 @@
 		1DE214DF128212EE004E3ADF /* Autocomplete.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Autocomplete.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		1DE214E0128212EE004E3ADF /* Autocomplete.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = Autocomplete.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1DE2154212821F1C004E3ADF /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/Autocomplete.xib; sourceTree = "<group>"; };
+		1DE306A21864EF030044583A /* NSArray+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSArray+iTerm.h"; sourceTree = "<group>"; };
+		1DE306A31864EF040044583A /* NSArray+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSArray+iTerm.m"; sourceTree = "<group>"; };
 		1DE5EBE6122B892900C736B0 /* ProfilesWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesWindow.h; sourceTree = "<group>"; };
 		1DE5EBE7122B892900C736B0 /* ProfilesWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ProfilesWindow.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1DE8DC871415513A00F83147 /* ToolbeltView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolbeltView.h; sourceTree = "<group>"; };
@@ -1670,6 +1675,8 @@
 				E8E901A202743CA303A80106 /* NSStringITerm.m */,
 				A60014F418550F3900CE38D8 /* NSMutableAttributedString+iTerm.h */,
 				A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */,
+				1DE306A21864EF030044583A /* NSArray+iTerm.h */,
+				1DE306A31864EF040044583A /* NSArray+iTerm.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -1967,6 +1974,7 @@
 				1D29732B14082A52004C5DBE /* SplitSelectionView.h in Headers */,
 				1D9F6AB8140C9DC4009B5CD4 /* FutureMethods.h in Headers */,
 				1DE8DC891415513A00F83147 /* ToolbeltView.h in Headers */,
+				1DE306A41864EF040044583A /* NSArray+iTerm.h in Headers */,
 				1DE8DC8D1415546000F83147 /* ToolProfiles.h in Headers */,
 				1DE8DDAD1415648600F83147 /* ToolPasteHistory.h in Headers */,
 				1DE8DF361415799700F83147 /* ToolWrapper.h in Headers */,
@@ -2406,6 +2414,7 @@
 				1D9A5592180FA87000B42CE9 /* PTToolbarController.m in Sources */,
 				1D9A553E180FA7ED00B42CE9 /* PTYWindow.m in Sources */,
 				1D9A558D180FA87000B42CE9 /* PasteViewController.m in Sources */,
+				1DE306A61864EF040044583A /* NSArray+iTerm.m in Sources */,
 				1D9A5547180FA82E00B42CE9 /* TmuxController.m in Sources */,
 				1D9A5550180FA82E00B42CE9 /* TmuxWindowsTable.m in Sources */,
 				1DD39B1E180B8415004E56D5 /* LineBuffer.m in Sources */,
@@ -2442,6 +2451,7 @@
 			files = (
 				8742064F0564169600CFC3F1 /* main.m in Sources */,
 				1D5FDDA51208E93600C46BA3 /* PseudoTerminal.m in Sources */,
+				1DE306A51864EF040044583A /* NSArray+iTerm.m in Sources */,
 				1D5FDDA61208E93600C46BA3 /* PTYScrollView.m in Sources */,
 				1D5FDDA71208E93600C46BA3 /* PTYTextView.m in Sources */,
 				1D5FDDA81208E93600C46BA3 /* PTYTask.m in Sources */,

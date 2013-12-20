@@ -3,6 +3,7 @@
 #import "DebugLogging.h"
 #import "DVR.h"
 #import "IntervalTree.h"
+#import "NSArray+iTerm.h"
 #import "PTYNoteViewController.h"
 #import "PTYTextView.h"
 #import "RegexKitLite.h"
@@ -1620,22 +1621,47 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (NSArray *)lastMarksOrNotes {
-    return [marksAndNotes_ objectsWithLargestLimit];
+    NSEnumerator *enumerator = [marksAndNotes_ reverseLimitEnumerator];
+    NSArray *objects;
+    do {
+        objects = [enumerator nextObject];
+        objects = [objects objectsOfClasses:@[ [PTYNoteViewController class],
+                                               [VT100ScreenMark class] ]];
+    } while (objects && !objects.count);
+    return objects;
 }
 
 - (NSArray *)firstMarksOrNotes {
-    return [marksAndNotes_ objectsWithSmallestLimit];
+    NSEnumerator *enumerator = [marksAndNotes_ forwardLimitEnumerator];
+    NSArray *objects;
+    do {
+        objects = [enumerator nextObject];
+        objects = [objects objectsOfClasses:@[ [PTYNoteViewController class],
+                                               [VT100ScreenMark class] ]];
+    } while (objects && !objects.count);
+    return objects;
 }
 
 - (NSArray *)marksOrNotesBefore:(Interval *)location {
     NSEnumerator *enumerator = [marksAndNotes_ reverseLimitEnumeratorAt:location.limit];
-    NSArray *objects = [enumerator nextObject];
+    NSArray *objects;
+    int count;
+    do {
+        objects = [enumerator nextObject];
+        objects = [objects objectsOfClasses:@[ [PTYNoteViewController class],
+                                               [VT100ScreenMark class] ]];
+    } while (objects && !objects.count);
     return objects;
 }
 
 - (NSArray *)marksOrNotesAfter:(Interval *)location {
     NSEnumerator *enumerator = [marksAndNotes_ forwardLimitEnumeratorAt:location.limit];
-    NSArray *objects = [enumerator nextObject];
+    NSArray *objects;
+    do {
+        objects = [enumerator nextObject];
+        objects = [objects objectsOfClasses:@[ [PTYNoteViewController class],
+                                               [VT100ScreenMark class] ]];
+    } while (objects && !objects.count);
     return objects;
 }
 
