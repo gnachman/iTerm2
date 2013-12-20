@@ -195,8 +195,6 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         return;
     }
     BOOL temp = [term isHotKeyWindow];
-    NSRect screenFrame = [[NSScreen mainScreen] frame];
-    NSRect rect = [[term window] frame];
     switch ([term windowType]) {
         case WINDOW_TYPE_NORMAL:
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];

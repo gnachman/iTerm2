@@ -7412,7 +7412,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     NSString *str = complexRun->string;
     PTYFontInfo *fontInfo = complexRun->attrs.fontInfo;
-    CGFloat width = CRunGetAdvances(complexRun)[0].width;
     BOOL fakeBold = complexRun->attrs.fakeBold;
     BOOL fakeItalic = complexRun->attrs.fakeItalic;
     BOOL antiAlias = complexRun->attrs.antiAlias;
