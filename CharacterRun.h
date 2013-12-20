@@ -71,6 +71,7 @@ struct CRun {
     int length;               // Number of codes/glyphs/advances.
     int index;                // -1 if nothing allocated, else start index of codes, glyphs, advances
     NSString *string;         // If set then there are no codes or glyphs, but may be advances.
+    int key;                  // For complex chars, this is the key that gives the sting.
     BOOL terminated;          // No more appends allowed (will go into |next|)
     CRunStorage *storage;     // Backing store for codes, glyphs, and advances.
     CRun *next;               // Next run in linked list.

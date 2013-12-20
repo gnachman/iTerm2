@@ -21,6 +21,7 @@ CRUN_INLINE CRun *CRunAppend(CRun *run,
 CRUN_INLINE CRun *CRunAppendString(CRun *run,
                                    CAttrs *attrs,
                                    NSString *string,
+                                   int key,
                                    CGFloat advance,
                                    CGFloat x);
 
@@ -82,6 +83,7 @@ CRUN_INLINE void CRunAppendSelf(CRun *run,
 // already set.
 CRUN_INLINE void CRunAppendSelfString(CRun *run,
                                       NSString *string,
+                                      int key,
                                       CGFloat advance) {
     assert(run->length == 0);
     int theIndex = [run->storage appendCode:0 andAdvance:NSMakeSize(advance, 0)];
@@ -89,6 +91,7 @@ CRUN_INLINE void CRunAppendSelfString(CRun *run,
         run->index = theIndex;
     }
     run->string = [string retain];
+    run->key = key;
 }
 
 // Allocate a new run and append a character to it. Link the new run as the
@@ -112,11 +115,12 @@ CRUN_INLINE CRun *CRunAppendNewString(CRun *run,
                                       CAttrs *attrs,
                                       CGFloat x,
                                       NSString *string,
+                                      int key,
                                       CGFloat advance) {
     assert(!run->next);
     CRun *newRun = malloc(sizeof(CRun));
     CRunInitialize(newRun, attrs, run->storage, x);
-    CRunAppendSelfString(newRun, string, advance);
+    CRunAppendSelfString(newRun, string, key, advance);
     run->next = newRun;
     return newRun;
 }
@@ -144,13 +148,14 @@ CRUN_INLINE CRun *CRunAppend(CRun *run,
 CRUN_INLINE CRun *CRunAppendString(CRun *run,
                                    CAttrs *attrs,
                                    NSString *string,
+                                   int key,
                                    CGFloat advance,
                                    CGFloat x) {
     if (run->length == 0 && !run->string) {
-        CRunAppendSelfString(run, string, advance);
+        CRunAppendSelfString(run, string, key, advance);
         return run;
     } else {
-        return CRunAppendNewString(run, attrs, x, string, advance);
+        return CRunAppendNewString(run, attrs, x, string, key, advance);
     }
 }
 
@@ -196,6 +201,7 @@ CRUN_INLINE CRun *CRunSplit(CRun *run, int newStart) {
                      &run->attrs,
                      [NSString stringWithCharacters:[run->storage codesFromIndex:run->index]
                                              length:1],
+                     -1,
                      [run->storage advancesFromIndex:run->index][newStart].width,
                      run->x);
 

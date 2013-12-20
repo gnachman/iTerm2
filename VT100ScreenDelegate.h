@@ -160,6 +160,9 @@
 // An image should be flashed over the view.
 - (void)screenFlashImage:(FlashImage)image;
 
+- (void)screenIncrementBadge;
+- (void)screenRequestUserAttention:(BOOL)isCritical;
+
 // Show/hide the cursor.
 - (void)screenSetCursorVisible:(BOOL)visible;
 

@@ -12,7 +12,12 @@
 
 - (NSString *)recursiveDescriptionWithPrefix:(NSString *)prefix {
   NSMutableString *s = [NSMutableString string];
-  [s appendFormat:@"%@%@ frame=%@\n", prefix, self, [NSValue valueWithRect:self.frame]];
+  [s appendFormat:@"%@%@ frame=%@ hidden=%@ alphaValue=%0.2f\n",
+      prefix,
+      self,
+      [NSValue valueWithRect:self.frame],
+      self.isHidden ? @"YES" : @"no",
+      self.alphaValue];
   for (NSView *view in [self subviews]) {
     [s appendString:[view recursiveDescriptionWithPrefix:[prefix stringByAppendingString:@"|   "]]];
   }

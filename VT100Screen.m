@@ -637,11 +637,12 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (void)reloadMarkCache {
+    long long totalScrollbackOverflow = [self totalScrollbackOverflow];
     [markCache_ removeAllObjects];
     for (id<IntervalTreeObject> obj in [marksAndNotes_ allObjects]) {
         if ([obj isKindOfClass:[VT100ScreenMark class]]) {
             VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
-            [markCache_ addObject:@(range.end.y)];
+            [markCache_ addObject:@(totalScrollbackOverflow + range.end.y)];
         }
     }
 }
@@ -887,7 +888,7 @@ static const double kInterBellQuietPeriod = 0.1;
     currentGrid_.cursorX = xPos;
 
     DebugLog(@"cursorToX");
-    
+
 }
 
 - (void)activateBell
@@ -911,6 +912,8 @@ static const double kInterBellQuietPeriod = 0.1;
     if (flashBell_) {
         [delegate_ screenFlashImage:FlashBell];
     }
+    [delegate_ screenIncrementBadge];
+    [delegate_ screenRequestUserAttention:NO];
 }
 
 - (void)setHistory:(NSArray *)history
@@ -1520,12 +1523,13 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)removeInaccessibleNotes {
     long long lastDeadLocation = [self totalScrollbackOverflow] * (self.width + 1);
+    long long totalScrollbackOverflow = [self totalScrollbackOverflow];
     if (lastDeadLocation > 0) {
         Interval *deadInterval = [Interval intervalWithLocation:0 length:lastDeadLocation + 1];
         for (id<IntervalTreeObject> obj in [marksAndNotes_ objectsInInterval:deadInterval]) {
             if ([obj.entry.interval limit] <= lastDeadLocation) {
                 if ([obj isKindOfClass:[VT100ScreenMark class]]) {
-                    [markCache_ removeObject:@([self coordRangeForInterval:obj.entry.interval].end.y)];
+                    [markCache_ removeObject:@(totalScrollbackOverflow + [self coordRangeForInterval:obj.entry.interval].end.y)];
                 }
                 [marksAndNotes_ removeObject:obj];
             }
@@ -1554,7 +1558,7 @@ static const double kInterBellQuietPeriod = 0.1;
                                         self.width,
                                         limit);
     }
-    [markCache_ addObject:@(range.end.y)];
+    [markCache_ addObject:@([self totalScrollbackOverflow] + range.end.y)];
     [marksAndNotes_ addObject:mark withInterval:[self intervalForGridCoordRange:range]];
     [delegate_ screenNeedsRedraw];
     return mark;
@@ -1618,7 +1622,7 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (BOOL)hasMarkOnLine:(int)line {
-    return [markCache_ containsObject:@(line)];
+    return [markCache_ containsObject:@([self totalScrollbackOverflow] + line)];
 }
 
 - (NSArray *)lastMarksOrNotes {
@@ -1650,7 +1654,7 @@ static const double kInterBellQuietPeriod = 0.1;
     if (![self terminalPostGrowlNotification:message]) {
         [self activateBell];
     }
-    [NSApp requestUserAttention:NSCriticalRequest];
+    [delegate_ screenRequestUserAttention:YES];
 }
 
 #pragma mark - VT100TerminalDelegate
@@ -2349,6 +2353,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (BOOL)terminalPostGrowlNotification:(NSString *)message {
     if (postGrowlNotifications_) {
+        [delegate_ screenIncrementBadge];
         NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
                                     [delegate_ screenName],
                                     [delegate_ screenNumber],

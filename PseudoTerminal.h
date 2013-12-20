@@ -804,6 +804,8 @@ NSWindowDelegate,
 - (void)changeTabColorToMenuAction:(id)sender;
 - (void)moveSessionToWindow:(id)sender;
 
+- (void)incrementBadge;
+
 @end
 
 @interface PseudoTerminal (KeyValueCoding)

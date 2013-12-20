@@ -1,4 +1,17 @@
-/* straight from linux/drivers/char/consolemap.c, GNU GPL:ed */
+/* Derived from linux/drivers/char/consolemap.c, GNU GPL:ed */
+
+#define ITERM_BOX_DRAWINGS_LIGHT_UP_AND_LEFT             0x2518  // 106: ┘
+#define ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_LEFT           0x2510  // 107: ┐
+#define ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT          0x250C  // 108: ┌
+#define ITERM_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT            0x2514  // 109: └
+#define ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_HORIZONTAL 0x253c  // 110: ┼
+#define ITERM_BOX_DRAWINGS_LIGHT_HORIZONTAL              0x2500  // 113: ─
+#define ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_RIGHT      0x251c  // 116: ├
+#define ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_LEFT       0x2524  // 117: ┤
+#define ITERM_BOX_DRAWINGS_LIGHT_UP_AND_HORIZONTAL       0x2534  // 118: ┴
+#define ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_HORIZONTAL     0x252C  // 119: ┬
+#define ITERM_BOX_DRAWINGS_LIGHT_VERTICAL                0x2502  // 120: │
+
 static const unichar charmap[256]={
   /* VT100 graphics mapped to Unicode */
     0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
@@ -14,9 +27,9 @@ static const unichar charmap[256]={
     0x0050, 0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057,
     0x0058, 0x0059, 0x005a, 0x005b, 0x005c, 0x005d, 0x005e, 0x00a0,
     0x25c6, 0x2592, 0x2409, 0x240c, 0x240d, 0x240a, 0x00b0, 0x00b1,
-    0x2424, 0x240b, 0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0x23ba,
-    0x23bb, 0x2500, 0x23bc, 0x23bd, 0x251c, 0x2524, 0x2534, 0x252c,
-    0x2502, 0x2264, 0x2265, 0x03c0, 0x2260, 0x00a3, 0x00b7, 0x007f,
+    0x2424, 0x240b, ITERM_BOX_DRAWINGS_LIGHT_UP_AND_LEFT, ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_LEFT, ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT, ITERM_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT, ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_HORIZONTAL, 0x23ba,
+    0x23bb, ITERM_BOX_DRAWINGS_LIGHT_HORIZONTAL, 0x23bc, 0x23bd, ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_RIGHT, ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_LEFT, ITERM_BOX_DRAWINGS_LIGHT_UP_AND_HORIZONTAL, ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_HORIZONTAL,
+    ITERM_BOX_DRAWINGS_LIGHT_VERTICAL, 0x2264, 0x2265, 0x03c0, 0x2260, 0x00a3, 0x00b7, 0x007f,
     0x0080, 0x0081, 0x0082, 0x0083, 0x0084, 0x0085, 0x0086, 0x0087,
     0x0088, 0x0089, 0x008a, 0x008b, 0x008c, 0x008d, 0x008e, 0x008f,
     0x0090, 0x0091, 0x0092, 0x0093, 0x0094, 0x0095, 0x0096, 0x0097,
@@ -33,4 +46,41 @@ static const unichar charmap[256]={
     0x00e8, 0x00e9, 0x00ea, 0x00eb, 0x00ec, 0x00ed, 0x00ee, 0x00ef,
     0x00f0, 0x00f1, 0x00f2, 0x00f3, 0x00f4, 0x00f5, 0x00f6, 0x00f7,
     0x00f8, 0x00f9, 0x00fa, 0x00fb, 0x00fc, 0x00fd, 0x00fe, 0x00ff
+};
+
+// Which chars should get special line-drawing treatment. Corresponds to the ITERM_BOX_DRAWINGS...
+// defines above.
+static const BOOL lineDrawingCharFlags[256]={
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 1, 1, 1, 1, 1, 0,
+    0, 1, 0, 0, 1, 1, 1, 1,
+    1, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0
 };
