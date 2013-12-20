@@ -75,8 +75,8 @@ static const double kInterBellQuietPeriod = 0.1;
         }
 
         findContext_ = [[FindContext alloc] init];
-        savedMarksAndNotes_ = [[IntervalTree alloc] init];
-        marksAndNotes_ = [[IntervalTree alloc] init];
+        savedIntervalTree_ = [[IntervalTree alloc] init];
+        intervalTree_ = [[IntervalTree alloc] init];
         markCache_ = [[NSMutableSet alloc] init];
     }
     return self;
@@ -93,7 +93,7 @@ static const double kInterBellQuietPeriod = 0.1;
     [terminal_ release];
     [charsetUsesLineDrawingMode_ release];
     [findContext_ release];
-    [marksAndNotes_ release];
+    [intervalTree_ release];
     [markCache_ release];
     [super dealloc];
 }
@@ -350,10 +350,10 @@ static const double kInterBellQuietPeriod = 0.1;
     // [ PTYNoteViewController*,
     //   LineBufferPosition* for start of range,
     //   LineBufferPosition* for end of range ]
-    // These will be re-added to marksAndNotes_ later on.
+    // These will be re-added to intervalTree_ later on.
     NSMutableArray *altScreenNotes = nil;
 
-    if (wasShowingAltScreen && [marksAndNotes_ count]) {
+    if (wasShowingAltScreen && [intervalTree_ count]) {
         // Add notes that were on the alt grid to altScreenNotes, leaving notes in history alone.
         VT100GridCoordRange screenCoordRange =
         VT100GridCoordRangeMake(0,
@@ -361,7 +361,7 @@ static const double kInterBellQuietPeriod = 0.1;
                                 0,
                                 [self numberOfScrollbackLines] + self.height);
         NSArray *notesAtLeastPartiallyOnScreen =
-            [marksAndNotes_ objectsInInterval:[self intervalForGridCoordRange:screenCoordRange]];
+            [intervalTree_ objectsInInterval:[self intervalForGridCoordRange:screenCoordRange]];
         
         LineBuffer *appendOnlyLineBuffer = [[realLineBuffer newAppendOnlyCopy] autorelease];
         [self appendScreen:altGrid_
@@ -373,7 +373,7 @@ static const double kInterBellQuietPeriod = 0.1;
         for (id<IntervalTreeObject> note in notesAtLeastPartiallyOnScreen) {
             VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
             [[note retain] autorelease];
-            [marksAndNotes_ removeObject:note];
+            [intervalTree_ removeObject:note];
             
             BOOL ok1, ok2;
             LineBufferPosition *startPosition = nil;
@@ -395,7 +395,7 @@ static const double kInterBellQuietPeriod = 0.1;
     
     if (wasShowingAltScreen) {
       currentGrid_ = primaryGrid_;
-      // Move savedMarksAndNotes_ into marksAndNotes_. This should leave savedMarksAndNotes_ empty.
+      // Move savedIntervalTree_ into intervalTree_. This should leave savedIntervalTree_ empty.
       [self swapNotes];
       currentGrid_ = altGrid_;
     }
@@ -414,7 +414,7 @@ static const double kInterBellQuietPeriod = 0.1;
                              inLineBuffer:linebuffer_];
     }
     
-    if ([marksAndNotes_ count]) {
+    if ([intervalTree_ count]) {
         // Fix up the intervals for the primary grid.
         if (wasShowingAltScreen) {
             // Temporarily swap in primary grid so convertRange: will do the right thing.
@@ -423,7 +423,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
         // Convert ranges of notes to their new coordinates and replace the interval tree.
         IntervalTree *replacementTree = [[IntervalTree alloc] init];
-        for (id<IntervalTreeObject> note in [marksAndNotes_ allObjects]) {
+        for (id<IntervalTreeObject> note in [intervalTree_ allObjects]) {
             VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
             VT100GridCoordRange newRange;
             if ([self convertRange:noteRange toWidth:new_width to:&newRange inLineBuffer:linebuffer_]) {
@@ -431,12 +431,12 @@ static const double kInterBellQuietPeriod = 0.1;
                                                                   width:new_width
                                                             linesOffset:[self totalScrollbackOverflow]];
                 [[note retain] autorelease];
-                [marksAndNotes_ removeObject:note];
+                [intervalTree_ removeObject:note];
                 [replacementTree addObject:note withInterval:newInterval];
             }
         }
-        [marksAndNotes_ release];
-        marksAndNotes_ = replacementTree;
+        [intervalTree_ release];
+        intervalTree_ = replacementTree;
         
         if (wasShowingAltScreen) {
             // Return to alt grid.
@@ -486,7 +486,7 @@ static const double kInterBellQuietPeriod = 0.1;
                                     maxLinesToRestore:new_height];
         }
 
-        // Any onscreen notes in primary grid get moved to savedMarksAndNotes_.
+        // Any onscreen notes in primary grid get moved to savedIntervalTree_.
         currentGrid_ = primaryGrid_;
         [self swapNotes];
         currentGrid_ = altGrid_;
@@ -539,7 +539,7 @@ static const double kInterBellQuietPeriod = 0.1;
                 Interval *interval = [self intervalForGridCoordRange:newRange
                                                                width:new_width
                                                          linesOffset:[self totalScrollbackOverflow]];
-                [marksAndNotes_ addObject:note withInterval:interval];
+                [intervalTree_ addObject:note withInterval:interval];
             } else {
                 NSLog(@"  *FAILED TO CONVERT*");
             }
@@ -560,7 +560,7 @@ static const double kInterBellQuietPeriod = 0.1;
         // Convert note ranges to new coords, dropping or truncating as needed
         currentGrid_ = altGrid_;  // Swap to alt grid temporarily for convertRange:toWidth:to:inLineBuffer:
         IntervalTree *replacementTree = [[IntervalTree alloc] init];
-        for (PTYNoteViewController *note in [savedMarksAndNotes_ allObjects]) {
+        for (PTYNoteViewController *note in [savedIntervalTree_ allObjects]) {
             VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
             NSLog(@"Found note at %@", VT100GridCoordRangeDescription(noteRange));
             VT100GridCoordRange newRange;
@@ -573,7 +573,7 @@ static const double kInterBellQuietPeriod = 0.1;
                     newRange.start.x = 0;
                 }
                 NSLog(@"  Its new range is %@ including %d lines dropped from top", VT100GridCoordRangeDescription(noteRange), numLinesDroppedFromTop);
-                [savedMarksAndNotes_ removeObject:note];
+                [savedIntervalTree_ removeObject:note];
                 if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
                     Interval *newInterval = [self intervalForGridCoordRange:newRange
                                                                       width:new_width
@@ -584,8 +584,8 @@ static const double kInterBellQuietPeriod = 0.1;
                 }
             }
         }
-        [savedMarksAndNotes_ release];
-        savedMarksAndNotes_ = replacementTree;
+        [savedIntervalTree_ release];
+        savedIntervalTree_ = replacementTree;
         currentGrid_ = primaryGrid_;  // Swap back to primary grid
         
         // Restore alt screen with new width
@@ -634,7 +634,7 @@ static const double kInterBellQuietPeriod = 0.1;
 - (void)reloadMarkCache {
     long long totalScrollbackOverflow = [self totalScrollbackOverflow];
     [markCache_ removeAllObjects];
-    for (id<IntervalTreeObject> obj in [marksAndNotes_ allObjects]) {
+    for (id<IntervalTreeObject> obj in [intervalTree_ allObjects]) {
         if ([obj isKindOfClass:[VT100ScreenMark class]]) {
             VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
             [markCache_ addObject:@(totalScrollbackOverflow + range.end.y)];
@@ -691,8 +691,8 @@ static const double kInterBellQuietPeriod = 0.1;
     [self resetScrollbackOverflow];
     [delegate_ screenRemoveSelection];
     [currentGrid_ markAllCharsDirty:YES];
-    [marksAndNotes_ release];
-    marksAndNotes_ = [[IntervalTree alloc] init];
+    [intervalTree_ release];
+    intervalTree_ = [[IntervalTree alloc] init];
     [self reloadMarkCache];
 }
 
@@ -1510,7 +1510,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)addNote:(PTYNoteViewController *)note
         inRange:(VT100GridCoordRange)range {
-    [marksAndNotes_ addObject:note withInterval:[self intervalForGridCoordRange:range]];
+    [intervalTree_ addObject:note withInterval:[self intervalForGridCoordRange:range]];
     [currentGrid_ markCharsDirty:YES inRectFrom:range.start to:[self predecessorOfCoord:range.end]];
     note.delegate = self;
     [delegate_ screenDidAddNote:note];
@@ -1521,19 +1521,19 @@ static const double kInterBellQuietPeriod = 0.1;
     long long totalScrollbackOverflow = [self totalScrollbackOverflow];
     if (lastDeadLocation > 0) {
         Interval *deadInterval = [Interval intervalWithLocation:0 length:lastDeadLocation + 1];
-        for (id<IntervalTreeObject> obj in [marksAndNotes_ objectsInInterval:deadInterval]) {
+        for (id<IntervalTreeObject> obj in [intervalTree_ objectsInInterval:deadInterval]) {
             if ([obj.entry.interval limit] <= lastDeadLocation) {
                 if ([obj isKindOfClass:[VT100ScreenMark class]]) {
                     [markCache_ removeObject:@(totalScrollbackOverflow + [self coordRangeForInterval:obj.entry.interval].end.y)];
                 }
-                [marksAndNotes_ removeObject:obj];
+                [intervalTree_ removeObject:obj];
             }
         }
     }
 }
 
 - (BOOL)markIsValid:(VT100ScreenMark *)mark {
-    return [marksAndNotes_ containsObject:mark];
+    return [intervalTree_ containsObject:mark];
 }
 
 - (VT100ScreenMark *)addMarkStartingAtAbsoluteLine:(long long)line oneLine:(BOOL)oneLine {
@@ -1554,7 +1554,7 @@ static const double kInterBellQuietPeriod = 0.1;
                                         limit);
     }
     [markCache_ addObject:@([self totalScrollbackOverflow] + range.end.y)];
-    [marksAndNotes_ addObject:mark withInterval:[self intervalForGridCoordRange:range]];
+    [intervalTree_ addObject:mark withInterval:[self intervalForGridCoordRange:range]];
     [delegate_ screenNeedsRedraw];
     return mark;
 }
@@ -1569,7 +1569,7 @@ static const double kInterBellQuietPeriod = 0.1;
                                                                                  line,
                                                                                  0,
                                                                                  line + 1)];
-    NSArray *objects = [marksAndNotes_ objectsInInterval:interval];
+    NSArray *objects = [intervalTree_ objectsInInterval:interval];
     for (id<IntervalTreeObject> note in objects) {
         if ([note isKindOfClass:[PTYNoteViewController class]]) {
             VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
@@ -1592,7 +1592,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (NSArray *)notesInRange:(VT100GridCoordRange)range {
     Interval *interval = [self intervalForGridCoordRange:range];
-    NSArray *objects = [marksAndNotes_ objectsInInterval:interval];
+    NSArray *objects = [intervalTree_ objectsInInterval:interval];
     NSMutableArray *notes = [NSMutableArray array];
     for (id<IntervalTreeObject> o in objects) {
         if ([o isKindOfClass:[PTYNoteViewController class]]) {
@@ -1603,7 +1603,7 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (VT100ScreenMark *)lastMark {
-    NSEnumerator *enumerator = [marksAndNotes_ reverseLimitEnumerator];
+    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
     while (objects) {
         for (id<IntervalTreeObject> obj in objects) {
@@ -1621,7 +1621,7 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (NSArray *)lastMarksOrNotes {
-    NSEnumerator *enumerator = [marksAndNotes_ reverseLimitEnumerator];
+    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
     NSArray *objects;
     do {
         objects = [enumerator nextObject];
@@ -1632,7 +1632,7 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (NSArray *)firstMarksOrNotes {
-    NSEnumerator *enumerator = [marksAndNotes_ forwardLimitEnumerator];
+    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumerator];
     NSArray *objects;
     do {
         objects = [enumerator nextObject];
@@ -1643,7 +1643,7 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (NSArray *)marksOrNotesBefore:(Interval *)location {
-    NSEnumerator *enumerator = [marksAndNotes_ reverseLimitEnumeratorAt:location.limit];
+    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumeratorAt:location.limit];
     NSArray *objects;
     int count;
     do {
@@ -1655,7 +1655,7 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (NSArray *)marksOrNotesAfter:(Interval *)location {
-    NSEnumerator *enumerator = [marksAndNotes_ forwardLimitEnumeratorAt:location.limit];
+    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumeratorAt:location.limit];
     NSArray *objects;
     do {
         objects = [enumerator nextObject];
@@ -2444,7 +2444,7 @@ static const double kInterBellQuietPeriod = 0.1;
     }
 }
 
-// Swap onscreen notes between marksAndNotes_ and savedMarksAndNotes_.
+// Swap onscreen notes between intervalTree_ and savedIntervalTree_.
 // IMPORTANT: Call -reloadMarkCache after this.
 - (void)swapNotes
 {
@@ -2455,17 +2455,17 @@ static const double kInterBellQuietPeriod = 0.1;
                                                                                historyLines)];
     IntervalTree *temp = [[IntervalTree alloc] init];
     NSLog(@"swapNotes: moving onscreen notes into savedNotes");
-    [self moveNotesOnScreenFrom:marksAndNotes_
+    [self moveNotesOnScreenFrom:intervalTree_
                              to:temp
                          offset:-origin.location
                    screenOrigin:[self numberOfScrollbackLines]];
     NSLog(@"swapNotes: moving onscreen savedNotes into notes");
-    [self moveNotesOnScreenFrom:savedMarksAndNotes_
-                             to:marksAndNotes_
+    [self moveNotesOnScreenFrom:savedIntervalTree_
+                             to:intervalTree_
                          offset:origin.location
                    screenOrigin:0];
-    [savedMarksAndNotes_ release];
-    savedMarksAndNotes_ = temp;
+    [savedIntervalTree_ release];
+    savedIntervalTree_ = temp;
 }
 
 - (void)terminalShowAltBuffer
@@ -2498,7 +2498,7 @@ static const double kInterBellQuietPeriod = 0.1;
                                 [self width],
                                 screenOrigin + self.height);
     Interval *screenInterval = [self intervalForGridCoordRange:screenRange];
-    for (id<IntervalTreeObject> note in [marksAndNotes_ objectsInInterval:screenInterval]) {
+    for (id<IntervalTreeObject> note in [intervalTree_ objectsInInterval:screenInterval]) {
         if (note.entry.interval.location < screenInterval.location) {
             // Truncate note so that it ends just before screen.
             note.entry.interval.length = screenInterval.location - note.entry.interval.location;
@@ -3274,10 +3274,10 @@ static void SwapInt(int *a, int *b) {
 #pragma mark - PTYNoteViewControllerDelegate
 
 - (void)noteDidRequestRemoval:(PTYNoteViewController *)note {
-    if ([marksAndNotes_ containsObject:note]) {
-        [marksAndNotes_ removeObject:note];
-    } else if ([savedMarksAndNotes_ containsObject:note]) {
-        [savedMarksAndNotes_ removeObject:note];
+    if ([intervalTree_ containsObject:note]) {
+        [intervalTree_ removeObject:note];
+    } else if ([savedIntervalTree_ containsObject:note]) {
+        [savedIntervalTree_ removeObject:note];
     }
     [delegate_ screenNeedsRedraw];
     [delegate_ screenDidEndEditingNote];
