@@ -47,6 +47,7 @@
 @class PTYScrollView;
 @class PTYSession;  // TODO: Remove this after PTYTextView doesn't depend directly on PTYSession
 @class PTYTask;
+@class SCPPath;
 @class SearchResult;
 @class ThreeFingerTapGestureRecognizer;
 @class VT100Screen;
@@ -75,6 +76,7 @@
 - (void)insertText:(NSString *)string;
 - (PTYTask *)SHELL;
 - (BOOL)alertOnNextMark;
+- (void)startDownloadOverSCP:(SCPPath *)path;
 
 @end
 

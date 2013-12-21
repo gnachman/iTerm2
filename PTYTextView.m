@@ -4828,7 +4828,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)downloadWithSCP:(id)sender
 {
-    NSString *scpPath = nil;
+    SCPPath *scpPath = nil;
     NSString *selectedText = [[self selectedText] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSArray *parts = [selectedText componentsSeparatedByString:@"\n"];
     if (parts.count != 1) {
@@ -4839,8 +4839,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (startY >= 0) {
         scpPath = [dataSource scpPathForFile:text onLine:startY];
     }
-
-    // TODO: Run scp? Or use libssh?
+    [_delegate startDownloadOverSCP:scpPath];
 }
 
 - (void)showNotes:(id)sender

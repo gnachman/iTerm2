@@ -12,6 +12,7 @@ typedef enum {
 @class PTYNoteViewController;
 @class PTYSession;
 @class PTYTask;
+@class SCPPath;
 @class VT100Terminal;
 
 @protocol PTYTextViewDataSource
@@ -96,6 +97,6 @@ typedef enum {
 - (NSArray *)charactersWithNotesOnLine:(int)line;
 - (BOOL)hasMarkOnLine:(int)line;
 - (NSString *)workingDirectoryOnLine:(int)line;
-- (NSString *)scpPathForFile:(NSString *)filename onLine:(int)line;
+- (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line;
 
 @end

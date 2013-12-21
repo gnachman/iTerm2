@@ -1560,7 +1560,7 @@ static const double kInterBellQuietPeriod = 0.1;
     return (VT100RemoteHost *)[self objectOnOrBeforeLine:line ofClass:[VT100RemoteHost class]];
 }
 
-- (NSString *)scpPathForFile:(NSString *)filename onLine:(int)line {
+- (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line {
     VT100RemoteHost *remoteHost = [self remoteHostOnLine:line];
     if (!remoteHost.username || !remoteHost.hostname) {
         return nil;
@@ -1575,7 +1575,11 @@ static const double kInterBellQuietPeriod = 0.1;
     } else {
         path = [workingDirectory stringByAppendingPathComponent:filename];
     }
-    return [NSString stringWithFormat:@"%@@%@:%@", remoteHost.username, remoteHost.hostname, path];
+    SCPPath *scpPath = [[[SCPPath alloc] init] autorelease];
+    scpPath.path = path;
+    scpPath.hostname = remoteHost.hostname;
+    scpPath.username = remoteHost.username;
+    return scpPath;
 }
 
 - (NSString *)workingDirectoryOnLine:(int)line {

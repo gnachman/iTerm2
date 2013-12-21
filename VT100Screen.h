@@ -1,6 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #import "PTYNoteViewController.h"
 #import "PTYTextViewDataSource.h"
+#import "SCPPath.h"
 #import "VT100ScreenDelegate.h"
 #import "VT100Terminal.h"
 

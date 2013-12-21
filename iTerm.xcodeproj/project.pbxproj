@@ -581,6 +581,9 @@
 		A60014FD18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m in Sources */ = {isa = PBXBuildFile; fileRef = A60014FA18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m */; };
 		A608F1D51866166B004EDE74 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A608F1D41866166B004EDE74 /* NMSSH.framework */; };
 		A608F1D61866166B004EDE74 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A608F1D41866166B004EDE74 /* NMSSH.framework */; };
+		A608F1D9186616E8004EDE74 /* SCPPath.h in Headers */ = {isa = PBXBuildFile; fileRef = A608F1D7186616E7004EDE74 /* SCPPath.h */; };
+		A608F1DA186616E8004EDE74 /* SCPPath.m in Sources */ = {isa = PBXBuildFile; fileRef = A608F1D8186616E8004EDE74 /* SCPPath.m */; };
+		A608F1DB186616E8004EDE74 /* SCPPath.m in Sources */ = {isa = PBXBuildFile; fileRef = A608F1D8186616E8004EDE74 /* SCPPath.m */; };
 		A6358646184BEA57009ED690 /* AATree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358642184BEA57009ED690 /* AATree.h */; };
 		A6358647184BEA57009ED690 /* AATree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358643184BEA57009ED690 /* AATree.m */; };
 		A6358648184BEA57009ED690 /* AATree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358643184BEA57009ED690 /* AATree.m */; };
@@ -1007,6 +1010,8 @@
 		A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermNSKeyBindingEmulator.h; sourceTree = "<group>"; };
 		A60014FA18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNSKeyBindingEmulator.m; sourceTree = "<group>"; };
 		A608F1D41866166B004EDE74 /* NMSSH.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = NMSSH.framework; sourceTree = "<group>"; };
+		A608F1D7186616E7004EDE74 /* SCPPath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SCPPath.h; sourceTree = "<group>"; };
+		A608F1D8186616E8004EDE74 /* SCPPath.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SCPPath.m; sourceTree = "<group>"; };
 		A6358642184BEA57009ED690 /* AATree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AATree.h; path = "objc-aatree-master/AATree.h"; sourceTree = "<group>"; };
 		A6358643184BEA57009ED690 /* AATree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AATree.m; path = "objc-aatree-master/AATree.m"; sourceTree = "<group>"; };
 		A6358644184BEA57009ED690 /* AATreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AATreeNode.h; path = "objc-aatree-master/AATreeNode.h"; sourceTree = "<group>"; };
@@ -1256,6 +1261,8 @@
 				A6CFDAD1185D2587005DC94B /* URLAction.m */,
 				1DE306A71864F2010044583A /* VT100WorkingDirectory.h */,
 				1DE306A81864F2010044583A /* VT100WorkingDirectory.m */,
+				A608F1D7186616E7004EDE74 /* SCPPath.h */,
+				A608F1D8186616E8004EDE74 /* SCPPath.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -1960,6 +1967,7 @@
 				1D93D35312697529007F741B /* DVREncoder.h in Headers */,
 				1D173859126C820A004622DC /* FakeWindow.h in Headers */,
 				1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */,
+				A608F1D9186616E8004EDE74 /* SCPPath.h in Headers */,
 				1D7C18811275D22900461E55 /* PasteboardHistory.h in Headers */,
 				1D7C1D1212772ECC00461E55 /* NSDateFormatterExtras.h in Headers */,
 				1DE214E1128212EE004E3ADF /* Autocomplete.h in Headers */,
@@ -2398,6 +2406,7 @@
 				1D9A5548180FA82E00B42CE9 /* TmuxControllerRegistry.m in Sources */,
 				1D9A5541180FA81400B42CE9 /* ProfileListView.m in Sources */,
 				1D9A5542180FA81400B42CE9 /* ProfilesWindow.m in Sources */,
+				A608F1DB186616E8004EDE74 /* SCPPath.m in Sources */,
 				1DD39B22180B8467004E56D5 /* BackgroundThread.m in Sources */,
 				1D9A5576180FA85D00B42CE9 /* CoprocessTrigger.m in Sources */,
 				1D9A5580180FA87000B42CE9 /* FontSizeEstimator.m in Sources */,
@@ -2603,6 +2612,7 @@
 				1DA9AEEB14A51CA000BEB37B /* TmuxSessionsTable.m in Sources */,
 				1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */,
 				1DE306AA1864F2010044583A /* VT100WorkingDirectory.m in Sources */,
+				A608F1DA186616E8004EDE74 /* SCPPath.m in Sources */,
 				1D0B613D14A7C76500C57C33 /* TmuxWindowsTable.m in Sources */,
 				1DAE714E14AAF24200DA144B /* EquivalenceClassSet.m in Sources */,
 				A6358647184BEA57009ED690 /* AATree.m in Sources */,

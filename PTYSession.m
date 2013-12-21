@@ -4245,6 +4245,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self launchCoprocessWithCommand:command mute:NO];
 }
 
+- (void)startDownloadOverSCP:(SCPPath *)path
+{
+    // TODO
+}
+
 - (NSString*)_getLocale
 {
     NSString* theLocale = nil;
