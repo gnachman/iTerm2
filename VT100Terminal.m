@@ -3933,6 +3933,8 @@ static VT100TCC decode_string(unsigned char *datap,
             if (shape >= 0 && shape < sizeof(shapeMap)/sizeof(int)) {
                 [delegate_ terminalSetCursorType:shapeMap[shape]];
             }
+        } else if ([key isEqualToString:@"RemoteHost"]) {
+            [delegate_ terminalSetRemoteHost:value];
         } else if ([key isEqualToString:@"SetMark"]) {
             [delegate_ terminalSaveScrollPositionWithArgument:value];
         } else if ([key isEqualToString:@"StealFocus"]) {

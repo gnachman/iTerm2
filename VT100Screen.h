@@ -10,6 +10,7 @@
 @class IntervalTree;
 @class PTYTask;
 @class VT100Grid;
+@class VT100RemoteHost;
 @class VT100ScreenMark;
 @class VT100Terminal;
 
@@ -193,5 +194,6 @@ extern int kVT100ScreenMinRows;
 
 - (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line;
 - (NSString *)workingDirectoryOnLine:(int)line;
+- (VT100RemoteHost *)remoteHostOnLine:(int)line;
 
 @end

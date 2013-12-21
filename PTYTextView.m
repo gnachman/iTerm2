@@ -4826,6 +4826,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
+- (void)downloadWithSCP:(id)sender
+{
+    NSString *scpPath = nil;
+    NSString *selectedText = [[self selectedText] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSArray *parts = [selectedText componentsSeparatedByString:@"\n"];
+    if (parts.length != 1) {
+        return;
+    }
+    NSString *unescapedText = parts[0];
+    NSString *text = [unescapedText stringWithEscapedShellCharacters];
+    if (startY >= 0) {
+        scpPath = [dataSource scpPathForFile:text onLine:startY];
+    }
+    // TODO: Run scp? Or use libssh?
+}
+
 - (void)showNotes:(id)sender
 {
     for (PTYNoteViewController *note in [dataSource notesInRange:VT100GridCoordRangeMake(validationClickPoint_.x,
@@ -5126,6 +5142,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // These commands are allowed only if there is a selection.
         return startX > -1;
     }
+    if ([item action] == @selector(downloadWithSCP:)) {
+        return ([self _haveShortSelection] &&
+                startY >= 0 &&
+                [dataSource scpPathForFile:[self selectedText] onLine:startY] != nil);
+    }
     if ([item action]==@selector(showNotes:)) {
         return validationClickPoint_.x >= 0 &&
                [[dataSource notesInRange:VT100GridCoordRangeMake(validationClickPoint_.x,
@@ -5287,6 +5308,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     // Menu items for acting on text selections
+    [theMenu addItemWithTitle:@"Download with scp"
+                       action:@selector(downloadWithSCP:)
+                keyEquivalent:@""];
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Open Selection as URL",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(browse:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];

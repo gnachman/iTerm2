@@ -525,6 +525,9 @@
 		1DE306A91864F2010044583A /* VT100WorkingDirectory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE306A71864F2010044583A /* VT100WorkingDirectory.h */; };
 		1DE306AA1864F2010044583A /* VT100WorkingDirectory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE306A81864F2010044583A /* VT100WorkingDirectory.m */; };
 		1DE306AB1864F2010044583A /* VT100WorkingDirectory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE306A81864F2010044583A /* VT100WorkingDirectory.m */; };
+		1DE3231B186518960044583A /* VT100RemoteHost.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE32319186518960044583A /* VT100RemoteHost.h */; };
+		1DE3231C186518960044583A /* VT100RemoteHost.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE3231A186518960044583A /* VT100RemoteHost.m */; };
+		1DE3231D186518960044583A /* VT100RemoteHost.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE3231A186518960044583A /* VT100RemoteHost.m */; };
 		1DE5EBE8122B892900C736B0 /* ProfilesWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE5EBE6122B892900C736B0 /* ProfilesWindow.h */; };
 		1DE5EBE9122B892900C736B0 /* ProfilesWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE5EBE7122B892900C736B0 /* ProfilesWindow.m */; };
 		1DE8DC891415513A00F83147 /* ToolbeltView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC871415513A00F83147 /* ToolbeltView.h */; };
@@ -941,6 +944,8 @@
 		1DE306A31864EF040044583A /* NSArray+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSArray+iTerm.m"; sourceTree = "<group>"; };
 		1DE306A71864F2010044583A /* VT100WorkingDirectory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100WorkingDirectory.h; sourceTree = "<group>"; };
 		1DE306A81864F2010044583A /* VT100WorkingDirectory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100WorkingDirectory.m; sourceTree = "<group>"; };
+		1DE32319186518960044583A /* VT100RemoteHost.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100RemoteHost.h; sourceTree = "<group>"; };
+		1DE3231A186518960044583A /* VT100RemoteHost.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100RemoteHost.m; sourceTree = "<group>"; };
 		1DE5EBE6122B892900C736B0 /* ProfilesWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesWindow.h; sourceTree = "<group>"; };
 		1DE5EBE7122B892900C736B0 /* ProfilesWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ProfilesWindow.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1DE8DC871415513A00F83147 /* ToolbeltView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolbeltView.h; sourceTree = "<group>"; };
@@ -1187,6 +1192,8 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				1DE32319186518960044583A /* VT100RemoteHost.h */,
+				1DE3231A186518960044583A /* VT100RemoteHost.m */,
 				A6358641184BEA47009ED690 /* AATree */,
 				A63F40AC1842988A003A6A6D /* Core */,
 				1D9DDE31142E73E300275650 /* Categories */,
@@ -1930,6 +1937,7 @@
 				1D5FDD721208E8F000C46BA3 /* CGSNotifications.h in Headers */,
 				1D5FDD731208E8F000C46BA3 /* CGSRegion.h in Headers */,
 				1D5FDD741208E8F000C46BA3 /* CGSSession.h in Headers */,
+				1DE3231B186518960044583A /* VT100RemoteHost.h in Headers */,
 				1D5FDD751208E8F000C46BA3 /* CGSTransitions.h in Headers */,
 				1D5FDD761208E8F000C46BA3 /* CGSWindow.h in Headers */,
 				1D5FDD771208E8F000C46BA3 /* CGSWorkspace.h in Headers */,
@@ -2374,6 +2382,7 @@
 				1D9A5583180FA87000B42CE9 /* iTermApplicationDelegate.m in Sources */,
 				1D9A55A5180FA87000B42CE9 /* VT100Terminal.m in Sources */,
 				1D9A559A180FA87000B42CE9 /* PTYTextView.m in Sources */,
+				1DE3231D186518960044583A /* VT100RemoteHost.m in Sources */,
 				1D9A55A8180FA8B700B42CE9 /* PSMAquaTabStyle.m in Sources */,
 				1D9A5599180FA87000B42CE9 /* PTYTask.m in Sources */,
 				1D9A552F180FA6A100B42CE9 /* iTermGrowlDelegate.m in Sources */,
@@ -2515,6 +2524,7 @@
 				1D7C18821275D22900461E55 /* PasteboardHistory.m in Sources */,
 				A635864A184BEA57009ED690 /* AATreeNode.m in Sources */,
 				1D7C1D1312772ECC00461E55 /* NSDateFormatterExtras.m in Sources */,
+				1DE3231C186518960044583A /* VT100RemoteHost.m in Sources */,
 				1DE214E2128212EE004E3ADF /* Autocomplete.m in Sources */,
 				1DD736421283C2FA009B7829 /* Popup.m in Sources */,
 				1D44218D1290B34500891504 /* TextViewWrapper.m in Sources */,

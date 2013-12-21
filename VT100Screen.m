@@ -9,6 +9,7 @@
 #import "RegexKitLite.h"
 #import "SearchResult.h"
 #import "TmuxStateParser.h"
+#import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
 #import "VT100WorkingDirectory.h"
 #import "iTermExpose.h"
@@ -1527,7 +1528,16 @@ static const double kInterBellQuietPeriod = 0.1;
     }
 }
 
-- (NSString *)workingDirectoryOnLine:(int)line {
+- (void)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {
+    VT100RemoteHost *remoteHostObj = [[[VT100RemoteHost alloc] init] autorelease];
+    remoteHostObj.hostname = host;
+    remoteHostObj.username = user;
+    VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, self.width, line);
+    [intervalTree_ addObject:remoteHostObj
+                withInterval:[self intervalForGridCoordRange:range]];
+}
+
+- (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls {
     long long pos = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
                                                                             line,
                                                                             0,
@@ -1537,14 +1547,41 @@ static const double kInterBellQuietPeriod = 0.1;
     int count;
     do {
         objects = [enumerator nextObject];
-        objects = [objects objectsOfClasses:@[ [VT100WorkingDirectory class] ]];
+        objects = [objects objectsOfClasses:@[ cls ]];
     } while (objects && !objects.count);
     if (objects.count) {
-        VT100WorkingDirectory *workingDirectory = objects[0];
-        return workingDirectory.workingDirectory;
+        return objects[0];
     } else {
         return nil;
     }
+}
+
+- (VT100RemoteHost *)remoteHostOnLine:(int)line {
+    return (VT100RemoteHost *)[self objectOnOrBeforeLine:line ofClass:[VT100RemoteHost class]];
+}
+
+- (NSString *)scpPathForFile:(NSString *)filename onLine:(int)line {
+    VT100RemoteHost *remoteHost = [self remoteHostOnLine:line];
+    if (!remoteHost.username || !remoteHost.hostname) {
+        return;
+    }
+    NSString *workingDirectory = [self workingDirectoryOnLine:line];
+    if (!workingDirectory) {
+        return nil;
+    }
+    NSString *path;
+    if ([filename hasPrefix:@"/"]) {
+        path = filename;
+    } else {
+        path = [workingDirectory stringByAppendingPathComponent:filename];
+    }
+    return [NSString stringWithFormat:@"%@@%@:%@", remoteHost.username, remoteHost.hostname, path];
+}
+
+- (NSString *)workingDirectoryOnLine:(int)line {
+    VT100WorkingDirectory *workingDirectory =
+        [self objectOnOrBeforeLine:line ofClass:[VT100WorkingDirectory class]];
+    return workingDirectory.workingDirectory;
 }
 
 - (void)addNote:(PTYNoteViewController *)note
@@ -2561,6 +2598,28 @@ static const double kInterBellQuietPeriod = 0.1;
         }
         [delegate_ screenNeedsRedraw];
     }
+}
+
+- (void)terminalSetRemoteHost:(NSString *)remoteHost {
+    NSRange atRange = [remoteHost rangeOfString:@"@"];
+    NSString *user = nil;
+    NSString *host = nil;
+    if (atRange.length == 1) {
+        user = [remoteHost substringToIndex:atRange.location];
+        host = [remoteHost substringFromIndex:atRange.location + 1];
+    } else {
+        host = remoteHost;
+    }
+
+    char localHostname[256];
+    if (remoteHost && !gethostname(localHostname, sizeof(localHostname) - 1)) {
+        localHostname[sizeof(localHostname) - 1] = '\0';
+        if ([remoteHost isEqualToString:[NSString stringWithUTF8String:localHostname]]) {
+            remoteHost = nil;
+        }
+    }
+    int cursorLine = [self numberOfLines] - [self height] + currentGrid_.cursorY;
+    [self setRemoteHost:host user:user onLine:cursorLine];
 }
 
 - (void)terminalClearScreen {

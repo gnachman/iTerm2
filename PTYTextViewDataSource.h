@@ -96,5 +96,6 @@ typedef enum {
 - (NSArray *)charactersWithNotesOnLine:(int)line;
 - (BOOL)hasMarkOnLine:(int)line;
 - (NSString *)workingDirectoryOnLine:(int)line;
+- (NSString *)scpPathForFile:(NSString *)filename onLine:(int)line;
 
 @end

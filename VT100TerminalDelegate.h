@@ -255,6 +255,9 @@ typedef enum {
 // Called when the current directory may have changed.
 - (void)terminalCurrentDirectoryDidChangeTo:(NSString *)value;
 
+// Sets the username@hostname or hostname of the current cursor location.
+- (void)terminalSetRemoteHost:(NSString *)remoteHost;
+
 // The profile should change to one with the name |value|.
 - (void)terminalProfileShouldChangeTo:(NSString *)value;
 
