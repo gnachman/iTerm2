@@ -4831,7 +4831,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString *scpPath = nil;
     NSString *selectedText = [[self selectedText] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSArray *parts = [selectedText componentsSeparatedByString:@"\n"];
-    if (parts.length != 1) {
+    if (parts.count != 1) {
         return;
     }
     NSString *unescapedText = parts[0];
@@ -4839,6 +4839,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (startY >= 0) {
         scpPath = [dataSource scpPathForFile:text onLine:startY];
     }
+
     // TODO: Run scp? Or use libssh?
 }
 

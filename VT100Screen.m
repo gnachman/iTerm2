@@ -1563,7 +1563,7 @@ static const double kInterBellQuietPeriod = 0.1;
 - (NSString *)scpPathForFile:(NSString *)filename onLine:(int)line {
     VT100RemoteHost *remoteHost = [self remoteHostOnLine:line];
     if (!remoteHost.username || !remoteHost.hostname) {
-        return;
+        return nil;
     }
     NSString *workingDirectory = [self workingDirectoryOnLine:line];
     if (!workingDirectory) {
