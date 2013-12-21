@@ -1,9 +1,3 @@
-/* Bugs found during testing
- - Cmd-I>terminal>put cursor in "scrollback lines", close window. It goes from 100000 to 100.
- - Attach to tmux that's running vimdiff. Open a new tmux tab, grow the window, and close the tab. vimdiff's display is messed up.
- - Save/restore alt screen in tmux is broken. Test that it's restored correctly, and that cursor position is also loaded properly on connecting.
- */
-
 #import "VT100Screen.h"
 
 #import "DebugLogging.h"

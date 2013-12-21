@@ -1709,7 +1709,8 @@
 - (void)closeTabClick:(id)sender
 {
     NSTabViewItem *item = [sender representedObject];
-    [sender retain];
+    [[sender retain] autorelease];
+    [[item retain] autorelease];
     if(([_cells count] == 1) && (![self canCloseOnlyTab]))
         return;
 
@@ -1721,13 +1722,9 @@
         }
     }
 
-    [item retain];
     if(([self delegate]) && ([[self delegate] respondsToSelector:@selector(closeTab:)])){
         [[self delegate] closeTab:[item identifier]];
     }
-
-    [item release];
-    [sender release];
 }
 
 - (void)tabClick:(id)sender
