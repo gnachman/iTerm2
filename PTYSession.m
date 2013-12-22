@@ -28,6 +28,7 @@
 
 #import "Coprocess.h"
 #import "FakeWindow.h"
+#import "FileTransferManager.h"
 #import "ITAddressBookMgr.h"
 #import "MovePaneController.h"
 #import "MovePaneController.h"
@@ -43,6 +44,8 @@
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
 #import "PseudoTerminal.h"
+#import "SCPFile.h"
+#import "SCPPath.h"
 #import "SearchResult.h"
 #import "SessionView.h"
 #import "TmuxController.h"
@@ -4247,7 +4250,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)startDownloadOverSCP:(SCPPath *)path
 {
-    // TODO
+    SCPFile *file = [[[SCPFile alloc] init] autorelease];
+    file.path = path;
+    [file download];
 }
 
 - (NSString*)_getLocale

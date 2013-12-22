@@ -584,6 +584,9 @@
 		A608F1D9186616E8004EDE74 /* SCPPath.h in Headers */ = {isa = PBXBuildFile; fileRef = A608F1D7186616E7004EDE74 /* SCPPath.h */; };
 		A608F1DA186616E8004EDE74 /* SCPPath.m in Sources */ = {isa = PBXBuildFile; fileRef = A608F1D8186616E8004EDE74 /* SCPPath.m */; };
 		A608F1DB186616E8004EDE74 /* SCPPath.m in Sources */ = {isa = PBXBuildFile; fileRef = A608F1D8186616E8004EDE74 /* SCPPath.m */; };
+		A608F1DE1866185A004EDE74 /* FileTransferManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A608F1DC1866185A004EDE74 /* FileTransferManager.h */; };
+		A608F1DF1866185A004EDE74 /* FileTransferManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A608F1DD1866185A004EDE74 /* FileTransferManager.m */; };
+		A608F1E01866185A004EDE74 /* FileTransferManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A608F1DD1866185A004EDE74 /* FileTransferManager.m */; };
 		A6358646184BEA57009ED690 /* AATree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358642184BEA57009ED690 /* AATree.h */; };
 		A6358647184BEA57009ED690 /* AATree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358643184BEA57009ED690 /* AATree.m */; };
 		A6358648184BEA57009ED690 /* AATree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358643184BEA57009ED690 /* AATree.m */; };
@@ -618,6 +621,12 @@
 		A6CFDAD7185D53C2005DC94B /* AsyncHostLookupController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */; };
 		A6CFDAD8185D53C2005DC94B /* AsyncHostLookupController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD6185D53C2005DC94B /* AsyncHostLookupController.m */; };
 		A6CFDAD9185D53C2005DC94B /* AsyncHostLookupController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD6185D53C2005DC94B /* AsyncHostLookupController.m */; };
+		A6F9CCD218663B2E00046B6B /* SCPFile.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F9CCD018663B2E00046B6B /* SCPFile.h */; };
+		A6F9CCD318663B2E00046B6B /* SCPFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCD118663B2E00046B6B /* SCPFile.m */; };
+		A6F9CCD418663B2E00046B6B /* SCPFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCD118663B2E00046B6B /* SCPFile.m */; };
+		A6F9CCD71867425A00046B6B /* NSObject+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F9CCD51867425A00046B6B /* NSObject+iTerm.h */; };
+		A6F9CCD81867425A00046B6B /* NSObject+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCD61867425A00046B6B /* NSObject+iTerm.m */; };
+		A6F9CCD91867425A00046B6B /* NSObject+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCD61867425A00046B6B /* NSObject+iTerm.m */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = FB151F2903648AC401F955DB /* iTerm.strings */; };
@@ -1012,6 +1021,8 @@
 		A608F1D41866166B004EDE74 /* NMSSH.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = NMSSH.framework; sourceTree = "<group>"; };
 		A608F1D7186616E7004EDE74 /* SCPPath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SCPPath.h; sourceTree = "<group>"; };
 		A608F1D8186616E8004EDE74 /* SCPPath.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SCPPath.m; sourceTree = "<group>"; };
+		A608F1DC1866185A004EDE74 /* FileTransferManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileTransferManager.h; sourceTree = "<group>"; };
+		A608F1DD1866185A004EDE74 /* FileTransferManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FileTransferManager.m; sourceTree = "<group>"; };
 		A6358642184BEA57009ED690 /* AATree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AATree.h; path = "objc-aatree-master/AATree.h"; sourceTree = "<group>"; };
 		A6358643184BEA57009ED690 /* AATree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AATree.m; path = "objc-aatree-master/AATree.m"; sourceTree = "<group>"; };
 		A6358644184BEA57009ED690 /* AATreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AATreeNode.h; path = "objc-aatree-master/AATreeNode.h"; sourceTree = "<group>"; };
@@ -1036,6 +1047,11 @@
 		A6CFDAD1185D2587005DC94B /* URLAction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = URLAction.m; sourceTree = "<group>"; };
 		A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AsyncHostLookupController.h; sourceTree = "<group>"; };
 		A6CFDAD6185D53C2005DC94B /* AsyncHostLookupController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AsyncHostLookupController.m; sourceTree = "<group>"; };
+		A6F9CCD018663B2E00046B6B /* SCPFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SCPFile.h; sourceTree = "<group>"; };
+		A6F9CCD118663B2E00046B6B /* SCPFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SCPFile.m; sourceTree = "<group>"; };
+		A6F9CCD51867425A00046B6B /* NSObject+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+iTerm.h"; sourceTree = "<group>"; };
+		A6F9CCD61867425A00046B6B /* NSObject+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+iTerm.m"; sourceTree = "<group>"; };
+		A6F9CCDA18678DCC00046B6B /* libssh2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssh2.a; path = libs/libssh2.a; sourceTree = "<group>"; };
 		DD02572409CB9398008F320C /* PSMAquaTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMAquaTabStyle.h; sourceTree = "<group>"; };
 		DD02572509CB9398008F320C /* PSMAquaTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMAquaTabStyle.m; sourceTree = "<group>"; };
 		DD02572609CB9398008F320C /* PSMMetalTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMMetalTabStyle.h; sourceTree = "<group>"; };
@@ -1263,6 +1279,10 @@
 				1DE306A81864F2010044583A /* VT100WorkingDirectory.m */,
 				A608F1D7186616E7004EDE74 /* SCPPath.h */,
 				A608F1D8186616E8004EDE74 /* SCPPath.m */,
+				A608F1DC1866185A004EDE74 /* FileTransferManager.h */,
+				A6F9CCD018663B2E00046B6B /* SCPFile.h */,
+				A6F9CCD118663B2E00046B6B /* SCPFile.m */,
+				A608F1DD1866185A004EDE74 /* FileTransferManager.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -1703,6 +1723,8 @@
 				A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */,
 				1DE306A21864EF030044583A /* NSArray+iTerm.h */,
 				1DE306A31864EF040044583A /* NSArray+iTerm.m */,
+				A6F9CCD51867425A00046B6B /* NSObject+iTerm.h */,
+				A6F9CCD61867425A00046B6B /* NSObject+iTerm.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -1710,6 +1732,7 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A6F9CCDA18678DCC00046B6B /* libssh2.a */,
 				A608F1D41866166B004EDE74 /* NMSSH.framework */,
 				1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */,
 				1D9A55B6180FA90700B42CE9 /* Sparkle */,
@@ -1961,6 +1984,7 @@
 				1D6C50A71226EEFB00E0AA3E /* ProfileListView.h in Headers */,
 				1DE5EBE8122B892900C736B0 /* ProfilesWindow.h in Headers */,
 				1D93D33512695442007F741B /* DVR.h in Headers */,
+				A6F9CCD218663B2E00046B6B /* SCPFile.h in Headers */,
 				1D93D3471269741B007F741B /* DVRBuffer.h in Headers */,
 				1D93D34B1269746F007F741B /* DVRIndexEntry.h in Headers */,
 				1D93D34F126974BC007F741B /* DVRDecoder.h in Headers */,
@@ -2044,6 +2068,7 @@
 				1DD6707714934ADE008E4361 /* PTYSplitView.h in Headers */,
 				1DD4CE8014A51C0D00ED182E /* TmuxDashboardController.h in Headers */,
 				1DA9AEEA14A51CA000BEB37B /* TmuxSessionsTable.h in Headers */,
+				A608F1DE1866185A004EDE74 /* FileTransferManager.h in Headers */,
 				1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */,
 				1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */,
 				1DAE714D14AAF24200DA144B /* EquivalenceClassSet.h in Headers */,
@@ -2058,6 +2083,7 @@
 				1D407A3E14BABE8700BD5035 /* PTYScrollView.h in Headers */,
 				1D407A3F14BABE8700BD5035 /* PTYSession.h in Headers */,
 				1D407A4014BABE8700BD5035 /* PTYTabView.h in Headers */,
+				A6F9CCD71867425A00046B6B /* NSObject+iTerm.h in Headers */,
 				1D407A4114BABE8700BD5035 /* PTYTask.h in Headers */,
 				1D407A4214BABE8700BD5035 /* PTYTextView.h in Headers */,
 				1D407A4314BABE8700BD5035 /* PTYWindow.h in Headers */,
@@ -2409,6 +2435,7 @@
 				A608F1DB186616E8004EDE74 /* SCPPath.m in Sources */,
 				1DD39B22180B8467004E56D5 /* BackgroundThread.m in Sources */,
 				1D9A5576180FA85D00B42CE9 /* CoprocessTrigger.m in Sources */,
+				A608F1E01866185A004EDE74 /* FileTransferManager.m in Sources */,
 				1D9A5580180FA87000B42CE9 /* FontSizeEstimator.m in Sources */,
 				1D9A5561180FA83900B42CE9 /* TrouterPrefsController.m in Sources */,
 				1D9A556F180FA85900B42CE9 /* ToolNotes.m in Sources */,
@@ -2423,6 +2450,7 @@
 				1DD39B17180B82AC004E56D5 /* ScreenChar.m in Sources */,
 				1D9A5591180FA87000B42CE9 /* PseudoTerminalRestorer.m in Sources */,
 				1DD39B16180B81B3004E56D5 /* VT100GridTest.m in Sources */,
+				A6F9CCD91867425A00046B6B /* NSObject+iTerm.m in Sources */,
 				1D9A558C180FA87000B42CE9 /* PasteView.m in Sources */,
 				1D9A557E180FA87000B42CE9 /* FindView.m in Sources */,
 				1D9A554C180FA82E00B42CE9 /* TmuxLayoutParser.m in Sources */,
@@ -2450,6 +2478,7 @@
 				1DE306A61864EF040044583A /* NSArray+iTerm.m in Sources */,
 				1D9A5547180FA82E00B42CE9 /* TmuxController.m in Sources */,
 				1D9A5550180FA82E00B42CE9 /* TmuxWindowsTable.m in Sources */,
+				A6F9CCD418663B2E00046B6B /* SCPFile.m in Sources */,
 				1DD39B1E180B8415004E56D5 /* LineBuffer.m in Sources */,
 				1D9A55AF180FA8B700B42CE9 /* PSMTabDragAssistant.m in Sources */,
 				1D9A559F180FA87000B42CE9 /* SplitPanel.m in Sources */,
@@ -2529,6 +2558,7 @@
 				874206500564169600CFC3F1 /* iTermApplicationDelegate.m in Sources */,
 				DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */,
 				1DCF3E8F122419D200AD56F1 /* ProfileModel.m in Sources */,
+				A6F9CCD81867425A00046B6B /* NSObject+iTerm.m in Sources */,
 				1D6C50A81226EEFB00E0AA3E /* ProfileListView.m in Sources */,
 				1DE5EBE9122B892900C736B0 /* ProfilesWindow.m in Sources */,
 				1D93D33612695442007F741B /* DVR.m in Sources */,
@@ -2573,6 +2603,7 @@
 				1DE8DC8E1415546000F83147 /* ToolProfiles.m in Sources */,
 				1DE8DDAE1415648600F83147 /* ToolPasteHistory.m in Sources */,
 				1DE8DF371415799700F83147 /* ToolWrapper.m in Sources */,
+				A608F1DF1866185A004EDE74 /* FileTransferManager.m in Sources */,
 				1D19C71514171F1D00617E08 /* ToolJobs.m in Sources */,
 				1D67AAAA14284BF300D5DA4E /* ToolNotes.m in Sources */,
 				1D67ABAC14285D6000D5DA4E /* NSFileManager+iTerm.m in Sources */,
@@ -2594,6 +2625,7 @@
 				1D8255FD14687EE8007CAE78 /* PointerPrefsController.m in Sources */,
 				1D825601146881EC007CAE78 /* PointerController.m in Sources */,
 				1D825605146B258A007CAE78 /* EventMonitorView.m in Sources */,
+				A6F9CCD318663B2E00046B6B /* SCPFile.m in Sources */,
 				1D3BBD6C14759D6C00FAB389 /* HighlightTrigger.m in Sources */,
 				1D21EE3C147711300066E04A /* ContextMenuActionPrefsController.m in Sources */,
 				1D3D21881482E0E500FAC8E7 /* TmuxGateway.m in Sources */,

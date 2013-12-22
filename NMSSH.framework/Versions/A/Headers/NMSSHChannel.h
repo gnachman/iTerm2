@@ -180,4 +180,36 @@ typedef NS_ENUM(NSInteger, NMSSHChannelType)  {
  */
 - (BOOL)downloadFile:(NSString *)remotePath to:(NSString *)localPath;
 
+/**
+ * Download a remote file to local the filesystem.
+ *
+ * If to: specifies a directory, the file name from the original file will be
+ * used.
+ *
+ * @param remotePath Path to a file on the remote server
+ * @param localPath Path to save the file to
+ * @param progress Method called periodically with number of bytes downloaded and total file size.
+ *        Returns NO to abort.
+ * @returns SCP download success
+ */
+- (BOOL)downloadFile:(NSString *)remotePath
+                  to:(NSString *)localPath
+            progress:(BOOL (^)(NSUInteger, NSUInteger))progress;
+
+/**
+ * Upload a local file to a remote server.
+ *
+ * If to: specifies a directory, the file name from the original file will be
+ * used.
+ *
+ * @param localPath Path to a file on the local computer
+ * @param remotePath Path to save the file to
+ * @param progress Method called periodically with number of bytes uploaded. Returns NO to abort.
+ * @returns SCP upload success
+ */
+- (BOOL)uploadFile:(NSString *)localPath
+                to:(NSString *)remotePath
+          progress:(BOOL (^)(NSUInteger))progress;
+
+
 @end

@@ -5,6 +5,13 @@ typedef NS_ENUM(NSInteger, NMSSHSessionHash) {
     NMSSHSessionHashSHA1
 };
 
+typedef NS_ENUM(NSInteger, NMSSHKnownHostStatus) {
+    NMSSHKnownHostStatusMatch,
+    NMSSHKnownHostStatusMismatch,
+    NMSSHKnownHostStatusNotFound,
+    NMSSHKnownHostStatusFailure
+};
+
 /**
 NMSSHSession provides the functionality required to setup a SSH connection
 and authorize against it.
@@ -221,6 +228,22 @@ In it's simplest form it works like this:
  * @returns The host's fingerprint
  */
 - (NSString *)fingerprint:(NMSSHSessionHash)hashType;
+
+/**
+ * Checks if a fingerprint is known for the current host.
+ * The session must be connected to an host.
+ *
+ * @param hashType The host's fingerprint
+ * @returns Known host status.
+ */
+- (NMSSHKnownHostStatus)knownHostStatusFoFingerprint:(NSString *)fingerprint;
+
+/**
+ * Adds the current host to the user's known hosts file.
+ *
+ * @returns Success status.
+ */
+- (BOOL)addCurrentHostToKnownHosts;
 
 /// ----------------------------------------------------------------------------
 /// @name Quick channel/sftp access
