@@ -51,6 +51,11 @@ static NSError *SCPFileError(NSString *description) {
     return [components lastObject];
 }
 
+- (BOOL)havePrivateKey {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    return [fileManager fileExistsAtPath:[kPrivateKeyPath stringByExpandingTildeInPath]];
+}
+
 // This runs in a thread.
 - (void)performTransfer:(BOOL)isDownload {
     NSString *baseName = [[self class] fileNameForPath:self.path.path];
@@ -81,6 +86,9 @@ static NSError *SCPFileError(NSString *description) {
     }
     
     NSArray *authTypes = [self.session supportedAuthenticationMethods];
+    if (!authTypes) {
+        authTypes = @[ @"password" ];
+    }
     for (NSString *authType in authTypes) {
         if (self.stopped) {
             break;
@@ -91,7 +99,7 @@ static NSError *SCPFileError(NSString *description) {
                 password = [[FileTransferManager sharedInstance] transferrableFile:self
                                                          keyboardInteractivePrompt:@"Password:"];
             });
-            if (self.stopped) {
+            if (self.stopped || !password) {
                 break;
             }
             [self.session authenticateByPassword:password];
@@ -110,7 +118,7 @@ static NSError *SCPFileError(NSString *description) {
             if (self.stopped || self.session.isAuthorized) {
                 break;
             }
-        } else if ([authType isEqualToString:@"publickey"]) {
+        } else if ([authType isEqualToString:@"publickey"] && [self havePrivateKey]) {
             __block NSString *password;
             dispatch_sync(dispatch_get_main_queue(), ^() {
                 password = [[FileTransferManager sharedInstance] transferrableFile:self
@@ -127,6 +135,7 @@ static NSError *SCPFileError(NSString *description) {
             }
         }
     }
+
     if (self.stopped) {
         dispatch_sync(dispatch_get_main_queue(), ^() {
             [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
@@ -144,6 +153,7 @@ static NSError *SCPFileError(NSString *description) {
             [[FileTransferManager sharedInstance] transferrableFile:self
                                      didFinishTransmissionWithError:error];
         });
+        return;
     }
     
     if (isDownload) {
@@ -161,12 +171,12 @@ static NSError *SCPFileError(NSString *description) {
                 do {
                     finalDestination = [path stringByAppendingPathComponent:name];
                     ++retries;
-                    NSRange rangeOfDot = [name rangeOfString:@"."];
-                    NSString *prefix = finalDestination;
+                    NSRange rangeOfDot = [baseName rangeOfString:@"."];
+                    NSString *prefix = baseName;
                     NSString *suffix = @"";
                     if (rangeOfDot.length > 0) {
-                        prefix = [finalDestination substringToIndex:rangeOfDot.location];
-                        suffix = [finalDestination substringFromIndex:rangeOfDot.location];
+                        prefix = [baseName substringToIndex:rangeOfDot.location];
+                        suffix = [baseName substringFromIndex:rangeOfDot.location];
                     }
                     name = [NSString stringWithFormat:@"%@ (%d)%@", prefix, retries, suffix];
                 } while ([[NSFileManager defaultManager] fileExistsAtPath:finalDestination]);
@@ -299,8 +309,8 @@ static NSError *SCPFileError(NSString *description) {
                 
             case NMSSHKnownHostStatusNotFound:
                 message =
-                    [NSString stringWithFormat:@"The authenticity of host '%@' can't be established. "
-                                               @"DSA key fingerprint is %@. Connect anyay?",
+                    [NSString stringWithFormat:@"The authenticity of host '%@' can't be established.\n"
+                                               @"DSA key fingerprint is %@.\nConnect anyay?",
                         session.host, fingerprint];
                 okToAdd = YES;
                 break;
@@ -314,6 +324,15 @@ static NSError *SCPFileError(NSString *description) {
         }
     });
     return result;
+}
+
+- (NSString *)session:(NMSSHSession *)session keyboardInteractiveRequest:(NSString *)request {
+    __block NSString *string;
+    dispatch_sync(dispatch_get_main_queue(), ^() {
+        string = [[FileTransferManager sharedInstance] transferrableFile:self
+                                               keyboardInteractivePrompt:request];
+    });
+    return string;
 }
 
 @end
