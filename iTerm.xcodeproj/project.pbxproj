@@ -628,6 +628,15 @@
 		A6F9CCD81867425A00046B6B /* NSObject+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCD61867425A00046B6B /* NSObject+iTerm.m */; };
 		A6F9CCD91867425A00046B6B /* NSObject+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCD61867425A00046B6B /* NSObject+iTerm.m */; };
 		A6F9CCDD1867929700046B6B /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A608F1D41866166B004EDE74 /* NMSSH.framework */; };
+		A6F9CCE01868C67500046B6B /* TransferrableFileMenuItemViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F9CCDE1868C67500046B6B /* TransferrableFileMenuItemViewController.h */; };
+		A6F9CCE11868C67500046B6B /* TransferrableFileMenuItemViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCDF1868C67500046B6B /* TransferrableFileMenuItemViewController.m */; };
+		A6F9CCE21868C67500046B6B /* TransferrableFileMenuItemViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCDF1868C67500046B6B /* TransferrableFileMenuItemViewController.m */; };
+		A6F9CCE51868C88F00046B6B /* TransferrableFile.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F9CCE31868C88F00046B6B /* TransferrableFile.h */; };
+		A6F9CCE61868C88F00046B6B /* TransferrableFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCE41868C88F00046B6B /* TransferrableFile.m */; };
+		A6F9CCE71868C88F00046B6B /* TransferrableFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCE41868C88F00046B6B /* TransferrableFile.m */; };
+		A6F9CCEA1868C8DE00046B6B /* TransferrableFileMenuItemView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F9CCE81868C8DE00046B6B /* TransferrableFileMenuItemView.h */; };
+		A6F9CCEB1868C8DE00046B6B /* TransferrableFileMenuItemView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCE91868C8DE00046B6B /* TransferrableFileMenuItemView.m */; };
+		A6F9CCEC1868C8DE00046B6B /* TransferrableFileMenuItemView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCE91868C8DE00046B6B /* TransferrableFileMenuItemView.m */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = FB151F2903648AC401F955DB /* iTerm.strings */; };
@@ -1054,6 +1063,12 @@
 		A6F9CCD51867425A00046B6B /* NSObject+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+iTerm.h"; sourceTree = "<group>"; };
 		A6F9CCD61867425A00046B6B /* NSObject+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+iTerm.m"; sourceTree = "<group>"; };
 		A6F9CCDA18678DCC00046B6B /* libssh2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssh2.a; path = libs/libssh2.a; sourceTree = "<group>"; };
+		A6F9CCDE1868C67500046B6B /* TransferrableFileMenuItemViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TransferrableFileMenuItemViewController.h; sourceTree = "<group>"; };
+		A6F9CCDF1868C67500046B6B /* TransferrableFileMenuItemViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TransferrableFileMenuItemViewController.m; sourceTree = "<group>"; };
+		A6F9CCE31868C88F00046B6B /* TransferrableFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TransferrableFile.h; sourceTree = "<group>"; };
+		A6F9CCE41868C88F00046B6B /* TransferrableFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TransferrableFile.m; sourceTree = "<group>"; };
+		A6F9CCE81868C8DE00046B6B /* TransferrableFileMenuItemView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TransferrableFileMenuItemView.h; sourceTree = "<group>"; };
+		A6F9CCE91868C8DE00046B6B /* TransferrableFileMenuItemView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TransferrableFileMenuItemView.m; sourceTree = "<group>"; };
 		DD02572409CB9398008F320C /* PSMAquaTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMAquaTabStyle.h; sourceTree = "<group>"; };
 		DD02572509CB9398008F320C /* PSMAquaTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMAquaTabStyle.m; sourceTree = "<group>"; };
 		DD02572609CB9398008F320C /* PSMMetalTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMMetalTabStyle.h; sourceTree = "<group>"; };
@@ -1191,6 +1206,12 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A6F9CCE81868C8DE00046B6B /* TransferrableFileMenuItemView.h */,
+				A6F9CCE91868C8DE00046B6B /* TransferrableFileMenuItemView.m */,
+				A6F9CCDE1868C67500046B6B /* TransferrableFileMenuItemViewController.h */,
+				A6F9CCDF1868C67500046B6B /* TransferrableFileMenuItemViewController.m */,
+				A6F9CCE31868C88F00046B6B /* TransferrableFile.h */,
+				A6F9CCE41868C88F00046B6B /* TransferrableFile.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -1961,10 +1982,12 @@
 				1DE306A91864F2010044583A /* VT100WorkingDirectory.h in Headers */,
 				1D5FDD6B1208E8F000C46BA3 /* CGSConnection.h in Headers */,
 				A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */,
+				A6F9CCE51868C88F00046B6B /* TransferrableFile.h in Headers */,
 				A60014FB18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h in Headers */,
 				1D5FDD6C1208E8F000C46BA3 /* CGSCursor.h in Headers */,
 				1D81F0C0183C3C2D00910838 /* NSView+RecursiveDescription.h in Headers */,
 				1D5FDD6D1208E8F000C46BA3 /* CGSDebug.h in Headers */,
+				A6F9CCE01868C67500046B6B /* TransferrableFileMenuItemViewController.h in Headers */,
 				1D5FDD6E1208E8F000C46BA3 /* CGSDisplays.h in Headers */,
 				A63F409F183F3AF5003A6A6D /* VT100LineInfo.h in Headers */,
 				1D5FDD6F1208E8F000C46BA3 /* CGSHotKeys.h in Headers */,
@@ -2104,6 +2127,7 @@
 				1D6944D7169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h in Headers */,
 				1D085F8616F02E7400B7FCE9 /* PasteContext.h in Headers */,
 				1D085F8D16F0328B00B7FCE9 /* PasteViewController.h in Headers */,
+				A6F9CCEA1868C8DE00046B6B /* TransferrableFileMenuItemView.h in Headers */,
 				1D085F9216F03E5400B7FCE9 /* PasteView.h in Headers */,
 				1D085F9616F04D0900B7FCE9 /* NSBezierPath+iTerm.h in Headers */,
 				1D085F9A16F1135F00B7FCE9 /* PasteEvent.h in Headers */,
@@ -2385,10 +2409,12 @@
 				1D9A55AA180FA8B700B42CE9 /* PSMOverflowPopUpButton.m in Sources */,
 				1D9A5560180FA83900B42CE9 /* TriggerController.m in Sources */,
 				1D78B560183EE1C000014D49 /* LineBufferPosition.m in Sources */,
+				A6F9CCEC1868C8DE00046B6B /* TransferrableFileMenuItemView.m in Sources */,
 				1D9A5549180FA82E00B42CE9 /* TmuxDashboardController.m in Sources */,
 				1D9A5579180FA85D00B42CE9 /* ScriptTrigger.m in Sources */,
 				1D9A5551180FA82E00B42CE9 /* TSVParser.m in Sources */,
 				1D9A559B180FA87000B42CE9 /* RoundedRectView.m in Sources */,
+				A6F9CCE71868C88F00046B6B /* TransferrableFile.m in Sources */,
 				1D9A5573180FA85D00B42CE9 /* Trigger.m in Sources */,
 				1D9A554F180FA82E00B42CE9 /* TmuxWindowOpener.m in Sources */,
 				1D9A5535180FA78B00B42CE9 /* DVRBuffer.m in Sources */,
@@ -2505,6 +2531,7 @@
 				1D9A5523180FA46100B42CE9 /* iTermTests.m in Sources */,
 				1D9A559C180FA87000B42CE9 /* SessionTitleView.m in Sources */,
 				1D9A55B0180FA8B700B42CE9 /* PSMTabDragWindow.m in Sources */,
+				A6F9CCE21868C67500046B6B /* TransferrableFileMenuItemViewController.m in Sources */,
 				1D9A554D180FA82E00B42CE9 /* TmuxSessionsTable.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2544,8 +2571,10 @@
 				1D5FDDBC1208E93600C46BA3 /* PSMMetalTabStyle.m in Sources */,
 				1D5FDDBD1208E93600C46BA3 /* PSMOverflowPopUpButton.m in Sources */,
 				A6CFDAD8185D53C2005DC94B /* AsyncHostLookupController.m in Sources */,
+				A6F9CCEB1868C8DE00046B6B /* TransferrableFileMenuItemView.m in Sources */,
 				1D5FDDBE1208E93600C46BA3 /* PSMProgressIndicator.m in Sources */,
 				1D5FDDBF1208E93600C46BA3 /* PSMRolloverButton.m in Sources */,
+				A6F9CCE61868C88F00046B6B /* TransferrableFile.m in Sources */,
 				1D5FDDC01208E93600C46BA3 /* PSMTabBarCell.m in Sources */,
 				1D5FDDC11208E93600C46BA3 /* PSMTabBarControl.m in Sources */,
 				1D5FDDC21208E93600C46BA3 /* NSBezierPath_AMShading.m in Sources */,
@@ -2621,6 +2650,7 @@
 				1D9DDD9D142E5FBB00275650 /* Coprocess.m in Sources */,
 				1D24C285142EF334006B246F /* SendTextTrigger.m in Sources */,
 				1D24C2C6142FEACF006B246F /* SmartSelectionController.m in Sources */,
+				A6F9CCE11868C67500046B6B /* TransferrableFileMenuItemViewController.m in Sources */,
 				1D4AE8FF14343A760092EB49 /* TrouterPrefsController.m in Sources */,
 				1DEDC8FE1451F67D004F1615 /* SessionTitleView.m in Sources */,
 				5ECE00601454E59B004861E9 /* PseudoTerminalRestorer.m in Sources */,

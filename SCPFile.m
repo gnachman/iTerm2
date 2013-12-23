@@ -29,6 +29,7 @@ static NSError *SCPFileError(NSString *description) {
 
 @implementation SCPFile {
     dispatch_queue_t _queue;
+    BOOL _okToAdd;
 }
 
 - (id)init {
@@ -41,6 +42,10 @@ static NSError *SCPFileError(NSString *description) {
 
 - (NSString *)displayName {
     return [NSString stringWithFormat:@"scp %@@%@:%@", _path.username, _path.hostname, _path.path];
+}
+
+- (NSString *)shortName {
+    return [[self.path.path pathComponents] lastObject];
 }
 
 + (NSString *)fileNameForPath:(NSString *)path {
@@ -66,11 +71,13 @@ static NSError *SCPFileError(NSString *description) {
         });
         return;
     }
+    _okToAdd = NO;
     self.session = [[[NMSSHSession alloc] initWithHost:self.path.hostname
                                            andUsername:self.path.username] autorelease];
     self.session.delegate = self;
     [self.session connect];
     if (self.stopped) {
+        NSLog(@"Stop after connect");
         dispatch_sync(dispatch_get_main_queue(), ^() {
             [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
         });
@@ -91,6 +98,7 @@ static NSError *SCPFileError(NSString *description) {
     }
     for (NSString *authType in authTypes) {
         if (self.stopped) {
+            NSLog(@"Break out of auth loop because stopped");
             break;
         }
         if ([authType isEqualToString:@"password"]) {
@@ -119,17 +127,19 @@ static NSError *SCPFileError(NSString *description) {
                 break;
             }
         } else if ([authType isEqualToString:@"publickey"] && [self havePrivateKey]) {
-            __block NSString *password;
-            dispatch_sync(dispatch_get_main_queue(), ^() {
-                password = [[FileTransferManager sharedInstance] transferrableFile:self
-                                                         keyboardInteractivePrompt:@"Password for private key:"];
-            });
             if (self.stopped) {
                 break;
             }
             [self.session authenticateByPublicKey:[kPublicKeyPath stringByExpandingTildeInPath]
                                        privateKey:[kPrivateKeyPath stringByExpandingTildeInPath]
-                                      andPassword:password];
+                            optionalPasswordBlock:^NSString *() {
+                                __block NSString *password;
+                                dispatch_sync(dispatch_get_main_queue(), ^() {
+                                    password = [[FileTransferManager sharedInstance] transferrableFile:self
+                                                                             keyboardInteractivePrompt:@"Passphrase for private key:"];
+                                });
+                                return password;
+                            }];
             if (self.session.isAuthorized) {
                 break;
             }
@@ -137,6 +147,7 @@ static NSError *SCPFileError(NSString *description) {
     }
 
     if (self.stopped) {
+        NSLog(@"Stop after auth");
         dispatch_sync(dispatch_get_main_queue(), ^() {
             [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
         });
@@ -156,6 +167,10 @@ static NSError *SCPFileError(NSString *description) {
         return;
     }
     
+    if (_okToAdd) {
+        [self.session addCurrentHostToKnownHosts];
+    }
+
     if (isDownload) {
         NSArray* paths = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory,
                                                              NSUserDomainMask,
@@ -190,6 +205,7 @@ static NSError *SCPFileError(NSString *description) {
             });
             return;
         }
+        self.status = kTransferrableFileStatusTransferring;
         BOOL ok = [self.session.channel downloadFile:self.path.path
                                                   to:tempfile
                                             progress:^BOOL (NSUInteger bytes, NSUInteger fileSize) {
@@ -200,6 +216,9 @@ static NSError *SCPFileError(NSString *description) {
                                                         [[FileTransferManager sharedInstance] transferrableFileProgressDidChange:self];
                                                     }
                                                 });
+                                                if (self.stopped) {
+                                                    NSLog(@"Stopping mid-download");
+                                                }
                                                 return !self.stopped;
                                             }];
         NSError *error;
@@ -209,9 +228,19 @@ static NSError *SCPFileError(NSString *description) {
                                                     toPath:finalDestination
                                                      error:&error];
         } else {
-            error = SCPFileError(@"Download failed");
+            if (self.stopped) {
+                dispatch_sync(dispatch_get_main_queue(), ^() {
+                    [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
+                });
+                return;
+            } else {
+                error = SCPFileError(@"Download failed");
+            }
         }
         dispatch_sync(dispatch_get_main_queue(), ^() {
+            if (!error) {
+                self.localPath = finalDestination;
+            }
             [[FileTransferManager sharedInstance] transferrableFile:self
                                      didFinishTransmissionWithError:error];
         });
@@ -276,6 +305,7 @@ static NSError *SCPFileError(NSString *description) {
 }
 
 - (void)stop {
+    [[FileTransferManager sharedInstance] transferrableFileWillStop:self];
     self.stopped = YES;
 }
 
@@ -283,9 +313,9 @@ static NSError *SCPFileError(NSString *description) {
     __block BOOL result;
     dispatch_sync(dispatch_get_main_queue(), ^(void) {
         BOOL known;
-        BOOL okToAdd = NO;
+        _okToAdd = NO;
         NSString *message;
-        switch ([self.session knownHostStatusFoFingerprint:fingerprint]) {
+        switch ([self.session knownHostStatus]) {
             case NMSSHKnownHostStatusFailure:
                 message = [NSString stringWithFormat:@"Could not read the known_hosts file.\n"
                                                      @"As a result, the autenticity of host '%@' can't be established."
@@ -312,15 +342,12 @@ static NSError *SCPFileError(NSString *description) {
                     [NSString stringWithFormat:@"The authenticity of host '%@' can't be established.\n"
                                                @"DSA key fingerprint is %@.\nConnect anyay?",
                         session.host, fingerprint];
-                okToAdd = YES;
+                _okToAdd = YES;
                 break;
         }
         if (message) {
             result = [[FileTransferManager sharedInstance] transferrableFile:self
                                                               confirmMessage:message];
-        }
-        if (okToAdd && result) {
-            [session addCurrentHostToKnownHosts];
         }
     });
     return result;

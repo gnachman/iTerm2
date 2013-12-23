@@ -7,42 +7,24 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "TransferrableFile.h"
 
-@class TransferrableFile;
-
-typedef enum {
-    kTransferrableFileStatusUnstarted,
-    kTransferrableFileStatusStarting,
-    kTransferrableFileStatusTransferring,
-    kTransferrableFileStatusFinishedSuccessfully,
-    kTransferrableFileStatusFinishedWithError
-} TransferrableFileStatus;
-
-@interface TransferrableFile : NSObject
-
-@property(atomic, assign) BOOL openWhenFinished;
-@property(atomic, assign) TransferrableFileStatus status;
-@property(atomic, assign) NSUInteger bytesTransferred;
-@property(atomic, assign) int fileSize;  // -1 if unknown
-
-- (NSString *)displayName;
-- (void)download;
-- (void)upload;
-- (void)stop;
-- (NSString *)localPath;  // For downloads, should be nil until download is complete.
-
-@end
+@class TransferrableFileMenuItemViewController;
 
 @interface FileTransferManager : NSObject
 
 @property(nonatomic, readonly) NSMutableArray *files;
 
 + (instancetype)sharedInstance;
+- (void)removeItem:(TransferrableFileMenuItemViewController *)viewController;
 
 #pragma mark - Calls made by subclasses of TransferrableFile
 
 // Connection initiation has started.
 - (void)transferrableFileDidStartTransfer:(TransferrableFile *)transferrableFile;
+
+// Stop was requested.
+- (void)transferrableFileWillStop:(TransferrableFile *)transferrableFile;
 
 // A transfer stopped with -stop has finally stopped.
 - (void)transferrableFileDidStopTransfer:(TransferrableFile *)transferrableFile;

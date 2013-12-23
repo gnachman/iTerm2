@@ -187,6 +187,22 @@ In it's simplest form it works like this:
                     andPassword:(NSString *)password;
 
 /**
+ * Authenticate by private key pair. First it tries to authenticate with an empty passphrase on the
+ * private key. If that fails, |passwordBlock| is called to get the passpharse for the private key
+ * and authentication is attempted again.
+ *
+ *
+ * @param publicKey Filepath to public key
+ * @param privateKey Filepath to private key
+ * @param passwordBlock Returns the passphrase for the private key. Only called if the private key
+ *   is encrypted. May return nil to abort authentication.
+ * @returns Authentication success
+ */
+- (BOOL)authenticateByPublicKey:(NSString *)publicKey
+                     privateKey:(NSString *)privateKey
+          optionalPasswordBlock:(NSString *(^)())passwordBlock;
+
+/**
  * Authenticate by keyboard-interactive using delegate.
  *
  * @returns Authentication success
@@ -230,13 +246,11 @@ In it's simplest form it works like this:
 - (NSString *)fingerprint:(NMSSHSessionHash)hashType;
 
 /**
- * Checks if a fingerprint is known for the current host.
- * The session must be connected to an host.
+ * Checks if the hosts's key is recognized. The session must be connected.
  *
- * @param hashType The host's fingerprint
- * @returns Known host status.
+ * @returns Known host status for current host.
  */
-- (NMSSHKnownHostStatus)knownHostStatusFoFingerprint:(NSString *)fingerprint;
+- (NMSSHKnownHostStatus)knownHostStatus;
 
 /**
  * Adds the current host to the user's known hosts file.
