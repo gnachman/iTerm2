@@ -1206,12 +1206,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				A6F9CCE81868C8DE00046B6B /* TransferrableFileMenuItemView.h */,
-				A6F9CCE91868C8DE00046B6B /* TransferrableFileMenuItemView.m */,
-				A6F9CCDE1868C67500046B6B /* TransferrableFileMenuItemViewController.h */,
-				A6F9CCDF1868C67500046B6B /* TransferrableFileMenuItemViewController.m */,
-				A6F9CCE31868C88F00046B6B /* TransferrableFile.h */,
-				A6F9CCE41868C88F00046B6B /* TransferrableFile.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -1241,8 +1235,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				1DE32319186518960044583A /* VT100RemoteHost.h */,
-				1DE3231A186518960044583A /* VT100RemoteHost.m */,
+				A6F9CCED186A561300046B6B /* File Transfers */,
 				A6358641184BEA47009ED690 /* AATree */,
 				A63F40AC1842988A003A6A6D /* Core */,
 				1D9DDE31142E73E300275650 /* Categories */,
@@ -1300,12 +1293,6 @@
 				A6CFDAD1185D2587005DC94B /* URLAction.m */,
 				1DE306A71864F2010044583A /* VT100WorkingDirectory.h */,
 				1DE306A81864F2010044583A /* VT100WorkingDirectory.m */,
-				A608F1D7186616E7004EDE74 /* SCPPath.h */,
-				A608F1D8186616E8004EDE74 /* SCPPath.m */,
-				A608F1DC1866185A004EDE74 /* FileTransferManager.h */,
-				A6F9CCD018663B2E00046B6B /* SCPFile.h */,
-				A6F9CCD118663B2E00046B6B /* SCPFile.m */,
-				A608F1DD1866185A004EDE74 /* FileTransferManager.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -1326,6 +1313,13 @@
 				1D9DCC0C142D7F5F0016228A /* BellTrigger.h */,
 				1D9DCC08142D7F300016228A /* BounceTrigger.h */,
 				1D48B377167E809D000046EE /* CharacterRun.h */,
+				A608F1DC1866185A004EDE74 /* FileTransferManager.h */,
+				A6F9CCD018663B2E00046B6B /* SCPFile.h */,
+				A608F1D7186616E7004EDE74 /* SCPPath.h */,
+				A6F9CCE31868C88F00046B6B /* TransferrableFile.h */,
+				A6F9CCE81868C8DE00046B6B /* TransferrableFileMenuItemView.h */,
+				A6F9CCDE1868C67500046B6B /* TransferrableFileMenuItemViewController.h */,
+				1DE32319186518960044583A /* VT100RemoteHost.h */,
 				1D699BC317CABC060094F0C1 /* CharacterRunInline.h */,
 				1D407A2414BABE8700BD5035 /* charmaps.h */,
 				A073973D14C768E400786414 /* ColorsMenuItemView.h */,
@@ -1842,6 +1836,20 @@
 				E8CF7563026DDA6303A80106 /* VT100Terminal.m */,
 			);
 			name = Core;
+			sourceTree = "<group>";
+		};
+		A6F9CCED186A561300046B6B /* File Transfers */ = {
+			isa = PBXGroup;
+			children = (
+				A608F1DD1866185A004EDE74 /* FileTransferManager.m */,
+				A6F9CCD118663B2E00046B6B /* SCPFile.m */,
+				A608F1D8186616E8004EDE74 /* SCPPath.m */,
+				A6F9CCE41868C88F00046B6B /* TransferrableFile.m */,
+				A6F9CCE91868C8DE00046B6B /* TransferrableFileMenuItemView.m */,
+				A6F9CCDF1868C67500046B6B /* TransferrableFileMenuItemViewController.m */,
+				1DE3231A186518960044583A /* VT100RemoteHost.m */,
+			);
+			name = "File Transfers";
 			sourceTree = "<group>";
 		};
 		DD02571D09CB9363008F320C /* PSMTabBarControl */ = {
