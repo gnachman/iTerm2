@@ -20,6 +20,7 @@
 - (id)initWithTransferrableFile:(TransferrableFile *)transferrableFile;
 - (void)update;
 - (void)itemSelected:(id)sender;
+- (NSTimeInterval)timeSinceLastStatusChange;
 
 - (void)stop:(id)sender;
 - (void)showInFinder:(id)sender;

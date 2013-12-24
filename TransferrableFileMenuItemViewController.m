@@ -199,4 +199,8 @@ static const CGFloat kCollapsedHeight = 47;
     [alert runModal];
 }
 
+- (NSTimeInterval)timeSinceLastStatusChange {
+    return [NSDate timeIntervalSinceReferenceDate] - [_transferrableFile timeOfLastStatusChange];
+}
+
 @end

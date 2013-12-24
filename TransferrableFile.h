@@ -36,6 +36,7 @@ typedef enum {
 - (NSString *)localPath;  // For downloads, should be nil until download is complete.
 - (NSString *)error;
 - (NSString *)destination;
+- (NSTimeInterval)timeOfLastStatusChange;
 
 @end
 

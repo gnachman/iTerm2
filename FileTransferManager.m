@@ -10,12 +10,17 @@
 #import "iTermApplicationDelegate.h"
 #import "TransferrableFileMenuItemViewController.h"
 
+// Finished downloads will be automatically removed from the downloads menu after this number of
+// seconds.
+static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
+
 @interface FileTransferManager ()
 @property(nonatomic, retain) NSMutableArray *files;
 @end
 
 @implementation FileTransferManager {
     NSMutableArray *_viewControllers;
+    NSTimer *_timer;  // cleanUpDownloads timer. weak reference.
 }
 
 + (instancetype)sharedInstance {
@@ -32,6 +37,11 @@
     if (self) {
         _files = [[NSMutableArray alloc] init];
         _viewControllers = [[NSMutableArray alloc] init];
+        _timer = [NSTimer scheduledTimerWithTimeInterval:60 * 10
+                                                  target:self
+                                                selector:@selector(cleanUpDownloads)
+                                                userInfo:nil
+                                                 repeats:YES];
     }
     return self;
 }
@@ -41,6 +51,24 @@
     [_files release];
     [_viewControllers release];
     [super dealloc];
+}
+
+- (void)cleanUpDownloads {
+    NSMenu *menu = [self menu];
+    NSMutableArray *controllersToRemove = [NSMutableArray array];
+    for (TransferrableFileMenuItemViewController *controller in _viewControllers) {
+        if ([controller timeSinceLastStatusChange] > kMaximumTimeToKeepFinishedDownload &&
+            controller.transferrableFile.status != kTransferrableFileStatusStarting &&
+            controller.transferrableFile.status != kTransferrableFileStatusTransferring &&
+            controller.transferrableFile.status != kTransferrableFileStatusCancelling) {
+            [menu removeItem:controller.view.enclosingMenuItem];
+            [controllersToRemove addObject:controller];
+        }
+    }
+    
+    for (TransferrableFileMenuItemViewController *controller in controllersToRemove) {
+        [_viewControllers removeObject:controller];
+    }
 }
 
 - (NSMenu *)menu {

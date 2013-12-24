@@ -8,7 +8,10 @@
 
 #import "TransferrableFile.h"
 
-@implementation TransferrableFile
+@implementation TransferrableFile {
+    NSTimeInterval _timeOfLastStatusChange;
+    TransferrableFileStatus _status;
+}
 
 - (id)init {
     self = [super init];
@@ -53,6 +56,23 @@
 
 - (NSString *)destination  {
     assert(false);
+}
+
+- (void)setStatus:(TransferrableFileStatus)status {
+    @synchronized(self) {
+        _status = status;
+        _timeOfLastStatusChange = [NSDate timeIntervalSinceReferenceDate];
+    }
+}
+
+- (TransferrableFileStatus)status {
+    @synchronized(self) {
+        return _status;
+    }
+}
+
+- (NSTimeInterval)timeOfLastStatusChange {
+    return _timeOfLastStatusChange;
 }
 
 @end
