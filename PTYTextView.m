@@ -5331,7 +5331,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     // Menu items for acting on text selections
-    [theMenu addItemWithTitle:@"Download with scp"
+    NSString *scpTitle = @"Download with scp";
+    if ([self _haveShortSelection] &&
+        startY >= 0) {
+        SCPPath *scpPath = [dataSource scpPathForFile:[self selectedText] onLine:startY];
+        if (scpPath) {
+            scpTitle = [NSString stringWithFormat:@"Download with scp from %@", scpPath.hostname];
+        }
+    }
+
+    [theMenu addItemWithTitle:scpTitle
                        action:@selector(downloadWithSCP:)
                 keyEquivalent:@""];
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Open Selection as URL",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
