@@ -77,6 +77,7 @@
 - (PTYTask *)SHELL;
 - (BOOL)alertOnNextMark;
 - (void)startDownloadOverSCP:(SCPPath *)path;
+- (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath;
 
 @end
 

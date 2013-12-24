@@ -32,6 +32,7 @@ static NSError *SCPFileError(NSString *description) {
 @implementation SCPFile {
     dispatch_queue_t _queue;
     BOOL _okToAdd;
+    BOOL _downloading;
 }
 
 - (id)init {
@@ -291,7 +292,7 @@ static NSError *SCPFileError(NSString *description) {
                                      didFinishTransmissionWithError:error];
         });
     } else {
-        // TODO: Finish this.
+        self.status = kTransferrableFileStatusTransferring;
         BOOL ok = [self.session.channel uploadFile:[self localPath]
                                                 to:self.path.path
                                           progress:^BOOL (NSUInteger bytes) {
@@ -307,7 +308,20 @@ static NSError *SCPFileError(NSString *description) {
         if (ok) {
             error = nil;
         } else {
-            error = SCPFileError(@"Upload failed");
+            if (self.stopped) {
+                dispatch_sync(dispatch_get_main_queue(), ^() {
+                    [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
+                });
+                return;
+            } else {
+                NSString *errorDescription = [[self.session lastError] localizedDescription];
+                if (errorDescription.length) {
+                    self.error = errorDescription;
+                } else {
+                    self.error = @"Upload failed";
+                }
+                error = SCPFileError(@"Upload failed");
+            }
         }
         dispatch_sync(dispatch_get_main_queue(), ^() {
             [[FileTransferManager sharedInstance] transferrableFile:self
@@ -332,6 +346,7 @@ static NSError *SCPFileError(NSString *description) {
 }
 
 - (void)download {
+    _downloading = YES;
     self.status = kTransferrableFileStatusStarting;
     [[[FileTransferManager sharedInstance] files] addObject:self];
     [[FileTransferManager sharedInstance] transferrableFileDidStartTransfer:self];
@@ -342,7 +357,9 @@ static NSError *SCPFileError(NSString *description) {
 }
 
 - (void)upload {
+    _downloading = NO;
     self.status = kTransferrableFileStatusStarting;
+    self.fileSize = [[[NSFileManager defaultManager] attributesOfItemAtPath:self.localPath error:nil] fileSize];
     [[[FileTransferManager sharedInstance] files] addObject:self];
     [[FileTransferManager sharedInstance] transferrableFileDidStartTransfer:self];
     
@@ -351,6 +368,9 @@ static NSError *SCPFileError(NSString *description) {
     });
 }
 
+- (BOOL)isDownloading {
+    return _downloading;
+}
 - (void)stop {
     [[FileTransferManager sharedInstance] transferrableFileWillStop:self];
     self.stopped = YES;

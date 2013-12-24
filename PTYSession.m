@@ -4248,6 +4248,21 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self launchCoprocessWithCommand:command mute:NO];
 }
 
+- (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath
+{
+    for (NSString *file in localFilenames) {
+        SCPFile *scpFile = [[[SCPFile alloc] init] autorelease];
+        scpFile.path = [[[SCPPath alloc] init] autorelease];
+        scpFile.path.hostname = destinationPath.hostname;
+        scpFile.path.username = destinationPath.username;
+        NSString *filename = [file lastPathComponent];
+        scpFile.path.path = [destinationPath.path stringByAppendingPathComponent:filename];
+        scpFile.localPath = file;
+        
+        [scpFile upload];
+    }
+}
+
 - (void)startDownloadOverSCP:(SCPPath *)path
 {
     SCPFile *file = [[[SCPFile alloc] init] autorelease];

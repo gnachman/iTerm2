@@ -12,7 +12,7 @@
 
 static const CGFloat kWidth = 300;
 static const CGFloat kHeight = 63;
-static const CGFloat kCollapsedHeight = 47;
+static const CGFloat kCollapsedHeight = 51;
 
 @implementation TransferrableFileMenuItemViewController {
     BOOL _hasOpenedMenu;
@@ -70,9 +70,13 @@ static const CGFloat kCollapsedHeight = 47;
     return NO;
 }
 
-- (void)showDownloadsMenu {
+- (void)showMenu {
     if (!_hasOpenedMenu) {
-        [[FileTransferManager sharedInstance] openDownloadsMenu];
+        if (self.transferrableFile.isDownloading) {
+            [[FileTransferManager sharedInstance] openDownloadsMenu];
+        } else {
+            [[FileTransferManager sharedInstance] openUploadsMenu];
+        }
         _hasOpenedMenu = YES;
     }
 }
@@ -99,8 +103,12 @@ static const CGFloat kCollapsedHeight = 47;
         case kTransferrableFileStatusTransferring:
             [self expand];
             [view.progressIndicator setHidden:[_transferrableFile fileSize] < 0];
-            view.statusMessage = @"Downloading…";
-            [self showDownloadsMenu];
+            if (self.transferrableFile.isDownloading) {
+                view.statusMessage = @"Downloading…";
+            } else {
+                view.statusMessage = @"Uploading…";
+            }
+            [self showMenu];
             break;
             
         case kTransferrableFileStatusFinishedSuccessfully:
@@ -111,7 +119,7 @@ static const CGFloat kCollapsedHeight = 47;
         case kTransferrableFileStatusFinishedWithError:
             [self collapse];
             view.statusMessage = @"Failed";
-            [self showDownloadsMenu];
+            [self showMenu];
             break;
             
         case kTransferrableFileStatusCancelling:
@@ -180,15 +188,18 @@ static const CGFloat kCollapsedHeight = 47;
 }
 
 - (void)getInfo:(id)sender {
-    NSString *destination = @"";
+    NSString *extra = @"";
     if (_transferrableFile.destination) {
-        destination = [NSString stringWithFormat:@"\nDestination: %@",
+        extra = [NSString stringWithFormat:@"\nDestination: %@",
                        _transferrableFile.destination];
+    } else if (_transferrableFile.localPath) {
+        extra = [NSString stringWithFormat:@"\nLocal path: %@",
+                       _transferrableFile.localPath];
     }
     NSString *text = [NSString stringWithFormat:@"%@\nStatus: %@%@",
                       [_transferrableFile displayName],
                       [self stringForStatus:_transferrableFile.status],
-                      destination];
+                      extra];
     NSAlert *alert = [NSAlert alertWithMessageText:text
                                      defaultButton:@"OK"
                                    alternateButton:nil

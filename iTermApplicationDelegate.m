@@ -1307,6 +1307,19 @@ static BOOL hasBecomeActive = NO;
     return [downloadsMenu_ submenu];
 }
 
+- (NSMenu *)uploadsMenu
+{
+    if (!uploadsMenu_) {
+        uploadsMenu_ = [[[NSMenuItem alloc] init] autorelease];
+        uploadsMenu_.title = @"Uploads";
+        NSMenu *mainMenu = [[NSApplication sharedApplication] mainMenu];
+        [mainMenu insertItem:uploadsMenu_
+                     atIndex:mainMenu.itemArray.count - 1];
+        [uploadsMenu_ setSubmenu:[[NSMenu alloc] initWithTitle:@"Uploads"]];
+    }
+    return [uploadsMenu_ submenu];
+}
+
 // This is called whenever a tab becomes key or logging starts/stops.
 - (void)reloadSessionMenus:(NSNotification *)aNotification
 {

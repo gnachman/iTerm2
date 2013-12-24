@@ -78,10 +78,12 @@ static const double kCharWidthFractionOffset = 0.35;
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "RegexKitLite/RegexKitLite.h"
+#import "SCPPath.h"
 #import "SearchResult.h"
 #import "SmartSelectionController.h"
 #import "ThreeFingerTapGestureRecognizer.h"
 #import "URLAction.h"
+#import "VT100RemoteHost.h"
 #import "charmaps.h"
 #import "iTerm.h"
 #import "iTermApplicationDelegate.h"
@@ -5550,6 +5552,40 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return result;
 }
 
+- (BOOL)hostIsLocal:(NSString *)host {
+    NSArray *hostAddresses = [[NSHost hostWithName:host] addresses];
+    NSArray *localAddresses = [[NSHost currentHost] addresses];
+    for (NSString *hostAddress in hostAddresses) {
+        if ([localAddresses containsObject:hostAddress]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (BOOL)confirmUploadOfFiles:(NSArray *)files toPath:(SCPPath *)path {
+    NSString *text = [NSString stringWithFormat:@"Ok to scp the following files\n%@\n\nto %@@%@:%@?",
+                      [files componentsJoinedByString:@", "],
+                      path.username, path.hostname, path.path];
+    NSAlert *alert = [NSAlert alertWithMessageText:text
+                                     defaultButton:@"OK"
+                                   alternateButton:@"Cancel"
+                                       otherButton:nil
+                         informativeTextWithFormat:@""];
+    
+    [alert layout];
+    NSInteger button = [alert runModal];
+    return (button == NSAlertDefaultReturn);
+}
+
+- (void)maybeUpload:(NSArray *)tuple {
+    NSArray *propertyList = tuple[0];
+    SCPPath *dropScpPath = tuple[1];
+    if ([self confirmUploadOfFiles:propertyList toPath:dropScpPath]) {
+        [self.delegate uploadFiles:propertyList toPath:dropScpPath];
+    }
+}
+
 //
 // Called when the dragged item is released in our drop area.
 //
@@ -5573,6 +5609,26 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
             if ([types containsObject:NSFilenamesPboardType]) {
                 propertyList = [pb propertyListForType: NSFilenamesPboardType];
+                VT100RemoteHost *validRemoteHost = [dataSource currentRemoteHost];
+                NSPoint windowDropPoint = [sender draggingLocation];
+                NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
+                int dropLine = dropPoint.y / lineHeight;
+                SCPPath *dropScpPath = [dataSource scpPathForFile:@"" onLine:dropLine];
+                // Make sure you are currently connected to a remote host and you dragged into that
+                // host.
+                if (validRemoteHost.hostname.length > 0 &&
+                    [validRemoteHost.hostname isEqualToString:dropScpPath.hostname] &&
+                    ![self hostIsLocal:dropScpPath.hostname]) {
+                    // This is all so the mouse cursor will change to a plain arrow instead of the
+                    // drop target cursor.
+                    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+                    [[self window] makeKeyAndOrderFront:nil];
+                    [self performSelector:@selector(maybeUpload:)
+                               withObject:@[ propertyList, dropScpPath]
+                               afterDelay:0];
+                    return YES;
+                }
+
                 for (i = 0; i < (int)[propertyList count]; i++) {
                     // Ignore text clippings
                     NSString *filename = (NSString*)[propertyList objectAtIndex:i];  // this contains the POSIX path to a file

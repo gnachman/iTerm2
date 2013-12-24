@@ -20,7 +20,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 
 @implementation FileTransferManager {
     NSMutableArray *_viewControllers;
-    NSTimer *_timer;  // cleanUpDownloads timer. weak reference.
+    NSTimer *_timer;  // cleanUpMenus timer. weak reference.
 }
 
 + (instancetype)sharedInstance {
@@ -39,7 +39,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
         _viewControllers = [[NSMutableArray alloc] init];
         _timer = [NSTimer scheduledTimerWithTimeInterval:60 * 10
                                                   target:self
-                                                selector:@selector(cleanUpDownloads)
+                                                selector:@selector(cleanUpMenus)
                                                 userInfo:nil
                                                  repeats:YES];
     }
@@ -53,33 +53,41 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     [super dealloc];
 }
 
-- (void)cleanUpDownloads {
-    NSMenu *menu = [self menu];
-    NSMutableArray *controllersToRemove = [NSMutableArray array];
-    for (TransferrableFileMenuItemViewController *controller in _viewControllers) {
-        if ([controller timeSinceLastStatusChange] > kMaximumTimeToKeepFinishedDownload &&
-            controller.transferrableFile.status != kTransferrableFileStatusStarting &&
-            controller.transferrableFile.status != kTransferrableFileStatusTransferring &&
-            controller.transferrableFile.status != kTransferrableFileStatusCancelling) {
-            [menu removeItem:controller.view.enclosingMenuItem];
-            [controllersToRemove addObject:controller];
+- (void)cleanUpMenus {
+    for (NSMenu *menu in @[ [self downloadsMenu], [self uploadsMenu] ]) {
+        NSMutableArray *controllersToRemove = [NSMutableArray array];
+        for (TransferrableFileMenuItemViewController *controller in _viewControllers) {
+            if ([controller timeSinceLastStatusChange] > kMaximumTimeToKeepFinishedDownload &&
+                controller.transferrableFile.status != kTransferrableFileStatusStarting &&
+                controller.transferrableFile.status != kTransferrableFileStatusTransferring &&
+                controller.transferrableFile.status != kTransferrableFileStatusCancelling) {
+                [menu removeItem:controller.view.enclosingMenuItem];
+                [controllersToRemove addObject:controller];
+            }
         }
-    }
-    
-    for (TransferrableFileMenuItemViewController *controller in controllersToRemove) {
-        [_viewControllers removeObject:controller];
+        
+        for (TransferrableFileMenuItemViewController *controller in controllersToRemove) {
+            [_viewControllers removeObject:controller];
+        }
     }
 }
 
-- (NSMenu *)menu {
+- (NSMenu *)downloadsMenu {
     iTermApplicationDelegate *ad = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
     return [ad downloadsMenu];
 }
 
-- (void)animateImage:(NSImage *)image intoDownloadsMenuFromPoint:(NSPoint)point onScreen:(NSScreen *)screen {
-    CFTypeRef temp;
-    AXUIElementRef menuElement = [self downloadsMenuElement];
+- (NSMenu *)uploadsMenu {
+    iTermApplicationDelegate *ad = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
+    return [ad uploadsMenu];
+}
+
+- (void)animateImage:(NSImage *)image
+            intoMenu:(AXUIElementRef)menuElement
+           fromPoint:(NSPoint)point
+            onScreen:(NSScreen *)screen {
     if (menuElement) {
+        CFTypeRef temp;
         AXUIElementCopyAttributeValue(menuElement, kAXPositionAttribute, (CFTypeRef *)&temp);
 
         CGPoint position;
@@ -120,6 +128,11 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     }
 }
 
+- (void)animateImage:(NSImage *)image intoDownloadsMenuFromPoint:(NSPoint)point onScreen:(NSScreen *)screen {
+    AXUIElementRef menuElement = [self downloadsMenuElement];
+    [self animateImage:image intoMenu:menuElement fromPoint:point onScreen:screen];
+}
+
 - (void)fadeWindowOut:(NSWindow *)window {
     window.animator.alphaValue = 0;
     [window performSelector:@selector(release)
@@ -128,6 +141,14 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 }
 
 - (AXUIElementRef)downloadsMenuElement {
+    return [self menuElementNamed:@"Downloads"];
+}
+
+- (AXUIElementRef)uploadsMenuElement {
+    return [self menuElementNamed:@"Uploads"];
+}
+
+- (AXUIElementRef)menuElementNamed:(NSString *)menuName {
     AXUIElementRef appElement = AXUIElementCreateApplication(getpid());
     AXUIElementRef menuBar;
     AXError error = AXUIElementCopyAttributeValue(appElement,
@@ -157,7 +178,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
         AXError error = AXUIElementCopyAttributeValue(element,
                                                       kAXTitleAttribute,
                                                       (CFTypeRef *)&title);
-        if ([title isEqualToString:@"Downloads"]) {
+        if ([title isEqualToString:menuName]) {
             CFRelease(title);
 //            [children autorelease];
             return element;
@@ -172,6 +193,14 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 
 - (void)openDownloadsMenu {
     AXUIElementRef menuElement = [self downloadsMenuElement];
+    if (menuElement) {
+        AXUIElementPerformAction(menuElement, kAXPressAction);
+        CFRelease(menuElement);
+    }
+}
+
+- (void)openUploadsMenu {
+    AXUIElementRef menuElement = [self uploadsMenuElement];
     if (menuElement) {
         AXUIElementPerformAction(menuElement, kAXPressAction);
         CFRelease(menuElement);
@@ -205,13 +234,15 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     [submenu addItem:subItem];
     controller.stopSubItem = subItem;
     
-    subItem = [[[NSMenuItem alloc] initWithTitle:@"Show in Finder"
-                                          action:@selector(showInFinder:)
-                                   keyEquivalent:@""] autorelease];
-    [subItem setTarget:controller];
-    [submenu addItem:subItem];
-    controller.showInFinderSubItem = subItem;
-
+    if (transferrableFile.isDownloading) {
+        subItem = [[[NSMenuItem alloc] initWithTitle:@"Show in Finder"
+                                              action:@selector(showInFinder:)
+                                       keyEquivalent:@""] autorelease];
+        [subItem setTarget:controller];
+        [submenu addItem:subItem];
+        controller.showInFinderSubItem = subItem;
+    }
+    
     subItem = [[[NSMenuItem alloc] initWithTitle:@"Remove from List"
                                           action:@selector(removeFromList:)
                                    keyEquivalent:@""] autorelease];
@@ -219,12 +250,14 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     [submenu addItem:subItem];
     controller.removeFromListSubItem = subItem;
 
-    subItem = [[[NSMenuItem alloc] initWithTitle:@"Open"
-                                          action:@selector(open:)
-                                   keyEquivalent:@""] autorelease];
-    [subItem setTarget:controller];
-    [submenu addItem:subItem];
-    controller.openSubItem = subItem;
+    if (transferrableFile.isDownloading) {
+        subItem = [[[NSMenuItem alloc] initWithTitle:@"Open"
+                                              action:@selector(open:)
+                                       keyEquivalent:@""] autorelease];
+        [subItem setTarget:controller];
+        [submenu addItem:subItem];
+        controller.openSubItem = subItem;
+    }
 
     subItem = [[[NSMenuItem alloc] initWithTitle:@"Get Info"
                                           action:@selector(getInfo:)
@@ -239,12 +272,19 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     return item;
 }
 
+- (NSMenu *)menuForFile:(TransferrableFile *)transferrableFile {
+    if (transferrableFile.isDownloading) {
+        return [self downloadsMenu];
+    } else {
+        return [self uploadsMenu];
+    }
+}
+
 - (void)transferrableFileDidStartTransfer:(TransferrableFile *)transferrableFile {
     NSLog(@"Transfer started");
-    [[self menu] addItem:[self menuItemForTransferrableFile:transferrableFile]];
+    [[self menuForFile:transferrableFile] addItem:[self menuItemForTransferrableFile:transferrableFile]];
     TransferrableFileMenuItemViewController *controller = [self viewControllerForTransferrableFile:transferrableFile];
     [controller update];
-//    [self openDownloadsMenu];
 }
 
 // Number of bytes transferred has changed or total size has been discovered.
@@ -258,7 +298,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 - (void)transferrableFile:(TransferrableFile *)transferrableFile
     didFinishTransmissionWithError:(NSError *)error {
     transferrableFile.status = error ? kTransferrableFileStatusFinishedWithError : kTransferrableFileStatusFinishedSuccessfully;
-    NSLog(@"Download finished. error=%@", error);
+    NSLog(@"Transfer finished. error=%@", error);
 
     TransferrableFileMenuItemViewController *controller = [self viewControllerForTransferrableFile:transferrableFile];
     [controller update];

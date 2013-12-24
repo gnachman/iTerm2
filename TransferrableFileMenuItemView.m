@@ -155,7 +155,7 @@ const CGFloat rightMargin = 5;
 
     // Draw subheading
     NSRect subheadingRect = NSMakeRect(leftMargin,
-                                       topY - smallTextHeight,
+                                       topY - smallTextHeight - 1,
                                        self.bounds.size.width - rightMargin,
                                        smallTextHeight);
     [_subheading drawInRect:subheadingRect withAttributes:smallGrayAttributes];

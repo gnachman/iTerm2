@@ -37,6 +37,7 @@ typedef enum {
 - (NSString *)error;
 - (NSString *)destination;
 - (NSTimeInterval)timeOfLastStatusChange;
+- (BOOL)isDownloading;
 
 @end
 

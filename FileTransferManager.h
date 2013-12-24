@@ -19,6 +19,7 @@
 - (void)removeItem:(TransferrableFileMenuItemViewController *)viewController;
 - (void)animateImage:(NSImage *)image intoDownloadsMenuFromPoint:(NSPoint)point onScreen:(NSScreen *)screen;
 - (void)openDownloadsMenu;
+- (void)openUploadsMenu;
 
 #pragma mark - Calls made by subclasses of TransferrableFile
 

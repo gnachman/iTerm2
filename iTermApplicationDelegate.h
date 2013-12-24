@@ -54,6 +54,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     IBOutlet NSMenu     *bookmarkMenu;
     IBOutlet NSMenu     *toolbeltMenu;
     NSMenuItem *downloadsMenu_;
+    NSMenuItem *uploadsMenu_;
     IBOutlet NSMenuItem *showToolbeltItem;
     IBOutlet NSMenuItem *selectTab;
     IBOutlet NSMenuItem *previousTerminal;
@@ -181,6 +182,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (void)userDidInteractWithASession;
 
 - (NSMenu *)downloadsMenu;
+- (NSMenu *)uploadsMenu;
 
 @end
 

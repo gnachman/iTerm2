@@ -58,6 +58,10 @@
     assert(false);
 }
 
+- (BOOL)isDownloading {
+    assert(false);
+}
+
 - (void)setStatus:(TransferrableFileStatus)status {
     @synchronized(self) {
         _status = status;
