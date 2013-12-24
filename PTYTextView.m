@@ -56,6 +56,7 @@ static const double kCharWidthFractionOffset = 0.35;
 #import "AsyncHostLookupController.h"
 #import "CharacterRun.h"
 #import "CharacterRunInline.h"
+#import "FileTransferManager.h"
 #import "FontSizeEstimator.h"
 #import "FutureMethods.h"
 #import "FutureMethods.h"
@@ -4840,6 +4841,28 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         scpPath = [dataSource scpPathForFile:text onLine:startY];
     }
     [_delegate startDownloadOverSCP:scpPath];
+    
+    NSDictionary *attributes =
+        @{ NSForegroundColorAttributeName: selectedTextColor,
+           NSBackgroundColorAttributeName: selectionColor,
+           NSFontAttributeName: primaryFont.font };
+    NSSize size = [selectedText sizeWithAttributes:attributes];
+    size.height = lineHeight;
+    NSImage* image = [[[NSImage alloc] initWithSize:size] autorelease];
+    [image lockFocus];
+    [selectedText drawAtPoint:NSMakePoint(0, 0) withAttributes:attributes];
+    [image unlockFocus];
+    
+    NSRect windowRect = [self convertRect:NSMakeRect(startX * charWidth + MARGIN,
+                                                     startY * lineHeight,
+                                                     0,
+                                                     0)
+                                   toView:nil];
+    NSPoint point = [[self window] convertRectToScreen:windowRect].origin;
+    point.y -= lineHeight;
+    [[FileTransferManager sharedInstance] animateImage:image
+                            intoDownloadsMenuFromPoint:point
+                                              onScreen:[[self window] screen]];
 }
 
 - (void)showNotes:(id)sender

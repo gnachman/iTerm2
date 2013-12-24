@@ -27,6 +27,10 @@
     assert(false);
 }
 
+- (NSString *)subheading {
+    assert(false);
+}
+
 - (void)download {
     assert(false);
 }
@@ -40,6 +44,14 @@
 }
 
 - (NSString *)localPath {
+    assert(false);
+}
+
+- (NSString *)error {
+    assert(false);
+}
+
+- (NSString *)destination  {
     assert(false);
 }
 

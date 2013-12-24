@@ -11,8 +11,11 @@
 @interface TransferrableFileMenuItemView : NSView
 
 @property(nonatomic, copy) NSString *filename;
-@property(nonatomic, assign) double size;
+@property(nonatomic, copy) NSString *subheading;
+@property(nonatomic, assign) long long size;
+@property(nonatomic, assign) long long bytesTransferred;
 @property(nonatomic, copy) NSString *statusMessage;
 @property(nonatomic, retain) NSProgressIndicator *progressIndicator;
+@property(nonatomic, assign) BOOL lastDrawnHighlighted;
 
 @end

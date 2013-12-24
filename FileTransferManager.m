@@ -9,7 +9,6 @@
 #import "FileTransferManager.h"
 #import "iTermApplicationDelegate.h"
 #import "TransferrableFileMenuItemViewController.h"
-#import <Cocoa/Cocoa.h>
 
 @interface FileTransferManager ()
 @property(nonatomic, retain) NSMutableArray *files;
@@ -38,6 +37,7 @@
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_files release];
     [_viewControllers release];
     [super dealloc];
@@ -46,6 +46,108 @@
 - (NSMenu *)menu {
     iTermApplicationDelegate *ad = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
     return [ad downloadsMenu];
+}
+
+- (void)animateImage:(NSImage *)image intoDownloadsMenuFromPoint:(NSPoint)point onScreen:(NSScreen *)screen {
+    CFTypeRef temp;
+    AXUIElementRef menuElement = [self downloadsMenuElement];
+    if (menuElement) {
+        AXUIElementCopyAttributeValue(menuElement, kAXPositionAttribute, (CFTypeRef *)&temp);
+
+        CGPoint position;
+        AXValueGetValue(temp, kAXValueCGPointType, &position);
+        CFRelease(temp);
+        CFRelease(menuElement);
+        
+        NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(point.x,
+                                                                            point.y,
+                                                                            image.size.width,
+                                                                            image.size.height)
+                                                       styleMask:NSBorderlessWindowMask
+                                                         backing:NSBackingStoreBuffered
+                                                           defer:NO];
+        NSImageView  *imageView =
+            [[[NSImageView alloc] initWithFrame:NSMakeRect(0,
+                                                           0,
+                                                           image.size.width,
+                                                           image.size.height)] autorelease];
+        imageView.image = image;
+        window.contentView = imageView;
+        [window makeKeyAndOrderFront:nil];
+        [window setLevel:NSMainMenuWindowLevel];
+
+        // Todo: deal with multiple screens, mavericks
+        const CGFloat menuBarHeight =
+            [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
+        position.y = screen.frame.size.height - position.y - menuBarHeight;
+
+        [window.animator setFrame:NSMakeRect(position.x,
+                                             position.y,
+                                             window.frame.size.width,
+                                             window.frame.size.height)
+                          display:YES];
+        [self performSelector:@selector(fadeWindowOut:)
+                   withObject:window
+                   afterDelay:[[NSAnimationContext currentContext] duration]];
+    }
+}
+
+- (void)fadeWindowOut:(NSWindow *)window {
+    window.animator.alphaValue = 0;
+    [window performSelector:@selector(release)
+               withObject:nil
+               afterDelay:[[NSAnimationContext currentContext] duration]];
+}
+
+- (AXUIElementRef)downloadsMenuElement {
+    AXUIElementRef appElement = AXUIElementCreateApplication(getpid());
+    AXUIElementRef menuBar;
+    AXError error = AXUIElementCopyAttributeValue(appElement,
+                                                  kAXMenuBarAttribute,
+                                                  (CFTypeRef *)&menuBar);
+    if (error) {
+        return NULL;
+    }
+    
+	CFIndex count = -1;
+	error = AXUIElementGetAttributeValueCount(menuBar, kAXChildrenAttribute, &count);
+    if (error) {
+        CFRelease(menuBar);
+        return NULL;
+    }
+    
+	NSArray *children = nil;
+	error = AXUIElementCopyAttributeValues(menuBar, kAXChildrenAttribute, 0, count, (CFArrayRef *)&children);
+    if (error) {
+        CFRelease(menuBar);
+        return NULL;
+    }
+    
+    for (id child in children) {
+        AXUIElementRef element = (AXUIElementRef)child;
+        id title;
+        AXError error = AXUIElementCopyAttributeValue(element,
+                                                      kAXTitleAttribute,
+                                                      (CFTypeRef *)&title);
+        if ([title isEqualToString:@"Downloads"]) {
+            CFRelease(title);
+//            [children autorelease];
+            return element;
+        }
+        CFRelease(title);
+    }
+    CFRelease(menuBar);
+    [children release];
+    
+    return NULL;
+}
+
+- (void)openDownloadsMenu {
+    AXUIElementRef menuElement = [self downloadsMenuElement];
+    if (menuElement) {
+        AXUIElementPerformAction(menuElement, kAXPressAction);
+        CFRelease(menuElement);
+    }
 }
 
 - (TransferrableFileMenuItemViewController *)viewControllerForTransferrableFile:(TransferrableFile *)transferrableFile {
@@ -96,6 +198,13 @@
     [submenu addItem:subItem];
     controller.openSubItem = subItem;
 
+    subItem = [[[NSMenuItem alloc] initWithTitle:@"Get Info"
+                                          action:@selector(getInfo:)
+                                   keyEquivalent:@""] autorelease];
+    [subItem setTarget:controller];
+    [submenu addItem:subItem];
+    controller.openSubItem = subItem;
+
     item.submenu = submenu;
     
     [controller update];
@@ -107,6 +216,7 @@
     [[self menu] addItem:[self menuItemForTransferrableFile:transferrableFile]];
     TransferrableFileMenuItemViewController *controller = [self viewControllerForTransferrableFile:transferrableFile];
     [controller update];
+//    [self openDownloadsMenu];
 }
 
 // Number of bytes transferred has changed or total size has been discovered.

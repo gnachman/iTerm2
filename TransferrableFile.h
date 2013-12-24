@@ -29,10 +29,13 @@ typedef enum {
 
 - (NSString *)displayName;
 - (NSString *)shortName;
+- (NSString *)subheading;
 - (void)download;
 - (void)upload;
 - (void)stop;
 - (NSString *)localPath;  // For downloads, should be nil until download is complete.
+- (NSString *)error;
+- (NSString *)destination;
 
 @end
 

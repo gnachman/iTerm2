@@ -25,5 +25,6 @@
 - (void)showInFinder:(id)sender;
 - (void)removeFromList:(id)sender;
 - (void)open:(id)sender;
+- (void)getInfo:(id)sender;
 
 @end

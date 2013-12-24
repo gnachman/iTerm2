@@ -25,6 +25,8 @@ static NSError *SCPFileError(NSString *description) {
 @interface SCPFile () <NMSSHSessionDelegate>
 @property(atomic, assign) NMSSHSession *session;
 @property(atomic, assign) BOOL stopped;
+@property(atomic, copy) NSString *error;
+@property(atomic, copy) NSString *destination;
 @end
 
 @implementation SCPFile {
@@ -40,12 +42,22 @@ static NSError *SCPFileError(NSString *description) {
     return self;
 }
 
+- (void)dealloc {
+    [_error release];
+    [_destination release];
+    [super dealloc];
+}
+
 - (NSString *)displayName {
     return [NSString stringWithFormat:@"scp %@@%@:%@", _path.username, _path.hostname, _path.path];
 }
 
 - (NSString *)shortName {
     return [[self.path.path pathComponents] lastObject];
+}
+
+- (NSString *)subheading {
+    return [NSString stringWithFormat:@"%@@%@:%@", self.path.username, self.path.hostname, self.path.path];
 }
 
 + (NSString *)fileNameForPath:(NSString *)path {
@@ -61,10 +73,31 @@ static NSError *SCPFileError(NSString *description) {
     return [fileManager fileExistsAtPath:[kPrivateKeyPath stringByExpandingTildeInPath]];
 }
 
+- (NSString *)finalDestinationForPath:(NSString *)baseName
+                 destinationDirectory:(NSString *)destinationDirectory {
+    NSString *name = baseName;
+    NSString *finalDestination = nil;
+    int retries = 0;
+    do {
+        finalDestination = [destinationDirectory stringByAppendingPathComponent:name];
+        ++retries;
+        NSRange rangeOfDot = [baseName rangeOfString:@"."];
+        NSString *prefix = baseName;
+        NSString *suffix = @"";
+        if (rangeOfDot.length > 0) {
+            prefix = [baseName substringToIndex:rangeOfDot.location];
+            suffix = [baseName substringFromIndex:rangeOfDot.location];
+        }
+        name = [NSString stringWithFormat:@"%@ (%d)%@", prefix, retries, suffix];
+    } while ([[NSFileManager defaultManager] fileExistsAtPath:finalDestination]);
+    return finalDestination;
+}
+
 // This runs in a thread.
 - (void)performTransfer:(BOOL)isDownload {
     NSString *baseName = [[self class] fileNameForPath:self.path.path];
     if (!baseName) {
+        self.error = [NSString stringWithFormat:@"Invalid path: %@", self.path.path];
         dispatch_sync(dispatch_get_main_queue(), ^() {
             [[FileTransferManager sharedInstance] transferrableFile:self
                                      didFinishTransmissionWithError:SCPFileError(@"Invalid filename")];
@@ -85,9 +118,11 @@ static NSError *SCPFileError(NSString *description) {
     }
     
     if (!self.session.isConnected) {
+        NSError *theError = self.session.lastError;
+        self.error = [NSString stringWithFormat:@"Connection failed: %@", theError.localizedDescription];
         dispatch_sync(dispatch_get_main_queue(), ^() {
             [[FileTransferManager sharedInstance] transferrableFile:self
-                                     didFinishTransmissionWithError:self.session.lastError];
+                                     didFinishTransmissionWithError:theError];
         });
         return;
     }
@@ -154,13 +189,14 @@ static NSError *SCPFileError(NSString *description) {
         return;
     }
     if (!self.session.isAuthorized) {
+        __block NSError *error = self.session.lastError;
         dispatch_sync(dispatch_get_main_queue(), ^() {
-            NSError *error = self.session.lastError;
             if (!error) {
                 error = [NSError errorWithDomain:@"com.googlecode.iterm2.SCPFile"
                                             code:0
                                         userInfo:@{ NSLocalizedDescriptionKey: @"Authentication failed." }];
             }
+            self.error = @"Authentication error.";
             [[FileTransferManager sharedInstance] transferrableFile:self
                                      didFinishTransmissionWithError:error];
         });
@@ -175,36 +211,26 @@ static NSError *SCPFileError(NSString *description) {
         NSArray* paths = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory,
                                                              NSUserDomainMask,
                                                              YES);
+        NSString *downloadDirectory = nil;
         NSString *tempfile = nil;
-        NSString *finalDestination = nil;
-        NSString *uuid = [self uuid];
-        NSString *name = baseName;
-        int retries = 0;
+        NSString *tempFileName = [self tempFileName];
         for (NSString *path in paths) {
             if ([[NSFileManager defaultManager] isWritableFileAtPath:path]) {
-                tempfile = [path stringByAppendingPathComponent:uuid];
-                do {
-                    finalDestination = [path stringByAppendingPathComponent:name];
-                    ++retries;
-                    NSRange rangeOfDot = [baseName rangeOfString:@"."];
-                    NSString *prefix = baseName;
-                    NSString *suffix = @"";
-                    if (rangeOfDot.length > 0) {
-                        prefix = [baseName substringToIndex:rangeOfDot.location];
-                        suffix = [baseName substringFromIndex:rangeOfDot.location];
-                    }
-                    name = [NSString stringWithFormat:@"%@ (%d)%@", prefix, retries, suffix];
-                } while ([[NSFileManager defaultManager] fileExistsAtPath:finalDestination]);
+                tempfile = [path stringByAppendingPathComponent:tempFileName];
+                downloadDirectory = path;
                 break;
             }
         }
         if (!tempfile) {
+            self.error = [NSString stringWithFormat:@"Downloads folder not writable. Tried: %@",
+                          paths];
             dispatch_sync(dispatch_get_main_queue(), ^() {
                 [[FileTransferManager sharedInstance] transferrableFile:self
                                          didFinishTransmissionWithError:SCPFileError(@"Downloads folder not writable")];
             });
             return;
         }
+        self.destination = tempfile;
         self.status = kTransferrableFileStatusTransferring;
         BOOL ok = [self.session.channel downloadFile:self.path.path
                                                   to:tempfile
@@ -221,19 +247,39 @@ static NSError *SCPFileError(NSString *description) {
                                                 }
                                                 return !self.stopped;
                                             }];
-        NSError *error;
+        __block NSError *error;
+        __block NSString *finalDestination = nil;
         if (ok) {
             error = nil;
-            [[NSFileManager defaultManager] moveItemAtPath:tempfile
-                                                    toPath:finalDestination
-                                                     error:&error];
+            // We determine the filename and perform the move in the main thread to avoid two
+            // threads trying to determine the final destination at the same time.
+            dispatch_sync(dispatch_get_main_queue(), ^() {
+                finalDestination = [[self finalDestinationForPath:baseName
+                                             destinationDirectory:downloadDirectory] retain];
+                [[NSFileManager defaultManager] moveItemAtPath:tempfile
+                                                        toPath:finalDestination
+                                                         error:&error];
+            });
+            if (error) {
+                self.error = [NSString stringWithFormat:@"Couldn't move %@ to %@",
+                              tempfile, finalDestination];
+            }
+            [[NSFileManager defaultManager] removeItemAtPath:tempfile error:NULL];
+            self.destination = [finalDestination autorelease];
         } else {
+            [[NSFileManager defaultManager] removeItemAtPath:tempfile error:NULL];
             if (self.stopped) {
                 dispatch_sync(dispatch_get_main_queue(), ^() {
                     [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
                 });
                 return;
             } else {
+                NSString *errorDescription = [[self.session lastError] localizedDescription];
+                if (errorDescription.length) {
+                    self.error = errorDescription;
+                } else {
+                    self.error = @"Download failed";
+                }
                 error = SCPFileError(@"Download failed");
             }
         }
@@ -245,6 +291,7 @@ static NSError *SCPFileError(NSString *description) {
                                      didFinishTransmissionWithError:error];
         });
     } else {
+        // TODO: Finish this.
         BOOL ok = [self.session.channel uploadFile:[self localPath]
                                                 to:self.path.path
                                           progress:^BOOL (NSUInteger bytes) {
@@ -269,18 +316,18 @@ static NSError *SCPFileError(NSString *description) {
     }
 }
 
-- (NSString *)uuid {
+- (NSString *)tempFileName {
     CFUUIDRef   uuid;
     CFStringRef uuidStr;
     
     uuid = CFUUIDCreate(NULL);
     uuidStr = CFUUIDCreateString(NULL, uuid);
     
-    NSString *result = [[(NSString *)uuidStr copy] autorelease];
+    NSString *result = [NSString stringWithFormat:@".iTerm2.%@", uuidStr];
 
     CFRelease(uuidStr);
     CFRelease(uuid);
-    
+
     return result;
 }
 

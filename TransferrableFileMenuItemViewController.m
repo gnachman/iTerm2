@@ -11,9 +11,12 @@
 #import "TransferrableFileMenuItemView.h"
 
 static const CGFloat kWidth = 300;
-static const CGFloat kHeight = 50;
+static const CGFloat kHeight = 63;
+static const CGFloat kCollapsedHeight = 47;
 
-@implementation TransferrableFileMenuItemViewController
+@implementation TransferrableFileMenuItemViewController {
+    BOOL _hasOpenedMenu;
+}
 
 - (id)initWithTransferrableFile:(TransferrableFile *)transferrableFile {
     self = [super init];
@@ -61,78 +64,79 @@ static const CGFloat kHeight = 50;
     if ([menuItem action] == @selector(open:)) {
         return (status == kTransferrableFileStatusFinishedSuccessfully);
     }
+    if ([menuItem action] == @selector(getInfo:)) {
+        return YES;
+    }
     return NO;
+}
+
+- (void)showDownloadsMenu {
+    if (!_hasOpenedMenu) {
+        [[FileTransferManager sharedInstance] openDownloadsMenu];
+        _hasOpenedMenu = YES;
+    }
 }
 
 - (void)update {
     TransferrableFileMenuItemView *view = (TransferrableFileMenuItemView *)[self view];
     view.filename = [_transferrableFile shortName];
+    view.subheading = [_transferrableFile subheading];
     double fileSize = [_transferrableFile fileSize];
     view.size = fileSize;
     if ([_transferrableFile fileSize] > 0) {
         double fraction = [_transferrableFile bytesTransferred];
         fraction /= [_transferrableFile fileSize];
-        [view.progressIndicator setIndeterminate:NO];
         view.progressIndicator.doubleValue = fraction;
     }
+    view.bytesTransferred = [_transferrableFile bytesTransferred];
     switch (_transferrableFile.status) {
         case kTransferrableFileStatusUnstarted:
         case kTransferrableFileStatusStarting:
             view.statusMessage = @"Starting…";
-            [view.progressIndicator setHidden:YES];
-            [_stopSubItem setEnabled:YES];
-            [_showInFinderSubItem setEnabled:NO];
-            [_removeFromListSubItem setEnabled:NO];
-            [_openSubItem setEnabled:NO];
+            [self collapse];
             break;
             
         case kTransferrableFileStatusTransferring:
+            [self expand];
             [view.progressIndicator setHidden:[_transferrableFile fileSize] < 0];
             view.statusMessage = @"Downloading…";
-            [_stopSubItem setEnabled:YES];
-            [_showInFinderSubItem setEnabled:NO];
-            [_removeFromListSubItem setEnabled:NO];
-            [_openSubItem setEnabled:NO];
+            [self showDownloadsMenu];
             break;
             
         case kTransferrableFileStatusFinishedSuccessfully:
-            [view.progressIndicator setHidden:YES];
+            [self collapse];
             view.statusMessage = @"Finished";
-            [_stopSubItem setEnabled:NO];
-            [_showInFinderSubItem setEnabled:YES];
-            [_removeFromListSubItem setEnabled:YES];
-            [_openSubItem setEnabled:YES];
             break;
             
         case kTransferrableFileStatusFinishedWithError:
-            [view.progressIndicator setHidden:YES];
+            [self collapse];
             view.statusMessage = @"Failed";
-            [_stopSubItem setEnabled:NO];
-            [_showInFinderSubItem setEnabled:NO];
-            [_removeFromListSubItem setEnabled:YES];
-            [_openSubItem setEnabled:NO];
+            [self showDownloadsMenu];
             break;
             
         case kTransferrableFileStatusCancelling:
-            [view.progressIndicator setHidden:NO];
-            [view.progressIndicator setIndeterminate:YES];
+            [self expand];
             view.statusMessage = @"Cancelling…";
-            [_stopSubItem setEnabled:NO];
-            [_showInFinderSubItem setEnabled:NO];
-            [_removeFromListSubItem setEnabled:NO];
-            [_openSubItem setEnabled:NO];
             break;
             
         case kTransferrableFileStatusCancelled:
-            [view.progressIndicator setHidden:YES];
+            [self collapse];
             view.statusMessage = @"Cancelled";
-            [_stopSubItem setEnabled:NO];
-            [_showInFinderSubItem setEnabled:NO];
-            [_removeFromListSubItem setEnabled:YES];
-            [_openSubItem setEnabled:NO];
             break;
     }
     [view setNeedsDisplay:YES];
+}
+
+- (void)collapse {
+    TransferrableFileMenuItemView *view = (TransferrableFileMenuItemView *)[self view];
+    [view.progressIndicator setHidden:YES];
+    view.frame = NSMakeRect(0, 0, view.frame.size.width, kCollapsedHeight);
+}
+
+- (void)expand {
+    TransferrableFileMenuItemView *view = (TransferrableFileMenuItemView *)[self view];
+    [view.progressIndicator setHidden:NO];
+    view.frame = NSMakeRect(0, 0, view.frame.size.width, kHeight);
 }
 
 - (void)itemSelected:(id)sender {
@@ -154,6 +158,45 @@ static const CGFloat kHeight = 50;
 
 - (void)open:(id)sender {
     [[NSWorkspace sharedWorkspace] openFile:self.transferrableFile.localPath];
+}
+
+- (NSString *)stringForStatus:(TransferrableFileStatus)status {
+    switch (_transferrableFile.status) {
+        case kTransferrableFileStatusUnstarted:
+            return @"Unstarted";
+        case kTransferrableFileStatusStarting:
+            return @"Starting";
+        case kTransferrableFileStatusTransferring:
+            return @"Transferring";
+        case kTransferrableFileStatusFinishedSuccessfully:
+            return @"Finished";
+        case kTransferrableFileStatusFinishedWithError:
+            return [NSString stringWithFormat:@"Failed with error: %@", [_transferrableFile error]];
+        case kTransferrableFileStatusCancelling:
+            return @"Waiting to cancel";
+        case kTransferrableFileStatusCancelled:
+            return @"Canceled by user";
+    }
+}
+
+- (void)getInfo:(id)sender {
+    NSString *destination = @"";
+    if (_transferrableFile.destination) {
+        destination = [NSString stringWithFormat:@"\nDestination: %@",
+                       _transferrableFile.destination];
+    }
+    NSString *text = [NSString stringWithFormat:@"%@\nStatus: %@%@",
+                      [_transferrableFile displayName],
+                      [self stringForStatus:_transferrableFile.status],
+                      destination];
+    NSAlert *alert = [NSAlert alertWithMessageText:text
+                                     defaultButton:@"OK"
+                                   alternateButton:nil
+                                       otherButton:nil
+                         informativeTextWithFormat:@""];
+    
+    [alert layout];
+    [alert runModal];
 }
 
 @end

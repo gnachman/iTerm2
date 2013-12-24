@@ -6,7 +6,7 @@
 //
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 #import "TransferrableFile.h"
 
 @class TransferrableFileMenuItemViewController;
@@ -17,6 +17,8 @@
 
 + (instancetype)sharedInstance;
 - (void)removeItem:(TransferrableFileMenuItemViewController *)viewController;
+- (void)animateImage:(NSImage *)image intoDownloadsMenuFromPoint:(NSPoint)point onScreen:(NSScreen *)screen;
+- (void)openDownloadsMenu;
 
 #pragma mark - Calls made by subclasses of TransferrableFile
 
