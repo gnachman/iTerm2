@@ -27,12 +27,13 @@ static NSError *SCPFileError(NSString *description) {
 @property(atomic, assign) BOOL stopped;
 @property(atomic, copy) NSString *error;
 @property(atomic, copy) NSString *destination;
+@property(nonatomic, assign) dispatch_queue_t queue;
 @end
 
 @implementation SCPFile {
-    dispatch_queue_t _queue;
     BOOL _okToAdd;
     BOOL _downloading;
+    dispatch_queue_t _queue;
 }
 
 - (id)init {
@@ -46,7 +47,26 @@ static NSError *SCPFileError(NSString *description) {
 - (void)dealloc {
     [_error release];
     [_destination release];
+    dispatch_release(_queue);
     [super dealloc];
+}
+
+- (void)setQueue:(dispatch_queue_t)queue {
+    @synchronized(self) {
+        if (queue != _queue) {
+            dispatch_release(_queue);
+            _queue = queue;
+            if (queue) {
+                dispatch_retain(queue);
+            }
+        }
+    }
+}
+
+- (dispatch_queue_t)queue {
+    @synchronized(self) {
+        return _queue;
+    }
 }
 
 - (NSString *)displayName {
@@ -95,6 +115,15 @@ static NSError *SCPFileError(NSString *description) {
 }
 
 // This runs in a thread.
+- (void)performTransferWrapper:(BOOL)isDownload {
+    [self performTransfer:isDownload];
+    if (self.session && self.session.isConnected) {
+        [self.session disconnect];
+    }
+    self.session = nil;
+}
+
+// This runs in a thread.
 - (void)performTransfer:(BOOL)isDownload {
     NSString *baseName = [[self class] fileNameForPath:self.path.path];
     if (!baseName) {
@@ -106,18 +135,21 @@ static NSError *SCPFileError(NSString *description) {
         return;
     }
     _okToAdd = NO;
-    self.session = [[[NMSSHSession alloc] initWithHost:self.path.hostname
-                                           andUsername:self.path.username] autorelease];
-    self.session.delegate = self;
-    [self.session connect];
-    if (self.stopped) {
-        NSLog(@"Stop after connect");
-        dispatch_sync(dispatch_get_main_queue(), ^() {
-            [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
-        });
-        return;
+    if (self.session) {
+        self.session.delegate = self;
+    } else {
+        self.session = [[[NMSSHSession alloc] initWithHost:self.path.hostname
+                                               andUsername:self.path.username] autorelease];
+        self.session.delegate = self;
+        [self.session connect];
+        if (self.stopped) {
+            NSLog(@"Stop after connect");
+            dispatch_sync(dispatch_get_main_queue(), ^() {
+                [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
+            });
+            return;
+        }
     }
-    
     if (!self.session.isConnected) {
         NSError *theError = self.session.lastError;
         self.error = [NSString stringWithFormat:@"Connection failed: %@", theError.localizedDescription];
@@ -128,60 +160,61 @@ static NSError *SCPFileError(NSString *description) {
         return;
     }
     
-    NSArray *authTypes = [self.session supportedAuthenticationMethods];
-    if (!authTypes) {
-        authTypes = @[ @"password" ];
-    }
-    for (NSString *authType in authTypes) {
-        if (self.stopped) {
-            NSLog(@"Break out of auth loop because stopped");
-            break;
+    if (!self.session.isAuthorized) {
+        NSArray *authTypes = [self.session supportedAuthenticationMethods];
+        if (!authTypes) {
+            authTypes = @[ @"password" ];
         }
-        if ([authType isEqualToString:@"password"]) {
-            __block NSString *password;
-            dispatch_sync(dispatch_get_main_queue(), ^() {
-                password = [[FileTransferManager sharedInstance] transferrableFile:self
-                                                         keyboardInteractivePrompt:@"Password:"];
-            });
-            if (self.stopped || !password) {
-                break;
-            }
-            [self.session authenticateByPassword:password];
-            if (self.session.isAuthorized) {
-                break;
-            }
-        } else if ([authType isEqualToString:@"keyboard-interactive"]) {
-            [self.session authenticateByKeyboardInteractiveUsingBlock:^NSString *(NSString *request) {
-                __block NSString *response;
-                dispatch_sync(dispatch_get_main_queue(), ^() {
-                    response = [[FileTransferManager sharedInstance] transferrableFile:self
-                                                             keyboardInteractivePrompt:request];
-                });
-                return response;
-            }];
-            if (self.stopped || self.session.isAuthorized) {
-                break;
-            }
-        } else if ([authType isEqualToString:@"publickey"] && [self havePrivateKey]) {
+        for (NSString *authType in authTypes) {
             if (self.stopped) {
+                NSLog(@"Break out of auth loop because stopped");
                 break;
             }
-            [self.session authenticateByPublicKey:[kPublicKeyPath stringByExpandingTildeInPath]
-                                       privateKey:[kPrivateKeyPath stringByExpandingTildeInPath]
-                            optionalPasswordBlock:^NSString *() {
-                                __block NSString *password;
-                                dispatch_sync(dispatch_get_main_queue(), ^() {
-                                    password = [[FileTransferManager sharedInstance] transferrableFile:self
-                                                                             keyboardInteractivePrompt:@"Passphrase for private key:"];
-                                });
-                                return password;
-                            }];
-            if (self.session.isAuthorized) {
-                break;
+            if ([authType isEqualToString:@"password"]) {
+                __block NSString *password;
+                dispatch_sync(dispatch_get_main_queue(), ^() {
+                    password = [[FileTransferManager sharedInstance] transferrableFile:self
+                                                             keyboardInteractivePrompt:@"Password:"];
+                });
+                if (self.stopped || !password) {
+                    break;
+                }
+                [self.session authenticateByPassword:password];
+                if (self.session.isAuthorized) {
+                    break;
+                }
+            } else if ([authType isEqualToString:@"keyboard-interactive"]) {
+                [self.session authenticateByKeyboardInteractiveUsingBlock:^NSString *(NSString *request) {
+                    __block NSString *response;
+                    dispatch_sync(dispatch_get_main_queue(), ^() {
+                        response = [[FileTransferManager sharedInstance] transferrableFile:self
+                                                                 keyboardInteractivePrompt:request];
+                    });
+                    return response;
+                }];
+                if (self.stopped || self.session.isAuthorized) {
+                    break;
+                }
+            } else if ([authType isEqualToString:@"publickey"] && [self havePrivateKey]) {
+                if (self.stopped) {
+                    break;
+                }
+                [self.session authenticateByPublicKey:[kPublicKeyPath stringByExpandingTildeInPath]
+                                           privateKey:[kPrivateKeyPath stringByExpandingTildeInPath]
+                                optionalPasswordBlock:^NSString *() {
+                                    __block NSString *password;
+                                    dispatch_sync(dispatch_get_main_queue(), ^() {
+                                        password = [[FileTransferManager sharedInstance] transferrableFile:self
+                                                                                 keyboardInteractivePrompt:@"Passphrase for private key:"];
+                                    });
+                                    return password;
+                                }];
+                if (self.session.isAuthorized) {
+                    break;
+                }
             }
         }
     }
-
     if (self.stopped) {
         NSLog(@"Stop after auth");
         dispatch_sync(dispatch_get_main_queue(), ^() {
@@ -291,6 +324,14 @@ static NSError *SCPFileError(NSString *description) {
             [[FileTransferManager sharedInstance] transferrableFile:self
                                      didFinishTransmissionWithError:error];
         });
+        if (!error && self.successor) {
+            SCPFile *scpSuccessor = (SCPFile *)self.successor;
+            scpSuccessor.session = self.session;
+            scpSuccessor.queue = _queue;
+            self.session = nil;
+            self.queue = nil;
+            [scpSuccessor performTransferWrapper:isDownload];
+        }
     } else {
         self.status = kTransferrableFileStatusTransferring;
         BOOL ok = [self.session.channel uploadFile:[self localPath]
@@ -327,6 +368,14 @@ static NSError *SCPFileError(NSString *description) {
             [[FileTransferManager sharedInstance] transferrableFile:self
                                      didFinishTransmissionWithError:error];
         });
+        if (!error && self.successor) {
+            SCPFile *scpSuccessor = (SCPFile *)self.successor;
+            scpSuccessor.session = self.session;
+            scpSuccessor.queue = _queue;
+            self.session = nil;
+            self.queue = nil;
+            [scpSuccessor performTransferWrapper:isDownload];
+        }
     }
 }
 
@@ -351,9 +400,11 @@ static NSError *SCPFileError(NSString *description) {
     [[[FileTransferManager sharedInstance] files] addObject:self];
     [[FileTransferManager sharedInstance] transferrableFileDidStartTransfer:self];
 
-    dispatch_async(_queue, ^() {
-        [self performTransfer:YES];
-    });
+    if (!self.hasPredecessor) {
+        dispatch_async(_queue, ^() {
+            [self performTransferWrapper:YES];
+        });
+    }
 }
 
 - (void)upload {
@@ -363,9 +414,11 @@ static NSError *SCPFileError(NSString *description) {
     [[[FileTransferManager sharedInstance] files] addObject:self];
     [[FileTransferManager sharedInstance] transferrableFileDidStartTransfer:self];
     
-    dispatch_async(_queue, ^() {
-        [self performTransfer:NO];
-    });
+    if (!self.hasPredecessor) {
+        dispatch_async(_queue, ^() {
+            [self performTransferWrapper:NO];
+        });
+    }
 }
 
 - (BOOL)isDownloading {

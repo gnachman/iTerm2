@@ -4250,6 +4250,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath
 {
+    SCPFile *previous = nil;
     for (NSString *file in localFilenames) {
         SCPFile *scpFile = [[[SCPFile alloc] init] autorelease];
         scpFile.path = [[[SCPPath alloc] init] autorelease];
@@ -4258,7 +4259,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         NSString *filename = [file lastPathComponent];
         scpFile.path.path = [destinationPath.path stringByAppendingPathComponent:filename];
         scpFile.localPath = file;
-        
+
+        if (previous) {
+            previous.successor = scpFile;
+        }
+        previous = scpFile;
         [scpFile upload];
     }
 }

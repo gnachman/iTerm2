@@ -26,6 +26,8 @@ typedef enum {
 @property(atomic, assign) TransferrableFileStatus status;
 @property(atomic, assign) NSUInteger bytesTransferred;
 @property(atomic, assign) int fileSize;  // -1 if unknown
+@property(atomic, retain) TransferrableFile *successor;
+@property(atomic, assign) BOOL hasPredecessor;
 
 - (NSString *)displayName;
 - (NSString *)shortName;

@@ -11,6 +11,7 @@
 @implementation TransferrableFile {
     NSTimeInterval _timeOfLastStatusChange;
     TransferrableFileStatus _status;
+    TransferrableFile *_successor;
 }
 
 - (id)init {
@@ -60,6 +61,20 @@
 
 - (BOOL)isDownloading {
     assert(false);
+}
+
+- (void)setSuccessor:(TransferrableFile *)successor {
+    @synchronized(self) {
+        [_successor autorelease];
+        _successor = [successor retain];
+        successor.hasPredecessor = YES;
+    }
+}
+
+- (TransferrableFile *)successor {
+    @synchronized(self) {
+        return _successor;
+    }
 }
 
 - (void)setStatus:(TransferrableFileStatus)status {
