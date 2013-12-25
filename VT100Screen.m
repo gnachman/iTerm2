@@ -1582,11 +1582,6 @@ static const double kInterBellQuietPeriod = 0.1;
     return scpPath;
 }
 
-- (VT100RemoteHost *)currentRemoteHost {
-    int line = [self numberOfScrollbackLines] + [self height];
-    return [self remoteHostOnLine:line];
-}
-
 - (NSString *)workingDirectoryOnLine:(int)line {
     VT100WorkingDirectory *workingDirectory =
         [self objectOnOrBeforeLine:line ofClass:[VT100WorkingDirectory class]];

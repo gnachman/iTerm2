@@ -5564,9 +5564,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (BOOL)confirmUploadOfFiles:(NSArray *)files toPath:(SCPPath *)path {
-    NSString *text = [NSString stringWithFormat:@"Ok to scp the following files\n%@\n\nto %@@%@:%@?",
-                      [files componentsJoinedByString:@", "],
-                      path.username, path.hostname, path.path];
+    NSString *text;
+    if (files.count == 0) {
+        return NO;
+    }
+    if (files.count == 1) {
+        text = [NSString stringWithFormat:@"Ok to scp\n%@\nto\n%@@%@:%@?",
+                [files componentsJoinedByString:@", "],
+                path.username, path.hostname, path.path];
+    } else {
+        text = [NSString stringWithFormat:@"Ok to scp the following files:\n%@\n\nto\n%@@%@:%@?",
+                [files componentsJoinedByString:@", "],
+                path.username, path.hostname, path.path];
+    }
     NSAlert *alert = [NSAlert alertWithMessageText:text
                                      defaultButton:@"OK"
                                    alternateButton:@"Cancel"
@@ -5609,16 +5619,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
             if ([types containsObject:NSFilenamesPboardType]) {
                 propertyList = [pb propertyListForType: NSFilenamesPboardType];
-                VT100RemoteHost *validRemoteHost = [dataSource currentRemoteHost];
                 NSPoint windowDropPoint = [sender draggingLocation];
                 NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
                 int dropLine = dropPoint.y / lineHeight;
                 SCPPath *dropScpPath = [dataSource scpPathForFile:@"" onLine:dropLine];
                 // Make sure you are currently connected to a remote host and you dragged into that
                 // host.
-                if (validRemoteHost.hostname.length > 0 &&
-                    [validRemoteHost.hostname isEqualToString:dropScpPath.hostname] &&
-                    ![self hostIsLocal:dropScpPath.hostname]) {
+                if (![self hostIsLocal:dropScpPath.hostname]) {
                     // This is all so the mouse cursor will change to a plain arrow instead of the
                     // drop target cursor.
                     [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];

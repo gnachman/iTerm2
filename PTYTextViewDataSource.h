@@ -99,6 +99,5 @@ typedef enum {
 - (BOOL)hasMarkOnLine:(int)line;
 - (NSString *)workingDirectoryOnLine:(int)line;
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line;
-- (VT100RemoteHost *)currentRemoteHost;
 
 @end

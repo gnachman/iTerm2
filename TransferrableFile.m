@@ -7,6 +7,7 @@
 //
 
 #import "TransferrableFile.h"
+#import "iTermGrowlDelegate.h"
 
 @implementation TransferrableFile {
     NSTimeInterval _timeOfLastStatusChange;
@@ -79,8 +80,29 @@
 
 - (void)setStatus:(TransferrableFileStatus)status {
     @synchronized(self) {
-        _status = status;
-        _timeOfLastStatusChange = [NSDate timeIntervalSinceReferenceDate];
+        if (status != _status) {
+            _status = status;
+            _timeOfLastStatusChange = [NSDate timeIntervalSinceReferenceDate];
+            switch (status) {
+                case kTransferrableFileStatusUnstarted:
+                case kTransferrableFileStatusStarting:
+                case kTransferrableFileStatusTransferring:
+                case kTransferrableFileStatusCancelling:
+                case kTransferrableFileStatusCancelled:
+                    break;
+                    
+                case kTransferrableFileStatusFinishedSuccessfully:
+                    [[iTermGrowlDelegate sharedInstance] growlNotify:
+                        [NSString stringWithFormat:@"%@ of “%@” finished!",
+                            self.isDownloading ? @"Download" : @"Upload", [self shortName]]];
+                    break;
+
+                case kTransferrableFileStatusFinishedWithError:
+                    [[iTermGrowlDelegate sharedInstance] growlNotify:
+                     [NSString stringWithFormat:@"%@ of “%@” failed.",
+                      self.isDownloading ? @"Download" : @"Upload", [self shortName]]];
+            }
+        }
     }
 }
 
