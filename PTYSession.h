@@ -365,7 +365,6 @@ typedef enum {
 - (void)pageDown:(id)sender;
 - (void)paste:(id)sender;
 - (void)pasteString:(NSString *)str flags:(int)flags;
-- (void)pasteSlowly:(id)sender;
 - (void)deleteBackward:(id)sender;
 - (void)deleteForward:(id)sender;
 - (void)textViewDidChangeSelection: (NSNotification *)aNotification;

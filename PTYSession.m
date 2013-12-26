@@ -1476,7 +1476,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
 }
 
-- (void)pasteAgain {
+- (void)_pasteAgain {
     NSRange range;
     range.location = 0;
     range.length = MIN(pasteContext_.bytesPerCall, [slowPasteBuffer length]);
@@ -1487,7 +1487,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [pasteContext_ updateValues];
         slowPasteTimer = [NSTimer scheduledTimerWithTimeInterval:pasteContext_.delayBetweenCalls
                                                           target:self
-                                                        selector:@selector(pasteAgain)
+                                                        selector:@selector(_pasteAgain)
                                                         userInfo:nil
                                                          repeats:NO];
     } else {
@@ -1519,12 +1519,12 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [self showPasteUI];
     }
 
-    [self pasteAgain];
+    [self _pasteAgain];
 }
 
 // Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.
 // Override the constants by setting defaults SlowPasteBytesPerCall and SlowPasteDelayBetweenCalls
-- (void)pasteSlowly:(id)sender
+- (void)_pasteSlowly:(id)sender
 {
     [self _pasteWithBytePerCallPrefKey:@"SlowPasteBytesPerCall"
                           defaultValue:16
@@ -1555,6 +1555,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)pasteString:(NSString *)aString
 {
+    if (![self maybeWarnAboutMultiLinePaste:aString]) {
+        return;
+    }
     if ([TERMINAL bracketedPasteMode]) {
         [self writeTask:[[NSString stringWithFormat:@"%c[200~", 27]
                          dataUsingEncoding:[TERMINAL encoding]
@@ -4151,8 +4154,43 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (BOOL)maybeWarnAboutMultiLinePaste:(NSString *)string
+{
+    iTermApplicationDelegate *ad = [[NSApplication sharedApplication] delegate];
+    if (![ad warnBeforeMultiLinePaste]) {
+        return YES;
+    }
+    
+    if ([string rangeOfString:@"\n"].length == 0) {
+        return YES;
+    }
+    
+    switch (NSRunAlertPanel(@"Confirm Multi-Line Paste",
+                            @"Ok to paste %d lines?",
+                            @"Yes",
+                            @"No",
+                            @"Yes and don‘t ask again",
+                            (int)[[string componentsSeparatedByString:@"\n"] count])) {
+        case NSAlertDefaultReturn:
+            return YES;
+        case NSAlertAlternateReturn:
+            return NO;
+        case NSAlertOtherReturn:
+            [ad toggleMultiLinePasteWarning:nil];
+            return YES;
+    }
+    
+    assert(false);
+    return YES;
+}
+
+// Pastes a specific string. The API for pasting not-from-clipboard. All pastes go through here.
+// If queued, this is called just before the paste occurs, not when getting queued.
 - (void)pasteString:(NSString *)str flags:(int)flags
 {
+    if (![self maybeWarnAboutMultiLinePaste:str]) {
+        return;
+    }
     if (flags & 1) {
         // paste escaping special characters
         str = [str stringWithEscapedShellCharacters];
@@ -4164,12 +4202,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
     if (flags & 2) {
         [slowPasteBuffer appendString:[str stringWithLinefeedNewlines]];
-        [self pasteSlowly:nil];
+        [self _pasteSlowly:nil];
     } else {
         [self _pasteString:str];
     }
 }
 
+// Pastes the current string in the clipboard. Uses the sender's tag to get flags.
 - (void)paste:(id)sender
 {
     NSString* pbStr = [PTYSession pasteboardString];

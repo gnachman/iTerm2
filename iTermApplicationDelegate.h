@@ -160,6 +160,8 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (IBAction)pasteSlowlyFaster:(id)sender;
 - (IBAction)pasteSlowlySlower:(id)sender;
 
+- (IBAction)toggleMultiLinePasteWarning:(id)sender;
+
 // size
 - (IBAction)returnToDefaultSize:(id)sender;
 - (IBAction)exposeForTabs:(id)sender;
@@ -180,6 +182,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 // Call this when the user has any nontrivial interaction with a session, such as typing in it or closing a window.
 - (void)userDidInteractWithASession;
+- (BOOL)warnBeforeMultiLinePaste;
 
 @end
 

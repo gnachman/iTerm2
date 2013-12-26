@@ -56,6 +56,7 @@ static NSString *ITERM2_FLAG = @"~/Library/Application Support/iTerm/version.txt
 static NSString *ITERM2_QUIET = @"~/Library/Application Support/iTerm/quiet";
 static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern indicator";
 NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPatternIndicatorChangedNotification";
+static NSString *const kMultiLinePasteWarningUserDefaultsKey = @"Multi-Line Paste Warning";
 static BOOL gStartupActivitiesPerformed = NO;
 // Prior to 8/7/11, there was only one window arrangement, always called Default.
 static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
@@ -1054,6 +1055,17 @@ static BOOL hasBecomeActive = NO;
                 defaultDelay:0.125];
 }
 
+- (IBAction)toggleMultiLinePasteWarning:(id)sender {
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setBool:![userDefaults boolForKey:kMultiLinePasteWarningUserDefaultsKey]
+                   forKey:kMultiLinePasteWarningUserDefaultsKey];
+}
+
+- (BOOL)warnBeforeMultiLinePaste {
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults boolForKey:kMultiLinePasteWarningUserDefaultsKey];
+}
+
 - (IBAction)maximizePane:(id)sender
 {
     [[[iTermController sharedInstance] currentTerminal] toggleMaximizeActivePane];
@@ -1386,6 +1398,9 @@ static BOOL hasBecomeActive = NO;
             [menuItem setState:[term fullScreenTabControl] ? NSOnState : NSOffState];
             return YES;
         }
+    } else if ([menuItem action] == @selector(toggleMultiLinePasteWarning:)) {
+        menuItem.state = [self warnBeforeMultiLinePaste] ? NSOnState : NSOffState;
+        return YES;
     } else {
         return YES;
     }
