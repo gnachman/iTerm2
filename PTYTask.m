@@ -29,9 +29,9 @@
 // Debug option
 #define DEBUG_ALLOC         0
 #define DEBUG_METHOD_TRACE  0
-#define PtyTaskDebugLog(fmt, ...)
+//#define PtyTaskDebugLog(fmt, ...)
 // Use this instead to debug this module:
-// #define PtyTaskDebugLog NSLog
+#define PtyTaskDebugLog DLog
 
 #define MAXRW 1024
 
@@ -56,6 +56,7 @@
 #include <stdlib.h>
 #include <string.h>
 #import "Coprocess.h"
+#import "iTermApplicationDelegate.h"
 
 NSString *kCoprocessStatusChangeNotification = @"kCoprocessStatusChangeNotification";
 
@@ -527,6 +528,7 @@ setup_tty_param(
 #if DEBUG_ALLOC
     PtyTaskDebugLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
 #endif
+    DLog(@"Deallc %@", self);
     [[TaskNotifier sharedInstance] deregisterTask:self];
 
     if (pid > 0) {
@@ -823,6 +825,7 @@ static void reapchild(int n)
 
 - (void)brokenPipe
 {
+    DLog(@"Broken pipe on %@ from %@", self, [NSThread callStackSymbols]);
     brokenPipe_ = YES;
     [[TaskNotifier sharedInstance] deregisterTask:self];
     if ([delegate respondsToSelector:@selector(brokenPipe)]) {
