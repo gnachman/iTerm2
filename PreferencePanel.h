@@ -468,6 +468,8 @@
     IBOutlet NSButton* blur;
     IBOutlet NSSlider *blurRadius;
     IBOutlet NSButton* asciiAntiAliased;
+    IBOutlet NSButton* useNonAsciiFont;
+    IBOutlet NSView* nonAsciiFontView;  // Hide this view to hide all non-ascii font settings
     IBOutlet NSButton* nonasciiAntiAliased;
     IBOutlet NSButton* backgroundImage;
     NSString* backgroundImageFilename;

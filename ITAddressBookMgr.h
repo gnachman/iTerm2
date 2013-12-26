@@ -122,6 +122,7 @@
 #define KEY_BLUR_RADIUS            @"Blur Radius"
 #define KEY_ANTI_ALIASING          @"Anti Aliasing"  // DEPRECATED
 #define KEY_ASCII_ANTI_ALIASED     @"ASCII Anti Aliased"
+#define KEY_USE_NONASCII_FONT      @"Use Non-ASCII Font"
 #define KEY_NONASCII_ANTI_ALIASED  @"Non-ASCII Anti Aliased"
 #define KEY_BACKGROUND_IMAGE_LOCATION @"Background Image Location"
 #define KEY_BACKGROUND_IMAGE_TILED @"Background Image Is Tiled"

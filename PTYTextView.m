@@ -312,94 +312,100 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     _antiAliasedShift = [[[self window] screen] backingScaleFactor] > 1 ? 0.5 : 0;
 }
 
-- (id)initWithFrame:(NSRect)aRect
-{
-    self = [super initWithFrame: aRect];
-    firstMouseEventNumber_ = -1;
-
-    dimmedColorCache_ = [[NSMutableDictionary alloc] init];
+- (void)updateMarkedTextAttributes {
     [self setMarkedTextAttributes:
         [NSDictionary dictionaryWithObjectsAndKeys:
             defaultBGColor, NSBackgroundColorAttributeName,
             defaultFGColor, NSForegroundColorAttributeName,
-            secondaryFont.font, NSFontAttributeName,
+            [self nafont], NSFontAttributeName,
             [NSNumber numberWithInt:(NSUnderlineStyleSingle|NSUnderlineByWordMask)],
                 NSUnderlineStyleAttributeName,
             NULL]];
-    CURSOR=YES;
-    lastFindStartX = lastFindEndX = oldStartX = startX = -1;
-    _underlineStartX = _underlineStartY = _underlineEndX = _underlineEndY = -1;
-    markedText = nil;
-    gettimeofday(&lastBlink, NULL);
-    [[self window] useOptimizedDrawing:YES];
+}
 
-    // register for drag and drop
-    [self registerForDraggedTypes: [NSArray arrayWithObjects:
-        NSFilenamesPboardType,
-        NSStringPboardType,
-        nil]];
+- (id)initWithFrame:(NSRect)aRect
+{
+    self = [super initWithFrame: aRect];
+    if (self) {
+        firstMouseEventNumber_ = -1;
 
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_useBackgroundIndicatorChanged:)
-                                                 name:kUseBackgroundPatternIndicatorChangedNotification
-                                               object:nil];
-    [self _useBackgroundIndicatorChanged:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_settingsChanged:)
-                                                 name:@"iTermRefreshTerminal"
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_pointerSettingsChanged:)
-                                                 name:kPointerPrefsChangedNotification
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(flagsChangedNotification:)
-                                                 name:@"iTermFlagsChanged"
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(hostnameLookupFailed:)
-                                                 name:kHostnameLookupFailed
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(hostnameLookupSucceeded:)
-                                                 name:kHostnameLookupSucceeded
-                                               object:nil];
-    
-    advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
-    strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
-    imeOffset = 0;
-    resultMap_ = [[NSMutableDictionary alloc] init];
+        dimmedColorCache_ = [[NSMutableDictionary alloc] init];
+        [self updateMarkedTextAttributes];
+        CURSOR=YES;
+        lastFindStartX = lastFindEndX = oldStartX = startX = -1;
+        _underlineStartX = _underlineStartY = _underlineEndX = _underlineEndY = -1;
+        markedText = nil;
+        gettimeofday(&lastBlink, NULL);
+        [[self window] useOptimizedDrawing:YES];
 
-    trouter = [[Trouter alloc] init];
-    trouter.delegate = self;
-    trouterDragged = NO;
-    workingDirectoryAtLines = [[NSMutableArray alloc] init];
+        // register for drag and drop
+        [self registerForDraggedTypes: [NSArray arrayWithObjects:
+            NSFilenamesPboardType,
+            NSStringPboardType,
+            nil]];
 
-    pointer_ = [[PointerController alloc] init];
-    pointer_.delegate = self;
-    primaryFont = [[PTYFontInfo alloc] init];
-    secondaryFont = [[PTYFontInfo alloc] init];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(_useBackgroundIndicatorChanged:)
+                                                     name:kUseBackgroundPatternIndicatorChangedNotification
+                                                   object:nil];
+        [self _useBackgroundIndicatorChanged:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(_settingsChanged:)
+                                                     name:@"iTermRefreshTerminal"
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(_pointerSettingsChanged:)
+                                                     name:kPointerPrefsChangedNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(flagsChangedNotification:)
+                                                     name:@"iTermFlagsChanged"
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(hostnameLookupFailed:)
+                                                     name:kHostnameLookupFailed
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(hostnameLookupSucceeded:)
+                                                     name:kHostnameLookupSucceeded
+                                                   object:nil];
+        
+        advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
+        strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
+        imeOffset = 0;
+        resultMap_ = [[NSMutableDictionary alloc] init];
 
-    initialFindContext_ = [[FindContext alloc] init];
-    if ([pointer_ viewShouldTrackTouches]) {
-        DLog(@"Begin tracking touches in view %@", self);
-        [self setAcceptsTouchEvents:YES];
-        [self setWantsRestingTouches:YES];
-        if ([self useThreeFingerTapGestureRecognizer]) {
-            threeFingerTapGestureRecognizer_ = [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
-                                                                                              selector:@selector(threeFingerTap:)];
+        trouter = [[Trouter alloc] init];
+        trouter.delegate = self;
+        trouterDragged = NO;
+        workingDirectoryAtLines = [[NSMutableArray alloc] init];
+
+        pointer_ = [[PointerController alloc] init];
+        pointer_.delegate = self;
+        primaryFont = [[PTYFontInfo alloc] init];
+        secondaryFont = [[PTYFontInfo alloc] init];
+
+        initialFindContext_ = [[FindContext alloc] init];
+        if ([pointer_ viewShouldTrackTouches]) {
+            DLog(@"Begin tracking touches in view %@", self);
+            [self setAcceptsTouchEvents:YES];
+            [self setWantsRestingTouches:YES];
+            if ([self useThreeFingerTapGestureRecognizer]) {
+                threeFingerTapGestureRecognizer_ = [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
+                                                                                                  selector:@selector(threeFingerTap:)];
+            }
+        } else {
+            DLog(@"Not tracking touches in view %@", self);
         }
-    } else {
-        DLog(@"Not tracking touches in view %@", self);
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"LogDrawingPerformance"]) {
+            NSLog(@"** Drawing performance timing enabled **");
+            drawRectDuration_ = [[MovingAverage alloc] init];
+            drawRectInterval_ = [[MovingAverage alloc] init];
+        }
+        [self viewDidChangeBackingProperties];
+        markImage_ = [NSImage imageNamed:@"mark"];
     }
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"LogDrawingPerformance"]) {
-        NSLog(@"** Drawing performance timing enabled **");
-        drawRectDuration_ = [[MovingAverage alloc] init];
-        drawRectInterval_ = [[MovingAverage alloc] init];
-    }
-    [self viewDidChangeBackingProperties];
-    markImage_ = [NSImage imageNamed:@"mark"];
-    
+
     return self;
 }
 
@@ -590,6 +596,12 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return YES;
 }
 
+- (void)setUseNonAsciiFont:(BOOL)useNonAsciiFont {
+    useNonAsciiFont_ = useNonAsciiFont;
+    [self setNeedsDisplay:YES];
+    [self updateMarkedTextAttributes];
+}
+
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA
 {
     asciiAntiAlias = asciiAA;
@@ -675,9 +687,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setMarkedTextAttributes:(NSDictionary *)attr
 {
-    [markedTextAttributes release];
+    [markedTextAttributes autorelease];
     [attr retain];
-    markedTextAttributes=attr;
+    markedTextAttributes = attr;
 }
 
 - (int)selectionStartX
@@ -1052,7 +1064,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (NSFont *)nafont
 {
-    return secondaryFont.font;
+    return useNonAsciiFont_ ? secondaryFont.font : primaryFont.font;
 }
 
 + (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(double)hspace verticalSpacing:(double)vspace baseline:(double*)baseline
@@ -1129,14 +1141,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         }
     }
 
-    [self setMarkedTextAttributes:
-        [NSDictionary dictionaryWithObjectsAndKeys:
-            defaultBGColor, NSBackgroundColorAttributeName,
-            defaultFGColor, NSForegroundColorAttributeName,
-            secondaryFont.font, NSFontAttributeName,
-            [NSNumber numberWithInt:(NSUnderlineStyleSingle|NSUnderlineByWordMask)],
-                NSUnderlineStyleAttributeName,
-            NULL]];
+    [self updateMarkedTextAttributes];
     [self setNeedsDisplay:YES];
 
     NSScrollView* scrollview = [self enclosingScrollView];
@@ -6801,7 +6806,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     *renderBold = NO;
     *renderItalic = NO;
     PTYFontInfo* theFont;
-    BOOL usePrimary = !complex && (ch < 128);
+    BOOL usePrimary = !useNonAsciiFont_ || (!complex && (ch < 128));
 
     PTYFontInfo *rootFontInfo = usePrimary ? primaryFont : secondaryFont;
     theFont = rootFontInfo;
@@ -7085,7 +7090,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         NSString* thisCharString = nil;
         CGFloat thisCharAdvance;
 
-        if (theLine[i].code < 128 && !theLine[i].complexChar) {
+        if (!useNonAsciiFont_ || (theLine[i].code < 128 && !theLine[i].complexChar)) {
             attrs.antiAlias = asciiAntiAlias;
         } else {
             attrs.antiAlias = nonasciiAntiAlias;

@@ -209,6 +209,8 @@
 		<key>Red Component</key>
 		<real>0.70980000495910645</real>
 	</dict>
+        <key>Use Non-ASCII Font</key>
+        <false/>
 	<key>Non-ASCII Anti Aliased</key>
 	<true/>
 	<key>ASCII Anti Aliased</key>

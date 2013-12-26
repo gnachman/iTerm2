@@ -116,7 +116,8 @@ enum {
 
     // anti-alias flags
     BOOL asciiAntiAlias;
-    BOOL nonasciiAntiAlias;
+    BOOL nonasciiAntiAlias;  // Only used if useNonAsciiFont_ is set.
+    BOOL useNonAsciiFont_;
 
     // option to not render in bold
     BOOL useBoldFont;
@@ -146,7 +147,7 @@ enum {
     double  verticalSpacing_;
 
     PTYFontInfo *primaryFont;
-    PTYFontInfo *secondaryFont;
+    PTYFontInfo *secondaryFont;  // non-ascii font, only used if useNonAsciiFont_ is set.
 
     NSColor* colorTable[256];
     NSColor* defaultFGColor;
@@ -498,6 +499,7 @@ enum {
 - (void)setFont:(NSFont*)aFont nafont:(NSFont *)naFont horizontalSpacing:(double)horizontalSpacing verticalSpacing:(double)verticalSpacing;
 - (NSRect)scrollViewContentSize;
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
+- (void)setUseNonAsciiFont:(BOOL)useNonAsciiFont;
 - (BOOL)useBoldFont;
 - (void)setUseBoldFont:(BOOL)boldFlag;
 - (void)setUseBrightBold:(BOOL)flag;

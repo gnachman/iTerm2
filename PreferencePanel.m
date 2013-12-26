@@ -926,9 +926,12 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [newDict setObject:[NSNumber numberWithFloat:[blend floatValue]] forKey:KEY_BLEND];
     [newDict setObject:[NSNumber numberWithFloat:[blurRadius floatValue]] forKey:KEY_BLUR_RADIUS];
     [newDict setObject:[NSNumber numberWithBool:([blur state]==NSOnState)] forKey:KEY_BLUR];
+    [newDict setObject:[NSNumber numberWithBool:([useNonAsciiFont state]==NSOnState)] forKey:KEY_USE_NONASCII_FONT];
     [newDict setObject:[NSNumber numberWithBool:([asciiAntiAliased state]==NSOnState)] forKey:KEY_ASCII_ANTI_ALIASED];
     [newDict setObject:[NSNumber numberWithBool:([nonasciiAntiAliased state]==NSOnState)] forKey:KEY_NONASCII_ANTI_ALIASED];
     [self _updateFontsDisplay];
+
+    [nonAsciiFontView setHidden:(useNonAsciiFont.state == NSOffState)];
 
     if (sender == backgroundImage) {
         NSString* filename = nil;
@@ -2783,6 +2786,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         KEY_USE_ITALIC_FONT,
         KEY_ASCII_ANTI_ALIASED,
         KEY_NONASCII_ANTI_ALIASED,
+        KEY_USE_NONASCII_FONT,
         KEY_ANTI_ALIASING,
         KEY_AMBIGUOUS_DOUBLE_WIDTH,
         nil
@@ -4015,11 +4019,18 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         }
     [blurRadius setFloatValue:[dict objectForKey:KEY_BLUR_RADIUS] ? [[dict objectForKey:KEY_BLUR_RADIUS] floatValue] : 2.0];
     [blur setState:[[dict objectForKey:KEY_BLUR] boolValue] ? NSOnState : NSOffState];
+    if ([dict objectForKey:KEY_USE_NONASCII_FONT]) {
+        [useNonAsciiFont setState:[[dict objectForKey:KEY_USE_NONASCII_FONT] boolValue] ? NSOnState : NSOffState];
+    } else {
+        // Default to ON for backward compatibility
+        [useNonAsciiFont setState:NSOnState];
+    }
     if ([dict objectForKey:KEY_ASCII_ANTI_ALIASED]) {
         [asciiAntiAliased setState:[[dict objectForKey:KEY_ASCII_ANTI_ALIASED] boolValue] ? NSOnState : NSOffState];
     } else {
         [asciiAntiAliased setState:[[dict objectForKey:KEY_ANTI_ALIASING] boolValue] ? NSOnState : NSOffState];
     }
+    [nonAsciiFontView setHidden:(useNonAsciiFont.state == NSOffState)];
     if ([dict objectForKey:KEY_NONASCII_ANTI_ALIASED]) {
         [nonasciiAntiAliased setState:[[dict objectForKey:KEY_NONASCII_ANTI_ALIASED] boolValue] ? NSOnState : NSOffState];
     } else {

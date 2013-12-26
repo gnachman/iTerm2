@@ -1793,7 +1793,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
     [TEXTVIEW setSmartSelectionRules:[aDict objectForKey:KEY_SMART_SELECTION_RULES]];
     [TEXTVIEW setTrouterPrefs:[aDict objectForKey:KEY_TROUTER]];
-
+    [TEXTVIEW setUseNonAsciiFont:[[aDict objectForKey:KEY_USE_NONASCII_FONT] boolValue]];
     [TEXTVIEW setAntiAlias:asciiAA nonAscii:nonasciiAA];
     [self setEncoding:[[aDict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]];
     [self setTERM_VALUE:[aDict objectForKey:KEY_TERMINAL_TYPE]];
