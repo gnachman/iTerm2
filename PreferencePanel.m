@@ -1005,6 +1005,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         BOOL sendCH = [self _deleteSendsCtrlHInBookmark:newDict];
         [deleteSendsCtrlHButton setState:sendCH ? NSOnState : NSOffState];
     }
+    [newDict setObject:@(applicationKeypadAllowed.state == NSOnState) forKey:KEY_APPLICATION_KEYPAD_ALLOWED];
 
     // Session tab
     [newDict setObject:[NSNumber numberWithInt:[[promptBeforeClosing_ selectedCell] tag]]
@@ -4100,6 +4101,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     // "delete sends ^h" checkbox is correct
     BOOL sendCH = [self _deleteSendsCtrlHInBookmark:dict];
     [deleteSendsCtrlHButton setState:sendCH ? NSOnState : NSOffState];
+    [applicationKeypadAllowed setState:[[dict objectForKey:KEY_APPLICATION_KEYPAD_ALLOWED] boolValue] ? NSOnState : NSOffState];
 
     // Session tab
     [promptBeforeClosing_ selectCellWithTag:[[dict objectForKey:KEY_PROMPT_CLOSE] intValue]];

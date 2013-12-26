@@ -575,7 +575,7 @@
     IBOutlet NSPopUpButton* switchWindowModifierButton;
 
     IBOutlet NSButton* deleteSendsCtrlHButton;
-
+    IBOutlet NSButton* applicationKeypadAllowed;
     IBOutlet NSTableView* globalKeyMappings;
     IBOutlet NSTableColumn* globalKeyCombinationColumn;
     IBOutlet NSTableColumn* globalActionColumn;

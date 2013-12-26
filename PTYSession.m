@@ -1807,6 +1807,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [self setXtermMouseReporting:[[aDict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue]];
     [TERMINAL setDisableSmcupRmcup:[[aDict objectForKey:KEY_DISABLE_SMCUP_RMCUP] boolValue]];
     [SCREEN setAllowTitleReporting:[[aDict objectForKey:KEY_ALLOW_TITLE_REPORTING] boolValue]];
+    [TERMINAL setAllowKeypadMode:[[aDict objectForKey:KEY_APPLICATION_KEYPAD_ALLOWED] boolValue]];
     [TERMINAL setUseCanonicalParser:[[aDict objectForKey:KEY_USE_CANONICAL_PARSER] boolValue]];
     [SCREEN setUnlimitedScrollback:[[aDict objectForKey:KEY_UNLIMITED_SCROLLBACK] intValue]];
     [SCREEN setMaxScrollbackLines:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
@@ -4142,6 +4143,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         return [self optionKey];
     }
     return [rightOptPref intValue];
+}
+
+- (BOOL)applicationKeypadAllowed
+{
+    return [[[self addressBookEntry] objectForKey:KEY_APPLICATION_KEYPAD_ALLOWED] boolValue];
 }
 
 // Contextual menu

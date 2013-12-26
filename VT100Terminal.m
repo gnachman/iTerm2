@@ -3286,6 +3286,14 @@ static VT100TCC decode_string(unsigned char *datap,
     keypadMode_ = mode;
 }
 
+- (void)setAllowKeypadMode:(BOOL)allow
+{
+    allowKeypadMode_ = allow;
+    if (!allow) {
+        keypadMode_ = NO;
+    }
+}
+
 - (BOOL)insertMode
 {
     return insertMode_;
