@@ -90,6 +90,8 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     BOOL userHasInteractedWithAnySession_;  // Disables min 10-second running time
 }
 
+@property(nonatomic, readonly) BOOL workspaceSessionActive;
+
 - (void)awakeFromNib;
 
 // NSApplication Delegate methods

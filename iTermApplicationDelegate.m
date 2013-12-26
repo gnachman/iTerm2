@@ -64,6 +64,8 @@ static BOOL hasBecomeActive = NO;
 
 @interface iTermApplicationDelegate ()
 
+@property(nonatomic, readwrite) BOOL workspaceSessionActive;
+
 - (void)_updateToolbeltMenuItem;
 
 @end
@@ -325,6 +327,25 @@ static BOOL hasBecomeActive = NO;
                afterDelay:0];
     [[NSNotificationCenter defaultCenter] postNotificationName:kApplicationDidFinishLaunchingNotification
                                                         object:nil];
+    
+    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                           selector:@selector(workspaceSessionDidBecomeActive:)
+                                                               name:NSWorkspaceSessionDidBecomeActiveNotification
+                                                             object:nil];
+    
+    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                           selector:@selector(workspaceSessionDidResignActive:)
+                                                               name:NSWorkspaceSessionDidResignActiveNotification
+                                                             object:nil];
+
+}
+
+- (void)workspaceSessionDidBecomeActive:(NSNotification *)notification {
+    _workspaceSessionActive = YES;
+}
+
+- (void)workspaceSessionDidResignActive:(NSNotification *)notification {
+    _workspaceSessionActive = NO;
 }
 
 - (BOOL)applicationShouldTerminate:(NSNotification *)theNotification
@@ -625,7 +646,9 @@ static BOOL hasBecomeActive = NO;
 
         aboutController = nil;
         launchTime_ = [[NSDate date] retain];
+        _workspaceSessionActive = YES;
     }
+    
     return self;
 }
 
