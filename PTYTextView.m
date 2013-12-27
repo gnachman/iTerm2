@@ -1,56 +1,3 @@
-// -*- mode:objc -*-
-// $Id: PTYTextView.m,v 1.325 2009-02-06 14:33:17 delx Exp $
-/*
- **  PTYTextView.m
- **
- **  Copyright (c) 2002, 2003
- **
- **  Author: Fabian, Ujwal S. Setlur
- **         Initial code by Kiichi Kusama
- **
- **  Project: iTerm
- **
- **  Description: NSTextView subclass. The view object for the VT100 screen.
- **
- **  This program is free software; you can redistribute it and/or modify
- **  it under the terms of the GNU General Public License as published by
- **  the Free Software Foundation; either version 2 of the License, or
- **  (at your option) any later version.
- **
- **  This program is distributed in the hope that it will be useful,
- **  but WITHOUT ANY WARRANTY; without even the implied warranty of
- **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- **  GNU General Public License for more details.
- **
- **  You should have received a copy of the GNU General Public License
- **  along with this program; if not, write to the Free Software
- **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-static const int kMaxSelectedTextLengthForCustomActions = 8192;
-static const int kMaxSelectedTextLinesForCustomActions = 100;
-
-// This defines the fraction of a character's width on its right side that is used to
-// select the NEXT character.
-//        |   A rightward drag beginning left of the bar selects G.
-//        <-> kCharWidthFractionOffset * charWidth
-//  <-------> Character width
-//   .-----.  .      :
-//  ;         :      :
-//  :         :      :
-//  :    ---- :------:
-//  '       : :      :
-//   `-----'  :      :
-static const double kCharWidthFractionOffset = 0.35;
-
-//#define DEBUG_DRAWING
-
-// Constants for converting RGB to luma.
-#define RED_COEFFICIENT    0.30
-#define GREEN_COEFFICIENT  0.59
-#define BLUE_COEFFICIENT   0.11
-
-#define SWAPINT(a, b) { int temp; temp = a; a = b; b = temp; }
 #import "AsyncHostLookupController.h"
 #import "CharacterRun.h"
 #import "CharacterRunInline.h"
@@ -93,7 +40,33 @@ static const double kCharWidthFractionOffset = 0.35;
 #include <math.h>
 #include <sys/time.h>
 
+static const int kMaxSelectedTextLengthForCustomActions = 8192;
+static const int kMaxSelectedTextLinesForCustomActions = 100;
+
+// This defines the fraction of a character's width on its right side that is used to
+// select the NEXT character.
+//        |   A rightward drag beginning left of the bar selects G.
+//        <-> kCharWidthFractionOffset * charWidth
+//  <-------> Character width
+//   .-----.  .      :
+//  ;         :      :
+//  :         :      :
+//  :    ---- :------:
+//  '       : :      :
+//   `-----'  :      :
+static const double kCharWidthFractionOffset = 0.35;
+
+//#define DEBUG_DRAWING
+
+// Constants for converting RGB to luma.
+#define RED_COEFFICIENT    0.30
+#define GREEN_COEFFICIENT  0.59
+#define BLUE_COEFFICIENT   0.11
+
+#define SWAPINT(a, b) { int temp; temp = a; a = b; b = temp; }
+
 const int kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
+
 // If the cursor's background color is too close to nearby background colors,
 // force it to the "most different" color. This is the difference threshold
 // that triggers that change. 0 means always trigger, 1 means never trigger.
@@ -109,7 +82,6 @@ static double gSmartCursorFgThreshold = 0.75;
 static NSString *const kHostnameLookupFailed = @"kHostnameLookupFailed";
 static NSString *const kHostnameLookupSucceeded = @"kHostnameLookupSucceeded";
 static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
-
 
 // Minimum distance that the mouse must move before a cmd+drag will be
 // recognized as a drag.
@@ -149,15 +121,12 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 + (void)initialize
 {
     NSPoint hotspot = NSMakePoint(4, 5);
-
     NSBundle* bundle = [NSBundle bundleForClass:[self class]];
-
     NSImage* image = [NSImage imageNamed:@"IBarCursor"];
 
     textViewCursor = [[NSCursor alloc] initWithImage:image hotSpot:hotspot];
 
     NSImage* xmrImage = [NSImage imageNamed:@"IBarCursorXMR"];
-
     xmrCursor = [[NSCursor alloc] initWithImage:xmrImage hotSpot:hotspot];
 
     NSString* bellFile = [bundle
@@ -209,37 +178,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [iTermNSKeyBindingEmulator sharedInstance];  // Load and parse DefaultKeyBindings.dict if needed.
 }
 
-- (BOOL)xtermMouseReporting
-{
-    NSEvent *event = [NSApp currentEvent];
-    return (([[self delegate] xtermMouseReporting]) &&        // Xterm mouse reporting is on
-            !([event modifierFlags] & NSAlternateKeyMask));   // Not holding Opt to disable mouse reporting
-}
-
 + (NSCursor *)textViewCursor
 {
     return textViewCursor;
-}
-
-- (BOOL)useThreeFingerTapGestureRecognizer {
-    // This used to be guarded by [[NSUserDefaults standardUserDefaults] boolForKey:@"ThreeFingerTapEmulatesThreeFingerClick"];
-    // but I'm going to turn it on by default and see if anyone complains. 12/16/13
-    return YES;
-}
-
-- (void)viewDidChangeBackingProperties {
-    _antiAliasedShift = [[[self window] screen] backingScaleFactor] > 1 ? 0.5 : 0;
-}
-
-- (void)updateMarkedTextAttributes {
-    [self setMarkedTextAttributes:
-        [NSDictionary dictionaryWithObjectsAndKeys:
-            defaultBGColor, NSBackgroundColorAttributeName,
-            defaultFGColor, NSForegroundColorAttributeName,
-            [self nafont], NSFontAttributeName,
-            [NSNumber numberWithInt:(NSUnderlineStyleSingle|NSUnderlineByWordMask)],
-                NSUnderlineStyleAttributeName,
-            NULL]];
 }
 
 - (id)initWithFrame:(NSRect)aRect
@@ -325,12 +266,95 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return self;
 }
 
+- (void)dealloc
+{
+    [drawRectDuration_ release];
+    [drawRectInterval_ release];
+    
+    [smartSelectionRules_ release];
+    int i;
+    
+    if (mouseDownEvent != nil) {
+        [mouseDownEvent release];
+        mouseDownEvent = nil;
+    }
+    
+    if (trackingArea) {
+        [self removeTrackingArea:trackingArea];
+    }
+    if ([self isFindingCursor]) {
+        [findCursorWindow_ close];
+    }
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [dimmedColorCache_ release];
+    [memoizedContrastingColor_ release];
+    for (i = 0; i < 256; i++) {
+        [colorTable[i] release];
+    }
+    [lastFlashUpdate_ release];
+    [cachedBackgroundColor_ release];
+    [resultMap_ release];
+    [findResults_ release];
+    [findString_ release];
+    [defaultFGColor release];
+    [defaultBGColor release];
+    [defaultBoldColor release];
+    [selectionColor release];
+    [unfocusedSelectionColor release];
+    [defaultCursorColor release];
+    
+    [primaryFont release];
+    [secondaryFont release];
+    
+    [markedTextAttributes release];
+    [markedText release];
+    
+    [selectionScrollTimer release];
+    
+    [trouter release];
+    
+    [pointer_ release];
+    [cursor_ release];
+    [threeFingerTapGestureRecognizer_ disconnectTarget];
+    [threeFingerTapGestureRecognizer_ release];
+    
+    [initialFindContext_ release];
+    if (self.currentUnderlineHostname) {
+        [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
+    }
+    [_currentUnderlineHostname release];
+    
+    [super dealloc];
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"<PTYTextView: %p frame=%@ visibleRect=%@ SCREEN=%@>",
             self,
             [NSValue valueWithRect:self.frame],
             [NSValue valueWithRect:[self visibleRect]],
             dataSource];
+}
+
+- (BOOL)useThreeFingerTapGestureRecognizer {
+    // This used to be guarded by [[NSUserDefaults standardUserDefaults] boolForKey:@"ThreeFingerTapEmulatesThreeFingerClick"];
+    // but I'm going to turn it on by default and see if anyone complains. 12/16/13
+    return YES;
+}
+
+- (void)viewDidChangeBackingProperties {
+    _antiAliasedShift = [[[self window] screen] backingScaleFactor] > 1 ? 0.5 : 0;
+}
+
+- (void)updateMarkedTextAttributes {
+    [self setMarkedTextAttributes:
+     [NSDictionary dictionaryWithObjectsAndKeys:
+      defaultBGColor, NSBackgroundColorAttributeName,
+      defaultFGColor, NSForegroundColorAttributeName,
+      [self nafont], NSFontAttributeName,
+      [NSNumber numberWithInt:(NSUnderlineStyleSingle|NSUnderlineByWordMask)],
+      NSUnderlineStyleAttributeName,
+      NULL]];
 }
 
 - (void)sendFakeThreeFingerClickDown:(BOOL)isDown basedOnEvent:(NSEvent *)event {
@@ -432,68 +456,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                                     userInfo:nil] autorelease];
         [self addTrackingArea:trackingArea];
     }
-}
-
-- (void)dealloc
-{
-    [drawRectDuration_ release];
-    [drawRectInterval_ release];
-
-    [smartSelectionRules_ release];
-    int i;
-
-    if (mouseDownEvent != nil) {
-        [mouseDownEvent release];
-        mouseDownEvent = nil;
-    }
-
-    if (trackingArea) {
-        [self removeTrackingArea:trackingArea];
-    }
-    if ([self isFindingCursor]) {
-        [findCursorWindow_ close];
-    }
-
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [dimmedColorCache_ release];
-    [memoizedContrastingColor_ release];
-    for (i = 0; i < 256; i++) {
-        [colorTable[i] release];
-    }
-    [lastFlashUpdate_ release];
-    [cachedBackgroundColor_ release];
-    [resultMap_ release];
-    [findResults_ release];
-    [findString_ release];
-    [defaultFGColor release];
-    [defaultBGColor release];
-    [defaultBoldColor release];
-    [selectionColor release];
-    [unfocusedSelectionColor release];
-    [defaultCursorColor release];
-
-    [primaryFont release];
-    [secondaryFont release];
-
-    [markedTextAttributes release];
-    [markedText release];
-
-    [selectionScrollTimer release];
-
-    [trouter release];
-
-    [pointer_ release];
-    [cursor_ release];
-    [threeFingerTapGestureRecognizer_ disconnectTarget];
-    [threeFingerTapGestureRecognizer_ release];
-
-    [initialFindContext_ release];
-    if (self.currentUnderlineHostname) {
-        [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
-    }
-    [_currentUnderlineHostname release];
-
-    [super dealloc];
 }
 
 - (BOOL)shouldDrawInsertionPoint
@@ -2772,6 +2734,13 @@ NSMutableArray* screens=0;
 - (BOOL)keyIsARepeat
 {
     return (keyIsARepeat);
+}
+
+- (BOOL)xtermMouseReporting
+{
+    NSEvent *event = [NSApp currentEvent];
+    return (([[self delegate] xtermMouseReporting]) &&        // Xterm mouse reporting is on
+            !([event modifierFlags] & NSAlternateKeyMask));   // Not holding Opt to disable mouse reporting
 }
 
 // TODO: disable other, right mouse for inactive panes
