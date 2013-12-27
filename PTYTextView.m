@@ -309,17 +309,18 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             [self setAcceptsTouchEvents:YES];
             [self setWantsRestingTouches:YES];
             if ([self useThreeFingerTapGestureRecognizer]) {
-                threeFingerTapGestureRecognizer_ = [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
-                                                                                                  selector:@selector(threeFingerTap:)];
+                threeFingerTapGestureRecognizer_ =
+                    [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
+                                                                   selector:@selector(threeFingerTap:)];
             }
-            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"LogDrawingPerformance"]) {
-                NSLog(@"** Drawing performance timing enabled **");
-                drawRectDuration_ = [[MovingAverage alloc] init];
-                drawRectInterval_ = [[MovingAverage alloc] init];
-            }
-            [self viewDidChangeBackingProperties];
-            markImage_ = [NSImage imageNamed:@"mark"];
         }
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"LogDrawingPerformance"]) {
+            NSLog(@"** Drawing performance timing enabled **");
+            drawRectDuration_ = [[MovingAverage alloc] init];
+            drawRectInterval_ = [[MovingAverage alloc] init];
+        }
+        [self viewDidChangeBackingProperties];
+        markImage_ = [NSImage imageNamed:@"mark"];
     }
     return self;
 }
