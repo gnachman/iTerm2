@@ -166,7 +166,13 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     }
     
 	NSArray *children = nil;
-	error = AXUIElementCopyAttributeValues(menuBar, kAXChildrenAttribute, 0, count, (CFArrayRef *)&children);
+    // Despite what the name would suggest, the children array and its contents don't seen to need
+    // too be released by us.
+	error = AXUIElementCopyAttributeValues(menuBar,
+                                           kAXChildrenAttribute,
+                                           0,
+                                           count,
+                                           (CFArrayRef *)&children);
     if (error) {
         CFRelease(menuBar);
         return NULL;
@@ -178,15 +184,15 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
         AXError error = AXUIElementCopyAttributeValue(element,
                                                       kAXTitleAttribute,
                                                       (CFTypeRef *)&title);
-        if ([title isEqualToString:menuName]) {
-            CFRelease(title);
-//            [children autorelease];
+        if (error) {
+            continue;
+        }
+        BOOL found = [title isEqualToString:menuName];
+        CFRelease(title);
+        if (found) {
             return element;
         }
-        CFRelease(title);
     }
-    CFRelease(menuBar);
-    [children release];
     
     return NULL;
 }
