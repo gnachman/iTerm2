@@ -8,7 +8,6 @@
 
 #import "SplitPanel.h"
 #import "ProfileListView.h"
-#import "PseudoTerminal.h"
 
 @implementation SplitPanel
 
@@ -17,7 +16,7 @@
 @synthesize label = label_;
 @synthesize guid = guid_;
 
-+ (NSString *)showPanelWithParent:(PseudoTerminal *)parent isVertical:(BOOL)vertical
++ (NSString *)showPanelWithParent:(NSWindowController *)parent isVertical:(BOOL)vertical
 {
     SplitPanel *splitPanel = [[[SplitPanel alloc] initWithWindowNibName:@"SplitPanel"] autorelease];
     if (splitPanel) {
