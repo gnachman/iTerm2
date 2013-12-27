@@ -43,6 +43,7 @@
 #define VMARGIN 2
 #define COLOR_KEY_SIZE 4
 
+@class FindCursorView;
 @class MovingAverage;
 @class PTYScrollView;
 @class PTYSession;  // TODO: Remove this after PTYTextView doesn't depend directly on PTYSession
@@ -88,14 +89,6 @@ enum {
     SELECT_BOX,
     SELECT_WHOLE_LINE
 };
-
-@interface FindCursorView : NSView {
-    NSPoint cursor;
-}
-
-@property (nonatomic, assign) NSPoint cursor;
-
-@end
 
 @class CRunStorage;
 

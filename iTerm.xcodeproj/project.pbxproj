@@ -591,6 +591,9 @@
 		A63F40A9183F3CED003A6A6D /* LineBufferHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */; };
 		A63F40AA183F3CED003A6A6D /* LineBufferHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F40A8183F3CED003A6A6D /* LineBufferHelpers.m */; };
 		A63F40AB183F3CED003A6A6D /* LineBufferHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F40A8183F3CED003A6A6D /* LineBufferHelpers.m */; };
+		A68A30C1186D0DC1007F550F /* FindCursorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30BF186D0DC1007F550F /* FindCursorView.h */; };
+		A68A30C2186D0DC1007F550F /* FindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* FindCursorView.m */; };
+		A68A30C3186D0DC1007F550F /* FindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* FindCursorView.m */; };
 		A693395C1851A61D00EBEA20 /* VT100ScreenMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */; };
 		A693395D1851A61D00EBEA20 /* VT100ScreenMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */; };
 		A693395E1851A61D00EBEA20 /* VT100ScreenMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */; };
@@ -1003,6 +1006,8 @@
 		A63F40A3183F3B78003A6A6D /* LineBlock.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBlock.m; sourceTree = "<group>"; };
 		A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferHelpers.h; sourceTree = "<group>"; };
 		A63F40A8183F3CED003A6A6D /* LineBufferHelpers.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferHelpers.m; sourceTree = "<group>"; };
+		A68A30BF186D0DC1007F550F /* FindCursorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindCursorView.h; sourceTree = "<group>"; };
+		A68A30C0186D0DC1007F550F /* FindCursorView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FindCursorView.m; sourceTree = "<group>"; };
 		A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100ScreenMark.h; sourceTree = "<group>"; };
 		A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenMark.m; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; };
@@ -1148,6 +1153,8 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A68A30BF186D0DC1007F550F /* FindCursorView.h */,
+				A68A30C0186D0DC1007F550F /* FindCursorView.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -1888,6 +1895,7 @@
 				1D5FDD5D1208E8F000C46BA3 /* PSMRolloverButton.h in Headers */,
 				1D5FDD5E1208E8F000C46BA3 /* PSMTabBarCell.h in Headers */,
 				1D5FDD5F1208E8F000C46BA3 /* PSMTabBarControl.h in Headers */,
+				A68A30C1186D0DC1007F550F /* FindCursorView.h in Headers */,
 				1D81F0C3183C3CCD00910838 /* SBSystemPreferences.h in Headers */,
 				1D5FDD601208E8F000C46BA3 /* PSMTabStyle.h in Headers */,
 				1D5FDD611208E8F000C46BA3 /* NSBezierPath_AMShading.h in Headers */,
@@ -2336,6 +2344,7 @@
 				1D9A5585180FA87000B42CE9 /* iTermKeyBindingMgr.m in Sources */,
 				1D9A5595180FA87000B42CE9 /* PTYSession.m in Sources */,
 				1D9A555E180FA83900B42CE9 /* PreferencePanel.m in Sources */,
+				A68A30C3186D0DC1007F550F /* FindCursorView.m in Sources */,
 				1D9A558B180FA87000B42CE9 /* PasteEvent.m in Sources */,
 				1D9A556E180FA85900B42CE9 /* ToolJobs.m in Sources */,
 				1D9A55A1180FA87000B42CE9 /* TextViewWrapper.m in Sources */,
@@ -2565,6 +2574,7 @@
 				1DD6707814934ADE008E4361 /* PTYSplitView.m in Sources */,
 				1DD39B1B180B82F5004E56D5 /* DebugLogging.m in Sources */,
 				1DD4CE8114A51C0D00ED182E /* TmuxDashboardController.m in Sources */,
+				A68A30C2186D0DC1007F550F /* FindCursorView.m in Sources */,
 				1DA9AEEB14A51CA000BEB37B /* TmuxSessionsTable.m in Sources */,
 				1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */,
 				1D0B613D14A7C76500C57C33 /* TmuxWindowsTable.m in Sources */,

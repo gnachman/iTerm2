@@ -419,6 +419,9 @@
     [triggerLine_ appendString:string];
 }
 
+- (void)screenDidReset {
+}
+
 - (void)screenPrintString:(NSString *)s {
     if (!printed_) {
         printed_ = [NSMutableString string];
