@@ -7490,6 +7490,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
       }
       CFRelease(lineRef);
     } else {
+        CGFloat width = CRunGetAdvances(complexRun)[0].width;
         NSMutableAttributedString* attributedString =
             [[[NSMutableAttributedString alloc] initWithString:str
                                                     attributes:attrs] autorelease];
