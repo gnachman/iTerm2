@@ -10,6 +10,7 @@
 #import "NSDateFormatterExtras.h"
 #import "iTermController.h"
 #import "ToolWrapper.h"
+#import "PseudoTerminal.h"
 
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 4;

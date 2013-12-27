@@ -634,6 +634,15 @@
 		A68A310A186D2BCF007F550F /* BottomBarView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3108186D2BCF007F550F /* BottomBarView.h */; };
 		A68A310B186D2BCF007F550F /* BottomBarView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3109186D2BCF007F550F /* BottomBarView.m */; };
 		A68A310C186D2BCF007F550F /* BottomBarView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3109186D2BCF007F550F /* BottomBarView.m */; };
+		A68A310F186E2EDA007F550F /* PopupEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A310D186E2EDA007F550F /* PopupEntry.h */; };
+		A68A3110186E2EDA007F550F /* PopupEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A310E186E2EDA007F550F /* PopupEntry.m */; };
+		A68A3111186E2EDA007F550F /* PopupEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A310E186E2EDA007F550F /* PopupEntry.m */; };
+		A68A3114186E2F14007F550F /* PopupWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3112186E2F14007F550F /* PopupWindow.h */; };
+		A68A3115186E2F14007F550F /* PopupWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3113186E2F14007F550F /* PopupWindow.m */; };
+		A68A3116186E2F14007F550F /* PopupWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3113186E2F14007F550F /* PopupWindow.m */; };
+		A68A3119186E2F54007F550F /* PopupModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3117186E2F54007F550F /* PopupModel.h */; };
+		A68A311A186E2F54007F550F /* PopupModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3118186E2F54007F550F /* PopupModel.m */; };
+		A68A311B186E2F54007F550F /* PopupModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3118186E2F54007F550F /* PopupModel.m */; };
 		A693395C1851A61D00EBEA20 /* VT100ScreenMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */; };
 		A693395D1851A61D00EBEA20 /* VT100ScreenMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */; };
 		A693395E1851A61D00EBEA20 /* VT100ScreenMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */; };
@@ -1075,6 +1084,12 @@
 		A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TemporaryNumberAllocator.m; sourceTree = "<group>"; };
 		A68A3108186D2BCF007F550F /* BottomBarView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BottomBarView.h; sourceTree = "<group>"; };
 		A68A3109186D2BCF007F550F /* BottomBarView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BottomBarView.m; sourceTree = "<group>"; };
+		A68A310D186E2EDA007F550F /* PopupEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PopupEntry.h; sourceTree = "<group>"; };
+		A68A310E186E2EDA007F550F /* PopupEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PopupEntry.m; sourceTree = "<group>"; };
+		A68A3112186E2F14007F550F /* PopupWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PopupWindow.h; sourceTree = "<group>"; };
+		A68A3113186E2F14007F550F /* PopupWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PopupWindow.m; sourceTree = "<group>"; };
+		A68A3117186E2F54007F550F /* PopupModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PopupModel.h; sourceTree = "<group>"; };
+		A68A3118186E2F54007F550F /* PopupModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PopupModel.m; sourceTree = "<group>"; };
 		A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100ScreenMark.h; sourceTree = "<group>"; };
 		A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenMark.m; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; };
@@ -1294,6 +1309,9 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				A68A310D186E2EDA007F550F /* PopupEntry.h */,
+				A68A3112186E2F14007F550F /* PopupWindow.h */,
+				A68A3117186E2F54007F550F /* PopupModel.h */,
 				A68A3108186D2BCF007F550F /* BottomBarView.h */,
 				A68A3103186D2973007F550F /* TemporaryNumberAllocator.h */,
 				A68A30EA186D150A007F550F /* FileTransferManager.h */,
@@ -1723,6 +1741,9 @@
 				1DE214E0128212EE004E3ADF /* Autocomplete.m */,
 				1D7C18801275D22900461E55 /* PasteboardHistory.m */,
 				1DD736401283C2FA009B7829 /* Popup.m */,
+				A68A310E186E2EDA007F550F /* PopupEntry.m */,
+				A68A3113186E2F14007F550F /* PopupWindow.m */,
+				A68A3118186E2F54007F550F /* PopupModel.m */,
 			);
 			name = Popups;
 			sourceTree = "<group>";
@@ -2012,6 +2033,7 @@
 				A693395C1851A61D00EBEA20 /* VT100ScreenMark.h in Headers */,
 				1D5FDD5D1208E8F000C46BA3 /* PSMRolloverButton.h in Headers */,
 				1D5FDD5E1208E8F000C46BA3 /* PSMTabBarCell.h in Headers */,
+				A68A3114186E2F14007F550F /* PopupWindow.h in Headers */,
 				1D5FDD5F1208E8F000C46BA3 /* PSMTabBarControl.h in Headers */,
 				A68A30F7186D150B007F550F /* SCPFile.h in Headers */,
 				A68A30C1186D0DC1007F550F /* FindCursorView.h in Headers */,
@@ -2083,6 +2105,7 @@
 				1D988597135D23BD0072023F /* ProcessCache.h in Headers */,
 				1D624BD91386E0B600111319 /* GTMCarbonEvent.h in Headers */,
 				1D624BDD1386E0FA00111319 /* GTMDefines.h in Headers */,
+				A68A3119186E2F54007F550F /* PopupModel.h in Headers */,
 				1D624BEE1386E34F00111319 /* GTMObjectSingleton.h in Headers */,
 				1D624BF41386E39D00111319 /* GTMDebugSelectorValidation.h in Headers */,
 				1D624BF61386E3B400111319 /* GTMTypeCasting.h in Headers */,
@@ -2142,6 +2165,7 @@
 				A68A30C6186D0F37007F550F /* SmartMatch.h in Headers */,
 				1DD6707714934ADE008E4361 /* PTYSplitView.h in Headers */,
 				1DD4CE8014A51C0D00ED182E /* TmuxDashboardController.h in Headers */,
+				A68A310F186E2EDA007F550F /* PopupEntry.h in Headers */,
 				1DA9AEEA14A51CA000BEB37B /* TmuxSessionsTable.h in Headers */,
 				1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */,
 				1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */,
@@ -2422,6 +2446,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1D9A557C180FA87000B42CE9 /* ColorsMenuItemView.m in Sources */,
+				A68A3111186E2EDA007F550F /* PopupEntry.m in Sources */,
 				1D9A552D180FA69900B42CE9 /* SearchResult.m in Sources */,
 				A63F409C183B3AA7003A6A6D /* PTYNoteView.m in Sources */,
 				1D9A55AB180FA8B700B42CE9 /* PSMProgressIndicator.m in Sources */,
@@ -2432,6 +2457,7 @@
 				A6CFDAD9185D53C2005DC94B /* AsyncHostLookupController.m in Sources */,
 				1D9A555C180FA83900B42CE9 /* EventMonitorView.m in Sources */,
 				A68A30E9186D1429007F550F /* VT100WorkingDirectory.m in Sources */,
+				A68A3116186E2F14007F550F /* PopupWindow.m in Sources */,
 				1D9A555B180FA83900B42CE9 /* ContextMenuActionPrefsController.m in Sources */,
 				A63F40AB183F3CED003A6A6D /* LineBufferHelpers.m in Sources */,
 				1D9A5531180FA73300B42CE9 /* FutureMethods.m in Sources */,
@@ -2505,6 +2531,7 @@
 				1D9A5599180FA87000B42CE9 /* PTYTask.m in Sources */,
 				1D9A552F180FA6A100B42CE9 /* iTermGrowlDelegate.m in Sources */,
 				1D9A555D180FA83900B42CE9 /* PointerPrefsController.m in Sources */,
+				A68A311B186E2F54007F550F /* PopupModel.m in Sources */,
 				1D9A5589180FA87000B42CE9 /* MovingAverage.m in Sources */,
 				1D9A5598180FA87000B42CE9 /* PTYTabView.m in Sources */,
 				1D9A5548180FA82E00B42CE9 /* TmuxControllerRegistry.m in Sources */,
@@ -2646,6 +2673,7 @@
 				A68A30C7186D0F37007F550F /* SmartMatch.m in Sources */,
 				1DE5EBE9122B892900C736B0 /* ProfilesWindow.m in Sources */,
 				1D93D33612695442007F741B /* DVR.m in Sources */,
+				A68A311A186E2F54007F550F /* PopupModel.m in Sources */,
 				1D93D350126974BC007F741B /* DVRDecoder.m in Sources */,
 				1D93D35412697529007F741B /* DVREncoder.m in Sources */,
 				1D93D35A1269778C007F741B /* DVRBuffer.m in Sources */,
@@ -2700,6 +2728,7 @@
 				1D9DCC0F142D7F5F0016228A /* BellTrigger.m in Sources */,
 				1D9DCC13142D7F970016228A /* ScriptTrigger.m in Sources */,
 				1D9DCC17142D7FC10016228A /* AlertTrigger.m in Sources */,
+				A68A3110186E2EDA007F550F /* PopupEntry.m in Sources */,
 				1D9DDD93142E5AC600275650 /* CoprocessTrigger.m in Sources */,
 				1D9DDD9D142E5FBB00275650 /* Coprocess.m in Sources */,
 				1D24C285142EF334006B246F /* SendTextTrigger.m in Sources */,
@@ -2730,6 +2759,7 @@
 				1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */,
 				1D0B613D14A7C76500C57C33 /* TmuxWindowsTable.m in Sources */,
 				1DAE714E14AAF24200DA144B /* EquivalenceClassSet.m in Sources */,
+				A68A3115186E2F14007F550F /* PopupWindow.m in Sources */,
 				A6358647184BEA57009ED690 /* AATree.m in Sources */,
 				1D06E7D414BC04510097C0ED /* ProfileTableRow.m in Sources */,
 				1D06E7D814BC04E20097C0ED /* ProfileModelWrapper.m in Sources */,

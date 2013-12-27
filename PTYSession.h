@@ -7,6 +7,7 @@
 #import "PTYTask.h"
 #import "PTYTextView.h"
 #import "PasteViewController.h"
+#import "Popup.h"
 #import "ProfileModel.h"
 #import "TextViewWrapper.h"
 #import "TmuxController.h"
@@ -56,6 +57,7 @@ typedef enum {
 @interface PTYSession : NSResponder <
     FindViewControllerDelegate,
     PasteViewControllerDelegate,
+    PopupDelegate,
     PTYTaskDelegate,
     PTYTextViewDelegate,
     TmuxGatewayDelegate,

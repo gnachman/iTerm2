@@ -449,7 +449,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return parentWindow_;
 }
 
-- (id<iTermWindowController>)realParentWindow
+- (NSWindowController<iTermWindowController> *)realParentWindow
 {
     return realParentWindow_;
 }
@@ -500,7 +500,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 }
 
-- (void)setParentWindow:(id<iTermWindowController>)theParent
+- (void)setParentWindow:(NSWindowController<iTermWindowController> *)theParent
 {
     // Parent holds a reference to us (indirectly) so we mustn't reference it.
     parentWindow_ = realParentWindow_ = theParent;
@@ -2125,7 +2125,7 @@ static NSString* FormatRect(NSRect r) {
 }
 
 + (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
-                    inTerminal:(id<iTermWindowController>)term
+                    inTerminal:(NSWindowController<iTermWindowController> *)term
                hasFlexibleView:(BOOL)hasFlexible
 {
     PTYTab* theTab;
@@ -2159,7 +2159,8 @@ static NSString* FormatRect(NSRect r) {
 
 // This can only be used in conjunction with
 // +[tabWithArrangement:inTerminal:hasFlexibleView:].
- - (void)addToTerminal:(id<iTermWindowController>)term withArrangement:(NSDictionary *)arrangement
+ - (void)addToTerminal:(NSWindowController<iTermWindowController> *)term
+       withArrangement:(NSDictionary *)arrangement
 {
     // Add the existing tab, which is now fully populated, to the term.
     [term appendTab:self];
@@ -2182,7 +2183,7 @@ static NSString* FormatRect(NSRect r) {
 }
 
 + (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
-                        inTerminal:(id<iTermWindowController>)term
+                        inTerminal:(NSWindowController<iTermWindowController> *)term
                    hasFlexibleView:(BOOL)hasFlexible
 {
     PTYTab *theTab = [PTYTab tabWithArrangement:arrangement
@@ -2220,7 +2221,7 @@ static NSString* FormatRect(NSRect r) {
 + (NSSize)_recursiveSetSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
                                  showTitles:(BOOL)showTitles
                                    bookmark:(Profile *)bookmark
-                                 inTerminal:(id<iTermWindowController>)term
+                                 inTerminal:(NSWindowController<iTermWindowController> *)term
 {
     double splitterSize = 1;  // hack: should use -[NSSplitView dividerThickness], but don't have an instance yet.
     NSSize totalSize = NSZeroSize;
@@ -2408,7 +2409,7 @@ static NSString* FormatRect(NSRect r) {
 }
 
 + (void)setSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
-                     inTerminal:(id<iTermWindowController>)term
+                     inTerminal:(NSWindowController<iTermWindowController> *)term
 {
     Profile *bookmark = [PTYTab tmuxBookmark];
 
@@ -2449,7 +2450,7 @@ static NSString* FormatRect(NSRect r) {
 }
 
 + (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
-                       inTerminal:(id<iTermWindowController>)term
+                       inTerminal:(NSWindowController<iTermWindowController> *)term
                        tmuxWindow:(int)tmuxWindow
                    tmuxController:(TmuxController *)tmuxController
 {

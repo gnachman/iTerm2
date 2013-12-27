@@ -32,7 +32,8 @@
 
 @implementation FakeWindow
 
-- (id)initFromRealWindow:(id<iTermWindowController>)aTerm session:(PTYSession*)aSession
+- (id)initFromRealWindow:(NSWindowController<iTermWindowController> *)aTerm
+                 session:(PTYSession*)aSession
 {
     self = [super init];
     if (!self) {
@@ -62,7 +63,7 @@
     [super dealloc];
 }
 
-- (void)rejoin:(id<iTermWindowController>)aTerm
+- (void)rejoin:(NSWindowController<iTermWindowController> *)aTerm
 {
     [session release];
     if (hasPendingClose) {

@@ -14,6 +14,7 @@
 #import "PTYNoteView.h"
 #import "PTYNoteViewController.h"
 #import "PTYScrollView.h"
+#import "PTYSession.h"
 #import "PTYTab.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"

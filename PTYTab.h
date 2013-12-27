@@ -25,7 +25,7 @@
     NSTabViewItem* tabViewItem_;
 
     id<WindowControllerInterface> parentWindow_;  // Parent controller. Always set. Equals one of realParent or fakeParent.
-    id<iTermWindowController> realParentWindow_;  // non-nil only if parent is PseudoTerminal*. Implements optional methods of protocol.
+    NSWindowController<iTermWindowController> *realParentWindow_;  // non-nil only if parent is PseudoTerminal*. Implements optional methods of protocol.
     FakeWindow* fakeParentWindow_;  // non-nil only if parent is FakeWindow*
 
     // The tab number that is observed by PSMTabBarControl.
@@ -118,8 +118,8 @@
 
 - (void)setLockedSession:(PTYSession*)lockedSession;
 - (id<WindowControllerInterface>)parentWindow;
-- (id<iTermWindowController>)realParentWindow;
-- (void)setParentWindow:(id<iTermWindowController>)theParent;
+- (NSWindowController<iTermWindowController> *)realParentWindow;
+- (void)setParentWindow:(NSWindowController<iTermWindowController> *)theParent;
 - (void)setFakeParentWindow:(FakeWindow*)theParent;
 - (FakeWindow*)fakeWindow;
 
@@ -222,7 +222,7 @@
                       forNewLayout:(NSMutableDictionary *)parseTree;
 - (void)reloadTmuxLayout;
 + (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
-                       inTerminal:(id<iTermWindowController>)term
+                       inTerminal:(NSWindowController<iTermWindowController> *)term
                        tmuxWindow:(int)tmuxWindow
                    tmuxController:(TmuxController *)tmuxController;
 + (void)setTmuxFont:(NSFont *)font

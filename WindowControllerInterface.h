@@ -153,7 +153,10 @@ typedef enum {
 
 // Returns a new terminal at the given screen coordinate. The
 // "wasDraggedFromAnotherWindow_" flag is set on the returned window.
-- (id<iTermWindowController>)terminalDraggedFromAnotherWindowAtPoint:(NSPoint)point;
+- (NSWindowController<iTermWindowController> *)terminalDraggedFromAnotherWindowAtPoint:(NSPoint)point;
+
+// Session terminated. Remove any weak refs to it.
+- (void)sessionDidTerminate:(PTYSession *)session;
 
 #pragma mark - Tabs
 

@@ -22,6 +22,7 @@
 #import "PTYTask.h"
 #import "PTYTextView.h"
 #import "PasteboardHistory.h"
+#import "PopupWindow.h"
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
 #import "ProfilesWindow.h"
@@ -773,7 +774,7 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
-- (id<iTermWindowController>)terminalDraggedFromAnotherWindowAtPoint:(NSPoint)point
+- (NSWindowController<iTermWindowController> *)terminalDraggedFromAnotherWindowAtPoint:(NSPoint)point
 {
     PseudoTerminal *term;
 
@@ -3439,7 +3440,8 @@ NSString *kSessionsKVCKey = @"sessions";
         return nil;
     }
 
-    id<iTermWindowController> term = [self terminalDraggedFromAnotherWindowAtPoint:point];
+    NSWindowController<iTermWindowController> * term =
+        [self terminalDraggedFromAnotherWindowAtPoint:point];
     if ([term windowType] == WINDOW_TYPE_NORMAL &&
         [[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
             [[term window] setFrameTopLeftPoint:point];
@@ -3932,7 +3934,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (IBAction)openPasteHistory:(id)sender
 {
-    [pbHistoryView popInSession:[self currentSession]];
+    [pbHistoryView popWithDelegate:[self currentSession]];
 }
 
 - (IBAction)openAutocomplete:(id)sender
@@ -3940,7 +3942,7 @@ NSString *kSessionsKVCKey = @"sessions";
     if ([[autocompleteView window] isVisible]) {
         [autocompleteView more];
     } else {
-        [autocompleteView popInSession:[self currentSession]];
+        [autocompleteView popWithDelegate:[self currentSession]];
     }
 }
 
@@ -5795,7 +5797,7 @@ NSString *kSessionsKVCKey = @"sessions";
 // Move a tab to a new window due to a context menu selection.
 - (void)moveTabToNewWindowContextualMenuAction:(id)sender
 {
-    id<iTermWindowController> term;
+    NSWindowController<iTermWindowController> * term;
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *aTab = [aTabViewItem identifier];
 
@@ -6520,6 +6522,15 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 
     return [[iTermController sharedInstance] launchBookmark:abEntry inTerminal:self];
+}
+
+- (void)sessionDidTerminate:(PTYSession *)session {
+    if (pbHistoryView.delegate == session) {
+        pbHistoryView.delegate = nil;
+    }
+    if (autocompleteView.delegate == session) {
+        autocompleteView.delegate = nil;
+    }
 }
 
 @end

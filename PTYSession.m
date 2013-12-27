@@ -895,7 +895,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [env setObject:[PWD_ENVVALUE stringByExpandingTildeInPath] forKey:PWD_ENVNAME];
     }
 
-    id<iTermWindowController> pty = [tab_ realParentWindow];
+    NSWindowController<iTermWindowController> *pty = [tab_ realParentWindow];
     NSString *itermId = [NSString stringWithFormat:@"w%dt%dp%d",
                          [pty number],
                          [tab_ realObjectCount] - 1,
@@ -1005,7 +1005,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                 [tmuxGateway_ release];
                 tmuxGateway_ = nil;
     }
-        tmuxMode_ = TMUX_NONE;
+    tmuxMode_ = TMUX_NONE;
     [tmuxController_ release];
     tmuxController_ = nil;
 
@@ -1050,6 +1050,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         slowPasteTimer = nil;
         [eventQueue_ removeAllObjects];
     }
+    
+    [[tab_ realParentWindow]  sessionDidTerminate:self];
 
     tab_ = nil;
 }
@@ -5055,6 +5057,24 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (BOOL)screenShouldSendReport {
     return (SHELL != nil) && (![self isTmuxClient]);
+}
+
+#pragma mark - PopupDelegate
+
+- (NSWindowController *)popupWindowController {
+    return [[self tab] realParentWindow];
+}
+
+- (VT100Screen *)popupVT100Screen {
+    return SCREEN;
+}
+
+- (PTYTextView *)popupVT100TextView {
+    return TEXTVIEW;
+}
+
+- (void)popupInsertText:(NSString *)string {
+    [self insertText:string];
 }
 
 @end

@@ -1,57 +1,62 @@
-// -*- mode:objc -*-
-/*
- **  Autocomplete.m
- **
- **  Copyright (c) 2010
- **
- **  Author: George Nachman
- **
- **  Project: iTerm2
- **
- **  Description: Implements the Autocomplete UI. It grabs the word behind the
- **      cursor and opens a popup window with likely suffixes. Selecting one
- **      appends it, and you can search the list Quicksilver-style.
- **
- **  This program is free software; you can redistribute it and/or modify
- **  it under the terms of the GNU General Public License as published by
- **  the Free Software Foundation; either version 2 of the License, or
- **  (at your option) any later version.
- **
- **  This program is distributed in the hope that it will be useful,
- **  but WITHOUT ANY WARRANTY; without even the implied warranty of
- **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- **  GNU General Public License for more details.
- **
- **  You should have received a copy of the GNU General Public License
- **  along with this program; if not, write to the Free Software
- **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
 #include <wctype.h>
 #import "Autocomplete.h"
-#import "iTermController.h"
-#import "VT100Screen.h"
-#import "PTYTextView.h"
 #import "LineBuffer.h"
+#import "PTYTextView.h"
 #import "PasteboardHistory.h"
-#import "iTermApplicationDelegate.h"
+#import "PopupModel.h"
 #import "SearchResult.h"
-//#define AUTOCOMPLETE_VERBOSE_LOGGING
-#ifdef AUTOCOMPLETE_VERBOSE_LOGGING
-#define AcLog NSLog
-#else
-#define AcLog(args...) \
-do { \
-if (gDebugLogging) { \
-DebugLog([NSString stringWithFormat:args]); \
-} \
-} while (0)
-#endif
+#import "VT100Screen.h"
+#import "iTermApplicationDelegate.h"
+#import "iTermController.h"
+
+#define AcLog DLog
 
 const int kMaxQueryContextWords = 4;
 const int kMaxResultContextWords = 4;
 
 @implementation AutocompleteView
+{
+    // Table view that displays choices.
+    IBOutlet NSTableView* table_;
+    
+    // Word before cursor.
+    NSMutableString* prefix_;
+    
+    // Is there whitespace before the cursor? If so, strip whitespace from before candidates.
+    BOOL whitespaceBeforeCursor_;
+    
+    // Words before the word at the cursor.
+    NSMutableArray* context_;
+    
+    // x,y coords where prefix occured.
+    int startX_;
+    long long startY_;  // absolute coord
+    
+    // Context for searches while populating unfilteredModel.
+    FindContext *findContext_;
+    
+    // Timer for doing asynch seraches for prefix.
+    NSTimer* populateTimer_;
+    
+    // Cursor location to begin next search.
+    int x_;
+    long long y_;  // absolute coord
+    
+    // Number of matches found so far
+    int matchCount_;
+    
+    // Text from previous autocompletes that were followed by -[more];
+    NSMutableString* moreText_;
+    
+    // Previous state from calls to -[more] so that -[less] can go back in time.
+    NSMutableArray* stack_;
+    
+    // SearchResults from doing a find operation
+    NSMutableArray* findResults_;
+    
+    // Result of previous search
+    BOOL more_;
+}
 
 + (int)maxOptions
 {
@@ -98,7 +103,7 @@ const int kMaxResultContextWords = 4;
 - (void)appendContextAtX:(int)x y:(int)y into:(NSMutableArray*)context maxWords:(int)maxWords
 {
     const int kMaxIterations = maxWords * 2;
-    VT100Screen* screen = [[self session] SCREEN];
+    VT100Screen* screen = [[self delegate] popupVT100Screen];
     NSCharacterSet* nonWhitespace = [[NSCharacterSet whitespaceCharacterSet] invertedSet];
     for (int i = 0; i < kMaxIterations && [context count] < maxWords; ++i) {
         // Move back one position
@@ -112,12 +117,12 @@ const int kMaxResultContextWords = 4;
         }
 
         int tx1, tx2, ty1, ty2;
-        NSString* s = [[[self session] TEXTVIEW] getWordForX:x
-                                                           y:y
-                                                      startX:&tx1
-                                                      startY:&ty1
-                                                        endX:&tx2
-                                                        endY:&ty2];
+        NSString* s = [[[self delegate] popupVT100TextView] getWordForX:x
+                                                                      y:y
+                                                                 startX:&tx1
+                                                                 startY:&ty1
+                                                                   endX:&tx2
+                                                                   endY:&ty2];
         if ([s rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
             // Add only if not whitespace.
             AcLog(@"Add to context (%d/%d): %@", (int) [context count], (int) maxWords, s);
@@ -130,7 +135,7 @@ const int kMaxResultContextWords = 4;
 - (void)onOpen
 {
     int tx1, ty1, tx2, ty2;
-    VT100Screen* screen = [[self session] SCREEN];
+    VT100Screen* screen = [[self delegate] popupVT100Screen];
 
     int x = [screen cursorX]-2;
     int y = [screen cursorY] + [screen numberOfLines] - [screen height] - 1;
@@ -143,12 +148,12 @@ const int kMaxResultContextWords = 4;
     if (x < 0) {
         [prefix_ setString:@""];
     } else {
-        NSString* s = [[[self session] TEXTVIEW] getWordForX:x
-                                                           y:y
-                                                      startX:&tx1
-                                                      startY:&ty1
-                                                        endX:&tx2
-                                                        endY:&ty2];
+        NSString* s = [[[self delegate] popupVT100TextView] getWordForX:x
+                                                                      y:y
+                                                                 startX:&tx1
+                                                                 startY:&ty1
+                                                                   endX:&tx2
+                                                                   endY:&ty2];
         int maxWords = kMaxQueryContextWords;
         if ([s rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
             ++maxWords;
@@ -290,7 +295,7 @@ const int kMaxResultContextWords = 4;
 {
     [[self unfilteredModel] removeAllObjects];
     findContext_.substring = nil;
-    VT100Screen* screen = [[self session] SCREEN];
+    VT100Screen* screen = [[self delegate] popupVT100Screen];
 
     x_ = startX_;
     y_ = startY_ - [screen scrollbackOverflow];
@@ -330,11 +335,11 @@ const int kMaxResultContextWords = 4;
         PopupEntry* e = [[self model] objectAtIndex:[self convertIndex:[table_ selectedRow]]];
         [stack_ removeAllObjects];
         if (moreText_) {
-            [[self session] insertText:moreText_];
+            [[self delegate] popupInsertText:moreText_];
             [moreText_ release];
             moreText_ = nil;
         }
-        [[self session] insertText:[e mainValue]];
+        [[self delegate] popupInsertText:[e mainValue]];
         [super rowSelected:sender];
     }
 }
@@ -424,7 +429,7 @@ const int kMaxResultContextWords = 4;
 
 - (void)_doPopulateMore
 {
-    VT100Screen* screen = [[self session] SCREEN];
+    VT100Screen* screen = [[self delegate] popupVT100Screen];
 
     struct timeval begintime;
     gettimeofday(&begintime, NULL);
@@ -463,19 +468,19 @@ const int kMaxResultContextWords = 4;
             AcLog(@"Found match at %d-%d, line %d", startX, endX, startY);
             int tx1, ty1, tx2, ty2;
             // Get the word that includes the match.
-            NSMutableString* firstWord = [NSMutableString stringWithString:[[[self session] TEXTVIEW] getWordForX:startX
-                                                                                                                y:startY
-                                                                                                           startX:&tx1
-                                                                                                           startY:&ty1
-                                                                                                             endX:&tx2
-                                                                                                             endY:&ty2]];
+            NSMutableString* firstWord = [NSMutableString stringWithString:[[[self delegate] popupVT100TextView] getWordForX:startX
+                                                                                                                           y:startY
+                                                                                                                      startX:&tx1
+                                                                                                                      startY:&ty1
+                                                                                                                        endX:&tx2
+                                                                                                                        endY:&ty2]];
             while ([firstWord length] < [prefix_ length]) {
-                NSString* part = [[[self session] TEXTVIEW] getWordForX:tx2
-                                                                      y:ty2
-                                                                 startX:&tx1
-                                                                 startY:&ty1
-                                                                   endX:&tx2
-                                                                   endY:&ty2];
+                NSString* part = [[[self delegate] popupVT100TextView] getWordForX:tx2
+                                                                                 y:ty2
+                                                                            startX:&tx1
+                                                                            startY:&ty1
+                                                                              endX:&tx2
+                                                                              endY:&ty2];
                 if ([part length] == 0) {
                     break;
                 }
@@ -501,7 +506,7 @@ const int kMaxResultContextWords = 4;
                         endX -= [screen width];
                         ++endY;
                     }
-                    word = [[[self session] TEXTVIEW] getWordForX:endX y:endY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
+                    word = [[[self delegate] popupVT100TextView] getWordForX:endX y:endY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
                     AcLog(@"First candidate is at %d-%d, %d: '%@'", tx1, tx2, ty1, word);
                     if ([word rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
                         // word after match is all whitespace. Grab the next word.
@@ -510,7 +515,7 @@ const int kMaxResultContextWords = 4;
                             ++ty2;
                         }
                         if (ty2 < [screen numberOfLines]) {
-                            word = [[[self session] TEXTVIEW] getWordForX:tx2 y:ty2 startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
+                            word = [[[self delegate] popupVT100TextView] getWordForX:tx2 y:ty2 startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
                             if (!whitespaceBeforeCursor_) {
                                 // Prepend a space if one is needed
                                 word = [NSString stringWithFormat:@" %@", word];

@@ -29,9 +29,10 @@
 
 
 #import <Cocoa/Cocoa.h>
-#import "VT100Screen.h"
 #import "PTYTextView.h"
 #import "Popup.h"
+#import "PopupEntry.h"
+#import "VT100Screen.h"
 
 #define kPasteboardHistoryDidChange @"PasteboardHistoryDidChange"
 

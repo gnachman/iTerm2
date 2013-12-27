@@ -2,285 +2,44 @@
 
 #import "Popup.h"
 #import "DebugLogging.h"
-#import "PTYTab.h"
+#import "PopupEntry.h"
+#import "PopupModel.h"
+#import "PopupWindow.h"
 #import "PTYTextView.h"
 #import "VT100Screen.h"
-#import "iTermApplicationDelegate.h"
 #include <wctype.h>
 
 #define PopLog DLog
 
-@implementation PopupEntry
-
-- (id)init
-{
-    self = [super init];
-    if (self) {
-        [self _setDefaultValues];
-    }
-    return self;
+@implementation Popup {
+    // Subclass-owned tableview.
+    NSTableView* tableView_;
+    
+    // Results currently being displayed.
+    PopupModel* model_;
+    
+    // All candidate results, including those not matching filter. Subclass-owend.
+    PopupModel* unfilteredModel_;
+    
+    // Timer to set clearFilterOnNextKeyDown_.
+    NSTimer* timer_;
+    
+    // If set, then next time a key is pressed erase substring_ before appending.
+    BOOL clearFilterOnNextKeyDown_;
+    // What the user has typed so far to filter result set.
+    NSMutableString* substring_;
+    
+    // If true then window is above cursor.
+    BOOL onTop_;
+    
+    // Set to true when the user changes the selected row.
+    BOOL haveChangedSelection_;
+    // String that the user has selected.
+    NSMutableString* selectionMainValue_;
+    
+    // True while reloading data.
+    BOOL reloading_;
 }
-
-- (void)dealloc
-{
-    [s_ release];
-    [prefix_ release];
-    [super dealloc];
-}
-
-- (void)_setDefaultValues
-{
-    hitMultiplier_ = 1;
-    [self setMainValue:@""];
-    [self setScore:0];
-    [self setPrefix:@""];
-}
-
-+ (PopupEntry*)entryWithString:(NSString*)s score:(double)score
-{
-    PopupEntry* e = [[[PopupEntry alloc] init] autorelease];
-    [e _setDefaultValues];
-    [e setMainValue:s];
-    [e setScore:score];
-
-    return e;
-}
-
-- (NSString*)mainValue
-{
-    return s_;
-}
-
-- (void)setScore:(double)score
-{
-    score_ = score;
-}
-
-- (void)setMainValue:(NSString*)s
-{
-    [s_ autorelease];
-    s_ = [s retain];
-}
-
-- (double)advanceHitMult
-{
-    hitMultiplier_ *= 0.8;
-    return hitMultiplier_;
-}
-
-- (double)score
-{
-    return score_;
-}
-
-- (BOOL)isEqual:(id)o
-{
-    if ([o respondsToSelector:@selector(mainValue)]) {
-        return [[self mainValue] isEqual:[o mainValue]];
-    } else {
-        return [super isEqual:o];
-    }
-}
-
-- (NSComparisonResult)compare:(id)otherObject
-{
-    return [[NSNumber numberWithDouble:score_] compare:[NSNumber numberWithDouble:[otherObject score]]];
-}
-
-- (void)setPrefix:(NSString*)prefix
-{
-    [prefix_ autorelease];
-    prefix_ = [prefix retain];
-}
-
-- (NSString*)prefix
-{
-    return prefix_;
-}
-
-@end
-
-@implementation PopupWindow
-
-- (id)initWithContentRect:(NSRect)contentRect
-                styleMask:(NSUInteger)aStyle
-                  backing:(NSBackingStoreType)bufferingType
-                    defer:(BOOL)flag
-{
-    self = [super initWithContentRect:contentRect
-                            styleMask:NSBorderlessWindowMask
-                              backing:bufferingType
-                                defer:flag];
-    if (self) {
-        [self setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
-    }
-    return self;
-}
-
-- (void)dealloc
-{
-    [parentWindow_ release];
-    [super dealloc];
-}
-
-- (BOOL)canBecomeKeyWindow
-{
-    return YES;
-}
-
-- (void)keyDown:(NSEvent *)event
-{
-    id cont = [self windowController];
-    if (cont && [cont respondsToSelector:@selector(keyDown:)]) {
-        [cont keyDown:event];
-    }
-}
-
-- (void)shutdown
-{
-    shutdown_ = YES;
-}
-
-- (void)setParentWindow:(NSWindow*)parentWindow
-{
-    [parentWindow_ autorelease];
-    parentWindow_ = [parentWindow retain];
-}
-
-- (void)close
-{
-    if (shutdown_) {
-        [super close];
-    } else {
-        // The OS will send a hotkey window to the background if it's open and in
-        // all spaces. Make it key before closing. This has to be done later because if you do it
-        // here the OS gets confused and two windows are key.
-        //NSLog(@"Perform delayed selector with target %@", self);
-        [self performSelector:@selector(twiddleKeyWindow)
-                   withObject:self
-                   afterDelay:0];
-    }
-}
-
-- (void)twiddleKeyWindow
-{
-    iTermApplicationDelegate* theDelegate = [NSApp delegate];
-    [theDelegate makeHotKeyWindowKeyIfOpen];
-    [super close];
-    [parentWindow_ makeKeyAndOrderFront:self];
-}
-
-@end
-
-@implementation PopupModel
-
-- (id)init
-{
-    self = [super init];
-    if (self) {
-        maxEntries_ = -1;
-        values_ = [[NSMutableArray alloc] init];
-    }
-    return self;
-}
-
-- (id)initWithMaxEntries:(int)maxEntries
-{
-    self = [super init];
-    if (self) {
-        maxEntries_ = maxEntries;
-        values_ = [[NSMutableArray alloc] init];
-    }
-    return self;
-}
-
-- (void)dealloc
-{
-    [values_ release];
-    [super dealloc];
-}
-
-- (NSUInteger)count
-{
-    return [values_ count];
-}
-
-- (void)removeAllObjects
-{
-    [values_ removeAllObjects];
-}
-
-- (void)addObject:(id)object
-{
-    [values_ addObject:object];
-}
-
-- (PopupEntry*)entryEqualTo:(PopupEntry*)entry
-{
-    for (PopupEntry* candidate in values_) {
-        if ([candidate isEqual:entry]) {
-            return candidate;
-        }
-    }
-    return nil;
-}
-
-- (void)addHit:(PopupEntry*)object
-{
-    PopupEntry* entry = [self entryEqualTo:object];
-    if (entry) {
-        [entry setScore:[entry score] + [object score] * [entry advanceHitMult]];
-        PopLog(@"Add additional hit for %@ bringing score to %lf", [entry mainValue], [entry score]);
-    } else if (maxEntries_ < 0 || [self count] < maxEntries_) {
-        [self addObject:object];
-        PopLog(@"Add entry for %@ with score %lf", [object mainValue], [object score]);
-    } else {
-        PopLog(@"Not adding entry because max of %u hit", maxEntries_);
-    }
-}
-
-- (id)objectAtIndex:(NSUInteger)i
-{
-    return [values_ objectAtIndex:i];
-}
-
-- (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id *)stackbuf count:(NSUInteger)len
-{
-    return [values_ countByEnumeratingWithState:state objects:stackbuf count:len];
-}
-
-- (NSUInteger)indexOfObject:(id)o
-{
-    return [values_ indexOfObject:o];
-}
-
-- (void)sortByScore
-{
-    NSSortDescriptor *sortDescriptor;
-    sortDescriptor = [[[NSSortDescriptor alloc] initWithKey:@"score"
-                                                  ascending:NO] autorelease];
-    NSArray *sortDescriptors = [NSArray arrayWithObject:sortDescriptor];
-    NSArray *sortedArray;
-    sortedArray = [values_ sortedArrayUsingDescriptors:sortDescriptors];
-    [values_ release];
-    values_ = [[NSMutableArray arrayWithArray:sortedArray] retain];
-}
-
-- (int)indexOfObjectWithMainValue:(NSString*)value
-{
-    for (int i = 0; i < [values_ count]; ++i) {
-        PopupEntry* entry = [values_ objectAtIndex:i];
-        if ([[entry mainValue] isEqualToString:value]) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-@end
-
-
-@implementation Popup
 
 - (id)initWithWindowNibName:(NSString*)nibName tablePtr:(NSTableView**)table model:(PopupModel*)model;
 {
@@ -306,7 +65,6 @@
     [substring_ release];
     [model_ release];
     [tableView_ release];
-    [session_ release];
     [super dealloc];
 }
 
@@ -332,23 +90,13 @@
     return YES;
 }
 
-- (void)popInSession:(PTYSession*)session
+- (void)popWithDelegate:(id<PopupDelegate>)delegate
 {
-    [[self window] setParentWindow:[[[session tab] realParentWindow] window]];
-    [self setSession:session];
-    [self showWindow:[[session tab] parentWindow]];
-    [[self window] makeKeyAndOrderFront:[[session tab] parentWindow]];
-}
-
-- (void)setSession:(PTYSession*)session
-{
-    [session_ autorelease];
-    session_ = [session retain];
-}
-
-- (PTYSession*)session
-{
-    return session_;
+    self.delegate = delegate;
+    
+    [[self window] setParentWindow:delegate.popupWindowController.window];
+    [self showWindow:delegate.popupWindowController];
+    [[self window] makeKeyAndOrderFront:delegate.popupWindowController];
 }
 
 - (PopupModel*)unfilteredModel
@@ -369,7 +117,7 @@
         timer_ = nil;
     }
     [substring_ setString:@""];
-    [self setSession:nil];
+    self.delegate = nil;
 }
 
 - (void)onOpen
@@ -420,11 +168,11 @@
 {
     BOOL onTop = NO;
 
-    VT100Screen* screen = [session_ SCREEN];
+    VT100Screen* screen = [self.delegate popupVT100Screen];
     int cx = [screen cursorX] - 1;
     int cy = [screen cursorY];
 
-    PTYTextView* tv = [session_ TEXTVIEW];
+    PTYTextView* tv = [self.delegate popupVT100TextView];
     [tv scrollEnd];
     NSRect frame = [[self window] frame];
     frame.size.height = [[tableView_ headerView] frame].size.height + [model_ count] * ([tableView_ rowHeight] + [tableView_ intercellSpacing].height);
@@ -435,7 +183,7 @@
     p = [[tv window] convertBaseToScreen:p];
     p.y -= frame.size.height;
 
-    NSRect monitorFrame = [[[[[screen session] tab] parentWindow] windowScreen] visibleFrame];
+    NSRect monitorFrame = [[[[self.delegate popupWindowController] window] screen] visibleFrame];
 
     if (canChangeSide) {
         // p.y gives the bottom of the frame relative to the bottom of the screen, assuming it's below the cursor.
@@ -608,11 +356,11 @@
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification
 {
-    if (!session_) {
+    if (!self.delegate) {
         // A dialog box can cause you to become key after closing because of a
         // race condition with twiddleKeyWindow. But it immediately loses key
         // status again after this. Because it was already closed, there is no
-        // session at this point and we just return harmlessly.
+        // delegate at this point and we just return harmlessly.
         return;
     }
     clearFilterOnNextKeyDown_ = NO;

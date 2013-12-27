@@ -5,6 +5,7 @@
 #import "ProfileListView.h"
 #import "WindowControllerInterface.h"
 #import "PasteboardHistory.h"
+#import "Popup.h"
 #import "Autocomplete.h"
 #import "ToolbeltView.h"
 #import "SolidColorView.h"
