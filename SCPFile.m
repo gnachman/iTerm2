@@ -432,7 +432,6 @@ static NSError *SCPFileError(NSString *description) {
 - (BOOL)session:(NMSSHSession *)session shouldConnectToHostWithFingerprint:(NSString *)fingerprint {
     __block BOOL result;
     dispatch_sync(dispatch_get_main_queue(), ^(void) {
-        BOOL known;
         _okToAdd = NO;
         NSString *message;
         switch ([self.session knownHostStatus]) {

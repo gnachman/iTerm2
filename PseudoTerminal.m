@@ -1,5 +1,6 @@
 #import "PseudoTerminal.h"
 
+#import "BottomBarView.h"
 #import "ColorsMenuItemView.h"
 #import "Coprocess.h"
 #import "FakeWindow.h"
@@ -52,7 +53,6 @@ static NSString* TERMINAL_ARRANGEMENT_OLD_X_ORIGIN = @"Old X Origin";
 static NSString* TERMINAL_ARRANGEMENT_OLD_Y_ORIGIN = @"Old Y Origin";
 static NSString* TERMINAL_ARRANGEMENT_OLD_WIDTH = @"Old Width";
 static NSString* TERMINAL_ARRANGEMENT_OLD_HEIGHT = @"Old Height";
-
 static NSString* TERMINAL_ARRANGEMENT_X_ORIGIN = @"X Origin";
 static NSString* TERMINAL_ARRANGEMENT_Y_ORIGIN = @"Y Origin";
 static NSString* TERMINAL_ARRANGEMENT_WIDTH = @"Width";
@@ -81,68 +81,6 @@ NSString *kRowsKVCKey = @"rows";
 // keys for to-many relationships:
 NSString *kSessionsKVCKey = @"sessions";
 
-#define TABVIEW_TOP_OFFSET                29
-#define TABVIEW_BOTTOM_OFFSET            27
-#define TABVIEW_LEFT_RIGHT_OFFSET        29
-#define TOOLBAR_OFFSET                    0
-
-@class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
-
-@interface PseudoTerminal ()
-- (void)updateDivisionView;
-- (NSRect)traditionalFullScreenFrameForScreen:(NSScreen *)screen;
-- (void)_updateToolbeltParentage;
-- (CGFloat)fullscreenToolbeltWidth;
-- (BOOL)_haveLeftBorder;
-- (BOOL)_haveRightBorder;
-- (void)fitBottomBarToWindow;
-- (void)repositionWidgets;
-- (int)_screenAtPoint:(NSPoint)p;
-- (void)copySettingsFrom:(PseudoTerminal*)other;
-- (void)fitTabsToWindow;
-- (BOOL)showCloseWindow;
-- (void)_loadFindStringFromSharedPasteboard;
-- (NSSize)windowDecorationSize;
-- (void)hideFullScreenTabControl;
-- (NSRect)maxFrame;
-- (void)_drawFullScreenBlackBackground;
-- (void)insertTab:(PTYTab*)aTab atIndex:(int)anIndex;
-- (BOOL)_haveBottomBorder;
-- (BOOL)_haveTopBorder;
-- (float)maxCharHeight:(int*)numChars;
-- (float)maxCharWidth:(int*)numChars;
-- (void)assignUniqueNumberToWindow;
-- (void)safelySetSessionSize:(PTYSession*)aSession
-                        rows:(int)rows
-                     columns:(int)columns;
-- (void)setInstantReplayBarVisible:(BOOL)visible;
-- (void)adjustFullScreenWindowForBottomBarChange;
-- (void)fitTabToWindow:(PTYTab*)aTab;
-- (void)setupSession:(PTYSession *)aSession
-               title:(NSString *)title
-            withSize:(NSSize*)size;
-- (long long)timestampForFraction:(float)f;
-- (PTYSession*)newSessionWithBookmark:(Profile*)bookmark;
-- (void)runCommandInSession:(PTYSession*)aSession
-                      inCwd:(NSString*)oldCWD
-              forObjectType:(iTermObjectType)objectType;
-- (void)_refreshTerminal:(NSNotification *)aNotification;
-
-@end
-
-@implementation BottomBarView
-- (void)drawRect:(NSRect)dirtyRect
-{
-    [[NSColor controlColor] setFill];
-    NSRectFill(dirtyRect);
-
-    // Draw a black line at the top of the view.
-    [[NSColor blackColor] setFill];
-    NSRect r = [self frame];
-    NSRectFill(NSMakeRect(0, r.size.height - 1, r.size.width, 1));
-}
-
-@end
 @implementation PseudoTerminal
 
 - (id)init {
@@ -477,6 +415,53 @@ NSString *kSessionsKVCKey = @"sessions";
     [[self window] setRestorable:YES];
     [[self window] setRestorationClass:[PseudoTerminalRestorer class]];
     terminalGuid_ = [[NSString stringWithFormat:@"pty-%@", [ProfileModel freshGuid]] retain];
+}
+
+- (void)dealloc
+{
+    doNotSetRestorableState_ = YES;
+    wellFormed_ = NO;
+    [toolbelt_ shutdown];
+    [drawer_ release];
+    
+    // Do not assume that [self window] is valid here. It may have been freed.
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    
+    // Cancel any SessionView timers.
+    for (PTYSession* aSession in [self sessions]) {
+        [[aSession view] cancelTimers];
+    }
+    
+    // Release all our sessions
+    NSTabViewItem *aTabViewItem;
+    for (; [TABVIEW numberOfTabViewItems]; )  {
+        aTabViewItem = [TABVIEW tabViewItemAtIndex:0];
+        [[aTabViewItem identifier] terminateAllSessions];
+        PTYTab* theTab = [aTabViewItem identifier];
+        [theTab setParentWindow:nil];
+        [TABVIEW removeTabViewItem:aTabViewItem];
+    }
+    
+    if ([[iTermController sharedInstance] currentTerminal] == self) {
+        NSLog(@"Red alert! Current terminal is being freed!");
+        [[iTermController sharedInstance] setCurrentTerminal:nil];
+    }
+    [broadcastViewIds_ release];
+    [commandField release];
+    [bottomBar release];
+    [_toolbarController release];
+    [autocompleteView shutdown];
+    [pbHistoryView shutdown];
+    [pbHistoryView release];
+    [autocompleteView release];
+    [tabBarControl release];
+    [terminalGuid_ release];
+    if (fullScreenTabviewTimer_) {
+        [fullScreenTabviewTimer_ invalidate];
+    }
+    [lastArrangement_ release];
+    [_divisionView release];
+    [super dealloc];
 }
 
 - (void)updateDivisionView {
@@ -1048,52 +1033,6 @@ NSString *kSessionsKVCKey = @"sessions";
     return [[[TABVIEW selectedTabViewItem] identifier] activeSession];
 }
 
-- (void)dealloc
-{
-    doNotSetRestorableState_ = YES;
-    wellFormed_ = NO;
-    [toolbelt_ shutdown];
-    [drawer_ release];
-
-    // Do not assume that [self window] is valid here. It may have been freed.
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-
-    // Cancel any SessionView timers.
-    for (PTYSession* aSession in [self sessions]) {
-        [[aSession view] cancelTimers];
-    }
-
-    // Release all our sessions
-    NSTabViewItem *aTabViewItem;
-    for (; [TABVIEW numberOfTabViewItems]; )  {
-        aTabViewItem = [TABVIEW tabViewItemAtIndex:0];
-        [[aTabViewItem identifier] terminateAllSessions];
-        PTYTab* theTab = [aTabViewItem identifier];
-        [theTab setParentWindow:nil];
-        [TABVIEW removeTabViewItem:aTabViewItem];
-    }
-
-    if ([[iTermController sharedInstance] currentTerminal] == self) {
-        NSLog(@"Red alert! Current terminal is being freed!");
-        [[iTermController sharedInstance] setCurrentTerminal:nil];
-    }
-    [broadcastViewIds_ release];
-    [commandField release];
-    [bottomBar release];
-    [_toolbarController release];
-    [autocompleteView shutdown];
-    [pbHistoryView shutdown];
-    [pbHistoryView release];
-    [autocompleteView release];
-    [tabBarControl release];
-    [terminalGuid_ release];
-    if (fullScreenTabviewTimer_) {
-        [fullScreenTabviewTimer_ invalidate];
-    }
-    [lastArrangement_ release];
-    [_divisionView release];
-    [super dealloc];
-}
 
 - (void)setWindowTitle
 {

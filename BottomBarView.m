@@ -10,20 +10,15 @@
 
 @implementation BottomBarView
 
-- (id)initWithFrame:(NSRect)frame
-{
-    self = [super initWithFrame:frame];
-    if (self) {
-        // Initialization code here.
-    }
-    return self;
-}
-
 - (void)drawRect:(NSRect)dirtyRect
 {
-	[super drawRect:dirtyRect];
-	
-    // Drawing code here.
+    [[NSColor controlColor] setFill];
+    NSRectFill(dirtyRect);
+    
+    // Draw a black line at the top of the view.
+    [[NSColor blackColor] setFill];
+    NSRect r = [self frame];
+    NSRectFill(NSMakeRect(0, r.size.height - 1, r.size.width, 1));
 }
 
 @end

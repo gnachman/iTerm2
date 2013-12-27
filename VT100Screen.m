@@ -1544,7 +1544,6 @@ static const double kInterBellQuietPeriod = 0.1;
                                                                             line)].limit;
     NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumeratorAt:pos];
     NSArray *objects;
-    int count;
     do {
         objects = [enumerator nextObject];
         objects = [objects objectsOfClasses:@[ cls ]];
@@ -1725,7 +1724,6 @@ static const double kInterBellQuietPeriod = 0.1;
 - (NSArray *)marksOrNotesBefore:(Interval *)location {
     NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumeratorAt:location.limit];
     NSArray *objects;
-    int count;
     do {
         objects = [enumerator nextObject];
         objects = [objects objectsOfClasses:@[ [PTYNoteViewController class],
