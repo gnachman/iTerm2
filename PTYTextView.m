@@ -27,8 +27,6 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#define DEBUG_ALLOC           0
-#define DEBUG_METHOD_TRACE    0
 static const int MAX_WORKING_DIR_COUNT = 50;
 static const int kMaxSelectedTextLengthForCustomActions = 8192;
 static const int kMaxSelectedTextLinesForCustomActions = 100;
