@@ -356,7 +356,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
     [aSession setPreferencesFromAddressBookEntry:theBookmark];
     [aSession loadInitialColorTable];
-    [[aSession SCREEN] setDisplay:[aSession TEXTVIEW]];
     [aSession setName:[theBookmark objectForKey:KEY_NAME]];
     NSString *arrangementBookmarkName = arrangement[SESSION_ARRANGEMENT_BOOKMARK_NAME];
     if (arrangementBookmarkName) {
