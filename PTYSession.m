@@ -920,6 +920,37 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
 }
 
+- (void)launchProfileInCurrentTerminal:(Profile *)profile
+                               withURL:(NSString *)url
+{
+    PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+    [[iTermController sharedInstance] launchBookmark:profile
+                                          inTerminal:term
+                                             withURL:url
+                                            isHotkey:NO
+                                             makeKey:NO];
+}
+
+- (void)selectPaneLeftInCurrentTerminal
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneLeft:nil];
+}
+
+- (void)selectPaneRightInCurrentTerminal
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneRight:nil];
+}
+
+- (void)selectPaneAboveInCurrentTerminal
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneUp:nil];
+}
+
+- (void)selectPaneBelowInCurrentTerminal
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneDown:nil];
+}
+
 - (void)_maybeWarnAboutShortLivedSessions
 {
     if ([[NSDate date] timeIntervalSinceDate:creationDate_] < 3) {

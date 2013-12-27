@@ -72,6 +72,12 @@ typedef enum {
 - (BOOL)alertOnNextMark;
 - (void)startDownloadOverSCP:(SCPPath *)path;
 - (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath;
+- (void)launchProfileInCurrentTerminal:(Profile *)profile
+                               withURL:(NSString *)url;
+- (void)selectPaneLeftInCurrentTerminal;
+- (void)selectPaneRightInCurrentTerminal;
+- (void)selectPaneAboveInCurrentTerminal;
+- (void)selectPaneBelowInCurrentTerminal;
 
 @end
 

@@ -22,12 +22,12 @@
 #import "PointerPrefsController.h"
 #import "PreferencePanel.h"
 #import "PreferencePanel.h"
-#import "PseudoTerminal.h"
 #import "RegexKitLite/RegexKitLite.h"
 #import "SCPPath.h"
 #import "SmartMatch.h"
 #import "SearchResult.h"
 #import "SmartSelectionController.h"
+#import "SolidColorView.h"
 #import "ThreeFingerTapGestureRecognizer.h"
 #import "URLAction.h"
 #import "VT100RemoteHost.h"
@@ -4597,22 +4597,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)selectPaneLeftWithEvent:(NSEvent *)event
 {
-    [[[iTermController sharedInstance] currentTerminal] selectPaneLeft:nil];
+    [_delegate selectPaneLeftInCurrentTerminal];
 }
 
 - (void)selectPaneRightWithEvent:(NSEvent *)event
 {
-    [[[iTermController sharedInstance] currentTerminal] selectPaneRight:nil];
+    [_delegate selectPaneRightInCurrentTerminal];
 }
 
 - (void)selectPaneAboveWithEvent:(NSEvent *)event
 {
-    [[[iTermController sharedInstance] currentTerminal] selectPaneUp:nil];
+    [_delegate selectPaneAboveInCurrentTerminal];
 }
 
 - (void)selectPaneBelowWithEvent:(NSEvent *)event
 {
-    [[[iTermController sharedInstance] currentTerminal] selectPaneDown:nil];
+    [_delegate selectPaneBelowInCurrentTerminal];
 }
 
 - (void)newWindowWithProfile:(NSString *)guid withEvent:(NSEvent *)event
@@ -9821,12 +9821,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     Profile *bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:[url scheme]];
 
     if (bm != nil)  {
-        PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
-        [[iTermController sharedInstance] launchBookmark:bm
-                                              inTerminal:term
-                                                 withURL:trimmedURLString
-                                                isHotkey:NO
-                                                 makeKey:NO];
+        [_delegate launchProfileInCurrentTerminal:bm withURL:trimmedURLString];
     } else {
         [self openURL:url inBackground:background];
     }
