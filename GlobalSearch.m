@@ -52,9 +52,9 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     NSMutableSet* matchLocations_;
 }
 
-- (id)initWithTextView:(PTYTextView*)textView
-            findString:(NSString*)findString
-                 label:(NSString*)label;
+- (id)initWithSession:(PTYSession *)session
+           findString:(NSString*)findString
+                label:(NSString*)label;
 - (void)dealloc;
 - (BOOL)more;
 - (NSArray*)results;
@@ -167,7 +167,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
 
 @implementation GlobalSearchInstance
 
-- (id)initWithTextView:(PTYTextView*)textView
+- (id)initWithSession:(PTYSession *)session
             findString:(NSString*)findString
                  label:(NSString*)label
 {
@@ -178,9 +178,9 @@ const double GLOBAL_SEARCH_MARGIN = 10;
         results_ = [[NSMutableArray alloc] init];
         findString_ = [findString copy];
         more_ = YES;
-        textView_ = textView;
-        textViewDataSource_ = [textView dataSource];  // TODO: this is a weak ref. Be on the lookout for its death.
-        theSession_ = [textViewDataSource_ session];
+        textView_ = [session TEXTVIEW];
+        textViewDataSource_ = [session SCREEN];
+        theSession_ = session;
         label_ = [label retain];
         findContext_ = [[FindContext alloc] init];
         [textViewDataSource_ setFindString:findString_
@@ -522,7 +522,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
                 }
             }
             GlobalSearchInstance* aSearch;
-            aSearch = [[[GlobalSearchInstance alloc] initWithTextView:[aSession TEXTVIEW]
+            aSearch = [[[GlobalSearchInstance alloc] initWithSession:aSession
                                                            findString:findString
                                                                 label:[iTermExpose labelForTab:[aSession tab]
                                                                                   windowNumber:i+1
@@ -693,7 +693,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
         tv = [inst textView];
         [tv setSelectionFromX:[theResult x] fromY:[theResult y] toX:[theResult endX]+1 toY:[theResult endY]];
         [tv scrollToSelection];
-        session = [[tv dataSource] session];
+        session = [inst session];
     } else {
         theResult = nil;
     }

@@ -18,7 +18,6 @@ typedef enum {
 
 @protocol PTYTextViewDataSource
 
-- (PTYSession *)session;
 - (VT100Terminal *)terminal;
 - (int)numberOfLines;
 - (int)width;
@@ -99,5 +98,7 @@ typedef enum {
 - (BOOL)hasMarkOnLine:(int)line;
 - (NSString *)workingDirectoryOnLine:(int)line;
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line;
+
+- (void)clearBuffer;
 
 @end

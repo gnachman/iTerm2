@@ -16,12 +16,16 @@
 // Number of pixels margin on the top.
 #define VMARGIN 2
 
+#define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
+#define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
+
 @class CRunStorage;
 @class FindCursorView;
 @class MovingAverage;
 @class PTYScrollView;
-@class PTYSession;  // TODO: Remove this after PTYTextView doesn't depend directly on PTYSession
+@class PTYScroller;
 @class PTYTask;
+@class PTYTextView;
 @class SCPPath;
 @class SearchResult;
 @class ThreeFingerTapGestureRecognizer;
@@ -78,6 +82,37 @@ typedef enum {
 - (void)selectPaneRightInCurrentTerminal;
 - (void)selectPaneAboveInCurrentTerminal;
 - (void)selectPaneBelowInCurrentTerminal;
+- (void)writeTask:(NSData*)data;
+- (void)textViewDidBecomeFirstResponder;
+- (void)refreshAndStartTimerIfNeeded;
+- (BOOL)textViewIsActiveSession;
+- (BOOL)textViewSessionIsBroadcastingInput;
+- (BOOL)textViewTabHasMaximizedPanel;
+- (void)textViewWillNeedUpdateForBlink;
+- (BOOL)textViewDelegateHandlesAllKeystrokes;
+- (BOOL)textViewInSameTabAsTextView:(PTYTextView *)other;
+- (void)textViewSplitVertically:(BOOL)vertically withProfileGuid:(NSString *)guid;
+- (void)textViewSelectNextTab;
+- (void)textViewSelectPreviousTab;
+- (void)textViewSelectNextWindow;
+- (void)textViewSelectPreviousWindow;
+- (void)textViewCreateWindowWithProfileGuid:(NSString *)guid;
+- (void)textViewCreateTabWithProfileGuid:(NSString *)guid;
+- (void)textViewSelectNextPane;
+- (void)textViewSelectPreviousPane;
+- (void)textViewEditSession;
+- (void)textViewToggleBroadcastingInput;
+- (void)textViewCloseWithConfirmation;
+- (NSString *)textViewPasteboardString;
+- (void)textViewPasteFromSessionWithMostRecentSelection;
+- (BOOL)textViewWindowUsesTransparency;
+- (BOOL)textViewAmbiguousWidthCharsAreDoubleWidth;
+- (PTYScroller *)textViewVerticalScroller;
+- (BOOL)textViewHasCoprocess;
+- (void)textViewPostTabContentsChangedNotification;
+- (void)textViewBeginDrag;
+- (void)textViewMovePane;
+- (NSStringEncoding)textViewEncoding;
 
 @end
 

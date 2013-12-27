@@ -19,9 +19,6 @@
 #import <Foundation/Foundation.h>
 #include <sys/time.h>
 
-#define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
-#define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
-
 // Posted when the tmux font changes. Window layouts will need to be updated.
 extern NSString *const kPTYSessionTmuxFontDidChange;
 

@@ -14,14 +14,12 @@
 #import "PTYNoteView.h"
 #import "PTYNoteViewController.h"
 #import "PTYScrollView.h"
-#import "PTYSession.h"
 #import "PTYTab.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
 #import "PasteboardHistory.h"
 #import "PointerController.h"
 #import "PointerPrefsController.h"
-#import "PreferencePanel.h"
 #import "PreferencePanel.h"
 #import "RegexKitLite/RegexKitLite.h"
 #import "SCPPath.h"
@@ -705,8 +703,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (BOOL)becomeFirstResponder
 {
-    PTYSession* mySession = [dataSource session];
-    [[mySession tab] setActiveSession:mySession];
+    [_delegate textViewDidBecomeFirstResponder];
     return YES;
 }
 
@@ -912,7 +909,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)updateScrollerForBackgroundColor
 {
-    PTYScroller *scroller = (PTYScroller*)[[[dataSource session] SCROLLVIEW] verticalScroller];
+    PTYScroller *scroller = [_delegate textViewVerticalScroller];
     BOOL isDark = ([self perceivedBrightness:defaultBGColor] < kBackgroundConsideredDarkThreshold);
     [scroller setHasDarkBackground:isDark];
 }
@@ -1469,7 +1466,7 @@ NSMutableArray* screens=0;
                                  Y:y
                 locationInTextView:scrollingLocation];
 
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
     [self scheduleSelectionScroll];
 }
 
@@ -1881,7 +1878,7 @@ NSMutableArray* screens=0;
 {
     if ([self blinkingCursor] &&
         [self isInKeyWindow] &&
-        [[[dataSource session] tab] activeSession] == [dataSource session]) {
+        [_delegate textViewIsActiveSession]) {
         return YES;
     } else {
         return NO;
@@ -2200,7 +2197,7 @@ NSMutableArray* screens=0;
     }
     const NSRect frame = [self visibleRect];
     double x = frame.origin.x + frame.size.width;
-    if ([[[[dataSource session] tab] realParentWindow] broadcastInputToSession:[dataSource session]]) {
+    if ([_delegate textViewSessionIsBroadcastingInput]) {
         NSSize size = [broadcastInputImage size];
         x -= size.width + kBroadcastMargin;
         [broadcastInputImage drawAtPoint:NSMakePoint(x,
@@ -2210,7 +2207,7 @@ NSMutableArray* screens=0;
                                 fraction:0.5];
     }
 
-    if ([[[dataSource session] SHELL] hasCoprocess]) {
+    if ([_delegate textViewHasCoprocess]) {
         NSSize size = [coprocessImage size];
         x -= size.width + kCoprocessMargin;
         [coprocessImage drawAtPoint:NSMakePoint(x,
@@ -2345,7 +2342,7 @@ NSMutableArray* screens=0;
 
 - (void)drawOutlineInRect:(NSRect)rect topOnly:(BOOL)topOnly
 {
-    if ([[[dataSource session] tab] hasMaximizedPane]) {
+    if ([_delegate textViewTabHasMaximizedPanel]) {
         NSColor *color = [self defaultBGColor];
         double r = [color redComponent];
         double g = [color greenComponent];
@@ -2443,7 +2440,7 @@ NSMutableArray* screens=0;
     int vh = visible.size.height;
     int lh = lineHeight;
     int visibleRows = vh / lh;
-    NSRect docVisibleRect = [[[dataSource session] SCROLLVIEW] documentVisibleRect];
+    NSRect docVisibleRect = [[self enclosingScrollView] documentVisibleRect];
     double hiddenAbove = docVisibleRect.origin.y + [self frame].origin.y;
     int firstVisibleRow = hiddenAbove / lh;
     if (lineEnd > firstVisibleRow + visibleRows) {
@@ -2627,7 +2624,7 @@ NSMutableArray* screens=0;
         // The user might have used the scroll wheel to cause blinking text to become
         // visible. Make sure the timer is running if anything onscreen is
         // blinking.
-        [[dataSource session] scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
+        [_delegate textViewWillNeedUpdateForBlink];
     }
     [selectedFont_ release];
     selectedFont_ = nil;
@@ -2882,7 +2879,7 @@ NSMutableArray* screens=0;
         [delegate queueKeyDown:event];
         return;
     }
-    if ([[[[[self dataSource] session] tab] realParentWindow] inInstantReplay]) {
+    if ([_delegate textViewDelegateHandlesAllKeystrokes]) {
         if (debugKeyDown) {
             NSLog(@"PTYTextView keyDown: in instant replay, send to delegate");
         }
@@ -3053,7 +3050,6 @@ NSMutableArray* screens=0;
             ry = -1;
         }
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         int buttonNumber = [event buttonNumber];
         if (buttonNumber == 2) {
@@ -3066,10 +3062,10 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
                 reportingMouseDown = YES;
-                [session writeTask:[terminal mousePress:buttonNumber
-                                          withModifiers:[event modifierFlags]
-                                                    atX:rx
-                                                      Y:ry]];
+                [_delegate writeTask:[terminal mousePress:buttonNumber
+                                            withModifiers:[event modifierFlags]
+                                                      atX:rx
+                                                        Y:ry]];
                 return;
                 break;
 
@@ -3102,7 +3098,6 @@ NSMutableArray* screens=0;
             ry = -1;
         }
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         int buttonNumber = [event buttonNumber];
         if (buttonNumber == 2) {
@@ -3114,10 +3109,10 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseRelease:buttonNumber
-                                            withModifiers:[event modifierFlags]
-                                                      atX:rx
-                                                        Y:ry]];
+                [_delegate writeTask:[terminal mouseRelease:buttonNumber
+                                             withModifiers:[event modifierFlags]
+                                                       atX:rx
+                                                         Y:ry]];
                 return;
                 break;
 
@@ -3156,7 +3151,6 @@ NSMutableArray* screens=0;
             ry = -1;
         }
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         int buttonNumber = [event buttonNumber];
         if (buttonNumber == 2) {
@@ -3168,10 +3162,10 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseMotion:buttonNumber
-                                           withModifiers:[event modifierFlags]
-                                                     atX:rx
-                                                       Y:ry]];
+                [_delegate writeTask:[terminal mouseMotion:buttonNumber
+                                            withModifiers:[event modifierFlags]
+                                                      atX:rx
+                                                        Y:ry]];
                 return;
                 break;
 
@@ -3206,17 +3200,16 @@ NSMutableArray* screens=0;
         if (rx < 0) rx = -1;
         if (ry < 0) ry = -1;
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
                 reportingMouseDown = YES;
-                [session writeTask:[terminal mousePress:MOUSE_BUTTON_RIGHT
-                                          withModifiers:[event modifierFlags]
-                                                    atX:rx
-                                                      Y:ry]];
+                [_delegate writeTask:[terminal mousePress:MOUSE_BUTTON_RIGHT
+                                           withModifiers:[event modifierFlags]
+                                                     atX:rx
+                                                       Y:ry]];
                 return;
                 break;
             case MOUSE_REPORTING_NONE:
@@ -3257,16 +3250,15 @@ NSMutableArray* screens=0;
             ry = -1;
         }
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseRelease:MOUSE_BUTTON_RIGHT
-                                            withModifiers:[event modifierFlags]
-                                                      atX:rx
-                                                        Y:ry]];
+                [_delegate writeTask:[terminal mouseRelease:MOUSE_BUTTON_RIGHT
+                                             withModifiers:[event modifierFlags]
+                                                       atX:rx
+                                                         Y:ry]];
                 return;
                 break;
 
@@ -3300,16 +3292,15 @@ NSMutableArray* screens=0;
             ry = -1;
         }
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_RIGHT
-                                           withModifiers:[event modifierFlags]
-                                                     atX:rx
-                                                       Y:ry]];
+                [_delegate writeTask:[terminal mouseMotion:MOUSE_BUTTON_RIGHT
+                                            withModifiers:[event modifierFlags]
+                                                      atX:rx
+                                                        Y:ry]];
                 return;
                 break;
 
@@ -3343,7 +3334,6 @@ NSMutableArray* screens=0;
             ry = -1;
         }
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         int buttonNumber;
         if ([event deltaY] > 0)
@@ -3356,10 +3346,10 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
                 if ([event deltaY] != 0) {
-                    [session writeTask:[terminal mousePress:buttonNumber
-                                              withModifiers:[event modifierFlags]
-                                                        atX:rx
-                                                          Y:ry]];
+                    [_delegate writeTask:[terminal mousePress:buttonNumber
+                                               withModifiers:[event modifierFlags]
+                                                         atX:rx
+                                                           Y:ry]];
                     return;
                 }
                 break;
@@ -3575,7 +3565,7 @@ NSMutableArray* screens=0;
             [[self window] makeKeyWindow];
         }
         if ([self isInKeyWindow]) {
-            [[[dataSource session] tab] setActiveSession:[dataSource session]];
+            [_delegate textViewDidBecomeFirstResponder];
         }
     }
 }
@@ -3740,7 +3730,7 @@ NSMutableArray* screens=0;
     mouseDownIsThreeFingerClick_ = NO;
     DLog(@"mouseDownImpl - set mouseDownIsThreeFingerClick=NO");
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
-        [[MovePaneController sharedInstance] beginDrag:[dataSource session]];
+        [_delegate textViewBeginDrag];
         return NO;
     }
     if (numTouches_ == 3) {
@@ -3762,7 +3752,7 @@ NSMutableArray* screens=0;
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
     if (!cmdPressed &&
         frontTextView &&
-        [[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
+        ![_delegate textViewInSameTabAsTextView:frontTextView]) {
         // Mouse clicks in inactive tab are always handled by superclass because we don't want clicks
         // to select a split pane to be xterm-mouse-reported. We do allow cmd-clicks to go through
         // incase you're clicking on a URL.
@@ -3810,7 +3800,6 @@ NSMutableArray* screens=0;
         lastReportedX_ = rx;
         lastReportedY_ = ry;
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
@@ -3818,10 +3807,10 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_ALL_MOTION:
                 DebugLog(@"Do xterm mouse reporting");
                 reportingMouseDown = YES;
-                [session writeTask:[terminal mousePress:MOUSE_BUTTON_LEFT
-                                          withModifiers:[event modifierFlags]
-                                                    atX:rx
-                                                      Y:ry]];
+                [_delegate writeTask:[terminal mousePress:MOUSE_BUTTON_LEFT
+                                            withModifiers:[event modifierFlags]
+                                                      atX:rx
+                                                        Y:ry]];
                 return NO;
                 break;
 
@@ -3965,7 +3954,7 @@ NSMutableArray* screens=0;
     }
 
     DebugLog([NSString stringWithFormat:@"Mouse down. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
 
     return NO;
 }
@@ -4004,7 +3993,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
     if (!cmdPressed &&
         frontTextView &&
-        [[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
+        ![_delegate textViewInSameTabAsTextView:frontTextView]) {
         // Mouse clicks in inactive tab are always handled by superclass but make it first responder.
         [[self window] makeFirstResponder: self];
         [super mouseUp:event];
@@ -4045,16 +4034,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         lastReportedX_ = rx;
         lastReportedY_ = ry;
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseRelease:MOUSE_BUTTON_LEFT
-                                            withModifiers:[event modifierFlags]
-                                                      atX:rx
-                                                        Y:ry]];
+                [_delegate writeTask:[terminal mouseRelease:MOUSE_BUTTON_LEFT
+                                              withModifiers:[event modifierFlags]
+                                                        atX:rx
+                                                          Y:ry]];
                 if (willFollowLink) {
                     // This is a special case. Cmd-click is treated like alt-click at the protocol
                     // level (because we use alt to disable mouse reporting, unfortunately). Few
@@ -4148,7 +4136,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     DebugLog([NSString stringWithFormat:@"Mouse up. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
 
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
 }
 
 - (void)mouseMoved:(NSEvent *)event
@@ -4182,11 +4170,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (rx != lastReportedX_ || ry != lastReportedY_) {
         lastReportedX_ = rx;
         lastReportedY_ = ry;
-        PTYSession* session = [dataSource session];
-        [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_NONE
-                                   withModifiers:[event modifierFlags]
-                                             atX:rx
-                                               Y:ry]];
+        [_delegate writeTask:[terminal mouseMotion:MOUSE_BUTTON_NONE
+                                     withModifiers:[event modifierFlags]
+                                               atX:rx
+                                                 Y:ry]];
     }
 }
 
@@ -4256,15 +4243,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             lastReportedX_ = rx;
             lastReportedY_ = ry;
             VT100Terminal *terminal = [dataSource terminal];
-            PTYSession* session = [dataSource session];
 
             switch ([terminal mouseMode]) {
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
-                    [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_LEFT
-                                               withModifiers:[event modifierFlags]
-                                                         atX:rx
-                                                           Y:ry]];
+                    [_delegate writeTask:[terminal mouseMotion:MOUSE_BUTTON_LEFT
+                                                 withModifiers:[event modifierFlags]
+                                                           atX:rx
+                                                             Y:ry]];
                 case MOUSE_REPORTING_NORMAL:
                     DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
                     return;
@@ -4558,22 +4544,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)nextTabWithEvent:(NSEvent *)event
 {
-    [[[[dataSource session] tab] realParentWindow] nextTab:nil];
+    [_delegate textViewSelectNextTab];
 }
 
 - (void)previousTabWithEvent:(NSEvent *)event
 {
-    [[[[dataSource session] tab] realParentWindow] previousTab:nil];
+    [_delegate textViewSelectPreviousTab];
 }
 
 - (void)nextWindowWithEvent:(NSEvent *)event
 {
-    [[iTermController sharedInstance] nextTerminal:nil];
+    [_delegate textViewSelectNextWindow];
 }
 
 - (void)previousWindowWithEvent:(NSEvent *)event
 {
-    [[iTermController sharedInstance] previousTerminal:nil];
+    [_delegate textViewSelectPreviousWindow];
 }
 
 - (void)movePaneWithEvent:(NSEvent *)event
@@ -4618,34 +4604,32 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)newWindowWithProfile:(NSString *)guid withEvent:(NSEvent *)event
 {
-    [[[[dataSource session] tab] realParentWindow] newWindowWithBookmarkGuid:guid];
+    [_delegate textViewCreateWindowWithProfileGuid:guid];
 }
 
 - (void)newTabWithProfile:(NSString *)guid withEvent:(NSEvent *)event
 {
-    [[[[dataSource session] tab] realParentWindow] newTabWithBookmarkGuid:guid];
+    [_delegate textViewCreateTabWithProfileGuid:guid];
 }
 
 - (void)newVerticalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event
 {
-    [[[[dataSource session] tab] realParentWindow] splitVertically:YES
-                                                  withBookmarkGuid:guid];
+    [_delegate textViewSplitVertically:YES withProfileGuid:guid];
 }
 
 - (void)newHorizontalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event
 {
-    [[[[dataSource session] tab] realParentWindow] splitVertically:NO
-                                                  withBookmarkGuid:guid];
+    [_delegate textViewSplitVertically:NO withProfileGuid:guid];
 }
 
 - (void)selectNextPaneWithEvent:(NSEvent *)event
 {
-    [[[dataSource session] tab] nextSession];
+    [_delegate textViewSelectNextPane];
 }
 
 - (void)selectPreviousPaneWithEvent:(NSEvent *)event
 {
-    [[[dataSource session] tab] previousSession];
+    [_delegate textViewSelectPreviousPane];
 }
 
 - (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event
@@ -4664,7 +4648,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int cursorX = [dataSource cursorX];
     int width = [dataSource width];
     VT100Terminal *terminal = [dataSource terminal];
-    PTYSession* session = [dataSource session];
 
     int i = abs(cursorX - x);
     int j = abs(cursorY - y);
@@ -4674,15 +4657,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // so first move to left, and (if necessary)
         // up or down afterwards
         while (i > 0) {
-            [session writeTask:[terminal keyArrowLeft:0]];
+            [_delegate writeTask:[terminal keyArrowLeft:0]];
             i--;
         }
     }
     while (j > 0) {
         if (cursorY > y) {
-            [session writeTask:[terminal keyArrowUp:0]];
+            [_delegate writeTask:[terminal keyArrowUp:0]];
         } else {
-            [session writeTask:[terminal keyArrowDown:0]];
+            [_delegate writeTask:[terminal keyArrowDown:0]];
         }
         j--;
     }
@@ -4691,7 +4674,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // so first moved up/down (if necessary)
         // and then/now to the right
         while (i > 0) {
-            [session writeTask:[terminal keyArrowRight:0]];
+            [_delegate writeTask:[terminal keyArrowRight:0]];
             i--;
         }
     }
@@ -4885,7 +4868,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     endX = [dataSource width];
     endY = [dataSource numberOfLines] - 1;
     [self setSelectionTime];
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
 }
 
 - (void)deselect
@@ -4893,7 +4876,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (startX > -1) {
         startX = -1;
         [self setSelectionTime];
-        [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+        [_delegate refreshAndStartTimerIfNeeded];
     }
 }
 
@@ -4963,26 +4946,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)splitTextViewVertically:(id)sender
 {
-    [[[[dataSource session] tab] realParentWindow] splitVertically:YES
-                                                      withBookmark:[[ProfileModel sharedInstance] defaultBookmark]
-                                                     targetSession:[dataSource session]];
+    [_delegate textViewSplitVertically:YES withProfileGuid:nil];
 }
 
 - (void)splitTextViewHorizontally:(id)sender
 {
-    [[[[dataSource session] tab] realParentWindow] splitVertically:NO
-                                                      withBookmark:[[ProfileModel sharedInstance] defaultBookmark]
-                                                     targetSession:[dataSource session]];
+    [_delegate textViewSplitVertically:NO withProfileGuid:nil];
 }
 
 - (void)movePane:(id)sender
 {
-    [[MovePaneController sharedInstance] movePane:[dataSource session]];
+    [_delegate textViewMovePane];
 }
 
 - (void)clearTextViewBuffer:(id)sender
 {
-    [[dataSource session] clearBuffer];
+    [dataSource clearBuffer];
 }
 
 - (void)addViewForNote:(PTYNoteViewController *)note
@@ -5079,17 +5058,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)editTextViewSession:(id)sender
 {
-    [[[[dataSource session] tab] realParentWindow] editSession:[dataSource session]];
+    [_delegate textViewEditSession];
 }
 
 - (void)toggleBroadcastingInput:(id)sender
 {
-    [[[[dataSource session] tab] realParentWindow] toggleBroadcastingInputToSession:[dataSource session]];
+    [_delegate textViewToggleBroadcastingInput];
 }
 
 - (void)closeTextViewSession:(id)sender
 {
-    [[[[dataSource session] tab] realParentWindow] closeSessionWithConfirmation:[dataSource session]];
+    [_delegate textViewCloseWithConfirmation];
 }
 
 - (void)copySelectionAccordingToUserPreferences
@@ -5274,7 +5253,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)paste:(id)sender
 {
-    NSString* info = [PTYSession pasteboardString];
+    NSString* info = [_delegate textViewPasteboardString];
     if (info) {
         [[PasteboardHistory sharedInstance] save:info];
     }
@@ -5291,15 +5270,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)pasteSelection:(id)sender
 {
-    if ([_delegate respondsToSelector:@selector(pasteString:)]) {
-        PTYSession *session = [[iTermController sharedInstance] sessionWithMostRecentSelection];
-        if (session) {
-            PTYTextView *textview = [session TEXTVIEW];
-            if (textview->startX > -1) {
-                [_delegate pasteString:[textview selectedText]];
-            }
-        }
-    }
+    [_delegate textViewPasteFromSessionWithMostRecentSelection];
 }
 
 - (BOOL)_broadcastToggleable
@@ -5785,7 +5756,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (BOOL)performDragOperation:(id <NSDraggingInfo>)sender
 {
     unsigned int dragOperation;
-    PTYSession *delegate = [self delegate];
     BOOL res = NO;
 
     // If parent class does not know how to deal with this drag type, check if we do.
@@ -5831,14 +5801,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     }
 
                     // Just paste the file names into the shell after escaping special characters.
-                    if ([delegate respondsToSelector:@selector(pasteString:)]) {
+                    if ([_delegate respondsToSelector:@selector(pasteString:)]) {
                         NSMutableString *path;
 
                         path = [[NSMutableString alloc] initWithString:(NSString*)[propertyList objectAtIndex:i]];
 
                         // get rid of special characters
-                        [delegate pasteString:[path stringWithEscapedShellCharacters]];
-                        [delegate pasteString:@" "];
+                        [_delegate pasteString:[path stringWithEscapedShellCharacters]];
+                        [_delegate pasteString:@" "];
                         [path release];
 
                         res = YES;
@@ -5848,8 +5818,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (!res && [types containsObject:NSStringPboardType]) {
                 aString = [pb stringForType:NSStringPboardType];
                 if (aString != nil) {
-                    if ([delegate respondsToSelector:@selector(pasteString:)]) {
-                        [delegate pasteString:aString];
+                    if ([_delegate respondsToSelector:@selector(pasteString:)]) {
+                        [_delegate pasteString:aString];
                         res = YES;
                     }
                 }
@@ -5884,7 +5854,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         aString = [self content];
     }
 
-    aData = [aString dataUsingEncoding:[[dataSource session] encoding]
+    aData = [aString dataUsingEncoding:[_delegate textViewEncoding]
                   allowLossyConversion:YES];
 
     // initialize a save panel
@@ -6019,7 +5989,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if ([self hasMarkedText]) {
         // In case imeOffset changed, the frame height must adjust.
-        [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+        [_delegate refreshAndStartTimerIfNeeded];
     }
 }
 
@@ -6067,7 +6037,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // char in the IME buffer then this causes it be erased.
         [self invalidateInputMethodEditorRect];
     }
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
     [self scrollEnd];
 }
 
@@ -6082,7 +6052,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     IM_INPUT_MARKEDRANGE = NSMakeRange(0, 0);
     imeOffset = 0;
     [self invalidateInputMethodEditorRect];
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
     [self scrollEnd];
 }
 
@@ -6211,7 +6181,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     startX = tmpX1;
     startY = tmpY1;
     [self setSelectionTime];
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
     return YES;
 }
 
@@ -6250,7 +6220,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     endX = tmpX2;
     endY = tmpY2;
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
 }
 
 // Add a match to resultMap_
@@ -6562,7 +6532,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (BOOL)useTransparency
 {
-    return [[[[dataSource session] tab] realParentWindow] useTransparency];
+    return [_delegate textViewWindowUsesTransparency];
 }
 
 // service stuff
@@ -8066,8 +8036,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int screenstartline = [self frame].origin.y / lineHeight;
     DebugLog([NSString stringWithFormat:@"Draw line %d (%d on screen)", line, (line - screenstartline)]);
 #endif
-    const BOOL stripes = useBackgroundIndicator_ &&
-        [[[[dataSource session] tab] realParentWindow] broadcastInputToSession:[dataSource session]];
+    const BOOL stripes = useBackgroundIndicator_ && [_delegate textViewSessionIsBroadcastingInput];
     int WIDTH = [dataSource width];
     screen_char_t* theLine = [dataSource getLineAtIndex:line];
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
@@ -8387,7 +8356,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         fg,
                         bg,
                         &len,
-                        [[dataSource session] doubleWidth],
+                        [_delegate textViewAmbiguousWidthCharsAreDoubleWidth],
                         NULL);
 
     // Count how many additional cells are needed due to double-width chars
@@ -8434,7 +8403,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             fg,
                             bg,
                             &len,
-                            [[dataSource session] doubleWidth],
+                            [_delegate textViewAmbiguousWidthCharsAreDoubleWidth],
                             &cursorIndex);
         int cursorX = 0;
         int baseX = floor(xStart * charWidth + MARGIN);
@@ -8695,7 +8664,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     if ([self blinkingCursor] &&
         [self isInKeyWindow] &&
-        [[[dataSource session] tab] activeSession] == [dataSource session] &&
+        [_delegate textViewIsActiveSession] &&
         now - lastTimeCursorMoved_ > 0.5) {
         // Allow the cursor to blink if it is configured, the window is key, this session is active
         // in the tab, and the cursor has not moved for half a second.
@@ -8803,7 +8772,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     // draw the box
                     DLog(@"draw cursor box at %f,%f size %fx%f", (float)curX, (float)curY, (float)ceil(cursorWidth * (double_width ? 2 : 1)), cursorHeight);
                     if ([self isInKeyWindow] &&
-                        [[[dataSource session] tab] activeSession] == [dataSource session]) {
+                        [_delegate textViewIsActiveSession]) {
                         frameOnly = NO;
                         NSRectFill(NSMakeRect(curX,
                                               curY,
@@ -10109,9 +10078,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if (foundDirty && [dataSource shouldSendContentsChangedNotification]) {
         changedSinceLastExpose_ = YES;
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermTabContentsChanged"
-                                                            object:[dataSource session]
-                                                          userInfo:nil];
+        [_delegate textViewPostTabContentsChangedNotification];
     }
 
     if (foundDirty && gDebugLogging) {
@@ -10298,7 +10265,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
     [self setSelectionTime];
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
 }
 
 - (void)_deselectDirtySelectedText

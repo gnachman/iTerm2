@@ -1504,31 +1504,31 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 + (NSString*)pasteboardString
 {
-  NSPasteboard *board;
-
-  board = [NSPasteboard generalPasteboard];
-  assert(board != nil);
-
-  NSArray *supportedTypes = [NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil];
-  NSString *bestType = [board availableTypeFromArray:supportedTypes];
-
-  NSString* info = nil;
-  if ([bestType isEqualToString:NSFilenamesPboardType]) {
-    NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
-    NSMutableArray *escapedFilenames = [NSMutableArray array];
-    for (NSString *filename in filenames) {
-      [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
+    NSPasteboard *board;
+    
+    board = [NSPasteboard generalPasteboard];
+    assert(board != nil);
+    
+    NSArray *supportedTypes = [NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil];
+    NSString *bestType = [board availableTypeFromArray:supportedTypes];
+    
+    NSString* info = nil;
+    if ([bestType isEqualToString:NSFilenamesPboardType]) {
+        NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
+        NSMutableArray *escapedFilenames = [NSMutableArray array];
+        for (NSString *filename in filenames) {
+            [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
+        }
+        if (escapedFilenames.count > 0) {
+            info = [escapedFilenames componentsJoinedByString:@" "];
+        }
+        if ([info length] == 0) {
+            info = nil;
+        }
+    } else {
+        info = [board stringForType:NSStringPboardType];
     }
-    if (escapedFilenames.count > 0) {
-      info = [escapedFilenames componentsJoinedByString:@" "];
-    }
-    if ([info length] == 0) {
-      info = nil;
-    }
-  } else {
-    info = [board stringForType:NSStringPboardType];
-  }
-  return info;
+    return info;
 }
 
 - (void)insertText:(NSString *)string
@@ -1728,6 +1728,15 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     if ([[PreferencePanel sharedInstance] copySelection]) {
         [TEXTVIEW copySelectionAccordingToUserPreferences];
     }
+}
+
+- (PTYScroller *)textViewVerticalScroller
+{
+    return (PTYScroller *)[SCROLLVIEW verticalScroller];
+}
+
+- (BOOL)textViewHasCoprocess {
+    return [SHELL hasCoprocess];
 }
 
 - (void) textViewResized:(NSNotification *) aNotification;
@@ -4349,6 +4358,154 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (void)textViewPostTabContentsChangedNotification
+{
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermTabContentsChanged"
+                                                        object:self
+                                                      userInfo:nil];
+}
+
+- (void)textViewBeginDrag
+{
+    [[MovePaneController sharedInstance] beginDrag:self];
+}
+
+- (void)textViewMovePane
+{
+    [[MovePaneController sharedInstance] movePane:self];
+}
+
+- (NSStringEncoding)textViewEncoding
+{
+    return [self encoding];
+}
+
+- (void)textViewWillNeedUpdateForBlink
+{
+    [self scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
+}
+
+- (void)textViewSplitVertically:(BOOL)vertically withProfileGuid:(NSString *)guid
+{
+    Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
+    if (guid) {
+        profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    }
+    [[[self tab] realParentWindow] splitVertically:vertically
+                                      withBookmark:profile
+                                     targetSession:self];
+}
+
+- (void)textViewSelectNextTab
+{
+    [[[self tab] realParentWindow] nextTab:nil];
+}
+
+- (void)textViewSelectPreviousTab
+{
+    [[[self tab] realParentWindow] previousTab:nil];
+}
+
+- (void)textViewSelectNextWindow
+{
+    [[iTermController sharedInstance] nextTerminal:nil];
+}
+
+- (void)textViewSelectPreviousWindow
+{
+    [[iTermController sharedInstance] previousTerminal:nil];
+}
+
+- (void)textViewSelectNextPane
+{
+    [[self tab] nextSession];
+}
+
+- (void)textViewSelectPreviousPane;
+{
+    [[self tab] previousSession];
+}
+
+- (void)textViewEditSession
+{
+    [[[self tab] realParentWindow] editSession:self];
+}
+
+- (void)textViewToggleBroadcastingInput
+{
+    [[[self tab] realParentWindow] toggleBroadcastingInputToSession:self];
+}
+
+- (void)textViewCloseWithConfirmation
+{
+    [[[self tab] realParentWindow] closeSessionWithConfirmation:self];
+}
+
+- (NSString *)textViewPasteboardString
+{
+    return [[self class] pasteboardString];
+}
+
+- (void)textViewPasteFromSessionWithMostRecentSelection
+{
+    PTYSession *session = [[iTermController sharedInstance] sessionWithMostRecentSelection];
+    if (session) {
+        PTYTextView *textview = [session TEXTVIEW];
+        if ([textview selectionStartX] > -1) {
+            [self pasteString:[textview selectedText]];
+        }
+    }
+}
+
+- (BOOL)textViewWindowUsesTransparency
+{
+    return [[[self tab] realParentWindow] useTransparency];
+}
+
+- (BOOL)textViewAmbiguousWidthCharsAreDoubleWidth
+{
+    return [self doubleWidth];
+}
+
+- (void)textViewCreateWindowWithProfileGuid:(NSString *)guid
+{
+    [[[self tab] realParentWindow] newWindowWithBookmarkGuid:guid];
+}
+
+- (void)textViewCreateTabWithProfileGuid:(NSString *)guid
+{
+    [[[self tab] realParentWindow] newTabWithBookmarkGuid:guid];
+}
+
+- (BOOL)textViewDelegateHandlesAllKeystrokes
+{
+    return [[[self tab] realParentWindow] inInstantReplay];
+}
+
+- (BOOL)textViewInSameTabAsTextView:(PTYTextView *)other {
+    return [self tab] == [other.delegate tab];
+}
+
+- (BOOL)textViewIsActiveSession
+{
+    return [[self tab] activeSession] == self;
+}
+
+- (BOOL)textViewSessionIsBroadcastingInput
+{
+    return [[[self tab] realParentWindow] broadcastInputToSession:self];
+}
+
+- (BOOL)textViewTabHasMaximizedPanel
+{
+    return [[self tab] hasMaximizedPane];
+}
+
+- (void)textViewDidBecomeFirstResponder
+{
+    [[self tab] setActiveSession:self];
+}
+
 - (PTYScrollView *)SCROLLVIEW
 {
     return SCROLLVIEW;
@@ -4911,7 +5068,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         newProfile = [[ProfileModel sharedInstance] defaultBookmark];
     }
     if (newProfile) {
-        NSString *theName = [[[SCREEN session] addressBookEntry] objectForKey:KEY_NAME];
+        NSString *theName = [[self addressBookEntry] objectForKey:KEY_NAME];
         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:newProfile];
         [dict setObject:theName forKey:KEY_NAME];
         [self setAddressBookEntry:dict];
