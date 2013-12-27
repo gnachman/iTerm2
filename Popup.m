@@ -1,51 +1,32 @@
-// -*- mode:objc -*-
-/*
- **  Popup.m
- **
- **  Copyright 20101
- **
- **  Author: George Nachman
- **
- **  Project: iTerm2
- **
- **  Description: Base classes for popup windows like autocomplete and
- **  pasteboardhistory.
- **
- **  This program is free software; you can redistribute it and/or modify
- **  it under the terms of the GNU General Public License as published by
- **  the Free Software Foundation; either version 2 of the License, or
- **  (at your option) any later version.
- **
- **  This program is distributed in the hope that it will be useful,
- **  but WITHOUT ANY WARRANTY; without even the implied warranty of
- **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- **  GNU General Public License for more details.
- **
- **  You should have received a copy of the GNU General Public License
- **  along with this program; if not, write to the Free Software
- **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
+// Base classes for popup windows like autocomplete and pasteboardhistory.
 
 #import "Popup.h"
-#import "PseudoTerminal.h"
+#import "DebugLogging.h"
 #import "PTYTab.h"
 #import "PTYTextView.h"
 #import "VT100Screen.h"
 #import "iTermApplicationDelegate.h"
 #include <wctype.h>
 
-#ifdef POPUP_VERBOSE_LOGGING
-#define PopLog NSLog
-#else
-#define PopLog(args...) \
-do { \
-if (gDebugLogging) { \
-DebugLog([NSString stringWithFormat:args]); \
-} \
-} while (0)
-#endif
+#define PopLog DLog
 
 @implementation PopupEntry
+
+- (id)init
+{
+    self = [super init];
+    if (self) {
+        [self _setDefaultValues];
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [s_ release];
+    [prefix_ release];
+    [super dealloc];
+}
 
 - (void)_setDefaultValues
 {
@@ -53,17 +34,6 @@ DebugLog([NSString stringWithFormat:args]); \
     [self setMainValue:@""];
     [self setScore:0];
     [self setPrefix:@""];
-}
-
-- (id)init
-{
-    self = [super init];
-    if (!self) {
-        return self;
-    }
-    [self _setDefaultValues];
-    
-    return self;
 }
 
 + (PopupEntry*)entryWithString:(NSString*)s score:(double)score
@@ -141,9 +111,16 @@ DebugLog([NSString stringWithFormat:args]); \
                             styleMask:NSBorderlessWindowMask
                               backing:bufferingType
                                 defer:flag];
-    [self setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
-
+    if (self) {
+        [self setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
+    }
     return self;
+}
+
+- (void)dealloc
+{
+    [parentWindow_ release];
+    [super dealloc];
 }
 
 - (BOOL)canBecomeKeyWindow
@@ -166,7 +143,8 @@ DebugLog([NSString stringWithFormat:args]); \
 
 - (void)setParentWindow:(NSWindow*)parentWindow
 {
-    parentWindow_ = parentWindow;
+    [parentWindow_ autorelease];
+    parentWindow_ = [parentWindow retain];
 }
 
 - (void)close
@@ -199,23 +177,20 @@ DebugLog([NSString stringWithFormat:args]); \
 - (id)init
 {
     self = [super init];
-    if (!self) {
-        return self;
+    if (self) {
+        maxEntries_ = -1;
+        values_ = [[NSMutableArray alloc] init];
     }
-
-    maxEntries_ = -1;
-    values_ = [[NSMutableArray alloc] init];
     return self;
 }
 
 - (id)initWithMaxEntries:(int)maxEntries
 {
     self = [super init];
-    if (!self) {
-        return self;
+    if (self) {
+        maxEntries_ = maxEntries;
+        values_ = [[NSMutableArray alloc] init];
     }
-    maxEntries_ = maxEntries;
-    values_ = [[NSMutableArray alloc] init];
     return self;
 }
 
@@ -310,20 +285,17 @@ DebugLog([NSString stringWithFormat:args]); \
 - (id)initWithWindowNibName:(NSString*)nibName tablePtr:(NSTableView**)table model:(PopupModel*)model;
 {
     self = [super initWithWindowNibName:nibName];
-    if (!self) {
-        return self;
+    if (self) {
+        [self window];
+
+        if (table){
+            tableView_ = [*table retain];
+        }
+        model_ = [[PopupModel alloc] init];
+        substring_ = [[NSMutableString alloc] init];
+        unfilteredModel_ = [model retain];
+        selectionMainValue_ = [[NSMutableString alloc] init];
     }
-
-    [self window];
-
-    if (table){
-        tableView_ = [*table retain];
-    }
-    model_ = [[PopupModel alloc] init];
-    substring_ = [[NSMutableString alloc] init];
-    unfilteredModel_ = [model retain];
-    selectionMainValue_ = [[NSMutableString alloc] init];
-
     return self;
 }
 
@@ -341,7 +313,7 @@ DebugLog([NSString stringWithFormat:args]); \
 - (void)shutdown
 {
     // Disable the fancy footwork in -[PopupWindow close]
-    [(PopupWindow*)[self window] shutdown];
+    [(PopupWindow *)[self window] shutdown];
 
     // Prevent twiddleKeyWindow from running after parent window is dealloc'ed.
     [NSObject cancelPreviousPerformRequestsWithTarget:[self window]];
