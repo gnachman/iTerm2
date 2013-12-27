@@ -131,30 +131,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
 }
 
-@interface Coord : NSObject
-{
-@public
-    int x, y;
-}
-+ (Coord*)coordWithX:(int)x y:(int)y;
-@end
-
-@implementation Coord
-
-+ (Coord*)coordWithX:(int)x y:(int)y
-{
-    Coord* c = [[[Coord alloc] init] autorelease];
-    c->x = x;
-    c->y = y;
-    return c;
-}
-
-- (NSString *)description {
-  return [NSString stringWithFormat:@"<%p: %@ %d,%d>", self, [self class], x, y];
-}
-
-@end
-
 @interface SmartMatch : NSObject
 {
 @public
@@ -2489,8 +2465,7 @@ NSMutableArray* screens=0;
             if (*targetOffset == -1 && i == y && o >= x) {
                 *targetOffset = k + [joinedLines length];
             }
-            [coords addObject:[Coord coordWithX:o
-                                              y:i]];
+            [coords addObject:[NSValue valueWithGridCoord:VT100GridCoordMake(o, i)]];
         }
         [joinedLines appendString:string];
         free(deltas);
@@ -2500,8 +2475,7 @@ NSMutableArray* screens=0;
         o++;
         if (i >= y && theLine[width].code == EOL_HARD) {
             if (rejectAtHardEol || theLine[width - 1].code == 0) {
-                [coords addObject:[Coord coordWithX:o
-                                                  y:i]];
+                [coords addObject:[NSValue valueWithGridCoord:VT100GridCoordMake(o, i)]];
                 break;
             }
         }
@@ -2568,12 +2542,12 @@ NSMutableArray* screens=0;
                     if (!oldMatch || score > oldMatch->score) {
                         SmartMatch* match = [[[SmartMatch alloc] init] autorelease];
                         match->score = score;
-                        Coord* startCoord = [coords objectAtIndex:i + temp.location];
-                        Coord* endCoord = [coords objectAtIndex:MIN(numCoords - 1, i + temp.location + temp.length)];
-                        match->startX = startCoord->x;
-                        match->absStartY = startCoord->y + [dataSource totalScrollbackOverflow];
-                        match->endX = endCoord->x;
-                        match->absEndY = endCoord->y + [dataSource totalScrollbackOverflow];
+                        VT100GridCoord startCoord = [[coords objectAtIndex:i + temp.location] gridCoordValue];
+                        VT100GridCoord endCoord = [[coords objectAtIndex:MIN(numCoords - 1, i + temp.location + temp.length)] gridCoordValue];
+                        match->startX = startCoord.x;
+                        match->absStartY = startCoord.y + [dataSource totalScrollbackOverflow];
+                        match->endX = endCoord.x;
+                        match->absEndY = endCoord.y + [dataSource totalScrollbackOverflow];
                         match->rule = rule;
                         [matches setObject:match forKey:result];
 
