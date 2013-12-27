@@ -126,7 +126,6 @@
 		1D53FD17181C4B4B00524D4F /* FindContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D53FD14181C4B4B00524D4F /* FindContext.m */; };
 		1D5FDD501208E8F000C46BA3 /* PTToolbarController.h in Headers */ = {isa = PBXBuildFile; fileRef = 2076B15704E8817300000106 /* PTToolbarController.h */; };
 		1D5FDD511208E8F000C46BA3 /* ITAddressBookMgr.h in Headers */ = {isa = PBXBuildFile; fileRef = 20E74F4804E9089700000106 /* ITAddressBookMgr.h */; };
-		1D5FDD521208E8F000C46BA3 /* ITViewLocalizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 20B8892A04E9342100000106 /* ITViewLocalizer.h */; };
 		1D5FDD591208E8F000C46BA3 /* PSMAquaTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02572409CB9398008F320C /* PSMAquaTabStyle.h */; };
 		1D5FDD5A1208E8F000C46BA3 /* PSMMetalTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02572609CB9398008F320C /* PSMMetalTabStyle.h */; };
 		1D5FDD5B1208E8F000C46BA3 /* PSMOverflowPopUpButton.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02572809CB9398008F320C /* PSMOverflowPopUpButton.h */; };
@@ -203,7 +202,6 @@
 		1D5FDDB01208E93600C46BA3 /* PTYWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = F56B230B03A1B36701A8A066 /* PTYWindow.m */; };
 		1D5FDDB21208E93600C46BA3 /* PTToolbarController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2076B15804E8817300000106 /* PTToolbarController.m */; };
 		1D5FDDB31208E93600C46BA3 /* ITAddressBookMgr.m in Sources */ = {isa = PBXBuildFile; fileRef = 20E74F4904E9089700000106 /* ITAddressBookMgr.m */; };
-		1D5FDDB41208E93600C46BA3 /* ITViewLocalizer.m in Sources */ = {isa = PBXBuildFile; fileRef = 20B8892B04E9342100000106 /* ITViewLocalizer.m */; };
 		1D5FDDB61208E93600C46BA3 /* iTermKeyBindingMgr.m in Sources */ = {isa = PBXBuildFile; fileRef = DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */; };
 		1D5FDDBB1208E93600C46BA3 /* PSMAquaTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02572509CB9398008F320C /* PSMAquaTabStyle.m */; };
 		1D5FDDBC1208E93600C46BA3 /* PSMMetalTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02572709CB9398008F320C /* PSMMetalTabStyle.m */; };
@@ -380,7 +378,6 @@
 		1D9A5584180FA87000B42CE9 /* iTermFontPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */; };
 		1D9A5585180FA87000B42CE9 /* iTermKeyBindingMgr.m in Sources */ = {isa = PBXBuildFile; fileRef = DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */; };
 		1D9A5586180FA87000B42CE9 /* iTermSearchField.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DAED99112EDF923005E49ED /* iTermSearchField.m */; };
-		1D9A5587180FA87000B42CE9 /* ITViewLocalizer.m in Sources */ = {isa = PBXBuildFile; fileRef = 20B8892B04E9342100000106 /* ITViewLocalizer.m */; };
 		1D9A5588180FA87000B42CE9 /* MovePaneController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D29732614082676004C5DBE /* MovePaneController.m */; };
 		1D9A5589180FA87000B42CE9 /* MovingAverage.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9053C517A5CCF100A0B64E /* MovingAverage.m */; };
 		1D9A558A180FA87000B42CE9 /* PasteContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F8516F02E7400B7FCE9 /* PasteContext.m */; };
@@ -959,8 +956,6 @@
 		1DF8AF5713FD781700C8A435 /* SplitPanel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SplitPanel.m; sourceTree = "<group>"; };
 		2076B15704E8817300000106 /* PTToolbarController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTToolbarController.h; sourceTree = "<group>"; };
 		2076B15804E8817300000106 /* PTToolbarController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTToolbarController.m; sourceTree = "<group>"; };
-		20B8892A04E9342100000106 /* ITViewLocalizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITViewLocalizer.h; sourceTree = "<group>"; };
-		20B8892B04E9342100000106 /* ITViewLocalizer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ITViewLocalizer.m; sourceTree = "<group>"; };
 		20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermApplicationDelegate.h; sourceTree = "<group>"; };
 		20D5CC6404E7AA0500000106 /* iTermApplicationDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermApplicationDelegate.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		20E74F4804E9089700000106 /* ITAddressBookMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITAddressBookMgr.h; sourceTree = "<group>"; };
@@ -1158,10 +1153,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				A68A30C4186D0F36007F550F /* SmartMatch.h */,
-				A68A30C5186D0F36007F550F /* SmartMatch.m */,
-				A68A30BF186D0DC1007F550F /* FindCursorView.h */,
-				A68A30C0186D0DC1007F550F /* FindCursorView.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -1191,61 +1182,41 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				A6358641184BEA47009ED690 /* AATree */,
+				A68A30CA186D118E007F550F /* Data Structures */,
 				A63F40AC1842988A003A6A6D /* Core */,
 				1D9DDE31142E73E300275650 /* Categories */,
 				1D9DDE2F142E735900275650 /* DVR */,
 				1D06E7CF14BC03BE0097C0ED /* GTM */,
+				A68A30C9186D101C007F550F /* Helpers */,
 				1D9DDE30142E738800275650 /* Popups */,
 				1D24C37714303E00006B246F /* Preferences */,
 				1D06E7D014BC04110097C0ED /* Profiles */,
 				1D3D21921483142800FAC8E7 /* tmux */,
 				1D9DDE2E142E733100275650 /* Toolbelt */,
 				1D9DDE2D142E730700275650 /* Triggers */,
-				A6CFDAD6185D53C2005DC94B /* AsyncHostLookupController.m */,
-				1DA26ABF15007507004B5792 /* BackgroundThread.m */,
 				1D48B378167E809D000046EE /* CharacterRun.m */,
-				A073973F14C7694600786414 /* ColorsMenuItemView.m */,
 				1D9DDD9B142E5FBB00275650 /* Coprocess.m */,
 				1DD39B19180B82F5004E56D5 /* DebugLogging.m */,
-				1D53FD14181C4B4B00524D4F /* FindContext.m */,
-				1D237D27131D8741004DD60C /* FindView.m */,
 				1D237D93131D8D66004DD60C /* FindViewController.m */,
-				1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */,
-				1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */,
 				1DAED28712E9395E005E49ED /* GlobalSearch.m */,
 				1DB9D8F1183FE9EF0029F0B5 /* HotkeyWindowController.m */,
-				1D7B9A681491D82F003A2A22 /* IntervalMap.m */,
-				A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */,
 				1DDBC61D12E2BCDC00BC3868 /* iTermExpose.m */,
-				1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */,
 				F69E788C0AB7AC6D001EC0FF /* iTermGrowlDelegate.m */,
 				DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */,
-				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
-				20B8892B04E9342100000106 /* ITViewLocalizer.m */,
 				1D29732614082676004C5DBE /* MovePaneController.m */,
-				1D9053C517A5CCF100A0B64E /* MovingAverage.m */,
-				1D085F8516F02E7400B7FCE9 /* PasteContext.m */,
-				1D085F9916F1135F00B7FCE9 /* PasteEvent.m */,
-				1D085F9116F03E5400B7FCE9 /* PasteView.m */,
 				1D085F8B16F0328B00B7FCE9 /* PasteViewController.m */,
 				1D8255FF146881EC007CAE78 /* PointerController.m */,
 				1D988596135D23BD0072023F /* ProcessCache.m */,
 				A63F4099183B3AA7003A6A6D /* PTYNoteView.m */,
 				A63F4094183B398C003A6A6D /* PTYNoteViewController.m */,
-				1D085F9D16F137D900B7FCE9 /* RoundedRectView.m */,
-				1DC393C417B59B08000EE0F2 /* SearchResult.m */,
 				1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */,
 				1D8FC67B17E67FA700A82402 /* shell_launcher.c */,
-				1DC38817148E840700B89F7C /* SolidColorView.m */,
 				1DF8AF5713FD781700C8A435 /* SplitPanel.m */,
 				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
 				1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */,
 				1D085FA116F138A000B7FCE9 /* ToastWindowController.m */,
 				1D06A04F134CDBED00C414EF /* Trouter.m */,
-				A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */,
 				A60014FA18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m */,
-				A6CFDAD1185D2587005DC94B /* URLAction.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -1261,6 +1232,8 @@
 				A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */,
 				A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */,
 				A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */,
+				A68A30C4186D0F36007F550F /* SmartMatch.h */,
+				A68A30BF186D0DC1007F550F /* FindCursorView.h */,
 				A6CFDAD0185D2587005DC94B /* URLAction.h */,
 				1DA26ABE15007507004B5792 /* BackgroundThread.h */,
 				1D9DCC0C142D7F5F0016228A /* BellTrigger.h */,
@@ -1306,7 +1279,6 @@
 				F69E78910AB7AC85001EC0FF /* iTermGrowlDelegate.h */,
 				1D407A2814BABE8700BD5035 /* iTermKeyBindingMgr.h */,
 				1DAED99012EDF923005E49ED /* iTermSearchField.h */,
-				20B8892A04E9342100000106 /* ITViewLocalizer.h */,
 				A63F40A2183F3B78003A6A6D /* LineBlock.h */,
 				1D72438F11F416F300BD4924 /* LineBuffer.h */,
 				A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */,
@@ -1562,7 +1534,6 @@
 		1D3D21921483142800FAC8E7 /* tmux */ = {
 			isa = PBXGroup;
 			children = (
-				1DAE714C14AAF24200DA144B /* EquivalenceClassSet.m */,
 				1D3D218F1482F18A00FAC8E7 /* TmuxController.m */,
 				1D0B613714A7BC1200C57C33 /* TmuxControllerRegistry.m */,
 				1DD4CE7F14A51C0D00ED182E /* TmuxDashboardController.m */,
@@ -1677,6 +1648,7 @@
 		1D9DDE31142E73E300275650 /* Categories */ = {
 			isa = PBXGroup;
 			children = (
+				1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */,
 				1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */,
 				1D085F9516F04D0900B7FCE9 /* NSBezierPath+iTerm.m */,
 				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
@@ -1776,6 +1748,43 @@
 				E8CF7563026DDA6303A80106 /* VT100Terminal.m */,
 			);
 			name = Core;
+			sourceTree = "<group>";
+		};
+		A68A30C9186D101C007F550F /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				A6CFDAD6185D53C2005DC94B /* AsyncHostLookupController.m */,
+				1DA26ABF15007507004B5792 /* BackgroundThread.m */,
+				A073973F14C7694600786414 /* ColorsMenuItemView.m */,
+				1D53FD14181C4B4B00524D4F /* FindContext.m */,
+				A68A30C0186D0DC1007F550F /* FindCursorView.m */,
+				1D237D27131D8741004DD60C /* FindView.m */,
+				1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */,
+				1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */,
+				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
+				1D9053C517A5CCF100A0B64E /* MovingAverage.m */,
+				1D085F8516F02E7400B7FCE9 /* PasteContext.m */,
+				1D085F9916F1135F00B7FCE9 /* PasteEvent.m */,
+				1D085F9116F03E5400B7FCE9 /* PasteView.m */,
+				1D085F9D16F137D900B7FCE9 /* RoundedRectView.m */,
+				1DC393C417B59B08000EE0F2 /* SearchResult.m */,
+				A68A30C5186D0F36007F550F /* SmartMatch.m */,
+				1DC38817148E840700B89F7C /* SolidColorView.m */,
+				A6CFDAD1185D2587005DC94B /* URLAction.m */,
+				A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */,
+			);
+			name = Helpers;
+			sourceTree = "<group>";
+		};
+		A68A30CA186D118E007F550F /* Data Structures */ = {
+			isa = PBXGroup;
+			children = (
+				A6358641184BEA47009ED690 /* AATree */,
+				1DAE714C14AAF24200DA144B /* EquivalenceClassSet.m */,
+				1D7B9A681491D82F003A2A22 /* IntervalMap.m */,
+				A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */,
+			);
+			name = "Data Structures";
 			sourceTree = "<group>";
 		};
 		DD02571D09CB9363008F320C /* PSMTabBarControl */ = {
@@ -1893,7 +1902,6 @@
 				1D5FDD501208E8F000C46BA3 /* PTToolbarController.h in Headers */,
 				1D5FDD511208E8F000C46BA3 /* ITAddressBookMgr.h in Headers */,
 				A63F4095183B398C003A6A6D /* PTYNoteViewController.h in Headers */,
-				1D5FDD521208E8F000C46BA3 /* ITViewLocalizer.h in Headers */,
 				1D5FDD591208E8F000C46BA3 /* PSMAquaTabStyle.h in Headers */,
 				1D5FDD5A1208E8F000C46BA3 /* PSMMetalTabStyle.h in Headers */,
 				1D5FDD5B1208E8F000C46BA3 /* PSMOverflowPopUpButton.h in Headers */,
@@ -2443,7 +2451,6 @@
 				A635864B184BEA57009ED690 /* AATreeNode.m in Sources */,
 				1D9A5543180FA81400B42CE9 /* ProfileTableRow.m in Sources */,
 				1D9A5588180FA87000B42CE9 /* MovePaneController.m in Sources */,
-				1D9A5587180FA87000B42CE9 /* ITViewLocalizer.m in Sources */,
 				1D9A5536180FA79100B42CE9 /* DVRDecoder.m in Sources */,
 				1D9A5574180FA85D00B42CE9 /* AlertTrigger.m in Sources */,
 				1D9A55A9180FA8B700B42CE9 /* PSMMetalTabStyle.m in Sources */,
@@ -2482,7 +2489,6 @@
 				A6CFDAD3185D2587005DC94B /* URLAction.m in Sources */,
 				1DB9D8F3183FE9EF0029F0B5 /* HotkeyWindowController.m in Sources */,
 				1D5FDDB31208E93600C46BA3 /* ITAddressBookMgr.m in Sources */,
-				1D5FDDB41208E93600C46BA3 /* ITViewLocalizer.m in Sources */,
 				1D5FDDB61208E93600C46BA3 /* iTermKeyBindingMgr.m in Sources */,
 				1D5FDDBB1208E93600C46BA3 /* PSMAquaTabStyle.m in Sources */,
 				1D5FDDBC1208E93600C46BA3 /* PSMMetalTabStyle.m in Sources */,

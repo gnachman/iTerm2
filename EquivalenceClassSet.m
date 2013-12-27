@@ -1,13 +1,3 @@
-// TOMORROW: test that everything with affinities works.
-
-//
-//  EquivalenceClassSet.m
-//  iTerm
-//
-//  Created by George Nachman on 12/28/11.
-//  Copyright (c) 2011 Georgetech. All rights reserved.
-//
-
 #import "EquivalenceClassSet.h"
 
 @implementation EquivalenceClassSet
