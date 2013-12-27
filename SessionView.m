@@ -1,42 +1,16 @@
-// -*- mode:objc -*-
-/*
- **  SessionView.m
- **
- **  Copyright (c) 2010
- **
- **  Author: George Nachman
- **
- **  Project: iTerm2
- **
- **  Description: This view contains a session's scrollview.
- **
- **  This program is free software; you can redistribute it and/or modify
- **  it under the terms of the GNU General Public License as published by
- **  the Free Software Foundation; either version 2 of the License, or
- **  (at your option) any later version.
- **
- **  This program is distributed in the hope that it will be useful,
- **  but WITHOUT ANY WARRANTY; without even the implied warranty of
- **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- **  GNU General Public License for more details.
- **
- **  You should have received a copy of the GNU General Public License
- **  along with this program; if not, write to the Free Software
- **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
+// This view contains a session's scrollview.
 
 #import "SessionView.h"
+#import "DebugLogging.h"
+#import "FutureMethods.h"
+#import "MovePaneController.h"
+#import "PSMTabDragAssistant.h"
+#import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
 #import "PTYTextView.h"
-#import "PseudoTerminal.h"
-#import "SplitSelectionView.h"
-#import "MovePaneController.h"
-#import "PSMTabDragAssistant.h"
 #import "SessionTitleView.h"
-#import "iTermApplicationDelegate.h"  // For DLog
-#import "FutureMethods.h"
-#import "PTYScrollView.h"
+#import "SplitSelectionView.h"
 
 static const float kTargetFrameRate = 1.0/60.0;
 static int nextViewId;
