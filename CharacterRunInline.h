@@ -195,7 +195,7 @@ CRUN_INLINE CRun *CRunSplit(CRun *run, int newStart) {
                      &run->attrs,
                      [NSString stringWithCharacters:[run->storage codesFromIndex:run->index]
                                              length:1],
-                     [run->storage advancesFromIndex:run->index][newStart].width,
+                     [run->storage advancesFromIndex:run->index][0].width,
                      run->x);
 
     // Skip past that one char.
