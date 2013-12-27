@@ -5700,14 +5700,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
     DLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
-
-#if GREED_KEYDOWN == 0
-    id delegate = [self delegate];
-
-    if ([delegate respondsToSelector:aSelector]) {
-        [delegate performSelector:aSelector withObject:nil];
-    }
-#endif
 }
 
 - (void)insertText:(id)aString
