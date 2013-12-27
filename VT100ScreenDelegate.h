@@ -15,6 +15,9 @@
 // A change was made to the screen's contents which could cause a trigger to fire.
 - (void)screenTriggerableChangeDidOccur;
 
+// Called when the screen and terminal's attributes are reset
+- (void)screenDidReset;
+
 // Returns if the profile name should be included in the window title.
 - (BOOL)screenShouldSyncTitle;
 

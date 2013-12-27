@@ -4488,6 +4488,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self clearTriggerLine];
 }
 
+- (void)screenDidReset {
+    [self loadInitialColorTable];
+}
+
 - (BOOL)screenShouldSyncTitle {
     if (![[PreferencePanel sharedInstance] showBookmarkName]) {
         return NO;

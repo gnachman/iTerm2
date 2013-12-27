@@ -1999,7 +1999,7 @@ static const double kInterBellQuietPeriod = 0.1;
         [savedCharsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
         [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
     }
-    [SESSION loadInitialColorTable];
+    [delegate_ screenDidReset];
 
     [self showCursor:YES];
 }
