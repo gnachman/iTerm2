@@ -116,7 +116,293 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 @end
 
 
-@implementation PTYTextView
+@implementation PTYTextView {
+    // This is a flag to let us know whether we are handling this
+    // particular drag and drop operation. We are using it because
+    // the prepareDragOperation and performDragOperation of the
+    // parent NSTextView class return "YES" even if the parent
+    // cannot handle the drag type. To make matters worse, the
+    // concludeDragOperation does not have any return value.
+    // This all results in the inability to test whether the
+    // parent could handle the drag type properly. Is this a Cocoa
+    // implementation bug?
+    // Fortunately, the draggingEntered and draggingUpdated methods
+    // seem to return a real status, based on which we can set this flag.
+    BOOL extendedDragNDrop;
+    
+    // anti-alias flags
+    BOOL asciiAntiAlias;
+    BOOL nonasciiAntiAlias;  // Only used if useNonAsciiFont_ is set.
+    BOOL useNonAsciiFont_;
+    
+    // option to not render in bold
+    BOOL useBoldFont;
+    
+    // Option to draw bold text as brighter colors.
+    BOOL useBrightBold;
+    
+    // option to not render in italic
+    BOOL useItalicFont;
+    
+    // NSTextInput support
+    BOOL IM_INPUT_INSERT;
+    NSRange IM_INPUT_SELRANGE;
+    NSRange IM_INPUT_MARKEDRANGE;
+    NSDictionary *markedTextAttributes;
+    NSAttributedString *markedText;
+    
+    BOOL CURSOR;
+    BOOL colorInvertedCursor;
+    
+    // geometry
+    double lineHeight;
+    double lineWidth;
+    double charWidth;
+    double charWidthWithoutSpacing, charHeightWithoutSpacing;
+    double horizontalSpacing_;
+    double  verticalSpacing_;
+    
+    PTYFontInfo *primaryFont;
+    PTYFontInfo *secondaryFont;  // non-ascii font, only used if useNonAsciiFont_ is set.
+    
+    NSColor* colorTable[256];
+    NSColor* defaultFGColor;
+    NSColor* defaultBGColor;
+    NSColor* defaultBoldColor;
+    NSColor* defaultCursorColor;
+    NSColor* selectionColor;
+    NSColor* unfocusedSelectionColor;
+    NSColor* selectedTextColor;
+    NSColor* cursorTextColor;
+    
+    // transparency
+    double transparency;
+    double blend;
+    
+    // data source
+    id<PTYTextViewDataSource> dataSource;
+    id<PTYTextViewDelegate> _delegate;
+    
+    // selection goes from startX,startY to endX,endY. The end may be before or after the start.
+    // While the selection is being made (the mouse was clicked and is being dragged) the end
+    // position moves with the cursor.
+    int startX, startY, endX, endY;
+    int oldStartX, oldStartY, oldEndX, oldEndY;
+    
+    // Underlined selection range (inclusive of all values), indicating clickable url.
+    int _underlineStartX, _underlineStartY, _underlineEndX, _underlineEndY;
+    char oldSelectMode;
+    BOOL mouseDown;
+    BOOL mouseDragged;
+    char selectMode;
+    BOOL mouseDownOnSelection;
+    NSEvent *mouseDownEvent;
+    int lastReportedX_, lastReportedY_;
+    
+    //find support
+    int lastFindStartX, lastFindEndX;
+    // this includes all the lines since the beginning of time. It is stable.
+    long long absLastFindStartY, absLastFindEndY;
+    
+    BOOL reportingMouseDown;
+    
+    // blinking cursor
+    BOOL blinkingCursor;
+    BOOL showCursor;
+    BOOL blinkShow;
+    struct timeval lastBlink;
+    int oldCursorX, oldCursorY;
+    
+    BOOL blinkAllowed_;
+    
+    // trackingRect tab
+    NSTrackingArea *trackingArea;
+    
+    BOOL keyIsARepeat;
+    
+    // Is a find currently executing?
+    BOOL _findInProgress;
+    
+    // Previous tracking rect to avoid expensive calls to addTrackingRect.
+    NSRect _trackingRect;
+    
+    // Maps a NSNumber int consisting of color index, alternate fg semantics
+    // flag, bold flag, and background flag to NSColor*s.
+    NSMutableDictionary* dimmedColorCache_;
+    
+    // Dimmed background color with alpha.
+    NSColor *cachedBackgroundColor_;
+    double cachedBackgroundColorAlpha_;  // cached alpha value (comparable to another double)
+    
+    // Previuos contrasting color returned
+    NSColor *memoizedContrastingColor_;
+    double memoizedMainRGB_[4];  // rgba for "main" color memoized.
+    double memoizedOtherRGB_[3];  // rgb for "other" color memoized.
+    
+    // Indicates if a selection that scrolls the window is in progress.
+    // Negative value: scroll up.
+    // Positive value: scroll down.
+    // Zero: don't scroll.
+    int selectionScrollDirection;
+    NSTimeInterval lastSelectionScroll;
+    
+    // Scrolls view when you drag a selection to top or bottom of view.
+    NSTimer* selectionScrollTimer;
+    double prevScrollDelay;
+    int scrollingX;
+    int scrollingY;
+    NSPoint scrollingLocation;
+    
+    // This gives the number of lines added to the bottom of the frame that do
+    // not correspond to a line in the dataSource. They are used solely for
+    // IME text.
+    int imeOffset;
+    
+    // Last position that accessibility was read up to.
+    int accX;
+    int accY;
+    
+    BOOL advancedFontRendering;
+    double strokeThickness;
+    double minimumContrast_;
+    
+    BOOL changedSinceLastExpose_;
+    
+    double dimmingAmount_;
+    
+    // The string last searched for.
+    NSString* findString_;
+    
+    // The set of SearchResult objects for which matches have been found.
+    NSMutableArray* findResults_;
+    
+    // The next offset into findResults_ where values from findResults_ should
+    // be added to the map.
+    int nextOffset_;
+    
+    // True if a result has been highlighted & scrolled to.
+    BOOL foundResult_;
+    
+    // Maps an absolute line number (NSNumber longlong) to an NSData bit array
+    // with one bit per cell indicating whether that cell is a match.
+    NSMutableDictionary* resultMap_;
+    
+    // True if the last search was forward, flase if backward.
+    BOOL searchingForward_;
+    
+    // Offset value for last search.
+    int findOffset_;
+    
+    // True if trying to find a result before/after current selection to
+    // highlight.
+    BOOL searchingForNextResult_;
+    
+    // True if the last search was case insensitive.
+    BOOL findIgnoreCase_;
+    
+    // True if the last search was for a regex.
+    BOOL findRegex_;
+    
+    // Time that the flashing bell's alpha value was last adjusted.
+    NSDate* lastFlashUpdate_;
+    
+    // Alpha value of flashing bell graphic.
+    double flashing_;
+    
+    // Image currently flashing.
+    FlashImage flashImage_;
+    
+    ITermCursorType cursorType_;
+    
+    // Works around an apparent OS bug where we get drag events without a mousedown.
+    BOOL dragOk_;
+    
+    // Semantic history controller
+    Trouter* trouter;
+    
+    // Flag to make sure a Trouter drag check is only one once per drag
+    BOOL trouterDragged;
+    
+    // Saves the monotonically increasing event number of a first-mouse click, which disallows
+    // selection.
+    int firstMouseEventNumber_;
+    
+    // For accessibility. This is a giant string with the entire scrollback buffer plus screen concatenated with newlines for hard eol's.
+    NSMutableString* allText_;
+    // For accessibility. This is the indices at which soft newlines occur in allText_, ignoring multi-char compositing characters.
+    NSMutableArray* lineBreakIndexOffsets_;
+    // For accessibility. This is the actual indices at which soft newlines occcur in allText_.
+    NSMutableArray* lineBreakCharOffsets_;
+    
+    // Brightness of background color
+    double backgroundBrightness_;
+    
+    // Dim everything but the default background color.
+    BOOL dimOnlyText_;
+    
+    // For find-cursor animation
+    NSWindow *findCursorWindow_;
+    FindCursorView *findCursorView_;
+    NSTimer *findCursorTeardownTimer_;
+    NSTimer *findCursorBlinkTimer_;
+    BOOL autoHideFindCursor_;
+    NSPoint imeCursorLastPos_;
+    
+    // Number of fingers currently down (only valid if three finger click
+    // emulates middle button)
+    int numTouches_;
+    
+    // If true, ignore the next mouse up because it's due to a three finger
+    // mouseDown.
+    BOOL mouseDownIsThreeFingerClick_;
+    
+    // Is the mouse inside our view?
+    BOOL mouseInRect_;
+    
+    // Time the selection last changed at or 0 if there's no selection.
+    NSTimeInterval selectionTime_;
+    
+    // Dictionaries with a regex and a priority.
+    NSArray *smartSelectionRules_;
+    
+    // Show a background indicator when in broadcast input mode
+    BOOL useBackgroundIndicator_;
+    
+    // Find context just after initialization.
+    FindContext *initialFindContext_;
+    
+    PointerController *pointer_;
+	NSCursor *cursor_;
+    
+    // True while the context menu is being opened.
+    BOOL openingContextMenu_;
+    
+	// Experimental feature gated by ThreeFingerTapEmulatesThreeFingerClick bool pref.
+    ThreeFingerTapGestureRecognizer *threeFingerTapGestureRecognizer_;
+    
+    // Position of cursor last time we looked. Since the cursor might move around a lot between
+    // calls to -updateDirtyRects without making any changes, we only redraw the old and new cursor
+    // positions.
+    int prevCursorX, prevCursorY;
+    
+    MovingAverage *drawRectDuration_, *drawRectInterval_;
+	// Current font. Only valid for the duration of a single drawing context.
+    NSFont *selectedFont_;
+    
+    // Used by _drawCursorTo: to remember the last time the cursor moved to avoid drawing a blinked-out
+    // cursor while it's moving.
+    NSTimeInterval lastTimeCursorMoved_;
+    
+    // If set, the last-modified time of each line on the screen is shown on the right side of the display.
+    BOOL showTimestamps_;
+    float _antiAliasedShift;  // Amount to shift anti-aliased text by horizontally to simulate bold
+    NSImage *markImage_;
+    
+    // Point clicked, valid only during -validateMenuItem and calls made from
+    // the context menu and if x and y are nonnegative.
+    VT100GridCoord validationClickPoint_;
+}
+
 
 + (void)initialize
 {
@@ -458,6 +744,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     }
 }
 
+// TODO: Not sure if this is used.
 - (BOOL)shouldDrawInsertionPoint
 {
     return NO;
@@ -1767,9 +2054,10 @@ NSMutableArray* screens=0;
     return [self updateDirtyRects] || [self _isCursorBlinking];
 }
 
+// Overrides an NSView method.
 - (NSRect)adjustScroll:(NSRect)proposedVisibleRect
 {
-    proposedVisibleRect.origin.y=(int)(proposedVisibleRect.origin.y/lineHeight+0.5)*lineHeight;
+    proposedVisibleRect.origin.y = (int)(proposedVisibleRect.origin.y / lineHeight + 0.5) * lineHeight;
     return proposedVisibleRect;
 }
 
@@ -3086,12 +3374,12 @@ NSMutableArray* screens=0;
 
 - (BOOL)setCursor:(NSCursor *)cursor
 {
-        if (cursor == cursor_) {
-                return NO;
-        }
-        [cursor_ autorelease];
-        cursor_ = [cursor retain];
-        return YES;
+    if (cursor == cursor_) {
+        return NO;
+    }
+    [cursor_ autorelease];
+    cursor_ = [cursor retain];
+    return YES;
 }
 
 - (void)updateCursor:(NSEvent *)event
@@ -3100,11 +3388,11 @@ NSMutableArray* screens=0;
 
     BOOL changed = NO;
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
-                changed = [self setCursor:[NSCursor openHandCursor]];
+        changed = [self setCursor:[NSCursor openHandCursor]];
     } else if (([event modifierFlags] & (NSCommandKeyMask | NSAlternateKeyMask)) == (NSCommandKeyMask | NSAlternateKeyMask)) {
-                changed = [self setCursor:[NSCursor crosshairCursor]];
+        changed = [self setCursor:[NSCursor crosshairCursor]];
     } else if (([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask) {
-                changed = [self setCursor:[NSCursor pointingHandCursor]];
+        changed = [self setCursor:[NSCursor pointingHandCursor]];
     } else if ([self xtermMouseReporting] &&
                mouseMode != MOUSE_REPORTING_NONE &&
                mouseMode != MOUSE_REPORTING_HILITE) {
@@ -5389,20 +5677,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 //
 // Called when our drop area is entered
 //
-- (unsigned int)draggingEntered:(id <NSDraggingInfo>)sender
+- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender
 {
     extendedDragNDrop = YES;
 
-    // Always say YES; handle failure later.
-    return YES;
+    // Always say NSDragOperationCopy; handle failure later.
+    return NSDragOperationCopy;
 }
 
 //
 // Called when the dragged object is moved within our drop area
 //
-- (unsigned int)draggingUpdated:(id <NSDraggingInfo>)sender
+- (NSDragOperation)draggingUpdated:(id <NSDraggingInfo>)sender
 {
-    unsigned int iResult;
+    NSDragOperation iResult;
 
     // Let's see if our parent NSTextView knows what to do
     iResult = [super draggingUpdated:sender];
@@ -5695,6 +5983,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
 }
 
+// NSTextInput
 - (void)insertText:(id)aString
 {
     if (gCurrentKeyEventTextView && self != gCurrentKeyEventTextView) {
@@ -5739,6 +6028,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return YES;
 }
 
+// NSTextInput
 - (void)setMarkedText:(id)aString selectedRange:(NSRange)selRange
 {
     BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
@@ -5780,6 +6070,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self scrollEnd];
 }
 
+// NSTextInput
 - (void)unmarkText
 {
     BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
@@ -5794,6 +6085,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self scrollEnd];
 }
 
+// NSTextInput
 - (BOOL)hasMarkedText
 {
     BOOL result;
@@ -5806,6 +6098,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return result;
 }
 
+// NSTextInput
 - (NSRange)markedRange
 {
     if (IM_INPUT_MARKEDRANGE.length > 0) {
@@ -5815,11 +6108,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
+// NSTextInput
 - (NSRange)selectedRange
 {
     return NSMakeRange(NSNotFound, 0);
 }
 
+// NSTextInput
 - (NSArray *)validAttributesForMarkedText
 {
     return [NSArray arrayWithObjects:NSForegroundColorAttributeName,
@@ -5829,21 +6124,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         nil];
 }
 
+// NSTextInput
 - (NSAttributedString *)attributedSubstringFromRange:(NSRange)theRange
 {
     return [markedText attributedSubstringFromRange:NSMakeRange(0,theRange.length)];
 }
 
-- (unsigned int)characterIndexForPoint:(NSPoint)thePoint
+// NSTextInput
+- (NSUInteger)characterIndexForPoint:(NSPoint)thePoint
 {
-    return thePoint.x/charWidth;
+    return MAX(0, thePoint.x / charWidth);
 }
 
+// NSTextInput
 - (long)conversationIdentifier
 {
     return (long)self; //not sure about this
 }
 
+// NSTextInput
 - (NSRect)firstRectForCharacterRange:(NSRange)theRange
 {
     int y = [dataSource cursorY] - 1;
@@ -6275,6 +6574,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return ([super validRequestorForSendType: sendType returnType: returnType]);
 }
 
+// Service
 - (BOOL)writeSelectionToPasteboard:(NSPasteboard *)pboard types:(NSArray *)types
 {
     NSString *copyString;
@@ -6302,6 +6602,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return NO;
 }
 
+// Service
 - (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard
 {
     return NO;
@@ -6339,7 +6640,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
-- (void)beginFlash:(int)image
+- (void)beginFlash:(FlashImage)image
 {
     flashImage_ = image;
     if (flashing_ == 0) {
@@ -6643,11 +6944,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     } else {
         return YES;
     }
-}
-
-- (void)clearMatches
-{
-    [resultMap_ removeAllObjects];
 }
 
 - (NSString *)getWordForX:(int)x
