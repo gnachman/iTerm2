@@ -28,6 +28,7 @@
 
 #import "Coprocess.h"
 #import "FakeWindow.h"
+#import "FileTransferManager.h"
 #import "ITAddressBookMgr.h"
 #import "MovePaneController.h"
 #import "MovePaneController.h"
@@ -43,6 +44,8 @@
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
 #import "PseudoTerminal.h"
+#import "SCPFile.h"
+#import "SCPPath.h"
 #import "SearchResult.h"
 #import "SessionView.h"
 #import "TmuxController.h"
@@ -2485,13 +2488,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (void)clearBuffer
 {
     [SCREEN clearBuffer];
-    [TEXTVIEW clearWorkingDirectories];
 }
 
 - (void)clearScrollbackBuffer
 {
     [SCREEN clearScrollbackBuffer];
-    [TEXTVIEW clearWorkingDirectories];
 }
 
 - (BOOL)exited
@@ -4298,6 +4299,33 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self launchCoprocessWithCommand:command mute:NO];
 }
 
+- (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath
+{
+    SCPFile *previous = nil;
+    for (NSString *file in localFilenames) {
+        SCPFile *scpFile = [[[SCPFile alloc] init] autorelease];
+        scpFile.path = [[[SCPPath alloc] init] autorelease];
+        scpFile.path.hostname = destinationPath.hostname;
+        scpFile.path.username = destinationPath.username;
+        NSString *filename = [file lastPathComponent];
+        scpFile.path.path = [destinationPath.path stringByAppendingPathComponent:filename];
+        scpFile.localPath = file;
+
+        if (previous) {
+            previous.successor = scpFile;
+        }
+        previous = scpFile;
+        [scpFile upload];
+    }
+}
+
+- (void)startDownloadOverSCP:(SCPPath *)path
+{
+    SCPFile *file = [[[SCPFile alloc] init] autorelease];
+    file.path = path;
+    [file download];
+}
+
 - (NSString*)_getLocale
 {
     NSString* theLocale = nil;
@@ -4547,14 +4575,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self setName:theName];
 }
 
-- (void)screenLogWorkingDirectoryAtLine:(long long)lineNumber withDirectory:(NSString *)directory {
-    if ([directory length]) {
-        [[self TEXTVIEW] logWorkingDirectoryAtLine:lineNumber withDirectory:directory];
-    } else {
-        [[self TEXTVIEW] logWorkingDirectoryAtLine:lineNumber];
-    }
-}
-
 - (BOOL)screenWindowIsFullscreen {
     return [[[self tab] parentWindow] anyFullScreen];
 }
@@ -4735,6 +4755,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenRequestUserAttention:(BOOL)isCritical {
   [NSApp requestUserAttention:isCritical ? NSCriticalRequest : NSInformationalRequest];
+}
+
+- (NSString *)screenCurrentWorkingDirectory {
+    return [SHELL getWorkingDirectory];
 }
 
 - (void)screenSetCursorVisible:(BOOL)visible {

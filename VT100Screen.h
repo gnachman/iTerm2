@@ -1,6 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #import "PTYNoteViewController.h"
 #import "PTYTextViewDataSource.h"
+#import "SCPPath.h"
 #import "VT100ScreenDelegate.h"
 #import "VT100Terminal.h"
 
@@ -10,6 +11,7 @@
 @class IntervalTree;
 @class PTYTask;
 @class VT100Grid;
+@class VT100RemoteHost;
 @class VT100ScreenMark;
 @class VT100Terminal;
 
@@ -79,12 +81,12 @@ extern int kVT100ScreenMinRows;
 
     // Holds notes on alt/primary grid (the one we're not in). The origin is the top-left of the
     // grid.
-    IntervalTree *savedMarksAndNotes_;
+    IntervalTree *savedIntervalTree_;
 
     // All currently visible marks and notes. Maps an interval of
     //   (startx + absstarty * (width+1)) to (endx + absendy * (width+1))
     // to an id<IntervalTreeObject>, which is either PTYNoteViewController or VT100ScreenMark.
-    IntervalTree *marksAndNotes_;
+    IntervalTree *intervalTree_;
 
     NSMutableSet *markCache_;  // Maps an absolute line number to a VT100ScreenMark.
     VT100GridCoordRange markCacheRange_;
@@ -191,5 +193,8 @@ extern int kVT100ScreenMinRows;
 - (NSArray *)marksOrNotesBefore:(Interval *)location;
 - (NSArray *)marksOrNotesAfter:(Interval *)location;
 
+- (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line;
+- (NSString *)workingDirectoryOnLine:(int)line;
+- (VT100RemoteHost *)remoteHostOnLine:(int)line;
 
 @end

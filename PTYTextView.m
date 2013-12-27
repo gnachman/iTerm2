@@ -27,7 +27,6 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static const int MAX_WORKING_DIR_COUNT = 50;
 static const int kMaxSelectedTextLengthForCustomActions = 8192;
 static const int kMaxSelectedTextLinesForCustomActions = 100;
 
@@ -55,6 +54,7 @@ static const double kCharWidthFractionOffset = 0.35;
 #import "AsyncHostLookupController.h"
 #import "CharacterRun.h"
 #import "CharacterRunInline.h"
+#import "FileTransferManager.h"
 #import "FindCursorView.h"
 #import "FontSizeEstimator.h"
 #import "FutureMethods.h"
@@ -77,11 +77,13 @@ static const double kCharWidthFractionOffset = 0.35;
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "RegexKitLite/RegexKitLite.h"
+#import "SCPPath.h"
 #import "SmartMatch.h"
 #import "SearchResult.h"
 #import "SmartSelectionController.h"
 #import "ThreeFingerTapGestureRecognizer.h"
 #import "URLAction.h"
+#import "VT100RemoteHost.h"
 #import "charmaps.h"
 #import "iTerm.h"
 #import "iTermApplicationDelegate.h"
@@ -295,7 +297,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         trouter = [[Trouter alloc] init];
         trouter.delegate = self;
         trouterDragged = NO;
-        workingDirectoryAtLines = [[NSMutableArray alloc] init];
 
         pointer_ = [[PointerController alloc] init];
         pointer_.delegate = self;
@@ -311,18 +312,15 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 threeFingerTapGestureRecognizer_ = [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
                                                                                                   selector:@selector(threeFingerTap:)];
             }
-        } else {
-            DLog(@"Not tracking touches in view %@", self);
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"LogDrawingPerformance"]) {
+                NSLog(@"** Drawing performance timing enabled **");
+                drawRectDuration_ = [[MovingAverage alloc] init];
+                drawRectInterval_ = [[MovingAverage alloc] init];
+            }
+            [self viewDidChangeBackingProperties];
+            markImage_ = [NSImage imageNamed:@"mark"];
         }
-        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"LogDrawingPerformance"]) {
-            NSLog(@"** Drawing performance timing enabled **");
-            drawRectDuration_ = [[MovingAverage alloc] init];
-            drawRectInterval_ = [[MovingAverage alloc] init];
-        }
-        [self viewDidChangeBackingProperties];
-        markImage_ = [NSImage imageNamed:@"mark"];
     }
-
     return self;
 }
 
@@ -481,7 +479,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
     [selectionScrollTimer release];
 
-    [workingDirectoryAtLines release];
     [trouter release];
 
     [pointer_ release];
@@ -3197,7 +3194,7 @@ NSMutableArray* screens=0;
     NSCharacterSet *charsToTrim = [NSCharacterSet whitespaceAndNewlineCharacterSet];
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:charsToTrim];
 
-    NSString *workingDirectory = [self getWorkingDirectoryAtLine:line];
+    NSString *workingDirectory = [dataSource workingDirectoryOnLine:line];
     if ([trouter canOpenPath:trimmedURLString workingDirectory:workingDirectory]) {
         return YES;
     }
@@ -4724,10 +4721,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[MovePaneController sharedInstance] movePane:[dataSource session]];
 }
 
-- (void)clearWorkingDirectories {
-    [workingDirectoryAtLines removeAllObjects];
-}
-
 - (void)clearTextViewBuffer:(id)sender
 {
     [[dataSource session] clearBuffer];
@@ -4758,6 +4751,44 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [note setNoteHidden:NO];
         [note beginEditing];
     }
+}
+
+- (void)downloadWithSCP:(id)sender
+{
+    SCPPath *scpPath = nil;
+    NSString *selectedText = [[self selectedText] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSArray *parts = [selectedText componentsSeparatedByString:@"\n"];
+    if (parts.count != 1) {
+        return;
+    }
+    NSString *unescapedText = parts[0];
+    NSString *text = [unescapedText stringWithEscapedShellCharacters];
+    if (startY >= 0) {
+        scpPath = [dataSource scpPathForFile:text onLine:startY];
+    }
+    [_delegate startDownloadOverSCP:scpPath];
+    
+    NSDictionary *attributes =
+        @{ NSForegroundColorAttributeName: selectedTextColor,
+           NSBackgroundColorAttributeName: selectionColor,
+           NSFontAttributeName: primaryFont.font };
+    NSSize size = [selectedText sizeWithAttributes:attributes];
+    size.height = lineHeight;
+    NSImage* image = [[[NSImage alloc] initWithSize:size] autorelease];
+    [image lockFocus];
+    [selectedText drawAtPoint:NSMakePoint(0, 0) withAttributes:attributes];
+    [image unlockFocus];
+    
+    NSRect windowRect = [self convertRect:NSMakeRect(startX * charWidth + MARGIN,
+                                                     startY * lineHeight,
+                                                     0,
+                                                     0)
+                                   toView:nil];
+    NSPoint point = [[self window] convertRectToScreen:windowRect].origin;
+    point.y -= lineHeight;
+    [[FileTransferManager sharedInstance] animateImage:image
+                            intoDownloadsMenuFromPoint:point
+                                              onScreen:[[self window] screen]];
 }
 
 - (void)showNotes:(id)sender
@@ -5060,6 +5091,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // These commands are allowed only if there is a selection.
         return startX > -1;
     }
+    if ([item action] == @selector(downloadWithSCP:)) {
+        return ([self _haveShortSelection] &&
+                startY >= 0 &&
+                [dataSource scpPathForFile:[self selectedText] onLine:startY] != nil);
+    }
     if ([item action]==@selector(showNotes:)) {
         return validationClickPoint_.x >= 0 &&
                [[dataSource notesInRange:VT100GridCoordRangeMake(validationClickPoint_.x,
@@ -5221,6 +5257,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     // Menu items for acting on text selections
+    NSString *scpTitle = @"Download with scp";
+    if ([self _haveShortSelection] &&
+        startY >= 0) {
+        SCPPath *scpPath = [dataSource scpPathForFile:[self selectedText] onLine:startY];
+        if (scpPath) {
+            scpTitle = [NSString stringWithFormat:@"Download with scp from %@", scpPath.hostname];
+        }
+    }
+
+    [theMenu addItemWithTitle:scpTitle
+                       action:@selector(downloadWithSCP:)
+                keyEquivalent:@""];
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Open Selection as URL",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(browse:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
@@ -5428,6 +5476,50 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return result;
 }
 
+- (BOOL)hostIsLocal:(NSString *)host {
+    NSArray *hostAddresses = [[NSHost hostWithName:host] addresses];
+    NSArray *localAddresses = [[NSHost currentHost] addresses];
+    for (NSString *hostAddress in hostAddresses) {
+        if ([localAddresses containsObject:hostAddress]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (BOOL)confirmUploadOfFiles:(NSArray *)files toPath:(SCPPath *)path {
+    NSString *text;
+    if (files.count == 0) {
+        return NO;
+    }
+    if (files.count == 1) {
+        text = [NSString stringWithFormat:@"Ok to scp\n%@\nto\n%@@%@:%@?",
+                [files componentsJoinedByString:@", "],
+                path.username, path.hostname, path.path];
+    } else {
+        text = [NSString stringWithFormat:@"Ok to scp the following files:\n%@\n\nto\n%@@%@:%@?",
+                [files componentsJoinedByString:@", "],
+                path.username, path.hostname, path.path];
+    }
+    NSAlert *alert = [NSAlert alertWithMessageText:text
+                                     defaultButton:@"OK"
+                                   alternateButton:@"Cancel"
+                                       otherButton:nil
+                         informativeTextWithFormat:@""];
+    
+    [alert layout];
+    NSInteger button = [alert runModal];
+    return (button == NSAlertDefaultReturn);
+}
+
+- (void)maybeUpload:(NSArray *)tuple {
+    NSArray *propertyList = tuple[0];
+    SCPPath *dropScpPath = tuple[1];
+    if ([self confirmUploadOfFiles:propertyList toPath:dropScpPath]) {
+        [self.delegate uploadFiles:propertyList toPath:dropScpPath];
+    }
+}
+
 //
 // Called when the dragged item is released in our drop area.
 //
@@ -5451,6 +5543,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
             if ([types containsObject:NSFilenamesPboardType]) {
                 propertyList = [pb propertyListForType: NSFilenamesPboardType];
+                NSPoint windowDropPoint = [sender draggingLocation];
+                NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
+                int dropLine = dropPoint.y / lineHeight;
+                SCPPath *dropScpPath = [dataSource scpPathForFile:@"" onLine:dropLine];
+                // Make sure you are currently connected to a remote host and you dragged into that
+                // host.
+                if (![self hostIsLocal:dropScpPath.hostname]) {
+                    // This is all so the mouse cursor will change to a plain arrow instead of the
+                    // drop target cursor.
+                    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+                    [[self window] makeKeyAndOrderFront:nil];
+                    [self performSelector:@selector(maybeUpload:)
+                               withObject:@[ propertyList, dropScpPath]
+                               afterDelay:0];
+                    return YES;
+                }
+
                 for (i = 0; i < (int)[propertyList count]; i++) {
                     // Ignore text clippings
                     NSString *filename = (NSString*)[propertyList objectAtIndex:i];  // this contains the POSIX path to a file
@@ -9028,13 +9137,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     int fileCharsTaken = 0;
 
-    NSString *workingDirectory = [self getWorkingDirectoryAtLine:y];
+    NSString *workingDirectory = [dataSource workingDirectoryOnLine:y];
     // First, try to locate an existing filename at this location.
     NSString *filename = [self _bruteforcePathFromBeforeString:[[possibleFilePart1 mutableCopy] autorelease]
                                                    afterString:[[possibleFilePart2 mutableCopy] autorelease]
                                               workingDirectory:workingDirectory
                                           charsTakenFromPrefix:&fileCharsTaken];
-    
+
     // Don't consider / to be a valid filename because it's useless and single/double slashes are
     // pretty common.
     if (filename && ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
@@ -9303,46 +9412,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 
-- (void)logWorkingDirectoryAtLine:(long long)line
-{
-    NSString *workingDirectory = [[_delegate SHELL] getWorkingDirectory];
-    [self logWorkingDirectoryAtLine:line withDirectory:workingDirectory];
-}
-
-- (void)logWorkingDirectoryAtLine:(long long)line withDirectory:(NSString *)workingDirectory
-{
-    [workingDirectoryAtLines addObject:@[ @(line), workingDirectory ]];
-    if ([workingDirectoryAtLines count] > MAX_WORKING_DIR_COUNT) {
-        [workingDirectoryAtLines removeObjectAtIndex:0];
-    }
-}
-
-- (NSString *)getWorkingDirectoryAtLine:(long long)line
-{
-    // TODO: use a binary search if we make MAX_WORKING_DIR_COUNT large.
-
-    // Return current directory if not able to log via XTERMCC_WINDOW_TITLE
-    if ([workingDirectoryAtLines count] == 0) {
-        return [[_delegate SHELL] getWorkingDirectory];
-    }
-
-    long long previousLine = [[[workingDirectoryAtLines lastObject] objectAtIndex:0] longLongValue];
-    long long currentLine;
-
-    for (int i = [workingDirectoryAtLines count] - 1; i >= 0; i--) {
-
-        currentLine = [[[workingDirectoryAtLines objectAtIndex:i] objectAtIndex: 0] longLongValue];
-
-        if (currentLine <= line && line <= previousLine) {
-            return [[workingDirectoryAtLines objectAtIndex:i] lastObject];
-        }
-
-        previousLine = currentLine;
-    }
-
-    return [[workingDirectoryAtLines lastObject] lastObject];
-}
-
 - (void)_openSemanticHistoryForUrl:(NSString *)aURLString
                             atLine:(long long)line
                       inBackground:(BOOL)background
@@ -9353,7 +9422,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
-    NSString *workingDirectory = [self getWorkingDirectoryAtLine:line];
+    NSString *workingDirectory = [dataSource workingDirectoryOnLine:line];
     if (![trouter openPath:trimmedURLString
               workingDirectory:workingDirectory
                     prefix:prefix

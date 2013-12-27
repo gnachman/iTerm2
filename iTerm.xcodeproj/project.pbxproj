@@ -516,6 +516,15 @@
 		1DE214E1128212EE004E3ADF /* Autocomplete.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE214DF128212EE004E3ADF /* Autocomplete.h */; };
 		1DE214E2128212EE004E3ADF /* Autocomplete.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE214E0128212EE004E3ADF /* Autocomplete.m */; };
 		1DE2154312821F1C004E3ADF /* Autocomplete.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DE2154112821F1C004E3ADF /* Autocomplete.xib */; };
+		1DE306A41864EF040044583A /* NSArray+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE306A21864EF030044583A /* NSArray+iTerm.h */; };
+		1DE306A51864EF040044583A /* NSArray+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE306A31864EF040044583A /* NSArray+iTerm.m */; };
+		1DE306A61864EF040044583A /* NSArray+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE306A31864EF040044583A /* NSArray+iTerm.m */; };
+		1DE306A91864F2010044583A /* VT100WorkingDirectory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE306A71864F2010044583A /* VT100WorkingDirectory.h */; };
+		1DE306AA1864F2010044583A /* VT100WorkingDirectory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE306A81864F2010044583A /* VT100WorkingDirectory.m */; };
+		1DE306AB1864F2010044583A /* VT100WorkingDirectory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE306A81864F2010044583A /* VT100WorkingDirectory.m */; };
+		1DE3231B186518960044583A /* VT100RemoteHost.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE32319186518960044583A /* VT100RemoteHost.h */; };
+		1DE3231C186518960044583A /* VT100RemoteHost.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE3231A186518960044583A /* VT100RemoteHost.m */; };
+		1DE3231D186518960044583A /* VT100RemoteHost.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE3231A186518960044583A /* VT100RemoteHost.m */; };
 		1DE5EBE8122B892900C736B0 /* ProfilesWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE5EBE6122B892900C736B0 /* ProfilesWindow.h */; };
 		1DE5EBE9122B892900C736B0 /* ProfilesWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE5EBE7122B892900C736B0 /* ProfilesWindow.m */; };
 		1DE8DC891415513A00F83147 /* ToolbeltView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC871415513A00F83147 /* ToolbeltView.h */; };
@@ -567,6 +576,14 @@
 		A60014FB18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h in Headers */ = {isa = PBXBuildFile; fileRef = A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */; };
 		A60014FC18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m in Sources */ = {isa = PBXBuildFile; fileRef = A60014FA18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m */; };
 		A60014FD18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m in Sources */ = {isa = PBXBuildFile; fileRef = A60014FA18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m */; };
+		A608F1D51866166B004EDE74 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A608F1D41866166B004EDE74 /* NMSSH.framework */; };
+		A608F1D61866166B004EDE74 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A608F1D41866166B004EDE74 /* NMSSH.framework */; };
+		A608F1D9186616E8004EDE74 /* SCPPath.h in Headers */ = {isa = PBXBuildFile; fileRef = A608F1D7186616E7004EDE74 /* SCPPath.h */; };
+		A608F1DA186616E8004EDE74 /* SCPPath.m in Sources */ = {isa = PBXBuildFile; fileRef = A608F1D8186616E8004EDE74 /* SCPPath.m */; };
+		A608F1DB186616E8004EDE74 /* SCPPath.m in Sources */ = {isa = PBXBuildFile; fileRef = A608F1D8186616E8004EDE74 /* SCPPath.m */; };
+		A608F1DE1866185A004EDE74 /* FileTransferManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A608F1DC1866185A004EDE74 /* FileTransferManager.h */; };
+		A608F1DF1866185A004EDE74 /* FileTransferManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A608F1DD1866185A004EDE74 /* FileTransferManager.m */; };
+		A608F1E01866185A004EDE74 /* FileTransferManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A608F1DD1866185A004EDE74 /* FileTransferManager.m */; };
 		A6358646184BEA57009ED690 /* AATree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358642184BEA57009ED690 /* AATree.h */; };
 		A6358647184BEA57009ED690 /* AATree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358643184BEA57009ED690 /* AATree.m */; };
 		A6358648184BEA57009ED690 /* AATree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358643184BEA57009ED690 /* AATree.m */; };
@@ -607,6 +624,22 @@
 		A6CFDAD7185D53C2005DC94B /* AsyncHostLookupController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */; };
 		A6CFDAD8185D53C2005DC94B /* AsyncHostLookupController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD6185D53C2005DC94B /* AsyncHostLookupController.m */; };
 		A6CFDAD9185D53C2005DC94B /* AsyncHostLookupController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD6185D53C2005DC94B /* AsyncHostLookupController.m */; };
+		A6F9CCD218663B2E00046B6B /* SCPFile.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F9CCD018663B2E00046B6B /* SCPFile.h */; };
+		A6F9CCD318663B2E00046B6B /* SCPFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCD118663B2E00046B6B /* SCPFile.m */; };
+		A6F9CCD418663B2E00046B6B /* SCPFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCD118663B2E00046B6B /* SCPFile.m */; };
+		A6F9CCD71867425A00046B6B /* NSObject+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F9CCD51867425A00046B6B /* NSObject+iTerm.h */; };
+		A6F9CCD81867425A00046B6B /* NSObject+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCD61867425A00046B6B /* NSObject+iTerm.m */; };
+		A6F9CCD91867425A00046B6B /* NSObject+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCD61867425A00046B6B /* NSObject+iTerm.m */; };
+		A6F9CCDD1867929700046B6B /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A608F1D41866166B004EDE74 /* NMSSH.framework */; };
+		A6F9CCE01868C67500046B6B /* TransferrableFileMenuItemViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F9CCDE1868C67500046B6B /* TransferrableFileMenuItemViewController.h */; };
+		A6F9CCE11868C67500046B6B /* TransferrableFileMenuItemViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCDF1868C67500046B6B /* TransferrableFileMenuItemViewController.m */; };
+		A6F9CCE21868C67500046B6B /* TransferrableFileMenuItemViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCDF1868C67500046B6B /* TransferrableFileMenuItemViewController.m */; };
+		A6F9CCE51868C88F00046B6B /* TransferrableFile.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F9CCE31868C88F00046B6B /* TransferrableFile.h */; };
+		A6F9CCE61868C88F00046B6B /* TransferrableFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCE41868C88F00046B6B /* TransferrableFile.m */; };
+		A6F9CCE71868C88F00046B6B /* TransferrableFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCE41868C88F00046B6B /* TransferrableFile.m */; };
+		A6F9CCEA1868C8DE00046B6B /* TransferrableFileMenuItemView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F9CCE81868C8DE00046B6B /* TransferrableFileMenuItemView.h */; };
+		A6F9CCEB1868C8DE00046B6B /* TransferrableFileMenuItemView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCE91868C8DE00046B6B /* TransferrableFileMenuItemView.m */; };
+		A6F9CCEC1868C8DE00046B6B /* TransferrableFileMenuItemView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9CCE91868C8DE00046B6B /* TransferrableFileMenuItemView.m */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = FB151F2903648AC401F955DB /* iTerm.strings */; };
@@ -632,6 +665,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				A6F9CCDD1867929700046B6B /* NMSSH.framework in CopyFiles */,
 				1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */,
 				5ECE4AE814513F05002A9CC2 /* Growl.framework in CopyFiles */,
 			);
@@ -934,6 +968,12 @@
 		1DE214DF128212EE004E3ADF /* Autocomplete.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Autocomplete.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		1DE214E0128212EE004E3ADF /* Autocomplete.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = Autocomplete.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1DE2154212821F1C004E3ADF /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/Autocomplete.xib; sourceTree = "<group>"; };
+		1DE306A21864EF030044583A /* NSArray+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSArray+iTerm.h"; sourceTree = "<group>"; };
+		1DE306A31864EF040044583A /* NSArray+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSArray+iTerm.m"; sourceTree = "<group>"; };
+		1DE306A71864F2010044583A /* VT100WorkingDirectory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100WorkingDirectory.h; sourceTree = "<group>"; };
+		1DE306A81864F2010044583A /* VT100WorkingDirectory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100WorkingDirectory.m; sourceTree = "<group>"; };
+		1DE32319186518960044583A /* VT100RemoteHost.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100RemoteHost.h; sourceTree = "<group>"; };
+		1DE3231A186518960044583A /* VT100RemoteHost.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100RemoteHost.m; sourceTree = "<group>"; };
 		1DE5EBE6122B892900C736B0 /* ProfilesWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesWindow.h; sourceTree = "<group>"; };
 		1DE5EBE7122B892900C736B0 /* ProfilesWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ProfilesWindow.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1DE8DC871415513A00F83147 /* ToolbeltView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolbeltView.h; sourceTree = "<group>"; };
@@ -990,6 +1030,11 @@
 		A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableAttributedString+iTerm.m"; sourceTree = "<group>"; };
 		A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermNSKeyBindingEmulator.h; sourceTree = "<group>"; };
 		A60014FA18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNSKeyBindingEmulator.m; sourceTree = "<group>"; };
+		A608F1D41866166B004EDE74 /* NMSSH.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = NMSSH.framework; sourceTree = "<group>"; };
+		A608F1D7186616E7004EDE74 /* SCPPath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SCPPath.h; sourceTree = "<group>"; };
+		A608F1D8186616E8004EDE74 /* SCPPath.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SCPPath.m; sourceTree = "<group>"; };
+		A608F1DC1866185A004EDE74 /* FileTransferManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileTransferManager.h; sourceTree = "<group>"; };
+		A608F1DD1866185A004EDE74 /* FileTransferManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FileTransferManager.m; sourceTree = "<group>"; };
 		A6358642184BEA57009ED690 /* AATree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AATree.h; path = "objc-aatree-master/AATree.h"; sourceTree = "<group>"; };
 		A6358643184BEA57009ED690 /* AATree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AATree.m; path = "objc-aatree-master/AATree.m"; sourceTree = "<group>"; };
 		A6358644184BEA57009ED690 /* AATreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AATreeNode.h; path = "objc-aatree-master/AATreeNode.h"; sourceTree = "<group>"; };
@@ -1018,6 +1063,17 @@
 		A6CFDAD1185D2587005DC94B /* URLAction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = URLAction.m; sourceTree = "<group>"; };
 		A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AsyncHostLookupController.h; sourceTree = "<group>"; };
 		A6CFDAD6185D53C2005DC94B /* AsyncHostLookupController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AsyncHostLookupController.m; sourceTree = "<group>"; };
+		A6F9CCD018663B2E00046B6B /* SCPFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SCPFile.h; sourceTree = "<group>"; };
+		A6F9CCD118663B2E00046B6B /* SCPFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SCPFile.m; sourceTree = "<group>"; };
+		A6F9CCD51867425A00046B6B /* NSObject+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+iTerm.h"; sourceTree = "<group>"; };
+		A6F9CCD61867425A00046B6B /* NSObject+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+iTerm.m"; sourceTree = "<group>"; };
+		A6F9CCDA18678DCC00046B6B /* libssh2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssh2.a; path = libs/libssh2.a; sourceTree = "<group>"; };
+		A6F9CCDE1868C67500046B6B /* TransferrableFileMenuItemViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TransferrableFileMenuItemViewController.h; sourceTree = "<group>"; };
+		A6F9CCDF1868C67500046B6B /* TransferrableFileMenuItemViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TransferrableFileMenuItemViewController.m; sourceTree = "<group>"; };
+		A6F9CCE31868C88F00046B6B /* TransferrableFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TransferrableFile.h; sourceTree = "<group>"; };
+		A6F9CCE41868C88F00046B6B /* TransferrableFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TransferrableFile.m; sourceTree = "<group>"; };
+		A6F9CCE81868C8DE00046B6B /* TransferrableFileMenuItemView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TransferrableFileMenuItemView.h; sourceTree = "<group>"; };
+		A6F9CCE91868C8DE00046B6B /* TransferrableFileMenuItemView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TransferrableFileMenuItemView.m; sourceTree = "<group>"; };
 		DD02572409CB9398008F320C /* PSMAquaTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMAquaTabStyle.h; sourceTree = "<group>"; };
 		DD02572509CB9398008F320C /* PSMAquaTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMAquaTabStyle.m; sourceTree = "<group>"; };
 		DD02572609CB9398008F320C /* PSMMetalTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMMetalTabStyle.h; sourceTree = "<group>"; };
@@ -1124,6 +1180,7 @@
 				1D9A55BA180FAA1100B42CE9 /* Growl in Frameworks */,
 				1D9A55B9180FA93000B42CE9 /* AddressBook.framework in Frameworks */,
 				1D9A55B8180FA92100B42CE9 /* libncurses.dylib in Frameworks */,
+				A608F1D61866166B004EDE74 /* NMSSH.framework in Frameworks */,
 				1D9A55B5180FA8F400B42CE9 /* AppKit.framework in Frameworks */,
 				1D9A5534180FA77F00B42CE9 /* Quartz.framework in Frameworks */,
 				1D9A5533180FA77900B42CE9 /* Carbon.framework in Frameworks */,
@@ -1142,6 +1199,7 @@
 				1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */,
 				1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */,
 				1D94EAC812D641D3008225A9 /* AddressBook.framework in Frameworks */,
+				A608F1D51866166B004EDE74 /* NMSSH.framework in Frameworks */,
 				1DF0897113DBAF4C00A52AD8 /* Quartz.framework in Frameworks */,
 				1DA7894814AC19F500C8FBD9 /* Growl in Frameworks */,
 			);
@@ -1183,6 +1241,7 @@
 			isa = PBXGroup;
 			children = (
 				A68A30CA186D118E007F550F /* Data Structures */,
+				A6F9CCED186A561300046B6B /* File Transfers */,
 				A63F40AC1842988A003A6A6D /* Core */,
 				1D9DDE31142E73E300275650 /* Categories */,
 				1D9DDE2F142E735900275650 /* DVR */,
@@ -1217,6 +1276,8 @@
 				1D085FA116F138A000B7FCE9 /* ToastWindowController.m */,
 				1D06A04F134CDBED00C414EF /* Trouter.m */,
 				A60014FA18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m */,
+				1DE306A71864F2010044583A /* VT100WorkingDirectory.h */,
+				1DE306A81864F2010044583A /* VT100WorkingDirectory.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -1239,6 +1300,13 @@
 				1D9DCC0C142D7F5F0016228A /* BellTrigger.h */,
 				1D9DCC08142D7F300016228A /* BounceTrigger.h */,
 				1D48B377167E809D000046EE /* CharacterRun.h */,
+				A608F1DC1866185A004EDE74 /* FileTransferManager.h */,
+				A6F9CCD018663B2E00046B6B /* SCPFile.h */,
+				A608F1D7186616E7004EDE74 /* SCPPath.h */,
+				A6F9CCE31868C88F00046B6B /* TransferrableFile.h */,
+				A6F9CCE81868C8DE00046B6B /* TransferrableFileMenuItemView.h */,
+				A6F9CCDE1868C67500046B6B /* TransferrableFileMenuItemViewController.h */,
+				1DE32319186518960044583A /* VT100RemoteHost.h */,
 				1D699BC317CABC060094F0C1 /* CharacterRunInline.h */,
 				1D407A2414BABE8700BD5035 /* charmaps.h */,
 				A073973D14C768E400786414 /* ColorsMenuItemView.h */,
@@ -1656,6 +1724,10 @@
 				E8E901A202743CA303A80106 /* NSStringITerm.m */,
 				A60014F418550F3900CE38D8 /* NSMutableAttributedString+iTerm.h */,
 				A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */,
+				1DE306A21864EF030044583A /* NSArray+iTerm.h */,
+				1DE306A31864EF040044583A /* NSArray+iTerm.m */,
+				A6F9CCD51867425A00046B6B /* NSObject+iTerm.h */,
+				A6F9CCD61867425A00046B6B /* NSObject+iTerm.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -1663,6 +1735,8 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A6F9CCDA18678DCC00046B6B /* libssh2.a */,
+				A608F1D41866166B004EDE74 /* NMSSH.framework */,
 				1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */,
 				1D9A55B6180FA90700B42CE9 /* Sparkle */,
 				1D9A553A180FA7C500B42CE9 /* Growl */,
@@ -1785,6 +1859,18 @@
 				A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */,
 			);
 			name = "Data Structures";
+		A6F9CCED186A561300046B6B /* File Transfers */ = {
+			isa = PBXGroup;
+			children = (
+				A608F1DD1866185A004EDE74 /* FileTransferManager.m */,
+				A6F9CCD118663B2E00046B6B /* SCPFile.m */,
+				A608F1D8186616E8004EDE74 /* SCPPath.m */,
+				A6F9CCE41868C88F00046B6B /* TransferrableFile.m */,
+				A6F9CCE91868C8DE00046B6B /* TransferrableFileMenuItemView.m */,
+				A6F9CCDF1868C67500046B6B /* TransferrableFileMenuItemViewController.m */,
+				1DE3231A186518960044583A /* VT100RemoteHost.m */,
+			);
+			name = "File Transfers";
 			sourceTree = "<group>";
 		};
 		DD02571D09CB9363008F320C /* PSMTabBarControl */ = {
@@ -1922,12 +2008,15 @@
 				1D5FDD681208E8F000C46BA3 /* CarbonHelpers.h in Headers */,
 				1D5FDD691208E8F000C46BA3 /* CGSAccessibility.h in Headers */,
 				1D5FDD6A1208E8F000C46BA3 /* CGSCIFilter.h in Headers */,
+				1DE306A91864F2010044583A /* VT100WorkingDirectory.h in Headers */,
 				1D5FDD6B1208E8F000C46BA3 /* CGSConnection.h in Headers */,
 				A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */,
+				A6F9CCE51868C88F00046B6B /* TransferrableFile.h in Headers */,
 				A60014FB18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h in Headers */,
 				1D5FDD6C1208E8F000C46BA3 /* CGSCursor.h in Headers */,
 				1D81F0C0183C3C2D00910838 /* NSView+RecursiveDescription.h in Headers */,
 				1D5FDD6D1208E8F000C46BA3 /* CGSDebug.h in Headers */,
+				A6F9CCE01868C67500046B6B /* TransferrableFileMenuItemViewController.h in Headers */,
 				1D5FDD6E1208E8F000C46BA3 /* CGSDisplays.h in Headers */,
 				A63F409F183F3AF5003A6A6D /* VT100LineInfo.h in Headers */,
 				1D5FDD6F1208E8F000C46BA3 /* CGSHotKeys.h in Headers */,
@@ -1938,6 +2027,7 @@
 				1D5FDD721208E8F000C46BA3 /* CGSNotifications.h in Headers */,
 				1D5FDD731208E8F000C46BA3 /* CGSRegion.h in Headers */,
 				1D5FDD741208E8F000C46BA3 /* CGSSession.h in Headers */,
+				1DE3231B186518960044583A /* VT100RemoteHost.h in Headers */,
 				1D5FDD751208E8F000C46BA3 /* CGSTransitions.h in Headers */,
 				1D5FDD761208E8F000C46BA3 /* CGSWindow.h in Headers */,
 				1D5FDD771208E8F000C46BA3 /* CGSWorkspace.h in Headers */,
@@ -1948,12 +2038,14 @@
 				1D6C50A71226EEFB00E0AA3E /* ProfileListView.h in Headers */,
 				1DE5EBE8122B892900C736B0 /* ProfilesWindow.h in Headers */,
 				1D93D33512695442007F741B /* DVR.h in Headers */,
+				A6F9CCD218663B2E00046B6B /* SCPFile.h in Headers */,
 				1D93D3471269741B007F741B /* DVRBuffer.h in Headers */,
 				1D93D34B1269746F007F741B /* DVRIndexEntry.h in Headers */,
 				1D93D34F126974BC007F741B /* DVRDecoder.h in Headers */,
 				1D93D35312697529007F741B /* DVREncoder.h in Headers */,
 				1D173859126C820A004622DC /* FakeWindow.h in Headers */,
 				1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */,
+				A608F1D9186616E8004EDE74 /* SCPPath.h in Headers */,
 				1D7C18811275D22900461E55 /* PasteboardHistory.h in Headers */,
 				1D7C1D1212772ECC00461E55 /* NSDateFormatterExtras.h in Headers */,
 				1DE214E1128212EE004E3ADF /* Autocomplete.h in Headers */,
@@ -1990,6 +2082,7 @@
 				1D29732B14082A52004C5DBE /* SplitSelectionView.h in Headers */,
 				1D9F6AB8140C9DC4009B5CD4 /* FutureMethods.h in Headers */,
 				1DE8DC891415513A00F83147 /* ToolbeltView.h in Headers */,
+				1DE306A41864EF040044583A /* NSArray+iTerm.h in Headers */,
 				1DE8DC8D1415546000F83147 /* ToolProfiles.h in Headers */,
 				1DE8DDAD1415648600F83147 /* ToolPasteHistory.h in Headers */,
 				1DE8DF361415799700F83147 /* ToolWrapper.h in Headers */,
@@ -2030,6 +2123,7 @@
 				1DD6707714934ADE008E4361 /* PTYSplitView.h in Headers */,
 				1DD4CE8014A51C0D00ED182E /* TmuxDashboardController.h in Headers */,
 				1DA9AEEA14A51CA000BEB37B /* TmuxSessionsTable.h in Headers */,
+				A608F1DE1866185A004EDE74 /* FileTransferManager.h in Headers */,
 				1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */,
 				1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */,
 				1DAE714D14AAF24200DA144B /* EquivalenceClassSet.h in Headers */,
@@ -2044,6 +2138,7 @@
 				1D407A3E14BABE8700BD5035 /* PTYScrollView.h in Headers */,
 				1D407A3F14BABE8700BD5035 /* PTYSession.h in Headers */,
 				1D407A4014BABE8700BD5035 /* PTYTabView.h in Headers */,
+				A6F9CCD71867425A00046B6B /* NSObject+iTerm.h in Headers */,
 				1D407A4114BABE8700BD5035 /* PTYTask.h in Headers */,
 				1D407A4214BABE8700BD5035 /* PTYTextView.h in Headers */,
 				1D407A4314BABE8700BD5035 /* PTYWindow.h in Headers */,
@@ -2062,6 +2157,7 @@
 				1D6944D7169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h in Headers */,
 				1D085F8616F02E7400B7FCE9 /* PasteContext.h in Headers */,
 				1D085F8D16F0328B00B7FCE9 /* PasteViewController.h in Headers */,
+				A6F9CCEA1868C8DE00046B6B /* TransferrableFileMenuItemView.h in Headers */,
 				1D085F9216F03E5400B7FCE9 /* PasteView.h in Headers */,
 				1D085F9616F04D0900B7FCE9 /* NSBezierPath+iTerm.h in Headers */,
 				1D085F9A16F1135F00B7FCE9 /* PasteEvent.h in Headers */,
@@ -2343,10 +2439,12 @@
 				1D9A55AA180FA8B700B42CE9 /* PSMOverflowPopUpButton.m in Sources */,
 				1D9A5560180FA83900B42CE9 /* TriggerController.m in Sources */,
 				1D78B560183EE1C000014D49 /* LineBufferPosition.m in Sources */,
+				A6F9CCEC1868C8DE00046B6B /* TransferrableFileMenuItemView.m in Sources */,
 				1D9A5549180FA82E00B42CE9 /* TmuxDashboardController.m in Sources */,
 				1D9A5579180FA85D00B42CE9 /* ScriptTrigger.m in Sources */,
 				1D9A5551180FA82E00B42CE9 /* TSVParser.m in Sources */,
 				1D9A559B180FA87000B42CE9 /* RoundedRectView.m in Sources */,
+				A6F9CCE71868C88F00046B6B /* TransferrableFile.m in Sources */,
 				1D9A5573180FA85D00B42CE9 /* Trigger.m in Sources */,
 				1D9A554F180FA82E00B42CE9 /* TmuxWindowOpener.m in Sources */,
 				1D9A5535180FA78B00B42CE9 /* DVRBuffer.m in Sources */,
@@ -2368,6 +2466,7 @@
 				1D9A5597180FA87000B42CE9 /* PTYTab.m in Sources */,
 				1D9A556A180FA85000B42CE9 /* Popup.m in Sources */,
 				1D9A5530180FA70D00B42CE9 /* iTermController.m in Sources */,
+				1DE306AB1864F2010044583A /* VT100WorkingDirectory.m in Sources */,
 				1D53FD17181C4B4B00524D4F /* FindContext.m in Sources */,
 				1DD39B11180B817B004E56D5 /* VT100GridTypes.m in Sources */,
 				1D9A5564180FA84700B42CE9 /* NSDateFormatterExtras.m in Sources */,
@@ -2383,6 +2482,7 @@
 				1D9A5583180FA87000B42CE9 /* iTermApplicationDelegate.m in Sources */,
 				1D9A55A5180FA87000B42CE9 /* VT100Terminal.m in Sources */,
 				1D9A559A180FA87000B42CE9 /* PTYTextView.m in Sources */,
+				1DE3231D186518960044583A /* VT100RemoteHost.m in Sources */,
 				1D9A55A8180FA8B700B42CE9 /* PSMAquaTabStyle.m in Sources */,
 				1D9A5599180FA87000B42CE9 /* PTYTask.m in Sources */,
 				1D9A552F180FA6A100B42CE9 /* iTermGrowlDelegate.m in Sources */,
@@ -2392,8 +2492,10 @@
 				1D9A5548180FA82E00B42CE9 /* TmuxControllerRegistry.m in Sources */,
 				1D9A5541180FA81400B42CE9 /* ProfileListView.m in Sources */,
 				1D9A5542180FA81400B42CE9 /* ProfilesWindow.m in Sources */,
+				A608F1DB186616E8004EDE74 /* SCPPath.m in Sources */,
 				1DD39B22180B8467004E56D5 /* BackgroundThread.m in Sources */,
 				1D9A5576180FA85D00B42CE9 /* CoprocessTrigger.m in Sources */,
+				A608F1E01866185A004EDE74 /* FileTransferManager.m in Sources */,
 				1D9A5580180FA87000B42CE9 /* FontSizeEstimator.m in Sources */,
 				1D9A5561180FA83900B42CE9 /* TrouterPrefsController.m in Sources */,
 				1D9A556F180FA85900B42CE9 /* ToolNotes.m in Sources */,
@@ -2408,6 +2510,7 @@
 				1DD39B17180B82AC004E56D5 /* ScreenChar.m in Sources */,
 				1D9A5591180FA87000B42CE9 /* PseudoTerminalRestorer.m in Sources */,
 				1DD39B16180B81B3004E56D5 /* VT100GridTest.m in Sources */,
+				A6F9CCD91867425A00046B6B /* NSObject+iTerm.m in Sources */,
 				1D9A558C180FA87000B42CE9 /* PasteView.m in Sources */,
 				1D9A557E180FA87000B42CE9 /* FindView.m in Sources */,
 				1D9A554C180FA82E00B42CE9 /* TmuxLayoutParser.m in Sources */,
@@ -2432,8 +2535,10 @@
 				1D9A5592180FA87000B42CE9 /* PTToolbarController.m in Sources */,
 				1D9A553E180FA7ED00B42CE9 /* PTYWindow.m in Sources */,
 				1D9A558D180FA87000B42CE9 /* PasteViewController.m in Sources */,
+				1DE306A61864EF040044583A /* NSArray+iTerm.m in Sources */,
 				1D9A5547180FA82E00B42CE9 /* TmuxController.m in Sources */,
 				1D9A5550180FA82E00B42CE9 /* TmuxWindowsTable.m in Sources */,
+				A6F9CCD418663B2E00046B6B /* SCPFile.m in Sources */,
 				1DD39B1E180B8415004E56D5 /* LineBuffer.m in Sources */,
 				1D9A55AF180FA8B700B42CE9 /* PSMTabDragAssistant.m in Sources */,
 				1D9A559F180FA87000B42CE9 /* SplitPanel.m in Sources */,
@@ -2457,6 +2562,7 @@
 				1D9A5523180FA46100B42CE9 /* iTermTests.m in Sources */,
 				1D9A559C180FA87000B42CE9 /* SessionTitleView.m in Sources */,
 				1D9A55B0180FA8B700B42CE9 /* PSMTabDragWindow.m in Sources */,
+				A6F9CCE21868C67500046B6B /* TransferrableFileMenuItemViewController.m in Sources */,
 				1D9A554D180FA82E00B42CE9 /* TmuxSessionsTable.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2467,6 +2573,7 @@
 			files = (
 				8742064F0564169600CFC3F1 /* main.m in Sources */,
 				1D5FDDA51208E93600C46BA3 /* PseudoTerminal.m in Sources */,
+				1DE306A51864EF040044583A /* NSArray+iTerm.m in Sources */,
 				1D5FDDA61208E93600C46BA3 /* PTYScrollView.m in Sources */,
 				1D5FDDA71208E93600C46BA3 /* PTYTextView.m in Sources */,
 				1D5FDDA81208E93600C46BA3 /* PTYTask.m in Sources */,
@@ -2494,8 +2601,10 @@
 				1D5FDDBC1208E93600C46BA3 /* PSMMetalTabStyle.m in Sources */,
 				1D5FDDBD1208E93600C46BA3 /* PSMOverflowPopUpButton.m in Sources */,
 				A6CFDAD8185D53C2005DC94B /* AsyncHostLookupController.m in Sources */,
+				A6F9CCEB1868C8DE00046B6B /* TransferrableFileMenuItemView.m in Sources */,
 				1D5FDDBE1208E93600C46BA3 /* PSMProgressIndicator.m in Sources */,
 				1D5FDDBF1208E93600C46BA3 /* PSMRolloverButton.m in Sources */,
+				A6F9CCE61868C88F00046B6B /* TransferrableFile.m in Sources */,
 				1D5FDDC01208E93600C46BA3 /* PSMTabBarCell.m in Sources */,
 				1D5FDDC11208E93600C46BA3 /* PSMTabBarControl.m in Sources */,
 				1D5FDDC21208E93600C46BA3 /* NSBezierPath_AMShading.m in Sources */,
@@ -2510,6 +2619,7 @@
 				874206500564169600CFC3F1 /* iTermApplicationDelegate.m in Sources */,
 				DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */,
 				1DCF3E8F122419D200AD56F1 /* ProfileModel.m in Sources */,
+				A6F9CCD81867425A00046B6B /* NSObject+iTerm.m in Sources */,
 				1D6C50A81226EEFB00E0AA3E /* ProfileListView.m in Sources */,
 				A68A30C7186D0F37007F550F /* SmartMatch.m in Sources */,
 				1DE5EBE9122B892900C736B0 /* ProfilesWindow.m in Sources */,
@@ -2521,6 +2631,7 @@
 				1D7C18821275D22900461E55 /* PasteboardHistory.m in Sources */,
 				A635864A184BEA57009ED690 /* AATreeNode.m in Sources */,
 				1D7C1D1312772ECC00461E55 /* NSDateFormatterExtras.m in Sources */,
+				1DE3231C186518960044583A /* VT100RemoteHost.m in Sources */,
 				1DE214E2128212EE004E3ADF /* Autocomplete.m in Sources */,
 				1DD736421283C2FA009B7829 /* Popup.m in Sources */,
 				1D44218D1290B34500891504 /* TextViewWrapper.m in Sources */,
@@ -2554,6 +2665,7 @@
 				1DE8DC8E1415546000F83147 /* ToolProfiles.m in Sources */,
 				1DE8DDAE1415648600F83147 /* ToolPasteHistory.m in Sources */,
 				1DE8DF371415799700F83147 /* ToolWrapper.m in Sources */,
+				A608F1DF1866185A004EDE74 /* FileTransferManager.m in Sources */,
 				1D19C71514171F1D00617E08 /* ToolJobs.m in Sources */,
 				1D67AAAA14284BF300D5DA4E /* ToolNotes.m in Sources */,
 				1D67ABAC14285D6000D5DA4E /* NSFileManager+iTerm.m in Sources */,
@@ -2569,12 +2681,14 @@
 				1D9DDD9D142E5FBB00275650 /* Coprocess.m in Sources */,
 				1D24C285142EF334006B246F /* SendTextTrigger.m in Sources */,
 				1D24C2C6142FEACF006B246F /* SmartSelectionController.m in Sources */,
+				A6F9CCE11868C67500046B6B /* TransferrableFileMenuItemViewController.m in Sources */,
 				1D4AE8FF14343A760092EB49 /* TrouterPrefsController.m in Sources */,
 				1DEDC8FE1451F67D004F1615 /* SessionTitleView.m in Sources */,
 				5ECE00601454E59B004861E9 /* PseudoTerminalRestorer.m in Sources */,
 				1D8255FD14687EE8007CAE78 /* PointerPrefsController.m in Sources */,
 				1D825601146881EC007CAE78 /* PointerController.m in Sources */,
 				1D825605146B258A007CAE78 /* EventMonitorView.m in Sources */,
+				A6F9CCD318663B2E00046B6B /* SCPFile.m in Sources */,
 				1D3BBD6C14759D6C00FAB389 /* HighlightTrigger.m in Sources */,
 				1D21EE3C147711300066E04A /* ContextMenuActionPrefsController.m in Sources */,
 				1D3D21881482E0E500FAC8E7 /* TmuxGateway.m in Sources */,
@@ -2593,6 +2707,8 @@
 				A68A30C2186D0DC1007F550F /* FindCursorView.m in Sources */,
 				1DA9AEEB14A51CA000BEB37B /* TmuxSessionsTable.m in Sources */,
 				1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */,
+				1DE306AA1864F2010044583A /* VT100WorkingDirectory.m in Sources */,
+				A608F1DA186616E8004EDE74 /* SCPPath.m in Sources */,
 				1D0B613D14A7C76500C57C33 /* TmuxWindowsTable.m in Sources */,
 				1DAE714E14AAF24200DA144B /* EquivalenceClassSet.m in Sources */,
 				A6358647184BEA57009ED690 /* AATree.m in Sources */,
@@ -2759,7 +2875,8 @@
 				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)\"",
+					"$(SRCROOT)",
+					/Users/gnachman/iTerm2,
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -2854,6 +2971,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/gnachman/iTerm2,
+				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -2913,6 +3034,10 @@
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/gnachman/iTerm2,
+				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -2964,6 +3089,10 @@
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/gnachman/iTerm2,
+				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -3015,6 +3144,10 @@
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/gnachman/iTerm2,
+				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -3054,7 +3187,8 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)\"",
+					"$(SRCROOT)",
+					/Users/gnachman/iTerm2,
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
@@ -3142,7 +3276,8 @@
 				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)\"",
+					"$(SRCROOT)",
+					/Users/gnachman/iTerm2,
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -3226,7 +3361,8 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)\"",
+					"$(SRCROOT)",
+					/Users/gnachman/iTerm2,
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G4;

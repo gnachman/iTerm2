@@ -48,6 +48,7 @@
 @class PTYScrollView;
 @class PTYSession;  // TODO: Remove this after PTYTextView doesn't depend directly on PTYSession
 @class PTYTask;
+@class SCPPath;
 @class SearchResult;
 @class ThreeFingerTapGestureRecognizer;
 @class VT100Screen;
@@ -76,6 +77,8 @@
 - (void)insertText:(NSString *)string;
 - (PTYTask *)SHELL;
 - (BOOL)alertOnNextMark;
+- (void)startDownloadOverSCP:(SCPPath *)path;
+- (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath;
 
 @end
 
@@ -299,9 +302,6 @@ enum {
 
     // Flag to make sure a Trouter drag check is only one once per drag
     BOOL trouterDragged;
-
-    // Array of (line number, pwd) arrays, sorted by line number. Line numbers are absolute.
-    NSMutableArray *workingDirectoryAtLines;
 
     // Saves the monotonically increasing event number of a first-mouse click, which disallows
     // selection.
@@ -663,7 +663,6 @@ enum {
 - (void)movePane:(id)sender;
 
 // Clear working directories for when buffer is cleared
-- (void)clearWorkingDirectories;
 - (NSString *)getWordForX:(int)x
                         y:(int)y
                    startX:(int *)startx
@@ -751,11 +750,6 @@ typedef enum {
                              y:(int)yi
                            dir:(int)dir
            respectHardNewlines:(BOOL)respectHardNewlines;
-
-// Snapshot working directory for Trouter
-- (void)logWorkingDirectoryAtLine:(long long)line;
-- (void)logWorkingDirectoryAtLine:(long long)line withDirectory:(NSString *)workingDirectory;
-- (NSString *)getWorkingDirectoryAtLine:(long long)line;
 
 - (BOOL)_findMatchingParenthesis:(NSString *)parenthesis withX:(int)X Y:(int)Y;
 - (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent;

@@ -53,6 +53,8 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     // Menu items
     IBOutlet NSMenu     *bookmarkMenu;
     IBOutlet NSMenu     *toolbeltMenu;
+    NSMenuItem *downloadsMenu_;
+    NSMenuItem *uploadsMenu_;
     IBOutlet NSMenuItem *showToolbeltItem;
     IBOutlet NSMenuItem *selectTab;
     IBOutlet NSMenuItem *previousTerminal;
@@ -183,6 +185,9 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 // Call this when the user has any nontrivial interaction with a session, such as typing in it or closing a window.
 - (void)userDidInteractWithASession;
 - (BOOL)warnBeforeMultiLinePaste;
+
+- (NSMenu *)downloadsMenu;
+- (NSMenu *)uploadsMenu;
 
 @end
 
