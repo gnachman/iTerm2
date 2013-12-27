@@ -21,7 +21,7 @@
     BOOL isMiniaturized;
     NSRect frame;
     NSScreen* screen;
-    PseudoTerminal* realWindow;
+    id<iTermWindowController> realWindow;
 
     // Changes the session has initiated that will be delayed and performed
     // in -[rejoin:].
@@ -41,11 +41,11 @@
     BOOL scrollbarShouldBeVisible;
 }
 
-- (id)initFromRealWindow:(PseudoTerminal*)aTerm session:(PTYSession*)aSession;
+- (id)initFromRealWindow:(id<iTermWindowController>)aTerm session:(PTYSession*)aSession;
 - (void)dealloc;
 
 // PseudoTerminal should call this after adding the session to its tab view.
-- (void)rejoin:(PseudoTerminal*)aTerm;
+- (void)rejoin:(id<iTermWindowController>)aTerm;
 
 - (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
 - (BOOL)fullScreen;

@@ -952,12 +952,6 @@ static BOOL hasBecomeActive = NO;
             return;
         }
     }
-    for (PseudoTerminal* term in [self terminals]) {
-        if ([term isOrderedOut]) {
-            //NSLog(@"term %p was orphaned, order front.", term);
-            [[term window] orderFront:nil];
-        }
-    }
 }
 
 // font control

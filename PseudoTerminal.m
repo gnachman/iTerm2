@@ -81,7 +81,208 @@ NSString *kRowsKVCKey = @"rows";
 // keys for to-many relationships:
 NSString *kSessionsKVCKey = @"sessions";
 
-@implementation PseudoTerminal
+@implementation PseudoTerminal {
+    NSPoint preferredOrigin_;
+
+    SolidColorView* background_;
+    ////////////////////////////////////////////////////////////////////////////
+    // Parameter Panel
+    // A bookmark may have metasyntactic variables like $$FOO$$ in the command.
+    // When opening such a bookmark, pop up a sheet and ask the user to fill in
+    // the value. These fields belong to that sheet.
+    IBOutlet NSTextField *parameterName;
+    IBOutlet NSPanel     *parameterPanel;
+    IBOutlet NSTextField *parameterValue;
+    IBOutlet NSTextField *parameterPrompt;
+
+    ////////////////////////////////////////////////////////////////////////////
+    // BottomBar
+    // UI elements for searching the current session.
+
+    // This contains all the other elements.
+    IBOutlet BottomBarView* instantReplaySubview;
+
+    // Contains only bottomBarSubview. For whatever reason, adding the BottomBarView
+    // directly to the window doesn't work.
+    NSView* bottomBar;
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Tab View
+    // The tabview occupies almost the entire window. Each tab has an identifier
+    // which is a PTYTab.
+    PTYTabView *TABVIEW;
+
+    // Gray line dividing tab/title bar from content. Will be nil if a division
+    // view isn't needed such as for fullscreen windows or windows without a
+    // title bar (e.g., top-of-screen).
+    NSView *_divisionView;
+
+    // This is a sometimes-visible control that shows the tabs and lets the user
+    // change which is visible.
+    PSMTabBarControl *tabBarControl;
+    NSView* tabBarBackground;
+
+    // This is either 0 or 1. If 1, then a tab item is in the process of being
+    // added and the tabBarControl will be shown if it is added successfully
+    // if it's not currently shown.
+    int tabViewItemsBeingAdded;
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Toolbar
+    // A toolbar may be shown at the top of the window.
+
+    // This does the dirty work of running the toolbar.
+    PTToolbarController* _toolbarController;
+
+    // A text field into which you may type a command. When you press enter in it
+    // then the text is sent to the terminal.
+    IBOutlet id commandField;
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Miscellaneous
+
+    // Is the transparency setting respected?
+    BOOL useTransparency_;
+
+    // Is this a full screenw indow?
+    BOOL _fullScreen;
+
+    // When you enter full-screen mode the old frame size is saved here. When
+    // full-screen mode is exited that frame is restored.
+    NSRect oldFrame_;
+
+    // When you enter fullscreen mode, the old use transparency setting is
+    // saved, and then restored when you exit FS unless it was changed
+    // by the user.
+    BOOL oldUseTransparency_;
+    BOOL restoreUseTransparency_;
+
+    // True if an [init...] method was called.
+    BOOL windowInited;
+
+    // How input should be broadcast (or not).
+    BroadcastMode broadcastMode_;
+
+    // True if the window title is showing transient information (such as the
+    // size during resizing).
+    BOOL tempTitle;
+
+    // When sending input to all sessions we temporarily change the background
+    // color. This stores the normal background color so we can restore to it.
+    NSColor *normalBackgroundColor;
+
+    // This prevents recursive resizing.
+    BOOL _resizeInProgressFlag;
+
+    // There is a scheme for saving window positions. Each window is assigned
+    // a number, and the positions are stored by window name. The window name
+    // includes its unique number. This variable gives this window's number.
+    int uniqueNumber_;
+
+    // This is set while toggling full screen. It prevents windowDidResignMain
+    // from trying to exit fullscreen mode in the midst of toggling it.
+    BOOL togglingFullScreen_;
+
+    // True while entering lion fullscreen (the animation is going on)
+    BOOL togglingLionFullScreen_;
+
+    // Instant Replay widgets.
+    IBOutlet NSSlider* irSlider;
+    IBOutlet NSTextField* earliestTime;
+    IBOutlet NSTextField* latestTime;
+    IBOutlet NSTextField* currentTime;
+
+    PasteboardHistoryWindowController* pbHistoryView;
+    AutocompleteView* autocompleteView;
+
+    // True if preBottomBarFrame is valid.
+    BOOL pbbfValid;
+
+    NSTimer* fullScreenTabviewTimer_;
+
+    // This is a hack to support old applescript code that set the window size
+    // before adding a session to it, which doesn't really make sense now that
+    // textviews and windows are loosely coupled.
+    int nextSessionRows_;
+    int nextSessionColumns_;
+
+    BOOL tempDisableProgressIndicators_;
+
+    int windowType_;
+    // Window type before entering fullscreen. Only relevant if in/entering fullscreen.
+    int savedWindowType_;
+    BOOL isHotKeyWindow_;
+    BOOL haveScreenPreference_;
+    int screenNumber_;
+
+    // Window number, used for keyboard shortcut to select a window.
+    // This value is 0-based while the UI is 1-based.
+    int number_;
+
+    // True if this window was created by dragging a tab from another window.
+    // Affects how its size is set when the number of tabview items changes.
+    BOOL wasDraggedFromAnotherWindow_;
+    BOOL fullscreenTabs_;
+
+    // In the process of zooming in Lion or later.
+    BOOL zooming_;
+
+    // Time since 1970 of last window resize
+    double lastResizeTime_;
+
+    BOOL temporarilyShowingTabs_;
+
+    NSMutableSet *broadcastViewIds_;
+    NSTimeInterval findCursorStartTime_;
+
+    // Accumulated pinch magnification amount.
+    double cumulativeMag_;
+
+    // Time of last magnification change.
+    NSTimeInterval lastMagChangeTime_;
+
+    // In 10.7 style full screen mode
+    BOOL lionFullScreen_;
+
+    // Drawer view, which only exists for window_type normal.
+    NSDrawer *drawer_;
+
+    // Toolbelt view which goes in the drawer, or perhaps other places in the future.
+    ToolbeltView *toolbelt_;
+
+    IBOutlet NSPanel *coprocesssPanel_;
+    IBOutlet NSButton *coprocessOkButton_;
+    IBOutlet NSComboBox *coprocessCommand_;
+
+    NSDictionary *lastArrangement_;
+    BOOL wellFormed_;
+
+    BOOL exitingLionFullscreen_;
+
+    // If positive, then any window resizing that happens is driven by tmux and
+    // shoudn't be reported back to tmux as a user-originated resize.
+    int tmuxOriginatedResizeInProgress_;
+
+    BOOL liveResize_;
+    BOOL postponedTmuxTabLayoutChange_;
+
+    // A unique string for this window. Used for tmux to remember which window
+    // a tmux window should be opened in as a tab. A window restored from a
+    // saved arrangement will also restore its guid.
+    NSString *terminalGuid_;
+
+    // Recalls if this was a hide-after-opening window.
+    BOOL hideAfterOpening_;
+
+    // After dealloc starts, the restorable state should not be updated
+    // because the window's state is a shambles.
+    BOOL doNotSetRestorableState_;
+
+    // For top/left/bottom of screen windows, this is the size it really wants to be.
+    // Initialized to -1 in -init and then set to the size of the first session
+    // forever.
+    int desiredRows_, desiredColumns_;
+}
 
 - (id)init {
     // This is invoked by Applescript's "make new terminal" and must be followed by a command like
@@ -572,7 +773,7 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
-- (PseudoTerminal *)terminalDraggedFromAnotherWindowAtPoint:(NSPoint)point
+- (id<iTermWindowController>)terminalDraggedFromAnotherWindowAtPoint:(NSPoint)point
 {
     PseudoTerminal *term;
 
@@ -1390,15 +1591,15 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (NSString *)terminalGuid
 {
-        return terminalGuid_;
+    return terminalGuid_;
 }
 
 - (void)hideAfterOpening
 {
-        hideAfterOpening_ = YES;
-        [[self window] performSelector:@selector(miniaturize:)
-                                                withObject:nil
-                                                afterDelay:0];
+    hideAfterOpening_ = YES;
+    [[self window] performSelector:@selector(miniaturize:)
+                                            withObject:nil
+                                            afterDelay:0];
 }
 
 - (void)loadArrangement:(NSDictionary *)arrangement
@@ -1507,8 +1708,8 @@ NSString *kSessionsKVCKey = @"sessions";
     // Save index of selected tab.
     [result setObject:[NSNumber numberWithInt:[TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]]]
                forKey:TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX];
-        [result setObject:[NSNumber numberWithBool:hideAfterOpening_]
-                           forKey:TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING];
+    [result setObject:[NSNumber numberWithBool:hideAfterOpening_]
+               forKey:TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING];
 
     return result;
 }
@@ -1659,7 +1860,6 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification
 {
-    isOrderedOut_ = NO;
     [[[NSApplication sharedApplication] dockTile] setBadgeLabel:@""];
     [[[NSApplication sharedApplication] dockTile] setShowsApplicationBadge:NO];
     PtyLog(@"%s(%d):-[PseudoTerminal windowDidBecomeKey:%@]",
@@ -3239,8 +3439,8 @@ NSString *kSessionsKVCKey = @"sessions";
         return nil;
     }
 
-    PseudoTerminal *term = [self terminalDraggedFromAnotherWindowAtPoint:point];
-    if (term->windowType_ == WINDOW_TYPE_NORMAL &&
+    id<iTermWindowController> term = [self terminalDraggedFromAnotherWindowAtPoint:point];
+    if ([term windowType] == WINDOW_TYPE_NORMAL &&
         [[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
             [[term window] setFrameTopLeftPoint:point];
     }
@@ -3837,7 +4037,7 @@ NSString *kSessionsKVCKey = @"sessions";
     }
     [[self currentTab] recheckBlur];
     [[self currentTab] numberOfSessionsDidChange];
-        [self setDimmingForSession:targetSession];
+    [self setDimmingForSession:targetSession];
     [sessionView updateDim];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
@@ -4162,52 +4362,74 @@ NSString *kSessionsKVCKey = @"sessions";
     while (1) {
         currentRange = NSMakeRange(0,[command length]);
         r1 = [command rangeOfString:@"$$" options:NSLiteralSearch range:currentRange];
-        if (r1.location == NSNotFound) break;
+        if (r1.location == NSNotFound) {
+            break;
+        }
         currentRange.location = r1.location + 2;
         currentRange.length -= r1.location + 2;
         r2 = [command rangeOfString:@"$$" options:NSLiteralSearch range:currentRange];
-        if (r2.location == NSNotFound) break;
+        if (r2.location == NSNotFound) {
+            break;
+        }
 
-        [parameterName setStringValue: [command substringWithRange:NSMakeRange(r1.location+2, r2.location - r1.location-2)]];
+        [parameterName setStringValue:[command substringWithRange:NSMakeRange(r1.location+2,
+                                                                              r2.location - r1.location-2)]];
         [parameterValue setStringValue:@""];
-        [NSApp beginSheet: parameterPanel
-           modalForWindow: [self window]
-            modalDelegate: self
-           didEndSelector: nil
-              contextInfo: nil];
+        [NSApp beginSheet:parameterPanel
+           modalForWindow:[self window]
+            modalDelegate:self
+           didEndSelector:nil
+              contextInfo:nil];
 
         [NSApp runModalForWindow:parameterPanel];
 
         [NSApp endSheet:parameterPanel];
         [parameterPanel orderOut:self];
 
-        [name replaceOccurrencesOfString:[command  substringWithRange:NSMakeRange(r1.location, r2.location - r1.location+2)] withString:[parameterValue stringValue] options:NSLiteralSearch range:NSMakeRange(0,[name length])];
-        [command replaceOccurrencesOfString:[command  substringWithRange:NSMakeRange(r1.location, r2.location - r1.location+2)] withString:[parameterValue stringValue] options:NSLiteralSearch range:NSMakeRange(0,[command length])];
+        [name replaceOccurrencesOfString:[command substringWithRange:NSMakeRange(r1.location,
+                                                                                 r2.location - r1.location+2)]
+                              withString:[parameterValue stringValue]
+                                 options:NSLiteralSearch
+                                   range:NSMakeRange(0, [name length])];
+        [command replaceOccurrencesOfString:[command substringWithRange:NSMakeRange(r1.location,
+                                                                                    r2.location - r1.location+2)]
+                                 withString:[parameterValue stringValue]
+                                    options:NSLiteralSearch
+                                      range:NSMakeRange(0,[command length])];
     }
 
     while (1) {
         currentRange = NSMakeRange(0,[name length]);
         r1 = [name rangeOfString:@"$$" options:NSLiteralSearch range:currentRange];
-        if (r1.location == NSNotFound) break;
+        if (r1.location == NSNotFound) {
+            break;
+        }
         currentRange.location = r1.location + 2;
         currentRange.length -= r1.location + 2;
         r2 = [name rangeOfString:@"$$" options:NSLiteralSearch range:currentRange];
-        if (r2.location == NSNotFound) break;
+        if (r2.location == NSNotFound) {
+            break;
+        }
 
-        [parameterName setStringValue: [name substringWithRange:NSMakeRange(r1.location+2, r2.location - r1.location-2)]];
+        [parameterName setStringValue:[name substringWithRange:NSMakeRange(r1.location+2,
+                                                                           r2.location - r1.location-2)]];
         [parameterValue setStringValue:@""];
-        [NSApp beginSheet: parameterPanel
-           modalForWindow: [self window]
-            modalDelegate: self
-           didEndSelector: nil
-              contextInfo: nil];
+        [NSApp beginSheet:parameterPanel
+           modalForWindow:[self window]
+            modalDelegate:self
+           didEndSelector:nil
+              contextInfo:nil];
 
         [NSApp runModalForWindow:parameterPanel];
 
         [NSApp endSheet:parameterPanel];
         [parameterPanel orderOut:self];
 
-        [name replaceOccurrencesOfString:[name  substringWithRange:NSMakeRange(r1.location, r2.location - r1.location+2)] withString:[parameterValue stringValue] options:NSLiteralSearch range:NSMakeRange(0,[name length])];
+        [name replaceOccurrencesOfString:[name substringWithRange:NSMakeRange(r1.location,
+                                                                              r2.location - r1.location+2)]
+                              withString:[parameterValue stringValue]
+                                 options:NSLiteralSearch
+                                   range:NSMakeRange(0,[name length])];
     }
 
 }
@@ -4231,16 +4453,6 @@ NSString *kSessionsKVCKey = @"sessions";
 - (void)setIsHotKeyWindow:(BOOL)value
 {
     isHotKeyWindow_ = value;
-}
-
-- (BOOL)isOrderedOut
-{
-    return isOrderedOut_;
-}
-
-- (void)setIsOrderedOut:(BOOL)value
-{
-    isOrderedOut_ = value;
 }
 
 - (BOOL)fullScreenTabControl
@@ -4426,9 +4638,9 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)setDimmingForSessions
 {
-        for (PTYSession *aSession in [self sessions]) {
-                [self setDimmingForSession:aSession];
-        }
+    for (PTYSession *aSession in [self sessions]) {
+        [self setDimmingForSession:aSession];
+    }
 }
 
 - (int)_screenAtPoint:(NSPoint)p
@@ -5577,7 +5789,7 @@ NSString *kSessionsKVCKey = @"sessions";
 // Move a tab to a new window due to a context menu selection.
 - (void)moveTabToNewWindowContextualMenuAction:(id)sender
 {
-    PseudoTerminal *term;
+    id<iTermWindowController> term;
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *aTab = [aTabViewItem identifier];
 
@@ -5847,17 +6059,14 @@ NSString *kSessionsKVCKey = @"sessions";
     [self.window.dockTile setShowsApplicationBadge:YES];
 }
 
-@end
+#pragma mark - KeyValueCoding
 
-
-@implementation PseudoTerminal (KeyValueCoding)
-
--(int)columns
+- (int)columns
 {
     return [[self currentSession] columns];
 }
 
--(void)setColumns:(int)columns
+- (void)setColumns:(int)columns
 {
     if (![self currentSession]) {
         nextSessionColumns_ = columns;
@@ -5868,12 +6077,12 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
--(int)rows
+- (int)rows
 {
     return [[self currentSession] rows];
 }
 
--(void)setRows:(int)rows
+- (void)setRows:(int)rows
 {
     if (![self currentSession]) {
         nextSessionRows_ = rows;
@@ -5884,7 +6093,7 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
--(id)addNewSession:(NSDictionary *)addressbookEntry
+- (id)addNewSession:(NSDictionary *)addressbookEntry
 {
     assert(addressbookEntry);
     PTYSession *aSession;
@@ -5975,13 +6184,13 @@ NSString *kSessionsKVCKey = @"sessions";
 
 // accessors for to-many relationships:
 // (See NSScriptKeyValueCoding.h)
--(id)valueInSessionsAtIndex:(unsigned)anIndex
+- (id)valueInSessionsAtIndex:(unsigned)anIndex
 {
     // NSLog(@"PseudoTerminal: -valueInSessionsAtIndex: %d", anIndex);
     return [[self sessions] objectAtIndex:anIndex];
 }
 
--(NSArray*)sessions
+- (NSArray*)sessions
 {
     int n = [TABVIEW numberOfTabViewItems];
     NSMutableArray *sessions = [NSMutableArray arrayWithCapacity:n];
@@ -5996,11 +6205,11 @@ NSString *kSessionsKVCKey = @"sessions";
     return sessions;
 }
 
--(void)setSessions: (NSArray*)sessions
+- (void)setSessions:(NSArray*)sessions
 {
 }
 
--(id)valueWithName: (NSString *)uniqueName inPropertyWithKey: (NSString*)propertyKey
+- (id)valueWithName: (NSString *)uniqueName inPropertyWithKey: (NSString*)propertyKey
 {
     id result = nil;
     int i;
@@ -6020,7 +6229,7 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 // The 'uniqueID' argument might be an NSString or an NSNumber.
--(id)valueWithID: (NSString *)uniqueID inPropertyWithKey: (NSString*)propertyKey
+- (id)valueWithID: (NSString *)uniqueID inPropertyWithKey: (NSString*)propertyKey
 {
     id result = nil;
     int i;
@@ -6253,9 +6462,7 @@ NSString *kSessionsKVCKey = @"sessions";
     return _kvcKeys;
 }
 
-@end
-
-@implementation PseudoTerminal (ScriptingSupport)
+#pragma mark - Scripting Support
 
 // Object specifier
 - (NSScriptObjectSpecifier *)objectSpecifier

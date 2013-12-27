@@ -38,6 +38,7 @@
 @class PasteboardHistory;
 @class GTMCarbonHotKey;
 @class PTYSession;
+@class PTYTab;
 
 @interface iTermController : NSObject
 {
@@ -117,6 +118,10 @@
 - (int)windowTypeForBookmark:(Profile*)aDict;
 
 - (void)reloadAllBookmarks;
+
+- (PseudoTerminal *)terminalWithTab:(PTYTab *)tab;
+- (PseudoTerminal *)terminalWithSession:(PTYSession *)session;
+
 
 @end
 

@@ -140,7 +140,7 @@ static BOOL OpenHotkeyWindow()
                                            withURL:nil
                                           isHotkey:YES
                                            makeKey:YES];
-        PseudoTerminal* term = [[session tab] realParentWindow];
+        PseudoTerminal* term = [[iTermController sharedInstance] terminalWithSession:session];
         [term setIsHotKeyWindow:YES];
 
         if ([term windowType] == WINDOW_TYPE_FULL_SCREEN) {

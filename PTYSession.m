@@ -895,7 +895,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [env setObject:[PWD_ENVVALUE stringByExpandingTildeInPath] forKey:PWD_ENVNAME];
     }
 
-    id<WindowControllerInterface> pty = [tab_ realParentWindow];
+    id<iTermWindowController> pty = [tab_ realParentWindow];
     NSString *itermId = [NSString stringWithFormat:@"w%dt%dp%d",
                          [pty number],
                          [tab_ realObjectCount] - 1,
@@ -4729,7 +4729,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (int)screenWindowIndex {
-    return [[iTermController sharedInstance] indexOfTerminal:[[self tab] realParentWindow]];
+    return [[iTermController sharedInstance] indexOfTerminal:(PseudoTerminal *)[[self tab] realParentWindow]];
 }
 
 - (int)screenTabIndex {
