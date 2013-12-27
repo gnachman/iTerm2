@@ -38,7 +38,6 @@
 - (void)removeTabForCell:(PSMTabBarCell *)cell;
 
     // draw
-- (void)update;
 - (void)update:(BOOL)animate;
 - (void)_removeCellTrackingRects;
 - (void)_finishCellUpdate:(NSArray *)newWidths;

@@ -266,4 +266,7 @@ enum {
 - (void)fillPath:(NSBezierPath*)path;
 - (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
 
+// This used to be private. Updates the cell layout.
+- (void)update;
+
 @end

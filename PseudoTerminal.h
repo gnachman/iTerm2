@@ -164,8 +164,8 @@ NSWindowDelegate,
 
     // There is a scheme for saving window positions. Each window is assigned
     // a number, and the positions are stored by window name. The window name
-    // includes its unique number. framePos gives this window's number.
-    int framePos;
+    // includes its unique number. This variable gives this window's number.
+    int uniqueNumber_;
 
     // This is set while toggling full screen. It prevents windowDidResignMain
     // from trying to exit fullscreen mode in the midst of toggling it.

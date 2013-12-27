@@ -1,42 +1,3 @@
-// -*- mode:objc -*-
-// $Id: PseudoTerminal.m,v 1.437 2009-02-06 15:07:23 delx Exp $
-//
-/*
- **  PseudoTerminal.m
- **
- **  Copyright (c) 2002, 2003
- **
- **  Author: Fabian, Ujwal S. Setlur
- **         Initial code by Kiichi Kusama
- **
- **  Project: iTerm
- **
- **  Description: Session and window controller for iTerm.
- **
- **  This program is free software; you can redistribute it and/or modify
- **  it under the terms of the GNU General Public License as published by
- **  the Free Software Foundation; either version 2 of the License, or
- **  (at your option) any later version.
- **
- **  This program is distributed in the hope that it will be useful,
- **  but WITHOUT ANY WARRANTY; without even the implied warranty of
- **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- **  GNU General Public License for more details.
- **
- **  You should have received a copy of the GNU General Public License
- **  along with this program; if not, write to the Free Software
- **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-// Debug option
-#define DEBUG_ALLOC           0
-#define DEBUG_METHOD_TRACE    0
-
-// For beta 1, we're trying to keep the IR bar from mysteriously disappearing
-// when live mode is entered.
-// #define HIDE_IR_WHEN_LIVE_VIEW_ENTERED
-#define WINDOW_NAME @"iTerm Window %d"
-
 #import "PseudoTerminal.h"
 
 #import "ColorsMenuItemView.h"
@@ -67,6 +28,7 @@
 #import "PseudoTerminalRestorer.h"
 #import "SessionView.h"
 #import "SplitPanel.h"
+#import "TemporaryNumberAllocator.h"
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
 #import "ToolbeltView.h"
@@ -81,23 +43,9 @@
 #import "iTermGrowlDelegate.h"
 #include <unistd.h>
 
-#define CACHED_WINDOW_POSITIONS 100
+static NSString *const kWindowNameFormat = @"iTerm Window %d";
 
-#define ITLocalizedString(key) NSLocalizedStringFromTableInBundle(key, @"iTerm", [NSBundle bundleForClass:[self class]], @"Context menu")
-
-// #define PSEUDOTERMINAL_VERBOSE_LOGGING
-#ifdef PSEUDOTERMINAL_VERBOSE_LOGGING
-#define PtyLog NSLog
-#else
-#define PtyLog(args...) \
-    do { \
-        if (gDebugLogging) { \
-          DebugLog([NSString stringWithFormat:args]); \
-        } \
-    } while (0)
-#endif
-
-static BOOL windowPositions[CACHED_WINDOW_POSITIONS];
+#define PtyLog DLog
 
 // Constants for saved window arrangement key names.
 static NSString* TERMINAL_ARRANGEMENT_OLD_X_ORIGIN = @"Old X Origin";
@@ -123,46 +71,15 @@ static NSString* TERMINAL_GUID = @"TerminalGuid";
 // In full screen, leave a bit of space at the top of the toolbar for aesthetics.
 static const CGFloat kToolbeltMargin = 8;
 
-@interface NSEvent (iTermFutureCompat)
-
-- (double)futureMagnification;
-
-@end
-
-@implementation NSEvent (iTermFutureCompat)
-
-- (double)futureMagnification
-{
-    if ([self respondsToSelector:@selector(magnification)]) {
-        NSMethodSignature *sig = [[self class] instanceMethodSignatureForSelector:@selector(magnification)];
-        NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
-        [inv setTarget:self];
-        [inv setSelector:@selector(magnification)];
-        [inv invoke];
-
-        double result;
-        [inv getReturnValue:&result];
-        return result;
-    } else {
-        return 0;
-    }
-}
-
-@end
-
-@interface PSMTabBarControl (Private)
-- (void)update;
-@end
-
 @interface NSWindow (private)
 - (void)setBottomCornerRounded:(BOOL)rounded;
 @end
 
 // keys for attributes:
-NSString *columnsKey = @"columns";
-NSString *rowsKey = @"rows";
+NSString *kColumnsKVCKey = @"columns";
+NSString *kRowsKVCKey = @"rows";
 // keys for to-many relationships:
-NSString *sessionsKey = @"sessions";
+NSString *kSessionsKVCKey = @"sessions";
 
 #define TABVIEW_TOP_OFFSET                29
 #define TABVIEW_BOTTOM_OFFSET            27
@@ -194,7 +111,7 @@ NSString *sessionsKey = @"sessions";
 - (BOOL)_haveTopBorder;
 - (float)maxCharHeight:(int*)numChars;
 - (float)maxCharWidth:(int*)numChars;
-- (void)setFramePos;
+- (void)assignUniqueNumberToWindow;
 - (void)safelySetSessionSize:(PTYSession*)aSession
                         rows:(int)rows
                      columns:(int)columns;
@@ -438,10 +355,6 @@ NSString *sessionsKey = @"sessions";
 
     normalBackgroundColor = [background_ color];
 
-#if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
-#endif
-
     _resizeInProgressFlag = NO;
 
     if (!smartLayout || windowType == WINDOW_TYPE_FORCE_FULL_SCREEN) {
@@ -452,6 +365,7 @@ NSString *sessionsKey = @"sessions";
     if (windowType == WINDOW_TYPE_NORMAL) {
         _toolbarController = [[PTToolbarController alloc] initWithPseudoTerminal:self];
         if ([[self window] respondsToSelector:@selector(setBottomCornerRounded:)])
+            // TODO: Why is this here?
             [[self window] setBottomCornerRounded:NO];
     }
 
@@ -748,7 +662,7 @@ NSString *sessionsKey = @"sessions";
     }
     lastMagChangeTime_ = [[NSDate date] timeIntervalSince1970];
 
-    double factor = [event futureMagnification];
+    double factor = [event magnification];
     cumulativeMag_ += factor;
     int dir;
     const double kMagnifyThreshold = 0.4 ;
@@ -1183,19 +1097,11 @@ NSString *sessionsKey = @"sessions";
 
 - (void)setWindowTitle
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal setWindowTitle]",
-          __FILE__, __LINE__);
-#endif
     [self setWindowTitle:[self currentSessionName]];
 }
 
 - (void)setWindowTitle:(NSString *)title
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal setWindowTitle:%@]",
-          __FILE__, __LINE__, title);
-#endif
     if (title == nil) {
         // title can be nil during loadWindowArrangement
         title = @"";
@@ -1667,10 +1573,6 @@ NSString *sessionsKey = @"sessions";
 // NSWindow delegate methods
 - (void)windowDidDeminiaturize:(NSNotification *)aNotification
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal windowDidDeminiaturize:%@]",
-          __FILE__, __LINE__, aNotification);
-#endif
     [self.window.dockTile setBadgeLabel:@""];
     [self.window.dockTile setShowsApplicationBadge:NO];
     if ([[self currentTab] blur]) {
@@ -1772,17 +1674,17 @@ NSString *sessionsKey = @"sessions";
             [self showHideInstantReplay];
         }
         if ([[PreferencePanel sharedInstance] smartPlacement]) {
-            [[self window] saveFrameUsingName: [NSString stringWithFormat: WINDOW_NAME, 0]];
+            [[self window] saveFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, 0]];
         } else {
             // Save frame position for window
-            [[self window] saveFrameUsingName: [NSString stringWithFormat: WINDOW_NAME, framePos]];
-            windowPositions[framePos] = NO;
+            [[self window] saveFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, uniqueNumber_]];
+            [[TemporaryNumberAllocator sharedInstance] deallocateNumber:uniqueNumber_];
         }
     } else {
         if (![[PreferencePanel sharedInstance] smartPlacement]) {
             // Save frame position for window
-            [[self window] saveFrameUsingName: [NSString stringWithFormat: WINDOW_NAME, framePos]];
-            windowPositions[framePos] = NO;
+            [[self window] saveFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, uniqueNumber_]];
+            [[TemporaryNumberAllocator sharedInstance] deallocateNumber:uniqueNumber_];
         }
     }
 
@@ -1812,10 +1714,6 @@ NSString *sessionsKey = @"sessions";
     isOrderedOut_ = NO;
     [[[NSApplication sharedApplication] dockTile] setBadgeLabel:@""];
     [[[NSApplication sharedApplication] dockTile] setShowsApplicationBadge:NO];
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal windowDidBecomeKey:%@]",
-          __FILE__, __LINE__, aNotification);
-#endif
     PtyLog(@"%s(%d):-[PseudoTerminal windowDidBecomeKey:%@]",
           __FILE__, __LINE__, aNotification);
 
@@ -2855,8 +2753,8 @@ NSString *sessionsKey = @"sessions";
         (![[PreferencePanel sharedInstance] smartPlacement])) {
         PtyLog(@"No smart layout");
         NSRect frame = [window frame];
-        [self setFramePos];
-        if ([window setFrameUsingName:[NSString stringWithFormat:WINDOW_NAME, framePos]]) {
+        [self assignUniqueNumberToWindow];
+        if ([window setFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, uniqueNumber_]]) {
             frame.origin = [window frame].origin;
             frame.origin.y += [window frame].size.height - frame.size.height;
         } else {
@@ -2913,10 +2811,6 @@ NSString *sessionsKey = @"sessions";
     // right click does not paste.
     int nextIndex = 0;
     NSMenuItem *aMenuItem;
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal menuForEvent]", __FILE__, __LINE__);
-#endif
 
     if (theMenu == nil) {
         return;
@@ -2992,9 +2886,6 @@ NSString *sessionsKey = @"sessions";
 // NSTabView
 - (void)tabView:(NSTabView *)tabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal tabView: willSelectTabViewItem]", __FILE__, __LINE__);
-#endif
     if (![[self currentSession] exited]) {
         [[self currentSession] setNewOutput:NO];
     }
@@ -3115,9 +3006,6 @@ NSString *sessionsKey = @"sessions";
 
 - (void)tabView:(NSTabView *)tabView willRemoveTabViewItem:(NSTabViewItem *)tabViewItem
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal tabView:willRemoveTabViewItem]", __FILE__, __LINE__);
-#endif
     [self saveAffinitiesLater:[tabViewItem identifier]];
         iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
         [itad updateBroadcastMenuState];
@@ -3125,9 +3013,6 @@ NSString *sessionsKey = @"sessions";
 
 - (void)tabView:(NSTabView *)tabView willAddTabViewItem:(NSTabViewItem *)tabViewItem
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal tabView:willAddTabViewItem]", __FILE__, __LINE__);
-#endif
 
     [self tabView:tabView willInsertTabViewItem:tabViewItem atIndex:[tabView numberOfTabViewItems]];
     [self saveAffinitiesLater:[tabViewItem identifier]];
@@ -3137,9 +3022,6 @@ NSString *sessionsKey = @"sessions";
 
 - (void)tabView:(NSTabView *)tabView willInsertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(int)anIndex
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal tabView:willInsertTabViewItem:atIndex:%d]", __FILE__, __LINE__, anIndex);
-#endif
     PTYTab* theTab = [tabViewItem identifier];
     [theTab setParentWindow:self];
     if ([theTab isTmuxTab]) {
@@ -3366,7 +3248,7 @@ NSString *sessionsKey = @"sessions";
             [tabMenu addItem:item];
         }
 
-        [rootMenu addItemWithTitle:ITLocalizedString(@"Select")
+        [rootMenu addItemWithTitle:@"Select"
                             action:nil
                      keyEquivalent:@""];
         [rootMenu setSubmenu:tabMenu forItem:[rootMenu itemAtIndex:0]];
@@ -3374,14 +3256,14 @@ NSString *sessionsKey = @"sessions";
    }
 
     // add tasks
-    item = [[[NSMenuItem alloc] initWithTitle:ITLocalizedString(@"Close Tab")
+    item = [[[NSMenuItem alloc] initWithTitle:@"Close Tab"
                                        action:@selector(closeTabContextualMenuAction:)
                                 keyEquivalent:@""] autorelease];
     [item setRepresentedObject:tabViewItem];
     [rootMenu addItem:item];
 
     if ([TABVIEW numberOfTabViewItems] > 1) {
-        item = [[[NSMenuItem alloc] initWithTitle:ITLocalizedString(@"Move to new window")
+        item = [[[NSMenuItem alloc] initWithTitle:@"Move to new window"
                                            action:@selector(moveTabToNewWindowContextualMenuAction:)
                                     keyEquivalent:@""] autorelease];
         [item setRepresentedObject:tabViewItem];
@@ -3392,7 +3274,7 @@ NSString *sessionsKey = @"sessions";
     [rootMenu addItem: [NSMenuItem separatorItem]];
     ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
                                               initWithFrame:NSMakeRect(0, 0, 180, 50)] autorelease];
-    item = [[[NSMenuItem alloc] initWithTitle:ITLocalizedString(@"Tab Color")
+    item = [[[NSMenuItem alloc] initWithTitle:@"Tab Color"
                                        action:@selector(changeTabColorToMenuAction:)
                                 keyEquivalent:@""] autorelease];
     [item setView:labelTrackView];
@@ -3759,9 +3641,6 @@ NSString *sessionsKey = @"sessions";
 {
     PTYTab* theTab = [replaySession tab];
     [self updateInstantReplay];
-#ifdef HIDE_IR_WHEN_LIVE_VIEW_ENTERED
-    [self showHideInstantReplay];
-#endif
 
     [self sessionInitiatedResize:replaySession
                            width:[[liveSession SCREEN] width]
@@ -3817,20 +3696,10 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)irSliderMoved:(id)sender
 {
-#ifdef HIDE_IR_WHEN_LIVE_VIEW_ENTERED
-    if ([irSlider floatValue] == 1.0) {
-        if ([[self currentSession] liveSession]) {
-            [self showLiveSession:[[self currentSession] liveSession] inPlaceOf:[self currentSession]];
-        }
-    } else {
-#endif
-        if (![[self currentSession] liveSession]) {
-            [self replaySession:[self currentSession]];
-        }
-        [[self currentSession] irSeekToAtLeast:[self timestampForFraction:[irSlider floatValue]]];
-#ifdef HIDE_IR_WHEN_LIVE_VIEW_ENTERED
+    if (![[self currentSession] liveSession]) {
+        [self replaySession:[self currentSession]];
     }
-#endif
+    [[self currentSession] irSeekToAtLeast:[self timestampForFraction:[irSlider floatValue]]];
     [self updateInstantReplay];
 }
 
@@ -5543,19 +5412,11 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
-// Assign a value to the 'framePos' member variable which is used for storing
+// Assign a value to the 'uniqueNumber_' member variable which is used for storing
 // window frame positions between invocations of iTerm.
-- (void)setFramePos
+- (void)assignUniqueNumberToWindow
 {
-    // Set framePos to the next unused window position.
-    for (int i = 0; i < CACHED_WINDOW_POSITIONS; ++i) {
-        if (!windowPositions[i]) {
-            windowPositions[i] = YES;
-            framePos = i;
-            return;
-        }
-    }
-    framePos = CACHED_WINDOW_POSITIONS - 1;
+    uniqueNumber_ = [[TemporaryNumberAllocator sharedInstance] allocateNumber];
 }
 
 // Execute the given program and set the window title if it is uninitialized.
@@ -5565,10 +5426,6 @@ NSString *sessionsKey = @"sessions";
               isUTF8:(BOOL)isUTF8
            inSession:(PTYSession*)theSession
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal startProgram:%@ arguments:%@]",
-          __FILE__, __LINE__, program, prog_argv );
-#endif
     [theSession startProgram:program
                    arguments:prog_argv
                  environment:prog_env
@@ -5635,11 +5492,6 @@ NSString *sessionsKey = @"sessions";
 {
     BOOL logging = [[self currentSession] logging];
     BOOL result = YES;
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal validateMenuItem:%@]",
-          __FILE__, __LINE__, item );
-#endif
 
     if ([item action] == @selector(detachTmux:) ||
         [item action] == @selector(newTmuxWindow:) ||
@@ -6205,8 +6057,7 @@ NSString *sessionsKey = @"sessions";
     id result = nil;
     int i;
 
-    // TODO: if (... == YES) => if (...)
-    if ([propertyKey isEqualToString: sessionsKey] == YES) {
+    if ([propertyKey isEqualToString:kSessionsKVCKey]) {
         PTYSession *aSession;
 
         for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
@@ -6226,7 +6077,7 @@ NSString *sessionsKey = @"sessions";
     id result = nil;
     int i;
 
-    if ([propertyKey isEqualToString: sessionsKey] == YES) {
+    if ([propertyKey isEqualToString:kSessionsKVCKey]) {
         PTYSession *aSession;
 
         for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
@@ -6442,14 +6293,14 @@ NSString *sessionsKey = @"sessions";
     windowInited = flag;
 }
 
-
+// TODO: What is KVC?
 // a class method to provide the keys for KVC:
-+(NSArray*)kvcKeys
++ (NSArray*)kvcKeys
 {
     static NSArray *_kvcKeys = nil;
     if (nil == _kvcKeys ){
         _kvcKeys = [[NSArray alloc] initWithObjects:
-            columnsKey, rowsKey, sessionsKey,  nil ];
+            kColumnsKVCKey, kRowsKVCKey, kSessionsKVCKey, nil ];
     }
     return _kvcKeys;
 }

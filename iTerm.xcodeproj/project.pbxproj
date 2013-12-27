@@ -628,6 +628,9 @@
 		A68A3100186D151F007F550F /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A68A30FE186D151E007F550F /* NMSSH.framework */; };
 		A68A3101186D1565007F550F /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A68A30FE186D151E007F550F /* NMSSH.framework */; };
 		A68A3102186D1585007F550F /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A68A30FE186D151E007F550F /* NMSSH.framework */; };
+		A68A3105186D2973007F550F /* TemporaryNumberAllocator.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3103186D2973007F550F /* TemporaryNumberAllocator.h */; };
+		A68A3106186D2973007F550F /* TemporaryNumberAllocator.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */; };
+		A68A3107186D2973007F550F /* TemporaryNumberAllocator.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */; };
 		A693395C1851A61D00EBEA20 /* VT100ScreenMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */; };
 		A693395D1851A61D00EBEA20 /* VT100ScreenMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */; };
 		A693395E1851A61D00EBEA20 /* VT100ScreenMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */; };
@@ -1065,6 +1068,8 @@
 		A68A30F2186D150A007F550F /* VT100RemoteHost.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100RemoteHost.h; sourceTree = "<group>"; };
 		A68A30F3186D150A007F550F /* VT100WorkingDirectory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100WorkingDirectory.h; sourceTree = "<group>"; };
 		A68A30FE186D151E007F550F /* NMSSH.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = NMSSH.framework; sourceTree = "<group>"; };
+		A68A3103186D2973007F550F /* TemporaryNumberAllocator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TemporaryNumberAllocator.h; sourceTree = "<group>"; };
+		A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TemporaryNumberAllocator.m; sourceTree = "<group>"; };
 		A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100ScreenMark.h; sourceTree = "<group>"; };
 		A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenMark.m; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; };
@@ -1284,6 +1289,7 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				A68A3103186D2973007F550F /* TemporaryNumberAllocator.h */,
 				A68A30EA186D150A007F550F /* FileTransferManager.h */,
 				A68A30EB186D150A007F550F /* NSArray+iTerm.h */,
 				A68A30EC186D150A007F550F /* NSObject+iTerm.h */,
@@ -1841,6 +1847,7 @@
 				1DC393C417B59B08000EE0F2 /* SearchResult.m */,
 				A68A30C5186D0F36007F550F /* SmartMatch.m */,
 				1DC38817148E840700B89F7C /* SolidColorView.m */,
+				A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */,
 				A6CFDAD1185D2587005DC94B /* URLAction.m */,
 				A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */,
 			);
@@ -1992,6 +1999,7 @@
 				A63F4095183B398C003A6A6D /* PTYNoteViewController.h in Headers */,
 				1D5FDD591208E8F000C46BA3 /* PSMAquaTabStyle.h in Headers */,
 				1D5FDD5A1208E8F000C46BA3 /* PSMMetalTabStyle.h in Headers */,
+				A68A3105186D2973007F550F /* TemporaryNumberAllocator.h in Headers */,
 				1D5FDD5B1208E8F000C46BA3 /* PSMOverflowPopUpButton.h in Headers */,
 				1D5FDD5C1208E8F000C46BA3 /* PSMProgressIndicator.h in Headers */,
 				A693395C1851A61D00EBEA20 /* VT100ScreenMark.h in Headers */,
@@ -2495,6 +2503,7 @@
 				1D9A5542180FA81400B42CE9 /* ProfilesWindow.m in Sources */,
 				1DD39B22180B8467004E56D5 /* BackgroundThread.m in Sources */,
 				1D9A5576180FA85D00B42CE9 /* CoprocessTrigger.m in Sources */,
+				A68A3107186D2973007F550F /* TemporaryNumberAllocator.m in Sources */,
 				1D9A5580180FA87000B42CE9 /* FontSizeEstimator.m in Sources */,
 				1D9A5561180FA83900B42CE9 /* TrouterPrefsController.m in Sources */,
 				1D9A556F180FA85900B42CE9 /* ToolNotes.m in Sources */,
@@ -2669,6 +2678,7 @@
 				1DE8DC8E1415546000F83147 /* ToolProfiles.m in Sources */,
 				1DE8DDAE1415648600F83147 /* ToolPasteHistory.m in Sources */,
 				1DE8DF371415799700F83147 /* ToolWrapper.m in Sources */,
+				A68A3106186D2973007F550F /* TemporaryNumberAllocator.m in Sources */,
 				1D19C71514171F1D00617E08 /* ToolJobs.m in Sources */,
 				1D67AAAA14284BF300D5DA4E /* ToolNotes.m in Sources */,
 				1D67ABAC14285D6000D5DA4E /* NSFileManager+iTerm.m in Sources */,
