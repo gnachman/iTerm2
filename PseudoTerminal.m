@@ -4780,24 +4780,30 @@ NSString *kSessionsKVCKey = @"sessions";
         if ([[PreferencePanel sharedInstance] hideMenuBarInFullscreen]) {
             flags |= NSApplicationPresentationAutoHideMenuBar;
         }
-        iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-        [itad setFutureApplicationPresentationOptions:flags unset:0];
+        NSApplicationPresentationOptions presentationOptions =
+            [[NSApplication sharedApplication] presentationOptions];
+        presentationOptions |= flags;
+        [[NSApplication sharedApplication] setPresentationOptions:presentationOptions];
+
     }
 }
 
 - (void)showMenuBarHideDock
 {
-    iTermApplicationDelegate *itad = [[iTermApplication sharedApplication] delegate];
-    [itad setFutureApplicationPresentationOptions:NSApplicationPresentationAutoHideDock
-                                            unset:NSApplicationPresentationAutoHideMenuBar];
+    NSApplicationPresentationOptions presentationOptions =
+        [[NSApplication sharedApplication] presentationOptions];
+    presentationOptions |= NSApplicationPresentationAutoHideDock;
+    presentationOptions &= ~NSApplicationPresentationAutoHideMenuBar;
+    [[NSApplication sharedApplication] setPresentationOptions:presentationOptions];
 }
 
 - (void)showMenuBar
 {
     int flags = NSApplicationPresentationAutoHideDock | NSApplicationPresentationAutoHideMenuBar;
-    iTermApplicationDelegate *itad = [[iTermApplication sharedApplication] delegate];
-    [itad setFutureApplicationPresentationOptions:0
-                                            unset:flags];
+    NSApplicationPresentationOptions presentationOptions =
+        [[NSApplication sharedApplication] presentationOptions];
+    presentationOptions &= ~flags;
+    [[NSApplication sharedApplication] setPresentationOptions:presentationOptions];
 }
 
 - (void)setFrameSize:(NSSize)newSize

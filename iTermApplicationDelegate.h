@@ -174,10 +174,6 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 - (void)makeHotKeyWindowKeyIfOpen;
 
-// Implements the 10.6 api but is callable in 10.5 and tries to implement
-// some subset of the flags.
-- (void)setFutureApplicationPresentationOptions:(int)flags unset:(int)antiflags;
-
 - (void)updateBroadcastMenuState;
 
 - (BOOL)showToolbelt;
