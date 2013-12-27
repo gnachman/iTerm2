@@ -79,6 +79,7 @@ static const double kCharWidthFractionOffset = 0.35;
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "RegexKitLite/RegexKitLite.h"
+#import "SmartMatch.h"
 #import "SearchResult.h"
 #import "SmartSelectionController.h"
 #import "ThreeFingerTapGestureRecognizer.h"
@@ -130,28 +131,6 @@ static NSImage* alertImage;
 static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
 }
-
-@interface SmartMatch : NSObject
-{
-@public
-    double score;
-    int startX;
-    long long absStartY;
-    int endX;
-    long long absEndY;
-    NSDictionary *rule;
-}
-- (NSComparisonResult)compare:(SmartMatch *)aNumber;
-@end
-
-@implementation SmartMatch
-
-- (NSComparisonResult)compare:(SmartMatch *)other
-{
-    return [[NSNumber numberWithDouble:score] compare:[NSNumber numberWithDouble:other->score]];
-}
-
-@end
 
 @interface PTYTextView ()
 // Set the hostname this view is currently waiting for AsyncHostLookupController to finish looking
@@ -2539,20 +2518,20 @@ NSMutableArray* screens=0;
                     NSString* result = [substring substringWithRange:temp];
                     double score = precision * (double) temp.length;
                     SmartMatch* oldMatch = [matches objectForKey:result];
-                    if (!oldMatch || score > oldMatch->score) {
+                    if (!oldMatch || score > oldMatch.score) {
                         SmartMatch* match = [[[SmartMatch alloc] init] autorelease];
-                        match->score = score;
+                        match.score = score;
                         VT100GridCoord startCoord = [[coords objectAtIndex:i + temp.location] gridCoordValue];
                         VT100GridCoord endCoord = [[coords objectAtIndex:MIN(numCoords - 1, i + temp.location + temp.length)] gridCoordValue];
-                        match->startX = startCoord.x;
-                        match->absStartY = startCoord.y + [dataSource totalScrollbackOverflow];
-                        match->endX = endCoord.x;
-                        match->absEndY = endCoord.y + [dataSource totalScrollbackOverflow];
-                        match->rule = rule;
+                        match.startX = startCoord.x;
+                        match.absStartY = startCoord.y + [dataSource totalScrollbackOverflow];
+                        match.endX = endCoord.x;
+                        match.absEndY = endCoord.y + [dataSource totalScrollbackOverflow];
+                        match.rule = rule;
                         [matches setObject:match forKey:result];
 
                         if (debug) {
-                            NSLog(@"Add result %@ at %d,%lld -> %d,%lld with score %lf", result, match->startX, match->absStartY, match->endX, match->absEndY, match->score);
+                            NSLog(@"Add result %@ at %d,%lld -> %d,%lld with score %lf", result, match.startX, match.absStartY, match.endX, match.absEndY, match.score);
                         }
                     }
                     i += temp.location + temp.length - 1;
@@ -2569,13 +2548,13 @@ NSMutableArray* screens=0;
         NSArray* sortedMatches = [[matches allValues] sortedArrayUsingSelector:@selector(compare:)];
         SmartMatch* bestMatch = [sortedMatches lastObject];
         if (debug) {
-            NSLog(@"Select match with score %lf", bestMatch->score);
+            NSLog(@"Select match with score %lf", bestMatch.score);
         }
-        *X1 = bestMatch->startX;
-        *Y1 = bestMatch->absStartY - [dataSource totalScrollbackOverflow];
-        *X2 = bestMatch->endX;
-        *Y2 = bestMatch->absEndY - [dataSource totalScrollbackOverflow];
-        return bestMatch->rule;
+        *X1 = bestMatch.startX;
+        *Y1 = bestMatch.absStartY - [dataSource totalScrollbackOverflow];
+        *X2 = bestMatch.endX;
+        *Y2 = bestMatch.absEndY - [dataSource totalScrollbackOverflow];
+        return bestMatch.rule;
     } else {
         if (debug) {
             NSLog(@"No matches. Fall back on word selection.");
