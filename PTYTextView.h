@@ -1,23 +1,13 @@
 #import <Cocoa/Cocoa.h>
-#import "iTerm.h"
-#import "ScreenChar.h"
-#import "PreferencePanel.h"
-#import "Trouter.h"
-#import "LineBuffer.h"
-#import "PointerController.h"
-#import "PTYFontInfo.h"
 #import "CharacterRun.h"
-
+#import "LineBuffer.h"
+#import "PTYFontInfo.h"
+#import "PointerController.h"
+#import "PreferencePanel.h"
+#import "ScreenChar.h"
+#import "Trouter.h"
+#import "iTerm.h"
 #include <sys/time.h>
-
-// Number of pixels margin on left and right edge.
-#define MARGIN  5
-
-// Number of pixels margin on the top.
-#define VMARGIN 2
-
-#define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
-#define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
 
 @class CRunStorage;
 @class FindCursorView;
@@ -32,6 +22,15 @@
 @protocol TrouterDelegate;
 @class VT100Screen;
 @class VT100Terminal;
+
+// Number of pixels margin on left and right edge.
+#define MARGIN  5
+
+// Number of pixels margin on the top.
+#define VMARGIN 2
+
+#define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
+#define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
 
 // Amount of time to highlight the cursor after beginFindCursor:YES
 static const double kFindCursorHoldTime = 1;
