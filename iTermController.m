@@ -916,6 +916,16 @@ static BOOL initDone = NO;
     }
 }
 
+- (void)reloadAllBookmarks
+{
+    int n = [self numberOfTerminals];
+    for (int i = 0; i < n; ++i) {
+        PseudoTerminal* pty = [self terminalAtIndex:i];
+        [pty reloadBookmarks];
+    }
+}
+
+
 - (Profile *)defaultBookmark
 {
     Profile *aDict = [[ProfileModel sharedInstance] defaultBookmark];

@@ -19,5 +19,6 @@
 + (TmuxControllerRegistry *)sharedInstance;
 - (TmuxController *)controllerForClient:(TmuxClient *)client;
 - (void)setController:(TmuxController *)controller forClient:(TmuxClient *)client;
+- (int)numberOfClients;
 
 @end

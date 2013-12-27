@@ -1,29 +1,3 @@
-/*
- **  PTYSession.m
- **
- **  Copyright (c) 2002, 2003
- **
- **  Author: Fabian, Ujwal S. Setlur
- **
- **  Project: iTerm
- **
- **  Description: Implements the model class for a terminal session.
- **
- **  This program is free software; you can redistribute it and/or modify
- **  it under the terms of the GNU General Public License as published by
- **  the Free Software Foundation; either version 2 of the License, or
- **  (at your option) any later version.
- **
- **  This program is distributed in the hope that it will be useful,
- **  but WITHOUT ANY WARRANTY; without even the implied warranty of
- **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- **  GNU General Public License for more details.
- **
- **  You should have received a copy of the GNU General Public License
- **  along with this program; if not, write to the Free Software
- **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
 #import "PTYSession.h"
 
 #import "Coprocess.h"
@@ -43,12 +17,12 @@
 #import "PasteViewController.h"
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
-#import "PseudoTerminal.h"
 #import "SCPFile.h"
 #import "SCPPath.h"
 #import "SearchResult.h"
 #import "SessionView.h"
 #import "TmuxController.h"
+#import "TmuxControllerRegistry.h"
 #import "TmuxGateway.h"
 #import "TmuxLayoutParser.h"
 #import "TmuxStateParser.h"
@@ -74,6 +48,7 @@
 #define DEBUG_KEYDOWNDUMP     0
 #define ASK_ABOUT_OUTDATED_FORMAT @"AskAboutOutdatedKeyMappingForGuid%@"
 
+NSString *const kPTYSessionTmuxFontDidChange = @"kPTYSessionTmuxFontDidChange";
 @interface PTYSession ()
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @end
@@ -745,7 +720,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [env setObject:[PWD_ENVVALUE stringByExpandingTildeInPath] forKey:PWD_ENVNAME];
     }
 
-    PseudoTerminal *pty = [tab_ realParentWindow];
+    id<WindowControllerInterface> pty = [tab_ realParentWindow];
     NSString *itermId = [NSString stringWithFormat:@"w%dt%dp%d",
                          [pty number],
                          [tab_ realObjectCount] - 1,
@@ -1140,15 +1115,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     return NO;
 }
 
-+ (void)reloadAllBookmarks
-{
-    int n = [[iTermController sharedInstance] numberOfTerminals];
-    for (int i = 0; i < n; ++i) {
-        PseudoTerminal* pty = [[iTermController sharedInstance] terminalAtIndex:i];
-        [pty reloadBookmarks];
-    }
-}
-
 - (BOOL)_askAboutOutdatedKeyMappings
 {
     NSNumber* n = [addressBookEntry objectForKey:KEY_ASK_ABOUT_OUTDATED_KEYMAPS];
@@ -1181,7 +1147,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermKeyBindingsChanged"
                                                         object:nil
                                                       userInfo:nil];
-    [PTYSession reloadAllBookmarks];
+    [[iTermController sharedInstance] reloadAllBookmarks];
 }
 
 - (void)_setKeepOutdatedKeyMapping
@@ -1203,7 +1169,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                                                   forKey:[NSString stringWithFormat:ASK_ABOUT_OUTDATED_FORMAT,
                                                           [addressBookEntry objectForKey:KEY_ORIGINAL_GUID]]];
     }
-    [PTYSession reloadAllBookmarks];
+    [[iTermController sharedInstance] reloadAllBookmarks];
 }
 
 + (BOOL)_recursiveSelectMenuItem:(NSString*)theName inMenu:(NSMenu*)menu
@@ -2846,11 +2812,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                      nafont:[TEXTVIEW nafont]
                    hSpacing:[TEXTVIEW horizontalSpacing]
                    vSpacing:[TEXTVIEW verticalSpacing]];
-        for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
-            if ([[term uniqueTmuxControllers] count]) {
-                [term refreshTmuxLayoutsAndWindow];
-            }
-        }
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionTmuxFontDidChange
+                                                            object:nil];
     }
 }
 
@@ -3203,14 +3166,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)startTmuxMode
 {
-    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
-        if ([[term uniqueTmuxControllers] count]) {
-            const char *message = "detach\n";
-            [self printTmuxMessage:@"Can't enter tmux mode: another tmux is already attached"];
-            [SCREEN crlf];
-            [self writeTaskImpl:[NSData dataWithBytes:message length:strlen(message)]];
-            return;
-        }
+    if ([[TmuxControllerRegistry sharedInstance] numberOfClients]) {
+        const char *message = "detach\n";
+        [self printTmuxMessage:@"Can't enter tmux mode: another tmux is already attached"];
+        [SCREEN crlf];
+        [self writeTaskImpl:[NSData dataWithBytes:message length:strlen(message)]];
+        return;
     }
 
     if (tmuxMode_ != TMUX_NONE) {

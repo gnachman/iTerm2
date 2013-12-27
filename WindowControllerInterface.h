@@ -63,4 +63,7 @@
 - (BOOL)scrollbarShouldBeVisible;
 - (NSScrollerStyle)scrollerStyle;
 
+@optional
+- (int)number;
+
 @end

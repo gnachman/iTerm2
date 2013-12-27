@@ -367,12 +367,10 @@ NSString *kSessionsKVCKey = @"sessions";
                                              selector: @selector(_refreshTitle:)
                                                  name: @"iTermUpdateLabels"
                                                object: nil];
-
     [[NSNotificationCenter defaultCenter] addObserver: self
                                              selector: @selector(_refreshTerminal:)
                                                  name: @"iTermRefreshTerminal"
                                                object: nil];
-
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_scrollerStyleChanged:)
                                                  name:@"NSPreferredScrollerStyleDidChangeNotification"
@@ -380,6 +378,10 @@ NSString *kSessionsKVCKey = @"sessions";
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_updateDrawerVisibility:)
                                                  name:@"iTermToolbeltVisibilityChanged"
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(tmuxFontDidChange:)
+                                                 name:@"kPTYSessionTmuxFontDidChange"
                                                object:nil];
     PtyLog(@"set window inited");
     [self setWindowInited: YES];
@@ -560,6 +562,13 @@ NSString *kSessionsKVCKey = @"sessions";
         } else {
             [drawer_ close];
         }
+    }
+}
+
+- (void)tmuxFontDidChange:(NSNotification *)notification
+{
+    if ([[self uniqueTmuxControllers] count]) {
+        [self refreshTmuxLayoutsAndWindow];
     }
 }
 

@@ -116,6 +116,8 @@
 - (void)restorePreviouslyActiveApp;
 - (int)windowTypeForBookmark:(Profile*)aDict;
 
+- (void)reloadAllBookmarks;
+
 @end
 
 // Scripting support
