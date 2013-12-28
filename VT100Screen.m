@@ -2700,10 +2700,10 @@ static const double kInterBellQuietPeriod = 0.1;
         message = parts[1];
         length = [parts[0] intValue];
     } else if (parts.count >= 4) {
-        location.x = MIN(MAX(0, [parts[0] intValue]), location.x);
-        location.y = MIN(MAX(0, [parts[1] intValue]), location.y);
-        length = [parts[2] intValue];
-        message = parts[3];
+        message = parts[0];
+        length = [parts[1] intValue];
+        location.x = MIN(MAX(0, [parts[2] intValue]), location.x);
+        location.y = MIN(MAX(0, [parts[3] intValue]), location.y);
     }
     VT100GridCoord end = location;
     end.x += length;
