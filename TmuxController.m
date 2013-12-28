@@ -363,7 +363,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                                  forClient:@""];  // Set a proper client name
 }
 
-- (BOOL)windowDidResize:(PseudoTerminal *)term
+- (BOOL)windowDidResize:(NSWindowController<iTermWindowController> *)term
 {
     NSSize size = [term tmuxCompatibleSize];
     if (size.width == 0 || size.height == 0) {
@@ -798,7 +798,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         }
         NSString *windowIds = [temp componentsJoinedByString:@","];
         if (tab) {
-            PseudoTerminal *term = [tab realParentWindow];
+            NSWindowController<iTermWindowController> * term = [tab realParentWindow];
             NSPoint origin = [[term window] frame].origin;
             [maps addObject:[NSString stringWithFormat:@"%@:%d,%d", windowIds,
                 (int)origin.x, (int)origin.y]];
@@ -888,7 +888,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         } else if (![n hasSuffix:@"_ph"]) {
             PTYTab *tab = [self window:[n intValue]];
             if (tab) {
-                return [tab realParentWindow];
+                return [[iTermController sharedInstance] terminalWithTab:tab];
             }
         }
     }
@@ -1136,7 +1136,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerWindowDidOpen
                                                         object:nil];
     PTYTab *tab = [self window:[windowIndex intValue]];
-    PseudoTerminal *term = [tab realParentWindow];
+    NSWindowController<iTermWindowController> * term = [tab realParentWindow];
     NSValue *p = [origins_ objectForKey:windowIndex];
     if (term && p && ![term anyFullScreen]) {
         [[term window] setFrameOrigin:[p pointValue]];

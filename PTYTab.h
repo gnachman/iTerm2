@@ -1,32 +1,5 @@
-// -*- mode:objc -*-
-/*
- **  PTYTab.h
- **
- **  Copyright (c) 2010
- **
- **  Author: George Nachman
- **
- **  Project: iTerm2
- **
- **  Description: PTYTab abstracts the concept of a tab. This is
- **  attached to the tabview's identifier and is the owner of
- **  PTYSession.
- **
- **  This program is free software; you can redistribute it and/or modify
- **  it under the terms of the GNU General Public License as published by
- **  the Free Software Foundation; either version 2 of the License, or
- **  (at your option) any later version.
- **
- **  This program is distributed in the hope that it will be useful,
- **  but WITHOUT ANY WARRANTY; without even the implied warranty of
- **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- **  GNU General Public License for more details.
- **
- **  You should have received a copy of the GNU General Public License
- **  along with this program; if not, write to the Free Software
- **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
+// PTYTab abstracts the concept of a tab. This is attached to the tabview's identifier and is the
+// owner of PTYSession.
 
 #import <Cocoa/Cocoa.h>
 #import "WindowControllerInterface.h"
@@ -35,7 +8,6 @@
 #import "FutureMethods.h"
 
 @class PTYSession;
-@class PseudoTerminal;
 @class FakeWindow;
 @class SessionView;
 @class TmuxController;
@@ -53,7 +25,7 @@
     NSTabViewItem* tabViewItem_;
 
     id<WindowControllerInterface> parentWindow_;  // Parent controller. Always set. Equals one of realParent or fakeParent.
-    PseudoTerminal* realParentWindow_;  // non-nil only if parent is PseudoTerminal*
+    NSWindowController<iTermWindowController> *realParentWindow_;  // non-nil only if parent is PseudoTerminal*. Implements optional methods of protocol.
     FakeWindow* fakeParentWindow_;  // non-nil only if parent is FakeWindow*
 
     // The tab number that is observed by PSMTabBarControl.
@@ -146,8 +118,8 @@
 
 - (void)setLockedSession:(PTYSession*)lockedSession;
 - (id<WindowControllerInterface>)parentWindow;
-- (PseudoTerminal*)realParentWindow;
-- (void)setParentWindow:(PseudoTerminal*)theParent;
+- (NSWindowController<iTermWindowController> *)realParentWindow;
+- (void)setParentWindow:(NSWindowController<iTermWindowController> *)theParent;
 - (void)setFakeParentWindow:(FakeWindow*)theParent;
 - (FakeWindow*)fakeWindow;
 
@@ -228,7 +200,9 @@
 - (PTYSession*)_recursiveSessionAtPoint:(NSPoint)point relativeTo:(NSView*)node;
 
 + (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame;
-+ (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement inTerminal:(PseudoTerminal*)term hasFlexibleView:(BOOL)hasFlexible;
++ (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
+                        inTerminal:(id<WindowControllerInterface>)term
+                   hasFlexibleView:(BOOL)hasFlexible;
 - (void)updateFlexibleViewColors;
 - (NSDictionary*)arrangement;
 
@@ -248,7 +222,7 @@
                       forNewLayout:(NSMutableDictionary *)parseTree;
 - (void)reloadTmuxLayout;
 + (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
-                       inTerminal:(PseudoTerminal *)term
+                       inTerminal:(NSWindowController<iTermWindowController> *)term
                        tmuxWindow:(int)tmuxWindow
                    tmuxController:(TmuxController *)tmuxController;
 + (void)setTmuxFont:(NSFont *)font

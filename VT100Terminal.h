@@ -181,6 +181,7 @@ typedef enum {
 - (void)setInsertMode:(BOOL)mode;
 - (void)setCursorMode:(BOOL)mode;
 - (void)setKeypadMode:(BOOL)mode;
+- (void)setAllowKeypadMode:(BOOL)allow;
 - (void)setMouseMode:(MouseMode)mode;
 - (void)setMouseFormat:(MouseFormat)format;
 

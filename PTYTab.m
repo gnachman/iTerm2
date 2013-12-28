@@ -1,32 +1,3 @@
-// -*- mode:objc -*-
-/*
- **  PTYTab.m
- **
- **  Copyright (c) 2010
- **
- **  Author: George Nachman
- **
- **  Project: iTerm2
- **
- **  Description: PTYTab abstracts the concept of a tab. This is
- **  attached to the tabview's identifier and is the owner of
- **  PTYSession.
- **
- **  This program is free software; you can redistribute it and/or modify
- **  it under the terms of the GNU General Public License as published by
- **  the Free Software Foundation; either version 2 of the License, or
- **  (at your option) any later version.
- **
- **  This program is distributed in the hope that it will be useful,
- **  but WITHOUT ANY WARRANTY; without even the implied warranty of
- **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- **  GNU General Public License for more details.
- **
- **  You should have received a copy of the GNU General Public License
- **  along with this program; if not, write to the Free Software
- **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
 #import "PTYTab.h"
 #import "PTYSession.h"
 #import "WindowControllerInterface.h"
@@ -45,17 +16,7 @@
 #import "IntervalMap.h"
 #import "TmuxDashboardController.h"
 
-//#define PTYTAB_VERBOSE_LOGGING
-#ifdef PTYTAB_VERBOSE_LOGGING
-#define PtyLog NSLog
-#else
-#define PtyLog(args...) \
-do { \
-if (gDebugLogging) { \
-DebugLog([NSString stringWithFormat:args]); \
-} \
-} while (0)
-#endif
+#define PtyLog DLog
 
 // No growl output/idle alerts for a few seconds after a window is resized because there will be bogus bg activity
 const int POST_WINDOW_RESIZE_SILENCE_SEC = 5;
@@ -488,7 +449,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return parentWindow_;
 }
 
-- (PseudoTerminal*)realParentWindow
+- (NSWindowController<iTermWindowController> *)realParentWindow
 {
     return realParentWindow_;
 }
@@ -539,7 +500,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 }
 
-- (void)setParentWindow:(PseudoTerminal*)theParent
+- (void)setParentWindow:(NSWindowController<iTermWindowController> *)theParent
 {
     // Parent holds a reference to us (indirectly) so we mustn't reference it.
     parentWindow_ = realParentWindow_ = theParent;
@@ -2164,7 +2125,7 @@ static NSString* FormatRect(NSRect r) {
 }
 
 + (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
-                    inTerminal:(PseudoTerminal*)term
+                    inTerminal:(NSWindowController<iTermWindowController> *)term
                hasFlexibleView:(BOOL)hasFlexible
 {
     PTYTab* theTab;
@@ -2198,7 +2159,8 @@ static NSString* FormatRect(NSRect r) {
 
 // This can only be used in conjunction with
 // +[tabWithArrangement:inTerminal:hasFlexibleView:].
- - (void)addToTerminal:(PseudoTerminal *)term withArrangement:(NSDictionary *)arrangement
+ - (void)addToTerminal:(NSWindowController<iTermWindowController> *)term
+       withArrangement:(NSDictionary *)arrangement
 {
     // Add the existing tab, which is now fully populated, to the term.
     [term appendTab:self];
@@ -2221,7 +2183,7 @@ static NSString* FormatRect(NSRect r) {
 }
 
 + (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
-                        inTerminal:(PseudoTerminal*)term
+                        inTerminal:(NSWindowController<iTermWindowController> *)term
                    hasFlexibleView:(BOOL)hasFlexible
 {
     PTYTab *theTab = [PTYTab tabWithArrangement:arrangement
@@ -2259,7 +2221,7 @@ static NSString* FormatRect(NSRect r) {
 + (NSSize)_recursiveSetSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
                                  showTitles:(BOOL)showTitles
                                    bookmark:(Profile *)bookmark
-                                 inTerminal:(PseudoTerminal *)term
+                                 inTerminal:(NSWindowController<iTermWindowController> *)term
 {
     double splitterSize = 1;  // hack: should use -[NSSplitView dividerThickness], but don't have an instance yet.
     NSSize totalSize = NSZeroSize;
@@ -2447,7 +2409,7 @@ static NSString* FormatRect(NSRect r) {
 }
 
 + (void)setSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
-                     inTerminal:(PseudoTerminal *)term
+                     inTerminal:(NSWindowController<iTermWindowController> *)term
 {
     Profile *bookmark = [PTYTab tmuxBookmark];
 
@@ -2488,7 +2450,7 @@ static NSString* FormatRect(NSRect r) {
 }
 
 + (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
-                       inTerminal:(PseudoTerminal *)term
+                       inTerminal:(NSWindowController<iTermWindowController> *)term
                        tmuxWindow:(int)tmuxWindow
                    tmuxController:(TmuxController *)tmuxController
 {

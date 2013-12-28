@@ -7,6 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "TmuxGateway.h"
+#import "WindowControllerInterface.h"
 
 @class PTYSession;
 @class PTYTab;
@@ -90,7 +91,7 @@ extern NSString *kTmuxControllerSessionWasRenamed;
 
 // This should be called after the host sends an %exit command.
 - (void)detach;
-- (BOOL)windowDidResize:(PseudoTerminal *)term;
+- (BOOL)windowDidResize:(NSWindowController<iTermWindowController> *)term;
 - (void)fitLayoutToWindows;
 - (void)validateOptions;
 - (void)setClientSize:(NSSize)size;

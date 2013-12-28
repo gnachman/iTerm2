@@ -6,13 +6,13 @@
 //
 
 #import "TmuxWindowOpener.h"
-#import "iTermController.h"
-#import "TmuxLayoutParser.h"
-#import "ScreenChar.h"
-#import "PseudoTerminal.h"
-#import "TmuxHistoryParser.h"
-#import "TmuxStateParser.h"
 #import "PTYTab.h"
+#import "PseudoTerminal.h"
+#import "ScreenChar.h"
+#import "TmuxHistoryParser.h"
+#import "TmuxLayoutParser.h"
+#import "TmuxStateParser.h"
+#import "iTermController.h"
 
 NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
 
@@ -280,7 +280,7 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
 {
     --pendingRequests_;
     if (pendingRequests_ == 0) {
-        PseudoTerminal *term = nil;
+        NSWindowController<iTermWindowController> * term = nil;
         if (!tabToUpdate_) {
             if (![[[PTYTab tmuxBookmark] objectForKey:KEY_PREVENT_TAB] boolValue]) {
                 term = [self.controller windowWithAffinityForWindowId:self.windowIndex];

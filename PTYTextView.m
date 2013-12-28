@@ -1,35 +1,44 @@
-// -*- mode:objc -*-
-// $Id: PTYTextView.m,v 1.325 2009-02-06 14:33:17 delx Exp $
-/*
- **  PTYTextView.m
- **
- **  Copyright (c) 2002, 2003
- **
- **  Author: Fabian, Ujwal S. Setlur
- **         Initial code by Kiichi Kusama
- **
- **  Project: iTerm
- **
- **  Description: NSTextView subclass. The view object for the VT100 screen.
- **
- **  This program is free software; you can redistribute it and/or modify
- **  it under the terms of the GNU General Public License as published by
- **  the Free Software Foundation; either version 2 of the License, or
- **  (at your option) any later version.
- **
- **  This program is distributed in the hope that it will be useful,
- **  but WITHOUT ANY WARRANTY; without even the implied warranty of
- **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- **  GNU General Public License for more details.
- **
- **  You should have received a copy of the GNU General Public License
- **  along with this program; if not, write to the Free Software
- **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
+#import "AsyncHostLookupController.h"
+#import "CharacterRun.h"
+#import "CharacterRunInline.h"
+#import "FileTransferManager.h"
+#import "FindCursorView.h"
+#import "FontSizeEstimator.h"
+#import "FutureMethods.h"
+#import "FutureMethods.h"
+#import "ITAddressBookMgr.h"
+#import "MovePaneController.h"
+#import "MovingAverage.h"
+#import "NSMutableAttributedString+iTerm.h"
+#import "NSStringITerm.h"
+#import "PTYNoteView.h"
+#import "PTYNoteViewController.h"
+#import "PTYScrollView.h"
+#import "PTYTab.h"
+#import "PTYTask.h"
+#import "PTYTextView.h"
+#import "PasteboardHistory.h"
+#import "PointerController.h"
+#import "PointerPrefsController.h"
+#import "PreferencePanel.h"
+#import "RegexKitLite/RegexKitLite.h"
+#import "SCPPath.h"
+#import "SmartMatch.h"
+#import "SearchResult.h"
+#import "SmartSelectionController.h"
+#import "SolidColorView.h"
+#import "ThreeFingerTapGestureRecognizer.h"
+#import "URLAction.h"
+#import "VT100RemoteHost.h"
+#import "charmaps.h"
+#import "iTerm.h"
+#import "iTermApplicationDelegate.h"
+#import "iTermController.h"
+#import "iTermExpose.h"
+#import "iTermNSKeyBindingEmulator.h"
+#include <math.h>
+#include <sys/time.h>
 
-#define DEBUG_ALLOC           0
-#define DEBUG_METHOD_TRACE    0
-static const int MAX_WORKING_DIR_COUNT = 50;
 static const int kMaxSelectedTextLengthForCustomActions = 8192;
 static const int kMaxSelectedTextLinesForCustomActions = 100;
 
@@ -54,49 +63,9 @@ static const double kCharWidthFractionOffset = 0.35;
 #define BLUE_COEFFICIENT   0.11
 
 #define SWAPINT(a, b) { int temp; temp = a; a = b; b = temp; }
-#import "AsyncHostLookupController.h"
-#import "CharacterRun.h"
-#import "CharacterRunInline.h"
-#import "FontSizeEstimator.h"
-#import "FutureMethods.h"
-#import "FutureMethods.h"
-#import "ITAddressBookMgr.h"
-#import "MovePaneController.h"
-#import "MovingAverage.h"
-#import "NSMutableAttributedString+iTerm.h"
-#import "NSStringITerm.h"
-#import "PTYNoteView.h"
-#import "PTYNoteViewController.h"
-#import "PTYScrollView.h"
-#import "PTYTab.h"
-#import "PTYTask.h"
-#import "PTYTextView.h"
-#import "PasteboardHistory.h"
-#import "PointerController.h"
-#import "PointerPrefsController.h"
-#import "PreferencePanel.h"
-#import "PreferencePanel.h"
-#import "PseudoTerminal.h"
-#import "RegexKitLite/RegexKitLite.h"
-#import "SearchResult.h"
-#import "SmartSelectionController.h"
-#import "ThreeFingerTapGestureRecognizer.h"
-#import "URLAction.h"
-#import "charmaps.h"
-#import "iTerm.h"
-#import "iTermApplicationDelegate.h"
-#import "iTermController.h"
-#import "iTermExpose.h"
-#import "iTermNSKeyBindingEmulator.h"
-#include <math.h>
-#include <sys/time.h>
-
-// When performing the "find cursor" action, a gray window is shown with a
-// transparent "hole" around the cursor. This is the radius of that hole in
-// pixels.
-const double kFindCursorHoleRadius = 30;
 
 const int kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
+
 // If the cursor's background color is too close to nearby background colors,
 // force it to the "most different" color. This is the difference threshold
 // that triggers that change. 0 means always trigger, 1 means never trigger.
@@ -111,40 +80,7 @@ static double gSmartCursorFgThreshold = 0.75;
 // avoid dangling references.
 static NSString *const kHostnameLookupFailed = @"kHostnameLookupFailed";
 static NSString *const kHostnameLookupSucceeded = @"kHostnameLookupSucceeded";
-
-@implementation FindCursorView
-
-@synthesize cursor;
-
-- (void)drawRect:(NSRect)dirtyRect
-{
-    const double initialAlpha = 0.7;
-    NSGradient *grad = [[NSGradient alloc] initWithStartingColor:[NSColor whiteColor]
-                                                     endingColor:[NSColor blackColor]];
-    NSPoint relativeCursorPosition = NSMakePoint(2 * (cursor.x / self.frame.size.width - 0.5),
-                                                 2 * (cursor.y / self.frame.size.height - 0.5));
-    [grad drawInRect:NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height)
-        relativeCenterPosition:relativeCursorPosition];
-    [grad release];
-
-    double x = cursor.x;
-    double y = cursor.y;
-
-    const double numSteps = 1;
-    const double stepSize = 1;
-    const double initialRadius = kFindCursorHoleRadius + numSteps * stepSize;
-    double a = initialAlpha;
-    for (double focusRadius = initialRadius; a > 0 && focusRadius >= initialRadius - numSteps * stepSize; focusRadius -= stepSize) {
-        [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
-        NSBezierPath *circle = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(x - focusRadius, y - focusRadius, focusRadius*2, focusRadius*2)];
-        a -= initialAlpha / numSteps;
-        a = MAX(0, a);
-        [[NSColor colorWithDeviceWhite:0.5 alpha:a] set];
-        [circle fill];
-    }
-}
-@end
-
+static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
 
 // Minimum distance that the mouse must move before a cmd+drag will be
 // recognized as a drag.
@@ -167,52 +103,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
 }
 
-@interface Coord : NSObject
-{
-@public
-    int x, y;
-}
-+ (Coord*)coordWithX:(int)x y:(int)y;
-@end
-
-@implementation Coord
-
-+ (Coord*)coordWithX:(int)x y:(int)y
-{
-    Coord* c = [[[Coord alloc] init] autorelease];
-    c->x = x;
-    c->y = y;
-    return c;
-}
-
-- (NSString *)description {
-  return [NSString stringWithFormat:@"<%p: %@ %d,%d>", self, [self class], x, y];
-}
-
-@end
-
-@interface SmartMatch : NSObject
-{
-@public
-    double score;
-    int startX;
-    long long absStartY;
-    int endX;
-    long long absEndY;
-    NSDictionary *rule;
-}
-- (NSComparisonResult)compare:(SmartMatch *)aNumber;
-@end
-
-@implementation SmartMatch
-
-- (NSComparisonResult)compare:(SmartMatch *)other
-{
-    return [[NSNumber numberWithDouble:score] compare:[NSNumber numberWithDouble:other->score]];
-}
-
-@end
-
 @interface PTYTextView ()
 // Set the hostname this view is currently waiting for AsyncHostLookupController to finish looking
 // up.
@@ -225,20 +115,303 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 @end
 
 
-@implementation PTYTextView
+@implementation PTYTextView {
+    // This is a flag to let us know whether we are handling this
+    // particular drag and drop operation. We are using it because
+    // the prepareDragOperation and performDragOperation of the
+    // parent NSTextView class return "YES" even if the parent
+    // cannot handle the drag type. To make matters worse, the
+    // concludeDragOperation does not have any return value.
+    // This all results in the inability to test whether the
+    // parent could handle the drag type properly. Is this a Cocoa
+    // implementation bug?
+    // Fortunately, the draggingEntered and draggingUpdated methods
+    // seem to return a real status, based on which we can set this flag.
+    BOOL extendedDragNDrop;
+    
+    // anti-alias flags
+    BOOL asciiAntiAlias;
+    BOOL nonasciiAntiAlias;  // Only used if useNonAsciiFont_ is set.
+    BOOL useNonAsciiFont_;
+    
+    // option to not render in bold
+    BOOL useBoldFont;
+    
+    // Option to draw bold text as brighter colors.
+    BOOL useBrightBold;
+    
+    // option to not render in italic
+    BOOL useItalicFont;
+    
+    // NSTextInput support
+    BOOL IM_INPUT_INSERT;
+    NSRange IM_INPUT_SELRANGE;
+    NSRange IM_INPUT_MARKEDRANGE;
+    NSDictionary *markedTextAttributes;
+    NSAttributedString *markedText;
+    
+    BOOL CURSOR;
+    BOOL colorInvertedCursor;
+    
+    // geometry
+    double lineHeight;
+    double lineWidth;
+    double charWidth;
+    double charWidthWithoutSpacing, charHeightWithoutSpacing;
+    double horizontalSpacing_;
+    double  verticalSpacing_;
+    
+    PTYFontInfo *primaryFont;
+    PTYFontInfo *secondaryFont;  // non-ascii font, only used if useNonAsciiFont_ is set.
+    
+    NSColor* colorTable[256];
+    NSColor* defaultFGColor;
+    NSColor* defaultBGColor;
+    NSColor* defaultBoldColor;
+    NSColor* defaultCursorColor;
+    NSColor* selectionColor;
+    NSColor* unfocusedSelectionColor;
+    NSColor* selectedTextColor;
+    NSColor* cursorTextColor;
+    
+    // transparency
+    double transparency;
+    double blend;
+    
+    // data source
+    id<PTYTextViewDataSource> dataSource;
+    id<PTYTextViewDelegate> _delegate;
+    
+    // selection goes from startX,startY to endX,endY. The end may be before or after the start.
+    // While the selection is being made (the mouse was clicked and is being dragged) the end
+    // position moves with the cursor.
+    int startX, startY, endX, endY;
+    int oldStartX, oldStartY, oldEndX, oldEndY;
+    
+    // Underlined selection range (inclusive of all values), indicating clickable url.
+    int _underlineStartX, _underlineStartY, _underlineEndX, _underlineEndY;
+    char oldSelectMode;
+    BOOL mouseDown;
+    BOOL mouseDragged;
+    char selectMode;
+    BOOL mouseDownOnSelection;
+    NSEvent *mouseDownEvent;
+    int lastReportedX_, lastReportedY_;
+    
+    //find support
+    int lastFindStartX, lastFindEndX;
+    // this includes all the lines since the beginning of time. It is stable.
+    long long absLastFindStartY, absLastFindEndY;
+    
+    BOOL reportingMouseDown;
+    
+    // blinking cursor
+    BOOL blinkingCursor;
+    BOOL showCursor;
+    BOOL blinkShow;
+    struct timeval lastBlink;
+    int oldCursorX, oldCursorY;
+    
+    BOOL blinkAllowed_;
+    
+    // trackingRect tab
+    NSTrackingArea *trackingArea;
+    
+    BOOL keyIsARepeat;
+    
+    // Is a find currently executing?
+    BOOL _findInProgress;
+    
+    // Previous tracking rect to avoid expensive calls to addTrackingRect.
+    NSRect _trackingRect;
+    
+    // Maps a NSNumber int consisting of color index, alternate fg semantics
+    // flag, bold flag, and background flag to NSColor*s.
+    NSMutableDictionary* dimmedColorCache_;
+    
+    // Dimmed background color with alpha.
+    NSColor *cachedBackgroundColor_;
+    double cachedBackgroundColorAlpha_;  // cached alpha value (comparable to another double)
+    
+    // Previuos contrasting color returned
+    NSColor *memoizedContrastingColor_;
+    double memoizedMainRGB_[4];  // rgba for "main" color memoized.
+    double memoizedOtherRGB_[3];  // rgb for "other" color memoized.
+    
+    // Indicates if a selection that scrolls the window is in progress.
+    // Negative value: scroll up.
+    // Positive value: scroll down.
+    // Zero: don't scroll.
+    int selectionScrollDirection;
+    NSTimeInterval lastSelectionScroll;
+    
+    // Scrolls view when you drag a selection to top or bottom of view.
+    NSTimer* selectionScrollTimer;
+    double prevScrollDelay;
+    int scrollingX;
+    int scrollingY;
+    NSPoint scrollingLocation;
+    
+    // This gives the number of lines added to the bottom of the frame that do
+    // not correspond to a line in the dataSource. They are used solely for
+    // IME text.
+    int imeOffset;
+    
+    // Last position that accessibility was read up to.
+    int accX;
+    int accY;
+    
+    BOOL advancedFontRendering;
+    double strokeThickness;
+    double minimumContrast_;
+    
+    BOOL changedSinceLastExpose_;
+    
+    double dimmingAmount_;
+    
+    // The string last searched for.
+    NSString* findString_;
+    
+    // The set of SearchResult objects for which matches have been found.
+    NSMutableArray* findResults_;
+    
+    // The next offset into findResults_ where values from findResults_ should
+    // be added to the map.
+    int nextOffset_;
+    
+    // True if a result has been highlighted & scrolled to.
+    BOOL foundResult_;
+    
+    // Maps an absolute line number (NSNumber longlong) to an NSData bit array
+    // with one bit per cell indicating whether that cell is a match.
+    NSMutableDictionary* resultMap_;
+    
+    // True if the last search was forward, flase if backward.
+    BOOL searchingForward_;
+    
+    // Offset value for last search.
+    int findOffset_;
+    
+    // True if trying to find a result before/after current selection to
+    // highlight.
+    BOOL searchingForNextResult_;
+    
+    // True if the last search was case insensitive.
+    BOOL findIgnoreCase_;
+    
+    // True if the last search was for a regex.
+    BOOL findRegex_;
+    
+    // Time that the flashing bell's alpha value was last adjusted.
+    NSDate* lastFlashUpdate_;
+    
+    // Alpha value of flashing bell graphic.
+    double flashing_;
+    
+    // Image currently flashing.
+    FlashImage flashImage_;
+    
+    ITermCursorType cursorType_;
+    
+    // Works around an apparent OS bug where we get drag events without a mousedown.
+    BOOL dragOk_;
+    
+    // Semantic history controller
+    Trouter* trouter;
+    
+    // Flag to make sure a Trouter drag check is only one once per drag
+    BOOL trouterDragged;
+    
+    // Saves the monotonically increasing event number of a first-mouse click, which disallows
+    // selection.
+    int firstMouseEventNumber_;
+    
+    // For accessibility. This is a giant string with the entire scrollback buffer plus screen concatenated with newlines for hard eol's.
+    NSMutableString* allText_;
+    // For accessibility. This is the indices at which soft newlines occur in allText_, ignoring multi-char compositing characters.
+    NSMutableArray* lineBreakIndexOffsets_;
+    // For accessibility. This is the actual indices at which soft newlines occcur in allText_.
+    NSMutableArray* lineBreakCharOffsets_;
+    
+    // Brightness of background color
+    double backgroundBrightness_;
+    
+    // Dim everything but the default background color.
+    BOOL dimOnlyText_;
+    
+    // For find-cursor animation
+    NSWindow *findCursorWindow_;
+    FindCursorView *findCursorView_;
+    NSTimer *findCursorTeardownTimer_;
+    NSTimer *findCursorBlinkTimer_;
+    BOOL autoHideFindCursor_;
+    NSPoint imeCursorLastPos_;
+    
+    // Number of fingers currently down (only valid if three finger click
+    // emulates middle button)
+    int numTouches_;
+    
+    // If true, ignore the next mouse up because it's due to a three finger
+    // mouseDown.
+    BOOL mouseDownIsThreeFingerClick_;
+    
+    // Is the mouse inside our view?
+    BOOL mouseInRect_;
+    
+    // Time the selection last changed at or 0 if there's no selection.
+    NSTimeInterval selectionTime_;
+    
+    // Dictionaries with a regex and a priority.
+    NSArray *smartSelectionRules_;
+    
+    // Show a background indicator when in broadcast input mode
+    BOOL useBackgroundIndicator_;
+    
+    // Find context just after initialization.
+    FindContext *initialFindContext_;
+    
+    PointerController *pointer_;
+	NSCursor *cursor_;
+    
+    // True while the context menu is being opened.
+    BOOL openingContextMenu_;
+    
+	// Experimental feature gated by ThreeFingerTapEmulatesThreeFingerClick bool pref.
+    ThreeFingerTapGestureRecognizer *threeFingerTapGestureRecognizer_;
+    
+    // Position of cursor last time we looked. Since the cursor might move around a lot between
+    // calls to -updateDirtyRects without making any changes, we only redraw the old and new cursor
+    // positions.
+    int prevCursorX, prevCursorY;
+    
+    MovingAverage *drawRectDuration_, *drawRectInterval_;
+	// Current font. Only valid for the duration of a single drawing context.
+    NSFont *selectedFont_;
+    
+    // Used by _drawCursorTo: to remember the last time the cursor moved to avoid drawing a blinked-out
+    // cursor while it's moving.
+    NSTimeInterval lastTimeCursorMoved_;
+    
+    // If set, the last-modified time of each line on the screen is shown on the right side of the display.
+    BOOL showTimestamps_;
+    float _antiAliasedShift;  // Amount to shift anti-aliased text by horizontally to simulate bold
+    NSImage *markImage_;
+    
+    // Point clicked, valid only during -validateMenuItem and calls made from
+    // the context menu and if x and y are nonnegative.
+    VT100GridCoord validationClickPoint_;
+}
+
 
 + (void)initialize
 {
     NSPoint hotspot = NSMakePoint(4, 5);
-
     NSBundle* bundle = [NSBundle bundleForClass:[self class]];
-
     NSImage* image = [NSImage imageNamed:@"IBarCursor"];
 
     textViewCursor = [[NSCursor alloc] initWithImage:image hotSpot:hotspot];
 
     NSImage* xmrImage = [NSImage imageNamed:@"IBarCursorXMR"];
-
     xmrCursor = [[NSCursor alloc] initWithImage:xmrImage hotSpot:hotspot];
 
     NSString* bellFile = [bundle
@@ -290,16 +463,162 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [iTermNSKeyBindingEmulator sharedInstance];  // Load and parse DefaultKeyBindings.dict if needed.
 }
 
-- (BOOL)xtermMouseReporting
-{
-    NSEvent *event = [NSApp currentEvent];
-    return (([[self delegate] xtermMouseReporting]) &&        // Xterm mouse reporting is on
-            !([event modifierFlags] & NSAlternateKeyMask));   // Not holding Opt to disable mouse reporting
-}
-
 + (NSCursor *)textViewCursor
 {
     return textViewCursor;
+}
+
+- (id)initWithFrame:(NSRect)aRect
+{
+    self = [super initWithFrame: aRect];
+    if (self) {
+        firstMouseEventNumber_ = -1;
+
+        dimmedColorCache_ = [[NSMutableDictionary alloc] init];
+        [self updateMarkedTextAttributes];
+        CURSOR=YES;
+        lastFindStartX = lastFindEndX = oldStartX = startX = -1;
+        _underlineStartX = _underlineStartY = _underlineEndX = _underlineEndY = -1;
+        markedText = nil;
+        gettimeofday(&lastBlink, NULL);
+        [[self window] useOptimizedDrawing:YES];
+
+        // register for drag and drop
+        [self registerForDraggedTypes: [NSArray arrayWithObjects:
+            NSFilenamesPboardType,
+            NSStringPboardType,
+            nil]];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(_useBackgroundIndicatorChanged:)
+                                                     name:kUseBackgroundPatternIndicatorChangedNotification
+                                                   object:nil];
+        [self _useBackgroundIndicatorChanged:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(_settingsChanged:)
+                                                     name:@"iTermRefreshTerminal"
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(_pointerSettingsChanged:)
+                                                     name:kPointerPrefsChangedNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(flagsChangedNotification:)
+                                                     name:@"iTermFlagsChanged"
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(hostnameLookupFailed:)
+                                                     name:kHostnameLookupFailed
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(hostnameLookupSucceeded:)
+                                                     name:kHostnameLookupSucceeded
+                                                   object:nil];
+        
+        advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
+        strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
+        imeOffset = 0;
+        resultMap_ = [[NSMutableDictionary alloc] init];
+
+        trouter = [[Trouter alloc] init];
+        trouter.delegate = self;
+        trouterDragged = NO;
+
+        pointer_ = [[PointerController alloc] init];
+        pointer_.delegate = self;
+        primaryFont = [[PTYFontInfo alloc] init];
+        secondaryFont = [[PTYFontInfo alloc] init];
+
+        initialFindContext_ = [[FindContext alloc] init];
+        if ([pointer_ viewShouldTrackTouches]) {
+            DLog(@"Begin tracking touches in view %@", self);
+            [self setAcceptsTouchEvents:YES];
+            [self setWantsRestingTouches:YES];
+            if ([self useThreeFingerTapGestureRecognizer]) {
+                threeFingerTapGestureRecognizer_ =
+                    [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
+                                                                   selector:@selector(threeFingerTap:)];
+            }
+        }
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"LogDrawingPerformance"]) {
+            NSLog(@"** Drawing performance timing enabled **");
+            drawRectDuration_ = [[MovingAverage alloc] init];
+            drawRectInterval_ = [[MovingAverage alloc] init];
+        }
+        [self viewDidChangeBackingProperties];
+        markImage_ = [NSImage imageNamed:@"mark"];
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [drawRectDuration_ release];
+    [drawRectInterval_ release];
+    
+    [smartSelectionRules_ release];
+    int i;
+    
+    if (mouseDownEvent != nil) {
+        [mouseDownEvent release];
+        mouseDownEvent = nil;
+    }
+    
+    if (trackingArea) {
+        [self removeTrackingArea:trackingArea];
+    }
+    if ([self isFindingCursor]) {
+        [findCursorWindow_ close];
+    }
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [dimmedColorCache_ release];
+    [memoizedContrastingColor_ release];
+    for (i = 0; i < 256; i++) {
+        [colorTable[i] release];
+    }
+    [lastFlashUpdate_ release];
+    [cachedBackgroundColor_ release];
+    [resultMap_ release];
+    [findResults_ release];
+    [findString_ release];
+    [defaultFGColor release];
+    [defaultBGColor release];
+    [defaultBoldColor release];
+    [selectionColor release];
+    [unfocusedSelectionColor release];
+    [defaultCursorColor release];
+    
+    [primaryFont release];
+    [secondaryFont release];
+    
+    [markedTextAttributes release];
+    [markedText release];
+    
+    [selectionScrollTimer release];
+    
+    [trouter release];
+    
+    [pointer_ release];
+    [cursor_ release];
+    [threeFingerTapGestureRecognizer_ disconnectTarget];
+    [threeFingerTapGestureRecognizer_ release];
+    
+    [initialFindContext_ release];
+    if (self.currentUnderlineHostname) {
+        [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
+    }
+    [_currentUnderlineHostname release];
+    
+    [super dealloc];
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<PTYTextView: %p frame=%@ visibleRect=%@ SCREEN=%@>",
+            self,
+            [NSValue valueWithRect:self.frame],
+            [NSValue valueWithRect:[self visibleRect]],
+            dataSource];
 }
 
 - (BOOL)useThreeFingerTapGestureRecognizer {
@@ -312,103 +631,15 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     _antiAliasedShift = [[[self window] screen] backingScaleFactor] > 1 ? 0.5 : 0;
 }
 
-- (id)initWithFrame:(NSRect)aRect
-{
-    self = [super initWithFrame: aRect];
-    firstMouseEventNumber_ = -1;
-
-    dimmedColorCache_ = [[NSMutableDictionary alloc] init];
+- (void)updateMarkedTextAttributes {
     [self setMarkedTextAttributes:
-        [NSDictionary dictionaryWithObjectsAndKeys:
-            defaultBGColor, NSBackgroundColorAttributeName,
-            defaultFGColor, NSForegroundColorAttributeName,
-            secondaryFont.font, NSFontAttributeName,
-            [NSNumber numberWithInt:(NSUnderlineStyleSingle|NSUnderlineByWordMask)],
-                NSUnderlineStyleAttributeName,
-            NULL]];
-    CURSOR=YES;
-    lastFindStartX = lastFindEndX = oldStartX = startX = -1;
-    _underlineStartX = _underlineStartY = _underlineEndX = _underlineEndY = -1;
-    markedText = nil;
-    gettimeofday(&lastBlink, NULL);
-    [[self window] useOptimizedDrawing:YES];
-
-    // register for drag and drop
-    [self registerForDraggedTypes: [NSArray arrayWithObjects:
-        NSFilenamesPboardType,
-        NSStringPboardType,
-        nil]];
-
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_useBackgroundIndicatorChanged:)
-                                                 name:kUseBackgroundPatternIndicatorChangedNotification
-                                               object:nil];
-    [self _useBackgroundIndicatorChanged:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_settingsChanged:)
-                                                 name:@"iTermRefreshTerminal"
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_pointerSettingsChanged:)
-                                                 name:kPointerPrefsChangedNotification
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(flagsChangedNotification:)
-                                                 name:@"iTermFlagsChanged"
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(hostnameLookupFailed:)
-                                                 name:kHostnameLookupFailed
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(hostnameLookupSucceeded:)
-                                                 name:kHostnameLookupSucceeded
-                                               object:nil];
-    
-    advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
-    strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
-    imeOffset = 0;
-    resultMap_ = [[NSMutableDictionary alloc] init];
-
-    trouter = [[Trouter alloc] init];
-    trouter.delegate = self;
-    trouterDragged = NO;
-    workingDirectoryAtLines = [[NSMutableArray alloc] init];
-
-    pointer_ = [[PointerController alloc] init];
-    pointer_.delegate = self;
-    primaryFont = [[PTYFontInfo alloc] init];
-    secondaryFont = [[PTYFontInfo alloc] init];
-
-    initialFindContext_ = [[FindContext alloc] init];
-    if ([pointer_ viewShouldTrackTouches]) {
-        DLog(@"Begin tracking touches in view %@", self);
-        [self setAcceptsTouchEvents:YES];
-        [self setWantsRestingTouches:YES];
-        if ([self useThreeFingerTapGestureRecognizer]) {
-            threeFingerTapGestureRecognizer_ = [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
-                                                                                              selector:@selector(threeFingerTap:)];
-        }
-    } else {
-        DLog(@"Not tracking touches in view %@", self);
-    }
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"LogDrawingPerformance"]) {
-        NSLog(@"** Drawing performance timing enabled **");
-        drawRectDuration_ = [[MovingAverage alloc] init];
-        drawRectInterval_ = [[MovingAverage alloc] init];
-    }
-    [self viewDidChangeBackingProperties];
-    markImage_ = [NSImage imageNamed:@"mark"];
-    
-    return self;
-}
-
-- (NSString *)description {
-    return [NSString stringWithFormat:@"<PTYTextView: %p frame=%@ visibleRect=%@ SCREEN=%@>",
-            self,
-            [NSValue valueWithRect:self.frame],
-            [NSValue valueWithRect:[self visibleRect]],
-            dataSource];
+     [NSDictionary dictionaryWithObjectsAndKeys:
+      defaultBGColor, NSBackgroundColorAttributeName,
+      defaultFGColor, NSForegroundColorAttributeName,
+      [self nafont], NSFontAttributeName,
+      [NSNumber numberWithInt:(NSUnderlineStyleSingle|NSUnderlineByWordMask)],
+      NSUnderlineStyleAttributeName,
+      NULL]];
 }
 
 - (void)sendFakeThreeFingerClickDown:(BOOL)isDown basedOnEvent:(NSEvent *)event {
@@ -472,8 +703,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (BOOL)becomeFirstResponder
 {
-    PTYSession* mySession = [dataSource session];
-    [[mySession tab] setActiveSession:mySession];
+    [_delegate textViewDidBecomeFirstResponder];
     return YES;
 }
 
@@ -512,69 +742,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     }
 }
 
-- (void)dealloc
-{
-    [drawRectDuration_ release];
-    [drawRectInterval_ release];
-
-    [smartSelectionRules_ release];
-    int i;
-
-    if (mouseDownEvent != nil) {
-        [mouseDownEvent release];
-        mouseDownEvent = nil;
-    }
-
-    if (trackingArea) {
-        [self removeTrackingArea:trackingArea];
-    }
-    if ([self isFindingCursor]) {
-        [findCursorWindow_ close];
-    }
-
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [dimmedColorCache_ release];
-    [memoizedContrastingColor_ release];
-    for (i = 0; i < 256; i++) {
-        [colorTable[i] release];
-    }
-    [lastFlashUpdate_ release];
-    [cachedBackgroundColor_ release];
-    [resultMap_ release];
-    [findResults_ release];
-    [findString_ release];
-    [defaultFGColor release];
-    [defaultBGColor release];
-    [defaultBoldColor release];
-    [selectionColor release];
-    [unfocusedSelectionColor release];
-    [defaultCursorColor release];
-
-    [primaryFont release];
-    [secondaryFont release];
-
-    [markedTextAttributes release];
-    [markedText release];
-
-    [selectionScrollTimer release];
-
-    [workingDirectoryAtLines release];
-    [trouter release];
-
-    [pointer_ release];
-    [cursor_ release];
-    [threeFingerTapGestureRecognizer_ disconnectTarget];
-    [threeFingerTapGestureRecognizer_ release];
-
-    [initialFindContext_ release];
-    if (self.currentUnderlineHostname) {
-        [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
-    }
-    [_currentUnderlineHostname release];
-
-    [super dealloc];
-}
-
+// TODO: Not sure if this is used.
 - (BOOL)shouldDrawInsertionPoint
 {
     return NO;
@@ -588,6 +756,12 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 - (BOOL)isOpaque
 {
     return YES;
+}
+
+- (void)setUseNonAsciiFont:(BOOL)useNonAsciiFont {
+    useNonAsciiFont_ = useNonAsciiFont;
+    [self setNeedsDisplay:YES];
+    [self updateMarkedTextAttributes];
 }
 
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA
@@ -675,9 +849,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setMarkedTextAttributes:(NSDictionary *)attr
 {
-    [markedTextAttributes release];
+    [markedTextAttributes autorelease];
     [attr retain];
-    markedTextAttributes=attr;
+    markedTextAttributes = attr;
 }
 
 - (int)selectionStartX
@@ -735,7 +909,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)updateScrollerForBackgroundColor
 {
-    PTYScroller *scroller = (PTYScroller*)[[[dataSource session] SCROLLVIEW] verticalScroller];
+    PTYScroller *scroller = [_delegate textViewVerticalScroller];
     BOOL isDark = ([self perceivedBrightness:defaultBGColor] < kBackgroundConsideredDarkThreshold);
     [scroller setHasDarkBackground:isDark];
 }
@@ -1052,7 +1226,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (NSFont *)nafont
 {
-    return secondaryFont.font;
+    return useNonAsciiFont_ ? secondaryFont.font : primaryFont.font;
 }
 
 + (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(double)hspace verticalSpacing:(double)vspace baseline:(double*)baseline
@@ -1129,14 +1303,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         }
     }
 
-    [self setMarkedTextAttributes:
-        [NSDictionary dictionaryWithObjectsAndKeys:
-            defaultBGColor, NSBackgroundColorAttributeName,
-            defaultFGColor, NSForegroundColorAttributeName,
-            secondaryFont.font, NSFontAttributeName,
-            [NSNumber numberWithInt:(NSUnderlineStyleSingle|NSUnderlineByWordMask)],
-                NSUnderlineStyleAttributeName,
-            NULL]];
+    [self updateMarkedTextAttributes];
     [self setNeedsDisplay:YES];
 
     NSScrollView* scrollview = [self enclosingScrollView];
@@ -1299,7 +1466,7 @@ NSMutableArray* screens=0;
                                  Y:y
                 locationInTextView:scrollingLocation];
 
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
     [self scheduleSelectionScroll];
 }
 
@@ -1711,7 +1878,7 @@ NSMutableArray* screens=0;
 {
     if ([self blinkingCursor] &&
         [self isInKeyWindow] &&
-        [[[dataSource session] tab] activeSession] == [dataSource session]) {
+        [_delegate textViewIsActiveSession]) {
         return YES;
     } else {
         return NO;
@@ -1885,9 +2052,10 @@ NSMutableArray* screens=0;
     return [self updateDirtyRects] || [self _isCursorBlinking];
 }
 
+// Overrides an NSView method.
 - (NSRect)adjustScroll:(NSRect)proposedVisibleRect
 {
-    proposedVisibleRect.origin.y=(int)(proposedVisibleRect.origin.y/lineHeight+0.5)*lineHeight;
+    proposedVisibleRect.origin.y = (int)(proposedVisibleRect.origin.y / lineHeight + 0.5) * lineHeight;
     return proposedVisibleRect;
 }
 
@@ -2029,7 +2197,7 @@ NSMutableArray* screens=0;
     }
     const NSRect frame = [self visibleRect];
     double x = frame.origin.x + frame.size.width;
-    if ([[[[dataSource session] tab] realParentWindow] broadcastInputToSession:[dataSource session]]) {
+    if ([_delegate textViewSessionIsBroadcastingInput]) {
         NSSize size = [broadcastInputImage size];
         x -= size.width + kBroadcastMargin;
         [broadcastInputImage drawAtPoint:NSMakePoint(x,
@@ -2039,7 +2207,7 @@ NSMutableArray* screens=0;
                                 fraction:0.5];
     }
 
-    if ([[[dataSource session] SHELL] hasCoprocess]) {
+    if ([_delegate textViewHasCoprocess]) {
         NSSize size = [coprocessImage size];
         x -= size.width + kCoprocessMargin;
         [coprocessImage drawAtPoint:NSMakePoint(x,
@@ -2174,7 +2342,7 @@ NSMutableArray* screens=0;
 
 - (void)drawOutlineInRect:(NSRect)rect topOnly:(BOOL)topOnly
 {
-    if ([[[dataSource session] tab] hasMaximizedPane]) {
+    if ([_delegate textViewTabHasMaximizedPanel]) {
         NSColor *color = [self defaultBGColor];
         double r = [color redComponent];
         double g = [color greenComponent];
@@ -2272,7 +2440,7 @@ NSMutableArray* screens=0;
     int vh = visible.size.height;
     int lh = lineHeight;
     int visibleRows = vh / lh;
-    NSRect docVisibleRect = [[[dataSource session] SCROLLVIEW] documentVisibleRect];
+    NSRect docVisibleRect = [[self enclosingScrollView] documentVisibleRect];
     double hiddenAbove = docVisibleRect.origin.y + [self frame].origin.y;
     int firstVisibleRow = hiddenAbove / lh;
     if (lineEnd > firstVisibleRow + visibleRows) {
@@ -2456,7 +2624,7 @@ NSMutableArray* screens=0;
         // The user might have used the scroll wheel to cause blinking text to become
         // visible. Make sure the timer is running if anything onscreen is
         // blinking.
-        [[dataSource session] scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
+        [_delegate textViewWillNeedUpdateForBlink];
     }
     [selectedFont_ release];
     selectedFont_ = nil;
@@ -2520,8 +2688,7 @@ NSMutableArray* screens=0;
             if (*targetOffset == -1 && i == y && o >= x) {
                 *targetOffset = k + [joinedLines length];
             }
-            [coords addObject:[Coord coordWithX:o
-                                              y:i]];
+            [coords addObject:[NSValue valueWithGridCoord:VT100GridCoordMake(o, i)]];
         }
         [joinedLines appendString:string];
         free(deltas);
@@ -2531,8 +2698,7 @@ NSMutableArray* screens=0;
         o++;
         if (i >= y && theLine[width].code == EOL_HARD) {
             if (rejectAtHardEol || theLine[width - 1].code == 0) {
-                [coords addObject:[Coord coordWithX:o
-                                                  y:i]];
+                [coords addObject:[NSValue valueWithGridCoord:VT100GridCoordMake(o, i)]];
                 break;
             }
         }
@@ -2596,20 +2762,20 @@ NSMutableArray* screens=0;
                     NSString* result = [substring substringWithRange:temp];
                     double score = precision * (double) temp.length;
                     SmartMatch* oldMatch = [matches objectForKey:result];
-                    if (!oldMatch || score > oldMatch->score) {
+                    if (!oldMatch || score > oldMatch.score) {
                         SmartMatch* match = [[[SmartMatch alloc] init] autorelease];
-                        match->score = score;
-                        Coord* startCoord = [coords objectAtIndex:i + temp.location];
-                        Coord* endCoord = [coords objectAtIndex:MIN(numCoords - 1, i + temp.location + temp.length)];
-                        match->startX = startCoord->x;
-                        match->absStartY = startCoord->y + [dataSource totalScrollbackOverflow];
-                        match->endX = endCoord->x;
-                        match->absEndY = endCoord->y + [dataSource totalScrollbackOverflow];
-                        match->rule = rule;
+                        match.score = score;
+                        VT100GridCoord startCoord = [[coords objectAtIndex:i + temp.location] gridCoordValue];
+                        VT100GridCoord endCoord = [[coords objectAtIndex:MIN(numCoords - 1, i + temp.location + temp.length)] gridCoordValue];
+                        match.startX = startCoord.x;
+                        match.absStartY = startCoord.y + [dataSource totalScrollbackOverflow];
+                        match.endX = endCoord.x;
+                        match.absEndY = endCoord.y + [dataSource totalScrollbackOverflow];
+                        match.rule = rule;
                         [matches setObject:match forKey:result];
 
                         if (debug) {
-                            NSLog(@"Add result %@ at %d,%lld -> %d,%lld with score %lf", result, match->startX, match->absStartY, match->endX, match->absEndY, match->score);
+                            NSLog(@"Add result %@ at %d,%lld -> %d,%lld with score %lf", result, match.startX, match.absStartY, match.endX, match.absEndY, match.score);
                         }
                     }
                     i += temp.location + temp.length - 1;
@@ -2626,13 +2792,13 @@ NSMutableArray* screens=0;
         NSArray* sortedMatches = [[matches allValues] sortedArrayUsingSelector:@selector(compare:)];
         SmartMatch* bestMatch = [sortedMatches lastObject];
         if (debug) {
-            NSLog(@"Select match with score %lf", bestMatch->score);
+            NSLog(@"Select match with score %lf", bestMatch.score);
         }
-        *X1 = bestMatch->startX;
-        *Y1 = bestMatch->absStartY - [dataSource totalScrollbackOverflow];
-        *X2 = bestMatch->endX;
-        *Y2 = bestMatch->absEndY - [dataSource totalScrollbackOverflow];
-        return bestMatch->rule;
+        *X1 = bestMatch.startX;
+        *Y1 = bestMatch.absStartY - [dataSource totalScrollbackOverflow];
+        *X2 = bestMatch.endX;
+        *Y2 = bestMatch.absEndY - [dataSource totalScrollbackOverflow];
+        return bestMatch.rule;
     } else {
         if (debug) {
             NSLog(@"No matches. Fall back on word selection.");
@@ -2713,7 +2879,7 @@ NSMutableArray* screens=0;
         [delegate queueKeyDown:event];
         return;
     }
-    if ([[[[[self dataSource] session] tab] realParentWindow] inInstantReplay]) {
+    if ([_delegate textViewDelegateHandlesAllKeystrokes]) {
         if (debugKeyDown) {
             NSLog(@"PTYTextView keyDown: in instant replay, send to delegate");
         }
@@ -2827,7 +2993,14 @@ NSMutableArray* screens=0;
         if (debugKeyDown) {
             NSLog(@"PTYTextView keyDown send to IME");
         }
+        
+        // In issue 2743, it is revealed that in OS 10.9 this sometimes calls -insertText on the
+        // wrong instnace of PTYTextView. We work around the issue by using a global variable to
+        // track the instance of PTYTextView that is currently handling a key event and rerouting
+        // calls as needed in -insertText and -doCommandBySelector.
+        gCurrentKeyEventTextView = [[self retain] autorelease];
         [self interpretKeyEvents:[NSArray arrayWithObject:event]];
+        gCurrentKeyEventTextView = nil;
 
         // If the IME didn't want it, pass it on to the delegate
         if (!prev &&
@@ -2847,6 +3020,13 @@ NSMutableArray* screens=0;
 - (BOOL)keyIsARepeat
 {
     return (keyIsARepeat);
+}
+
+- (BOOL)xtermMouseReporting
+{
+    NSEvent *event = [NSApp currentEvent];
+    return (([[self delegate] xtermMouseReporting]) &&        // Xterm mouse reporting is on
+            !([event modifierFlags] & NSAlternateKeyMask));   // Not holding Opt to disable mouse reporting
 }
 
 // TODO: disable other, right mouse for inactive panes
@@ -2870,7 +3050,6 @@ NSMutableArray* screens=0;
             ry = -1;
         }
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         int buttonNumber = [event buttonNumber];
         if (buttonNumber == 2) {
@@ -2883,10 +3062,10 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
                 reportingMouseDown = YES;
-                [session writeTask:[terminal mousePress:buttonNumber
-                                          withModifiers:[event modifierFlags]
-                                                    atX:rx
-                                                      Y:ry]];
+                [_delegate writeTask:[terminal mousePress:buttonNumber
+                                            withModifiers:[event modifierFlags]
+                                                      atX:rx
+                                                        Y:ry]];
                 return;
                 break;
 
@@ -2919,7 +3098,6 @@ NSMutableArray* screens=0;
             ry = -1;
         }
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         int buttonNumber = [event buttonNumber];
         if (buttonNumber == 2) {
@@ -2931,10 +3109,10 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseRelease:buttonNumber
-                                            withModifiers:[event modifierFlags]
-                                                      atX:rx
-                                                        Y:ry]];
+                [_delegate writeTask:[terminal mouseRelease:buttonNumber
+                                             withModifiers:[event modifierFlags]
+                                                       atX:rx
+                                                         Y:ry]];
                 return;
                 break;
 
@@ -2973,7 +3151,6 @@ NSMutableArray* screens=0;
             ry = -1;
         }
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         int buttonNumber = [event buttonNumber];
         if (buttonNumber == 2) {
@@ -2985,10 +3162,10 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseMotion:buttonNumber
-                                           withModifiers:[event modifierFlags]
-                                                     atX:rx
-                                                       Y:ry]];
+                [_delegate writeTask:[terminal mouseMotion:buttonNumber
+                                            withModifiers:[event modifierFlags]
+                                                      atX:rx
+                                                        Y:ry]];
                 return;
                 break;
 
@@ -3023,17 +3200,16 @@ NSMutableArray* screens=0;
         if (rx < 0) rx = -1;
         if (ry < 0) ry = -1;
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
                 reportingMouseDown = YES;
-                [session writeTask:[terminal mousePress:MOUSE_BUTTON_RIGHT
-                                          withModifiers:[event modifierFlags]
-                                                    atX:rx
-                                                      Y:ry]];
+                [_delegate writeTask:[terminal mousePress:MOUSE_BUTTON_RIGHT
+                                           withModifiers:[event modifierFlags]
+                                                     atX:rx
+                                                       Y:ry]];
                 return;
                 break;
             case MOUSE_REPORTING_NONE:
@@ -3074,16 +3250,15 @@ NSMutableArray* screens=0;
             ry = -1;
         }
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseRelease:MOUSE_BUTTON_RIGHT
-                                            withModifiers:[event modifierFlags]
-                                                      atX:rx
-                                                        Y:ry]];
+                [_delegate writeTask:[terminal mouseRelease:MOUSE_BUTTON_RIGHT
+                                             withModifiers:[event modifierFlags]
+                                                       atX:rx
+                                                         Y:ry]];
                 return;
                 break;
 
@@ -3117,16 +3292,15 @@ NSMutableArray* screens=0;
             ry = -1;
         }
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_RIGHT
-                                           withModifiers:[event modifierFlags]
-                                                     atX:rx
-                                                       Y:ry]];
+                [_delegate writeTask:[terminal mouseMotion:MOUSE_BUTTON_RIGHT
+                                            withModifiers:[event modifierFlags]
+                                                      atX:rx
+                                                        Y:ry]];
                 return;
                 break;
 
@@ -3160,7 +3334,6 @@ NSMutableArray* screens=0;
             ry = -1;
         }
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         int buttonNumber;
         if ([event deltaY] > 0)
@@ -3173,10 +3346,10 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
                 if ([event deltaY] != 0) {
-                    [session writeTask:[terminal mousePress:buttonNumber
-                                              withModifiers:[event modifierFlags]
-                                                        atX:rx
-                                                          Y:ry]];
+                    [_delegate writeTask:[terminal mousePress:buttonNumber
+                                               withModifiers:[event modifierFlags]
+                                                         atX:rx
+                                                           Y:ry]];
                     return;
                 }
                 break;
@@ -3192,12 +3365,12 @@ NSMutableArray* screens=0;
 
 - (BOOL)setCursor:(NSCursor *)cursor
 {
-        if (cursor == cursor_) {
-                return NO;
-        }
-        [cursor_ autorelease];
-        cursor_ = [cursor retain];
-        return YES;
+    if (cursor == cursor_) {
+        return NO;
+    }
+    [cursor_ autorelease];
+    cursor_ = [cursor retain];
+    return YES;
 }
 
 - (void)updateCursor:(NSEvent *)event
@@ -3206,11 +3379,11 @@ NSMutableArray* screens=0;
 
     BOOL changed = NO;
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
-                changed = [self setCursor:[NSCursor openHandCursor]];
+        changed = [self setCursor:[NSCursor openHandCursor]];
     } else if (([event modifierFlags] & (NSCommandKeyMask | NSAlternateKeyMask)) == (NSCommandKeyMask | NSAlternateKeyMask)) {
-                changed = [self setCursor:[NSCursor crosshairCursor]];
+        changed = [self setCursor:[NSCursor crosshairCursor]];
     } else if (([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask) {
-                changed = [self setCursor:[NSCursor pointingHandCursor]];
+        changed = [self setCursor:[NSCursor pointingHandCursor]];
     } else if ([self xtermMouseReporting] &&
                mouseMode != MOUSE_REPORTING_NONE &&
                mouseMode != MOUSE_REPORTING_HILITE) {
@@ -3270,7 +3443,7 @@ NSMutableArray* screens=0;
     NSCharacterSet *charsToTrim = [NSCharacterSet whitespaceAndNewlineCharacterSet];
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:charsToTrim];
 
-    NSString *workingDirectory = [self getWorkingDirectoryAtLine:line];
+    NSString *workingDirectory = [dataSource workingDirectoryOnLine:line];
     if ([trouter canOpenPath:trimmedURLString workingDirectory:workingDirectory]) {
         return YES;
     }
@@ -3392,7 +3565,7 @@ NSMutableArray* screens=0;
             [[self window] makeKeyWindow];
         }
         if ([self isInKeyWindow]) {
-            [[[dataSource session] tab] setActiveSession:[dataSource session]];
+            [_delegate textViewDidBecomeFirstResponder];
         }
     }
 }
@@ -3557,7 +3730,7 @@ NSMutableArray* screens=0;
     mouseDownIsThreeFingerClick_ = NO;
     DLog(@"mouseDownImpl - set mouseDownIsThreeFingerClick=NO");
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
-        [[MovePaneController sharedInstance] beginDrag:[dataSource session]];
+        [_delegate textViewBeginDrag];
         return NO;
     }
     if (numTouches_ == 3) {
@@ -3579,7 +3752,7 @@ NSMutableArray* screens=0;
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
     if (!cmdPressed &&
         frontTextView &&
-        [[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
+        ![_delegate textViewInSameTabAsTextView:frontTextView]) {
         // Mouse clicks in inactive tab are always handled by superclass because we don't want clicks
         // to select a split pane to be xterm-mouse-reported. We do allow cmd-clicks to go through
         // incase you're clicking on a URL.
@@ -3627,7 +3800,6 @@ NSMutableArray* screens=0;
         lastReportedX_ = rx;
         lastReportedY_ = ry;
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
@@ -3635,10 +3807,10 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_ALL_MOTION:
                 DebugLog(@"Do xterm mouse reporting");
                 reportingMouseDown = YES;
-                [session writeTask:[terminal mousePress:MOUSE_BUTTON_LEFT
-                                          withModifiers:[event modifierFlags]
-                                                    atX:rx
-                                                      Y:ry]];
+                [_delegate writeTask:[terminal mousePress:MOUSE_BUTTON_LEFT
+                                            withModifiers:[event modifierFlags]
+                                                      atX:rx
+                                                        Y:ry]];
                 return NO;
                 break;
 
@@ -3782,7 +3954,7 @@ NSMutableArray* screens=0;
     }
 
     DebugLog([NSString stringWithFormat:@"Mouse down. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
 
     return NO;
 }
@@ -3821,7 +3993,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
     if (!cmdPressed &&
         frontTextView &&
-        [[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
+        ![_delegate textViewInSameTabAsTextView:frontTextView]) {
         // Mouse clicks in inactive tab are always handled by superclass but make it first responder.
         [[self window] makeFirstResponder: self];
         [super mouseUp:event];
@@ -3862,16 +4034,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         lastReportedX_ = rx;
         lastReportedY_ = ry;
         VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
 
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseRelease:MOUSE_BUTTON_LEFT
-                                            withModifiers:[event modifierFlags]
-                                                      atX:rx
-                                                        Y:ry]];
+                [_delegate writeTask:[terminal mouseRelease:MOUSE_BUTTON_LEFT
+                                              withModifiers:[event modifierFlags]
+                                                        atX:rx
+                                                          Y:ry]];
                 if (willFollowLink) {
                     // This is a special case. Cmd-click is treated like alt-click at the protocol
                     // level (because we use alt to disable mouse reporting, unfortunately). Few
@@ -3965,7 +4136,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     DebugLog([NSString stringWithFormat:@"Mouse up. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
 
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
 }
 
 - (void)mouseMoved:(NSEvent *)event
@@ -3999,11 +4170,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (rx != lastReportedX_ || ry != lastReportedY_) {
         lastReportedX_ = rx;
         lastReportedY_ = ry;
-        PTYSession* session = [dataSource session];
-        [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_NONE
-                                   withModifiers:[event modifierFlags]
-                                             atX:rx
-                                               Y:ry]];
+        [_delegate writeTask:[terminal mouseMotion:MOUSE_BUTTON_NONE
+                                     withModifiers:[event modifierFlags]
+                                               atX:rx
+                                                 Y:ry]];
     }
 }
 
@@ -4073,15 +4243,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             lastReportedX_ = rx;
             lastReportedY_ = ry;
             VT100Terminal *terminal = [dataSource terminal];
-            PTYSession* session = [dataSource session];
 
             switch ([terminal mouseMode]) {
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
-                    [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_LEFT
-                                               withModifiers:[event modifierFlags]
-                                                         atX:rx
-                                                           Y:ry]];
+                    [_delegate writeTask:[terminal mouseMotion:MOUSE_BUTTON_LEFT
+                                                 withModifiers:[event modifierFlags]
+                                                           atX:rx
+                                                             Y:ry]];
                 case MOUSE_REPORTING_NORMAL:
                     DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
                     return;
@@ -4375,22 +4544,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)nextTabWithEvent:(NSEvent *)event
 {
-    [[[[dataSource session] tab] realParentWindow] nextTab:nil];
+    [_delegate textViewSelectNextTab];
 }
 
 - (void)previousTabWithEvent:(NSEvent *)event
 {
-    [[[[dataSource session] tab] realParentWindow] previousTab:nil];
+    [_delegate textViewSelectPreviousTab];
 }
 
 - (void)nextWindowWithEvent:(NSEvent *)event
 {
-    [[iTermController sharedInstance] nextTerminal:nil];
+    [_delegate textViewSelectNextWindow];
 }
 
 - (void)previousWindowWithEvent:(NSEvent *)event
 {
-    [[iTermController sharedInstance] previousTerminal:nil];
+    [_delegate textViewSelectPreviousWindow];
 }
 
 - (void)movePaneWithEvent:(NSEvent *)event
@@ -4415,54 +4584,52 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)selectPaneLeftWithEvent:(NSEvent *)event
 {
-    [[[iTermController sharedInstance] currentTerminal] selectPaneLeft:nil];
+    [_delegate selectPaneLeftInCurrentTerminal];
 }
 
 - (void)selectPaneRightWithEvent:(NSEvent *)event
 {
-    [[[iTermController sharedInstance] currentTerminal] selectPaneRight:nil];
+    [_delegate selectPaneRightInCurrentTerminal];
 }
 
 - (void)selectPaneAboveWithEvent:(NSEvent *)event
 {
-    [[[iTermController sharedInstance] currentTerminal] selectPaneUp:nil];
+    [_delegate selectPaneAboveInCurrentTerminal];
 }
 
 - (void)selectPaneBelowWithEvent:(NSEvent *)event
 {
-    [[[iTermController sharedInstance] currentTerminal] selectPaneDown:nil];
+    [_delegate selectPaneBelowInCurrentTerminal];
 }
 
 - (void)newWindowWithProfile:(NSString *)guid withEvent:(NSEvent *)event
 {
-    [[[[dataSource session] tab] realParentWindow] newWindowWithBookmarkGuid:guid];
+    [_delegate textViewCreateWindowWithProfileGuid:guid];
 }
 
 - (void)newTabWithProfile:(NSString *)guid withEvent:(NSEvent *)event
 {
-    [[[[dataSource session] tab] realParentWindow] newTabWithBookmarkGuid:guid];
+    [_delegate textViewCreateTabWithProfileGuid:guid];
 }
 
 - (void)newVerticalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event
 {
-    [[[[dataSource session] tab] realParentWindow] splitVertically:YES
-                                                  withBookmarkGuid:guid];
+    [_delegate textViewSplitVertically:YES withProfileGuid:guid];
 }
 
 - (void)newHorizontalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event
 {
-    [[[[dataSource session] tab] realParentWindow] splitVertically:NO
-                                                  withBookmarkGuid:guid];
+    [_delegate textViewSplitVertically:NO withProfileGuid:guid];
 }
 
 - (void)selectNextPaneWithEvent:(NSEvent *)event
 {
-    [[[dataSource session] tab] nextSession];
+    [_delegate textViewSelectNextPane];
 }
 
 - (void)selectPreviousPaneWithEvent:(NSEvent *)event
 {
-    [[[dataSource session] tab] previousSession];
+    [_delegate textViewSelectPreviousPane];
 }
 
 - (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event
@@ -4481,7 +4648,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int cursorX = [dataSource cursorX];
     int width = [dataSource width];
     VT100Terminal *terminal = [dataSource terminal];
-    PTYSession* session = [dataSource session];
 
     int i = abs(cursorX - x);
     int j = abs(cursorY - y);
@@ -4491,15 +4657,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // so first move to left, and (if necessary)
         // up or down afterwards
         while (i > 0) {
-            [session writeTask:[terminal keyArrowLeft:0]];
+            [_delegate writeTask:[terminal keyArrowLeft:0]];
             i--;
         }
     }
     while (j > 0) {
         if (cursorY > y) {
-            [session writeTask:[terminal keyArrowUp:0]];
+            [_delegate writeTask:[terminal keyArrowUp:0]];
         } else {
-            [session writeTask:[terminal keyArrowDown:0]];
+            [_delegate writeTask:[terminal keyArrowDown:0]];
         }
         j--;
     }
@@ -4508,7 +4674,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // so first moved up/down (if necessary)
         // and then/now to the right
         while (i > 0) {
-            [session writeTask:[terminal keyArrowRight:0]];
+            [_delegate writeTask:[terminal keyArrowRight:0]];
             i--;
         }
     }
@@ -4702,7 +4868,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     endX = [dataSource width];
     endY = [dataSource numberOfLines] - 1;
     [self setSelectionTime];
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
 }
 
 - (void)deselect
@@ -4710,7 +4876,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (startX > -1) {
         startX = -1;
         [self setSelectionTime];
-        [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+        [_delegate refreshAndStartTimerIfNeeded];
     }
 }
 
@@ -4780,30 +4946,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)splitTextViewVertically:(id)sender
 {
-    [[[[dataSource session] tab] realParentWindow] splitVertically:YES
-                                                      withBookmark:[[ProfileModel sharedInstance] defaultBookmark]
-                                                     targetSession:[dataSource session]];
+    [_delegate textViewSplitVertically:YES withProfileGuid:nil];
 }
 
 - (void)splitTextViewHorizontally:(id)sender
 {
-    [[[[dataSource session] tab] realParentWindow] splitVertically:NO
-                                                      withBookmark:[[ProfileModel sharedInstance] defaultBookmark]
-                                                     targetSession:[dataSource session]];
+    [_delegate textViewSplitVertically:NO withProfileGuid:nil];
 }
 
 - (void)movePane:(id)sender
 {
-    [[MovePaneController sharedInstance] movePane:[dataSource session]];
-}
-
-- (void)clearWorkingDirectories {
-    [workingDirectoryAtLines removeAllObjects];
+    [_delegate textViewMovePane];
 }
 
 - (void)clearTextViewBuffer:(id)sender
 {
-    [[dataSource session] clearBuffer];
+    [dataSource clearBuffer];
 }
 
 - (void)addViewForNote:(PTYNoteViewController *)note
@@ -4831,6 +4989,44 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [note setNoteHidden:NO];
         [note beginEditing];
     }
+}
+
+- (void)downloadWithSCP:(id)sender
+{
+    SCPPath *scpPath = nil;
+    NSString *selectedText = [[self selectedText] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSArray *parts = [selectedText componentsSeparatedByString:@"\n"];
+    if (parts.count != 1) {
+        return;
+    }
+    NSString *unescapedText = parts[0];
+    NSString *text = [unescapedText stringWithEscapedShellCharacters];
+    if (startY >= 0) {
+        scpPath = [dataSource scpPathForFile:text onLine:startY];
+    }
+    [_delegate startDownloadOverSCP:scpPath];
+    
+    NSDictionary *attributes =
+        @{ NSForegroundColorAttributeName: selectedTextColor,
+           NSBackgroundColorAttributeName: selectionColor,
+           NSFontAttributeName: primaryFont.font };
+    NSSize size = [selectedText sizeWithAttributes:attributes];
+    size.height = lineHeight;
+    NSImage* image = [[[NSImage alloc] initWithSize:size] autorelease];
+    [image lockFocus];
+    [selectedText drawAtPoint:NSMakePoint(0, 0) withAttributes:attributes];
+    [image unlockFocus];
+    
+    NSRect windowRect = [self convertRect:NSMakeRect(startX * charWidth + MARGIN,
+                                                     startY * lineHeight,
+                                                     0,
+                                                     0)
+                                   toView:nil];
+    NSPoint point = [[self window] convertRectToScreen:windowRect].origin;
+    point.y -= lineHeight;
+    [[FileTransferManager sharedInstance] animateImage:image
+                            intoDownloadsMenuFromPoint:point
+                                              onScreen:[[self window] screen]];
 }
 
 - (void)showNotes:(id)sender
@@ -4862,17 +5058,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)editTextViewSession:(id)sender
 {
-    [[[[dataSource session] tab] realParentWindow] editSession:[dataSource session]];
+    [_delegate textViewEditSession];
 }
 
 - (void)toggleBroadcastingInput:(id)sender
 {
-    [[[[dataSource session] tab] realParentWindow] toggleBroadcastingInputToSession:[dataSource session]];
+    [_delegate textViewToggleBroadcastingInput];
 }
 
 - (void)closeTextViewSession:(id)sender
 {
-    [[[[dataSource session] tab] realParentWindow] closeSessionWithConfirmation:[dataSource session]];
+    [_delegate textViewCloseWithConfirmation];
 }
 
 - (void)copySelectionAccordingToUserPreferences
@@ -5057,7 +5253,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)paste:(id)sender
 {
-    NSString* info = [PTYSession pasteboardString];
+    NSString* info = [_delegate textViewPasteboardString];
     if (info) {
         [[PasteboardHistory sharedInstance] save:info];
     }
@@ -5074,15 +5270,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)pasteSelection:(id)sender
 {
-    if ([_delegate respondsToSelector:@selector(pasteString:)]) {
-        PTYSession *session = [[iTermController sharedInstance] sessionWithMostRecentSelection];
-        if (session) {
-            PTYTextView *textview = [session TEXTVIEW];
-            if (textview->startX > -1) {
-                [_delegate pasteString:[textview selectedText]];
-            }
-        }
-    }
+    [_delegate textViewPasteFromSessionWithMostRecentSelection];
 }
 
 - (BOOL)_broadcastToggleable
@@ -5132,6 +5320,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         ([item action]==@selector(print:) && [item tag] == 1)) { // print selection
         // These commands are allowed only if there is a selection.
         return startX > -1;
+    }
+    if ([item action] == @selector(downloadWithSCP:)) {
+        return ([self _haveShortSelection] &&
+                startY >= 0 &&
+                [dataSource scpPathForFile:[self selectedText] onLine:startY] != nil);
     }
     if ([item action]==@selector(showNotes:)) {
         return validationClickPoint_.x >= 0 &&
@@ -5294,6 +5487,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     // Menu items for acting on text selections
+    NSString *scpTitle = @"Download with scp";
+    if ([self _haveShortSelection] &&
+        startY >= 0) {
+        SCPPath *scpPath = [dataSource scpPathForFile:[self selectedText] onLine:startY];
+        if (scpPath) {
+            scpTitle = [NSString stringWithFormat:@"Download with scp from %@", scpPath.hostname];
+        }
+    }
+
+    [theMenu addItemWithTitle:scpTitle
+                       action:@selector(downloadWithSCP:)
+                keyEquivalent:@""];
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Open Selection as URL",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(browse:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
@@ -5444,20 +5649,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 //
 // Called when our drop area is entered
 //
-- (unsigned int)draggingEntered:(id <NSDraggingInfo>)sender
+- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender
 {
     extendedDragNDrop = YES;
 
-    // Always say YES; handle failure later.
-    return YES;
+    // Always say NSDragOperationCopy; handle failure later.
+    return NSDragOperationCopy;
 }
 
 //
 // Called when the dragged object is moved within our drop area
 //
-- (unsigned int)draggingUpdated:(id <NSDraggingInfo>)sender
+- (NSDragOperation)draggingUpdated:(id <NSDraggingInfo>)sender
 {
-    unsigned int iResult;
+    NSDragOperation iResult;
 
     // Let's see if our parent NSTextView knows what to do
     iResult = [super draggingUpdated:sender];
@@ -5501,13 +5706,56 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return result;
 }
 
+- (BOOL)hostIsLocal:(NSString *)host {
+    NSArray *hostAddresses = [[NSHost hostWithName:host] addresses];
+    NSArray *localAddresses = [[NSHost currentHost] addresses];
+    for (NSString *hostAddress in hostAddresses) {
+        if ([localAddresses containsObject:hostAddress]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (BOOL)confirmUploadOfFiles:(NSArray *)files toPath:(SCPPath *)path {
+    NSString *text;
+    if (files.count == 0) {
+        return NO;
+    }
+    if (files.count == 1) {
+        text = [NSString stringWithFormat:@"Ok to scp\n%@\nto\n%@@%@:%@?",
+                [files componentsJoinedByString:@", "],
+                path.username, path.hostname, path.path];
+    } else {
+        text = [NSString stringWithFormat:@"Ok to scp the following files:\n%@\n\nto\n%@@%@:%@?",
+                [files componentsJoinedByString:@", "],
+                path.username, path.hostname, path.path];
+    }
+    NSAlert *alert = [NSAlert alertWithMessageText:text
+                                     defaultButton:@"OK"
+                                   alternateButton:@"Cancel"
+                                       otherButton:nil
+                         informativeTextWithFormat:@""];
+    
+    [alert layout];
+    NSInteger button = [alert runModal];
+    return (button == NSAlertDefaultReturn);
+}
+
+- (void)maybeUpload:(NSArray *)tuple {
+    NSArray *propertyList = tuple[0];
+    SCPPath *dropScpPath = tuple[1];
+    if ([self confirmUploadOfFiles:propertyList toPath:dropScpPath]) {
+        [self.delegate uploadFiles:propertyList toPath:dropScpPath];
+    }
+}
+
 //
 // Called when the dragged item is released in our drop area.
 //
 - (BOOL)performDragOperation:(id <NSDraggingInfo>)sender
 {
     unsigned int dragOperation;
-    PTYSession *delegate = [self delegate];
     BOOL res = NO;
 
     // If parent class does not know how to deal with this drag type, check if we do.
@@ -5524,6 +5772,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
             if ([types containsObject:NSFilenamesPboardType]) {
                 propertyList = [pb propertyListForType: NSFilenamesPboardType];
+                NSPoint windowDropPoint = [sender draggingLocation];
+                NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
+                int dropLine = dropPoint.y / lineHeight;
+                SCPPath *dropScpPath = [dataSource scpPathForFile:@"" onLine:dropLine];
+                // Make sure you are currently connected to a remote host and you dragged into that
+                // host.
+                if (![self hostIsLocal:dropScpPath.hostname]) {
+                    // This is all so the mouse cursor will change to a plain arrow instead of the
+                    // drop target cursor.
+                    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+                    [[self window] makeKeyAndOrderFront:nil];
+                    [self performSelector:@selector(maybeUpload:)
+                               withObject:@[ propertyList, dropScpPath]
+                               afterDelay:0];
+                    return YES;
+                }
+
                 for (i = 0; i < (int)[propertyList count]; i++) {
                     // Ignore text clippings
                     NSString *filename = (NSString*)[propertyList objectAtIndex:i];  // this contains the POSIX path to a file
@@ -5536,14 +5801,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     }
 
                     // Just paste the file names into the shell after escaping special characters.
-                    if ([delegate respondsToSelector:@selector(pasteString:)]) {
+                    if ([_delegate respondsToSelector:@selector(pasteString:)]) {
                         NSMutableString *path;
 
                         path = [[NSMutableString alloc] initWithString:(NSString*)[propertyList objectAtIndex:i]];
 
                         // get rid of special characters
-                        [delegate pasteString:[path stringWithEscapedShellCharacters]];
-                        [delegate pasteString:@" "];
+                        [_delegate pasteString:[path stringWithEscapedShellCharacters]];
+                        [_delegate pasteString:@" "];
                         [path release];
 
                         res = YES;
@@ -5553,8 +5818,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (!res && [types containsObject:NSStringPboardType]) {
                 aString = [pb stringForType:NSStringPboardType];
                 if (aString != nil) {
-                    if ([delegate respondsToSelector:@selector(pasteString:)]) {
-                        [delegate pasteString:aString];
+                    if ([_delegate respondsToSelector:@selector(pasteString:)]) {
+                        [_delegate pasteString:aString];
                         res = YES;
                     }
                 }
@@ -5589,7 +5854,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         aString = [self content];
     }
 
-    aData = [aString dataUsingEncoding:[[dataSource session] encoding]
+    aData = [aString dataUsingEncoding:[_delegate textViewEncoding]
                   allowLossyConversion:YES];
 
     // initialize a save panel
@@ -5680,14 +5945,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)doCommandBySelector:(SEL)aSelector
 {
-    // doCommandBySelector isn't safe for us to implement blindly. For example, the standard
-    // key bindings make Enter send insertNewline:, which does the wrong thing when called on our
-    // delegate (it sends 0xa instead of 0xd). TODO: Find a list of useful selectors that could be
-    // whitelisted here.
+    if (gCurrentKeyEventTextView && self != gCurrentKeyEventTextView) {
+        // See comment in -keyDown:
+        DLog(@"Rerouting doCommandBySelector from %@ to %@", self, gCurrentKeyEventTextView);
+        [gCurrentKeyEventTextView doCommandBySelector:aSelector];
+        return;
+    }
+    DLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
 }
 
+// NSTextInput
 - (void)insertText:(id)aString
 {
+    if (gCurrentKeyEventTextView && self != gCurrentKeyEventTextView) {
+        // See comment in -keyDown:
+        DLog(@"Rerouting insertText from %@ to %@", self, gCurrentKeyEventTextView);
+        [gCurrentKeyEventTextView insertText:aString];
+        return;
+    }
+    DLog(@"PTYTextView insertText:%@", aString);
     if ([self hasMarkedText]) {
         BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
         if (debugKeyDown) {
@@ -5713,7 +5989,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if ([self hasMarkedText]) {
         // In case imeOffset changed, the frame height must adjust.
-        [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+        [_delegate refreshAndStartTimerIfNeeded];
     }
 }
 
@@ -5723,6 +5999,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return YES;
 }
 
+// NSTextInput
 - (void)setMarkedText:(id)aString selectedRange:(NSRange)selRange
 {
     BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
@@ -5760,10 +6037,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // char in the IME buffer then this causes it be erased.
         [self invalidateInputMethodEditorRect];
     }
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
     [self scrollEnd];
 }
 
+// NSTextInput
 - (void)unmarkText
 {
     BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
@@ -5774,10 +6052,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     IM_INPUT_MARKEDRANGE = NSMakeRange(0, 0);
     imeOffset = 0;
     [self invalidateInputMethodEditorRect];
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
     [self scrollEnd];
 }
 
+// NSTextInput
 - (BOOL)hasMarkedText
 {
     BOOL result;
@@ -5790,6 +6069,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return result;
 }
 
+// NSTextInput
 - (NSRange)markedRange
 {
     if (IM_INPUT_MARKEDRANGE.length > 0) {
@@ -5799,11 +6079,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
+// NSTextInput
 - (NSRange)selectedRange
 {
     return NSMakeRange(NSNotFound, 0);
 }
 
+// NSTextInput
 - (NSArray *)validAttributesForMarkedText
 {
     return [NSArray arrayWithObjects:NSForegroundColorAttributeName,
@@ -5813,21 +6095,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         nil];
 }
 
+// NSTextInput
 - (NSAttributedString *)attributedSubstringFromRange:(NSRange)theRange
 {
     return [markedText attributedSubstringFromRange:NSMakeRange(0,theRange.length)];
 }
 
-- (unsigned int)characterIndexForPoint:(NSPoint)thePoint
+// NSTextInput
+- (NSUInteger)characterIndexForPoint:(NSPoint)thePoint
 {
-    return thePoint.x/charWidth;
+    return MAX(0, thePoint.x / charWidth);
 }
 
+// NSTextInput
 - (long)conversationIdentifier
 {
     return (long)self; //not sure about this
 }
 
+// NSTextInput
 - (NSRect)firstRectForCharacterRange:(NSRange)theRange
 {
     int y = [dataSource cursorY] - 1;
@@ -5895,7 +6181,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     startX = tmpX1;
     startY = tmpY1;
     [self setSelectionTime];
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
     return YES;
 }
 
@@ -5934,7 +6220,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     endX = tmpX2;
     endY = tmpY2;
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
 }
 
 // Add a match to resultMap_
@@ -6246,7 +6532,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (BOOL)useTransparency
 {
-    return [[[[dataSource session] tab] realParentWindow] useTransparency];
+    return [_delegate textViewWindowUsesTransparency];
 }
 
 // service stuff
@@ -6259,6 +6545,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return ([super validRequestorForSendType: sendType returnType: returnType]);
 }
 
+// Service
 - (BOOL)writeSelectionToPasteboard:(NSPasteboard *)pboard types:(NSArray *)types
 {
     NSString *copyString;
@@ -6286,6 +6573,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return NO;
 }
 
+// Service
 - (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard
 {
     return NO;
@@ -6323,7 +6611,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
-- (void)beginFlash:(int)image
+- (void)beginFlash:(FlashImage)image
 {
     flashImage_ = image;
     if (flashing_ == 0) {
@@ -6629,11 +6917,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (void)clearMatches
-{
-    [resultMap_ removeAllObjects];
-}
-
 - (NSString *)getWordForX:(int)x
                         y:(int)y
                    startX:(int *)startx
@@ -6801,7 +7084,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     *renderBold = NO;
     *renderItalic = NO;
     PTYFontInfo* theFont;
-    BOOL usePrimary = !complex && (ch < 128);
+    BOOL usePrimary = !useNonAsciiFont_ || (!complex && (ch < 128));
 
     PTYFontInfo *rootFontInfo = usePrimary ? primaryFont : secondaryFont;
     theFont = rootFontInfo;
@@ -7085,7 +7368,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         NSString* thisCharString = nil;
         CGFloat thisCharAdvance;
 
-        if (theLine[i].code < 128 && !theLine[i].complexChar) {
+        if (!useNonAsciiFont_ || (theLine[i].code < 128 && !theLine[i].complexChar)) {
             attrs.antiAlias = asciiAntiAlias;
         } else {
             attrs.antiAlias = nonasciiAntiAlias;
@@ -7423,47 +7706,85 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 nil];
     [ctx saveGraphicsState];
     [ctx setCompositingOperation:NSCompositeSourceOver];
-    NSMutableAttributedString* attributedString =
-        [[[NSMutableAttributedString alloc] initWithString:str
-                                                attributes:attrs] autorelease];
-    // This code used to use -[NSAttributedString drawWithRect:options] but
-    // it does a lousy job rendering multiple combining marks. This is close
-    // to what WebKit does and appears to be the highest quality text
-    // rendering available. However, this path is only available in 10.7+.
+    if (StringContainsCombiningMark(str)) {
+      // This renders characters with combining marks better but is slower.
+      NSMutableAttributedString* attributedString =
+          [[[NSMutableAttributedString alloc] initWithString:str
+                                                  attributes:attrs] autorelease];
+      // This code used to use -[NSAttributedString drawWithRect:options] but
+      // it does a lousy job rendering multiple combining marks. This is close
+      // to what WebKit does and appears to be the highest quality text
+      // rendering available. However, this path is only available in 10.7+.
 
-    CTLineRef lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)attributedString);
-    CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
-    CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
-    CGContextSetFillColorWithColor(cgContext, [self cgColorForColor:color]);
-    CGContextSetStrokeColorWithColor(cgContext, [self cgColorForColor:color]);
+      CTLineRef lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)attributedString);
+      CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
+      CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
+      CGContextSetFillColorWithColor(cgContext, [self cgColorForColor:color]);
+      CGContextSetStrokeColorWithColor(cgContext, [self cgColorForColor:color]);
 
-    CGFloat m21 = 0.0;
-    if (fakeItalic) {
-        m21 = 0.2;
-    }
+      CGFloat m21 = 0.0;
+      if (fakeItalic) {
+          m21 = 0.2;
+      }
 
-    CGAffineTransform textMatrix = CGAffineTransformMake(1.0,  0.0,
-                                                         m21, -1.0,
-                                                         pos.x, pos.y + fontInfo.baselineOffset + lineHeight);
-    CGContextSetTextMatrix(cgContext, textMatrix);
+      CGAffineTransform textMatrix = CGAffineTransformMake(1.0,  0.0,
+                                                           m21, -1.0,
+                                                           pos.x, pos.y + fontInfo.baselineOffset + lineHeight);
+      CGContextSetTextMatrix(cgContext, textMatrix);
 
-    for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
-        CTRunRef run = CFArrayGetValueAtIndex(runs, j);
-        CFRange range;
-        range.length = 0;
-        range.location = 0;
-        size_t length = CTRunGetGlyphCount(run);
-        const CGGlyph *buffer = CTRunGetGlyphsPtr(run);
-        const CGPoint *positions = CTRunGetPositionsPtr(run);
-        CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
-        CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
+      for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
+          CTRunRef run = CFArrayGetValueAtIndex(runs, j);
+          CFRange range;
+          range.length = 0;
+          range.location = 0;
+          size_t length = CTRunGetGlyphCount(run);
+          const CGGlyph *buffer = CTRunGetGlyphsPtr(run);
+          const CGPoint *positions = CTRunGetPositionsPtr(run);
+          CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
+          CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
+          if (fakeBold) {
+              CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
+              CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
+              CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+          }
+      }
+      CFRelease(lineRef);
+    } else {
+        CGFloat width = CRunGetAdvances(complexRun)[0].width;
+        NSMutableAttributedString* attributedString =
+            [[[NSMutableAttributedString alloc] initWithString:str
+                                                    attributes:attrs] autorelease];
+        // Note that drawInRect doesn't use the right baseline, but drawWithRect
+        // does.
+        //
+        // This technique was picked because it can find glyphs that aren't in the
+        // selected font (e.g., tests/radical.txt). It does a fairly nice job on
+        // laying out combining marks. For now, it fails in two known cases:
+        // 1. Enclosing marks (q in a circle shows as a q)
+        // 2. U+239d, a part of a paren for graphics drawing, doesn't quite render
+        //    right (though it appears to need to render in another char's cell).
+        // Other rejected approaches included using CTFontGetGlyphsForCharacters+
+        // CGContextShowGlyphsWithAdvances, which doesn't render thai characters
+        // correctly in UTF-8-demo.txt.
+        //
+        // We use width*2 so that wide characters that are not double width chars
+        // render properly. These are font-dependent. See tests/suits.txt for an
+        // example.
+        [attributedString drawWithRect:NSMakeRect(pos.x,
+                                                  pos.y + fontInfo.baselineOffset + lineHeight,
+                                                  width*2,
+                                                  lineHeight)
+                               options:0];  // NSStringDrawingUsesLineFragmentOrigin
         if (fakeBold) {
-            CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
-            CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
-            CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+            // If anti-aliased, drawing twice at the same position makes the strokes thicker.
+            // If not anti-alised, draw one pixel to the right.
+            [attributedString drawWithRect:NSMakeRect(pos.x + (antiAlias ? 0 : 1),
+                                                      pos.y + fontInfo.baselineOffset + lineHeight,
+                                                      width*2,
+                                                      lineHeight)
+                                   options:0];  // NSStringDrawingUsesLineFragmentOrigin
         }
     }
-    CFRelease(lineRef);
     [ctx restoreGraphicsState];
 }
 
@@ -7715,8 +8036,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int screenstartline = [self frame].origin.y / lineHeight;
     DebugLog([NSString stringWithFormat:@"Draw line %d (%d on screen)", line, (line - screenstartline)]);
 #endif
-    const BOOL stripes = useBackgroundIndicator_ &&
-        [[[[dataSource session] tab] realParentWindow] broadcastInputToSession:[dataSource session]];
+    const BOOL stripes = useBackgroundIndicator_ && [_delegate textViewSessionIsBroadcastingInput];
     int WIDTH = [dataSource width];
     screen_char_t* theLine = [dataSource getLineAtIndex:line];
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
@@ -8036,7 +8356,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         fg,
                         bg,
                         &len,
-                        [[dataSource session] doubleWidth],
+                        [_delegate textViewAmbiguousWidthCharsAreDoubleWidth],
                         NULL);
 
     // Count how many additional cells are needed due to double-width chars
@@ -8083,7 +8403,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             fg,
                             bg,
                             &len,
-                            [[dataSource session] doubleWidth],
+                            [_delegate textViewAmbiguousWidthCharsAreDoubleWidth],
                             &cursorIndex);
         int cursorX = 0;
         int baseX = floor(xStart * charWidth + MARGIN);
@@ -8344,7 +8664,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     if ([self blinkingCursor] &&
         [self isInKeyWindow] &&
-        [[[dataSource session] tab] activeSession] == [dataSource session] &&
+        [_delegate textViewIsActiveSession] &&
         now - lastTimeCursorMoved_ > 0.5) {
         // Allow the cursor to blink if it is configured, the window is key, this session is active
         // in the tab, and the cursor has not moved for half a second.
@@ -8452,7 +8772,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     // draw the box
                     DLog(@"draw cursor box at %f,%f size %fx%f", (float)curX, (float)curY, (float)ceil(cursorWidth * (double_width ? 2 : 1)), cursorHeight);
                     if ([self isInKeyWindow] &&
-                        [[[dataSource session] tab] activeSession] == [dataSource session]) {
+                        [_delegate textViewIsActiveSession]) {
                         frameOnly = NO;
                         NSRectFill(NSMakeRect(curX,
                                               curY,
@@ -9053,13 +9373,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     int fileCharsTaken = 0;
 
-    NSString *workingDirectory = [self getWorkingDirectoryAtLine:y];
+    NSString *workingDirectory = [dataSource workingDirectoryOnLine:y];
     // First, try to locate an existing filename at this location.
     NSString *filename = [self _bruteforcePathFromBeforeString:[[possibleFilePart1 mutableCopy] autorelease]
                                                    afterString:[[possibleFilePart2 mutableCopy] autorelease]
                                               workingDirectory:workingDirectory
                                           charsTakenFromPrefix:&fileCharsTaken];
-    
+
     // Don't consider / to be a valid filename because it's useless and single/double slashes are
     // pretty common.
     if (filename && ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
@@ -9328,46 +9648,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 
-- (void)logWorkingDirectoryAtLine:(long long)line
-{
-    NSString *workingDirectory = [[_delegate SHELL] getWorkingDirectory];
-    [self logWorkingDirectoryAtLine:line withDirectory:workingDirectory];
-}
-
-- (void)logWorkingDirectoryAtLine:(long long)line withDirectory:(NSString *)workingDirectory
-{
-    [workingDirectoryAtLines addObject:@[ @(line), workingDirectory ]];
-    if ([workingDirectoryAtLines count] > MAX_WORKING_DIR_COUNT) {
-        [workingDirectoryAtLines removeObjectAtIndex:0];
-    }
-}
-
-- (NSString *)getWorkingDirectoryAtLine:(long long)line
-{
-    // TODO: use a binary search if we make MAX_WORKING_DIR_COUNT large.
-
-    // Return current directory if not able to log via XTERMCC_WINDOW_TITLE
-    if ([workingDirectoryAtLines count] == 0) {
-        return [[_delegate SHELL] getWorkingDirectory];
-    }
-
-    long long previousLine = [[[workingDirectoryAtLines lastObject] objectAtIndex:0] longLongValue];
-    long long currentLine;
-
-    for (int i = [workingDirectoryAtLines count] - 1; i >= 0; i--) {
-
-        currentLine = [[[workingDirectoryAtLines objectAtIndex:i] objectAtIndex: 0] longLongValue];
-
-        if (currentLine <= line && line <= previousLine) {
-            return [[workingDirectoryAtLines objectAtIndex:i] lastObject];
-        }
-
-        previousLine = currentLine;
-    }
-
-    return [[workingDirectoryAtLines lastObject] lastObject];
-}
-
 - (void)_openSemanticHistoryForUrl:(NSString *)aURLString
                             atLine:(long long)line
                       inBackground:(BOOL)background
@@ -9378,7 +9658,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
-    NSString *workingDirectory = [self getWorkingDirectoryAtLine:line];
+    NSString *workingDirectory = [dataSource workingDirectoryOnLine:line];
     if (![trouter openPath:trimmedURLString
               workingDirectory:workingDirectory
                     prefix:prefix
@@ -9511,12 +9791,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     Profile *bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:[url scheme]];
 
     if (bm != nil)  {
-        PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
-        [[iTermController sharedInstance] launchBookmark:bm
-                                              inTerminal:term
-                                                 withURL:trimmedURLString
-                                                isHotkey:NO
-                                                 makeKey:NO];
+        [_delegate launchProfileInCurrentTerminal:bm withURL:trimmedURLString];
     } else {
         [self openURL:url inBackground:background];
     }
@@ -9803,9 +10078,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if (foundDirty && [dataSource shouldSendContentsChangedNotification]) {
         changedSinceLastExpose_ = YES;
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermTabContentsChanged"
-                                                            object:[dataSource session]
-                                                          userInfo:nil];
+        [_delegate textViewPostTabContentsChangedNotification];
     }
 
     if (foundDirty && gDebugLogging) {
@@ -9992,7 +10265,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
     [self setSelectionTime];
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    [_delegate refreshAndStartTimerIfNeeded];
 }
 
 - (void)_deselectDirtySelectedText

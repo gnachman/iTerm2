@@ -44,7 +44,7 @@
             break;
             
         case NSAlertAlternateReturn: {
-            PseudoTerminal *term = [[aSession tab] realParentWindow];
+            NSWindowController<iTermWindowController> * term = [[aSession tab] realParentWindow];
             [[term window] makeKeyAndOrderFront:nil];
             [[term tabView] selectTabViewItemWithIdentifier:[aSession tab]];
             [[aSession tab] setActiveSession:aSession];

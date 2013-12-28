@@ -468,6 +468,8 @@
     IBOutlet NSButton* blur;
     IBOutlet NSSlider *blurRadius;
     IBOutlet NSButton* asciiAntiAliased;
+    IBOutlet NSButton* useNonAsciiFont;
+    IBOutlet NSView* nonAsciiFontView;  // Hide this view to hide all non-ascii font settings
     IBOutlet NSButton* nonasciiAntiAliased;
     IBOutlet NSButton* backgroundImage;
     NSString* backgroundImageFilename;
@@ -573,7 +575,7 @@
     IBOutlet NSPopUpButton* switchWindowModifierButton;
 
     IBOutlet NSButton* deleteSendsCtrlHButton;
-
+    IBOutlet NSButton* applicationKeypadAllowed;
     IBOutlet NSTableView* globalKeyMappings;
     IBOutlet NSTableColumn* globalKeyCombinationColumn;
     IBOutlet NSTableColumn* globalActionColumn;

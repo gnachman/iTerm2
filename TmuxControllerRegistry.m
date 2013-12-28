@@ -43,4 +43,8 @@
     }
 }
 
+- (int)numberOfClients {
+    return controllers_.count;
+}
+
 @end

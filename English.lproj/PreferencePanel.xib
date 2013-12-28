@@ -174,6 +174,7 @@
                 <outlet property="mouseToolbarItem" destination="6056" id="6057"/>
                 <outlet property="nonAsciiDoubleWidth" destination="5126" id="5129"/>
                 <outlet property="nonAsciiFontField" destination="4777" id="4873"/>
+                <outlet property="nonAsciiFontView" destination="15P-ty-S1w" id="dru-RS-lgT"/>
                 <outlet property="nonasciiAntiAliased" destination="4783" id="4878"/>
                 <outlet property="normalFontField" destination="4775" id="4870"/>
                 <outlet property="onlyWhenMoreTabs" destination="1996" id="2806"/>
@@ -241,6 +242,7 @@
                 <outlet property="useCanonicalParser" destination="6391" id="6394"/>
                 <outlet property="useCompactLabel" destination="4446" id="4624"/>
                 <outlet property="useItalicFont" destination="6400" id="6404"/>
+                <outlet property="useNonAsciiFont" destination="vNf-D5-cU4" id="dv1-fh-orK"/>
                 <outlet property="valueToSend" destination="2662" id="3205"/>
                 <outlet property="visualBell" destination="2403" id="3145"/>
                 <outlet property="window" destination="1923" id="2981"/>
@@ -2246,7 +2248,7 @@ Gw
                                                 <tabViewItem label="Text" identifier="Item 5" id="4763" userLabel="Tab View Item (Display)">
                                                     <view key="view" id="4764">
                                                         <rect key="frame" x="10" y="33" width="559" height="404"/>
-                                                        <autoresizingMask key="autoresizingMask"/>
+                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                         <subviews>
                                                             <button id="4765">
                                                                 <rect key="frame" x="270" y="355" width="226" height="18"/>
@@ -2315,7 +2317,7 @@ Gw
                                                                 </textFieldCell>
                                                             </textField>
                                                             <textField verticalHuggingPriority="750" id="5130">
-                                                                <rect key="frame" x="68" y="88" width="181" height="17"/>
+                                                                <rect key="frame" x="67" y="258" width="181" height="17"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Double-Width Characters:" id="5131">
                                                                     <font key="font" metaFont="systemBold"/>
@@ -2324,7 +2326,7 @@ Gw
                                                                 </textFieldCell>
                                                             </textField>
                                                             <button id="4773">
-                                                                <rect key="frame" x="68" y="291" width="119" height="18"/>
+                                                                <rect key="frame" x="67" y="291" width="119" height="18"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <buttonCell key="cell" type="check" title="Blinking cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4834">
                                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2336,7 +2338,7 @@ Gw
                                                                 </connections>
                                                             </button>
                                                             <button verticalHuggingPriority="750" id="4774">
-                                                                <rect key="frame" x="167" y="197" width="138" height="32"/>
+                                                                <rect key="frame" x="167" y="140" width="138" height="32"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <buttonCell key="cell" type="push" title="Change Font" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="4833">
                                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -2348,7 +2350,7 @@ Gw
                                                                 </connections>
                                                             </button>
                                                             <textField verticalHuggingPriority="750" id="4775">
-                                                                <rect key="frame" x="67" y="233" width="478" height="17"/>
+                                                                <rect key="frame" x="67" y="176" width="478" height="17"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Font Name" id="4832">
                                                                     <font key="font" metaFont="system"/>
@@ -2356,38 +2358,17 @@ Gw
                                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                                 </textFieldCell>
                                                             </textField>
-                                                            <button verticalHuggingPriority="750" tag="1" id="4776">
-                                                                <rect key="frame" x="167" y="115" width="138" height="32"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="push" title="Change Font" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="4831">
-                                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="displaySelectFont:" target="-2" id="4847"/>
-                                                                    <outlet property="nextKeyView" destination="5126" id="5253"/>
-                                                                </connections>
-                                                            </button>
-                                                            <textField verticalHuggingPriority="750" id="4777">
-                                                                <rect key="frame" x="68" y="148" width="477" height="17"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Font Name" id="4830">
-                                                                    <font key="font" metaFont="system"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
                                                             <textField verticalHuggingPriority="750" id="4778">
-                                                                <rect key="frame" x="67" y="258" width="101" height="17"/>
+                                                                <rect key="frame" x="67" y="201" width="101" height="17"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
-                                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Regular Font" id="4829">
+                                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Font" id="4829">
                                                                     <font key="font" metaFont="systemBold"/>
                                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                                 </textFieldCell>
                                                             </textField>
                                                             <button id="4782">
-                                                                <rect key="frame" x="68" y="206" width="106" height="18"/>
+                                                                <rect key="frame" x="67" y="149" width="106" height="18"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <buttonCell key="cell" type="check" title="Anti-aliased" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4825">
                                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2398,29 +2379,20 @@ Gw
                                                                     <outlet property="nextKeyView" destination="4774" id="5250"/>
                                                                 </connections>
                                                             </button>
-                                                            <button id="4783">
-                                                                <rect key="frame" x="69" y="124" width="106" height="18"/>
+                                                            <button id="vNf-D5-cU4">
+                                                                <rect key="frame" x="67" y="129" width="263" height="18"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Anti-aliased" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4824">
+                                                                <buttonCell key="cell" type="check" title="Use a different font for non-ASCII text" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="e7d-pm-ySF">
                                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="4850"/>
-                                                                    <outlet property="nextKeyView" destination="4776" id="5252"/>
+                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="XyL-2u-iKp"/>
+                                                                    <outlet property="nextKeyView" destination="4776" id="qqh-zL-dT6"/>
                                                                 </connections>
                                                             </button>
-                                                            <textField verticalHuggingPriority="750" id="5002">
-                                                                <rect key="frame" x="67" y="173" width="120" height="17"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Non-ASCII Font" id="5003">
-                                                                    <font key="font" metaFont="systemBold"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
                                                             <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" id="5017">
-                                                                <rect key="frame" x="70" y="315" width="98" height="58"/>
+                                                                <rect key="frame" x="69" y="315" width="98" height="58"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                                 <size key="cellSize" width="98" height="18"/>
@@ -2451,7 +2423,7 @@ Gw
                                                                 </connections>
                                                             </matrix>
                                                             <button id="5126">
-                                                                <rect key="frame" x="69" y="64" width="393" height="18"/>
+                                                                <rect key="frame" x="67" y="234" width="393" height="18"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <buttonCell key="cell" type="check" title="Treat ambiguous-width characters as double width" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5127">
                                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2462,6 +2434,54 @@ Gw
                                                                     <outlet property="nextKeyView" destination="4765" id="5254"/>
                                                                 </connections>
                                                             </button>
+                                                            <customView id="15P-ty-S1w">
+                                                                <rect key="frame" x="69" y="33" width="474" height="84"/>
+                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                <subviews>
+                                                                    <textField verticalHuggingPriority="750" id="4777">
+                                                                        <rect key="frame" x="-2" y="42" width="478" height="17"/>
+                                                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Font Name" id="4830">
+                                                                            <font key="font" metaFont="system"/>
+                                                                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                                        </textFieldCell>
+                                                                    </textField>
+                                                                    <textField verticalHuggingPriority="750" id="5002">
+                                                                        <rect key="frame" x="-2" y="67" width="120" height="17"/>
+                                                                        <autoresizingMask key="autoresizingMask"/>
+                                                                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Non-ASCII Font" id="5003">
+                                                                            <font key="font" metaFont="systemBold"/>
+                                                                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                                        </textFieldCell>
+                                                                    </textField>
+                                                                    <button id="4783">
+                                                                        <rect key="frame" x="-2" y="18" width="106" height="18"/>
+                                                                        <autoresizingMask key="autoresizingMask"/>
+                                                                        <buttonCell key="cell" type="check" title="Anti-aliased" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4824">
+                                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                                            <font key="font" metaFont="system"/>
+                                                                        </buttonCell>
+                                                                        <connections>
+                                                                            <action selector="bookmarkSettingChanged:" target="-2" id="4850"/>
+                                                                            <outlet property="nextKeyView" destination="4776" id="5252"/>
+                                                                        </connections>
+                                                                    </button>
+                                                                    <button verticalHuggingPriority="750" tag="1" id="4776">
+                                                                        <rect key="frame" x="97" y="13" width="138" height="32"/>
+                                                                        <autoresizingMask key="autoresizingMask"/>
+                                                                        <buttonCell key="cell" type="push" title="Change Font" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="4831">
+                                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                                            <font key="font" metaFont="system"/>
+                                                                        </buttonCell>
+                                                                        <connections>
+                                                                            <action selector="displaySelectFont:" target="-2" id="4847"/>
+                                                                            <outlet property="nextKeyView" destination="5126" id="5253"/>
+                                                                        </connections>
+                                                                    </button>
+                                                                </subviews>
+                                                            </customView>
                                                         </subviews>
                                                     </view>
                                                 </tabViewItem>
@@ -3316,17 +3336,17 @@ Gw
                                                 <tabViewItem label="Keys" identifier="Item 3" id="2109">
                                                     <view key="view" id="2110">
                                                         <rect key="frame" x="10" y="33" width="559" height="404"/>
-                                                        <autoresizingMask key="autoresizingMask"/>
+                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                         <subviews>
                                                             <scrollView horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" id="2442">
                                                                 <rect key="frame" x="17" y="130" width="525" height="246"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <clipView key="contentView" id="Flq-2t-wqn">
-                                                                    <rect key="frame" x="1" y="17" width="507" height="228"/>
-                                                                    <autoresizingMask key="autoresizingMask"/>
+                                                                    <rect key="frame" x="1" y="17" width="523" height="228"/>
+                                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                     <subviews>
                                                                         <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveName="KeyBingingTable" headerView="2460" id="2463">
-                                                                            <rect key="frame" x="0.0" y="0.0" width="507" height="228"/>
+                                                                            <rect key="frame" x="0.0" y="0.0" width="523" height="228"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <size key="intercellSpacing" width="3" height="2"/>
                                                                             <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -3346,7 +3366,7 @@ Gw
                                                                                     </textFieldCell>
                                                                                     <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                                                                 </tableColumn>
-                                                                                <tableColumn identifier="1" editable="NO" width="303.101" minWidth="42.10107" maxWidth="1000" id="2465">
+                                                                                <tableColumn identifier="1" editable="NO" width="319.101" minWidth="42.10107" maxWidth="1000" id="2465">
                                                                                     <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
                                                                                         <font key="font" metaFont="smallSystem"/>
                                                                                         <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -3377,7 +3397,7 @@ Gw
                                                                     <autoresizingMask key="autoresizingMask"/>
                                                                 </scroller>
                                                                 <tableHeaderView key="headerView" id="2460">
-                                                                    <rect key="frame" x="0.0" y="0.0" width="507" height="17"/>
+                                                                    <rect key="frame" x="0.0" y="0.0" width="523" height="17"/>
                                                                     <autoresizingMask key="autoresizingMask"/>
                                                                 </tableHeaderView>
                                                                 <connections>
@@ -3533,6 +3553,17 @@ Gw
                                                                 </buttonCell>
                                                                 <connections>
                                                                     <action selector="bookmarkSettingChanged:" target="-2" id="5079"/>
+                                                                </connections>
+                                                            </button>
+                                                            <button id="U4H-3c-nZg">
+                                                                <rect key="frame" x="204" y="20" width="317" height="18"/>
+                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                <buttonCell key="cell" type="check" title="Numeric keypad may act as application keypad" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="cTE-39-JA0">
+                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                                    <font key="font" metaFont="system"/>
+                                                                </buttonCell>
+                                                                <connections>
+                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="Tfo-EZ-wH2"/>
                                                                 </connections>
                                                             </button>
                                                         </subviews>
@@ -4024,11 +4055,11 @@ Gw
                                             <rect key="frame" x="363" y="30" width="508" height="379"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <clipView key="contentView" id="Dzn-LP-RyA">
-                                                <rect key="frame" x="1" y="17" width="506" height="361"/>
+                                                <rect key="frame" x="1" y="17" width="490" height="361"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveName="KeyBingingTable" headerView="3855" id="3852">
-                                                        <rect key="frame" x="0.0" y="0.0" width="506" height="361"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="490" height="361"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -4048,7 +4079,7 @@ Gw
                                                                 </textFieldCell>
                                                                 <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                                             </tableColumn>
-                                                            <tableColumn identifier="1" editable="NO" width="302.101" minWidth="42.10107" maxWidth="1000" id="3856">
+                                                            <tableColumn identifier="1" editable="NO" width="286.101" minWidth="42.10107" maxWidth="1000" id="3856">
                                                                 <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
                                                                     <font key="font" metaFont="smallSystem"/>
                                                                     <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -4079,7 +4110,7 @@ Gw
                                                 <autoresizingMask key="autoresizingMask"/>
                                             </scroller>
                                             <tableHeaderView key="headerView" id="3855">
-                                                <rect key="frame" x="0.0" y="0.0" width="506" height="17"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="490" height="17"/>
                                                 <autoresizingMask key="autoresizingMask"/>
                                             </tableHeaderView>
                                             <connections>
@@ -4306,7 +4337,7 @@ Gw
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
-                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="229"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -4462,14 +4493,14 @@ Gw
                             <tabViewItem label="Keys" identifier="Keys" id="5417" userLabel="Selected Tab View Item (Arrangements)">
                                 <view key="view" id="5418">
                                     <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
-                                    <autoresizingMask key="autoresizingMask"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <scrollView autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="5559">
                                             <rect key="frame" x="20" y="21" width="240" height="379"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <clipView key="contentView" id="N1C-ir-dI5">
                                                 <rect key="frame" x="1" y="17" width="238" height="361"/>
-                                                <autoresizingMask key="autoresizingMask"/>
+                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" headerView="5563" id="5562">
                                                         <rect key="frame" x="0.0" y="0.0" width="238" height="361"/>

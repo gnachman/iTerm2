@@ -8,6 +8,18 @@
 
 #import "FutureMethods.h"
 
+@implementation NSScreen (future)
+
++ (BOOL)futureScreensHaveSeparateSpaces {
+    if ([self respondsToSelector:@selector(screensHaveSeparateSpaces)]) {
+        return [self screensHaveSeparateSpaces];
+    } else {
+        return NO;
+    }
+}
+
+@end
+
 static void *GetFunctionByName(NSString *library, char *func) {
     CFBundleRef bundle;
     CFURLRef bundleURL = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (CFStringRef) library, kCFURLPOSIXPathStyle, true);

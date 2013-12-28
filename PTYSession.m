@@ -1,33 +1,8 @@
-/*
- **  PTYSession.m
- **
- **  Copyright (c) 2002, 2003
- **
- **  Author: Fabian, Ujwal S. Setlur
- **
- **  Project: iTerm
- **
- **  Description: Implements the model class for a terminal session.
- **
- **  This program is free software; you can redistribute it and/or modify
- **  it under the terms of the GNU General Public License as published by
- **  the Free Software Foundation; either version 2 of the License, or
- **  (at your option) any later version.
- **
- **  This program is distributed in the hope that it will be useful,
- **  but WITHOUT ANY WARRANTY; without even the implied warranty of
- **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- **  GNU General Public License for more details.
- **
- **  You should have received a copy of the GNU General Public License
- **  along with this program; if not, write to the Free Software
- **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
 #import "PTYSession.h"
 
 #import "Coprocess.h"
 #import "FakeWindow.h"
+#import "FileTransferManager.h"
 #import "ITAddressBookMgr.h"
 #import "MovePaneController.h"
 #import "MovePaneController.h"
@@ -42,10 +17,12 @@
 #import "PasteViewController.h"
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
-#import "PseudoTerminal.h"
+#import "SCPFile.h"
+#import "SCPPath.h"
 #import "SearchResult.h"
 #import "SessionView.h"
 #import "TmuxController.h"
+#import "TmuxControllerRegistry.h"
 #import "TmuxGateway.h"
 #import "TmuxLayoutParser.h"
 #import "TmuxStateParser.h"
@@ -66,16 +43,11 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define DEBUG_ALLOC           0
-#define DEBUG_METHOD_TRACE    0
-#define DEBUG_KEYDOWNDUMP     0
-#define ASK_ABOUT_OUTDATED_FORMAT @"AskAboutOutdatedKeyMappingForGuid%@"
+// The format for a user defaults key that recalls if the user has already been pestered about
+// outdated key mappings for a give profile. The %@ is replaced with the profile's GUID.
+static NSString *const kAskAboutOutdatedKeyMappingKeyFormat = @"AskAboutOutdatedKeyMappingForGuid%@";
 
-@interface PTYSession ()
-@property(nonatomic, retain) Interval *currentMarkOrNotePosition;
-@end
-
-@implementation PTYSession
+NSString *const kPTYSessionTmuxFontDidChange = @"kPTYSessionTmuxFontDidChange";
 
 static NSString *TERM_ENVNAME = @"TERM";
 static NSString *COLORFGBG_ENVNAME = @"COLORFGBG";
@@ -95,63 +67,249 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
-// init/dealloc
+@interface PTYSession ()
+@property(nonatomic, retain) Interval *currentMarkOrNotePosition;
+@end
+
+@implementation PTYSession
+{
+    // Owning tab.
+    PTYTab* tab_;
+    
+    // tty device
+    NSString* tty;
+    
+    // name can be changed by the host.
+    NSString* name;
+    
+    // defaultName cannot be changed by the host.
+    NSString* defaultName;
+    
+    // The window title that should be used when this session is current. Otherwise defaultName
+    // should be used.
+    NSString* windowTitle;
+    
+    // The window title stack
+    NSMutableArray* windowTitleStack;
+    
+    // The icon title stack
+    NSMutableArray* iconTitleStack;
+    
+    // The original bookmark name.
+    NSString* bookmarkName;
+    
+    // Shell wraps the underlying file descriptor pair.
+    PTYTask* SHELL;
+    
+    // Terminal processes vt100 codes.
+    VT100Terminal* TERMINAL;
+    
+    // The value of the $TERM environment var.
+    NSString* TERM_VALUE;
+    
+    // The value of the $COLORFGBG environment var.
+    NSString* COLORFGBG_VALUE;
+    
+    // The current screen contents.
+    VT100Screen* SCREEN;
+    
+    // Has the underlying connection been closed?
+    BOOL EXIT;
+    
+    // The view in which this session's objects live.
+    SessionView* view;
+    
+    // The scrollview in which this session's contents are displayed.
+    PTYScrollView* SCROLLVIEW;
+    
+    // A view that wraps the textview. It is the scrollview's document. This exists to provide a
+    // top margin above the textview.
+    TextViewWrapper* WRAPPER;
+    
+    // The view that contains all the visible text in this session.
+    PTYTextView* TEXTVIEW;
+    
+    // This timer fires periodically to redraw TEXTVIEW, update the scroll position, tab appearance,
+    // etc.
+    NSTimer *updateTimer;
+    
+    // Anti-idle timer that sends a character every so often to the host.
+    NSTimer* antiIdleTimer;
+    
+    // The code to send in the anti idle timer.
+    char ai_code;
+    
+    // If true, close the tab when the session ends.
+    BOOL autoClose;
+    
+    // True if ambiguous-width characters are double-width.
+    BOOL doubleWidth;
+    
+    // True if mouse movements are sent to the host.
+    BOOL xtermMouseReporting;
+    
+    // This is not used as far as I can tell.
+    int bell;
+    
+    // True if background image should be tiled
+    BOOL backgroundImageTiled;
+    
+    // Filename of background image.
+    NSString* backgroundImagePath;
+    
+    // Bookmark currently in use.
+    NSDictionary* addressBookEntry;
+    
+    // The bookmark the session was originally created with so those settings can be restored if
+    // needed.
+    Profile* originalAddressBookEntry;
+    
+    // Growl stuff
+    iTermGrowlDelegate* gd;
+    
+    // Status reporting
+    struct timeval lastInput, lastOutput;
+    
+    // Time that the tab label was last updated.
+    struct timeval lastUpdate;
+    
+    // Does the session have new output? Used by -[PTYTab setLabelAttributes] to color the tab's title
+    // appropriately.
+    BOOL newOutput;
+    
+    // Is the session idle? Used by setLableAttribute to send a growl message when processing ends.
+    BOOL growlIdle;
+    
+    // Is there new output for the purposes of growl notifications? They run on a different schedule
+    // than tab colors.
+    BOOL growlNewOutput;
+    
+    // Has this session's bookmark been divorced from the profile in the ProfileModel? Changes
+    // in this bookmark may happen indepentendly of the persistent bookmark.
+    bool isDivorced;
+    
+    // A digital video recorder for this session that implements the instant replay feature. These
+    // are non-null while showing instant replay.
+    DVR* dvr_;
+    DVRDecoder* dvrDecoder_;
+    
+    // Set only if this is not a live session (we are showing instant replay). Is a pointer to the
+    // hidden live session while looking at the past.
+    PTYSession* liveSession_;
+    
+    // Is the update timer's callback currently running?
+    BOOL timerRunning_;
+    
+    // Paste from the head of this string from a timer until it's empty.
+    NSMutableString* slowPasteBuffer;
+    NSTimer* slowPasteTimer;
+    
+    // The name of the foreground job at the moment as best we can tell.
+    NSString* jobName_;
+    
+    // Ignore resize notifications. This would be set because the session's size musn't be changed
+    // due to temporary changes in the window size, as code later on may need to know the session's
+    // size to set the window size properly.
+    BOOL ignoreResizeNotifications_;
+    
+    // Last time this session became active
+    NSDate* lastActiveAt_;
+    
+    // Time session was created
+    NSDate* creationDate_;
+    
+    // After receiving new output, we keep running the updateDisplay timer for a few seconds to catch
+    // changes in job name.
+    NSDate* updateDisplayUntil_;
+    
+    // If not nil, we're aggregating text to append to a pasteboard. The pasteboard will be
+    // updated when this is set to nil.
+    NSString *pasteboard_;
+    NSMutableData *pbtext_;
+    
+    // The current line of text, for checking against triggers if any.
+    NSMutableString *triggerLine_;
+    
+    // The current triggers.
+    NSMutableArray *triggers_;
+    
+    // Does the terminal think this session is focused?
+    BOOL focused_;
+    
+    FindContext *tailFindContext_;
+    NSTimer *tailFindTimer_;
+    
+    enum {
+        TMUX_NONE,
+        TMUX_GATEWAY,
+        TMUX_CLIENT
+    } tmuxMode_;
+    TmuxGateway *tmuxGateway_;
+    TmuxController *tmuxController_;
+    int tmuxPane_;
+    BOOL tmuxLogging_;  // log to gateway client
+    BOOL tmuxSecureLogging_;
+    
+    NSArray *sendModifiers_;
+    NSMutableArray *eventQueue_;
+    PasteViewController *pasteViewController_;
+    PasteContext *pasteContext_;
+    
+    NSInteger requestAttentionId_;  // Last request-attention identifier
+    VT100ScreenMark *lastMark_;
+}
+
 - (id)init
 {
-    if ((self = [super init]) == nil) {
-        return (nil);
+    self = [super init];
+    if (self) {
+        // The new session won't have the move-pane overlay, so just exit move pane
+        // mode.
+        [[MovePaneController sharedInstance] exitMovePaneMode];
+        triggerLine_ = [[NSMutableString alloc] init];
+        isDivorced = NO;
+        gettimeofday(&lastInput, NULL);
+        lastOutput = lastInput;
+        lastUpdate = lastInput;
+        EXIT=NO;
+        updateTimer = nil;
+        antiIdleTimer = nil;
+        addressBookEntry = nil;
+        windowTitleStack = nil;
+        iconTitleStack = nil;
+        eventQueue_ = [[NSMutableArray alloc] init];
+
+        // Allocate screen, shell, and terminal objects
+        SHELL = [[PTYTask alloc] init];
+        TERMINAL = [[VT100Terminal alloc] init];
+        SCREEN = [[VT100Screen alloc] initWithTerminal:TERMINAL];
+        NSParameterAssert(SHELL != nil && TERMINAL != nil && SCREEN != nil);
+
+        // Need Growl plist stuff
+        gd = [iTermGrowlDelegate sharedInstance];
+        growlIdle = growlNewOutput = NO;
+
+        slowPasteBuffer = [[NSMutableString alloc] init];
+        creationDate_ = [[NSDate date] retain];
+        tmuxSecureLogging_ = NO;
+        tailFindContext_ = [[FindContext alloc] init];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowResized)
+                                                     name:@"iTermWindowDidResize"
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(coprocessChanged)
+                                                     name:@"kCoprocessStatusChangeNotification"
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(sessionContentsChanged:)
+                                                     name:@"iTermTabContentsChanged"
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(synchronizeTmuxFonts:)
+                                                     name:kTmuxFontChanged
+                                                   object:nil];
     }
-
-    // The new session won't have the move-pane overlay, so just exit move pane
-    // mode.
-    [[MovePaneController sharedInstance] exitMovePaneMode];
-    triggerLine_ = [[NSMutableString alloc] init];
-    isDivorced = NO;
-    gettimeofday(&lastInput, NULL);
-    lastOutput = lastInput;
-    lastUpdate = lastInput;
-    EXIT=NO;
-    updateTimer = nil;
-    antiIdleTimer = nil;
-    addressBookEntry = nil;
-    windowTitleStack = nil;
-    iconTitleStack = nil;
-    eventQueue_ = [[NSMutableArray alloc] init];
-
-#if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
-#endif
-
-    // Allocate screen, shell, and terminal objects
-    SHELL = [[PTYTask alloc] init];
-    TERMINAL = [[VT100Terminal alloc] init];
-    SCREEN = [[VT100Screen alloc] initWithTerminal:TERMINAL];
-    NSParameterAssert(SHELL != nil && TERMINAL != nil && SCREEN != nil);
-
-    // Need Growl plist stuff
-    gd = [iTermGrowlDelegate sharedInstance];
-    growlIdle = growlNewOutput = NO;
-
-    slowPasteBuffer = [[NSMutableString alloc] init];
-    creationDate_ = [[NSDate date] retain];
-    tmuxSecureLogging_ = NO;
-    tailFindContext_ = [[FindContext alloc] init];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(windowResized)
-                                                 name:@"iTermWindowDidResize"
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(coprocessChanged)
-                                                 name:@"kCoprocessStatusChangeNotification"
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(sessionContentsChanged:)
-                                                 name:@"iTermTabContentsChanged"
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(synchronizeTmuxFonts:)
-                                                 name:kTmuxFontChanged
-                                               object:nil];
     return self;
 }
 
@@ -207,14 +365,12 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
 
     [super dealloc];
-#if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x, done", __PRETTY_FUNCTION__, self);
-#endif
 }
 
 - (NSString *)description
 {
-    return [NSString stringWithFormat:@"<%@: %p %dx%d>", [self class], self, [SCREEN width], [SCREEN height]];
+    return [NSString stringWithFormat:@"<%@: %p %dx%d>",
+               [self class], self, [SCREEN width], [SCREEN height]];
 }
 
 - (void)cancelTimers
@@ -313,7 +469,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 + (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame
 {
-    Profile* theBookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[[arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK] objectForKey:KEY_GUID]];
+    Profile* theBookmark =
+        [[ProfileModel sharedInstance] bookmarkWithGuid:[[arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK]
+                                                             objectForKey:KEY_GUID]];
     if (!theBookmark) {
         theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
     }
@@ -336,7 +494,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     PTYSession* aSession = [[[PTYSession alloc] init] autorelease];
     aSession->view = sessionView;
     [[sessionView findViewController] setDelegate:aSession];
-    Profile* theBookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[[arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK] objectForKey:KEY_GUID]];
+    Profile* theBookmark =
+        [[ProfileModel sharedInstance] bookmarkWithGuid:[[arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK]
+                                                            objectForKey:KEY_GUID]];
     BOOL needDivorce = NO;
     if (!theBookmark) {
         theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
@@ -351,10 +511,12 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [aSession setScreenSize:[sessionView frame] parent:[theTab realParentWindow]];
     NSDictionary *state = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_STATE];
     if (state) {
-        // For tmux tabs, get the size from the arrangement instead of the containing view because it helps things to line up correctly.
+        // For tmux tabs, get the size from the arrangement instead of the containing view because
+        // it helps things to line up correctly.
         [aSession setSizeFromArrangement:arrangement];
     }
     [aSession setPreferencesFromAddressBookEntry:theBookmark];
+    [aSession loadInitialColorTable];
     [aSession setName:[theBookmark objectForKey:KEY_NAME]];
     NSString *arrangementBookmarkName = arrangement[SESSION_ARRANGEMENT_BOOKMARK_NAME];
     if (arrangementBookmarkName) {
@@ -418,10 +580,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 // Session specific methods
 - (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession setScreenSize:parent:]", __FILE__, __LINE__);
-#endif
-
     SCREEN.delegate = self;
 
     // Allocate a container to hold the scrollview
@@ -704,10 +862,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     NSMutableDictionary *env = [NSMutableDictionary dictionaryWithDictionary:prog_env];
 
 
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession startProgram:%@ arguments:%@ environment:%@]",
-          __FILE__, __LINE__, program, prog_argv, prog_env );
-#endif
     if ([env objectForKey:TERM_ENVNAME] == nil)
         [env setObject:TERM_VALUE forKey:TERM_ENVNAME];
     if ([[env objectForKey:TERM_ENVNAME] isEqualToString:@"xterm-256color"]) {
@@ -741,7 +895,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [env setObject:[PWD_ENVVALUE stringByExpandingTildeInPath] forKey:PWD_ENVNAME];
     }
 
-    PseudoTerminal *pty = [tab_ realParentWindow];
+    NSWindowController<iTermWindowController> *pty = [tab_ realParentWindow];
     NSString *itermId = [NSString stringWithFormat:@"w%dt%dp%d",
                          [pty number],
                          [tab_ realObjectCount] - 1,
@@ -764,6 +918,37 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [SHELL writeTask:[initialText dataUsingEncoding:[self encoding]]];
         [SHELL writeTask:[@"\n" dataUsingEncoding:[self encoding]]];
     }
+}
+
+- (void)launchProfileInCurrentTerminal:(Profile *)profile
+                               withURL:(NSString *)url
+{
+    PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+    [[iTermController sharedInstance] launchBookmark:profile
+                                          inTerminal:term
+                                             withURL:url
+                                            isHotkey:NO
+                                             makeKey:NO];
+}
+
+- (void)selectPaneLeftInCurrentTerminal
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneLeft:nil];
+}
+
+- (void)selectPaneRightInCurrentTerminal
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneRight:nil];
+}
+
+- (void)selectPaneAboveInCurrentTerminal
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneUp:nil];
+}
+
+- (void)selectPaneBelowInCurrentTerminal
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneDown:nil];
 }
 
 - (void)_maybeWarnAboutShortLivedSessions
@@ -820,7 +1005,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                 [tmuxGateway_ release];
                 tmuxGateway_ = nil;
     }
-        tmuxMode_ = TMUX_NONE;
+    tmuxMode_ = TMUX_NONE;
     [tmuxController_ release];
     tmuxController_ = nil;
 
@@ -865,6 +1050,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         slowPasteTimer = nil;
         [eventQueue_ removeAllObjects];
     }
+    
+    [[tab_ realParentWindow]  sessionDidTerminate:self];
 
     tab_ = nil;
 }
@@ -1136,22 +1323,15 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     return NO;
 }
 
-+ (void)reloadAllBookmarks
-{
-    int n = [[iTermController sharedInstance] numberOfTerminals];
-    for (int i = 0; i < n; ++i) {
-        PseudoTerminal* pty = [[iTermController sharedInstance] terminalAtIndex:i];
-        [pty reloadBookmarks];
-    }
-}
-
 - (BOOL)_askAboutOutdatedKeyMappings
 {
     NSNumber* n = [addressBookEntry objectForKey:KEY_ASK_ABOUT_OUTDATED_KEYMAPS];
     if (!n) {
-        n = [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:ASK_ABOUT_OUTDATED_FORMAT, [addressBookEntry objectForKey:KEY_GUID]]];
+        n = [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:kAskAboutOutdatedKeyMappingKeyFormat,
+                                                                 [addressBookEntry objectForKey:KEY_GUID]]];
         if (!n && [addressBookEntry objectForKey:KEY_ORIGINAL_GUID]) {
-            n = [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:ASK_ABOUT_OUTDATED_FORMAT, [addressBookEntry objectForKey:KEY_ORIGINAL_GUID]]];
+            n = [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:kAskAboutOutdatedKeyMappingKeyFormat,
+                                                                     [addressBookEntry objectForKey:KEY_ORIGINAL_GUID]]];
         }
     }
     return n ? [n boolValue] : YES;
@@ -1177,7 +1357,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermKeyBindingsChanged"
                                                         object:nil
                                                       userInfo:nil];
-    [PTYSession reloadAllBookmarks];
+    [[iTermController sharedInstance] reloadAllBookmarks];
 }
 
 - (void)_setKeepOutdatedKeyMapping
@@ -1192,14 +1372,14 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                                        forKey:KEY_ASK_ABOUT_OUTDATED_KEYMAPS
                                    inBookmark:addressBookEntry];
     [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:NO]
-                                              forKey:[NSString stringWithFormat:ASK_ABOUT_OUTDATED_FORMAT,
+                                              forKey:[NSString stringWithFormat:kAskAboutOutdatedKeyMappingKeyFormat,
                                                       [addressBookEntry objectForKey:KEY_GUID]]];
     if ([addressBookEntry objectForKey:KEY_ORIGINAL_GUID]) {
         [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:NO]
-                                                  forKey:[NSString stringWithFormat:ASK_ABOUT_OUTDATED_FORMAT,
+                                                  forKey:[NSString stringWithFormat:kAskAboutOutdatedKeyMappingKeyFormat,
                                                           [addressBookEntry objectForKey:KEY_ORIGINAL_GUID]]];
     }
-    [PTYSession reloadAllBookmarks];
+    [[iTermController sharedInstance] reloadAllBookmarks];
 }
 
 + (BOOL)_recursiveSelectMenuItem:(NSString*)theName inMenu:(NSMenu*)menu
@@ -1268,73 +1448,41 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)insertNewline:(id)sender
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession insertNewline:%@]",
-          __FILE__, __LINE__, sender);
-#endif
     [self insertText:@"\n"];
 }
 
 - (void)insertTab:(id)sender
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession insertTab:%@]",
-          __FILE__, __LINE__, sender);
-#endif
     [self insertText:@"\t"];
 }
 
 - (void)moveUp:(id)sender
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession moveUp:%@]",
-          __FILE__, __LINE__, sender);
-#endif
     [self writeTask:[TERMINAL keyArrowUp:0]];
 }
 
 - (void)moveDown:(id)sender
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession moveDown:%@]",
-          __FILE__, __LINE__, sender);
-#endif
     [self writeTask:[TERMINAL keyArrowDown:0]];
 }
 
 - (void)moveLeft:(id)sender
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession moveLeft:%@]",
-          __FILE__, __LINE__, sender);
-#endif
     [self writeTask:[TERMINAL keyArrowLeft:0]];
 }
 
 - (void)moveRight:(id)sender
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession moveRight:%@]",
-          __FILE__, __LINE__, sender);
-#endif
     [self writeTask:[TERMINAL keyArrowRight:0]];
 }
 
 - (void)pageUp:(id)sender
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession pageUp:%@]",
-          __FILE__, __LINE__, sender);
-#endif
     [self writeTask:[TERMINAL keyPageUp:0]];
 }
 
 - (void)pageDown:(id)sender
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession pageDown:%@]",
-          __FILE__, __LINE__, sender);
-#endif
     [self writeTask:[TERMINAL keyPageDown:0]];
 }
 
@@ -1356,31 +1504,31 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 + (NSString*)pasteboardString
 {
-  NSPasteboard *board;
-
-  board = [NSPasteboard generalPasteboard];
-  assert(board != nil);
-
-  NSArray *supportedTypes = [NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil];
-  NSString *bestType = [board availableTypeFromArray:supportedTypes];
-
-  NSString* info = nil;
-  if ([bestType isEqualToString:NSFilenamesPboardType]) {
-    NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
-    NSMutableArray *escapedFilenames = [NSMutableArray array];
-    for (NSString *filename in filenames) {
-      [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
+    NSPasteboard *board;
+    
+    board = [NSPasteboard generalPasteboard];
+    assert(board != nil);
+    
+    NSArray *supportedTypes = [NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil];
+    NSString *bestType = [board availableTypeFromArray:supportedTypes];
+    
+    NSString* info = nil;
+    if ([bestType isEqualToString:NSFilenamesPboardType]) {
+        NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
+        NSMutableArray *escapedFilenames = [NSMutableArray array];
+        for (NSString *filename in filenames) {
+            [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
+        }
+        if (escapedFilenames.count > 0) {
+            info = [escapedFilenames componentsJoinedByString:@" "];
+        }
+        if ([info length] == 0) {
+            info = nil;
+        }
+    } else {
+        info = [board stringForType:NSStringPboardType];
     }
-    if (escapedFilenames.count > 0) {
-      info = [escapedFilenames componentsJoinedByString:@" "];
-    }
-    if ([info length] == 0) {
-      info = nil;
-    }
-  } else {
-    info = [board stringForType:NSStringPboardType];
-  }
-  return info;
+    return info;
 }
 
 - (void)insertText:(NSString *)string
@@ -1407,11 +1555,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
             [mstring replaceCharactersInRange:NSMakeRange(i, 1) withString:@"\\"];
         }
     }
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession insertText:%@]",
-          __FILE__, __LINE__, mstring);
-#endif
 
     data = [mstring dataUsingEncoding:[TERMINAL encoding]
                  allowLossyConversion:YES];
@@ -1476,7 +1619,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
 }
 
-- (void)pasteAgain {
+- (void)_pasteAgain {
     NSRange range;
     range.location = 0;
     range.length = MIN(pasteContext_.bytesPerCall, [slowPasteBuffer length]);
@@ -1487,7 +1630,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [pasteContext_ updateValues];
         slowPasteTimer = [NSTimer scheduledTimerWithTimeInterval:pasteContext_.delayBetweenCalls
                                                           target:self
-                                                        selector:@selector(pasteAgain)
+                                                        selector:@selector(_pasteAgain)
                                                         userInfo:nil
                                                          repeats:NO];
     } else {
@@ -1519,12 +1662,12 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [self showPasteUI];
     }
 
-    [self pasteAgain];
+    [self _pasteAgain];
 }
 
 // Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.
 // Override the constants by setting defaults SlowPasteBytesPerCall and SlowPasteDelayBetweenCalls
-- (void)pasteSlowly:(id)sender
+- (void)_pasteSlowly:(id)sender
 {
     [self _pasteWithBytePerCallPrefKey:@"SlowPasteBytesPerCall"
                           defaultValue:16
@@ -1555,6 +1698,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)pasteString:(NSString *)aString
 {
+    if (![self maybeWarnAboutMultiLinePaste:aString]) {
+        return;
+    }
     if ([TERMINAL bracketedPasteMode]) {
         [self writeTask:[[NSString stringWithFormat:@"%c[200~", 27]
                          dataUsingEncoding:[TERMINAL encoding]
@@ -1567,11 +1713,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 {
     unsigned char p = 0x08; // Ctrl+H
 
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession deleteBackward:%@]",
-          __FILE__, __LINE__, sender);
-#endif
-
     [self writeTask:[NSData dataWithBytes:&p length:1]];
 }
 
@@ -1579,30 +1720,27 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 {
     unsigned char p = 0x7F; // DEL
 
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession deleteForward:%@]",
-          __FILE__, __LINE__, sender);
-#endif
     [self writeTask:[NSData dataWithBytes:&p length:1]];
 }
 
 - (void)textViewDidChangeSelection:(NSNotification *) aNotification
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession textViewDidChangeSelection]",
-          __FILE__, __LINE__);
-#endif
-
     if ([[PreferencePanel sharedInstance] copySelection]) {
         [TEXTVIEW copySelectionAccordingToUserPreferences];
     }
 }
 
+- (PTYScroller *)textViewVerticalScroller
+{
+    return (PTYScroller *)[SCROLLVIEW verticalScroller];
+}
+
+- (BOOL)textViewHasCoprocess {
+    return [SHELL hasCoprocess];
+}
+
 - (void) textViewResized:(NSNotification *) aNotification;
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s: textView = 0x%x", __PRETTY_FUNCTION__, TEXTVIEW);
-#endif
     int w;
     int h;
 
@@ -1672,6 +1810,21 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     return ([[NSString alloc] initWithFormat:@"%d;%d", fgNum, bgNum]);
 }
 
+- (void)loadInitialColorTable
+{
+    int i;
+    for (i = 0; i < 216; i++) {
+        [self setColorTable:i+16
+                      color:[NSColor colorWithCalibratedRed:(i/36) ? ((i/36)*40+55)/255.0 : 0
+                                                      green:(i%36)/6 ? (((i%36)/6)*40+55)/255.0:0
+                                                       blue:(i%6) ?((i%6)*40+55)/255.0:0
+                                                      alpha:1]];
+    }
+    for (i = 0; i < 24; i++) {
+        [self setColorTable:i+232 color:[NSColor colorWithCalibratedWhite:(i*10+8)/255.0 alpha:1]];
+    }
+}
+
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs
 {
     NSColor *colorTable[2][8];
@@ -1716,16 +1869,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     for(i = 0; i < 8; i++) {
         [self setColorTable:i color:colorTable[0][i]];
         [self setColorTable:i+8 color:colorTable[1][i]];
-    }
-    for (i = 0; i < 216; i++) {
-        [self setColorTable:i+16
-                      color:[NSColor colorWithCalibratedRed:(i/36) ? ((i/36)*40+55)/255.0 : 0
-                                                      green:(i%36)/6 ? (((i%36)/6)*40+55)/255.0:0
-                                                       blue:(i%6) ?((i%6)*40+55)/255.0:0
-                                                      alpha:1]];
-    }
-    for (i = 0; i < 24; i++) {
-        [self setColorTable:i+232 color:[NSColor colorWithCalibratedWhite:(i*10+8)/255.0 alpha:1]];
     }
 
     // background image
@@ -1793,7 +1936,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
     [TEXTVIEW setSmartSelectionRules:[aDict objectForKey:KEY_SMART_SELECTION_RULES]];
     [TEXTVIEW setTrouterPrefs:[aDict objectForKey:KEY_TROUTER]];
-
+    [TEXTVIEW setUseNonAsciiFont:[[aDict objectForKey:KEY_USE_NONASCII_FONT] boolValue]];
     [TEXTVIEW setAntiAlias:asciiAA nonAscii:nonasciiAA];
     [self setEncoding:[[aDict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]];
     [self setTERM_VALUE:[aDict objectForKey:KEY_TERMINAL_TYPE]];
@@ -1804,6 +1947,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [self setXtermMouseReporting:[[aDict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue]];
     [TERMINAL setDisableSmcupRmcup:[[aDict objectForKey:KEY_DISABLE_SMCUP_RMCUP] boolValue]];
     [SCREEN setAllowTitleReporting:[[aDict objectForKey:KEY_ALLOW_TITLE_REPORTING] boolValue]];
+    [TERMINAL setAllowKeypadMode:[[aDict objectForKey:KEY_APPLICATION_KEYPAD_ALLOWED] boolValue]];
     [TERMINAL setUseCanonicalParser:[[aDict objectForKey:KEY_USE_CANONICAL_PARSER] boolValue]];
     [SCREEN setUnlimitedScrollback:[[aDict objectForKey:KEY_UNLIMITED_SCROLLBACK] intValue]];
     [SCREEN setMaxScrollbackLines:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
@@ -2157,10 +2301,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)setEncoding:(NSStringEncoding)encoding
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession setEncoding:%d]",
-          __FILE__, __LINE__, encoding);
-#endif
     [TERMINAL setEncoding:encoding];
 }
 
@@ -2449,10 +2589,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     NSSavePanel *panel;
     int sts;
 
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession logStart:%@]",
-          __FILE__, __LINE__);
-#endif
     panel = [NSSavePanel savePanel];
     // Session could end before panel is dismissed.
     [[self retain] autorelease];
@@ -2475,13 +2611,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (void)clearBuffer
 {
     [SCREEN clearBuffer];
-    [TEXTVIEW clearWorkingDirectories];
 }
 
 - (void)clearScrollbackBuffer
 {
     [SCREEN clearScrollbackBuffer];
-    [TEXTVIEW clearWorkingDirectories];
 }
 
 - (BOOL)exited
@@ -2835,11 +2969,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                      nafont:[TEXTVIEW nafont]
                    hSpacing:[TEXTVIEW horizontalSpacing]
                    vSpacing:[TEXTVIEW verticalSpacing]];
-        for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
-            if ([[term uniqueTmuxControllers] count]) {
-                [term refreshTmuxLayoutsAndWindow];
-            }
-        }
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionTmuxFontDidChange
+                                                            object:nil];
     }
 }
 
@@ -3192,14 +3323,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)startTmuxMode
 {
-    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
-        if ([[term uniqueTmuxControllers] count]) {
-            const char *message = "detach\n";
-            [self printTmuxMessage:@"Can't enter tmux mode: another tmux is already attached"];
-            [SCREEN crlf];
-            [self writeTaskImpl:[NSData dataWithBytes:message length:strlen(message)]];
-            return;
-        }
+    if ([[TmuxControllerRegistry sharedInstance] numberOfClients]) {
+        const char *message = "detach\n";
+        [self printTmuxMessage:@"Can't enter tmux mode: another tmux is already attached"];
+        [SCREEN crlf];
+        [self writeTaskImpl:[NSData dataWithBytes:message length:strlen(message)]];
+        return;
     }
 
     if (tmuxMode_ != TMUX_NONE) {
@@ -3633,11 +3762,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
   NSString *keystr;
   NSString *unmodkeystr;
   unichar unicode, unmodunicode;
-
-#if DEBUG_METHOD_TRACE || DEBUG_KEYDOWNDUMP
-  NSLog(@"%s(%d):-[PTYSession keyDown:%@]",
-        __FILE__, __LINE__, event);
-#endif
 
   modflag = [event modifierFlags];
   keystr  = [event characters];
@@ -4141,6 +4265,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [rightOptPref intValue];
 }
 
+- (BOOL)applicationKeypadAllowed
+{
+    return [[[self addressBookEntry] objectForKey:KEY_APPLICATION_KEYPAD_ALLOWED] boolValue];
+}
+
 // Contextual menu
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu
 {
@@ -4151,8 +4280,43 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (BOOL)maybeWarnAboutMultiLinePaste:(NSString *)string
+{
+    iTermApplicationDelegate *ad = [[NSApplication sharedApplication] delegate];
+    if (![ad warnBeforeMultiLinePaste]) {
+        return YES;
+    }
+    
+    if ([string rangeOfString:@"\n"].length == 0) {
+        return YES;
+    }
+    
+    switch (NSRunAlertPanel(@"Confirm Multi-Line Paste",
+                            @"Ok to paste %d lines?",
+                            @"Yes",
+                            @"No",
+                            @"Yes and don‘t ask again",
+                            (int)[[string componentsSeparatedByString:@"\n"] count])) {
+        case NSAlertDefaultReturn:
+            return YES;
+        case NSAlertAlternateReturn:
+            return NO;
+        case NSAlertOtherReturn:
+            [ad toggleMultiLinePasteWarning:nil];
+            return YES;
+    }
+    
+    assert(false);
+    return YES;
+}
+
+// Pastes a specific string. The API for pasting not-from-clipboard. All pastes go through here.
+// If queued, this is called just before the paste occurs, not when getting queued.
 - (void)pasteString:(NSString *)str flags:(int)flags
 {
+    if (![self maybeWarnAboutMultiLinePaste:str]) {
+        return;
+    }
     if (flags & 1) {
         // paste escaping special characters
         str = [str stringWithEscapedShellCharacters];
@@ -4164,12 +4328,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
     if (flags & 2) {
         [slowPasteBuffer appendString:[str stringWithLinefeedNewlines]];
-        [self pasteSlowly:nil];
+        [self _pasteSlowly:nil];
     } else {
         [self _pasteString:str];
     }
 }
 
+// Pastes the current string in the clipboard. Uses the sender's tag to get flags.
 - (void)paste:(id)sender
 {
     NSString* pbStr = [PTYSession pasteboardString];
@@ -4191,6 +4356,154 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if ([self isTmuxClient]) {
         [self notifyTmuxFontChange];
     }
+}
+
+- (void)textViewPostTabContentsChangedNotification
+{
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermTabContentsChanged"
+                                                        object:self
+                                                      userInfo:nil];
+}
+
+- (void)textViewBeginDrag
+{
+    [[MovePaneController sharedInstance] beginDrag:self];
+}
+
+- (void)textViewMovePane
+{
+    [[MovePaneController sharedInstance] movePane:self];
+}
+
+- (NSStringEncoding)textViewEncoding
+{
+    return [self encoding];
+}
+
+- (void)textViewWillNeedUpdateForBlink
+{
+    [self scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
+}
+
+- (void)textViewSplitVertically:(BOOL)vertically withProfileGuid:(NSString *)guid
+{
+    Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
+    if (guid) {
+        profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    }
+    [[[self tab] realParentWindow] splitVertically:vertically
+                                      withBookmark:profile
+                                     targetSession:self];
+}
+
+- (void)textViewSelectNextTab
+{
+    [[[self tab] realParentWindow] nextTab:nil];
+}
+
+- (void)textViewSelectPreviousTab
+{
+    [[[self tab] realParentWindow] previousTab:nil];
+}
+
+- (void)textViewSelectNextWindow
+{
+    [[iTermController sharedInstance] nextTerminal:nil];
+}
+
+- (void)textViewSelectPreviousWindow
+{
+    [[iTermController sharedInstance] previousTerminal:nil];
+}
+
+- (void)textViewSelectNextPane
+{
+    [[self tab] nextSession];
+}
+
+- (void)textViewSelectPreviousPane;
+{
+    [[self tab] previousSession];
+}
+
+- (void)textViewEditSession
+{
+    [[[self tab] realParentWindow] editSession:self];
+}
+
+- (void)textViewToggleBroadcastingInput
+{
+    [[[self tab] realParentWindow] toggleBroadcastingInputToSession:self];
+}
+
+- (void)textViewCloseWithConfirmation
+{
+    [[[self tab] realParentWindow] closeSessionWithConfirmation:self];
+}
+
+- (NSString *)textViewPasteboardString
+{
+    return [[self class] pasteboardString];
+}
+
+- (void)textViewPasteFromSessionWithMostRecentSelection
+{
+    PTYSession *session = [[iTermController sharedInstance] sessionWithMostRecentSelection];
+    if (session) {
+        PTYTextView *textview = [session TEXTVIEW];
+        if ([textview selectionStartX] > -1) {
+            [self pasteString:[textview selectedText]];
+        }
+    }
+}
+
+- (BOOL)textViewWindowUsesTransparency
+{
+    return [[[self tab] realParentWindow] useTransparency];
+}
+
+- (BOOL)textViewAmbiguousWidthCharsAreDoubleWidth
+{
+    return [self doubleWidth];
+}
+
+- (void)textViewCreateWindowWithProfileGuid:(NSString *)guid
+{
+    [[[self tab] realParentWindow] newWindowWithBookmarkGuid:guid];
+}
+
+- (void)textViewCreateTabWithProfileGuid:(NSString *)guid
+{
+    [[[self tab] realParentWindow] newTabWithBookmarkGuid:guid];
+}
+
+- (BOOL)textViewDelegateHandlesAllKeystrokes
+{
+    return [[[self tab] realParentWindow] inInstantReplay];
+}
+
+- (BOOL)textViewInSameTabAsTextView:(PTYTextView *)other {
+    return [self tab] == [other.delegate tab];
+}
+
+- (BOOL)textViewIsActiveSession
+{
+    return [[self tab] activeSession] == self;
+}
+
+- (BOOL)textViewSessionIsBroadcastingInput
+{
+    return [[[self tab] realParentWindow] broadcastInputToSession:self];
+}
+
+- (BOOL)textViewTabHasMaximizedPanel
+{
+    return [[self tab] hasMaximizedPane];
+}
+
+- (void)textViewDidBecomeFirstResponder
+{
+    [[self tab] setActiveSession:self];
 }
 
 - (PTYScrollView *)SCROLLVIEW
@@ -4245,6 +4558,33 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)launchCoprocessWithCommand:(NSString *)command
 {
     [self launchCoprocessWithCommand:command mute:NO];
+}
+
+- (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath
+{
+    SCPFile *previous = nil;
+    for (NSString *file in localFilenames) {
+        SCPFile *scpFile = [[[SCPFile alloc] init] autorelease];
+        scpFile.path = [[[SCPPath alloc] init] autorelease];
+        scpFile.path.hostname = destinationPath.hostname;
+        scpFile.path.username = destinationPath.username;
+        NSString *filename = [file lastPathComponent];
+        scpFile.path.path = [destinationPath.path stringByAppendingPathComponent:filename];
+        scpFile.localPath = file;
+
+        if (previous) {
+            previous.successor = scpFile;
+        }
+        previous = scpFile;
+        [scpFile upload];
+    }
+}
+
+- (void)startDownloadOverSCP:(SCPPath *)path
+{
+    SCPFile *file = [[[SCPFile alloc] init] autorelease];
+    file.path = path;
+    [file download];
 }
 
 - (NSString*)_getLocale
@@ -4437,6 +4777,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self clearTriggerLine];
 }
 
+- (void)screenDidReset {
+    [self loadInitialColorTable];
+}
+
 - (BOOL)screenShouldSyncTitle {
     if (![[PreferencePanel sharedInstance] showBookmarkName]) {
         return NO;
@@ -4490,14 +4834,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenSetName:(NSString *)theName {
     [self setName:theName];
-}
-
-- (void)screenLogWorkingDirectoryAtLine:(long long)lineNumber withDirectory:(NSString *)directory {
-    if ([directory length]) {
-        [[self TEXTVIEW] logWorkingDirectoryAtLine:lineNumber withDirectory:directory];
-    } else {
-        [[self TEXTVIEW] logWorkingDirectoryAtLine:lineNumber];
-    }
 }
 
 - (BOOL)screenWindowIsFullscreen {
@@ -4583,7 +4919,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (int)screenWindowIndex {
-    return [[iTermController sharedInstance] indexOfTerminal:[[self tab] realParentWindow]];
+    return [[iTermController sharedInstance] indexOfTerminal:(PseudoTerminal *)[[self tab] realParentWindow]];
 }
 
 - (int)screenTabIndex {
@@ -4682,6 +5018,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
   [NSApp requestUserAttention:isCritical ? NSCriticalRequest : NSInformationalRequest];
 }
 
+- (NSString *)screenCurrentWorkingDirectory {
+    return [SHELL getWorkingDirectory];
+}
+
 - (void)screenSetCursorVisible:(BOOL)visible {
     if (visible) {
         [TEXTVIEW showCursor];
@@ -4728,7 +5068,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         newProfile = [[ProfileModel sharedInstance] defaultBookmark];
     }
     if (newProfile) {
-        NSString *theName = [[[SCREEN session] addressBookEntry] objectForKey:KEY_NAME];
+        NSString *theName = [[self addressBookEntry] objectForKey:KEY_NAME];
         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:newProfile];
         [dict setObject:theName forKey:KEY_NAME];
         [self setAddressBookEntry:dict];
@@ -4874,6 +5214,24 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (BOOL)screenShouldSendReport {
     return (SHELL != nil) && (![self isTmuxClient]);
+}
+
+#pragma mark - PopupDelegate
+
+- (NSWindowController *)popupWindowController {
+    return [[self tab] realParentWindow];
+}
+
+- (VT100Screen *)popupVT100Screen {
+    return SCREEN;
+}
+
+- (PTYTextView *)popupVT100TextView {
+    return TEXTVIEW;
+}
+
+- (void)popupInsertText:(NSString *)string {
+    [self insertText:string];
 }
 
 @end

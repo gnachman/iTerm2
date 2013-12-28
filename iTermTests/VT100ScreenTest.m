@@ -361,10 +361,6 @@
     return NSMakeRect(30, 40, 1000, 2000);
 }
 
-- (void)screenLogWorkingDirectoryAtLine:(long long)line withDirectory:(NSString *)directory {
-    [dirlog_ addObject:@[ @(line), directory ? directory : [NSNull null] ]];
-}
-
 - (NSString *)selectedStringInScreen:(VT100Screen *)screen {
     if (startX_ < 0 ||
         startY_ < 0 ||
@@ -417,6 +413,9 @@
 
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string {
     [triggerLine_ appendString:string];
+}
+
+- (void)screenDidReset {
 }
 
 - (void)screenPrintString:(NSString *)s {

@@ -1,32 +1,3 @@
-// -*- mode:objc -*-
-// $Id: PseudoTerminal.h,v 1.62 2009-02-06 15:07:24 delx Exp $
-/*
- **  PseudoTerminal.h
- **
- **  Copyright (c) 2002, 2003
- **
- **  Author: Fabian, Ujwal S. Setlur
- **         Initial code by Kiichi Kusama
- **
- **  Project: iTerm
- **
- **  Description: Session and window controller for iTerm.
- **
- **  This program is free software; you can redistribute it and/or modify
- **  it under the terms of the GNU General Public License as published by
- **  the Free Software Foundation; either version 2 of the License, or
- **  (at your option) any later version.
- **
- **  This program is distributed in the hope that it will be useful,
- **  but WITHOUT ANY WARRANTY; without even the implied warranty of
- **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- **  GNU General Public License for more details.
- **
- **  You should have received a copy of the GNU General Public License
- **  along with this program; if not, write to the Free Software
- **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
 #import <Cocoa/Cocoa.h>
 #import "PSMTabBarControl.h"
 #import "PTYTabView.h"
@@ -34,28 +5,18 @@
 #import "ProfileListView.h"
 #import "WindowControllerInterface.h"
 #import "PasteboardHistory.h"
+#import "Popup.h"
 #import "Autocomplete.h"
 #import "ToolbeltView.h"
 #import "SolidColorView.h"
 #import "FutureMethods.h"
 
-@class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
+@class BottomBarView;
+@class PTYSession;
+@class PSMTabBarControl;
+@class PTToolbarController;
 @class ToolbeltView;
-
-typedef enum {
-    BROADCAST_OFF,
-    BROADCAST_TO_ALL_PANES,
-    BROADCAST_TO_ALL_TABS,
-    BROADCAST_CUSTOM
-} BroadcastMode;
-
-// The BottomBar's view is of this class. It overrides drawing the background.
-@interface BottomBarView : NSView
-{
-}
-- (void)drawRect:(NSRect)dirtyRect;
-
-@end
+@class iTermController;
 
 @class TmuxController;
 
@@ -64,214 +25,26 @@ typedef enum {
 // or window-initiated).
 // OS 10.5 doesn't support window delegates
 @interface PseudoTerminal : NSWindowController <
-    PSMTabBarControlDelegate,
-    PTYTabViewDelegateProtocol,
-    PTYWindowDelegateProtocol,
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
-NSWindowDelegate,
-#endif
-    WindowControllerInterface >
-{
-    NSPoint preferredOrigin_;
-    SolidColorView* background_;
-    ////////////////////////////////////////////////////////////////////////////
-    // Parameter Panel
-    // A bookmark may have metasyntactic variables like $$FOO$$ in the command.
-    // When opening such a bookmark, pop up a sheet and ask the user to fill in
-    // the value. These fields belong to that sheet.
-    IBOutlet NSTextField *parameterName;
-    IBOutlet NSPanel     *parameterPanel;
-    IBOutlet NSTextField *parameterValue;
-    IBOutlet NSTextField *parameterPrompt;
+  iTermWindowController,
+  NSWindowDelegate,
+  PSMTabBarControlDelegate,
+  PTYTabViewDelegateProtocol,
+  PTYWindowDelegateProtocol,
+  WindowControllerInterface>
 
-    ////////////////////////////////////////////////////////////////////////////
-    // BottomBar
-    // UI elements for searching the current session.
-
-    // This contains all the other elements.
-    IBOutlet BottomBarView* instantReplaySubview;
-
-    // Contains only bottomBarSubview. For whatever reason, adding the BottomBarView
-    // directly to the window doesn't work.
-    NSView* bottomBar;
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Tab View
-    // The tabview occupies almost the entire window. Each tab has an identifier
-    // which is a PTYTab.
-    PTYTabView *TABVIEW;
-
-    // Gray line dividing tab/title bar from content. Will be nil if a division view isn't needed
-    // such as for fullscreen windows or windows without a title bar (e.g., top-of-screen).
-    NSView *_divisionView;
-
-    // This is a sometimes-visible control that shows the tabs and lets the user
-    // change which is visible.
-    PSMTabBarControl *tabBarControl;
-    NSView* tabBarBackground;
-
-    // This is either 0 or 1. If 1, then a tab item is in the process of being
-    // added and the tabBarControl will be shown if it is added successfully
-    // if it's not currently shown.
-    int tabViewItemsBeingAdded;
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Toolbar
-    // A toolbar may be shown at the top of the window.
-
-    // This does the dirty work of running the toolbar.
-    PTToolbarController* _toolbarController;
-
-    // A text field into which you may type a command. When you press enter in it
-    // then the text is sent to the terminal.
-    IBOutlet id commandField;
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Miscellaneous
-
-    // Is the transparency setting respected?
-    BOOL useTransparency_;
-
-    // Is this a full screenw indow?
-    BOOL _fullScreen;
-
-    // When you enter full-screen mode the old frame size is saved here. When
-    // full-screen mode is exited that frame is restored.
-    NSRect oldFrame_;
-
-    // When you enter fullscreen mode, the old use transparency setting is
-    // saved, and then restored when you exit FS unless it was changed
-    // by the user.
-    BOOL oldUseTransparency_;
-    BOOL restoreUseTransparency_;
-
-    // True if an [init...] method was called.
-    BOOL windowInited;
-
-    // How input should be broadcast (or not).
-    BroadcastMode broadcastMode_;
-
-    // True if the window title is showing transient information (such as the
-    // size during resizing).
-    BOOL tempTitle;
-
-    // When sending input to all sessions we temporarily change the background
-    // color. This stores the normal background color so we can restore to it.
-    NSColor *normalBackgroundColor;
-
-    // This prevents recursive resizing.
-    BOOL _resizeInProgressFlag;
-
-    // There is a scheme for saving window positions. Each window is assigned
-    // a number, and the positions are stored by window name. The window name
-    // includes its unique number. framePos gives this window's number.
-    int framePos;
-
-    // This is set while toggling full screen. It prevents windowDidResignMain
-    // from trying to exit fullscreen mode in the midst of toggling it.
-    BOOL togglingFullScreen_;
-
-    // True while entering lion fullscreen (the animation is going on)
-    BOOL togglingLionFullScreen_;
-
-    // Instant Replay widgets.
-    IBOutlet NSSlider* irSlider;
-    IBOutlet NSTextField* earliestTime;
-    IBOutlet NSTextField* latestTime;
-    IBOutlet NSTextField* currentTime;
-
-    PasteboardHistoryWindowController* pbHistoryView;
-    AutocompleteView* autocompleteView;
-
-    // True if preBottomBarFrame is valid.
-    BOOL pbbfValid;
-
-    NSTimer* fullScreenTabviewTimer_;
-
-    // This is a hack to support old applescript code that set the window size
-    // before adding a session to it, which doesn't really make sense now that
-    // textviews and windows are loosely coupled.
-    int nextSessionRows_;
-    int nextSessionColumns_;
-
-    BOOL tempDisableProgressIndicators_;
-
-    int windowType_;
-    int savedWindowType_;  // Window type before entering fullscreen. Only relevant if in/entering fullscreen.
-    BOOL isHotKeyWindow_;
-    BOOL haveScreenPreference_;
-    int screenNumber_;
-    BOOL isOrderedOut_;
-
-    // Window number, used for keyboard shortcut to select a window.
-    // This value is 0-based while the UI is 1-based.
-    int number_;
-
-    // True if this window was created by dragging a tab from another window.
-    // Affects how its size is set when the number of tabview items changes.
-    BOOL wasDraggedFromAnotherWindow_;
-    BOOL fullscreenTabs_;
-
-    // In the process of zooming in Lion or later.
-    BOOL zooming_;
-
-    // Time since 1970 of last window resize
-    double lastResizeTime_;
-
-    BOOL temporarilyShowingTabs_;
-
-    NSMutableSet *broadcastViewIds_;
-    NSTimeInterval findCursorStartTime_;
-
-    // Accumulated pinch magnification amount.
-    double cumulativeMag_;
-
-    // Time of last magnification change.
-    NSTimeInterval lastMagChangeTime_;
-
-    // In 10.7 style full screen mode
-    BOOL lionFullScreen_;
-
-    // Drawer view, which only exists for window_type normal.
-    NSDrawer *drawer_;
-
-    // Toolbelt view which goes in the drawer, or perhaps other places in the future.
-    ToolbeltView *toolbelt_;
-
-    IBOutlet NSPanel *coprocesssPanel_;
-    IBOutlet NSButton *coprocessOkButton_;
-    IBOutlet NSComboBox *coprocessCommand_;
-
-    NSDictionary *lastArrangement_;
-    BOOL wellFormed_;
-
-    BOOL exitingLionFullscreen_;
-
-    // If positive, then any window resizing that happens is driven by tmux and
-    // shoudn't be reported back to tmux as a user-originated resize.
-    int tmuxOriginatedResizeInProgress_;
-
-    BOOL liveResize_;
-    BOOL postponedTmuxTabLayoutChange_;
-	// A unique string for this window. Used for tmux to remember which window
-	// a tmux window should be opened in as a tab. A window restored from a
-	// saved arrangement will also restore its guid.
-	NSString *terminalGuid_;
-
-	// Recalls if this was a hide-after-opening window.
-	BOOL hideAfterOpening_;
-
-    // After dealloc starts, the restorable state should not be updated
-    // because the window's state is a shambles.
-    BOOL doNotSetRestorableState_;
-
-	// For top/left/bottom of screen windows, this is the size it really wants to be.
-	// Initialized to -1 in -init and then set to the size of the first session forever.
-    int desiredRows_, desiredColumns_;
-}
-
+// Draws a mock-up of a window arrangement into the current graphics context.
+// |frames| gives an array of NSValue's having NSRect values for each screen,
+// giving the screens' coordinates in the model.
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
                   screenFrames:(NSArray *)frames;
+
+// Returns a new terminal window restored from an arrangement, but with no
+// tabs/sessions.
++ (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary*)arrangement;
+
+// Returns a new terminal window restored from an arrangement, with
+// tabs/sessions also restored..
++ (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement;
 
 // Initialize a new PseudoTerminal.
 // smartLayout: If true then position windows using the "smart layout"
@@ -285,20 +58,24 @@ NSWindowDelegate,
                windowType:(int)windowType
                    screen:(int)screenIndex;
 
+// isHotkey indicates if this is a hotkey window, which recieves special
+// treatment and must be unique.
 - (id)initWithSmartLayout:(BOOL)smartLayout
                windowType:(int)windowType
                    screen:(int)screenNumber
                  isHotkey:(BOOL)isHotkey;
+
+// If a PseudoTerminal is created with -init (such as happens with AppleScript)
+// this must be called before it is used.
 - (void)finishInitializationWithSmartLayout:(BOOL)smartLayout
                                  windowType:(int)windowType
                                      screen:(int)screenNumber
                                    isHotkey:(BOOL)isHotkey;
 
-- (PseudoTerminal *)terminalDraggedFromAnotherWindowAtPoint:(NSPoint)point;
-
 // The window's original screen.
 - (NSScreen*)screen;
 
+// Sets the window frame. Value should have an NSRect value.
 - (void)setFrameValue:(NSValue *)value;
 
 // The PTYWindow for this controller.
@@ -313,87 +90,34 @@ NSWindowDelegate,
 // Set the tab bar's look & feel
 - (void)setTabBarStyle;
 
-// Get term number
-- (int)number;
-
-// Returns true if the window is fullscreen in either Lion-style or pre-Lion-style fullscreen.
-- (BOOL)anyFullScreen;
-
-// Returns true if the window is in 10.7-style fullscreen.
-- (BOOL)lionFullScreen;
-
 // Fix the window frame for fullscreen, top, bottom windows.
 - (void)canonicalizeWindowFrame;
 
 // Make the tab at [sender tag] the foreground tab.
 - (void)selectSessionAtIndexAction:(id)sender;
 
-// Return the index of a tab or NSNotFound.
-// This method is used, for example, in iTermExpose, where PTYTabs are shown
-// side by side, and one needs to determine which index it has, so it can be
-// selected when leaving iTerm expose.
-- (NSInteger)indexOfTab:(PTYTab*)aTab;
-
+// A unique number for this window assigned by finishInitializationWithSmartLayout.
 - (NSString *)terminalGuid;
+
+// Miniaturizes the window and marks it as a hide-after-opening window (which
+// will be saved in window arrangements).
 - (void)hideAfterOpening;
 
 // Open a new tab with the bookmark given by the guid in
 // [sender representedObject]. Used by menu items in the Bookmarks menu.
 - (void)newSessionInTabAtIndex:(id)sender;
 
-// Kill tmux window if applicable, or close a tab and resize/close the window if needed.
-- (void)closeTab:(PTYTab*)aTab;
-// If soft is true, don't kill tmux session. Otherwise is just like closeTab.
-- (void)closeTab:(PTYTab *)aTab soft:(BOOL)soft;
-// Close a tab and resize/close the window if needed.
-- (void)removeTab:(PTYTab *)aTab;
-
-// Get the window type
-- (int)windowType;
-
-// Close a session
-- (void)closeSession:(PTYSession *)aSession;
-
-// Close a session but don't kill the underlying window pane if it's a tmux session.
-- (void)softCloseSession:(PTYSession *)aSession;
-
+// Toggles visibility of fullscreen tab bar.
 - (void)toggleFullScreenTabBar;
-
-- (void)invalidateRestorableState;
-
-- (void)closeSessionWithConfirmation:(PTYSession *)aSession;
 
 // Is there a saved scroll position?
 - (BOOL)hasSavedScrollPosition;
 
-// Return the number of sessions in this window.
-- (int)numberOfTabs;
-
-// Return the foreground tab
-- (PTYTab*)currentTab;
-
-// accessor for foreground session.
-- (PTYSession *)currentSession;
-
-// Set the window title to the name of the current session.
-- (void)setWindowTitle;
-
 // Set the window title to 'title'.
 - (void)setWindowTitle:(NSString *)title;
 
-// Is the window title transient?
-- (BOOL)tempTitle;
-
-// Set the window title to non-transient.
-- (void)resetTempTitle;
-
 // Sessions in the broadcast group.
 - (NSArray *)broadcastSessions;
-
-// Call writeTask: for each session's shell with the given data.
-- (void)sendInputToAllSessions:(NSData *)data;
-
-- (BOOL)useTransparency;
 
 // Enter full screen mode in the next mainloop.
 - (void)delayedEnterFullscreen;
@@ -402,72 +126,37 @@ NSWindowDelegate,
 - (void)toggleTraditionalFullScreenMode;
 
 // accessor
-- (BOOL)fullScreen;
 - (BOOL)fullScreenTabControl;
 
-// Last time the window was resized.
-- (NSDate *)lastResizeTime;
-
+// Should the tab bar be shown?
 - (BOOL)tabBarShouldBeVisible;
+
+// If n tabs were added, should the tab bar then be shown?
 - (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)n;
-- (BOOL)scrollbarShouldBeVisible;
-
-// Called by VT100Screen when it wants to resize a window for a
-// session-initiated resize. It resizes the session, then the window, then all
-// sessions to fit the new window size.
-- (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
-
-// Resize the window to a given pixel size. A nearby size will be used if possible, but minimum size
-// constraints will be respected.
-- (void)setFrameSize:(NSSize)newSize;
 
 // Open the session preference panel.
 - (void)editCurrentSession:(id)sender;
-- (void)editSession:(PTYSession*)session;
-
-// Construct the right-click context menu.
-- (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu;
-
-// setters
-- (void)enableBlur:(double)radius;
-- (void)disableBlur;
-
-// Set the text color for a tab control's name.
-- (void)setLabelColor:(NSColor *)color forTabViewItem:tabViewItem;
-
-// Set background color for tab chrome.
-- (void)setTabColor:(NSColor *)color forTabViewItem:(NSTabViewItem*)tabViewItem;
-- (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
-
-// accessor
-- (PTYTabView *)tabView;
 
 // Are we in in IR?
 - (BOOL)inInstantReplay;
 
-// Toggle IR bar.
-- (void)showHideInstantReplay;
-
 // Move backward/forward in time by one frame.
 - (void)irAdvance:(int)dir;
-
-// Can progress indicators be shown? They're turned off during animation of the tabbar.
-- (BOOL)disableProgressIndicators;
 
 // Does any session want to be prompted for closing?
 - (BOOL)promptOnClose;
 
+// Accessor for toolbelt view.
 - (ToolbeltView *)toolbelt;
-////////////////////////////////////////////////////////////////////////////////
-// NSTextField Delegate Methods
+
+#pragma mark - NSTextField Delegate Methods
 
 // Called when return or tab is pressed in the bottombar text field or the command
 // field.
 - (void)controlTextDidEndEditing:(NSNotification *)aNotification;
 
+#pragma mark - NSWindowController Delegate Methods
 
-////////////////////////////////////////////////////////////////////////////////
-// NSWindowController Delegate Methods
 // Called when a window is unhidden.
 - (void)windowDidDeminiaturize:(NSNotification *)aNotification;
 
@@ -511,16 +200,13 @@ NSWindowDelegate,
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender
                         defaultFrame:(NSRect)defaultFrame;
 
-
-////////////////////////////////////////////////////////////////////////////////
-// PTYWindow Delegate Methods
+#pragma mark - PTYWindow Delegate Methods
 
 // Set the window's initial frame. Unofficial protocol.
 - (void)windowWillShowInitial;
 
 
-////////////////////////////////////////////////////////////////////////////////
-// Tab View Delegate Methods
+#pragma mark - Tab View Delegate Methods
 
 // Called before a tab view item is selected.
 - (void)tabView:(NSTabView *)tabView
@@ -606,39 +292,15 @@ NSWindowDelegate,
 // Fill in a path with the tabbar color.
 - (void)fillPath:(NSBezierPath*)path;
 
-// Resize window to be just large enough to fit the largest tab without changing session sizes.
-- (void)fitWindowToTabs;
-
-// If excludeTmux is NO, then this is just like fitWindowToTabs. Otherwise, we resize
-// the window to be just large enough to fit the largest tab without changing session sizes,
-// but ignore tmux tabs when looking for the largest tab (assuming that a pending resize has
-// been sent to the server, this lets you anticipate its response). Does nothing if all tabs
-// are tmux tabs.
+// If excludeTmux is NO, then this is just like fitWindowToTabs. Otherwise, we
+// resize the window to be just large enough to fit the largest tab without
+// changing session sizes, but ignore tmux tabs when looking for the largest
+// tab (assuming that a pending resize has been sent to the server, this lets
+// you anticipate its response). Does nothing if all tabs are tmux tabs.
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux;
-
-// Fit the window to exactly fit a tab of the given size. Returns true if the window was resized.
-- (BOOL)fitWindowToTabSize:(NSSize)tabSize;
-
-// Force the window size to change to be just large enough to fit this session.
-- (void)fitWindowToTab:(PTYTab*)tab;
-
-// Replace a replay session with a live session.
-- (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession;
 
 // Update irBar.
 - (void)updateInstantReplay;
-
--(void)replaySession:(PTYSession *)session;
-
-// WindowControllerInterface protocol
-- (void)windowSetFrameTopLeftPoint:(NSPoint)point;
-- (void)windowPerformMiniaturize:(id)sender;
-- (void)windowDeminiaturize:(id)sender;
-- (void)windowOrderFront:(id)sender;
-- (void)windowOrderBack:(id)sender;
-- (BOOL)windowIsMiniaturized;
-- (NSRect)windowFrame;
-- (NSScreen*)windowScreen;
 
 // Show or hide as needed for current session.
 - (void)showOrHideInstantReplayBar;
@@ -646,47 +308,19 @@ NSWindowDelegate,
 // Maximize or unmaximize the active pane
 - (void)toggleMaximizeActivePane;
 
-// Key actions
-- (void)newWindowWithBookmarkGuid:(NSString*)guid;
-- (void)newTabWithBookmarkGuid:(NSString*)guid;
-
-// Splitting
-- (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Profile*)theBookmark;
-- (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid;
-- (void)splitVertically:(BOOL)isVertical withBookmark:(Profile*)theBookmark targetSession:(PTYSession*)targetSession;
-- (void)splitVertically:(BOOL)isVertical
-                 before:(BOOL)before
-          addingSession:(PTYSession*)newSession
-          targetSession:(PTYSession*)targetSession
-           performSetup:(BOOL)performSetup;
-
-
-// Do some cleanup after a session is removed.
-- (void)sessionWasRemoved;
-
 // Return the smallest allowable width for this terminal.
 - (float)minWidth;
 
-+ (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary*)arrangement;
-+ (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement;
+// Load an arrangement into an empty window.
 - (void)loadArrangement:(NSDictionary *)arrangement;
+
+// Returns the arrangement for this window.
 - (NSDictionary*)arrangement;
+
+// Update a window's tmux layout, such as when fonts or scrollbar sizes change.
 - (void)refreshTmuxLayoutsAndWindow;
-- (NSArray *)uniqueTmuxControllers;
-- (void)tmuxTabLayoutDidChange:(BOOL)nontrivialChange;
-- (NSSize)tmuxCompatibleSize;
-- (void)loadTmuxLayout:(NSMutableDictionary *)parseTree
-                window:(int)window
-        tmuxController:(TmuxController *)tmuxController
-                  name:(NSString *)name;
 
-- (void)beginTmuxOriginatedResize;
-- (void)endTmuxOriginatedResize;
-
-- (void)appendTab:(PTYTab*)theTab;
-
-- (void)getSessionParameters:(NSMutableString *)command withName:(NSMutableString *)name;
-
+// All tabs in this window.
 - (NSArray*)tabs;
 
 // Up to one window may be the hotkey window, which is toggled with the system-wide
@@ -694,40 +328,26 @@ NSWindowDelegate,
 - (BOOL)isHotKeyWindow;
 - (void)setIsHotKeyWindow:(BOOL)value;
 
-- (BOOL)isOrderedOut;
-- (void)setIsOrderedOut:(BOOL)value;
+// Updates the window when screen parameters (number of screens, resolutions,
+// etc.) change.
 - (void)screenParametersDidChange;
 
-// setter
+// Changes how input is broadcast.
 - (void)setBroadcastMode:(BroadcastMode)mode;
-- (void)toggleBroadcastingInputToSession:(PTYSession *)session;
-- (BroadcastMode)broadcastMode;
-- (BOOL)broadcastInputToSession:(PTYSession *)session;
 
+// Change split selection mode for all sessions in this window.
 - (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session;
 
-- (void)setDimmingForSession:(PTYSession *)aSession;
-- (void)setDimmingForSessions;
-
-// Return the name of the foreground session.
-- (NSString *)currentSessionName;
+// Change visibility of menu bar (but only if it should be changed--may do
+// nothing if the menu bar is on a different screen, for example).
 - (void)hideMenuBar;
 - (void)showMenuBar;
-
-// Set the session name. If theSessionName is nil then set it to the pathname
-// or "Finish" if it's closed.
-- (void)setName:(NSString*)theName forSession:(PTYSession*)aSession;
 
 // Cause every session in this window to reload its bookmark.
 - (void)reloadBookmarks;
 
-// accessor
-- (PSMTabBarControl*)tabBarControl;
-
 // Return all sessions in all tabs.
 - (NSArray*)allSessions;
-
-- (void)insertSession:(PTYSession *)aSession atIndex:(int)anIndex;
 
 #pragma mark - IBActions
 
@@ -804,11 +424,8 @@ NSWindowDelegate,
 - (void)changeTabColorToMenuAction:(id)sender;
 - (void)moveSessionToWindow:(id)sender;
 
-- (void)incrementBadge;
+#pragma mark - Key Value Coding
 
-@end
-
-@interface PseudoTerminal (KeyValueCoding)
 // IMPORTANT:
 // Never remove methods from here because it will break existing Applescript.
 // Be careful making any changes that might not be backward-compatible.
@@ -836,7 +453,6 @@ NSWindowDelegate,
      forObjectType:(iTermObjectType)objectType;
 -(void)appendSession:(PTYSession *)object;
 -(void)removeFromSessionsAtIndex:(unsigned)index;
--(NSArray*)sessions;
 -(void)setSessions: (NSArray*)sessions;
 -(void)replaceInSessions:(PTYSession *)object atIndex:(unsigned)index;
 -(void)addInSessions:(PTYSession *)object;
@@ -852,12 +468,7 @@ NSWindowDelegate,
 // a class method to provide the keys for KVC:
 +(NSArray*)kvcKeys;
 
-@end
-
-@interface PseudoTerminal (ScriptingSupport)
-
-// Object specifier
-- (NSScriptObjectSpecifier *)objectSpecifier;
+#pragma mark - Scripting support
 
 -(void)handleSelectScriptCommand: (NSScriptCommand *)command;
 

@@ -52,7 +52,8 @@
         return;
     }
     PTYTab *theTab = [movingSession tab];
-    PseudoTerminal *term = [[theTab realParentWindow] terminalDraggedFromAnotherWindowAtPoint:point];
+    NSWindowController<iTermWindowController> * term =
+        [[theTab realParentWindow] terminalDraggedFromAnotherWindowAtPoint:point];
 
     SessionView *oldView = [movingSession view];
     [oldView retain];

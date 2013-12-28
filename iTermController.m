@@ -794,7 +794,30 @@ static BOOL initDone = NO;
     [self _newSessionsInManyWindowsInMenu:[sender menu]];
 }
 
-- (PseudoTerminal*)_openNewSessionsFromMenu:(NSMenu*)parent inNewWindow:(BOOL)newWindow usedGuids:(NSMutableSet*)usedGuids bookmarks:(NSMutableArray*)bookmarks
+- (PseudoTerminal *)terminalWithTab:(PTYTab *)tab
+{
+    for (PseudoTerminal *term in [self terminals]) {
+        if ([[term tabs] containsObject:tab]) {
+            return term;
+        }
+    }
+    return nil;
+}
+
+- (PseudoTerminal *)terminalWithSession:(PTYSession *)session
+{
+    for (PseudoTerminal *term in [self terminals]) {
+        if ([[term sessions] containsObject:session]) {
+            return term;
+        }
+    }
+    return nil;
+}
+
+- (PseudoTerminal *)_openNewSessionsFromMenu:(NSMenu*)parent
+                                 inNewWindow:(BOOL)newWindow
+                                   usedGuids:(NSMutableSet*)usedGuids
+                                   bookmarks:(NSMutableArray*)bookmarks
 {
     BOOL doOpen = usedGuids == nil;
     if (doOpen) {
@@ -823,7 +846,7 @@ static BOOL initDone = NO;
         for (Profile* bookmark in bookmarks) {
             if (!term) {
                 PTYSession* session = [self launchBookmark:bookmark inTerminal:nil];
-                term = [[session tab] realParentWindow];
+                term = [self terminalWithSession:session];
             } else {
                 [self launchBookmark:bookmark inTerminal:term];
             }
@@ -835,13 +858,18 @@ static BOOL initDone = NO;
 
 - (void)newSessionsInWindow:(id)sender
 {
-    [self _openNewSessionsFromMenu:[sender menu] inNewWindow:[sender isAlternate] usedGuids:nil bookmarks:nil];
+    [self _openNewSessionsFromMenu:[sender menu]
+                       inNewWindow:[sender isAlternate]
+                         usedGuids:nil
+                         bookmarks:nil];
 }
 
 - (void)newSessionsInNewWindow:(id)sender
 {
-    [self _openNewSessionsFromMenu:[sender menu] inNewWindow:YES
-                         usedGuids:nil bookmarks:nil];
+    [self _openNewSessionsFromMenu:[sender menu]
+                       inNewWindow:YES
+                         usedGuids:nil
+                         bookmarks:nil];
 }
 
 - (void)addBookmarksToMenu:(NSMenu *)aMenu withSelector:(SEL)selector openAllSelector:(SEL)openAllSelector startingAt:(int)startingAt
@@ -916,6 +944,16 @@ static BOOL initDone = NO;
     }
 }
 
+- (void)reloadAllBookmarks
+{
+    int n = [self numberOfTerminals];
+    for (int i = 0; i < n; ++i) {
+        PseudoTerminal* pty = [self terminalAtIndex:i];
+        [pty reloadBookmarks];
+    }
+}
+
+
 - (Profile *)defaultBookmark
 {
     Profile *aDict = [[ProfileModel sharedInstance] defaultBookmark];
@@ -937,9 +975,9 @@ static BOOL initDone = NO;
                                              windowType:WINDOW_TYPE_NORMAL
                                                  screen:[bookmark objectForKey:KEY_SCREEN] ? [[bookmark objectForKey:KEY_SCREEN] intValue] : -1
                                                isHotkey:NO] autorelease];
-        if ([[bookmark objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
-                [term hideAfterOpening];
-        }
+    if ([[bookmark objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
+        [term hideAfterOpening];
+    }
     [self addInTerminals:term];
     return term;
 }

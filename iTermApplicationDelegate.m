@@ -56,6 +56,7 @@ static NSString *ITERM2_FLAG = @"~/Library/Application Support/iTerm/version.txt
 static NSString *ITERM2_QUIET = @"~/Library/Application Support/iTerm/quiet";
 static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern indicator";
 NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPatternIndicatorChangedNotification";
+static NSString *const kMultiLinePasteWarningUserDefaultsKey = @"Multi-Line Paste Warning";
 static BOOL gStartupActivitiesPerformed = NO;
 // Prior to 8/7/11, there was only one window arrangement, always called Default.
 static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
@@ -63,6 +64,8 @@ static BOOL ranAutoLaunchScript = NO;
 static BOOL hasBecomeActive = NO;
 
 @interface iTermApplicationDelegate ()
+
+@property(nonatomic, readwrite) BOOL workspaceSessionActive;
 
 - (void)_updateToolbeltMenuItem;
 
@@ -95,45 +98,6 @@ static BOOL hasBecomeActive = NO;
 
     [ToolbeltView populateMenu:toolbeltMenu];
     [self _updateToolbeltMenuItem];
-}
-
-- (void)setFutureApplicationPresentationOptions:(int)flags unset:(int)antiflags
-{
-    if ([NSApp respondsToSelector:@selector(presentationOptions)]) {
-        // This crazy hackery is done so that we can use 10.6 and 10.7 features
-        // while compiling against the 10.5 SDK.
-
-        // presentationOptions =  [NSApp presentationOptions]
-        NSMethodSignature *presentationOptionsSignature = [object_getClass(NSApp)
-            instanceMethodSignatureForSelector:@selector(presentationOptions)];
-        NSInvocation *presentationOptionsInvocation = [NSInvocation
-            invocationWithMethodSignature:presentationOptionsSignature];
-        [presentationOptionsInvocation setTarget:NSApp];
-        [presentationOptionsInvocation setSelector:@selector(presentationOptions)];
-        [presentationOptionsInvocation invoke];
-
-        NSUInteger presentationOptions;
-        [presentationOptionsInvocation getReturnValue:&presentationOptions];
-
-        presentationOptions |= flags;
-        presentationOptions &= ~antiflags;
-
-        // [NSAppObj setPresentationOptions:presentationOptions];
-        NSMethodSignature *setSig = [object_getClass(NSApp) instanceMethodSignatureForSelector:@selector(setPresentationOptions:)];
-        NSInvocation *setInv = [NSInvocation invocationWithMethodSignature:setSig];
-        [setInv setTarget:NSApp];
-        [setInv setSelector:@selector(setPresentationOptions:)];
-        [setInv setArgument:&presentationOptions atIndex:2];
-        [setInv invoke];
-    } else {
-        // Emulate setPresentationOptions API for OS 10.5.
-        if (flags & NSApplicationPresentationAutoHideMenuBar) {
-            SetSystemUIMode(kUIModeAllHidden, kUIOptionAutoShowMenuBar);
-        } else if (antiflags & NSApplicationPresentationAutoHideMenuBar) {
-            SetSystemUIMode(kUIModeNormal, 0);
-        }
-
-    }
 }
 
 - (void)_performIdempotentStartupActivities
@@ -325,6 +289,25 @@ static BOOL hasBecomeActive = NO;
                afterDelay:0];
     [[NSNotificationCenter defaultCenter] postNotificationName:kApplicationDidFinishLaunchingNotification
                                                         object:nil];
+    
+    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                           selector:@selector(workspaceSessionDidBecomeActive:)
+                                                               name:NSWorkspaceSessionDidBecomeActiveNotification
+                                                             object:nil];
+    
+    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                           selector:@selector(workspaceSessionDidResignActive:)
+                                                               name:NSWorkspaceSessionDidResignActiveNotification
+                                                             object:nil];
+
+}
+
+- (void)workspaceSessionDidBecomeActive:(NSNotification *)notification {
+    _workspaceSessionActive = YES;
+}
+
+- (void)workspaceSessionDidResignActive:(NSNotification *)notification {
+    _workspaceSessionActive = NO;
 }
 
 - (BOOL)applicationShouldTerminate:(NSNotification *)theNotification
@@ -625,7 +608,9 @@ static BOOL hasBecomeActive = NO;
 
         aboutController = nil;
         launchTime_ = [[NSDate date] retain];
+        _workspaceSessionActive = YES;
     }
+    
     return self;
 }
 
@@ -928,12 +913,6 @@ static BOOL hasBecomeActive = NO;
             return;
         }
     }
-    for (PseudoTerminal* term in [self terminals]) {
-        if ([term isOrderedOut]) {
-            //NSLog(@"term %p was orphaned, order front.", term);
-            [[term window] orderFront:nil];
-        }
-    }
 }
 
 // font control
@@ -1029,6 +1008,17 @@ static BOOL hasBecomeActive = NO;
                 defaultBytes:16
                     delayKey:@"SlowPasteDelayBetweenCalls"
                 defaultDelay:0.125];
+}
+
+- (IBAction)toggleMultiLinePasteWarning:(id)sender {
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setBool:![userDefaults boolForKey:kMultiLinePasteWarningUserDefaultsKey]
+                   forKey:kMultiLinePasteWarningUserDefaultsKey];
+}
+
+- (BOOL)warnBeforeMultiLinePaste {
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults boolForKey:kMultiLinePasteWarningUserDefaultsKey];
 }
 
 - (IBAction)maximizePane:(id)sender
@@ -1294,6 +1284,32 @@ static BOOL hasBecomeActive = NO;
                          params:&params];
 }
 
+- (NSMenu *)downloadsMenu
+{
+    if (!downloadsMenu_) {
+        downloadsMenu_ = [[[NSMenuItem alloc] init] autorelease];
+        downloadsMenu_.title = @"Downloads";
+        NSMenu *mainMenu = [[NSApplication sharedApplication] mainMenu];
+        [mainMenu insertItem:downloadsMenu_
+                     atIndex:mainMenu.itemArray.count - 1];
+        [downloadsMenu_ setSubmenu:[[NSMenu alloc] initWithTitle:@"Downloads"]];
+    }
+    return [downloadsMenu_ submenu];
+}
+
+- (NSMenu *)uploadsMenu
+{
+    if (!uploadsMenu_) {
+        uploadsMenu_ = [[[NSMenuItem alloc] init] autorelease];
+        uploadsMenu_.title = @"Uploads";
+        NSMenu *mainMenu = [[NSApplication sharedApplication] mainMenu];
+        [mainMenu insertItem:uploadsMenu_
+                     atIndex:mainMenu.itemArray.count - 1];
+        [uploadsMenu_ setSubmenu:[[NSMenu alloc] initWithTitle:@"Uploads"]];
+    }
+    return [uploadsMenu_ submenu];
+}
+
 // This is called whenever a tab becomes key or logging starts/stops.
 - (void)reloadSessionMenus:(NSNotification *)aNotification
 {
@@ -1363,6 +1379,9 @@ static BOOL hasBecomeActive = NO;
             [menuItem setState:[term fullScreenTabControl] ? NSOnState : NSOffState];
             return YES;
         }
+    } else if ([menuItem action] == @selector(toggleMultiLinePasteWarning:)) {
+        menuItem.state = [self warnBeforeMultiLinePaste] ? NSOnState : NSOffState;
+        return YES;
     } else {
         return YES;
     }

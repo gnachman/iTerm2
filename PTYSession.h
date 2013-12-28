@@ -1,28 +1,4 @@
-/*
- **  PTYSession.h
- **
- **  Copyright (c) 2002, 2003
- **
- **  Author: Fabian, Ujwal S. Setlur
- **
- **  Project: iTerm
- **
- **  Description: Implements the model class for a terminal session.
- **
- **  This program is free software; you can redistribute it and/or modify
- **  it under the terms of the GNU General Public License as published by
- **  the Free Software Foundation; either version 2 of the License, or
- **  (at your option) any later version.
- **
- **  This program is distributed in the hope that it will be useful,
- **  but WITHOUT ANY WARRANTY; without even the implied warranty of
- **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- **  GNU General Public License for more details.
- **
- **  You should have received a copy of the GNU General Public License
- **  along with this program; if not, write to the Free Software
- **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
+// Implements the model class for a terminal session.
 
 #import "DVR.h"
 #import "FindViewController.h"
@@ -31,6 +7,7 @@
 #import "PTYTask.h"
 #import "PTYTextView.h"
 #import "PasteViewController.h"
+#import "Popup.h"
 #import "ProfileModel.h"
 #import "TextViewWrapper.h"
 #import "TmuxController.h"
@@ -42,8 +19,8 @@
 #import <Foundation/Foundation.h>
 #include <sys/time.h>
 
-#define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
-#define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
+// Posted when the tmux font changes. Window layouts will need to be updated.
+extern NSString *const kPTYSessionTmuxFontDidChange;
 
 @class FakeWindow;
 @class PTYScrollView;
@@ -51,7 +28,6 @@
 @class PTYTextView;
 @class PasteContext;
 @class PreferencePanel;
-@class PseudoTerminal;
 @class VT100Screen;
 @class VT100Terminal;
 @class iTermController;
@@ -78,196 +54,11 @@ typedef enum {
 @interface PTYSession : NSResponder <
     FindViewControllerDelegate,
     PasteViewControllerDelegate,
+    PopupDelegate,
     PTYTaskDelegate,
     PTYTextViewDelegate,
     TmuxGatewayDelegate,
     VT100ScreenDelegate>
-{
-    // Owning tab.
-    PTYTab* tab_;
-
-    // tty device
-    NSString* tty;
-
-    // name can be changed by the host.
-    NSString* name;
-
-    // defaultName cannot be changed by the host.
-    NSString* defaultName;
-
-    // The window title that should be used when this session is current. Otherwise defaultName
-    // should be used.
-    NSString* windowTitle;
-    
-    // The window title stack
-    NSMutableArray* windowTitleStack;
-    
-    // The icon title stack
-    NSMutableArray* iconTitleStack;
-
-    // The original bookmark name.
-    NSString* bookmarkName;
-    
-    // Shell wraps the underlying file descriptor pair.
-    PTYTask* SHELL;
-
-    // Terminal processes vt100 codes.
-    VT100Terminal* TERMINAL;
-
-    // The value of the $TERM environment var.
-    NSString* TERM_VALUE;
-
-    // The value of the $COLORFGBG environment var.
-    NSString* COLORFGBG_VALUE;
-
-    // The current screen contents.
-    VT100Screen* SCREEN;
-
-    // Has the underlying connection been closed?
-    BOOL EXIT;
-
-    // The view in which this session's objects live.
-    SessionView* view;
-
-    // The scrollview in which this session's contents are displayed.
-    PTYScrollView* SCROLLVIEW;
-
-    // A view that wraps the textview. It is the scrollview's document. This exists to provide a
-    // top margin above the textview.
-    TextViewWrapper* WRAPPER;
-
-    // The view that contains all the visible text in this session.
-    PTYTextView* TEXTVIEW;
-
-    // This timer fires periodically to redraw TEXTVIEW, update the scroll position, tab appearance,
-    // etc.
-    NSTimer *updateTimer;
-
-    // Anti-idle timer that sends a character every so often to the host.
-    NSTimer* antiIdleTimer;
-
-    // The code to send in the anti idle timer.
-    char ai_code;
-
-    // If true, close the tab when the session ends.
-    BOOL autoClose;
-
-    // True if ambiguous-width characters are double-width.
-    BOOL doubleWidth;
-
-    // True if mouse movements are sent to the host.
-    BOOL xtermMouseReporting;
-
-    // This is not used as far as I can tell.
-    int bell;
-
-    // True if background image should be tiled
-    BOOL backgroundImageTiled;
-
-    // Filename of background image.
-    NSString* backgroundImagePath;
-
-    // Bookmark currently in use.
-    NSDictionary* addressBookEntry;
-
-    // The bookmark the session was originally created with so those settings can be restored if
-    // needed.
-    Profile* originalAddressBookEntry;
-
-    // Growl stuff
-    iTermGrowlDelegate* gd;
-
-    // Status reporting
-    struct timeval lastInput, lastOutput;
-
-    // Time that the tab label was last updated.
-    struct timeval lastUpdate;
-
-    // Does the session have new output? Used by -[PTYTab setLabelAttributes] to color the tab's title
-    // appropriately.
-    BOOL newOutput;
-
-    // Is the session idle? Used by setLableAttribute to send a growl message when processing ends.
-    BOOL growlIdle;
-
-    // Is there new output for the purposes of growl notifications? They run on a different schedule
-    // than tab colors.
-    BOOL growlNewOutput;
-
-    // Has this session's bookmark been divorced from the profile in the ProfileModel? Changes
-    // in this bookmark may happen indepentendly of the persistent bookmark.
-    bool isDivorced;
-
-    // A digital video recorder for this session that implements the instant replay feature. These
-    // are non-null while showing instant replay.
-    DVR* dvr_;
-    DVRDecoder* dvrDecoder_;
-
-    // Set only if this is not a live session (we are showing instant replay). Is a pointer to the
-    // hidden live session while looking at the past.
-    PTYSession* liveSession_;
-
-    // Is the update timer's callback currently running?
-    BOOL timerRunning_;
-
-    // Paste from the head of this string from a timer until it's empty.
-    NSMutableString* slowPasteBuffer;
-    NSTimer* slowPasteTimer;
-
-    // The name of the foreground job at the moment as best we can tell.
-    NSString* jobName_;
-
-    // Ignore resize notifications. This would be set because the session's size musn't be changed
-    // due to temporary changes in the window size, as code later on may need to know the session's
-    // size to set the window size properly.
-    BOOL ignoreResizeNotifications_;
-
-    // Last time this session became active
-    NSDate* lastActiveAt_;
-
-    // Time session was created
-    NSDate* creationDate_;
-
-    // After receiving new output, we keep running the updateDisplay timer for a few seconds to catch
-    // changes in job name.
-    NSDate* updateDisplayUntil_;
-
-    // If not nil, we're aggregating text to append to a pasteboard. The pasteboard will be
-    // updated when this is set to nil.
-    NSString *pasteboard_;
-    NSMutableData *pbtext_;
-
-    // The current line of text, for checking against triggers if any.
-    NSMutableString *triggerLine_;
-
-    // The current triggers.
-    NSMutableArray *triggers_;
-
-    // Does the terminal think this session is focused?
-    BOOL focused_;
-
-    FindContext *tailFindContext_;
-    NSTimer *tailFindTimer_;
-
-    enum {
-        TMUX_NONE,
-        TMUX_GATEWAY,
-        TMUX_CLIENT
-    } tmuxMode_;
-    TmuxGateway *tmuxGateway_;
-    TmuxController *tmuxController_;
-    int tmuxPane_;
-    BOOL tmuxLogging_;  // log to gateway client
-    BOOL tmuxSecureLogging_;
-
-    NSArray *sendModifiers_;
-    NSMutableArray *eventQueue_;
-    PasteViewController *pasteViewController_;
-    PasteContext *pasteContext_;
-
-    NSInteger requestAttentionId_;  // Last request-attention identifier
-    VT100ScreenMark *lastMark_;
-}
 
 @property(nonatomic, assign) BOOL alertOnNextMark;
 
@@ -344,6 +135,7 @@ typedef enum {
 
 // Preferences
 - (void)setPreferencesFromAddressBookEntry: (NSDictionary *)aePrefs;
+- (void)loadInitialColorTable;
 
 // PTYTask
 - (void)writeTask:(NSData*)data;
@@ -365,7 +157,6 @@ typedef enum {
 - (void)pageDown:(id)sender;
 - (void)paste:(id)sender;
 - (void)pasteString:(NSString *)str flags:(int)flags;
-- (void)pasteSlowly:(id)sender;
 - (void)deleteBackward:(id)sender;
 - (void)deleteForward:(id)sender;
 - (void)textViewDidChangeSelection: (NSNotification *)aNotification;

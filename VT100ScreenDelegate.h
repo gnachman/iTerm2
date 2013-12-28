@@ -15,6 +15,9 @@
 // A change was made to the screen's contents which could cause a trigger to fire.
 - (void)screenTriggerableChangeDidOccur;
 
+// Called when the screen and terminal's attributes are reset
+- (void)screenDidReset;
+
 // Returns if the profile name should be included in the window title.
 - (BOOL)screenShouldSyncTitle;
 
@@ -52,10 +55,6 @@
 
 // Returns the session's current name
 - (NSString *)screenName;
-
-// The delegate should check the current working directory and associate it with |lineNumber|, since
-// it may have changed. If |directory| is nil then the current directory is found and used.
-- (void)screenLogWorkingDirectoryAtLine:(long long)lineNumber withDirectory:(NSString *)directory;
 
 // Returns if the window is full-screen.
 - (BOOL)screenWindowIsFullscreen;
@@ -162,6 +161,7 @@
 
 - (void)screenIncrementBadge;
 - (void)screenRequestUserAttention:(BOOL)isCritical;
+- (NSString *)screenCurrentWorkingDirectory;
 
 // Show/hide the cursor.
 - (void)screenSetCursorVisible:(BOOL)visible;

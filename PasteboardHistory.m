@@ -28,9 +28,11 @@
 
 #include <wctype.h>
 #import "PasteboardHistory.h"
-#import "iTermController.h"
 #import "NSDateFormatterExtras.h"
+#import "PopupModel.h"
 #import "PreferencePanel.h"
+#import "iTermController.h"
+
 #define PBHKEY_ENTRIES @"Entries"
 #define PBHKEY_VALUE @"Value"
 #define PBHKEY_TIMESTAMP @"Timestamp"
@@ -263,7 +265,7 @@
         [minuteRefreshTimer_ invalidate];
         minuteRefreshTimer_ = nil;
     }
-    [self setSession:nil];
+    [self setDelegate:nil];
 }
 
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
