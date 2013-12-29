@@ -1,3 +1,4 @@
+<html>
 <head>
   <meta charset="utf-8">
   <meta name="AppleTitle" content="iTerm2 Help"></meta>
@@ -454,11 +455,10 @@ html.no-js .back-to-top { float: right; }
   <li><a href="#/section/documentation/preferences">Preferences</a></li>
   <li><a href="#/section/documentation/hidden_settings">Hidden Settings</a></li>
   <li><a href="#/section/documentation/scripting">Scripting</a></li>
-  <li><a href="#/section/documentation/links">Links</a></li>
   <li><a href="#/section/documentation/fonts">Fonts</a></li>
-  <li><a href="#/section/documentation/shell_tips">Shell Tips</a></li>
   <li><a href="#/section/documentation/escape_codes">Proprietary Escape Codes</a></li>
 </ul>
+
 
 <p><br/>
 <a name="/section/documentation/general"> </a></p>
@@ -466,6 +466,7 @@ html.no-js .back-to-top { float: right; }
 <h2>General Usage</h2>
 
 <hr/>
+
 
 <h4>Tabs</h4>
 
@@ -488,26 +489,27 @@ html.no-js .back-to-top { float: right; }
 <li>The <i>New</i> button allows you to open a new tab. If you have configured multiple profiles, it allows you to select one from a list.</li>
 <li>The <i>Info</i> button allows you to change the appearance of the current session.</li>
 <li>The <i>Close</i> button closes the current session, and may close the current window if it was the only session.</li>
-<li>The <i>Execute</i> field lets you to type in a command locally before sending it to the terminal. You can also type in a URL (including the scheme, such as <i>http://</i>), in which case the URL will be opened by the appropriate application. If you press TAB key instead of Enter after you type in the command, a new tab will be launched with your command. </li>
+<li>The <i>Execute</i> field lets you to type in a command locally before sending it to the terminal. You can also type in a URL (including the scheme, such as <i>http://</i>), in which case the URL will be opened by the appropriate application. If you press TAB key instead of Enter after you type in the command, a new tab will be launched with your command.</li>
 </ul>
+
 
 <p><br/>
 <br/></p>
 
 <h4>Info Panel</h4>
 
-<p>Info Panel lets you modify the apperance of a single session. Note that after you open this panel, your changes will not be reflected in the profile and profile changes will not be reflected in this session. </p>
+<p>Info Panel lets you modify the apperance of a single session. Note that after you open this panel, your changes will not be reflected in the profile and profile changes will not be reflected in this session.</p>
 
 <p><br/>
 <br/></p>
 
-<h4>Mouse</h4>
+<h4>Pointer</h4>
 
-<p>The primary use of the mouse in iTerm2 is to select text, and (by default) text is copied to the clipboard immediately upon being selected. You can click and drag to perform a normal selection. Double-clicking selects a whole word. Triple-clicking selects an entire line. Quadruple-clicking performs a "smart select", matching recognized strings such as URLs and email addresses.</p>
+<p>The primary use of the pointer in iTerm2 is to select text, and (by default) text is copied to the clipboard immediately upon being selected. You can click and drag to perform a normal selection. Double-clicking selects a whole word. Triple-clicking selects an entire line. Quadruple-clicking performs a "smart select", matching recognized strings such as URLs and email addresses.</p>
 
 <p>If you hold shift while clicking the existing selection is extended.</p>
 
-<p>If you hold cmd and click on a URL it will be opened. If you hold cmd and click on a filename, it will be opened. There is special support for Macvim, Textmate, and BBEdit when you cmd-click on a text file's name: if it is followed by a colon and line number, the file will be opened at that line number. The current directory is tracked if you have your shell prompt set the window title, <a href="http://www.faqs.org/docs/Linux-mini/Xterm-Title.html#toc4">as described here</a>. </p>
+<p>If you hold cmd and click on a URL it will be opened. If you hold cmd and click on a filename, it will be opened if it exists. There is special support for Macvim, Textmate, and BBEdit when you cmd-click on a text file's name: if it is followed by a colon and line number, the file will be opened at that line number. The current directory is tracked if you have your shell prompt set the window title, <a href="http://www.faqs.org/docs/Linux-mini/Xterm-Title.html#toc4">as described here</a>.</p>
 
 <p>If you hold cmd you can drag and drop selected text.</p>
 
@@ -535,6 +537,7 @@ html.no-js .back-to-top { float: right; }
 <li>Cmd+Option+Arrow keys navigate among split panes.</li>
 <li>Cmd+] and Cmd+[ navigates among split panes in order of use.</li>
 </ul>
+
 
 <p>You can configure any key combination to perform any action in two places: in Preferences &gt; Keys, you can define global key shortcuts that affect all profiles. In Preferences &gt; Profiles &gt; Keys, you can define key shortcuts that affect only a single profile.</p>
 
@@ -566,15 +569,16 @@ html.no-js .back-to-top { float: right; }
 
 <hr />
 
+
 <p>iTerm2 has many features that will change the way you interact with your terminal. This section outlines them briefly.
 <br/>
 <br/></p>
 
 <h4>Text Selection</h4>
 
-<p>There are two ways to select text to copy to the clipboard: you can use the mouse, or you can use the find feature's "mouseless copy" feature. Text selection by mouse is described above in <a href="/section/documentation/general">General Usage</a> section.</p>
+<p>There are two ways to select text to copy to the clipboard: you can use the mouse, or you can use the find feature's "mouseless copy" feature. Text selection by mouse is described above in <a href="#/section/documentation/general">General Usage</a> section.</p>
 
-<p>To select text without using the mouse, press cmd-f to open the find field. Enter the beginning of the text you wish to copy and the find feature will select it in your window. Then press tab and the end of the selection will advance by a word. To advance the beginning of the selection to the left, press shift-tab. At most one line of text can be selected this way.</p>
+<p>To select text without using the mouse, press cmd-f to open the find field. Enter the beginning fo the text you wish to copy and the find feature will select it in your window. Then press tab and the end of the selection will advance by a word. To advance the beginning of the selection to the left, press shift-tab. At most one line of text can be selected this way</p>
 
 <p><br/>
 <br/></p>
@@ -612,7 +616,8 @@ html.no-js .back-to-top { float: right; }
 <p>When you open the find field (cmd-f) there is a down-arrow on the left of the field by the magnifying glass. Clicking it opens a menu of options in which you can enable regular expression search. The <a href="http://userguide.icu-project.org/strings/regexp#TOC-Regular-Expression-Metacharacters">ICU syntax</a> is used.</p>
 
 <p><br/>
-<br/></p>
+<br/>
+<a name="/section/documentation/autocomplete"></a></p>
 
 <h4>Autocomplete</h4>
 
@@ -652,6 +657,7 @@ html.no-js .back-to-top { float: right; }
 set t_Co=256
 </pre>
 
+
 <p><br/>
 <br/></p>
 
@@ -671,7 +677,7 @@ set t_Co=256
 
 <h4>Smart Cursor Color</h4>
 
-<p>When using a block cursor, it's hard to pick a cursor color that's visible against every background color. If you enable Smart cursor color (under Preferences &gt; Profiles &gt; Colors) then the cursor color will be dynamically chosen to be visible against the text it is over and the adjacent cells. </p>
+<p>When using a block cursor, it's hard to pick a cursor color that's visible against every background color. If you enable Smart cursor color (under Preferences &gt; Profiles &gt; Colors) then the cursor color will be dynamically chosen to be visible against the text it is over and the adjacent cells.</p>
 
 <p><br/>
 <br/></p>
@@ -702,14 +708,44 @@ set t_Co=256
 <p>You can take a snapshot of your open windows, tabs, and panes with the menu option Window &gt; Save Window Arrangement. You can restore this configuration with Window &gt; Restore Window Arrangement, or you can choose to have it automatically restored when you start iTerm2 with Preferences &gt; General &gt; Open saved window arrangement.</p>
 
 <p><br/>
+<br/></p>
+
+<h4>Smart Selection</h4>
+
+<p>Performing a quad-click does a "smart selection," which selects text under the pointer in a way appropriate to its content. For example, URLs, quoted strings, and email addresses (among many other objects) are recognized and selected in their entirety.</p>
+
+<p><br/>
+<br/></p>
+
+<h4>Triggers</h4>
+
+<p>Triggers are user-configurable regular expressions with associated actions that run when text is received that matches the regex. Actions include highlighting the matching text, showing an alert, sending text back, and more.</p>
+
+<p><br/>
+<br/></p>
+
+<h4>Tmux Integration</h4>
+
+<p>iTerm2 is tightly integrated with tmux. The integration allows you to see tmux windows as native iTerm2 windows or tabs. The tmux prefix key is not needed, as native menu commands operate on tmux windows. For more information, please see the <a href="https://code.google.com/p/iterm2/wiki/TmuxIntegration">iTerm2-tmux Integration</a> document.</p>
+
+<p><br/>
+<br/></p>
+
+<h4>Coprocesses</h4>
+
+<p>Coprocesses are programs that run alongside iTerm2 and are bound to a single session. All output bound for the session is also routed as input to the coprocess. The coprocess's output acts like the user typing at the keyboard. Coprocesses can be used to automate tasks. For more information, see the <a href="http://www.iterm2.com/coprocesses.html#/section/home">Coprocess</a> document.</p>
+
+<p><br/>
 <br/>
 <a name="/section/documentation/menu_items">
 </a></p>
 
 <h2>Menu Items</h2>
 
-<p><hr/>
-<br/><br/></p>
+<hr/>
+
+
+<p><br/><br/></p>
 
 <h4>iTerm &gt; Secure Keyboard Entry</h4>
 
@@ -717,17 +753,33 @@ set t_Co=256
 
 <p><br/><br/></p>
 
+<h4>Shell &gt; New Tab with Current Profile</h4>
+
+<p>This creates a new tab using the same profile as the current session rather than the default profile.</p>
+
+<h4>Shell &gt; New Window/Tab</h4>
+
+<p>This creates a new window or tab with the default profile. If the current session is a tmux integration session, then the new window or tab will be a tmux window.</p>
+
 <h4>Shell &gt; Split Vertically/Horizontally</h4>
 
-<p>These menu items allow you to divide a tab into two or more split panes. The panes can be adjusted by dragging the line that divides them.</p>
+<p>These menu items allow you to divide a tab into two or more split panes. The panes can be adjusted by dragging the line that divides them. They will use the default profile.</p>
 
-<p><br/><br/></p>
+<h4>Shell &gt; Split Vertically/Horizontally with Current Profile</h4>
 
-<h4>Shell &gt; Send Input to All Sessions</h4>
+<p>These menu items allow you to divide a tab into two or more split panes. The panes can be adjusted by dragging the line that divides them. They will use the profile of the current session.</p>
 
-<p>When this is enabled, keyboard input will be sent to all tabs in the current window. Other windows are not affected.</p>
+<h4>Shell &gt; Broadcast Input &gt; ...</h4>
 
-<p><br/><br/></p>
+<p>These options allow you to send keyboard input to more than one session.</p>
+
+<h4>Shell &gt; Run/Stop Coprocess</h4>
+
+<p>Allows you to start and stop a coprocess linked to the current session. <a href="http://www.iterm2.com/coprocesses.html#/section/home">Learn more about coprocesses.</a></p>
+
+<h4>Shell &gt; tmux &gt; ...</h4>
+
+<p>These commands let you interact with the tmux integration. The tmux dashboard is a view that lets you see all your tmux sessions and windows at a glance, adjust which are visible, rename them, and change the current tmux session.</p>
 
 <h4>Shell &gt; Log &gt; Start/Stop</h4>
 
@@ -739,8 +791,6 @@ set t_Co=256
 
 <p>"Paste Escaping Special Characters" pastes the current string in the clipboard, but places a backslash before spaces and backslashes.</p>
 
-<p><br/><br/></p>
-
 <h4>Edit &gt; Paste Slowly</h4>
 
 <p>"Paste Slowly" pastes the current string in the clipboard, but it doesn't send the whole string at once. It is sent in batches of 16 bytes with a 125ms delay between batches. These values can be tweaked with hidden settings. For example:</p>
@@ -750,35 +800,48 @@ set t_Co=256
     defaults write com.googlecode.iterm2 SlowPasteDelayBetweenCalls -float 0.125
 </pre>
 
-<p><br/><br/></p>
 
 <h4>Edit &gt; Open Paste History...</h4>
 
 <p>"Open Paste History" opens a window showing up to the last 20 values that were copied or pasted in iTerm2. You can search its contents by typing a (non-necessarily-consecutive) subsequence of characters that appear in the value. You can use arrow keys and enter to make a selection, or you can click on an item to choose it, and it will be pasted. If you enable the <b>Save copy/pate history to disk</b> preference then these values will persist across sessions of iTerm2.</p>
 
+<h4>Edit &gt; Open Autocomplete...</h4>
+
+<p>Shows the autocomplete window, which offers to finish typing a word that you've begun. <a href="#/section/documentation/autocomplete">Learn more about autocomplete.</a></p>
+
+<h4>Edit &gt; Set Mark</h4>
+
+<p>Records the current scroll position. Use Edit &gt; Jump to Mark to restore the scroll position.</p>
+
 <p><br/><br/></p>
 
-<h4>Edit &gt; Special Characters...</h4>
+<h4>View &gt; Show Tabs in Fullscreen</h4>
 
-<p>"Special Characters" opens a window that facilitates entering any unicode character.</p>
-
-<p><br/><br/></p>
+<p>If enabled, tabs are shown in fullscreen windows.</p>
 
 <h4>View &gt; Use Transparency</h4>
 
 <p>This toggles transparency. It only has an effect if you have configured your session to be transparent under Preferences &gt; Profiles &gt; Window &gt; Transparency. When Full Screen mode is entered, transparency is turned off by default, but you can select this menu item to re-enable it.</p>
 
-<p><br/><br/></p>
+<h4>View &gt; Find Cursor</h4>
+
+<p>Reveals the current cursor position.</p>
+
+<h4>View &gt; Maximize Active Pane</h4>
+
+<p>When there are split panes present, this toggles whether a given pane expands to fill the tab. When a maximized pane is present, the tab will be inscribed with a dotted outline.</p>
 
 <h4>View &gt; Edit Current Session</h4>
 
 <p>This opens a window that lets you change the settings of the current session without affecting any other sessions. Once this has been done, changes to the profile will not affect this session.</p>
 
-<p><br/><br/></p>
-
 <h4>View &gt; Step Back/Forward in Time</h4>
 
 <p>Stepping through time allows you to see what was on the screen at a previous time. This is different than going back through the scrollback buffer, as interactive programs sometimes overwrite the screen contents without having them scroll back. Once in this mode, you can use the left and right arrow keys to step back and forward, respectively. The "esc" key exits this mode, as does clicking the close button in the bar that appears on the bottom. You can adjust the amount of memory dedicated to this feature in Preferences &gt; Instant Replay uses <b>xx</b> MB per session. The more memory you assign, the further back in time you can step.</p>
+
+<h4>View &gt; Tab Color</h4>
+
+<p>Allows you to select a tint color for the tab, to make it easier to distinguish.</p>
 
 <p><br/><br/></p>
 
@@ -788,11 +851,31 @@ set t_Co=256
 
 <p><br/><br/></p>
 
+<h4>Toolbelt &gt; Show Toolbelt</h4>
+
+<p>This toggles the visibility of the Toolbelt on the right side of all windows.</p>
+
+<h4>Toolbelt &gt; Jobs</h4>
+
+<p>This toggles the visibility of the Jobs tool, which shows the running jobs in the current session, and allows you to send them signals.</p>
+
+<h4>Toolbelt &gt; Notes</h4>
+
+<p>This toggles the visibility of the Notes tool, which provides a freeform scratchpad in the toolbelt.</p>
+
+<h4>Toolbelt &gt; Paste History</h4>
+
+<p>This toggles the visibility of the Paste History tool, which shows recently pasted strings in the toolbelt.</p>
+
+<h4>Toolbelt &gt; Profiles</h4>
+
+<p>This toggles the visibility of the Profiles tool, which lets you select profiles to open new windows, tabs, and split panes.</p>
+
+<p><br/><br/></p>
+
 <h4>Window &gt; Exposé All Tabs</h4>
 
 <p>All iTerm2 tabs will be shown tiled on the main screen. You can mouse over a tab to see it larger, and clicking on it will restore the windows and select that tab and bring its window to the front. You can search the contents of all tabs by typing in the search field that appears on the left. Making a selection from the results below it will highlight the tab that contains that text. This is useful when you have many tabs open and can't find the one you're looking for.</p>
-
-<p><br/><br/></p>
 
 <h4>Window &gt; Save/Restore Window Arrangement</h4>
 
@@ -803,200 +886,274 @@ set t_Co=256
 
 <h2>Preferences</h2>
 
-<p><hr>
-<br/></p>
+<hr>
+
+
+<p><br/></p>
 
 <h3>General</h3>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Open profiles window</h4>
 
 <p>If selected, the Profiles Window will automatically open when iTerm2 is started.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
-<h4>Open saved window arrangement</h4>
+<h4>Open default window arrangement</h4>
 
-<p>If selected, the saved window arrangement will be restored when iTerm2 starts. This is disabled if you haven't yet saved a window arrangement with Window &gt; Save Window Arrangement.</p>
+<p>If selected, the default saved window arrangement will be restored when iTerm2 starts. This is disabled if you haven't yet saved a window arrangement with Window &gt; Save Window Arrangement. If you'd like iTerm2 to open without any windows, create an empty default window arrangement and turn this option on.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Quit when all windows are closed</h4>
 
 <p>If selected, iTerm2 will automatically quit when its last terminal window is closed.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
-<h4>Confirm commands that close a session</h4>
-
-<p>If selected, commands such as "Shell &gt; Close" will require confirmation via an alert box before being executed.</p>
-
-<p><br/><br/></p>
-
-<h4>Only when multiple sessions close</h4>
+<h4>Confirm closing multiple sessions</h4>
 
 <p>If selected, commands that close one session will not be confirmed, but commands that close multiple sessions (such as clicking the red button on a window with two or more tabs) will be confirmed with an alert box.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Confirm Quit iTerm2 Command</h4>
 
 <p>If selected, the Quit iTerm2 (cmd-Q) command will be confirmed if any terminal windows are open.</p>
 
-<p><br/><br/></p>
-
-<h4>Smart window placement</h4>
-
-<p>If enabled, new windows will be opened where they least overlap existing windows.</p>
-
-<p><br/><br/></p>
-
-<h4>Adjust window size when changing font size</h4>
-
-<p>If enabled, the window size is adjusted when increasing or decreasing the font size.</p>
-
-<p><br/><br/></p>
-
-<h4>Green button zooms vertically only</h4>
-
-<p>If selected, the green "Zoom" button expands a terminal window vertically but does not affect its width. This can be overridden by holding down shift while clicking the zoom button.</p>
-
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Instant Replay Uses X MB per Session</h4>
 
 <p>This setting specifies the maximum amount of memory allocated to instant replay for each tab or split pane. More memory means instant replay is able to go farther back into the past. You can enter instant replay with View &gt; Step Back in Time.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Save copy/paste history to disk</h4>
 
 <p>If selected, every time text is copied or pasted in iTerm2 it will be saved to disk. The last 20 values are recorded. They can be accessed with Edit &gt; Open Paste History....</p>
 
-<p><br/><br/></p>
-
-<h4>Copy to clipboard on selection</h4>
-
-<p>If selected, text is copied to the clipboard immediately upon selection. If not selected, you must select Edit &gt; Copy to copy it.</p>
-
-<p><br/><br/></p>
-
-<h4>Focus follows mouse</h4>
-
-<p>If selected, moving the mouse over an inactive window will cause it to receive keyboard focus.</p>
-
-<p><br/><br/></p>
-
-<h4>Middle button pastes from clipboard</h4>
-
-<p>If selected, clicking the mouse's middle button will paste. Otherwise, it may be reported to the application if Xterm mouse reporting is on and the application supports it.</p>
-
-<p><br/><br/></p>
-
-<h4>Report ctrl-click to apps instead of opening menu</h4>
-
-<p>If selected, ctrl-click will be sent to applications that support Xterm mouse reporting (if mouse reporting is enabled).</p>
-
-<p><br/><br/></p>
-
-<h4>Characters considered part of a word for selection</h4>
-
-<p>When you double-click in the terminal window, a "word" is selected. A word is defined as a string delimited by characters of a different class. The classes of characters are whitespace, word characters, and non-word characters. The characters in this field define the set of non-word characters.</p>
-
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Add bonjour hosts to profiles</h4>
 
 <p>If selected, all bonjour hosts on the local network have a profile created for them as long as they're around.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Check for updates automatically</h4>
 
 <p>If enabled, iTerm2 will periodically check if a new version of iTerm2 exists, and if so it will prompt you to download and upgrade.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
-<h4>Prompt for test releases</h4>
+<h4>Prompt for test-release updates</h4>
 
 <p>If enabled, iTerm2 will periodically check if a new unstable version of iTerm2 exists, and if so it will prompt you to download and upgrade.</p>
 
 <p><br/></p>
 
+<h4>Load preferences from a custom folder or URL:</h4>
+
+<p>If enabled, iTerm2 will load its preferences from the specified folder or URL. After setting this, you'll be prompted when you quit iTerm2 if you'd like to save changes to the folder.</p>
+
+<p><br/></p>
+
+<h4>Copy to clipboard on selection</h4>
+
+<p>If enabled, text is copied to the clipboard immediately upon selection. If not selected, you must select Edit &gt; Copy to copy it.</p>
+
+<p><br/></p>
+
+<h4>Copied text includes trailing newline</h4>
+
+<p>If enabled, a terminal newline will be copied to the pasteboard when the selection includes one; otherwise, no selection will ever include a terminal newline.</p>
+
+<p><br/></p>
+
+<h4>Allow clipboard access to terminal apps</h4>
+
+<p>If enabled, clipboard access will be granted via escape code to programs running in iTerm2. They will be able to retreive and set the contents of the system pasteboard.</p>
+
+<p><br/></p>
+
+<h4>Characters considered part of a word for selection</h4>
+
+<p>When you double-click in the terminal window, a "word" is selected. A word is defined as a string delimited by characters of a different class. The classes of characters are whitespace, word characters, and non-word characters. The characters in this field define the set of non-word characters.</p>
+
+<p><br/></p>
+
+<h4>Smart window placement</h4>
+
+<p>If enabled, new windows will be opened where they least overlap existing windows.</p>
+
+<p><br/></p>
+
+<h4>Adjust window when changing font size</h4>
+
+<p>If enabled, a change to a session's font will cause the window to grow or shrink.</p>
+
+<p><br/></p>
+
+<h4>Zoom button maximizes vertically only</h4>
+
+<p>If enabled, the green "Zoom" button expands a terminal window vertically but does not affect its width. This can be overridden by holding down shift while clicking the zoom button.</p>
+
+<p><br/></p>
+
+<h4>Closing hotkey window restores focus to last window, but may switch spaces.</h4>
+
+<p>If enabled, the act of closing a hotkey window will restore focus to the window that last had it. As a side effect, the current desktop/space may change.</p>
+
+<p><br/></p>
+
+<h4>Use Lion-style Fullscreen windows</h4>
+
+<p>If enabled, fullscreen windows will animate into a special desktop, as is typical in OS X 10.7 and later. If disabled, fullscreen windows will instantly go fullscreen without changing desktops.</p>
+
+<p><br/></p>
+
+<h4>When attaching, open unrecognized windows in...</h4>
+
+<p>When attaching to a new tmux session with the tmux integration, tmux windows not seen by iTerm2 before will open in either new windows or tabs, as specified by this preference.</p>
+
+<p><br/></p>
+
+<h4>Open dashboard if there are more than...tmux windows</h4>
+
+<p>When attaching to a tmux session with the tmux integration, windows are normally opened automaticaly. If there are too many of them, then the tmux dashboard is opened instead.</p>
+
+<p><br/></p>
+
+<h4>Automatically hide the tmux client session after connecting</h4>
+
+<p>When the tmux integration is entered by running <b>tmux -CC</b>, the window in which that command was run will miniaturize into the dock if this option is enabled.</p>
+
+<p><br/></p>
+
 <h3>Appearance</h3>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Tab Style</h4>
 
 <p>Select from a list of tab looks.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Tab Position</h4>
 
 <p>Defines whether tabs appear at the top or bottom of a window.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Hide tab bar when there is only one tab</h4>
 
 <p>If selected, the tab bar will become invisible when a window contains exactly one tab.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Color tab labels on activity</h4>
 
 <p>If selected, tab labels become purple when a non-selected tab has new output, and red when a non-selected tab has output you haven't seen but that is not very recent.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Hide tab number and tab close button</h4>
 
 <p>If selected, only the tab name appears in a tab.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
-<h4>Tabs show in fullscreen mode when cmd is held down for a period of time</h4>
+<h4>Hide tab activity indicator</h4>
+
+<p>If selected, the progress indicator in each tab will not be displayed.</p>
+
+<p><br/></p>
+
+<h4>Show tabs in fullscreen by holding cmd for</h4>
 
 <p>When in fullscreen mode, holding down the cmd key will cause the tab bar to show. This setting allows you to specify how long cmd must be held down before the tab bar is shown.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
-<h4>Hide scrollbar and resize control</h4>
+<h4>Show per-pane title bar with split panes</h4>
 
-<p>If selected, the scrollbar and resize control will not be visible.</p>
+<p>When a tab has split panes, this option controls whether each split pane will have its own title bar.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
-<h4>Dim inactive split panes</h4>
+<h4>Auto-hide menu bar in non-Lion fullscreen</h4>
 
-<p>If selected, split panes that do not have keyboard focus will be slightly dimmed.</p>
+<p>When Lion-style fullscreen is disabled, this option is in effect. If you'd like the menu bar to remain visible when a fullscreen window is present on a screen with a menu bar, turn this on.</p>
 
-<p><br/><br/></p>
-
-<h4>Show border around window</h4>
-
-<p>If selected, a 1-pixel border will be shown around the edges of terminal windows.</p>
-
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Show window number</h4>
 
 <p>If selected, window titles include the window number. You can navigate to a window by pressing cmd-opt-N where N is the window number.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Show current job name</h4>
 
 <p>If selected, tab and window titles will show the name of the foreground job.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Show profile name</h4>
 
 <p>If selected, tab and window titles will show profile names.</p>
+
+<p><br/></p>
+
+<h4>Dimming affects only text, not background</h4>
+
+<p>When a window or pane is dimmed, this option controls whether the background color is dimmed or only the text colors.</p>
+
+<p><br/></p>
+
+<h4>Dimming amount</h4>
+
+<p>This slider controls how much to dim inactive windows or panes.</p>
+
+<p><br/></p>
+
+<h4>Dim inactive split panes</h4>
+
+<p>If selected, split panes that do not have keyboard focus will be slightly dimmed.</p>
+
+<p><br/></p>
+
+<h4>Dim background windows</h4>
+
+<p>If enabled, windows in the background (that is, those not receiving keyboard input) are dimmed according to the above settings.</p>
+
+<p><br/></p>
+
+<h4>Animate dimming</h4>
+
+<p>If enabled, window dimming effects are animated.</p>
+
+<p><br/></p>
+
+<h4>Show border around window</h4>
+
+<p>If selected, a 1-pixel border will be shown around the edges of terminal windows.</p>
+
+<p><br/></p>
+
+<h4>Hide scrollbar and resize control</h4>
+
+<p>If selected, the scrollbar and resize control (for OS 10.5 and 10.6) will not be visible.</p>
+
+<p><br/></p>
+
+<h4>Disable transparency for fullscreen windows by default</h4>
+
+<p>If enabled, entering fullscreen mode will automatically turn off transparency for that window.</p>
 
 <p><br/>
 <br/></p>
@@ -1007,31 +1164,31 @@ set t_Co=256
 
 <p>Gives the name of the profile which is shown in menus, preferences, and the profiles window.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
-<h4>Shortcut</h4>
+<h4>Shortcut key</h4>
 
 <p>This shortcut can be used to open a new window or tab. By default, it opens a new tab, but if you hold down the option key while pressing the shortcut, a new window will be opened in stead.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Tags</h4>
 
 <p>Tags are a collection of words or phrases that annotate a profile. When you search your profiles (for instance, in the profiles window), the tag names are searched in addition to the profile name.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Command</h4>
 
 <p>This is the command that is executed when a new session with the profile is created. If login shell is chosen, then your shell is run with '-' as the first character of argv[0]. You can put special terms surrounded by $$ in this field (example: $$USERNAME$$). When a new session is created, you will be prompted to enter a value for each such term. See the description of URL Schemes below for details about the special "$$" value that can go in this field.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Working directory</h4>
 
-<p>Normally, new sessions begin in your home directory. You can choose to open new sessions in the same directory as the current session (but only when creating a new tab), or you can specify a starting directory.</p>
+<p>Normally, new sessions begin in your home directory. You can choose to open new sessions in the same directory as the current session, or you can specify a starting directory. If you choose <i>Advanced Configuration</i> then you can specify different behaviors for the initial directory when opening a new window, tab, or split pane by tapping the edit button to its right.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>URL Schemes</h4>
 
@@ -1047,25 +1204,28 @@ set t_Co=256
 <li>$$RES$$ The portion of a url following the scheme.</li>
 </ul>
 
+
+<p>Please note that each application is responsible for setting its URL schemes and iTerm2 does not offer the option to set any other application as the handler for a scheme.</p>
+
 <p><br/></p>
 
 <h3>Profiles &gt; Colors</h3>
 
 <p>Clicking on any of the color wells opens a color picker that lets you change the setting for the selected color.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Smart cursor color</h4>
 
 <p>When selected, a block cursor will be displayed in reverse video. If this would result in confusion, then a different color is chosen that will be most visible given the surrounding cells' background colors.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Minimum contrast</h4>
 
 <p>If text is displayed against a similar background color, the minimum contrast setting will move the text color towards black or towards white to ensure some minimum level of visibility. Setting this slider all the way to maximum will make all text black and white.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Load Presets</h4>
 
@@ -1075,49 +1235,55 @@ set t_Co=256
 
 <h3>Profiles &gt; Text</h3>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Cursor</h4>
 
 <p>This lets you select a cursor shape.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Blinking cursor</h4>
 
 <p>If checked, the cursor will blink slowly to improve visibility.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Draw bold text in bold font</h4>
 
 <p>If selected, bold text will be drawn in a bold version of the selected font. If the font does not have a bold version, then a bold appearance is simulated by "double striking" the text: that is, drawing it twice, shifting it one pixel horizontally the second time.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Draw bold text in bright colors</h4>
 
 <p>If selected, bold text will be drawn in a bright version of its color.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
-<h4>Draw italic text in italic font</h4>
+<h4>Blinking text allowed</h4>
 
-<p>If selected, italic text will be drawn in an italic version of the selected font. If the font does not have an italic version, then the normal font will be used.</p>
+<p>If selected, text with the blink attribute set will actually blink. Oh, the humanity.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
+
+<h4>Italic text allowed</h4>
+
+<p>If selected, text with the italic attribute set will be rendered in italics. The font you select must have an italic face.</p>
+
+<p><br/></p>
 
 <h4>Regular font</h4>
 
-<p>ASCII text (latin letters, numbers, and some symbols) will be drawn using this font. Select "Anti-aliased" to draw the text with smooth edges.</p>
+<p>ASCII text (latin letters, numbers, and some symbols) will be drawn using this font, as well letters with combining marks. Select "Anti-aliased" to draw the text with smooth edges.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Non-ASCII font</h4>
 
 <p>All non-ASCII text (many accented Latin letters, non-Latin text, less-common symbols, and thousands of miscellaneous unicode characters) will be drawn with this font. It is recommended that you use the same point size for both regular and non-ASCII fonts. Select "Anti-aliased" to draw the text with smooth edges.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Treat ambiguous-width characters as double width</h4>
 
@@ -1127,55 +1293,55 @@ set t_Co=256
 
 <h3>Profiles &gt; Window</h3>
 
-<p><br/><br/></p>
-
-<h4>Rows/Columns</h4>
-
-<p>When creating a new window with this profile, it will be created with this many rows and columns.</p>
-
-<p><br/><br/></p>
-
-<h4>Style</h4>
-
-<p>This defines the window style. Top-of-screen windows will disregard the columns setting, while full-screen windows only respect the rows and columns setting when full-screen mode is exited.</p>
-
-<p><br/><br/></p>
-
-<h4>Screen</h4>
-
-<p>If you have more than one screen connected, this lets you select the screen on which a new window should open. It is particularly useful for fullscreen and top-of-screen window styles.</p>
-
-<p><br/><br/></p>
-
-<h4>Space</h4>
-
-<p>If you have enabled Spaces and have set Spaces to use Control+Number to switch spaces, then you can use this setting to select the initial space to open a new window using this profile.</p>
-
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Transparency</h4>
 
 <p>This sets the transparency of the window background. It can be temporarily disabled with View &gt; Use Transparency.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Blur</h4>
 
-<p>If selected, the window background is blurred provided the background has some transparency.</p>
+<p>If selected, the window background is blurred provided the background has some transparency. Selecting a large radius will blur the background more, but (especially on Retina displays) comes with a performance penalty.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
+
+<h4>Rows/Columns</h4>
+
+<p>When creating a new window with this profile, it will be created with this many rows and columns.</p>
+
+<p><br/></p>
 
 <h4>Background Image</h4>
 
-<p>This allows you to select an image to display behind the terminal's text.</p>
+<p>This allows you to select an image to display behind the terminal's text. If <i>Tile image</i> is selected, then the image will be shown at its actual size and tesselated; otherwise, it will be stretched to fit the whole pane. The <i>blending</i> slider determines how strongly the image dominates over the text's background color.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
-<h4>Server-set tab title preserve profile name (if shown)</h4>
+<h4>Style</h4>
+
+<p>This defines the window style. Bottom- and Top-of-screen windows will disregard the columns setting. Left-of-screen windows will disregard the rows setting. Full-screen windows only respect the rows and columns setting when full-screen mode is exited.</p>
+
+<p><br/></p>
+
+<h4>Screen</h4>
+
+<p>If you have more than one screen connected, this lets you select the screen on which a new window should open. It is particularly useful for fullscreen and top-of-screen window styles.</p>
+
+<p><br/></p>
+
+<h4>Space</h4>
+
+<p>If you have enabled Spaces (or your OS uses Desktops instead of spaces) and have set Spaces/Mission Control to use Control+Number to switch spaces/desktops, then you can use this setting to select the initial space/desktop to open a new window using this profile.</p>
+
+<p><br/></p>
+
+<h4>If showing profile name in tab title, keep it when the title is changed</h4>
 
 <p>You can specify that profile names are shown in window and tab titles under Preferences &gt; Appearance &gt; Show Profile Name. If that is not set, then this option is irrelevant. When in use, a host may send an escape code that changes the window title. This setting causes the profile name to be preserved in that session-set title.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Disable session-initiated window resizing</h4>
 
@@ -1185,77 +1351,123 @@ set t_Co=256
 
 <h3>Profiles &gt; Terminal</h3>
 
-<p><br/><br/></p>
-
-<h4>Automatically close a session when it ends</h4>
-
-<p>If selected, a session's pane, tab, or window will automatically close when the session ends.</p>
-
-<p><br/><br/></p>
-
-<h4>Silence bell</h4>
-
-<p>If selected, the bell (control-G) will not make an audible sound.</p>
-
-<p><br/><br/></p>
-
-<h4>Bell icon in tabs</h4>
-
-<p>If selected, tabs will indicate that a bell has rung by displaying a bell graphic.</p>
-
-<p><br/><br/></p>
-
-<h4>Visual bell</h4>
-
-<p>If selected, a bell graphic will be flashed when the bell character is received.</p>
-
-<p><br/><br/></p>
-
-<h4>Character encoding</h4>
-
-<p>The encoding to send and receive in. For most people, "Unicode (UTF-8)" is the right choice.</p>
-
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Scrollback lines</h4>
 
-<p>The number of lines of scrollback buffer to keep above the visible part of the screen.</p>
+<p>The number of lines of scrollback buffer to keep above the visible part of the screen. Unlimited scrollback will allow it to grow indefinitely, possibly using all available memory.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Save lines to scrollback when an app status bar is present</h4>
 
 <p>Some programs (such as vim or tmux) keep a status bar at the bottom of the screen. For some applications (like vim) it is undesirable to save lines to the scrollback buffer when the application scrolls. For others (like tmux) you may want to save scrolled-off lines into the scrollback buffer. When this setting is enabled, lines scrolled off the top of the screen in the presence of a status bar are added to the scrollback buffer. The screen is considered to have a status bar if it has a scroll region whose top is the first line of the screen and whose bottom is above the bottom of the screen.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
+
+<h4>Save lines to scrollback in alternate screen mode</h4>
+
+<p>When in alternate screen mode, lines that scroll off the top of the screen will be saved to the scrollback buffer only if this option is enabled.</p>
+
+<p><br/></p>
+
+<h4>Character encoding</h4>
+
+<p>The encoding to send and receive in. For most people, "Unicode (UTF-8)" is the right choice.</p>
+
+<p><br/></p>
 
 <h4>Report terminal type</h4>
 
 <p>The TERM variable will be set to this value by default. If xterm-256color is selected and your system is missing the terminfo file, you will be prompted to install it when you open a new session.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Enable xterm mouse reporting</h4>
 
 <p>If selected, applications may choose to receive information about the mouse. This can be temporarily disabled by holding down Option.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
+
+<h4>Allow terminal to report window title</h4>
+
+<p>Programs running in a terminal may send an escape code to request the current window title. You may disable this feature by enabling this option. It should be disabled if you're communicating with an untrusted party, as there are possible injection attacks.</p>
+
+<p><br/></p>
+
+<h4>Use modern parser (experimental)</h4>
+
+<p>iTerm2 includes an experimental parser for CSI codes that should produce more correct results, but it isn't tested enough to be on by default. Enable this option to use it.</p>
+
+<p><br/></p>
+
+<h4>Disable session-initiated printing</h4>
+
+<p>If enabled, escape codes that initiate printing will be ignored.</p>
+
+<p><br/></p>
 
 <h4>Disable save/restore alternate screen</h4>
 
 <p>Some programs (such as vim, tmux, and less) switch into a so-called "alternate screen". A characteristic of this behavior is that when these programs terminate the screen's contents are restored to their state from before the program was run. If this option is selected, alternate screen mode is disabled and the screen cannot be restored by an application.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
+
+<h4>Silence bell</h4>
+
+<p>If selected, the bell (control-G) will not make an audible sound.</p>
+
+<p><br/></p>
+
+<h4>Enable Growl notifications</h4>
+
+<p>If selected and Growl is installed, iTerm2 will post a Growl notification when sessions receive output, become idle, ring the bell, or close.</p>
+
+<p><br/></p>
+
+<h4>Flash visual bell</h4>
+
+<p>If selected, a bell graphic will be flashed when the bell character is received.</p>
+
+<p><br/></p>
+
+<h4>Show bell icon in tabs</h4>
+
+<p>If selected, tabs will indicate that a bell has rung by displaying a bell graphic.</p>
+
+<p><br/></p>
+
+<h4>Set locale variables automatically</h4>
+
+<p>If enabled, LANG and LC_CTYPE ennvironment variables will be set based on your machine's language settings.</p>
+
+<p><br/></p>
+
+<h3>Profiles &gt; Session</h3>
+
+<p><br/></p>
+
+<h4>Automatically close a session when it ends</h4>
+
+<p>If selected, a session's pane, tab, or window will automatically close when the session ends.</p>
+
+<p><br/></p>
+
+<h4>Prompt before closing</h4>
+
+<p>When a session will close, you can choose when to be prompted with a modal alert.</p>
+
+<p><br/></p>
+
+<h4>Automatically log session input to files in:</h4>
+
+<p>If enabled, every session's output will be logged to a file in the specified directory. File names are formatted as <i>Date_Time.ProfileName.TerminalID.ProcessId.RandomNumber.log</i>.</p>
+
+<p><br/></p>
 
 <h4>When idle, send ASCII code</h4>
 
 <p>If selected, the specified ASCII code will be transmitted every 30 seconds while nothing is happening. Don't use this unless you know what you're doing as it can have unexpected consequences.</p>
-
-<p><br/><br/></p>
-
-<h4>Enable Growl notifications</h4>
-
-<p>If selected and Growl is installed, iTerm2 will post a Growl notification when sessions receive output, become idle, ring the bell, or close. </p>
 
 <p><br/></p>
 
@@ -1263,144 +1475,339 @@ set t_Co=256
 
 <p>This panel shows key mappings. You can double-click on a mapping to edit it. When the "Keyboard Shortcut" field has focus, you should press the keystroke that you want to modify (even if it involves modifiers like Cmd). The following actions are available:</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>ignore</h4>
 
 <p>The keypress will do nothing.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Do not remap modifiers</h4>
 
 <p>If modifier remapping is in effect (set under Preferences &gt; Keys), it can be disabled for certain key combinations. When you choose this action, modifier remapping is temporarily disabled so you can press the key combination unremapped in the key field.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Remap modifiers in iTerm2 only</h4>
 
 <p>If modifier remapping is in effect (set under Preferences &gt; Keys), it can be set to not affect other applications that may listen for global hotkeys. When you choose this action, modifier remapping is temporarily disabled so you can press the key combination unremapped in the key field.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Split/New Window/Tab with Profile</h4>
 
 <p>These actions allow you to create a new session with a specified profile when a key is pressed.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Backward in Time/Forward in Time</h4>
 
 <p>This is equivalent to the menu item View &gt; Step Backward/Forward in Time</p>
 
-<p><br/><br/></p>
+<p><br/></p>
+
+<h4>Cycle Tabs Forward</h4>
+
+<p>This implements tab switching the same way Cmd-Tab switches windows, with the most-recently-used stack.</p>
+
+<p><br/></p>
 
 <h4>Next/Previous Tab/Window</h4>
 
 <p>These actions navigate among tabs and windows.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
+
+<h4>Move tab left/right</h4>
+
+<p>Changes the tab's position in the order.</p>
+
+<p><br/></p>
 
 <h4>Scroll to End/Top/Up/Down</h4>
 
 <p>These actions move through the scrollback buffer.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Select Split Pane Above/Below/Left/Right</h4>
 
 <p>These actions navigate split panes.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Send ^? / ^H Backspace</h4>
 
 <p>Modern systems use ^? for backspace, while some legacy systems use ^H.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Send Escape Sequence</h4>
 
 <p>This action allows you to enter some text that will be sent when the associated key is pressed. First, the ESC character is sent, and then the text you entered is sent.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Send Hex Code</h4>
 
 <p>This action allows you to enter a sequence of hex codes that will be sent. Each value should begin with "0x" followed by one or two hex digits (0-9, a-f, or A-F). Each code should be separated by a space. You can see a list of hex codes on http://asciitable.com/ in the "Hx" column.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Send Text</h4>
 
 <p>This action allows you to enter a text string that will be sent when the associated key is pressed. The following escape characters are supported: \n (newline), \e (escape), \a (bell), \t (tab).</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Toggle Fullscreen</h4>
 
 <p>This action enters or exits full screen mode.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
+
+<h4>Run Coprocess</h4>
+
+<p>This action launches a Coprocess. <a href="http://www.iterm2.com/coprocesses.html#/section/home">Learn more about coprocesses.</a></p>
+
+<p><br/></p>
 
 <h4>Select Menu Item...</h4>
 
-<p>This action allows you to enter the name of an iTerm2 menu item. It must be entered exactly the same as it appears in the menu. Ellipses can be typed with option-semicolon.</p>
+<p>This action allows you to select an item from the iTerm2 menu to run. All the menu items are presented in a drop-down list.</p>
 
 <p>You can add a new keymapping by pressing "+". You can remove an existing mapping by selecting it and pressing "-". Three presets are provided: "Xterm defaults" is the normal key mappings, while "Xterm defaults with numeric keypad" disables the "application keypad" in favor of the numbers and symbols that the numeric keypad typically emits. "Terminal.app Compatability" tries to emulate the way that Terminal.app sends keys by default.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Left/Right Option Key Acts As</h4>
 
 <p>It is common to use a modifier to send so-called "meta keys". For most users, selecting "+Esc" here is the right choice. The "Meta" option sets the high bit of the input character, and is not compatible with modern systems.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
-<h4>Delete sends ^H</h4>
+<h4>Delete key sends ^H</h4>
 
 <p>If you are on a legacy system that does not accept ^? for backspace, select this and it will add a key mapping for you.</p>
 
 <p><br/></p>
 
+<h3>Profiles &gt; Advanced</h3>
+
+<h4>Triggers</h4>
+
+<p>Triggers are actions that are performed when text matching a regular expression is received. Each trigger has a regular expression, which defines when it runs. It has an action, which defines what it performs, and it has an optional parameter, whose meaning depends on the action. When the parameter is textual, \0 is replaced with the entire match, and \1...\9 are replaced with match groups.</p>
+
+<h4>Action: Bounce Dock Icon</h4>
+
+<p>This action causes the dock icon to bounce when text matching the trigger is received. The dock icon only bounces if iTerm2 is in the background.</p>
+
+<h4>Action: Highlight Text</h4>
+
+<p>The text matching the regex in the trigger will change color. The parameter sets the color.</p>
+
+<h4>Action: Ring Bell</h4>
+
+<p>The system bell rings when text matching the trigger is received.</p>
+
+<h4>Action: Run Command</h4>
+
+<p>When text matching the trigger is received, a command is executed. Its output is dropped. The parameter gives the command to run.</p>
+
+<h4>Action: Run Coprocess</h4>
+
+<p>When text matching the trigger is received, a coprocess is started. The parameter gives a command to run as the coprocess.</p>
+
+<h4>Action: Run Silent Coprocess</h4>
+
+<p>When text matching the trigger is received, a silent coprocess is started. A silent coprocess differs from a regular coprocess in that input goes only to the coprocess and not to the terminal display. This is useful, for example, for ZModem transfers. The parameter gives a command to run as the coprocess.</p>
+
+<h4>Action: Send Growl Alert</h4>
+
+<p>When text matching the trigger is received, a growl alert is posted with the text inthe parameter.</p>
+
+<h4>Action: Send Text</h4>
+
+<p>When text matching the trigger is received, text in the parameter is written to the terminal.</p>
+
+<h4>Action: Show Alert</h4>
+
+<p>When text matching the trigger is received, a modal alert is shown with text in the parameter.</p>
+
+<p><br/></p>
+
+<h4>Smart Selection</h4>
+
+<p>Smart selection allows you to define a set of regular expressions, each with an assigned priority, that are used for making the best possible selection. By default, a quad-click invokes smart selection. Smart selection is described in full in the <a href="http://www.iterm2.com/smartselection.html#/section/home">Smart Selection</a> document.</p>
+
+<p><br/></p>
+
+<h4>Semantic History</h4>
+
+<p>Semantic history is used to open a file when you Cmd-Click on it. The current working directory for each line in the terminal is tracked to help find files. If Semantic History is set to "Open with default app," then files are passed to the OS to be opened with whatever is associated. Alternatively, you can choose "Open URL..." to open a specific URL (with \1 replaced with the filename and \2 replaced with the line number, if applicable). If you choose "Open with editor..." then text files will be opened with the designated editor, while other files are opened with the default app for their file type. For more flexibility, choose "Run command..." and specify a command to execute. \1 will be replaced with the file name, \2 will be replaced with the line number (if applicable), \3 with text in the line prior to the click location, \4 with text in the line subsequent to the click location, and \5 for the working directory of the line clicked on. Finally, "Always run command..." is like "Run command...," but takes effect even if the object clicked on is not an existing filename.</p>
+
+<p><br/></p>
+
 <h3>Keys</h3>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Remap modifier keys</h4>
 
 <p>iTerm2 allows you to change the meanings of the modifier keys only within iTerm2. This is useful, for example, if you find it difficult to press "option" for "meta" and would prefer to use "command" for that purpose.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>To switch tabs</h4>
 
 <p>Tabs are normally navigated with cmd+number, but you can change the modifier used for that function here.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>To switch windows</h4>
 
 <p>Windows are normally navigated with cmd+opt+number, but you can change the modifier used for that function here.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Show/Hide iTerm2 with a system-wide hotkey</h4>
 
 <p>When enabled, you can focus the Hotkey: field and press a keystroke. From then on, pressing that keystroke (even when iTerm2 is not the front application) will cause iTerm2 to come to the front. If it is the foreground app, it will be sent to the back. This requires that you enable access for assistive devices in the Universal Access panel of System Preferences.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Hotkey toggles a dedicated window with profile</h4>
 
 <p>If enabled, the hotkey set above will toggle a single window with a specific profile. This provides an always-available terminal.</p>
 
-<p><br/><br/></p>
+<p><br/></p>
 
 <h4>Global shortcut keys</h4>
 
-<p>This interface works like the keyboard shortcut system in profiles (described above) but it affects all profiles. Settings here are overridden by those in a profile's key mappings.
-<br/>
+<p>This interface works like the keyboard shortcut system in profiles (described above) but it affects all profiles. Settings here are overridden by those in a profile's key mappings.</p>
+
+<p><br/></p>
+
+<h3>Pointer</h3>
+
+<p><br/></p>
+
+<h4>Mouse Button and Trackpad Gesture Actions</h4>
+
+<p>You may assign custo actions to mouse clicks and trackpad gestures. The left mouse button is not configurable because its behavior is rather complex, however. This is especially useful if you have a mouse with many buttons. Any combination of mouse button + number of clicks + modifiers may be assigned an action. For gestures, three finger taps and swipes may be configured in combination with modifiers. The following actions are available:</p>
+
+<h4>Extend selection</h4>
+
+<p>The text selection will grow, either from its beginning or end, to the location of the pointer.</p>
+
+<h4>Move pane</h4>
+
+<p>The current pane will turn green. Click in another window's tab bar or in another pane to split to move the now-green pane.</p>
+
+<h4>New Horizontal/Vertical split with profile</h4>
+
+<p>The pane under the pointer will be split and the new split will use the specified profile.</p>
+
+<h4>New Window With Profile</h4>
+
+<p>A new window will be opened with the specified profile.</p>
+
+<h4>Next/Previous Tab/Window</h4>
+
+<p>Navigates through tabs and windows.</p>
+
+<h4>Open Context Menu</h4>
+
+<p>Opens the menu normally opened by a right click.</p>
+
+<h4>Open URL in background</h4>
+
+<p>Opens the URL under the pointer in your web browser without bringing the browser to the foreground.</p>
+
+<h4>Open URL/Semantic History</h4>
+
+<p>Opens the URL under the pointer, bringing the web browser to the foreground. If what's under the cursor is a filename on the local machine, it will be opened with Semantic History.</p>
+
+<h4>Paste from Clipboard</h4>
+
+<p>This is identical to Edit &gt; Paste.</p>
+
+<h4>Paste from Selection</h4>
+
+<p>Pastes the most recent selection made in iTerm2, even if it's not what's in the pasteboard.</p>
+
+<h4>Select Next/Previous Pane</h4>
+
+<p>Navigates panes according to how recently they were used.</p>
+
+<h4>Select pane Above/Below/Left/Right</h4>
+
+<p>Navigates panes by their layout.</p>
+
+<h4>Send Escape Sequence...</h4>
+
+<p>This action allows you to enter some text that will be sent when the associated key is pressed. First, the ESC character is sent, and then the text you entered is sent.</p>
+
+<h4>Send Hex Code</h4>
+
+<p>This action allows you to enter a sequence of hex codes that will be sent. Each value should begin with "0x" followed by one or two hex digits (0-9, a-f, or A-F). Each code should be separated by a space. You can see a list of hex codes on http://asciitable.com/ in the "Hx" column.</p>
+
+<h4>Send Text</h4>
+
+<p>This action allows you to enter a text string that will be sent when the associated key is pressed. The following escape characters are supported: \n (newline), \e (escape), \a (bell), \t (tab).</p>
+
+<h4>Smart Selection</h4>
+
+<p>Performs smart selection on the text under the pointer.</p>
+
+<h4>Smart Selection ignoring Newlines</h4>
+
+<p>Performs smart selection on the text under the pointer, ignoring newlines (e.g., if a URL is split by a hard newline, it can still be selected as a single item).</p>
+
+<p><br/></p>
+
+<h4>Focus follows mouse</h4>
+
+<p>If enabled, moving the mouse over an inactive window will cause it to receive keyboard focus.</p>
+
+<p><br/></p>
+
+<h4>Cmd-Click Opens Filename/URL</h4>
+
+<p>If enabled, then clicking on a filename (of an existing file on the local machine) or a URL will open it.</p>
+
+<p><br/></p>
+
+<h4>Report ctrl-click to apps instead of opening menu</h4>
+
+<p>If enabled, ctrl-click will be sent to applications that support Xterm mouse reporting (if mouse reporting is enabled).</p>
+
+<p><br/></p>
+
+<h4>Three-finger tap reports middle click to apps</h4>
+
+<p>If enabled, a three-finger tap acts like a middle click for the purposes of mouse reporting.</p>
+
+<p><br/></p>
+
+<h4>Triple-click selects full wrapped lines</h4>
+
+<p>If enabled, a triple click selects a whole line, even if it was longer than one row in the terminal. If off, then triple click selects exactly one row.</p>
+
+<p><br/></p>
+
+<h4>Middle button pastes from clipboard</h4>
+
+<p>If enabled, clicking the mouse's middle button will paste. Otherwise, it may be reported to the application if Xterm mouse reporting is on and the application supports it.</p>
+
+<p><br/></p>
+
+<h3>Arrangements</h3>
+
+<p>This tab lets you view saved window arrangements. You can delete them with the minus button and select the default arrangement.</p>
+
+<p><br/>
 <br/></p>
 
 <p><a name="/section/documentation/hidden_settings">
@@ -1410,9 +1817,129 @@ set t_Co=256
 
 <hr>
 
-<p>There are a few settings that you cannot access via iTerm2's own Preferences panel. However, you can use the "defaults" command to change them.</p>
 
-<p>The first four are for setting the tab size:</p>
+<p>There are a few settings that you cannot access via iTerm2's own Preferences panel. However, you can use the "defaults" command to change them. To change a hidden setting, quit iTerm2. In terminal, run the defaults command. Then restart iTerm2.</p>
+
+<p>To change the number of entries in the autocomplete menu:</p>
+
+<pre>
+    defaults write com.googlecode.iterm2 AutocompleteMaxOptions -int 10
+</pre>
+
+
+<p>To change the number of coprocess commands remembered:</p>
+
+<pre>
+    defaults write com.googlecode.iterm2 "Coprocess MRU" -int 10
+</pre>
+
+
+<p>To preserve whitespace in selections copied to the pasteboard:</p>
+
+<pre>
+    defaults write com.googlecode.iterm2 TrimWhitespaceOnCopy -bool false
+</pre>
+
+
+<p>When you open a file from the finder in iTerm2 (e.g., by double-clicking a shell script), it will either open in a window or a tab. By default, it opens in a tab. You can change this with:</p>
+
+<pre>
+    defaults write com.googlecode.iterm2 OpenFileInNewWindows -bool true
+</pre>
+
+
+<p>You can configure iTerm2 to quit when the last session is closed, and you can also configure sessions to close automatically when they end. If something is broken (like a bad command set in the default profile), it's possible for a session to start and end almost immediately, causing iTerm2 to quit very soon after launch and not giving you time to fix the problem. To prevent this issue, there is a 10-second safety valve during which iTerm2 won't quit automatically when the last session is closed. To change the time of this safety valve:</p>
+
+<pre>
+    defaults write com.googlecode.iterm2 MinRunningTime -float 10.0
+</pre>
+
+
+<p>When an external monitor is connected, sometimes it needs a few seconds to be recognized by the system. If iTerm2 isn't handling this well, you can increase the delay before it attempts to reconfigure itself after a change of monitors.</p>
+
+<pre>
+    defaults write com.googlecode.iterm2 UpdateScreenParamsDelay -float 1.0
+</pre>
+
+
+<p>To change the number of paste history entries saved:</p>
+
+<pre>
+    defaults write com.googlecode.iterm2 MaxPasteHistoryEntries -int 20
+</pre>
+
+
+<p>Pastes (both regular and slow) are done by splitting the text to paste into chunks. There is a delay between the transmission of each chunk. To change the speed that "paste" pastes at:</p>
+
+<pre>
+    defaults write com.googlecode.iterm2 QuickPasteBytesPerCall -int 1024
+    defaults write com.googlecode.iterm2 QuickPasteDelayBetweenCalls -float 0.01
+</pre>
+
+
+<p>To change the speed that "paste slowly" pastes at:</p>
+
+<pre>
+    defaults write com.googlecode.iterm2 SlowPasteBytesPerCall -int 16
+    defaults write com.googlecode.iterm2 SlowPasteDelayBetweenCalls -float 0.125
+</pre>
+
+
+<p>To disable using the pinch gesture to change font size:</p>
+
+<pre>
+    defaults write com.googlecode.iterm2 PinchToChangeFontSizeDisabled -bool true
+</pre>
+
+
+<p>To keep LC_CTYPE from being set when locale environment variables are set:</p>
+
+<pre>
+    defaults write com.googlecode.iterm2 DoNotSetCtype -bool true
+</pre>
+
+
+<p>To allow Growl notifications to be posted for the current tab:</p>
+
+<pre>
+    defaults write com.googlecode.iterm2 GrowlOnForegroundTabs -bool true
+</pre>
+
+
+<p>To tune smart cursor color settings:</p>
+
+<pre>
+    defaults write com.googlecode.iterm2.plist SmartCursorColorBgThreshold -float 0.5
+    defaults write com.googlecode.iterm2.plist SmartCursorColorFgThreshold -float 0.75
+</pre>
+
+
+<p>SmartCursorColorBgThreshold: If the cursor's background color is too close to nearby background colors, force it to the "most different" color. This is the difference threshold that triggers that change. 0 means always trigger, 1 means never trigger.</p>
+
+<p>SmartCursorColorFgThreshold: The cursor's text is forced to black or white if it is too similar to the background. If the brightness difference is below a threshold then the B/W text mode is triggered. 0 means always trigger, 1 means never trigger.</p>
+
+<p>To allow a three-finger tap to act like a three-finger click:</p>
+
+<pre>
+    defaults write com.googlecode.iterm2.plist ThreeFingerTapEmulatesThreeFingerClick -bool true
+</pre>
+
+
+<p>To change the set of characters that are considered part of a URL (besides alphanumerics):</p>
+
+<pre>
+    defaults write com.googlecode.iterm2.plist URLCharacterSet -string ".?\\/:;%=&amp;_-,+~#@!*'()|[]"
+</pre>
+
+
+<p>To use some experimental optimizations that will improve performance (safety not guaranteed):</p>
+
+<pre>
+    defaults write com.googlecode.iterm2.plist ExperimentalOptimizationsEnabled -bool true
+</pre>
+
+
+<p>To tweak tab sizes:</p>
 
 <pre>
     defaults write com.googlecode.iterm2 UseUnevenTabs -bool false
@@ -1421,49 +1948,29 @@ set t_Co=256
     defaults write com.googlecode.iterm2 OptimumTabWidth -int 175
 </pre>
 
-<p>The last one is for the search command launched from the contextual menu.
-The default is to use google. You can set it to anything you want.</p>
+
+<p>To change your search engine:</p>
 
 <pre>
-    defaults write com.googlecode.iterm2 SearchCommand \
-            -string "http://google.com/search?q=%@"
+    defaults write com.googlecode.iterm2 SearchCommand -string "http://google.com/search?q=%@"
 </pre>
 
-<p>For example, if you like Yahoo, here is the command:</p>
 
-<pre>
-    defaults write com.googlecode.iterm2 SearchCommand \
-            -string "http://search.yahoo.com/search?p=%@"
-</pre>
-
-<p>You can adjust the speed of the animation of the hotkey window's appearance and disappearance:</p>
+<p>To adjust the speed of the animation of the hotkey window's appearance and disappearance:</p>
 
 <pre>
     defaults write com.googlecode.iterm2 HotkeyTermAnimationDuration \
             -float 0.25
 </pre>
 
-<p>You can adjust the amount of dimming of split panes. Set the value to a floating-point number between 0 (no dimming) and 1 (complete dimming). The default is 0.15:</p>
+
+<p>To adjust the amount of dimming of split panes. Set the value to a floating-point number between 0 (no dimming) and 1 (complete dimming). The default is 0.15:</p>
 
 <pre>
     defaults write com.googlecode.iterm2 SplitPaneDimmingAmount \
             -float 0.25
 </pre>
 
-<p>If you don't mind <strong>extreme slowness</strong> you can turn on adjustable font width:</p>
-
-<pre>
-    defaults write com.googlecode.iterm2 HiddenAdvancedFontRendering -bool true
-    defaults write com.googlecode.iterm2 HiddenAFRStrokeThickness -float -0.1
-</pre>
-
-<p>The second parameter is a negative number, where values close to 0 are thin and very negative values are thick.</p>
-
-<p>If you'd like to receive Growl notifications for foreground tabs, which is useful as an accessibility feature, use this command:</p>
-
-<pre>
-    defaults write com.googlecode.iterm2 GrowlOnForegroundTabs -bool true
-</pre>
 
 <p><br/>
 <br/>
@@ -1475,96 +1982,18 @@ The default is to use google. You can set it to anything you want.</p>
 
 <hr/>
 
+
 <p>iTerm2 features Applescript support which allows you to automate many aspects of its behavior. Quite a bit of customization is also possible by writing shell scripts.</p>
 
 <h3>Applescript</h3>
-
-<p><br/><br/></p>
-
-<h4>Example Script</h4>
 
 <p>iTerm2 has sophisticated Applescript support allowing one to write stand-alone
 scripts to launch the application and open multiple sessions with profiles
 into either new tabs or new windows. You can also set some other
 parameters for a session such as foreground and background colors, and
-transparency. Here is a sample script:</p>
+transparency.</p>
 
-<pre><code>-- A sample iTerm2 Applescript
-
-tell application "iTerm"
-  activate
-
-  -- close the first session
-  terminate the first session of the first terminal
-
-  -- make a new terminal
-  set myterm to (make new terminal)
-
-  -- talk to the new terminal
-  tell myterm
-
-    -- set size
-    set number of columns to 100
-    set number of rows to 50
-    -- make a new session
-    set mysession to (make new session at the end of sessions)
-
-    -- talk to the session
-    tell mysession
-
-      -- set some attributes
-      set name to "tcsh"
-      set foreground color to "red"
-      set background color to "blue"
-      set transparency to "0.6"
-
-      -- execute a command
-      exec command "/bin/tcsh"
-
-    end tell -- we are done talking to the session
-
-    -- we are back to talking to the terminal
-
-    -- launch a default shell in a new tab in the same terminal
-    launch session "Default Session"
-
-    -- launch a saved session.
-    launch session "Root Shell"
-    -- select the previous session
-    select mysession
-    -- get the tty name of a session
-    set myttyname to the tty of the first session
-    -- refer to a session by its tty/id
-    tell session id myttyname
-        set foreground color to "yellow"
-    end tell
-
-  end tell
-
-  -- talk to the first terminal
-  tell the first terminal
-
-    -- launch a default shell in a new tab in the same terminal
-    launch session "Default Session"
-
-    tell the last session
-
-      -- write some text
-      write text "cd Projects/Cocoa/iTerm2"
-      -- write the contents of a file
-      write contents of file "/path/to/file/"
-
-    end tell
-
-  end tell
-
-  -- reposition window and name it
-  set the bounds of the first window to {100, 100, 700, 700}
-  set the name of the first window to "A Window Title"
-
-
-end tell
-</code></pre>
+<p>Sample scripts may be found at the <a href="https://code.google.com/p/iterm2/wiki/AppleScript">iTerm2 Applescript Examples</a> page.</p>
 
 <p>These scripts can then be saved as stand-alone executable applications.</p>
 
@@ -1587,37 +2016,6 @@ on startup.</p>
 <p><br/>
 <br/>
 <br/>
-<a name="/section/documentation/links">
-</a></p>
-
-<h2>Interesting Links</h2>
-
-<hr/>
-
-<p>Here are some links to some iTerm2-related websites.</p>
-
-<ul>
-<li><a href="http://homepage.mac.com/denao/scripts/">Applescripts for executing a command and connecting to a remote server</a>
-by Denis A.V. Jr.</li>
-<li><a href="http://damonparker.org/blog/2005/09/14/iterm-tricks/">Applescript for opening a session</a>
-by Damon Parker</li>
-<li><a href="http://damonparker.org/blog/2006/11/13/iterm-and-growl/">A Growl trick</a>
-by Damon Parker</li>
-<li><a href="http://xanana.ucsc.edu/xtal/iterm_tab_customization.html">A collection of iTerm Shell Customizations for bash, zsh and tcsh</a>
-from William G. Scott</li>
-<li><a href="http://www.macosxhints.com/article.php?story=20030609222910699">Use iTerm with OnMyCommand</a>
-from macosxhints</li>
-<li><a href="http://www.bigbold.com/snippets/tag/iTerm">Open current directory in iTerm</a></li>
-<li><a href="http://docs.blacktree.com/quicksilver/plug-ins/iterm?DokuWiki=">iTerm plugin</a>
-for Quicksilver.</li>
-<li><a href="http://www.tco.net/~dscott/software/itermhere/">iTerm Here</a></li>
-<li><a href="http://widgetterm.sourceforge.net/">WidgetTerm</a>:
-A mini terminal in your dash board.</li>
-</ul>
-
-<p><br/>
-<br/>
-<br/>
 <a name="/section/documentation/fonts">
 </a></p>
 
@@ -1625,26 +2023,8 @@ A mini terminal in your dash board.</li>
 
 <hr/>
 
-<p>While iTerm2 does not require monospaced fonts, they look much better than proportionately spaced fonts. Here are some recommended fonts:</p>
 
-<ul>
-<li>VT100 Comes with OS X, rather ugly though</li>
-<li>Lucide Console Comes with Office v.X</li>
-<li>SImPL A very nice font made by Phil Chastney. Download from
-<a href="http://www.vector.org.uk/resource/simpl02.zip">here</a></li>
-<li>APL385 Another font from Dyalog.NET. Get it from
-<a href="http://www.vector.org.uk/resource/apl385.zip">here</a></li>
-<li>FreeMono A nice font made available by Free UCS Outline Fonts project. It
-is bundled with iTerm.app starting from version 0.70. Visit their
-<a href="http://www.nongnu.org/freefont/">website</a>.</li>
-<li>Wen Ding Chinese fonts A set of simplified and traditional Chinese fonts.
-Download from <a href="http://www.arphic.net/tw/service/resource_cont.asp?id=1&amp;toppage=2">here</a>.
-Thanks to Miyang Lin for providing us information.</li>
-</ul>
-
-<p>One <strong>non</strong>-recommended font is Consolas. It has an improperly set baseline offset and
-appears too high. It can be fixed, though; please see this page on
-<a href="http://mbauman.net/geek/2009/03/15/minor-truetype-font-editing-on-a-mac/">how to fix Consolas baseline</a>.</p>
+<p>While iTerm2 does not require monospaced fonts, they look much better than proportionately spaced fonts. If you want to use Consolas, you'll need to correct its baseline offset as described at <a href="http://mbauman.net/geek/2009/03/15/minor-truetype-font-editing-on-a-mac/">how to fix Consolas baseline</a>.</p>
 
 <p><br/>
 <br/>
@@ -1652,61 +2032,10 @@ appears too high. It can be fixed, though; please see this page on
 <a name="/section/documentation/shell_tips">
 </a></p>
 
-<h2>Shell Tips</h2>
-
-<hr/>
-
-<h3>UTF-8 patch for tcsh 6.12.00</h3>
-
-<p>By Yuichi Ohkawa.</p>
-
-<p>The tcsh pre-installed in Mac OS X has many problems dealing with UTF-8. If
-you input mult-bytes characters to tcsh, this patch may help you to edit the characters.</p>
-
-<p>Download from <a href="ftp://ftp.tba.org.tohoku.ac.jp/pub/tcsh-6.12-utf8.patch.gz">here</a></p>
-
-<p><br/></p>
-
-<h3>Tips for using zsh with iTerm2</h3>
-
-<p>Provided by Marius Wyx.</p>
-
-<p>There are people with hints on ways to customize the title bar and tabs, a
-much simpler way when using zsh is to do the following:</p>
-
-<pre><code>bell=`tput bel`
-precmd () {
- echo -n "\033]1;$USERNAME@$HOST$bell\033]2;$PWD&gt;    - $USERNAME@$HOST ($status)$bell"
-}
-PROMPT='%m %B%3c%(#.#.&gt;)%b '
-RPROMPT=''
-</code></pre>
-
-<p>Much simpler and does not require anything special. (apart from zsh)</p>
-
-<p>Also in zsh, the command line completion I have expanded to be
-<code>/Applications/</code> aware:</p>
-
-<pre><code>if [ "`uname`" = "Darwin" ]; then
-   compctl -f -x 'p[2]' -s "`/bin/ls -d1 /Applications/*/*.app
-/Applications/*.app | sed 's|^.*/\([^/]*\)\.app.*|\\1|;s/ /\\\\ /g'`"
--- open
-   alias run='open -a'
-fi
-</code></pre>
-
-<p>typing: "open -a " and then pressing tab will try and complete any
-application... (added an alias run as well)</p>
-
-<p><br/>
-<br/>
-<br/>
-<a name="/section/documentation/escape_codes">
-</a></p>
-
 <h2>Proprietary Escape Codes</h2>
 
 <hr/>
+
 
 <p>iTerm2 supports several non-standard escape codes. These may not work properly in tmux or screen, and may have unknown effects on other terminal emulators. Proceed with caution.</p>
 
@@ -1719,6 +2048,7 @@ application... (added an alias run as well)</p>
 ^[]50;CursorShape=N^G
 </pre>
 
+
 <p>where N=0, 1, or 2.</p>
 
 <ul>
@@ -1727,6 +2057,7 @@ application... (added an alias run as well)</p>
 <li>2: Underline</li>
 </ul>
 
+
 <p>Add this to your .vimrc to change cursor shape in insert mode:</p>
 
 <pre>
@@ -1734,7 +2065,87 @@ let &t_SI = "\&lt;Esc&gt;]50;CursorShape=1\x7"
 let &t_EI = "\&lt;Esc&gt;]50;CursorShape=0\x7"
 </pre>
 
+
 <p>This is derived from <a href="http://vim.wikia.com/wiki/Change_cursor_shape_in_different_modes">Konsole</a>.</p>
+
+<p><br/>
+<br/></p>
+
+<h4>Set Mark</h4>
+
+<p>The "Set Mark" (cmd-shift-M) command allows you to record a location and then jump back to it later (with cmd-shift-J). The following escape code has the same effect as that command:</p>
+
+<pre>
+^[]50;SetMark^G
+</pre>
+
+
+<p><br/>
+<br/></p>
+
+<h4>Steal Focus</h4>
+
+<p>To bring iTerm2 to the foreground:</p>
+
+<pre>
+^[]50;StealFocus^G
+</pre>
+
+
+<p><br/>
+<br/></p>
+
+<h4>Clear Scrollback History</h4>
+
+<p>To erase the scrollback history:</p>
+
+<pre>
+^[]50;ClearScrollback^G
+</pre>
+
+
+<p><br/>
+<br/></p>
+
+<h4>Set curent directory</h4>
+
+<p>To inform iTerm2 of the current directory to help semantic history:</p>
+
+<pre>
+^[]50;CurrentDir=/the/current/directory^G
+</pre>
+
+
+<p><br/>
+<br/></p>
+
+<h4>Change profile</h4>
+
+<p>To change the session's profile on the fly:</p>
+
+<pre>
+^[]50;SetProfile=NewProfileName^G
+</pre>
+
+
+<p><br/>
+<br/></p>
+
+<h4>Copy to clipboard</h4>
+
+<p>To place text in the pasteboard:</p>
+
+<pre>
+^[]50;CopyToClipboard=name^G
+</pre>
+
+
+<p>Where name is one of "rule", "find", "font", or empty to mean the general pasteboard (which is what you normally want). After this is sent, all text received is placed in the pasteboard until this code comes in:</p>
+
+<pre>
+^[]50;EndCopy^G
+</pre>
+
 
 <p><br/>
 <br/></p>
@@ -1749,6 +2160,7 @@ let &t_EI = "\&lt;Esc&gt;]50;CursorShape=0\x7"
 ^[]6;1;bg;blue;brightness;N^G
 </pre>
 
+
 <p>Replace N with a decimal value in 0 to 255.</p>
 
 <p>Example in bash that turns the background purple:</p>
@@ -1759,6 +2171,7 @@ echo -e "\033]6;1;bg;green;brightness;0\a"
 echo -e "\033]6;1;bg;blue;brightness;255\a"
 </pre>
 
+
 <p><br/>
 <br/></p>
 
@@ -1767,6 +2180,7 @@ echo -e "\033]6;1;bg;blue;brightness;255\a"
 <pre>
 ^[]Pnrrggbb^[\
 </pre>
+
 
 <p>Replace "n" with:</p>
 
@@ -1781,6 +2195,7 @@ echo -e "\033]6;1;bg;blue;brightness;255\a"
 <li>m = cursor text</li>
 </ul>
 
+
 <p>rr, gg, bb are 2-digit hex value (for example, "ff").</p>
 
 <p>Example in bash that changes the foreground color blue:</p>
@@ -1789,24 +2204,6 @@ echo -e "\033]6;1;bg;blue;brightness;255\a"
 echo -e "\033]Pg4040ff\033\\"
 </pre>
 
-<h4>Dock Icon Activity Notification</h4>
-
-<p>Causes the iTerm2 Dock icon to bounce up and down in the standard
-OS X "This application wants attention" fashion.</p>
-
-<p><strong>Note:</strong> The Dock icon Notification will only occur if iTerm2
-is <em>not</em> the currently active application, and will continue until
-either iTerm2 is made active again, or the "cancel" sequence is received.
-</p>
-
-<pre>
-^[]50;RequestAttention=N^G
-</pre>
-
-<p>where N=0 or 1.</p>
-<ul>
-<li>1 = Bounce Dock Icon continuously until iTerm2 made active</li>
-<li>0 = Cancel Existing Bouncing. No-op if not bouncing.</li>
-</ul>
 </div>
 </body>
+</html>
