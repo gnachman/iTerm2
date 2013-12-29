@@ -2245,7 +2245,12 @@ static const double kInterBellQuietPeriod = 0.1;
         newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
     }
     [delegate_ screenSetWindowTitle:newTitle];
-    [self setWorkingDirectory:nil onLine:[self lineNumberOfCursor]];
+    
+    // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
+    // changes shouldn't override CurrentDirectory.
+    if (![self remoteHostOnLine:[self numberOfScrollbackLines] + self.height]) {
+        [self setWorkingDirectory:nil onLine:[self lineNumberOfCursor]];
+    }
 }
 
 - (void)terminalSetIconTitle:(NSString *)title {
