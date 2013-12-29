@@ -6910,6 +6910,18 @@ NSString *kSessionsKVCKey = @"sessions";
     return _kvcKeys;
 }
 
+- (void)sessionDidTerminate:(PTYSession *)session {
+    if (pbHistoryView.delegate == session) {
+        pbHistoryView.delegate = nil;
+    }
+    if (autocompleteView.delegate == session) {
+        autocompleteView.delegate = nil;
+    }
+    if (commandHistoryPopup.delegate == session) {
+        commandHistoryPopup.delegate = nil;
+    }
+}
+
 #pragma mark - Scripting Support
 
 // Object specifier
@@ -6964,16 +6976,30 @@ NSString *kSessionsKVCKey = @"sessions";
     return [[iTermController sharedInstance] launchBookmark:abEntry inTerminal:self];
 }
 
-- (void)sessionDidTerminate:(PTYSession *)session {
-    if (pbHistoryView.delegate == session) {
-        pbHistoryView.delegate = nil;
+-(void)handleSplitScriptCommand: (NSScriptCommand *)command
+{
+    // Get the command's arguments:
+    NSDictionary *args = [command evaluatedArguments];
+    NSString *direction = args[@"direction"];
+    BOOL isVertical = [direction isEqualToString:@"vertical"];
+    NSString *session = args[@"session"];
+    NSDictionary *abEntry;
+
+    abEntry = [[ProfileModel sharedInstance] bookmarkWithName:session];
+    if (abEntry == nil) {
+        abEntry = [[ProfileModel sharedInstance] defaultBookmark];
     }
-    if (autocompleteView.delegate == session) {
-        autocompleteView.delegate = nil;
+    if (abEntry == nil) {
+        NSMutableDictionary* aDict = [NSMutableDictionary dictionary];
+        [ITAddressBookMgr setDefaultsInBookmark:aDict];
+        [aDict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
+        abEntry = aDict;
     }
-    if (commandHistoryPopup.delegate == session) {
-        commandHistoryPopup.delegate = nil;
-    }
+
+    [self splitVertically:isVertical
+             withBookmark:abEntry
+            targetSession:[[self currentTab] activeSession]];
+
 }
 
 @end
