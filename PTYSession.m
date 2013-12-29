@@ -6,6 +6,7 @@
 #import "ITAddressBookMgr.h"
 #import "MovePaneController.h"
 #import "MovePaneController.h"
+#import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PTYScrollView.h"
@@ -1947,7 +1948,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [self setXtermMouseReporting:[[aDict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue]];
     [TERMINAL setDisableSmcupRmcup:[[aDict objectForKey:KEY_DISABLE_SMCUP_RMCUP] boolValue]];
     [SCREEN setAllowTitleReporting:[[aDict objectForKey:KEY_ALLOW_TITLE_REPORTING] boolValue]];
-    [TERMINAL setAllowKeypadMode:[[aDict objectForKey:KEY_APPLICATION_KEYPAD_ALLOWED] boolValue]];
+    [TERMINAL setAllowKeypadMode:[aDict boolValueDefaultingToYesForKey:KEY_APPLICATION_KEYPAD_ALLOWED]];
     [TERMINAL setUseCanonicalParser:[[aDict objectForKey:KEY_USE_CANONICAL_PARSER] boolValue]];
     [SCREEN setUnlimitedScrollback:[[aDict objectForKey:KEY_UNLIMITED_SCROLLBACK] intValue]];
     [SCREEN setMaxScrollbackLines:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];

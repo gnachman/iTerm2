@@ -2814,10 +2814,12 @@ static VT100TCC decode_string(unsigned char *datap,
 {
     NSData* prefix = nil;
     NSData* theSuffix;
-    if (keyStrings_[terminfo] && !allowKeypadMode_) {
+    if (keyStrings_[terminfo] && keypadMode_) {
+        // Application keypad mode
         theSuffix = [NSData dataWithBytes:keyStrings_[terminfo]
                                    length:strlen(keyStrings_[terminfo])];
     } else {
+        // Normal mode
         int mod = 0;
         static char buf[20];
         static int modValues[] = {
@@ -3283,7 +3285,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (void)setKeypadMode:(BOOL)mode
 {
-    keypadMode_ = mode;
+    keypadMode_ = mode && allowKeypadMode_;
 }
 
 - (void)setAllowKeypadMode:(BOOL)allow

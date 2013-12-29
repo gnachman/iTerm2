@@ -29,6 +29,7 @@
 
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
+#import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "PTYSession.h"
@@ -990,6 +991,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [newDict setObject:[origBookmark objectForKey:KEY_KEYBOARD_MAP] forKey:KEY_KEYBOARD_MAP];
     [newDict setObject:[NSNumber numberWithInt:[[optionKeySends selectedCell] tag]] forKey:KEY_OPTION_KEY_SENDS];
     [newDict setObject:[NSNumber numberWithInt:[[rightOptionKeySends selectedCell] tag]] forKey:KEY_RIGHT_OPTION_KEY_SENDS];
+    [newDict setObject:[NSNumber numberWithInt:([applicationKeypadAllowed state]==NSOnState)] forKey:KEY_APPLICATION_KEYPAD_ALLOWED];
     [newDict setObject:[tags objectValue] forKey:KEY_TAGS];
 
     BOOL reloadKeyMappings = NO;
@@ -1005,7 +1007,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         BOOL sendCH = [self _deleteSendsCtrlHInBookmark:newDict];
         [deleteSendsCtrlHButton setState:sendCH ? NSOnState : NSOffState];
     }
-    [newDict setObject:@(applicationKeypadAllowed.state == NSOnState) forKey:KEY_APPLICATION_KEYPAD_ALLOWED];
 
     // Session tab
     [newDict setObject:[NSNumber numberWithInt:[[promptBeforeClosing_ selectedCell] tag]]
@@ -2840,6 +2841,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     NSString* keyboardKeys[] = {
         KEY_KEYBOARD_MAP,
         KEY_OPTION_KEY_SENDS,
+        KEY_RIGHT_OPTION_KEY_SENDS,
+        KEY_APPLICATION_KEYPAD_ALLOWED,
         nil
     };
     NSString *advancedKeys[] = {
@@ -4101,7 +4104,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     // "delete sends ^h" checkbox is correct
     BOOL sendCH = [self _deleteSendsCtrlHInBookmark:dict];
     [deleteSendsCtrlHButton setState:sendCH ? NSOnState : NSOffState];
-    [applicationKeypadAllowed setState:[[dict objectForKey:KEY_APPLICATION_KEYPAD_ALLOWED] boolValue] ? NSOnState : NSOffState];
+    [applicationKeypadAllowed setState:[dict boolValueDefaultingToYesForKey:KEY_APPLICATION_KEYPAD_ALLOWED] ? NSOnState : NSOffState];
 
     // Session tab
     [promptBeforeClosing_ selectCellWithTag:[[dict objectForKey:KEY_PROMPT_CLOSE] intValue]];

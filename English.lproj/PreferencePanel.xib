@@ -34,6 +34,7 @@
                 <outlet property="ansi9Color" destination="2295" id="3051"/>
                 <outlet property="appearanceTabViewItem" destination="4439" id="4601"/>
                 <outlet property="appearanceToolbarItem" destination="5889" id="6038"/>
+                <outlet property="applicationKeypadAllowed" destination="U4H-3c-nZg" id="qYN-Rv-WQC"/>
                 <outlet property="arrangementsTabViewItem" destination="5417" id="5578"/>
                 <outlet property="arrangementsToolbarItem" destination="5890" id="6041"/>
                 <outlet property="arrangements_" destination="5572" id="5584"/>
