@@ -2376,10 +2376,10 @@ NSMutableArray* screens=0;
         isFirstInteraction = NO;
     }
 
-    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+    BOOL debugKeyDown = YES;
 
     if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown BEGIN %@", event);
+        DLog(@"PTYTextView keyDown BEGIN %@", event);
     }
     DebugLog(@"PTYTextView keyDown");
     id delegate = [self delegate];
@@ -2389,7 +2389,7 @@ NSMutableArray* screens=0;
     }
     if ([[[[[self dataSource] session] tab] realParentWindow] inInstantReplay]) {
         if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown: in instant replay, send to delegate");
+            DLog(@"PTYTextView keyDown: in instant replay, send to delegate");
         }
         // Delegate has special handling for this case.
         [delegate keyDown:event];
@@ -2401,17 +2401,17 @@ NSMutableArray* screens=0;
 
     keyIsARepeat = [event isARepeat];
     if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
-        NSLog(@"prev=%d", (int)prev);
-        NSLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
-        NSLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%d", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
-        NSLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
-        NSLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
-        NSLog(@"modflag & leftAlt == leftAlt && optionKey != NORMAL = %d", (int)((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
-        NSLog(@"modflag == alt && optionKey != NORMAL = %d", (int)(modflag == NSAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
-        NSLog(@"modflag & rightAlt == rightAlt && rightOptionKey != NORMAL = %d", (int)((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL));
-        NSLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
-        NSLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
+        DLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
+        DLog(@"prev=%d", (int)prev);
+        DLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
+        DLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%d", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
+        DLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
+        DLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
+        DLog(@"modflag & leftAlt == leftAlt && optionKey != NORMAL = %d", (int)((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
+        DLog(@"modflag == alt && optionKey != NORMAL = %d", (int)(modflag == NSAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
+        DLog(@"modflag & rightAlt == rightAlt && rightOptionKey != NORMAL = %d", (int)((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL));
+        DLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
+        DLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
     }
 
     // Hide the cursor
@@ -2428,20 +2428,20 @@ NSMutableArray* screens=0;
          ((modflag & NSControlKeyMask) &&                          // a few special cases
           (keyCode == 0x2c /* slash */ || keyCode == 0x2a /* backslash */)))) {
         if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown: process in delegate");
+            DLog(@"PTYTextView keyDown: process in delegate");
         }
         [delegate keyDown:event];
         return;
     }
 
     if (debugKeyDown) {
-        NSLog(@"Test for command key");
+        DLog(@"Test for command key");
     }
     if (modflag & NSCommandKeyMask) {
         // You pressed cmd+something but it's not handled by the delegate. Going further would
         // send the unmodified key to the terminal which doesn't make sense.
         if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown You pressed cmd+something");
+            DLog(@"PTYTextView keyDown You pressed cmd+something");
         }
         return;
     }
@@ -2452,7 +2452,7 @@ NSMutableArray* screens=0;
     if (!prev &&
         (modflag & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == NSControlKeyMask) {
         if (debugKeyDown) {
-            NSLog(@"Special ctrl+key handler running");
+            DLog(@"Special ctrl+key handler running");
         }
         NSString *unmodkeystr = [event charactersIgnoringModifiers];
         if ([unmodkeystr length] != 0) {
@@ -2476,7 +2476,7 @@ NSMutableArray* screens=0;
             if (cc != 0xffff) {
                 [self insertText:[NSString stringWithCharacters:&cc length:1]];
                 if (debugKeyDown) {
-                    NSLog(@"PTYTextView keyDown work around control bug. cc=%d", (int)cc);
+                    DLog(@"PTYTextView keyDown work around control bug. cc=%d", (int)cc);
                 }
                 workAroundControlBug = YES;
             }
@@ -2487,7 +2487,7 @@ NSMutableArray* screens=0;
         // Let the IME process key events
         IM_INPUT_INSERT = NO;
         if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown send to IME");
+            DLog(@"PTYTextView keyDown send to IME");
         }
         
         // In issue 2743, it is revealed that in OS 10.9 this sometimes calls -insertText on the
@@ -2503,13 +2503,13 @@ NSMutableArray* screens=0;
             !IM_INPUT_INSERT &&
             ![self hasMarkedText]) {
             if (debugKeyDown) {
-                NSLog(@"PTYTextView keyDown IME no, send to delegate");
+                DLog(@"PTYTextView keyDown IME no, send to delegate");
             }
             [delegate keyDown:event];
         }
     }
     if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown END");
+        DLog(@"PTYTextView keyDown END");
     }
 }
 

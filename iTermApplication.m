@@ -29,6 +29,7 @@
  */
 
 #import "iTermApplication.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "PTYWindow.h"
 #import "PseudoTerminal.h"
@@ -80,6 +81,7 @@
 - (void)sendEvent:(NSEvent*)event
 {
     if ([event type] == NSKeyDown) {
+        DLog(@"Received event %@", event);
         iTermController* cont = [iTermController sharedInstance];
 #ifdef FAKE_EVENT_TAP
         event = [cont runEventTapHandler:event];
@@ -94,12 +96,14 @@
             // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
             // the event tap performs the remapping.
             event = [iTermKeyBindingMgr remapModifiers:event prefPanel:prefPanel];
+            DLog(@"Modifiers remapped. %@", event);
         }
         if (IsSecureEventInputEnabled() &&
             [cont eventIsHotkey:event]) {
             // User pressed the hotkey while secure input is enabled so the event
             // tap won't get it. Do what the event tap would do in this case.
             OnHotKeyEvent();
+            DLog(@"Secure input is enabled, handle hotkey");
             return;
         }
         PreferencePanel* privatePrefPanel = [PreferencePanel sessionsInstance];
@@ -110,6 +114,7 @@
 
         if (([event modifierFlags] & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == [prefPanel modifierTagToMask:[prefPanel switchWindowModifier]]) {
             // Command-Alt (or selected modifier) + number: Switch to window by number.
+            DLog(@"Switch to window by number");
             int digit = [[event charactersIgnoringModifiers] intValue];
             if (!digit) {
                 digit = [[event characters] intValue];
@@ -130,26 +135,31 @@
             [prefPanel keySheetIsOpen] &&
             [iTermApplication isTextFieldInFocus:[prefPanel shortcutKeyTextField]]) {
             // Focus is in the shortcut field in prefspanel. Pass events directly to it.
+            DLog(@"shortcut keydown");
             [prefPanel shortcutKeyDown:event];
             return;
         } else if ([privatePrefPanel keySheet] == [self keyWindow] &&
                    [privatePrefPanel keySheetIsOpen] &&
                    [iTermApplication isTextFieldInFocus:[privatePrefPanel shortcutKeyTextField]]) {
+            DLog(@"focus in shortcut field");
             // Focus is in the shortcut field in sessions prefspanel. Pass events directly to it.
             [privatePrefPanel shortcutKeyDown:event];
             return;
         } else if ([prefPanel window] == [self keyWindow] &&
                    [iTermApplication isTextFieldInFocus:[prefPanel hotkeyField]]) {
+            DLog(@"focus in hotkey field");
             // Focus is in the hotkey field in prefspanel. Pass events directly to it.
             [prefPanel hotkeyKeyDown:event];
             return;
         } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
+            DLog(@"focus in terminal window");
             // Focus is in a terminal window.
             responder = [[self keyWindow] firstResponder];
             bool inTextView = [responder isKindOfClass:[PTYTextView class]];
 
             if (inTextView &&
                 [(PTYTextView *)responder hasMarkedText]) {
+                DLog(@"Send to IM");
                 // Let the IM process it
                 [(PTYTextView *)responder interpretKeyEvents:[NSArray arrayWithObject:event]];
                 return;
@@ -157,6 +167,7 @@
 
             const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
             if (([event modifierFlags] & mask) == [prefPanel modifierTagToMask:[prefPanel switchTabModifier]]) {
+                DLog(@"Changing tabs");
                 int digit = [[event charactersIgnoringModifiers] intValue];
                 if (!digit) {
                     digit = [[event characters] intValue];
@@ -175,23 +186,29 @@
 
             BOOL okToRemap = YES;
             if ([responder isKindOfClass:[NSTextView class]]) {
+                DLog(@"Not in a text view");
                 // Disable keymaps that send text
                 if ([currentSession hasTextSendingKeyMappingForEvent:event]) {
+                    DLog(@"ok to remap=NO (1)");
                     okToRemap = NO;
                 }
                 if ([self _eventUsesNavigationKeys:event]) {
+                    DLog(@"ok to remap=NO (2)");
                     okToRemap = NO;
                 }
             }
 
             if (okToRemap && [currentSession hasActionableKeyMappingForEvent:event]) {
                 // Remap key.
+                DLog(@"ending to session");
                 [currentSession keyDown:event];
                 return;
             }
         } else {
+            DLog(@"Focus not in terminal window");
             // Focus not in terminal window.
             if ([PTYSession handleShortcutWithoutTerminal:event]) {
+                DLog(@"Handle shortcut without terminal");
                 return;
             }
         }
