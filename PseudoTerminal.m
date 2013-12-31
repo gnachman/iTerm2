@@ -1138,8 +1138,14 @@ NSString *sessionsKey = @"sessions";
     // In bug 2593, we see a crazy thing where setting the window title right
     // after a window is created causes it to have the wrong background color.
     // A delay of 0 doesn't fix it. I'm at wit's end here, so this will have to
-    // do until a better explanation comes along.
-    [[self window] performSelector:@selector(setTitle:) withObject:title afterDelay:0.1];
+    // do until a better explanation comes along. But during a live resize it
+    // has to be done immediately because the runloop doesn't get around to
+    // delayed performs until the live resize is done (bug 2812).
+    if (liveResize_) {
+        [[self window] setTitle:title];
+    } else {
+        [[self window] performSelector:@selector(setTitle:) withObject:title afterDelay:0.1];
+    }
 }
 
 - (BOOL)tempTitle
