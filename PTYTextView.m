@@ -6339,11 +6339,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Chatacter hidden because of blinking.
             drawable = NO;
         }
-        if (theLine[i].underline) {
-            // This is not as fast as possible, but is nice and simple. Always draw underlined text
-            // even if it's just a blank.
-            drawable = YES;
-        }
         // Set all other common attributes.
         if (doubleWidth) {
             thisCharAdvance = charWidth * 2;
@@ -6558,6 +6553,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         storage:(CRunStorage *)storage {
     NSPoint startPoint = NSMakePoint(initialPoint.x + currentRun->x, initialPoint.y);
     CGContextSetShouldAntialias(ctx, currentRun->attrs.antiAlias);
+
+    // Draw underline
+    if (currentRun->attrs.underline) {
+        [currentRun->attrs.color set];
+        CGFloat runWidth = 0;
+        int length = currentRun->string ? 1 : currentRun->length;
+        NSSize *advances = CRunGetAdvances(currentRun);
+        for (int i = 0; i < length; i++) {
+            runWidth += advances[i].width;
+        }
+        NSRectFill(NSMakeRect(startPoint.x,
+                              startPoint.y + lineHeight - 2,
+                              runWidth,
+                              1));
+    }
+
     if (!currentRun->string) {
         // Non-complex, except for glyphs we can't find.
         while (currentRun->length) {
@@ -6586,21 +6597,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             width:CRunGetAdvances(currentRun)[0].width
                          fakeBold:currentRun->attrs.fakeBold
                         antiAlias:currentRun->attrs.antiAlias];
-    }
-
-    // Draw underline
-    if (currentRun->attrs.underline) {
-        [currentRun->attrs.color set];
-        CGFloat runWidth = 0;
-        int length = currentRun->string ? 1 : currentRun->length;
-        NSSize *advances = CRunGetAdvances(currentRun);
-        for (int i = 0; i < length; i++) {
-            runWidth += advances[i].width;
-        }
-        NSRectFill(NSMakeRect(startPoint.x,
-                              startPoint.y + lineHeight - 2,
-                              runWidth,
-                              1));
     }
 }
 
