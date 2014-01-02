@@ -123,6 +123,49 @@ static NSError *SCPFileError(NSString *description) {
     self.session = nil;
 }
 
+- (NSString *)hostname {
+    NSArray *hostComponents = [self.path.hostname componentsSeparatedByString:@":"];
+    NSInteger components = [hostComponents count];
+    
+    // Check if the host is {hostname}:{port} or {IPv4}:{port}
+    if (components == 2) {
+        return hostComponents[0];
+    } else if (components >= 4 &&
+               [hostComponents[0] hasPrefix:@"["] &&
+               [hostComponents[components-2] hasSuffix:@"]"]) {
+        // Is [{IPv6}]:{port}, return just {IPv6}.
+        hostComponents = [hostComponents subarrayWithRange:NSMakeRange(0, components - 1)];
+        NSString *bracketedHostname = [hostComponents componentsJoinedByString:@":"];
+        return [bracketedHostname substringWithRange:NSMakeRange(1, bracketedHostname.length - 2)];
+    }
+    
+    return self.path.hostname;
+}
+
+- (int)port {
+    NSArray *hostComponents = [self.path.hostname componentsSeparatedByString:@":"];
+    NSInteger components = [hostComponents count];
+    
+    // Check if the host is {hostname}:{port} or {IPv4}:{port}
+    if (components == 2) {
+        NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+        [formatter setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US"]];
+        
+        return [[formatter numberFromString:[hostComponents lastObject]] intValue];
+    } else if (components >= 4 &&
+               [hostComponents[0] hasPrefix:@"["] &&
+               [hostComponents[components-2] hasSuffix:@"]"]) {
+        // Check if the host is [{IPv6}]:{port}
+        NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+        [formatter setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US"]];
+        
+        return [[formatter numberFromString:[hostComponents lastObject]] intValue];
+    }
+    
+    // If no port was defined, use 22 by default
+    return 22;
+}
+
 // This runs in a thread.
 - (void)performTransfer:(BOOL)isDownload {
     NSString *baseName = [[self class] fileNameForPath:self.path.path];
@@ -138,7 +181,8 @@ static NSError *SCPFileError(NSString *description) {
     if (self.session) {
         self.session.delegate = self;
     } else {
-        self.session = [[[NMSSHSession alloc] initWithHost:self.path.hostname
+        self.session = [[[NMSSHSession alloc] initWithHost:[self hostname]
+                                                      port:[self port]
                                                andUsername:self.path.username] autorelease];
         self.session.delegate = self;
         [self.session connect];
@@ -238,7 +282,7 @@ static NSError *SCPFileError(NSString *description) {
     }
     
     if (_okToAdd) {
-        [self.session addCurrentHostToKnownHosts];
+        [self.session addCurrentHostToKnownHostsUnhashed];
     }
 
     if (isDownload) {
