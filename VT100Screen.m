@@ -205,8 +205,7 @@ void StringToScreenChars(NSString *s,
                     // built by surrogates.
                     buf[j].code = AppendToComplexChar(buf[j].code, sc[i]);
                 } else {
-                    buf[j].code = BeginComplexChar(buf[j].code, sc[i]);
-                    buf[j].complexChar = YES;
+                    BeginComplexChar(buf + j, sc[i]);
                 }
                 if (IsLowSurrogate(sc[i])) {
                     NSString* str = ComplexCharToStr(buf[j].code);
@@ -2702,9 +2701,7 @@ void DumpBuf(screen_char_t* p, int n) {
         theLine[cx].code = AppendToComplexChar(theLine[cx].code,
                                                combiningChar);
     } else {
-        theLine[cx].code = BeginComplexChar(theLine[cx].code,
-                                            combiningChar);
-        theLine[cx].complexChar = YES;
+        BeginComplexChar(theLine + cx, combiningChar);
     }
     return YES;
 }

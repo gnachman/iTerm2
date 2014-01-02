@@ -149,16 +149,25 @@ int AppendToComplexChar(int key, unichar codePoint)
     return GetOrSetComplexChar(temp);
 }
 
-int BeginComplexChar(unichar initialCodePoint, unichar combiningChar)
+void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar)
 {
+    unichar initialCodePoint = screenChar->code;
     if (initialCodePoint == UNICODE_REPLACEMENT_CHAR) {
-        return UNICODE_REPLACEMENT_CHAR;
+        return;
     }
 
     unichar temp[2];
     temp[0] = initialCodePoint;
     temp[1] = combiningChar;
-    return GetOrSetComplexChar([NSString stringWithCharacters:temp length:2]);
+    
+    // See if it makes a single code in NFC.
+    NSString *nfc = [[NSString stringWithCharacters:temp length:2] precomposedStringWithCanonicalMapping];
+    if (nfc.length == 1) {
+        screenChar->code = [nfc characterAtIndex:0];
+    } else {
+        screenChar->code = GetOrSetComplexChar([NSString stringWithCharacters:temp length:2]);
+        screenChar->complexChar = YES;
+    }
 }
 
 BOOL StringContainsCombiningMark(NSString *s)
