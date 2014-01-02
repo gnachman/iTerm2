@@ -4090,8 +4090,8 @@ static VT100TCC decode_string(unsigned char *datap,
 
             case 6: // Command from host -- Please report active position
                 if ([self originMode]) {
-                    // This is compatible with Terminal but not xterm :(. xterm seems to always do what
-                    // we do in the else clause.
+                    // This is compatible with Terminal but not old xterm :(. it always did what
+                    // we do in the else clause. This behavior of xterm is fixed by Patch #297.
                     [delegate_ terminalSendReport:[self reportActivePositionWithX:[delegate_ terminalRelativeCursorX]
                                                                                 Y:[delegate_ terminalRelativeCursorY]
                                                                      withQuestion:withQuestion]];
