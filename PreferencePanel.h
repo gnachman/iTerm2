@@ -705,6 +705,7 @@ typedef enum {
 - (int)minTabWidth;
 - (int)minCompactTabWidth;
 - (int)optimumTabWidth;
+- (BOOL)traditionalVisualBell;
 - (float)hotkeyTermAnimationDuration;
 - (NSString *)searchCommand;
 - (Profile *)handlerBookmarkForURL:(NSString *)url;

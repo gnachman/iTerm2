@@ -2229,7 +2229,14 @@ NSMutableArray* screens=0;
         NSImage* image = nil;
         switch (flashImage_) {
             case FlashBell:
-                image = bellImage;
+                if ([[PreferencePanel sharedInstance] traditionalVisualBell]) {
+                    image = [[[NSImage alloc] initWithSize: frame.size] autorelease];
+                    [image lockFocus];
+                    [defaultFGColor drawSwatchInRect:NSMakeRect(0, 0, frame.size.width, frame.size.width)];
+                    [image unlockFocus];
+                } else {
+                    image = bellImage;
+                }
                 break;
 
             case FlashWrapToTop:
@@ -6625,7 +6632,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                         repeats:NO];
     }
     // Turn the image to opaque and ask to redraw the screen.
-    flashing_ = 1;
+    if ([[PreferencePanel sharedInstance] traditionalVisualBell]) {
+        flashing_ = 0.33;
+    } else {
+        flashing_ = 1;
+    }
     [self setNeedsDisplay:YES];
 }
 
