@@ -376,6 +376,9 @@ typedef enum {
 - (void)previousMarkOrNote;
 - (void)nextMarkOrNote;
 
+// Select this session and tab and bring window to foreground.
+- (void)reveal;
+
 @end
 
 @interface PTYSession (ScriptingSupport)

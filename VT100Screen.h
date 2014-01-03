@@ -177,9 +177,6 @@ extern int kVT100ScreenMinRows;
 
 - (void)resetCharset;
 
-// Show a notification and bounce the dock icon.
-- (void)requestUserAttentionWithMessage:(NSString *)message;
-
 #pragma mark - Marks and notes
 
 - (VT100ScreenMark *)lastMark;

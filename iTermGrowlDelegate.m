@@ -29,12 +29,13 @@
  */
 
 #import "iTermGrowlDelegate.h"
-#import "PreferencePanel.h"
-#import "PTYTab.h"
-#import "iTermController.h"
-#import "PseudoTerminal.h"
-#import "HotkeyWindowController.h"
 #import "Growl.framework/Headers/GrowlApplicationBridge.h"
+#import "HotkeyWindowController.h"
+#import "PTYSession.h"
+#import "PTYTab.h"
+#import "PreferencePanel.h"
+#import "PseudoTerminal.h"
+#import "iTermController.h"
 
 /**
  **  The category is used to extend iTermGrowlDelegate with private methods.
@@ -189,21 +190,9 @@
         NSBeep();
         return;
     }
-
-    if ([terminal isHotKeyWindow]) {
-        [[HotkeyWindowController sharedInstance] showHotKeyWindow];
-    } else {
-        [controller setCurrentTerminal:terminal];
-        [[terminal window] makeKeyAndOrderFront:self];
-        [tabView selectTabViewItemAtIndex:tab];
-    }
-    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-
-    PTYTab *theTab = [terminal currentTab];
+    PTYTab *theTab = [[tabView tabViewItemAtIndex:tab] identifier];
     PTYSession *theSession = [theTab sessionWithViewId:view];
-    if (theSession) {
-        [theTab setActiveSession:theSession];
-    }
+    [theSession reveal];
 }
 
 - (NSDictionary *)registrationDictionaryForGrowl

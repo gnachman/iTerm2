@@ -315,4 +315,7 @@ typedef enum {
 // Indicates if the current session can be split.
 - (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Profile*)theBookmark;
 
+// Indicates if this the hotkey window.
+- (BOOL)isHotKeyWindow;
+
 @end

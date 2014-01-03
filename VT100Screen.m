@@ -1748,13 +1748,6 @@ static const double kInterBellQuietPeriod = 0.1;
     return VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
 }
 
-- (void)requestUserAttentionWithMessage:(NSString *)message {
-    if (![self terminalPostGrowlNotification:message]) {
-        [self activateBell];
-    }
-    [delegate_ screenRequestUserAttention:YES];
-}
-
 #pragma mark - VT100TerminalDelegate
 
 - (void)terminalAppendString:(NSString *)string isAscii:(BOOL)isAscii
