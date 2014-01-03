@@ -2803,7 +2803,7 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (int)terminalCursorX {
-    return [self cursorX];
+    return MIN([self cursorX], [self width]);
 }
 
 - (int)terminalCursorY {

@@ -3405,10 +3405,11 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 // The following are preferences with no UI, but accessible via "defaults read/write"
 // examples:
-//  defaults write net.sourceforge.iTerm UseUnevenTabs -bool true
-//  defaults write net.sourceforge.iTerm MinTabWidth -int 100
-//  defaults write net.sourceforge.iTerm MinCompactTabWidth -int 120
-//  defaults write net.sourceforge.iTerm OptimumTabWidth -int 100
+//  defaults write com.googlecode.iterm2 UseUnevenTabs -bool true
+//  defaults write com.googlecode.iterm2 MinTabWidth -int 100
+//  defaults write com.googlecode.iterm2 MinCompactTabWidth -int 120
+//  defaults write com.googlecode.iterm2 OptimumTabWidth -int 100
+//  defaults write com.googlecode.iterm2 TraditionalVisualBell -bool true
 
 - (BOOL)useUnevenTabs
 {
@@ -3432,6 +3433,12 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 {
     assert(prefs);
     return [prefs objectForKey:@"OptimumTabWidth"] ? [[prefs objectForKey:@"OptimumTabWidth"] intValue] : 175;
+}
+
+- (BOOL) traditionalVisualBell
+{
+    assert(prefs);
+    return [prefs objectForKey:@"TraditionalVisualBell"] ? [[prefs objectForKey:@"TraditionalVisualBell"] boolValue] : NO;
 }
 
 - (float) hotkeyTermAnimationDuration
