@@ -245,6 +245,10 @@ In it's simplest form it works like this:
  */
 - (NSString *)fingerprint:(NMSSHSessionHash)hashType;
 
+/// ----------------------------------------------------------------------------
+/// @name Known hosts
+/// ----------------------------------------------------------------------------
+
 /**
  * Checks if the hosts's key is recognized. The session must be connected.
  *
@@ -253,11 +257,26 @@ In it's simplest form it works like this:
 - (NMSSHKnownHostStatus)knownHostStatus;
 
 /**
- * Adds the current host to the user's known hosts file.
+ * Adds the current host to the user's known hosts file. It is added to the
+ * file unhashed.
  *
  * @returns Success status.
  */
-- (BOOL)addCurrentHostToKnownHosts;
+- (BOOL)addCurrentHostToKnownHostsUnhashed;
+
+/**
+ * Adds the passed-in host to the user's known hosts file. The hostName may be a
+ * numerical IP address or a full name. If it includes a port number, it should
+ * be formatted as [host]:port (e.g., @"[example.com]:2222"). If salt is non-nil
+ * then hostName must contain a hostname hashed with SHA1 and then
+ * base64-encoded.
+ *
+ * @param hostName The hostname to add.
+ * @param salt The base64-encoded salt used for hashing. May be nil.
+ * @returns Success status.
+ */
+- (BOOL)addHostToKnownHosts:(NSString *)hostName
+                   withSalt:(NSString *)salt;
 
 /// ----------------------------------------------------------------------------
 /// @name Quick channel/sftp access

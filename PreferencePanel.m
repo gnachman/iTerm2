@@ -29,6 +29,7 @@
 
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
+#import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "PTYSession.h"
@@ -990,6 +991,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [newDict setObject:[origBookmark objectForKey:KEY_KEYBOARD_MAP] forKey:KEY_KEYBOARD_MAP];
     [newDict setObject:[NSNumber numberWithInt:[[optionKeySends selectedCell] tag]] forKey:KEY_OPTION_KEY_SENDS];
     [newDict setObject:[NSNumber numberWithInt:[[rightOptionKeySends selectedCell] tag]] forKey:KEY_RIGHT_OPTION_KEY_SENDS];
+    [newDict setObject:[NSNumber numberWithInt:([applicationKeypadAllowed state]==NSOnState)] forKey:KEY_APPLICATION_KEYPAD_ALLOWED];
     [newDict setObject:[tags objectValue] forKey:KEY_TAGS];
 
     BOOL reloadKeyMappings = NO;
@@ -1005,7 +1007,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         BOOL sendCH = [self _deleteSendsCtrlHInBookmark:newDict];
         [deleteSendsCtrlHButton setState:sendCH ? NSOnState : NSOffState];
     }
-    [newDict setObject:@(applicationKeypadAllowed.state == NSOnState) forKey:KEY_APPLICATION_KEYPAD_ALLOWED];
 
     // Session tab
     [newDict setObject:[NSNumber numberWithInt:[[promptBeforeClosing_ selectedCell] tag]]
@@ -2840,6 +2841,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     NSString* keyboardKeys[] = {
         KEY_KEYBOARD_MAP,
         KEY_OPTION_KEY_SENDS,
+        KEY_RIGHT_OPTION_KEY_SENDS,
+        KEY_APPLICATION_KEYPAD_ALLOWED,
         nil
     };
     NSString *advancedKeys[] = {
@@ -3402,10 +3405,11 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 // The following are preferences with no UI, but accessible via "defaults read/write"
 // examples:
-//  defaults write net.sourceforge.iTerm UseUnevenTabs -bool true
-//  defaults write net.sourceforge.iTerm MinTabWidth -int 100
-//  defaults write net.sourceforge.iTerm MinCompactTabWidth -int 120
-//  defaults write net.sourceforge.iTerm OptimumTabWidth -int 100
+//  defaults write com.googlecode.iterm2 UseUnevenTabs -bool true
+//  defaults write com.googlecode.iterm2 MinTabWidth -int 100
+//  defaults write com.googlecode.iterm2 MinCompactTabWidth -int 120
+//  defaults write com.googlecode.iterm2 OptimumTabWidth -int 100
+//  defaults write com.googlecode.iterm2 TraditionalVisualBell -bool true
 
 - (BOOL)useUnevenTabs
 {
@@ -3429,6 +3433,12 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 {
     assert(prefs);
     return [prefs objectForKey:@"OptimumTabWidth"] ? [[prefs objectForKey:@"OptimumTabWidth"] intValue] : 175;
+}
+
+- (BOOL) traditionalVisualBell
+{
+    assert(prefs);
+    return [prefs objectForKey:@"TraditionalVisualBell"] ? [[prefs objectForKey:@"TraditionalVisualBell"] boolValue] : NO;
 }
 
 - (float) hotkeyTermAnimationDuration
@@ -4101,7 +4111,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     // "delete sends ^h" checkbox is correct
     BOOL sendCH = [self _deleteSendsCtrlHInBookmark:dict];
     [deleteSendsCtrlHButton setState:sendCH ? NSOnState : NSOffState];
-    [applicationKeypadAllowed setState:[[dict objectForKey:KEY_APPLICATION_KEYPAD_ALLOWED] boolValue] ? NSOnState : NSOffState];
+    [applicationKeypadAllowed setState:[dict boolValueDefaultingToYesForKey:KEY_APPLICATION_KEYPAD_ALLOWED] ? NSOnState : NSOffState];
 
     // Session tab
     [promptBeforeClosing_ selectCellWithTag:[[dict objectForKey:KEY_PROMPT_CLOSE] intValue]];
