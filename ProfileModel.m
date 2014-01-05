@@ -638,10 +638,12 @@ int gMigrated;
     return guids;
 }
 
-+ (BOOL)menuHasMultipleItemsExcludingAlternates:(NSMenu *)menu
++ (BOOL)menuHasMultipleItemsExcludingAlternates:(NSMenu *)menu fromIndex:(int)first
 {
     int n = 0;
-    for (NSMenuItem *item in [menu itemArray]) {
+    NSArray *array = [menu itemArray];
+    for (int i = first; i < array.count; i++) {
+        NSMenuItem *item = array[i];
         if (!item.isAlternate) {
             n++;
             if (n == 2) {
@@ -701,7 +703,7 @@ int gMigrated;
                                             withName:suffix
                                               params:params];
         if (menuToAddOpenAll &&
-            [self menuHasMultipleItemsExcludingAlternates:menuToAddOpenAll] &&
+            [self menuHasMultipleItemsExcludingAlternates:menuToAddOpenAll fromIndex:0] &&
             ![self menuHasOpenAll:menuToAddOpenAll]) {
             [self addOpenAllToMenu:menuToAddOpenAll params:params];
         }
@@ -846,7 +848,8 @@ int gMigrated;
         [self addBookmark:b toMenu:tagSubMenu startingAtItem:0 withTags:nil params:params atPos:theIndex];
     }
 
-    if ([menu numberOfItems] > skip + 2 && ![ProfileModel menuHasOpenAll:menu]) {
+    if ([[self class] menuHasMultipleItemsExcludingAlternates:menu fromIndex:skip] &&
+        ![ProfileModel menuHasOpenAll:menu]) {
         [ProfileModel addOpenAllToMenu:menu params:params];
     }
 }
