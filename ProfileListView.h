@@ -38,20 +38,20 @@
 @optional
 - (void)profileTableSelectionDidChange:(id)profileTable;
 
-@optional
 - (void)profileTableSelectionWillChange:(id)profileTable;
 
-@optional
 - (void)profileTableRowSelected:(id)profileTable;
 
-@optional
 - (NSMenu*)profileTable:(id)profileTable menuForEvent:(NSEvent*)theEvent;
 
-@optional
 - (void)profileTableFilterDidChange:(ProfileListView *)profileListView;
+
+- (void)profileTableTagsVisibilityDidChange:(ProfileListView *)profileListView;
+
 @end
 
 @interface ProfileListView : NSView <
+  NSSplitViewDelegate,
   NSTextFieldDelegate,
   NSTableViewDataSource,
   NSTableViewDelegate,

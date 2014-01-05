@@ -45,7 +45,9 @@ const CGFloat kDefaultTagsWidth = 80;
 - (void)syncTableViewsWithSelectedGuids:(NSArray *)guids;
 @end
 
-@implementation ProfileListView
+@implementation ProfileListView {
+    BOOL tagsViewIsCollapsed_;
+}
 
 - (id)initWithFrame:(NSRect)frameRect
 {
@@ -81,6 +83,7 @@ const CGFloat kDefaultTagsWidth = 80;
         splitView_ = [[[NSSplitView alloc] initWithFrame:splitViewFrame] autorelease];
         splitView_.vertical = YES;
         splitView_.autoresizesSubviews = NO;
+        splitView_.delegate = self;
         [self addSubview:splitView_];
         
         // Scroll view -----------------------------------------------------------------------------
@@ -155,6 +158,7 @@ const CGFloat kDefaultTagsWidth = 80;
         // Tags view -------------------------------------------------------------------------------
         NSRect tagsViewFrame = NSMakeRect(0, 0, kTagsViewWidth, splitViewFrame.size.height);
         lastTagsWidth_ = kDefaultTagsWidth;
+        tagsViewIsCollapsed_ = (tagsView_.frame.size.width == 0);
         tagsView_ = [[[ProfileTagsView alloc] initWithFrame:tagsViewFrame] autorelease];
         tagsView_.delegate = self;
         [splitView_ addSubview:tagsView_];
@@ -835,7 +839,7 @@ const CGFloat kDefaultTagsWidth = 80;
 }
 
 - (BOOL)tagsVisible {
-    return tagsView_.frame.size.width > 5;
+    return tagsView_.frame.size.width > 0;
 }
 
 #pragma mark - ProfileTagsViewDelegate
@@ -845,4 +849,13 @@ const CGFloat kDefaultTagsWidth = 80;
     [self updateResultsForSearch];
 }
 
+#pragma mark - NSSplitViewDelegate
+
+- (void)splitViewDidResizeSubviews:(NSNotification *)notification {
+    if ((tagsView_.frame.size.width == 0) != tagsViewIsCollapsed_ &&
+        [delegate_ respondsToSelector:@selector(profileTableTagsVisibilityDidChange:)]) {
+        [delegate_ profileTableTagsVisibilityDidChange:self];
+    }
+    tagsViewIsCollapsed_ = (tagsView_.frame.size.width == 0);
+}
 @end

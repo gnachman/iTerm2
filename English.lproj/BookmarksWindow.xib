@@ -12,6 +12,7 @@
                 <outlet property="newTabsInNewWindowButton_" destination="339" id="341"/>
                 <outlet property="tabButton_" destination="327" id="333"/>
                 <outlet property="tableView_" destination="319" id="322"/>
+                <outlet property="toggleTagsButton_" destination="6zs-tn-Vlz" id="1Ao-bA-ziT"/>
                 <outlet property="verticalPaneButton_" destination="350" id="356"/>
                 <outlet property="window" destination="5" id="128"/>
                 <outlet property="windowButton_" destination="329" id="334"/>
@@ -108,7 +109,7 @@ DQ
                         </connections>
                     </button>
                     <button id="335">
-                        <rect key="frame" x="19" y="58" width="375" height="18"/>
+                        <rect key="frame" x="119" y="58" width="375" height="18"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <buttonCell key="cell" type="check" title="Close this window after opening a profile." bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="336">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -129,6 +130,17 @@ DQ
                         <connections>
                             <action selector="newTabsInNewWindow:" target="-2" id="342"/>
                             <outlet property="nextKeyView" destination="343" id="361"/>
+                        </connections>
+                    </button>
+                    <button id="6zs-tn-Vlz">
+                        <rect key="frame" x="21" y="56" width="53" height="24"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="square" title="Tags >" bezelStyle="shadowlessSquare" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="QXh-S4-dCz">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="toggleTags:" target="-2" id="lG8-bM-bV2"/>
                         </connections>
                     </button>
                 </subviews>

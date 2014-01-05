@@ -375,6 +375,7 @@
     IBOutlet NSTableColumn *nameShortcutColumn;
     IBOutlet NSButton *removeBookmarkButton;
     IBOutlet NSButton *addBookmarkButton;
+    IBOutlet NSButton *toggleTagsButton;
 
     // General tab
     IBOutlet NSTextField *basicsLabel;

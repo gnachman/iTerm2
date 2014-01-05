@@ -232,6 +232,7 @@
                 <outlet property="terminalType" destination="2405" id="3155"/>
                 <outlet property="threeFingerEmulatesMiddle" destination="6227" id="6230"/>
                 <outlet property="tmuxDashboardLimit" destination="6345" id="6350"/>
+                <outlet property="toggleTagsButton" destination="nFj-0n-SWO" id="8Tx-UD-Ftx"/>
                 <outlet property="toolbar" destination="5885" id="6042"/>
                 <outlet property="transparency" destination="4978" id="4994"/>
                 <outlet property="triggerWindowController_" destination="5797" id="5920"/>

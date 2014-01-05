@@ -1249,7 +1249,10 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (IBAction)toggleTags:(id)sender {
     [bookmarksTableView toggleTags];
-    [sender setTitle:bookmarksTableView.tagsVisible ? @"Tags >" : @"< Tags"];
+}
+
+- (void)profileTableTagsVisibilityDidChange:(ProfileListView *)profileListView {
+    [toggleTagsButton setTitle:profileListView.tagsVisible ? @"< Tags" : @"Tags >"];
 }
 
 - (IBAction)addBookmark:(id)sender
