@@ -49,7 +49,7 @@ static const CGFloat kRowHeight = 21;
         _tableView.backgroundColor = [NSColor whiteColor];
 
         _tagsColumn = [[NSTableColumn alloc] initWithIdentifier:@"tags"];
-        [_tagsColumn setEditable:YES];
+        [_tagsColumn setEditable:NO];
         [_tableView addTableColumn:_tagsColumn];
 
         [_scrollView setDocumentView:_tableView];
