@@ -16,6 +16,7 @@ static const CGFloat kRowHeight = 21;
 @property(nonatomic, retain) NSTableView *tableView;
 @property(nonatomic, retain) NSTableColumn *tagsColumn;
 @property(nonatomic, retain) NSTableHeaderView *headerView;
+@property(nonatomic, retain) NSArray *cache;
 @end
 
 @implementation ProfileTagsView
@@ -78,6 +79,7 @@ static const CGFloat kRowHeight = 21;
     [_tableView release];
     [_tagsColumn release];
     [_headerView release];
+    [_cache release];
     [super dealloc];
 }
 
@@ -103,6 +105,7 @@ static const CGFloat kRowHeight = 21;
 #pragma mark - Notifications
 
 - (void)reloadAddressBook:(NSNotification *)notification {
+    self.cache = nil;
     [_tableView reloadData];
 }
 
@@ -145,29 +148,32 @@ static const CGFloat kRowHeight = 21;
     return string;
 }
 
-// TODO: Cache this
 - (NSArray *)sortedIndentedTags {
-    NSMutableArray *result = [NSMutableArray array];
-    NSArray *tags = [[[ProfileModel sharedInstance] allTags] sortedArrayUsingSelector:@selector(compare:)];
-    NSArray *previousParts = [NSMutableArray array];
-    for (int i = 0; i < tags.count; i++) {
-        NSString *tagName = tags[i];
-        NSArray *currentParts = [tagName componentsSeparatedByString:@"/"];
-        int numPartsMatched = [self numberOfPartsMatchedBetween:previousParts and:currentParts];
-        NSArray *suffixArray =
-            [currentParts subarrayWithRange:NSMakeRange(numPartsMatched,
-                                                        currentParts.count - numPartsMatched)];
-        while (numPartsMatched < currentParts.count) {
-            NSString *key = [NSString stringWithFormat:@"%@%@",
-                             [self stringForIndentLevel:numPartsMatched],
-                             currentParts[numPartsMatched]];
-            NSString *value = [[currentParts subarrayWithRange:NSMakeRange(0, numPartsMatched + 1)] componentsJoinedByString:@"/"];
-            [result addObject:@[ key, value ]];
-            ++numPartsMatched;
+    if (!_cache) {
+        NSMutableArray *result = [NSMutableArray array];
+        NSArray *tags = [[[ProfileModel sharedInstance] allTags] sortedArrayUsingSelector:@selector(compare:)];
+        NSArray *previousParts = [NSMutableArray array];
+        for (int i = 0; i < tags.count; i++) {
+            NSString *tagName = tags[i];
+            NSArray *currentParts = [tagName componentsSeparatedByString:@"/"];
+            int numPartsMatched = [self numberOfPartsMatchedBetween:previousParts and:currentParts];
+            NSArray *suffixArray =
+                [currentParts subarrayWithRange:NSMakeRange(numPartsMatched,
+                                                            currentParts.count - numPartsMatched)];
+            while (numPartsMatched < currentParts.count) {
+                NSString *key = [NSString stringWithFormat:@"%@%@",
+                                 [self stringForIndentLevel:numPartsMatched],
+                                 currentParts[numPartsMatched]];
+                NSString *value = [[currentParts subarrayWithRange:NSMakeRange(0, numPartsMatched + 1)] componentsJoinedByString:@"/"];
+                [result addObject:@[ key, value ]];
+                ++numPartsMatched;
+            }
+            previousParts = currentParts;
         }
-        previousParts = currentParts;
+        self.cache = result;
     }
-    return result;
+
+    return _cache;
 }
 
 @end
