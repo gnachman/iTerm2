@@ -755,6 +755,7 @@ typedef enum {
 - (IBAction)presetKeyMappingsItemSelected:(id)sender;
 - (void)_loadPresetColors:(NSString*)presetName;
 - (void)loadColorPreset:(id)sender;
+- (IBAction)toggleTags:(id)sender;
 - (IBAction)addBookmark:(id)sender;
 - (IBAction)removeBookmark:(id)sender;
 - (IBAction)duplicateBookmark:(id)sender;

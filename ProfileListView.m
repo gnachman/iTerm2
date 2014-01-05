@@ -37,6 +37,7 @@
 const int kSearchWidgetHeight = 22;
 const int kInterWidgetMargin = 10;
 const CGFloat kTagsViewWidth = 0;  // TODO: remember this for each superview
+const CGFloat kDefaultTagsWidth = 80;
 
 @interface ProfileListView () <ProfileTagsViewDelegate>
 - (NSDictionary *)rowOrder;
@@ -156,6 +157,7 @@ const CGFloat kTagsViewWidth = 0;  // TODO: remember this for each superview
         
         // Tags view -------------------------------------------------------------------------------
         NSRect tagsViewFrame = NSMakeRect(0, 0, kTagsViewWidth, splitViewFrame.size.height);
+        lastTagsWidth_ = kDefaultTagsWidth;
         tagsView_ = [[[ProfileTagsView alloc] initWithFrame:tagsViewFrame] autorelease];
         tagsView_.delegate = self;
         [splitView_ addSubview:tagsView_];
@@ -828,6 +830,28 @@ const CGFloat kTagsViewWidth = 0;  // TODO: remember this for each superview
 - (void)disableArrowHandler
 {
     [searchField_ setArrowHandler:nil];
+}
+
+- (void)toggleTags
+{
+    NSRect newTableFrame = tableView_.frame;
+    NSRect newTagsFrame = tagsView_.frame;
+    CGFloat newTagsWidth;
+    if ([self tagsVisible]) {
+        lastTagsWidth_ = tagsView_.frame.size.width;
+        newTagsWidth = 0;
+    } else {
+        newTagsWidth = lastTagsWidth_;
+    }
+    newTableFrame.size.width =  self.frame.size.width - newTagsWidth;
+    newTagsFrame.size.width = newTagsWidth;
+    
+    tagsView_.animator.frame = newTagsFrame;
+    tableView_.animator.frame = newTableFrame;
+}
+
+- (BOOL)tagsVisible {
+    return tagsView_.frame.size.width > 5;
 }
 
 #pragma mark - ProfileTagsViewDelegate

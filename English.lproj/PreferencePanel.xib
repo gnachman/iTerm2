@@ -1680,7 +1680,7 @@ Gw
                                                             <tokenField verticalHuggingPriority="750" id="3245">
                                                                 <rect key="frame" x="146" y="303" width="356" height="22"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <tokenFieldCell key="cell" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="left" placeholderString="Example: linux, dark bg, tall window" drawsBackground="YES" allowsEditingTextAttributes="YES" id="3246">
+                                                                <tokenFieldCell key="cell" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="left" placeholderString="Example: linux, dark bg, clients/ABC inc" drawsBackground="YES" allowsEditingTextAttributes="YES" id="3246">
                                                                     <font key="font" metaFont="system"/>
                                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -3728,7 +3728,7 @@ Gw
                                             </connections>
                                         </tabView>
                                         <button id="2111">
-                                            <rect key="frame" x="0.0" y="0.0" width="24" height="24"/>
+                                            <rect key="frame" x="52" y="0.0" width="24" height="24"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSAddTemplate" imagePosition="only" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="2112">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -3738,8 +3738,19 @@ Gw
                                                 <action selector="addBookmark:" target="-2" id="3228"/>
                                             </connections>
                                         </button>
+                                        <button id="nFj-0n-SWO">
+                                            <rect key="frame" x="0.0" y="0.0" width="53" height="24"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <buttonCell key="cell" type="square" title="Tags >" bezelStyle="shadowlessSquare" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="u6m-pp-fub">
+                                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <connections>
+                                                <action selector="toggleTags:" target="-2" id="aZM-ok-dLj"/>
+                                            </connections>
+                                        </button>
                                         <button id="2113">
-                                            <rect key="frame" x="23" y="0.0" width="24" height="24"/>
+                                            <rect key="frame" x="75" y="0.0" width="24" height="24"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="only" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="2114">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -3750,7 +3761,7 @@ Gw
                                             </connections>
                                         </button>
                                         <popUpButton id="3230">
-                                            <rect key="frame" x="46" y="0.0" width="157" height="24"/>
+                                            <rect key="frame" x="98" y="0.0" width="157" height="24"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <popUpButtonCell key="cell" type="square" title="Other Actions..." bezelStyle="shadowlessSquare" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="3235" id="3231">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>

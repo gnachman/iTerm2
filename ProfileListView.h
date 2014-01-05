@@ -73,7 +73,10 @@
     int margin_;
     ProfileTagsView *tagsView_;
     NSSplitView *splitView_;
+    CGFloat lastTagsWidth_;
 }
+
+@property(nonatomic, readonly) BOOL tagsVisible;
 
 - (id)initWithFrame:(NSRect)frameRect;
 - (id)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource;
@@ -127,5 +130,7 @@
 
 - (void)setFont:(NSFont *)theFont;
 - (void)disableArrowHandler;
+
+- (void)toggleTags;
 
 @end
