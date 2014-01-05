@@ -64,7 +64,6 @@
     NSTableColumn* tableColumn_;
     NSTableColumn* commandColumn_;
     NSTableColumn* shortcutColumn_;
-    NSTableColumn* starColumn_;
     NSTableColumn* tagsColumn_;
     NSObject<ProfileListViewDelegate> *delegate_;
     NSSet* selectedGuids_;

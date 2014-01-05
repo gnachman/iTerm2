@@ -114,8 +114,6 @@
 		1D48B28F165F3669000046EE /* AquaTabClose_Front_Pressed.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B28A165F3669000046EE /* AquaTabClose_Front_Pressed.png */; };
 		1D48B290165F3669000046EE /* AquaTabClose_Front.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B28B165F3669000046EE /* AquaTabClose_Front.png */; };
 		1D48B292165F405A000046EE /* important@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B291165F405A000046EE /* important@2x.png */; };
-		1D48B294165F4416000046EE /* star.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B293165F4416000046EE /* star.png */; };
-		1D48B2F9165F45BA000046EE /* star@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B2F8165F45BA000046EE /* star@2x.png */; };
 		1D48B379167E809D000046EE /* CharacterRun.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D48B377167E809D000046EE /* CharacterRun.h */; };
 		1D48B37A167E809D000046EE /* CharacterRun.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D48B378167E809D000046EE /* CharacterRun.m */; };
 		1D4AE8FE14343A760092EB49 /* TrouterPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */; };
@@ -805,8 +803,6 @@
 		1D48B28A165F3669000046EE /* AquaTabClose_Front_Pressed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabClose_Front_Pressed.png; sourceTree = "<group>"; };
 		1D48B28B165F3669000046EE /* AquaTabClose_Front.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabClose_Front.png; sourceTree = "<group>"; };
 		1D48B291165F405A000046EE /* important@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "important@2x.png"; path = "images/important@2x.png"; sourceTree = "<group>"; };
-		1D48B293165F4416000046EE /* star.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = star.png; path = images/star.png; sourceTree = "<group>"; };
-		1D48B2F8165F45BA000046EE /* star@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "star@2x.png"; path = "images/star@2x.png"; sourceTree = "<group>"; };
 		1D48B377167E809D000046EE /* CharacterRun.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CharacterRun.h; sourceTree = "<group>"; };
 		1D48B378167E809D000046EE /* CharacterRun.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CharacterRun.m; sourceTree = "<group>"; };
 		1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TrouterPrefsController.h; sourceTree = "<group>"; };
@@ -1624,8 +1620,6 @@
 				9DB3D6E3176CB4D80071CCF8 /* PrefsProfile@2x.png */,
 				1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */,
 				1D395912134E75B5005A8021 /* SmartSelectionRules.plist */,
-				1D48B293165F4416000046EE /* star.png */,
-				1D48B2F8165F45BA000046EE /* star@2x.png */,
 				1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */,
 				1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */,
 				1DB72CF51396059200EB1005 /* xterm-terminfo.txt */,
@@ -2414,9 +2408,7 @@
 				1D48B28F165F3669000046EE /* AquaTabClose_Front_Pressed.png in Resources */,
 				1D48B290165F3669000046EE /* AquaTabClose_Front.png in Resources */,
 				1D48B292165F405A000046EE /* important@2x.png in Resources */,
-				1D48B294165F4416000046EE /* star.png in Resources */,
 				1D81F0C9183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */,
-				1D48B2F9165F45BA000046EE /* star@2x.png in Resources */,
 				1DEF5E6F185F889600300319 /* Alert@2x.png in Resources */,
 				1D085F8916F030FB00B7FCE9 /* PasteView.xib in Resources */,
 				9D737D5F17495B4100B3334D /* PrefsGeneral.png in Resources */,

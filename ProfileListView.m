@@ -121,12 +121,6 @@ const CGFloat kDefaultTagsWidth = 80;
         [tableView_ setAllowsTypeSelect:NO];
         [tableView_ setBackgroundColor:[NSColor whiteColor]];
         
-        starColumn_ = [[NSTableColumn alloc] initWithIdentifier:@"default"];
-        [starColumn_ setEditable:NO];
-        [starColumn_ setDataCell:[[[NSImageCell alloc] initImageCell:nil] autorelease]];
-        [starColumn_ setWidth:34];
-        [tableView_ addTableColumn:starColumn_];
-        
         tableColumn_ =
             [[NSTableColumn alloc] initWithIdentifier:@"name"];
         [tableColumn_ setEditable:NO];
@@ -143,8 +137,6 @@ const CGFloat kDefaultTagsWidth = 80;
         NSTableHeaderView* header = [[[NSTableHeaderView alloc] init] autorelease];
         [tableView_ setHeaderView:header];
         [[tableColumn_ headerCell] setStringValue:@"Profile Name"];
-        [[starColumn_ headerCell] setStringValue:@"Default"];
-        [starColumn_ setWidth:[[starColumn_ headerCell] cellSize].width];
         
         [tableView_ sizeLastColumnToFit];
         
@@ -461,7 +453,13 @@ const CGFloat kDefaultTagsWidth = 80;
                                          [NSFont systemFontOfSize:10], NSFontAttributeName,
                                          nil];
 
-        NSString *name = [NSString stringWithFormat:@"%@\n", [bookmark objectForKey:KEY_NAME]];
+        NSString *defaultCheckmark;
+        if ([[bookmark objectForKey:KEY_GUID] isEqualToString:[[[ProfileModel sharedInstance] defaultBookmark] objectForKey:KEY_GUID]]) {
+            defaultCheckmark = @"★ ";
+        } else {
+            defaultCheckmark = @"";
+        }
+        NSString *name = [NSString stringWithFormat:@"%@%@\n", defaultCheckmark, [bookmark objectForKey:KEY_NAME]];
         NSString* tags = [[bookmark objectForKey:KEY_TAGS] componentsJoinedByString:@", "];
 
         NSMutableAttributedString *theAttributedString = [[[NSMutableAttributedString alloc] initWithString:name
@@ -483,31 +481,8 @@ const CGFloat kDefaultTagsWidth = 80;
         } else {
             return @"";
         }
-    } else if (aTableColumn == starColumn_) {
-        if ([[bookmark objectForKey:KEY_GUID] isEqualToString:[[[ProfileModel sharedInstance] defaultBookmark] objectForKey:KEY_GUID]]) {
-            static NSImage* starImage;
-            if (!starImage) {
-                starImage = [[NSImage imageNamed:@"star"] retain];
-            }
-            CGFloat thisRowHeight;
-            if ([[bookmark objectForKey:KEY_TAGS] count]) {
-                thisRowHeight = rowHeightWithTags_;
-            } else {
-                thisRowHeight = normalRowHeight_;
-            }
-            CGFloat starHeight = normalRowHeight_ - 2;
-
-            NSImage *image = [[[NSImage alloc] init] autorelease];
-            [image setSize:NSMakeSize(thisRowHeight, thisRowHeight)];
-            [image lockFocus];
-            CGFloat margin = (thisRowHeight - starHeight) / 2;
-            NSRect dest = NSMakeRect(margin, margin, thisRowHeight - 2*margin, thisRowHeight - 2*margin);
-            [starImage drawInRect:dest fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
-            [image unlockFocus];
-            return image;
-        } else {
-            return nil;
-        }
+    } else {
+        return nil;
     }
 
     return @"";
