@@ -27,11 +27,12 @@
 #import "ProfileTableView.h"
 #import "FutureMethods.h"
 
+@class ProfileListView;
 @class ProfileModelWrapper;
-@class iTermSearchField;
 @class ProfileTableRow;
 @class ProfileTableView;
-@class ProfileListView;
+@class ProfileTagsView;
+@class iTermSearchField;
 
 @protocol ProfileListViewDelegate
 @optional
@@ -68,11 +69,12 @@
     NSObject<ProfileListViewDelegate> *delegate_;
     NSSet* selectedGuids_;
     BOOL debug;
-    ProfileModelWrapper* dataSource_;
+    ProfileModelWrapper *dataSource_;
     int margin_;
+    ProfileTagsView *tagsView_;
+    NSSplitView *splitView_;
 }
 
-- (void)awakeFromNib;
 - (id)initWithFrame:(NSRect)frameRect;
 - (id)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource;
 - (void)setDelegate:(NSObject<ProfileListViewDelegate> *)delegate;

@@ -23,28 +23,153 @@
  */
 
 #import "ProfileListView.h"
-#import "ProfileModel.h"
 #import "ITAddressBookMgr.h"
 #import "PTYSession.h"
-#import "iTermSearchField.h"
-#import "ProfileTableRow.h"
+#import "ProfileModel.h"
 #import "ProfileModelWrapper.h"
+#import "ProfileTableRow.h"
 #import "ProfileTableView.h"
+#import "ProfileTagsView.h"
+#import "iTermSearchField.h"
 
 #define kProfileTableViewDataType @"iTerm2ProfileGuid"
 
 const int kSearchWidgetHeight = 22;
 const int kInterWidgetMargin = 10;
+const CGFloat kTagsViewWidth = 0;  // TODO: remember this for each superview
 
-@interface ProfileListView ()
+@interface ProfileListView () <ProfileTagsViewDelegate>
 - (NSDictionary *)rowOrder;
 - (void)syncTableViewsWithSelectedGuids:(NSArray *)guids;
 @end
 
 @implementation ProfileListView
 
-- (void)awakeFromNib
+- (id)initWithFrame:(NSRect)frameRect
 {
+    return [self initWithFrame:frameRect model:[ProfileModel sharedInstance]];
+}
+
+// This is the designated initializer.
+- (id)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource
+{
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        margin_ = kInterWidgetMargin;
+        [self setUnderlyingDatasource:dataSource];
+        debug = NO;
+        
+        NSRect frame = [self frame];
+        NSRect searchFieldFrame;
+        searchFieldFrame.origin.x = 0;
+        searchFieldFrame.origin.y = frame.size.height - kSearchWidgetHeight;
+        searchFieldFrame.size.height = kSearchWidgetHeight;
+        searchFieldFrame.size.width = frame.size.width;
+        searchField_ = [[iTermSearchField alloc] initWithFrame:searchFieldFrame];
+        [self _addTags:[[dataSource_ underlyingModel] allTags] toSearchField:searchField_];
+        [searchField_ setDelegate:self];
+        [self addSubview:searchField_];
+        delegate_ = nil;
+        
+        // Split view ------------------------------------------------------------------------------
+        NSRect splitViewFrame = NSMakeRect(0,
+                                           0,
+                                           frame.size.width,
+                                           frame.size.height - kSearchWidgetHeight - margin_);
+        splitView_ = [[[NSSplitView alloc] initWithFrame:splitViewFrame] autorelease];
+        splitView_.vertical = YES;
+        splitView_.autoresizesSubviews = YES;
+        splitView_.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
+        [self addSubview:splitView_];
+        
+        // Scroll view -----------------------------------------------------------------------------
+        NSRect scrollViewFrame;
+        scrollViewFrame.origin.x = kTagsViewWidth + kInterWidgetMargin;
+        scrollViewFrame.origin.y = 0;
+        scrollViewFrame.size.width = frame.size.width - scrollViewFrame.origin.x;
+        scrollViewFrame.size.height = splitViewFrame.size.height;
+        scrollView_ = [[NSScrollView alloc] initWithFrame:scrollViewFrame];
+        [scrollView_ setHasVerticalScroller:YES];
+        
+        // Table view ------------------------------------------------------------------------------
+        NSRect tableViewFrame;
+        tableViewFrame.origin.x = 0;
+        tableViewFrame.origin.y = 0;
+        tableViewFrame.size =
+            [NSScrollView contentSizeForFrameSize:scrollViewFrame.size
+                            hasHorizontalScroller:NO
+                              hasVerticalScroller:YES
+                                       borderType:[scrollView_ borderType]];
+        
+        tableView_ = [[ProfileTableView alloc] initWithFrame:tableViewFrame];
+        [tableView_ setMenuHandler:self];
+        [tableView_ registerForDraggedTypes:[NSArray arrayWithObject:kProfileTableViewDataType]];
+        normalRowHeight_ = 21;
+        rowHeightWithTags_ = 29;
+        [tableView_ setRowHeight:rowHeightWithTags_];
+        [tableView_
+         setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleSourceList];
+        [tableView_ setAllowsColumnResizing:YES];
+        [tableView_ setAllowsColumnReordering:YES];
+        [tableView_ setAllowsColumnSelection:NO];
+        [tableView_ setAllowsEmptySelection:YES];
+        [tableView_ setAllowsMultipleSelection:NO];
+        [tableView_ setAllowsTypeSelect:NO];
+        [tableView_ setBackgroundColor:[NSColor whiteColor]];
+        
+        starColumn_ = [[NSTableColumn alloc] initWithIdentifier:@"default"];
+        [starColumn_ setEditable:NO];
+        [starColumn_ setDataCell:[[[NSImageCell alloc] initImageCell:nil] autorelease]];
+        [starColumn_ setWidth:34];
+        [tableView_ addTableColumn:starColumn_];
+        
+        tableColumn_ =
+            [[NSTableColumn alloc] initWithIdentifier:@"name"];
+        [tableColumn_ setEditable:NO];
+        [tableView_ addTableColumn:tableColumn_];
+        
+        [scrollView_ setDocumentView:tableView_];
+        
+        [tableView_ setDelegate:self];
+        [tableView_ setDataSource:self];
+        selectedGuids_ = [[NSMutableSet alloc] init];
+        
+        [tableView_ setDoubleAction:@selector(onDoubleClick:)];
+        
+        NSTableHeaderView* header = [[[NSTableHeaderView alloc] init] autorelease];
+        [tableView_ setHeaderView:header];
+        [[tableColumn_ headerCell] setStringValue:@"Profile Name"];
+        [[starColumn_ headerCell] setStringValue:@"Default"];
+        [starColumn_ setWidth:[[starColumn_ headerCell] cellSize].width];
+        
+        [tableView_ sizeLastColumnToFit];
+        
+        [searchField_ setArrowHandler:tableView_];
+        
+        [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+        [searchField_ setAutoresizingMask:NSViewWidthSizable | NSViewMinYMargin];
+        
+        [[NSNotificationCenter defaultCenter] addObserver: self
+                                                 selector: @selector(dataChangeNotification:)
+                                                     name: @"iTermReloadAddressBook"
+                                                   object: nil];
+        
+        // Tags view -------------------------------------------------------------------------------
+        NSRect tagsViewFrame = NSMakeRect(0, 0, kTagsViewWidth, splitViewFrame.size.height);
+        tagsView_ = [[[ProfileTagsView alloc] initWithFrame:tagsViewFrame] autorelease];
+        tagsView_.delegate = self;
+        [splitView_ addSubview:tagsView_];
+        [splitView_ addSubview:scrollView_];
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [dataSource_ release];
+    [selectedGuids_ release];
+    [super dealloc];
 }
 
 - (void)focusSearchField
@@ -201,116 +326,11 @@ const int kInterWidgetMargin = 10;
     dataSource_ = [[ProfileModelWrapper alloc] initWithModel:dataSource];
 }
 
-- (id)initWithFrame:(NSRect)frameRect
-{
-    return [self initWithFrame:frameRect model:[ProfileModel sharedInstance]];
-}
 
-- (id)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource
-{
-    self = [super initWithFrame:frameRect];
-
-    margin_ = kInterWidgetMargin;
-    [self setUnderlyingDatasource:dataSource];
-    debug = NO;
-
-    NSRect frame = [self frame];
-    NSRect searchFieldFrame;
-    searchFieldFrame.origin.x = 0;
-    searchFieldFrame.origin.y = frame.size.height - kSearchWidgetHeight;
-    searchFieldFrame.size.height = kSearchWidgetHeight;
-    searchFieldFrame.size.width = frame.size.width;
-    searchField_ = [[iTermSearchField alloc] initWithFrame:searchFieldFrame];
-    [self _addTags:[[dataSource_ underlyingModel] allTags] toSearchField:searchField_];
-    [searchField_ setDelegate:self];
-    [self addSubview:searchField_];
-    delegate_ = nil;
-
-    NSRect scrollViewFrame;
-    scrollViewFrame.origin.x = 0;
-    scrollViewFrame.origin.y = 0;
-    scrollViewFrame.size.width = frame.size.width;
-    scrollViewFrame.size.height =
-        frame.size.height - kSearchWidgetHeight - margin_;
-    scrollView_ = [[NSScrollView alloc] initWithFrame:scrollViewFrame];
-    [scrollView_ setHasVerticalScroller:YES];
-    [self addSubview:scrollView_];
-
-    NSRect tableViewFrame;
-    tableViewFrame.origin.x = 0;
-    tableViewFrame.origin.y = 0;
-    tableViewFrame.size =
-        [NSScrollView contentSizeForFrameSize:scrollViewFrame.size
-                        hasHorizontalScroller:NO
-                          hasVerticalScroller:YES
-                                   borderType:[scrollView_ borderType]];
-
-    tableView_ = [[ProfileTableView alloc] initWithFrame:tableViewFrame];
-    [tableView_ setMenuHandler:self];
-    [tableView_ registerForDraggedTypes:[NSArray arrayWithObject:kProfileTableViewDataType]];
-    normalRowHeight_ = 21;
-    rowHeightWithTags_ = 29;
-    [tableView_ setRowHeight:rowHeightWithTags_];
-    [tableView_
-         setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleSourceList];
-    [tableView_ setAllowsColumnResizing:YES];
-    [tableView_ setAllowsColumnReordering:YES];
-    [tableView_ setAllowsColumnSelection:NO];
-    [tableView_ setAllowsEmptySelection:YES];
-    [tableView_ setAllowsMultipleSelection:NO];
-    [tableView_ setAllowsTypeSelect:NO];
-    [tableView_ setBackgroundColor:[NSColor whiteColor]];
-
-    starColumn_ = [[NSTableColumn alloc] initWithIdentifier:@"default"];
-    [starColumn_ setEditable:NO];
-    [starColumn_ setDataCell:[[[NSImageCell alloc] initImageCell:nil] autorelease]];
-    [starColumn_ setWidth:34];
-    [tableView_ addTableColumn:starColumn_];
-
-    tableColumn_ =
-        [[NSTableColumn alloc] initWithIdentifier:@"name"];
-    [tableColumn_ setEditable:NO];
-    [tableView_ addTableColumn:tableColumn_];
-
-    [scrollView_ setDocumentView:tableView_];
-
-    [tableView_ setDelegate:self];
-    [tableView_ setDataSource:self];
-    selectedGuids_ = [[NSMutableSet alloc] init];
-
-    [tableView_ setDoubleAction:@selector(onDoubleClick:)];
-
-    NSTableHeaderView* header = [[[NSTableHeaderView alloc] init] autorelease];
-    [tableView_ setHeaderView:header];
-    [[tableColumn_ headerCell] setStringValue:@"Name"];
-    [[starColumn_ headerCell] setStringValue:@"Default"];
-    [starColumn_ setWidth:[[starColumn_ headerCell] cellSize].width];
-
-    [tableView_ sizeLastColumnToFit];
-
-    [searchField_ setArrowHandler:tableView_];
-
-    [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-    [searchField_ setAutoresizingMask:NSViewWidthSizable | NSViewMinYMargin];
-    
-    [[NSNotificationCenter defaultCenter] addObserver: self
-                                             selector: @selector(dataChangeNotification:)
-                                                 name: @"iTermReloadAddressBook"
-                                               object: nil];
-    return self;
-}
 
 - (ProfileModelWrapper*)dataSource
 {
     return dataSource_;
-}
-
-- (void)dealloc
-{
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [dataSource_ release];
-    [selectedGuids_ release];
-    [super dealloc];
 }
 
 - (void)setDelegate:(NSObject<ProfileListViewDelegate> *)delegate
@@ -681,6 +701,11 @@ const int kInterWidgetMargin = 10;
 
 - (void)controlTextDidChange:(NSNotification *)aNotification
 {
+    [self updateResultsForSearch];
+}
+
+- (void)updateResultsForSearch
+{
     // search field changed
     [dataSource_ setFilter:[searchField_ stringValue]];
     [self reloadData];
@@ -803,6 +828,13 @@ const int kInterWidgetMargin = 10;
 - (void)disableArrowHandler
 {
     [searchField_ setArrowHandler:nil];
+}
+
+#pragma mark - ProfileTagsViewDelegate
+
+- (void)profileTagsViewSelectionDidChange:(ProfileTagsView *)profileTagsView {
+    searchField_.stringValue = [profileTagsView.selectedTags componentsJoinedByString:@" "];
+    [self updateResultsForSearch];
 }
 
 @end

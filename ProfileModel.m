@@ -530,16 +530,13 @@ int gMigrated;
 
 - (NSArray*)allTags
 {
-    NSMutableDictionary* temp = [[[NSMutableDictionary alloc] init] autorelease];
-    for (int i = 0; i < [self numberOfBookmarks]; ++i) {
-        Profile* bookmark = [self profileAtIndex:i];
-        NSArray* tags = [bookmark objectForKey:KEY_TAGS];
-        for (int j = 0; j < [tags count]; ++j) {
-            NSString* tag = [tags objectAtIndex:j];
-            [temp setObject:@"" forKey:tag];
+    NSMutableSet *tags = [NSMutableSet set];
+    for (Profile *profile in bookmarks_) {
+        for (NSString *tag in [profile objectForKey:KEY_TAGS]) {
+            [tags addObject:tag];
         }
     }
-    return [temp allKeys];
+    return [tags allObjects];
 }
 
 - (Profile*)setObject:(id)object forKey:(NSString*)key inBookmark:(Profile*)bookmark
