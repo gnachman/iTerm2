@@ -52,10 +52,10 @@
 @end
 
 @interface ProfileListView : NSView <
-      NSTextFieldDelegate,
-	  NSTableViewDataSource,
-	  NSTableViewDelegate,
-	  ProfileTableMenuHandler> {
+  NSTextFieldDelegate,
+  NSTableViewDataSource,
+  NSTableViewDelegate,
+  ProfileTableMenuHandler> {
     int normalRowHeight_;
     int rowHeightWithTags_;
     NSScrollView* scrollView_;

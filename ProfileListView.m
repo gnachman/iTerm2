@@ -31,6 +31,7 @@
 #import "ProfileTableView.h"
 #import "ProfileTagsView.h"
 #import "iTermSearchField.h"
+#import "NSView+RecursiveDescription.h"
 
 #define kProfileTableViewDataType @"iTerm2ProfileGuid"
 
@@ -79,8 +80,7 @@ const CGFloat kDefaultTagsWidth = 80;
                                            frame.size.height - kSearchWidgetHeight - margin_);
         splitView_ = [[[NSSplitView alloc] initWithFrame:splitViewFrame] autorelease];
         splitView_.vertical = YES;
-        splitView_.autoresizesSubviews = YES;
-        splitView_.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
+        splitView_.autoresizesSubviews = NO;
         [self addSubview:splitView_];
         
         // Scroll view -----------------------------------------------------------------------------
@@ -146,9 +146,6 @@ const CGFloat kDefaultTagsWidth = 80;
         [tableView_ sizeLastColumnToFit];
         
         [searchField_ setArrowHandler:tableView_];
-        
-        [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        [searchField_ setAutoresizingMask:NSViewWidthSizable | NSViewMinYMargin];
         
         [[NSNotificationCenter defaultCenter] addObserver: self
                                                  selector: @selector(dataChangeNotification:)
@@ -770,24 +767,11 @@ const CGFloat kDefaultTagsWidth = 80;
     searchFieldFrame.size.width = frame.size.width;
     [searchField_ setFrame:searchFieldFrame];
 
-    NSRect scrollViewFrame;
-    scrollViewFrame.origin.x = 0;
-    scrollViewFrame.origin.y = 0;
-    scrollViewFrame.size.width = frame.size.width;
-    scrollViewFrame.size.height =
-        frame.size.height - kSearchWidgetHeight - margin_;
-    [scrollView_ setFrame:scrollViewFrame];
-
-    NSRect tableViewFrame = [tableView_ frame];
-    tableViewFrame.origin.x = 0;
-    tableViewFrame.origin.y = 0;;
-    NSSize temp =
-        [NSScrollView contentSizeForFrameSize:scrollViewFrame.size
-                        hasHorizontalScroller:NO
-                          hasVerticalScroller:YES
-                                   borderType:[scrollView_ borderType]];
-    tableViewFrame.size.width = temp.width;
-    [tableView_ setFrame:tableViewFrame];
+    NSRect splitViewFrame = NSMakeRect(0,
+                                       0,
+                                       frame.size.width,
+                                       frame.size.height - kSearchWidgetHeight - margin_);
+    splitView_.frame = splitViewFrame;
 }
 
 - (void)turnOnDebug
