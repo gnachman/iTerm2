@@ -638,11 +638,34 @@ int gMigrated;
     return guids;
 }
 
-+ (NSMenu*)findOrCreateTagSubmenuInMenu:(NSMenu*)menu startingAtItem:(int)skip withName:(NSString*)name params:(JournalParams*)params
++ (BOOL)menuHasMultipleItemsExcludingAlternates:(NSMenu *)menu
 {
+    int n = 0;
+    for (NSMenuItem *item in [menu itemArray]) {
+        if (!item.isAlternate) {
+            n++;
+            if (n == 2) {
+                return YES;
+            }
+        }
+    }
+    return NO;
+}
+
++ (NSMenu*)findOrCreateTagSubmenuInMenu:(NSMenu*)menu
+                         startingAtItem:(int)skip
+                               withName:(NSString*)multipartName
+                                 params:(JournalParams*)params
+{
+    NSArray *parts = [multipartName componentsSeparatedByString:@"/"];
+    if (parts.count == 0) {
+        return nil;
+    }
+    NSString *name = parts[0];
     NSArray* items = [menu itemArray];
     int pos = [menu numberOfItems];
     int N = pos;
+    NSMenu *submenu = nil;
     for (int i = skip; i < N; i++) {
         NSMenuItem* cur = [items objectAtIndex:i];
         if (![cur submenu] || [cur isSeparatorItem]) {
@@ -651,19 +674,39 @@ int gMigrated;
         }
         int comp = [[cur title] caseInsensitiveCompare:name];
         if (comp == 0) {
-            return [cur submenu];
+            submenu = [cur submenu];
+            break;
         } else if (comp > 0) {
             pos = i;
             break;
         }
     }
 
-    // Add menu item with submenu
-    NSMenuItem* newItem = [[[NSMenuItem alloc] initWithTitle:name action:nil keyEquivalent:@""] autorelease];
-    [newItem setSubmenu:[[[NSMenu alloc] init] autorelease]];
-    [menu insertItem:newItem atIndex:pos];
-
-    return [newItem submenu];
+    if (!submenu) {
+        // Add menu item with submenu
+        NSMenuItem* newItem = [[[NSMenuItem alloc] initWithTitle:name
+                                                          action:nil
+                                                   keyEquivalent:@""] autorelease];
+        [newItem setSubmenu:[[[NSMenu alloc] init] autorelease]];
+        [menu insertItem:newItem atIndex:pos];
+        submenu = [newItem submenu];
+    }
+    
+    if (parts.count > 1) {
+        NSArray *tail = [parts subarrayWithRange:NSMakeRange(1, parts.count - 1)];
+        NSString *suffix = [tail componentsJoinedByString:@"/"];
+        NSMenu *menuToAddOpenAll = submenu;
+        submenu = [self findOrCreateTagSubmenuInMenu:submenu
+                                      startingAtItem:0
+                                            withName:suffix
+                                              params:params];
+        if (menuToAddOpenAll &&
+            [self menuHasMultipleItemsExcludingAlternates:menuToAddOpenAll] &&
+            ![self menuHasOpenAll:menuToAddOpenAll]) {
+            [self addOpenAllToMenu:menuToAddOpenAll params:params];
+        }
+    }
+    return submenu;
 }
 
 + (void)addOpenAllToMenu:(NSMenu*)menu params:(JournalParams*)params
@@ -773,7 +816,12 @@ int gMigrated;
     [item release];
 }
 
-- (void)addBookmark:(Profile*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params atPos:(int)theIndex
+- (void)addBookmark:(Profile*)b
+             toMenu:(NSMenu*)menu
+     startingAtItem:(int)skip
+           withTags:(NSArray*)tags
+             params:(JournalParams*)params
+              atPos:(int)theIndex
 {
     int pos;
     if (theIndex == -1) {
@@ -813,6 +861,22 @@ int gMigrated;
     [model addBookmark:b toMenu:menu startingAtItem:skip withTags:[b objectForKey:KEY_TAGS] params:params atPos:e->index];
 }
 
++ (NSArray *)menuItemsForTag:(NSString *)multipartName inMenu:(NSMenu *)menu
+{
+    NSMutableArray *result = [NSMutableArray array];
+    NSArray *parts = [multipartName componentsSeparatedByString:@"/"];
+    NSMenuItem *item = nil;
+    for (NSString *name in parts) {
+        item = [menu itemWithTitle:name];
+        if (!item) {
+            break;
+        }
+        [result addObject:item];
+        menu = [item submenu];
+    }
+    return result;
+}
+
 + (void)applyRemoveJournalEntry:(BookmarkJournalEntry*)e toMenu:(NSMenu*)menu startingAtItem:(int)skip params:(JournalParams*)params
 {
     int pos = [menu indexOfItemWithRepresentedObject:e->guid];
@@ -823,12 +887,26 @@ int gMigrated;
 
     // Remove bookmark from each tag it belongs to
     for (NSString* tag in e->tags) {
-        NSMenuItem* item = [menu itemWithTitle:tag];
-        NSMenu* submenu = [item submenu];
-        if (submenu) {
-            [ProfileModel applyRemoveJournalEntry:e toMenu:submenu startingAtItem:0 params:params];
-            if ([submenu numberOfItems] == 0) {
-                [menu removeItem:item];
+        NSArray *items = [self menuItemsForTag:tag inMenu:menu];
+        for (int i = items.count - 1; i >= 0; i--) {
+            NSMenuItem *item = items[i];
+            NSMenu *submenu = [item submenu];
+            if (submenu) {
+                if (i == items.count - 1) {
+                    [self applyRemoveJournalEntry:e toMenu:submenu startingAtItem:0 params:params];
+                }
+                if ([submenu numberOfItems] == 0) {
+                    [[[item parentItem] submenu] removeItem:item];
+                    
+                    // Remove "open all" (not at first level)
+                    if ([ProfileModel menuHasOpenAll:submenu] && submenu.numberOfItems <= 5) {
+                        [menu removeItemAtIndex:[menu numberOfItems] - 1];
+                        [menu removeItemAtIndex:[menu numberOfItems] - 1];
+                        [menu removeItemAtIndex:[menu numberOfItems] - 1];
+                    }
+                } else {
+                    break;
+                }
             }
         }
     }
