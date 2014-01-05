@@ -103,7 +103,7 @@ static const CGFloat kRowHeight = 21;
 #pragma mark - Notifications
 
 - (void)reloadAddressBook:(NSNotification *)notification {
-  // TODO
+    [_tableView reloadData];
 }
 
 #pragma mark - APIs
