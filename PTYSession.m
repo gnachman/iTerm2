@@ -23,6 +23,7 @@
 #import "SCPPath.h"
 #import "SearchResult.h"
 #import "SessionView.h"
+#import "TerminalFile.h"
 #import "TmuxController.h"
 #import "TmuxControllerRegistry.h"
 #import "TmuxGateway.h"
@@ -71,6 +72,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 @interface PTYSession ()
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
+@property(nonatomic, retain) TerminalFile *download;
 @end
 
 @implementation PTYSession
@@ -350,6 +352,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [sendModifiers_ release];
     [pasteViewController_ release];
     [pasteContext_ release];
+    [_download stop];
+    [_download endOfData];
+    [_download release];
     [SHELL release];
     SHELL = nil;
     [SCREEN release];
@@ -5149,6 +5154,27 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 
     [pbtext_ appendData:data];
+}
+
+- (void)screenWillReceiveFileNamed:(NSString *)filename ofSize:(int)size {
+    [self.download stop];
+    [self.download endOfData];
+    self.download = [[[TerminalFile alloc] initWithName:filename size:size] autorelease];
+    [self.download download];
+}
+
+- (void)screenDidFinishReceivingFile {
+    [self.download endOfData];
+    self.download = nil;
+}
+
+- (void)screenDidReceiveBase64FileData:(NSString *)data {
+    [self.download appendData:data];
+}
+
+- (void)screenFileReceiptEndedUnexpectedly {
+    [self.download stop];
+    [self.download endOfData];
 }
 
 - (void)setAlertOnNextMark:(BOOL)alertOnNextMark {

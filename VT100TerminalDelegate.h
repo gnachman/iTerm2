@@ -271,6 +271,22 @@ typedef enum {
 - (BOOL)terminalIsAppendingToPasteboard;
 - (void)terminalAppendDataToPasteboard:(NSData *)data;
 
+// Download of a base64-encoded file
+// nil = name unknown, -1 = size unknown.
+- (void)terminalWillReceiveFileNamed:(NSString *)name ofSize:(int)size;
+
+// Download completed normally
+- (void)terminalDidFinishReceivingFile;
+
+// Got another chunk of base-64 encoded data for the current download.
+// Preceded by terminalWillReceiveFileNamed:size:.
+- (void)terminalDidReceiveBase64FileData:(NSString *)data;
+
+// Got bogus data, abort download.
+// Preceded by terminalWillReceiveFileNamed:size: and possibly some
+// terminalDidReceiveBase64FileData: calls.
+- (void)terminalFileReceiptEndedUnexpectedly;
+
 // Signal the user that the terminal wants attention.
 - (void)terminalRequestAttention:(BOOL)request;
 

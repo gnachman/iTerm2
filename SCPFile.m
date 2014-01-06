@@ -94,26 +94,6 @@ static NSError *SCPFileError(NSString *description) {
     return [fileManager fileExistsAtPath:[kPrivateKeyPath stringByExpandingTildeInPath]];
 }
 
-- (NSString *)finalDestinationForPath:(NSString *)baseName
-                 destinationDirectory:(NSString *)destinationDirectory {
-    NSString *name = baseName;
-    NSString *finalDestination = nil;
-    int retries = 0;
-    do {
-        finalDestination = [destinationDirectory stringByAppendingPathComponent:name];
-        ++retries;
-        NSRange rangeOfDot = [baseName rangeOfString:@"."];
-        NSString *prefix = baseName;
-        NSString *suffix = @"";
-        if (rangeOfDot.length > 0) {
-            prefix = [baseName substringToIndex:rangeOfDot.location];
-            suffix = [baseName substringFromIndex:rangeOfDot.location];
-        }
-        name = [NSString stringWithFormat:@"%@ (%d)%@", prefix, retries, suffix];
-    } while ([[NSFileManager defaultManager] fileExistsAtPath:finalDestination]);
-    return finalDestination;
-}
-
 // This runs in a thread.
 - (void)performTransferWrapper:(BOOL)isDownload {
     [self performTransfer:isDownload];

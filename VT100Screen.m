@@ -2731,6 +2731,21 @@ static const double kInterBellQuietPeriod = 0.1;
     [delegate_ screenSetPasteboard:value];
 }
 
+- (void)terminalWillReceiveFileNamed:(NSString *)name ofSize:(int)size {
+    [delegate_ screenWillReceiveFileNamed:name ofSize:size];
+}
+- (void)terminalDidFinishReceivingFile {
+    [delegate_ screenDidFinishReceivingFile];
+}
+
+- (void)terminalDidReceiveBase64FileData:(NSString *)data {
+    [delegate_ screenDidReceiveBase64FileData:data];
+}
+
+- (void)terminalFileReceiptEndedUnexpectedly {
+    [delegate_ screenFileReceiptEndedUnexpectedly];
+}
+
 - (void)terminalCopyBufferToPasteboard {
     [delegate_ screenCopyBufferToPasteboard];
 }

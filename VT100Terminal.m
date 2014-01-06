@@ -6,7 +6,10 @@
 #define STANDARD_STREAM_SIZE 100000
 #define MAX_XTERM_TEMP_BUFFER_LENGTH 1024
 
-@implementation VT100Terminal
+@implementation VT100Terminal {
+    // True if between BeginFile and EndFile codes.
+    BOOL receivingFile_;
+}
 
 @synthesize delegate = delegate_;
 
@@ -2658,6 +2661,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
     strictAnsiMode_ = NO;
     allowColumnMode_ = NO;
+    receivingFile_ = NO;
     [delegate_ terminalResetPreservingPrompt:preservePrompt];
 }
 
@@ -3961,6 +3965,22 @@ static VT100TCC decode_string(unsigned char *datap,
             [delegate_ terminalAddNote:(NSString *)value show:NO];
         } else if ([key isEqualToString:@"CopyToClipboard"]) {
             [delegate_ terminalSetPasteboard:value];
+        } else if ([key isEqualToString:@"BeginFile"]) {
+            // Takes two args separated by newline. First is filename, second is size in bytes.
+            NSArray *parts = [value componentsSeparatedByString:@"\n"];
+            NSString *name = nil;
+            int size = -1;
+            if (parts.count >= 1) {
+                name = [parts[0] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            }
+            if (parts.count >= 2) {
+                size = [parts[1] intValue];
+            }
+            [delegate_ terminalWillReceiveFileNamed:name ofSize:size];
+            receivingFile_ = YES;
+        } else if ([key isEqualToString:@"EndFile"]) {
+            [delegate_ terminalDidFinishReceivingFile];
+            receivingFile_ = NO;
         } else if ([key isEqualToString:@"EndCopy"]) {
             [delegate_ terminalCopyBufferToPasteboard];
         } else if ([key isEqualToString:@"RequestAttention"]) {
@@ -4183,7 +4203,20 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (void)executeToken {
     VT100TCC token = *lastToken_;
-    // First, handle sending input to pasteboard.
+    // First, handle sending input to pasteboard/receving files.
+    if (receivingFile_) {
+        if (token.type == VT100_ASCIISTRING) {
+            [delegate_ terminalDidReceiveBase64FileData:token.u.string];
+            return;
+        } else if (token.type == VT100CC_CR ||
+                   token.type == VT100CC_LF ||
+                   token.type == XTERMCC_SET_KVP) {
+            return;
+        } else {
+            [delegate_ terminalFileReceiptEndedUnexpectedly];
+            receivingFile_ = NO;
+        }
+    }
     if (token.type != VT100_SKIP) {  // VT100_SKIP = there was no data to read
         if ([delegate_ terminalIsAppendingToPasteboard]) {
             // We are probably copying text to the clipboard until esc]50;EndCopy^G is received.

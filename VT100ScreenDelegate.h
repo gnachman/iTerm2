@@ -185,6 +185,11 @@
 - (BOOL)screenIsAppendingToPasteboard;
 - (void)screenAppendDataToPasteboard:(NSData *)data;
 
+- (void)screenWillReceiveFileNamed:(NSString *)name ofSize:(int)size;
+- (void)screenDidFinishReceivingFile;
+- (void)screenDidReceiveBase64FileData:(NSString *)data;
+- (void)screenFileReceiptEndedUnexpectedly;
+
 - (void)screenRequestAttention:(BOOL)request;
 - (void)screenSetForegroundColor:(NSColor *)color;
 - (void)screenSetBackgroundColor:(NSColor *)color;

@@ -10,6 +10,18 @@
 
 const CGFloat rightMargin = 5;
 
+@implementation iTermProgressIndicator
+
+- (void)drawRect:(NSRect)dirtyRect {
+    [[NSColor colorWithWhite:0.8 alpha:1] set];
+    NSRectFill(self.bounds);
+    
+    [[NSColor colorWithRed:0.5 green:0.7 blue:1.0 alpha:1.0] set];
+    NSRectFill(NSMakeRect(0, 0, self.bounds.size.width * self.fraction, self.bounds.size.height));
+}
+
+@end
+
 @interface TransferrableFileMenuItemView ()
 // This is used as part of the bug workaround in sanityCheckSiblings to ensure we don't try to
 // redraw a view more than once.
@@ -21,19 +33,10 @@ const CGFloat rightMargin = 5;
 - (id)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
-        _progressIndicator = [[NSProgressIndicator alloc] initWithFrame:NSMakeRect(5,
-                                                                                   15,
-                                                                                   frameRect.size.width - 10,
-                                                                                   10)];
-        [_progressIndicator setStyle:NSProgressIndicatorBarStyle];
-        [_progressIndicator setIndeterminate:NO];
-        [_progressIndicator setBezeled:YES];
-        [_progressIndicator setMinValue:0];
-        [_progressIndicator setMaxValue:1];
-        _progressIndicator.frame = NSMakeRect(5,
-                                              17,
-                                              frameRect.size.width - 10,
-                                              _progressIndicator.bounds.size.height);
+        _progressIndicator = [[iTermProgressIndicator alloc] initWithFrame:NSMakeRect(5,
+                                                                                      17,
+                                                                                      frameRect.size.width - 10,
+                                                                                      10)];
         [self addSubview:_progressIndicator];
     }
     return self;

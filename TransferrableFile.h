@@ -41,5 +41,11 @@ typedef enum {
 - (NSTimeInterval)timeOfLastStatusChange;
 - (BOOL)isDownloading;
 
+#pragma mark - Utility
+
+- (NSString *)finalDestinationForPath:(NSString *)baseName
+                 destinationDirectory:(NSString *)destinationDirectory;
+- (NSString *)downloadsDirectory;
+
 @end
 

@@ -64,6 +64,40 @@
     assert(false);
 }
 
+- (NSString *)finalDestinationForPath:(NSString *)baseName
+                 destinationDirectory:(NSString *)destinationDirectory {
+    NSString *name = baseName;
+    NSString *finalDestination = nil;
+    int retries = 0;
+    do {
+        finalDestination = [destinationDirectory stringByAppendingPathComponent:name];
+        ++retries;
+        NSRange rangeOfDot = [baseName rangeOfString:@"."];
+        NSString *prefix = baseName;
+        NSString *suffix = @"";
+        if (rangeOfDot.length > 0) {
+            prefix = [baseName substringToIndex:rangeOfDot.location];
+            suffix = [baseName substringFromIndex:rangeOfDot.location];
+        }
+        name = [NSString stringWithFormat:@"%@ (%d)%@", prefix, retries, suffix];
+    } while ([[NSFileManager defaultManager] fileExistsAtPath:finalDestination]);
+    return finalDestination;
+}
+
+- (NSString *)downloadsDirectory {
+    NSArray* paths = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory,
+                                                         NSUserDomainMask,
+                                                         YES);
+    NSString *directory;
+    if (paths.count > 0) {
+        directory = paths[0];
+    } else {
+        directory = NSHomeDirectory();
+    }
+
+    return directory;
+}
+
 - (void)setSuccessor:(TransferrableFile *)successor {
     @synchronized(self) {
         [_successor autorelease];
