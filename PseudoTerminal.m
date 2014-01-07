@@ -3412,13 +3412,29 @@ NSString *kSessionsKVCKey = @"sessions";
     [rootMenu addItem:item];
 
     if ([TABVIEW numberOfTabViewItems] > 1) {
-        item = [[[NSMenuItem alloc] initWithTitle:@"Move to new window"
+        item = [[[NSMenuItem alloc] initWithTitle:@"Move to New Window"
                                            action:@selector(moveTabToNewWindowContextualMenuAction:)
                                     keyEquivalent:@""] autorelease];
         [item setRepresentedObject:tabViewItem];
         [rootMenu addItem:item];
     }
 
+    if ([TABVIEW numberOfTabViewItems] > 1) {
+        item = [[[NSMenuItem alloc] initWithTitle:@"Close Other Tabs"
+                                           action:@selector(closeOtherTabs:)
+                                    keyEquivalent:@""] autorelease];
+        [item setRepresentedObject:tabViewItem];
+        [rootMenu addItem:item];
+    }
+    
+    if ([TABVIEW numberOfTabViewItems] > 1) {
+        item = [[[NSMenuItem alloc] initWithTitle:@"Close Tabs to the Right"
+                                           action:@selector(closeTabsToTheRight:)
+                                    keyEquivalent:@""] autorelease];
+        [item setRepresentedObject:tabViewItem];
+        [rootMenu addItem:item];
+    }
+    
     // add label
     [rootMenu addItem: [NSMenuItem separatorItem]];
     ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
@@ -5794,10 +5810,40 @@ NSString *kSessionsKVCKey = @"sessions";
     [self closeTab:(id)[[sender representedObject] identifier]];
 }
 
+// These two methods are delecate because -closeTab: won't remove the tab from
+// the -tabs array immediately for tmux tabs.
+- (void)closeOtherTabs:(id)sender
+{
+    NSTabViewItem *aTabViewItem = [sender representedObject];
+    PTYTab *tabToKeep = [aTabViewItem identifier];
+    NSMutableArray *tabsToRemove = [[[self tabs] mutableCopy] autorelease];
+    [tabsToRemove removeObject:tabToKeep];
+    for (PTYTab *tab in tabsToRemove) {
+        [self closeTab:tab];
+    }
+}
+
+- (void)closeTabsToTheRight:(id)sender
+{
+    NSTabViewItem *aTabViewItem = [sender representedObject];
+    PTYTab *tabToKeep = [aTabViewItem identifier];
+
+    NSMutableArray *tabsToRemove = [[[self tabs] mutableCopy] autorelease];
+    PTYTab *current;
+    do {
+        current = tabsToRemove[0];
+        [tabsToRemove removeObjectAtIndex:0];
+    } while (current != tabToKeep);
+    
+    for (PTYTab *tab in tabsToRemove) {
+        [self closeTab:tab];
+    }
+}
+
 // Move a tab to a new window due to a context menu selection.
 - (void)moveTabToNewWindowContextualMenuAction:(id)sender
 {
-    NSWindowController<iTermWindowController> * term;
+    NSWindowController<iTermWindowController> *term;
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *aTab = [aTabViewItem identifier];
 

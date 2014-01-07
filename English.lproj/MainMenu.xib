@@ -482,14 +482,14 @@ DQ
                                     <action selector="jumpToSavedScrollPosition:" target="-1" id="1248"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Previous mark/note" keyEquivalent="[" id="sZa-7I-YDa">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                            <menuItem title="Previous mark/note" keyEquivalent="" id="sZa-7I-YDa">
+                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
                                 <connections>
                                     <action selector="previousMarkOrNote:" target="-1" id="Qrg-Y8-KM2"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Next mark/note" keyEquivalent="]" id="mcu-LX-9Aj">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                            <menuItem title="Next mark/note" keyEquivalent="" id="mcu-LX-9Aj">
+                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
                                 <connections>
                                     <action selector="nextMarkOrNote:" target="-1" id="HSR-a4-u0F"/>
                                 </connections>

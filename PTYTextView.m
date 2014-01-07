@@ -371,12 +371,12 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     FindContext *initialFindContext_;
     
     PointerController *pointer_;
-	NSCursor *cursor_;
+        NSCursor *cursor_;
     
     // True while the context menu is being opened.
     BOOL openingContextMenu_;
     
-	// Experimental feature gated by ThreeFingerTapEmulatesThreeFingerClick bool pref.
+        // Experimental feature gated by ThreeFingerTapEmulatesThreeFingerClick bool pref.
     ThreeFingerTapGestureRecognizer *threeFingerTapGestureRecognizer_;
     
     // Position of cursor last time we looked. Since the cursor might move around a lot between
@@ -385,7 +385,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     int prevCursorX, prevCursorY;
     
     MovingAverage *drawRectDuration_, *drawRectInterval_;
-	// Current font. Only valid for the duration of a single drawing context.
+        // Current font. Only valid for the duration of a single drawing context.
     NSFont *selectedFont_;
     
     // Used by _drawCursorTo: to remember the last time the cursor moved to avoid drawing a blinked-out
@@ -9123,11 +9123,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Bail after 100 iterations if nothing is still found.
     int limit = 100;
 
+    NSMutableSet *paths = [NSMutableSet set];
+    NSMutableSet *befores = [NSMutableSet set];
+
     for (int i = [beforeChunks count]; i >= 0; i--) {
         NSString *beforeChunk = @"";
         if (i < [beforeChunks count]) {
             beforeChunk = [beforeChunks objectAtIndex:i];
         }
+
+        if ([befores containsObject:beforeChunk]) {
+            continue;
+        }
+        [befores addObject:beforeChunk];
 
         [left insertString:beforeChunk atIndex:0];
         NSMutableString *possiblePath = [NSMutableString stringWithString:left];
@@ -9135,6 +9143,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Do not search more than 10 chunks forward to avoid starving leftward search.
         for (int j = 0; j < [afterChunks count] && j < 10; j++) {
             [possiblePath appendString:[afterChunks objectAtIndex:j]];
+            if ([paths containsObject:[NSString stringWithString:possiblePath]]) {
+                continue;
+            }
+            [paths addObject:[[possiblePath copy] autorelease]];
+
             if ([trouter getFullPath:possiblePath workingDirectory:workingDirectory lineNumber:NULL]) {
                 if (charsTakenFromPrefixPtr) {
                     *charsTakenFromPrefixPtr = left.length;

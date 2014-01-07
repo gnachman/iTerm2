@@ -325,7 +325,6 @@
 
 // Up to one window may be the hotkey window, which is toggled with the system-wide
 // hotkey.
-- (BOOL)isHotKeyWindow;
 - (void)setIsHotKeyWindow:(BOOL)value;
 
 // Updates the window when screen parameters (number of screens, resolutions,

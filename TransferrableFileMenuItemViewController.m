@@ -90,7 +90,8 @@ static const CGFloat kCollapsedHeight = 51;
     if ([_transferrableFile fileSize] > 0) {
         double fraction = [_transferrableFile bytesTransferred];
         fraction /= [_transferrableFile fileSize];
-        view.progressIndicator.doubleValue = fraction;
+        view.progressIndicator.fraction = fraction;
+        [view.progressIndicator setNeedsDisplay:YES];
     }
     view.bytesTransferred = [_transferrableFile bytesTransferred];
     switch (_transferrableFile.status) {
@@ -179,7 +180,8 @@ static const CGFloat kCollapsedHeight = 51;
         case kTransferrableFileStatusFinishedSuccessfully:
             return @"Finished";
         case kTransferrableFileStatusFinishedWithError:
-            return [NSString stringWithFormat:@"Failed with error: %@", [_transferrableFile error]];
+            return [NSString stringWithFormat:@"Failed with error: %@",
+                    [_transferrableFile error]];
         case kTransferrableFileStatusCancelling:
             return @"Waiting to cancel";
         case kTransferrableFileStatusCancelled:

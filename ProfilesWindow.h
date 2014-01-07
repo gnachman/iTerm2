@@ -33,8 +33,9 @@
     IBOutlet NSButton* verticalPaneButton_;
     IBOutlet NSButton* tabButton_;
     IBOutlet NSButton* windowButton_;
-	IBOutlet NSButton* closeAfterOpeningBookmark_;
-	IBOutlet NSButton* newTabsInNewWindowButton_;
+    IBOutlet NSButton* closeAfterOpeningBookmark_;
+    IBOutlet NSButton* newTabsInNewWindowButton_;
+    IBOutlet NSButton* toggleTagsButton_;
 }
 
 + (ProfilesWindow*)sharedInstance;
@@ -44,6 +45,7 @@
 - (IBAction)openBookmarkInVerticalPane:(id)sender;
 - (IBAction)openBookmarkInTab:(id)sender;
 - (IBAction)openBookmarkInWindow:(id)sender;
+- (IBAction)toggleTags:(id)sender;
 - (void)profileTableSelectionDidChange:(id)profileTable;
 - (void)profileTableSelectionWillChange:(id)profileTable;
 - (void)profileTableRowSelected:(id)profileTable;

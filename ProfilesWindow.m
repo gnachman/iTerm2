@@ -147,6 +147,11 @@ typedef enum {
     }
 }
 
+- (IBAction)toggleTags:(id)sender
+{
+    [tableView_ toggleTags];
+}
+
 - (void)updatePaneButtons:(id)sender
 {
     [self profileTableSelectionDidChange:tableView_];
@@ -159,6 +164,10 @@ typedef enum {
     } else {
         windowButton_.keyEquivalentModifierMask = NSShiftKeyMask;
     }
+}
+
+- (void)profileTableTagsVisibilityDidChange:(ProfileListView *)profileListView {
+    [toggleTagsButton_ setTitle:profileListView.tagsVisible ? @"< Tags" : @"Tags >"];
 }
 
 - (void)profileTableSelectionDidChange:(id)profileTable

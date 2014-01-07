@@ -1247,6 +1247,14 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [keyMappings reloadData];
 }
 
+- (IBAction)toggleTags:(id)sender {
+    [bookmarksTableView toggleTags];
+}
+
+- (void)profileTableTagsVisibilityDidChange:(ProfileListView *)profileListView {
+    [toggleTagsButton setTitle:profileListView.tagsVisible ? @"< Tags" : @"Tags >"];
+}
+
 - (IBAction)addBookmark:(id)sender
 {
     NSMutableDictionary* newDict = [[[NSMutableDictionary alloc] init] autorelease];

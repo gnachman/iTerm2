@@ -27,34 +27,35 @@
 #import "ProfileTableView.h"
 #import "FutureMethods.h"
 
+@class ProfileListView;
 @class ProfileModelWrapper;
-@class iTermSearchField;
 @class ProfileTableRow;
 @class ProfileTableView;
-@class ProfileListView;
+@class ProfileTagsView;
+@class iTermSearchField;
 
 @protocol ProfileListViewDelegate
 @optional
 - (void)profileTableSelectionDidChange:(id)profileTable;
 
-@optional
 - (void)profileTableSelectionWillChange:(id)profileTable;
 
-@optional
 - (void)profileTableRowSelected:(id)profileTable;
 
-@optional
 - (NSMenu*)profileTable:(id)profileTable menuForEvent:(NSEvent*)theEvent;
 
-@optional
 - (void)profileTableFilterDidChange:(ProfileListView *)profileListView;
+
+- (void)profileTableTagsVisibilityDidChange:(ProfileListView *)profileListView;
+
 @end
 
 @interface ProfileListView : NSView <
-      NSTextFieldDelegate,
-	  NSTableViewDataSource,
-	  NSTableViewDelegate,
-	  ProfileTableMenuHandler> {
+  NSSplitViewDelegate,
+  NSTextFieldDelegate,
+  NSTableViewDataSource,
+  NSTableViewDelegate,
+  ProfileTableMenuHandler> {
     int normalRowHeight_;
     int rowHeightWithTags_;
     NSScrollView* scrollView_;
@@ -63,16 +64,19 @@
     NSTableColumn* tableColumn_;
     NSTableColumn* commandColumn_;
     NSTableColumn* shortcutColumn_;
-    NSTableColumn* starColumn_;
     NSTableColumn* tagsColumn_;
     NSObject<ProfileListViewDelegate> *delegate_;
     NSSet* selectedGuids_;
     BOOL debug;
-    ProfileModelWrapper* dataSource_;
+    ProfileModelWrapper *dataSource_;
     int margin_;
+    ProfileTagsView *tagsView_;
+    NSSplitView *splitView_;
+    CGFloat lastTagsWidth_;
 }
 
-- (void)awakeFromNib;
+@property(nonatomic, readonly) BOOL tagsVisible;
+
 - (id)initWithFrame:(NSRect)frameRect;
 - (id)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource;
 - (void)setDelegate:(NSObject<ProfileListViewDelegate> *)delegate;
@@ -125,5 +129,7 @@
 
 - (void)setFont:(NSFont *)theFont;
 - (void)disableArrowHandler;
+
+- (void)toggleTags;
 
 @end

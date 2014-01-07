@@ -1277,7 +1277,7 @@ NSString *terminalsKey = @"terminals";
     return ([terminalWindows objectAtIndex:theIndex]);
 }
 
-- (void)setCurrentTerminal:(PseudoTerminal*)thePseudoTerminal
+- (void)setCurrentTerminal:(PseudoTerminal *)thePseudoTerminal
 {
     FRONT = thePseudoTerminal;
 

@@ -3,6 +3,7 @@
 #import "Coprocess.h"
 #import "FakeWindow.h"
 #import "FileTransferManager.h"
+#import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "MovePaneController.h"
 #import "MovePaneController.h"
@@ -22,6 +23,7 @@
 #import "SCPPath.h"
 #import "SearchResult.h"
 #import "SessionView.h"
+#import "TerminalFile.h"
 #import "TmuxController.h"
 #import "TmuxControllerRegistry.h"
 #import "TmuxGateway.h"
@@ -70,6 +72,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 @interface PTYSession ()
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
+@property(nonatomic, retain) TerminalFile *download;
 @end
 
 @implementation PTYSession
@@ -349,6 +352,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [sendModifiers_ release];
     [pasteViewController_ release];
     [pasteContext_ release];
+    [_download stop];
+    [_download endOfData];
+    [_download release];
     [SHELL release];
     SHELL = nil;
     [SCREEN release];
@@ -5035,6 +5041,21 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return TEXTVIEW != nil;
 }
 
+- (void)reveal {
+    NSWindowController<iTermWindowController> *terminal = [[self tab] realParentWindow];
+    iTermController *controller = [iTermController sharedInstance];
+    if ([terminal isHotKeyWindow]) {
+        [[HotkeyWindowController sharedInstance] showHotKeyWindow];
+    } else {
+        [controller setCurrentTerminal:(PseudoTerminal *)terminal];
+        [[terminal window] makeKeyAndOrderFront:self];
+        [[terminal tabView] selectTabViewItemWithIdentifier:[self tab]];
+    }
+    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+    
+    [[self tab] setActiveSession:self];
+}
+
 - (void)screenAddMarkOnLine:(int)line {
     [TEXTVIEW refresh];  // In case text was appended
     [lastMark_ release];
@@ -5042,7 +5063,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                                oneLine:YES] retain];
     self.currentMarkOrNotePosition = lastMark_.entry.interval;
     if (self.alertOnNextMark) {
-        [SCREEN requestUserAttentionWithMessage:@"Your attention is requested!"];
+        if (NSRunAlertPanel(@"Alert",
+                            [NSString stringWithFormat:@"Mark set in session “%@.”", [self name]],
+                            @"Reveal",
+                            @"OK",
+                            nil) == NSAlertDefaultReturn) {
+            [self reveal];
+        }
         self.alertOnNextMark = NO;
     }
 }
@@ -5127,6 +5154,27 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 
     [pbtext_ appendData:data];
+}
+
+- (void)screenWillReceiveFileNamed:(NSString *)filename ofSize:(int)size {
+    [self.download stop];
+    [self.download endOfData];
+    self.download = [[[TerminalFile alloc] initWithName:filename size:size] autorelease];
+    [self.download download];
+}
+
+- (void)screenDidFinishReceivingFile {
+    [self.download endOfData];
+    self.download = nil;
+}
+
+- (void)screenDidReceiveBase64FileData:(NSString *)data {
+    [self.download appendData:data];
+}
+
+- (void)screenFileReceiptEndedUnexpectedly {
+    [self.download stop];
+    [self.download endOfData];
 }
 
 - (void)setAlertOnNextMark:(BOOL)alertOnNextMark {
