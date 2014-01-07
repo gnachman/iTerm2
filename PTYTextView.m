@@ -64,6 +64,10 @@ static const double kCharWidthFractionOffset = 0.35;
 
 #define SWAPINT(a, b) { int temp; temp = a; a = b; b = temp; }
 
+// Drag-drop operation flags for different possible dropping operations.
+const unsigned int kUploadDragOperation = NSDragOperationCopy;
+const unsigned int kPasteDragOperation = NSDragOperationGeneric;
+
 const int kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
 
 // If the cursor's background color is too close to nearby background colors,
@@ -5660,8 +5664,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     extendedDragNDrop = YES;
 
-    // Always say NSDragOperationCopy; handle failure later.
-    return NSDragOperationCopy;
+    return [self dragOperationForSender:sender];
 }
 
 //
@@ -5669,17 +5672,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 //
 - (NSDragOperation)draggingUpdated:(id <NSDraggingInfo>)sender
 {
-    NSDragOperation iResult;
-
-    // Let's see if our parent NSTextView knows what to do
-    iResult = [super draggingUpdated:sender];
-
-    // If parent class does not know how to deal with this drag type, check if we do.
-    if (iResult == NSDragOperationNone) {  // Parent NSTextView does not support this drag type.
-        return [self _checkForSupportedDragTypes:sender];
-    }
-
-    return iResult;
+    return [self dragOperationForSender:sender];
 }
 
 //
@@ -5706,7 +5699,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // If parent class does not know how to deal with this drag type, check if we do.
     if (result != YES &&
-        [self _checkForSupportedDragTypes:sender] != NSDragOperationNone) {
+        [self dragOperationForSender:sender] != NSDragOperationNone) {
         result = YES;
     }
 
@@ -5768,33 +5761,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // If parent class does not know how to deal with this drag type, check if we do.
     if (extendedDragNDrop) {
         NSPasteboard *pb = [sender draggingPasteboard];
-        NSArray *propertyList;
+        NSArray *propertyList = nil;
         NSString *aString;
         int i;
 
-        dragOperation = [self _checkForSupportedDragTypes: sender];
-
-        if (dragOperation == NSDragOperationCopy) {
+        dragOperation = [sender draggingSourceOperationMask];
+        if (dragOperation & kPasteDragOperation) {
+            // Paste string or filenames in.
             NSArray *types = [pb types];
 
             if ([types containsObject:NSFilenamesPboardType]) {
-                propertyList = [pb propertyListForType: NSFilenamesPboardType];
-                NSPoint windowDropPoint = [sender draggingLocation];
-                NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
-                int dropLine = dropPoint.y / lineHeight;
-                SCPPath *dropScpPath = [dataSource scpPathForFile:@"" onLine:dropLine];
-                // Make sure you are currently connected to a remote host and you dragged into that
-                // host.
-                if (![self hostIsLocal:dropScpPath.hostname]) {
-                    // This is all so the mouse cursor will change to a plain arrow instead of the
-                    // drop target cursor.
-                    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-                    [[self window] makeKeyAndOrderFront:nil];
-                    [self performSelector:@selector(maybeUpload:)
-                               withObject:@[ propertyList, dropScpPath]
-                               afterDelay:0];
-                    return YES;
-                }
+                propertyList = [pb propertyListForType:NSFilenamesPboardType];
 
                 for (i = 0; i < (int)[propertyList count]; i++) {
                     // Ignore text clippings
@@ -5831,7 +5808,28 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     }
                 }
             }
+        } else if (dragOperation & kUploadDragOperation) {
+            // Upload a file.
+            NSArray *types = [pb types];
+            
+            propertyList = [pb propertyListForType:NSFilenamesPboardType];
+            NSPoint windowDropPoint = [sender draggingLocation];
+            NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
+            int dropLine = dropPoint.y / lineHeight;
+            SCPPath *dropScpPath = [dataSource scpPathForFile:@"" onLine:dropLine];
+            if ([types containsObject:NSFilenamesPboardType]) {
+                // This is all so the mouse cursor will change to a plain arrow instead of the
+                // drop target cursor.
+                [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+                [[self window] makeKeyAndOrderFront:nil];
+                [self performSelector:@selector(maybeUpload:)
+                           withObject:@[ propertyList, dropScpPath ]
+                           afterDelay:0];
+                return YES;
+            }
+            return NO;
         }
+
     }
 
     return res;
@@ -9620,23 +9618,50 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 }
 
-- (unsigned int)_checkForSupportedDragTypes:(id <NSDraggingInfo>)sender
+// Returns the drag operation to use. It is determined from the type of thing
+// being dragged, the modifiers pressed, and where it's being dropped.
+- (NSDragOperation)dragOperationForSender:(id <NSDraggingInfo>)sender
 {
     NSString *sourceType;
-    BOOL iResult;
+    unsigned int iResult = 0;
 
     iResult = NSDragOperationNone;
 
-    // We support the FileName drag type for attching files
-    sourceType = [[sender draggingPasteboard] availableTypeFromArray: [NSArray arrayWithObjects:
-        NSFilenamesPboardType,
-        NSStringPboardType,
-        nil]];
+    
+    NSPasteboard *pb = [sender draggingPasteboard];
+    NSArray *types = [pb types];
+    NSPoint windowDropPoint = [sender draggingLocation];
+    NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
+    int dropLine = dropPoint.y / lineHeight;
+    SCPPath *dropScpPath = [dataSource scpPathForFile:@"" onLine:dropLine];
 
-    if (sourceType)
-        iResult = NSDragOperationCopy;
+    // It's ok to upload if a file is being dragged in and the drop location has a remote host path.
+    BOOL uploadOK = ([types containsObject:NSFilenamesPboardType] && dropScpPath);
 
-    return iResult;
+    // It's ok to paste if the the drag obejct is either a file or a string.
+    BOOL pasteOK = !![[sender draggingPasteboard] availableTypeFromArray:@[ NSFilenamesPboardType, NSStringPboardType ]];
+    
+    // The source defines the kind of operations it allows with
+    // -draggingSourceOperationMask. Pressing modifier keys will change its
+    // value by masking out all but one bit (if the sender allows modifiers
+    // to affect dragging).
+    NSDragOperation sourceMask = [sender draggingSourceOperationMask];
+    NSDragOperation both = (kUploadDragOperation | kPasteDragOperation);
+    if ((sourceMask & both) == both && pasteOK) {
+        // No modifier key was pressed and pasting is OK, so select the paste operation.
+        return kPasteDragOperation;
+    } else if ((sourceMask & kUploadDragOperation) && uploadOK) {
+        // Either Option was pressed or the sender allows Copy but not Generic,
+        // and it's ok to upload, so select the upload operation.
+        return kUploadDragOperation;
+    } else if ((sourceMask & kPasteDragOperation) && pasteOK) {
+        // Either Command was prsesed or the sender allows Generic but not
+        // copy, and it's ok to paste, so select the paste operation.
+        return kPasteDragOperation;
+    } else {
+        // No luck.
+        return NSDragOperationNone;
+    }
 }
 
 - (int)_lineLength:(int)y
