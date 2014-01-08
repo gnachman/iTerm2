@@ -823,23 +823,20 @@ static const double kInterBellQuietPeriod = 0.1;
                             NULL);
     }
 
-    if (len < 1) {
-        // The string is empty so do nothing.
-        if (dynamicBuffer) {
-            free(dynamicBuffer);
-        }
-        return;
+    if (len >= 1) {
+        [self incrementOverflowBy:[currentGrid_ appendCharsAtCursor:buffer
+                                                             length:len
+                                            scrollingIntoLineBuffer:linebuffer_
+                                                unlimitedScrollback:unlimitedScrollback_
+                                            useScrollbackWithRegion:[self useScrollbackWithRegion]]];
     }
-
-    [self incrementOverflowBy:[currentGrid_ appendCharsAtCursor:buffer
-                                                         length:len
-                                        scrollingIntoLineBuffer:linebuffer_
-                                            unlimitedScrollback:unlimitedScrollback_
-                                        useScrollbackWithRegion:[self useScrollbackWithRegion]]];
-
 
     if (dynamicBuffer) {
         free(dynamicBuffer);
+    }
+    
+    if (commandStartX_ != -1) {
+        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
     }
 }
 
@@ -1787,6 +1784,11 @@ static const double kInterBellQuietPeriod = 0.1;
             currentGrid_.cursor = VT100GridCoordMake(currentGrid_.size.width - 2, cursorY - 1);
         }
     }
+    
+    if (commandStartX_ != -1 && (currentGrid_.cursorX != cursorX ||
+                                 currentGrid_.cursorY != cursorY)) {
+        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+    }
 }
 
 - (void)terminalAppendTabAtCursor
@@ -2097,7 +2099,7 @@ static const double kInterBellQuietPeriod = 0.1;
         [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
     }
     [delegate_ screenDidReset];
-
+    commandStartX_ = commandStartY_ = -1;
     [self showCursor:YES];
 }
 
@@ -2563,6 +2565,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
     [currentGrid_ markAllCharsDirty:YES];
     [delegate_ screenNeedsRedraw];
+    commandStartX_ = commandStartY_ = -1;
 }
 
 - (void)hideOnScreenNotesAndTruncateSpanners
@@ -2589,6 +2592,7 @@ static const double kInterBellQuietPeriod = 0.1;
     if (currentGrid_ == altGrid_) {
         [self hideOnScreenNotesAndTruncateSpanners];
         currentGrid_ = primaryGrid_;
+        commandStartX_ = commandStartY_ = -1;
         [self swapNotes];
         [self reloadMarkCache];
 
@@ -2822,7 +2826,49 @@ static const double kInterBellQuietPeriod = 0.1;
     [delegate_ screenSetCursorVisible:visible];
 }
 
+- (void)terminalPromptDidStart; {
+    // FinalTerm uses this to define the start of a collapsable region. That would be a nightmare
+    // to add to iTerm, and our answer to this is marks, which already existed anyway.
+    [delegate_ screenAddMarkOnLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+}
+
+- (void)terminalCommandDidStart {
+    commandStartX_ = currentGrid_.cursorX;
+    commandStartY_ = currentGrid_.cursorY + [self numberOfScrollbackLines] + [self totalScrollbackOverflow];
+}
+
+- (void)terminalCommandDidEnd {
+    if (commandStartX_ != -1) {
+        [delegate_ screenCommandDidEndWithRange:[self commandRange]];
+        commandStartX_ = commandStartY_ = -1;
+    }
+}
+
+- (void)terminalSemanticTextDidStartOfType:(VT100TerminalSemanticTextType)type {
+    // TODO
+}
+
+- (void)terminalSemanticTextDidEndOfType:(VT100TerminalSemanticTextType)type {
+    // TODO
+}
+
+- (void)terminalProgressAt:(double)fraction label:(NSString *)label {
+     // TODO
+}
+
+- (void)terminalProgressDidFinish {
+    // TODO
+}
+
 #pragma mark - Private
+
+- (VT100GridCoordRange)commandRange {
+    long long offset = [self totalScrollbackOverflow];
+    return VT100GridCoordRangeMake(commandStartX_,
+                                   commandStartY_ - offset,
+                                   currentGrid_.cursorX,
+                                   currentGrid_.cursorY + [self numberOfScrollbackLines]);
+}
 
 - (void)setInitialTabStops
 {

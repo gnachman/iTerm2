@@ -411,5 +411,12 @@ typedef enum {
 // Show a visual highlight of a mark on the given line number.
 - (void)highlightMarkOnLine:(int)line;
 
+#pragma mark - Command Autocomplete
+
+- (void)openCommandAutocompleteAt:(VT100GridCoord)location;
+- (void)closeCommandAutocomplete;
+- (void)updateCommandAutocompleteWithCommands:(NSArray *)commands;
+
+
 @end
 

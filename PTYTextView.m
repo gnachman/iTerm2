@@ -1,6 +1,8 @@
 #import "AsyncHostLookupController.h"
 #import "CharacterRun.h"
 #import "CharacterRunInline.h"
+#import "CommandHistory.h"
+#import "CommandHistoryView.h"
 #import "FileTransferManager.h"
 #import "FindCursorView.h"
 #import "FontSizeEstimator.h"
@@ -107,7 +109,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
 }
 
-@interface PTYTextView ()
+@interface PTYTextView () <CommandHistoryViewDelegate>
 // Set the hostname this view is currently waiting for AsyncHostLookupController to finish looking
 // up.
 @property(nonatomic, copy) NSString *currentUnderlineHostname;
@@ -404,6 +406,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     // Point clicked, valid only during -validateMenuItem and calls made from
     // the context menu and if x and y are nonnegative.
     VT100GridCoord validationClickPoint_;
+    
+    CommandHistoryView *commandHistoryView_;
+    VT100GridCoord commandLocation_;
 }
 
 
@@ -2872,6 +2877,11 @@ NSMutableArray* screens=0;
 
 - (void)keyDown:(NSEvent*)event
 {
+    if ([commandHistoryView_ wantsKeyDown:event]) {
+        [commandHistoryView_ keyDown:event];
+        return;
+    }
+
     static BOOL isFirstInteraction = YES;
     if (isFirstInteraction) {
         iTermApplicationDelegate *appDelegate = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
@@ -7081,6 +7091,46 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate launchCoprocessWithCommand:command];
 }
 
+#pragma mark - Command Autocomplete
+
+- (void)openCommandAutocompleteAt:(VT100GridCoord)location {
+    if (commandHistoryView_) {
+        return;
+    }
+    
+    NSRect frame = NSMakeRect(location.x * charWidth + MARGIN,
+                              (location.y + 1) * lineHeight,
+                              0,
+                              0);
+    
+    commandLocation_ = location;
+    commandHistoryView_ = [[CommandHistoryView alloc] initWithFrame:frame];
+    commandHistoryView_.delegate = self;
+    [self addSubview:commandHistoryView_];
+}
+
+- (void)closeCommandAutocomplete {
+    [commandHistoryView_ removeFromSuperview];
+    [commandHistoryView_ release];
+    commandHistoryView_ = nil;
+}
+
+- (void)updateCommandAutocompleteWithCommands:(NSArray *)commands {
+    commandHistoryView_.commands = commands;
+    [self performSelector:@selector(updateCommandAutocompleteFrame) withObject:nil afterDelay:0];
+}
+
+- (void)updateCommandAutocompleteFrame {
+    if (commandHistoryView_) {
+        NSRect frame = NSMakeRect(commandLocation_.x * charWidth + MARGIN,
+                                  (commandLocation_.y + 1) * lineHeight,
+                                  0,
+                                  0);
+        frame.size = [commandHistoryView_ desiredSize];
+        commandHistoryView_.frame = frame;
+    }
+}
+
 #pragma mark - Private methods
 
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
@@ -10423,6 +10473,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     }
     return anyBlinkers;
+}
+
+#pragma mark - CommandHistoryViewDelegate
+
+- (void)commandHistoryViewDidSelectCommand:(NSString *)command {
+    // TODO
 }
 
 @end

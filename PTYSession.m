@@ -1,5 +1,6 @@
 #import "PTYSession.h"
 
+#import "CommandHistory.h"
 #import "Coprocess.h"
 #import "FakeWindow.h"
 #import "FileTransferManager.h"
@@ -5263,6 +5264,52 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (BOOL)screenShouldSendReport {
     return (SHELL != nil) && (![self isTmuxClient]);
+}
+
+// FinalTerm
+- (NSString *)commandInRange:(VT100GridCoordRange)range {
+    NSString *command = [TEXTVIEW contentFromX:range.start.x
+                                             Y:range.start.y
+                                           ToX:range.end.x
+                                             Y:range.end.y
+                                           pad:NO
+                            includeLastNewline:NO
+                        trimTrailingWhitespace:YES];
+    NSRange newline = [command rangeOfString:@"\n"];
+    if (newline.location != NSNotFound) {
+        return [command substringToIndex:newline.location];
+    } else {
+        return command;
+    }
+}
+
+- (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
+    NSString *command = [self commandInRange:range];
+    if (!command.length) {
+        [TEXTVIEW closeCommandAutocomplete];
+        return;
+    }
+    
+    VT100RemoteHost *host = [SCREEN remoteHostOnLine:range.end.y];
+    NSArray *commands =
+        [[CommandHistory sharedInstance] autocompleteSuggestionsWithPartialCommand:command
+                                                                            onHost:host];
+    if (!commands.count) {
+        [TEXTVIEW closeCommandAutocomplete];
+    } else {
+        [TEXTVIEW openCommandAutocompleteAt:range.start];
+        [TEXTVIEW updateCommandAutocompleteWithCommands:commands];
+    }
+}
+
+- (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
+    [TEXTVIEW closeCommandAutocomplete];
+
+    NSString *command = [self commandInRange:range];
+    if (command.length) {
+        [[CommandHistory sharedInstance] addCommand:command
+                                             onHost:[SCREEN remoteHostOnLine:range.end.y]];
+    }
 }
 
 #pragma mark - PopupDelegate
