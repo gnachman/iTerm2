@@ -1,3 +1,5 @@
+#import "NMSSH.h"
+
 #import "NMSSHChannelDelegate.h"
 
 typedef NS_ENUM(NSInteger, NMSSHChannelError) {
@@ -29,7 +31,7 @@ typedef NS_ENUM(NSInteger, NMSSHChannelType)  {
 };
 
 /**
- * NMSSHChannel provides functionality to work with SSH shells and SCP.
+ NMSSHChannel provides functionality to work with SSH shells and SCP.
  */
 @interface NMSSHChannel : NSObject
 
@@ -44,9 +46,9 @@ typedef NS_ENUM(NSInteger, NMSSHChannelType)  {
 /// ----------------------------------------------------------------------------
 
 /**
- * The receiver’s `delegate`.
- *
- * You can use the `delegate` to receive asynchronous read from a shell.
+ The receiver’s `delegate`.
+
+ You can use the `delegate` to receive asynchronous read from a shell.
  */
 @property (nonatomic, weak) id<NMSSHChannelDelegate> delegate;
 
@@ -58,12 +60,12 @@ typedef NS_ENUM(NSInteger, NMSSHChannelType)  {
 @property (nonatomic, readonly) NMSSHChannelType type;
 
 /**
- * Create a new NMSSHChannel instance.
- *
- * @param session A valid, connected, NMSSHSession instance
- * @returns New NMSSHChannel instance
+ Create a new NMSSHChannel instance.
+
+ @param session A valid, connected, NMSSHSession instance
+ @returns New NMSSHChannel instance
  */
-- (id)initWithSession:(NMSSHSession *)session;
+- (instancetype)initWithSession:(NMSSHSession *)session;
 
 /// ----------------------------------------------------------------------------
 /// @name Shell command execution
@@ -79,29 +81,29 @@ typedef NS_ENUM(NSInteger, NMSSHChannelType)  {
 @property (nonatomic, assign) NMSSHChannelPtyTerminal ptyTerminalType;
 
 /**
- * Execute a shell command on the server.
- *
- * If an error occurs, it will return nil and populate the error object.
- * If requestPty is enabled request a pseudo terminal before running the
- * command.
- *
- * @param command Any shell script that is available on the server
- * @param error Error handler
- * @returns Shell command response
+ Execute a shell command on the server.
+
+ If an error occurs, it will return `nil` and populate the error object.
+ If requestPty is enabled request a pseudo terminal before running the
+ command.
+
+ @param command Any shell script that is available on the server
+ @param error Error handler
+ @returns Shell command response
  */
 - (NSString *)execute:(NSString *)command error:(NSError **)error;
 
 /**
- * Execute a shell command on the server with a given timeout.
- *
- * If an error occurs or the connection timed out, it will return nil and populate the error object.
- * If requestPty is enabled request a pseudo terminal before running the
- * command.
- *
- * @param command Any shell script that is available on the server
- * @param error Error handler
- * @param timeout The time to wait (in seconds) before giving up on the request
- * @returns Shell command response
+ Execute a shell command on the server with a given timeout.
+
+ If an error occurs or the connection timed out, it will return `nil` and populate the error object.
+ If requestPty is enabled request a pseudo terminal before running the
+ command.
+
+ @param command Any shell script that is available on the server
+ @param error Error handler
+ @param timeout The time to wait (in seconds) before giving up on the request
+ @returns Shell command response
  */
 - (NSString *)execute:(NSString *)command error:(NSError **)error timeout:(NSNumber *)timeout;
 
@@ -109,103 +111,114 @@ typedef NS_ENUM(NSInteger, NMSSHChannelType)  {
 /// @name Remote shell session
 /// ----------------------------------------------------------------------------
 
-/** User-defined environment variables for the session, defaults to nil */
+/** User-defined environment variables for the session, defaults to `nil` */
 @property (nonatomic, strong) NSDictionary *environmentVariables;
 
 /**
- * Request a remote shell on the channel.
- *
- * If an error occurs, it will return NO and populate the error object.
- * If requestPty is enabled request a pseudo terminal before running the
- * command.
- *
- * @param error Error handler
- * @returns Shell initialization success
+ Request a remote shell on the channel.
+
+ If an error occurs, it will return NO and populate the error object.
+ If requestPty is enabled request a pseudo terminal before running the
+ command.
+
+ @param error Error handler
+ @returns Shell initialization success
  */
 - (BOOL)startShell:(NSError **)error;
 
 /**
- * Close a remote shell on an active channel.
+ Close a remote shell on an active channel.
  */
 - (void)closeShell;
 
 /**
- * Write a command on the remote shell.
- *
- * If an error occurs or the connection timed out, it will return NO and populate the error object.
- *
- * @param command Any command that is available on the server
- * @param error Error handler
- * @returns Shell write success
+ Write a command on the remote shell.
+
+ If an error occurs or the connection timed out, it will return NO and populate the error object.
+
+ @param command Any command that is available on the server
+ @param error Error handler
+ @returns Shell write success
  */
 - (BOOL)write:(NSString *)command error:(NSError **)error;
 
 /**
- * Write a command on the remote shell with a given timeout.
- *
- * If an error occurs or the connection timed out, it will return NO and populate the error object.
- *
- * @param command Any command that is available on the server
- * @param error Error handler
- * @param timeout The time to wait (in seconds) before giving up on the request
- * @returns Shell write success
+ Write a command on the remote shell with a given timeout.
+
+ If an error occurs or the connection timed out, it will return NO and populate the error object.
+
+ @param command Any command that is available on the server
+ @param error Error handler
+ @param timeout The time to wait (in seconds) before giving up on the request
+ @returns Shell write success
  */
 - (BOOL)write:(NSString *)command error:(NSError **)error timeout:(NSNumber *)timeout;
+
+/**
+ Request size for the remote pseudo terminal.
+
+ This method should be called only after startShell:
+
+ @param width Width in characters for terminal
+ @param height Height in characters for terminal
+ @returns Size change success
+ */
+- (BOOL)requestSizeWidth:(NSUInteger)width height:(NSUInteger)height;
 
 /// ----------------------------------------------------------------------------
 /// @name SCP file transfer
 /// ----------------------------------------------------------------------------
 
 /**
- * Upload a local file to a remote server.
- *
- * If to: specifies a directory, the file name from the original file will be
- * used.
- *
- * @param localPath Path to a file on the local computer
- * @param remotePath Path to save the file to
- * @returns SCP upload success
+ Upload a local file to a remote server.
+
+ If to: specifies a directory, the file name from the original file will be
+ used.
+
+ @param localPath Path to a file on the local computer
+ @param remotePath Path to save the file to
+ @returns SCP upload success
  */
 - (BOOL)uploadFile:(NSString *)localPath to:(NSString *)remotePath;
 
 /**
- * Download a remote file to local the filesystem.
- *
- * If to: specifies a directory, the file name from the original file will be
- * used.
- *
- * @param remotePath Path to a file on the remote server
- * @param localPath Path to save the file to
- * @returns SCP download success
+ Download a remote file to local the filesystem.
+
+ If to: specifies a directory, the file name from the original file will be
+ used.
+
+ @param remotePath Path to a file on the remote server
+ @param localPath Path to save the file to
+ @returns SCP download success
  */
 - (BOOL)downloadFile:(NSString *)remotePath to:(NSString *)localPath;
 
 /**
- * Download a remote file to local the filesystem.
- *
- * If to: specifies a directory, the file name from the original file will be
- * used.
- *
- * @param remotePath Path to a file on the remote server
- * @param localPath Path to save the file to
- * @param progress Method called periodically with number of bytes downloaded and total file size.
- *        Returns NO to abort.
- * @returns SCP download success
+ Download a remote file to local the filesystem.
+
+ If to: specifies a directory, the file name from the original file will be
+ used.
+
+ @param remotePath Path to a file on the remote server
+ @param localPath Path to save the file to
+ @param progress Method called periodically with number of bytes downloaded and total file size.
+        Returns NO to abort.
+ @returns SCP download success
  */
 - (BOOL)downloadFile:(NSString *)remotePath
                   to:(NSString *)localPath
             progress:(BOOL (^)(NSUInteger, NSUInteger))progress;
 
 /**
- * Upload a local file to a remote server.
- *
- * If to: specifies a directory, the file name from the original file will be
- * used.
- *
- * @param localPath Path to a file on the local computer
- * @param remotePath Path to save the file to
- * @param progress Method called periodically with number of bytes uploaded. Returns NO to abort.
- * @returns SCP upload success
+ Upload a local file to a remote server.
+
+ If to: specifies a directory, the file name from the original file will be
+ used.
+
+ @param localPath Path to a file on the local computer
+ @param remotePath Path to save the file to
+ @param progress Method called periodically with number of bytes uploaded. Returns NO to abort.
+ @returns SCP upload success
  */
 - (BOOL)uploadFile:(NSString *)localPath
                 to:(NSString *)remotePath
