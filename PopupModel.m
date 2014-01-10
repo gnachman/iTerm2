@@ -68,6 +68,19 @@
     return nil;
 }
 
+- (void)removeLowestScoringEntry
+{
+    PopupEntry *entryWithMinScore = nil;
+    for (PopupEntry *entry in values_) {
+        if (!entryWithMinScore || entry.score < entryWithMinScore.score) {
+            entryWithMinScore = entry;
+        }
+    }
+    if (entryWithMinScore) {
+        [values_ removeObject:entryWithMinScore];
+    }
+}
+
 - (void)addHit:(PopupEntry*)object
 {
     PopupEntry* entry = [self entryEqualTo:object];
@@ -78,6 +91,8 @@
         [self addObject:object];
         PopLog(@"Add entry for %@ with score %lf", [object mainValue], [object score]);
     } else {
+        [self removeLowestScoringEntry];
+        [self addObject:object];
         PopLog(@"Not adding entry because max of %u hit", maxEntries_);
     }
 }

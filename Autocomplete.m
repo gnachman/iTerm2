@@ -622,7 +622,7 @@ const int kMaxResultContextWords = 4;
         NSTimeInterval timeSinceLastUse = now - entry.lastUsed;
         score /= MAX(1, sqrt(timeSinceLastUse / (24 * 60 * 60.0)));
         
-        score = MIN(5, score);  // Limit score of commands so really relevant context has a chance.
+        score = MIN(10, score);  // Limit score of commands so really relevant context has a chance.
         NSLog(@"Add command %@ with score %f", entry.command, score);
         PopupEntry* e = [PopupEntry entryWithString:[entry.command substringFromIndex:context.length]
                                               score:score];
