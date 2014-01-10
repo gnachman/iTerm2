@@ -45,25 +45,27 @@ static const int kMaxResults = 20;
             self.matchLocation];
 }
 
+// Used to sort from highest to lowest score. So Ascending means self's score is higher
+// than other's.
 - (NSComparisonResult)compare:(CommandHistoryEntry *)other {
     if (_matchLocation == 0 && other.matchLocation > 0) {
-        return NSOrderedAscending;
+        return NSOrderedDescending;
     }
     if (other.matchLocation == 0 && _matchLocation > 0) {
-        return NSOrderedDescending;
+        return NSOrderedAscending;
     }
     int otherUses = other.uses;
     if (_uses < otherUses) {
-        return NSOrderedAscending;
-    } else if (_uses > other.uses) {
         return NSOrderedDescending;
+    } else if (_uses > other.uses) {
+        return NSOrderedAscending;
     }
     
     NSTimeInterval otherLastUsed = other.lastUsed;
     if (_lastUsed < otherLastUsed) {
-        return NSOrderedAscending;
-    } else if (_lastUsed > otherLastUsed) {
         return NSOrderedDescending;
+    } else if (_lastUsed > otherLastUsed) {
+        return NSOrderedAscending;
     } else {
         return NSOrderedSame;
     }
@@ -118,10 +120,16 @@ static const int kMaxResults = 20;
 
 - (NSArray *)autocompleteSuggestionsWithPartialCommand:(NSString *)partialCommand
                                                 onHost:(VT100RemoteHost *)host {
+    if (!partialCommand) {
+        return nil;
+    }
     NSMutableArray *result = [NSMutableArray array];
     for (CommandHistoryEntry *entry in [self commandsForHost:host]) {
         NSRange match = [entry.command rangeOfString:partialCommand];
-        if (match.location != NSNotFound) {
+        if (match.location == 0) {
+            // The FinalTerm algorithm doesn't require |partialCommand| to be a prefix of the
+            // history entry, but based on how our autocomplete works, it makes sense to only
+            // accept prefixes. Their scoring algorithm is implemented in case this should change.
             entry.matchLocation = match.location;
             [result addObject:entry];
         }
@@ -129,14 +137,7 @@ static const int kMaxResults = 20;
     
     // TODO: Cache this.
     NSArray *sortedEntries = [result sortedArrayUsingSelector:@selector(compare:)];
-    NSMutableArray *strings = [NSMutableArray array];
-    for (CommandHistoryEntry *entry in sortedEntries) {
-        [strings addObject:entry.command];
-        if (strings.count == kMaxResults) {
-            break;
-        }
-    }
-    return strings;
+    return [sortedEntries subarrayWithRange:NSMakeRange(0, MIN(kMaxResults, sortedEntries.count))];
 }
 
 #pragma mark - Private
@@ -153,7 +154,7 @@ static const int kMaxResults = 20;
     NSString *key = [self keyForHost:host];
     NSMutableArray *result = _hosts[key];
     if (!result) {
-        _hosts[key] = [NSMutableArray array];
+        _hosts[key] = result = [NSMutableArray array];
     }
     return result;
 }

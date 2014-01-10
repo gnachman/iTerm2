@@ -262,6 +262,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     
     NSInteger requestAttentionId_;  // Last request-attention identifier
     VT100ScreenMark *lastMark_;
+    
+    VT100GridCoordRange commandRange_;
 }
 
 - (id)init
@@ -5283,33 +5285,35 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
-- (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
-    NSString *command = [self commandInRange:range];
-    if (!command.length) {
-        [TEXTVIEW closeCommandAutocomplete];
-        return;
-    }
-    
-    VT100RemoteHost *host = [SCREEN remoteHostOnLine:range.end.y];
-    NSArray *commands =
-        [[CommandHistory sharedInstance] autocompleteSuggestionsWithPartialCommand:command
-                                                                            onHost:host];
-    if (!commands.count) {
-        [TEXTVIEW closeCommandAutocomplete];
+- (NSString *)currentCommand {
+    if (commandRange_.start.x < 0) {
+        return nil;
     } else {
-        [TEXTVIEW openCommandAutocompleteAt:range.start];
-        [TEXTVIEW updateCommandAutocompleteWithCommands:commands];
+        return [self commandInRange:commandRange_];
     }
 }
 
-- (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
-    [TEXTVIEW closeCommandAutocomplete];
+- (NSArray *)autocompleteSuggestionsForCurrentCommand {
+    if (commandRange_.start.x < 0) {
+        return nil;
+    } else {
+        NSString *command = [self commandInRange:commandRange_];
+        VT100RemoteHost *host = [SCREEN remoteHostOnLine:[SCREEN numberOfLines]];
+        return [[CommandHistory sharedInstance] autocompleteSuggestionsWithPartialCommand:command
+                                                                                   onHost:host];
+    }
+}
+- (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
+    commandRange_ = range;
+}
 
+- (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
     NSString *command = [self commandInRange:range];
     if (command.length) {
         [[CommandHistory sharedInstance] addCommand:command
                                              onHost:[SCREEN remoteHostOnLine:range.end.y]];
     }
+    commandRange_ = VT100GridCoordRangeMake(-1, -1, -1, -1);
 }
 
 #pragma mark - PopupDelegate

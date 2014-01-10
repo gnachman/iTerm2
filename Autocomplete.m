@@ -8,6 +8,7 @@
 #import "VT100Screen.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
+#import "CommandHistory.h"
 
 #define AcLog DLog
 
@@ -235,7 +236,11 @@ const int kMaxResultContextWords = 4;
     return similarity;
 }
 
-- (double)scoreResultNumber:(int)resultNumber queryContext:(NSArray*)queryContext resultContext:(NSArray*)resultContext joiningPrefixLength:(int)joiningPrefixLength word:(NSString*)word
+- (double)scoreResultNumber:(int)resultNumber
+               queryContext:(NSArray*)queryContext
+              resultContext:(NSArray*)resultContext
+        joiningPrefixLength:(int)joiningPrefixLength
+                       word:(NSString*)word
 {
     AcLog(@"Score result #%d with queryContext:%@ and resultContext:%@", resultNumber, [self formatContext:queryContext], [self formatContext:resultContext]);
     double similarity = [self contextSimilarityBetweenQuery:queryContext andResult:resultContext] * 2;
@@ -548,6 +553,7 @@ const int kMaxResultContextWords = 4;
                                                                                      resultContext:resultContext
                                                                                joiningPrefixLength:joiningPrefixLength
                                                                                               word:word]];
+                    NSLog(@"Add %@ with score %f", e.mainValue, e.score);
                     if (whitespaceBeforeCursor_) {
                         [e setPrefix:[NSString stringWithFormat:@"%@ ", prefix_]];
                     } else {
@@ -596,6 +602,33 @@ const int kMaxResultContextWords = 4;
         }
     } while (more_ || [findResults_ count] > 0);
     AcLog(@"While loop exited. Nothing more to do.");
+    [self reloadData:YES];
+}
+
+- (void)addCommandEntries:(NSArray *)entries context:(NSString *)context {
+    int i = 0;
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    for (CommandHistoryEntry *entry in entries) {
+        double score = [self scoreResultNumber:i++
+                                  queryContext:context_
+                                 resultContext:context_  // Maximize similarity because the whole prompt is in our favor
+                           joiningPrefixLength:[context length]
+                                          word:entry.command];
+        
+        // Boost the score for more uses of the command
+        score *= sqrt(entry.uses);
+        
+        // Divide the score by sqrt(the number of days since last use).
+        NSTimeInterval timeSinceLastUse = now - entry.lastUsed;
+        score /= MAX(1, sqrt(timeSinceLastUse / (24 * 60 * 60.0)));
+        
+        score = MIN(5, score);  // Limit score of commands so really relevant context has a chance.
+        NSLog(@"Add command %@ with score %f", entry.command, score);
+        PopupEntry* e = [PopupEntry entryWithString:[entry.command substringFromIndex:context.length]
+                                              score:score];
+        [e setPrefix:prefix_];
+        [[self unfilteredModel] addHit:e];
+    }
     [self reloadData:YES];
 }
 

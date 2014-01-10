@@ -19,6 +19,7 @@
 - (void)less;
 - (void)_populateMore:(id)sender;
 - (void)_doPopulateMore;
+- (void)addCommandEntries:(NSArray *)entries context:(NSString *)context;
 
 @end
 
