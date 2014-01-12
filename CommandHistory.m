@@ -120,13 +120,14 @@ static const int kMaxResults = 20;
 
 - (NSArray *)autocompleteSuggestionsWithPartialCommand:(NSString *)partialCommand
                                                 onHost:(VT100RemoteHost *)host {
-    if (!partialCommand) {
-        return nil;
-    }
+    BOOL emptyPartialCommand = (partialCommand.length == 0);
     NSMutableArray *result = [NSMutableArray array];
     for (CommandHistoryEntry *entry in [self commandsForHost:host]) {
-        NSRange match = [entry.command rangeOfString:partialCommand];
-        if (match.location == 0) {
+        NSRange match;
+        if (!emptyPartialCommand) {
+            match = [entry.command rangeOfString:partialCommand];
+        }
+        if (emptyPartialCommand || match.location == 0) {
             // The FinalTerm algorithm doesn't require |partialCommand| to be a prefix of the
             // history entry, but based on how our autocomplete works, it makes sense to only
             // accept prefixes. Their scoring algorithm is implemented in case this should change.

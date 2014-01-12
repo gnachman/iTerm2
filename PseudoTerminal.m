@@ -3960,10 +3960,8 @@ NSString *kSessionsKVCKey = @"sessions";
     } else {
         [autocompleteView popWithDelegate:[self currentSession]];
         NSString *currentCommand = [[self currentSession] currentCommand];
-        if (currentCommand) {
-            [autocompleteView addCommandEntries:[[self currentSession] autocompleteSuggestionsForCurrentCommand]
-                                        context:currentCommand];
-        }
+        [autocompleteView addCommandEntries:[[self currentSession] autocompleteSuggestionsForCurrentCommand]
+                                    context:currentCommand];
     }
 }
 

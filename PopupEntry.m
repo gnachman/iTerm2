@@ -32,6 +32,12 @@
     [super dealloc];
 }
 
+- (NSString *)description
+{
+    return [NSString stringWithFormat:@"<%@: %p s=%@ prefix=%@ score=%f hitMult=%f>",
+            [self class], self, s_, prefix_, score_, hitMultiplier_];
+}
+
 - (void)_setDefaultValues
 {
     hitMultiplier_ = 1;

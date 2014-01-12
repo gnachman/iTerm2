@@ -295,7 +295,11 @@ const int kMaxResultContextWords = 4;
                                           word:word];
         PopupEntry* e = [PopupEntry entryWithString:word 
                                               score:score];
-        [e setPrefix:prefix_];
+        if (whitespaceBeforeCursor_) {
+            [e setPrefix:[NSString stringWithFormat:@"%@ ", prefix_]];
+        } else {
+            [e setPrefix:prefix_];
+        }
         [[self unfilteredModel] addHit:e];
     }
 }
@@ -565,7 +569,6 @@ const int kMaxResultContextWords = 4;
                                                                                      resultContext:resultContext
                                                                                joiningPrefixLength:joiningPrefixLength
                                                                                               word:word]];
-                    NSLog(@"Add %@ with score %f", e.mainValue, e.score);
                     if (whitespaceBeforeCursor_) {
                         [e setPrefix:[NSString stringWithFormat:@"%@ ", prefix_]];
                     } else {
@@ -635,10 +638,13 @@ const int kMaxResultContextWords = 4;
         score /= MAX(1, sqrt(timeSinceLastUse / (24 * 60 * 60.0)));
         
         score = MIN(10, score);  // Limit score of commands so really relevant context has a chance.
-        NSLog(@"Add command %@ with score %f", entry.command, score);
         PopupEntry* e = [PopupEntry entryWithString:[entry.command substringFromIndex:context.length]
                                               score:score];
-        [e setPrefix:prefix_];
+        if (whitespaceBeforeCursor_) {
+            [e setPrefix:[NSString stringWithFormat:@"%@ ", prefix_]];
+        } else {
+            [e setPrefix:prefix_];
+        }
         [[self unfilteredModel] addHit:e];
     }
     [self reloadData:YES];

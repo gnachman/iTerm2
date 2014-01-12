@@ -5294,14 +5294,15 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (NSArray *)autocompleteSuggestionsForCurrentCommand {
+    NSString *command;
     if (commandRange_.start.x < 0) {
-        return nil;
+        command = nil;
     } else {
-        NSString *command = [self commandInRange:commandRange_];
-        VT100RemoteHost *host = [SCREEN remoteHostOnLine:[SCREEN numberOfLines]];
-        return [[CommandHistory sharedInstance] autocompleteSuggestionsWithPartialCommand:command
-                                                                                   onHost:host];
+        command = [self commandInRange:commandRange_];
     }
+    VT100RemoteHost *host = [SCREEN remoteHostOnLine:[SCREEN numberOfLines]];
+    return [[CommandHistory sharedInstance] autocompleteSuggestionsWithPartialCommand:command
+                                                                               onHost:host];
 }
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
     commandRange_ = range;
