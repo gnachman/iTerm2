@@ -57,6 +57,9 @@ const int kMaxResultContextWords = 4;
     
     // Result of previous search
     BOOL more_;
+    
+    // Character set for word separators
+    NSCharacterSet *wordSeparatorCharacterSet_;
 }
 
 + (int)maxOptions
@@ -98,6 +101,7 @@ const int kMaxResultContextWords = 4;
     [populateTimer_ invalidate];
     [populateTimer_ release];
     [findContext_ release];
+    [wordSeparatorCharacterSet_ release];
     [super dealloc];
 }
 
@@ -137,6 +141,9 @@ const int kMaxResultContextWords = 4;
 {
     int tx1, ty1, tx2, ty2;
     VT100Screen* screen = [[self delegate] popupVT100Screen];
+
+    [wordSeparatorCharacterSet_ autorelease];
+    wordSeparatorCharacterSet_ = [[[[self delegate] popupVT100TextView] wordSeparatorCharacterSet] retain];
 
     int x = [screen cursorX]-2;
     int y = [screen cursorY] + [screen numberOfLines] - [screen height] - 1;
@@ -271,6 +278,11 @@ const int kMaxResultContextWords = 4;
     NSString* value = [entry mainValue];
     NSRange range = [value rangeOfString:prefix_ options:(NSCaseInsensitiveSearch)];
     if (range.location != NSNotFound) {
+        if (range.location > 0) {
+            if (![wordSeparatorCharacterSet_ characterIsMember:[value characterAtIndex:range.location - 1]]) {
+                return;
+            }
+        }
         NSRange suffixRange;
         suffixRange.location = range.length + range.location;
         suffixRange.length = [value length] - suffixRange.location;
