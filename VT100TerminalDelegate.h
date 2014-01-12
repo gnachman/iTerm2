@@ -20,7 +20,7 @@ typedef enum {
     kVT100TerminalSemanticTextTypeFilename = 1,
     kVT100TerminalSemanticTextTypeDirectory = 2,
     kVT100TerminalSemanticTextTypeProcessId = 3,
-    
+
     kVT100TerminalSemanticTextTypeMax
 } VT100TerminalSemanticTextType;
 

@@ -300,6 +300,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         creationDate_ = [[NSDate date] retain];
         tmuxSecureLogging_ = NO;
         tailFindContext_ = [[FindContext alloc] init];
+        commandRange_ = VT100GridCoordRangeMake(-1, -1, -1, -1);
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
@@ -5296,7 +5297,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (NSArray *)autocompleteSuggestionsForCurrentCommand {
     NSString *command;
     if (commandRange_.start.x < 0) {
-        command = nil;
+        return nil;
     } else {
         command = [self commandInRange:commandRange_];
     }

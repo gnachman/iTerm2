@@ -80,6 +80,8 @@ static const double kInterBellQuietPeriod = 0.1;
         savedIntervalTree_ = [[IntervalTree alloc] init];
         intervalTree_ = [[IntervalTree alloc] init];
         markCache_ = [[NSMutableSet alloc] init];
+        commandStartX_ = commandStartY_ = -1;
+
     }
     return self;
 }
@@ -2835,12 +2837,14 @@ static const double kInterBellQuietPeriod = 0.1;
 - (void)terminalCommandDidStart {
     commandStartX_ = currentGrid_.cursorX;
     commandStartY_ = currentGrid_.cursorY + [self numberOfScrollbackLines] + [self totalScrollbackOverflow];
+    [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
 }
 
 - (void)terminalCommandDidEnd {
     if (commandStartX_ != -1) {
         [delegate_ screenCommandDidEndWithRange:[self commandRange]];
         commandStartX_ = commandStartY_ = -1;
+        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
     }
 }
 
@@ -2864,10 +2868,14 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (VT100GridCoordRange)commandRange {
     long long offset = [self totalScrollbackOverflow];
-    return VT100GridCoordRangeMake(commandStartX_,
-                                   commandStartY_ - offset,
-                                   currentGrid_.cursorX,
-                                   currentGrid_.cursorY + [self numberOfScrollbackLines]);
+    if (commandStartX_ < 0) {
+        return VT100GridCoordRangeMake(-1, -1, -1, -1);
+    } else {
+        return VT100GridCoordRangeMake(commandStartX_,
+                                       commandStartY_ - offset,
+                                       currentGrid_.cursorX,
+                                       currentGrid_.cursorY + [self numberOfScrollbackLines]);
+    }
 }
 
 - (void)setInitialTabStops
