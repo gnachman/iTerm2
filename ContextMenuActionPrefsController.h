@@ -9,11 +9,14 @@
 #import <Cocoa/Cocoa.h>
 #import "FutureMethods.h"
 
+@class VT100RemoteHost;
+
 typedef enum {
     kOpenFileContextMenuAction,
     kOpenUrlContextMenuAction,
     kRunCommandContextMenuAction,
-    kRunCoprocessContextMenuAction
+    kRunCoprocessContextMenuAction,
+    kSendTextContextMenuAction
 } ContextMenuActions;
 
 @protocol ContextMenuActionPrefsDelegate
@@ -37,8 +40,16 @@ typedef enum {
 @property (nonatomic, assign) BOOL hasSelection;
 
 + (ContextMenuActions)actionForActionDict:(NSDictionary *)dict;
-+ (NSString *)titleForActionDict:(NSDictionary *)dict withCaptureComponents:(NSArray *)components;
-+ (NSString *)parameterForActionDict:(NSDictionary *)dict withCaptureComponents:(NSArray *)components;
+
++ (NSString *)titleForActionDict:(NSDictionary *)dict
+           withCaptureComponents:(NSArray *)components
+                workingDirectory:(NSString *)workingDirectory
+                      remoteHost:(VT100RemoteHost *)remoteHost;
+
++ (NSString *)parameterForActionDict:(NSDictionary *)dict
+               withCaptureComponents:(NSArray *)components
+                    workingDirectory:(NSString *)workingDirectory
+                          remoteHost:(VT100RemoteHost *)remoteHost;
 
 - (IBAction)ok:(id)sender;
 - (void)setActions:(NSArray *)newActions;

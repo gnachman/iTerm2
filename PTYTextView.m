@@ -5396,10 +5396,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         case kRunCoprocessContextMenuAction:
             return @selector(contextMenuActionRunCoprocess:);
+
+        case kSendTextContextMenuAction:
+            return @selector(contextMenuActionSendText:);
     }
 }
 
-- (BOOL)addCustomActionsToMenu:(NSMenu *)theMenu matchingText:(NSString *)textWindow
+- (BOOL)addCustomActionsToMenu:(NSMenu *)theMenu matchingText:(NSString *)textWindow line:(int)line
 {
     BOOL didAdd = NO;
     NSArray* rulesArray = smartSelectionRules_ ? smartSelectionRules_ : [SmartSelectionController defaultRules];
@@ -5420,12 +5423,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 NSArray *actions = [SmartSelectionController actionsInRule:rule];
                 for (NSDictionary *action in actions) {
                     SEL mySelector = [self selectorForSmartSelectionAction:action];
-                    NSMenuItem *theItem = [[[NSMenuItem alloc] initWithTitle:[ContextMenuActionPrefsController titleForActionDict:action
-                                                                                                            withCaptureComponents:components]
+                    NSString *theTitle =
+                        [ContextMenuActionPrefsController titleForActionDict:action
+                                                       withCaptureComponents:components
+                                                            workingDirectory:[dataSource workingDirectoryOnLine:line]
+                                                                  remoteHost:[dataSource remoteHostOnLine:line]];
+
+                    NSMenuItem *theItem = [[[NSMenuItem alloc] initWithTitle:theTitle
                                                                       action:mySelector
                                                                keyEquivalent:@""] autorelease];
-                    [theItem setRepresentedObject:[ContextMenuActionPrefsController parameterForActionDict:action
-                                                                                     withCaptureComponents:components]];
+                    NSString *parameter =
+                        [ContextMenuActionPrefsController parameterForActionDict:action
+                                                           withCaptureComponents:components
+                                                                workingDirectory:[dataSource workingDirectoryOnLine:line]
+                                                                      remoteHost:[dataSource remoteHostOnLine:line]];
+                    [theItem setRepresentedObject:parameter];
                     [theItem setTarget:self];
                     [theMenu addItem:theItem];
                     didAdd = YES;
@@ -5476,6 +5488,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString *command = [sender representedObject];
     NSLog(@"Run coprocess: %@", command);
     [_delegate launchCoprocessWithCommand:command];
+}
+
+- (void)contextMenuActionSendText:(id)sender
+{
+    NSString *command = [sender representedObject];
+    NSLog(@"Send text: %@", command);
+    [_delegate insertText:command];
 }
 
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
@@ -5684,7 +5703,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (startX >= 0 && abs(endY - startY) < kMaxSelectedTextLinesForCustomActions) {
         NSString *selectedText = [self selectedText];
         if ([selectedText length] < kMaxSelectedTextLengthForCustomActions) {
-            if ([self addCustomActionsToMenu:theMenu matchingText:selectedText]) {
+            if ([self addCustomActionsToMenu:theMenu matchingText:selectedText line:coord.y]) {
                 [theMenu addItem:[NSMenuItem separatorItem]];
             }
         }
@@ -9661,7 +9680,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                  error:&regexError];
         action.selector = [self selectorForSmartSelectionAction:actions[0]];
         action.representedObject = [ContextMenuActionPrefsController parameterForActionDict:actions[0]
-                                                                      withCaptureComponents:components];
+                                                                      withCaptureComponents:components
+                                                                           workingDirectory:workingDirectory
+                                                                                 remoteHost:[dataSource remoteHostOnLine:y]];
         return action;
     }
 
