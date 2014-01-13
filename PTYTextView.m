@@ -5963,6 +5963,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // NSTextInput
 - (void)insertText:(id)aString
 {
+    if ([aString isKindOfClass:[NSAttributedString class]]) {
+        aString = [aString string];
+    }
     if (gCurrentKeyEventTextView && self != gCurrentKeyEventTextView) {
         // See comment in -keyDown:
         DLog(@"Rerouting insertText from %@ to %@", self, gCurrentKeyEventTextView);
@@ -7336,7 +7339,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     BOOL inUnderlinedRange = NO;
     CRun *firstRun = NULL;
-    CAttrs attrs;
+    CAttrs attrs = { 0 };
     CRun *currentRun = NULL;
     const char* matchBytes = [matches bytes];
     int lastForegroundColor = -1;
@@ -7505,6 +7508,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             attrs.fakeBold = fakeBold;
             attrs.fakeItalic = fakeItalic;
             attrs.underline = theLine[i].underline || inUnderlinedRange;
+            attrs.imageCode = theLine[i].image ? theLine[i].code : 0;
+            attrs.imageColumn = theLine[i].foregroundColor;
+            attrs.imageLine = theLine[i].backgroundColor;
+            if (theLine[i].image) {
+                thisCharString = @"I";
+            }
             if (inUnderlinedRange && !self.currentUnderlineHostname) {
                 attrs.color = [NSColor colorWithCalibratedRed:0.023 green:0.270 blue:0.678 alpha:1];
             }
@@ -7674,6 +7683,31 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)_advancedDrawRun:(CRun *)complexRun at:(NSPoint)pos
 {
+    if (complexRun->attrs.imageCode > 0) {
+        ImageInfo *imageInfo = GetImageInfo(complexRun->attrs.imageCode);
+        NSImage *image = [imageInfo imageEmbeddedInRegionOfSize:NSMakeSize(charWidth * imageInfo.size.width,
+                                                                           lineHeight * imageInfo.size.height)];
+        NSSize chunkSize = NSMakeSize(image.size.width / imageInfo.size.width,
+                                      image.size.height / imageInfo.size.height);
+        [NSGraphicsContext saveGraphicsState];
+        NSAffineTransform *transform = [NSAffineTransform transform];
+        [transform translateXBy:pos.x yBy:pos.y + lineHeight];
+        [transform scaleXBy:1.0 yBy:-1.0];
+        [transform concat];
+
+        [defaultBGColor set];
+        NSRectFill(NSMakeRect(0, 0, charWidth * complexRun->numImageCells, lineHeight));
+
+        [image drawInRect:NSMakeRect(0, 0, charWidth * complexRun->numImageCells, lineHeight)
+                 fromRect:NSMakeRect(chunkSize.width * complexRun->attrs.imageColumn,
+                                     image.size.height - lineHeight - chunkSize.height * complexRun->attrs.imageLine,
+                                     chunkSize.width * complexRun->numImageCells,
+                                     chunkSize.height)
+                operation:NSCompositeSourceOver
+                 fraction:1];
+        [NSGraphicsContext restoreGraphicsState];
+        return;
+    }
     NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
     NSColor *color = complexRun->attrs.color;
 

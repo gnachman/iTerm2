@@ -3341,6 +3341,7 @@ static VT100TCC decode_string(unsigned char *datap,
     result.italic = italic_;
     result.underline = under_;
     result.blink = blink_;
+    result.image = NO;
     return result;
 }
 
@@ -3984,7 +3985,24 @@ static VT100TCC decode_string(unsigned char *datap,
             if (parts.count >= 2) {
                 size = [parts[1] intValue];
             }
-            [delegate_ terminalWillReceiveFileNamed:name ofSize:size];
+            int width = 0, height = 0;
+            if (parts.count >= 4) {
+                width = [parts[2] intValue];
+                height = [parts[3] intValue];
+            }
+            BOOL preserveAspectRatio = YES;
+            if (parts.count >= 5) {
+                preserveAspectRatio = [parts[4] boolValue];
+            }
+            if (width > 0 && height > 0) {
+                [delegate_ terminalWillReceiveInlineFileNamed:name
+                                                       ofSize:size
+                                                        width:width
+                                                       height:height
+                                          preserveAspectRatio:preserveAspectRatio];
+            } else {
+                [delegate_ terminalWillReceiveFileNamed:name ofSize:size];
+            }
             receivingFile_ = YES;
         } else if ([key isEqualToString:@"EndFile"]) {
             [delegate_ terminalDidFinishReceivingFile];

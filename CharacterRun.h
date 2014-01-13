@@ -56,6 +56,9 @@ typedef struct {
     BOOL fakeBold;            // Should bold text be rendered by drawing text twice with a 1px shift?
     BOOL fakeItalic;          // Should text be skewed?
     BOOL underline;
+    unichar imageCode;        // Gives the image code, or 0 if not an image.
+    int imageLine;            // Line number of the image cell. Valid if image is positive.
+    int imageColumn;          // Column number of the image cell. Valid if image is positive.
     PTYFontInfo *fontInfo;    // Font to use. WEAK.
 } CAttrs;
 
@@ -74,6 +77,7 @@ struct CRun {
     int key;                  // For complex chars, this is the key that gives the sting.
     BOOL terminated;          // No more appends allowed (will go into |next|)
     CRunStorage *storage;     // Backing store for codes, glyphs, and advances.
+    int numImageCells;        // Number of consecutive image cells.
     CRun *next;               // Next run in linked list.
 };
 

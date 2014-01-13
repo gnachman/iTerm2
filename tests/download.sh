@@ -5,7 +5,7 @@ if [ $# -ne 1 ]; then
 fi
 if [ -a $1 ]; then
   printf '\033]50;BeginFile='$1'\n'
-  wc -c /etc/passwd | awk '{print $1}'
+  wc -c $1 | awk '{print $1}'
   printf '\a'
   base64 < $1
   printf '\033]50;EndFile\a'
