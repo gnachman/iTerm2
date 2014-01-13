@@ -200,9 +200,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     BOOL mouseDragged;
     char selectMode;
     BOOL mouseDownOnSelection;
+    BOOL mouseDownOnImage;
+    ImageInfo *theImage;
     NSEvent *mouseDownEvent;
     int lastReportedX_, lastReportedY_;
-    
+
     //find support
     int lastFindStartX, lastFindEndX;
     // this includes all the lines since the beginning of time. It is stable.
@@ -3848,6 +3850,7 @@ NSMutableArray* screens=0;
     mouseDragged = NO;
     mouseDown = YES;
     mouseDownOnSelection = NO;
+    mouseDownOnImage = NO;
 
     int clickCount = [event clickCount];
     DLog(@"clickCount=%d altPressed=%d cmdPressed=%d", clickCount, (int)altPressed, (int)cmdPressed);
@@ -3865,6 +3868,8 @@ NSMutableArray* screens=0;
             DLog(@"extend selection to %d, %d", (int)x, (int)y);
             [self extendSelectionToX:x y:y];
             // startX and endX may be reversed, but mouseUp fixes it.
+        } else if ((theImage = [self imageInfoAtCoord:VT100GridCoordMake(x, y)])) {
+            mouseDownOnImage = YES;
         } else if (startX > -1 &&
                    [self _isCharSelectedInRow:y col:x checkOld:NO]) {
             // not holding down shift key but there is an existing selection.
@@ -4283,7 +4288,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
 
-    if (mouseDownOnSelection == YES &&
+    if (mouseDownOnImage &&
+        ([event modifierFlags] & NSCommandKeyMask) &&
+        dragThresholdMet) {
+        [self _dragImage:theImage forEvent:event];
+    } else if (mouseDownOnSelection == YES &&
         ([event modifierFlags] & NSCommandKeyMask) &&
         dragThresholdMet) {
         DLog(@"drag and drop a selection");
@@ -4300,8 +4309,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                           trimTrailingWhitespace:[[PreferencePanel sharedInstance] trimTrailingWhitespace]];
         }
         if ([theSelectedText length] > 0) {
-            [self _dragText: theSelectedText forEvent: event];
-            DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
+            [self _dragText:theSelectedText forEvent:event];
+            DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d",
+                      startX, startY, endX, endY]);
             return;
         }
     }
@@ -10062,7 +10072,63 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 }
 
-- (void) _dragText: (NSString *) aString forEvent: (NSEvent *) theEvent
+- (void)_dragImage:(ImageInfo *)imageInfo forEvent:(NSEvent *)theEvent
+{
+    NSSize region = NSMakeSize(charWidth * imageInfo.size.width,
+                               lineHeight * imageInfo.size.height);
+    NSImage *icon = [imageInfo imageEmbeddedInRegionOfSize:region];
+
+    // get the pasteboard
+    NSPasteboard *pboard = [NSPasteboard pasteboardWithName:NSDragPboard];
+    [pboard declareTypes:[NSArray arrayWithObject:NSTIFFPboardType] owner:self];
+    NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
+    NSData *tiff = [rep representationUsingType:NSTIFFFileType properties:nil];
+    [pboard setData:tiff forType:NSTIFFPboardType];
+
+    // tell our app not switch windows (currently not working)
+    [NSApp preventWindowOrdering];
+
+    // drag from center of the image
+    NSPoint dragPoint = [self convertPoint:[theEvent locationInWindow] fromView:nil];
+
+    VT100GridCoord coord = VT100GridCoordMake((dragPoint.x - MARGIN) / charWidth,
+                                              dragPoint.y / lineHeight);
+    screen_char_t* theLine = [dataSource getLineAtIndex:coord.y];
+    if (theLine &&
+        coord.x < [dataSource width] &&
+        theLine[coord.x].image &&
+        theLine[coord.x].code == imageInfo.code) {
+        // Get the cell you clicked on (small y at top of view)
+        VT100GridCoord pos = GetPositionOfImageInChar(theLine[coord.x]);
+
+        // Get the top-left origin of the image in cell coords
+        VT100GridCoord imageCellOrigin = VT100GridCoordMake(coord.x - pos.x,
+                                                            coord.y - pos.y);
+
+        // Compute the pixel coordinate of the image's top left point
+        NSPoint imageTopLeftPoint = NSMakePoint(imageCellOrigin.x * charWidth + MARGIN,
+                                                imageCellOrigin.y * lineHeight);
+
+        // Compute the distance from the click location to the image's origin
+        NSPoint offset = NSMakePoint(dragPoint.x - imageTopLeftPoint.x,
+                                     dragPoint.y - imageTopLeftPoint.y);
+
+        // Adjust the drag point so the image won't jump as soon as the drag begins.
+        dragPoint.x -= offset.x;
+        dragPoint.y += region.height - offset.y;
+    }
+
+    // start the drag
+    [self dragImage:icon
+                 at:dragPoint
+             offset:NSMakeSize(0.0, 0.0)
+              event:mouseDownEvent
+         pasteboard:pboard
+             source:self
+          slideBack:YES];
+}
+
+- (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent
 {
     NSImage *anImage;
     int length;

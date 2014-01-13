@@ -46,6 +46,7 @@ static BOOL hasWrapped = NO;
 
 @interface ImageInfo ()
 @property(nonatomic, retain) NSImage *embeddedImage;
+@property(nonatomic, assign) unichar code;
 @end
 
 @implementation ImageInfo
@@ -206,6 +207,7 @@ screen_char_t ImageCharForNewImage(NSString *name, int width, int height, BOOL p
     imageInfo.filename = name;
     imageInfo.preserveAspectRatio = preserveAspectRatio;
     imageInfo.size = NSMakeSize(width, height);
+    imageInfo.code = c.code;
     gImages[@(c.code)] = imageInfo;
 
     return c;
@@ -229,6 +231,11 @@ void ReleaseImage(unichar code) {
 
 ImageInfo *GetImageInfo(unichar code) {
     return gImages[@(code)];
+}
+
+VT100GridCoord GetPositionOfImageInChar(screen_char_t c) {
+    return VT100GridCoordMake(c.foregroundColor,
+                              c.backgroundColor);
 }
 
 int GetOrSetComplexChar(NSString* str)
