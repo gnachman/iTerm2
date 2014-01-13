@@ -4500,9 +4500,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     maxAt *= [dataSource width];
     maxAt += endX;
 
-    if (startX < 0 ||
-        clickAt < minAt ||
-        clickAt >= maxAt) {
+    VT100GridCoord coord = VT100GridCoordMake(x, y);
+    ImageInfo *imageInfo = [self imageInfoAtCoord:coord];
+
+    if (!imageInfo &&
+        (startX < 0 ||
+         clickAt < minAt ||
+         clickAt >= maxAt)) {
         int savedStartX = startX;
         int savedStartY = startY;
         int savedEndX = endX;
@@ -4522,9 +4526,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     }
     [self setNeedsDisplay:YES];
-    NSMenu *menu = [self menuForEvent:nil];
+    NSMenu *menu = [self menuAtCoord:coord];
     openingContextMenu_ = YES;
-    
+
     // Slowly moving away from using NSPoint for integer coordinates.
     validationClickPoint_ = VT100GridCoordMake(clickPoint.x, clickPoint.y);
     [NSMenu popUpContextMenu:menu withEvent:event forView:self];
@@ -5345,6 +5349,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                  validationClickPoint_.x + 1,
                                                                  validationClickPoint_.y)] count] > 0;
     }
+
+    // Image actions
+    if ([item action] == @selector(saveImageAs:) ||
+        [item action] == @selector(copyImage:) ||
+        [item action] == @selector(openImage:) ||
+        [item action] == @selector(inspectImage:)) {
+        return YES;
+    }
+
     SEL theSel = [item action];
     if ([NSStringFromSelector(theSel) hasPrefix:@"contextMenuAction"]) {
         return YES;
@@ -5457,14 +5470,147 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
 {
-    if (theEvent) {
-        // Context menu is opened by the PointerController, not organically.
+    // Context menu is opened by mouseUp->PointerController->openContextMenuWithEvent, not
+    // by AppKit calling this method directly.
+    return nil;
+}
+
+- (void)saveImageAs:(id)sender {
+    ImageInfo *imageInfo = [sender representedObject];
+    NSSavePanel* panel = [NSSavePanel savePanel];
+
+    NSArray* paths = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory,
+                                                         NSUserDomainMask,
+                                                         YES);
+    NSString *directory;
+    if (paths.count > 0) {
+        directory = paths[0];
+    } else {
+        directory = NSHomeDirectory();
+    }
+
+    panel.directoryURL = [NSURL fileURLWithPath:directory];
+    panel.nameFieldStringValue = [imageInfo.filename lastPathComponent];
+    panel.allowedFileTypes = @[ @"png", @"bmp", @"gif", @"jp2", @"jpeg", @"jpg", @"tiff" ];
+    panel.allowsOtherFileTypes = NO;
+    panel.canCreateDirectories = YES;
+    [panel setExtensionHidden:NO];
+
+    if ([panel runModal] == NSOKButton) {
+        NSBitmapImageFileType fileType = NSPNGFileType;
+        NSString *filename = [panel legacyFilename];
+        if ([filename hasSuffix:@".bmp"]) {
+            fileType = NSBMPFileType;
+        } else if ([filename hasSuffix:@".gif"]) {
+            fileType = NSGIFFileType;
+        } else if ([filename hasSuffix:@".jp2"]) {
+            fileType = NSJPEG2000FileType;
+        } else if ([filename hasSuffix:@".jpg"] || [filename hasSuffix:@".jpeg"]) {
+            fileType = NSJPEGFileType;
+        } else if ([filename hasSuffix:@".png"]) {
+            fileType = NSPNGFileType;
+        } else if ([filename hasSuffix:@".tiff"]) {
+            fileType = NSTIFFFileType;
+        }
+
+        NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
+        NSData *data = [rep representationUsingType:fileType properties:nil];
+        [data writeToFile:[panel legacyFilename] atomically:NO];
+    }
+}
+
+- (void)copyImage:(id)sender {
+    ImageInfo *imageInfo = [sender representedObject];
+    NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+    if (imageInfo.image) {
+        [pboard declareTypes:[NSArray arrayWithObject:NSTIFFPboardType] owner:self];
+        NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
+        NSData *tiff = [rep representationUsingType:NSTIFFFileType properties:nil];
+        [pboard setData:tiff forType:NSTIFFPboardType];
+    }
+}
+
+- (void)openImage:(id)sender {
+    ImageInfo *imageInfo = [sender representedObject];
+    if (imageInfo.image) {
+        CFUUIDRef   uuid;
+        CFStringRef uuidStr;
+
+        uuid = CFUUIDCreate(NULL);
+        uuidStr = CFUUIDCreateString(NULL, uuid);
+
+        NSString *filename = [NSString stringWithFormat:@"iterm2TempImage.%@.tiff", uuidStr];
+
+        CFRelease(uuidStr);
+        CFRelease(uuid);
+
+        NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
+        NSData *tiff = [rep representationUsingType:NSTIFFFileType properties:nil];
+        [tiff writeToFile:filename atomically:NO];
+        [[NSWorkspace sharedWorkspace] openFile:filename];
+    }
+}
+
+- (void)inspectImage:(id)sender {
+    ImageInfo *imageInfo = [sender representedObject];
+    if (imageInfo) {
+        NSString *text = [NSString stringWithFormat:
+                          @"Filename: %@\n"
+                          @"Dimensions: %d x %d",
+                          imageInfo.filename,
+                          (int)imageInfo.image.size.width,
+                          (int)imageInfo.image.size.height];
+
+        NSAlert *alert = [NSAlert alertWithMessageText:text
+                                         defaultButton:@"OK"
+                                       alternateButton:nil
+                                           otherButton:nil
+                             informativeTextWithFormat:@""];
+
+        [alert layout];
+        [alert runModal];
+    }
+}
+
+- (ImageInfo *)imageInfoAtCoord:(VT100GridCoord)coord
+{
+    screen_char_t* theLine = [dataSource getLineAtIndex:coord.y];
+    if (theLine && coord.x < [dataSource width] && theLine[coord.x].image) {
+        return GetImageInfo(theLine[coord.x].code);
+    } else {
         return nil;
     }
+}
+
+- (NSMenu *)menuAtCoord:(VT100GridCoord)coord
+{
     NSMenu *theMenu;
 
     // Allocate a menu
     theMenu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
+    ImageInfo *imageInfo = [self imageInfoAtCoord:coord];
+    if (imageInfo) {
+        // Show context menu for an image.
+        NSArray *entryDicts =
+            @[ @{ @"title": @"Save Image As…",
+                  @"selector": @"saveImageAs:" },
+               @{ @"title": @"Copy Image",
+                  @"selector": @"copyImage:" },
+               @{ @"title": @"Open Image",
+                  @"selector": @"openImage:" },
+               @{ @"title": @"Inspect",
+                  @"selector": @"inspectImage:" } ];
+        for (NSDictionary *entryDict in entryDicts) {
+            NSMenuItem *item;
+
+            item = [[[NSMenuItem alloc] initWithTitle:entryDict[@"title"]
+                                               action:NSSelectorFromString(entryDict[@"selector"])
+                                        keyEquivalent:@""] autorelease];
+            [item setRepresentedObject:imageInfo];
+            [theMenu addItem:item];
+        }
+        return theMenu;
+    }
 
     if ([self _haveShortSelection]) {
         BOOL addedItem = NO;
@@ -5609,9 +5755,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
-    // Ask the delegae if there is anything to be added
+    // Ask the delegate if there is anything to be added
     if ([[self delegate] respondsToSelector:@selector(menuForEvent:menu:)]) {
-        [[self delegate] menuForEvent:theEvent menu:theMenu];
+        [[self delegate] menuForEvent:nil menu:theMenu];
     }
 
     return [theMenu autorelease];

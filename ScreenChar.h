@@ -46,6 +46,9 @@
 // If set, the image won't be squished.
 @property(nonatomic, assign) BOOL preserveAspectRatio;
 
+// Original filename
+@property(nonatomic, copy) NSString *filename;
+
 // Returns an image of size |region| containing a scaled copy of |image| and
 // transparency around two edges if |region| != |image.size|.
 - (NSImage *)imageEmbeddedInRegionOfSize:(NSSize)region;
@@ -364,7 +367,7 @@ BOOL StringContainsCombiningMark(NSString *s);
 // displayed in the terminal with width x height cells. If preserveAspectRatio
 // is set then background-color bars will be added on the edges so the image is
 // not distorted.
-screen_char_t ImageCharForNewImage(int width, int height, BOOL preserveAspectRatio);
+screen_char_t ImageCharForNewImage(NSString *name, int width, int height, BOOL preserveAspectRatio);
 
 // Sets the row and column number in an image cell. Goes from 0 to width/height
 // as specified in the preceding call to ImageCharForNewImage.

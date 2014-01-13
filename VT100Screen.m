@@ -2764,7 +2764,7 @@ static const double kInterBellQuietPeriod = 0.1;
     // TODO: Support scroll regions.
     int xOffset = self.cursorX;
     int screenWidth = currentGrid_.size.width;
-    screen_char_t c = ImageCharForNewImage(width, height, preserveAspectRatio);
+    screen_char_t c = ImageCharForNewImage(name, width, height, preserveAspectRatio);
     for (int y = 0; y < height; y++) {
         for (int x = xOffset; x < xOffset + width && x < screenWidth; x++) {
             SetPositionInImageChar(&c, x - xOffset, y);

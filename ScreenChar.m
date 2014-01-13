@@ -51,6 +51,7 @@ static BOOL hasWrapped = NO;
 @implementation ImageInfo
 
 - (void)dealloc {
+    [_filename release];
     [_image release];
     [_embeddedImage release];
     [super dealloc];
@@ -187,7 +188,7 @@ static BOOL ComplexCharKeyIsReserved(int k) {
     }
 }
 
-screen_char_t ImageCharForNewImage(int width, int height, BOOL preserveAspectRatio)
+screen_char_t ImageCharForNewImage(NSString *name, int width, int height, BOOL preserveAspectRatio)
 {
     if (!gImages) {
         gImages = [[NSMutableDictionary alloc] init];
@@ -196,12 +197,13 @@ screen_char_t ImageCharForNewImage(int width, int height, BOOL preserveAspectRat
     do {
         newKey = ccmNextKey++;
     } while (ComplexCharKeyIsReserved(newKey));
-    
+
     screen_char_t c = { 0 };
     c.image = 1;
     c.code = newKey;
-    
+
     ImageInfo *imageInfo = [[[ImageInfo alloc] init] autorelease];
+    imageInfo.filename = name;
     imageInfo.preserveAspectRatio = preserveAspectRatio;
     imageInfo.size = NSMakeSize(width, height);
     gImages[@(c.code)] = imageInfo;
