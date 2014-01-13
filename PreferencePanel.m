@@ -268,7 +268,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [setProfileLabel setHidden:NO];
     [setProfileBookmarkListView setHidden:NO];
     [changeProfileButton setHidden:NO];
-
+    [toggleTagsButton setHidden:YES];
+    
     [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
     [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
     [columnsField setEnabled:NO];
