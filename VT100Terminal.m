@@ -4783,6 +4783,13 @@ static VT100TCC decode_string(unsigned char *datap,
             break;
             
         case 'D':
+            // Return code of last command
+            if (args.count >= 2) {
+                int returnCode = [args[1] intValue];
+                [delegate_ terminalReturnCodeOfLastCommandWas:returnCode];
+            }
+
+        case 'E':
             // Semantic text is starting.
             // First argument:
             //    1: file name
@@ -4796,7 +4803,7 @@ static VT100TCC decode_string(unsigned char *datap,
             }
             break;
             
-        case 'E':
+        case 'F':
             // Semantic text is ending.
             // First argument is same as 'D'.
             if (args.count >= 2) {
@@ -4807,7 +4814,7 @@ static VT100TCC decode_string(unsigned char *datap,
             }
             break;
             
-        case 'F':
+        case 'G':
             // Update progress bar.
             // First argument: perecentage
             // Second argument: title

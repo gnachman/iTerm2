@@ -329,5 +329,6 @@ typedef enum {
 - (void)terminalSemanticTextDidEndOfType:(VT100TerminalSemanticTextType)type;
 - (void)terminalProgressAt:(double)fraction label:(NSString *)label;
 - (void)terminalProgressDidFinish;
+- (void)terminalReturnCodeOfLastCommandWas:(int)returnCode;
 
 @end

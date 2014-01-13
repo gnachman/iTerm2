@@ -2864,6 +2864,10 @@ static const double kInterBellQuietPeriod = 0.1;
     // TODO
 }
 
+- (void)terminalReturnCodeOfLastCommandWas:(int)returnCode {
+    // TODO
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {
