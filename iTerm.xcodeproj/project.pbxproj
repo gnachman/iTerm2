@@ -571,6 +571,9 @@
 		A6057C09187A1809004A60AF /* TerminalFile.h in Headers */ = {isa = PBXBuildFile; fileRef = A6057C07187A1809004A60AF /* TerminalFile.h */; };
 		A6057C0A187A1809004A60AF /* TerminalFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A6057C08187A1809004A60AF /* TerminalFile.m */; };
 		A6057C0B187A1809004A60AF /* TerminalFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A6057C08187A1809004A60AF /* TerminalFile.m */; };
+		A6057C0E187BC4C3004A60AF /* CommandHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6057C0C187BC4C3004A60AF /* CommandHistory.h */; };
+		A6057C0F187BC4C3004A60AF /* CommandHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6057C0D187BC4C3004A60AF /* CommandHistory.m */; };
+		A6057C10187BC4C3004A60AF /* CommandHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6057C0D187BC4C3004A60AF /* CommandHistory.m */; };
 		A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */; };
 		A628C7A918764AA4009B0818 /* NSDictionary+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */; };
 		A628C7AA18764AA4009B0818 /* NSDictionary+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */; };
@@ -1053,6 +1056,8 @@
 		A6057C031878CD30004A60AF /* ProfileTagsView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileTagsView.m; sourceTree = "<group>"; };
 		A6057C07187A1809004A60AF /* TerminalFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TerminalFile.h; sourceTree = "<group>"; };
 		A6057C08187A1809004A60AF /* TerminalFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TerminalFile.m; sourceTree = "<group>"; };
+		A6057C0C187BC4C3004A60AF /* CommandHistory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandHistory.h; sourceTree = "<group>"; };
+		A6057C0D187BC4C3004A60AF /* CommandHistory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CommandHistory.m; sourceTree = "<group>"; };
 		A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+iTerm.h"; sourceTree = "<group>"; };
 		A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+iTerm.m"; sourceTree = "<group>"; };
 		A6358642184BEA57009ED690 /* AATree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AATree.h; path = "objc-aatree-master/AATree.h"; sourceTree = "<group>"; };
@@ -1318,6 +1323,8 @@
 				1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */,
 				1D085FA116F138A000B7FCE9 /* ToastWindowController.m */,
 				1D06A04F134CDBED00C414EF /* Trouter.m */,
+				A6057C0C187BC4C3004A60AF /* CommandHistory.h */,
+				A6057C0D187BC4C3004A60AF /* CommandHistory.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -2117,6 +2124,7 @@
 				1D94EAAE12D64022008225A9 /* UKCrashReporter.h in Headers */,
 				1D94EAB212D64022008225A9 /* UKNibOwner.h in Headers */,
 				1DD39B14180B819A004E56D5 /* VT100GridTest.h in Headers */,
+				A6057C0E187BC4C3004A60AF /* CommandHistory.h in Headers */,
 				1D94EAB412D64022008225A9 /* UKSystemInfo.h in Headers */,
 				1DDBC61E12E2BCDC00BC3868 /* iTermExpose.h in Headers */,
 				1DAED28812E9395E005E49ED /* GlobalSearch.h in Headers */,
@@ -2600,6 +2608,7 @@
 				1DD39B1C180B834A004E56D5 /* DebugLogging.m in Sources */,
 				1D9A5563180FA84700B42CE9 /* NSBezierPath+iTerm.m in Sources */,
 				1D9A5569180FA85000B42CE9 /* Autocomplete.m in Sources */,
+				A6057C10187BC4C3004A60AF /* CommandHistory.m in Sources */,
 				1D9A553D180FA7EA00B42CE9 /* ITAddressBookMgr.m in Sources */,
 				1D9A552A180FA63500B42CE9 /* VT100Screen.m in Sources */,
 				A68A30D0186D1414007F550F /* FileTransferManager.m in Sources */,
@@ -2758,6 +2767,7 @@
 				1D9DCC05142D7E570016228A /* GrowlTrigger.m in Sources */,
 				1D9DCC0B142D7F300016228A /* BounceTrigger.m in Sources */,
 				1D9DCC0F142D7F5F0016228A /* BellTrigger.m in Sources */,
+				A6057C0F187BC4C3004A60AF /* CommandHistory.m in Sources */,
 				1D9DCC13142D7F970016228A /* ScriptTrigger.m in Sources */,
 				1D9DCC17142D7FC10016228A /* AlertTrigger.m in Sources */,
 				A68A3110186E2EDA007F550F /* PopupEntry.m in Sources */,

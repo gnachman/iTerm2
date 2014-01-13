@@ -20,5 +20,9 @@
 - (void)_populateMore:(id)sender;
 - (void)_doPopulateMore;
 
+// Add a bunch of CommandHistoryEntry's. 'context' gives the prefix that
+// generated the entries.
+- (void)addCommandEntries:(NSArray *)entries context:(NSString *)context;
+
 @end
 

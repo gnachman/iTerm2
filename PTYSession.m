@@ -1,5 +1,6 @@
 #import "PTYSession.h"
 
+#import "CommandHistory.h"
 #import "Coprocess.h"
 #import "FakeWindow.h"
 #import "FileTransferManager.h"
@@ -261,6 +262,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     
     NSInteger requestAttentionId_;  // Last request-attention identifier
     VT100ScreenMark *lastMark_;
+    
+    VT100GridCoordRange commandRange_;
 }
 
 - (id)init
@@ -297,6 +300,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         creationDate_ = [[NSDate date] retain];
         tmuxSecureLogging_ = NO;
         tailFindContext_ = [[FindContext alloc] init];
+        commandRange_ = VT100GridCoordRangeMake(-1, -1, -1, -1);
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
@@ -5263,6 +5267,55 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (BOOL)screenShouldSendReport {
     return (SHELL != nil) && (![self isTmuxClient]);
+}
+
+// FinalTerm
+- (NSString *)commandInRange:(VT100GridCoordRange)range {
+    NSString *command = [TEXTVIEW contentFromX:range.start.x
+                                             Y:range.start.y
+                                           ToX:range.end.x
+                                             Y:range.end.y
+                                           pad:NO
+                            includeLastNewline:NO
+                        trimTrailingWhitespace:YES];
+    NSRange newline = [command rangeOfString:@"\n"];
+    if (newline.location != NSNotFound) {
+        return [command substringToIndex:newline.location];
+    } else {
+        return command;
+    }
+}
+
+- (NSString *)currentCommand {
+    if (commandRange_.start.x < 0) {
+        return nil;
+    } else {
+        return [self commandInRange:commandRange_];
+    }
+}
+
+- (NSArray *)autocompleteSuggestionsForCurrentCommand {
+    NSString *command;
+    if (commandRange_.start.x < 0) {
+        return nil;
+    } else {
+        command = [self commandInRange:commandRange_];
+    }
+    VT100RemoteHost *host = [SCREEN remoteHostOnLine:[SCREEN numberOfLines]];
+    return [[CommandHistory sharedInstance] autocompleteSuggestionsWithPartialCommand:command
+                                                                               onHost:host];
+}
+- (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
+    commandRange_ = range;
+}
+
+- (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
+    NSString *command = [self commandInRange:range];
+    if (command.length) {
+        [[CommandHistory sharedInstance] addCommand:command
+                                             onHost:[SCREEN remoteHostOnLine:range.end.y]];
+    }
+    commandRange_ = VT100GridCoordRangeMake(-1, -1, -1, -1);
 }
 
 #pragma mark - PopupDelegate

@@ -206,4 +206,8 @@
 // Ok to write to shell?
 - (BOOL)screenShouldSendReport;
 
+// FinalTerm stuff
+- (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range;
+- (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range;
+
 @end

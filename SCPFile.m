@@ -146,6 +146,16 @@ static NSError *SCPFileError(NSString *description) {
     return 22;
 }
 
+- (BOOL)privateKeyIsEncrypted {
+    NSString *filename = [kPrivateKeyPath stringByExpandingTildeInPath];
+    @autoreleasepool {
+        NSString *privateKey = [NSString stringWithContentsOfFile:filename
+                                                         encoding:NSUTF8StringEncoding
+                                                            error:nil];
+        return [privateKey rangeOfString:@"ENCRYPTED"].location != NSNotFound;
+    }
+}
+
 // This runs in a thread.
 - (void)performTransfer:(BOOL)isDownload {
     NSString *baseName = [[self class] fileNameForPath:self.path.path];
@@ -223,16 +233,19 @@ static NSError *SCPFileError(NSString *description) {
                 if (self.stopped) {
                     break;
                 }
-                [self.session authenticateByPublicKey:[kPublicKeyPath stringByExpandingTildeInPath]
-                                           privateKey:[kPrivateKeyPath stringByExpandingTildeInPath]
-                                optionalPasswordBlock:^NSString *() {
-                                    __block NSString *password;
-                                    dispatch_sync(dispatch_get_main_queue(), ^() {
-                                        password = [[FileTransferManager sharedInstance] transferrableFile:self
-                                                                                 keyboardInteractivePrompt:@"Passphrase for private key:"];
-                                    });
-                                    return password;
-                                }];
+                
+                __block NSString *password = nil;
+                if ([self privateKeyIsEncrypted]) {
+                    dispatch_sync(dispatch_get_main_queue(), ^() {
+                        password = [[FileTransferManager sharedInstance] transferrableFile:self
+                                                                 keyboardInteractivePrompt:@"Passphrase for private key:"];
+                    });
+                }
+                // Try an empty passphrase first
+                BOOL ok = [self.session authenticateByPublicKey:[kPublicKeyPath stringByExpandingTildeInPath]
+                                                     privateKey:[kPrivateKeyPath stringByExpandingTildeInPath]
+                                                    andPassword:password];
+            
                 if (self.session.isAuthorized) {
                     break;
                 }
@@ -262,7 +275,10 @@ static NSError *SCPFileError(NSString *description) {
     }
     
     if (_okToAdd) {
-        [self.session addCurrentHostToKnownHostsUnhashed];
+        [self.session addKnownHostName:self.session.host
+                                  port:[self.session.port intValue]
+                                toFile:nil
+                              withSalt:nil];
     }
 
     if (isDownload) {
@@ -458,7 +474,7 @@ static NSError *SCPFileError(NSString *description) {
     dispatch_sync(dispatch_get_main_queue(), ^(void) {
         _okToAdd = NO;
         NSString *message;
-        switch ([self.session knownHostStatus]) {
+        switch ([self.session knownHostStatusInFiles:nil]) {
             case NMSSHKnownHostStatusFailure:
                 message = [NSString stringWithFormat:@"Could not read the known_hosts file.\n"
                                                      @"As a result, the autenticity of host '%@' can't be established."

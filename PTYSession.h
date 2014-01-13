@@ -379,6 +379,10 @@ typedef enum {
 // Select this session and tab and bring window to foreground.
 - (void)reveal;
 
+// FinalTerm
+- (NSArray *)autocompleteSuggestionsForCurrentCommand;
+- (NSString *)currentCommand;
+
 @end
 
 @interface PTYSession (ScriptingSupport)

@@ -16,6 +16,14 @@ typedef enum {
     MOUSE_REPORTING_ALL_MOTION = 3,
 } MouseMode;
 
+typedef enum {
+    kVT100TerminalSemanticTextTypeFilename = 1,
+    kVT100TerminalSemanticTextTypeDirectory = 2,
+    kVT100TerminalSemanticTextTypeProcessId = 3,
+
+    kVT100TerminalSemanticTextTypeMax
+} VT100TerminalSemanticTextType;
+
 @protocol VT100TerminalDelegate
 // Append a string at the cursor's position and advance the cursor, scrolling if necessary. If
 // |ascii| is set then the string contains only ascii characters.
@@ -312,5 +320,15 @@ typedef enum {
 
 // Shows/hides the cursor.
 - (void)terminalSetCursorVisible:(BOOL)visible;
+
+// FinalTerm features
+- (void)terminalPromptDidStart;
+- (void)terminalCommandDidStart;
+- (void)terminalCommandDidEnd;
+- (void)terminalSemanticTextDidStartOfType:(VT100TerminalSemanticTextType)type;
+- (void)terminalSemanticTextDidEndOfType:(VT100TerminalSemanticTextType)type;
+- (void)terminalProgressAt:(double)fraction label:(NSString *)label;
+- (void)terminalProgressDidFinish;
+- (void)terminalReturnCodeOfLastCommandWas:(int)returnCode;
 
 @end

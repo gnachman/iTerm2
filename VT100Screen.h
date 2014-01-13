@@ -90,6 +90,10 @@ extern int kVT100ScreenMinRows;
 
     NSMutableSet *markCache_;  // Maps an absolute line number to a VT100ScreenMark.
     VT100GridCoordRange markCacheRange_;
+
+    // Location of the start of the current command, or -1 for none. Y is absolute.
+    int commandStartX_;
+    long long commandStartY_;
 }
 
 @property(nonatomic, retain) VT100Terminal *terminal;
