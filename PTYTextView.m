@@ -4876,6 +4876,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)insertText:(id)aString
 {
+    if ([aString isKindOfClass:[NSAttributedString class]]) {
+        aString = [aString string];
+    }
     if (gCurrentKeyEventTextView && self != gCurrentKeyEventTextView) {
         // See comment in -keyDown:
         DLog(@"Rerouting insertText from %@ to %@", self, gCurrentKeyEventTextView);
