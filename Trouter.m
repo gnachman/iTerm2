@@ -115,6 +115,11 @@
         return nil;
     }
 
+    // If it's in parens, strip them.
+    if (path.length > 2 && [path characterAtIndex:0] == '(' && [path hasSuffix:@")"]) {
+        path = [path substringWithRange:NSMakeRange(1, path.length - 2)];
+    }
+
     // strip various trailing characters that are unlikely to be part of the file name.
     path = [path stringByReplacingOccurrencesOfRegex:@"[.),:]$"
                                           withString:@""];
