@@ -9158,6 +9158,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Remove escaping slashes
     NSString *removeEscapingSlashes = @"\\\\([ \\(\\[\\]\\\\)])";
 
+    DLog(@"Brute force path from prefix <<%@>>, suffix <<%@>> directory=%@",
+         beforeString, afterString, workingDirectory);
+
     [beforeString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
     [afterString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
     beforeString = [[beforeString copy] autorelease];
@@ -9172,6 +9175,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     NSMutableSet *paths = [NSMutableSet set];
     NSMutableSet *befores = [NSMutableSet set];
+
+    DLog(@"before chunks=%@", beforeChunks);
+    DLog(@"after chunks=%@", afterChunks);
 
     for (int i = [beforeChunks count]; i >= 0; i--) {
         NSString *beforeChunk = @"";
@@ -9199,6 +9205,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 if (charsTakenFromPrefixPtr) {
                     *charsTakenFromPrefixPtr = left.length;
                 }
+                DLog(@"Using path %@", possiblePath);
                 return possiblePath;
             }
 
@@ -9454,6 +9461,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Don't consider / to be a valid filename because it's useless and single/double slashes are
     // pretty common.
     if (filename && ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
+        DLog(@"Accepting filename from brute force search: %@", filename);
         // If you clicked on an existing filename, use it.
         URLAction *action = [URLAction urlActionToOpenExistingFile:filename];
         action.range = [self coordRangeFromCoord:VT100GridCoordMake(x, y)
@@ -9466,6 +9474,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return action;
     }
 
+    DLog(@"Brute force search failed, try smart selection.");
     // Next, see if smart selection matches anything with an action.
     int tx1, ty1, tx2, ty2;
     NSDictionary *rule = [self smartSelectAtX:x
@@ -9477,6 +9486,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                              ignoringNewlines:NO
                                actionRequired:YES];
     NSArray *actions = [SmartSelectionController actionsInRule:rule];
+    DLog(@"  Smart selection produces these actions: %@", actions);
     if (actions.count) {
         NSString *content = [self contentFromX:tx1
                                              Y:ty1
@@ -9485,6 +9495,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                            pad:NO
                             includeLastNewline:NO
                         trimTrailingWhitespace:NO];
+        DLog(@"  Actions match this content: %@", content);
         URLAction *action = [URLAction urlActionToPerformSmartSelectionRule:rule onString:content];
         action.range = VT100GridCoordRangeMake(tx1, ty1, tx2, ty2);
         NSError *regexError;
@@ -9501,13 +9512,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // No luck. Look for something vaguely URL-like.
     int prefixChars;
     NSString *joined = [prefix stringByAppendingString:suffix];
+    DLog(@"Smart selection found nothing. Look for URL-like things in %@ around offset %d",
+         joined, (int)[prefix length]);
     NSString *possibleUrl = [self stringInString:joined
                                  includingOffset:[prefix length]
                                 fromCharacterSet:[PTYTextView urlCharacterSet]
                             charsTakenFromPrefix:&prefixChars];
+    DLog(@"String of just permissible chars is %@", possibleUrl);
     NSString *originalMatch = possibleUrl;
     int offset, length;
     possibleUrl = [self urlInString:possibleUrl offset:&offset length:&length];
+    DLog(@"URL in string is %@", possibleUrl);
     if (!possibleUrl) {
         return nil;
     }
@@ -9516,16 +9531,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([possibleUrl rangeOfString:@":"].length > 0) {
         NSURL *url = [NSURL URLWithString:possibleUrl];
         ruledOutBasedOnScheme = (!url || [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url] == nil);
+        DLog(@"There seems to be a scheme. ruledOut=%d", (int)ruledOutBasedOnScheme);
     }
     
     if ([self _stringLooksLikeURL:[originalMatch substringWithRange:NSMakeRange(offset, length)]] &&
          !ruledOutBasedOnScheme) {
+        DLog(@"%@ looks like a URL and it's not ruled out based on scheme. Go for it.",
+             [originalMatch substringWithRange:NSMakeRange(offset, length)]);
         URLAction *action = [URLAction urlActionToOpenURL:possibleUrl];
         action.range = [self coordRangeFromCoord:VT100GridCoordMake(x, y)
                              startingCharsBefore:prefixChars - offset
                                           length:length];
         return action;
     } else {
+        DLog(@"%@ is either not plausibly a URL or was ruled out based on scheme. Fail.",
+             [originalMatch substringWithRange:NSMakeRange(offset, length)]);
         return nil;
     }
 }

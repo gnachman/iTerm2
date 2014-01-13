@@ -26,9 +26,10 @@
  */
 
 #import "Trouter.h"
+#import "DebugLogging.h"
+#import "NSStringITerm.h"
 #import "RegexKitLite/RegexKitLite.h"
 #import "TrouterPrefsController.h"
-#import "NSStringITerm.h"
 
 @implementation Trouter
 
@@ -109,20 +110,24 @@
          workingDirectory:(NSString *)workingDirectory
                lineNumber:(NSString **)lineNumber
 {
+    DLog(@"Check if %@ is a valid path in %@", path, workingDirectory);
     NSString *origPath = path;
     // TODO(chendo): Move regex, define capture semants in config file/prefs
     if (!path || [path length] == 0) {
+        DLog(@"  no: it is empty");
         return nil;
     }
 
     // If it's in parens, strip them.
     if (path.length > 2 && [path characterAtIndex:0] == '(' && [path hasSuffix:@")"]) {
         path = [path substringWithRange:NSMakeRange(1, path.length - 2)];
+        DLog(@" Strip parens, leaving %@", path);
     }
 
     // strip various trailing characters that are unlikely to be part of the file name.
     path = [path stringByReplacingOccurrencesOfRegex:@"[.),:]$"
                                           withString:@""];
+    DLog(@" Strip trailing chars, leaving %@", path);
 
     if (lineNumber != nil) {
         *lineNumber = [path stringByMatching:@":(\\d+)" capture:1];
@@ -130,25 +135,30 @@
     path = [[path stringByReplacingOccurrencesOfRegex:@":\\d*(?::.*)?$"
                                            withString:@""]
                stringByExpandingTildeInPath];
+    DLog(@"  Strip line number suffix leaving %@", path);
     if ([path length] == 0) {
         // Everything was stripped out, meaning we'd try to open the working directory.
         return nil;
     }
     if ([path rangeOfRegex:@"^/"].location == NSNotFound) {
         path = [NSString stringWithFormat:@"%@/%@", workingDirectory, path];
+        DLog(@"  Prepend working directory, giving %@", path);
     }
 
     NSURL *url = [NSURL fileURLWithPath:path];
 
     // Resolve path by removing ./ and ../ etc
     path = [[url standardizedURL] path];
+    DLog(@"  Standardized path is %@", path);
 
     if ([fileManager fileExistsAtPath:path]) {
+        DLog(@"    YES: A file exists at %@", path);
         return path;
     }
 
     // If path doesn't exist and it starts with "a/" or "b/" (from `diff`).
     if ([origPath isMatchedByRegex:@"^[ab]/"]) {
+        DLog(@"  Treating as diff path");
         // strip the prefix off ...
         origPath = [origPath stringByReplacingOccurrencesOfRegex:@"^[ab]/"
                                                  withString:@""];
@@ -159,6 +169,7 @@
                       lineNumber:lineNumber];
     }
 
+    DLog(@"     NO: no valid path found");
     return nil;
 }
 
