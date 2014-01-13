@@ -3975,7 +3975,9 @@ static VT100TCC decode_string(unsigned char *datap,
         } else if ([key isEqualToString:@"CopyToClipboard"]) {
             [delegate_ terminalSetPasteboard:value];
         } else if ([key isEqualToString:@"BeginFile"]) {
-            // Takes two args separated by newline. First is filename, second is size in bytes.
+            // Takes 2-5 args separated by newline. First is filename, second is size in bytes.
+            // Arg 3,4 are width,height in cells for an inline image.
+            // Arg 5 is whether to preserve the aspect ratio for an inline image.
             NSArray *parts = [value componentsSeparatedByString:@"\n"];
             NSString *name = nil;
             int size = -1;
@@ -3987,6 +3989,7 @@ static VT100TCC decode_string(unsigned char *datap,
             }
             int width = 0, height = 0;
             if (parts.count >= 4) {
+                // TODO: If a "px" suffix is present, infer number of cells from current text cell size.
                 width = [parts[2] intValue];
                 height = [parts[3] intValue];
             }
