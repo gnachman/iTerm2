@@ -589,6 +589,7 @@ void StringToScreenChars(NSString *s,
             buf[j].italic = fg.italic;
             buf[j].blink = fg.blink;
             buf[j].underline = fg.underline;
+            buf[j].image = NO;
 
             buf[j].unused = 0;
             lastInitializedChar = j;
