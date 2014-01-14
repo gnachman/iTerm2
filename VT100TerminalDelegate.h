@@ -282,6 +282,11 @@ typedef enum {
 // Download of a base64-encoded file
 // nil = name unknown, -1 = size unknown.
 - (void)terminalWillReceiveFileNamed:(NSString *)name ofSize:(int)size;
+- (void)terminalWillReceiveInlineFileNamed:(NSString *)name
+                                    ofSize:(int)size
+                                     width:(int)width
+                                    height:(int)height
+                       preserveAspectRatio:(BOOL)preserveAspectRatio;
 
 // Download completed normally
 - (void)terminalDidFinishReceivingFile;

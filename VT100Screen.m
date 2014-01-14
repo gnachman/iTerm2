@@ -15,6 +15,7 @@
 #import "iTermExpose.h"
 #import "iTermGrowlDelegate.h"
 
+#import <apr-1/apr_base64.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -32,7 +33,11 @@ NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
 // Wait this long between calls to NSBeep().
 static const double kInterBellQuietPeriod = 0.1;
 
-@implementation VT100Screen
+@implementation VT100Screen {
+    unichar inlineFileCode_;
+    NSMutableString *inlineFile_;
+    NSMutableArray *inlineFileCodes_;
+}
 
 @synthesize terminal = terminal_;
 @synthesize audibleBell = audibleBell_;
@@ -99,6 +104,11 @@ static const double kInterBellQuietPeriod = 0.1;
     [findContext_ release];
     [intervalTree_ release];
     [markCache_ release];
+    [inlineFile_ release];
+    for (NSNumber *code in inlineFileCodes_) {
+        ReleaseImage([code intValue]);
+    }
+    [inlineFileCodes_ release];
     [super dealloc];
 }
 
@@ -2740,12 +2750,55 @@ static const double kInterBellQuietPeriod = 0.1;
 - (void)terminalWillReceiveFileNamed:(NSString *)name ofSize:(int)size {
     [delegate_ screenWillReceiveFileNamed:name ofSize:size];
 }
+
+- (void)terminalWillReceiveInlineFileNamed:(NSString *)name
+                                    ofSize:(int)size
+                                     width:(int)width
+                                    height:(int)height
+                       preserveAspectRatio:(BOOL)preserveAspectRatio {
+    if (height > 255 || width >= self.width) {
+        return;
+    }
+
+    // Allocate cells for the image.
+    // TODO: Support scroll regions.
+    int xOffset = self.cursorX;
+    int screenWidth = currentGrid_.size.width;
+    screen_char_t c = ImageCharForNewImage(name, width, height, preserveAspectRatio);
+    for (int y = 0; y < height; y++) {
+        for (int x = xOffset; x < xOffset + width && x < screenWidth; x++) {
+            SetPositionInImageChar(&c, x - xOffset, y);
+            [currentGrid_ setCharsFrom:VT100GridCoordMake(x, currentGrid_.cursorY)
+                                    to:VT100GridCoordMake(x, currentGrid_.cursorY)
+                                toChar:c];
+        }
+        [self linefeed];
+    }
+    
+    inlineFileCode_ = c.code;
+}
+
 - (void)terminalDidFinishReceivingFile {
-    [delegate_ screenDidFinishReceivingFile];
+    if (inlineFileCode_) {
+        [self decodeInlineFile];
+        [delegate_ screenNeedsRedraw];
+        inlineFileCode_ = 0;
+        [inlineFile_ release];
+        inlineFile_ = nil;
+    } else {
+        [delegate_ screenDidFinishReceivingFile];
+    }
 }
 
 - (void)terminalDidReceiveBase64FileData:(NSString *)data {
-    [delegate_ screenDidReceiveBase64FileData:data];
+    if (inlineFileCode_) {
+        if (!inlineFile_) {
+            inlineFile_ = [[NSMutableString alloc] init];
+        }
+        [inlineFile_ appendString:data];
+    } else {
+        [delegate_ screenDidReceiveBase64FileData:data];
+    }
 }
 
 - (void)terminalFileReceiptEndedUnexpectedly {
@@ -3447,6 +3500,35 @@ static void SwapInt(int *a, int *b) {
     [self popScrollbackLines:linesPushed];
     return keepSearching;
 }
+
+- (void)decodeInlineFile {
+    // TODO: Handle objects other than images.
+    const char *buffer = [inlineFile_ UTF8String];
+    int destLength = apr_base64_decode_len(buffer);
+    if (destLength <= 0) {
+        goto error;
+    }
+    
+    NSMutableData *data = [NSMutableData dataWithLength:destLength];
+    char *decodedBuffer = [data mutableBytes];
+    int resultLength = apr_base64_decode(decodedBuffer, buffer);
+    if (resultLength <= 0) {
+        goto error;
+    }
+    
+    NSImage *image = [[[NSImage alloc] initWithData:data] autorelease];
+    if (!image) {
+        goto error;
+    }
+    
+    SetDecodedImage(inlineFileCode_, image);
+    [inlineFileCodes_ addObject:@(inlineFileCode_)];
+    return;
+    
+error:
+    SetDecodedImage(inlineFileCode_, [NSImage imageNamed:@"broken_image"]);
+}
+
 
 #pragma mark - PTYNoteViewControllerDelegate
 

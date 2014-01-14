@@ -4391,6 +4391,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [self encoding];
 }
 
+- (NSString *)textViewCurrentWorkingDirectory {
+    return [SHELL getWorkingDirectory];
+}
+
 - (void)textViewWillNeedUpdateForBlink
 {
     [self scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];

@@ -112,7 +112,7 @@ typedef enum {
 - (void)textViewBeginDrag;
 - (void)textViewMovePane;
 - (NSStringEncoding)textViewEncoding;
-
+- (NSString *)textViewCurrentWorkingDirectory;
 @end
 
 @interface PTYTextView : NSView <

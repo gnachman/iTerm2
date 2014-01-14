@@ -200,9 +200,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     BOOL mouseDragged;
     char selectMode;
     BOOL mouseDownOnSelection;
+    BOOL mouseDownOnImage;
+    ImageInfo *theImage;
     NSEvent *mouseDownEvent;
     int lastReportedX_, lastReportedY_;
-    
+
     //find support
     int lastFindStartX, lastFindEndX;
     // this includes all the lines since the beginning of time. It is stable.
@@ -3848,6 +3850,7 @@ NSMutableArray* screens=0;
     mouseDragged = NO;
     mouseDown = YES;
     mouseDownOnSelection = NO;
+    mouseDownOnImage = NO;
 
     int clickCount = [event clickCount];
     DLog(@"clickCount=%d altPressed=%d cmdPressed=%d", clickCount, (int)altPressed, (int)cmdPressed);
@@ -3865,6 +3868,8 @@ NSMutableArray* screens=0;
             DLog(@"extend selection to %d, %d", (int)x, (int)y);
             [self extendSelectionToX:x y:y];
             // startX and endX may be reversed, but mouseUp fixes it.
+        } else if ((theImage = [self imageInfoAtCoord:VT100GridCoordMake(x, y)])) {
+            mouseDownOnImage = YES;
         } else if (startX > -1 &&
                    [self _isCharSelectedInRow:y col:x checkOld:NO]) {
             // not holding down shift key but there is an existing selection.
@@ -4283,7 +4288,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
 
-    if (mouseDownOnSelection == YES &&
+    if (mouseDownOnImage &&
+        ([event modifierFlags] & NSCommandKeyMask) &&
+        dragThresholdMet) {
+        [self _dragImage:theImage forEvent:event];
+    } else if (mouseDownOnSelection == YES &&
         ([event modifierFlags] & NSCommandKeyMask) &&
         dragThresholdMet) {
         DLog(@"drag and drop a selection");
@@ -4300,8 +4309,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                           trimTrailingWhitespace:[[PreferencePanel sharedInstance] trimTrailingWhitespace]];
         }
         if ([theSelectedText length] > 0) {
-            [self _dragText: theSelectedText forEvent: event];
-            DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
+            [self _dragText:theSelectedText forEvent:event];
+            DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d",
+                      startX, startY, endX, endY]);
             return;
         }
     }
@@ -4500,9 +4510,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     maxAt *= [dataSource width];
     maxAt += endX;
 
-    if (startX < 0 ||
-        clickAt < minAt ||
-        clickAt >= maxAt) {
+    VT100GridCoord coord = VT100GridCoordMake(x, y);
+    ImageInfo *imageInfo = [self imageInfoAtCoord:coord];
+
+    if (!imageInfo &&
+        (startX < 0 ||
+         clickAt < minAt ||
+         clickAt >= maxAt)) {
         int savedStartX = startX;
         int savedStartY = startY;
         int savedEndX = endX;
@@ -4522,9 +4536,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     }
     [self setNeedsDisplay:YES];
-    NSMenu *menu = [self menuForEvent:nil];
+    NSMenu *menu = [self menuAtCoord:coord];
     openingContextMenu_ = YES;
-    
+
     // Slowly moving away from using NSPoint for integer coordinates.
     validationClickPoint_ = VT100GridCoordMake(clickPoint.x, clickPoint.y);
     [NSMenu popUpContextMenu:menu withEvent:event forView:self];
@@ -5345,6 +5359,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                  validationClickPoint_.x + 1,
                                                                  validationClickPoint_.y)] count] > 0;
     }
+
+    // Image actions
+    if ([item action] == @selector(saveImageAs:) ||
+        [item action] == @selector(copyImage:) ||
+        [item action] == @selector(openImage:) ||
+        [item action] == @selector(inspectImage:)) {
+        return YES;
+    }
+
     SEL theSel = [item action];
     if ([NSStringFromSelector(theSel) hasPrefix:@"contextMenuAction"]) {
         return YES;
@@ -5373,10 +5396,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         case kRunCoprocessContextMenuAction:
             return @selector(contextMenuActionRunCoprocess:);
+
+        case kSendTextContextMenuAction:
+            return @selector(contextMenuActionSendText:);
     }
 }
 
-- (BOOL)addCustomActionsToMenu:(NSMenu *)theMenu matchingText:(NSString *)textWindow
+- (BOOL)addCustomActionsToMenu:(NSMenu *)theMenu matchingText:(NSString *)textWindow line:(int)line
 {
     BOOL didAdd = NO;
     NSArray* rulesArray = smartSelectionRules_ ? smartSelectionRules_ : [SmartSelectionController defaultRules];
@@ -5397,12 +5423,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 NSArray *actions = [SmartSelectionController actionsInRule:rule];
                 for (NSDictionary *action in actions) {
                     SEL mySelector = [self selectorForSmartSelectionAction:action];
-                    NSMenuItem *theItem = [[[NSMenuItem alloc] initWithTitle:[ContextMenuActionPrefsController titleForActionDict:action
-                                                                                                            withCaptureComponents:components]
+                    NSString *theTitle =
+                        [ContextMenuActionPrefsController titleForActionDict:action
+                                                       withCaptureComponents:components
+                                                            workingDirectory:[dataSource workingDirectoryOnLine:line]
+                                                                  remoteHost:[dataSource remoteHostOnLine:line]];
+
+                    NSMenuItem *theItem = [[[NSMenuItem alloc] initWithTitle:theTitle
                                                                       action:mySelector
                                                                keyEquivalent:@""] autorelease];
-                    [theItem setRepresentedObject:[ContextMenuActionPrefsController parameterForActionDict:action
-                                                                                     withCaptureComponents:components]];
+                    NSString *parameter =
+                        [ContextMenuActionPrefsController parameterForActionDict:action
+                                                           withCaptureComponents:components
+                                                                workingDirectory:[dataSource workingDirectoryOnLine:line]
+                                                                      remoteHost:[dataSource remoteHostOnLine:line]];
+                    [theItem setRepresentedObject:parameter];
                     [theItem setTarget:self];
                     [theMenu addItem:theItem];
                     didAdd = YES;
@@ -5455,16 +5490,156 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate launchCoprocessWithCommand:command];
 }
 
+- (void)contextMenuActionSendText:(id)sender
+{
+    NSString *command = [sender representedObject];
+    NSLog(@"Send text: %@", command);
+    [_delegate insertText:command];
+}
+
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
 {
-    if (theEvent) {
-        // Context menu is opened by the PointerController, not organically.
+    // Context menu is opened by mouseUp->PointerController->openContextMenuWithEvent, not
+    // by AppKit calling this method directly.
+    return nil;
+}
+
+- (void)saveImageAs:(id)sender {
+    ImageInfo *imageInfo = [sender representedObject];
+    NSSavePanel* panel = [NSSavePanel savePanel];
+
+    NSArray* paths = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory,
+                                                         NSUserDomainMask,
+                                                         YES);
+    NSString *directory;
+    if (paths.count > 0) {
+        directory = paths[0];
+    } else {
+        directory = NSHomeDirectory();
+    }
+
+    panel.directoryURL = [NSURL fileURLWithPath:directory];
+    panel.nameFieldStringValue = [imageInfo.filename lastPathComponent];
+    panel.allowedFileTypes = @[ @"png", @"bmp", @"gif", @"jp2", @"jpeg", @"jpg", @"tiff" ];
+    panel.allowsOtherFileTypes = NO;
+    panel.canCreateDirectories = YES;
+    [panel setExtensionHidden:NO];
+
+    if ([panel runModal] == NSOKButton) {
+        NSBitmapImageFileType fileType = NSPNGFileType;
+        NSString *filename = [panel legacyFilename];
+        if ([filename hasSuffix:@".bmp"]) {
+            fileType = NSBMPFileType;
+        } else if ([filename hasSuffix:@".gif"]) {
+            fileType = NSGIFFileType;
+        } else if ([filename hasSuffix:@".jp2"]) {
+            fileType = NSJPEG2000FileType;
+        } else if ([filename hasSuffix:@".jpg"] || [filename hasSuffix:@".jpeg"]) {
+            fileType = NSJPEGFileType;
+        } else if ([filename hasSuffix:@".png"]) {
+            fileType = NSPNGFileType;
+        } else if ([filename hasSuffix:@".tiff"]) {
+            fileType = NSTIFFFileType;
+        }
+
+        NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
+        NSData *data = [rep representationUsingType:fileType properties:nil];
+        [data writeToFile:[panel legacyFilename] atomically:NO];
+    }
+}
+
+- (void)copyImage:(id)sender {
+    ImageInfo *imageInfo = [sender representedObject];
+    NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+    if (imageInfo.image) {
+        [pboard declareTypes:[NSArray arrayWithObject:NSTIFFPboardType] owner:self];
+        NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
+        NSData *tiff = [rep representationUsingType:NSTIFFFileType properties:nil];
+        [pboard setData:tiff forType:NSTIFFPboardType];
+    }
+}
+
+- (void)openImage:(id)sender {
+    ImageInfo *imageInfo = [sender representedObject];
+    if (imageInfo.image) {
+        CFUUIDRef   uuid;
+        CFStringRef uuidStr;
+
+        uuid = CFUUIDCreate(NULL);
+        uuidStr = CFUUIDCreateString(NULL, uuid);
+
+        NSString *filename = [NSString stringWithFormat:@"iterm2TempImage.%@.tiff", uuidStr];
+
+        CFRelease(uuidStr);
+        CFRelease(uuid);
+
+        NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
+        NSData *tiff = [rep representationUsingType:NSTIFFFileType properties:nil];
+        [tiff writeToFile:filename atomically:NO];
+        [[NSWorkspace sharedWorkspace] openFile:filename];
+    }
+}
+
+- (void)inspectImage:(id)sender {
+    ImageInfo *imageInfo = [sender representedObject];
+    if (imageInfo) {
+        NSString *text = [NSString stringWithFormat:
+                          @"Filename: %@\n"
+                          @"Dimensions: %d x %d",
+                          imageInfo.filename,
+                          (int)imageInfo.image.size.width,
+                          (int)imageInfo.image.size.height];
+
+        NSAlert *alert = [NSAlert alertWithMessageText:text
+                                         defaultButton:@"OK"
+                                       alternateButton:nil
+                                           otherButton:nil
+                             informativeTextWithFormat:@""];
+
+        [alert layout];
+        [alert runModal];
+    }
+}
+
+- (ImageInfo *)imageInfoAtCoord:(VT100GridCoord)coord
+{
+    screen_char_t* theLine = [dataSource getLineAtIndex:coord.y];
+    if (theLine && coord.x < [dataSource width] && theLine[coord.x].image) {
+        return GetImageInfo(theLine[coord.x].code);
+    } else {
         return nil;
     }
+}
+
+- (NSMenu *)menuAtCoord:(VT100GridCoord)coord
+{
     NSMenu *theMenu;
 
     // Allocate a menu
     theMenu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
+    ImageInfo *imageInfo = [self imageInfoAtCoord:coord];
+    if (imageInfo) {
+        // Show context menu for an image.
+        NSArray *entryDicts =
+            @[ @{ @"title": @"Save Image As…",
+                  @"selector": @"saveImageAs:" },
+               @{ @"title": @"Copy Image",
+                  @"selector": @"copyImage:" },
+               @{ @"title": @"Open Image",
+                  @"selector": @"openImage:" },
+               @{ @"title": @"Inspect",
+                  @"selector": @"inspectImage:" } ];
+        for (NSDictionary *entryDict in entryDicts) {
+            NSMenuItem *item;
+
+            item = [[[NSMenuItem alloc] initWithTitle:entryDict[@"title"]
+                                               action:NSSelectorFromString(entryDict[@"selector"])
+                                        keyEquivalent:@""] autorelease];
+            [item setRepresentedObject:imageInfo];
+            [theMenu addItem:item];
+        }
+        return theMenu;
+    }
 
     if ([self _haveShortSelection]) {
         BOOL addedItem = NO;
@@ -5528,7 +5703,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (startX >= 0 && abs(endY - startY) < kMaxSelectedTextLinesForCustomActions) {
         NSString *selectedText = [self selectedText];
         if ([selectedText length] < kMaxSelectedTextLengthForCustomActions) {
-            if ([self addCustomActionsToMenu:theMenu matchingText:selectedText]) {
+            if ([self addCustomActionsToMenu:theMenu matchingText:selectedText line:coord.y]) {
                 [theMenu addItem:[NSMenuItem separatorItem]];
             }
         }
@@ -5609,9 +5784,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
-    // Ask the delegae if there is anything to be added
+    // Ask the delegate if there is anything to be added
     if ([[self delegate] respondsToSelector:@selector(menuForEvent:menu:)]) {
-        [[self delegate] menuForEvent:theEvent menu:theMenu];
+        [[self delegate] menuForEvent:nil menu:theMenu];
     }
 
     return [theMenu autorelease];
@@ -5963,6 +6138,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // NSTextInput
 - (void)insertText:(id)aString
 {
+    if ([aString isKindOfClass:[NSAttributedString class]]) {
+        aString = [aString string];
+    }
     if (gCurrentKeyEventTextView && self != gCurrentKeyEventTextView) {
         // See comment in -keyDown:
         DLog(@"Rerouting insertText from %@ to %@", self, gCurrentKeyEventTextView);
@@ -7336,7 +7514,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     BOOL inUnderlinedRange = NO;
     CRun *firstRun = NULL;
-    CAttrs attrs;
+    CAttrs attrs = { 0 };
     CRun *currentRun = NULL;
     const char* matchBytes = [matches bytes];
     int lastForegroundColor = -1;
@@ -7505,6 +7683,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             attrs.fakeBold = fakeBold;
             attrs.fakeItalic = fakeItalic;
             attrs.underline = theLine[i].underline || inUnderlinedRange;
+            attrs.imageCode = theLine[i].image ? theLine[i].code : 0;
+            attrs.imageColumn = theLine[i].foregroundColor;
+            attrs.imageLine = theLine[i].backgroundColor;
+            if (theLine[i].image) {
+                thisCharString = @"I";
+            }
             if (inUnderlinedRange && !self.currentUnderlineHostname) {
                 attrs.color = [NSColor colorWithCalibratedRed:0.023 green:0.270 blue:0.678 alpha:1];
             }
@@ -7674,6 +7858,31 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)_advancedDrawRun:(CRun *)complexRun at:(NSPoint)pos
 {
+    if (complexRun->attrs.imageCode > 0) {
+        ImageInfo *imageInfo = GetImageInfo(complexRun->attrs.imageCode);
+        NSImage *image = [imageInfo imageEmbeddedInRegionOfSize:NSMakeSize(charWidth * imageInfo.size.width,
+                                                                           lineHeight * imageInfo.size.height)];
+        NSSize chunkSize = NSMakeSize(image.size.width / imageInfo.size.width,
+                                      image.size.height / imageInfo.size.height);
+        [NSGraphicsContext saveGraphicsState];
+        NSAffineTransform *transform = [NSAffineTransform transform];
+        [transform translateXBy:pos.x yBy:pos.y + lineHeight];
+        [transform scaleXBy:1.0 yBy:-1.0];
+        [transform concat];
+
+        [defaultBGColor set];
+        NSRectFill(NSMakeRect(0, 0, charWidth * complexRun->numImageCells, lineHeight));
+
+        [image drawInRect:NSMakeRect(0, 0, charWidth * complexRun->numImageCells, lineHeight)
+                 fromRect:NSMakeRect(chunkSize.width * complexRun->attrs.imageColumn,
+                                     image.size.height - lineHeight - chunkSize.height * complexRun->attrs.imageLine,
+                                     chunkSize.width * complexRun->numImageCells,
+                                     chunkSize.height)
+                operation:NSCompositeSourceOver
+                 fraction:1];
+        [NSGraphicsContext restoreGraphicsState];
+        return;
+    }
     NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
     NSColor *color = complexRun->attrs.color;
 
@@ -9124,6 +9333,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Remove escaping slashes
     NSString *removeEscapingSlashes = @"\\\\([ \\(\\[\\]\\\\)])";
 
+    DLog(@"Brute force path from prefix <<%@>>, suffix <<%@>> directory=%@",
+         beforeString, afterString, workingDirectory);
+
     [beforeString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
     [afterString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
     beforeString = [[beforeString copy] autorelease];
@@ -9138,6 +9350,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     NSMutableSet *paths = [NSMutableSet set];
     NSMutableSet *befores = [NSMutableSet set];
+
+    DLog(@"before chunks=%@", beforeChunks);
+    DLog(@"after chunks=%@", afterChunks);
 
     for (int i = [beforeChunks count]; i >= 0; i--) {
         NSString *beforeChunk = @"";
@@ -9165,6 +9380,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 if (charsTakenFromPrefixPtr) {
                     *charsTakenFromPrefixPtr = left.length;
                 }
+                DLog(@"Using path %@", possiblePath);
                 return possiblePath;
             }
 
@@ -9411,6 +9627,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int fileCharsTaken = 0;
 
     NSString *workingDirectory = [dataSource workingDirectoryOnLine:y];
+    if (!workingDirectory) {
+        // Well, just try the current directory then.
+        workingDirectory = [_delegate textViewCurrentWorkingDirectory];
+    }
+    if (!workingDirectory) {
+        workingDirectory = @"";
+    }
     // First, try to locate an existing filename at this location.
     NSString *filename = [self _bruteforcePathFromBeforeString:[[possibleFilePart1 mutableCopy] autorelease]
                                                    afterString:[[possibleFilePart2 mutableCopy] autorelease]
@@ -9420,6 +9643,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Don't consider / to be a valid filename because it's useless and single/double slashes are
     // pretty common.
     if (filename && ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
+        DLog(@"Accepting filename from brute force search: %@", filename);
         // If you clicked on an existing filename, use it.
         URLAction *action = [URLAction urlActionToOpenExistingFile:filename];
         action.range = [self coordRangeFromCoord:VT100GridCoordMake(x, y)
@@ -9432,6 +9656,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return action;
     }
 
+    DLog(@"Brute force search failed, try smart selection.");
     // Next, see if smart selection matches anything with an action.
     int tx1, ty1, tx2, ty2;
     NSDictionary *rule = [self smartSelectAtX:x
@@ -9443,6 +9668,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                              ignoringNewlines:NO
                                actionRequired:YES];
     NSArray *actions = [SmartSelectionController actionsInRule:rule];
+    DLog(@"  Smart selection produces these actions: %@", actions);
     if (actions.count) {
         NSString *content = [self contentFromX:tx1
                                              Y:ty1
@@ -9451,6 +9677,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                            pad:NO
                             includeLastNewline:NO
                         trimTrailingWhitespace:NO];
+        DLog(@"  Actions match this content: %@", content);
         URLAction *action = [URLAction urlActionToPerformSmartSelectionRule:rule onString:content];
         action.range = VT100GridCoordRangeMake(tx1, ty1, tx2, ty2);
         NSError *regexError;
@@ -9460,20 +9687,26 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                  error:&regexError];
         action.selector = [self selectorForSmartSelectionAction:actions[0]];
         action.representedObject = [ContextMenuActionPrefsController parameterForActionDict:actions[0]
-                                                                      withCaptureComponents:components];
+                                                                      withCaptureComponents:components
+                                                                           workingDirectory:workingDirectory
+                                                                                 remoteHost:[dataSource remoteHostOnLine:y]];
         return action;
     }
 
     // No luck. Look for something vaguely URL-like.
     int prefixChars;
     NSString *joined = [prefix stringByAppendingString:suffix];
+    DLog(@"Smart selection found nothing. Look for URL-like things in %@ around offset %d",
+         joined, (int)[prefix length]);
     NSString *possibleUrl = [self stringInString:joined
                                  includingOffset:[prefix length]
                                 fromCharacterSet:[PTYTextView urlCharacterSet]
                             charsTakenFromPrefix:&prefixChars];
+    DLog(@"String of just permissible chars is %@", possibleUrl);
     NSString *originalMatch = possibleUrl;
     int offset, length;
     possibleUrl = [self urlInString:possibleUrl offset:&offset length:&length];
+    DLog(@"URL in string is %@", possibleUrl);
     if (!possibleUrl) {
         return nil;
     }
@@ -9482,16 +9715,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([possibleUrl rangeOfString:@":"].length > 0) {
         NSURL *url = [NSURL URLWithString:possibleUrl];
         ruledOutBasedOnScheme = (!url || [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url] == nil);
+        DLog(@"There seems to be a scheme. ruledOut=%d", (int)ruledOutBasedOnScheme);
     }
     
     if ([self _stringLooksLikeURL:[originalMatch substringWithRange:NSMakeRange(offset, length)]] &&
          !ruledOutBasedOnScheme) {
+        DLog(@"%@ looks like a URL and it's not ruled out based on scheme. Go for it.",
+             [originalMatch substringWithRange:NSMakeRange(offset, length)]);
         URLAction *action = [URLAction urlActionToOpenURL:possibleUrl];
         action.range = [self coordRangeFromCoord:VT100GridCoordMake(x, y)
                              startingCharsBefore:prefixChars - offset
                                           length:length];
         return action;
     } else {
+        DLog(@"%@ is either not plausibly a URL or was ruled out based on scheme. Fail.",
+             [originalMatch substringWithRange:NSMakeRange(offset, length)]);
         return nil;
     }
 }
@@ -9862,7 +10100,63 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 }
 
-- (void) _dragText: (NSString *) aString forEvent: (NSEvent *) theEvent
+- (void)_dragImage:(ImageInfo *)imageInfo forEvent:(NSEvent *)theEvent
+{
+    NSSize region = NSMakeSize(charWidth * imageInfo.size.width,
+                               lineHeight * imageInfo.size.height);
+    NSImage *icon = [imageInfo imageEmbeddedInRegionOfSize:region];
+
+    // get the pasteboard
+    NSPasteboard *pboard = [NSPasteboard pasteboardWithName:NSDragPboard];
+    [pboard declareTypes:[NSArray arrayWithObject:NSTIFFPboardType] owner:self];
+    NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
+    NSData *tiff = [rep representationUsingType:NSTIFFFileType properties:nil];
+    [pboard setData:tiff forType:NSTIFFPboardType];
+
+    // tell our app not switch windows (currently not working)
+    [NSApp preventWindowOrdering];
+
+    // drag from center of the image
+    NSPoint dragPoint = [self convertPoint:[theEvent locationInWindow] fromView:nil];
+
+    VT100GridCoord coord = VT100GridCoordMake((dragPoint.x - MARGIN) / charWidth,
+                                              dragPoint.y / lineHeight);
+    screen_char_t* theLine = [dataSource getLineAtIndex:coord.y];
+    if (theLine &&
+        coord.x < [dataSource width] &&
+        theLine[coord.x].image &&
+        theLine[coord.x].code == imageInfo.code) {
+        // Get the cell you clicked on (small y at top of view)
+        VT100GridCoord pos = GetPositionOfImageInChar(theLine[coord.x]);
+
+        // Get the top-left origin of the image in cell coords
+        VT100GridCoord imageCellOrigin = VT100GridCoordMake(coord.x - pos.x,
+                                                            coord.y - pos.y);
+
+        // Compute the pixel coordinate of the image's top left point
+        NSPoint imageTopLeftPoint = NSMakePoint(imageCellOrigin.x * charWidth + MARGIN,
+                                                imageCellOrigin.y * lineHeight);
+
+        // Compute the distance from the click location to the image's origin
+        NSPoint offset = NSMakePoint(dragPoint.x - imageTopLeftPoint.x,
+                                     dragPoint.y - imageTopLeftPoint.y);
+
+        // Adjust the drag point so the image won't jump as soon as the drag begins.
+        dragPoint.x -= offset.x;
+        dragPoint.y += region.height - offset.y;
+    }
+
+    // start the drag
+    [self dragImage:icon
+                 at:dragPoint
+             offset:NSMakeSize(0.0, 0.0)
+              event:mouseDownEvent
+         pasteboard:pboard
+             source:self
+          slideBack:YES];
+}
+
+- (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent
 {
     NSImage *anImage;
     int length;

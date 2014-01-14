@@ -295,7 +295,6 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 
 // Number of bytes transferred has changed or total size has been discovered.
 - (void)transferrableFileProgressDidChange:(TransferrableFile *)transferrableFile {
-    NSLog(@"Progress: %lu/%d", (unsigned long)transferrableFile.bytesTransferred, transferrableFile.fileSize);
     TransferrableFileMenuItemViewController *controller = [self viewControllerForTransferrableFile:transferrableFile];
     [controller update];
 }

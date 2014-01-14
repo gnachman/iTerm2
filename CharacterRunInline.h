@@ -64,6 +64,7 @@ CRUN_INLINE void CRunInitialize(CRun *run,
     run->next = NULL;
     run->string = nil;
     run->terminated = NO;
+    run->numImageCells = 0;
     run->storage = [storage retain];
 }
 
@@ -122,6 +123,9 @@ CRUN_INLINE CRun *CRunAppendNewString(CRun *run,
     CRunInitialize(newRun, attrs, run->storage, x);
     CRunAppendSelfString(newRun, string, key, advance);
     run->next = newRun;
+    if (attrs->imageCode) {
+        run->numImageCells++;
+    }
     return newRun;
 }
 
@@ -136,6 +140,7 @@ CRUN_INLINE CRun *CRunAppend(CRun *run,
         run->attrs.fakeItalic == attrs->fakeItalic &&
         run->attrs.underline == attrs->underline &&
         run->attrs.fontInfo == attrs->fontInfo &&
+        run->attrs.imageCode == attrs->imageCode &&
         !run->terminated &&
         !run->string) {
         CRunAppendSelf(run, code, advance);
@@ -153,8 +158,19 @@ CRUN_INLINE CRun *CRunAppendString(CRun *run,
                                    CGFloat x) {
     if (run->length == 0 && !run->string) {
         CRunAppendSelfString(run, string, key, advance);
+        if (attrs->imageCode) {
+            run->numImageCells = 1;
+        }
+        return run;
+    } else if (run->attrs.imageCode &&
+               run->attrs.imageCode == attrs->imageCode &&
+               run->attrs.imageLine == attrs->imageLine &&
+               (run->attrs.imageColumn + run->numImageCells) == attrs->imageColumn) {
+        // This is the next image cell in the run.
+        run->numImageCells++;
         return run;
     } else {
+        // Current run already has data so create a new complex run.
         return CRunAppendNewString(run, attrs, x, string, key, advance);
     }
 }

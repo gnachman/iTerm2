@@ -7,8 +7,9 @@
 //
 
 #import "ContextMenuActionPrefsController.h"
-#import "NSStringITerm.h"
 #import "FutureMethods.h"
+#import "NSStringITerm.h"
+#import "VT100RemoteHost.h"
 
 static NSString* kTitleKey = @"title";
 static NSString* kActionKey = @"action";
@@ -39,7 +40,10 @@ static NSString* kParameterKey = @"parameter";
     return (ContextMenuActions) [[dict objectForKey:kActionKey] intValue];
 }
 
-+ (NSString *)titleForActionDict:(NSDictionary *)dict withCaptureComponents:(NSArray *)components
++ (NSString *)titleForActionDict:(NSDictionary *)dict
+           withCaptureComponents:(NSArray *)components
+                workingDirectory:(NSString *)workingDirectory
+                      remoteHost:(VT100RemoteHost *)remoteHost
 {
     NSString *title = [dict objectForKey:kTitleKey];
     for (int i = 0; i < 9; i++) {
@@ -49,6 +53,12 @@ static NSString* kParameterKey = @"parameter";
         }
         title = [title stringByReplacingBackreference:i withString:repl];
     }
+
+    title = [title stringByReplacingEscapedChar:'d' withString:workingDirectory ?: @"."];
+    title = [title stringByReplacingEscapedChar:'h' withString:remoteHost.hostname];
+    title = [title stringByReplacingEscapedChar:'u' withString:remoteHost.username];
+    title = [title stringByReplacingEscapedChar:'\\' withString:@"\\"];
+
     return title;
 }
 
@@ -63,12 +73,17 @@ static NSString* kParameterKey = @"parameter";
             return parameter;
         case kOpenUrlContextMenuAction:
             return [parameter stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        case kSendTextContextMenuAction:
+            return parameter;
     }
 
     return nil;
 }
 
-+ (NSString *)parameterForActionDict:(NSDictionary *)dict withCaptureComponents:(NSArray *)components
++ (NSString *)parameterForActionDict:(NSDictionary *)dict
+               withCaptureComponents:(NSArray *)components
+                    workingDirectory:(NSString *)workingDirectory
+                          remoteHost:(VT100RemoteHost *)remoteHost
 {
     NSString *parameter = [dict objectForKey:kParameterKey];
     ContextMenuActions action = (ContextMenuActions) [[dict objectForKey:kActionKey] intValue];
@@ -80,6 +95,13 @@ static NSString* kParameterKey = @"parameter";
         }
         parameter = [parameter stringByReplacingBackreference:i withString:repl];
     }
+
+    parameter = [parameter stringByReplacingEscapedChar:'d' withString:workingDirectory ?: @"."];
+    parameter = [parameter stringByReplacingEscapedChar:'h' withString:remoteHost.hostname];
+    parameter = [parameter stringByReplacingEscapedChar:'u' withString:remoteHost.username];
+    parameter = [parameter stringByReplacingEscapedChar:'n' withString:@"\n"];
+    parameter = [parameter stringByReplacingEscapedChar:'\\' withString:@"\\"];
+
     return parameter;
 }
 
@@ -158,18 +180,16 @@ static NSString* kParameterKey = @"parameter";
     row:(NSInteger)row
 {
     // These two arrays and the enum in the header file must be parallel
-    NSArray *actionNames = [NSArray arrayWithObjects:
-                            @"Open File…",
-                            @"Open URL…",
-                            @"Run Command…",
-                            @"Run Coprocess…",
-                            nil];
-    NSArray *paramPlaceholders = [NSArray arrayWithObjects:
-                                  @"Enter file name",
-                                  @"Enter URL",
-                                  @"Enter command",
-                                  @"Enter coprocess command",
-                                  nil];
+    NSArray *actionNames = @[ @"Open File…",
+                              @"Open URL…",
+                              @"Run Command…",
+                              @"Run Coprocess…",
+                              @"Send text…" ];
+    NSArray *paramPlaceholders = @[ @"Enter file name",
+                                    @"Enter URL",
+                                    @"Enter command",
+                                    @"Enter coprocess command",
+                                    @"Enter text" ];
 
 
     if (tableColumn == titleColumn_) {

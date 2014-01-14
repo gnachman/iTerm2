@@ -36,11 +36,62 @@
 static NSMutableDictionary* complexCharMap;
 // Maps strings to codes.
 static NSMutableDictionary* inverseComplexCharMap;
+// Image info. Maps a NSNumber with the image's code to an ImageInfo object.
+static NSMutableDictionary* gImages;
 // Next available code.
 static int ccmNextKey = 1;
 // If ccmNextKey has wrapped then this is set to true and we have to delete old
 // strings before creating a new one with a recycled code.
 static BOOL hasWrapped = NO;
+
+@interface ImageInfo ()
+@property(nonatomic, retain) NSImage *embeddedImage;
+@property(nonatomic, assign) unichar code;
+@end
+
+@implementation ImageInfo
+
+- (void)dealloc {
+    [_filename release];
+    [_image release];
+    [_embeddedImage release];
+    [super dealloc];
+}
+
+- (NSImage *)imageEmbeddedInRegionOfSize:(NSSize)region {
+    if (!_image) {
+        return nil;
+    }
+    if (!NSEqualSizes(_embeddedImage.size, region)) {
+        NSImage *canvas = [[[NSImage alloc] init] autorelease];
+        NSSize size;
+        if (_preserveAspectRatio) {
+            size = region;
+        } else {
+            double imageAR = _image.size.width / _image.size.height;
+            double canvasAR = region.width / region.height;
+            if (imageAR > canvasAR) {
+                // image is wider than canvas, add black bars on top and bottom
+                size = NSMakeSize(region.width, region.width / imageAR);
+            } else {
+                // image is taller than canvas, add black bars on sides
+                size = NSMakeSize(region.height * imageAR, region.height);
+            }
+        }
+        [canvas setSize:region];
+        [canvas lockFocus];
+        [_image drawInRect:NSMakeRect((region.width - size.width) / 2,
+                                      (region.height - size.height) / 2,
+                                      size.width,
+                                      size.height)];
+        [canvas unlockFocus];
+        
+        self.embeddedImage = canvas;
+    }
+    return _embeddedImage;
+}
+
+@end
 
 @implementation ScreenCharArray
 @synthesize line = _line;
@@ -136,6 +187,55 @@ static BOOL ComplexCharKeyIsReserved(int k) {
         default:
             return NO;
     }
+}
+
+screen_char_t ImageCharForNewImage(NSString *name, int width, int height, BOOL preserveAspectRatio)
+{
+    if (!gImages) {
+        gImages = [[NSMutableDictionary alloc] init];
+    }
+    int newKey;
+    do {
+        newKey = ccmNextKey++;
+    } while (ComplexCharKeyIsReserved(newKey));
+
+    screen_char_t c = { 0 };
+    c.image = 1;
+    c.code = newKey;
+
+    ImageInfo *imageInfo = [[[ImageInfo alloc] init] autorelease];
+    imageInfo.filename = name;
+    imageInfo.preserveAspectRatio = preserveAspectRatio;
+    imageInfo.size = NSMakeSize(width, height);
+    imageInfo.code = c.code;
+    gImages[@(c.code)] = imageInfo;
+
+    return c;
+}
+
+void SetPositionInImageChar(screen_char_t *charPtr, int x, int y)
+{
+    charPtr->foregroundColor = x;
+    charPtr->backgroundColor = y;
+}
+
+void SetDecodedImage(unichar code, NSImage *image)
+{
+    ImageInfo *imageInfo = gImages[@(code)];
+    imageInfo.image = image;
+}
+
+void ReleaseImage(unichar code) {
+    [gImages removeObjectForKey:@(code)];
+}
+
+ImageInfo *GetImageInfo(unichar code) {
+    return gImages[@(code)];
+}
+
+VT100GridCoord GetPositionOfImageInChar(screen_char_t c) {
+    return VT100GridCoordMake(c.foregroundColor,
+                              c.backgroundColor);
 }
 
 int GetOrSetComplexChar(NSString* str)

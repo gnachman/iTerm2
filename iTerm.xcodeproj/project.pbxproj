@@ -574,6 +574,7 @@
 		A6057C0E187BC4C3004A60AF /* CommandHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6057C0C187BC4C3004A60AF /* CommandHistory.h */; };
 		A6057C0F187BC4C3004A60AF /* CommandHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6057C0D187BC4C3004A60AF /* CommandHistory.m */; };
 		A6057C10187BC4C3004A60AF /* CommandHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6057C0D187BC4C3004A60AF /* CommandHistory.m */; };
+		A6057C171883D12E004A60AF /* broken_image.png in Resources */ = {isa = PBXBuildFile; fileRef = A6057C161883D12E004A60AF /* broken_image.png */; };
 		A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */; };
 		A628C7A918764AA4009B0818 /* NSDictionary+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */; };
 		A628C7AA18764AA4009B0818 /* NSDictionary+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */; };
@@ -1058,6 +1059,7 @@
 		A6057C08187A1809004A60AF /* TerminalFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TerminalFile.m; sourceTree = "<group>"; };
 		A6057C0C187BC4C3004A60AF /* CommandHistory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandHistory.h; sourceTree = "<group>"; };
 		A6057C0D187BC4C3004A60AF /* CommandHistory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CommandHistory.m; sourceTree = "<group>"; };
+		A6057C161883D12E004A60AF /* broken_image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = broken_image.png; path = images/broken_image.png; sourceTree = "<group>"; };
 		A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+iTerm.h"; sourceTree = "<group>"; };
 		A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+iTerm.m"; sourceTree = "<group>"; };
 		A6358642184BEA57009ED690 /* AATree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AATree.h; path = "objc-aatree-master/AATree.h"; sourceTree = "<group>"; };
@@ -1595,6 +1597,7 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				A6057C161883D12E004A60AF /* broken_image.png */,
 				1DEF5E6B185F889600300319 /* Alert.png */,
 				1DEF5E6C185F889600300319 /* Alert@2x.png */,
 				1DA02CFA1327612600D7E7DB /* bell.png */,
@@ -2430,6 +2433,7 @@
 				9D737D5F17495B4100B3334D /* PrefsGeneral.png in Resources */,
 				9D737D6017495B4100B3334D /* PrefsGeneral@2x.png in Resources */,
 				9DB3D6E0176C8F0B0071CCF8 /* PrefsAppearance.png in Resources */,
+				A6057C171883D12E004A60AF /* broken_image.png in Resources */,
 				9DB3D6E1176C8F0B0071CCF8 /* PrefsAppearance@2x.png in Resources */,
 				1DEF5E6D185F889600300319 /* Alert.png in Resources */,
 				9DB3D6E4176CB4D80071CCF8 /* PrefsProfile.png in Resources */,

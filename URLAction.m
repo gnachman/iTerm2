@@ -52,4 +52,9 @@
     [super dealloc];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p string=%@ rule=%@>",
+            [self class], self, self.string, self.rule];
+}
+
 @end

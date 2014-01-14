@@ -31,6 +31,33 @@
 
 #import <Cocoa/Cocoa.h>
 #import "NSStringITerm.h"
+#import "VT100GridTypes.h"
+
+// Describes an image. A screen_char_t may be used to draw a part of an image.
+// The code in the screen_char_t can be used to look up this object which is
+// 1:1 with images.
+@interface ImageInfo : NSObject
+
+// Size in cells.
+@property(nonatomic, assign) NSSize size;
+
+// Full-size image.
+@property(nonatomic, retain) NSImage *image;
+
+// If set, the image won't be squished.
+@property(nonatomic, assign) BOOL preserveAspectRatio;
+
+// Original filename
+@property(nonatomic, copy) NSString *filename;
+
+// Image code
+@property(nonatomic, readonly) unichar code;
+
+// Returns an image of size |region| containing a scaled copy of |image| and
+// transparency around two edges if |region| != |image.size|.
+- (NSImage *)imageEmbeddedInRegionOfSize:(NSSize)region;
+
+@end
 
 // This is used in the rightmost column when a double-width character would
 // have been split in half and was wrapped to the next line. It is nonprintable
@@ -115,11 +142,12 @@ typedef struct screen_char_t
     // With 24-bit semantics:
     //   foreground/backgroundColor gives red component and fg/bgGreen, fg/bgBlue
     //     give the rest of the color's components
-
+    // For images, foregroundColor doubles as the x index.
     unsigned int foregroundColor : 8;
     unsigned int fgGreen : 8;
     unsigned int fgBlue  : 8;
 
+    // For images, backgroundColor doubles as the y index.
     unsigned int backgroundColor : 8;
     unsigned int bgGreen : 8;
     unsigned int bgBlue  : 8;
@@ -142,9 +170,13 @@ typedef struct screen_char_t
     unsigned int blink : 1;
     unsigned int underline : 1;
 
+    // Is this actually an image? Changes the semantics of code,
+    // foregroundColor, and backgroundColor (see notes above).
+    unsigned int image : 1;
+
     // These bits aren't used but are defined here so that the entire memory
     // region can be initialized.
-    unsigned int unused : 7;
+    unsigned int unused : 6;
 } screen_char_t;
 
 // Typically used to store a single screen line.
@@ -177,6 +209,7 @@ static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t fr
     to->italic = from.italic;
     to->blink = from.blink;
     to->underline = from.underline;
+    to->image = from.image;
 }
 
 // Copy background color from one char to another.
@@ -333,3 +366,26 @@ void ConvertCharsToGraphicsCharset(screen_char_t *s, int len);
 
 // Indicates if s contains any combining marks.
 BOOL StringContainsCombiningMark(NSString *s);
+
+// Allocates a new image code and sets in the return value. The image will be
+// displayed in the terminal with width x height cells. If preserveAspectRatio
+// is set then background-color bars will be added on the edges so the image is
+// not distorted.
+screen_char_t ImageCharForNewImage(NSString *name, int width, int height, BOOL preserveAspectRatio);
+
+// Sets the row and column number in an image cell. Goes from 0 to width/height
+// as specified in the preceding call to ImageCharForNewImage.
+void SetPositionInImageChar(screen_char_t *charPtr, int x, int y);
+
+// Assigns an image to a code allocated by ImageCharForNewImage.
+void SetDecodedImage(unichar code, NSImage *image);
+
+// Releases all memory associated with an image. The code comes from ImageCharForNewImage.
+void ReleaseImage(unichar code);
+
+// Returns image info for a code found in a screen_char_t with field image==1.
+ImageInfo *GetImageInfo(unichar code);
+
+// Returns the position of a character within an image in cells with the origin
+// at the top left.
+VT100GridCoord GetPositionOfImageInChar(screen_char_t c);
