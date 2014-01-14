@@ -54,7 +54,7 @@ static NSString* kParameterKey = @"parameter";
         title = [title stringByReplacingBackreference:i withString:repl];
     }
 
-    title = [title stringByReplacingEscapedChar:'d' withString:workingDirectory];
+    title = [title stringByReplacingEscapedChar:'d' withString:workingDirectory ?: @"."];
     title = [title stringByReplacingEscapedChar:'h' withString:remoteHost.hostname];
     title = [title stringByReplacingEscapedChar:'u' withString:remoteHost.username];
     title = [title stringByReplacingEscapedChar:'\\' withString:@"\\"];
@@ -96,7 +96,7 @@ static NSString* kParameterKey = @"parameter";
         parameter = [parameter stringByReplacingBackreference:i withString:repl];
     }
 
-    parameter = [parameter stringByReplacingEscapedChar:'d' withString:workingDirectory];
+    parameter = [parameter stringByReplacingEscapedChar:'d' withString:workingDirectory ?: @"."];
     parameter = [parameter stringByReplacingEscapedChar:'h' withString:remoteHost.hostname];
     parameter = [parameter stringByReplacingEscapedChar:'u' withString:remoteHost.username];
     parameter = [parameter stringByReplacingEscapedChar:'n' withString:@"\n"];

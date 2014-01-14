@@ -9627,6 +9627,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int fileCharsTaken = 0;
 
     NSString *workingDirectory = [dataSource workingDirectoryOnLine:y];
+    if (!workingDirectory) {
+        // Well, just try the current directory then.
+        workingDirectory = [_delegate textViewCurrentWorkingDirectory];
+    }
+    if (!workingDirectory) {
+        workingDirectory = @"";
+    }
     // First, try to locate an existing filename at this location.
     NSString *filename = [self _bruteforcePathFromBeforeString:[[possibleFilePart1 mutableCopy] autorelease]
                                                    afterString:[[possibleFilePart2 mutableCopy] autorelease]
