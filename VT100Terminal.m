@@ -4849,9 +4849,14 @@ static VT100TCC decode_string(unsigned char *datap,
                 if (args.count >= 3) {
                     NSString *label = args[2];
                 }
-                
+
                 [delegate_ terminalProgressAt:fraction label:label];
             }
+            break;
+
+        case 'H':
+            // Terminal command.
+            [delegate_ terminalFinalTermCommand:[args subarrayWithRange:NSMakeRange(1, args.count - 1)]];
             break;
     }
 }
