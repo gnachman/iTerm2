@@ -7,6 +7,7 @@
 //
 
 #import "CommandHistory.h"
+#import "PreferencePanel.h"
 #import "VT100RemoteHost.h"
 
 static const int kMaxResults = 200;
@@ -160,7 +161,9 @@ static const int kMaxCommandsToSavePerHost = 200;
     theEntry.uses = theEntry.uses + 1;
     theEntry.lastUsed = [NSDate timeIntervalSinceReferenceDate];
 
-    [NSKeyedArchiver archiveRootObject:[self dictionaryForEntries] toFile:_path];
+    if ([[PreferencePanel sharedInstance] savePasteHistory]) {
+        [NSKeyedArchiver archiveRootObject:[self dictionaryForEntries] toFile:_path];
+    }
 }
 
 - (BOOL)haveCommandsForHost:(VT100RemoteHost *)host {
