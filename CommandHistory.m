@@ -9,7 +9,19 @@
 #import "CommandHistory.h"
 #import "VT100RemoteHost.h"
 
-static const int kMaxResults = 20;
+static const int kMaxResults = 200;
+
+// Keys for serializing an entry
+static NSString *const kCommand = @"command";
+static NSString *const kUses = @"uses";
+static NSString *const kLastUsed = @"last used";
+
+// Top level serialization keys
+static NSString *const kHostname = @"hostname";
+static NSString *const kCommands = @"commands";
+
+static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
+static const int kMaxCommandsToSavePerHost = 200;
 
 @interface CommandHistory ()
 @property(nonatomic, retain) NSMutableDictionary *hosts;
@@ -28,6 +40,21 @@ static const int kMaxResults = 20;
 
 + (instancetype)commandHistoryEntry {
     return [[[self alloc] init] autorelease];
+}
+
++ (instancetype)entryWithDictionary:(NSDictionary *)dict {
+    CommandHistoryEntry *entry = [self commandHistoryEntry];
+    entry.command = dict[kCommand];
+    entry.uses = [dict[kUses] intValue];
+    entry.lastUsed = [dict[kLastUsed] doubleValue];
+
+    return entry;
+}
+
+- (NSDictionary *)dictionary {
+    return @{ kCommand: self.command,
+              kUses: @(self.uses),
+              kLastUsed: @(self.lastUsed) };
 }
 
 - (void)dealloc {
@@ -73,7 +100,10 @@ static const int kMaxResults = 20;
 
 @end
 
-@implementation CommandHistory
+@implementation CommandHistory {
+    NSString *_path;
+}
+
 
 + (instancetype)sharedInstance {
     static id instance;
@@ -88,12 +118,25 @@ static const int kMaxResults = 20;
     self = [super init];
     if (self) {
         _hosts = [[NSMutableDictionary alloc] init];
+        _path = [NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory,
+                                                     NSUserDomainMask,
+                                                     YES) lastObject];
+        NSString *appname = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString *)kCFBundleNameKey];
+        _path = [_path stringByAppendingPathComponent:appname];
+        [[NSFileManager defaultManager] createDirectoryAtPath:_path
+                                  withIntermediateDirectories:YES
+                                                   attributes:nil
+                                                        error:NULL];
+        _path = [[_path stringByAppendingPathComponent:@"commandhistory.plist"] copy];
+
+        [self loadCommandHistory];
     }
     return self;
 }
 
 - (void)dealloc {
     [_hosts release];
+    [_path release];
     [super dealloc];
 }
 
@@ -116,6 +159,8 @@ static const int kMaxResults = 20;
     }
     theEntry.uses = theEntry.uses + 1;
     theEntry.lastUsed = [NSDate timeIntervalSinceReferenceDate];
+
+    [NSKeyedArchiver archiveRootObject:[self dictionaryForEntries] toFile:_path];
 }
 
 - (BOOL)haveCommandsForHost:(VT100RemoteHost *)host {
@@ -162,6 +207,48 @@ static const int kMaxResults = 20;
         _hosts[key] = result = [NSMutableArray array];
     }
     return result;
+}
+
+- (void)loadCommandHistory {
+    NSDictionary *archive = [NSKeyedUnarchiver unarchiveObjectWithFile:_path];
+    for (NSString *host in archive) {
+        NSMutableArray *commands = _hosts[host];
+        if (!commands) {
+            _hosts[host] = commands = [NSMutableArray array];
+        }
+
+        for (NSDictionary *commandDict in archive[host]) {
+            [commands addObject:[CommandHistoryEntry entryWithDictionary:commandDict]];
+        }
+    }
+}
+
+- (NSDictionary *)dictionaryForEntries {
+    NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
+    for (NSString *key in _hosts) {
+        NSArray *array = [self arrayForCommandEntries:_hosts[key]];
+        if (array.count) {
+            [dictionary setObject:array
+                           forKey:key];
+        }
+    }
+    return dictionary;
+}
+
+- (NSArray *)arrayForCommandEntries:(NSArray *)entries {
+    NSMutableArray *array = [NSMutableArray array];
+    NSTimeInterval minLastUse = [NSDate timeIntervalSinceReferenceDate] - kMaxTimeToRememberCommands;
+    for (CommandHistoryEntry *entry in entries) {
+        if (entry.lastUsed >= minLastUse) {
+            [array addObject:[entry dictionary]];
+        }
+    }
+    if (array.count > kMaxCommandsToSavePerHost) {
+        return [array subarrayWithRange:NSMakeRange(array.count - kMaxCommandsToSavePerHost,
+                                                    kMaxCommandsToSavePerHost)];
+    } else {
+        return array;
+    }
 }
 
 @end

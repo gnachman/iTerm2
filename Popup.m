@@ -175,7 +175,7 @@
     PTYTextView* tv = [self.delegate popupVT100TextView];
     [tv scrollEnd];
     NSRect frame = [[self window] frame];
-    frame.size.height = [[tableView_ headerView] frame].size.height + [model_ count] * ([tableView_ rowHeight] + [tableView_ intercellSpacing].height);
+    frame.size.height = [[tableView_ headerView] frame].size.height + MIN(20, [model_ count]) * ([tableView_ rowHeight] + [tableView_ intercellSpacing].height);
 
     NSPoint p = NSMakePoint(MARGIN + cx * [tv charWidth],
                             ([screen numberOfLines] - [screen height] + cy) * [tv lineHeight]);
