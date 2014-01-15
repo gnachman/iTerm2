@@ -88,7 +88,7 @@ extern int kVT100ScreenMinRows;
     // to an id<IntervalTreeObject>, which is either PTYNoteViewController or VT100ScreenMark.
     IntervalTree *intervalTree_;
 
-    NSMutableSet *markCache_;  // Maps an absolute line number to a VT100ScreenMark.
+    NSMutableDictionary *markCache_;  // Maps an absolute line number to a VT100ScreenMark.
     VT100GridCoordRange markCacheRange_;
 
     // Location of the start of the current command, or -1 for none. Y is absolute.

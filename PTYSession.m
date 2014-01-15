@@ -5284,10 +5284,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                         trimTrailingWhitespace:YES];
     NSRange newline = [command rangeOfString:@"\n"];
     if (newline.location != NSNotFound) {
-        return [command substringToIndex:newline.location];
-    } else {
-        return command;
+        command = [command substringToIndex:newline.location];
     }
+    return [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 }
 
 - (NSString *)currentCommand {
@@ -5318,6 +5317,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (command.length) {
         [[CommandHistory sharedInstance] addCommand:command
                                              onHost:[SCREEN remoteHostOnLine:range.end.y]];
+        VT100ScreenMark *mark = [SCREEN markOnLine:range.start.y];
+        mark.command = command;
     }
     commandRange_ = VT100GridCoordRangeMake(-1, -1, -1, -1);
 }
