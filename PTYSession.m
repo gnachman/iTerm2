@@ -3554,6 +3554,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (VT100RemoteHost *)currentHost {
+    return [SCREEN remoteHostOnLine:[SCREEN numberOfLines]];
+}
+
 #pragma mark tmux gateway delegate methods
 // TODO (also, capture and throw away keyboard input)
 
@@ -5281,13 +5285,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                              Y:range.end.y
                                            pad:NO
                             includeLastNewline:NO
-                        trimTrailingWhitespace:YES];
+                        trimTrailingWhitespace:NO];
     NSRange newline = [command rangeOfString:@"\n"];
     if (newline.location != NSNotFound) {
-        return [command substringToIndex:newline.location];
-    } else {
-        return command;
+        command = [command substringToIndex:newline.location];
     }
+
+    return [command stringByTrimmingLeadingWhitespace];
 }
 
 - (NSString *)currentCommand {
@@ -5306,7 +5310,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         command = [self commandInRange:commandRange_];
     }
     VT100RemoteHost *host = [SCREEN remoteHostOnLine:[SCREEN numberOfLines]];
-    return [[CommandHistory sharedInstance] autocompleteSuggestionsWithPartialCommand:command
+    NSString *trimmedCommand =
+        [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    return [[CommandHistory sharedInstance] autocompleteSuggestionsWithPartialCommand:trimmedCommand
                                                                                onHost:host];
 }
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
@@ -5315,9 +5321,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
     NSString *command = [self commandInRange:range];
-    if (command.length) {
-        [[CommandHistory sharedInstance] addCommand:command
+    NSString *trimmedCommand =
+        [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    if (trimmedCommand.length) {
+        [[CommandHistory sharedInstance] addCommand:trimmedCommand
                                              onHost:[SCREEN remoteHostOnLine:range.end.y]];
+        VT100ScreenMark *mark = [SCREEN markOnLine:range.start.y];
+        mark.command = command;
     }
     commandRange_ = VT100GridCoordRangeMake(-1, -1, -1, -1);
 }

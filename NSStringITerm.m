@@ -658,4 +658,14 @@ int decode_utf8_char(const unsigned char *datap,
   return s;
 }
 
+- (NSString*)stringByTrimmingLeadingWhitespace {
+    int i = 0;
+
+    while ((i < self.length) &&
+           [[NSCharacterSet whitespaceCharacterSet] characterIsMember:[self characterAtIndex:i]]) {
+        i++;
+    }
+    return [self substringFromIndex:i];
+}
+
 @end

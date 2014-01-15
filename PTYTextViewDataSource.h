@@ -14,6 +14,7 @@ typedef enum {
 @class PTYTask;
 @class SCPPath;
 @class VT100RemoteHost;
+@class VT100ScreenMark;
 @class VT100Terminal;
 
 @protocol PTYTextViewDataSource
@@ -95,7 +96,7 @@ typedef enum {
 
 - (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note;
 - (NSArray *)charactersWithNotesOnLine:(int)line;
-- (BOOL)hasMarkOnLine:(int)line;
+- (VT100ScreenMark *)markOnLine:(int)line;
 - (NSString *)workingDirectoryOnLine:(int)line;
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line;
 - (VT100RemoteHost *)remoteHostOnLine:(int)line;

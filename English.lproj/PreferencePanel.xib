@@ -926,9 +926,9 @@ Gw
                                             </connections>
                                         </textField>
                                         <button id="5056">
-                                            <rect key="frame" x="95" y="196" width="220" height="18"/>
+                                            <rect key="frame" x="95" y="196" width="312" height="18"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <buttonCell key="cell" type="check" title="Save copy/paste history to disk" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5057">
+                                            <buttonCell key="cell" type="check" title="Save copy/paste and command history to disk" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5057">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>

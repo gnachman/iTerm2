@@ -30,6 +30,7 @@
 #import "SolidColorView.h"
 #import "ThreeFingerTapGestureRecognizer.h"
 #import "URLAction.h"
+#import "VT100ScreenMark.h"
 #import "VT100RemoteHost.h"
 #import "charmaps.h"
 #import "iTerm.h"
@@ -398,12 +399,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     // Used by _drawCursorTo: to remember the last time the cursor moved to avoid drawing a blinked-out
     // cursor while it's moving.
     NSTimeInterval lastTimeCursorMoved_;
-    
+
     // If set, the last-modified time of each line on the screen is shown on the right side of the display.
     BOOL showTimestamps_;
     float _antiAliasedShift;  // Amount to shift anti-aliased text by horizontally to simulate bold
     NSImage *markImage_;
-    
+    NSImage *markErrImage_;
+
     // Point clicked, valid only during -validateMenuItem and calls made from
     // the context menu and if x and y are nonnegative.
     VT100GridCoord validationClickPoint_;
@@ -554,6 +556,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         }
         [self viewDidChangeBackingProperties];
         markImage_ = [NSImage imageNamed:@"mark"];
+        markErrImage_ = [NSImage imageNamed:@"mark_err"];
     }
     return self;
 }
@@ -4510,33 +4513,43 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     maxAt *= [dataSource width];
     maxAt += endX;
 
-    VT100GridCoord coord = VT100GridCoordMake(x, y);
-    ImageInfo *imageInfo = [self imageInfoAtCoord:coord];
-
-    if (!imageInfo &&
-        (startX < 0 ||
-         clickAt < minAt ||
-         clickAt >= maxAt)) {
-        int savedStartX = startX;
-        int savedStartY = startY;
-        int savedEndX = endX;
-        int savedEndY = endY;
-        // Didn't click on selection.
-        [self smartSelectWithEvent:event];
-        NSCharacterSet *nonWhiteSpaceSet = [[NSCharacterSet whitespaceAndNewlineCharacterSet] invertedSet];
-        NSString *text = [self selectedText];
-        if (!text ||
-            !text.length ||
-            [text rangeOfCharacterFromSet:nonWhiteSpaceSet].location == NSNotFound) {
-            // If all we selected was white space, undo it.
-            startX = savedStartX;
-            startY = savedStartY;
-            endX = savedEndX;
-            endY = savedEndY;
+    NSMenu *menu = nil;
+    if (x < MARGIN) {
+        VT100ScreenMark *mark = [dataSource markOnLine:y];
+        if (mark && mark.command.length) {
+            menu = [self menuForMark:mark directory:[dataSource workingDirectoryOnLine:y]];
         }
     }
-    [self setNeedsDisplay:YES];
-    NSMenu *menu = [self menuAtCoord:coord];
+
+    VT100GridCoord coord = VT100GridCoordMake(x, y);
+    if (!menu) {
+        ImageInfo *imageInfo = [self imageInfoAtCoord:coord];
+
+        if (!imageInfo &&
+            (startX < 0 ||
+             clickAt < minAt ||
+             clickAt >= maxAt)) {
+            int savedStartX = startX;
+            int savedStartY = startY;
+            int savedEndX = endX;
+            int savedEndY = endY;
+            // Didn't click on selection.
+            [self smartSelectWithEvent:event];
+            NSCharacterSet *nonWhiteSpaceSet = [[NSCharacterSet whitespaceAndNewlineCharacterSet] invertedSet];
+            NSString *text = [self selectedText];
+            if (!text ||
+                !text.length ||
+                [text rangeOfCharacterFromSet:nonWhiteSpaceSet].location == NSNotFound) {
+                // If all we selected was white space, undo it.
+                startX = savedStartX;
+                startY = savedStartY;
+                endX = savedEndX;
+                endY = savedEndY;
+            }
+        }
+        [self setNeedsDisplay:YES];
+        menu = [self menuAtCoord:coord];
+    }
     openingContextMenu_ = YES;
 
     // Slowly moving away from using NSPoint for integer coordinates.
@@ -5367,6 +5380,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [item action] == @selector(inspectImage:)) {
         return YES;
     }
+    if ([item action] == @selector(reRunCommand:)) {
+        return YES;
+    }
 
     SEL theSel = [item action];
     if ([NSStringFromSelector(theSel) hasPrefix:@"contextMenuAction"]) {
@@ -5609,6 +5625,44 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     } else {
         return nil;
     }
+}
+
+- (void)reRunCommand:(id)sender
+{
+    NSString *command = [sender representedObject];
+    [_delegate insertText:[command stringByAppendingString:@"\n"]];
+}
+
+- (NSMenu *)menuForMark:(VT100ScreenMark *)mark directory:(NSString *)directory
+{
+    NSMenu *theMenu;
+
+    // Allocate a menu
+    theMenu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
+
+    NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
+    theItem.title = [NSString stringWithFormat:@"Command: %@", mark.command];
+    [theMenu addItem:theItem];
+
+    if (directory) {
+        theItem = [[[NSMenuItem alloc] init] autorelease];
+        theItem.title = [NSString stringWithFormat:@"Directory: %@", directory];
+        [theMenu addItem:theItem];
+    }
+
+    theItem = [[[NSMenuItem alloc] init] autorelease];
+    theItem.title = [NSString stringWithFormat:@"Return code: %d", mark.code];
+    [theMenu addItem:theItem];
+
+    [theMenu addItem:[NSMenuItem separatorItem]];
+
+    theItem = [[[NSMenuItem alloc] initWithTitle:@"Re-run Command"
+                                          action:@selector(reRunCommand:)
+                                   keyEquivalent:@""] autorelease];
+    [theItem setRepresentedObject:mark.command];
+    [theMenu addItem:theItem];
+
+    return theMenu;
 }
 
 - (NSMenu *)menuAtCoord:(VT100GridCoord)coord
@@ -8340,13 +8394,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     // Indicate marks in margin --
-    if ([dataSource hasMarkOnLine:line]) {
+    VT100ScreenMark *mark = [dataSource markOnLine:line];
+    if (mark) {
+        NSImage *image = mark.code ? markErrImage_ : markImage_;
         CGFloat offset = (lineHeight - markImage_.size.height) / 2.0;
-        [markImage_ drawAtPoint:NSMakePoint(leftMargin.origin.x,
-                                            leftMargin.origin.y + offset)
-                       fromRect:NSMakeRect(0, 0, markImage_.size.width, markImage_.size.height)
-                      operation:NSCompositeSourceOver
-                       fraction:1.0];
+        [image drawAtPoint:NSMakePoint(leftMargin.origin.x,
+                                       leftMargin.origin.y + offset)
+                  fromRect:NSMakeRect(0, 0, markImage_.size.width, markImage_.size.height)
+                 operation:NSCompositeSourceOver
+                  fraction:1.0];
     }
     // Draw text and background --------------------------------------------------------------------
     // Contiguous sections of background with the same colour

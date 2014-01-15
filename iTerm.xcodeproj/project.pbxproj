@@ -475,6 +475,15 @@
 		1DB9D8F2183FE9EF0029F0B5 /* HotkeyWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB9D8F0183FE9EF0029F0B5 /* HotkeyWindowController.h */; };
 		1DB9D8F3183FE9EF0029F0B5 /* HotkeyWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB9D8F1183FE9EF0029F0B5 /* HotkeyWindowController.m */; };
 		1DB9D8F4183FE9EF0029F0B5 /* HotkeyWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB9D8F1183FE9EF0029F0B5 /* HotkeyWindowController.m */; };
+		1DC13ABD1886146B00034DAE /* mark_err.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13ABB1886146B00034DAE /* mark_err.png */; };
+		1DC13ABE1886146B00034DAE /* mark_err.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13ABB1886146B00034DAE /* mark_err.png */; };
+		1DC13ABF1886146B00034DAE /* mark_err@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13ABC1886146B00034DAE /* mark_err@2x.png */; };
+		1DC13AC01886146B00034DAE /* mark_err@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13ABC1886146B00034DAE /* mark_err@2x.png */; };
+		1DC13AC318864E2200034DAE /* CommandHistoryPopup.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DC13AC118864E2200034DAE /* CommandHistoryPopup.h */; };
+		1DC13AC418864E2200034DAE /* CommandHistoryPopup.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DC13AC218864E2200034DAE /* CommandHistoryPopup.m */; };
+		1DC13AC518864E2200034DAE /* CommandHistoryPopup.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DC13AC218864E2200034DAE /* CommandHistoryPopup.m */; };
+		1DC13AC71886507D00034DAE /* CommandHistoryPopup.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13AC61886507D00034DAE /* CommandHistoryPopup.xib */; };
+		1DC13AC81886507D00034DAE /* CommandHistoryPopup.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13AC61886507D00034DAE /* CommandHistoryPopup.xib */; };
 		1DC38818148E840700B89F7C /* SolidColorView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DC38816148E840600B89F7C /* SolidColorView.h */; };
 		1DC38819148E840700B89F7C /* SolidColorView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DC38817148E840700B89F7C /* SolidColorView.m */; };
 		1DC742A0127C96F90069594C /* IBarCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC7429F127C96F90069594C /* IBarCursor.png */; };
@@ -953,6 +962,11 @@
 		1DB72CF51396059200EB1005 /* xterm-terminfo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "xterm-terminfo.txt"; sourceTree = "<group>"; };
 		1DB9D8F0183FE9EF0029F0B5 /* HotkeyWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HotkeyWindowController.h; sourceTree = "<group>"; };
 		1DB9D8F1183FE9EF0029F0B5 /* HotkeyWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HotkeyWindowController.m; sourceTree = "<group>"; };
+		1DC13ABB1886146B00034DAE /* mark_err.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = mark_err.png; path = images/mark_err.png; sourceTree = "<group>"; };
+		1DC13ABC1886146B00034DAE /* mark_err@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "mark_err@2x.png"; path = "images/mark_err@2x.png"; sourceTree = "<group>"; };
+		1DC13AC118864E2200034DAE /* CommandHistoryPopup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandHistoryPopup.h; sourceTree = "<group>"; };
+		1DC13AC218864E2200034DAE /* CommandHistoryPopup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CommandHistoryPopup.m; sourceTree = "<group>"; };
+		1DC13AC61886507D00034DAE /* CommandHistoryPopup.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CommandHistoryPopup.xib; sourceTree = "<group>"; };
 		1DC38816148E840600B89F7C /* SolidColorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SolidColorView.h; sourceTree = "<group>"; };
 		1DC38817148E840700B89F7C /* SolidColorView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SolidColorView.m; sourceTree = "<group>"; };
 		1DC393C317B59B08000EE0F2 /* SearchResult.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SearchResult.h; sourceTree = "<group>"; };
@@ -1540,6 +1554,7 @@
 				F6C9AFEF0EA70D0200D318A8 /* sort.png */,
 				1D844C8B13FD8B7700CD4F85 /* SplitPanel.xib */,
 				1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */,
+				1DC13AC61886507D00034DAE /* CommandHistoryPopup.xib */,
 			);
 			name = Interfaces;
 			sourceTree = "<group>";
@@ -1597,11 +1612,11 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				A6057C161883D12E004A60AF /* broken_image.png */,
 				1DEF5E6B185F889600300319 /* Alert.png */,
 				1DEF5E6C185F889600300319 /* Alert@2x.png */,
 				1DA02CFA1327612600D7E7DB /* bell.png */,
 				1D8F396A13EB7A2C0025B80B /* BroadcastInput.png */,
+				A6057C161883D12E004A60AF /* broken_image.png */,
 				1D19C3621415998E00617E08 /* closebutton.tif */,
 				1D6C4D59122329F000E0AA3E /* ColorPresets.plist */,
 				1D9DDE9D142E855D00275650 /* Coprocess.png */,
@@ -1617,6 +1632,8 @@
 				FBB2EBCD040AC7C201F955DB /* important.png */,
 				1D48B291165F405A000046EE /* important@2x.png */,
 				1D1158C913444D29009B366F /* iTerm2 Help */,
+				1DC13ABB1886146B00034DAE /* mark_err.png */,
+				1DC13ABC1886146B00034DAE /* mark_err@2x.png */,
 				1D01609A1852AA6F0014D26A /* mark.png */,
 				1D0160991852AA6F0014D26A /* mark@2x.png */,
 				1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */,
@@ -1772,6 +1789,8 @@
 				A68A310E186E2EDA007F550F /* PopupEntry.m */,
 				A68A3113186E2F14007F550F /* PopupWindow.m */,
 				A68A3118186E2F54007F550F /* PopupModel.m */,
+				1DC13AC118864E2200034DAE /* CommandHistoryPopup.h */,
+				1DC13AC218864E2200034DAE /* CommandHistoryPopup.m */,
 			);
 			name = Popups;
 			sourceTree = "<group>";
@@ -2200,6 +2219,7 @@
 				1DD6707714934ADE008E4361 /* PTYSplitView.h in Headers */,
 				1DD4CE8014A51C0D00ED182E /* TmuxDashboardController.h in Headers */,
 				A68A310F186E2EDA007F550F /* PopupEntry.h in Headers */,
+				1DC13AC318864E2200034DAE /* CommandHistoryPopup.h in Headers */,
 				1DA9AEEA14A51CA000BEB37B /* TmuxSessionsTable.h in Headers */,
 				1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */,
 				1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */,
@@ -2330,13 +2350,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				1D81F0CA183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */,
+				1DC13AC81886507D00034DAE /* CommandHistoryPopup.xib in Resources */,
 				1D01609E1852AA6F0014D26A /* mark.png in Resources */,
 				1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */,
 				1DD39AEF180B8118004E56D5 /* Images.xcassets in Resources */,
 				1DEF5E6E185F889600300319 /* Alert.png in Resources */,
 				1D01609C1852AA6F0014D26A /* mark@2x.png in Resources */,
+				1DC13ABE1886146B00034DAE /* mark_err.png in Resources */,
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
 				1D81F0CC183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */,
+				1DC13AC01886146B00034DAE /* mark_err@2x.png in Resources */,
 				1DEF5E70185F889600300319 /* Alert@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2351,6 +2374,7 @@
 				1D5FDD7D1208E91100C46BA3 /* config.png in Resources */,
 				1D5FDD7E1208E91100C46BA3 /* exec.png in Resources */,
 				1D5FDD7F1208E91100C46BA3 /* important.png in Resources */,
+				1DC13ABD1886146B00034DAE /* mark_err.png in Resources */,
 				1D5FDD801208E91100C46BA3 /* new.png in Resources */,
 				1D5FDD811208E91100C46BA3 /* newwin.png in Resources */,
 				1D5FDD821208E91100C46BA3 /* iTerm.scriptSuite in Resources */,
@@ -2363,6 +2387,7 @@
 				1D5FDD8C1208E91100C46BA3 /* AquaTabsBackground.png in Resources */,
 				1D5FDD8D1208E91100C46BA3 /* AquaTabsDown.png in Resources */,
 				1D5FDD8E1208E91100C46BA3 /* AquaTabsDownGraphite.png in Resources */,
+				1DC13AC71886507D00034DAE /* CommandHistoryPopup.xib in Resources */,
 				1D5FDD8F1208E91100C46BA3 /* AquaTabsDownNonKey.png in Resources */,
 				1D5FDD901208E91100C46BA3 /* AquaTabsSeparator.png in Resources */,
 				1D5FDD911208E91100C46BA3 /* AquaTabsSeparatorDown.png in Resources */,
@@ -2399,6 +2424,7 @@
 				1D94EAB112D64022008225A9 /* UKCrashReporter.strings in Resources */,
 				1D99785312EEB3D600F0794D /* GlobalSearch.xib in Resources */,
 				1D237D90131D8BEE004DD60C /* FindView.xib in Resources */,
+				1DC13ABF1886146B00034DAE /* mark_err@2x.png in Resources */,
 				1DA02CFB1327612600D7E7DB /* bell.png in Resources */,
 				1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */,
 				1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */,
@@ -2622,6 +2648,7 @@
 				1D9A553E180FA7ED00B42CE9 /* PTYWindow.m in Sources */,
 				A68A30DF186D1429007F550F /* SCPPath.m in Sources */,
 				1D9A558D180FA87000B42CE9 /* PasteViewController.m in Sources */,
+				1DC13AC518864E2200034DAE /* CommandHistoryPopup.m in Sources */,
 				1D9A5547180FA82E00B42CE9 /* TmuxController.m in Sources */,
 				1D9A5550180FA82E00B42CE9 /* TmuxWindowsTable.m in Sources */,
 				1DD39B1E180B8415004E56D5 /* LineBuffer.m in Sources */,
@@ -2701,6 +2728,7 @@
 				1D5FDDC21208E93600C46BA3 /* NSBezierPath_AMShading.m in Sources */,
 				1D5FDDC31208E93600C46BA3 /* PSMTabDragAssistant.m in Sources */,
 				1D5FDDC41208E93600C46BA3 /* PSMUnifiedTabStyle.m in Sources */,
+				1DC13AC418864E2200034DAE /* CommandHistoryPopup.m in Sources */,
 				1D78B55F183EE1C000014D49 /* LineBufferPosition.m in Sources */,
 				1D5FDDC51208E93600C46BA3 /* PSMAdiumTabStyle.m in Sources */,
 				A68A30D1186D1414007F550F /* NSArray+iTerm.m in Sources */,

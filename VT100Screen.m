@@ -84,7 +84,7 @@ static const double kInterBellQuietPeriod = 0.1;
         findContext_ = [[FindContext alloc] init];
         savedIntervalTree_ = [[IntervalTree alloc] init];
         intervalTree_ = [[IntervalTree alloc] init];
-        markCache_ = [[NSMutableSet alloc] init];
+        markCache_ = [[NSMutableDictionary alloc] init];
         commandStartX_ = commandStartY_ = -1;
 
     }
@@ -651,7 +651,8 @@ static const double kInterBellQuietPeriod = 0.1;
     for (id<IntervalTreeObject> obj in [intervalTree_ allObjects]) {
         if ([obj isKindOfClass:[VT100ScreenMark class]]) {
             VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
-            [markCache_ addObject:@(totalScrollbackOverflow + range.end.y)];
+            VT100ScreenMark *mark = (VT100ScreenMark *)obj;
+            markCache_[@(totalScrollbackOverflow + range.end.y)] = mark;
         }
     }
 }
@@ -1531,7 +1532,8 @@ static const double kInterBellQuietPeriod = 0.1;
     }
     if (workingDirectory.length) {
         workingDirectoryObj.workingDirectory = workingDirectory;
-        VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, self.width, line);
+        VT100GridCoordRange range;
+        range = VT100GridCoordRangeMake(currentGrid_.cursorX, line, self.width, line);
         [intervalTree_ addObject:workingDirectoryObj
                     withInterval:[self intervalForGridCoordRange:range]];
     }
@@ -1548,9 +1550,9 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls {
     long long pos = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
-                                                                            line,
+                                                                            line + 1,
                                                                             0,
-                                                                            line)].limit;
+                                                                            line + 1)].limit;
     NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumeratorAt:pos];
     NSArray *objects;
     do {
@@ -1612,7 +1614,9 @@ static const double kInterBellQuietPeriod = 0.1;
         for (id<IntervalTreeObject> obj in [intervalTree_ objectsInInterval:deadInterval]) {
             if ([obj.entry.interval limit] <= lastDeadLocation) {
                 if ([obj isKindOfClass:[VT100ScreenMark class]]) {
-                    [markCache_ removeObject:@(totalScrollbackOverflow + [self coordRangeForInterval:obj.entry.interval].end.y)];
+                    long long theKey = (totalScrollbackOverflow +
+                                        [self coordRangeForInterval:obj.entry.interval].end.y);
+                    [markCache_ removeObjectForKey:@(theKey)];
                 }
                 [intervalTree_ removeObject:obj];
             }
@@ -1641,7 +1645,7 @@ static const double kInterBellQuietPeriod = 0.1;
                                         self.width,
                                         limit);
     }
-    [markCache_ addObject:@([self totalScrollbackOverflow] + range.end.y)];
+    markCache_[@([self totalScrollbackOverflow] + range.end.y)] = mark;
     [intervalTree_ addObject:mark withInterval:[self intervalForGridCoordRange:range]];
     [delegate_ screenNeedsRedraw];
     return mark;
@@ -1704,8 +1708,8 @@ static const double kInterBellQuietPeriod = 0.1;
     return nil;
 }
 
-- (BOOL)hasMarkOnLine:(int)line {
-    return [markCache_ containsObject:@([self totalScrollbackOverflow] + line)];
+- (VT100ScreenMark *)markOnLine:(int)line {
+  return markCache_[@([self totalScrollbackOverflow] + line)];
 }
 
 - (NSArray *)lastMarksOrNotes {
@@ -2918,7 +2922,45 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (void)terminalReturnCodeOfLastCommandWas:(int)returnCode {
+    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
+    NSArray *objects = [enumerator nextObject];
+    int numChecked = 0;
+    while (objects && numChecked < 50) {
+        for (id<IntervalTreeObject> obj in objects) {
+            if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+                VT100ScreenMark *mark = (VT100ScreenMark *)obj;
+                if (mark.command) {
+                    mark.code = returnCode;
+                    [delegate_ screenNeedsRedraw];
+                    return;
+                }
+            }
+            ++numChecked;
+        }
+        objects = [enumerator nextObject];
+    }
+}
+
+- (void)terminalFinalTermCommand:(NSArray *)argv {
     // TODO
+    // Currently, FinalTerm supports these commands:
+  /*
+   QUIT_PROGRAM,
+   SEND_TO_SHELL,
+   CLEAR_SHELL_COMMAND,
+   SET_SHELL_COMMAND,
+   RUN_SHELL_COMMAND,
+   TOGGLE_VISIBLE,
+   TOGGLE_FULLSCREEN,
+   TOGGLE_DROPDOWN,
+   ADD_TAB,
+   SPLIT,
+   CLOSE,
+   LOG,
+   PRINT_METRICS,
+   COPY_TO_CLIPBOARD,
+   OPEN_URL
+   */
 }
 
 #pragma mark - Private

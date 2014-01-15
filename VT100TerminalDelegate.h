@@ -335,5 +335,6 @@ typedef enum {
 - (void)terminalProgressAt:(double)fraction label:(NSString *)label;
 - (void)terminalProgressDidFinish;
 - (void)terminalReturnCodeOfLastCommandWas:(int)returnCode;
+- (void)terminalFinalTermCommand:(NSArray *)argv;
 
 @end
