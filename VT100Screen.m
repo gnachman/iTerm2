@@ -1532,7 +1532,8 @@ static const double kInterBellQuietPeriod = 0.1;
     }
     if (workingDirectory.length) {
         workingDirectoryObj.workingDirectory = workingDirectory;
-        VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, self.width, line);
+        VT100GridCoordRange range;
+        range = VT100GridCoordRangeMake(currentGrid_.cursorX, line, self.width, line);
         [intervalTree_ addObject:workingDirectoryObj
                     withInterval:[self intervalForGridCoordRange:range]];
     }
@@ -1549,9 +1550,9 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls {
     long long pos = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
-                                                                            line,
+                                                                            line + 1,
                                                                             0,
-                                                                            line)].limit;
+                                                                            line + 1)].limit;
     NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumeratorAt:pos];
     NSArray *objects;
     do {
@@ -2921,9 +2922,23 @@ static const double kInterBellQuietPeriod = 0.1;
 }
 
 - (void)terminalReturnCodeOfLastCommandWas:(int)returnCode {
-    VT100ScreenMark *mark = [self lastMark];
-    mark.code = returnCode;
-    [delegate_ screenNeedsRedraw];
+    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
+    NSArray *objects = [enumerator nextObject];
+    int numChecked = 0;
+    while (objects && numChecked < 50) {
+        for (id<IntervalTreeObject> obj in objects) {
+            if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+                VT100ScreenMark *mark = (VT100ScreenMark *)obj;
+                if (mark.command) {
+                    mark.code = returnCode;
+                    [delegate_ screenNeedsRedraw];
+                    return;
+                }
+            }
+            ++numChecked;
+        }
+        objects = [enumerator nextObject];
+    }
 }
 
 - (void)terminalFinalTermCommand:(NSArray *)argv {
