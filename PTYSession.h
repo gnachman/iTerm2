@@ -28,6 +28,7 @@ extern NSString *const kPTYSessionTmuxFontDidChange;
 @class PTYTextView;
 @class PasteContext;
 @class PreferencePanel;
+@class VT100RemoteHost;
 @class VT100Screen;
 @class VT100Terminal;
 @class iTermController;
@@ -375,6 +376,8 @@ typedef enum {
 - (void)showHideNotes;
 - (void)previousMarkOrNote;
 - (void)nextMarkOrNote;
+
+- (VT100RemoteHost *)currentHost;
 
 // Select this session and tab and bring window to foreground.
 - (void)reveal;

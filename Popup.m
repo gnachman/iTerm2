@@ -36,18 +36,18 @@
     BOOL haveChangedSelection_;
     // String that the user has selected.
     NSMutableString* selectionMainValue_;
-    
+
     // True while reloading data.
     BOOL reloading_;
 }
 
-- (id)initWithWindowNibName:(NSString*)nibName tablePtr:(NSTableView**)table model:(PopupModel*)model;
+- (id)initWithWindowNibName:(NSString*)nibName tablePtr:(NSTableView**)table model:(PopupModel*)model
 {
     self = [super initWithWindowNibName:nibName];
     if (self) {
         [self window];
 
-        if (table){
+        if (table) {
             tableView_ = [*table retain];
         }
         model_ = [[PopupModel alloc] init];

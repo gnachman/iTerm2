@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="4514" systemVersion="13A2093" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="4514" systemVersion="13B42" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment defaultVersion="1070" identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="4514"/>
@@ -333,7 +333,7 @@ DQ
                                     <action selector="copy:" target="-1" id="1327"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Copy with Styles" keyEquivalent="c" id="n4U-yI-y7D">
+                            <menuItem title="Copy with Styles" alternate="YES" keyEquivalent="c" id="n4U-yI-y7D">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="copyWithStyles:" target="-1" id="B2X-kC-nrq"/>
@@ -411,12 +411,18 @@ DQ
                                     <action selector="selectAll:" target="-1" id="179"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="1145"/>
                             <menuItem title="Open Paste History..." keyEquivalent="H" id="1142">
                                 <connections>
                                     <action selector="openPasteHistory:" target="-1" id="1143"/>
                                 </connections>
                             </menuItem>
-                            <menuItem isSeparatorItem="YES" id="1145"/>
+                            <menuItem title="Open Command History..." alternate="YES" keyEquivalent="y" id="MXE-be-qxv">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="openCommandHistory:" target="-1" id="XHr-bn-Hbc"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Open Autocomplete..." keyEquivalent=";" id="1144">
                                 <connections>
                                     <action selector="openAutocomplete:" target="-1" id="1146"/>
@@ -499,22 +505,6 @@ DQ
                                 <connections>
                                     <action selector="toggleAlertOnNextMark:" target="-1" id="hTO-Iy-yuC"/>
                                 </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="5a1-MJ-4uR">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                                <menu key="submenu" id="tEw-W0-CB4">
-                                    <items>
-                                        <menuItem title="Item 1" enabled="NO" id="A6D-EZ-4C7">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                        </menuItem>
-                                        <menuItem title="Item 2" enabled="NO" id="4fq-WI-27g">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                        </menuItem>
-                                        <menuItem title="Item 3" enabled="NO" id="U95-Js-BA7">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                        </menuItem>
-                                    </items>
-                                </menu>
                             </menuItem>
                             <menuItem title="Add note at cursor" keyEquivalent="m" id="Fna-Ng-9y6">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>

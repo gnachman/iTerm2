@@ -82,4 +82,6 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Returns a string containing only the digits.
 - (NSString *)stringWithOnlyDigits;
 
+- (NSString *)stringByTrimmingLeadingWhitespace;
+
 @end

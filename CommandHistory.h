@@ -32,4 +32,6 @@
 - (NSArray *)autocompleteSuggestionsWithPartialCommand:(NSString *)partialCommand
                                                 onHost:(VT100RemoteHost *)host;
 
+- (BOOL)haveCommandsForHost:(VT100RemoteHost *)host;
+
 @end

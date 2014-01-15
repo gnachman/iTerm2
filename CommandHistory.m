@@ -118,6 +118,10 @@ static const int kMaxResults = 20;
     theEntry.lastUsed = [NSDate timeIntervalSinceReferenceDate];
 }
 
+- (BOOL)haveCommandsForHost:(VT100RemoteHost *)host {
+    return [[self commandsForHost:host] count] > 0;
+}
+
 - (NSArray *)autocompleteSuggestionsWithPartialCommand:(NSString *)partialCommand
                                                 onHost:(VT100RemoteHost *)host {
     BOOL emptyPartialCommand = (partialCommand.length == 0);

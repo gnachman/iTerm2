@@ -393,6 +393,7 @@
 - (IBAction)openSplitVerticallySheet:(id)sender;
 // Show paste history window.
 - (IBAction)openPasteHistory:(id)sender;
+- (IBAction)openCommandHistory:(id)sender;
 // Show autocomplete window.
 - (IBAction)openAutocomplete:(id)sender;
 // selector for menu item to split current session vertically.

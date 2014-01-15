@@ -2,6 +2,8 @@
 
 #import "BottomBarView.h"
 #import "ColorsMenuItemView.h"
+#import "CommandHistory.h"
+#import "CommandHistoryPopup.h"
 #import "Coprocess.h"
 #import "FakeWindow.h"
 #import "FindViewController.h"
@@ -194,6 +196,7 @@ NSString *kSessionsKVCKey = @"sessions";
     IBOutlet NSTextField* currentTime;
 
     PasteboardHistoryWindowController* pbHistoryView;
+    CommandHistoryPopupWindowController *commandHistoryPopup;
     AutocompleteView* autocompleteView;
 
     // True if preBottomBarFrame is valid.
@@ -380,6 +383,7 @@ NSString *kSessionsKVCKey = @"sessions";
     broadcastViewIds_ = [[NSMutableSet alloc] init];
     pbHistoryView = [[PasteboardHistoryWindowController alloc] init];
     autocompleteView = [[AutocompleteView alloc] init];
+    commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
 
     NSScreen* screen;
     if (screenNumber < 0 || screenNumber >= [[NSScreen screens] count])  {
@@ -657,6 +661,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [autocompleteView shutdown];
     [pbHistoryView shutdown];
     [pbHistoryView release];
+    [commandHistoryPopup release];
     [autocompleteView release];
     [tabBarControl release];
     [terminalGuid_ release];
@@ -1801,6 +1806,7 @@ NSString *kSessionsKVCKey = @"sessions";
     // Close popups.
     [pbHistoryView close];
     [autocompleteView close];
+    [commandHistoryPopup close];
 
     // tabBarControl is holding on to us, so we have to tell it to let go
     [tabBarControl setDelegate:nil];
@@ -2145,7 +2151,8 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 
     if ([[pbHistoryView window] isVisible] ||
-        [[autocompleteView window] isVisible]) {
+        [[autocompleteView window] isVisible] ||
+        [[commandHistoryPopup window] isVisible]) {
         return;
     }
 
@@ -3953,6 +3960,13 @@ NSString *kSessionsKVCKey = @"sessions";
     [pbHistoryView popWithDelegate:[self currentSession]];
 }
 
+- (IBAction)openCommandHistory:(id)sender
+{
+    [commandHistoryPopup popWithDelegate:[self currentSession]];
+    [commandHistoryPopup loadCommandsForHost:[[self currentSession] currentHost]
+                              partialCommand:[[self currentSession] currentCommand]];
+}
+
 - (IBAction)openAutocomplete:(id)sender
 {
     if ([[autocompleteView window] isVisible]) {
@@ -5737,6 +5751,8 @@ NSString *kSessionsKVCKey = @"sessions";
         }
     } else if ([item action] == @selector(resetCharset:)) {
         result = ![[[self currentSession] SCREEN] allCharacterSetPropertiesHaveDefaultValues];
+    } else if ([item action] == @selector(openCommandHistory:)) {
+        return [[CommandHistory sharedInstance] haveCommandsForHost:[[self currentSession] currentHost]];
     }
     return result;
 }
@@ -6579,6 +6595,9 @@ NSString *kSessionsKVCKey = @"sessions";
     }
     if (autocompleteView.delegate == session) {
         autocompleteView.delegate = nil;
+    }
+    if (commandHistoryPopup.delegate == session) {
+        commandHistoryPopup.delegate = nil;
     }
 }
 
