@@ -3554,6 +3554,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (void)scrollToMark:(VT100ScreenMark *)mark {
+    if ([SCREEN containsMark:mark]) {
+        VT100GridRange range = [SCREEN lineNumberRangeOfInterval:mark.entry.interval];
+        [TEXTVIEW scrollLineNumberRangeIntoView:range];
+        [self highlightMarkOrNote:mark];
+    }
+}
+
 - (VT100RemoteHost *)currentHost {
     return [SCREEN remoteHostOnLine:[SCREEN numberOfLines]];
 }
@@ -5273,6 +5281,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                forTabViewItem:[[self ptytab] tabViewItem]];
 }
 
+- (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
+    [[[self tab] realParentWindow] sessionHostDidChange:self to:host];
+}
+
 - (BOOL)screenShouldSendReport {
     return (SHELL != nil) && (![self isTmuxClient]);
 }
@@ -5324,10 +5336,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSString *trimmedCommand =
         [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     if (trimmedCommand.length) {
-        [[CommandHistory sharedInstance] addCommand:trimmedCommand
-                                             onHost:[SCREEN remoteHostOnLine:range.end.y]];
         VT100ScreenMark *mark = [SCREEN markOnLine:range.start.y];
         mark.command = command;
+        [[CommandHistory sharedInstance] addCommand:trimmedCommand
+                                             onHost:[SCREEN remoteHostOnLine:range.end.y]
+                                           withMark:mark];
     }
     commandRange_ = VT100GridCoordRangeMake(-1, -1, -1, -1);
 }

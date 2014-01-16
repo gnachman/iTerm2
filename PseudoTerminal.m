@@ -35,6 +35,7 @@
 #import "TemporaryNumberAllocator.h"
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
+#import "ToolCommandHistoryView.h"
 #import "ToolbeltView.h"
 #import "VT100Screen.h"
 #import "VT100Screen.h"
@@ -6130,6 +6131,12 @@ NSString *kSessionsKVCKey = @"sessions";
     ++count;
     [dockTile setBadgeLabel:[NSString stringWithFormat:@"%d", count]];
     [self.window.dockTile setShowsApplicationBadge:YES];
+}
+
+- (void)sessionHostDidChange:(PTYSession *)session to:(VT100RemoteHost *)host {
+    if ([self currentSession] == session) {
+      [[toolbelt_ commandHistoryView] updateCommands];
+    }
 }
 
 #pragma mark - KeyValueCoding

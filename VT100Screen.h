@@ -193,9 +193,11 @@ extern int kVT100ScreenMinRows;
 - (NSArray *)firstMarksOrNotes;
 - (NSArray *)marksOrNotesBefore:(Interval *)location;
 - (NSArray *)marksOrNotesAfter:(Interval *)location;
+- (BOOL)containsMark:(VT100ScreenMark *)mark;
 
 - (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line;
 - (NSString *)workingDirectoryOnLine:(int)line;
 - (VT100RemoteHost *)remoteHostOnLine:(int)line;
+- (VT100ScreenMark *)lastCommandMark;  // last mark representing a command
 
 @end

@@ -8,6 +8,7 @@
 @class PTYTabView;
 @class PTYTab;
 @class TmuxController;
+@class VT100RemoteHost;
 
 typedef enum {
     BROADCAST_OFF,
@@ -317,5 +318,7 @@ typedef enum {
 
 // Indicates if this the hotkey window.
 - (BOOL)isHotKeyWindow;
+
+- (void)sessionHostDidChange:(PTYSession *)session to:(VT100RemoteHost *)host;
 
 @end

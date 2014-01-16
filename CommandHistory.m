@@ -10,12 +10,15 @@
 #import "PreferencePanel.h"
 #import "VT100RemoteHost.h"
 
+NSString *const kCommandHistoryDidChangeNotificationName = @"kCommandHistoryDidChangeNotificationName";
+
 static const int kMaxResults = 200;
 
 // Keys for serializing an entry
 static NSString *const kCommand = @"command";
 static NSString *const kUses = @"uses";
 static NSString *const kLastUsed = @"last used";
+static NSString *const kUseTimes = @"use times";
 
 // Top level serialization keys
 static NSString *const kHostname = @"hostname";
@@ -24,14 +27,47 @@ static NSString *const kCommands = @"commands";
 static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
 static const int kMaxCommandsToSavePerHost = 200;
 
+@interface CommandUse : NSObject
+@property(nonatomic, assign) NSTimeInterval time;
+@property(nonatomic, retain) VT100ScreenMark *mark;
+
++ (instancetype)commandUseFromSerializedValue:(NSArray *)serializedValue;
+- (NSArray *)serializedValue;
+
+@end
+
+@implementation CommandUse
+
+- (void)dealloc {
+    [_mark release];
+    [super dealloc];
+}
+
+- (NSArray *)serializedValue {
+    return @[ @(self.time) ];
+}
+
++ (instancetype)commandUseFromSerializedValue:(id)serializedValue {
+    CommandUse *commandUse = [[[CommandUse alloc] init] autorelease];
+    if ([serializedValue isKindOfClass:[NSArray class]]) {
+        commandUse.time = [serializedValue[0] doubleValue];
+    } else if ([serializedValue isKindOfClass:[NSNumber class]]) {
+        commandUse.time = [serializedValue doubleValue];
+    }
+    return commandUse;
+}
+
+@end
+
 @interface CommandHistory ()
 @property(nonatomic, retain) NSMutableDictionary *hosts;
 @end
 
-@interface CommandHistoryEntry ()
+@interface CommandHistoryEntry () <NSCopying>
 
 // First character matched by current search.
 @property(nonatomic, assign) int matchLocation;
+@property(nonatomic, retain) NSMutableArray *useTimes;
 
 + (instancetype)commandHistoryEntry;
 
@@ -48,19 +84,43 @@ static const int kMaxCommandsToSavePerHost = 200;
     entry.command = dict[kCommand];
     entry.uses = [dict[kUses] intValue];
     entry.lastUsed = [dict[kLastUsed] doubleValue];
-
+    [entry setSerializedUseTimes:dict[kUseTimes]];
     return entry;
+}
+
+- (id)init {
+    self = [super init];
+    if (self) {
+        _useTimes = [[NSMutableArray alloc] init];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_command release];
+    [_useTimes release];
+    [super dealloc];
+}
+
+- (NSArray *)serializableUseTimes {
+    NSMutableArray *result = [NSMutableArray array];
+    for (CommandUse *use in self.useTimes) {
+        [result addObject:[use serializedValue]];
+    }
+    return result;
+}
+
+- (void)setSerializedUseTimes:(NSArray *)array {
+    for (NSArray *value in array) {
+        [self.useTimes addObject:[CommandUse commandUseFromSerializedValue:value]];
+    }
 }
 
 - (NSDictionary *)dictionary {
     return @{ kCommand: self.command,
               kUses: @(self.uses),
-              kLastUsed: @(self.lastUsed) };
-}
-
-- (void)dealloc {
-    [_command release];
-    [super dealloc];
+              kLastUsed: @(self.lastUsed),
+              kUseTimes: [self serializableUseTimes] };
 }
 
 - (NSString *)description {
@@ -71,6 +131,11 @@ static const int kMaxCommandsToSavePerHost = 200;
             self.uses,
             [NSDate dateWithTimeIntervalSinceReferenceDate:self.lastUsed],
             self.matchLocation];
+}
+
+- (VT100ScreenMark *)lastMark {
+    CommandUse *use = [self.useTimes lastObject];
+    return use.mark;
 }
 
 // Used to sort from highest to lowest score. So Ascending means self's score is higher
@@ -99,12 +164,24 @@ static const int kMaxCommandsToSavePerHost = 200;
     }
 }
 
+- (NSComparisonResult)compareUseTime:(CommandHistoryEntry *)other {
+    return [@(other.lastUsed) compare:@(self.lastUsed)];
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+    CommandHistoryEntry *theCopy = [[CommandHistoryEntry alloc] init];
+    theCopy.command = self.command;
+    theCopy.uses = self.uses;
+    theCopy.lastUsed = self.lastUsed;
+    theCopy.useTimes = [[self.useTimes mutableCopy] autorelease];
+    return theCopy;
+}
+
 @end
 
 @implementation CommandHistory {
     NSString *_path;
 }
-
 
 + (instancetype)sharedInstance {
     static id instance;
@@ -143,7 +220,9 @@ static const int kMaxCommandsToSavePerHost = 200;
 
 #pragma mark - APIs
 
-- (void)addCommand:(NSString *)command onHost:(VT100RemoteHost *)host {
+- (void)addCommand:(NSString *)command
+            onHost:(VT100RemoteHost *)host
+          withMark:(VT100ScreenMark *)mark {
     NSMutableArray *commands = [self commandsForHost:host];
     CommandHistoryEntry *theEntry = nil;
     for (CommandHistoryEntry *entry in commands) {
@@ -160,10 +239,16 @@ static const int kMaxCommandsToSavePerHost = 200;
     }
     theEntry.uses = theEntry.uses + 1;
     theEntry.lastUsed = [NSDate timeIntervalSinceReferenceDate];
+    CommandUse *commandUse = [[[CommandUse alloc] init] autorelease];
+    commandUse.time = theEntry.lastUsed;
+    commandUse.mark = mark;
+    [theEntry.useTimes addObject:commandUse];
 
     if ([[PreferencePanel sharedInstance] savePasteHistory]) {
         [NSKeyedArchiver archiveRootObject:[self dictionaryForEntries] toFile:_path];
     }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCommandHistoryDidChangeNotificationName
+                                                        object:nil];
 }
 
 - (BOOL)haveCommandsForHost:(VT100RemoteHost *)host {
@@ -191,6 +276,21 @@ static const int kMaxCommandsToSavePerHost = 200;
     // TODO: Cache this.
     NSArray *sortedEntries = [result sortedArrayUsingSelector:@selector(compare:)];
     return [sortedEntries subarrayWithRange:NSMakeRange(0, MIN(kMaxResults, sortedEntries.count))];
+}
+
+- (NSArray *)entryArrayByExpandingAllUsesInEntryArray:(NSArray *)array {
+    NSMutableArray *result = [NSMutableArray array];
+    for (CommandHistoryEntry *entry in array) {
+        for (CommandUse *commandUse in entry.useTimes) {
+            CommandHistoryEntry *singleUseEntry = [[entry copy] autorelease];
+            [singleUseEntry.useTimes removeAllObjects];
+
+            [singleUseEntry.useTimes addObject:commandUse];
+            singleUseEntry.lastUsed = commandUse.time;
+            [result addObject:singleUseEntry];
+        }
+    }
+    return [result sortedArrayUsingSelector:@selector(compareUseTime:)];
 }
 
 #pragma mark - Private
@@ -252,6 +352,15 @@ static const int kMaxCommandsToSavePerHost = 200;
     } else {
         return array;
     }
+}
+
+- (void)eraseHistory {
+    [_hosts release];
+    _hosts = [[NSMutableDictionary alloc] init];
+    [[NSFileManager defaultManager] removeItemAtPath:_path error:NULL];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCommandHistoryDidChangeNotificationName
+                                                        object:nil];
 }
 
 @end
