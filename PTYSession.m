@@ -3555,9 +3555,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)scrollToMark:(VT100ScreenMark *)mark {
-    VT100GridRange range = [SCREEN lineNumberRangeOfInterval:mark.entry.interval];
-    [TEXTVIEW scrollLineNumberRangeIntoView:range];
-    [self highlightMarkOrNote:mark];
+    if ([SCREEN containsMark:mark]) {
+        VT100GridRange range = [SCREEN lineNumberRangeOfInterval:mark.entry.interval];
+        [TEXTVIEW scrollLineNumberRangeIntoView:range];
+        [self highlightMarkOrNote:mark];
+    }
 }
 
 - (VT100RemoteHost *)currentHost {

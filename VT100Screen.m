@@ -1539,13 +1539,14 @@ static const double kInterBellQuietPeriod = 0.1;
     }
 }
 
-- (void)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {
+- (VT100RemoteHost *)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {
     VT100RemoteHost *remoteHostObj = [[[VT100RemoteHost alloc] init] autorelease];
     remoteHostObj.hostname = host;
     remoteHostObj.username = user;
     VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, self.width, line);
     [intervalTree_ addObject:remoteHostObj
                 withInterval:[self intervalForGridCoordRange:range]];
+    return remoteHostObj;
 }
 
 - (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls {
@@ -1754,6 +1755,15 @@ static const double kInterBellQuietPeriod = 0.1;
                                                [VT100ScreenMark class] ]];
     } while (objects && !objects.count);
     return objects;
+}
+
+- (BOOL)containsMark:(VT100ScreenMark *)mark {
+    for (id obj in [intervalTree_ objectsInInterval:mark.entry.interval]) {
+        if (obj == mark) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval {
@@ -2641,12 +2651,11 @@ static const double kInterBellQuietPeriod = 0.1;
         }
     }
     int cursorLine = [self numberOfLines] - [self height] + currentGrid_.cursorY;
-    [self setRemoteHost:host user:user onLine:cursorLine];
+    VT100RemoteHost *remoteHostObj = [self setRemoteHost:host user:user onLine:cursorLine];
     
-    if (![host isEqual:currentHost]) {
-        [delegate_ screenCurrentHostDidChange:host];
+    if (![remoteHostObj isEqualToRemoteHost:currentHost]) {
+        [delegate_ screenCurrentHostDidChange:remoteHostObj];
     }
-    // TODO: If remote host has changed, pass a message up to the ToolCommandHistoryView to reload its state.
 }
 
 - (void)terminalClearScreen {

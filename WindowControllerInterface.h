@@ -8,6 +8,7 @@
 @class PTYTabView;
 @class PTYTab;
 @class TmuxController;
+@class VT100RemoteHost;
 
 typedef enum {
     BROADCAST_OFF,

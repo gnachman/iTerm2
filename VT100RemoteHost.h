@@ -12,4 +12,7 @@
 @interface VT100RemoteHost : NSObject <IntervalTreeObject>
 @property(nonatomic, copy) NSString *hostname;
 @property(nonatomic, copy) NSString *username;
+
+- (BOOL)isEqualToRemoteHost:(VT100RemoteHost *)other;
+
 @end

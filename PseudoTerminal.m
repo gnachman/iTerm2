@@ -35,6 +35,7 @@
 #import "TemporaryNumberAllocator.h"
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
+#import "ToolCommandHistoryView.h"
 #import "ToolbeltView.h"
 #import "VT100Screen.h"
 #import "VT100Screen.h"
@@ -6133,8 +6134,8 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 - (void)sessionHostDidChange:(PTYSession *)session to:(VT100RemoteHost *)host {
-    if ([[self currentSession] == session]) {
-        [toolbelt_]
+    if ([self currentSession] == session) {
+      [[toolbelt_ commandHistoryView] updateCommands];
     }
 }
 

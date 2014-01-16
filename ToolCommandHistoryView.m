@@ -143,6 +143,10 @@ static const CGFloat kMargin = 4;
 
 - (void)commandHistoryDidChange:(id)sender
 {
+    [self updateCommands];
+}
+
+- (void)updateCommands {
     [entries_ autorelease];
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
     VT100RemoteHost *host = [[wrapper.term currentSession] currentHost];

@@ -13,6 +13,6 @@
 
 - (id)initWithFrame:(NSRect)frame;
 - (void)shutdown;
-
+- (void)updateCommands;
 
 @end
