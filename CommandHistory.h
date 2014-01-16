@@ -21,6 +21,9 @@
 // Time since reference date of last use.
 @property(nonatomic, assign) NSTimeInterval lastUsed;
 
+// NSNumber times since reference date
+@property(nonatomic, readonly) NSMutableArray *useTimes;
+
 @end
 
 @interface CommandHistory : NSObject
@@ -33,5 +36,7 @@
                                                 onHost:(VT100RemoteHost *)host;
 
 - (BOOL)haveCommandsForHost:(VT100RemoteHost *)host;
+
+- (NSArray *)entryArrayByExpandingAllUsesInEntryArray:(NSArray *)array;
 
 @end

@@ -16,6 +16,7 @@ static const int kMaxResults = 200;
 static NSString *const kCommand = @"command";
 static NSString *const kUses = @"uses";
 static NSString *const kLastUsed = @"last used";
+static NSString *const kUseTimes = @"use times";
 
 // Top level serialization keys
 static NSString *const kHostname = @"hostname";
@@ -28,10 +29,11 @@ static const int kMaxCommandsToSavePerHost = 200;
 @property(nonatomic, retain) NSMutableDictionary *hosts;
 @end
 
-@interface CommandHistoryEntry ()
+@interface CommandHistoryEntry () <NSCopying>
 
 // First character matched by current search.
 @property(nonatomic, assign) int matchLocation;
+@property(nonatomic, retain) NSMutableArray *useTimes;
 
 + (instancetype)commandHistoryEntry;
 
@@ -48,19 +50,29 @@ static const int kMaxCommandsToSavePerHost = 200;
     entry.command = dict[kCommand];
     entry.uses = [dict[kUses] intValue];
     entry.lastUsed = [dict[kLastUsed] doubleValue];
-
+    entry.useTimes = [[dict[kUseTimes] mutableCopy] autorelease];
     return entry;
+}
+
+- (id)init {
+    self = [super init];
+    if (self) {
+        _useTimes = [[NSMutableArray alloc] init];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_command release];
+    [_useTimes release];
+    [super dealloc];
 }
 
 - (NSDictionary *)dictionary {
     return @{ kCommand: self.command,
               kUses: @(self.uses),
-              kLastUsed: @(self.lastUsed) };
-}
-
-- (void)dealloc {
-    [_command release];
-    [super dealloc];
+              kLastUsed: @(self.lastUsed),
+              kUseTimes: self.useTimes };
 }
 
 - (NSString *)description {
@@ -99,12 +111,24 @@ static const int kMaxCommandsToSavePerHost = 200;
     }
 }
 
+- (NSComparisonResult)compareUseTime:(CommandHistoryEntry *)other {
+    return [@(other.lastUsed) compare:@(self.lastUsed)];
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+    CommandHistoryEntry *theCopy = [[CommandHistoryEntry alloc] init];
+    theCopy.command = self.command;
+    theCopy.uses = self.uses;
+    theCopy.lastUsed = self.lastUsed;
+    theCopy.useTimes = [[self.useTimes mutableCopy] autorelease];
+    return theCopy;
+}
+
 @end
 
 @implementation CommandHistory {
     NSString *_path;
 }
-
 
 + (instancetype)sharedInstance {
     static id instance;
@@ -160,7 +184,7 @@ static const int kMaxCommandsToSavePerHost = 200;
     }
     theEntry.uses = theEntry.uses + 1;
     theEntry.lastUsed = [NSDate timeIntervalSinceReferenceDate];
-
+    [theEntry.useTimes addObject:@(theEntry.lastUsed )];
     if ([[PreferencePanel sharedInstance] savePasteHistory]) {
         [NSKeyedArchiver archiveRootObject:[self dictionaryForEntries] toFile:_path];
     }
@@ -191,6 +215,20 @@ static const int kMaxCommandsToSavePerHost = 200;
     // TODO: Cache this.
     NSArray *sortedEntries = [result sortedArrayUsingSelector:@selector(compare:)];
     return [sortedEntries subarrayWithRange:NSMakeRange(0, MIN(kMaxResults, sortedEntries.count))];
+}
+
+- (NSArray *)entryArrayByExpandingAllUsesInEntryArray:(NSArray *)array {
+    NSMutableArray *result = [NSMutableArray array];
+    for (CommandHistoryEntry *entry in array) {
+        for (NSNumber *useTime in entry.useTimes) {
+            CommandHistoryEntry *singleUseEntry = [[entry copy] autorelease];
+            [singleUseEntry.useTimes removeAllObjects];
+            [singleUseEntry.useTimes addObject:useTime];
+            singleUseEntry.lastUsed = [useTime doubleValue];
+            [result addObject:singleUseEntry];
+        }
+    }
+    return [result sortedArrayUsingSelector:@selector(compareUseTime:)];
 }
 
 #pragma mark - Private
