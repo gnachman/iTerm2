@@ -3988,10 +3988,20 @@ static VT100TCC decode_string(unsigned char *datap,
                 size = [parts[1] intValue];
             }
             int width = 0, height = 0;
+            VT100TerminalUnits widthUnits = kVT100TerminalUnitsCells, heightUnits = kVT100TerminalUnitsCells;
             if (parts.count >= 4) {
-                // TODO: If a "px" suffix is present, infer number of cells from current text cell size.
-                width = [parts[2] intValue];
-                height = [parts[3] intValue];
+                NSString *widthString =
+                    [parts[2] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                NSString *heightString =
+                    [parts[3] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                width = [widthString intValue];
+                if ([widthString hasSuffix:@"px"]) {
+                    widthUnits = kVT100TerminalUnitsPixels;
+                }
+                height = [heightString intValue];
+                if ([heightString hasSuffix:@"px"]) {
+                    heightUnits = kVT100TerminalUnitsPixels;
+                }
             }
             BOOL preserveAspectRatio = YES;
             if (parts.count >= 5) {
@@ -4001,7 +4011,9 @@ static VT100TCC decode_string(unsigned char *datap,
                 [delegate_ terminalWillReceiveInlineFileNamed:name
                                                        ofSize:size
                                                         width:width
+                                                        units:widthUnits
                                                        height:height
+                                                        units:heightUnits
                                           preserveAspectRatio:preserveAspectRatio];
             } else {
                 [delegate_ terminalWillReceiveFileNamed:name ofSize:size];

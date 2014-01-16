@@ -2758,8 +2758,17 @@ static const double kInterBellQuietPeriod = 0.1;
 - (void)terminalWillReceiveInlineFileNamed:(NSString *)name
                                     ofSize:(int)size
                                      width:(int)width
+                                     units:(VT100TerminalUnits)widthUnits
                                     height:(int)height
+                                     units:(VT100TerminalUnits)heightUnits
                        preserveAspectRatio:(BOOL)preserveAspectRatio {
+    NSSize cellSize = [delegate_ screenCellSize];
+    if (widthUnits == kVT100TerminalUnitsPixels) {
+        width = ceil((double)width / cellSize.width);
+    }
+    if (heightUnits == kVT100TerminalUnitsPixels) {
+        height = ceil((double)height / cellSize.height);
+    }
     if (height > 255 || width >= self.width) {
         return;
     }
