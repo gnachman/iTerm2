@@ -318,4 +318,6 @@ typedef enum {
 // Indicates if this the hotkey window.
 - (BOOL)isHotKeyWindow;
 
+- (void)sessionHostDidChange:(PTYSession *)session to:(VT100RemoteHost *)host;
+
 @end

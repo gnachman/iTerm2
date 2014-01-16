@@ -2623,6 +2623,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)terminalSetRemoteHost:(NSString *)remoteHost {
     NSRange atRange = [remoteHost rangeOfString:@"@"];
+    VT100RemoteHost *currentHost = [self remoteHostOnLine:[self numberOfLines]];
     NSString *user = nil;
     NSString *host = nil;
     if (atRange.length == 1) {
@@ -2641,6 +2642,11 @@ static const double kInterBellQuietPeriod = 0.1;
     }
     int cursorLine = [self numberOfLines] - [self height] + currentGrid_.cursorY;
     [self setRemoteHost:host user:user onLine:cursorLine];
+    
+    if (![host isEqual:currentHost]) {
+        [delegate_ screenCurrentHostDidChange:host];
+    }
+    // TODO: If remote host has changed, pass a message up to the ToolCommandHistoryView to reload its state.
 }
 
 - (void)terminalClearScreen {
@@ -2921,7 +2927,7 @@ static const double kInterBellQuietPeriod = 0.1;
     // TODO
 }
 
-- (void)terminalReturnCodeOfLastCommandWas:(int)returnCode {
+- (VT100ScreenMark *)lastCommandMark {
     NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
     int numChecked = 0;
@@ -2930,14 +2936,22 @@ static const double kInterBellQuietPeriod = 0.1;
             if ([obj isKindOfClass:[VT100ScreenMark class]]) {
                 VT100ScreenMark *mark = (VT100ScreenMark *)obj;
                 if (mark.command) {
-                    mark.code = returnCode;
-                    [delegate_ screenNeedsRedraw];
-                    return;
+                    return mark;
                 }
             }
             ++numChecked;
         }
         objects = [enumerator nextObject];
+    }
+    
+    return nil;
+}
+
+- (void)terminalReturnCodeOfLastCommandWas:(int)returnCode {
+    VT100ScreenMark *mark = [self lastCommandMark];
+    if (mark) {
+        mark.code = returnCode;
+        [delegate_ screenNeedsRedraw];
     }
 }
 

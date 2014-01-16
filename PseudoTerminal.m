@@ -6132,6 +6132,12 @@ NSString *kSessionsKVCKey = @"sessions";
     [self.window.dockTile setShowsApplicationBadge:YES];
 }
 
+- (void)sessionHostDidChange:(PTYSession *)session to:(VT100RemoteHost *)host {
+    if ([[self currentSession] == session]) {
+        [toolbelt_]
+    }
+}
+
 #pragma mark - KeyValueCoding
 
 - (int)columns

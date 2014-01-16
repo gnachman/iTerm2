@@ -287,4 +287,9 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     }
 }
 
+- (ToolCommandHistoryView *)commandHistoryView {
+    ToolWrapper *wrapper = [tools_ objectForKey:theName];
+    // TODO FINISH THIS
+}
+
 @end

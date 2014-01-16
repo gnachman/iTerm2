@@ -1,6 +1,8 @@
 #import <Cocoa/Cocoa.h>
 #import "PTYTextViewDataSource.h"
 
+@class VT100RemoteHost;
+
 @protocol VT100ScreenDelegate <NSObject>
 
 // Screen contents have become dirty and should be redrawn right away.
@@ -202,6 +204,8 @@
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color;
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color;
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color;
+
+- (void)screenCurrentHostDidChange:(VT100RemoteHost *)host;
 
 // Ok to write to shell?
 - (BOOL)screenShouldSendReport;

@@ -45,10 +45,10 @@ static const CGFloat kMargin = 4;
         
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
         NSTableColumn *col;
-        col = [[[NSTableColumn alloc] initWithIdentifier:@"contents"] autorelease];
+        col = [[[NSTableColumn alloc] initWithIdentifier:@"commands"] autorelease];
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
-        [[col headerCell] setStringValue:@"Contents"];
+        [[col headerCell] setStringValue:@"Commands"];
         NSFont *theFont = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
         [[col dataCell] setFont:theFont];
         [tableView_ setRowHeight:[[[[NSLayoutManager alloc] init] autorelease] defaultLineHeightForFont:theFont]];
@@ -126,6 +126,18 @@ static const CGFloat kMargin = 4;
         // Contents
         NSString* value = [entry.command stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
         return value;
+    }
+}
+
+- (void)tableViewSelectionDidChange:(NSNotification *)notification
+{
+    NSInteger row = [tableView_ selectedRow];
+    if (row != -1) {
+        CommandHistoryEntry *entry = entries_[row];
+        if (entry.lastMark) {
+            ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+            [[wrapper.term currentSession] scrollToMark:entry.lastMark];
+        }
     }
 }
 

@@ -11,6 +11,7 @@
 extern NSString *const kCommandHistoryDidChangeNotificationName;
 
 @class VT100RemoteHost;
+@class VT100ScreenMark;
 
 @interface CommandHistoryEntry : NSObject
 
@@ -26,13 +27,15 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
 // NSNumber times since reference date
 @property(nonatomic, readonly) NSMutableArray *useTimes;
 
+- (VT100ScreenMark *)lastMark;
+
 @end
 
 @interface CommandHistory : NSObject
 
 + (instancetype)sharedInstance;
 
-- (void)addCommand:(NSString *)command onHost:(VT100RemoteHost *)host;
+- (void)addCommand:(NSString *)command onHost:(VT100RemoteHost *)host withMark:(VT100ScreenMark *)mark;
 
 - (NSArray *)autocompleteSuggestionsWithPartialCommand:(NSString *)partialCommand
                                                 onHost:(VT100RemoteHost *)host;
