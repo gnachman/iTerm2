@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+extern NSString *const kCommandHistoryDidChangeNotificationName;
+
 @class VT100RemoteHost;
 
 @interface CommandHistoryEntry : NSObject
@@ -38,5 +40,7 @@
 - (BOOL)haveCommandsForHost:(VT100RemoteHost *)host;
 
 - (NSArray *)entryArrayByExpandingAllUsesInEntryArray:(NSArray *)array;
+
+- (void)eraseHistory;
 
 @end

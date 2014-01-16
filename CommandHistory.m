@@ -10,6 +10,8 @@
 #import "PreferencePanel.h"
 #import "VT100RemoteHost.h"
 
+NSString *const kCommandHistoryDidChangeNotificationName = @"kCommandHistoryDidChangeNotificationName";
+
 static const int kMaxResults = 200;
 
 // Keys for serializing an entry
@@ -188,6 +190,8 @@ static const int kMaxCommandsToSavePerHost = 200;
     if ([[PreferencePanel sharedInstance] savePasteHistory]) {
         [NSKeyedArchiver archiveRootObject:[self dictionaryForEntries] toFile:_path];
     }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCommandHistoryDidChangeNotificationName
+                                                        object:nil];
 }
 
 - (BOOL)haveCommandsForHost:(VT100RemoteHost *)host {
@@ -290,6 +294,15 @@ static const int kMaxCommandsToSavePerHost = 200;
     } else {
         return array;
     }
+}
+
+- (void)eraseHistory {
+    [_hosts release];
+    _hosts = [[NSMutableDictionary alloc] init];
+    [[NSFileManager defaultManager] removeItemAtPath:_path error:NULL];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCommandHistoryDidChangeNotificationName
+                                                        object:nil];
 }
 
 @end
