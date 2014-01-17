@@ -18,7 +18,6 @@ static const CGFloat kMargin = 4;
     NSScrollView *scrollView_;
     NSTableView *tableView_;
     NSButton *clear_;
-    NSTimer *refreshTimer_;
     BOOL shutdown_;
     NSArray *entries_;
 }
@@ -70,12 +69,6 @@ static const CGFloat kMargin = 4;
                                                  selector:@selector(commandHistoryDidChange:)
                                                      name:kCommandHistoryDidChangeNotificationName
                                                    object:nil];
-        refreshTimer_ = [NSTimer scheduledTimerWithTimeInterval:10
-                                                         target:self
-                                                       selector:@selector(commandHistoryDidChange:)
-                                                       userInfo:nil
-                                                        repeats:YES];
-        [self commandHistoryDidChange:nil];
     }
     return self;
 }
@@ -83,7 +76,6 @@ static const CGFloat kMargin = 4;
 - (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [refreshTimer_ invalidate];
     [tableView_ release];
     [scrollView_ release];
     [super dealloc];
@@ -93,8 +85,6 @@ static const CGFloat kMargin = 4;
 {
     shutdown_ = YES;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [refreshTimer_ invalidate];
-    refreshTimer_ = nil;
 }
 
 - (void)relayout

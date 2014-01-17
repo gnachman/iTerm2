@@ -42,6 +42,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
 
+#import <apr-1/apr_base64.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -1513,10 +1514,31 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [eventQueue_ removeObjectsInRange:NSMakeRange(0, eventsSent)];
 }
 
++ (NSData *)pasteboardFile
+{
+    NSPasteboard *board;
+
+    board = [NSPasteboard generalPasteboard];
+    assert(board != nil);
+
+    NSArray *supportedTypes = [NSArray arrayWithObjects:NSFilenamesPboardType, nil];
+    NSString *bestType = [board availableTypeFromArray:supportedTypes];
+
+    NSString* info = nil;
+    if ([bestType isEqualToString:NSFilenamesPboardType]) {
+        NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
+        if (filenames.count > 0) {
+            NSString *filename = filenames[0];
+            return [NSData dataWithContentsOfFile:filename];
+        }
+    }
+    return nil;
+}
+
 + (NSString*)pasteboardString
 {
     NSPasteboard *board;
-    
+
     board = [NSPasteboard generalPasteboard];
     assert(board != nil);
     
@@ -4482,6 +4504,41 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             [self pasteString:[textview selectedText]];
         }
     }
+}
+
+- (void)textViewPasteWithEncoding:(TextViewPasteEncoding)encoding
+{
+    NSData *data = [[self class] pasteboardFile];
+    if (data) {
+        int length = apr_base64_encode_len(data.length);
+        NSMutableData *buffer = [NSMutableData dataWithLength:length];
+        if (buffer) {
+            apr_base64_encode_binary(buffer.mutableBytes,
+                                     data.bytes,
+                                     data.length);
+        }
+        NSMutableString *string = [NSMutableString string];
+        int remaining = length;
+        int offset = 0;
+        char *bytes = (char *)buffer.mutableBytes;
+        while (remaining > 0) {
+            @autoreleasepool {
+                NSString *chunk = [[[NSString alloc] initWithBytes:bytes + offset
+                                                            length:MIN(77, remaining)
+                                                          encoding:NSUTF8StringEncoding] autorelease];
+                [string appendString:chunk];
+                [string appendString:@"\n"];
+                remaining -= chunk.length;
+                offset += chunk.length;
+            }
+        }
+        [self pasteString:string flags:0];
+    }
+}
+
+- (BOOL)textViewCanPasteFile
+{
+    return [[self class] pasteboardFile] != nil;
 }
 
 - (BOOL)textViewWindowUsesTransparency

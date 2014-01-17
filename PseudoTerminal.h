@@ -149,6 +149,8 @@
 // Accessor for toolbelt view.
 - (ToolbeltView *)toolbelt;
 
+- (void)refreshTools;
+
 #pragma mark - NSTextField Delegate Methods
 
 // Called when return or tab is pressed in the bottombar text field or the command

@@ -330,6 +330,10 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
     --preserveOrder_;
     [realParentWindow_ invalidateRestorableState];
+
+    if (changed) {
+        [[self realParentWindow] tabActiveSessionDidChange];
+    }
 }
 
 - (void)setActiveSession:(PTYSession*)session

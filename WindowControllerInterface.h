@@ -200,6 +200,8 @@ typedef enum {
 // changing session sizes.
 - (void)fitWindowToTabs;
 
+- (void)tabActiveSessionDidChange;
+
 #pragma mark - Sessions
 
 // Set the session name. If theSessionName is nil then set it to the pathname

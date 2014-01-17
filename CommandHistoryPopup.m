@@ -39,6 +39,8 @@
 }
 
 - (void)dealloc {
+    [_tableView setDelegate:nil];
+    [_tableView setDataSource:nil];
     [super dealloc];
 }
 
