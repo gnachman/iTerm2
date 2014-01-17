@@ -2784,6 +2784,8 @@ static const double kInterBellQuietPeriod = 0.1;
     if (heightUnits == kVT100TerminalUnitsPixels) {
         height = ceil((double)height / cellSize.height);
     }
+    width = MAX(1, width);
+    height = MAX(1, height);
     
     // If the requested size is too large, scale it down to fit.
     if (width >= self.width) {
