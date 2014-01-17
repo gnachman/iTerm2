@@ -418,6 +418,10 @@
 - (IBAction)selectPaneRight:(id)sender;
 - (IBAction)selectPaneUp:(id)sender;
 - (IBAction)selectPaneDown:(id)sender;
+- (IBAction)movePaneDividerRight:(id)sender;
+- (IBAction)movePaneDividerLeft:(id)sender;
+- (IBAction)movePaneDividerDown:(id)sender;
+- (IBAction)movePaneDividerUp:(id)sender;
 - (IBAction)addNoteAtCursor:(id)sender;
 - (IBAction)showHideNotes:(id)sender;
 - (IBAction)nextMarkOrNote:(id)sender;

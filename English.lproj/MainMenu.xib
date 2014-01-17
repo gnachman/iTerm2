@@ -802,6 +802,37 @@ DQ
                                     </items>
                                 </menu>
                             </menuItem>
+                            <menuItem title="Resize Split Pane" id="R0v-Kn-z9m">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Resize Split Pane" id="nnc-o3-t2j">
+                                    <items>
+                                        <menuItem title="Move Divider Up" keyEquivalent="" id="2Jk-GR-zCt">
+                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="movePaneDividerUp:" target="-1" id="smA-wj-JIK"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Move Divider Down" keyEquivalent="" id="Qpv-Ie-1sh">
+                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="movePaneDividerDown:" target="-1" id="NVB-Pj-Xdg"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Move Divider Left" keyEquivalent="" id="avG-JI-rjO">
+                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="movePaneDividerLeft:" target="-1" id="0Jq-7S-KVC"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Move Divider Right" keyEquivalent="" id="t6w-8j-r4m">
+                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="movePaneDividerRight:" target="-1" id="0Bz-xh-KL2"/>
+                                            </connections>
+                                        </menuItem>
+                                    </items>
+                                </menu>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="1190"/>
                             <menuItem title="Select Next Tab" keyEquivalent="]" id="845">
                                 <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
