@@ -2784,8 +2784,22 @@ static const double kInterBellQuietPeriod = 0.1;
     if (heightUnits == kVT100TerminalUnitsPixels) {
         height = ceil((double)height / cellSize.height);
     }
-    if (height > 255 || width >= self.width) {
-        return;
+    width = MAX(1, width);
+    height = MAX(1, height);
+    
+    // If the requested size is too large, scale it down to fit.
+    if (width >= self.width) {
+        double scale = (double)self.width / (double)width;
+        width = self.width;
+        height *= scale;
+    }
+    
+    // Height is capped at 255 because only 8 bits are used to represent the line number of a cell
+    // within the image.
+    if (height > 255) {
+        double scale = (double)height / 255.0;
+        height = 255;
+        width *= scale;
     }
 
     // Allocate cells for the image.

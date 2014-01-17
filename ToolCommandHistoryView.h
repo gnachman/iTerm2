@@ -9,7 +9,11 @@
 #import <Cocoa/Cocoa.h>
 #import "ToolbeltView.h"
 
-@interface ToolCommandHistoryView : NSView <ToolbeltTool, NSTableViewDataSource, NSTableViewDelegate>
+@interface ToolCommandHistoryView : NSView <
+  ToolbeltTool,
+  NSTableViewDataSource,
+  NSTableViewDelegate,
+  NSTextFieldDelegate>
 
 - (id)initWithFrame:(NSRect)frame;
 - (void)shutdown;
