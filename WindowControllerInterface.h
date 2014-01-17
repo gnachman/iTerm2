@@ -8,6 +8,7 @@
 @class PTYTabView;
 @class PTYTab;
 @class TmuxController;
+@class VT100RemoteHost;
 
 typedef enum {
     BROADCAST_OFF,
@@ -199,6 +200,8 @@ typedef enum {
 // changing session sizes.
 - (void)fitWindowToTabs;
 
+- (void)tabActiveSessionDidChange;
+
 #pragma mark - Sessions
 
 // Set the session name. If theSessionName is nil then set it to the pathname
@@ -317,5 +320,7 @@ typedef enum {
 
 // Indicates if this the hotkey window.
 - (BOOL)isHotKeyWindow;
+
+- (void)sessionHostDidChange:(PTYSession *)session to:(VT100RemoteHost *)host;
 
 @end

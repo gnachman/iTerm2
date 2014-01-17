@@ -1539,13 +1539,14 @@ static const double kInterBellQuietPeriod = 0.1;
     }
 }
 
-- (void)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {
+- (VT100RemoteHost *)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {
     VT100RemoteHost *remoteHostObj = [[[VT100RemoteHost alloc] init] autorelease];
     remoteHostObj.hostname = host;
     remoteHostObj.username = user;
     VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, self.width, line);
     [intervalTree_ addObject:remoteHostObj
                 withInterval:[self intervalForGridCoordRange:range]];
+    return remoteHostObj;
 }
 
 - (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls {
@@ -1754,6 +1755,15 @@ static const double kInterBellQuietPeriod = 0.1;
                                                [VT100ScreenMark class] ]];
     } while (objects && !objects.count);
     return objects;
+}
+
+- (BOOL)containsMark:(VT100ScreenMark *)mark {
+    for (id obj in [intervalTree_ objectsInInterval:mark.entry.interval]) {
+        if (obj == mark) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval {
@@ -2623,6 +2633,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
 - (void)terminalSetRemoteHost:(NSString *)remoteHost {
     NSRange atRange = [remoteHost rangeOfString:@"@"];
+    VT100RemoteHost *currentHost = [self remoteHostOnLine:[self numberOfLines]];
     NSString *user = nil;
     NSString *host = nil;
     if (atRange.length == 1) {
@@ -2640,7 +2651,11 @@ static const double kInterBellQuietPeriod = 0.1;
         }
     }
     int cursorLine = [self numberOfLines] - [self height] + currentGrid_.cursorY;
-    [self setRemoteHost:host user:user onLine:cursorLine];
+    VT100RemoteHost *remoteHostObj = [self setRemoteHost:host user:user onLine:cursorLine];
+    
+    if (![remoteHostObj isEqualToRemoteHost:currentHost]) {
+        [delegate_ screenCurrentHostDidChange:remoteHostObj];
+    }
 }
 
 - (void)terminalClearScreen {
@@ -2758,10 +2773,33 @@ static const double kInterBellQuietPeriod = 0.1;
 - (void)terminalWillReceiveInlineFileNamed:(NSString *)name
                                     ofSize:(int)size
                                      width:(int)width
+                                     units:(VT100TerminalUnits)widthUnits
                                     height:(int)height
+                                     units:(VT100TerminalUnits)heightUnits
                        preserveAspectRatio:(BOOL)preserveAspectRatio {
-    if (height > 255 || width >= self.width) {
-        return;
+    NSSize cellSize = [delegate_ screenCellSize];
+    if (widthUnits == kVT100TerminalUnitsPixels) {
+        width = ceil((double)width / cellSize.width);
+    }
+    if (heightUnits == kVT100TerminalUnitsPixels) {
+        height = ceil((double)height / cellSize.height);
+    }
+    width = MAX(1, width);
+    height = MAX(1, height);
+    
+    // If the requested size is too large, scale it down to fit.
+    if (width >= self.width) {
+        double scale = (double)self.width / (double)width;
+        width = self.width;
+        height *= scale;
+    }
+    
+    // Height is capped at 255 because only 8 bits are used to represent the line number of a cell
+    // within the image.
+    if (height > 255) {
+        double scale = (double)height / 255.0;
+        height = 255;
+        width *= scale;
     }
 
     // Allocate cells for the image.
@@ -2921,7 +2959,7 @@ static const double kInterBellQuietPeriod = 0.1;
     // TODO
 }
 
-- (void)terminalReturnCodeOfLastCommandWas:(int)returnCode {
+- (VT100ScreenMark *)lastCommandMark {
     NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
     int numChecked = 0;
@@ -2930,14 +2968,22 @@ static const double kInterBellQuietPeriod = 0.1;
             if ([obj isKindOfClass:[VT100ScreenMark class]]) {
                 VT100ScreenMark *mark = (VT100ScreenMark *)obj;
                 if (mark.command) {
-                    mark.code = returnCode;
-                    [delegate_ screenNeedsRedraw];
-                    return;
+                    return mark;
                 }
             }
             ++numChecked;
         }
         objects = [enumerator nextObject];
+    }
+    
+    return nil;
+}
+
+- (void)terminalReturnCodeOfLastCommandWas:(int)returnCode {
+    VT100ScreenMark *mark = [self lastCommandMark];
+    if (mark) {
+        mark.code = returnCode;
+        [delegate_ screenNeedsRedraw];
     }
 }
 

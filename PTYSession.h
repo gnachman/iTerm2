@@ -376,6 +376,7 @@ typedef enum {
 - (void)showHideNotes;
 - (void)previousMarkOrNote;
 - (void)nextMarkOrNote;
+- (void)scrollToMark:(VT100ScreenMark *)mark;
 
 - (VT100RemoteHost *)currentHost;
 

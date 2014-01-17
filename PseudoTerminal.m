@@ -35,6 +35,7 @@
 #import "TemporaryNumberAllocator.h"
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
+#import "ToolCommandHistoryView.h"
 #import "ToolbeltView.h"
 #import "VT100Screen.h"
 #import "VT100Screen.h"
@@ -1755,6 +1756,10 @@ NSString *kSessionsKVCKey = @"sessions";
     return toolbelt_;
 }
 
+- (void)refreshTools {
+    [[toolbelt_ commandHistoryView] updateCommands];
+}
+
 - (int)numRunningSessions
 {
     int n = 0;
@@ -2698,6 +2703,7 @@ NSString *kSessionsKVCKey = @"sessions";
     togglingFullScreen_ = false;
 
     [newTerminal.window performSelector:@selector(makeKeyAndOrderFront:) withObject:nil afterDelay:0];
+    [newTerminal refreshTools];
     [self release];
 }
 
@@ -3132,6 +3138,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [self showOrHideInstantReplayBar];
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     [itad updateBroadcastMenuState];
+    [[toolbelt_ commandHistoryView] updateCommands];
 }
 
 - (void)showOrHideInstantReplayBar
@@ -4149,6 +4156,10 @@ NSString *kSessionsKVCKey = @"sessions";
     [self splitVertically:NO
              withBookmark:[self _bookmarkToSplit]
             targetSession:[[self currentTab] activeSession]];
+}
+
+- (void)tabActiveSessionDidChange {
+    [[toolbelt_ commandHistoryView] updateCommands];
 }
 
 - (void)fitWindowToTabs
@@ -6130,6 +6141,12 @@ NSString *kSessionsKVCKey = @"sessions";
     ++count;
     [dockTile setBadgeLabel:[NSString stringWithFormat:@"%d", count]];
     [self.window.dockTile setShowsApplicationBadge:YES];
+}
+
+- (void)sessionHostDidChange:(PTYSession *)session to:(VT100RemoteHost *)host {
+    if ([self currentSession] == session) {
+      [[toolbelt_ commandHistoryView] updateCommands];
+    }
 }
 
 #pragma mark - KeyValueCoding

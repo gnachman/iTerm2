@@ -22,4 +22,9 @@
             self.class, self, self.hostname, self.username];
 }
 
+- (BOOL)isEqualToRemoteHost:(VT100RemoteHost *)other {
+    return ([_hostname isEqualToString:other.hostname] &&
+            [_username isEqualToString:other.username]);
+}
+
 @end

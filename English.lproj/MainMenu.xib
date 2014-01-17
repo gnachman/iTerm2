@@ -371,6 +371,12 @@ DQ
                                                 <action selector="paste:" target="-1" id="1169"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Paste File with Base64 Encoding" tag="2" id="LzY-eC-RYe">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="pasteBase64Encoded:" target="-1" id="OMO-E1-H3J"/>
+                                            </connections>
+                                        </menuItem>
                                         <menuItem isSeparatorItem="YES" id="1491"/>
                                         <menuItem title="Paste Faster" tag="2" id="1483">
                                             <modifierMask key="keyEquivalentModifierMask"/>

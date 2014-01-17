@@ -679,6 +679,7 @@ static BOOL hasBecomeActive = NO;
     NSString *theName = [notification object];
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
         [[term toolbelt] toggleToolWithName:theName];
+        [term refreshTools];
     }
     NSMenuItem *menuItem = [toolbeltMenu itemWithTitle:theName];
 

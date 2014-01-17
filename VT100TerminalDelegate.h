@@ -24,6 +24,11 @@ typedef enum {
     kVT100TerminalSemanticTextTypeMax
 } VT100TerminalSemanticTextType;
 
+typedef enum {
+    kVT100TerminalUnitsCells,
+    kVT100TerminalUnitsPixels
+} VT100TerminalUnits;
+
 @protocol VT100TerminalDelegate
 // Append a string at the cursor's position and advance the cursor, scrolling if necessary. If
 // |ascii| is set then the string contains only ascii characters.
@@ -285,7 +290,9 @@ typedef enum {
 - (void)terminalWillReceiveInlineFileNamed:(NSString *)name
                                     ofSize:(int)size
                                      width:(int)width
+                                     units:(VT100TerminalUnits)widthUnits
                                     height:(int)height
+                                     units:(VT100TerminalUnits)heightUnits
                        preserveAspectRatio:(BOOL)preserveAspectRatio;
 
 // Download completed normally

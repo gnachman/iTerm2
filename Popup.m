@@ -60,6 +60,8 @@
 
 - (void)dealloc
 {
+    [tableView_ setDelegate:nil];
+    [tableView_ setDataSource:nil];
     [selectionMainValue_ release];
     [unfilteredModel_ release];
     [substring_ release];

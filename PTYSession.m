@@ -42,6 +42,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
 
+#import <apr-1/apr_base64.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -1513,10 +1514,31 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [eventQueue_ removeObjectsInRange:NSMakeRange(0, eventsSent)];
 }
 
++ (NSData *)pasteboardFile
+{
+    NSPasteboard *board;
+
+    board = [NSPasteboard generalPasteboard];
+    assert(board != nil);
+
+    NSArray *supportedTypes = [NSArray arrayWithObjects:NSFilenamesPboardType, nil];
+    NSString *bestType = [board availableTypeFromArray:supportedTypes];
+
+    NSString* info = nil;
+    if ([bestType isEqualToString:NSFilenamesPboardType]) {
+        NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
+        if (filenames.count > 0) {
+            NSString *filename = filenames[0];
+            return [NSData dataWithContentsOfFile:filename];
+        }
+    }
+    return nil;
+}
+
 + (NSString*)pasteboardString
 {
     NSPasteboard *board;
-    
+
     board = [NSPasteboard generalPasteboard];
     assert(board != nil);
     
@@ -3554,6 +3576,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (void)scrollToMark:(VT100ScreenMark *)mark {
+    if ([SCREEN containsMark:mark]) {
+        VT100GridRange range = [SCREEN lineNumberRangeOfInterval:mark.entry.interval];
+        [TEXTVIEW scrollLineNumberRangeIntoView:range];
+        [self highlightMarkOrNote:mark];
+    }
+}
+
 - (VT100RemoteHost *)currentHost {
     return [SCREEN remoteHostOnLine:[SCREEN numberOfLines]];
 }
@@ -4476,6 +4506,41 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (void)textViewPasteWithEncoding:(TextViewPasteEncoding)encoding
+{
+    NSData *data = [[self class] pasteboardFile];
+    if (data) {
+        int length = apr_base64_encode_len(data.length);
+        NSMutableData *buffer = [NSMutableData dataWithLength:length];
+        if (buffer) {
+            apr_base64_encode_binary(buffer.mutableBytes,
+                                     data.bytes,
+                                     data.length);
+        }
+        NSMutableString *string = [NSMutableString string];
+        int remaining = length;
+        int offset = 0;
+        char *bytes = (char *)buffer.mutableBytes;
+        while (remaining > 0) {
+            @autoreleasepool {
+                NSString *chunk = [[[NSString alloc] initWithBytes:bytes + offset
+                                                            length:MIN(77, remaining)
+                                                          encoding:NSUTF8StringEncoding] autorelease];
+                [string appendString:chunk];
+                [string appendString:@"\n"];
+                remaining -= chunk.length;
+                offset += chunk.length;
+            }
+        }
+        [self pasteString:string flags:0];
+    }
+}
+
+- (BOOL)textViewCanPasteFile
+{
+    return [[self class] pasteboardFile] != nil;
+}
+
 - (BOOL)textViewWindowUsesTransparency
 {
     return [[[self tab] realParentWindow] useTransparency];
@@ -5273,6 +5338,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                forTabViewItem:[[self ptytab] tabViewItem]];
 }
 
+- (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
+    [[[self tab] realParentWindow] sessionHostDidChange:self to:host];
+}
+
 - (BOOL)screenShouldSendReport {
     return (SHELL != nil) && (![self isTmuxClient]);
 }
@@ -5324,10 +5393,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSString *trimmedCommand =
         [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     if (trimmedCommand.length) {
-        [[CommandHistory sharedInstance] addCommand:trimmedCommand
-                                             onHost:[SCREEN remoteHostOnLine:range.end.y]];
         VT100ScreenMark *mark = [SCREEN markOnLine:range.start.y];
         mark.command = command;
+        [[CommandHistory sharedInstance] addCommand:trimmedCommand
+                                             onHost:[SCREEN remoteHostOnLine:range.end.y]
+                                           withMark:mark];
     }
     commandRange_ = VT100GridCoordRangeMake(-1, -1, -1, -1);
 }

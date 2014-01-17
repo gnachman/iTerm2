@@ -39,6 +39,8 @@
 }
 
 - (void)dealloc {
+    [_tableView setDelegate:nil];
+    [_tableView setDataSource:nil];
     [super dealloc];
 }
 
@@ -46,8 +48,10 @@
     CommandHistory *history = [CommandHistory sharedInstance];
     [[self unfilteredModel] removeAllObjects];
     _partialCommandLength = partialCommand.length;
-    for (CommandHistoryEntry *entry in [history autocompleteSuggestionsWithPartialCommand:partialCommand
-                                                                                   onHost:host]) {
+    NSArray *autocompleteEntries = [history autocompleteSuggestionsWithPartialCommand:partialCommand
+                                                                               onHost:host];
+    NSArray *expandedEntries = [history entryArrayByExpandingAllUsesInEntryArray:autocompleteEntries];
+    for (CommandHistoryEntry *entry in expandedEntries) {
         CommandHistoryPopupEntry *popupEntry = [[[CommandHistoryPopupEntry alloc] init] autorelease];
         popupEntry.command = entry.command;
         popupEntry.date = [NSDate dateWithTimeIntervalSinceReferenceDate:entry.lastUsed];
