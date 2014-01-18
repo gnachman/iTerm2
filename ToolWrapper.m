@@ -67,19 +67,14 @@ static const CGFloat kButtonSize = 17;
 
 - (void)relayout
 {
-    NSLog(@"Begin toolwrapper relayout");
     NSRect frame = [self frame];
     title_.frame = NSMakeRect(kButtonSize, 0, frame.size.width - kButtonSize - kRightMargin, kTitleHeight);
     closeButton_.frame = NSMakeRect(0, 0, kButtonSize, kButtonSize);
     container_.frame = NSMakeRect(kLeftMargin, kTitleHeight + kMargin, MAX(0, frame.size.width - kLeftMargin - kRightMargin), MAX(0, frame.size.height - kTitleHeight - kMargin - kBottomMargin));
 
-    NSLog(@"Get my tool...");
     NSObject<ToolbeltTool> *tool = [self tool];
-    NSLog(@"tool=%@", tool);
     if ([tool respondsToSelector:@selector(relayout)]) {
-        NSLog(@"Call relayout on the tool");
         [tool relayout];
-        NSLog(@"Returned.");
     }
 }
 
@@ -96,11 +91,11 @@ static const CGFloat kButtonSize = 17;
 
 - (void)close:(id)sender
 {
-	if ([delegate_ haveOnlyOneTool]) {
-		[delegate_ hideToolbelt];
-	} else {
-		[delegate_ toggleShowToolWithName:self.name];
-	}
+        if ([delegate_ haveOnlyOneTool]) {
+                [delegate_ hideToolbelt];
+        } else {
+                [delegate_ toggleShowToolWithName:self.name];
+        }
 }
 
 - (void)setName:(NSString *)theName

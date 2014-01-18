@@ -245,6 +245,9 @@
 - (BOOL)layoutIsTooLarge;
 - (TmuxController *)tmuxController;
 
+- (void)moveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally;
+- (BOOL)canMoveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally;
+
 #pragma mark NSSplitView delegate methods
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification;
 // This is the implementation of splitViewDidResizeSubviews. The delegate method isn't called when

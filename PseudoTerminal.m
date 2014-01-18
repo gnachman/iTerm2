@@ -4351,6 +4351,34 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
+- (IBAction)movePaneDividerRight:(id)sender
+{
+    int width = [[[self currentSession] TEXTVIEW] charWidth];
+    [[self currentTab] moveCurrentSessionDividerBy:width
+                                      horizontally:YES];
+}
+
+- (IBAction)movePaneDividerLeft:(id)sender
+{
+    int width = [[[self currentSession] TEXTVIEW] charWidth];
+    [[self currentTab] moveCurrentSessionDividerBy:-width
+                                      horizontally:YES];
+}
+
+- (IBAction)movePaneDividerDown:(id)sender
+{
+    int height = [[[self currentSession] TEXTVIEW] lineHeight];
+    [[self currentTab] moveCurrentSessionDividerBy:height
+                                      horizontally:NO];
+}
+
+- (IBAction)movePaneDividerUp:(id)sender
+{
+    int height = [[[self currentSession] TEXTVIEW] lineHeight];
+    [[self currentTab] moveCurrentSessionDividerBy:-height
+                                      horizontally:NO];
+}
+
 - (IBAction)addNoteAtCursor:(id)sender {
     [[self currentSession] addNoteAtCursor];
 }
@@ -5764,6 +5792,22 @@ NSString *kSessionsKVCKey = @"sessions";
         result = ![[[self currentSession] SCREEN] allCharacterSetPropertiesHaveDefaultValues];
     } else if ([item action] == @selector(openCommandHistory:)) {
         return [[CommandHistory sharedInstance] haveCommandsForHost:[[self currentSession] currentHost]];
+    } else if ([item action] == @selector(movePaneDividerDown:)) {
+        int height = [[[self currentSession] TEXTVIEW] lineHeight];
+        return [[self currentTab] canMoveCurrentSessionDividerBy:height
+                                                    horizontally:NO];
+    } else if ([item action] == @selector(movePaneDividerUp:)) {
+        int height = [[[self currentSession] TEXTVIEW] lineHeight];
+        return [[self currentTab] canMoveCurrentSessionDividerBy:-height
+                                                    horizontally:NO];
+    } else if ([item action] == @selector(movePaneDividerRight:)) {
+        int width = [[[self currentSession] TEXTVIEW] charWidth];
+        return [[self currentTab] canMoveCurrentSessionDividerBy:width
+                                                    horizontally:YES];
+    } else if ([item action] == @selector(movePaneDividerLeft:)) {
+        int width = [[[self currentSession] TEXTVIEW] charWidth];
+        return [[self currentTab] canMoveCurrentSessionDividerBy:-width
+                                                    horizontally:YES];
     }
     return result;
 }

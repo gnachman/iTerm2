@@ -2973,6 +2973,149 @@ static NSString* FormatRect(NSRect r) {
     return NO;
 }
 
+- (BOOL)canMoveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally
+{
+    SessionView *view = [[self activeSession] view];
+    PTYSplitView *split = (PTYSplitView *)[view superview];
+    if (horizontally) {
+        if ([split isVertical]) {
+            return [self canMoveView:view inSplit:split horizontally:YES by:direction];
+        } else {
+            return [self canMoveView:split inSplit:[split superview] horizontally:YES by:direction];
+        }
+    } else {
+        if ([split isVertical]) {
+            return [self canMoveView:split inSplit:[split superview] horizontally:NO by:direction];
+        } else {
+            return [self canMoveView:view inSplit:split horizontally:NO by:direction];
+        }
+    }
+}
+
+- (void)moveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally
+{
+    SessionView *view = [[self activeSession] view];
+    PTYSplitView *split = (PTYSplitView *)[view superview];
+    // Either adjust the superview of the active session's view or the
+    // superview of the superview of the current session's view. If you're
+    // trying to resize horizontally and the active view is inside a split view
+    // with horizontal dividers, for example, the split view that needs to
+    // change is actually the view's grandparent.
+    if (horizontally) {
+        if ([split isVertical]) {
+            [self moveView:view inSplit:split horizontally:YES by:direction];
+        } else {
+            [self moveView:split inSplit:[split superview] horizontally:YES by:direction];
+        }
+    } else {
+        if ([split isVertical]) {
+            [self moveView:split inSplit:[split superview] horizontally:NO by:direction];
+        } else {
+            [self moveView:view inSplit:split horizontally:NO by:direction];
+        }
+    }
+}
+
+// This computes what to do and returns a block that actually does it. But if
+// it's not allowed, then it returns null. This combines the "can move" with
+// the "move" into a single function.
+- (void (^)())blockToMoveView:(NSView *)view
+                      inSplit:(NSView *)possibleSplit
+                 horizontally:(BOOL)horizontally
+                           by:(int)direction {
+    if (![possibleSplit isKindOfClass:[PTYSplitView class]] ||
+        possibleSplit.subviews.count == 1) {
+        return NULL;
+    }
+
+    // Compute the index of the passed-in view and divider that are affected.
+    PTYSplitView *split = (PTYSplitView *)possibleSplit;
+    assert(([split isVertical] && horizontally) ||
+           (![split isVertical] && !horizontally));
+    NSUInteger subviewIndex = [[split subviews] indexOfObject:view];
+    if (subviewIndex == NSNotFound) {
+        return NULL;
+    }
+    NSArray *subviews = [split subviews];
+    int numSubviews = [subviews count];
+    int splitterIndex;
+    if (subviewIndex + 1 == numSubviews) {
+        splitterIndex = numSubviews - 2;
+    } else {
+        splitterIndex = subviewIndex;
+    }
+
+    // Compute the new frames for the subview before and after the divider.
+    // No other subviews are affected.
+    NSSize movement = NSMakeSize(horizontally ? direction : 0,
+                                 horizontally ? 0 : direction);
+
+    NSView *before = subviews[splitterIndex];
+    NSRect beforeFrame = before.frame;
+    beforeFrame.size.width += movement.width;
+    beforeFrame.size.height += movement.height;
+
+    NSView *after = subviews[splitterIndex + 1];
+    NSRect afterFrame = after.frame;
+    afterFrame.size.width -= movement.width;
+    afterFrame.size.height -= movement.height;
+    afterFrame.origin.x -= movement.width;
+    afterFrame.origin.y -= movement.height;
+
+    // See if any constraint would be violated.
+    CGFloat proposed = [self _positionOfDivider:splitterIndex inSplitView:split];
+    proposed += (horizontally ? movement.width : movement.height);
+
+    CGFloat constraint = [self splitView:split
+                  constrainMinCoordinate:proposed
+                             ofSubviewAt:splitterIndex];
+    if (constraint > proposed) {
+        return NULL;
+    }
+
+    proposed = [self _positionOfDivider:splitterIndex inSplitView:split];
+    proposed += (horizontally ? movement.width : movement.height);
+    proposed -= [split dividerThickness];
+    constraint = [self splitView:split constrainMaxCoordinate:proposed ofSubviewAt:splitterIndex];
+    if (constraint < proposed) {
+        return NULL;
+    }
+
+    // It would be ok to move the divider. Return a block that updates views' frames.
+    void (^block)() = ^void() {
+        [self splitView:split draggingWillBeginOfSplit:splitterIndex];
+        before.frame = beforeFrame;
+        after.frame = afterFrame;
+        [self splitView:split draggingDidEndOfSplit:splitterIndex pixels:movement];
+        [split setNeedsDisplay:YES];
+    };
+    return [[block copy] autorelease];
+}
+
+- (void)moveView:(NSView *)view
+         inSplit:(NSView *)possibleSplit
+    horizontally:(BOOL)horizontally
+              by:(int)direction {
+    void (^block)() = [self blockToMoveView:view
+                                    inSplit:possibleSplit
+                               horizontally:horizontally
+                                         by:direction];
+    if (block) {
+        block();
+    }
+}
+
+- (BOOL)canMoveView:(NSView *)view
+            inSplit:(NSView *)possibleSplit
+       horizontally:(BOOL)horizontally
+                 by:(int)direction {
+    void (^block)() = [self blockToMoveView:view
+                                    inSplit:possibleSplit
+                               horizontally:horizontally
+                                         by:direction];
+    return block != nil;
+}
+
 #pragma mark NSSplitView delegate methods
 
 - (void)splitView:(PTYSplitView *)splitView draggingWillBeginOfSplit:(int)splitterIndex
@@ -2981,10 +3124,10 @@ static NSString* FormatRect(NSRect r) {
         // Don't care for non-tmux tabs.
         return;
     }
-        // Dragging looks a lot better if we turn on resizing subviews temporarily.
-        for (SessionView *sv in [self sessionViews]) {
-                [sv setAutoresizesSubviews:YES];
-        }
+    // Dragging looks a lot better if we turn on resizing subviews temporarily.
+    for (SessionView *sv in [self sessionViews]) {
+            [sv setAutoresizesSubviews:YES];
+    }
 }
 
 - (void)splitView:(PTYSplitView *)splitView draggingDidEndOfSplit:(int)splitterIndex pixels:(NSSize)pxMoved
