@@ -5,12 +5,12 @@ if [ $# -eq 0 ]; then
 fi
 for fn in "$@"
 do
-  php -r '$a = getimagesize("$argv[1]"); if ($a==FALSE) exit(1); else exit(0);' "$fn" > /dev/null 1>&2
   rc=$?
   if [[ $rc == 0 ]] ; then
     printf '\033]50;BeginFile='"$fn"'\n'
     wc -c "$fn" | awk '{print $1}'
-    php -r '$a = getimagesize("$argv[1]"); print $a[0] . "px\n" . $a[1] . "px";' "$fn"
+    echo auto
+    echo auto
     printf '\a'
     base64 < "$fn"
     printf '\033]50;EndFile\a'

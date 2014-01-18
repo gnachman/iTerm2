@@ -3995,11 +3995,17 @@ static VT100TCC decode_string(unsigned char *datap,
                 NSString *heightString =
                     [parts[3] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
                 width = [widthString intValue];
-                if ([widthString hasSuffix:@"px"]) {
+                if ([widthString isEqualToString:@"auto"]) {
+                    widthUnits = kVT100TerminalUnitsAuto;
+                    width = 1;
+                } else if ([widthString hasSuffix:@"px"]) {
                     widthUnits = kVT100TerminalUnitsPixels;
                 }
                 height = [heightString intValue];
-                if ([heightString hasSuffix:@"px"]) {
+                if ([heightString isEqualToString:@"auto"]) {
+                    heightUnits = kVT100TerminalUnitsAuto;
+                    height = 1;
+                } else if ([heightString hasSuffix:@"px"]) {
                     heightUnits = kVT100TerminalUnitsPixels;
                 }
             }
