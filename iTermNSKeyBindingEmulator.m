@@ -115,7 +115,13 @@ static struct {
     // Not (or no longer) in a multi-keystroke binding. Move to the root of the tree.
     self.currentDict = _rootDict;
     DLog(@"Default key binding is %@", obj);
-    return obj != nil;
+    
+    if (![obj isKindOfClass:[NSArray class]]) {
+        return NO;
+    }
+    
+    NSArray *theArray = (NSArray *)obj;
+    return ([theArray[0] isEqualToString:@"insertText:"]);
 }
 
 #pragma mark - Private
