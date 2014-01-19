@@ -23,6 +23,7 @@ static const CGFloat kMargin = 5;
     NSArray *entries_;
     NSArray *filteredEntries_;
     iTermSearchField *searchField_;
+    NSFont *boldFont_;
 }
 
 - (id)initWithFrame:(NSRect)frame {
@@ -79,6 +80,14 @@ static const CGFloat kMargin = 5;
         [tableView_ sizeToFit];
         [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
         
+        // Save the bold version of the table's default font
+        NSFontManager *fontManager = [NSFontManager sharedFontManager];
+        NSFont *font = [[col dataCell] font];
+        boldFont_ = [[fontManager fontWithFamily:font.familyName
+                                          traits:NSBoldFontMask
+                                          weight:0
+                                            size:font.pointSize] retain];
+
         [self relayout];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(commandHistoryDidChange:)
@@ -94,6 +103,7 @@ static const CGFloat kMargin = 5;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [tableView_ release];
     [scrollView_ release];
+    [boldFont_ release];
     [super dealloc];
 }
 
@@ -135,7 +145,13 @@ static const CGFloat kMargin = 5;
     } else {
         // Contents
         NSString* value = [entry.command stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
-        return value;
+        ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+        if (entry.lastMark && [[wrapper.term currentSession] sessionID] == entry.lastMark.sessionID) {
+            return [[NSAttributedString alloc] initWithString:value
+                                                   attributes:@{ NSFontAttributeName: boldFont_ }];
+        } else {
+            return value;
+        }
     }
 }
 

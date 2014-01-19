@@ -72,9 +72,12 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
+static int gNextSessionID = 1;
+
 @interface PTYSession ()
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
+@property(nonatomic, assign) int sessionID;
 @end
 
 @implementation PTYSession
@@ -271,6 +274,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 {
     self = [super init];
     if (self) {
+        _sessionID = gNextSessionID++;
         // The new session won't have the move-pane overlay, so just exit move pane
         // mode.
         [[MovePaneController sharedInstance] exitMovePaneMode];
@@ -4841,6 +4845,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 #pragma mark - VT100ScreenDelegate
+
+- (int)screenSessionID {
+    return self.sessionID;
+}
 
 - (void)screenNeedsRedraw {
     [self refreshAndStartTimerIfNeeded];
