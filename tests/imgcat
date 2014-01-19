@@ -1,19 +1,17 @@
 #!/bin/bash
 if [ $# -eq 0 ]; then
-  echo "Usage: image.sh filename"
+  echo "Usage: imgcat file ..."
   exit 1
 fi
 for fn in "$@"
 do
-  php -r '$a = getimagesize("$argv[1]"); if ($a==FALSE) exit(1); else exit(0);' "$fn" > /dev/null 1>&2
-  rc=$?
-  if [[ $rc == 0 ]] ; then
-    printf '\033]50;BeginFile='"$fn"'\n'
-    wc -c "$fn" | awk '{print $1}'
-    php -r '$a = getimagesize("$argv[1]"); print $a[0] . "px\n" . $a[1] . "px";' "$fn"
-    printf '\a'
+  if [ -r $fn ] ; then
+    printf '\033]50;File=name='`echo -n "$fn" | base64`";"
+    wc -c "$fn" | awk '{printf "size=%d",$1}'
+    printf ";inline=1"
+    printf ":"
     base64 < "$fn"
-    printf '\033]50;EndFile\a'
+    printf '\a'
   else
     echo File $fn does not exist.
   fi

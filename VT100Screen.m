@@ -34,10 +34,17 @@ NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
 static const double kInterBellQuietPeriod = 0.1;
 
 @implementation VT100Screen {
-    unichar inlineFileCode_;
-    NSMutableString *inlineFile_;
+    NSDictionary *inlineFileInfo_;  // Keys are kInlineFileXXX
     NSMutableArray *inlineFileCodes_;
 }
+
+static NSString *const kInlineFileName = @"name";  // NSString
+static NSString *const kInlineFileWidth = @"width";  // NSNumber
+static NSString *const kInlineFileWidthUnits = @"width units";  // NSNumber of VT100TerminalUnits
+static NSString *const kInlineFileHeight = @"height";  // NSNumber
+static NSString *const kInlineFileHeightUnits = @"height units"; // NSNumber of VT100TerminalUnits
+static NSString *const kInlineFilePreserveAspectRatio = @"preserve aspect ratio";  // NSNumber bool
+static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutableString
 
 @synthesize terminal = terminal_;
 @synthesize audibleBell = audibleBell_;
@@ -104,7 +111,7 @@ static const double kInterBellQuietPeriod = 0.1;
     [findContext_ release];
     [intervalTree_ release];
     [markCache_ release];
-    [inlineFile_ release];
+    [inlineFileInfo_ release];
     for (NSNumber *code in inlineFileCodes_) {
         ReleaseImage([code intValue]);
     }
@@ -2777,28 +2784,85 @@ static const double kInterBellQuietPeriod = 0.1;
                                     height:(int)height
                                      units:(VT100TerminalUnits)heightUnits
                        preserveAspectRatio:(BOOL)preserveAspectRatio {
+    [inlineFileInfo_ release];
+    inlineFileInfo_ = [@{ kInlineFileName: name,
+                          kInlineFileWidth: @(width),
+                          kInlineFileWidthUnits: @(widthUnits),
+                          kInlineFileHeight: @(height),
+                          kInlineFileHeightUnits: @(heightUnits),
+                          kInlineFilePreserveAspectRatio: @(preserveAspectRatio),
+                          kInlineFileBase64String: [NSMutableString string] } retain];
+}
+
+- (void)appendInlineFileCharsForName:(NSString *)name
+                               width:(int)width
+                               units:(VT100TerminalUnits)widthUnits
+                              height:(int)height
+                               units:(VT100TerminalUnits)heightUnits
+                 preserveAspectRatio:(BOOL)preserveAspectRatio
+                               image:(NSImage *)image {
+    if (!image) {
+        image = [NSImage imageNamed:@"broken_image"];
+    }
+
+    BOOL needsWidth = NO;
     NSSize cellSize = [delegate_ screenCellSize];
-    if (widthUnits == kVT100TerminalUnitsPixels) {
-        width = ceil((double)width / cellSize.width);
+    switch (widthUnits) {
+        case kVT100TerminalUnitsPixels:
+            width = ceil((double)width / cellSize.width);
+            break;
+            
+        case kVT100TerminalUnitsCells:
+            break;
+            
+        case kVT100TerminalUnitsAuto:
+            if (heightUnits == kVT100TerminalUnitsAuto) {
+                width = ceil((double)image.size.width / cellSize.width);
+            } else {
+                needsWidth = YES;
+            }
+            break;
     }
-    if (heightUnits == kVT100TerminalUnitsPixels) {
-        height = ceil((double)height / cellSize.height);
+    switch (heightUnits) {
+        case kVT100TerminalUnitsPixels:
+            height = ceil((double)height / cellSize.height);
+            break;
+            
+        case kVT100TerminalUnitsCells:
+            break;
+            
+        case kVT100TerminalUnitsAuto:
+            if (widthUnits == kVT100TerminalUnitsAuto) {
+                height = ceil((double)image.size.height / cellSize.height);
+            } else {
+                double aspectRatio = image.size.width / image.size.height;
+                height = ((double)(width * cellSize.width) / aspectRatio) / cellSize.height;
+            }
+            break;
     }
+    
+    if (needsWidth) {
+        double aspectRatio = image.size.width / image.size.height;
+        width = ((double)(height * cellSize.height) * aspectRatio) / cellSize.width;
+    }
+    
     width = MAX(1, width);
     height = MAX(1, height);
-    
+
+    double maxWidth = self.width - currentGrid_.cursorX;
     // If the requested size is too large, scale it down to fit.
-    if (width >= self.width) {
-        double scale = (double)self.width / (double)width;
+    if (width > maxWidth) {
+        double scale = maxWidth / (double)width;
         width = self.width;
         height *= scale;
     }
     
     // Height is capped at 255 because only 8 bits are used to represent the line number of a cell
     // within the image.
-    if (height > 255) {
-        double scale = (double)height / 255.0;
-        height = 255;
+    double maxHeight = 255;
+    if (height > maxHeight) {
+        double scale = (double)height / maxHeight;
+        height = maxHeight;
         width *= scale;
     }
 
@@ -2817,27 +2881,31 @@ static const double kInterBellQuietPeriod = 0.1;
         [self linefeed];
     }
     
-    inlineFileCode_ = c.code;
+    SetDecodedImage(c.code, image);
+    [inlineFileCodes_ addObject:@(c.code)];
 }
 
 - (void)terminalDidFinishReceivingFile {
-    if (inlineFileCode_) {
-        [self decodeInlineFile];
+    if (inlineFileInfo_) {
+        NSImage *image = [self imageWithBase64EncodedString:inlineFileInfo_[kInlineFileBase64String]];
+        [self appendInlineFileCharsForName:inlineFileInfo_[kInlineFileName]
+                                     width:[inlineFileInfo_[kInlineFileWidth] intValue]
+                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileWidthUnits] intValue]
+                                    height:[inlineFileInfo_[kInlineFileHeight] intValue]
+                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
+                       preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
+                                     image:image];
         [delegate_ screenNeedsRedraw];
-        inlineFileCode_ = 0;
-        [inlineFile_ release];
-        inlineFile_ = nil;
+        [inlineFileInfo_ release];
+        inlineFileInfo_ = nil;
     } else {
         [delegate_ screenDidFinishReceivingFile];
     }
 }
 
 - (void)terminalDidReceiveBase64FileData:(NSString *)data {
-    if (inlineFileCode_) {
-        if (!inlineFile_) {
-            inlineFile_ = [[NSMutableString alloc] init];
-        }
-        [inlineFile_ appendString:data];
+    if (inlineFileInfo_) {
+        [inlineFileInfo_[kInlineFileBase64String] appendString:data];
     } else {
         [delegate_ screenDidReceiveBase64FileData:data];
     }
@@ -3589,32 +3657,23 @@ static void SwapInt(int *a, int *b) {
     return keepSearching;
 }
 
-- (void)decodeInlineFile {
+- (NSImage *)imageWithBase64EncodedString:(NSString *)string {
     // TODO: Handle objects other than images.
-    const char *buffer = [inlineFile_ UTF8String];
+    const char *buffer = [string UTF8String];
     int destLength = apr_base64_decode_len(buffer);
     if (destLength <= 0) {
-        goto error;
+        return nil;
     }
     
     NSMutableData *data = [NSMutableData dataWithLength:destLength];
     char *decodedBuffer = [data mutableBytes];
     int resultLength = apr_base64_decode(decodedBuffer, buffer);
     if (resultLength <= 0) {
-        goto error;
+        return nil;
     }
     
     NSImage *image = [[[NSImage alloc] initWithData:data] autorelease];
-    if (!image) {
-        goto error;
-    }
-    
-    SetDecodedImage(inlineFileCode_, image);
-    [inlineFileCodes_ addObject:@(inlineFileCode_)];
-    return;
-    
-error:
-    SetDecodedImage(inlineFileCode_, [NSImage imageNamed:@"broken_image"]);
+    return image;
 }
 
 

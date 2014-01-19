@@ -26,7 +26,8 @@ typedef enum {
 
 typedef enum {
     kVT100TerminalUnitsCells,
-    kVT100TerminalUnitsPixels
+    kVT100TerminalUnitsPixels,
+    kVT100TerminalUnitsAuto,
 } VT100TerminalUnits;
 
 @protocol VT100TerminalDelegate
