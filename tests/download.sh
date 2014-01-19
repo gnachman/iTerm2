@@ -6,7 +6,7 @@ fi
 for fn in "$@"
 do
   if [ -r "$fn" ] ; then
-    printf '\033]50;File=name='`echo -n "$fn" | base64`";"
+    printf '\033]1337;File=name='`echo -n "$fn" | base64`";"
     wc -c "$fn" | awk '{printf "size=%d",$1}'
     printf ":"
     base64 < "$fn"

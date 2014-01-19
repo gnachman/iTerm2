@@ -1736,7 +1736,9 @@ static VT100TCC decode_xterm(unsigned char *datap,
                     break;
                 }
             }
-            if (*datap == ':' && !memcmp(tempBuffer, "File=", MIN(outputPointer - tempBuffer, 5))) {
+            if ((mode == 50 || mode == 1337) &&
+                *datap == ':' &&
+                !memcmp(tempBuffer, "File=", MIN(outputPointer - tempBuffer, 5))) {
                 // Long base-64 encoded part of code begins. Terminate the OSC so we don't have to
                 // buffer the whole string here.
                 ADVANCE(datap, datalen, rmlen);
@@ -1800,8 +1802,12 @@ static VT100TCC decode_xterm(unsigned char *datap,
                 result.type = ITERM_GROWL;
                 break;
             case 50:
-                // Nonstandard escape code implemented by Konsole.
+            case 1337:
+                // 50 is a nonstandard escape code implemented by Konsole.
+                // xterm since started using it for setting the font, so 1337 is the preferred code
+                // for this in iterm.
                 // <Esc>]50;key=value^G
+                // <Esc>]1337;key=value^G
                 result.type = XTERMCC_SET_KVP;
                 break;
             case 52:
@@ -4338,7 +4344,7 @@ static VT100TCC decode_string(unsigned char *datap,
     }
     if (token.type != VT100_SKIP) {  // VT100_SKIP = there was no data to read
         if ([delegate_ terminalIsAppendingToPasteboard]) {
-            // We are probably copying text to the clipboard until esc]50;EndCopy^G is received.
+            // We are probably copying text to the clipboard until esc]1337;EndCopy^G is received.
             if (token.type != XTERMCC_SET_KVP ||
                 ![token.u.string hasPrefix:@"CopyToClipboard"]) {
                 // Append text to clipboard except for initial command that turns on copying to

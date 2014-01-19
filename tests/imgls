@@ -8,7 +8,7 @@ do
   dims=$(php -r '$a = getimagesize("$argv[1]"); if ($a==FALSE) exit(1); else { echo $a[0] . "x" .$a[1]; exit(0); }' "$fn")
   rc=$?
   if [[ $rc == 0 ]] ; then
-    printf '\033]50;File=name='`echo -n "$fn" | base64`";"
+    printf '\033]1337;File=name='`echo -n "$fn" | base64`";"
     wc -c "$fn" | awk '{printf "size=%d",$1}'
     printf ";inline=1"
     printf ":"
