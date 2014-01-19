@@ -1638,8 +1638,8 @@ static VT100TCC decode_xterm(unsigned char *datap,
     int mode = 0;
     VT100TCC result;
     NSData *data;
-    char s[MAX_XTERM_TEMP_BUFFER_LENGTH] = { 0 };
-    char *c = NULL;
+    char tempBuffer[MAX_XTERM_TEMP_BUFFER_LENGTH] = { 0 };
+    char *outputPointer = NULL;
 
     assert(datap != NULL);
     assert(datalen >= 2);
@@ -1674,11 +1674,11 @@ static VT100TCC decode_xterm(unsigned char *datap,
             ADVANCE(datap, datalen, rmlen);
         }
         BOOL str_end = NO;
-        c = s;
+        outputPointer = tempBuffer;
         // Search for the end of a ^G/ST terminated string (but see the note below about other ways to terminate it).
         while (datalen > 0) {
             // broken OSC (ESC ] P NRRGGBB) does not need any terminator
-            if (mode == -1 && c - s >= 7) {
+            if (mode == -1 && outputPointer - tempBuffer >= 7) {
                 str_end = YES;
                 break;
             }
@@ -1736,14 +1736,20 @@ static VT100TCC decode_xterm(unsigned char *datap,
                     break;
                 }
             }
-            if (c - s < MAX_XTERM_TEMP_BUFFER_LENGTH) {
-                // if 0 <= mode <=2 and current *datap is a control character, replace it with '?'. 
+            if (*datap == ':' && !memcmp(tempBuffer, "File=", MIN(outputPointer - tempBuffer, 5))) {
+                // Long base-64 encoded part of code begins. Terminate the OSC so we don't have to
+                // buffer the whole string here.
+                ADVANCE(datap, datalen, rmlen);
+                str_end = YES;
+                break;
+            } else if (outputPointer - tempBuffer < MAX_XTERM_TEMP_BUFFER_LENGTH) {
+                // if 0 <= mode <=2 and current *datap is a control character, replace it with '?'.
                 if ((*datap < 0x20 || *datap == 0x7f) && (mode == 0 || mode == 1 || mode == 2)) {
-                    *c = '?';
+                    *outputPointer = '?';
                 } else {
-                    *c = *datap;
+                    *outputPointer = *datap;
                 }
-                c++;
+                outputPointer++;
             }
             ADVANCE(datap, datalen, rmlen);
         }
@@ -1762,7 +1768,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
         // Found terminator but it's malformed.
         result.type = VT100_NOTSUPPORT;
     } else {
-        data = [NSData dataWithBytes:s length:c - s];
+        data = [NSData dataWithBytes:tempBuffer length:outputPointer - tempBuffer];
         result.u.string = [[[NSString alloc] initWithData:data
                                                  encoding:enc] autorelease];
         switch (mode) {
@@ -3974,7 +3980,69 @@ static VT100TCC decode_string(unsigned char *datap,
             [delegate_ terminalAddNote:(NSString *)value show:NO];
         } else if ([key isEqualToString:@"CopyToClipboard"]) {
             [delegate_ terminalSetPasteboard:value];
+        } else if ([key isEqualToString:@"File"]) {
+            // Takes semicolon-delimited arguments.
+            // File=<arg>;<arg>;...;<arg>
+            // <arg> is one of:
+            //   name=<base64-encoded filename>    Default: Unnamed file
+            //   size=<integer file size>          Default: 0
+            //   width=auto|<integer>px|<integer>  Default: auto
+            //   height=auto|<integer>px|<integer> Default: auto
+            //   preserveAspectRatio=<bool>        Default: yes
+            //   inline=<bool>                     Default: no
+            NSArray *parts = [value componentsSeparatedByString:@";"];
+            NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+            dict[@"size"] = @(0);
+            dict[@"width"] = @"auto";
+            dict[@"height"] = @"auto";
+            dict[@"preserveAspectRatio"] = @YES;
+            dict[@"inline"] = @NO;
+            for (NSString *part in parts) {
+                NSRange eq = [part rangeOfString:@"="];
+                if (eq.location != NSNotFound && eq.location > 0) {
+                    NSString *left = [part substringToIndex:eq.location];
+                    NSString *right = [part substringFromIndex:eq.location + 1];
+                    dict[left] = right;
+                } else {
+                    dict[part] = @"";
+                }
+            }
+            
+            NSString *widthString = dict[@"width"];
+            VT100TerminalUnits widthUnits = kVT100TerminalUnitsCells;
+            NSString *heightString = dict[@"height"];
+            VT100TerminalUnits heightUnits = kVT100TerminalUnitsCells;
+            int width = [widthString intValue];
+            if ([widthString isEqualToString:@"auto"]) {
+                widthUnits = kVT100TerminalUnitsAuto;
+            } else if ([widthString hasSuffix:@"px"]) {
+                widthUnits = kVT100TerminalUnitsPixels;
+            }
+            int height = [heightString intValue];
+            if ([heightString isEqualToString:@"auto"]) {
+                heightUnits = kVT100TerminalUnitsAuto;
+            } else if ([heightString hasSuffix:@"px"]) {
+                heightUnits = kVT100TerminalUnitsPixels;
+            }
+
+            NSString *name = [dict[@"name"] stringByBase64DecodingStringWithEncoding:NSISOLatin1StringEncoding];
+            if (!name) {
+                name = @"Unnamed file";
+            }
+            if ([dict[@"inline"] boolValue]) {
+                [delegate_ terminalWillReceiveInlineFileNamed:name
+                                                       ofSize:[dict[@"size"] intValue]
+                                                        width:width
+                                                        units:widthUnits
+                                                       height:height
+                                                        units:heightUnits
+                                          preserveAspectRatio:[dict[@"preserveAspectRatio"] boolValue]];
+            } else {
+                [delegate_ terminalWillReceiveFileNamed:name ofSize:[dict[@"size"] intValue]];
+            }
+            receivingFile_ = YES;
         } else if ([key isEqualToString:@"BeginFile"]) {
+            // DEPRECATED. Use File instead.
             // Takes 2-5 args separated by newline. First is filename, second is size in bytes.
             // Arg 3,4 are width,height in cells for an inline image.
             // Arg 5 is whether to preserve the aspect ratio for an inline image.
@@ -4252,7 +4320,11 @@ static VT100TCC decode_string(unsigned char *datap,
     VT100TCC token = *lastToken_;
     // First, handle sending input to pasteboard/receving files.
     if (receivingFile_) {
-        if (token.type == VT100_ASCIISTRING) {
+        if (token.type == VT100CC_BEL) {
+            [delegate_ terminalDidFinishReceivingFile];
+            receivingFile_ = NO;
+            return;
+        } else if (token.type == VT100_ASCIISTRING) {
             [delegate_ terminalDidReceiveBase64FileData:token.u.string];
             return;
         } else if (token.type == VT100CC_CR ||

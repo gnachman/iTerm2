@@ -65,15 +65,13 @@
     self.status = kTransferrableFileStatusStarting;
     [[FileTransferManager sharedInstance] transferrableFileDidStartTransfer:self];
 
-    NSError *error;
     if (!self.localPath) {
+        NSError *error;
         error = [self errorWithDescription:@"Canceled."];
-    } else {
-        error = nil;
+        self.error = [error localizedDescription];
+        [[FileTransferManager sharedInstance] transferrableFile:self
+                                 didFinishTransmissionWithError:error];
     }
-    self.error = [error localizedDescription];
-    [[FileTransferManager sharedInstance] transferrableFile:self
-                             didFinishTransmissionWithError:error];
     self.data = [NSMutableString string];
 }
 

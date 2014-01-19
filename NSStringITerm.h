@@ -84,4 +84,6 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (NSString *)stringByTrimmingLeadingWhitespace;
 
+- (NSString *)stringByBase64DecodingStringWithEncoding:(NSStringEncoding)encoding;
+
 @end

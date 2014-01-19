@@ -1,16 +1,17 @@
 #!/bin/bash
 if [ $# -ne 1 ]; then
-  echo "Usage: download.sh filename"
+  echo "Usage: download.sh file ..."
   exit 1
 fi
-if [ -a $1 ]; then
-  printf '\033]50;BeginFile='$1'\n'
-  wc -c $1 | awk '{print $1}'
-  printf '\a'
-  base64 < $1
-  printf '\033]50;EndFile\a'
-  exit 0
-fi
-
-echo File $1 does not exist.
-exit 1
+for fn in "$@"
+do
+  if [ -r "$fn" ] ; then
+    printf '\033]50;File=name='`echo -n "$fn" | base64`";"
+    wc -c "$fn" | awk '{printf "size=%d",$1}'
+    printf ":"
+    base64 < "$fn"
+    printf '\a'
+  else
+    echo File $fn does not exist or is not readable.
+  fi
+done
