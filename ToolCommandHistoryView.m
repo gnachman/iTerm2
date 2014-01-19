@@ -162,12 +162,19 @@ static const CGFloat kMargin = 5;
     VT100RemoteHost *host = [[wrapper.term currentSession] currentHost];
     NSArray *temp = [[CommandHistory sharedInstance] autocompleteSuggestionsWithPartialCommand:@""
                                                                                         onHost:host];
-    entries_ = [[[CommandHistory sharedInstance] entryArrayByExpandingAllUsesInEntryArray:temp] retain];
+    NSArray *expanded = [[CommandHistory sharedInstance] entryArrayByExpandingAllUsesInEntryArray:temp];
+    NSArray *reversed = [[expanded reverseObjectEnumerator] allObjects];
+    entries_ = [reversed retain];
     [tableView_ reloadData];
     
     [self computeFilteredEntries];
     // Updating the table data causes the cursor to change into an arrow!
     [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
+    
+    NSResponder *firstResponder = [[tableView_ window] firstResponder];
+    if (firstResponder != tableView_) {
+        [tableView_ scrollToEndOfDocument:nil];
+    }
 }
 
 - (void)fixCursor
