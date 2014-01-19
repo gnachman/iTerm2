@@ -29,13 +29,19 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
 
 - (VT100ScreenMark *)lastMark;
 
+// PWD at the time of the command
+- (NSString *)lastDirectory;
+
 @end
 
 @interface CommandHistory : NSObject
 
 + (instancetype)sharedInstance;
 
-- (void)addCommand:(NSString *)command onHost:(VT100RemoteHost *)host withMark:(VT100ScreenMark *)mark;
+- (void)addCommand:(NSString *)command
+            onHost:(VT100RemoteHost *)host
+       inDirectory:(NSString *)directory
+          withMark:(VT100ScreenMark *)mark;
 
 - (NSArray *)autocompleteSuggestionsWithPartialCommand:(NSString *)partialCommand
                                                 onHost:(VT100RemoteHost *)host;

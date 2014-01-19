@@ -210,7 +210,15 @@ static const CGFloat kMargin = 5;
     }
     CommandHistoryEntry* entry = filteredEntries_[selectedIndex];
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-    [[wrapper.term currentSession] insertText:entry.command];
+    NSString *text = entry.command;
+    if (([[NSApp currentEvent] modifierFlags] & NSAlternateKeyMask)) {
+        if (entry.lastDirectory) {
+            text = [@"cd " stringByAppendingString:entry.lastDirectory];
+        } else {
+            return;
+        }
+    }
+    [[wrapper.term currentSession] insertText:text];
 }
 
 - (void)clear:(id)sender

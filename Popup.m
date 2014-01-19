@@ -219,6 +219,11 @@
             reloading_ = oldReloading;
         }
     }
+    if (onTop) {
+        [tableView_ scrollToEndOfDocument:nil];
+    } else {
+        [tableView_ scrollToBeginningOfDocument:nil];
+    }
 }
 
 - (void)setOnTop:(BOOL)onTop

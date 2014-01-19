@@ -5405,6 +5405,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         mark.command = command;
         [[CommandHistory sharedInstance] addCommand:trimmedCommand
                                              onHost:[SCREEN remoteHostOnLine:range.end.y]
+                                        inDirectory:[SCREEN workingDirectoryOnLine:range.end.y]
                                            withMark:mark];
     }
     commandRange_ = VT100GridCoordRangeMake(-1, -1, -1, -1);
