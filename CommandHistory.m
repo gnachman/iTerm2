@@ -7,19 +7,14 @@
 //
 
 #import "CommandHistory.h"
+#import "CommandHistoryEntry.h"
+#import "CommandUse.h"
 #import "PreferencePanel.h"
 #import "VT100RemoteHost.h"
 
 NSString *const kCommandHistoryDidChangeNotificationName = @"kCommandHistoryDidChangeNotificationName";
 
 static const int kMaxResults = 200;
-
-// Keys for serializing an entry
-static NSString *const kCommand = @"command";
-static NSString *const kDirectory = @"directory";
-static NSString *const kUses = @"uses";
-static NSString *const kLastUsed = @"last used";
-static NSString *const kUseTimes = @"use times";
 
 // Top level serialization keys
 static NSString *const kHostname = @"hostname";
@@ -28,178 +23,8 @@ static NSString *const kCommands = @"commands";
 static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
 static const int kMaxCommandsToSavePerHost = 200;
 
-@interface CommandUse : NSObject <NSCopying>
-@property(nonatomic, assign) NSTimeInterval time;
-@property(nonatomic, retain) VT100ScreenMark *mark;
-@property(nonatomic, retain) NSString *directory;
-
-+ (instancetype)commandUseFromSerializedValue:(NSArray *)serializedValue;
-- (NSArray *)serializedValue;
-
-@end
-
-@implementation CommandUse
-
-- (void)dealloc {
-    [_mark release];
-    [_directory release];
-    [super dealloc];
-}
-
-- (NSArray *)serializedValue {
-    return @[ @(self.time), _directory ?: @"" ];
-}
-
-- (id)copyWithZone:(NSZone *)zone {
-    return [[[self class] commandUseFromSerializedValue:[self serializedValue]] retain];
-}
-
-+ (instancetype)commandUseFromSerializedValue:(id)serializedValue {
-    CommandUse *commandUse = [[[CommandUse alloc] init] autorelease];
-    if ([serializedValue isKindOfClass:[NSArray class]]) {
-        commandUse.time = [serializedValue[0] doubleValue];
-        if ([serializedValue count] > 1) {
-            commandUse.directory = serializedValue[1];
-        }
-    } else if ([serializedValue isKindOfClass:[NSNumber class]]) {
-        commandUse.time = [serializedValue doubleValue];
-    }
-    return commandUse;
-}
-
-@end
-
 @interface CommandHistory ()
 @property(nonatomic, retain) NSMutableDictionary *hosts;
-@end
-
-@interface CommandHistoryEntry () <NSCopying>
-
-// First character matched by current search.
-@property(nonatomic, assign) int matchLocation;
-@property(nonatomic, retain) NSMutableArray *useTimes;
-
-+ (instancetype)commandHistoryEntry;
-
-@end
-
-@implementation CommandHistoryEntry
-
-+ (instancetype)commandHistoryEntry {
-    return [[[self alloc] init] autorelease];
-}
-
-+ (instancetype)entryWithDictionary:(NSDictionary *)dict {
-    CommandHistoryEntry *entry = [self commandHistoryEntry];
-    entry.command = dict[kCommand];
-    entry.uses = [dict[kUses] intValue];
-    entry.lastUsed = [dict[kLastUsed] doubleValue];
-    [entry setUseTimesFromSerializedArray:dict[kUseTimes]];
-    return entry;
-}
-
-- (id)init {
-    self = [super init];
-    if (self) {
-        _useTimes = [[NSMutableArray alloc] init];
-    }
-    return self;
-}
-
-- (void)dealloc {
-    [_command release];
-    [_useTimes release];
-    [super dealloc];
-}
-
-- (NSArray *)serializedUseTimes {
-    NSMutableArray *result = [NSMutableArray array];
-    for (CommandUse *use in self.useTimes) {
-        [result addObject:[use serializedValue]];
-    }
-    return result;
-}
-
-- (void)setUseTimesFromSerializedArray:(NSArray *)array {
-    for (NSArray *value in array) {
-        [self.useTimes addObject:[CommandUse commandUseFromSerializedValue:value]];
-    }
-}
-
-- (NSDictionary *)dictionary {
-    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-    if (self.command) {
-        dict[kCommand] = self.command;
-    }
-    dict[kUses] = @(self.uses);
-    dict[kLastUsed] = @(self.lastUsed);
-    dict[kUseTimes] = [self serializedUseTimes];
-    return dict;
-}
-
-- (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p command=%@ uses=%d lastUsed=%@ matchLocation=%d>",
-            [self class],
-            self,
-            self.command,
-            self.uses,
-            [NSDate dateWithTimeIntervalSinceReferenceDate:self.lastUsed],
-            self.matchLocation];
-}
-
-- (VT100ScreenMark *)lastMark {
-    CommandUse *use = [self.useTimes lastObject];
-    return use.mark;
-}
-
-- (NSString *)lastDirectory {
-    CommandUse *use = [self.useTimes lastObject];
-    return use.directory.length > 0 ? use.directory : nil;
-}
-
-// Used to sort from highest to lowest score. So Ascending means self's score is higher
-// than other's.
-- (NSComparisonResult)compare:(CommandHistoryEntry *)other {
-    if (_matchLocation == 0 && other.matchLocation > 0) {
-        return NSOrderedDescending;
-    }
-    if (other.matchLocation == 0 && _matchLocation > 0) {
-        return NSOrderedAscending;
-    }
-    int otherUses = other.uses;
-    if (_uses < otherUses) {
-        return NSOrderedDescending;
-    } else if (_uses > other.uses) {
-        return NSOrderedAscending;
-    }
-    
-    NSTimeInterval otherLastUsed = other.lastUsed;
-    if (_lastUsed < otherLastUsed) {
-        return NSOrderedDescending;
-    } else if (_lastUsed > otherLastUsed) {
-        return NSOrderedAscending;
-    } else {
-        return NSOrderedSame;
-    }
-}
-
-- (NSComparisonResult)compareUseTime:(CommandHistoryEntry *)other {
-    return [@(other.lastUsed) compare:@(self.lastUsed)];
-}
-
-- (id)copyWithZone:(NSZone *)zone {
-    CommandHistoryEntry *theCopy = [[CommandHistoryEntry alloc] init];
-    theCopy.command = self.command;
-    theCopy.uses = self.uses;
-    theCopy.lastUsed = self.lastUsed;
-    theCopy.useTimes = [NSMutableArray array];
-    for (CommandUse *use in self.useTimes) {
-        [theCopy.useTimes addObject:[use copy]];
-    }
-    return theCopy;
-}
-
-
 @end
 
 @implementation CommandHistory {

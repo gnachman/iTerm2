@@ -8,6 +8,7 @@
 
 #import "CommandHistoryPopup.h"
 #import "CommandHistory.h"
+#import "CommandHistoryEntry.h"
 #import "NSDateFormatterExtras.h"
 #import "PopupModel.h"
 

@@ -13,27 +13,6 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
 @class VT100RemoteHost;
 @class VT100ScreenMark;
 
-@interface CommandHistoryEntry : NSObject
-
-// Full text of command.
-@property(nonatomic, copy) NSString *command;
-
-// Number of times used.
-@property(nonatomic, assign) int uses;
-
-// Time since reference date of last use.
-@property(nonatomic, assign) NSTimeInterval lastUsed;
-
-// NSNumber times since reference date
-@property(nonatomic, readonly) NSMutableArray *useTimes;
-
-- (VT100ScreenMark *)lastMark;
-
-// PWD at the time of the command
-- (NSString *)lastDirectory;
-
-@end
-
 @interface CommandHistory : NSObject
 
 + (instancetype)sharedInstance;
@@ -48,6 +27,7 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
 
 - (BOOL)haveCommandsForHost:(VT100RemoteHost *)host;
 
+// Expands each entry to one entry per use.
 - (NSArray *)entryArrayByExpandingAllUsesInEntryArray:(NSArray *)array;
 
 - (void)eraseHistory;

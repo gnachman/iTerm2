@@ -8,6 +8,7 @@
 
 #import "ToolCommandHistoryView.h"
 #import "CommandHistory.h"
+#import "CommandHistoryEntry.h"
 #import "iTermSearchField.h"
 #import "NSDateFormatterExtras.h"
 #import "PTYSession.h"
