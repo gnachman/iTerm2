@@ -1221,7 +1221,9 @@ static int gNextSessionID = 1;
     [updateDisplayUntil_ release];
     updateDisplayUntil_ = [[NSDate dateWithTimeIntervalSinceNow:10] retain];
     if ([[[self tab] parentWindow] currentTab] == [self tab]) {
-        if ([data length] < 1024) {
+        if ([data length] < 16) {
+            [self scheduleUpdateIn:kSuperFastTimerIntervalSec];
+        } else if ([data length] < 1024) {
             [self scheduleUpdateIn:kFastTimerIntervalSec];
         } else {
             [self scheduleUpdateIn:kSlowTimerIntervalSec];
