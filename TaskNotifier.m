@@ -11,7 +11,7 @@
 #import "DebugLogging.h"
 #import "PTYTask.h"
 
-#define PtyTaskDebugLog DLog
+#define PtyTaskDebugLog(args...)
 
 @implementation TaskNotifier
 {
