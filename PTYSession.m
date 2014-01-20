@@ -4435,6 +4435,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [SHELL getWorkingDirectory];
 }
 
+- (BOOL)textViewShouldPlaceCursor {
+    // Only place cursor when not at the command line.
+    return commandRange_.start.x < 0;
+}
+
 - (void)textViewWillNeedUpdateForBlink
 {
     [self scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];

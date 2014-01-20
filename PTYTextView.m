@@ -4122,7 +4122,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
                 default:
                     // Not reporting mouse clicks, so we'll move the cursor since the remote app can't.
-                    if (!cmdPressed) {
+                    if (!cmdPressed && [_delegate textViewShouldPlaceCursor]) {
                         [self placeCursorOnCurrentLineWithEvent:event];
                     }
                     break;
