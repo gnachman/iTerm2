@@ -1,5 +1,7 @@
 #include <wctype.h>
 #import "Autocomplete.h"
+#import "CommandHistory.h"
+#import "CommandHistoryEntry.h"
 #import "LineBuffer.h"
 #import "PTYTextView.h"
 #import "PasteboardHistory.h"
@@ -8,7 +10,6 @@
 #import "VT100Screen.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
-#import "CommandHistory.h"
 
 #define AcLog DLog
 

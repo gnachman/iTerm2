@@ -1638,6 +1638,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (VT100ScreenMark *)addMarkStartingAtAbsoluteLine:(long long)line oneLine:(BOOL)oneLine {
     VT100ScreenMark *mark = [[[VT100ScreenMark alloc] init] autorelease];
+    mark.sessionID = [delegate_ screenSessionID];
     int nonAbsoluteLine = line - [self totalScrollbackOverflow];
     VT100GridCoordRange range;
     if (oneLine) {

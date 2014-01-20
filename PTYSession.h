@@ -62,6 +62,7 @@ typedef enum {
     VT100ScreenDelegate>
 
 @property(nonatomic, assign) BOOL alertOnNextMark;
+@property(nonatomic, readonly) int sessionID;
 
 // Return the current pasteboard value as a string.
 + (NSString*)pasteboardString;

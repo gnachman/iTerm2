@@ -28,8 +28,11 @@
 #import <Cocoa/Cocoa.h>
 #import "FutureMethods.h"
 
+extern const float kItermExposeThumbMargin;
+
 @class iTermExposeView;
 @class PTYTab;
+
 @interface iTermExpose : NSObject {
     NSWindow* window_;
     iTermExposeView* view_;
@@ -50,6 +53,8 @@
 
 // NSWindowDelegate protocol (informal prior to 10.6)
 - (void)windowDidResignKey:(NSNotification *)notification;
+
+- (void)toggleOff;
 
 @end
 

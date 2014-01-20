@@ -8,6 +8,7 @@
 
 #import "ToolCommandHistoryView.h"
 #import "CommandHistory.h"
+#import "CommandHistoryEntry.h"
 #import "iTermSearchField.h"
 #import "NSDateFormatterExtras.h"
 #import "PTYSession.h"
@@ -23,6 +24,7 @@ static const CGFloat kMargin = 5;
     NSArray *entries_;
     NSArray *filteredEntries_;
     iTermSearchField *searchField_;
+    NSFont *boldFont_;
 }
 
 - (id)initWithFrame:(NSRect)frame {
@@ -79,6 +81,14 @@ static const CGFloat kMargin = 5;
         [tableView_ sizeToFit];
         [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
         
+        // Save the bold version of the table's default font
+        NSFontManager *fontManager = [NSFontManager sharedFontManager];
+        NSFont *font = [[col dataCell] font];
+        boldFont_ = [[fontManager fontWithFamily:font.familyName
+                                          traits:NSBoldFontMask
+                                          weight:0
+                                            size:font.pointSize] retain];
+
         [self relayout];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(commandHistoryDidChange:)
@@ -94,6 +104,7 @@ static const CGFloat kMargin = 5;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [tableView_ release];
     [scrollView_ release];
+    [boldFont_ release];
     [super dealloc];
 }
 
@@ -135,7 +146,13 @@ static const CGFloat kMargin = 5;
     } else {
         // Contents
         NSString* value = [entry.command stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
-        return value;
+        ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+        if (entry.lastMark && [[wrapper.term currentSession] sessionID] == entry.lastMark.sessionID) {
+            return [[NSAttributedString alloc] initWithString:value
+                                                   attributes:@{ NSFontAttributeName: boldFont_ }];
+        } else {
+            return value;
+        }
     }
 }
 
@@ -162,12 +179,19 @@ static const CGFloat kMargin = 5;
     VT100RemoteHost *host = [[wrapper.term currentSession] currentHost];
     NSArray *temp = [[CommandHistory sharedInstance] autocompleteSuggestionsWithPartialCommand:@""
                                                                                         onHost:host];
-    entries_ = [[[CommandHistory sharedInstance] entryArrayByExpandingAllUsesInEntryArray:temp] retain];
+    NSArray *expanded = [[CommandHistory sharedInstance] entryArrayByExpandingAllUsesInEntryArray:temp];
+    NSArray *reversed = [[expanded reverseObjectEnumerator] allObjects];
+    entries_ = [reversed retain];
     [tableView_ reloadData];
     
     [self computeFilteredEntries];
     // Updating the table data causes the cursor to change into an arrow!
     [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
+    
+    NSResponder *firstResponder = [[tableView_ window] firstResponder];
+    if (firstResponder != tableView_) {
+        [tableView_ scrollToEndOfDocument:nil];
+    }
 }
 
 - (void)fixCursor
@@ -187,7 +211,15 @@ static const CGFloat kMargin = 5;
     }
     CommandHistoryEntry* entry = filteredEntries_[selectedIndex];
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-    [[wrapper.term currentSession] insertText:entry.command];
+    NSString *text = entry.command;
+    if (([[NSApp currentEvent] modifierFlags] & NSAlternateKeyMask)) {
+        if (entry.lastDirectory) {
+            text = [@"cd " stringByAppendingString:entry.lastDirectory];
+        } else {
+            return;
+        }
+    }
+    [[wrapper.term currentSession] insertText:text];
 }
 
 - (void)clear:(id)sender

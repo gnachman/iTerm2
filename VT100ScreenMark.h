@@ -17,4 +17,7 @@
 // Command for this mark.
 @property(nonatomic, copy) NSString *command;
 
+// The session this mark belongs to.
+@property(nonatomic, assign) int sessionID;
+
 @end
