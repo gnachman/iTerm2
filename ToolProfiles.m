@@ -126,4 +126,10 @@ static const int kPopupHeight = 26;
 - (void)shutdown
 {
 }
+
+- (CGFloat)minimumHeight
+{
+    return 88;
+}
+
 @end

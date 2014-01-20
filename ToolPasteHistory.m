@@ -162,4 +162,9 @@ static const CGFloat kMargin = 4;
     [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
 }
 
+- (CGFloat)minimumHeight
+{
+    return 60;
+}
+
 @end

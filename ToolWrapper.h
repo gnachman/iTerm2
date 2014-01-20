@@ -19,9 +19,10 @@
 @end
 
 @protocol ToolbeltTool
+- (CGFloat)minimumHeight;
+
 @optional
 - (void)relayout;
-
 - (void)shutdown;
 @end
 
@@ -42,5 +43,6 @@
 - (void)relayout;
 - (NSObject<ToolbeltTool> *)tool;
 - (void)removeToolSubviews;
+- (CGFloat)minimumHeight;
 
 @end

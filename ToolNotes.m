@@ -89,4 +89,9 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
 - (void)shutdown {
 }
 
+- (CGFloat)minimumHeight
+{
+    return 15;
+}
+
 @end
