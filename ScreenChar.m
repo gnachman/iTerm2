@@ -65,7 +65,7 @@ static BOOL hasWrapped = NO;
     if (!NSEqualSizes(_embeddedImage.size, region)) {
         NSImage *canvas = [[[NSImage alloc] init] autorelease];
         NSSize size;
-        if (_preserveAspectRatio) {
+        if (!_preserveAspectRatio) {
             size = region;
         } else {
             double imageAR = _image.size.width / _image.size.height;
