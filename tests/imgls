@@ -10,11 +10,11 @@ do
   if [[ $rc == 0 ]] ; then
     printf '\033]1337;File=name='`echo -n "$fn" | base64`";"
     wc -c "$fn" | awk '{printf "size=%d",$1}'
-    printf ";inline=1;height=3"
+    printf ";inline=1;height=3;width=3;preserveAspectRatio=true"
     printf ":"
     base64 < "$fn"
     printf '\a'
-
+    printf '\033[A'
     echo -n "$dims "
     ls -l $fn
   else

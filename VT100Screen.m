@@ -2881,6 +2881,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         }
         [self linefeed];
     }
+    currentGrid_.cursorX = currentGrid_.cursorX + width + 1;
     
     SetDecodedImage(c.code, image);
     [inlineFileCodes_ addObject:@(c.code)];
