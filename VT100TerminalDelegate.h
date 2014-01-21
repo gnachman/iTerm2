@@ -334,6 +334,8 @@ typedef enum {
 // Shows/hides the cursor.
 - (void)terminalSetCursorVisible:(BOOL)visible;
 
+- (void)terminalSetHighlightCursorLine:(BOOL)highlight;
+
 // FinalTerm features
 - (void)terminalPromptDidStart;
 - (void)terminalCommandDidStart;

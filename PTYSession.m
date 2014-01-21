@@ -4878,6 +4878,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenDidReset {
     [self loadInitialColorTable];
+    TEXTVIEW.highlightCursorLine = NO;
+    [TEXTVIEW setNeedsDisplay:YES];
 }
 
 - (BOOL)screenShouldSyncTitle {
@@ -5127,6 +5129,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     } else {
         [TEXTVIEW hideCursor];
     }
+}
+
+- (void)screenSetHighlightCursorLine:(BOOL)highlight {
+    TEXTVIEW.highlightCursorLine = highlight;
+    [TEXTVIEW setNeedsDisplay:YES];
 }
 
 - (BOOL)screenHasView {

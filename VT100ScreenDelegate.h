@@ -171,6 +171,8 @@
 // Show/hide the cursor.
 - (void)screenSetCursorVisible:(BOOL)visible;
 
+- (void)screenSetHighlightCursorLine:(BOOL)highlight;
+
 // Returns if there is a view.
 - (BOOL)screenHasView;
 

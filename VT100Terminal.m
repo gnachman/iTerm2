@@ -3984,6 +3984,8 @@ static VT100TCC decode_string(unsigned char *datap,
             [delegate_ terminalAddNote:(NSString *)value show:YES];
         } else if ([key isEqualToString:@"AddHiddenNote"]) {
             [delegate_ terminalAddNote:(NSString *)value show:NO];
+        } else if ([key isEqualToString:@"HighlightCursorLine"]) {
+            [delegate_ terminalSetHighlightCursorLine:value.length ? [value boolValue] : YES];
         } else if ([key isEqualToString:@"CopyToClipboard"]) {
             [delegate_ terminalSetPasteboard:value];
         } else if ([key isEqualToString:@"File"]) {

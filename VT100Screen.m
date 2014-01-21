@@ -1407,6 +1407,13 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     currentGrid_.allDirty = NO;
 }
 
+- (void)setLineDirtyAtY:(int)y
+{
+    [currentGrid_ markCharsDirty:YES
+                      inRectFrom:VT100GridCoordMake(0, y)
+                              to:VT100GridCoordMake(self.width - 1, y)];
+}
+
 - (void)setCharDirtyAtCursorX:(int)x Y:(int)y
 {
     int xToMark = x;
@@ -2991,6 +2998,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)terminalSetCursorVisible:(BOOL)visible {
     [delegate_ screenSetCursorVisible:visible];
+}
+
+- (void)terminalSetHighlightCursorLine:(BOOL)highlight {
+    [delegate_ screenSetHighlightCursorLine:highlight];
 }
 
 - (void)terminalPromptDidStart; {
