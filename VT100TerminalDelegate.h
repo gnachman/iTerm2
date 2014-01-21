@@ -250,6 +250,9 @@ typedef enum {
 // Clears the screen, preserving the wrapped line the cursor is on.
 - (void)terminalClearScreen;
 
+// Erase scrollback history, leave screen alone.
+- (void)terminalClearScrollbackBuffer;
+
 // Not quite sure, kind of a mess right now. See comment in -[PTYSession setSendModifiers:].
 - (void)terminalSendModifiersDidChangeTo:(int *)modifiers
                                numValues:(int)numValues;
@@ -333,6 +336,8 @@ typedef enum {
 
 // Shows/hides the cursor.
 - (void)terminalSetCursorVisible:(BOOL)visible;
+
+- (void)terminalSetHighlightCursorLine:(BOOL)highlight;
 
 // FinalTerm features
 - (void)terminalPromptDidStart;

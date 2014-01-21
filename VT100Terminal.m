@@ -3984,6 +3984,8 @@ static VT100TCC decode_string(unsigned char *datap,
             [delegate_ terminalAddNote:(NSString *)value show:YES];
         } else if ([key isEqualToString:@"AddHiddenNote"]) {
             [delegate_ terminalAddNote:(NSString *)value show:NO];
+        } else if ([key isEqualToString:@"HighlightCursorLine"]) {
+            [delegate_ terminalSetHighlightCursorLine:value.length ? [value boolValue] : YES];
         } else if ([key isEqualToString:@"CopyToClipboard"]) {
             [delegate_ terminalSetPasteboard:value];
         } else if ([key isEqualToString:@"File"]) {
@@ -4470,7 +4472,10 @@ static VT100TCC decode_string(unsigned char *datap,
                     [delegate_ terminalEraseInDisplayBeforeCursor:YES afterCursor:YES];
                     break;
 
-                // TODO: case 3 should erase history.
+                case 3:
+                    [delegate_ terminalClearScrollbackBuffer];
+                    break;
+
                 case 0:
                 default:
                     [delegate_ terminalEraseInDisplayBeforeCursor:NO afterCursor:YES];

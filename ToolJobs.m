@@ -251,4 +251,9 @@ static const CGFloat kMargin = 4;
     kill(p, [[signal_ selectedItem] tag]);
 }
 
+- (CGFloat)minimumHeight
+{
+    return 60;
+}
+
 @end

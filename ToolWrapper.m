@@ -78,6 +78,10 @@ static const CGFloat kButtonSize = 17;
     }
 }
 
+- (CGFloat)minimumHeight {
+    return [self.tool minimumHeight] + kTitleHeight + kMargin + kBottomMargin;
+}
+
 - (void)removeToolSubviews {
     [container_ removeFromSuperview];
     container_ = nil;

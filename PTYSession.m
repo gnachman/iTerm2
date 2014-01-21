@@ -1221,7 +1221,9 @@ static int gNextSessionID = 1;
     [updateDisplayUntil_ release];
     updateDisplayUntil_ = [[NSDate dateWithTimeIntervalSinceNow:10] retain];
     if ([[[self tab] parentWindow] currentTab] == [self tab]) {
-        if ([data length] < 1024) {
+        if ([data length] < 16) {
+            [self scheduleUpdateIn:kSuperFastTimerIntervalSec];
+        } else if ([data length] < 1024) {
             [self scheduleUpdateIn:kFastTimerIntervalSec];
         } else {
             [self scheduleUpdateIn:kSlowTimerIntervalSec];
@@ -4433,6 +4435,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [SHELL getWorkingDirectory];
 }
 
+- (BOOL)textViewShouldPlaceCursor {
+    // Only place cursor when not at the command line.
+    return commandRange_.start.x < 0;
+}
+
 - (void)textViewWillNeedUpdateForBlink
 {
     [self scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
@@ -4871,6 +4878,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenDidReset {
     [self loadInitialColorTable];
+    TEXTVIEW.highlightCursorLine = NO;
+    [TEXTVIEW setNeedsDisplay:YES];
 }
 
 - (BOOL)screenShouldSyncTitle {
@@ -5120,6 +5129,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     } else {
         [TEXTVIEW hideCursor];
     }
+}
+
+- (void)screenSetHighlightCursorLine:(BOOL)highlight {
+    TEXTVIEW.highlightCursorLine = highlight;
+    [TEXTVIEW setNeedsDisplay:YES];
 }
 
 - (BOOL)screenHasView {

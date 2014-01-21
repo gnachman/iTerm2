@@ -4122,7 +4122,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
                 default:
                     // Not reporting mouse clicks, so we'll move the cursor since the remote app can't.
-                    if (!cmdPressed) {
+                    if (!cmdPressed && [_delegate textViewShouldPlaceCursor]) {
                         [self placeCursorOnCurrentLineWithEvent:event];
                     }
                     break;
@@ -8294,6 +8294,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         textOrigin = NSMakePoint(MARGIN + firstIndex * charWidth,
                                  yOrigin);
     }
+    
+    // Highlight cursor line
+    int cursorLine = [dataSource cursorY] - 1 + [dataSource numberOfScrollbackLines];
+    if (_highlightCursorLine && row == cursorLine) {
+        [[NSColor colorWithCalibratedRed:.65 green:.91 blue:1 alpha:.25] set];
+        NSRect rect = NSMakeRect(textOrigin.x,
+                                 textOrigin.y,
+                                 (lastIndex - firstIndex) * charWidth,
+                                 lineHeight);
+        NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+    }
+
     [self _drawCharactersInLine:theLine
                             row:row
                         inRange:NSMakeRange(firstIndex, lastIndex - firstIndex)
@@ -10448,10 +10460,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Mark previous and current cursor position dirty
         DLog(@"Mark previous cursor position %d,%d dirty", prevCursorX, prevCursorY);
         int maxX = [dataSource width] - 1;
-        [dataSource setCharDirtyAtCursorX:MIN(maxX, prevCursorX) Y:prevCursorY];
-        DLog(@"Mark current cursor position %d,%d dirty", currentCursorX, currentCursorY);
-        [dataSource setCharDirtyAtCursorX:MIN(maxX, currentCursorX) Y:currentCursorY];
-
+        if (_highlightCursorLine) {
+            [dataSource setLineDirtyAtY:prevCursorY];
+            DLog(@"Mark current cursor line %d dirty", currentCursorY);
+            [dataSource setLineDirtyAtY:currentCursorY];
+        } else {
+            [dataSource setCharDirtyAtCursorX:MIN(maxX, prevCursorX) Y:prevCursorY];
+            DLog(@"Mark current cursor position %d,%d dirty", currentCursorX, currentCursorY);
+            [dataSource setCharDirtyAtCursorX:MIN(maxX, currentCursorX) Y:currentCursorY];
+        }
         // Set prevCursor[XY] to new cursor position
         prevCursorX = currentCursorX;
         prevCursorY = currentCursorY;

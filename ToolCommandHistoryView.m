@@ -119,10 +119,10 @@ static const CGFloat kMargin = 5;
     NSRect frame = self.frame;
     searchField_.frame = NSMakeRect(0, 0, frame.size.width, searchField_.frame.size.height);
     [clear_ setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
-    scrollView_ = [[NSScrollView alloc] initWithFrame:NSMakeRect(0,
-                                                                 searchField_.frame.size.height + kMargin,
-                                                                 frame.size.width,
-                                                                 frame.size.height - kButtonHeight - 2 * kMargin - searchField_.frame.size.height)];
+    scrollView_.frame = NSMakeRect(0,
+                                   searchField_.frame.size.height + kMargin,
+                                   frame.size.width,
+                                   frame.size.height - kButtonHeight - 2 * kMargin - searchField_.frame.size.height);
     NSSize contentSize = [scrollView_ contentSize];
     [tableView_ setFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
 }
@@ -253,6 +253,11 @@ static const CGFloat kMargin = 5;
 - (void)controlTextDidChange:(NSNotification *)aNotification
 {
     [self computeFilteredEntries];
+}
+
+- (CGFloat)minimumHeight
+{
+    return 88;
 }
 
 @end

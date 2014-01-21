@@ -11,7 +11,7 @@ do
     printf ";inline=1"
     printf ":"
     base64 < "$fn"
-    printf '\a'
+    printf '\a\n'
   else
     echo File $fn does not exist.
   fi

@@ -119,6 +119,7 @@ typedef enum {
 - (void)textViewMovePane;
 - (NSStringEncoding)textViewEncoding;
 - (NSString *)textViewCurrentWorkingDirectory;
+- (BOOL)textViewShouldPlaceCursor;
 @end
 
 @interface PTYTextView : NSView <
@@ -126,6 +127,9 @@ typedef enum {
   NSTextInput,
   PointerControllerDelegate,
   TrouterDelegate>
+
+// Draw a highlight along the entire line the cursor is on.
+@property(nonatomic, assign) BOOL highlightCursorLine;
 
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;

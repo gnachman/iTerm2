@@ -69,6 +69,7 @@ typedef enum {
 // whereas that wouldn't normally be a legal X value. If possible, the char to the right of the
 // cursor is also set dirty to handle DWCs.
 - (void)setCharDirtyAtCursorX:(int)x Y:(int)y;
+- (void)setLineDirtyAtY:(int)y;
 
 // Check if any the character at x,y has been marked dirty.
 - (BOOL)isDirtyAtX:(int)x Y:(int)y;

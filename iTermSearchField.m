@@ -47,7 +47,12 @@
     // This is a pretty ugly hack. Also, calling keyDown from here is probably not cool.
     BOOL handled = NO;
     if (arrowHandler_ && !(mask & modflag) && (keycode == 125 || keycode == 126)) {
-        [arrowHandler_ keyDown:theEvent];
+        static BOOL running;
+        if (!running) {
+            running = YES;
+            [arrowHandler_ keyDown:theEvent];
+            running = NO;
+        }
         handled = YES;
     } else {
         handled = [super performKeyEquivalent:theEvent];
