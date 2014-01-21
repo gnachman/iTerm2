@@ -243,12 +243,14 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     wrapper.term = term_;
 	wrapper.delegate = self;
     Class c = [gRegisteredTools objectForKey:toolName];
-    [self addTool:[[[c alloc] initWithFrame:NSMakeRect(0,
-                                                       0,
-                                                       wrapper.container.frame.size.width,
-                                                       wrapper.container.frame.size.height)] autorelease]
-        toWrapper:wrapper];
-    [self setHaveOnlyOneTool:[self haveOnlyOneTool]];
+    if (c) {
+        [self addTool:[[[c alloc] initWithFrame:NSMakeRect(0,
+                                                           0,
+                                                           wrapper.container.frame.size.width,
+                                                           wrapper.container.frame.size.height)] autorelease]
+            toWrapper:wrapper];
+        [self setHaveOnlyOneTool:[self haveOnlyOneTool]];
+    }
 }
 
 - (BOOL)isFlipped
