@@ -406,7 +406,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                               selectionEndPostionIsValid:&ok2
                                             inLineBuffer:appendOnlyLineBuffer
                                                 forRange:range];
-            NSLog(@"Add note on alt screen at %@ (position %@ to %@) to altScreenNotes",
+            DLog(@"Add note on alt screen at %@ (position %@ to %@) to altScreenNotes",
                   VT100GridCoordRangeDescription(range),
                   startPosition,
                   endPosition);
@@ -539,14 +539,14 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                          range:&newSelection
                                                   linesMovedUp:linesMovedUp];
         }
-        NSLog(@"Original limit=%@", originalLastPos);
-        NSLog(@"New limit=%@", newLastPos);
+        DLog(@"Original limit=%@", originalLastPos);
+        DLog(@"New limit=%@", newLastPos);
         for (NSArray *tuple in altScreenNotes) {
             id<IntervalTreeObject> note = tuple[0];
             LineBufferPosition *start = tuple[1];
             LineBufferPosition *end = tuple[2];
             VT100GridCoordRange newRange;
-            NSLog(@"  Note positions=%@ to %@", start, end);
+            DLog(@"  Note positions=%@ to %@", start, end);
             BOOL ok = [self computeRangeFromOriginalLimit:originalLastPos
                                             limitPosition:newLastPos
                                             startPosition:start
@@ -556,13 +556,13 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                     range:&newRange
                                              linesMovedUp:linesMovedUp];
             if (ok) {
-                NSLog(@"  New range=%@", VT100GridCoordRangeDescription(newRange));
+                DLog(@"  New range=%@", VT100GridCoordRangeDescription(newRange));
                 Interval *interval = [self intervalForGridCoordRange:newRange
                                                                width:new_width
                                                          linesOffset:[self totalScrollbackOverflow]];
                 [intervalTree_ addObject:note withInterval:interval];
             } else {
-                NSLog(@"  *FAILED TO CONVERT*");
+                DLog(@"  *FAILED TO CONVERT*");
             }
         }
     } else {
@@ -583,7 +583,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         IntervalTree *replacementTree = [[IntervalTree alloc] init];
         for (PTYNoteViewController *note in [savedIntervalTree_ allObjects]) {
             VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
-            NSLog(@"Found note at %@", VT100GridCoordRangeDescription(noteRange));
+            DLog(@"Found note at %@", VT100GridCoordRangeDescription(noteRange));
             VT100GridCoordRange newRange;
             if ([self convertRange:noteRange toWidth:new_width to:&newRange inLineBuffer:altScreenLineBuffer]) {
                 // Anticipate the lines that will be dropped when the alt grid is restored.
@@ -593,7 +593,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                     newRange.start.y = 0;
                     newRange.start.x = 0;
                 }
-                NSLog(@"  Its new range is %@ including %d lines dropped from top", VT100GridCoordRangeDescription(noteRange), numLinesDroppedFromTop);
+                DLog(@"  Its new range is %@ including %d lines dropped from top", VT100GridCoordRangeDescription(noteRange), numLinesDroppedFromTop);
                 [savedIntervalTree_ removeObject:note];
                 if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
                     Interval *newInterval = [self intervalForGridCoordRange:newRange
@@ -601,7 +601,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                                 linesOffset:0];
                     [replacementTree addObject:note withInterval:newInterval];
                 } else {
-                    NSLog(@"Failed to convert");
+                    DLog(@"Failed to convert");
                 }
             }
         }
@@ -2550,15 +2550,15 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                 screenOrigin,
                                 [self width],
                                 screenOrigin + self.height);
-    NSLog(@"  moveNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
+    DLog(@"  moveNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
     Interval *interval = [self intervalForGridCoordRange:screenRange];
     for (id<IntervalTreeObject> obj in [source objectsInInterval:interval]) {
         Interval *interval = [[obj.entry.interval retain] autorelease];
         [[obj retain] autorelease];
-        NSLog(@"  found note with interval %@", interval);
+        DLog(@"  found note with interval %@", interval);
         [source removeObject:obj];
         interval.location = interval.location + offset;
-        NSLog(@"  new interval is %@", interval);
+        DLog(@"  new interval is %@", interval);
         [dest addObject:obj withInterval:interval];
     }
 }
@@ -2573,12 +2573,12 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                                                1,
                                                                                historyLines)];
     IntervalTree *temp = [[IntervalTree alloc] init];
-    NSLog(@"swapNotes: moving onscreen notes into savedNotes");
+    DLog(@"swapNotes: moving onscreen notes into savedNotes");
     [self moveNotesOnScreenFrom:intervalTree_
                              to:temp
                          offset:-origin.location
                    screenOrigin:[self numberOfScrollbackLines]];
-    NSLog(@"swapNotes: moving onscreen savedNotes into notes");
+    DLog(@"swapNotes: moving onscreen savedNotes into notes");
     [self moveNotesOnScreenFrom:savedIntervalTree_
                              to:intervalTree_
                          offset:origin.location
