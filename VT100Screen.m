@@ -2718,6 +2718,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [delegate_ screenRaise:YES];
 }
 
+- (void)terminalClearScrollbackBuffer {
+    [self clearScrollbackBuffer];
+}
+
 - (void)terminalClearBuffer {
     [self clearBuffer];
 }
