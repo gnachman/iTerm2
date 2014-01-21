@@ -235,6 +235,10 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 - (void)addToolWithName:(NSString *)toolName
 {
+    if (![gRegisteredTools objectForKey:toolName]) {
+        // User could have a plist from a future version with a tool that doesn't exist here.
+        return;
+    }
     ToolWrapper *wrapper = [[[ToolWrapper alloc] initWithFrame:NSMakeRect(0,
                                                                           0,
                                                                           self.frame.size.width,
