@@ -1158,13 +1158,19 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         x = 0;
         y++;
     }
+    if (y >= [self numberOfLines]) {
+        y = [self numberOfLines] - 1;
+        x = WIDTH;
+    }
     theLine = [self getLineAtIndex:y];
 
     while (XYIsBeforeXY(*nonNullStartX, *nonNullStartY, x, y)) {
         if (x == 0) {
             x = WIDTH;
             y--;
-            assert(y >= 0);
+            if (y < 0) {
+                break;
+            }
             theLine = [self getLineAtIndex:y];
         }
         if (theLine[x - 1].code) {
@@ -1172,8 +1178,10 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         }
         x--;
     }
-    assert(x >= 0);
-    assert(y >= 0);
+    while (x < 0) {
+        x += WIDTH;
+        y--;
+    }
 
     *nonNullEndX = x;
     *nonNullEndY = y;
