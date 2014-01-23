@@ -1419,6 +1419,8 @@ NSMutableArray* screens=0;
 
     frameSize.height += VMARGIN;  // This causes a margin to be left at the top
     [[self superview] setFrameSize:frameSize];
+    
+    [_delegate textViewSizeDidChange];
 }
 
 - (void)scheduleSelectionScroll

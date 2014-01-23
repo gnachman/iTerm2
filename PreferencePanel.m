@@ -1203,22 +1203,24 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 // guid of the profile from which all that data came.n
 - (IBAction)changeProfile:(id)sender
 {
-    NSString* origGuid = [bookmarksTableView selectedGuid];
-    Profile* origBookmark = [dataSource bookmarkWithGuid:origGuid];
-    NSString *theName = [[[origBookmark objectForKey:KEY_NAME] copy] autorelease];
     NSString *guid = [setProfileBookmarkListView selectedGuid];
-    Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
-    [dict setObject:theName forKey:KEY_NAME];
-    [dict setObject:origGuid forKey:KEY_GUID];
+    if (guid) {
+        NSString* origGuid = [bookmarksTableView selectedGuid];
+        Profile* origBookmark = [dataSource bookmarkWithGuid:origGuid];
+        NSString *theName = [[[origBookmark objectForKey:KEY_NAME] copy] autorelease];
+        Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+        NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
+        [dict setObject:theName forKey:KEY_NAME];
+        [dict setObject:origGuid forKey:KEY_GUID];
 
-    // Change the dict in the sessions bookmarks so that if you copy it back, it gets copied to
-    // the new profile.
-    [dict setObject:guid forKey:KEY_ORIGINAL_GUID];
-    [dataSource setBookmark:dict withGuid:origGuid];
+        // Change the dict in the sessions bookmarks so that if you copy it back, it gets copied to
+        // the new profile.
+        [dict setObject:guid forKey:KEY_ORIGINAL_GUID];
+        [dataSource setBookmark:dict withGuid:origGuid];
 
-    [self updateBookmarkFields:dict];
-    [self bookmarkSettingChanged:nil];
+        [self updateBookmarkFields:dict];
+        [self bookmarkSettingChanged:nil];
+    }
 }
 
 - (IBAction)addNewMapping:(id)sender
