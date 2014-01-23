@@ -46,16 +46,7 @@
 #import "TmuxDashboardController.h"
 
 //#define PTYTAB_VERBOSE_LOGGING
-#ifdef PTYTAB_VERBOSE_LOGGING
-#define PtyLog NSLog
-#else
-#define PtyLog(args...) \
-do { \
-if (gDebugLogging) { \
-DebugLog([NSString stringWithFormat:args]); \
-} \
-} while (0)
-#endif
+#define PtyLog DLog
 
 // No growl output/idle alerts for a few seconds after a window is resized because there will be bogus bg activity
 const int POST_WINDOW_RESIZE_SILENCE_SEC = 5;
@@ -1750,7 +1741,9 @@ static NSString* FormatRect(NSRect r) {
     BOOL hasScrollbar = ![parentWindow_ anyFullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
     [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
     NSSize size = [[aSession view] maximumPossibleScrollViewContentSize];
-    DLog(@"Max size is %@", [NSValue valueWithSize:size]);
+    DLog(@"Maximum possible size is %@", [NSValue valueWithSize:size]);
+    DLog(@"Line height is %d", (int)[[aSession TEXTVIEW] lineHeight]);
+    DLog(@"Height minus vertical margins is %d", (int)(size.height - VMARGIN*2));
     int width = (size.width - MARGIN*2) / [[aSession TEXTVIEW] charWidth];
     int height = (size.height - VMARGIN*2) / [[aSession TEXTVIEW] lineHeight];
     PtyLog(@"fitSessionToCurrentViewSize %@ gives %d rows", [NSValue valueWithSize:size], height);
@@ -1772,6 +1765,7 @@ static NSString* FormatRect(NSRect r) {
 - (BOOL)fitSessionToCurrentViewSize:(PTYSession*)aSession
 {
     DLog(@"fitSessionToCurrentViewSize:%@", aSession);
+  DLog(@"%@", [[[root_ window] contentView] iterm_recursiveDescription]);
     if ([aSession isTmuxClient]) {
         return NO;
     }

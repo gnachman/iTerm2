@@ -426,10 +426,10 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [SCROLLVIEW setAutoresizingMask: NSViewWidthSizable|NSViewHeightSizable];
 
     // assign the main view
-        [view addSubview:SCROLLVIEW];
-        if (![self isTmuxClient]) {
-                [view setAutoresizesSubviews:YES];
-        }
+    [view addSubview:SCROLLVIEW];
+    if (![self isTmuxClient]) {
+            [view setAutoresizesSubviews:YES];
+    }
     // TODO(georgen): I disabled setCopiesOnScroll because there is a vertical margin in the PTYTextView and
     // we would not want that copied. This is obviously bad for performance when scrolling, but it's unclear
     // whether the difference will ever be noticable. I believe it could be worked around (painfully) by
@@ -470,6 +470,12 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     // initialize the screen
     int width = (aSize.width - MARGIN*2) / [TEXTVIEW charWidth];
     int height = (aSize.height - VMARGIN*2) / [TEXTVIEW lineHeight];
+    DLog(@"Creating a new screen.");
+    DLog(@"Recursive description of session's view:");
+    DLog(@"%@", [view iterm_recursiveDescription]);
+    DLog(@"View's screen: %@", [NSValue valueWithRect:[[[view window] screen] frame]]);
+    DLog(@"Line height: %d", (int)[TEXTVIEW lineHeight]);
+    DLog(@"number of rows: %d", height);
     if ([SCREEN initScreenWithWidth:width Height:height]) {
         [self setName:@"Shell"];
         [self setDefaultName:@"Shell"];

@@ -33,6 +33,7 @@
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
 //#define DEBUG_CORRUPTION
+#define DEBUG_RESIZEDWIDTH
 
 #import "iTerm.h"
 #import "VT100Screen.h"
@@ -291,14 +292,14 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     gExperimentalOptimization =
         [[NSUserDefaults standardUserDefaults] boolForKey:@"ExperimentalOptimizationsEnabled"];
     if (gExperimentalOptimization) {
-        NSLog(@"** Experimental optimizations enabled **");
+        DLog(@"** Experimental optimizations enabled **");
     }
 }
 
 - (id)init
 {
 #if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
+    DLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
 #endif
     if ((self = [super init]) == nil)
         return nil;
@@ -347,7 +348,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 - (void)dealloc
 {
 #if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
+    DLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
 #endif
     // free our character buffer
     if (buffer_lines)
@@ -379,7 +380,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     dirtySize = 0;
     [super dealloc];
 #if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x, done", __PRETTY_FUNCTION__, self);
+    DLog(@"%s: 0x%x, done", __PRETTY_FUNCTION__, self);
 #endif
 }
 
@@ -394,7 +395,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     screen_char_t *aDefaultLine;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen initScreenWithWidth:%d Height:%d]", __FILE__, __LINE__, width, height );
+    DLog(@"%s(%d):-[VT100Screen initScreenWithWidth:%d Height:%d]", __FILE__, __LINE__, width, height );
 #endif
 
     width = MAX(width, MIN_SESSION_COLUMNS);
@@ -667,7 +668,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 - (void)setWidth:(int)width height:(int)height
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen setWidth:%d height:%d]",
+    DLog(@"%s(%d):-[VT100Screen setWidth:%d height:%d]",
           __FILE__, __LINE__, width, height);
 #endif
 
@@ -752,14 +753,14 @@ static char* FormatCont(int c)
 - (void)dumpAll {
     int n = [self numberOfLines];
     for (int i = 0; i < n; i++) {
-        NSLog(@"%8d: %@", i, ScreenCharArrayToStringDebug([self getLineAtIndex:i], WIDTH));
+        DLog(@"%8d: %@", i, ScreenCharArrayToStringDebug([self getLineAtIndex:i], WIDTH));
     }
 }
 
-// NSLog the screen contents for debugging.
+// DLog the screen contents for debugging.
 - (void)dumpScreen
 {
-    NSLog(@"%@", [self debugString]);
+    DLog(@"%@", [self debugString]);
 }
 
 - (void)dumpDebugLog
@@ -1020,7 +1021,7 @@ static char* FormatCont(int c)
 
         [linebuffer appendLine:line length:line_length partial:(continuation != EOL_HARD) width:WIDTH];
 #ifdef DEBUG_RESIZEDWIDTH
-        NSLog(@"Appended a line. now have %d lines for width %d\n", [linebuffer numLinesWithWidth:WIDTH], WIDTH);
+        DLog(@"Appended a line. now have %d lines for width %d\n", [linebuffer numLinesWithWidth:WIDTH], WIDTH);
 #endif
     }
 
@@ -1114,7 +1115,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 }
 
 - (void)printLine:(screen_char_t *)theLine {
-    NSLog(@"%@", ScreenCharArrayToStringDebug(theLine, WIDTH));
+    DLog(@"%@", ScreenCharArrayToStringDebug(theLine, WIDTH));
 }
         
 
@@ -1370,7 +1371,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 - (void)resizeWidth:(int)new_width height:(int)new_height
 {
 #ifdef DEBUG_RESIZEDWIDTH
-    NSLog(@"Size before resizing is %dx%d", WIDTH, HEIGHT);
+    DLog(@"Size before resizing is %dx%d", WIDTH, HEIGHT);
     [self dumpAll];
 #endif
     DLog(@"Resize session to %d height", new_height);
@@ -1378,7 +1379,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     screen_char_t *new_buffer_lines;
 
 #ifdef DEBUG_RESIZEDWIDTH
-    NSLog(@"Resize from %dx%d to %dx%d\n", WIDTH, HEIGHT, new_width, new_height);
+    DLog(@"Resize from %dx%d to %dx%d\n", WIDTH, HEIGHT, new_width, new_height);
     [self dumpScreen];
 #endif
 
@@ -1475,7 +1476,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     }
 
 #ifdef DEBUG_RESIZEDWIDTH
-    NSLog(@"After push:\n");
+    DLog(@"After push:\n");
         [linebuffer dump];
 #endif
 
@@ -1598,7 +1599,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
          */
 
 #ifdef DEBUG_RESIZEDWIDTH
-        NSLog(@"Selection at %d,%d - %d,%d", [display selectionStartX], [display selectionStartY], [display selectionEndX], [display selectionEndY]);
+        DLog(@"Selection at %d,%d - %d,%d", [display selectionStartX], [display selectionStartY], [display selectionEndX], [display selectionEndY]);
 #endif
         if (hasSelection) {
             // Compute selection positions relative to the end of the line buffer, which may have
@@ -1662,7 +1663,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     }
 
 #ifdef DEBUG_RESIZEDWIDTH
-    NSLog(@"After pops\n");
+    DLog(@"After pops\n");
     [linebuffer dump];
 #endif
 
@@ -1674,7 +1675,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 
     // The linebuffer may have grown. Ensure it doesn't have too many lines.
 #ifdef DEBUG_RESIZEDWIDTH
-    NSLog(@"Before dropExcessLines have %d\n", [linebuffer numLinesWithWidth:WIDTH]);
+    DLog(@"Before dropExcessLines have %d\n", [linebuffer numLinesWithWidth:WIDTH]);
 #endif
     int linesDropped = 0;
     if (!unlimitedScrollback_) {
@@ -1700,7 +1701,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 
     [SESSION updateScroll];
 #ifdef DEBUG_RESIZEDWIDTH
-    NSLog(@"After resizeWidth\n");
+    DLog(@"After resizeWidth\n");
     [self dumpScreen];
 #endif
 }
@@ -1798,7 +1799,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 - (void)setSession:(PTYSession *)session
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s", __PRETTY_FUNCTION__);
+    DLog(@"%s", __PRETTY_FUNCTION__);
 #endif
     SESSION=session;
 }
@@ -1806,7 +1807,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 - (void)setTerminal:(VT100Terminal *)terminal
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen setTerminal:%@]",
+    DLog(@"%s(%d):-[VT100Screen setTerminal:%@]",
       __FILE__, __LINE__, terminal);
 #endif
     TERMINAL = terminal;
@@ -1824,7 +1825,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 - (void)setShellTask:(PTYTask *)shell
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen setShellTask:%@]",
+    DLog(@"%s(%d):-[VT100Screen setShellTask:%@]",
       __FILE__, __LINE__, shell);
 #endif
     SHELL = shell;
@@ -1833,7 +1834,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 - (PTYTask *)shellTask
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen shellTask]", __FILE__, __LINE__);
+    DLog(@"%s(%d):-[VT100Screen shellTask]", __FILE__, __LINE__);
 #endif
     return SHELL;
 }
@@ -1950,7 +1951,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     NSString *newTitle;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen putToken:%d]",__FILE__, __LINE__, token);
+    DLog(@"%s(%d):-[VT100Screen putToken:%d]",__FILE__, __LINE__, token);
 #endif
     int i,j,k;
     screen_char_t *aLine;
@@ -2171,7 +2172,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
                 [[SESSION TEXTVIEW] setCursorType:CURSOR_VERTICAL];
                 break;
             default:
-                //NSLog(@"DECSCUSR: Unrecognized parameter: %d", token.u.csi.p[0]);
+                //DLog(@"DECSCUSR: Unrecognized parameter: %d", token.u.csi.p[0]);
                 break;
         }
         break;
@@ -2373,7 +2374,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         [SESSION clearTriggerLine];
         break;
     case XTERMCC_WINDOWSIZE:
-        //NSLog(@"setting window size from (%d, %d) to (%d, %d)", WIDTH, HEIGHT, token.u.csi.p[1], token.u.csi.p[2]);
+        //DLog(@"setting window size from (%d, %d) to (%d, %d)", WIDTH, HEIGHT, token.u.csi.p[1], token.u.csi.p[2]);
         if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] &&
             ![[[SESSION tab] parentWindow] anyFullScreen]) {
             // set the column
@@ -2393,7 +2394,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         }
         break;
     case XTERMCC_WINDOWPOS:
-        //NSLog(@"setting window position to Y=%d, X=%d", token.u.csi.p[1], token.u.csi.p[2]);
+        //DLog(@"setting window position to Y=%d, X=%d", token.u.csi.p[1], token.u.csi.p[2]);
         if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] &&
             ![[[SESSION tab] parentWindow] anyFullScreen])
             // TODO: Only allow this if there is a single session in the tab.
@@ -2495,7 +2496,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         if (allowTitleReporting_) {
             theString = [NSString stringWithFormat:@"\033]L%@\033\\", [SESSION windowTitle] ? [SESSION windowTitle] : [SESSION defaultName]];
         } else {
-            NSLog(@"Not reporting icon title. You can enable this in prefs>profiles>terminal");
+            DLog(@"Not reporting icon title. You can enable this in prefs>profiles>terminal");
             theString = @"\033]L\033\\";
         }
         NSData *theData = [theString dataUsingEncoding:NSUTF8StringEncoding];
@@ -2507,7 +2508,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         if (allowTitleReporting_) {
             theString = [NSString stringWithFormat:@"\033]l%@\033\\", [SESSION windowName]];
         } else {
-            NSLog(@"Not reporting window title. You can enable this in prefs>profiles>terminal");
+            DLog(@"Not reporting window title. You can enable this in prefs>profiles>terminal");
             theString = @"\033]l\033\\";
         }
         NSData *theData = [theString dataUsingEncoding:NSUTF8StringEncoding];
@@ -2566,11 +2567,11 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         break;
 
     default:
-        /*NSLog(@"%s(%d): bug?? token.type = %d",
+        /*DLog(@"%s(%d): bug?? token.type = %d",
             __FILE__, __LINE__, token.type);*/
         break;
     }
-//    NSLog(@"Done");
+//    DLog(@"Done");
 }
 
 - (long long)absoluteLineNumberOfCursor
@@ -2672,7 +2673,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 
 void DumpBuf(screen_char_t* p, int n) {
     for (int i = 0; i < n; ++i) {
-        NSLog(@"%3d: \"%@\" (0x%04x)", i, ScreenCharToStr(&p[i]), (int)p[i].code);
+        DLog(@"%3d: \"%@\" (0x%04x)", i, ScreenCharToStr(&p[i]), (int)p[i].code);
     }
 }
 
@@ -2725,12 +2726,12 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen setString:%@ at %d]",
+    DLog(@"%s(%d):-[VT100Screen setString:%@ at %d]",
           __FILE__, __LINE__, string, cursorX);
 #endif
 
     if ((len=[string length]) < 1 || !string) {
-        //NSLog(@"%s: invalid string '%@'", __PRETTY_FUNCTION__, string);
+        //DLog(@"%s: invalid string '%@'", __PRETTY_FUNCTION__, string);
         return;
     }
 
@@ -2760,7 +2761,7 @@ void DumpBuf(screen_char_t* p, int n) {
                                                               sizeof(screen_char_t));
             assert(dynamicBuffer);
             if (!buffer) {
-                NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
+                DLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
                 return;
             }
         } else {
@@ -2792,7 +2793,7 @@ void DumpBuf(screen_char_t* p, int n) {
                                                               sizeof(screen_char_t));
             assert(buffer);
             if (!buffer) {
-                NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
+                DLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
                 return;
             }
         } else {
@@ -2855,7 +2856,7 @@ void DumpBuf(screen_char_t* p, int n) {
     for (idx = 0; idx < len; )  {
         int startIdx = idx;
 #ifdef VERBOSE_STRING
-        NSLog(@"Begin inserting line. cursorX=%d, WIDTH=%d", cursorX, WIDTH);
+        DLog(@"Begin inserting line. cursorX=%d, WIDTH=%d", cursorX, WIDTH);
 #endif
         NSAssert(buffer[idx].code != DWC_RIGHT, @"DWC cut off");
 
@@ -2872,7 +2873,7 @@ void DumpBuf(screen_char_t* p, int n) {
             // rightmost position.
             widthOffset = 1;
 #ifdef VERBOSE_STRING
-            NSLog(@"The first char we're going to insert is a DWC");
+            DLog(@"The first char we're going to insert is a DWC");
 #endif
         } else {
             widthOffset = 0;
@@ -2891,7 +2892,7 @@ void DumpBuf(screen_char_t* p, int n) {
                 // Advance to the next line
                 [self setNewLine];
 #ifdef VERBOSE_STRING
-                NSLog(@"Advance cursor to next line");
+                DLog(@"Advance cursor to next line");
 #endif
             } else {
                 // Wraparound is off.
@@ -2924,7 +2925,7 @@ void DumpBuf(screen_char_t* p, int n) {
                 }
 
 #ifdef VERBOSE_STRING
-                NSLog(@"Scribbling on last position");
+                DLog(@"Scribbling on last position");
 #endif
             }
         }
@@ -2936,13 +2937,13 @@ void DumpBuf(screen_char_t* p, int n) {
 #endif
         BOOL wrapDwc = NO;
 #ifdef VERBOSE_STRING
-        NSLog(@"There is %d space left in the line and we are appending %d chars",
+        DLog(@"There is %d space left in the line and we are appending %d chars",
               spaceRemainingInLine, charsLeftToAppend);
 #endif
         int effective_width = WIDTH;
         if (spaceRemainingInLine <= charsLeftToAppend) {
 #ifdef VERBOSE_STRING
-            NSLog(@"Not enough space in the line for everything we want to append.");
+            DLog(@"Not enough space in the line for everything we want to append.");
 #endif
             // There is enough text to at least fill the line. Place the cursor
             // at the end of the line.
@@ -2952,14 +2953,14 @@ void DumpBuf(screen_char_t* p, int n) {
                 // If we filled the line all the way out to WIDTH a DWC would be
                 // split. Wrap the DWC around to the next line.
 #ifdef VERBOSE_STRING
-                NSLog(@"Dropping a char from the end to avoid splitting a DWC.");
+                DLog(@"Dropping a char from the end to avoid splitting a DWC.");
 #endif
                 wrapDwc = YES;
                 newx = WIDTH - 1;
                 --effective_width;
             } else {
 #ifdef VERBOSE_STRING
-                NSLog(@"Inserting up to the end of the line only.");
+                DLog(@"Inserting up to the end of the line only.");
 #endif
                 newx = WIDTH;
             }
@@ -2969,7 +2970,7 @@ void DumpBuf(screen_char_t* p, int n) {
             // where it should be after appending is complete.
             newx = cursorX + charsLeftToAppend;
 #ifdef VERBOSE_STRING
-            NSLog(@"All remaining chars fit.");
+            DLog(@"All remaining chars fit.");
 #endif
         }
 
@@ -2977,10 +2978,10 @@ void DumpBuf(screen_char_t* p, int n) {
         // on the current line).
         charsToInsert = newx - cursorX;
 #ifdef VERBOSE_STRING
-        NSLog(@"Will insert %d chars", charsToInsert);
+        DLog(@"Will insert %d chars", charsToInsert);
 #endif
         if (charsToInsert <= 0) {
-            //NSLog(@"setASCIIString: output length=0?(%d+%d)%d+%d",cursorX,charsToInsert,idx2,len);
+            //DLog(@"setASCIIString: output length=0?(%d+%d)%d+%d",cursorX,charsToInsert,idx2,len);
             break;
         }
 
@@ -2990,7 +2991,7 @@ void DumpBuf(screen_char_t* p, int n) {
         if ([TERMINAL insertMode]) {
             if (cursorX + charsToInsert < WIDTH) {
 #ifdef VERBOSE_STRING
-                NSLog(@"Shifting old contents to the right");
+                DLog(@"Shifting old contents to the right");
 #endif
                 // Shift the old line contents to the right by 'charsToInsert' positions.
                 screen_char_t* src = aLine + cursorX;
@@ -3023,7 +3024,7 @@ void DumpBuf(screen_char_t* p, int n) {
         // DWC into a space.
         if (aLine[cursorX].code == DWC_RIGHT) {
 #ifdef VERBOSE_STRING
-            NSLog(@"Wiping out the right-half DWC at the cursor before writing to screen");
+            DLog(@"Wiping out the right-half DWC at the cursor before writing to screen");
 #endif
             NSAssert(cursorX > 0, @"DWC split");  // there should never be the second half of a DWC at x=0
             aLine[cursorX].code = ' ';
@@ -3099,7 +3100,7 @@ void DumpBuf(screen_char_t* p, int n) {
     int sx, sy;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen setStringToX:%d Y:%d string:%@]",
+    DLog(@"%s(%d):-[VT100Screen setStringToX:%d Y:%d string:%@]",
           __FILE__, __LINE__, x, y, string);
 #endif
 
@@ -3131,7 +3132,7 @@ void DumpBuf(screen_char_t* p, int n) {
     BOOL wrap = NO;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen setNewLine](%d,%d)-[%d,%d]", __FILE__, __LINE__, cursorX, cursorY, SCROLL_TOP, SCROLL_BOTTOM);
+    DLog(@"%s(%d):-[VT100Screen setNewLine](%d,%d)-[%d,%d]", __FILE__, __LINE__, cursorX, cursorY, SCROLL_TOP, SCROLL_BOTTOM);
 #endif
 
     if (cursorY < SCROLL_BOTTOM ||
@@ -3193,7 +3194,7 @@ void DumpBuf(screen_char_t* p, int n) {
     int i;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen deleteCharacter]: %d", __FILE__, __LINE__, n);
+    DLog(@"%s(%d):-[VT100Screen deleteCharacter]: %d", __FILE__, __LINE__, n);
 #endif
 
     if (cursorX >= 0 && cursorX < WIDTH &&
@@ -3246,7 +3247,7 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)backTab
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen backTab]", __FILE__, __LINE__);
+    DLog(@"%s(%d):-[VT100Screen backTab]", __FILE__, __LINE__);
 #endif
 
     [self setCursorX:cursorX - 1 Y:cursorY];
@@ -3364,7 +3365,7 @@ void DumpBuf(screen_char_t* p, int n) {
     int i, j;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen clearScreen]; cursorY = %d", __FILE__, __LINE__, cursorY);
+    DLog(@"%s(%d):-[VT100Screen clearScreen]; cursorY = %d", __FILE__, __LINE__, cursorY);
 #endif
 
     if (cursorY < 0) {
@@ -3446,7 +3447,7 @@ void DumpBuf(screen_char_t* p, int n) {
     //BOOL wrap;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen eraseInDisplay:(param=%d); X = %d; Y = %d]",
+    DLog(@"%s(%d):-[VT100Screen eraseInDisplay:(param=%d); X = %d; Y = %d]",
           __FILE__, __LINE__, token.u.csi.p[0], cursorX, cursorY);
 #endif
     switch (token.u.csi.p[0]) {
@@ -3543,7 +3544,7 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)selectGraphicRendition:(VT100TCC)token
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen selectGraphicRendition:...]",
+    DLog(@"%s(%d):-[VT100Screen selectGraphicRendition:...]",
       __FILE__, __LINE__);
 #endif
 
@@ -3554,7 +3555,7 @@ void DumpBuf(screen_char_t* p, int n) {
     int x = cursorX - (n > 0 ? n : 1);
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen cursorLeft:%d]",
+    DLog(@"%s(%d):-[VT100Screen cursorLeft:%d]",
       __FILE__, __LINE__, n);
 #endif
     if (x < 0)
@@ -3574,7 +3575,7 @@ void DumpBuf(screen_char_t* p, int n) {
     int x = cursorX + (n > 0 ? n : 1);
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen cursorRight:%d]",
+    DLog(@"%s(%d):-[VT100Screen cursorRight:%d]",
           __FILE__, __LINE__, n);
 #endif
     if (x >= WIDTH)
@@ -3621,7 +3622,7 @@ void DumpBuf(screen_char_t* p, int n) {
 
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen cursorToX:%d]",
+    DLog(@"%s(%d):-[VT100Screen cursorToX:%d]",
           __FILE__, __LINE__, x);
 #endif
     x_pos = (x-1);
@@ -3644,7 +3645,7 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)cursorToX:(int)x Y:(int)y
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen cursorToX:%d Y:%d]",
+    DLog(@"%s(%d):-[VT100Screen cursorToX:%d Y:%d]",
           __FILE__, __LINE__, x, y);
 #endif
     int x_pos, y_pos;
@@ -3677,7 +3678,7 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)saveCursorPosition
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen saveCursorPosition]", __FILE__, __LINE__);
+    DLog(@"%s(%d):-[VT100Screen saveCursorPosition]", __FILE__, __LINE__);
 #endif
 
     int nx = cursorX;
@@ -3712,7 +3713,7 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)restoreCursorPosition
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen restoreCursorPosition]", __FILE__, __LINE__);
+    DLog(@"%s(%d):-[VT100Screen restoreCursorPosition]", __FILE__, __LINE__);
 #endif
 
     if(temp_buffer) {
@@ -3734,7 +3735,7 @@ void DumpBuf(screen_char_t* p, int n) {
     int top, bottom;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen setTopBottom:(%d,%d)]",
+    DLog(@"%s(%d):-[VT100Screen setTopBottom:(%d,%d)]",
       __FILE__, __LINE__, token.u.csi.p[0], token.u.csi.p[1]);
 #endif
 
@@ -3762,7 +3763,7 @@ void DumpBuf(screen_char_t* p, int n) {
     screen_char_t *sourceLine, *targetLine;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen scrollUp]", __FILE__, __LINE__);
+    DLog(@"%s(%d):-[VT100Screen scrollUp]", __FILE__, __LINE__);
 #endif
 
     assert(SCROLL_TOP >= 0 && SCROLL_TOP < HEIGHT);
@@ -3819,7 +3820,7 @@ void DumpBuf(screen_char_t* p, int n) {
     screen_char_t *sourceLine, *targetLine;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen scrollDown]", __FILE__, __LINE__);
+    DLog(@"%s(%d):-[VT100Screen scrollDown]", __FILE__, __LINE__);
 #endif
 
     NSParameterAssert(SCROLL_TOP >= 0 && SCROLL_TOP < HEIGHT);
@@ -3903,11 +3904,11 @@ void DumpBuf(screen_char_t* p, int n) {
     screen_char_t *sourceLine, *targetLine, *aDefaultLine;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen insertLines; %d]", __FILE__, __LINE__, n);
+    DLog(@"%s(%d):-[VT100Screen insertLines; %d]", __FILE__, __LINE__, n);
 #endif
 
 
-//    NSLog(@"insertLines %d[%d,%d]",n, cursorX,cursorY);
+//    DLog(@"insertLines %d[%d,%d]",n, cursorX,cursorY);
     if (n + cursorY <= SCROLL_BOTTOM) {
         // number of lines we can move down by n before we hit SCROLL_BOTTOM
         num_lines_moved = SCROLL_BOTTOM - (cursorY + n);
@@ -3943,7 +3944,7 @@ void DumpBuf(screen_char_t* p, int n) {
     screen_char_t *sourceLine, *targetLine, *aDefaultLine;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen deleteLines; %d]", __FILE__, __LINE__, n);
+    DLog(@"%s(%d):-[VT100Screen deleteLines; %d]", __FILE__, __LINE__, n);
 #endif
 
     if (n + cursorY <= SCROLL_BOTTOM) {
@@ -3978,7 +3979,7 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)setPlayBellFlag:(BOOL)flag
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):+[VT100Screen setPlayBellFlag:%s]",
+    DLog(@"%s(%d):+[VT100Screen setPlayBellFlag:%s]",
           __FILE__, __LINE__, flag == YES ? "YES" : "NO");
 #endif
     PLAYBELL = flag;
@@ -3987,7 +3988,7 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)setShowBellFlag:(BOOL)flag
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):+[VT100Screen setShowBellFlag:%s]",
+    DLog(@"%s(%d):+[VT100Screen setShowBellFlag:%s]",
           __FILE__, __LINE__, flag == YES ? "YES" : "NO");
 #endif
     SHOWBELL = flag;
@@ -3996,7 +3997,7 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)setFlashBellFlag:(BOOL)flag
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):+[VT100Screen setFlashBellFlag:%s]",
+    DLog(@"%s(%d):+[VT100Screen setFlashBellFlag:%s]",
           __FILE__, __LINE__, flag == YES ? "YES" : "NO");
 #endif
     FLASHBELL = flag;
@@ -4005,7 +4006,7 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)activateBell
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen playBell]",  __FILE__, __LINE__);
+    DLog(@"%s(%d):-[VT100Screen playBell]",  __FILE__, __LINE__);
 #endif
     if (PLAYBELL) {
         // Some bells or systems block on NSBeep so it's important to rate-limit it to prevent
@@ -4031,7 +4032,7 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)setGrowlFlag:(BOOL)flag
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):+[VT100Screen setGrowlFlag:%s]",
+    DLog(@"%s(%d):+[VT100Screen setGrowlFlag:%s]",
           __FILE__, __LINE__, flag == YES ? "YES" : "NO");
 #endif
     GROWL = flag;
@@ -4052,7 +4053,7 @@ void DumpBuf(screen_char_t* p, int n) {
     NSData *report = nil;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen deviceReport:%d]",
+    DLog(@"%s(%d):-[VT100Screen deviceReport:%d]",
           __FILE__, __LINE__, token.u.csi.p[0]);
 #endif
     if (SHELL == nil)
@@ -4097,7 +4098,7 @@ void DumpBuf(screen_char_t* p, int n) {
     NSData *report = nil;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen deviceAttribute:%d]",
+    DLog(@"%s(%d):-[VT100Screen deviceAttribute:%d]",
           __FILE__, __LINE__, token.u.csi.p[0]);
 #endif
     if (SHELL == nil)
@@ -4115,7 +4116,7 @@ void DumpBuf(screen_char_t* p, int n) {
     NSData *report = nil;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen secondaryDeviceAttribute:%d]",
+    DLog(@"%s(%d):-[VT100Screen secondaryDeviceAttribute:%d]",
           __FILE__, __LINE__, token.u.csi.p[0]);
 #endif
     if (SHELL == nil)
@@ -4472,7 +4473,7 @@ void DumpBuf(screen_char_t* p, int n) {
                                      toPosition:&startPos
                                          offset:offset * (direction ? 1 : -1)];
     if (!isOk) {
-        // NSLog(@"Couldn't convert %d,%d to position", x, y);
+        // DLog(@"Couldn't convert %d,%d to position", x, y);
         if (direction) {
             startPos = [linebuffer firstPos];
         } else {
@@ -4529,13 +4530,13 @@ void DumpBuf(screen_char_t* p, int n) {
         if (context->status == Searching) {
             //NSDate* begin = [NSDate date];
             [linebuffer findSubstring:context stopAt:stopAt];
-            //NSLog(@"One call to linebuffer findSubstring took %f seconds", (float)[begin timeIntervalSinceNow]);
+            //DLog(@"One call to linebuffer findSubstring took %f seconds", (float)[begin timeIntervalSinceNow]);
         }
 
         // Handle the current state
         switch (context->status) {
             case Matched: {
-                // NSLog(@"matched");
+                // DLog(@"matched");
                 // Found a match in the text.
                 NSArray *allPositions = [linebuffer convertPositions:context->results
                                                            withWidth:WIDTH];
@@ -4565,19 +4566,19 @@ void DumpBuf(screen_char_t* p, int n) {
             }
 
             case Searching:
-                // NSLog(@"searching");
+                // DLog(@"searching");
                 // No result yet but keep looking
                 keepSearching = YES;
                 break;
 
             case NotFound:
-                // NSLog(@"not found");
+                // DLog(@"not found");
                 // Reached stopAt point with no match.
                 if (context->hasWrapped) {
                     [linebuffer releaseFind:context];
                     keepSearching = NO;
                 } else {
-                    // NSLog(@"...wrapping");
+                    // DLog(@"...wrapping");
                     // wrap around and resume search.
                     FindContext temp;
                     [linebuffer initFind:findContext.substring
@@ -4604,7 +4605,7 @@ void DumpBuf(screen_char_t* p, int n) {
         }
         ++iterations;
     } while (keepSearching && ms_diff < maxTime*1000);
-    // NSLog(@"Did %d iterations in %dms. Average time per block was %dms", iterations, ms_diff, ms_diff/iterations);
+    // DLog(@"Did %d iterations in %dms. Average time per block was %dms", iterations, ms_diff, ms_diff/iterations);
 
     [self _popScrollbackLines:linesPushed];
     return keepSearching;

@@ -588,10 +588,10 @@ static NSDate* lastResizeDate_;
 - (NSSize)maximumPossibleScrollViewContentSize
 {
     NSSize size = self.frame.size;
-    DLog(@"maximumPossibleScrollViewContentSize. size=%@", [NSValue valueWithSize:size]);
+    DLog(@"maximumPossibleScrollViewContentSize. session view's frame size=%@", [NSValue valueWithSize:size]);
     if (showTitle_) {
         size.height -= kTitleHeight;
-        DLog(@"maximumPossibleScrollViewContentSize: sub title height. size=%@", [NSValue valueWithSize:size]);
+        DLog(@"maximumPossibleScrollViewContentSize: subtract title height. size=%@", [NSValue valueWithSize:size]);
     }
     return [NSScrollView contentSizeForFrameSize:size
                            hasHorizontalScroller:NO
