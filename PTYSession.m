@@ -672,6 +672,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [antiIdleTimer release];
     antiIdleTimer = nil;
     newOutput = NO;
+    [view centerScrollView];
 
     return YES;
 }
@@ -718,6 +719,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [SCREEN resizeWidth:width height:height];
     [SHELL setWidth:width height:height];
     [TEXTVIEW clearHighlights];
+    [view centerScrollView];
     [[tab_ realParentWindow] invalidateRestorableState];
 }
 

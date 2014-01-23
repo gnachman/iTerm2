@@ -4081,6 +4081,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [[self currentTab] numberOfSessionsDidChange];
     [self setDimmingForSession:targetSession];
     [sessionView updateDim];
+    [sessionView centerScrollView];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
 

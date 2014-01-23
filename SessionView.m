@@ -536,6 +536,7 @@ static NSDate* lastResizeDate_;
         [self updateTitleFrame];
     }
     [self setTitle:[session_ name]];
+    [self centerScrollView];
     return YES;
 }
 
@@ -585,23 +586,35 @@ static NSDate* lastResizeDate_;
 
 - (void)updateTitleFrame
 {
-        NSRect aRect = [self frame];
-        NSView *scrollView = (NSView *)[session_ SCROLLVIEW];
-        if (showTitle_) {
-                [title_ setFrame:NSMakeRect(0,
-                                                                        aRect.size.height - kTitleHeight,
-                                                                        aRect.size.width,
-                                                                        kTitleHeight)];
-                [scrollView setFrameOrigin:NSMakePoint(
-                        0,
-                        aRect.size.height - scrollView.frame.size.height - kTitleHeight)];
-        } else {
-                [scrollView setFrameOrigin:NSMakePoint(
-                        0,
-                        aRect.size.height - scrollView.frame.size.height)];
-        }
-        [findView_ setFrameOrigin:NSMakePoint(aRect.size.width - [[findView_ view] frame].size.width - 30,
-                                                                                  aRect.size.height - [[findView_ view] frame].size.height)];
+    NSRect aRect = [self frame];
+    NSView *scrollView = (NSView *)[session_ SCROLLVIEW];
+    if (showTitle_) {
+        [title_ setFrame:NSMakeRect(0,
+                                    aRect.size.height - kTitleHeight,
+                                    aRect.size.width,
+                                    kTitleHeight)];
+    }
+    [self centerScrollView];
+    [findView_ setFrameOrigin:NSMakePoint(aRect.size.width - [[findView_ view] frame].size.width - 30,
+                                          aRect.size.height - [[findView_ view] frame].size.height)];
+}
+
+- (void)centerScrollView
+{
+  int lineHeight = [[session_ TEXTVIEW] lineHeight];
+  int margins = VMARGIN * 2;
+  CGFloat titleHeight = showTitle_ ? title_.frame.size.height : 0;
+  NSRect rect = NSMakeRect(0,
+                           0,
+                           self.frame.size.width,
+                           self.frame.size.height - titleHeight);
+  int rows = floor((rect.size.height - margins) / lineHeight);
+  CGFloat height = rows * lineHeight;
+  CGFloat offset = floor((rect.size.height - height) / 2);
+  [session_ SCROLLVIEW].frame = NSMakeRect(rect.origin.x,
+                                           rect.origin.y + offset,
+                                           rect.size.width,
+                                           rect.size.height - offset * 2);
 }
 
 - (void)setTitle:(NSString *)title

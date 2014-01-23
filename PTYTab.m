@@ -1121,6 +1121,7 @@ static NSString* FormatRect(NSRect r) {
                                                      0,
                                                      theSize.width,
                                                      theSize.height)];
+        [[theSession view] centerScrollView];
         if ([self isTmuxTab]) {
             [[theSession view] setAutoresizesSubviews:NO];
         }
@@ -2745,6 +2746,7 @@ static NSString* FormatRect(NSRect r) {
                                                      theSize.height)];
         [[theSession view] setAutoresizesSubviews:NO];
         [[theSession view] updateTitleFrame];
+        [[theSession view] centerScrollView];
     }
 }
 
