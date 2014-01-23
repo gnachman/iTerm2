@@ -672,7 +672,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [antiIdleTimer release];
     antiIdleTimer = nil;
     newOutput = NO;
-    [view centerScrollView];
+    [view updateScrollViewFrame];
 
     return YES;
 }
@@ -719,7 +719,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [SCREEN resizeWidth:width height:height];
     [SHELL setWidth:width height:height];
     [TEXTVIEW clearHighlights];
-    [view centerScrollView];
     [[tab_ realParentWindow] invalidateRestorableState];
 }
 
@@ -4403,6 +4402,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if ([self isTmuxClient]) {
         [self notifyTmuxFontChange];
     }
+    [view updateScrollViewFrame];
+}
+
+- (void)textViewSizeDidChange
+{
+    [view updateScrollViewFrame];
 }
 
 - (void)textViewPostTabContentsChangedNotification

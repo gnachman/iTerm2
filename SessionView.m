@@ -377,20 +377,24 @@ static NSDate* lastResizeDate_;
 
 - (void)drawRect:(NSRect)dirtyRect
 {
-        // Fill in background color in the area around a scrollview if it's smaller
-        // than the session view.
-        [super drawRect:dirtyRect];
-        NSColor *bgColor = [[session_ TEXTVIEW] defaultBGColor];
-        [bgColor set];
+    // Fill in background color in the area around a scrollview if it's smaller
+    // than the session view.
+    [super drawRect:dirtyRect];
+    NSColor *bgColor = [[session_ TEXTVIEW] defaultBGColor];
+    [bgColor set];
     PTYScrollView *scrollView = [session_ SCROLLVIEW];
-        NSRect svFrame = [scrollView frame];
-        if (svFrame.size.width < self.frame.size.width) {
-                double widthDiff = self.frame.size.width - svFrame.size.width;
-                NSRectFill(NSMakeRect(self.frame.size.width - widthDiff, 0, widthDiff, self.frame.size.height));
-        }
-        if (svFrame.origin.y != 0) {
-                NSRectFill(NSMakeRect(0, 0, self.frame.size.width, svFrame.origin.y));
-        }
+    NSRect svFrame = [scrollView frame];
+    if (svFrame.size.width < self.frame.size.width) {
+        double widthDiff = self.frame.size.width - svFrame.size.width;
+        NSRectFill(NSMakeRect(self.frame.size.width - widthDiff, 0, widthDiff, self.frame.size.height));
+    }
+    if (svFrame.origin.y != 0) {
+        NSRectFill(NSMakeRect(0, 0, self.frame.size.width, svFrame.origin.y));
+    }
+    CGFloat maxY = svFrame.origin.y + svFrame.size.height;
+    if (maxY < self.frame.size.height) {
+        NSRectFill(NSMakeRect(dirtyRect.origin.x, maxY, dirtyRect.size.width, self.frame.size.height - maxY));
+    }
 }
 
 #pragma mark NSDraggingSource protocol
@@ -536,7 +540,7 @@ static NSDate* lastResizeDate_;
         [self updateTitleFrame];
     }
     [self setTitle:[session_ name]];
-    [self centerScrollView];
+    [self updateScrollViewFrame];
     return YES;
 }
 
@@ -594,27 +598,24 @@ static NSDate* lastResizeDate_;
                                     aRect.size.width,
                                     kTitleHeight)];
     }
-    [self centerScrollView];
+    [self updateScrollViewFrame];
     [findView_ setFrameOrigin:NSMakePoint(aRect.size.width - [[findView_ view] frame].size.width - 30,
                                           aRect.size.height - [[findView_ view] frame].size.height)];
 }
 
-- (void)centerScrollView
+- (void)updateScrollViewFrame
 {
-  int lineHeight = [[session_ TEXTVIEW] lineHeight];
-  int margins = VMARGIN * 2;
-  CGFloat titleHeight = showTitle_ ? title_.frame.size.height : 0;
-  NSRect rect = NSMakeRect(0,
-                           0,
-                           self.frame.size.width,
-                           self.frame.size.height - titleHeight);
-  int rows = floor((rect.size.height - margins) / lineHeight);
-  CGFloat height = rows * lineHeight;
-  CGFloat offset = floor((rect.size.height - height) / 2);
-  [session_ SCROLLVIEW].frame = NSMakeRect(rect.origin.x,
-                                           rect.origin.y + offset,
-                                           rect.size.width,
-                                           rect.size.height - offset * 2);
+    int lineHeight = [[session_ TEXTVIEW] lineHeight];
+    int margins = VMARGIN * 2;
+    CGFloat titleHeight = showTitle_ ? title_.frame.size.height : 0;
+    NSRect rect = NSMakeRect(0,
+                             0,
+                             self.frame.size.width,
+                             self.frame.size.height - titleHeight);
+    int rows = floor((rect.size.height - margins) / lineHeight);
+    rect.size.height = rows * lineHeight + margins;
+    rect.origin.y = self.frame.size.height - titleHeight - rect.size.height;
+    [session_ SCROLLVIEW].frame = rect;
 }
 
 - (void)setTitle:(NSString *)title

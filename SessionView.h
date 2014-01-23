@@ -99,6 +99,6 @@
 // rows and columns.
 - (NSSize)compactFrame;
 
-- (void)centerScrollView;
+- (void)updateScrollViewFrame;
 
 @end
