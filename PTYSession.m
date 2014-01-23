@@ -676,6 +676,7 @@ static int gNextSessionID = 1;
     [antiIdleTimer release];
     antiIdleTimer = nil;
     newOutput = NO;
+    [view updateScrollViewFrame];
 
     return YES;
 }
@@ -4407,6 +4408,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if ([self isTmuxClient]) {
         [self notifyTmuxFontChange];
     }
+    [view updateScrollViewFrame];
+}
+
+- (void)textViewSizeDidChange
+{
+    [view updateScrollViewFrame];
 }
 
 - (void)textViewPostTabContentsChangedNotification

@@ -42,5 +42,6 @@
 - (void)setUseDarkDividers:(BOOL)useDarkDividers;
 
 - (ToolCommandHistoryView *)commandHistoryView;
+- (void)relayoutAllTools;
 
 @end

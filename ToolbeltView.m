@@ -313,6 +313,13 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     // For KVO
 }
 
+- (void)relayoutAllTools
+{
+    for (ToolWrapper *wrapper in [splitter_ subviews]) {
+        [wrapper relayout];
+    }
+}
+
 #pragma mark - ToolWrapperDelegate
 
 - (void)hideToolbelt
@@ -330,9 +337,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification
 {
-    for (ToolWrapper *wrapper in [splitter_ subviews]) {
-        [wrapper relayout];
-    }
+    [self relayoutAllTools];
 }
 
 - (CGFloat)splitView:(NSSplitView *)splitView

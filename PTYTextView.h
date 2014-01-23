@@ -69,6 +69,7 @@ typedef enum {
 - (void)pasteString:(NSString *)aString;
 - (void)paste:(id)sender;
 - (void)textViewFontDidChange;
+- (void)textViewSizeDidChange;
 - (PTYScrollView *)SCROLLVIEW;
 - (void)sendEscapeSequence:(NSString *)text;
 - (void)sendHexCode:(NSString *)codes;

@@ -61,6 +61,7 @@ static NSString* TERMINAL_ARRANGEMENT_X_ORIGIN = @"X Origin";
 static NSString* TERMINAL_ARRANGEMENT_Y_ORIGIN = @"Y Origin";
 static NSString* TERMINAL_ARRANGEMENT_WIDTH = @"Width";
 static NSString* TERMINAL_ARRANGEMENT_HEIGHT = @"Height";
+static NSString* TERMINAL_ARRANGEMENT_EDGE_SPANNING_OFF = @"Edge Spanning Off";
 static NSString* TERMINAL_ARRANGEMENT_TABS = @"Tabs";
 static NSString* TERMINAL_ARRANGEMENT_FULLSCREEN = @"Fullscreen";
 static NSString* TERMINAL_ARRANGEMENT_LION_FULLSCREEN = @"LionFullscreen";
@@ -287,6 +288,14 @@ NSString *kSessionsKVCKey = @"sessions";
     // Initialized to -1 in -init and then set to the size of the first session
     // forever.
     int desiredRows_, desiredColumns_;
+    
+    // If set, then an edge window (top, left, bottom, right of screen) does
+    // not span the entire visible edge of the screen because the user has
+    // manually resized it. This will be remembered by saved arrangements and
+    // restored. When the window frames are canonicalized (e.g., because
+    // displays changed), this flag keeps the windows from getting resized to
+    // the full width/height of the screen.
+    BOOL edgeSpanningOff_;
 }
 
 - (id)init {
@@ -467,6 +476,8 @@ NSString *kSessionsKVCKey = @"sessions";
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
+            styleMask = NSBorderlessWindowMask | NSResizableWindowMask;
+            break;
         case WINDOW_TYPE_FORCE_FULL_SCREEN:
             styleMask = NSBorderlessWindowMask;
             break;
@@ -715,7 +726,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (CGFloat)tabviewWidth
 {
-    if ([self anyFullScreen]) {
+    if ([self anyFullScreen] || [self isEdgeWindow]) {
         iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
         if ([itad showToolbelt] && !exitingLionFullscreen_) {
             const CGFloat width = [self fullscreenToolbeltWidth];
@@ -1515,6 +1526,7 @@ NSString *kSessionsKVCKey = @"sessions";
         // TODO: for window type top, set width to screen width.
         rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
         rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+        term->edgeSpanningOff_ = [arrangement[TERMINAL_ARRANGEMENT_EDGE_SPANNING_OFF] boolValue];
         [[term window] setFrame:rect display:NO];
     }
 
@@ -1691,6 +1703,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
     [result setObject:[NSNumber numberWithInt:([self lionFullScreen] ? WINDOW_TYPE_LION_FULL_SCREEN : windowType_)]
                forKey:TERMINAL_ARRANGEMENT_WINDOW_TYPE];
+    [result setObject:@(edgeSpanningOff_) forKey:TERMINAL_ARRANGEMENT_EDGE_SPANNING_OFF];
     [result setObject:[NSNumber numberWithInt:[[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]]]
                                        forKey:TERMINAL_ARRANGEMENT_SCREEN_INDEX];
     [result setObject:[NSNumber numberWithInt:desiredRows_]
@@ -1985,8 +1998,15 @@ NSString *kSessionsKVCKey = @"sessions";
             } else {
                 frame.size.height = MIN([screen visibleFrame].size.height, frame.size.height);
             }
-            frame.size.width = [screen visibleFrame].size.width;
-            frame.origin.x = [screen visibleFrame].origin.x;
+            if (edgeSpanningOff_) {
+                frame.size.width = MIN(frame.size.width, [screen visibleFrame].size.width);
+                frame.origin.x = MAX(frame.origin.x, screen.visibleFrame.origin.x);
+                double freeSpaceOnLeft = MIN(0, [screen visibleFrame].size.width - frame.size.width - (frame.origin.x - screen.visibleFrame.origin.x));
+                frame.origin.x += freeSpaceOnLeft;
+            } else {
+                frame.size.width = [screen visibleFrame].size.width;
+                frame.origin.x = [screen visibleFrame].origin.x;
+            }
             if ([[self window] alphaValue] == 0) {
                 // Is hidden hotkey window
                 frame.origin.y = [screen visibleFrame].origin.y + [screen visibleFrame].size.height;
@@ -2009,8 +2029,15 @@ NSString *kSessionsKVCKey = @"sessions";
             } else {
                 frame.size.height = MIN([screen visibleFrame].size.height, frame.size.height);
             }
-            frame.size.width = [screen visibleFrame].size.width;
-            frame.origin.x = [screen visibleFrame].origin.x;
+            if (edgeSpanningOff_) {
+                frame.size.width = MIN(frame.size.width, [screen visibleFrame].size.width);
+                frame.origin.x = MAX(frame.origin.x, screen.visibleFrame.origin.x);
+                double freeSpaceOnLeft = MIN(0, [screen visibleFrame].size.width - frame.size.width - (frame.origin.x - screen.visibleFrame.origin.x));
+                frame.origin.x += freeSpaceOnLeft;
+            } else {
+                frame.size.width = [screen visibleFrame].size.width;
+                frame.origin.x = [screen visibleFrame].origin.x;
+            }
             if ([[self window] alphaValue] == 0) {
                 // Is hidden hotkey window
                 frame.origin.y = [screen visibleFrame].origin.y - frame.size.height;
@@ -2033,8 +2060,15 @@ NSString *kSessionsKVCKey = @"sessions";
             } else {
                 frame.size.width = MIN([screen visibleFrame].size.width, frame.size.width);
             }
-            frame.size.height = [screen visibleFrame].size.height;
-            frame.origin.y = [screen visibleFrame].origin.y;
+            if (edgeSpanningOff_) {
+                frame.size.height = MIN(frame.size.height, [screen visibleFrame].size.height);
+                frame.origin.y = MAX(frame.origin.y, screen.visibleFrame.origin.y);
+                double freeSpaceOnBottom = MIN(0, [screen visibleFrame].size.height - frame.size.height - (frame.origin.y - screen.visibleFrame.origin.y));
+                frame.origin.y += freeSpaceOnBottom;
+            } else {
+                frame.size.height = [screen visibleFrame].size.height;
+                frame.origin.y = [screen visibleFrame].origin.y;
+            }
             if ([[self window] alphaValue] == 0) {
                 // Is hidden hotkey window
                 frame.origin.x = [screen visibleFrame].origin.x - frame.size.width;
@@ -2057,8 +2091,15 @@ NSString *kSessionsKVCKey = @"sessions";
             } else {
                 frame.size.width = MIN([screen visibleFrame].size.width, frame.size.width);
             }
-            frame.size.height = [screen visibleFrame].size.height;
-            frame.origin.y = [screen visibleFrame].origin.y;
+            if (edgeSpanningOff_) {
+                frame.size.height = MIN(frame.size.height, [screen visibleFrame].size.height);
+                frame.origin.y = MAX(frame.origin.y, screen.visibleFrame.origin.y);
+                double freeSpaceOnBottom = MIN(0, [screen visibleFrame].size.height - frame.size.height - (frame.origin.y - screen.visibleFrame.origin.y));
+                frame.origin.y += freeSpaceOnBottom;
+            } else {
+                frame.size.height = [screen visibleFrame].size.height;
+                frame.origin.y = [screen visibleFrame].origin.y;
+            }
             if ([[self window] alphaValue] == 0) {
                 // Is hidden hotkey window
                 frame.origin.x = [screen visibleFrame].origin.x + [screen visibleFrame].size.width;
@@ -2097,7 +2138,7 @@ NSString *kSessionsKVCKey = @"sessions";
             break;
     }
 
-    if ([self anyFullScreen]) {
+    if ([self anyFullScreen] || [self isEdgeWindow]) {
         [toolbelt_ setFrame:[self fullscreenToolbeltFrame]];
     }
 }
@@ -2199,6 +2240,20 @@ NSString *kSessionsKVCKey = @"sessions";
     // update the cursor
     [[[self currentSession] TEXTVIEW] refresh];
     [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
+}
+
+- (BOOL)isEdgeWindow
+{
+    switch (windowType_) {
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_RIGHT:
+            return YES;
+            
+        default:
+            return NO;
+    }
 }
 
 - (BOOL)anyFullScreen
@@ -2747,6 +2802,36 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)windowDidEndLiveResize:(NSNotification *)notification
 {
+    NSScreen *screen = self.window.screen;
+    NSRect frame = self.window.frame;
+    switch (windowType_) {
+        case WINDOW_TYPE_TOP:
+            frame.origin.y = [screen visibleFrame].origin.y + [screen visibleFrame].size.height - frame.size.height;
+            edgeSpanningOff_ = (frame.size.width < [screen visibleFrame].size.width);
+            break;
+            
+        case WINDOW_TYPE_BOTTOM:
+            edgeSpanningOff_ = (frame.size.width < [screen visibleFrame].size.width);
+            frame.origin.y = [screen visibleFrame].origin.y;
+            break;
+            
+        case WINDOW_TYPE_LEFT:
+            edgeSpanningOff_ = (frame.size.height < [screen visibleFrame].size.height);
+            frame.origin.x = [screen visibleFrame].origin.x;
+            break;
+            
+        case WINDOW_TYPE_RIGHT:
+            edgeSpanningOff_ = (frame.size.height < [screen visibleFrame].size.height);
+            frame.origin.x = [screen visibleFrame].origin.x + [screen visibleFrame].size.width - frame.size.width;
+            break;
+            
+        default:
+            break;
+    }
+    if (!NSEqualRects(frame, self.window.frame)) {
+        [[self window] setFrame:frame display:NO];
+    }
+
     liveResize_ = NO;
     BOOL wasZooming = zooming_;
     zooming_ = NO;
@@ -4225,6 +4310,13 @@ NSString *kSessionsKVCKey = @"sessions";
     winSize.height += decorationSize.height;
     NSRect frame = [[self window] frame];
 
+    if ([self isEdgeWindow]) {
+        iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+        if ([itad showToolbelt]) {
+            winSize.width += [self fullscreenToolbeltWidthForContentWidth:winSize.width] - 2.5;
+        }
+    }
+
     BOOL mustResizeTabs = NO;
     NSSize maxFrameSize = [self maxFrame].size;
     PtyLog(@"maxFrameSize=%@, screens=%@", [NSValue valueWithSize:maxFrameSize], [NSScreen screens]);
@@ -4263,38 +4355,62 @@ NSString *kSessionsKVCKey = @"sessions";
     NSUInteger savedMask = TABVIEW.autoresizingMask;
     TABVIEW.autoresizingMask = 0;
 
-    if (windowType_ == WINDOW_TYPE_TOP || windowType_ == WINDOW_TYPE_BOTTOM) {
-        frame.size.width = [[self window] frame].size.width;
-        frame.origin.x = [[self window] frame].origin.x;
-    }
-
-    if (windowType_ == WINDOW_TYPE_LEFT || windowType_ == WINDOW_TYPE_RIGHT) {
-        frame.size.height = self.screen.visibleFrame.size.height;
-
-        PTYSession* session = [self currentSession];
-        if (desiredColumns_ > 0) {
-            frame.size.width = MIN(winSize.width,
-                                   ceil([[session TEXTVIEW] charWidth] *
-                                        desiredColumns_) + decorationSize.width + 2 * MARGIN);
-        } else {
-            frame.size.width = winSize.width;
+    if (!edgeSpanningOff_) {
+        if (windowType_ == WINDOW_TYPE_TOP || windowType_ == WINDOW_TYPE_BOTTOM) {
+            frame.size.width = [[self window] frame].size.width;
+            frame.origin.x = [[self window] frame].origin.x;
         }
 
-    }
+        if (windowType_ == WINDOW_TYPE_LEFT || windowType_ == WINDOW_TYPE_RIGHT) {
+            frame.size.height = self.screen.visibleFrame.size.height;
 
-    if (windowType_ == WINDOW_TYPE_LEFT) {
-        frame.origin.x = [[self window] frame].origin.x;
-    } else if (windowType_ == WINDOW_TYPE_RIGHT) {
-        frame.origin.x = [[self window] frame].origin.x + [[self window] frame].size.width - frame.size.width;
-    }
+            PTYSession* session = [self currentSession];
+            if (desiredColumns_ > 0) {
+                frame.size.width = MIN(winSize.width,
+                                       ceil([[session TEXTVIEW] charWidth] *
+                                            desiredColumns_) + decorationSize.width + 2 * MARGIN);
+            } else {
+                frame.size.width = winSize.width;
+            }
 
-    // Set the origin again to the bottom of screen
-    if (windowType_ == WINDOW_TYPE_BOTTOM ||
-        windowType_ == WINDOW_TYPE_LEFT ||
-        windowType_ == WINDOW_TYPE_RIGHT) {
-        frame.origin.y = self.screen.visibleFrame.origin.y;
-    }
+        }
 
+        if (windowType_ == WINDOW_TYPE_LEFT) {
+            frame.origin.x = [[self window] frame].origin.x;
+        } else if (windowType_ == WINDOW_TYPE_RIGHT) {
+            frame.origin.x = [[self window] frame].origin.x + [[self window] frame].size.width - frame.size.width;
+        }
+
+        // Set the origin again to the bottom of screen
+        if (windowType_ == WINDOW_TYPE_BOTTOM ||
+            windowType_ == WINDOW_TYPE_LEFT ||
+            windowType_ == WINDOW_TYPE_RIGHT) {
+            frame.origin.y = self.screen.visibleFrame.origin.y;
+        }
+    } else {
+        double freeSpaceOnLeft;
+        double freeSpaceOnTop;
+        switch (windowType_) {
+            case WINDOW_TYPE_TOP:
+                frame.origin.y = self.screen.visibleFrame.origin.y + self.screen.visibleFrame.size.height - frame.size.height;
+                break;
+                
+            case WINDOW_TYPE_BOTTOM:
+                frame.origin.y = self.screen.visibleFrame.origin.y;
+                break;
+                
+            case WINDOW_TYPE_LEFT:
+                frame.origin.x = self.screen.visibleFrame.origin.x;
+                break;
+                
+            case WINDOW_TYPE_RIGHT:
+                frame.origin.x = self.screen.visibleFrame.origin.x + self.screen.visibleFrame.size.width - frame.size.width;
+                break;
+            default:
+                break;
+        }
+    }
+    
     BOOL didResize = NSEqualRects([[self window] frame], frame);
     [[self window] setFrame:frame display:YES];
 
@@ -5210,12 +5326,10 @@ NSString *kSessionsKVCKey = @"sessions";
         }
     }
 
-    if (windowType_ != WINDOW_TYPE_NORMAL || (!exitingLionFullscreen_ && [self anyFullScreen])) {
+    if ([self isEdgeWindow] || (!exitingLionFullscreen_ && [self anyFullScreen])) {
         iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
         if ([itad showToolbelt]) {
-            const CGFloat width = [self fullscreenToolbeltWidth];
-            [toolbelt_ setFrameOrigin:NSMakePoint(self.window.frame.size.width - width,
-                                                  0)];
+            [toolbelt_ setFrame:[self fullscreenToolbeltFrame]];
         }
     }
 
@@ -5622,6 +5736,22 @@ NSString *kSessionsKVCKey = @"sessions";
 - (CGFloat)fullscreenToolbeltWidth
 {
     return MIN(250, self.window.frame.size.width / 5);
+}
+
+- (CGFloat)fullscreenToolbeltWidthForContentWidth:(CGFloat)contentWidth {
+    // Returns the toolbelt frame for a window whose frame has a content view of size frameWidth.
+    // windowWidth = contentWidth + toolbeltWidth
+    // toolbeltWidth = MIN(250, windowWidth / 5)
+    // windowWidth = contentWidth + MIN(250, windowWidth / 5)
+    // windowWidth - MIN(250, windowWidth / 5) = contentWidth
+    // two cases:
+    // 1. windowWidth - windowWidth / 5 = contentWidth
+    //    0.8 * windowWidth = contentWidth
+    //    windowWidth = contentWidth / 0.8
+    //    toolbeltWidth = contentWidth / 4
+    // 2. windowWidth - 250 = contentWidth
+    //    toolbeltWidth = 250
+    return MIN(250, contentWidth / 4);
 }
 
 - (NSString *)currentSessionName
@@ -6134,7 +6264,7 @@ NSString *kSessionsKVCKey = @"sessions";
 - (void)_updateToolbeltParentage
 {
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-    if ([self anyFullScreen]) {
+    if ([self anyFullScreen] || [self isEdgeWindow]) {
         [toolbelt_ retain];
         [toolbelt_ removeFromSuperview];
         [toolbelt_ setFrame:[self fullscreenToolbeltFrame]];
@@ -6163,6 +6293,7 @@ NSString *kSessionsKVCKey = @"sessions";
             [drawer_ open];
         }
     }
+    [toolbelt_ relayoutAllTools];
 }
 
 - (NSUInteger)validModesForFontPanel:(NSFontPanel *)fontPanel
