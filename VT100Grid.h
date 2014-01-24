@@ -15,11 +15,14 @@
 @class VT100Terminal;
 
 @protocol VT100GridDelegate <NSObject>
-- (BOOL)wraparoundMode;
-- (BOOL)insertMode;
-- (BOOL)isAnsi;
-- (screen_char_t)foregroundColorCodeReal;
-- (screen_char_t)backgroundColorCodeReal;
+- (BOOL)gridShouldUseWraparoundMode;
+- (BOOL)gridShouldUseInsertMode;
+- (BOOL)gridShouldActLikeANSITerminal;
+- (screen_char_t)gridForegroundColorCode;
+- (screen_char_t)gridBackgroundColorCode;
+
+// Only called if trackCursorLineMovement is set.
+- (void)gridCursorDidChangeLine;
 @end
 
 @interface VT100Grid : NSObject <NSCopying> {
@@ -53,6 +56,7 @@
 @property(nonatomic, readonly) int bottomMargin;
 @property(nonatomic, assign) screen_char_t savedDefaultChar;
 @property(nonatomic, assign) id<VT100GridDelegate> delegate;
+@property(nonatomic, assign) BOOL trackCursorLineMovement;
 
 - (id)initWithSize:(VT100GridSize)size delegate:(id<VT100GridDelegate>)delegate;
 

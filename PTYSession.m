@@ -4887,6 +4887,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self loadInitialColorTable];
     TEXTVIEW.highlightCursorLine = NO;
     [TEXTVIEW setNeedsDisplay:YES];
+    SCREEN.trackCursorLineMovement = NO;
 }
 
 - (BOOL)screenShouldSyncTitle {
@@ -5138,9 +5139,16 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (void)screenCursorDidMoveToLine:(int)line {
+    if ([TEXTVIEW cursorIsVisible]) {
+        [TEXTVIEW setNeedsDisplayOnLine:line];
+    }
+}
+
 - (void)screenSetHighlightCursorLine:(BOOL)highlight {
     TEXTVIEW.highlightCursorLine = highlight;
     [TEXTVIEW setNeedsDisplay:YES];
+    SCREEN.trackCursorLineMovement = highlight;
 }
 
 - (BOOL)screenHasView {

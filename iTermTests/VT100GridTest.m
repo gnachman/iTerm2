@@ -39,23 +39,23 @@ do { \
     backgroundColor_.backgroundColorMode = ColorModeAlternate;
 }
 
-- (BOOL)wraparoundMode {
+- (BOOL)gridShouldUseWraparoundMode {
     return wraparoundMode_;
 }
 
-- (BOOL)insertMode {
+- (BOOL)gridShouldUseInsertMode {
     return insertMode_;
 }
 
-- (BOOL)isAnsi {
+- (BOOL)gridShouldActLikeANSITerminal {
     return isAnsi_;
 }
 
-- (screen_char_t)foregroundColorCodeReal {
+- (screen_char_t)gridForegroundColorCode {
     return foregroundColor_;
 }
 
-- (screen_char_t)backgroundColorCodeReal {
+- (screen_char_t)gridBackgroundColorCode {
     return backgroundColor_;
 }
 

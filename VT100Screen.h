@@ -24,6 +24,7 @@ extern int kVT100ScreenMinRows;
 @interface VT100Screen : NSObject <
     PTYNoteViewControllerDelegate,
     PTYTextViewDataSource,
+    VT100GridDelegate,
     VT100TerminalDelegate>
 {
     NSMutableSet* tabStops_;
@@ -110,6 +111,7 @@ extern int kVT100ScreenMinRows;
 @property(nonatomic, assign) BOOL saveToScrollbackInAlternateScreen;
 @property(nonatomic, retain) DVR *dvr;
 @property(nonatomic, readonly) VT100GridCoord savedCursor;
+@property(nonatomic, assign) BOOL trackCursorLineMovement;
 
 // Designated initializer.
 - (id)initWithTerminal:(VT100Terminal *)terminal;
