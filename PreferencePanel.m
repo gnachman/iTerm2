@@ -889,9 +889,12 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [newDict setObject:[ITAddressBookMgr encodeColor:[selectedTextColor color]] forKey:KEY_SELECTED_TEXT_COLOR];
     [newDict setObject:[ITAddressBookMgr encodeColor:[cursorColor color]] forKey:KEY_CURSOR_COLOR];
     [newDict setObject:[ITAddressBookMgr encodeColor:[cursorTextColor color]] forKey:KEY_CURSOR_TEXT_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[tabColor color]] forKey:KEY_TAB_COLOR];
+    [newDict setObject:[NSNumber numberWithBool:[useTabColor state]] forKey:KEY_USE_TAB_COLOR];
     [newDict setObject:[NSNumber numberWithBool:[checkColorInvertedCursor state]] forKey:KEY_SMART_CURSOR_COLOR];
     [newDict setObject:[NSNumber numberWithFloat:[minimumContrast floatValue]] forKey:KEY_MINIMUM_CONTRAST];
 
+    [tabColor setEnabled:[useTabColor state] == NSOnState];
     [cursorColor setEnabled:[checkColorInvertedCursor state] == NSOffState];
     [cursorColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
 
@@ -1515,7 +1518,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                             KEY_SELECTION_COLOR,
                             KEY_SELECTED_TEXT_COLOR,
                             KEY_CURSOR_COLOR,
-                            KEY_CURSOR_TEXT_COLOR ];
+                            KEY_CURSOR_TEXT_COLOR,
+                            KEY_TAB_COLOR ];
     NSColorWell* wells[] = {
         ansi0Color,
         ansi1Color,
@@ -1539,7 +1543,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         selectionColor,
         selectedTextColor,
         cursorColor,
-        cursorTextColor
+        cursorTextColor,
+        tabColor
     };
     NSMutableDictionary* theDict = [NSMutableDictionary dictionaryWithCapacity:24];
     int i = 0;
@@ -3950,6 +3955,9 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [selectedTextColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_SELECTED_TEXT_COLOR]]];
     [cursorColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_CURSOR_COLOR]]];
     [cursorTextColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_CURSOR_TEXT_COLOR]]];
+    [tabColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_TAB_COLOR]]];
+    [useTabColor setState:[[dict objectForKey:KEY_USE_TAB_COLOR] boolValue]];
+    [tabColor setEnabled:[useTabColor state] == NSOnState];
 
     BOOL smartCursorColor;
     if ([dict objectForKey:KEY_SMART_CURSOR_COLOR]) {

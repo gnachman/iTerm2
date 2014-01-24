@@ -1865,6 +1865,15 @@ static int gNextSessionID = 1;
     }
 }
 
+- (NSColor *)tabColorInAddressBookEntry
+{
+    NSColor *tabColor = nil;
+    if ([addressBookEntry[KEY_USE_TAB_COLOR] boolValue]) {
+        tabColor = [ITAddressBookMgr decodeColor:addressBookEntry[KEY_TAB_COLOR]];
+    }
+    return tabColor;
+}
+
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs
 {
     NSColor *colorTable[2][8];
@@ -1886,6 +1895,8 @@ static int gNextSessionID = 1;
     [self setBoldColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_BOLD_COLOR]]];
     [self setCursorColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_CURSOR_COLOR]]];
     [self setCursorTextColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_CURSOR_TEXT_COLOR]]];
+    [[[self tab] realParentWindow] setTabColor:[self tabColorInAddressBookEntry] forTabViewItem:[[self tab] tabViewItem]];
+
     BOOL scc;
     if ([aDict objectForKey:KEY_SMART_CURSOR_COLOR]) {
         scc = [[aDict objectForKey:KEY_SMART_CURSOR_COLOR] boolValue];

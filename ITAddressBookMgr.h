@@ -94,9 +94,11 @@
 #define KEY_ANSI_13_COLOR          @"Ansi 13 Color"
 #define KEY_ANSI_14_COLOR          @"Ansi 14 Color"
 #define KEY_ANSI_15_COLOR          @"Ansi 15 Color"
-#define KEYTEMPLATE_ANSI_X_COLOR          @"Ansi %d Color"
+#define KEYTEMPLATE_ANSI_X_COLOR   @"Ansi %d Color"
 #define KEY_SMART_CURSOR_COLOR     @"Smart Cursor Color"
-#define KEY_MINIMUM_CONTRAST      @"Minimum Contrast"
+#define KEY_MINIMUM_CONTRAST       @"Minimum Contrast"
+#define KEY_TAB_COLOR              @"Tab Color"
+#define KEY_USE_TAB_COLOR          @"Use Tab Color"
 
 // Display
 #define KEY_ROWS                   @"Rows"

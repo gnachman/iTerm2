@@ -3652,8 +3652,8 @@ NSString *kSessionsKVCKey = @"sessions";
             [[self window] setBackgroundColor:newTabColor];
             [background_ setColor:newTabColor];
         } else {
-              [[self window] setBackgroundColor:nil];
-              [background_ setColor:normalBackgroundColor];
+            [[self window] setBackgroundColor:nil];
+            [background_ setColor:normalBackgroundColor];
         }
     }
 }
@@ -6090,19 +6090,9 @@ NSString *kSessionsKVCKey = @"sessions";
             return;
         }
     }
-    [tabBarControl setTabColor:color forTabViewItem:aTabViewItem];
-    if ([TABVIEW selectedTabViewItem] == aTabViewItem) {
-        NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:aTabViewItem];
-        if ([TABVIEW numberOfTabViewItems] == 1 &&
-            [[PreferencePanel sharedInstance] hideTab] &&
-            newTabColor) {
-            [[self window] setBackgroundColor:newTabColor];
-            [background_ setColor:newTabColor];
-        } else {
-            [[self window] setBackgroundColor:nil];
-            [background_ setColor:normalBackgroundColor];
-        }
-    }
+    for (PTYSession *session in [[self currentTab] sessions]) {
+        [session setTabColor]
+    [self setTabColor:color forTabViewItem:aTabViewItem];
 }
 
 // Close this window.

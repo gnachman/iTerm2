@@ -334,6 +334,8 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     if (changed) {
         [[self realParentWindow] tabActiveSessionDidChange];
     }
+    
+    [[self realParentWindow] setTabColor:[activeSession_ tabColor] forTabViewItem:tabViewItem_];
 }
 
 - (void)setActiveSession:(PTYSession*)session

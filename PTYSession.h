@@ -386,6 +386,9 @@ typedef enum {
 // Select this session and tab and bring window to foreground.
 - (void)reveal;
 
+// Color for tab this session is in.
+- (NSColor *)tabColor;
+
 // FinalTerm
 - (NSArray *)autocompleteSuggestionsForCurrentCommand;
 - (NSString *)currentCommand;

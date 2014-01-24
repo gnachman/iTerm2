@@ -220,6 +220,7 @@
     // See ITermCursorType. One of: CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX
     IBOutlet NSMatrix *cursorType;
 
+    IBOutlet NSButton *useTabColor;
     IBOutlet NSButton *checkColorInvertedCursor;
     BOOL defaultColorInvertedCursor;
 
@@ -436,6 +437,7 @@
     IBOutlet NSColorWell *selectedTextColor;
     IBOutlet NSColorWell *cursorColor;
     IBOutlet NSColorWell *cursorTextColor;
+    IBOutlet NSColorWell *tabColor;
     IBOutlet NSTextField *cursorColorLabel;
     IBOutlet NSTextField *cursorTextColorLabel;
     IBOutlet NSMenu *presetsMenu;
