@@ -353,6 +353,10 @@
     return @"joblessName";
 }
 
+- (void)screenLogWorkingDirectoryAtLine:(long long)line withDirectory:(NSString *)directory {
+    [dirlog_ addObject:@[ @(line), directory ? directory : [NSNull null] ]];
+}
+
 - (NSRect)screenWindowFrame {
     return NSMakeRect(10, 20, 100, 200);
 }
@@ -389,6 +393,10 @@
         sx = 0;
     }
     return s;
+}
+
+- (NSString *)screenCurrentWorkingDirectory {
+    return nil;
 }
 
 - (void)screenClearHighlights {
@@ -3241,7 +3249,7 @@
     [screen terminalSetWindowTitle:@"test"];
     assert(dirlog_.count == 1);
     entry = dirlog_[0];
-    assert([entry[0] intValue] == 114);
+    assert([entry[0] intValue] == 29);  // 20 lines of scrollback + 10th line of display
     assert([entry[1] isKindOfClass:[NSNull class]]);
 
     // Test icon title, which is the same, but does not log the pwd.

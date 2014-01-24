@@ -222,4 +222,7 @@
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range;
 - (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range;
 
+@optional
+- (void)screenLogWorkingDirectoryAtLine:(long long)line withDirectory:(NSString *)directory;
+
 @end
