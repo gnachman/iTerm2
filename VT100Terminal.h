@@ -47,7 +47,7 @@ typedef enum {
 #define NUM_CHARSETS 4  // G0...G3. Values returned from -charset go from 0 to this.
 #define NUM_MODIFIABLE_RESOURCES 5
 
-@interface VT100Terminal : NSObject <VT100GridDelegate>
+@interface VT100Terminal : NSObject
 {
     NSString          *termType;
     NSStringEncoding  encoding_;

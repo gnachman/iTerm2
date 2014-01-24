@@ -2064,6 +2064,11 @@ NSMutableArray* screens=0;
     return [self updateDirtyRects] || [self _isCursorBlinking];
 }
 
+- (void)setNeedsDisplayOnLine:(int)line
+{
+    [self setNeedsDisplayOnLine:line inRange:VT100GridRangeMake(0, dataSource.width)];
+}
+
 // Overrides an NSView method.
 - (NSRect)adjustScroll:(NSRect)proposedVisibleRect
 {
@@ -2179,6 +2184,11 @@ NSMutableArray* screens=0;
     DLog(@"showCursor");
     [self markCursorDirty];
     CURSOR = YES;
+}
+
+- (BOOL)cursorIsVisible
+{
+    return CURSOR;
 }
 
 - (void)drawRect:(NSRect)rect
@@ -8305,6 +8315,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                  textOrigin.y,
                                  (lastIndex - firstIndex) * charWidth,
                                  lineHeight);
+        NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+        [[NSColor colorWithCalibratedRed:.65 green:.91 blue:1 alpha:.25] set];
+
+        rect.size.height = 1;
+        NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+
+        rect.origin.y += lineHeight - 1;
         NSRectFillUsingOperation(rect, NSCompositeSourceOver);
     }
 

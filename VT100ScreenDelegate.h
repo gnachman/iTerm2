@@ -173,6 +173,9 @@
 
 - (void)screenSetHighlightCursorLine:(BOOL)highlight;
 
+// Only called if the trackCursorLineMovement property is set.
+- (void)screenCursorDidMoveToLine:(int)line;
+
 // Returns if there is a view.
 - (BOOL)screenHasView;
 
