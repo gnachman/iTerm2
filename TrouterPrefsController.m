@@ -276,6 +276,9 @@ enum {
     [guid_ autorelease];
     guid_ = [guid copy];
     Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:self.guid];
+    if (!bookmark) {
+        bookmark = [[ProfileModel sessionsInstance] bookmarkWithGuid:self.guid];
+    }
     NSDictionary *prefs = [bookmark objectForKey:KEY_TROUTER];
     prefs = prefs ? prefs : [TrouterPrefsController defaultPrefs];
     NSString *action = [prefs objectForKey:kTrouterActionKey];

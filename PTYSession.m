@@ -78,6 +78,7 @@ static int gNextSessionID = 1;
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
 @property(nonatomic, assign) int sessionID;
+@property(nonatomic, copy) NSDictionary *previousAddressBookEntry;
 @end
 
 @implementation PTYSession
@@ -196,6 +197,11 @@ static int gNextSessionID = 1;
     // Has this session's bookmark been divorced from the profile in the ProfileModel? Changes
     // in this bookmark may happen indepentendly of the persistent bookmark.
     bool isDivorced;
+
+    // This is used for divorced sessions. It contains the keys in addressBookEntry
+    // that have been customized. Changes in the original profile will be copied over
+    // to addressBookEntry except for these keys.
+    NSMutableSet *overriddenFields_;  
     
     // A digital video recorder for this session that implements the instant replay feature. These
     // are non-null while showing instant replay.
@@ -348,6 +354,8 @@ static int gNextSessionID = 1;
     [windowTitleStack release];
     [iconTitleStack release];
     [addressBookEntry release];
+    [_previousAddressBookEntry release];
+    [overriddenFields_ release];
     [eventQueue_ release];
     [backgroundImagePath release];
     [antiIdleTimer invalidate];
@@ -1865,13 +1873,76 @@ static int gNextSessionID = 1;
     }
 }
 
+- (NSDictionary *)dictionaryByMergingOriginalPreferencesWithDictionary:(NSDictionary *)overlay
+{
+    NSString *guid = addressBookEntry[KEY_ORIGINAL_GUID];
+    NSDictionary *currentVersionOfOriginal = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    if (!currentVersionOfOriginal) {
+        return overlay;
+    }
+    
+    NSMutableDictionary *combined = [NSMutableDictionary dictionaryWithDictionary:currentVersionOfOriginal];
+    for (NSString *key in overriddenFields_) {
+        combined[key] = overlay[key];
+    }
+    
+    return combined;
+}
+
+- (void)updateOverriddenFieldsWithProfile:(NSDictionary *)profile
+{
+    if (!overriddenFields_) {
+        overriddenFields_ = [[NSMutableSet alloc] init];
+    }
+    
+    // Find fields changed in this iteration.
+    NSMutableArray *changedFields = [NSMutableArray array];
+    for (NSString *key in profile) {
+        NSObject *value = profile[key];
+        NSObject *previousValue = _previousAddressBookEntry[key];
+        if (![value isEqual:previousValue]) {
+            DLog(@"The field %@ changed from %@ to %@", key, previousValue, value);
+            [overriddenFields_ addObject:key];
+        }
+    }
+
+    // Any overridden field whose value is the same as the shared profile is not overridden any more.
+    NSString *guid = addressBookEntry[KEY_ORIGINAL_GUID];
+    NSDictionary *currentVersionOfOriginal = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    for (NSString *key in [[overriddenFields_ copy] autorelease]) {
+        NSObject *currentValue = currentVersionOfOriginal[key];
+        NSObject *profileValue = profile[key];
+        if (currentVersionOfOriginal && [currentValue isEqual:profileValue]) {
+            DLog(@"The field %@ has gone back to its original value", key);
+            [overriddenFields_ removeObject:key];
+        } else {
+            DLog(@"The field %@ remains different (session has %@ vs shared %@)", key, profileValue, currentValue);
+        }
+    }
+    
+    DLog(@"Overridden fields: %@", overriddenFields_);
+}
+
+- (NSDictionary *)updateDivorcedProfileWithProfile:(NSDictionary *)updatedProfile
+{
+    if (isDivorced) {
+        [[updatedProfile retain] autorelease];
+        [self updateOverriddenFieldsWithProfile:updatedProfile];
+        NSDictionary *aDict = [self dictionaryByMergingOriginalPreferencesWithDictionary:updatedProfile];
+        [[ProfileModel sessionsInstance] setBookmark:aDict withGuid:aDict[KEY_GUID]];
+        self.previousAddressBookEntry = updatedProfile;
+        return aDict;
+    } else {
+        return updatedProfile;
+    }
+}
+
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs
 {
     NSColor *colorTable[2][8];
     int i;
-    NSDictionary *aDict;
+    NSDictionary *aDict = aePrefs;
 
-    aDict = aePrefs;
     if (aDict == nil) {
         aDict = [[ProfileModel sharedInstance] defaultBookmark];
     }
@@ -2691,6 +2762,7 @@ static int gNextSessionID = 1;
 
 - (void)setAddressBookEntry:(NSDictionary*)entry
 {
+    DLog(@"Set address book entry to one with guid %@", entry[KEY_GUID]);
     NSMutableDictionary *dict = [[entry mutableCopy] autorelease];
     // This is the most practical way to migrate the bopy of a
     // profile that's stored in a saved window arrangement. It doesn't get
@@ -3089,18 +3161,25 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [[ProfileModel sessionsInstance] removeBookmarkWithGuid:guid];
     [[ProfileModel sessionsInstance] addBookmark:bookmark];
 
-    // Change the GUID so that this session can follow a different path in life
-    // than its bookmark. Changes to the bookmark will no longer affect this
-    // session, and changes to this session won't affect its originating bookmark
-    // (which may not evene exist any longer).
-    bookmark = [[ProfileModel sessionsInstance] setObject:guid
-                                                    forKey:KEY_ORIGINAL_GUID
-                                                inBookmark:bookmark];
+    NSString *existingOriginalGuid = bookmark[KEY_ORIGINAL_GUID];
+    if (!existingOriginalGuid ||
+        ![[ProfileModel sharedInstance] bookmarkWithGuid:existingOriginalGuid] ||
+        ![existingOriginalGuid isEqualToString:originalAddressBookEntry[KEY_GUID]]) {
+        // The bookmark doesn't already have a valid original GUID.
+        bookmark = [[ProfileModel sessionsInstance] setObject:guid
+                                                        forKey:KEY_ORIGINAL_GUID
+                                                    inBookmark:bookmark];
+    }
+
+    // Allocate a new guid for this bookmark.
     guid = [ProfileModel freshGuid];
     [[ProfileModel sessionsInstance] setObject:guid
                                          forKey:KEY_GUID
                                      inBookmark:bookmark];
     [self setAddressBookEntry:[[ProfileModel sessionsInstance] bookmarkWithGuid:guid]];
+    self.previousAddressBookEntry = nil;
+    [self updateOverriddenFieldsWithProfile:addressBookEntry];
+    self.previousAddressBookEntry = addressBookEntry;
     return guid;
 }
 

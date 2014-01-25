@@ -140,6 +140,10 @@ typedef enum {
 // Preferences
 - (void)setPreferencesFromAddressBookEntry: (NSDictionary *)aePrefs;
 - (void)loadInitialColorTable;
+// Figure out which fields, if any, have been changed in the sessions instance since the last call
+// to this method and update overriddenFields_. For all non-overridden fields, copy the value from
+// the shared instance. Returns the updated dictionary.
+- (NSDictionary *)updateDivorcedProfileWithProfile:(NSDictionary *)updatedProfile;
 
 // PTYTask
 - (void)writeTask:(NSData*)data;
