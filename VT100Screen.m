@@ -68,7 +68,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         terminal_ = [terminal retain];
         primaryGrid_ = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(kDefaultScreenColumns,
                                                                          kDefaultScreenRows)
-                                              delegate:terminal];
+                                              delegate:self];
         currentGrid_ = primaryGrid_;
 
         maxScrollbackLines_ = kDefaultMaxScrollbackLines;
@@ -129,8 +129,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (void)setTerminal:(VT100Terminal *)terminal {
     [terminal_ autorelease];
     terminal_ = [terminal retain];
-    primaryGrid_.delegate = terminal;
-    altGrid_.delegate = terminal;
+    primaryGrid_.delegate = self;
+    altGrid_.delegate = self;
 }
 
 - (void)destructivelySetScreenWidth:(int)width height:(int)height
@@ -1153,6 +1153,15 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
 }
 
+- (void)setTrackCursorLineMovement:(BOOL)trackCursorLineMovement {
+    primaryGrid_.trackCursorLineMovement = trackCursorLineMovement;
+    altGrid_.trackCursorLineMovement = trackCursorLineMovement;
+}
+
+- (BOOL)trackCursorLineMovement {
+    return currentGrid_.trackCursorLineMovement;
+}
+
 #pragma mark - PTYTextViewDataSource
 
 // This is a wee hack until PTYTextView breaks its direct dependence on PTYSession
@@ -1550,6 +1559,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         range = VT100GridCoordRangeMake(currentGrid_.cursorX, line, self.width, line);
         [intervalTree_ addObject:workingDirectoryObj
                     withInterval:[self intervalForGridCoordRange:range]];
+    }
+    // This delegate call is for testing.
+    if ([delegate_ respondsToSelector:@selector(screenLogWorkingDirectoryAtLine:withDirectory:)]) {
+        [delegate_ screenLogWorkingDirectoryAtLine:line withDirectory:workingDirectory];
     }
 }
 
@@ -2281,7 +2294,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
     }
     [delegate_ screenSetWindowTitle:newTitle];
-    
+
     // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
     // changes shouldn't override CurrentDirectory.
     if (![self remoteHostOnLine:[self numberOfScrollbackLines] + self.height]) {
@@ -2593,7 +2606,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         return;
     }
     if (!altGrid_) {
-        altGrid_ = [[VT100Grid alloc] initWithSize:primaryGrid_.size delegate:terminal_];
+        altGrid_ = [[VT100Grid alloc] initWithSize:primaryGrid_.size delegate:self];
     }
 
     primaryGrid_.savedDefaultChar = [primaryGrid_ defaultChar];
@@ -3708,6 +3721,32 @@ static void SwapInt(int *a, int *b) {
 
 - (void)noteDidEndEditing:(PTYNoteViewController *)note {
     [delegate_ screenDidEndEditingNote];
+}
+
+#pragma mark - VT100GridDelegate
+
+- (BOOL)gridShouldUseWraparoundMode {
+    return [terminal_ wraparoundMode];
+}
+
+- (BOOL)gridShouldUseInsertMode {
+    return [terminal_ insertMode];
+}
+
+- (BOOL)gridShouldActLikeANSITerminal {
+    return [terminal_ isAnsi];
+}
+
+- (screen_char_t)gridForegroundColorCode {
+    return [terminal_ foregroundColorCodeReal];
+}
+
+- (screen_char_t)gridBackgroundColorCode {
+    return [terminal_ backgroundColorCodeReal];
+}
+
+- (void)gridCursorDidChangeLine {
+    [delegate_ screenCursorDidMoveToLine:currentGrid_.cursorY + [self numberOfScrollbackLines]];
 }
 
 @end

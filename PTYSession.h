@@ -140,6 +140,10 @@ typedef enum {
 // Preferences
 - (void)setPreferencesFromAddressBookEntry: (NSDictionary *)aePrefs;
 - (void)loadInitialColorTable;
+// Figure out which fields, if any, have been changed in the sessions instance since the last call
+// to this method and update overriddenFields_. For all non-overridden fields, copy the value from
+// the shared instance. Returns the updated dictionary.
+- (NSDictionary *)updateDivorcedProfileWithProfile:(NSDictionary *)updatedProfile;
 
 // PTYTask
 - (void)writeTask:(NSData*)data;
@@ -313,6 +317,7 @@ typedef enum {
 // affect it. Returns the GUID of a divorced bookmark. Does nothing if already
 // divorced, but still returns the divorced GUID.
 - (NSString*)divorceAddressBookEntryFromPreferences;
+- (BOOL)isDivorced;
 - (void)remarry;
 
 // Schedule the screen update timer to run in a specified number of seconds.

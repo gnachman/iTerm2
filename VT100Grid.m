@@ -30,6 +30,7 @@
 @synthesize savedDefaultChar = savedDefaultChar_;
 @synthesize cursor = cursor_;
 @synthesize delegate = delegate_;
+@synthesize trackCursorLineMovement = trackCursorLineMovement_;
 
 - (id)initWithSize:(VT100GridSize)size delegate:(id<VT100GridDelegate>)delegate {
     self = [super init];
@@ -148,12 +149,16 @@
 }
 
 - (void)setCursorY:(int)cursorY {
+    int prev = cursor_.y;
     cursor_.y = MIN(size_.height - 1, MAX(0, cursorY));
+    if (trackCursorLineMovement_ && cursorY != prev) {
+        [delegate_ gridCursorDidChangeLine];
+    }
 }
 
 - (void)setCursor:(VT100GridCoord)coord {
     cursor_.x = MIN(size_.width, MAX(0, coord.x));
-    cursor_.y = MIN(size_.height - 1, MAX(0, coord.y));
+    self.cursorY = MIN(size_.height - 1, MAX(0, coord.y));
 }
 
 - (int)numberOfLinesUsed {
@@ -591,7 +596,7 @@
             rightMargin = size_.width;
         }
         if (cursor_.x >= rightMargin - widthOffset) {
-            if ([delegate_ wraparoundMode]) {
+            if ([delegate_ gridShouldUseWraparoundMode]) {
                 if (leftMargin == 0 && rightMargin == size_.width) {
                     // Set the continuation marker
                     screen_char_t* prevLine = [self screenCharsAtLineNumber:cursor_.y];
@@ -710,7 +715,7 @@
         int lineNumber = cursor_.y;
         aLine = [self screenCharsAtLineNumber:cursor_.y];
 
-        if ([delegate_ insertMode]) {
+        if ([delegate_ gridShouldUseInsertMode]) {
             if (cursor_.x + charsToInsert < rightMargin) {
 #ifdef VERBOSE_STRING
                 NSLog(@"Shifting old contents to the right");
@@ -798,8 +803,8 @@
 
         // ANSI terminals will go to a new line after displaying a character at
         // the rightmost column.
-        if (cursor_.x >= effective_width && [delegate_ isAnsi]) {
-            if ([delegate_ wraparoundMode]) {
+        if (cursor_.x >= effective_width && [delegate_ gridShouldActLikeANSITerminal]) {
+            if ([delegate_ gridShouldUseWraparoundMode]) {
                 //set the wrapping flag
                 aLine[size_.width].code = ((effective_width == size_.width) ? EOL_SOFT : EOL_DWC);
                 self.cursorX = leftMargin;
@@ -1492,8 +1497,8 @@
 - (screen_char_t)defaultChar {
     assert(delegate_);
     screen_char_t c = { 0 };
-    screen_char_t fg = [delegate_ foregroundColorCodeReal];
-    screen_char_t bg = [delegate_ backgroundColorCodeReal];
+    screen_char_t fg = [delegate_ gridForegroundColorCode];
+    screen_char_t bg = [delegate_ gridBackgroundColorCode];
 
     c.code = 0;
     c.complexChar = NO;
@@ -1624,7 +1629,7 @@
         scrollRegionCols_.length = MIN(scrollRegionCols_.length,
                                        size_.height - scrollRegionRows_.location);
         cursor_.x = MIN(cursor_.x, size_.width - 1);
-        cursor_.y = MIN(cursor_.y, size_.height - 1);
+        self.cursorY = MIN(cursor_.y, size_.height - 1);
     }
 }
 
@@ -1857,6 +1862,7 @@ void DumpBuf(screen_char_t* p, int n) {
     theCopy.scrollRegionCols = scrollRegionCols_;
     theCopy.useScrollRegionCols = useScrollRegionCols_;
     theCopy.savedDefaultChar = savedDefaultChar_;
+    theCopy.trackCursorLineMovement = trackCursorLineMovement_;
 
     return theCopy;
 }

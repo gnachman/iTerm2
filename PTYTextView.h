@@ -305,10 +305,12 @@ typedef enum {
 // Update the scroll position and schedule a redraw. Returns true if anything
 // onscreen is blinking.
 - (BOOL)refresh;
+- (void)setNeedsDisplayOnLine:(int)line;
 
 // Change visibility of cursor
 - (void)showCursor;
 - (void)hideCursor;
+- (BOOL)cursorIsVisible;
 
 // selection
 - (IBAction)selectAll:(id)sender;

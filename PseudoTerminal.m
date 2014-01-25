@@ -6148,16 +6148,22 @@ NSString *kSessionsKVCKey = @"sessions";
             newBookmark = [[ProfileModel sessionsInstance] bookmarkWithGuid:guid];
         }
         if (newBookmark && newBookmark != oldBookmark) {
+            NSDictionary *merged = [session updateDivorcedProfileWithProfile:newBookmark];
             // Same guid but different pointer means it has changed.
             // The test can have false positives but it should be harmless.
-            [session setPreferencesFromAddressBookEntry:newBookmark];
-            [session setAddressBookEntry:newBookmark];
+            [session setPreferencesFromAddressBookEntry:merged];
+            [session setAddressBookEntry:merged];
             [[session tab] recheckBlur];
-            if (![[newBookmark objectForKey:KEY_NAME] isEqualToString:oldName]) {
+            if (![[merged objectForKey:KEY_NAME] isEqualToString:oldName]) {
                 // Set name, which overrides any session-set icon name.
-                [session setName:[newBookmark objectForKey:KEY_NAME]];
+                [session setName:[merged objectForKey:KEY_NAME]];
                 // set default name, which will appear as a prefix if the session changes the name.
-                [session setDefaultName:[newBookmark objectForKey:KEY_NAME]];
+                [session setDefaultName:[merged objectForKey:KEY_NAME]];
+            }
+            if ([session isDivorced] &&
+                [[[PreferencePanel sessionsInstance] currentProfileGuid] isEqualToString:guid] &&
+                [[[PreferencePanel sessionsInstance] window] isVisible]) {
+                [[PreferencePanel sessionsInstance] updateBookmarkFields:merged];
             }
         }
         [oldName release];

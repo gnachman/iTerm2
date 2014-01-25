@@ -52,7 +52,517 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 static NSString * const kDeleteKeyString = @"0x7f-0x0";
 static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
 
-@implementation PreferencePanel
+@interface PreferencePanel ()
+@property(nonatomic, copy) NSString *currentProfileGuid;
+@end
+
+@implementation PreferencePanel {
+    ProfileModel* dataSource;
+    BOOL oneBookmarkMode;
+    IBOutlet TriggerController *triggerWindowController_;
+    IBOutlet SmartSelectionController *smartSelectionWindowController_;
+    IBOutlet TrouterPrefsController *trouterPrefController_;
+    
+    // This is actually the tab style. It takes one of these values:
+    // 0: Metal
+    // 1: Aqua
+    // 2: Unified
+    // other: Adium
+    // Bound to Metal/Aqua/Unified/Adium button
+    IBOutlet NSPopUpButton *windowStyle;
+    int defaultWindowStyle;
+    BOOL oneBookmarkOnly;
+    
+    // This gives a value from NSTabViewType, which as of OS 10.6 is:
+    // Bound to Top/Bottom button
+    // NSTopTabsBezelBorder     = 0,
+    // NSLeftTabsBezelBorder    = 1,
+    // NSBottomTabsBezelBorder  = 2,
+    // NSRightTabsBezelBorder   = 3,
+    // NSNoTabsBezelBorder      = 4,
+    // NSNoTabsLineBorder       = 5,
+    // NSNoTabsNoBorder         = 6
+    IBOutlet NSPopUpButton *tabPosition;
+    int defaultTabViewType;
+    
+    IBOutlet NSTextField* tagFilter;
+    
+    // Allow clipboard access by terminal applications
+    IBOutlet NSButton *allowClipboardAccessFromTerminal;
+    BOOL defaultAllowClipboardAccess;
+    
+    // Copy to clipboard on selection
+    IBOutlet NSButton *selectionCopiesText;
+    BOOL defaultCopySelection;
+    
+    // Copy includes trailing newline
+    IBOutlet NSButton *copyLastNewline;
+    BOOL defaultCopyLastNewline;
+    
+    // Middle button paste from clipboard
+    IBOutlet NSButton *middleButtonPastesFromClipboard;
+    BOOL defaultPasteFromClipboard;
+    
+    // Three finger click emulates middle button
+    IBOutlet NSButton *threeFingerEmulatesMiddle;
+    BOOL defaultThreeFingerEmulatesMiddle;
+    
+    // Hide tab bar when there is only one session
+    IBOutlet id hideTab;
+    BOOL defaultHideTab;
+    
+    // Warn when quitting
+    IBOutlet id promptOnQuit;
+    BOOL defaultPromptOnQuit;
+    
+    // only when multiple sessions close
+    IBOutlet id onlyWhenMoreTabs;
+    BOOL defaultOnlyWhenMoreTabs;
+    
+    // Focus follows mouse
+    IBOutlet NSButton *focusFollowsMouse;
+    BOOL defaultFocusFollowsMouse;
+    
+    // Triple click selects full, wrapped lines
+    IBOutlet NSButton *tripleClickSelectsFullLines;
+    BOOL defaultTripleClickSelectsFullLines;
+    
+    // Characters considered part of word
+    IBOutlet NSTextField *wordChars;
+    NSString *defaultWordChars;
+    
+    // Hotkey opens dedicated window
+    IBOutlet NSButton* hotkeyTogglesWindow;
+    BOOL defaultHotkeyTogglesWindow;
+    IBOutlet NSPopUpButton* hotkeyBookmark;
+    NSString* defaultHotKeyBookmarkGuid;
+    
+    // Enable bonjour
+    IBOutlet NSButton *enableBonjour;
+    BOOL defaultEnableBonjour;
+    
+    // cmd-click to launch url
+    IBOutlet NSButton *cmdSelection;
+    BOOL defaultCmdSelection;
+    
+    // pass on ctrl-click
+    IBOutlet NSButton* controlLeftClickActsLikeRightClick;
+    BOOL defaultPassOnControlLeftClick;
+    
+    // Opt-click moves cursor
+    IBOutlet NSButton *optionClickMovesCursor;
+    BOOL defaultOptionClickMovesCursor;
+    
+    // Zoom vertically only
+    IBOutlet NSButton *maxVertically;
+    BOOL defaultMaxVertically;
+    
+    // Closing hotkey window may switch Spaces
+    IBOutlet NSButton* closingHotkeySwitchesSpaces;
+    BOOL defaultClosingHotkeySwitchesSpaces;
+    
+    // use compact tab labels
+    IBOutlet NSButton *useCompactLabel;
+    BOOL defaultUseCompactLabel;
+    
+    // hide activity indicator
+    IBOutlet NSButton *hideActivityIndicator;
+    BOOL defaultHideActivityIndicator;
+    
+    // Highlight tab labels on activity
+    IBOutlet NSButton *highlightTabLabels;
+    BOOL defaultHighlightTabLabels;
+    
+	// Hide menu bar in non-lion fullscreen
+	IBOutlet NSButton *hideMenuBarInFullscreen;
+	BOOL defaultHideMenuBarInFullscreen;
+	
+    // Minimum contrast
+    IBOutlet NSSlider* minimumContrast;
+    
+    // open bookmarks when iterm starts
+    IBOutlet NSButton *openBookmark;
+    BOOL defaultOpenBookmark;
+    
+    // quit when all windows are closed
+    IBOutlet NSButton *quitWhenAllWindowsClosed;
+    BOOL defaultQuitWhenAllWindowsClosed;
+    
+    // check for updates automatically
+    IBOutlet NSButton *checkUpdate;
+    BOOL defaultCheckUpdate;
+    
+    // cursor type: underline/vertical bar/box
+    // See ITermCursorType. One of: CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX
+    IBOutlet NSMatrix *cursorType;
+    
+    IBOutlet NSButton *useTabColor;
+    IBOutlet NSButton *checkColorInvertedCursor;
+    BOOL defaultColorInvertedCursor;
+    
+    // Dim inactive split panes
+    IBOutlet NSButton* dimInactiveSplitPanes;
+    BOOL defaultDimInactiveSplitPanes;
+    
+    // Animate dimming
+    IBOutlet NSButton* animateDimming;
+    BOOL defaultAnimateDimming;
+    
+    // Dim background windows
+    IBOutlet NSButton* dimBackgroundWindows;
+    BOOL defaultDimBackgroundWindows;
+    
+    // Dim text (and non-default background colors)
+    IBOutlet NSButton* dimOnlyText;
+    BOOL defaultDimOnlyText;
+    
+    // Dimming amount
+    IBOutlet NSSlider* dimmingAmount;
+    float defaultDimmingAmount;
+    
+    // Window border
+    IBOutlet NSButton* showWindowBorder;
+    BOOL defaultShowWindowBorder;
+    
+    // Lion-style fullscreen
+    IBOutlet NSButton* lionStyleFullscreen;
+    BOOL defaultLionStyleFullscreen;
+    
+    // Open tmux dashboard if there are more than N windows
+    IBOutlet NSTextField *tmuxDashboardLimit;
+    int defaultTmuxDashboardLimit;
+    
+    // Open tmux windows in
+    IBOutlet NSPopUpButton *openTmuxWindows;
+    int defaultOpenTmuxWindowsIn;
+    
+    // Hide the tmux client session
+    IBOutlet NSButton *autoHideTmuxClientSession;
+    BOOL defaultAutoHideTmuxClientSession;
+    
+    // Load prefs from custom folder
+    IBOutlet NSButton *loadPrefsFromCustomFolder;
+    BOOL defaultLoadPrefsFromCustomFolder;
+    IBOutlet NSTextField *prefsCustomFolder;
+    NSString *defaultPrefsCustomFolder;
+    IBOutlet NSButton *browseCustomFolder;
+    IBOutlet NSButton *pushToCustomFolder;
+    IBOutlet NSImageView *prefsDirWarning;
+    BOOL customFolderChanged_;
+    
+    // hide scrollbar and resize
+    IBOutlet NSButton *hideScrollbar;
+    BOOL defaultHideScrollbar;
+    
+    // show pane titles
+    IBOutlet NSButton *showPaneTitles;
+    BOOL defaultShowPaneTitles;
+    
+    // Disable transparency in fullscreen by default
+    IBOutlet NSButton *disableFullscreenTransparency;
+    BOOL defaultDisableFullscreenTransparency;
+    
+    // smart window placement
+    IBOutlet NSButton *smartPlacement;
+    BOOL defaultSmartPlacement;
+    
+    // Adjust window size when changing font size
+    IBOutlet NSButton *adjustWindowForFontSizeChange;
+    BOOL defaultAdjustWindowForFontSizeChange;
+    
+    // Delay before showing tabs in fullscreen mode
+    IBOutlet NSSlider* fsTabDelay;
+    float defaultFsTabDelay;
+    
+    // Window/tab title customization
+    IBOutlet NSButton* windowNumber;
+    BOOL defaultWindowNumber;
+    
+    // Show job name in title
+    IBOutlet NSButton* jobName;
+    BOOL defaultJobName;
+    
+    // Show bookmark name in title
+    IBOutlet NSButton* showBookmarkName;
+    BOOL defaultShowBookmarkName;
+    
+    // instant replay
+    IBOutlet NSButton *instantReplay;
+    BOOL defaultInstantReplay;
+    
+    // instant replay memory usage.
+    IBOutlet NSTextField* irMemory;
+    int defaultIrMemory;
+    
+    // hotkey
+    IBOutlet NSButton *hotkey;
+    IBOutlet NSTextField* hotkeyLabel;
+    BOOL defaultHotkey;
+    
+    // hotkey code
+    IBOutlet NSTextField* hotkeyField;
+    int defaultHotkeyChar;
+    int defaultHotkeyCode;
+    int defaultHotkeyModifiers;
+    
+    // Save copy paste history
+    IBOutlet NSButton *savePasteHistory;
+    BOOL defaultSavePasteHistory;
+    
+    // Open saved window arrangement at startup
+    IBOutlet NSButton *openArrangementAtStartup;
+    BOOL defaultOpenArrangementAtStartup;
+    
+    // prompt for test-release updates
+    IBOutlet NSButton *checkTestRelease;
+    BOOL defaultCheckTestRelease;
+    
+    IBOutlet NSTabView* bookmarksSettingsTabViewParent;
+    IBOutlet NSTabViewItem* bookmarkSettingsGeneralTab;
+    
+    NSUserDefaults *prefs;
+    
+    IBOutlet NSToolbar* toolbar;
+    IBOutlet NSTabView* tabView;
+    IBOutlet NSToolbarItem* globalToolbarItem;
+    IBOutlet NSTabViewItem* globalTabViewItem;
+    IBOutlet NSToolbarItem* appearanceToolbarItem;
+    IBOutlet NSTabViewItem* appearanceTabViewItem;
+    IBOutlet NSToolbarItem* keyboardToolbarItem;
+    IBOutlet NSToolbarItem* arrangementsToolbarItem;
+    IBOutlet NSTabViewItem* keyboardTabViewItem;
+    IBOutlet NSTabViewItem* arrangementsTabViewItem;
+    IBOutlet NSToolbarItem* bookmarksToolbarItem;
+    IBOutlet NSTabViewItem* bookmarksTabViewItem;
+    IBOutlet NSToolbarItem* mouseToolbarItem;
+    IBOutlet NSTabViewItem* mouseTabViewItem;
+    NSString* globalToolbarId;
+    NSString* appearanceToolbarId;
+    NSString* keyboardToolbarId;
+    NSString* arrangementsToolbarId;
+    NSString* bookmarksToolbarId;
+    NSString *mouseToolbarId;
+    
+    // url handler stuff
+    NSMutableDictionary *urlHandlersByGuid;
+    
+    // Bookmarks -----------------------------
+    IBOutlet ProfileListView *bookmarksTableView;
+    IBOutlet NSTableColumn *shellImageColumn;
+    IBOutlet NSTableColumn *nameShortcutColumn;
+    IBOutlet NSButton *removeBookmarkButton;
+    IBOutlet NSButton *addBookmarkButton;
+    IBOutlet NSButton *toggleTagsButton;
+    
+    // General tab
+    IBOutlet NSTextField *basicsLabel;
+    IBOutlet NSTextField *bookmarkName;
+    IBOutlet NSPopUpButton *bookmarkShortcutKey;
+    IBOutlet NSMatrix *bookmarkCommandType;
+    IBOutlet NSTextField *bookmarkCommand;
+    IBOutlet NSTextField *initialText;
+    IBOutlet NSMatrix *bookmarkDirectoryType;
+    IBOutlet NSTextField *bookmarkDirectory;
+    IBOutlet NSTextField *bookmarkShortcutKeyLabel;
+    IBOutlet NSTextField *bookmarkShortcutKeyModifiersLabel;
+    IBOutlet NSTextField *bookmarkTagsLabel;
+    IBOutlet NSTextField *bookmarkCommandLabel;
+    IBOutlet NSTextField *initialTextLabel;
+    IBOutlet NSTextField *bookmarkDirectoryLabel;
+    IBOutlet NSTextField *bookmarkUrlSchemesHeaderLabel;
+    IBOutlet NSTextField *bookmarkUrlSchemesLabel;
+    IBOutlet NSPopUpButton* bookmarkUrlSchemes;
+    IBOutlet NSButton* editAdvancedConfigButton;
+    
+    // Advanced working dir sheet
+    IBOutlet NSPanel* advancedWorkingDirSheet_;
+    IBOutlet NSMatrix* awdsWindowDirectoryType;
+    IBOutlet NSTextField* awdsWindowDirectory;
+    IBOutlet NSMatrix* awdsTabDirectoryType;
+    IBOutlet NSTextField* awdsTabDirectory;
+    IBOutlet NSMatrix* awdsPaneDirectoryType;
+    IBOutlet NSTextField* awdsPaneDirectory;
+    
+    // Only visible in Get Info mode
+    IBOutlet NSButton* copyToProfileButton;
+    IBOutlet NSTextField* setProfileLabel;
+    IBOutlet ProfileListView* setProfileBookmarkListView;
+    IBOutlet NSButton* changeProfileButton;
+    
+    // Colors tab
+    IBOutlet NSColorWell *ansi0Color;
+    IBOutlet NSColorWell *ansi1Color;
+    IBOutlet NSColorWell *ansi2Color;
+    IBOutlet NSColorWell *ansi3Color;
+    IBOutlet NSColorWell *ansi4Color;
+    IBOutlet NSColorWell *ansi5Color;
+    IBOutlet NSColorWell *ansi6Color;
+    IBOutlet NSColorWell *ansi7Color;
+    IBOutlet NSColorWell *ansi8Color;
+    IBOutlet NSColorWell *ansi9Color;
+    IBOutlet NSColorWell *ansi10Color;
+    IBOutlet NSColorWell *ansi11Color;
+    IBOutlet NSColorWell *ansi12Color;
+    IBOutlet NSColorWell *ansi13Color;
+    IBOutlet NSColorWell *ansi14Color;
+    IBOutlet NSColorWell *ansi15Color;
+    IBOutlet NSColorWell *foregroundColor;
+    IBOutlet NSColorWell *backgroundColor;
+    IBOutlet NSColorWell *boldColor;
+    IBOutlet NSColorWell *selectionColor;
+    IBOutlet NSColorWell *selectedTextColor;
+    IBOutlet NSColorWell *cursorColor;
+    IBOutlet NSColorWell *cursorTextColor;
+    IBOutlet NSColorWell *tabColor;
+    IBOutlet NSTextField *cursorColorLabel;
+    IBOutlet NSTextField *cursorTextColorLabel;
+    IBOutlet NSMenu *presetsMenu;
+    
+    // Display tab
+    IBOutlet NSView *displayFontAccessoryView;
+    IBOutlet NSSlider *displayFontSpacingWidth;
+    IBOutlet NSSlider *displayFontSpacingHeight;
+    IBOutlet NSTextField *columnsField;
+    IBOutlet NSTextField *columnsLabel;
+    IBOutlet NSTextField *rowsLabel;
+    IBOutlet NSTextField *rowsField;
+    IBOutlet NSTextField* windowTypeLabel;
+    IBOutlet NSPopUpButton* screenButton;
+    IBOutlet NSTextField* spaceLabel;
+    IBOutlet NSPopUpButton* spaceButton;
+    
+    IBOutlet NSPopUpButton* windowTypeButton;
+    IBOutlet NSTextField *normalFontField;
+    IBOutlet NSTextField *nonAsciiFontField;
+    IBOutlet NSTextField *newWindowttributesHeader;
+    IBOutlet NSTextField *screenLabel;
+    
+    IBOutlet NSButton* blinkingCursor;
+    IBOutlet NSButton* blinkAllowed;
+    IBOutlet NSButton* useBoldFont;
+    IBOutlet NSButton* useBrightBold;
+    IBOutlet NSButton* useItalicFont;
+    IBOutlet NSSlider *transparency;
+    IBOutlet NSSlider *blend;
+    IBOutlet NSButton* blur;
+    IBOutlet NSSlider *blurRadius;
+    IBOutlet NSButton* asciiAntiAliased;
+    IBOutlet NSButton* useNonAsciiFont;
+    IBOutlet NSView* nonAsciiFontView;  // Hide this view to hide all non-ascii font settings
+    IBOutlet NSButton* nonasciiAntiAliased;
+    IBOutlet NSButton* backgroundImage;
+    NSString* backgroundImageFilename;
+    IBOutlet NSButton* backgroundImageTiled;
+    IBOutlet NSImageView* backgroundImagePreview;
+    IBOutlet NSTextField* displayFontsLabel;
+    IBOutlet NSButton* displayRegularFontButton;
+    IBOutlet NSButton* displayNAFontButton;
+    
+    NSFont* normalFont;
+    NSFont *nonAsciiFont;
+    BOOL changingNAFont; // true if font dialog is currently modifying the non-ascii font
+    
+    // Terminal tab
+    IBOutlet NSButton* disableWindowResizing;
+    IBOutlet NSButton* preventTab;
+    IBOutlet NSButton* hideAfterOpening;
+    IBOutlet NSButton* syncTitle;
+    IBOutlet NSButton* closeSessionsOnEnd;
+    IBOutlet NSButton* nonAsciiDoubleWidth;
+    IBOutlet NSButton* silenceBell;
+    IBOutlet NSButton* visualBell;
+    IBOutlet NSButton* flashingBell;
+    IBOutlet NSButton* xtermMouseReporting;
+    IBOutlet NSButton* disableSmcupRmcup;
+    IBOutlet NSButton* allowTitleReporting;
+    IBOutlet NSButton* disablePrinting;
+    IBOutlet NSButton* scrollbackWithStatusBar;
+    IBOutlet NSButton* scrollbackInAlternateScreen;
+    IBOutlet NSButton* bookmarkGrowlNotifications;
+    IBOutlet NSTextField* scrollbackLines;
+    IBOutlet NSButton* unlimitedScrollback;
+    IBOutlet NSComboBox* terminalType;
+    IBOutlet NSPopUpButton* characterEncoding;
+    IBOutlet NSButton* setLocaleVars;
+    IBOutlet NSButton* useCanonicalParser;
+    
+    // Keyboard tab
+    IBOutlet NSTableView* keyMappings;
+    IBOutlet NSTableColumn* keyCombinationColumn;
+    IBOutlet NSTableColumn* actionColumn;
+    IBOutlet NSWindow* editKeyMappingWindow;
+    IBOutlet NSTextField* keyPress;
+    IBOutlet NSPopUpButton* action;
+    IBOutlet NSTextField* valueToSend;
+    IBOutlet NSTextField* profileLabel;
+    IBOutlet NSPopUpButton* bookmarkPopupButton;
+    IBOutlet NSPopUpButton* menuToSelect;
+    IBOutlet NSButton* removeMappingButton;
+    IBOutlet NSTextField* escPlus;
+    IBOutlet NSMatrix *optionKeySends;
+    IBOutlet NSMatrix *rightOptionKeySends;
+    IBOutlet NSTokenField* tags;
+    
+    IBOutlet NSPopUpButton* presetsPopupButton;
+    IBOutlet NSTextField*   presetsErrorLabel;
+    
+    NSString* keyString;  // hexcode-hexcode rep of keystring in current sheet
+    BOOL newMapping;  // true if the keymap sheet is open for adding a new entry
+    id modifyMappingOriginator;  // widget that caused add new mapping window to open
+    IBOutlet NSPopUpButton* bookmarksPopup;
+    IBOutlet NSButton* addNewMapping;
+    
+    // Session --------------------------------
+    IBOutlet NSTableView *jobsTable_;
+    IBOutlet NSButton *autoLog;
+    IBOutlet NSTextField *logDir;
+    IBOutlet NSButton *changeLogDir;
+    IBOutlet NSImageView *logDirWarning;
+    IBOutlet NSButton* sendCodeWhenIdle;
+    IBOutlet NSTextField* idleCode;
+    IBOutlet NSButton* removeJobButton_;
+    IBOutlet NSMatrix* promptBeforeClosing_;
+    
+    // Copy Bookmark Settings...
+    IBOutlet NSTextField* bulkCopyLabel;
+    IBOutlet NSPanel* copyPanel;
+    IBOutlet NSButton* copyColors;
+    IBOutlet NSButton* copyDisplay;
+    IBOutlet NSButton* copyTerminal;
+    IBOutlet NSButton* copyWindow;
+    IBOutlet NSButton* copyKeyboard;
+    IBOutlet NSButton* copySession;
+    IBOutlet NSButton* copyAdvanced;
+    IBOutlet ProfileListView* copyTo;
+    IBOutlet NSButton* copyButton;
+    
+    // Keyboard ------------------------------
+    int defaultControl;
+    IBOutlet NSPopUpButton* controlButton;
+    int defaultLeftOption;
+    IBOutlet NSPopUpButton* leftOptionButton;
+    int defaultRightOption;
+    IBOutlet NSPopUpButton* rightOptionButton;
+    int defaultLeftCommand;
+    IBOutlet NSPopUpButton* leftCommandButton;
+    int defaultRightCommand;
+    IBOutlet NSPopUpButton* rightCommandButton;
+    
+    int defaultSwitchTabModifier;
+    IBOutlet NSPopUpButton* switchTabModifierButton;
+    int defaultSwitchWindowModifier;
+    IBOutlet NSPopUpButton* switchWindowModifierButton;
+    
+    IBOutlet NSButton* deleteSendsCtrlHButton;
+    IBOutlet NSButton* applicationKeypadAllowed;
+    IBOutlet NSTableView* globalKeyMappings;
+    IBOutlet NSTableColumn* globalKeyCombinationColumn;
+    IBOutlet NSTableColumn* globalActionColumn;
+    IBOutlet NSButton* globalRemoveMappingButton;
+    IBOutlet NSButton* globalAddNewMapping;
+    
+    IBOutlet WindowArrangements *arrangements_;
+}
 
 + (PreferencePanel*)sharedInstance;
 {
@@ -313,6 +823,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [setProfileBookmarkListView selectRowByGuid:nil];
     [bookmarksSettingsTabViewParent selectTabViewItem:bookmarkSettingsGeneralTab];
     [[self window] makeFirstResponder:bookmarkName];
+    self.currentProfileGuid = guid;
 }
 
 - (Profile*)hotkeyBookmark
@@ -409,6 +920,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 {
     [self settingChanged:nil];
     [self savePreferences];
+    self.currentProfileGuid = nil;
+
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification
@@ -466,8 +979,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                sender == hideScrollbar ||
                sender == showPaneTitles ||
                sender == disableFullscreenTransparency ||
-               sender == advancedFontRendering ||
-               sender == strokeThickness ||
                sender == dimInactiveSplitPanes ||
                sender == dimBackgroundWindows ||
                sender == animateDimming ||
@@ -486,12 +997,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         defaultHighlightTabLabels = ([highlightTabLabels state] == NSOnState);
         defaultHideMenuBarInFullscreen = ([hideMenuBarInFullscreen state] == NSOnState);
         defaultShowPaneTitles = ([showPaneTitles state] == NSOnState);
-        defaultAdvancedFontRendering = ([advancedFontRendering state] == NSOnState);
-        [strokeThickness setEnabled:defaultAdvancedFontRendering];
-        [strokeThicknessLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
-        [strokeThicknessMinLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
-        [strokeThicknessMaxLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
-        defaultStrokeThickness = [strokeThickness floatValue];
         defaultHideTab = ([hideTab state] == NSOnState);
         defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
         defaultDimBackgroundWindows = ([dimBackgroundWindows state] == NSOnState);
@@ -2475,8 +2980,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultHideActivityIndicator = [prefs objectForKey:@"HideActivityIndicator"]?[[prefs objectForKey:@"HideActivityIndicator"] boolValue]: NO;
     defaultHighlightTabLabels = [prefs objectForKey:@"HighlightTabLabels"]?[[prefs objectForKey:@"HighlightTabLabels"] boolValue]: YES;
     defaultHideMenuBarInFullscreen = [prefs objectForKey:@"HideMenuBarInFullscreen"]?[[prefs objectForKey:@"HideMenuBarInFullscreen"] boolValue] : YES;
-    defaultAdvancedFontRendering = [prefs objectForKey:@"HiddenAdvancedFontRendering"]?[[prefs objectForKey:@"HiddenAdvancedFontRendering"] boolValue] : NO;
-    defaultStrokeThickness = [prefs objectForKey:@"HiddenAFRStrokeThickness"] ? [[prefs objectForKey:@"HiddenAFRStrokeThickness"] floatValue] : 0;
     [defaultWordChars release];
     defaultWordChars = [prefs objectForKey: @"WordCharacters"]?[[prefs objectForKey: @"WordCharacters"] retain]:@"/-+\\~_.";
     defaultTmuxDashboardLimit = [prefs objectForKey: @"TmuxDashboardLimit"]?[[prefs objectForKey:@"TmuxDashboardLimit"] intValue]:10;
@@ -2607,8 +3110,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setBool:defaultHideActivityIndicator forKey:@"HideActivityIndicator"];
     [prefs setBool:defaultHighlightTabLabels forKey:@"HighlightTabLabels"];
     [prefs setBool:defaultHideMenuBarInFullscreen forKey:@"HideMenuBarInFullscreen"];
-    [prefs setBool:defaultAdvancedFontRendering forKey:@"HiddenAdvancedFontRendering"];
-    [prefs setFloat:defaultStrokeThickness forKey:@"HiddenAFRStrokeThickness"];
     [prefs setObject:defaultWordChars forKey: @"WordCharacters"];
     [prefs setObject:[NSNumber numberWithInt:defaultTmuxDashboardLimit]
                           forKey:@"TmuxDashboardLimit"];
@@ -3033,16 +3534,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     } else {
         return YES;
     }
-}
-
-- (BOOL)advancedFontRendering
-{
-    return defaultAdvancedFontRendering;
-}
-
-- (float)strokeThickness
-{
-    return defaultStrokeThickness;
 }
 
 - (float)legacyMinimumContrast
@@ -3656,12 +4147,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [hideActivityIndicator setState:defaultHideActivityIndicator?NSOnState:NSOffState];
     [highlightTabLabels setState: defaultHighlightTabLabels?NSOnState:NSOffState];
     [hideMenuBarInFullscreen setState:defaultHideMenuBarInFullscreen ? NSOnState:NSOffState];
-    [advancedFontRendering setState: defaultAdvancedFontRendering?NSOnState:NSOffState];
-    [strokeThickness setEnabled:defaultAdvancedFontRendering];
-    [strokeThicknessLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
-    [strokeThicknessMinLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
-    [strokeThicknessMaxLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
-    [strokeThickness setFloatValue:defaultStrokeThickness];
     [fsTabDelay setFloatValue:defaultFsTabDelay];
 
     [openBookmark setState: defaultOpenBookmark?NSOnState:NSOffState];
