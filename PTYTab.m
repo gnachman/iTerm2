@@ -334,6 +334,8 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     if (changed) {
         [[self realParentWindow] tabActiveSessionDidChange];
     }
+    
+    [[self realParentWindow] updateTabColors];
 }
 
 - (void)setActiveSession:(PTYSession*)session
@@ -2177,13 +2179,7 @@ static NSString* FormatRect(NSRect r) {
 
     [self numberOfSessionsDidChange];
     [term setDimmingForSessions];
-
-    NSColor *tabColor;
-    NSString *colorName = [arrangement objectForKey:TAB_ARRANGEMENT_COLOR];
-    tabColor = [[self class] colorForHtmlName:colorName];
-    if (tabColor) {
-        [term setTabColor:tabColor forTabViewItem:tabViewItem_];
-    }
+    [term updateTabColors];
 }
 
 + (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement

@@ -78,176 +78,182 @@ static int gNextSessionID = 1;
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
 @property(nonatomic, assign) int sessionID;
+@property(nonatomic, copy) NSDictionary *previousAddressBookEntry;
 @end
 
 @implementation PTYSession
 {
     // Owning tab.
     PTYTab* tab_;
-    
+
     // tty device
     NSString* tty;
-    
+
     // name can be changed by the host.
     NSString* name;
-    
+
     // defaultName cannot be changed by the host.
     NSString* defaultName;
-    
+
     // The window title that should be used when this session is current. Otherwise defaultName
     // should be used.
     NSString* windowTitle;
-    
+
     // The window title stack
     NSMutableArray* windowTitleStack;
-    
+
     // The icon title stack
     NSMutableArray* iconTitleStack;
-    
+
     // The original bookmark name.
     NSString* bookmarkName;
-    
+
     // Shell wraps the underlying file descriptor pair.
     PTYTask* SHELL;
-    
+
     // Terminal processes vt100 codes.
     VT100Terminal* TERMINAL;
-    
+
     // The value of the $TERM environment var.
     NSString* TERM_VALUE;
-    
+
     // The value of the $COLORFGBG environment var.
     NSString* COLORFGBG_VALUE;
-    
+
     // The current screen contents.
     VT100Screen* SCREEN;
-    
+
     // Has the underlying connection been closed?
     BOOL EXIT;
-    
+
     // The view in which this session's objects live.
     SessionView* view;
-    
+
     // The scrollview in which this session's contents are displayed.
     PTYScrollView* SCROLLVIEW;
-    
+
     // A view that wraps the textview. It is the scrollview's document. This exists to provide a
     // top margin above the textview.
     TextViewWrapper* WRAPPER;
-    
+
     // The view that contains all the visible text in this session.
     PTYTextView* TEXTVIEW;
-    
+
     // This timer fires periodically to redraw TEXTVIEW, update the scroll position, tab appearance,
     // etc.
     NSTimer *updateTimer;
-    
+
     // Anti-idle timer that sends a character every so often to the host.
     NSTimer* antiIdleTimer;
-    
+
     // The code to send in the anti idle timer.
     char ai_code;
-    
+
     // If true, close the tab when the session ends.
     BOOL autoClose;
-    
+
     // True if ambiguous-width characters are double-width.
     BOOL doubleWidth;
-    
+
     // True if mouse movements are sent to the host.
     BOOL xtermMouseReporting;
-    
+
     // This is not used as far as I can tell.
     int bell;
-    
+
     // True if background image should be tiled
     BOOL backgroundImageTiled;
-    
+
     // Filename of background image.
     NSString* backgroundImagePath;
-    
+
     // Bookmark currently in use.
     NSDictionary* addressBookEntry;
-    
+
     // The bookmark the session was originally created with so those settings can be restored if
     // needed.
     Profile* originalAddressBookEntry;
-    
+
     // Growl stuff
     iTermGrowlDelegate* gd;
-    
+
     // Status reporting
     struct timeval lastInput, lastOutput;
-    
+
     // Time that the tab label was last updated.
     struct timeval lastUpdate;
-    
+
     // Does the session have new output? Used by -[PTYTab setLabelAttributes] to color the tab's title
     // appropriately.
     BOOL newOutput;
-    
+
     // Is the session idle? Used by setLableAttribute to send a growl message when processing ends.
     BOOL growlIdle;
-    
+
     // Is there new output for the purposes of growl notifications? They run on a different schedule
     // than tab colors.
     BOOL growlNewOutput;
-    
+
     // Has this session's bookmark been divorced from the profile in the ProfileModel? Changes
     // in this bookmark may happen indepentendly of the persistent bookmark.
     bool isDivorced;
-    
+
+    // This is used for divorced sessions. It contains the keys in addressBookEntry
+    // that have been customized. Changes in the original profile will be copied over
+    // to addressBookEntry except for these keys.
+    NSMutableSet *overriddenFields_;
+
     // A digital video recorder for this session that implements the instant replay feature. These
     // are non-null while showing instant replay.
     DVR* dvr_;
     DVRDecoder* dvrDecoder_;
-    
+
     // Set only if this is not a live session (we are showing instant replay). Is a pointer to the
     // hidden live session while looking at the past.
     PTYSession* liveSession_;
-    
+
     // Is the update timer's callback currently running?
     BOOL timerRunning_;
-    
+
     // Paste from the head of this string from a timer until it's empty.
     NSMutableString* slowPasteBuffer;
     NSTimer* slowPasteTimer;
-    
+
     // The name of the foreground job at the moment as best we can tell.
     NSString* jobName_;
-    
+
     // Ignore resize notifications. This would be set because the session's size musn't be changed
     // due to temporary changes in the window size, as code later on may need to know the session's
     // size to set the window size properly.
     BOOL ignoreResizeNotifications_;
-    
+
     // Last time this session became active
     NSDate* lastActiveAt_;
-    
+
     // Time session was created
     NSDate* creationDate_;
-    
+
     // After receiving new output, we keep running the updateDisplay timer for a few seconds to catch
     // changes in job name.
     NSDate* updateDisplayUntil_;
-    
+
     // If not nil, we're aggregating text to append to a pasteboard. The pasteboard will be
     // updated when this is set to nil.
     NSString *pasteboard_;
     NSMutableData *pbtext_;
-    
+
     // The current line of text, for checking against triggers if any.
     NSMutableString *triggerLine_;
-    
+
     // The current triggers.
     NSMutableArray *triggers_;
-    
+
     // Does the terminal think this session is focused?
     BOOL focused_;
-    
+
     FindContext *tailFindContext_;
     NSTimer *tailFindTimer_;
-    
+
     enum {
         TMUX_NONE,
         TMUX_GATEWAY,
@@ -258,15 +264,15 @@ static int gNextSessionID = 1;
     int tmuxPane_;
     BOOL tmuxLogging_;  // log to gateway client
     BOOL tmuxSecureLogging_;
-    
+
     NSArray *sendModifiers_;
     NSMutableArray *eventQueue_;
     PasteViewController *pasteViewController_;
     PasteContext *pasteContext_;
-    
+
     NSInteger requestAttentionId_;  // Last request-attention identifier
     VT100ScreenMark *lastMark_;
-    
+
     VT100GridCoordRange commandRange_;
 }
 
@@ -348,6 +354,8 @@ static int gNextSessionID = 1;
     [windowTitleStack release];
     [iconTitleStack release];
     [addressBookEntry release];
+    [_previousAddressBookEntry release];
+    [overriddenFields_ release];
     [eventQueue_ release];
     [backgroundImagePath release];
     [antiIdleTimer invalidate];
@@ -1067,7 +1075,7 @@ static int gNextSessionID = 1;
         slowPasteTimer = nil;
         [eventQueue_ removeAllObjects];
     }
-    
+
     [[tab_ realParentWindow]  sessionDidTerminate:self];
 
     tab_ = nil;
@@ -1548,10 +1556,10 @@ static int gNextSessionID = 1;
 
     board = [NSPasteboard generalPasteboard];
     assert(board != nil);
-    
+
     NSArray *supportedTypes = [NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil];
     NSString *bestType = [board availableTypeFromArray:supportedTypes];
-    
+
     NSString* info = nil;
     if ([bestType isEqualToString:NSFilenamesPboardType]) {
         NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
@@ -1865,13 +1873,90 @@ static int gNextSessionID = 1;
     }
 }
 
+- (NSColor *)tabColorInProfile:(NSDictionary *)profile
+{
+    NSColor *tabColor = nil;
+    if ([profile[KEY_USE_TAB_COLOR] boolValue]) {
+        tabColor = [ITAddressBookMgr decodeColor:profile[KEY_TAB_COLOR]];
+    }
+    return tabColor;
+}
+
+- (NSDictionary *)dictionaryByMergingOriginalPreferencesWithDictionary:(NSDictionary *)overlay
+{
+    NSString *guid = addressBookEntry[KEY_ORIGINAL_GUID];
+    NSDictionary *currentVersionOfOriginal = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    if (!currentVersionOfOriginal) {
+        return overlay;
+    }
+
+    NSMutableDictionary *combined = [NSMutableDictionary dictionaryWithDictionary:currentVersionOfOriginal];
+    for (NSString *key in overriddenFields_) {
+        NSObject *overlayValue = overlay[key];
+        if (overlayValue) {
+            combined[key] = overlay[key];
+        } else {
+            [combined removeObjectForKey:key];
+        }
+    }
+
+    return combined;
+}
+
+- (void)updateOverriddenFieldsWithProfile:(NSDictionary *)profile
+{
+    if (!overriddenFields_) {
+        overriddenFields_ = [[NSMutableSet alloc] init];
+    }
+
+    // Find fields changed in this iteration.
+    NSMutableArray *changedFields = [NSMutableArray array];
+    for (NSString *key in profile) {
+        NSObject *value = profile[key];
+        NSObject *previousValue = _previousAddressBookEntry[key];
+        if (![value isEqual:previousValue]) {
+            DLog(@"The field %@ changed from %@ to %@", key, previousValue, value);
+            [overriddenFields_ addObject:key];
+        }
+    }
+
+    // Any overridden field whose value is the same as the shared profile is not overridden any more.
+    NSString *guid = addressBookEntry[KEY_ORIGINAL_GUID];
+    NSDictionary *currentVersionOfOriginal = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    for (NSString *key in [[overriddenFields_ copy] autorelease]) {
+        NSObject *currentValue = currentVersionOfOriginal[key];
+        NSObject *profileValue = profile[key];
+        if (currentVersionOfOriginal && [currentValue isEqual:profileValue]) {
+            DLog(@"The field %@ has gone back to its original value", key);
+            [overriddenFields_ removeObject:key];
+        } else {
+            DLog(@"The field %@ remains different (session has %@ vs shared %@)", key, profileValue, currentValue);
+        }
+    }
+
+    DLog(@"Overridden fields: %@", overriddenFields_);
+}
+
+- (NSDictionary *)updateDivorcedProfileWithProfile:(NSDictionary *)updatedProfile
+{
+    if (isDivorced) {
+        [[updatedProfile retain] autorelease];
+        [self updateOverriddenFieldsWithProfile:updatedProfile];
+        NSDictionary *aDict = [self dictionaryByMergingOriginalPreferencesWithDictionary:updatedProfile];
+        [[ProfileModel sessionsInstance] setBookmark:aDict withGuid:aDict[KEY_GUID]];
+        self.previousAddressBookEntry = updatedProfile;
+        return aDict;
+    } else {
+        return updatedProfile;
+    }
+}
+
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs
 {
     NSColor *colorTable[2][8];
     int i;
-    NSDictionary *aDict;
+    NSDictionary *aDict = aePrefs;
 
-    aDict = aePrefs;
     if (aDict == nil) {
         aDict = [[ProfileModel sharedInstance] defaultBookmark];
     }
@@ -1886,6 +1971,8 @@ static int gNextSessionID = 1;
     [self setBoldColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_BOLD_COLOR]]];
     [self setCursorColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_CURSOR_COLOR]]];
     [self setCursorTextColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_CURSOR_TEXT_COLOR]]];
+    [[[self tab] realParentWindow] updateTabColors];
+
     BOOL scc;
     if ([aDict objectForKey:KEY_SMART_CURSOR_COLOR]) {
         scc = [[aDict objectForKey:KEY_SMART_CURSOR_COLOR] boolValue];
@@ -2691,6 +2778,7 @@ static int gNextSessionID = 1;
 
 - (void)setAddressBookEntry:(NSDictionary*)entry
 {
+    DLog(@"Set address book entry to one with guid %@", entry[KEY_GUID]);
     NSMutableDictionary *dict = [[entry mutableCopy] autorelease];
     // This is the most practical way to migrate the bopy of a
     // profile that's stored in a saved window arrangement. It doesn't get
@@ -3052,13 +3140,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         // Move this bookmark into the sessions model.
         NSString* guid = [self divorceAddressBookEntryFromPreferences];
 
+        [self setSessionSpecificProfileValues:@{ KEY_NORMAL_FONT: [ITAddressBookMgr descFromFont:font],
+                                                 KEY_NON_ASCII_FONT: [ITAddressBookMgr descFromFont:nafont] }];
         // Set the font in the bookmark dictionary
-        NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:addressBookEntry];
-        [temp setObject:[ITAddressBookMgr descFromFont:font] forKey:KEY_NORMAL_FONT];
-        [temp setObject:[ITAddressBookMgr descFromFont:nafont] forKey:KEY_NON_ASCII_FONT];
-
-        // Update this session's copy of the bookmark
-        [self setAddressBookEntry:[NSDictionary dictionaryWithDictionary:temp]];
 
         // Update the model's copy of the bookmark.
         [[ProfileModel sessionsInstance] setBookmark:[self addressBookEntry] withGuid:guid];
@@ -3070,9 +3154,29 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (void)setSessionSpecificProfileValues:(NSDictionary *)newValues
+{
+    if (!isDivorced) {
+        [self divorceAddressBookEntryFromPreferences];
+    }
+    NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:addressBookEntry];
+    for (NSString *key in newValues) {
+        NSObject *value = newValues[key];
+        temp[key] = value;
+    }
+    // Update this session's copy of the bookmark
+    [self updateOverriddenFieldsWithProfile:temp];
+    [self setAddressBookEntry:[self dictionaryByMergingOriginalPreferencesWithDictionary:temp]];
+}
+
 - (void)remarry
 {
     isDivorced = NO;
+}
+
+- (BOOL)isDivorced
+{
+    return isDivorced;
 }
 
 - (NSString*)divorceAddressBookEntryFromPreferences
@@ -3089,18 +3193,25 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [[ProfileModel sessionsInstance] removeBookmarkWithGuid:guid];
     [[ProfileModel sessionsInstance] addBookmark:bookmark];
 
-    // Change the GUID so that this session can follow a different path in life
-    // than its bookmark. Changes to the bookmark will no longer affect this
-    // session, and changes to this session won't affect its originating bookmark
-    // (which may not evene exist any longer).
-    bookmark = [[ProfileModel sessionsInstance] setObject:guid
-                                                    forKey:KEY_ORIGINAL_GUID
-                                                inBookmark:bookmark];
+    NSString *existingOriginalGuid = bookmark[KEY_ORIGINAL_GUID];
+    if (!existingOriginalGuid ||
+        ![[ProfileModel sharedInstance] bookmarkWithGuid:existingOriginalGuid] ||
+        ![existingOriginalGuid isEqualToString:originalAddressBookEntry[KEY_GUID]]) {
+        // The bookmark doesn't already have a valid original GUID.
+        bookmark = [[ProfileModel sessionsInstance] setObject:guid
+                                                        forKey:KEY_ORIGINAL_GUID
+                                                    inBookmark:bookmark];
+    }
+
+    // Allocate a new guid for this bookmark.
     guid = [ProfileModel freshGuid];
     [[ProfileModel sessionsInstance] setObject:guid
                                          forKey:KEY_GUID
                                      inBookmark:bookmark];
     [self setAddressBookEntry:[[ProfileModel sessionsInstance] bookmarkWithGuid:guid]];
+    self.previousAddressBookEntry = nil;
+    [self updateOverriddenFieldsWithProfile:addressBookEntry];
+    self.previousAddressBookEntry = addressBookEntry;
     return guid;
 }
 
@@ -4338,11 +4449,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (![ad warnBeforeMultiLinePaste]) {
         return YES;
     }
-    
+
     if ([string rangeOfString:@"\n"].length == 0) {
         return YES;
     }
-    
+
     switch (NSRunAlertPanel(@"Confirm Multi-Line Paste",
                             @"Ok to paste %d lines?",
                             @"Yes",
@@ -4357,7 +4468,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             [ad toggleMultiLinePasteWarning:nil];
             return YES;
     }
-    
+
     assert(false);
     return YES;
 }
@@ -5166,7 +5277,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         [[terminal tabView] selectTabViewItemWithIdentifier:[self tab]];
     }
     [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-    
+
     [[self tab] setActiveSession:self];
 }
 
@@ -5337,42 +5448,49 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenSetCurrentTabColor:(NSColor *)color {
-    NSTabViewItem* tabViewItem = [[self ptytab] tabViewItem];
+    [self setTabColor:color];
     id<WindowControllerInterface> term = [[self ptytab] parentWindow];
-    [term setTabColor:nil forTabViewItem:tabViewItem];
+    [term updateTabColors];
 }
 
 - (NSColor *)tabColor {
-    NSTabViewItem* tabViewItem = [[self ptytab] tabViewItem];
-    id<WindowControllerInterface> term = [[self ptytab] parentWindow];
-    return [term tabColorForTabViewItem:tabViewItem];
+    NSDictionary *colorDict = addressBookEntry[KEY_TAB_COLOR];
+    if (colorDict) {
+        return [ITAddressBookMgr decodeColor:colorDict];
+    } else {
+        return nil;
+    }
+}
+
+- (void)setTabColor:(NSColor *)color {
+    [self setSessionSpecificProfileValues:@{ KEY_TAB_COLOR: [ITAddressBookMgr encodeColor:color] }];
 }
 
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color {
     NSColor *curColor = [self tabColor];
-    [[[self ptytab] parentWindow] setTabColor:[NSColor colorWithCalibratedRed:color
-                                                                        green:[curColor greenComponent]
-                                                                         blue:[curColor blueComponent]
-                                                                        alpha:1]
-                               forTabViewItem:[[self ptytab] tabViewItem]];
+    [self setTabColor:[NSColor colorWithCalibratedRed:color
+                                                green:[curColor greenComponent]
+                                                 blue:[curColor blueComponent]
+                                                alpha:1]];
+    [[[self ptytab] parentWindow] updateTabColors];
 }
 
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color {
     NSColor *curColor = [self tabColor];
-    [[[self ptytab] parentWindow] setTabColor:[NSColor colorWithCalibratedRed:[curColor redComponent]
-                                                                        green:color
-                                                                         blue:[curColor blueComponent]
-                                                                        alpha:1]
-                               forTabViewItem:[[self ptytab] tabViewItem]];
+    [self setTabColor:[NSColor colorWithCalibratedRed:[curColor redComponent]
+                                                green:color
+                                                 blue:[curColor blueComponent]
+                                                alpha:1]];
+    [[[self ptytab] parentWindow] updateTabColors];
 }
 
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color {
     NSColor *curColor = [self tabColor];
-    [[[self ptytab] parentWindow] setTabColor:[NSColor colorWithCalibratedRed:[curColor redComponent]
-                                                                        green:[curColor greenComponent]
-                                                                         blue:color
-                                                                        alpha:1]
-                               forTabViewItem:[[self ptytab] tabViewItem]];
+    [self setTabColor:[NSColor colorWithCalibratedRed:[curColor redComponent]
+                                                green:[curColor greenComponent]
+                                                 blue:color
+                                                alpha:1]];
+    [[[self ptytab] parentWindow] updateTabColors];
 }
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {

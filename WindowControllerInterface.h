@@ -46,10 +46,7 @@ typedef enum {
 - (void)setLabelColor:(NSColor *)color forTabViewItem:tabViewItem;
 
 // Set background color for tab chrome.
-- (void)setTabColor:(NSColor *)color forTabViewItem:tabViewItem;
-
-// Returns the background color for tab chrome.
-- (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
+- (void)updateTabColors;
 
 // Set blur radius for window.
 - (void)enableBlur:(double)radius;
