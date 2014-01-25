@@ -269,8 +269,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     int accX;
     int accY;
     
-    BOOL advancedFontRendering;
-    double strokeThickness;
     double minimumContrast_;
     
     BOOL changedSinceLastExpose_;
@@ -524,8 +522,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                                      name:kHostnameLookupSucceeded
                                                    object:nil];
         
-        advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
-        strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
         imeOffset = 0;
         resultMap_ = [[NSMutableDictionary alloc] init];
 
@@ -10379,8 +10375,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)_settingsChanged:(NSNotification *)notification
 {
-    advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
-    strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
     [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
     [self setDimOnlyText:[[PreferencePanel sharedInstance] dimOnlyText]];

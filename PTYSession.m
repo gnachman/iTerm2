@@ -3147,6 +3147,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     isDivorced = NO;
 }
 
+- (BOOL)isDivorced
+{
+    return isDivorced;
+}
+
 - (NSString*)divorceAddressBookEntryFromPreferences
 {
     Profile* bookmark = [self addressBookEntry];

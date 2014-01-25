@@ -6170,6 +6170,11 @@ NSString *kSessionsKVCKey = @"sessions";
                 // set default name, which will appear as a prefix if the session changes the name.
                 [session setDefaultName:[merged objectForKey:KEY_NAME]];
             }
+            if ([session isDivorced] &&
+                [[[PreferencePanel sessionsInstance] currentProfileGuid] isEqualToString:guid] &&
+                [[[PreferencePanel sessionsInstance] window] isVisible]) {
+                [[PreferencePanel sessionsInstance] updateBookmarkFields:merged];
+            }
         }
         [oldName release];
     }
