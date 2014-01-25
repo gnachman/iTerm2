@@ -65,6 +65,7 @@ typedef enum {
 
 @property(nonatomic, assign) BOOL alertOnNextMark;
 @property(nonatomic, readonly) int sessionID;
+@property(nonatomic, copy) NSColor *tabColor;
 
 // Return the current pasteboard value as a string.
 + (NSString*)pasteboardString;
@@ -390,9 +391,6 @@ typedef enum {
 
 // Select this session and tab and bring window to foreground.
 - (void)reveal;
-
-// Color for tab this session is in.
-- (NSColor *)tabColor;
 
 // FinalTerm
 - (NSArray *)autocompleteSuggestionsForCurrentCommand;

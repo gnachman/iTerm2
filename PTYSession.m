@@ -1892,7 +1892,12 @@ static int gNextSessionID = 1;
 
     NSMutableDictionary *combined = [NSMutableDictionary dictionaryWithDictionary:currentVersionOfOriginal];
     for (NSString *key in overriddenFields_) {
-        combined[key] = overlay[key];
+        NSObject *overlayValue = overlay[key];
+        if (overlayValue) {
+            combined[key] = overlay[key];
+        } else {
+            [combined removeObjectForKey:key];
+        }
     }
 
     return combined;
@@ -1966,7 +1971,7 @@ static int gNextSessionID = 1;
     [self setBoldColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_BOLD_COLOR]]];
     [self setCursorColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_CURSOR_COLOR]]];
     [self setCursorTextColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_CURSOR_TEXT_COLOR]]];
-    [[[self tab] realParentWindow] setTabColor:[self tabColorInProfile:aDict] forTabViewItem:[[self tab] tabViewItem]];
+    [[[self tab] realParentWindow] updateTabColors];
 
     BOOL scc;
     if ([aDict objectForKey:KEY_SMART_CURSOR_COLOR]) {
@@ -3135,13 +3140,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         // Move this bookmark into the sessions model.
         NSString* guid = [self divorceAddressBookEntryFromPreferences];
 
+        [self setSessionSpecificProfileValues:@{ KEY_NORMAL_FONT: [ITAddressBookMgr descFromFont:font],
+                                                 KEY_NON_ASCII_FONT: [ITAddressBookMgr descFromFont:nafont] }];
         // Set the font in the bookmark dictionary
-        NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:addressBookEntry];
-        [temp setObject:[ITAddressBookMgr descFromFont:font] forKey:KEY_NORMAL_FONT];
-        [temp setObject:[ITAddressBookMgr descFromFont:nafont] forKey:KEY_NON_ASCII_FONT];
-
-        // Update this session's copy of the bookmark
-        [self setAddressBookEntry:[NSDictionary dictionaryWithDictionary:temp]];
 
         // Update the model's copy of the bookmark.
         [[ProfileModel sessionsInstance] setBookmark:[self addressBookEntry] withGuid:guid];
@@ -3151,6 +3152,21 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
         }
     }
+}
+
+- (void)setSessionSpecificProfileValues:(NSDictionary *)newValues
+{
+    if (!isDivorced) {
+        [self divorceAddressBookEntryFromPreferences];
+    }
+    NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:addressBookEntry];
+    for (NSString *key in newValues) {
+        NSObject *value = newValues[key];
+        temp[key] = value;
+    }
+    // Update this session's copy of the bookmark
+    [self updateOverriddenFieldsWithProfile:temp];
+    [self setAddressBookEntry:[self dictionaryByMergingOriginalPreferencesWithDictionary:temp]];
 }
 
 - (void)remarry
@@ -5432,42 +5448,49 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenSetCurrentTabColor:(NSColor *)color {
-    NSTabViewItem* tabViewItem = [[self ptytab] tabViewItem];
+    [self setTabColor:color];
     id<WindowControllerInterface> term = [[self ptytab] parentWindow];
-    [term setTabColor:nil forTabViewItem:tabViewItem];
+    [term updateTabColors];
 }
 
 - (NSColor *)tabColor {
-    NSTabViewItem* tabViewItem = [[self ptytab] tabViewItem];
-    id<WindowControllerInterface> term = [[self ptytab] parentWindow];
-    return [term tabColorForTabViewItem:tabViewItem];
+    NSDictionary *colorDict = addressBookEntry[KEY_TAB_COLOR];
+    if (colorDict) {
+        return [ITAddressBookMgr decodeColor:colorDict];
+    } else {
+        return nil;
+    }
+}
+
+- (void)setTabColor:(NSColor *)color {
+    [self setSessionSpecificProfileValues:@{ KEY_TAB_COLOR: [ITAddressBookMgr encodeColor:color] }];
 }
 
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color {
     NSColor *curColor = [self tabColor];
-    [[[self ptytab] parentWindow] setTabColor:[NSColor colorWithCalibratedRed:color
-                                                                        green:[curColor greenComponent]
-                                                                         blue:[curColor blueComponent]
-                                                                        alpha:1]
-                               forTabViewItem:[[self ptytab] tabViewItem]];
+    [self setTabColor:[NSColor colorWithCalibratedRed:color
+                                                green:[curColor greenComponent]
+                                                 blue:[curColor blueComponent]
+                                                alpha:1]];
+    [[[self ptytab] parentWindow] updateTabColors];
 }
 
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color {
     NSColor *curColor = [self tabColor];
-    [[[self ptytab] parentWindow] setTabColor:[NSColor colorWithCalibratedRed:[curColor redComponent]
-                                                                        green:color
-                                                                         blue:[curColor blueComponent]
-                                                                        alpha:1]
-                               forTabViewItem:[[self ptytab] tabViewItem]];
+    [self setTabColor:[NSColor colorWithCalibratedRed:[curColor redComponent]
+                                                green:color
+                                                 blue:[curColor blueComponent]
+                                                alpha:1]];
+    [[[self ptytab] parentWindow] updateTabColors];
 }
 
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color {
     NSColor *curColor = [self tabColor];
-    [[[self ptytab] parentWindow] setTabColor:[NSColor colorWithCalibratedRed:[curColor redComponent]
-                                                                        green:[curColor greenComponent]
-                                                                         blue:color
-                                                                        alpha:1]
-                               forTabViewItem:[[self ptytab] tabViewItem]];
+    [self setTabColor:[NSColor colorWithCalibratedRed:[curColor redComponent]
+                                                green:[curColor greenComponent]
+                                                 blue:color
+                                                alpha:1]];
+    [[[self ptytab] parentWindow] updateTabColors];
 }
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {

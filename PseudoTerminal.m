@@ -2673,15 +2673,12 @@ NSString *kSessionsKVCKey = @"sessions";
         }
         // remove from our window
         PtyLog(@"toggleFullScreenMode - remove tab %d from old window", i);
-        NSColor *tabColor = [[self tabColorForTabViewItem:aTabViewItem] retain];
         [TABVIEW removeTabViewItem:aTabViewItem];
 
         // add the session to the new terminal
         PtyLog(@"toggleFullScreenMode - add tab %d from old window", i);
         [newTerminal insertTab:theTab atIndex:i];
         NSTabViewItem *newTabViewItem = [theTab tabViewItem];
-        [newTerminal setTabColor:tabColor forTabViewItem:newTabViewItem];
-        [tabColor release];
         PtyLog(@"toggleFullScreenMode - done inserting session");
 
         // release the tabViewItem
@@ -2759,6 +2756,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
     [newTerminal.window performSelector:@selector(makeKeyAndOrderFront:) withObject:nil afterDelay:0];
     [newTerminal refreshTools];
+    [newTerminal updateTabColors];
     [self release];
 }
 
@@ -3143,18 +3141,6 @@ NSString *kSessionsKVCKey = @"sessions";
     if ([[autocompleteView window] isVisible]) {
         [autocompleteView close];
     }
-    NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:tabViewItem];
-    if ([tabView numberOfTabViewItems] == 1 &&
-        [[PreferencePanel sharedInstance] hideTab] &&
-        newTabColor) {
-        // Draw colored title bar (and tab bar, and tab bar background).
-        [[self window] setBackgroundColor:newTabColor];
-        [background_ setColor:newTabColor];
-    } else {
-        // Draw normal title bar.
-        [[self window] setBackgroundColor:nil];
-        [background_ setColor:normalBackgroundColor];
-    }
 }
 
 - (void)enableBlur:(double)radius
@@ -3224,6 +3210,7 @@ NSString *kSessionsKVCKey = @"sessions";
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     [itad updateBroadcastMenuState];
     [[toolbelt_ commandHistoryView] updateCommands];
+    [self updateTabColors];
 }
 
 - (void)showOrHideInstantReplayBar
@@ -3455,22 +3442,7 @@ NSString *kSessionsKVCKey = @"sessions";
         }
     }
 
-    BOOL setWindowBackground = NO;
-    if ([tabView numberOfTabViewItems] == 1) {
-        NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:[tabView tabViewItemAtIndex:0]];
-        if ([[PreferencePanel sharedInstance] hideTab] && newTabColor) {
-            // Draw colored title bar (and tab bar, and tab bar background).
-            [[self window] setBackgroundColor:newTabColor];
-            [background_ setColor:newTabColor];
-            setWindowBackground = YES;
-        }
-    }
-    if (!setWindowBackground) {
-        // Draw normal title bar.
-        [[self window] setBackgroundColor:nil];
-        [background_ setColor:normalBackgroundColor];
-    }
-
+    [self updateTabColors];
     [self _updateTabObjectCounts];
 
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
@@ -3641,26 +3613,26 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
-- (void)setTabColor:(NSColor*)color forTabViewItem:(NSTabViewItem*)tabViewItem
+- (void)updateTabColors
 {
-    [tabBarControl setTabColor:color forTabViewItem:tabViewItem];
-    if ([TABVIEW selectedTabViewItem] == tabViewItem) {
-        NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:tabViewItem];
-        if ([TABVIEW numberOfTabViewItems] == 1 &&
-            [[PreferencePanel sharedInstance] hideTab] &&
-            newTabColor) {
-            [[self window] setBackgroundColor:newTabColor];
-            [background_ setColor:newTabColor];
-        } else {
-            [[self window] setBackgroundColor:nil];
-            [background_ setColor:normalBackgroundColor];
+    for (PTYTab *aTab in [self tabs]) {
+        NSTabViewItem *tabViewItem = [aTab tabViewItem];
+        PTYSession *aSession = [aTab activeSession];
+        NSColor *color = [aSession tabColor];
+        [tabBarControl setTabColor:color forTabViewItem:tabViewItem];
+        if ([TABVIEW selectedTabViewItem] == tabViewItem) {
+            NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:tabViewItem];
+            if ([TABVIEW numberOfTabViewItems] == 1 &&
+                [[PreferencePanel sharedInstance] hideTab] &&
+                newTabColor) {
+                [[self window] setBackgroundColor:newTabColor];
+                [background_ setColor:newTabColor];
+            } else {
+                [[self window] setBackgroundColor:nil];
+                [background_ setColor:normalBackgroundColor];
+            }
         }
     }
-}
-
-- (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem
-{
-    return [tabBarControl tabColorForTabViewItem:tabViewItem];
 }
 
 - (PTYTabView *)tabView
@@ -4137,6 +4109,7 @@ NSString *kSessionsKVCKey = @"sessions";
            performSetup:(BOOL)performSetup
 {
     NSView *scrollView;
+    NSColor *tabColor = [[[tabBarControl tabColorForTabViewItem:[[self currentTab] tabViewItem]] retain] autorelease];
     SessionView* sessionView = [[self currentTab] splitVertically:isVertical
                                                            before:before
                                                     targetSession:targetSession];
@@ -4166,6 +4139,8 @@ NSString *kSessionsKVCKey = @"sessions";
     [[self currentTab] numberOfSessionsDidChange];
     [self setDimmingForSession:targetSession];
     [sessionView updateDim];
+    newSession.tabColor = tabColor;
+    [self updateTabColors];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
 
@@ -6083,16 +6058,10 @@ NSString *kSessionsKVCKey = @"sessions";
 {
     ColorsMenuItemView *menuItem = (ColorsMenuItemView *)[sender view];
     NSColor *color = menuItem.color;
-    NSTabViewItem *aTabViewItem = [sender representedObject];
-    if (!aTabViewItem) {
-        aTabViewItem = [[self currentTab] tabViewItem];
-        if (!aTabViewItem) {
-            return;
-        }
+    for (PTYSession *aSession in [[self currentTab] sessions]) {
+        [aSession setTabColor:color];
     }
-    for (PTYSession *session in [[self currentTab] sessions]) {
-        [session setTabColor]
-    [self setTabColor:color forTabViewItem:aTabViewItem];
+    [self updateTabColors];
 }
 
 // Close this window.
