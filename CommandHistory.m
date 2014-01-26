@@ -13,6 +13,7 @@
 #import "VT100RemoteHost.h"
 
 NSString *const kCommandHistoryDidChangeNotificationName = @"kCommandHistoryDidChangeNotificationName";
+NSString *const kCommandHistoryHasEverBeenUsed = @"kCommandHistoryHasEverBeenUsed";
 
 static const int kMaxResults = 200;
 
@@ -68,10 +69,26 @@ static const int kMaxCommandsToSavePerHost = 200;
 
 #pragma mark - APIs
 
++ (void)showInformationalMessage {
+    if (NSRunInformationalAlertPanel(@"About Command History",
+                                     @"To use command history your shell must be properly configured.",
+                                     @"Learn More…",
+                                     @"Ok",
+                                     nil) == NSAlertDefaultReturn) {
+        [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://iterm2.com/shell_integration.html"]];
+    }
+}
+
+- (BOOL)commandHistoryHasEverBeenUsed {
+    return (_hosts.count > 0 ||
+            [[NSUserDefaults standardUserDefaults] boolForKey:kCommandHistoryHasEverBeenUsed]);
+}
+
 - (void)addCommand:(NSString *)command
             onHost:(VT100RemoteHost *)host
        inDirectory:(NSString *)directory
           withMark:(VT100ScreenMark *)mark {
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kCommandHistoryHasEverBeenUsed];
     NSMutableArray *commands = [self commandsForHost:host];
     CommandHistoryEntry *theEntry = nil;
     for (CommandHistoryEntry *entry in commands) {

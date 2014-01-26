@@ -17,6 +17,10 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
 
 + (instancetype)sharedInstance;
 
++ (void)showInformationalMessage;
+
+- (BOOL)commandHistoryHasEverBeenUsed;
+
 - (void)addCommand:(NSString *)command
             onHost:(VT100RemoteHost *)host
        inDirectory:(NSString *)directory

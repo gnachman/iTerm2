@@ -4026,9 +4026,13 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (IBAction)openCommandHistory:(id)sender
 {
-    [commandHistoryPopup popWithDelegate:[self currentSession]];
-    [commandHistoryPopup loadCommandsForHost:[[self currentSession] currentHost]
-                              partialCommand:[[self currentSession] currentCommand]];
+    if ([[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+        [commandHistoryPopup popWithDelegate:[self currentSession]];
+        [commandHistoryPopup loadCommandsForHost:[[self currentSession] currentHost]
+                                  partialCommand:[[self currentSession] currentCommand]];
+    } else {
+        [CommandHistory showInformationalMessage];
+    }
 }
 
 - (IBAction)openAutocomplete:(id)sender
@@ -5896,6 +5900,9 @@ NSString *kSessionsKVCKey = @"sessions";
     } else if ([item action] == @selector(resetCharset:)) {
         result = ![[[self currentSession] SCREEN] allCharacterSetPropertiesHaveDefaultValues];
     } else if ([item action] == @selector(openCommandHistory:)) {
+        if (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+            return YES;
+        }
         return [[CommandHistory sharedInstance] haveCommandsForHost:[[self currentSession] currentHost]];
     } else if ([item action] == @selector(movePaneDividerDown:)) {
         int height = [[[self currentSession] TEXTVIEW] lineHeight];
@@ -6107,32 +6114,25 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)reloadBookmarks
 {
+    int j = 0;
     for (PTYSession* session in [self allSessions]) {
         Profile *oldBookmark = [session addressBookEntry];
         NSString* oldName = [oldBookmark objectForKey:KEY_NAME];
         [oldName retain];
         NSString* guid = [oldBookmark objectForKey:KEY_GUID];
-        Profile* newBookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-        if (!newBookmark) {
-            newBookmark = [[ProfileModel sessionsInstance] bookmarkWithGuid:guid];
-        }
-        if (newBookmark && newBookmark != oldBookmark) {
-            NSDictionary *merged = [session updateDivorcedProfileWithProfile:newBookmark];
-            // Same guid but different pointer means it has changed.
-            // The test can have false positives but it should be harmless.
-            [session setPreferencesFromAddressBookEntry:merged];
-            [session setAddressBookEntry:merged];
+        if ([session reloadProfile]) {
             [[session tab] recheckBlur];
-            if (![[merged objectForKey:KEY_NAME] isEqualToString:oldName]) {
+            NSDictionary *profile = [session addressBookEntry];
+            if (![[profile objectForKey:KEY_NAME] isEqualToString:oldName]) {
                 // Set name, which overrides any session-set icon name.
-                [session setName:[merged objectForKey:KEY_NAME]];
+                [session setName:[profile objectForKey:KEY_NAME]];
                 // set default name, which will appear as a prefix if the session changes the name.
-                [session setDefaultName:[merged objectForKey:KEY_NAME]];
+                [session setDefaultName:[profile objectForKey:KEY_NAME]];
             }
             if ([session isDivorced] &&
                 [[[PreferencePanel sessionsInstance] currentProfileGuid] isEqualToString:guid] &&
                 [[[PreferencePanel sessionsInstance] window] isVisible]) {
-                [[PreferencePanel sessionsInstance] updateBookmarkFields:merged];
+                [[PreferencePanel sessionsInstance] updateBookmarkFields:profile];
             }
         }
         [oldName release];

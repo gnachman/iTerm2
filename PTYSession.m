@@ -78,7 +78,6 @@ static int gNextSessionID = 1;
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
 @property(nonatomic, assign) int sessionID;
-@property(nonatomic, copy) NSDictionary *previousAddressBookEntry;
 @end
 
 @implementation PTYSession
@@ -307,6 +306,7 @@ static int gNextSessionID = 1;
         gd = [iTermGrowlDelegate sharedInstance];
         growlIdle = growlNewOutput = NO;
 
+        overriddenFields_ = [[NSMutableSet alloc] init];
         slowPasteBuffer = [[NSMutableString alloc] init];
         creationDate_ = [[NSDate date] retain];
         tmuxSecureLogging_ = NO;
@@ -354,7 +354,6 @@ static int gNextSessionID = 1;
     [windowTitleStack release];
     [iconTitleStack release];
     [addressBookEntry release];
-    [_previousAddressBookEntry release];
     [overriddenFields_ release];
     [eventQueue_ release];
     [backgroundImagePath release];
@@ -565,6 +564,7 @@ static int gNextSessionID = 1;
     }
     if (needDivorce) {
         [aSession divorceAddressBookEntryFromPreferences];
+        [aSession sessionProfileDidChange];
     }
 
     if (n) {
@@ -1882,73 +1882,104 @@ static int gNextSessionID = 1;
     return tabColor;
 }
 
-- (NSDictionary *)dictionaryByMergingOriginalPreferencesWithDictionary:(NSDictionary *)overlay
+- (void)sharedProfileDidChange
 {
-    NSString *guid = addressBookEntry[KEY_ORIGINAL_GUID];
-    NSDictionary *currentVersionOfOriginal = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-    if (!currentVersionOfOriginal) {
-        return overlay;
+    NSDictionary *updatedProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:originalAddressBookEntry[KEY_GUID]];
+    if (!updatedProfile) {
+        return;
     }
-
-    NSMutableDictionary *combined = [NSMutableDictionary dictionaryWithDictionary:currentVersionOfOriginal];
-    for (NSString *key in overriddenFields_) {
-        NSObject *overlayValue = overlay[key];
-        if (overlayValue) {
-            combined[key] = overlay[key];
+    if (!isDivorced) {
+        [self setPreferencesFromAddressBookEntry:updatedProfile];
+        [self setAddressBookEntry:updatedProfile];
+        return;
+    }
+    
+    // Copy non-overridden fields over.
+    NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:addressBookEntry];
+    NSMutableArray *noLongerOverriddenFields = [NSMutableArray array];
+    NSMutableSet *keys = [NSMutableSet setWithArray:[updatedProfile allKeys]];
+    [keys addObjectsFromArray:[addressBookEntry allKeys]];
+    for (NSString *key in keys) {
+        NSObject *originalValue = updatedProfile[key];
+        NSObject *currentValue = addressBookEntry[key];
+        if ([overriddenFields_ containsObject:key]) {
+            if ([originalValue isEqual:currentValue]) {
+                [noLongerOverriddenFields addObject:key];
+            }
         } else {
-            [combined removeObjectForKey:key];
+            if (!originalValue) {
+                DLog(@"Unset %@ in session because it was removed from shared profile", key);
+                [temp removeObjectForKey:key];
+            } else {
+                if (![originalValue isEqual:temp[key]]) {
+                    DLog(@"Update session for key %@ from %@ -> %@", key, temp[key], originalValue);
+                }
+                temp[key] = originalValue;
+            }
         }
     }
 
-    return combined;
+    // For fields that are no longer overridden because the shared profile took on the same value
+    // as the sessions profile, remove those keys from overriddenFields.
+    for (NSString *key in noLongerOverriddenFields) {
+        DLog(@"%@ is no longer overridden because shared profile now matches session profile value of %@", key, temp[key]);
+        [overriddenFields_ removeObject:key];
+    }
+    DLog(@"After shared profile change overridden keys are: %@", overriddenFields_);
+
+    // Update saved state.
+    [[ProfileModel sessionsInstance] setBookmark:temp withGuid:temp[KEY_GUID]];
+    [self setPreferencesFromAddressBookEntry:temp];
+    [self setAddressBookEntry:temp];
 }
 
-- (void)updateOverriddenFieldsWithProfile:(NSDictionary *)profile
+- (void)sessionProfileDidChange
 {
-    if (!overriddenFields_) {
-        overriddenFields_ = [[NSMutableSet alloc] init];
+    if (!isDivorced) {
+        return;
     }
-
-    // Find fields changed in this iteration.
-    NSMutableArray *changedFields = [NSMutableArray array];
-    for (NSString *key in profile) {
-        NSObject *value = profile[key];
-        NSObject *previousValue = _previousAddressBookEntry[key];
-        if (![value isEqual:previousValue]) {
-            DLog(@"The field %@ changed from %@ to %@", key, previousValue, value);
-            [overriddenFields_ addObject:key];
+    NSDictionary *updatedProfile =
+        [[ProfileModel sessionsInstance] bookmarkWithGuid:addressBookEntry[KEY_GUID]];
+    NSMutableSet *keys = [NSMutableSet setWithArray:[updatedProfile allKeys]];
+    [keys addObjectsFromArray:[addressBookEntry allKeys]];
+    for (NSString *aKey in keys) {
+        NSObject *sharedValue = originalAddressBookEntry[aKey];
+        NSObject *newSessionValue = updatedProfile[aKey];
+        BOOL isEqual = [newSessionValue isEqual:sharedValue];
+        BOOL isOverridden = [overriddenFields_ containsObject:aKey];
+        if (!isEqual && !isOverridden) {
+            DLog(@"%@ is now overridden because %@ != %@", aKey, newSessionValue, sharedValue);
+            [overriddenFields_ addObject:aKey];
+        } else if (isEqual && isOverridden) {
+            DLog(@"%@ is no longer overridden because %@ == %@", aKey, newSessionValue, sharedValue);
+            [overriddenFields_ removeObject:aKey];
         }
     }
-
-    // Any overridden field whose value is the same as the shared profile is not overridden any more.
-    NSString *guid = addressBookEntry[KEY_ORIGINAL_GUID];
-    NSDictionary *currentVersionOfOriginal = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-    for (NSString *key in [[overriddenFields_ copy] autorelease]) {
-        NSObject *currentValue = currentVersionOfOriginal[key];
-        NSObject *profileValue = profile[key];
-        if (currentVersionOfOriginal && [currentValue isEqual:profileValue]) {
-            DLog(@"The field %@ has gone back to its original value", key);
-            [overriddenFields_ removeObject:key];
-        } else {
-            DLog(@"The field %@ remains different (session has %@ vs shared %@)", key, profileValue, currentValue);
-        }
-    }
-
-    DLog(@"Overridden fields: %@", overriddenFields_);
+    DLog(@"After session profile change overridden keys are: %@", overriddenFields_);
+    [self setPreferencesFromAddressBookEntry:updatedProfile];
+    [self setAddressBookEntry:updatedProfile];
 }
 
-- (NSDictionary *)updateDivorcedProfileWithProfile:(NSDictionary *)updatedProfile
+- (BOOL)reloadProfile
 {
+    DLog(@"Reload profile for %@", self);
+    BOOL didChange = NO;
+    NSDictionary *sharedProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:originalAddressBookEntry[KEY_GUID]];
+    if (sharedProfile && ![sharedProfile isEqual:originalAddressBookEntry]) {
+        DLog(@"Shared profile changed");
+        [self sharedProfileDidChange];
+        didChange = YES;
+    }
+
     if (isDivorced) {
-        [[updatedProfile retain] autorelease];
-        [self updateOverriddenFieldsWithProfile:updatedProfile];
-        NSDictionary *aDict = [self dictionaryByMergingOriginalPreferencesWithDictionary:updatedProfile];
-        [[ProfileModel sessionsInstance] setBookmark:aDict withGuid:aDict[KEY_GUID]];
-        self.previousAddressBookEntry = updatedProfile;
-        return aDict;
-    } else {
-        return updatedProfile;
+        NSDictionary *sessionProfile = [[ProfileModel sessionsInstance] bookmarkWithGuid:addressBookEntry[KEY_GUID]];
+        if (![sessionProfile isEqual:addressBookEntry]) {
+            DLog(@"Session profile changed");
+            [self sessionProfileDidChange];
+            didChange = YES;
+        }
     }
+    return didChange;
 }
 
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs
@@ -1971,7 +2002,6 @@ static int gNextSessionID = 1;
     [self setBoldColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_BOLD_COLOR]]];
     [self setCursorColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_CURSOR_COLOR]]];
     [self setCursorTextColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_CURSOR_TEXT_COLOR]]];
-    [[[self tab] realParentWindow] updateTabColors];
 
     BOOL scc;
     if ([aDict objectForKey:KEY_SMART_CURSOR_COLOR]) {
@@ -2803,6 +2833,7 @@ static int gNextSessionID = 1;
     [addressBookEntry release];
     addressBookEntry = [dict retain];
     [[tab_ realParentWindow] invalidateRestorableState];
+    [[[self tab] realParentWindow] updateTabColors];
 }
 
 - (NSDictionary *)addressBookEntry
@@ -3164,9 +3195,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         NSObject *value = newValues[key];
         temp[key] = value;
     }
+    [[ProfileModel sessionsInstance] setBookmark:temp withGuid:temp[KEY_GUID]];
+
     // Update this session's copy of the bookmark
-    [self updateOverriddenFieldsWithProfile:temp];
-    [self setAddressBookEntry:[self dictionaryByMergingOriginalPreferencesWithDictionary:temp]];
+    [self reloadProfile];
 }
 
 - (void)remarry
@@ -3208,10 +3240,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [[ProfileModel sessionsInstance] setObject:guid
                                          forKey:KEY_GUID
                                      inBookmark:bookmark];
+    [overriddenFields_ removeAllObjects];
+    [overriddenFields_ addObjectsFromArray:@[ KEY_GUID, KEY_ORIGINAL_GUID] ];
     [self setAddressBookEntry:[[ProfileModel sessionsInstance] bookmarkWithGuid:guid]];
-    self.previousAddressBookEntry = nil;
-    [self updateOverriddenFieldsWithProfile:addressBookEntry];
-    self.previousAddressBookEntry = addressBookEntry;
     return guid;
 }
 
@@ -5454,16 +5485,28 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (NSColor *)tabColor {
-    NSDictionary *colorDict = addressBookEntry[KEY_TAB_COLOR];
-    if (colorDict) {
-        return [ITAddressBookMgr decodeColor:colorDict];
+    if ([addressBookEntry[KEY_USE_TAB_COLOR] boolValue]) {
+        NSDictionary *colorDict = addressBookEntry[KEY_TAB_COLOR];
+        if (colorDict) {
+            return [ITAddressBookMgr decodeColor:colorDict];
+        } else {
+            return nil;
+        }
     } else {
         return nil;
     }
 }
 
 - (void)setTabColor:(NSColor *)color {
-    [self setSessionSpecificProfileValues:@{ KEY_TAB_COLOR: [ITAddressBookMgr encodeColor:color] }];
+    NSDictionary *dict;
+    if (color) {
+        dict = @{ KEY_USE_TAB_COLOR: @YES,
+                  KEY_TAB_COLOR: [ITAddressBookMgr encodeColor:color] };
+    } else {
+        dict = @{ KEY_USE_TAB_COLOR: @NO };
+    }
+
+    [self setSessionSpecificProfileValues:dict];
 }
 
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color {
