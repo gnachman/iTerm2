@@ -4026,9 +4026,13 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (IBAction)openCommandHistory:(id)sender
 {
-    [commandHistoryPopup popWithDelegate:[self currentSession]];
-    [commandHistoryPopup loadCommandsForHost:[[self currentSession] currentHost]
-                              partialCommand:[[self currentSession] currentCommand]];
+    if ([[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+        [commandHistoryPopup popWithDelegate:[self currentSession]];
+        [commandHistoryPopup loadCommandsForHost:[[self currentSession] currentHost]
+                                  partialCommand:[[self currentSession] currentCommand]];
+    } else {
+        [CommandHistory showInformationalMessage];
+    }
 }
 
 - (IBAction)openAutocomplete:(id)sender
@@ -5896,6 +5900,9 @@ NSString *kSessionsKVCKey = @"sessions";
     } else if ([item action] == @selector(resetCharset:)) {
         result = ![[[self currentSession] SCREEN] allCharacterSetPropertiesHaveDefaultValues];
     } else if ([item action] == @selector(openCommandHistory:)) {
+        if (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+            return YES;
+        }
         return [[CommandHistory sharedInstance] haveCommandsForHost:[[self currentSession] currentHost]];
     } else if ([item action] == @selector(movePaneDividerDown:)) {
         int height = [[[self currentSession] TEXTVIEW] lineHeight];
