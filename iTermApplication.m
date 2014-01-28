@@ -30,6 +30,7 @@
 
 #import "iTermApplication.h"
 #import "HotkeyWindowController.h"
+#import "NSTextField+iTerm.h"
 #import "PTYSession.h"
 #import "PTYTextView.h"
 #import "PTYWindow.h"
@@ -39,20 +40,6 @@
 #import "iTermKeyBindingMgr.h"
 
 @implementation iTermApplication
-
-+ (BOOL)isTextFieldInFocus:(NSTextField *)textField
-{
-    BOOL inFocus = NO;
-
-    // If the textfield's widow's first responder is a text view and
-    // the default editor for the text field exists and
-    // the textfield is the textfield's window's first responder's delegate
-    inFocus = ([[[textField window] firstResponder] isKindOfClass:[NSTextView class]]
-               && [[textField window] fieldEditor:NO forObject:nil]!=nil
-               && [textField isEqualTo:(id)[(NSTextView *)[[textField window] firstResponder]delegate]]);
-
-    return inFocus;
-}
 
 - (BOOL)_eventUsesNavigationKeys:(NSEvent*)event
 {
@@ -129,18 +116,18 @@
         }
         if ([prefPanel keySheet] == [self keyWindow] &&
             [prefPanel keySheetIsOpen] &&
-            [iTermApplication isTextFieldInFocus:[prefPanel shortcutKeyTextField]]) {
+            [[prefPanel shortcutKeyTextField] textFieldIsFirstResponder]) {
             // Focus is in the shortcut field in prefspanel. Pass events directly to it.
             [prefPanel shortcutKeyDown:event];
             return;
         } else if ([privatePrefPanel keySheet] == [self keyWindow] &&
                    [privatePrefPanel keySheetIsOpen] &&
-                   [iTermApplication isTextFieldInFocus:[privatePrefPanel shortcutKeyTextField]]) {
+                   [[privatePrefPanel shortcutKeyTextField] textFieldIsFirstResponder]) {
             // Focus is in the shortcut field in sessions prefspanel. Pass events directly to it.
             [privatePrefPanel shortcutKeyDown:event];
             return;
         } else if ([prefPanel window] == [self keyWindow] &&
-                   [iTermApplication isTextFieldInFocus:[prefPanel hotkeyField]]) {
+                   [[prefPanel hotkeyField] textFieldIsFirstResponder]) {
             // Focus is in the hotkey field in prefspanel. Pass events directly to it.
             [prefPanel hotkeyKeyDown:event];
             return;

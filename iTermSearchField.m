@@ -26,7 +26,7 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.                           
  */
 #import "iTermSearchField.h"
-
+#import "NSTextField+iTerm.h"
 
 @implementation iTermSearchField
 
@@ -42,6 +42,10 @@
     modflag = [theEvent modifierFlags];
     keycode = [theEvent keyCode];
 
+    if (![self textFieldIsFirstResponder]) {
+        return NO;
+    }
+    
     const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
     // TODO(georgen): Not getting normal keycodes here, but 125 and 126 are up and down arrows.
     // This is a pretty ugly hack. Also, calling keyDown from here is probably not cool.
