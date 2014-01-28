@@ -27,6 +27,7 @@
  */
 
 #import "FindViewController.h"
+#import "NSTextField+iTerm.h"
 #import "iTermApplication.h"
 
 static const float FINDVIEW_DURATION = 0.075;
@@ -96,7 +97,7 @@ static NSString *gSearchString;
 
 - (void)_loadFindStringFromSharedPasteboard
 {
-    if (![iTermApplication isTextFieldInFocus:findBarTextField_]) {
+    if (![findBarTextField_ textFieldIsFirstResponder]) {
         NSPasteboard* findBoard = [NSPasteboard pasteboardWithName:NSFindPboard];
         if ([[findBoard types] containsObject:NSStringPboardType]) {
             NSString *value = [findBoard stringForType:NSStringPboardType];

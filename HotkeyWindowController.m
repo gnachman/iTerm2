@@ -6,6 +6,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
+#import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
 #import "SBSystemPreferences.h"
@@ -412,7 +413,7 @@ void OnHotKeyEvent(void)
         NSWindow* prefWindow = [prefPanel window];
         NSWindow* appKeyWindow = [[NSApplication sharedApplication] keyWindow];
         if (prefWindow != appKeyWindow ||
-            ![iTermApplication isTextFieldInFocus:[prefPanel hotkeyField]]) {
+            ![[prefPanel hotkeyField] textFieldIsFirstResponder]) {
             [NSApp hide:nil];
         }
     } else {
