@@ -273,6 +273,8 @@ static int gNextSessionID = 1;
     VT100ScreenMark *lastMark_;
 
     VT100GridCoordRange commandRange_;
+    
+    NSTimeInterval lastUpdate_;
 }
 
 - (id)init
@@ -1230,9 +1232,7 @@ static int gNextSessionID = 1;
     [updateDisplayUntil_ release];
     updateDisplayUntil_ = [[NSDate dateWithTimeIntervalSinceNow:10] retain];
     if ([[[self tab] parentWindow] currentTab] == [self tab]) {
-        if ([data length] < 16) {
-            [self scheduleUpdateIn:kSuperFastTimerIntervalSec];
-        } else if ([data length] < 1024) {
+        if ([data length] < 1024) {
             [self scheduleUpdateIn:kFastTimerIntervalSec];
         } else {
             [self scheduleUpdateIn:kSlowTimerIntervalSec];
@@ -3005,7 +3005,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [updateTimer invalidate];
     [updateTimer release];
 
-    updateTimer = [[NSTimer scheduledTimerWithTimeInterval:timeout
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    NSTimeInterval timeSinceLastUpdate = now - lastUpdate_;
+    lastUpdate_ = now;
+
+    updateTimer = [[NSTimer scheduledTimerWithTimeInterval:MAX(0, timeout - timeSinceLastUpdate)
                                                     target:self
                                                   selector:@selector(updateDisplay)
                                                   userInfo:[NSNumber numberWithFloat:(float)timeout]
