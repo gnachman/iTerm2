@@ -2718,16 +2718,20 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (void)putStreamData:(NSData *)data
 {
-    if (current_stream_length + [data length] > total_stream_length) {
+    [self putStreamData:(const char *)[data bytes] length:[data length]];
+}
+
+- (void)putStreamData:(const char *)buffer length:(int)length {
+    if (current_stream_length + length > total_stream_length) {
         // Grow the stream if needed.
-        int n = ([data length] + current_stream_length) / STANDARD_STREAM_SIZE;
+        int n = (length + current_stream_length) / STANDARD_STREAM_SIZE;
 
         total_stream_length += n * STANDARD_STREAM_SIZE;
         stream_ = reallocf(stream_, total_stream_length);
     }
 
-    memcpy(stream_ + current_stream_length, [data bytes], [data length]);
-    current_stream_length += [data length];
+    memcpy(stream_ + current_stream_length, buffer, length);
+    current_stream_length += length;
     assert(current_stream_length >= 0);
     if (current_stream_length == 0) {
         streamOffset_ = 0;

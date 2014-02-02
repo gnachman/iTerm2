@@ -125,6 +125,8 @@ typedef enum {
 - (void)setEncoding:(NSStringEncoding)encoding;
 
 - (void)putStreamData:(NSData*)data;
+- (void)putStreamData:(const char *)buffer length:(int)length;
+;
 
 // Returns true if a new token was parsed, false if there was nothing left to do.
 - (BOOL)parseNextToken;

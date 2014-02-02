@@ -1190,20 +1190,19 @@ static int gNextSessionID = 1;
     [self writeTaskImpl:data];
 }
 
-- (void)readTask:(NSData*)data
+- (void)readTask:(const char *)buffer length:(int)length
 {
-    if ([data length] == 0 || EXIT) {
+    if (length == 0 || EXIT) {
         return;
     }
     if ([SHELL hasMuteCoprocess]) {
         return;
     }
     if (gDebugLogging) {
-      const char* bytes = [data bytes];
-      int length = [data length];
-      DebugLog([NSString stringWithFormat:@"readTask called with %d bytes. The last byte is %d", (int)length, (int)bytes[length-1]]);
+      DebugLog([NSString stringWithFormat:@"readTask called with %d bytes. The last byte is %d", (int)length, (int)buffer[length-1]]);
     }
     if (tmuxMode_ == TMUX_GATEWAY) {
+        NSData *data = [NSData dataWithBytes:buffer length:length];
         if (tmuxLogging_) {
             [self printTmuxCommandOutputToScreen:[[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]];
         }
@@ -1214,7 +1213,7 @@ static int gNextSessionID = 1;
         }
     }
 
-    [TERMINAL putStreamData:data];
+    [TERMINAL putStreamData:buffer length:length];
 
     // while loop to process all the tokens we can get
     while (!EXIT &&
@@ -1232,7 +1231,7 @@ static int gNextSessionID = 1;
     [updateDisplayUntil_ release];
     updateDisplayUntil_ = [[NSDate dateWithTimeIntervalSinceNow:10] retain];
     if ([[[self tab] parentWindow] currentTab] == [self tab]) {
-        if ([data length] < 1024) {
+        if (length < 1024) {
             [self scheduleUpdateIn:kFastTimerIntervalSec];
         } else {
             [self scheduleUpdateIn:kSlowTimerIntervalSec];
@@ -3837,8 +3836,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)tmuxReadTask:(NSData *)data
 {
     if (!EXIT) {
-        [SHELL logData:data];
-        [self readTask:data];
+        [SHELL logData:(const char *)[data bytes] length:[data length]];
+        [self readTask:(const char *)[data bytes] length:[data length]];
     }
 }
 

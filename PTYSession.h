@@ -149,7 +149,7 @@ typedef enum {
 // PTYTask
 - (void)writeTask:(NSData*)data;
 - (void)writeTaskNoBroadcast:(NSData *)data;
-- (void)readTask:(NSData*)data;
+- (void)readTask:(const char *)bytes length:(int)length;
 - (void)brokenPipe;
 
 // PTYTextView

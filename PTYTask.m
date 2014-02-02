@@ -279,10 +279,10 @@ static void reapchild(int n)
     int iterations = 10;
     int bytesRead = 0;
 
-    NSMutableData* data = [NSMutableData dataWithLength:MAXRW * iterations];
+    char buffer[MAXRW * iterations];
     for (int i = 0; i < iterations; ++i) {
         // Only read up to MAXRW*iterations bytes, then release control
-        ssize_t n = read(fd, [data mutableBytes] + bytesRead, MAXRW);
+        ssize_t n = read(fd, buffer + bytesRead, MAXRW);
         if (n < 0) {
             // There was a read error.
             if (errno != EAGAIN && errno != EINTR) {
@@ -305,11 +305,10 @@ static void reapchild(int n)
         }
     }
 
-    [data setLength:bytesRead];
     hasOutput = YES;
 
     // Send data to the terminal
-    [self readTask:data];
+    [self readTask:buffer length:bytesRead];
 }
 
 - (void)processWrite
@@ -357,32 +356,32 @@ static void reapchild(int n)
     return delegate;
 }
 
-- (void)logData:(NSData *)data {
+- (void)logData:(const char *)buffer length:(int)length {
     @synchronized(logHandle) {
         if ([self logging]) {
-            [logHandle writeData:data];
+            [logHandle writeData:[NSData dataWithBytes:buffer
+                                                length:length]];
         }
     }
 }
 
 // The bytes in data were just read from the fd.
-- (void)readTask:(NSData*)data
+- (void)readTask:(char *)buffer length:(int)length
 {
-    [self logData:data];
+    [self logData:buffer length:length];
 
     // forward the data to our delegate
-    if ([delegate respondsToSelector:@selector(readTask:)]) {
-        // This waitsUntilDone because otherwise we can read data from a child process faster than
-        // we can parse it. The main thread will quickly end up overloaded with calls to readTask:,
-        // never catching up, and never having a chance to draw or respond to input.
-        NSObject *delegateObj = delegate;
-        [delegateObj performSelectorOnMainThread:@selector(readTask:)
-                                      withObject:data
-                                   waitUntilDone:YES];
-    }
+    // This is synchronous because otherwise we can read data from a child process faster than
+    // we can parse it. The main thread will quickly end up overloaded with calls to readTask:,
+    // never catching up, and never having a chance to draw or respond to input.
+    dispatch_sync(dispatch_get_main_queue(), ^() {
+        [delegate readTask:buffer length:length];
+    });
 
     @synchronized (self) {
-        [coprocess_.outputBuffer appendData:data];
+        if (coprocess_) {
+            [coprocess_.outputBuffer appendData:[NSData dataWithBytes:buffer length:length]];
+        }
     }
 }
 
