@@ -42,13 +42,27 @@
     if (dirty && updateTimestamp) {
         [self updateTimestamp];
     }
-    int n = MAX(0, MIN(range.length, width_ - range.location));
-    if (start_ < 0) {
-        start_ = range.location;
-        bound_ = range.location + range.length;
-    } else {
-        start_ = MIN(start_, range.location);
-        bound_ = MAX(bound_, range.location + range.length);
+    if (dirty) {
+        if (start_ < 0) {
+            start_ = range.location;
+            bound_ = range.location + range.length;
+        } else {
+            start_ = MIN(start_, range.location);
+            bound_ = MAX(bound_, range.location + range.length);
+        }
+    } else if (start_ >= 0) {
+        // Unset part of the dirty region.
+        int clearBound = range.location + range.length;
+        if (range.location <= start_) {
+            if (clearBound >= bound_) {
+                start_ = bound_ = -1;
+            } else if (clearBound > start_) {
+                start_ = clearBound;
+            }
+        } else if (range.location < bound_ && clearBound >= bound_) {
+            // Clear the right-hand part of the dirty region
+            bound_ = range.location;
+        }
     }
 }
 
