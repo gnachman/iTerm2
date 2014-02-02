@@ -35,8 +35,8 @@ extern int kVT100ScreenMinRows;
     VT100GridCoord savedCursor_;
 
     // BOOLs indicating, for each of the characters sets, which ones are in line-drawing mode.
-    NSMutableArray *charsetUsesLineDrawingMode_;
-    NSMutableArray *savedCharsetUsesLineDrawingMode_;
+    BOOL charsetUsesLineDrawingMode_[4];
+    BOOL savedCharsetUsesLineDrawingMode_[4];
     BOOL audibleBell_;
     BOOL showBellIndicator_;
     BOOL flashBell_;

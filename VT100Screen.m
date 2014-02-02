@@ -81,11 +81,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         dvr_ = [DVR alloc];
         [dvr_ initWithBufferCapacity:[[PreferencePanel sharedInstance] irMemory] * 1024 * 1024];
 
-        charsetUsesLineDrawingMode_ = [[NSMutableArray alloc] init];
-        savedCharsetUsesLineDrawingMode_ = [[NSMutableArray alloc] init];
         for (int i = 0; i < NUM_CHARSETS; i++) {
-            [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
-            [savedCharsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
+            charsetUsesLineDrawingMode_[i] = NO;
+            savedCharsetUsesLineDrawingMode_[i] = NO;
         }
 
         findContext_ = [[FindContext alloc] init];
@@ -107,7 +105,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [linebuffer_ release];
     [dvr_ release];
     [terminal_ release];
-    [charsetUsesLineDrawingMode_ release];
     [findContext_ release];
     [intervalTree_ release];
     [markCache_ release];
@@ -666,7 +663,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (BOOL)allCharacterSetPropertiesHaveDefaultValues {
     for (int i = 0; i < NUM_CHARSETS; i++) {
-        if ([[charsetUsesLineDrawingMode_ objectAtIndex:i] boolValue]) {
+        if (charsetUsesLineDrawingMode_[i]) {
             return NO;
         }
     }
@@ -776,7 +773,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
         // If a graphics character set was selected then translate buffer
         // characters into graphics charaters.
-        if ([[charsetUsesLineDrawingMode_ objectAtIndex:[terminal_ charset]] boolValue]) {
+        if (charsetUsesLineDrawingMode_[[terminal_ charset]]) {
             ConvertCharsToGraphicsCharset(buffer, len);
         }
         if (dynamicTemp) {
@@ -1147,9 +1144,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)resetCharset {
-    [charsetUsesLineDrawingMode_ removeAllObjects];
     for (int i = 0; i < NUM_CHARSETS; i++) {
-        [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
+        charsetUsesLineDrawingMode_[i] = NO;
     }
 }
 
@@ -1998,9 +1994,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)terminalRestoreCharsetFlags
 {
-    assert(savedCharsetUsesLineDrawingMode_.count == charsetUsesLineDrawingMode_.count);
-    [charsetUsesLineDrawingMode_ removeAllObjects];
-    [charsetUsesLineDrawingMode_ addObjectsFromArray:savedCharsetUsesLineDrawingMode_];
+    memmove(charsetUsesLineDrawingMode_,
+            savedCharsetUsesLineDrawingMode_,
+            sizeof(savedCharsetUsesLineDrawingMode_));
 
     [delegate_ screenTriggerableChangeDidOccur];
 }
@@ -2013,8 +2009,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)terminalSaveCharsetFlags
 {
-    [savedCharsetUsesLineDrawingMode_ removeAllObjects];
-    [savedCharsetUsesLineDrawingMode_ addObjectsFromArray:charsetUsesLineDrawingMode_];
+    memmove(savedCharsetUsesLineDrawingMode_,
+            charsetUsesLineDrawingMode_,
+            sizeof(charsetUsesLineDrawingMode_));
 }
 
 - (int)terminalRelativeCursorX {
@@ -2146,11 +2143,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
     [self setInitialTabStops];
 
-    [savedCharsetUsesLineDrawingMode_ removeAllObjects];
-    [charsetUsesLineDrawingMode_ removeAllObjects];
     for (int i = 0; i < NUM_CHARSETS; i++) {
-        [savedCharsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
-        [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
+        savedCharsetUsesLineDrawingMode_[i] = NO;
+        charsetUsesLineDrawingMode_[i] = NO;
     }
     [delegate_ screenDidReset];
     commandStartX_ = commandStartY_ = -1;
@@ -2194,8 +2189,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalSetCharset:(int)charset toLineDrawingMode:(BOOL)lineDrawingMode {
-    [charsetUsesLineDrawingMode_ replaceObjectAtIndex:charset
-                                           withObject:[NSNumber numberWithBool:lineDrawingMode]];
+    charsetUsesLineDrawingMode_[charset] = lineDrawingMode;
 }
 
 - (void)terminalRemoveTabStops {
