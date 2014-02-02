@@ -65,7 +65,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     self = [super init];
     if (self) {
         assert(terminal);
-        terminal_ = [terminal retain];
+        [self setTerminal:terminal];
         primaryGrid_ = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(kDefaultScreenColumns,
                                                                          kDefaultScreenRows)
                                               delegate:self];
@@ -126,8 +126,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (void)setTerminal:(VT100Terminal *)terminal {
     [terminal_ autorelease];
     terminal_ = [terminal retain];
-    primaryGrid_.delegate = self;
-    altGrid_.delegate = self;
+    _ansi = [terminal_ isAnsi];
+    _wraparoundMode = [terminal_ wraparoundMode];
 }
 
 - (void)destructivelySetScreenWidth:(int)width height:(int)height
@@ -845,7 +845,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                              length:len
                                             scrollingIntoLineBuffer:linebuffer_
                                                 unlimitedScrollback:unlimitedScrollback_
-                                            useScrollbackWithRegion:[self useScrollbackWithRegion]]];
+                                            useScrollbackWithRegion:[self useScrollbackWithRegion]
+                                                         wraparound:_wraparoundMode
+                                                               ansi:_ansi]];
     }
 
     if (dynamicBuffer) {
@@ -3101,6 +3103,14 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
    */
 }
 
+- (void)terminalWraparoundModeDidChangeTo:(BOOL)newValue {
+    _wraparoundMode = newValue;
+}
+
+- (void)terminalTypeDidChange {
+    _ansi = [terminal_ isAnsi];
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {
@@ -3719,16 +3729,8 @@ static void SwapInt(int *a, int *b) {
 
 #pragma mark - VT100GridDelegate
 
-- (BOOL)gridShouldUseWraparoundMode {
-    return [terminal_ wraparoundMode];
-}
-
 - (BOOL)gridShouldUseInsertMode {
     return [terminal_ insertMode];
-}
-
-- (BOOL)gridShouldActLikeANSITerminal {
-    return [terminal_ isAnsi];
 }
 
 - (screen_char_t)gridForegroundColorCode {

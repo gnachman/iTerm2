@@ -39,16 +39,8 @@ do { \
     backgroundColor_.backgroundColorMode = ColorModeAlternate;
 }
 
-- (BOOL)gridShouldUseWraparoundMode {
-    return wraparoundMode_;
-}
-
 - (BOOL)gridShouldUseInsertMode {
     return insertMode_;
-}
-
-- (BOOL)gridShouldActLikeANSITerminal {
-    return isAnsi_;
 }
 
 - (screen_char_t)gridForegroundColorCode {
@@ -1841,7 +1833,9 @@ do { \
                                              length:[stringToAppend length]
                             scrollingIntoLineBuffer:lineBuffer
                                 unlimitedScrollback:unlimitedScrollback
-                            useScrollbackWithRegion:useScrollbackWithRegion];
+                            useScrollbackWithRegion:useScrollbackWithRegion
+                                         wraparound:wraparoundMode_
+                                               ansi:isAnsi_];
     assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:expectedLines]);
     assert([[lineBuffer debugString] isEqualToString:expectedLineBuffer]);
     assert(numLinesDropped == expectedNumLinesDropped);

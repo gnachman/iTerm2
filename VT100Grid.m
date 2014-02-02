@@ -535,7 +535,9 @@
                     length:(int)len
    scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
        unlimitedScrollback:(BOOL)unlimitedScrollback
-   useScrollbackWithRegion:(BOOL)useScrollbackWithRegion {
+   useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
+                wraparound:(BOOL)wraparound
+                      ansi:(BOOL)ansi {
     int numDropped = 0;
     assert(buffer);
     int idx;  // Index into buffer
@@ -596,7 +598,7 @@
             rightMargin = size_.width;
         }
         if (cursor_.x >= rightMargin - widthOffset) {
-            if ([delegate_ gridShouldUseWraparoundMode]) {
+            if (wraparound) {
                 if (leftMargin == 0 && rightMargin == size_.width) {
                     // Set the continuation marker
                     screen_char_t* prevLine = [self screenCharsAtLineNumber:cursor_.y];
@@ -803,8 +805,8 @@
 
         // ANSI terminals will go to a new line after displaying a character at
         // the rightmost column.
-        if (cursor_.x >= effective_width && [delegate_ gridShouldActLikeANSITerminal]) {
-            if ([delegate_ gridShouldUseWraparoundMode]) {
+        if (cursor_.x >= effective_width && ansi) {
+            if (wraparound) {
                 //set the wrapping flag
                 aLine[size_.width].code = ((effective_width == size_.width) ? EOL_SOFT : EOL_DWC);
                 self.cursorX = leftMargin;

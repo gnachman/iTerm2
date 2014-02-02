@@ -95,6 +95,10 @@ extern int kVT100ScreenMinRows;
     // Location of the start of the current command, or -1 for none. Y is absolute.
     int commandStartX_;
     long long commandStartY_;
+
+    // Cached copies of terminal attributes
+    BOOL _wraparoundMode;
+    BOOL _ansi;
 }
 
 @property(nonatomic, retain) VT100Terminal *terminal;

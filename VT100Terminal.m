@@ -2486,7 +2486,7 @@ static VT100TCC decode_string(unsigned char *datap,
         scrollMode_ = NO;
         screenMode_ = NO;
         originMode_ = NO;
-        wraparoundMode_ = YES;
+        [self setWraparoundMode:YES];
         autorepeatMode_ = YES;
         keypadMode_ = NO;
         insertMode_ = NO;
@@ -2591,6 +2591,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
     isAnsi_ = [termType rangeOfString:@"ANSI"
                               options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location != NSNotFound;
+    [delegate_ terminalTypeDidChange];
 }
 
 - (void)saveTextAttributes
@@ -2656,7 +2657,7 @@ static VT100TCC decode_string(unsigned char *datap,
     scrollMode_ = NO;
     screenMode_ = NO;
     originMode_ = NO;
-    wraparoundMode_ = YES;
+    [self setWraparoundMode:YES];
     autorepeatMode_ = YES;
     keypadMode_ = NO;
     insertMode_ = NO;
@@ -3289,7 +3290,10 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (void)setWraparoundMode:(BOOL)mode
 {
-    wraparoundMode_ = mode;
+    if (mode != wraparoundMode_) {
+        wraparoundMode_ = mode;
+        [delegate_ terminalWraparoundModeDidChangeTo:mode];
+    }
 }
 
 - (BOOL)isAnsi
@@ -3471,7 +3475,7 @@ static VT100TCC decode_string(unsigned char *datap,
                         [delegate_ terminalMoveCursorToX:1 y:1];
                         break;
                     case 7:
-                        wraparoundMode_ = mode;
+                        [self setWraparoundMode:mode];
                         break;
                     case 8:
                         autorepeatMode_ = mode;
@@ -3607,7 +3611,7 @@ static VT100TCC decode_string(unsigned char *datap,
             [delegate_ terminalSaveCursor];
             break;
         case VT100CSI_DECSTR:
-            wraparoundMode_ = YES;
+            [self setWraparoundMode:YES];
             originMode_ = NO;
             break;
         case VT100CSI_RESET_MODIFIERS:
