@@ -353,5 +353,6 @@ typedef enum {
 // Flag changes
 - (void)terminalWraparoundModeDidChangeTo:(BOOL)newValue;
 - (void)terminalTypeDidChange;
+- (void)terminalInsertModeDidChangeTo:(BOOL)newValue;
 
 @end

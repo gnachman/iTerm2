@@ -128,6 +128,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     terminal_ = [terminal retain];
     _ansi = [terminal_ isAnsi];
     _wraparoundMode = [terminal_ wraparoundMode];
+    _insert = [terminal_ insertMode];
 }
 
 - (void)destructivelySetScreenWidth:(int)width height:(int)height
@@ -847,7 +848,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                 unlimitedScrollback:unlimitedScrollback_
                                             useScrollbackWithRegion:[self useScrollbackWithRegion]
                                                          wraparound:_wraparoundMode
-                                                               ansi:_ansi]];
+                                                               ansi:_ansi
+                                                             insert:_insert]];
     }
 
     if (dynamicBuffer) {
@@ -3111,6 +3113,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     _ansi = [terminal_ isAnsi];
 }
 
+- (void)terminalInsertModeDidChangeTo:(BOOL)newValue {
+    _insert = newValue;
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {
@@ -3728,10 +3734,6 @@ static void SwapInt(int *a, int *b) {
 }
 
 #pragma mark - VT100GridDelegate
-
-- (BOOL)gridShouldUseInsertMode {
-    return [terminal_ insertMode];
-}
 
 - (screen_char_t)gridForegroundColorCode {
     return [terminal_ foregroundColorCodeReal];

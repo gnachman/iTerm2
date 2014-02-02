@@ -99,6 +99,7 @@ extern int kVT100ScreenMinRows;
     // Cached copies of terminal attributes
     BOOL _wraparoundMode;
     BOOL _ansi;
+    BOOL _insert;
 }
 
 @property(nonatomic, retain) VT100Terminal *terminal;

@@ -2660,7 +2660,7 @@ static VT100TCC decode_string(unsigned char *datap,
     [self setWraparoundMode:YES];
     autorepeatMode_ = YES;
     keypadMode_ = NO;
-    insertMode_ = NO;
+    [self setInsertMode:NO];
     bracketedPasteMode_ = NO;
     saveCharset_ = charset_ = NO;
     xon_ = YES;
@@ -3431,7 +3431,10 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (void)setInsertMode:(BOOL)mode
 {
-    insertMode_ = mode;
+    if (insertMode_ != mode) {
+        insertMode_ = mode;
+        [delegate_ terminalInsertModeDidChangeTo:mode];
+    }
 }
 
 - (void)setCursorMode:(BOOL)mode

@@ -537,7 +537,8 @@
        unlimitedScrollback:(BOOL)unlimitedScrollback
    useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
                 wraparound:(BOOL)wraparound
-                      ansi:(BOOL)ansi {
+                      ansi:(BOOL)ansi
+                    insert:(BOOL)insert {
     int numDropped = 0;
     assert(buffer);
     int idx;  // Index into buffer
@@ -717,7 +718,7 @@
         int lineNumber = cursor_.y;
         aLine = [self screenCharsAtLineNumber:cursor_.y];
 
-        if ([delegate_ gridShouldUseInsertMode]) {
+        if (insert) {
             if (cursor_.x + charsToInsert < rightMargin) {
 #ifdef VERBOSE_STRING
                 NSLog(@"Shifting old contents to the right");
