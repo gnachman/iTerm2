@@ -381,7 +381,8 @@
 - (int)moveCursorDownOneLineScrollingIntoLineBuffer:(LineBuffer *)lineBuffer
                                 unlimitedScrollback:(BOOL)unlimitedScrollback
                             useScrollbackWithRegion:(BOOL)useScrollbackWithRegion {
-    const int scrollBottom = self.bottomMargin;
+    // This doesn't call -bottomMargin because it was a hotspot in profiling.
+    const int scrollBottom = VT100GridRangeMax(scrollRegionRows_);
 
     if (cursor_.y < scrollBottom ||
         (cursor_.y < (size_.height - 1) && cursor_.y > scrollBottom)) {

@@ -320,10 +320,6 @@
     newPixelSize_ = NSMakeSize(newWidth, newHeight);
 }
 
-- (BOOL)screenShouldAppendToScrollbackWithStatusBar {
-    return YES;
-}
-
 - (BOOL)screenShouldInitiateWindowResize {
     return canResize_;
 }

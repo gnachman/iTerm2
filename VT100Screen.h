@@ -117,6 +117,7 @@ extern int kVT100ScreenMinRows;
 @property(nonatomic, retain) DVR *dvr;
 @property(nonatomic, readonly) VT100GridCoord savedCursor;
 @property(nonatomic, assign) BOOL trackCursorLineMovement;
+@property(nonatomic, assign) BOOL appendToScrollbackWithStatusBar;
 
 // Designated initializer.
 - (id)initWithTerminal:(VT100Terminal *)terminal;

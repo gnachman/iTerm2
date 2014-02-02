@@ -2109,6 +2109,8 @@ static int gNextSessionID = 1;
     [SCREEN setUnlimitedScrollback:[[aDict objectForKey:KEY_UNLIMITED_SCROLLBACK] intValue]];
     [SCREEN setMaxScrollbackLines:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
+    SCREEN.appendToScrollbackWithStatusBar = [[aDict objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue];
+    
     [self setFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NORMAL_FONT]]
            nafont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NON_ASCII_FONT]]
         horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
@@ -5195,10 +5197,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (BOOL)screenShouldTreatAmbiguousCharsAsDoubleWidth {
     return [self doubleWidth];
-}
-
-- (BOOL)screenShouldAppendToScrollbackWithStatusBar {
-    return [[[self addressBookEntry] objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue];
 }
 
 - (void)screenDidChangeNumberOfScrollbackLines {

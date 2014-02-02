@@ -846,7 +846,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                              length:len
                                             scrollingIntoLineBuffer:linebuffer_
                                                 unlimitedScrollback:unlimitedScrollback_
-                                            useScrollbackWithRegion:[self useScrollbackWithRegion]
+                                            useScrollbackWithRegion:_appendToScrollbackWithStatusBar
                                                          wraparound:_wraparoundMode
                                                                ansi:_ansi
                                                              insert:_insert]];
@@ -884,7 +884,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
     [self incrementOverflowBy:[currentGrid_ moveCursorDownOneLineScrollingIntoLineBuffer:lineBufferToUse
                                                                      unlimitedScrollback:unlimitedScrollback_
-                                                                 useScrollbackWithRegion:[self useScrollbackWithRegion]]];
+                                                                 useScrollbackWithRegion:_appendToScrollbackWithStatusBar]];
 }
 
 - (void)cursorToX:(int)x
@@ -2430,7 +2430,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
          i++) {
         [self incrementOverflowBy:[currentGrid_ scrollUpIntoLineBuffer:linebuffer_
                                                    unlimitedScrollback:unlimitedScrollback_
-                                               useScrollbackWithRegion:[self useScrollbackWithRegion]]];
+                                               useScrollbackWithRegion:_appendToScrollbackWithStatusBar]];
     }
     [delegate_ screenTriggerableChangeDidOccur];
 }
@@ -3444,11 +3444,6 @@ static void SwapInt(int *a, int *b) {
         [self incrementOverflowBy:[linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width]];
     }
     [delegate_ screenDidChangeNumberOfScrollbackLines];
-}
-
-- (BOOL)useScrollbackWithRegion
-{
-    return [delegate_ screenShouldAppendToScrollbackWithStatusBar];
 }
 
 - (void)advanceCursor:(BOOL)canOccupyLastSpace
