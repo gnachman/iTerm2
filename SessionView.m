@@ -629,7 +629,8 @@ static NSDate* lastResizeDate_;
 
 - (NSString *)description
 {
-    return [NSString stringWithFormat:@"<SessionView frame:%@ size:%dx%d>", [NSValue valueWithRect:[self frame]], [session_ columns], [session_ rows]];
+    return [NSString stringWithFormat:@"<%@: %p frame:%@ size:%dx%d>", [self class], self,
+            [NSValue valueWithRect:[self frame]], [session_ columns], [session_ rows]];
 }
 
 #pragma mark SessionTitleViewDelegate
