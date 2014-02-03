@@ -21,6 +21,10 @@ NSString *VT100GridCoordRangeDescription(VT100GridCoordRange range) {
             range.end.y];
 }
 
+NSString *VT100GridCoordDescription(VT100GridCoord coord) {
+    return [NSString stringWithFormat:@"(%d, %d)", coord.x, coord.y];
+}
+
 @implementation NSValue (VT100Grid)
 
 + (NSValue *)valueWithGridCoord:(VT100GridCoord)coord {

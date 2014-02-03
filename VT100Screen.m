@@ -304,6 +304,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)resizeWidth:(int)new_width height:(int)new_height
 {
+    NSLog(@"-- Begin resize --");
     DLog(@"Resize session to %d height", new_height);
 
     if (currentGrid_.size.width == 0 ||
@@ -316,12 +317,14 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     new_width = MAX(new_width, 1);
     new_height = MAX(new_height, 1);
 
+    NSLog(@"resizeWidth:height: selection=%d,%d to %d,%d", [delegate_ screenSelectionStartX], [delegate_ screenSelectionStartY], [delegate_ screenSelectionEndX], [delegate_ screenSelectionEndY]);
     BOOL hasSelection = ([delegate_ screenHasView] &&
                          [delegate_ screenSelectionStartX] >= 0 &&
                          [delegate_ screenSelectionEndX] >= 0 &&
                          [delegate_ screenSelectionStartY] >= 0 &&
                          [delegate_ screenSelectionEndY] >= 0);
-
+    NSLog(@"has selection=%d", hasSelection);
+    
     int usedHeight = [currentGrid_ numberOfLinesUsed];
 
     VT100Grid *copyOfAltGrid = [[altGrid_ copy] autorelease];
@@ -345,6 +348,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                  newHeight:new_height];
         VT100GridCoordRange selection = [self coordRangeForCurrentSelection];
 
+        NSLog(@"resizeWidth:height: has selection, was showing alt screen.");
         [self getNullCorrectedSelectionStartPosition:&originalStartPos
                                          endPosition:&originalEndPos
                        selectionStartPositionIsValid:&ok1
@@ -373,6 +377,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     NSMutableArray *altScreenNotes = nil;
 
     if (wasShowingAltScreen && [intervalTree_ count]) {
+        NSLog(@"Was showing alt screen and there are objects in the interval tree");
         // Add notes that were on the alt grid to altScreenNotes, leaving notes in history alone.
         VT100GridCoordRange screenCoordRange =
         VT100GridCoordRangeMake(0,
@@ -390,7 +395,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         altScreenNotes = [NSMutableArray array];
         
         for (id<IntervalTreeObject> note in notesAtLeastPartiallyOnScreen) {
+            NSLog(@"Reposition note %@", note);
             VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
+            NSLog(@"range for note is %@", VT100GridCoordRangeDescription(range));
             [[note retain] autorelease];
             [intervalTree_ removeObject:note];
             
@@ -427,6 +434,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
     VT100GridCoordRange newSelection;
     if (!wasShowingAltScreen && hasSelection) {
+        NSLog(@"Was not showing alt screen but have selection");
         hasSelection = [self convertRange:[self coordRangeForCurrentSelection]
                                   toWidth:new_width
                                        to:&newSelection
@@ -442,9 +450,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
         // Convert ranges of notes to their new coordinates and replace the interval tree.
         IntervalTree *replacementTree = [[IntervalTree alloc] init];
+        NSLog(@"* Begin updating notes on primary grid");
         for (id<IntervalTreeObject> note in [intervalTree_ allObjects]) {
             VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
             VT100GridCoordRange newRange;
+            NSLog(@"Handle note %@ on primary grid", note);
             if ([self convertRange:noteRange toWidth:new_width to:&newRange inLineBuffer:linebuffer_]) {
                 Interval *newInterval = [self intervalForGridCoordRange:newRange
                                                                   width:new_width
@@ -454,6 +464,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                 [replacementTree addObject:note withInterval:newInterval];
             }
         }
+        NSLog(@"* Done with notes on primary grid");
         [intervalTree_ release];
         intervalTree_ = replacementTree;
         
@@ -528,6 +539,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                  newHeight:new_height];
 
         if (hasSelection) {
+            NSLog(@"Calling compute range from original...");
             hasSelection = [self computeRangeFromOriginalLimit:originalLastPos
                                                  limitPosition:newLastPos
                                                  startPosition:originalStartPos
@@ -536,9 +548,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                     lineBuffer:appendOnlyLineBuffer
                                                          range:&newSelection
                                                   linesMovedUp:linesMovedUp];
+            NSLog(@"new selection is now %@", VT100GridCoordRangeDescription(newSelection));
         }
         DLog(@"Original limit=%@", originalLastPos);
         DLog(@"New limit=%@", newLastPos);
+        NSLog(@"* Begin notes on alt screen");
         for (NSArray *tuple in altScreenNotes) {
             id<IntervalTreeObject> note = tuple[0];
             LineBufferPosition *start = tuple[1];
@@ -563,6 +577,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                 DLog(@"  *FAILED TO CONVERT*");
             }
         }
+        NSLog(@"* End notes on alt screen");
     } else {
         // Was showing primary grid. Fix up notes in the alt screen.
 
@@ -635,6 +650,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     // adjusted to fit the new size
     DebugLog(@"resizeWidth setDirty");
     [delegate_ screenNeedsRedraw];
+    NSLog(@"hasSelection=%d, new selection=%@", hasSelection, VT100GridCoordRangeDescription(newSelection));
     if (hasSelection &&
         newSelection.start.y >= linesDropped &&
         newSelection.end.y >= linesDropped) {
@@ -648,6 +664,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
     [self reloadMarkCache];
     [delegate_ screenSizeDidChange];
+    NSLog(@"-- End resize --");
 }
 
 - (void)reloadMarkCache {
@@ -3288,6 +3305,8 @@ static void SwapInt(int *a, int *b) {
                       toStartX:(VT100GridCoord *)startPtr
                         toEndX:(VT100GridCoord *)endPtr
 {
+    NSLog(@"trimSelectionFromStart:%@ end:%@", VT100GridCoordDescription(start), VT100GridCoordDescription(end));
+    
     assert(start.x >= 0);
     assert(end.x >= 0);
     assert(start.y >= 0);
@@ -3332,6 +3351,7 @@ static void SwapInt(int *a, int *b) {
                                   inLineBuffer:(LineBuffer *)lineBuffer
                                       forRange:(VT100GridCoordRange)range
 {
+    NSLog(@"getNullCorrectedSelection. range=%@", VT100GridCoordRangeDescription(range));
     int actualStartX = range.start.x;
     int actualStartY = range.start.y;
     int actualEndX = range.end.x;
@@ -3399,6 +3419,7 @@ static void SwapInt(int *a, int *b) {
     // Temporarily swap in the passed-in linebuffer so the call below can access lines in the right line buffer.
     LineBuffer *savedLineBuffer = linebuffer_;
     linebuffer_ = lineBuffer;
+    NSLog(@"convertRange:%@ to width:%d", VT100GridCoordRangeDescription(range), newWidth);
     BOOL hasSelection = [self getNullCorrectedSelectionStartPosition:&selectionStartPosition
                                                          endPosition:&selectionEndPosition
                                        selectionStartPositionIsValid:&selectionStartPositionIsValid
