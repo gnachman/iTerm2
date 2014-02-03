@@ -3482,6 +3482,15 @@ NSString *kSessionsKVCKey = @"sessions";
     [item setRepresentedObject:tabViewItem];
     [rootMenu addItem:item];
 
+    PTYTab *theTab = [tabViewItem identifier];
+    if (![theTab isTmuxTab]) {
+        item = [[[NSMenuItem alloc] initWithTitle:@"Duplicate Tab"
+                                           action:@selector(duplicateTab:)
+                                    keyEquivalent:@""] autorelease];
+        [item setRepresentedObject:tabViewItem];
+        [rootMenu addItem:item];
+    }
+    
     if ([TABVIEW numberOfTabViewItems] > 1) {
         item = [[[NSMenuItem alloc] initWithTitle:@"Move to New Window"
                                            action:@selector(moveTabToNewWindowContextualMenuAction:)
@@ -5920,6 +5929,8 @@ NSString *kSessionsKVCKey = @"sessions";
         int width = [[[self currentSession] TEXTVIEW] charWidth];
         return [[self currentTab] canMoveCurrentSessionDividerBy:-width
                                                     horizontally:YES];
+    } else if ([item action] == @selector(duplicateTab:)) {
+        return ![[self currentTab] isTmuxTab];
     }
     return result;
 }
@@ -5991,9 +6002,18 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 // Called when the "Close tab" contextual menu item is clicked.
-- (void)closeTabContextualMenuAction: (id) sender
+- (void)closeTabContextualMenuAction:(id)sender
 {
     [self closeTab:(id)[[sender representedObject] identifier]];
+}
+
+- (IBAction)duplicateTab:(id)sender
+{
+    PTYTab *theTab = (PTYTab *)[[sender representedObject] identifier];
+    if (!theTab) {
+        theTab = [self currentTab];
+    }
+    [self appendTab:[[theTab copy] autorelease]];
 }
 
 // These two methods are delecate because -closeTab: won't remove the tab from

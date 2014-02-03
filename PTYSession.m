@@ -524,7 +524,10 @@ static int gNextSessionID = 1;
                                                             objectForKey:KEY_GUID]];
     BOOL needDivorce = NO;
     if (!theBookmark) {
-        theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
+        NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:[arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK]];
+        // Keep it from stepping on an existing sesion with the same guid.
+        temp[KEY_GUID] = [ProfileModel freshGuid];
+        theBookmark = temp;
         needDivorce = YES;
     }
     [[aSession SCREEN] setUnlimitedScrollback:[[theBookmark objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
@@ -2809,6 +2812,7 @@ static int gNextSessionID = 1;
 
 - (void)setAddressBookEntry:(NSDictionary*)entry
 {
+    assert(entry);
     DLog(@"Set address book entry to one with guid %@", entry[KEY_GUID]);
     NSMutableDictionary *dict = [[entry mutableCopy] autorelease];
     // This is the most practical way to migrate the bopy of a

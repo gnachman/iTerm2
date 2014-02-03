@@ -160,6 +160,14 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return self;
 }
 
+- (id)copyWithZone:(NSZone *)zone {
+    NSDictionary *arrangement = [self arrangement];
+    PTYTab *theCopy = [PTYTab tabWithArrangement:arrangement
+                                      inTerminal:[self realParentWindow]
+                                 hasFlexibleView:flexibleView_ != nil];
+    return [theCopy retain];
+}
+
 + (void)_recursiveSetDelegateIn:(NSSplitView*)node to:(id)delegate
 {
     [node setDelegate:delegate];
@@ -3871,9 +3879,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     return originalPosition + allowedDiff;
 }
 
-@end
-
-@implementation PTYTab (Private)
+#pragma mark - Private
 
 - (void)_setLabelAttributesForDeadSession
 {

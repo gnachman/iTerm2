@@ -427,6 +427,8 @@
 - (IBAction)nextMarkOrNote:(id)sender;
 - (IBAction)previousMarkOrNote:(id)sender;
 - (IBAction)toggleAlertOnNextMark:(id)sender;
+- (IBAction)duplicateTab:(id)sender;
+
 - (void)changeTabColorToMenuAction:(id)sender;
 - (void)moveSessionToWindow:(id)sender;
 
