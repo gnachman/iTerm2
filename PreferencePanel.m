@@ -133,7 +133,9 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     
     // Hotkey opens dedicated window
     IBOutlet NSButton* hotkeyTogglesWindow;
+    IBOutlet NSButton* hotkeyAutoHides;
     BOOL defaultHotkeyTogglesWindow;
+    BOOL defaultHotkeyAutoHides;
     IBOutlet NSPopUpButton* hotkeyBookmark;
     NSString* defaultHotKeyBookmarkGuid;
     
@@ -987,7 +989,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                sender == openTmuxWindows ||
                sender == threeFingerEmulatesMiddle ||
                sender == autoHideTmuxClientSession ||
-               sender == showWindowBorder) {
+               sender == showWindowBorder ||
+               sender == hotkeyAutoHides) {
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
         defaultOpenTmuxWindowsIn = [[openTmuxWindows selectedItem] tag];
         defaultAutoHideTmuxClientSession = ([autoHideTmuxClientSession state] == NSOnState);
@@ -1007,6 +1010,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         defaultThreeFingerEmulatesMiddle=([threeFingerEmulatesMiddle state] == NSOnState);
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
         defaultDisableFullscreenTransparency = ([disableFullscreenTransparency state] == NSOnState);
+        defaultHotkeyAutoHides = ([hotkeyAutoHides state] == NSOnState);
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermRefreshTerminal"
                                                             object:nil
                                                           userInfo:nil];
@@ -1049,7 +1053,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                             nil,
                             nil);
         }
-
         defaultFsTabDelay = [fsTabDelay floatValue];
         defaultAllowClipboardAccess = ([allowClipboardAccessFromTerminal state]==NSOnState);
         defaultCopySelection = ([selectionCopiesText state]==NSOnState);
@@ -1118,6 +1121,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [hotkeyField setEnabled:defaultHotkey];
         [hotkeyLabel setTextColor:defaultHotkey ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
         [hotkeyTogglesWindow setEnabled:defaultHotkey];
+        [hotkeyAutoHides setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
         [hotkeyBookmark setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
 
         if (prefs &&
@@ -2968,6 +2972,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultFocusFollowsMouse = [prefs objectForKey:@"FocusFollowsMouse"]?[[prefs objectForKey:@"FocusFollowsMouse"] boolValue]: NO;
     defaultTripleClickSelectsFullLines = [prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] ? [[prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] boolValue] : NO;
     defaultHotkeyTogglesWindow = [prefs objectForKey:@"HotKeyTogglesWindow"]?[[prefs objectForKey:@"HotKeyTogglesWindow"] boolValue]: NO;
+    defaultHotkeyAutoHides = [prefs objectForKey:@"HotkeyAutoHides"] ? [[prefs objectForKey:@"HotkeyAutoHides"] boolValue] : YES;
     defaultHotKeyBookmarkGuid = [[prefs objectForKey:@"HotKeyBookmark"] copy];
     defaultEnableBonjour = [prefs objectForKey:@"EnableRendezvous"]?[[prefs objectForKey:@"EnableRendezvous"] boolValue]: NO;
     defaultCmdSelection = [prefs objectForKey:@"CommandSelection"]?[[prefs objectForKey:@"CommandSelection"] boolValue]: YES;
@@ -3098,6 +3103,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setBool:defaultFocusFollowsMouse forKey:@"FocusFollowsMouse"];
     [prefs setBool:defaultTripleClickSelectsFullLines forKey:@"TripleClickSelectsFullWrappedLines"];
     [prefs setBool:defaultHotkeyTogglesWindow forKey:@"HotKeyTogglesWindow"];
+    [prefs setBool:defaultHotkeyAutoHides forKey:@"HotkeyAutoHides"];
     [prefs setValue:defaultHotKeyBookmarkGuid forKey:@"HotKeyBookmark"];
     [prefs setBool:defaultEnableBonjour forKey:@"EnableRendezvous"];
     [prefs setBool:defaultCmdSelection forKey:@"CommandSelection"];
@@ -3954,7 +3960,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return [prefs objectForKey:@"HotkeyTermAnimationDuration"] ? [[prefs objectForKey:@"HotkeyTermAnimationDuration"] floatValue] : 0.25;
 }
 
-- (NSString *) searchCommand
+- (NSString *)searchCommand
 {
     assert(prefs);
     return [prefs objectForKey:@"SearchCommand"] ? [prefs objectForKey:@"SearchCommand"] : @"http://google.com/search?q=%@";
@@ -3963,6 +3969,11 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 - (BOOL)hotkeyTogglesWindow
 {
     return defaultHotkeyTogglesWindow;
+}
+
+- (BOOL)hotkeyAutoHides
+{
+    return defaultHotkeyAutoHides;
 }
 
 - (BOOL)dockIconTogglesWindow
@@ -4136,6 +4147,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [focusFollowsMouse setState: defaultFocusFollowsMouse?NSOnState:NSOffState];
     [tripleClickSelectsFullLines setState:defaultTripleClickSelectsFullLines?NSOnState:NSOffState];
     [hotkeyTogglesWindow setState: defaultHotkeyTogglesWindow?NSOnState:NSOffState];
+    [hotkeyAutoHides setState: defaultHotkeyAutoHides?NSOnState:NSOffState];
     [self _populateHotKeyBookmarksMenu];
     [enableBonjour setState: defaultEnableBonjour?NSOnState:NSOffState];
     [cmdSelection setState: defaultCmdSelection?NSOnState:NSOffState];
@@ -4177,6 +4189,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [hotkeyField setEnabled:defaultHotkey];
     [hotkeyLabel setTextColor:defaultHotkey ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
     [hotkeyTogglesWindow setEnabled:defaultHotkey];
+    [hotkeyAutoHides setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
     [hotkeyBookmark setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
 
     [irMemory setIntValue:defaultIrMemory];

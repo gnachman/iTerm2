@@ -2161,8 +2161,9 @@ NSString *kSessionsKVCKey = @"sessions";
     PtyLog(@"PseudoTerminal windowDidResignKey");
     if ([[self window] alphaValue] > 0 &&
         [self isHotKeyWindow] &&
+        [[PreferencePanel sharedInstance] hotkeyAutoHides] &&
         ![[HotkeyWindowController sharedInstance] rollingInHotkeyTerm]) {
-        PtyLog(@"windowDidResignKey: is hotkey");
+        PtyLog(@"windowDidResignKey: is hotkey and hotkey window auto-hides");
         // We want to dismiss the hotkey window when some other window
         // becomes key. Note that if a popup closes this function shouldn't
         // be called at all because it makes us key before closing itself.
