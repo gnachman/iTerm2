@@ -2486,7 +2486,7 @@ static VT100TCC decode_string(unsigned char *datap,
         scrollMode_ = NO;
         screenMode_ = NO;
         originMode_ = NO;
-        wraparoundMode_ = YES;
+        [self setWraparoundMode:YES];
         autorepeatMode_ = YES;
         keypadMode_ = NO;
         insertMode_ = NO;
@@ -2591,6 +2591,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
     isAnsi_ = [termType rangeOfString:@"ANSI"
                               options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location != NSNotFound;
+    [delegate_ terminalTypeDidChange];
 }
 
 - (void)saveTextAttributes
@@ -2656,10 +2657,10 @@ static VT100TCC decode_string(unsigned char *datap,
     scrollMode_ = NO;
     screenMode_ = NO;
     originMode_ = NO;
-    wraparoundMode_ = YES;
+    [self setWraparoundMode:YES];
     autorepeatMode_ = YES;
     keypadMode_ = NO;
-    insertMode_ = NO;
+    [self setInsertMode:NO];
     bracketedPasteMode_ = NO;
     saveCharset_ = charset_ = NO;
     xon_ = YES;
@@ -2717,16 +2718,20 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (void)putStreamData:(NSData *)data
 {
-    if (current_stream_length + [data length] > total_stream_length) {
+    [self putStreamData:(const char *)[data bytes] length:[data length]];
+}
+
+- (void)putStreamData:(const char *)buffer length:(int)length {
+    if (current_stream_length + length > total_stream_length) {
         // Grow the stream if needed.
-        int n = ([data length] + current_stream_length) / STANDARD_STREAM_SIZE;
+        int n = (length + current_stream_length) / STANDARD_STREAM_SIZE;
 
         total_stream_length += n * STANDARD_STREAM_SIZE;
         stream_ = reallocf(stream_, total_stream_length);
     }
 
-    memcpy(stream_ + current_stream_length, [data bytes], [data length]);
-    current_stream_length += [data length];
+    memcpy(stream_ + current_stream_length, buffer, length);
+    current_stream_length += length;
     assert(current_stream_length >= 0);
     if (current_stream_length == 0) {
         streamOffset_ = 0;
@@ -3289,7 +3294,10 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (void)setWraparoundMode:(BOOL)mode
 {
-    wraparoundMode_ = mode;
+    if (mode != wraparoundMode_) {
+        wraparoundMode_ = mode;
+        [delegate_ terminalWraparoundModeDidChangeTo:mode];
+    }
 }
 
 - (BOOL)isAnsi
@@ -3427,7 +3435,10 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (void)setInsertMode:(BOOL)mode
 {
-    insertMode_ = mode;
+    if (insertMode_ != mode) {
+        insertMode_ = mode;
+        [delegate_ terminalInsertModeDidChangeTo:mode];
+    }
 }
 
 - (void)setCursorMode:(BOOL)mode
@@ -3471,7 +3482,7 @@ static VT100TCC decode_string(unsigned char *datap,
                         [delegate_ terminalMoveCursorToX:1 y:1];
                         break;
                     case 7:
-                        wraparoundMode_ = mode;
+                        [self setWraparoundMode:mode];
                         break;
                     case 8:
                         autorepeatMode_ = mode;
@@ -3607,7 +3618,7 @@ static VT100TCC decode_string(unsigned char *datap,
             [delegate_ terminalSaveCursor];
             break;
         case VT100CSI_DECSTR:
-            wraparoundMode_ = YES;
+            [self setWraparoundMode:YES];
             originMode_ = NO;
             break;
         case VT100CSI_RESET_MODIFIERS:

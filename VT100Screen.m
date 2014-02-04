@@ -65,7 +65,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     self = [super init];
     if (self) {
         assert(terminal);
-        terminal_ = [terminal retain];
+        [self setTerminal:terminal];
         primaryGrid_ = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(kDefaultScreenColumns,
                                                                          kDefaultScreenRows)
                                               delegate:self];
@@ -81,11 +81,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         dvr_ = [DVR alloc];
         [dvr_ initWithBufferCapacity:[[PreferencePanel sharedInstance] irMemory] * 1024 * 1024];
 
-        charsetUsesLineDrawingMode_ = [[NSMutableArray alloc] init];
-        savedCharsetUsesLineDrawingMode_ = [[NSMutableArray alloc] init];
         for (int i = 0; i < NUM_CHARSETS; i++) {
-            [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
-            [savedCharsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
+            charsetUsesLineDrawingMode_[i] = NO;
+            savedCharsetUsesLineDrawingMode_[i] = NO;
         }
 
         findContext_ = [[FindContext alloc] init];
@@ -107,7 +105,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [linebuffer_ release];
     [dvr_ release];
     [terminal_ release];
-    [charsetUsesLineDrawingMode_ release];
     [findContext_ release];
     [intervalTree_ release];
     [markCache_ release];
@@ -129,8 +126,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (void)setTerminal:(VT100Terminal *)terminal {
     [terminal_ autorelease];
     terminal_ = [terminal retain];
-    primaryGrid_.delegate = self;
-    altGrid_.delegate = self;
+    _ansi = [terminal_ isAnsi];
+    _wraparoundMode = [terminal_ wraparoundMode];
+    _insert = [terminal_ insertMode];
 }
 
 - (void)destructivelySetScreenWidth:(int)width height:(int)height
@@ -666,7 +664,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (BOOL)allCharacterSetPropertiesHaveDefaultValues {
     for (int i = 0; i < NUM_CHARSETS; i++) {
-        if ([[charsetUsesLineDrawingMode_ objectAtIndex:i] boolValue]) {
+        if (charsetUsesLineDrawingMode_[i]) {
             return NO;
         }
     }
@@ -776,7 +774,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
         // If a graphics character set was selected then translate buffer
         // characters into graphics charaters.
-        if ([[charsetUsesLineDrawingMode_ objectAtIndex:[terminal_ charset]] boolValue]) {
+        if (charsetUsesLineDrawingMode_[[terminal_ charset]]) {
             ConvertCharsToGraphicsCharset(buffer, len);
         }
         if (dynamicTemp) {
@@ -848,7 +846,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                              length:len
                                             scrollingIntoLineBuffer:linebuffer_
                                                 unlimitedScrollback:unlimitedScrollback_
-                                            useScrollbackWithRegion:[self useScrollbackWithRegion]]];
+                                            useScrollbackWithRegion:_appendToScrollbackWithStatusBar
+                                                         wraparound:_wraparoundMode
+                                                               ansi:_ansi
+                                                             insert:_insert]];
     }
 
     if (dynamicBuffer) {
@@ -883,7 +884,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
     [self incrementOverflowBy:[currentGrid_ moveCursorDownOneLineScrollingIntoLineBuffer:lineBufferToUse
                                                                      unlimitedScrollback:unlimitedScrollback_
-                                                                 useScrollbackWithRegion:[self useScrollbackWithRegion]]];
+                                                                 useScrollbackWithRegion:_appendToScrollbackWithStatusBar]];
 }
 
 - (void)cursorToX:(int)x
@@ -1147,9 +1148,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)resetCharset {
-    [charsetUsesLineDrawingMode_ removeAllObjects];
     for (int i = 0; i < NUM_CHARSETS; i++) {
-        [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
+        charsetUsesLineDrawingMode_[i] = NO;
     }
 }
 
@@ -1998,9 +1998,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)terminalRestoreCharsetFlags
 {
-    assert(savedCharsetUsesLineDrawingMode_.count == charsetUsesLineDrawingMode_.count);
-    [charsetUsesLineDrawingMode_ removeAllObjects];
-    [charsetUsesLineDrawingMode_ addObjectsFromArray:savedCharsetUsesLineDrawingMode_];
+    memmove(charsetUsesLineDrawingMode_,
+            savedCharsetUsesLineDrawingMode_,
+            sizeof(savedCharsetUsesLineDrawingMode_));
 
     [delegate_ screenTriggerableChangeDidOccur];
 }
@@ -2013,8 +2013,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)terminalSaveCharsetFlags
 {
-    [savedCharsetUsesLineDrawingMode_ removeAllObjects];
-    [savedCharsetUsesLineDrawingMode_ addObjectsFromArray:charsetUsesLineDrawingMode_];
+    memmove(savedCharsetUsesLineDrawingMode_,
+            charsetUsesLineDrawingMode_,
+            sizeof(charsetUsesLineDrawingMode_));
 }
 
 - (int)terminalRelativeCursorX {
@@ -2146,11 +2147,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
     [self setInitialTabStops];
 
-    [savedCharsetUsesLineDrawingMode_ removeAllObjects];
-    [charsetUsesLineDrawingMode_ removeAllObjects];
     for (int i = 0; i < NUM_CHARSETS; i++) {
-        [savedCharsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
-        [charsetUsesLineDrawingMode_ addObject:[NSNumber numberWithBool:NO]];
+        savedCharsetUsesLineDrawingMode_[i] = NO;
+        charsetUsesLineDrawingMode_[i] = NO;
     }
     [delegate_ screenDidReset];
     commandStartX_ = commandStartY_ = -1;
@@ -2194,8 +2193,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalSetCharset:(int)charset toLineDrawingMode:(BOOL)lineDrawingMode {
-    [charsetUsesLineDrawingMode_ replaceObjectAtIndex:charset
-                                           withObject:[NSNumber numberWithBool:lineDrawingMode]];
+    charsetUsesLineDrawingMode_[charset] = lineDrawingMode;
 }
 
 - (void)terminalRemoveTabStops {
@@ -2432,7 +2430,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
          i++) {
         [self incrementOverflowBy:[currentGrid_ scrollUpIntoLineBuffer:linebuffer_
                                                    unlimitedScrollback:unlimitedScrollback_
-                                               useScrollbackWithRegion:[self useScrollbackWithRegion]]];
+                                               useScrollbackWithRegion:_appendToScrollbackWithStatusBar]];
     }
     [delegate_ screenTriggerableChangeDidOccur];
 }
@@ -3107,6 +3105,18 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
    */
 }
 
+- (void)terminalWraparoundModeDidChangeTo:(BOOL)newValue {
+    _wraparoundMode = newValue;
+}
+
+- (void)terminalTypeDidChange {
+    _ansi = [terminal_ isAnsi];
+}
+
+- (void)terminalInsertModeDidChangeTo:(BOOL)newValue {
+    _insert = newValue;
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {
@@ -3436,11 +3446,6 @@ static void SwapInt(int *a, int *b) {
     [delegate_ screenDidChangeNumberOfScrollbackLines];
 }
 
-- (BOOL)useScrollbackWithRegion
-{
-    return [delegate_ screenShouldAppendToScrollbackWithStatusBar];
-}
-
 - (void)advanceCursor:(BOOL)canOccupyLastSpace
 {
     // TODO: respect left-right margins
@@ -3724,18 +3729,6 @@ static void SwapInt(int *a, int *b) {
 }
 
 #pragma mark - VT100GridDelegate
-
-- (BOOL)gridShouldUseWraparoundMode {
-    return [terminal_ wraparoundMode];
-}
-
-- (BOOL)gridShouldUseInsertMode {
-    return [terminal_ insertMode];
-}
-
-- (BOOL)gridShouldActLikeANSITerminal {
-    return [terminal_ isAnsi];
-}
 
 - (screen_char_t)gridForegroundColorCode {
     return [terminal_ foregroundColorCodeReal];

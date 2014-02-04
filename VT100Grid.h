@@ -15,9 +15,6 @@
 @class VT100Terminal;
 
 @protocol VT100GridDelegate <NSObject>
-- (BOOL)gridShouldUseWraparoundMode;
-- (BOOL)gridShouldUseInsertMode;
-- (BOOL)gridShouldActLikeANSITerminal;
 - (screen_char_t)gridForegroundColorCode;
 - (screen_char_t)gridBackgroundColorCode;
 
@@ -155,7 +152,10 @@
                     length:(int)len
    scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
        unlimitedScrollback:(BOOL)unlimitedScrollback
-   useScrollbackWithRegion:(BOOL)useScrollbackWithRegion;
+   useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
+                wraparound:(BOOL)wraparound
+                      ansi:(BOOL)ansi
+                    insert:(BOOL)insert;
 
 // Delete some number of chars starting at a given location, moving chars to the right of them back.
 - (void)deleteChars:(int)num

@@ -35,8 +35,8 @@ extern int kVT100ScreenMinRows;
     VT100GridCoord savedCursor_;
 
     // BOOLs indicating, for each of the characters sets, which ones are in line-drawing mode.
-    NSMutableArray *charsetUsesLineDrawingMode_;
-    NSMutableArray *savedCharsetUsesLineDrawingMode_;
+    BOOL charsetUsesLineDrawingMode_[4];
+    BOOL savedCharsetUsesLineDrawingMode_[4];
     BOOL audibleBell_;
     BOOL showBellIndicator_;
     BOOL flashBell_;
@@ -95,6 +95,11 @@ extern int kVT100ScreenMinRows;
     // Location of the start of the current command, or -1 for none. Y is absolute.
     int commandStartX_;
     long long commandStartY_;
+
+    // Cached copies of terminal attributes
+    BOOL _wraparoundMode;
+    BOOL _ansi;
+    BOOL _insert;
 }
 
 @property(nonatomic, retain) VT100Terminal *terminal;
@@ -112,6 +117,7 @@ extern int kVT100ScreenMinRows;
 @property(nonatomic, retain) DVR *dvr;
 @property(nonatomic, readonly) VT100GridCoord savedCursor;
 @property(nonatomic, assign) BOOL trackCursorLineMovement;
+@property(nonatomic, assign) BOOL appendToScrollbackWithStatusBar;
 
 // Designated initializer.
 - (id)initWithTerminal:(VT100Terminal *)terminal;

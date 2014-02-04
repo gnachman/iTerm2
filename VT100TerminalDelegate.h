@@ -350,4 +350,9 @@ typedef enum {
 - (void)terminalReturnCodeOfLastCommandWas:(int)returnCode;
 - (void)terminalFinalTermCommand:(NSArray *)argv;
 
+// Flag changes
+- (void)terminalWraparoundModeDidChangeTo:(BOOL)newValue;
+- (void)terminalTypeDidChange;
+- (void)terminalInsertModeDidChangeTo:(BOOL)newValue;
+
 @end

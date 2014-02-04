@@ -148,6 +148,7 @@
                 <outlet property="hideTab" destination="4462" id="4614"/>
                 <outlet property="highlightTabLabels" destination="4467" id="4615"/>
                 <outlet property="hotkey" destination="5104" id="5121"/>
+                <outlet property="hotkeyAutoHides" destination="rG7-dO-Nxw" id="JTl-kM-C6D"/>
                 <outlet property="hotkeyBookmark" destination="5108" id="5124"/>
                 <outlet property="hotkeyField" destination="5105" id="5122"/>
                 <outlet property="hotkeyLabel" destination="5106" id="5125"/>
@@ -3367,11 +3368,11 @@ Gw
                                                                 <rect key="frame" x="17" y="130" width="525" height="246"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <clipView key="contentView" id="Flq-2t-wqn">
-                                                                    <rect key="frame" x="1" y="17" width="507" height="228"/>
+                                                                    <rect key="frame" x="1" y="17" width="523" height="228"/>
                                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                     <subviews>
                                                                         <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveName="KeyBingingTable" headerView="2460" id="2463">
-                                                                            <rect key="frame" x="0.0" y="0.0" width="507" height="228"/>
+                                                                            <rect key="frame" x="0.0" y="0.0" width="523" height="228"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <size key="intercellSpacing" width="3" height="2"/>
                                                                             <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -3391,7 +3392,7 @@ Gw
                                                                                     </textFieldCell>
                                                                                     <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                                                                 </tableColumn>
-                                                                                <tableColumn identifier="1" editable="NO" width="303.101" minWidth="42.10107" maxWidth="1000" id="2465">
+                                                                                <tableColumn identifier="1" editable="NO" width="319.101" minWidth="42.10107" maxWidth="1000" id="2465">
                                                                                     <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
                                                                                         <font key="font" metaFont="smallSystem"/>
                                                                                         <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -3422,7 +3423,7 @@ Gw
                                                                     <autoresizingMask key="autoresizingMask"/>
                                                                 </scroller>
                                                                 <tableHeaderView key="headerView" id="2460">
-                                                                    <rect key="frame" x="0.0" y="0.0" width="507" height="17"/>
+                                                                    <rect key="frame" x="0.0" y="0.0" width="523" height="17"/>
                                                                     <autoresizingMask key="autoresizingMask"/>
                                                                 </tableHeaderView>
                                                                 <connections>
@@ -4091,11 +4092,11 @@ Gw
                                             <rect key="frame" x="363" y="30" width="508" height="379"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <clipView key="contentView" id="Dzn-LP-RyA">
-                                                <rect key="frame" x="1" y="17" width="490" height="361"/>
+                                                <rect key="frame" x="1" y="17" width="506" height="361"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveName="KeyBingingTable" headerView="3855" id="3852">
-                                                        <rect key="frame" x="0.0" y="0.0" width="490" height="361"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="506" height="361"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -4115,7 +4116,7 @@ Gw
                                                                 </textFieldCell>
                                                                 <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                                             </tableColumn>
-                                                            <tableColumn identifier="1" editable="NO" width="286.101" minWidth="42.10107" maxWidth="1000" id="3856">
+                                                            <tableColumn identifier="1" editable="NO" width="302.101" minWidth="42.10107" maxWidth="1000" id="3856">
                                                                 <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
                                                                     <font key="font" metaFont="smallSystem"/>
                                                                     <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -4146,7 +4147,7 @@ Gw
                                                 <autoresizingMask key="autoresizingMask"/>
                                             </scroller>
                                             <tableHeaderView key="headerView" id="3855">
-                                                <rect key="frame" x="0.0" y="0.0" width="490" height="17"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="506" height="17"/>
                                                 <autoresizingMask key="autoresizingMask"/>
                                             </tableHeaderView>
                                             <connections>
@@ -4319,6 +4320,18 @@ Gw
                                                 <outlet property="nextKeyView" destination="3852" id="5299"/>
                                             </connections>
                                         </popUpButton>
+                                        <button id="rG7-dO-Nxw">
+                                            <rect key="frame" x="27" y="43" width="272" height="18"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <buttonCell key="cell" type="check" title="Hotkey window hides when focus is lost" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="PhL-bP-TkB">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <connections>
+                                                <action selector="settingChanged:" target="-2" id="h2I-HY-jiR"/>
+                                                <outlet property="nextKeyView" destination="5048" id="4p5-NY-C5G"/>
+                                            </connections>
+                                        </button>
                                     </subviews>
                                 </view>
                             </tabViewItem>

@@ -239,6 +239,7 @@ typedef enum {
 
 - (BOOL)remappingDisabledTemporarily;
 - (BOOL)hotkeyTogglesWindow;
+- (BOOL)hotkeyAutoHides;
 - (BOOL)dockIconTogglesWindow;
 - (NSTimeInterval)timeBetweenBlinks;
 

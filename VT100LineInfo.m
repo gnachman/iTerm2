@@ -9,10 +9,10 @@
 #import "VT100LineInfo.h"
 
 @implementation VT100LineInfo {
-    char *dirty_;
     int width_;
-    BOOL anyCharPossiblyDirty_;  // No means nothing is dirty. Yes means MAYBE something is dirty.
     NSTimeInterval timestamp_;
+    int start_;
+    int bound_;
 }
 
 @synthesize timestamp = timestamp_;
@@ -21,7 +21,8 @@
     self = [super init];
     if (self) {
         width_ = width;
-        dirty_ = realloc(dirty_, width);
+        start_ = -1;
+        bound_ = -1;
         [self setDirty:NO inRange:VT100GridRangeMake(0, width) updateTimestamp:YES];
         [self updateTimestamp];
     }
@@ -29,7 +30,6 @@
 }
 
 - (void)dealloc {
-    free(dirty_);
     [super dealloc];
 }
 
@@ -39,41 +39,35 @@
     assert(range.length >= 0);
     assert(range.location + range.length <= width_);
 #endif
-    if (dirty) {
-        anyCharPossiblyDirty_ = YES;
-        if (updateTimestamp) {
-            [self updateTimestamp];
-        }
-    } else if (range.location == 0 && range.length == width_) {
-        anyCharPossiblyDirty_ = NO;
+    if (dirty && updateTimestamp) {
+        [self updateTimestamp];
     }
-    int n = MAX(0, MIN(range.length, width_ - range.location));
-    memset(dirty_ + range.location, dirty, n);
+    if (dirty) {
+        if (start_ < 0) {
+            start_ = range.location;
+            bound_ = range.location + range.length;
+        } else {
+            start_ = MIN(start_, range.location);
+            bound_ = MAX(bound_, range.location + range.length);
+        }
+    } else if (start_ >= 0) {
+        // Unset part of the dirty region.
+        int clearBound = range.location + range.length;
+        if (range.location <= start_) {
+            if (clearBound >= bound_) {
+                start_ = bound_ = -1;
+            } else if (clearBound > start_) {
+                start_ = clearBound;
+            }
+        } else if (range.location < bound_ && clearBound >= bound_) {
+            // Clear the right-hand part of the dirty region
+            bound_ = range.location;
+        }
+    }
 }
 
 - (VT100GridRange)dirtyRange {
-    VT100GridRange range = VT100GridRangeMake(-1, 0);
-    if (!anyCharPossiblyDirty_) {
-        return range;
-    }
-    for (int i = 0; i < width_; i++) {
-        if (dirty_[i]) {
-            range.location = i;
-            break;
-        }
-    }
-    if (range.location >= 0) {
-        for (int i = width_ - 1; i >= 0; i--) {
-            if (dirty_[i]) {
-                range.length = i - range.location + 1;
-                break;
-            }
-        }
-    }
-    if (range.location == -1) {
-        anyCharPossiblyDirty_ = NO;
-    }
-    return range;
+    return VT100GridRangeMake(start_, bound_ - start_);
 }
 
 - (void)updateTimestamp {
@@ -86,26 +80,17 @@
 #else
     x = MIN(width_ - 1, MAX(0, x));
 #endif
-    return dirty_[x];
+    return x >= start_ && x < bound_;
 }
 
 - (BOOL)anyCharIsDirty {
-    if (!anyCharPossiblyDirty_) {
-        return NO;
-    } else {
-        for (int i = 0; i < width_; i++) {
-            if (dirty_[i]) {
-                return YES;
-            }
-        }
-        return NO;
-    }
+    return start_ >= 0;
 }
 
 - (id)copyWithZone:(NSZone *)zone {
     VT100LineInfo *theCopy = [[VT100LineInfo alloc] initWithWidth:width_];
-    memmove(theCopy->dirty_, dirty_, width_);
-    theCopy->anyCharPossiblyDirty_ = anyCharPossiblyDirty_;
+    theCopy->start_ = start_;
+    theCopy->bound_ = bound_;
     theCopy->timestamp_ = timestamp_;
     
     return theCopy;

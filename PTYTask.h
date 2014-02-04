@@ -8,7 +8,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 @class PTYTab;
 
 @protocol PTYTaskDelegate <NSObject>
-- (void)readTask:(NSData *)data;
+- (void)readTask:(char *)buffer length:length;
 - (void)brokenPipe;
 @end
 
@@ -29,7 +29,6 @@ extern NSString *kCoprocessStatusChangeNotification;
 
 - (void)setDelegate:(id<PTYTaskDelegate>)object;
 - (id<PTYTaskDelegate>)delegate;
-- (void)readTask:(NSData*)data;
 - (void)writeTask:(NSData*)data;
 
 - (void)sendSignal:(int)signo;
@@ -62,10 +61,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (BOOL)hasMuteCoprocess;
 - (void)stopCoprocess;
 
-// If session logging is on, append data to it. Only needed if PTYTask is not doing the reading, as
-// is the case for tmux.
-- (void)logData:(NSData *)data;
-
+- (void)logData:(const char *)buffer length:(int)length;
 
 @end
 

@@ -118,10 +118,6 @@
 // Returns if ambiguous characters are treated as fullwidth.
 - (BOOL)screenShouldTreatAmbiguousCharsAsDoubleWidth;
 
-// Returns if scrolling with a full-width scroll region abutting the top of the screen should append
-// to the line buffer.
-- (BOOL)screenShouldAppendToScrollbackWithStatusBar;
-
 // Number of scrollback lines changed.
 - (void)screenDidChangeNumberOfScrollbackLines;
 

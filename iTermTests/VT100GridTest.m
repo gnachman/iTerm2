@@ -39,18 +39,6 @@ do { \
     backgroundColor_.backgroundColorMode = ColorModeAlternate;
 }
 
-- (BOOL)gridShouldUseWraparoundMode {
-    return wraparoundMode_;
-}
-
-- (BOOL)gridShouldUseInsertMode {
-    return insertMode_;
-}
-
-- (BOOL)gridShouldActLikeANSITerminal {
-    return isAnsi_;
-}
-
 - (screen_char_t)gridForegroundColorCode {
     return foregroundColor_;
 }
@@ -198,6 +186,142 @@ do { \
 
     assert(![grid isCharDirtyAt:coord]);
     assert(![grid isAnyCharDirty]);
+}
+
+- (void)testMarkAndClearDirty {
+    // This test assumes that underlying implementation of dirty chars is a range per line.
+    VT100Grid *grid = [self largeGrid];
+    [grid markCharDirty:YES at:VT100GridCoordMake(1,1) updateTimestamp:NO];
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    
+    [grid markCharDirty:YES at:VT100GridCoordMake(3,1) updateTimestamp:NO];
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    
+    [grid markCharDirty:NO at:VT100GridCoordMake(2,1) updateTimestamp:NO];
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+
+    [grid markCharDirty:NO at:VT100GridCoordMake(1,1) updateTimestamp:NO];
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+
+    [grid markCharDirty:NO at:VT100GridCoordMake(3,1) updateTimestamp:NO];
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    
+    [grid markCharDirty:NO at:VT100GridCoordMake(2,1) updateTimestamp:NO];
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    
+    [grid markCharsDirty:YES inRectFrom:VT100GridCoordMake(1, 1) to:VT100GridCoordMake(5, 1)];
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+
+    [grid markCharsDirty:YES inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(5, 1)];
+    assert([grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+
+    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(2, 1) to:VT100GridCoordMake(4, 1)];
+    assert([grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+
+    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(2, 1)];
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+
+    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(2, 1)];
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+
+    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(3, 1)];
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+
+    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(8, 1)];
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+
+    [grid markCharsDirty:YES inRectFrom:VT100GridCoordMake(1, 1) to:VT100GridCoordMake(5, 1)];
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+
+    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(3, 1) to:VT100GridCoordMake(8, 1)];
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+
+    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(2, 1) to:VT100GridCoordMake(2, 1)];
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
 }
 
 - (void)testMarkCharsDirtyInRect {
@@ -1841,7 +1965,10 @@ do { \
                                              length:[stringToAppend length]
                             scrollingIntoLineBuffer:lineBuffer
                                 unlimitedScrollback:unlimitedScrollback
-                            useScrollbackWithRegion:useScrollbackWithRegion];
+                            useScrollbackWithRegion:useScrollbackWithRegion
+                                         wraparound:wraparoundMode_
+                                               ansi:isAnsi_
+                                             insert:insertMode_];
     assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:expectedLines]);
     assert([[lineBuffer debugString] isEqualToString:expectedLineBuffer]);
     assert(numLinesDropped == expectedNumLinesDropped);

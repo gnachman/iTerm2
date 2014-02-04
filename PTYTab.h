@@ -16,6 +16,7 @@
 // This implements NSSplitViewDelegate but it was an informal protocol in 10.5. If 10.5 support
 // is eventually dropped, change this to make it official.
 @interface PTYTab : NSObject <
+  NSCopying,
   NSSplitViewDelegate,
   PTYSplitViewDelegate,
   PSMTabBarControlRepresentedObjectIdentifierProtocol> {
@@ -255,15 +256,5 @@
 - (void)_splitViewDidResizeSubviews:(NSSplitView*)splitView;
 - (CGFloat)splitView:(NSSplitView *)splitView constrainSplitPosition:(CGFloat)proposedPosition ofSubviewAt:(NSInteger)dividerIndex;
 - (void)_recursiveRemoveView:(NSView*)theView;
-
-@end
-
-
-@interface PTYTab (Private)
-
-- (void)_setLabelAttributesForDeadSession;
-- (void)_setLabelAttributesForForegroundTab;
-- (void)_setLabelAttributesForActiveBackgroundTab;
-- (void)_setLabelAttributesForIdleBackgroundTabAtTime:(struct timeval)now;
 
 @end

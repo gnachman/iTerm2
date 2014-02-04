@@ -916,6 +916,21 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
+- (void)hideToolTipsInView:(NSView *)aView {
+    [aView removeAllToolTips];
+    for (NSView *subview in [aView subviews]) {
+        [self hideToolTipsInView:subview];
+    }
+}
+
+- (void)applicationWillHide:(NSNotification *)aNotification
+{
+    for (NSWindow *aWindow in [[NSApplication sharedApplication] windows]) {
+        [self hideToolTipsInView:[aWindow contentView]];
+    }
+}
+
+
 // font control
 - (IBAction)biggerFont: (id) sender
 {
