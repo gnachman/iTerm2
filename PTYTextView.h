@@ -121,6 +121,8 @@ typedef enum {
 - (NSStringEncoding)textViewEncoding;
 - (NSString *)textViewCurrentWorkingDirectory;
 - (BOOL)textViewShouldPlaceCursor;
+// If the textview isn't in the key window, the delegate can return YES in this
+// method to cause the cursor to be drawn as though it were key.
 - (BOOL)textViewShouldDrawFilledInCursor;
 @end
 

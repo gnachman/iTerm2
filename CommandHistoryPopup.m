@@ -49,7 +49,6 @@
               partialCommand:(NSString *)partialCommand
                       expand:(BOOL)expand {
     CommandHistory *history = [CommandHistory sharedInstance];
-    NSMutableArray *commands = [NSMutableArray array];
     NSArray *autocompleteEntries = [history autocompleteSuggestionsWithPartialCommand:partialCommand
                                                                                onHost:host];
     NSArray *expandedEntries;
@@ -68,7 +67,7 @@
         CommandHistoryPopupEntry *popupEntry = [[[CommandHistoryPopupEntry alloc] init] autorelease];
         popupEntry.command = entry.command;
         popupEntry.date = [NSDate dateWithTimeIntervalSinceReferenceDate:entry.lastUsed];
-        
+
         [popupEntry setMainValue:popupEntry.command];
         [[self unfilteredModel] addObject:popupEntry];
     }

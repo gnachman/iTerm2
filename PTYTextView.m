@@ -9080,8 +9080,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 case CURSOR_BOX:
                     // draw the box
                     DLog(@"draw cursor box at %f,%f size %fx%f", (float)curX, (float)curY, (float)ceil(cursorWidth * (double_width ? 2 : 1)), cursorHeight);
-                    if (([self isInKeyWindow] &&
-                         [_delegate textViewIsActiveSession]) || [_delegate textViewShouldDrawFilledInCursor]) {
+                    if (([self isInKeyWindow] && [_delegate textViewIsActiveSession]) ||
+                        [_delegate textViewShouldDrawFilledInCursor]) {
                         frameOnly = NO;
                         NSRectFill(NSMakeRect(curX,
                                               curY,
