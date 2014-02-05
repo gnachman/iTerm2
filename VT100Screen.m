@@ -445,7 +445,14 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         for (id<IntervalTreeObject> note in [intervalTree_ allObjects]) {
             VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
             VT100GridCoordRange newRange;
-            if ([self convertRange:noteRange toWidth:new_width to:&newRange inLineBuffer:linebuffer_]) {
+            if (noteRange.end.x < 0 && noteRange.end.y == 0 &&
+                noteRange.end.y < 0) {
+                // note has scrolled off top
+                [intervalTree_ removeObject:note];
+            } else if ([self convertRange:noteRange
+                                  toWidth:new_width
+                                       to:&newRange
+                             inLineBuffer:linebuffer_]) {
                 Interval *newInterval = [self intervalForGridCoordRange:newRange
                                                                   width:new_width
                                                             linesOffset:[self totalScrollbackOverflow]];
