@@ -121,6 +121,7 @@ typedef enum {
 - (NSStringEncoding)textViewEncoding;
 - (NSString *)textViewCurrentWorkingDirectory;
 - (BOOL)textViewShouldPlaceCursor;
+- (BOOL)textViewShouldDrawFilledInCursor;
 @end
 
 @interface PTYTextView : NSView <

@@ -4598,6 +4598,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return commandRange_.start.x < 0;
 }
 
+- (BOOL)textViewShouldDrawFilledInCursor {
+    // If the auto-command history popup is open for this session, the filled in cursor should be
+    // drawn even though the textview isn't in the key window.
+    return [[[self tab] realParentWindow] autoCommandHistoryIsOpenForSession:self];
+}
+
 - (void)textViewWillNeedUpdateForBlink
 {
     [self scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
