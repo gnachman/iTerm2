@@ -13,12 +13,13 @@
 @class PTYTextView;
 @class VT100Screen;
 
-@protocol PopupDelegate
+@protocol PopupDelegate <NSObject>
 
 - (NSWindowController *)popupWindowController;
 - (VT100Screen *)popupVT100Screen;
 - (PTYTextView *)popupVT100TextView;
 - (void)popupInsertText:(NSString *)text;
+- (BOOL)popupKeyDown:(NSEvent *)event;
 
 @end
 

@@ -53,8 +53,9 @@
 
 @implementation PTYWindow
 
-- (void) dealloc
+- (void)dealloc
 {
+    NSLog(@"Dealloc %@ %@", self, [NSThread callStackSymbols]);
     [restoreState_ release];
 
     [super dealloc];

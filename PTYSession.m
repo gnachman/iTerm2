@@ -5588,7 +5588,19 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                                                                onHost:host];
 }
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
+    BOOL hadCommand = commandRange_.start.x >= 0 && [[self commandInRange:commandRange_] length] > 0;
     commandRange_ = range;
+    BOOL haveCommand = commandRange_.start.x >= 0 && [[self commandInRange:commandRange_] length] > 0;
+    if (!haveCommand && hadCommand) {
+        [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
+    } else {
+        if (!hadCommand && range.start.x >= 0) {
+            [[[self tab] realParentWindow] showAutoCommandHistoryForSession:self];
+        }
+        NSString *command = haveCommand ? [self commandInRange:commandRange_] : @"";
+        [[[self tab] realParentWindow] updateAutoCommandHistoryForPrefix:command
+                                                               inSession:self];
+    }
 }
 
 - (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
@@ -5624,6 +5636,22 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self insertText:string];
 }
 
+- (BOOL)popupKeyDown:(NSEvent *)event {
+    if ([[[self tab] realParentWindow] autoCommandHistoryIsOpenForSession:self]) {
+        unichar c = [[event characters] characterAtIndex:0];
+        if (c == 27) {
+            [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
+            return YES;
+        } else if (c == '\r') {
+            return NO;  // Escape should close auto-command history, enter selects current row.
+        } else {
+            [TEXTVIEW keyDown:event];
+            return YES;
+        }
+    } else {
+        return NO;
+    }
+}
 @end
 
 @implementation PTYSession (ScriptingSupport)

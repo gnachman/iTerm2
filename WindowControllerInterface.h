@@ -320,4 +320,11 @@ typedef enum {
 
 - (void)sessionHostDidChange:(PTYSession *)session to:(VT100RemoteHost *)host;
 
+#pragma mark - Command history
+
+- (void)hideAutoCommandHistoryForSession:(PTYSession *)session;
+- (void)updateAutoCommandHistoryForPrefix:(NSString *)prefix inSession:(PTYSession *)session;
+- (void)showAutoCommandHistoryForSession:(PTYSession *)session;
+- (BOOL)autoCommandHistoryIsOpenForSession:(PTYSession *)session;
+
 @end

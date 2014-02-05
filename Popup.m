@@ -234,6 +234,12 @@
 
 - (void)keyDown:(NSEvent*)event
 {
+    if ([_delegate respondsToSelector:@selector(popupKeyDown:)]) {
+        if ([_delegate popupKeyDown:event]) {
+            return;
+        }
+    }
+
     unichar c = [[event characters] characterAtIndex:0];
     if (c == '\r') {
         [self rowSelected:self];

@@ -24,6 +24,7 @@
 #import "PTYTask.h"
 #import "PTYTextView.h"
 #import "PasteboardHistory.h"
+#import "PopupModel.h"
 #import "PopupWindow.h"
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
@@ -296,6 +297,17 @@ NSString *kSessionsKVCKey = @"sessions";
     // displays changed), this flag keeps the windows from getting resized to
     // the full width/height of the screen.
     BOOL edgeSpanningOff_;
+    
+    // Session ID of session that currently has an auto-command history window open
+    int _autoCommandHistorySessionId;
+}
+
+- (id)initWithWindowNibName:(NSString *)windowNibName {
+    self = [super initWithWindowNibName:windowNibName];
+    if (self) {
+        _autoCommandHistorySessionId = -1;
+    }
+    return self;
 }
 
 - (id)init {
@@ -313,7 +325,7 @@ NSString *kSessionsKVCKey = @"sessions";
     // Causes insertInSessions:atIndex: to be called.
     // A followup call to finishInitializationWithSmartLayout:windowType:screen:isHotkey:
     // finishes intialization. -windowInited will return NO until that is done.
-    return [super initWithWindowNibName:@"PseudoTerminal"];
+    return [self initWithWindowNibName:@"PseudoTerminal"];
 }
 
 
@@ -329,7 +341,7 @@ NSString *kSessionsKVCKey = @"sessions";
                    screen:(int)screenNumber
                  isHotkey:(BOOL)isHotkey
 {
-    self = [super initWithWindowNibName:@"PseudoTerminal"];
+    self = [self initWithWindowNibName:@"PseudoTerminal"];
     NSAssert(self, @"initWithWindowNibName returned nil");
     if (self) {
         [self finishInitializationWithSmartLayout:smartLayout
@@ -3164,6 +3176,9 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem
 {
+    if (_autoCommandHistorySessionId != -1) {
+        [self hideAutoCommandHistory];
+    }
     for (PTYSession* aSession in [[tabViewItem identifier] sessions]) {
         [aSession setNewOutput:NO];
 
@@ -4039,10 +4054,55 @@ NSString *kSessionsKVCKey = @"sessions";
     if ([[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
         [commandHistoryPopup popWithDelegate:[self currentSession]];
         [commandHistoryPopup loadCommandsForHost:[[self currentSession] currentHost]
-                                  partialCommand:[[self currentSession] currentCommand]];
+                                  partialCommand:[[self currentSession] currentCommand]
+                                          expand:YES];
     } else {
         [CommandHistory showInformationalMessage];
     }
+}
+
+- (void)hideAutoCommandHistory {
+    [commandHistoryPopup close];
+    _autoCommandHistorySessionId = -1;
+}
+
+- (void)hideAutoCommandHistoryForSession:(PTYSession *)session {
+    if ([session sessionID] == _autoCommandHistorySessionId) {
+        [self hideAutoCommandHistory];
+    }
+}
+
+- (void)updateAutoCommandHistoryForPrefix:(NSString *)prefix inSession:(PTYSession *)session {
+    if ([session sessionID] == _autoCommandHistorySessionId) {
+        if (![[commandHistoryPopup window] isVisible]) {
+            [self showAutoCommandHistoryForSession:session];
+        }
+        [commandHistoryPopup loadCommandsForHost:[session currentHost]
+                                  partialCommand:prefix
+                                          expand:NO];
+        if ([[commandHistoryPopup unfilteredModel] count] == 0) {
+            [commandHistoryPopup close];
+        }
+    }
+}
+
+- (void)showAutoCommandHistoryForSession:(PTYSession *)session {
+    // Use a delay so we don't get a flurry of windows appearing when restoring arrangements.
+    [self performSelector:@selector(reallyShowAutoCommandHistoryForSession:)
+               withObject:session
+               afterDelay:0.2];
+}
+
+- (void)reallyShowAutoCommandHistoryForSession:(PTYSession *)session {
+    if ([self currentSession] == session && [[self window] isKeyWindow]) {
+        _autoCommandHistorySessionId = [session sessionID];
+        [commandHistoryPopup popWithDelegate:session];
+        [self updateAutoCommandHistoryForPrefix:[session currentCommand] inSession:session];
+    }
+}
+
+- (BOOL)autoCommandHistoryIsOpenForSession:(PTYSession *)session {
+    return [[commandHistoryPopup window] isVisible] && _autoCommandHistorySessionId == [session sessionID];
 }
 
 - (IBAction)openAutocomplete:(id)sender
@@ -4233,6 +4293,9 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 - (void)tabActiveSessionDidChange {
+    if (_autoCommandHistorySessionId != -1) {
+        [self hideAutoCommandHistory];
+    }
     [[toolbelt_ commandHistoryView] updateCommands];
 }
 
