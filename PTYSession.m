@@ -5641,14 +5641,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self insertText:string];
 }
 
-- (BOOL)popupKeyDown:(NSEvent *)event {
+- (BOOL)popupKeyDown:(NSEvent *)event currentValue:(NSString *)value {
     if ([[[self tab] realParentWindow] autoCommandHistoryIsOpenForSession:self]) {
         unichar c = [[event characters] characterAtIndex:0];
         if (c == 27) {
             [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
             return YES;
         } else if (c == '\r') {
-            return NO;  // Escape should close auto-command history, enter selects current row.
+            if ([value isEqualToString:[self currentCommand]]) {
+                // Send the enter key on.
+                [TEXTVIEW keyDown:event];
+                return YES;
+            } else {
+                return NO;  // select the row
+            }
         } else {
             [TEXTVIEW keyDown:event];
             return YES;

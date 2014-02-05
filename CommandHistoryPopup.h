@@ -19,9 +19,11 @@
 
 @interface CommandHistoryPopupWindowController : Popup
 
-- (void)loadCommandsForHost:(VT100RemoteHost *)host
-             partialCommand:(NSString *)partialCommand
-                     expand:(BOOL)expand;
+- (NSArray *)commandsForHost:(VT100RemoteHost *)host
+              partialCommand:(NSString *)partialCommand
+                      expand:(BOOL)expand;
 
+
+- (void)loadCommands:(NSArray *)commands partialCommand:(NSString *)partialCommand;
 
 @end

@@ -3,6 +3,7 @@
 #import "BottomBarView.h"
 #import "ColorsMenuItemView.h"
 #import "CommandHistory.h"
+#import "CommandHistoryEntry.h"
 #import "CommandHistoryPopup.h"
 #import "Coprocess.h"
 #import "FakeWindow.h"
@@ -4054,9 +4055,10 @@ NSString *kSessionsKVCKey = @"sessions";
 {
     if ([[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
         [commandHistoryPopup popWithDelegate:[self currentSession]];
-        [commandHistoryPopup loadCommandsForHost:[[self currentSession] currentHost]
-                                  partialCommand:[[self currentSession] currentCommand]
-                                          expand:YES];
+        [commandHistoryPopup loadCommands:[commandHistoryPopup commandsForHost:[[self currentSession] currentHost]
+                                                                partialCommand:[[self currentSession] currentCommand]
+                                                                        expand:YES]
+                           partialCommand:[[self currentSession] currentCommand]];
     } else {
         [CommandHistory showInformationalMessage];
     }
@@ -4075,15 +4077,25 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)updateAutoCommandHistoryForPrefix:(NSString *)prefix inSession:(PTYSession *)session {
     if ([session sessionID] == _autoCommandHistorySessionId) {
+        NSArray *commands = [commandHistoryPopup commandsForHost:[session currentHost]
+                                                  partialCommand:prefix
+                                                          expand:NO];
+        if (![commands count]) {
+            [commandHistoryPopup close];
+            return;
+        }
+        if ([commands count] == 1) {
+            CommandHistoryEntry *entry = commands[0];
+            if ([entry.command isEqualToString:prefix]) {
+                [commandHistoryPopup close];
+                return;
+            }
+        }
         if (![[commandHistoryPopup window] isVisible]) {
             [self showAutoCommandHistoryForSession:session];
         }
-        [commandHistoryPopup loadCommandsForHost:[session currentHost]
-                                  partialCommand:prefix
-                                          expand:NO];
-        if ([[commandHistoryPopup unfilteredModel] count] == 0) {
-            [commandHistoryPopup close];
-        }
+        [commandHistoryPopup loadCommands:commands
+                           partialCommand:prefix];
     }
 }
 

@@ -234,8 +234,9 @@
 
 - (void)keyDown:(NSEvent*)event
 {
-    if ([_delegate respondsToSelector:@selector(popupKeyDown:)]) {
-        if ([_delegate popupKeyDown:event]) {
+    if ([_delegate respondsToSelector:@selector(popupKeyDown:currentValue:)]) {
+        PopupEntry *entry = [[self model] objectAtIndex:[self convertIndex:[tableView_ selectedRow]]];
+        if ([_delegate popupKeyDown:event currentValue:entry.mainValue]) {
             return;
         }
     }

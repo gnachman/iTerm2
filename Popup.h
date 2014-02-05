@@ -19,7 +19,7 @@
 - (VT100Screen *)popupVT100Screen;
 - (PTYTextView *)popupVT100TextView;
 - (void)popupInsertText:(NSString *)text;
-- (BOOL)popupKeyDown:(NSEvent *)event;
+- (BOOL)popupKeyDown:(NSEvent *)event currentValue:(NSString *)value;
 
 @end
 

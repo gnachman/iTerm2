@@ -45,12 +45,11 @@
     [super dealloc];
 }
 
-- (void)loadCommandsForHost:(VT100RemoteHost *)host
-             partialCommand:(NSString *)partialCommand
-                     expand:(BOOL)expand {
+- (NSArray *)commandsForHost:(VT100RemoteHost *)host
+              partialCommand:(NSString *)partialCommand
+                      expand:(BOOL)expand {
     CommandHistory *history = [CommandHistory sharedInstance];
-    [[self unfilteredModel] removeAllObjects];
-    _partialCommandLength = partialCommand.length;
+    NSMutableArray *commands = [NSMutableArray array];
     NSArray *autocompleteEntries = [history autocompleteSuggestionsWithPartialCommand:partialCommand
                                                                                onHost:host];
     NSArray *expandedEntries;
@@ -59,11 +58,17 @@
     } else {
         expandedEntries = autocompleteEntries;
     }
-    for (CommandHistoryEntry *entry in expandedEntries) {
+    return expandedEntries;
+}
+
+- (void)loadCommands:(NSArray *)commands partialCommand:(NSString *)partialCommand {
+    [[self unfilteredModel] removeAllObjects];
+    _partialCommandLength = partialCommand.length;
+    for (CommandHistoryEntry *entry in commands) {
         CommandHistoryPopupEntry *popupEntry = [[[CommandHistoryPopupEntry alloc] init] autorelease];
         popupEntry.command = entry.command;
         popupEntry.date = [NSDate dateWithTimeIntervalSinceReferenceDate:entry.lastUsed];
-
+        
         [popupEntry setMainValue:popupEntry.command];
         [[self unfilteredModel] addObject:popupEntry];
     }
