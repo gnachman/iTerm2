@@ -3994,6 +3994,16 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return timeBetweenBlinks;
 }
 
+- (BOOL)autoCommandHistory
+{
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"AutoCommandHistory"];
+}
+
+- (void)setAutoCommandHistory:(BOOL)value
+{
+    [[NSUserDefaults standardUserDefaults] setBool:value forKey:@"AutoCommandHistory"];
+}
+
 #pragma mark - URL Handler
 
 - (Profile *)handlerBookmarkForURL:(NSString *)url

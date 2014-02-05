@@ -353,6 +353,7 @@
 #pragma mark - IBActions
 
 - (IBAction)toggleShowTimestamps:(id)sender;
+- (IBAction)toggleAutoCommandHistory:(id)sender;
 - (IBAction)openDashboard:(id)sender;
 - (IBAction)findCursor:(id)sender;
 // Save the current scroll position

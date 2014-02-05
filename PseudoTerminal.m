@@ -4100,10 +4100,12 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 - (void)showAutoCommandHistoryForSession:(PTYSession *)session {
-    // Use a delay so we don't get a flurry of windows appearing when restoring arrangements.
-    [self performSelector:@selector(reallyShowAutoCommandHistoryForSession:)
-               withObject:session
-               afterDelay:0.2];
+    if ([[PreferencePanel sharedInstance] autoCommandHistory]) {
+        // Use a delay so we don't get a flurry of windows appearing when restoring arrangements.
+        [self performSelector:@selector(reallyShowAutoCommandHistoryForSession:)
+                   withObject:session
+                   afterDelay:0.2];
+    }
 }
 
 - (void)reallyShowAutoCommandHistoryForSession:(PTYSession *)session {
@@ -5962,6 +5964,16 @@ NSString *kSessionsKVCKey = @"sessions";
         result = [[self currentSession] canInstantReplayNext];
     } else if ([item action] == @selector(toggleShowTimestamps:)) {
         result = ([self currentSession] != nil);
+    } else if ([item action] == @selector(toggleAutoCommandHistory:)) {
+        result = [[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed];
+        if (result) {
+            PTYSession *currentSession = [self currentSession];
+            if ([item respondsToSelector:@selector(setState:)]) {
+                [item setState:[[PreferencePanel sharedInstance] autoCommandHistory] ? NSOnState : NSOffState];
+            }
+        } else {
+            [item setState:NSOffState];
+        }
     } else if ([item action] == @selector(toggleAlertOnNextMark:)) {
         PTYSession *currentSession = [self currentSession];
         if ([item respondsToSelector:@selector(setState:)]) {
@@ -6015,6 +6027,11 @@ NSString *kSessionsKVCKey = @"sessions";
 - (IBAction)toggleShowTimestamps:(id)sender
 {
     [[self currentSession] toggleShowTimestamps];
+}
+
+- (IBAction)toggleAutoCommandHistory:(id)sender
+{
+    [[PreferencePanel sharedInstance] setAutoCommandHistory:![[PreferencePanel sharedInstance] autoCommandHistory]];
 }
 
 // Turn on/off sending of input to all sessions. This causes a bunch of UI
