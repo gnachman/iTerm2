@@ -5592,12 +5592,15 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     commandRange_ = range;
     BOOL haveCommand = commandRange_.start.x >= 0 && [[self commandInRange:commandRange_] length] > 0;
     if (!haveCommand && hadCommand) {
+        NSLog(@"Hide because don't have a command, but just had one");
         [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
     } else {
         if (!hadCommand && range.start.x >= 0) {
+            NSLog(@"Show because I have a range but didn't have a command");
             [[[self tab] realParentWindow] showAutoCommandHistoryForSession:self];
         }
         NSString *command = haveCommand ? [self commandInRange:commandRange_] : @"";
+        NSLog(@"Update command to %@", command);
         [[[self tab] realParentWindow] updateAutoCommandHistoryForPrefix:command
                                                                inSession:self];
     }
@@ -5616,6 +5619,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                            withMark:mark];
     }
     commandRange_ = VT100GridCoordRangeMake(-1, -1, -1, -1);
+    NSLog(@"Hide because command ended");
+    [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
 }
 
 #pragma mark - PopupDelegate

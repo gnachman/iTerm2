@@ -683,6 +683,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [bottomBar release];
     [_toolbarController release];
     [autocompleteView shutdown];
+    [commandHistoryPopup shutdown];
     [pbHistoryView shutdown];
     [pbHistoryView release];
     [commandHistoryPopup release];
