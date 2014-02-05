@@ -27,6 +27,7 @@ function SparkleSign {
 set -x
 cd ~/server/nightly/iTerm2/
 # todo: git pull origin master
+rm -rf build/Nightly/iTerm.app
 make Nightly || die "Nightly build failed"
 ./sign.sh
 COMPACTDATE=$(date +"%Y%m%d")-nightly
