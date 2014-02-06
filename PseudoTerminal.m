@@ -2633,7 +2633,8 @@ NSString *kSessionsKVCKey = @"sessions";
     newTerminal->hideAfterOpening_ = hideAfterOpening_;
     newTerminal->number_ = number_;
     newTerminal->broadcastMode_ = broadcastMode_;
-
+    [newTerminal->broadcastViewIds_ addObjectsFromArray:[broadcastViewIds_ allObjects]];
+    
     // Ensure that fullscreen windows (often hotkey windows) don't lose their collection behavior.
     [[newTerminal window] setCollectionBehavior:[[self window] collectionBehavior]];
 
