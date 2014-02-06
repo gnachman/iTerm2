@@ -143,6 +143,7 @@
 #define KEY_XTERM_MOUSE_REPORTING             @"Mouse Reporting"
 #define KEY_DISABLE_SMCUP_RMCUP               @"Disable Smcup Rmcup"
 #define KEY_ALLOW_TITLE_REPORTING             @"Allow Title Reporting"
+#define KEY_ALLOW_TITLE_SETTING               @"Allow Title Setting"
 #define KEY_DISABLE_PRINTING                  @"Disable Printing"
 #define KEY_SCROLLBACK_WITH_STATUS_BAR        @"Scrollback With Status Bar"
 #define KEY_SCROLLBACK_IN_ALTERNATE_SCREEN    @"Scrollback in Alternate Screen"

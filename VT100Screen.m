@@ -2294,12 +2294,14 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalSetWindowTitle:(NSString *)title {
-    NSString *newTitle = [[title copy] autorelease];
-    if ([delegate_ screenShouldSyncTitle]) {
-        newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
+    if ([delegate_ screenAllowTitleSetting]) {
+        NSString *newTitle = [[title copy] autorelease];
+        if ([delegate_ screenShouldSyncTitle]) {
+            newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
+        }
+        [delegate_ screenSetWindowTitle:newTitle];
     }
-    [delegate_ screenSetWindowTitle:newTitle];
-
+    
     // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
     // changes shouldn't override CurrentDirectory.
     if (![self remoteHostOnLine:[self numberOfScrollbackLines] + self.height]) {
@@ -2308,11 +2310,13 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalSetIconTitle:(NSString *)title {
-    NSString *newTitle = [[title copy] autorelease];
-    if ([delegate_ screenShouldSyncTitle]) {
-        newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
+    if ([delegate_ screenAllowTitleSetting]) {
+        NSString *newTitle = [[title copy] autorelease];
+        if ([delegate_ screenShouldSyncTitle]) {
+            newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
+        }
+        [delegate_ screenSetName:newTitle];
     }
-    [delegate_ screenSetName:newTitle];
 }
 
 - (void)terminalPasteString:(NSString *)string {
@@ -2501,11 +2505,15 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalPushCurrentTitleForWindow:(BOOL)isWindow {
-    [delegate_ screenPushCurrentTitleForWindow:isWindow];
+    if ([delegate_ screenAllowTitleSetting]) {
+        [delegate_ screenPushCurrentTitleForWindow:isWindow];
+    }
 }
 
 - (void)terminalPopCurrentTitleForWindow:(BOOL)isWindow {
-    [delegate_ screenPopCurrentTitleForWindow:isWindow];
+    if ([delegate_ screenAllowTitleSetting]) {
+        [delegate_ screenPopCurrentTitleForWindow:isWindow];
+    }
 }
 
 - (BOOL)terminalPostGrowlNotification:(NSString *)message {

@@ -5628,6 +5628,15 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
 }
 
+- (BOOL)screenAllowTitleSetting {
+    NSNumber *n = addressBookEntry[KEY_ALLOW_TITLE_SETTING];
+    if (!n) {
+        return YES;
+    } else {
+        return [n boolValue];
+    }
+}
+
 #pragma mark - PopupDelegate
 
 - (NSWindowController *)popupWindowController {

@@ -15,6 +15,7 @@
                 <outlet property="advancedWorkingDirSheet_" destination="5979" id="6029"/>
                 <outlet property="allowClipboardAccessFromTerminal" destination="6383" id="6386"/>
                 <outlet property="allowTitleReporting" destination="6387" id="6390"/>
+                <outlet property="allowTitleSetting" destination="xih-tE-Xk7" id="cn0-W7-MGI"/>
                 <outlet property="animateDimming" destination="5403" id="5407"/>
                 <outlet property="ansi0Color" destination="2297" id="3067"/>
                 <outlet property="ansi10Color" destination="2300" id="3053"/>
@@ -3067,7 +3068,7 @@ Gw
                                                                 </connections>
                                                             </button>
                                                             <button id="5081">
-                                                                <rect key="frame" x="287" y="178" width="257" height="18"/>
+                                                                <rect key="frame" x="286" y="178" width="257" height="18"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <buttonCell key="cell" type="check" title="Disable save/restore alternate screen" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5082">
                                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3078,7 +3079,7 @@ Gw
                                                                 </connections>
                                                             </button>
                                                             <button id="5633">
-                                                                <rect key="frame" x="287" y="198" width="257" height="18"/>
+                                                                <rect key="frame" x="286" y="198" width="257" height="18"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <buttonCell key="cell" type="check" title="Disable session-initiated printing" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5634">
                                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3091,12 +3092,23 @@ Gw
                                                             <button id="6387">
                                                                 <rect key="frame" x="27" y="178" width="257" height="18"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <buttonCell key="cell" type="check" title="Allow terminal to report window title" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6388">
+                                                                <buttonCell key="cell" type="check" title="Terminal may report window title" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6388">
                                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
                                                                     <action selector="bookmarkSettingChanged:" target="-2" id="6389"/>
+                                                                </connections>
+                                                            </button>
+                                                            <button id="xih-tE-Xk7">
+                                                                <rect key="frame" x="27" y="158" width="237" height="18"/>
+                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                <buttonCell key="cell" type="check" title="Terminal may set tab/window title" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="hed-XP-5DZ">
+                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                                    <font key="font" metaFont="system"/>
+                                                                </buttonCell>
+                                                                <connections>
+                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="gPE-4z-K8x"/>
                                                                 </connections>
                                                             </button>
                                                             <button id="5154">
