@@ -2517,7 +2517,7 @@ Gw
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                         <subviews>
                                                             <textField verticalHuggingPriority="750" id="4911">
-                                                                <rect key="frame" x="109" y="166" width="140" height="22"/>
+                                                                <rect key="frame" x="94" y="166" width="140" height="22"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="4951">
                                                                     <numberFormatter key="formatter" formatterBehavior="default10_4" positiveFormat="#,##0.###" negativeFormat="#,##0.###" numberStyle="decimal" minimumIntegerDigits="1" maximumIntegerDigits="309" minimumFractionDigits="0" maximumFractionDigits="3" id="4952">
@@ -2537,7 +2537,7 @@ Gw
                                                                 </connections>
                                                             </textField>
                                                             <textField verticalHuggingPriority="750" id="4912">
-                                                                <rect key="frame" x="43" y="166" width="67" height="19"/>
+                                                                <rect key="frame" x="28" y="166" width="67" height="19"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Columns:" id="4950">
                                                                     <font key="font" metaFont="system"/>
@@ -2546,7 +2546,7 @@ Gw
                                                                 </textFieldCell>
                                                             </textField>
                                                             <textField verticalHuggingPriority="750" id="4913">
-                                                                <rect key="frame" x="66" y="136" width="44" height="19"/>
+                                                                <rect key="frame" x="51" y="136" width="44" height="19"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Rows:" id="4949">
                                                                     <font key="font" metaFont="system"/>
@@ -2555,7 +2555,7 @@ Gw
                                                                 </textFieldCell>
                                                             </textField>
                                                             <textField verticalHuggingPriority="750" id="4914">
-                                                                <rect key="frame" x="109" y="136" width="140" height="22"/>
+                                                                <rect key="frame" x="94" y="136" width="140" height="22"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="4947">
                                                                     <numberFormatter key="formatter" formatterBehavior="default10_4" positiveFormat="#,##0.###" negativeFormat="#,##0.###" numberStyle="decimal" minimumIntegerDigits="1" maximumIntegerDigits="309" minimumFractionDigits="0" maximumFractionDigits="3" id="4948">
@@ -2575,7 +2575,7 @@ Gw
                                                                 </connections>
                                                             </textField>
                                                             <textField verticalHuggingPriority="750" id="4992">
-                                                                <rect key="frame" x="30" y="196" width="190" height="20"/>
+                                                                <rect key="frame" x="15" y="196" width="190" height="20"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Settings for New Windows" id="4993">
                                                                     <font key="font" metaFont="systemBold"/>
@@ -2584,19 +2584,25 @@ Gw
                                                                 </textFieldCell>
                                                             </textField>
                                                             <popUpButton verticalHuggingPriority="750" id="4916">
-                                                                <rect key="frame" x="324" y="164" width="159" height="26"/>
+                                                                <rect key="frame" x="324" y="164" width="221" height="26"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <popUpButtonCell key="cell" type="push" title="Normal" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="4945" id="4941">
+                                                                <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="4941">
                                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                                     <font key="font" metaFont="menu"/>
                                                                     <menu key="menu" title="OtherViews" id="4942">
                                                                         <items>
-                                                                            <menuItem title="Normal" state="on" id="4945"/>
+                                                                            <menuItem title="Normal" id="4945"/>
                                                                             <menuItem title="Fullscreen" tag="1" id="4944"/>
-                                                                            <menuItem title="Bottom of screen" tag="5" id="4943"/>
-                                                                            <menuItem title="Top of Screen" tag="2" id="5591"/>
-                                                                            <menuItem title="Left of Screen" tag="6" id="6376"/>
-                                                                            <menuItem title="Right of Screen" tag="7" id="6405"/>
+                                                                            <menuItem isSeparatorItem="YES" id="ohs-lg-RYo"/>
+                                                                            <menuItem title="Full-Width Bottom of Screen" tag="5" id="4943"/>
+                                                                            <menuItem title="Full-Width Top of Screen" tag="2" id="5591"/>
+                                                                            <menuItem title="Full-Height Left of Screen" tag="6" id="6376"/>
+                                                                            <menuItem title="Full-Height Right of Screen" tag="7" id="6405"/>
+                                                                            <menuItem isSeparatorItem="YES" id="YuD-s4-8Sd"/>
+                                                                            <menuItem title="Bottom of Screen" tag="8" id="gu9-sV-Xji"/>
+                                                                            <menuItem title="Top of Screen" tag="9" id="onX-9F-jq7"/>
+                                                                            <menuItem title="Left of Screen" tag="10" id="Wfg-EQ-Kpk"/>
+                                                                            <menuItem title="Right of Screen" tag="11" id="07C-vC-8pn"/>
                                                                         </items>
                                                                     </menu>
                                                                 </popUpButtonCell>
@@ -2606,7 +2612,7 @@ Gw
                                                                 </connections>
                                                             </popUpButton>
                                                             <popUpButton verticalHuggingPriority="750" id="4917">
-                                                                <rect key="frame" x="324" y="138" width="159" height="26"/>
+                                                                <rect key="frame" x="324" y="138" width="221" height="26"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <popUpButtonCell key="cell" type="push" alternateTitle="Current Screen" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="4939">
                                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -2646,7 +2652,7 @@ Gw
                                                                 </textFieldCell>
                                                             </textField>
                                                             <popUpButton verticalHuggingPriority="750" id="4921">
-                                                                <rect key="frame" x="323" y="111" width="160" height="26"/>
+                                                                <rect key="frame" x="323" y="111" width="222" height="26"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <popUpButtonCell key="cell" type="push" title="Current Space" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="4935" id="4922">
                                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -2698,12 +2704,12 @@ Gw
                                                                 </connections>
                                                             </button>
                                                             <imageView id="4974">
-                                                                <rect key="frame" x="296" y="256" width="187" height="96"/>
+                                                                <rect key="frame" x="296" y="256" width="249" height="96"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" imageFrameStyle="grayBezel" id="4987"/>
                                                             </imageView>
                                                             <textField verticalHuggingPriority="750" id="4975">
-                                                                <rect key="frame" x="43" y="339" width="97" height="34"/>
+                                                                <rect key="frame" x="28" y="339" width="97" height="34"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Transparency:" id="4986">
                                                                     <font key="font" metaFont="system"/>
@@ -2721,7 +2727,7 @@ Gw
                                                                 </textFieldCell>
                                                             </textField>
                                                             <button id="4976">
-                                                                <rect key="frame" x="44" y="296" width="63" height="18"/>
+                                                                <rect key="frame" x="29" y="296" width="63" height="18"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <buttonCell key="cell" type="check" title="Blur:" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4985">
                                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2733,7 +2739,7 @@ Gw
                                                                 </connections>
                                                             </button>
                                                             <textField verticalHuggingPriority="750" id="4977">
-                                                                <rect key="frame" x="30" y="381" width="146" height="20"/>
+                                                                <rect key="frame" x="15" y="381" width="146" height="20"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Window Appearance" id="4984">
                                                                     <font key="font" metaFont="systemBold"/>
@@ -2751,7 +2757,7 @@ Gw
                                                                 </textFieldCell>
                                                             </textField>
                                                             <slider verticalHuggingPriority="750" id="4978">
-                                                                <rect key="frame" x="61" y="335" width="190" height="21"/>
+                                                                <rect key="frame" x="46" y="335" width="190" height="21"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <sliderCell key="cell" alignment="left" maxValue="0.90000000000000002" tickMarkPosition="below" sliderType="linear" id="4983"/>
                                                                 <connections>
@@ -2760,7 +2766,7 @@ Gw
                                                                 </connections>
                                                             </slider>
                                                             <textField verticalHuggingPriority="750" id="4979">
-                                                                <rect key="frame" x="60" y="320" width="53" height="11"/>
+                                                                <rect key="frame" x="45" y="320" width="53" height="11"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Opaque" id="4982">
                                                                     <font key="font" metaFont="miniSystem"/>
@@ -2769,7 +2775,7 @@ Gw
                                                                 </textFieldCell>
                                                             </textField>
                                                             <textField verticalHuggingPriority="750" id="4980">
-                                                                <rect key="frame" x="194" y="320" width="58" height="11"/>
+                                                                <rect key="frame" x="179" y="320" width="58" height="11"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Transparent" id="4981">
                                                                     <font key="font" metaFont="miniSystem"/>
@@ -2778,7 +2784,7 @@ Gw
                                                                 </textFieldCell>
                                                             </textField>
                                                             <slider verticalHuggingPriority="750" id="5363">
-                                                                <rect key="frame" x="61" y="271" width="190" height="21"/>
+                                                                <rect key="frame" x="46" y="271" width="190" height="21"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.10000000000000001" maxValue="15" doubleValue="0.10000000000000001" tickMarkPosition="below" sliderType="linear" id="5368"/>
                                                                 <connections>
@@ -2787,7 +2793,7 @@ Gw
                                                                 </connections>
                                                             </slider>
                                                             <textField verticalHuggingPriority="750" id="5364">
-                                                                <rect key="frame" x="60" y="256" width="60" height="11"/>
+                                                                <rect key="frame" x="45" y="256" width="60" height="11"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Small Radius" id="5367">
                                                                     <font key="font" metaFont="miniSystem"/>
@@ -2796,7 +2802,7 @@ Gw
                                                                 </textFieldCell>
                                                             </textField>
                                                             <textField verticalHuggingPriority="750" id="5365">
-                                                                <rect key="frame" x="191" y="256" width="61" height="11"/>
+                                                                <rect key="frame" x="176" y="256" width="61" height="11"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Large Radius" id="5366">
                                                                     <font key="font" metaFont="miniSystem"/>
@@ -2805,7 +2811,7 @@ Gw
                                                                 </textFieldCell>
                                                             </textField>
                                                             <button id="5004">
-                                                                <rect key="frame" x="44" y="30" width="299" height="18"/>
+                                                                <rect key="frame" x="29" y="30" width="299" height="18"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <buttonCell key="cell" type="check" title="Disable session-initiated window resizing" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5005">
                                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2817,7 +2823,7 @@ Gw
                                                                 </connections>
                                                             </button>
                                                             <button id="6416">
-                                                                <rect key="frame" x="44" y="10" width="389" height="18"/>
+                                                                <rect key="frame" x="29" y="10" width="389" height="18"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <buttonCell key="cell" type="check" title="Force this profile to open in a new window, never in a tab." bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6417">
                                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2829,7 +2835,7 @@ Gw
                                                                 </connections>
                                                             </button>
                                                             <button id="5008">
-                                                                <rect key="frame" x="44" y="50" width="458" height="18"/>
+                                                                <rect key="frame" x="29" y="50" width="458" height="18"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <buttonCell key="cell" type="check" title="If showing profile name in tab title, keep it when the title is changed" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5009">
                                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2841,7 +2847,7 @@ Gw
                                                                 </connections>
                                                             </button>
                                                             <textField verticalHuggingPriority="750" id="5012">
-                                                                <rect key="frame" x="30" y="74" width="105" height="20"/>
+                                                                <rect key="frame" x="15" y="74" width="105" height="20"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Miscellaneous" id="5013">
                                                                     <font key="font" metaFont="systemBold"/>
@@ -2850,7 +2856,7 @@ Gw
                                                                 </textFieldCell>
                                                             </textField>
                                                             <slider verticalHuggingPriority="750" id="6320">
-                                                                <rect key="frame" x="367" y="210" width="115" height="21"/>
+                                                                <rect key="frame" x="367" y="210" width="177" height="21"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <sliderCell key="cell" alignment="left" minValue="0.29999999999999999" maxValue="1" doubleValue="0.40000000000000002" tickMarkPosition="below" sliderType="linear" id="6321"/>
                                                                 <connections>
@@ -2859,7 +2865,7 @@ Gw
                                                                 </connections>
                                                             </slider>
                                                             <button id="6354">
-                                                                <rect key="frame" x="107" y="112" width="140" height="18"/>
+                                                                <rect key="frame" x="92" y="112" width="140" height="18"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <buttonCell key="cell" type="check" title="Hide after opening" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6355">
                                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>

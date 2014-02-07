@@ -49,9 +49,10 @@
 // Initialize a new PseudoTerminal.
 // smartLayout: If true then position windows using the "smart layout"
 //   algorithm.
-// windowType: WINDOW_TYPE_NORMAL, WINDOW_TYPE_FULL_SCREEN, WINDOW_TYPE_TOP, or
-//   WINDOW_TYPE_LION_FULL_SCREEN, or WINDOW_TYPE_BOTTOM or WINDOW_TYPE_LEFT or
-//   WINDOW_TYPE_RIGHT
+// windowType: WINDOW_TYPE_NORMAL, WINDOW_TYPE_FULL_SCREEN, WINDOW_TYPE_TOP,
+// WINDOW_TYPE_TOP_PARTIAL, WINDOW_TYPE_LION_FULL_SCREEN, WINDOW_TYPE_BOTTOM,
+// WINDOW_TYPE_BOTTOM_PARTIAL, WINDOW_TYPE_LEFT, WINDOW_TYPE_LEFT_PARTIAL, WINDOW_TYPE_RIGHT, or
+// WINDOW_TYPE_RIGHT_PARTIAL.
 // screen: An index into [NSScreen screens], or -1 to let the system pick a
 //   screen.
 - (id)initWithSmartLayout:(BOOL)smartLayout
