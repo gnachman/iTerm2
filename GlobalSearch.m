@@ -36,6 +36,7 @@
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "iTermSearchField.h"
+#import "iTermSelection.h"
 
 const double GLOBAL_SEARCH_MARGIN = 10;
 
@@ -233,13 +234,15 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     }
     [matchLocations_ addObject:setObj];
 
-    NSString* theContext = [textView_ contentFromX:0
-                                                 Y:absY
-                                               ToX:[textViewDataSource_ width] - 1
-                                                 Y:absEndY - [[textView_ dataSource] totalScrollbackOverflow]
-                                               pad:NO
-                                includeLastNewline:NO
-                            trimTrailingWhitespace:YES];
+    VT100GridCoordRange theRange =
+        VT100GridCoordRangeMake(0,
+                                absY,
+                                [textViewDataSource_ width] - 1,
+                                absEndY - [[textView_ dataSource] totalScrollbackOverflow]);
+    NSString* theContext = [textView_ contentInRange:theRange
+                                                 pad:NO
+                                  includeLastNewline:NO
+                              trimTrailingWhitespace:YES];
     theContext = [theContext stringByReplacingOccurrencesOfString:@"\n"
                                                        withString:@" "];
     [results_ addObject:[[[GlobalSearchResult alloc] initWithInstance:self
@@ -691,7 +694,10 @@ const double GLOBAL_SEARCH_MARGIN = 10;
         theResult = [combinedResults_ objectAtIndex:i];
         inst = [theResult instance];
         tv = [inst textView];
-        [tv setSelectionFromX:[theResult x] fromY:[theResult y] toX:[theResult endX]+1 toY:[theResult endY]];
+        tv.selection.selectedRange = VT100GridCoordRangeMake([theResult x],
+                                                             [theResult y],
+                                                             [theResult endX] + 1,
+                                                             [theResult endY]);
         [tv scrollToSelection];
         session = [inst session];
     } else {

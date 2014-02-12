@@ -593,6 +593,9 @@
 		A6358649184BEA57009ED690 /* AATreeNode.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358644184BEA57009ED690 /* AATreeNode.h */; };
 		A635864A184BEA57009ED690 /* AATreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358645184BEA57009ED690 /* AATreeNode.m */; };
 		A635864B184BEA57009ED690 /* AATreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358645184BEA57009ED690 /* AATreeNode.m */; };
+		A63BA39518A9CB43002BE075 /* iTermSelection.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39318A9CB43002BE075 /* iTermSelection.h */; };
+		A63BA39618A9CB43002BE075 /* iTermSelection.m in Sources */ = {isa = PBXBuildFile; fileRef = A63BA39418A9CB43002BE075 /* iTermSelection.m */; };
+		A63BA39718A9CB43002BE075 /* iTermSelection.m in Sources */ = {isa = PBXBuildFile; fileRef = A63BA39418A9CB43002BE075 /* iTermSelection.m */; };
 		A63F4095183B398C003A6A6D /* PTYNoteViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F4093183B398C003A6A6D /* PTYNoteViewController.h */; };
 		A63F4096183B398C003A6A6D /* PTYNoteViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4094183B398C003A6A6D /* PTYNoteViewController.m */; };
 		A63F4097183B398C003A6A6D /* PTYNoteViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4094183B398C003A6A6D /* PTYNoteViewController.m */; };
@@ -1104,6 +1107,8 @@
 		A6358643184BEA57009ED690 /* AATree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AATree.m; path = "objc-aatree-master/AATree.m"; sourceTree = "<group>"; };
 		A6358644184BEA57009ED690 /* AATreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AATreeNode.h; path = "objc-aatree-master/AATreeNode.h"; sourceTree = "<group>"; };
 		A6358645184BEA57009ED690 /* AATreeNode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AATreeNode.m; path = "objc-aatree-master/AATreeNode.m"; sourceTree = "<group>"; };
+		A63BA39318A9CB43002BE075 /* iTermSelection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSelection.h; sourceTree = "<group>"; };
+		A63BA39418A9CB43002BE075 /* iTermSelection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSelection.m; sourceTree = "<group>"; };
 		A63F4093183B398C003A6A6D /* PTYNoteViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYNoteViewController.h; sourceTree = "<group>"; };
 		A63F4094183B398C003A6A6D /* PTYNoteViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYNoteViewController.m; sourceTree = "<group>"; };
 		A63F4098183B3AA7003A6A6D /* PTYNoteView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYNoteView.h; sourceTree = "<group>"; };
@@ -1314,6 +1319,8 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A63BA39318A9CB43002BE075 /* iTermSelection.h */,
+				A63BA39418A9CB43002BE075 /* iTermSelection.m */,
 				A6E74755188C66CF005355CF /* iTermExposeTabView.h */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
@@ -2227,6 +2234,7 @@
 				A6E74757188C66CF005355CF /* iTermExposeTabView.h in Headers */,
 				1D624BDD1386E0FA00111319 /* GTMDefines.h in Headers */,
 				A68A3119186E2F54007F550F /* PopupModel.h in Headers */,
+				A63BA39518A9CB43002BE075 /* iTermSelection.h in Headers */,
 				1D624BEE1386E34F00111319 /* GTMObjectSingleton.h in Headers */,
 				1D624BF41386E39D00111319 /* GTMDebugSelectorValidation.h in Headers */,
 				1D624BF61386E3B400111319 /* GTMTypeCasting.h in Headers */,
@@ -2690,6 +2698,7 @@
 				A6DF401E1897607E00F05947 /* NSTextField+iTerm.m in Sources */,
 				1D9A5538180FA79F00B42CE9 /* GTMCarbonEvent.m in Sources */,
 				1D9A558A180FA87000B42CE9 /* PasteContext.m in Sources */,
+				A63BA39718A9CB43002BE075 /* iTermSelection.m in Sources */,
 				1D9A5582180FA87000B42CE9 /* iTermApplication.m in Sources */,
 				1D9A559D180FA87000B42CE9 /* SessionView.m in Sources */,
 				1DD39B17180B82AC004E56D5 /* ScreenChar.m in Sources */,
@@ -2834,6 +2843,7 @@
 				1D93D35412697529007F741B /* DVREncoder.m in Sources */,
 				1D93D35A1269778C007F741B /* DVRBuffer.m in Sources */,
 				A6E74762188C679C005355CF /* iTermExposeView.m in Sources */,
+				A63BA39618A9CB43002BE075 /* iTermSelection.m in Sources */,
 				1D93D3B112697D53007F741B /* DVRIndexEntry.m in Sources */,
 				1D7C18821275D22900461E55 /* PasteboardHistory.m in Sources */,
 				A635864A184BEA57009ED690 /* AATreeNode.m in Sources */,

@@ -122,25 +122,22 @@ const int kMaxResultContextWords = 4;
             break;
         }
 
-        int tx1, tx2, ty1, ty2;
+        VT100GridCoordRange range;
         NSString* s = [[[self delegate] popupVT100TextView] getWordForX:x
                                                                       y:y
-                                                                 startX:&tx1
-                                                                 startY:&ty1
-                                                                   endX:&tx2
-                                                                   endY:&ty2];
+                                                                  range:&range];
         if ([s rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
             // Add only if not whitespace.
             AcLog(@"Add to context (%d/%d): %@", (int) [context count], (int) maxWords, s);
             [context addObject:s];
         }
-        x = tx1;
+        x = range.start.x;
     }
 }
 
 - (void)onOpen
 {
-    int tx1, ty1, tx2, ty2;
+    VT100GridCoordRange range;
     VT100Screen* screen = [[self delegate] popupVT100Screen];
 
     [wordSeparatorCharacterSet_ autorelease];
@@ -159,21 +156,18 @@ const int kMaxResultContextWords = 4;
     } else {
         NSString* s = [[[self delegate] popupVT100TextView] getWordForX:x
                                                                       y:y
-                                                                 startX:&tx1
-                                                                 startY:&ty1
-                                                                   endX:&tx2
-                                                                   endY:&ty2];
+                                                                  range:&range];
         int maxWords = kMaxQueryContextWords;
         if ([s rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
             ++maxWords;
         } else {
             [prefix_ setString:s];
         }
-        AcLog(@"Prefix is %@ starting at %d", s, tx1);
-        startX_ = tx1;
-        startY_ = ty1 + [screen scrollbackOverflow];
+        AcLog(@"Prefix is %@ starting at %d", s, range.start.x);
+        startX_ = range.start.x;
+        startY_ = range.start.y + [screen scrollbackOverflow];
 
-        [self appendContextAtX:tx1 y:ty1 into:context_ maxWords:maxWords];
+        [self appendContextAtX:range.start.x y:range.start.y into:context_ maxWords:maxWords];
         if (maxWords > kMaxQueryContextWords) {
             if ([context_ count] > 0) {
                 [prefix_ setString:[context_ objectAtIndex:0]];
@@ -488,21 +482,15 @@ const int kMaxResultContextWords = 4;
             [findResults_ removeObjectAtIndex:0];
 
             AcLog(@"Found match at %d-%d, line %d", startX, endX, startY);
-            int tx1, ty1, tx2, ty2;
+            VT100GridCoordRange range;
             // Get the word that includes the match.
             NSMutableString* firstWord = [NSMutableString stringWithString:[[[self delegate] popupVT100TextView] getWordForX:startX
                                                                                                                            y:startY
-                                                                                                                      startX:&tx1
-                                                                                                                      startY:&ty1
-                                                                                                                        endX:&tx2
-                                                                                                                        endY:&ty2]];
+                                                                                                                       range:&range]];
             while ([firstWord length] < [prefix_ length]) {
-                NSString* part = [[[self delegate] popupVT100TextView] getWordForX:tx2
-                                                                                 y:ty2
-                                                                            startX:&tx1
-                                                                            startY:&ty1
-                                                                              endX:&tx2
-                                                                              endY:&ty2];
+                NSString* part = [[[self delegate] popupVT100TextView] getWordForX:range.end.x
+                                                                                 y:range.end.y
+                                                                             range:&range];
                 if ([part length] == 0) {
                     break;
                 }
@@ -510,11 +498,11 @@ const int kMaxResultContextWords = 4;
             }
             NSString* word = firstWord;
             AcLog(@"Matching word is %@", word);
-            NSRange range = [word rangeOfString:prefix_ options:(NSCaseInsensitiveSearch|NSAnchoredSearch)];
-            if (range.location == 0) {
+            NSRange wordRange = [word rangeOfString:prefix_ options:(NSCaseInsensitiveSearch|NSAnchoredSearch)];
+            if (wordRange.location == 0) {
                 // Result has prefix_ as prefix.
                 // Set fullMatch to true if the word we found is equal to prefix, or false if word just has prefix as its prefix.
-                BOOL fullMatch = (range.length == [word length]);
+                BOOL fullMatch = (wordRange.length == [word length]);
 
                 // Grab the context before the match.
                 NSMutableArray* resultContext = [NSMutableArray arrayWithCapacity:kMaxResultContextWords];
@@ -528,21 +516,26 @@ const int kMaxResultContextWords = 4;
                         endX -= [screen width];
                         ++endY;
                     }
-                    word = [[[self delegate] popupVT100TextView] getWordForX:endX y:endY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
-                    AcLog(@"First candidate is at %d-%d, %d: '%@'", tx1, tx2, ty1, word);
+                    
+                    VT100GridCoordRange wordRange;
+                    word = [[[self delegate] popupVT100TextView] getWordForX:endX y:endY range:&wordRange];
+                    AcLog(@"First candidate is at %@", VT100GridCoordRangeDescription(wordRange));
                     if ([word rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
                         // word after match is all whitespace. Grab the next word.
-                        if (tx2 == [screen width]) {
-                            tx2 = 0;
-                            ++ty2;
+                        if (wordRange.end.x == [screen width]) {
+                            wordRange.end.x = 0;
+                            ++wordRange.end.y;
                         }
-                        if (ty2 < [screen numberOfLines]) {
-                            word = [[[self delegate] popupVT100TextView] getWordForX:tx2 y:ty2 startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
+                        if (range.end.y < [screen numberOfLines]) {
+                            word = [[[self delegate] popupVT100TextView] getWordForX:wordRange.end.x
+                                                                                   y:wordRange.end.y
+                                                                               range:&wordRange];
                             if (!whitespaceBeforeCursor_) {
                                 // Prepend a space if one is needed
                                 word = [NSString stringWithFormat:@" %@", word];
                             }
-                            AcLog(@"Replacement candidate is at %d-%d, %d: '%@'", tx1, tx2, ty1, word);
+                            AcLog(@"Replacement candidate is at %@: '%@'",
+                                  VT100GridCoordRangeDescription(wordRange), word);
                         } else {
                             AcLog(@"Hit end of screen.");
                         }
@@ -550,7 +543,7 @@ const int kMaxResultContextWords = 4;
                 } else if (!whitespaceBeforeCursor_) {
                     // Get suffix of word after match. If there's whitespace before the cursor then only
                     // full matches are interesting.
-                    word = [word substringWithRange:NSMakeRange(range.length, [word length] - range.length)];
+                    word = [word substringWithRange:NSMakeRange(wordRange.length, [word length] - wordRange.length)];
                 } else {
                     // Not a full match and there is whitespace before the cursor.
                     word = @"";

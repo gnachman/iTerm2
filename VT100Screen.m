@@ -154,10 +154,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (VT100GridCoordRange)coordRangeForCurrentSelection {
-    return VT100GridCoordRangeMake([delegate_ screenSelectionStartX],
-                                   [delegate_ screenSelectionStartY],
-                                   [delegate_ screenSelectionEndX],
-                                   [delegate_ screenSelectionEndY]);
+    return [delegate_ screenSelectionRange];
 }
 
 // This is used for a very specific case. It's used when you have some history, optionally followed
@@ -316,11 +313,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     new_width = MAX(new_width, 1);
     new_height = MAX(new_height, 1);
 
-    BOOL hasSelection = ([delegate_ screenHasView] &&
-                         [delegate_ screenSelectionStartX] >= 0 &&
-                         [delegate_ screenSelectionEndX] >= 0 &&
-                         [delegate_ screenSelectionStartY] >= 0 &&
-                         [delegate_ screenSelectionEndY] >= 0);
+    BOOL hasSelection = [delegate_ screenHasView] && [delegate_ screenHasSelection];
 
     int usedHeight = [currentGrid_ numberOfLinesUsed];
 

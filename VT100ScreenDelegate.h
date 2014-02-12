@@ -139,11 +139,9 @@
 // PTYTextView deselect
 - (void)screenRemoveSelection;
 
-// Returns inclusive bounds of selection range, or -1 if no selection present.
-- (int)screenSelectionStartX;
-- (int)screenSelectionEndX;
-- (int)screenSelectionStartY;
-- (int)screenSelectionEndY;
+// Selection range
+- (VT100GridCoordRange)screenSelectionRange;
+- (BOOL)screenHasSelection;
 
 // Sets inclusive bounds of selection range.
 - (void)screenSetSelectionFromX:(int)startX

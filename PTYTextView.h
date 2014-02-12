@@ -11,6 +11,7 @@
 
 @class CRunStorage;
 @class FindCursorView;
+@class iTermSelection;
 @class MovingAverage;
 @class PTYScrollView;
 @class PTYScroller;
@@ -34,14 +35,6 @@
 
 // Amount of time to highlight the cursor after beginFindCursor:YES
 static const double kFindCursorHoldTime = 1;
-enum {
-    SELECT_CHAR,
-    SELECT_WORD,
-    SELECT_LINE,
-    SELECT_SMART,
-    SELECT_BOX,
-    SELECT_WHOLE_LINE
-};
 
 // Types of characters. Used when classifying characters for word selection.
 typedef enum {
@@ -132,6 +125,9 @@ typedef enum {
   PointerControllerDelegate,
   TrouterDelegate>
 
+// Current selection
+@property(nonatomic, readonly) iTermSelection *selection;
+
 // Draw a highlight along the entire line the cursor is on.
 @property(nonatomic, assign) BOOL highlightCursorLine;
 
@@ -170,10 +166,7 @@ typedef enum {
 // a smart selection performed at (x, y).
 - (NSDictionary *)smartSelectAtX:(int)x
                                y:(int)y
-                        toStartX:(int*)X1
-                        toStartY:(int*)Y1
-                          toEndX:(int*)X2
-                          toEndY:(int*)Y2
+                              to:(VT100GridCoordRange *)range
                 ignoringNewlines:(BOOL)ignoringNewlines
                   actionRequired:(BOOL)actionRequred;
 
@@ -182,13 +175,10 @@ typedef enum {
                                           trimSpaces:(BOOL)trimSpaces;
 
 // Returns the content in a coord range.
-- (NSString *)contentFromX:(int)startx
-                         Y:(int)starty
-                       ToX:(int)nonInclusiveEndx
-                         Y:(int)endy
-                       pad:(BOOL)pad
-        includeLastNewline:(BOOL)includeLastNewline
-    trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces;
+- (NSString *)contentInRange:(VT100GridCoordRange)range
+                         pad:(BOOL)pad
+          includeLastNewline:(BOOL)includeLastNewline
+      trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces;
 
 // Returns the currently selected text.
 - (NSString *)selectedText;
@@ -281,16 +271,6 @@ typedef enum {
 
 // Update the scroller color for light or dark backgrounds.
 - (void)updateScrollerForBackgroundColor;
-
-// Range of selection.
-- (int)selectionStartX;
-- (int)selectionStartY;
-
-// This is a half open interval as far as X is concerned. So an empty selection has the same start
-// and end coordinates.
-- (int)selectionEndX;
-- (int)selectionEndY;
-- (void)setSelectionFromX:(int)fromX fromY:(int)fromY toX:(int)toX toY:(int)toY;
 
 // Remove underline indicating clickable URL.
 - (void)removeUnderline;
@@ -406,19 +386,13 @@ typedef enum {
 // Returns the range of coords for the word at (x,y).
 - (NSString *)getWordForX:(int)x
                         y:(int)y
-                   startX:(int *)startx
-                   startY:(int *)starty
-                     endX:(int *)endx
-                     endY:(int *)endy;
+                    range:(VT100GridCoordRange *)range;
 
 // Draws a dotted outline (or just the top of the outline) if there is a maximized pane.
 - (void)drawOutlineInRect:(NSRect)rect topOnly:(BOOL)topOnly;
 
 // Add a search result for highlighting in yellow.
-- (void)addResultFromX:(int)resStartX
-                  absY:(long long)absStartY
-                   toX:(int)resEndX
-                toAbsY:(long long)absEndY;
+- (void)addSearchResult:(SearchResult *)searchResult;
 
 // When a new note is created, call this to add a view for it.
 - (void)addViewForNote:(PTYNoteViewController *)note;

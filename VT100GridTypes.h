@@ -101,6 +101,26 @@ NS_INLINE BOOL VT100GridCoordEquals(VT100GridCoord a, VT100GridCoord b) {
     return a.x == b.x && a.y == b.y;
 }
 
+// Ascending: a < b
+// Descending: a > b
+// Same: a == b
+NS_INLINE NSComparisonResult VT100GridCoordOrder(VT100GridCoord a, VT100GridCoord b) {
+    if (a.y < b.y) {
+        return NSOrderedAscending;
+    }
+    if (a.y > b.y) {
+        return NSOrderedDescending;
+    }
+    if (a.x < b.x) {
+        return NSOrderedAscending;
+    }
+    if (a.x > b.x) {
+        return NSOrderedDescending;
+    }
+    
+    return NSOrderedSame;
+}
+
 NS_INLINE VT100GridRun VT100GridRunMake(int x, int y, int length) {
     VT100GridRun run;
     run.origin.x = x;
@@ -116,6 +136,26 @@ NS_INLINE VT100GridCoordRange VT100GridCoordRangeMake(int startX, int startY, in
     coordRange.end.x = endX;
     coordRange.end.y = endY;
     return coordRange;
+}
+
+NS_INLINE NSString *VT100GridCoordDescription(VT100GridCoord c) {
+    return [NSString stringWithFormat:@"(%d, %d)", c.x, c.y];
+}
+
+NS_INLINE VT100GridCoord VT100GridCoordRangeMin(VT100GridCoordRange range) {
+    if (VT100GridCoordOrder(range.start, range.end) == NSOrderedAscending) {
+        return range.start;
+    } else {
+        return range.end;
+    }
+}
+
+NS_INLINE VT100GridCoord VT100GridCoordRangeMax(VT100GridCoordRange range) {
+    if (VT100GridCoordOrder(range.start, range.end) == NSOrderedAscending) {
+        return range.end;
+    } else {
+        return range.start;
+    }
 }
 
 NS_INLINE int VT100GridCoordRangeLength(VT100GridCoordRange range, int gridWidth) {

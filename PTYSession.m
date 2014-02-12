@@ -5,6 +5,7 @@
 #import "FakeWindow.h"
 #import "FileTransferManager.h"
 #import "HotkeyWindowController.h"
+#import "iTermSelection.h"
 #import "ITAddressBookMgr.h"
 #import "MovePaneController.h"
 #import "MovePaneController.h"
@@ -3616,20 +3617,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (coord.x < 0 || coord.y < 0 || coord.x >= SCREEN.width || coord.y >= SCREEN.height) {
         return VT100GridCoordRangeMake(0, 0, 0, 0);
     }
-    int startX, startY, endX, endY;
+    VT100GridCoordRange range;
     [TEXTVIEW smartSelectAtX:coord.x
                            y:coord.y + [SCREEN numberOfScrollbackLines]
-                    toStartX:&startX
-                    toStartY:&startY
-                      toEndX:&endX
-                      toEndY:&endY
+                          to:&range
             ignoringNewlines:NO
               actionRequired:NO];
-    return [TEXTVIEW rangeByTrimmingNullsFromRange:VT100GridCoordRangeMake(startX,
-                                                                           startY,
-                                                                           endX,
-                                                                           endY)
-                                        trimSpaces:YES];
+    return [TEXTVIEW rangeByTrimmingNullsFromRange:range trimSpaces:YES];
 }
 
 - (void)addNoteAtCursor {
@@ -4674,7 +4668,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     PTYSession *session = [[iTermController sharedInstance] sessionWithMostRecentSelection];
     if (session) {
         PTYTextView *textview = [session TEXTVIEW];
-        if ([textview selectionStartX] > -1) {
+        if ([textview isAnyCharSelected]) {
             [self pasteString:[textview selectedText]];
         }
     }
@@ -4907,10 +4901,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     more = [SCREEN continueFindAllResults:results
                                 inContext:tailFindContext_];
     for (SearchResult *r in results) {
-        [TEXTVIEW addResultFromX:r->startX
-                            absY:r->absStartY
-                             toX:r->endX
-                          toAbsY:r->absEndY];
+        [TEXTVIEW addSearchResult:r];
     }
     if ([results count]) {
         [TEXTVIEW setNeedsDisplay:YES];
@@ -5231,27 +5222,19 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [TEXTVIEW deselect];
 }
 
-- (int)screenSelectionStartX {
-    return [TEXTVIEW selectionStartX];
+- (VT100GridCoordRange)screenSelectionRange {
+    return TEXTVIEW.selection.selectedRange;
 }
 
-- (int)screenSelectionEndX {
-    return [TEXTVIEW selectionEndX];
-}
-
-- (int)screenSelectionStartY {
-    return [TEXTVIEW selectionStartY];
-}
-
-- (int)screenSelectionEndY {
-    return [TEXTVIEW selectionEndY];
+- (BOOL)screenHasSelection {
+    return [TEXTVIEW isAnyCharSelected];
 }
 
 - (void)screenSetSelectionFromX:(int)startX
                           fromY:(int)startY
                             toX:(int)endX
                             toY:(int)endY {
-    [TEXTVIEW setSelectionFromX:startX fromY:startY toX:endX toY:endY];
+    TEXTVIEW.selection.selectedRange = VT100GridCoordRangeMake(startX, startY, endX, endY);
 }
 
 - (NSSize)screenCellSize {
@@ -5556,13 +5539,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 // FinalTerm
 - (NSString *)commandInRange:(VT100GridCoordRange)range {
-    NSString *command = [TEXTVIEW contentFromX:range.start.x
-                                             Y:range.start.y
-                                           ToX:range.end.x
-                                             Y:range.end.y
-                                           pad:NO
-                            includeLastNewline:NO
-                        trimTrailingWhitespace:NO];
+    NSString *command = [TEXTVIEW contentInRange:range
+                                             pad:NO
+                              includeLastNewline:NO
+                          trimTrailingWhitespace:NO];
     NSRange newline = [command rangeOfString:@"\n"];
     if (newline.location != NSNotFound) {
         command = [command substringToIndex:newline.location];
