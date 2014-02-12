@@ -14,6 +14,7 @@
 #import "VT100WorkingDirectory.h"
 #import "iTermExpose.h"
 #import "iTermGrowlDelegate.h"
+#import "iTermSelection.h"
 
 #import <apr-1/apr_base64.h>
 #include <string.h>
@@ -151,13 +152,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
     [primaryGrid_ markAllCharsDirty:YES];
     [altGrid_ markAllCharsDirty:YES];
-}
-
-- (VT100GridCoordRange)coordRangeForCurrentSelection {
-    return VT100GridCoordRangeMake([delegate_ screenSelectionStartX],
-                                   [delegate_ screenSelectionStartY],
-                                   [delegate_ screenSelectionEndX],
-                                   [delegate_ screenSelectionEndY]);
 }
 
 // This is used for a very specific case. It's used when you have some history, optionally followed
@@ -306,6 +300,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 {
     DLog(@"Resize session to %d height", new_height);
 
+    if (commandStartX_ != -1) {
+        commandStartX_ = commandStartY_ = -1;
+        [delegate_ screenCommandDidEndWithRange:[self commandRange]];
+    }
+    
     if (currentGrid_.size.width == 0 ||
         currentGrid_.size.height == 0 ||
         (new_width == currentGrid_.size.width &&
@@ -316,23 +315,25 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     new_width = MAX(new_width, 1);
     new_height = MAX(new_height, 1);
 
-    BOOL hasSelection = ([delegate_ screenHasView] &&
-                         [delegate_ screenSelectionStartX] >= 0 &&
-                         [delegate_ screenSelectionEndX] >= 0 &&
-                         [delegate_ screenSelectionStartY] >= 0 &&
-                         [delegate_ screenSelectionEndY] >= 0);
+    iTermSelection *selection = [delegate_ screenSelection];
+    if (selection.live) {
+        [selection endLiveSelection];
+    }
+    [selection removeWindows];
+    BOOL couldHaveSelection = [delegate_ screenHasView] && selection.hasSelection;
 
     int usedHeight = [currentGrid_ numberOfLinesUsed];
 
     VT100Grid *copyOfAltGrid = [[altGrid_ copy] autorelease];
     LineBuffer *realLineBuffer = linebuffer_;
 
+    // This is an array of triplets:
+    // [LineBufferPosition start, LineBufferPosition end, iTermSubSelection]
+    NSMutableArray *altScreenSubSelectionTriplets = nil;
     LineBufferPosition *originalLastPos = [linebuffer_ lastPosition];
-    LineBufferPosition *originalStartPos = nil;
-    LineBufferPosition *originalEndPos = nil;
     BOOL wasShowingAltScreen = (currentGrid_ == altGrid_);
 
-    if (hasSelection && wasShowingAltScreen) {
+    if (couldHaveSelection && wasShowingAltScreen) {
         // In alternate screen mode, get the original positions of the
         // selection. Later this will be used to set the selection positions
         // relative to the end of the udpated linebuffer (which could change as
@@ -343,15 +344,23 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
               toScrollback:lineBufferWithAltScreen
             withUsedHeight:usedHeight
                  newHeight:new_height];
-        VT100GridCoordRange selection = [self coordRangeForCurrentSelection];
+        altScreenSubSelectionTriplets = [NSMutableArray array];
+        for (iTermSubSelection *sub in selection.allSubSelections) {
+            VT100GridCoordRange range = sub.range.coordRange;
 
-        [self getNullCorrectedSelectionStartPosition:&originalStartPos
-                                         endPosition:&originalEndPos
-                       selectionStartPositionIsValid:&ok1
-                          selectionEndPostionIsValid:&ok2
-                                        inLineBuffer:lineBufferWithAltScreen
-                                            forRange:selection];
-        hasSelection = ok1 && ok2;
+            BOOL startOk, endOk;
+            LineBufferPosition *start;
+            LineBufferPosition *end;
+            [self getNullCorrectedSelectionStartPosition:&start
+                                             endPosition:&end
+                           selectionStartPositionIsValid:&startOk
+                              selectionEndPostionIsValid:&endOk
+                                            inLineBuffer:lineBufferWithAltScreen
+                                                forRange:range];
+            if (startOk && endOk) {
+                [altScreenSubSelectionTriplets addObject:@[start, end, sub]];
+            }
+        }
     }
 
     // If we're in the alternate screen, create a temporary linebuffer and append
@@ -425,12 +434,25 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         withUsedHeight:[primaryGrid_ numberOfLinesUsed]
              newHeight:new_height];
 
-    VT100GridCoordRange newSelection;
-    if (!wasShowingAltScreen && hasSelection) {
-        hasSelection = [self convertRange:[self coordRangeForCurrentSelection]
-                                  toWidth:new_width
-                                       to:&newSelection
-                             inLineBuffer:linebuffer_];
+    // Contains iTermSubSelection*s updated for the new screen size. Used
+    // regardless of whether we were in the alt screen, as it's simply the set
+    // of new sub-selections.
+    NSMutableArray *newSubSelections = [NSMutableArray array];
+    if (!wasShowingAltScreen && couldHaveSelection) {
+        for (iTermSubSelection *sub in selection.allSubSelections) {
+            VT100GridCoordRange newSelection;
+            BOOL ok = [self convertRange:sub.range.coordRange
+                                 toWidth:new_width
+                                      to:&newSelection
+                            inLineBuffer:linebuffer_];
+            if (ok) {
+                VT100GridWindowedRange theRange = VT100GridWindowedRangeMake(newSelection, 0, 0);
+                iTermSubSelection *theSub =
+                    [iTermSubSelection subSelectionWithRange:theRange mode:sub.selectionMode];
+                theSub.connected = sub.connected;
+                [newSubSelections addObject:theSub];
+            }
+        }
     }
     
     if ([intervalTree_ count]) {
@@ -534,15 +556,28 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             withUsedHeight:usedHeight
                  newHeight:new_height];
 
-        if (hasSelection) {
-            hasSelection = [self computeRangeFromOriginalLimit:originalLastPos
-                                                 limitPosition:newLastPos
-                                                 startPosition:originalStartPos
-                                                   endPosition:originalEndPos
-                                                      newWidth:new_width
-                                                    lineBuffer:appendOnlyLineBuffer
-                                                         range:&newSelection
-                                                  linesMovedUp:linesMovedUp];
+        for (int i = 0; i < altScreenSubSelectionTriplets.count; i++) {
+            LineBufferPosition *originalStartPos = altScreenSubSelectionTriplets[i][0];
+            LineBufferPosition *originalEndPos = altScreenSubSelectionTriplets[i][1];
+            iTermSubSelection *originalSub = altScreenSubSelectionTriplets[i][2];
+            iTermSelectionMode mode = originalSub.selectionMode;
+            VT100GridCoordRange newSelection;
+            BOOL ok = [self computeRangeFromOriginalLimit:originalLastPos
+                                            limitPosition:newLastPos
+                                            startPosition:originalStartPos
+                                              endPosition:originalEndPos
+                                                 newWidth:new_width
+                                               lineBuffer:appendOnlyLineBuffer
+                                                    range:&newSelection
+                                             linesMovedUp:linesMovedUp];
+            if (ok) {
+                VT100GridWindowedRange theRange =
+                    VT100GridWindowedRangeMake(newSelection, 0, 0);
+                iTermSubSelection *theSub = [iTermSubSelection subSelectionWithRange:theRange
+                                                                                mode:mode];
+                theSub.connected = originalSub.connected;
+                [newSubSelections addObject:theSub];
+            }
         }
         DLog(@"Original limit=%@", originalLastPos);
         DLog(@"New limit=%@", newLastPos);
@@ -642,15 +677,17 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     // adjusted to fit the new size
     DebugLog(@"resizeWidth setDirty");
     [delegate_ screenNeedsRedraw];
-    if (hasSelection &&
-        newSelection.start.y >= linesDropped &&
-        newSelection.end.y >= linesDropped) {
-        [delegate_ screenSetSelectionFromX:newSelection.start.x
-                                     fromY:newSelection.start.y - linesDropped
-                                       toX:newSelection.end.x
-                                       toY:newSelection.end.y - linesDropped];
-    } else {
-        [delegate_ screenRemoveSelection];
+    [selection clearSelection];
+    if (couldHaveSelection) {
+        for (iTermSubSelection* sub in newSubSelections) {
+            VT100GridCoordRange newSelection = sub.range.coordRange;
+            if (newSelection.start.y >= linesDropped &&
+                newSelection.end.y >= linesDropped) {
+                newSelection.start.y -= linesDropped;
+                newSelection.end.y -= linesDropped;
+                [selection addSubSelection:sub];
+            }
+        }
     }
 
     [self reloadMarkCache];
@@ -1454,6 +1491,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (BOOL)isDirtyAtX:(int)x Y:(int)y
 {
     return [currentGrid_ isCharDirtyAt:VT100GridCoordMake(x, y)];
+}
+
+- (NSIndexSet *)dirtyIndexesOnLine:(int)line {
+    return [currentGrid_ dirtyIndexesOnLine:line];
 }
 
 - (void)resetDirty
@@ -3379,8 +3420,7 @@ static void SwapInt(int *a, int *b) {
                              end:VT100GridCoordMake(actualEndX, actualEndY)
                         toStartX:&trimmedStart
                           toEndX:&trimmedEnd];
-    BOOL endsAfterStart = XYIsBeforeXY(trimmedStart.x, trimmedStart.y, trimmedEnd.x, trimmedEnd.y);
-    if (!endsAfterStart) {
+    if (VT100GridCoordOrder(trimmedStart, trimmedEnd) == NSOrderedDescending) {
         return NO;
     }
 

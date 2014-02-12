@@ -304,4 +304,74 @@
     return YES;
 }
 
+- (NSString *)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
+                                         suffix:(NSString *)afterStringIn
+                               workingDirectory:(NSString *)workingDirectory
+                           charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr
+{
+    NSMutableString *beforeString = [[beforeStringIn mutableCopy] autorelease];
+    NSMutableString *afterString = [[afterStringIn mutableCopy] autorelease];
+    
+    // Remove escaping slashes
+    NSString *removeEscapingSlashes = @"\\\\([ \\(\\[\\]\\\\)])";
+    
+    DLog(@"Brute force path from prefix <<%@>>, suffix <<%@>> directory=%@",
+         beforeString, afterString, workingDirectory);
+    
+    [beforeString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
+    [afterString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
+    beforeString = [[beforeString copy] autorelease];
+    // The parens here cause "Foo bar" to become {"Foo", " ", "bar"} rather than {"Foo", "bar"}.
+    // Also, there is some kind of weird bug in regexkit. If you do [[beforeChunks mutableCopy] autoRelease]
+    // then the items in the array get over-released.
+    NSArray *beforeChunks = [beforeString componentsSeparatedByRegex:@"([\t ])"];
+    NSArray *afterChunks = [afterString componentsSeparatedByRegex:@"([\t ])"];
+    NSMutableString *left = [NSMutableString string];
+    // Bail after 100 iterations if nothing is still found.
+    int limit = 100;
+    
+    NSMutableSet *paths = [NSMutableSet set];
+    NSMutableSet *befores = [NSMutableSet set];
+    
+    DLog(@"before chunks=%@", beforeChunks);
+    DLog(@"after chunks=%@", afterChunks);
+    
+    for (int i = [beforeChunks count]; i >= 0; i--) {
+        NSString *beforeChunk = @"";
+        if (i < [beforeChunks count]) {
+            beforeChunk = [beforeChunks objectAtIndex:i];
+        }
+        
+        if ([befores containsObject:beforeChunk]) {
+            continue;
+        }
+        [befores addObject:beforeChunk];
+        
+        [left insertString:beforeChunk atIndex:0];
+        NSMutableString *possiblePath = [NSMutableString stringWithString:left];
+        
+        // Do not search more than 10 chunks forward to avoid starving leftward search.
+        for (int j = 0; j < [afterChunks count] && j < 10; j++) {
+            [possiblePath appendString:[afterChunks objectAtIndex:j]];
+            if ([paths containsObject:[NSString stringWithString:possiblePath]]) {
+                continue;
+            }
+            [paths addObject:[[possiblePath copy] autorelease]];
+            
+            if ([self getFullPath:possiblePath workingDirectory:workingDirectory lineNumber:NULL]) {
+                if (charsTakenFromPrefixPtr) {
+                    *charsTakenFromPrefixPtr = left.length;
+                }
+                DLog(@"Using path %@", possiblePath);
+                return possiblePath;
+            }
+            
+            if (--limit == 0) {
+                return nil;
+            }
+        }
+    }
+    return nil;
+}
+
 @end

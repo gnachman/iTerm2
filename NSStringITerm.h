@@ -83,7 +83,24 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)stringWithOnlyDigits;
 
 - (NSString *)stringByTrimmingLeadingWhitespace;
+- (NSString *)stringByTrimmingTrailingWhitespace;
 
 - (NSString *)stringByBase64DecodingStringWithEncoding:(NSStringEncoding)encoding;
+
+// Returns a substring of contiguous characters only from a given character set
+// including some character in the middle of the target.
+- (NSString *)substringIncludingOffset:(int)offset
+                      fromCharacterSet:(NSCharacterSet *)charSet
+                  charsTakenFromPrefix:(int*)charsTakenFromPrefixPtr;
+
+- (NSString *)URLInStringWithOffset:(int *)offset length:(int *)length;
+
+- (NSString *)stringByEscapingForURL;
+
+@end
+
+@interface NSMutableString (iTerm)
+
+- (void)trimTrailingWhitespace;
 
 @end

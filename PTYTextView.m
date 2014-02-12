@@ -38,11 +38,12 @@
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "iTermNSKeyBindingEmulator.h"
+#import "iTermSelection.h"
+#import "iTermTextExtractor.h"
 #include <math.h>
 #include <sys/time.h>
 
 static const int kMaxSelectedTextLengthForCustomActions = 8192;
-static const int kMaxSelectedTextLinesForCustomActions = 100;
 
 // This defines the fraction of a character's width on its right side that is used to
 // select the NEXT character.
@@ -109,10 +110,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
 }
 
-@interface PTYTextView ()
+@interface PTYTextView () <iTermSelectionDelegate>
 // Set the hostname this view is currently waiting for AsyncHostLookupController to finish looking
 // up.
 @property(nonatomic, copy) NSString *currentUnderlineHostname;
+@property(nonatomic, retain) iTermSelection *selection;
 
 - (NSRect)cursorRect;
 - (URLAction *)urlActionForClickAtX:(int)x
@@ -188,28 +190,18 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     id<PTYTextViewDataSource> dataSource;
     id<PTYTextViewDelegate> _delegate;
     
-    // selection goes from startX,startY to endX,endY. The end may be before or after the start.
-    // While the selection is being made (the mouse was clicked and is being dragged) the end
-    // position moves with the cursor.
-    int startX, startY, endX, endY;
-    int oldStartX, oldStartY, oldEndX, oldEndY;
-    
     // Underlined selection range (inclusive of all values), indicating clickable url.
-    int _underlineStartX, _underlineStartY, _underlineEndX, _underlineEndY;
-    char oldSelectMode;
+    VT100GridWindowedRange _underlineRange;
     BOOL mouseDown;
     BOOL mouseDragged;
-    char selectMode;
     BOOL mouseDownOnSelection;
     BOOL mouseDownOnImage;
     ImageInfo *theImage;
     NSEvent *mouseDownEvent;
     int lastReportedX_, lastReportedY_;
 
-    //find support
-    int lastFindStartX, lastFindEndX;
-    // this includes all the lines since the beginning of time. It is stable.
-    long long absLastFindStartY, absLastFindEndY;
+    // Find cursor. Only the start coordinate is used. Is nil if there is no cursor.
+    SearchResult *_lastFindCoord;
     
     BOOL reportingMouseDown;
     
@@ -407,6 +399,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     // Point clicked, valid only during -validateMenuItem and calls made from
     // the context menu and if x and y are nonnegative.
     VT100GridCoord validationClickPoint_;
+    
+    iTermSelection *_oldSelection;
 }
 
 
@@ -484,8 +478,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         dimmedColorCache_ = [[NSMutableDictionary alloc] init];
         [self updateMarkedTextAttributes];
         CURSOR=YES;
-        lastFindStartX = lastFindEndX = oldStartX = startX = -1;
-        _underlineStartX = _underlineStartY = _underlineEndX = _underlineEndY = -1;
+        _selection = [[iTermSelection alloc] init];
+        _selection.delegate = self;
+        _oldSelection = [_selection copy];
+        _underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
         markedText = nil;
         gettimeofday(&lastBlink, NULL);
         [[self window] useOptimizedDrawing:YES];
@@ -559,9 +555,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)dealloc
 {
+    [_selection release];
     [drawRectDuration_ release];
     [drawRectInterval_ release];
-    
+    [_lastFindCoord release];
     [smartSelectionRules_ release];
     int i;
     
@@ -821,6 +818,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 - (void)setBlinkAllowed:(BOOL)value
 {
     blinkAllowed_ = value;
+    [self setNeedsDisplay:YES];
 }
 
 - (void)setCursorNeedsDisplay {
@@ -858,50 +856,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [markedTextAttributes autorelease];
     [attr retain];
     markedTextAttributes = attr;
-}
-
-- (int)selectionStartX
-{
-    return startX;
-}
-
-- (int)selectionStartY
-{
-    return startY;
-}
-
-- (int)selectionEndX
-{
-    return endX;
-}
-
-- (int)selectionEndY
-{
-    return endY;
-}
-
-- (void)setSelectionTime
-{
-    if (startX < 0 || (startX == endX && startY == endY)) {
-        selectionTime_ = 0;
-    } else {
-        selectionTime_ = [[NSDate date] timeIntervalSince1970];
-    }
-    DLog(@"Update selection time to %lf. (%d,%d) to (%d,%d)", (double)selectionTime_, startX, startY, endX, endY);
-}
-
-- (void)setSelectionFromX:(int)fromX fromY:(int)fromY toX:(int)toX toY:(int)toY
-{
-    startX = fromX;
-    startY = fromY;
-    endX = toX;
-    endY = toY;
-    [self setSelectionTime];
-}
-
-- (void)setRectangularSelection:(BOOL)isBox
-{
-    selectMode = isBox ? SELECT_BOX : SELECT_CHAR;
 }
 
 - (void)setFGColor:(NSColor*)color
@@ -1474,7 +1428,6 @@ NSMutableArray* screens=0;
                                  Y:y
                 locationInTextView:scrollingLocation];
 
-    [_delegate refreshAndStartTimerIfNeeded];
     [self scheduleSelectionScroll];
 }
 
@@ -1958,17 +1911,8 @@ NSMutableArray* screens=0;
         BOOL userScroll = [(PTYScroller*)([scrollView verticalScroller]) userScroll];
 
         // Keep correct selection highlighted
-        startY -= scrollbackOverflow;
-        if (startY < 0) {
-            startX = -1;
-            [self setSelectionTime];
-        }
-        endY -= scrollbackOverflow;
-        oldStartY -= scrollbackOverflow;
-        if (oldStartY < 0) {
-            oldStartX = -1;
-        }
-        oldEndY -= scrollbackOverflow;
+        [_selection moveUpByLines:scrollbackOverflow];
+        [_oldSelection moveUpByLines:scrollbackOverflow];
 
         // Keep the user's current scroll position, nothing to redraw.
         if (userScroll) {
@@ -2151,13 +2095,16 @@ NSMutableArray* screens=0;
 
 - (void)scrollToSelection
 {
-    NSRect aFrame;
-    aFrame.origin.x = 0;
-    aFrame.origin.y = startY * lineHeight - VMARGIN;  // allow for top margin
-    aFrame.size.width = [self frame].size.width;
-    aFrame.size.height = (endY - startY + 1) *lineHeight;
-    [self scrollRectToVisible: aFrame];
-    [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+    if ([_selection hasSelection]) {
+        NSRect aFrame;
+        VT100GridCoordRange range = [_selection spanningRange];
+        aFrame.origin.x = 0;
+        aFrame.origin.y = range.start.y * lineHeight - VMARGIN;  // allow for top margin
+        aFrame.size.width = [self frame].size.width;
+        aFrame.size.height = (range.end.y - range.start.y + 1) *lineHeight;
+        [self scrollRectToVisible: aFrame];
+        [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+    }
 }
 
 - (void)markCursorDirty
@@ -2734,121 +2681,39 @@ NSMutableArray* screens=0;
 
 - (NSDictionary *)smartSelectAtX:(int)x
                                y:(int)y
-                        toStartX:(int*)X1
-                        toStartY:(int*)Y1
-                          toEndX:(int*)X2
-                          toEndY:(int*)Y2
+                              to:(VT100GridWindowedRange *)rangePtr
                 ignoringNewlines:(BOOL)ignoringNewlines
                   actionRequired:(BOOL)actionRequred
+                 respectDividers:(BOOL)respectDividers
 {
-    NSString* textWindow;
-    int targetOffset;
-    const int numLines = 2;
-    const int width = [dataSource width];
-    NSMutableArray* coords = [NSMutableArray arrayWithCapacity:numLines * width];
-    textWindow = [self _getTextInWindowAroundX:x
-                                             y:y
-                                      numLines:2
-                                  targetOffset:&targetOffset
-                                        coords:coords
-                              ignoringNewlines:ignoringNewlines];
-
-    NSArray* rulesArray = smartSelectionRules_ ? smartSelectionRules_ : [SmartSelectionController defaultRules];
-    const int numRules = [rulesArray count];
-
-    NSMutableDictionary* matches = [NSMutableDictionary dictionaryWithCapacity:13];
-    int numCoords = [coords count];
-
-    BOOL debug = [SmartSelectionController logDebugInfo];
-    if (debug) {
-        NSLog(@"Perform smart selection on text: %@", textWindow);
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
+    VT100GridCoord coord = VT100GridCoordMake(x, y);
+    if (respectDividers) {
+        [extractor restrictToLogicalWindowIncludingCoord:coord];
     }
-    for (int j = 0; j < numRules; j++) {
-        NSDictionary *rule = [rulesArray objectAtIndex:j];
-        if (actionRequred && [[SmartSelectionController actionsInRule:rule] count] == 0) {
-            DLog(@"Ignore smart selection rule because it has no action: %@", rule);
-            continue;
-        }
-        NSString *regex = [SmartSelectionController regexInRule:rule];
-        double precision = [SmartSelectionController precisionInRule:rule];
-        if (debug) {
-            NSLog(@"Try regex %@", regex);
-        }
-        for (int i = 0; i <= targetOffset; i++) {
-            NSString* substring = [textWindow substringWithRange:NSMakeRange(i, [textWindow length] - i)];
-            NSError* regexError = nil;
-            NSRange temp = [substring rangeOfRegex:regex
-                                           options:0
-                                           inRange:NSMakeRange(0, [substring length])
-                                           capture:0
-                                             error:&regexError];
-            if (temp.location != NSNotFound) {
-                if (i + temp.location <= targetOffset && i + temp.location + temp.length > targetOffset) {
-                    NSString* result = [substring substringWithRange:temp];
-                    double score = precision * (double) temp.length;
-                    SmartMatch* oldMatch = [matches objectForKey:result];
-                    if (!oldMatch || score > oldMatch.score) {
-                        SmartMatch* match = [[[SmartMatch alloc] init] autorelease];
-                        match.score = score;
-                        VT100GridCoord startCoord = [[coords objectAtIndex:i + temp.location] gridCoordValue];
-                        VT100GridCoord endCoord = [[coords objectAtIndex:MIN(numCoords - 1, i + temp.location + temp.length)] gridCoordValue];
-                        match.startX = startCoord.x;
-                        match.absStartY = startCoord.y + [dataSource totalScrollbackOverflow];
-                        match.endX = endCoord.x;
-                        match.absEndY = endCoord.y + [dataSource totalScrollbackOverflow];
-                        match.rule = rule;
-                        [matches setObject:match forKey:result];
-
-                        if (debug) {
-                            NSLog(@"Add result %@ at %d,%lld -> %d,%lld with score %lf", result, match.startX, match.absStartY, match.endX, match.absEndY, match.score);
-                        }
-                    }
-                    i += temp.location + temp.length - 1;
-                } else {
-                    i += temp.location;
-                }
-            } else {
-                break;
-            }
-        }
-    }
-
-    if ([matches count]) {
-        NSArray* sortedMatches = [[matches allValues] sortedArrayUsingSelector:@selector(compare:)];
-        SmartMatch* bestMatch = [sortedMatches lastObject];
-        if (debug) {
-            NSLog(@"Select match with score %lf", bestMatch.score);
-        }
-        *X1 = bestMatch.startX;
-        *Y1 = bestMatch.absStartY - [dataSource totalScrollbackOverflow];
-        *X2 = bestMatch.endX;
-        *Y2 = bestMatch.absEndY - [dataSource totalScrollbackOverflow];
-        return bestMatch.rule;
-    } else {
-        if (debug) {
-            NSLog(@"No matches. Fall back on word selection.");
-        }
-        // Fall back on word selection
-        [self getWordForX:x
-                        y:y
-                   startX:X1
-                   startY:Y1
-                     endX:X2
-                     endY:Y2];
-        return nil;
-    }
+    return [extractor smartSelectionAt:coord
+                             withRules:smartSelectionRules_
+                        actionRequired:actionRequred
+                                 range:rangePtr
+                      ignoringNewlines:ignoringNewlines];
 }
 
 - (BOOL)smartSelectAtX:(int)x y:(int)y ignoringNewlines:(BOOL)ignoringNewlines
 {
-    return [self smartSelectAtX:x
-                              y:y
-                       toStartX:&startX
-                       toStartY:&startY
-                         toEndX:&endX
-                         toEndY:&endY
-               ignoringNewlines:ignoringNewlines
-                 actionRequired:NO] != nil;
+    VT100GridWindowedRange range;
+    NSDictionary *rule = [self smartSelectAtX:x
+                                            y:y
+                                           to:&range
+                             ignoringNewlines:ignoringNewlines
+                               actionRequired:NO
+                              respectDividers:YES];
+
+    [_selection beginSelectionAt:VT100GridCoordMake(x, y)
+                            mode:kiTermSelectionModeSmart
+                          resume:NO
+                          append:NO];
+    [_selection endLiveSelection];
+    return rule != nil;
 }
 
 // Control-pgup and control-pgdown are handled at this level by NSWindow if no
@@ -3424,7 +3289,7 @@ NSMutableArray* screens=0;
 // Reset underlined chars indicating cmd-clicakble url.
 - (void)removeUnderline
 {
-    _underlineStartX = _underlineStartY = _underlineEndX = _underlineEndY = -1;
+    _underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
     if (self.currentUnderlineHostname) {
         [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
     }
@@ -3502,10 +3367,7 @@ NSMutableArray* screens=0;
                                                          y:y
                                     respectingHardNewlines:[self respectHardNewlinesForURLs]];
             if (action) {
-                _underlineStartX = action.range.start.x;
-                _underlineStartY = action.range.start.y;
-                _underlineEndX = action.range.end.x;
-                _underlineEndY = action.range.end.y;
+                _underlineRange = action.range;
                 
                 if (action.actionType == kURLActionOpenURL) {
                     NSURL *url = [NSURL URLWithString:action.string];
@@ -3629,78 +3491,6 @@ NSMutableArray* screens=0;
     if ([self mouseDownImpl:event]) {
         [super mouseDown:event];
     }
-}
-
-- (BOOL)lineHasSoftEol:(int)y
-{
-    screen_char_t *theLine = [dataSource getLineAtIndex:y];
-    int width = [dataSource width];
-    return (theLine[width].code == EOL_SOFT);
-}
-
-- (int)lineNumberWithStartOfWholeLineIncludingLine:(int)y
-{
-    int i = y;
-    while (i > 0 && [self lineHasSoftEol:i - 1]) {
-        i--;
-    }
-    return i;
-}
-
-- (int)lineNumberWithEndOfWholeLineIncludingLine:(int)y
-{
-    int i = y + 1;
-    int maxY = [dataSource numberOfLines];
-    while (i < maxY && [self lineHasSoftEol:i - 1]) {
-        i++;
-    }
-    return i - 1;
-}
-
-- (void)extendWholeLineSelectionToX:(int)x
-                                  y:(int)y
-                          withWidth:(int)width
-{
-    // Move startY or endY to include y.
-    endY = y;
-
-    // Bump start and end to include full lines, if needed.
-    if ([[PreferencePanel sharedInstance] tripleClickSelectsFullLines]) {
-        if (startY < endY) {
-            startY = [self lineNumberWithStartOfWholeLineIncludingLine:startY];
-            endY = [self lineNumberWithEndOfWholeLineIncludingLine:endY];
-        } else {
-            startY = [self lineNumberWithEndOfWholeLineIncludingLine:startY];
-            endY = [self lineNumberWithStartOfWholeLineIncludingLine:endY];
-        }
-    }
-
-    // Ensure startX and endX are correct.
-    if (startY < endY) {
-        startX = 0;
-        endX = width;
-    } else {
-        startX = width;
-        endX = 0;
-    }
-}
-
-- (void)extendSelectionToX:(int)x y:(int)y
-{
-    int width = [dataSource width];
-
-    // If you click before the start then flip start and end and extend end to click location. (effectively extends left)
-    // If you click after the start then move the end to the click location. (extends right)
-    // This means that if you click inside the selection it truncates it by moving the end (whichever that is)
-    if (x + y * width < startX + startY * width) {
-        // Clicked before the start. Move the start to the old end.
-        startX = endX;
-        startY = endY;
-        [self setSelectionTime];
-    }
-    // Move the end to the click location.
-    endX = x;
-    endY = y;
 }
 
 // Emulates a third mouse button event (up or down, based on 'isDown').
@@ -3865,123 +3655,58 @@ NSMutableArray* screens=0;
 
     int clickCount = [event clickCount];
     DLog(@"clickCount=%d altPressed=%d cmdPressed=%d", clickCount, (int)altPressed, (int)cmdPressed);
-    if (clickCount < 2) {
+    const BOOL isExtension = ([_selection hasSelection] && shiftPressed);
+    if (isExtension && [_selection hasSelection]) {
+        if (!_selection.live) {
+            [_selection beginExtendingSelectionAt:VT100GridCoordMake(x, y)];
+        }
+    } else if (clickCount < 2) {
         // single click
+        iTermSelectionMode mode;
         if (altPressed && cmdPressed) {
-            selectMode = SELECT_BOX;
+            mode = kiTermSelectionModeBox;
         } else {
-            selectMode = SELECT_CHAR;
+            mode = kiTermSelectionModeCharacter;
         }
 
-        if (startX > -1 && shiftPressed) {
-            // holding down shfit key and there is an existing selection ->
-            // extend the selection.
-            DLog(@"extend selection to %d, %d", (int)x, (int)y);
-            [self extendSelectionToX:x y:y];
-            // startX and endX may be reversed, but mouseUp fixes it.
-        } else if ((theImage = [self imageInfoAtCoord:VT100GridCoordMake(x, y)])) {
+        if ((theImage = [self imageInfoAtCoord:VT100GridCoordMake(x, y)])) {
             mouseDownOnImage = YES;
-        } else if (startX > -1 &&
-                   [self _isCharSelectedInRow:y col:x checkOld:NO]) {
+        } else if ([_selection containsCoord:VT100GridCoordMake(x, y)]) {
             // not holding down shift key but there is an existing selection.
-            // Possibly a drag coming up.
+            // Possibly a drag coming up (if a cmd-drag follows)
             DLog(@"mouse down on selection");
             mouseDownOnSelection = YES;
             return YES;
-        } else if (!cmdPressed || altPressed) {
+        } else {
             // start a new selection
-            DLog(@"start new selection at %d, %d", (int)x, (int)y);
-            endX = startX = x;
-            endY = startY = y;
-            [self setSelectionTime];
+            [_selection beginSelectionAt:VT100GridCoordMake(x, y)
+                                    mode:mode
+                                  resume:NO
+                                  append:(cmdPressed && !altPressed)];
+            _selection.resumable = YES;
         }
     } else if (clickCount == 2) {
-        int tmpX1, tmpY1, tmpX2, tmpY2;
-
-        // double-click; select word
-        selectMode = SELECT_WORD;
-        NSString *selectedWord = [self getWordForX:x
-                                                 y:y
-                                            startX:&tmpX1
-                                            startY:&tmpY1
-                                              endX:&tmpX2
-                                              endY:&tmpY2];
-        if ([self _findMatchingParenthesis:selectedWord withX:tmpX1 Y:tmpY1]) {
-            // Found a matching paren
-            ;
-        } else if (startX > -1 && shiftPressed) {
-            // no matching paren, but holding shift and extending selection
-            if (startX + startY * width < tmpX1 + tmpY1 * width) {
-                // extend end of selection
-                endX = tmpX2;
-                endY = tmpY2;
-            } else {
-                // extend start of selection
-                startX = endX;
-                startY = endY;
-                endX = tmpX1;
-                endY = tmpY1;
-                [self setSelectionTime];
-            }
-        } else  {
-            // no matching paren and not holding shift. Set selection to word boundary.
-            startX = tmpX1;
-            startY = tmpY1;
-            endX = tmpX2;
-            endY = tmpY2;
-            [self setSelectionTime];
-        }
+        [_selection beginSelectionAt:VT100GridCoordMake(x, y)
+                                mode:kiTermSelectionModeWord
+                              resume:YES
+                              append:_selection.appending];
     } else if (clickCount == 3) {
-        if ([[PreferencePanel sharedInstance] tripleClickSelectsFullLines]) {
-            selectMode = SELECT_WHOLE_LINE;
-            if (startX > -1 && shiftPressed) {
-                [self extendWholeLineSelectionToX:x y:y withWidth:width];
-            } else {
-                // new selection
-                startX = 0;
-                startY = [self lineNumberWithStartOfWholeLineIncludingLine:y];
-                endX = width;
-                endY = [self lineNumberWithEndOfWholeLineIncludingLine:y];
-            }
-            [self setSelectionTime];
-        } else {
-            // triple-click; select line
-            selectMode = SELECT_LINE;
-            if (startX > -1 && shiftPressed) {
-                // extend existing selection
-                if (startY < y) {
-                    // start of existing selection is before cursor so move end point.
-                    endX = width;
-                    endY = y;
-                } else {
-                    // end of existing selection is at or after the cursor
-                    if (startX + startY * width < endX + endY * width) {
-                        // start of selection is before end of selection.
-                        // advance start to end
-                        startX = endX;
-                        startY = endY;
-                    }
-                    // Set end of selection to current line
-                    endX = 0;
-                    endY = y;
-                }
-            } else {
-                // not holding shift
-                startX = 0;
-                endX = width;
-                startY = endY = y;
-            }
-            [self setSelectionTime];
-        }
+        BOOL wholeLines = [[PreferencePanel sharedInstance] tripleClickSelectsFullLines];
+        iTermSelectionMode mode =
+            wholeLines ? kiTermSelectionModeWholeLine : kiTermSelectionModeLine;
+
+        [_selection beginSelectionAt:VT100GridCoordMake(x, y)
+                                mode:mode
+                              resume:YES
+                              append:_selection.appending];
     } else if (clickCount == 4) {
-        // quad-click: smart selection
-        // ignore status of shift key for smart selection because extending was messed up by
-        // triple click.
-        selectMode = SELECT_SMART;
-        [self smartSelectWithEvent:event];
+        [_selection beginSelectionAt:VT100GridCoordMake(x, y)
+                                mode:kiTermSelectionModeSmart
+                              resume:YES
+                              append:_selection.appending];
     }
 
-    DebugLog([NSString stringWithFormat:@"Mouse down. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
+    DLog(@"Mouse down. selection set to %@", _selection);
     [_delegate refreshAndStartTimerIfNeeded];
 
     return NO;
@@ -4033,13 +3758,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint locationInWindow = [event locationInWindow];
     NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
-    BOOL haveReverseSelection = (startY > endY ||
-                                 (startY == endY && startX > endX));
     BOOL isUnshiftedSingleClick = ([event clickCount] < 2 &&
                                    !mouseDragged &&
                                    !([event modifierFlags] & NSShiftKeyMask));
-    BOOL willFollowLink = (!haveReverseSelection &&
-                           isUnshiftedSingleClick &&
+    BOOL willFollowLink = (isUnshiftedSingleClick &&
                            cmdPressed &&
                            [[PreferencePanel sharedInstance] cmdSelection]);
 
@@ -4098,7 +3820,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     if (mouseDown == NO) {
-        DebugLog([NSString stringWithFormat:@"Mouse up. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
+        DLog(@"Mouse up. Selection=%@", _selection);
         return;
     }
     mouseDown = NO;
@@ -4106,14 +3828,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // make sure we have key focus
     [[self window] makeFirstResponder:self];
 
-    if (haveReverseSelection) {
-        // Make sure the start is before the end.
-        DLog(@"swap selection start and end");
-        int t;
-        t = startY; startY = endY; endY = t;
-        t = startX; startX = endX; endX = t;
-        [self setSelectionTime];
-    } else if (isUnshiftedSingleClick) {
+    [_selection endLiveSelection];
+    if (isUnshiftedSingleClick) {
         // Just a click in the window.
         DLog(@"is a click in the window");
 
@@ -4137,7 +3853,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         }
 
-        startX=-1;
+        if (!_selection.appending) {
+            [_selection clearSelection];
+        }
         if (willFollowLink) {
             if (altPressed) {
                 [self openTargetInBackgroundWithEvent:event];
@@ -4145,24 +3863,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 [self openTargetWithEvent:event];
             }
         } else {
-            lastFindStartX = endX;
-            lastFindEndX = endX+1;
-            absLastFindStartY = endY + [dataSource totalScrollbackOverflow];
-            absLastFindEndY = absLastFindStartY+1;
+            [_lastFindCoord release];
+            _lastFindCoord = nil;
+            NSPoint clickPoint = [self clickPoint:event];
+            _lastFindCoord =
+                [[SearchResult searchResultFromX:clickPoint.x
+                                               y:clickPoint.y + [dataSource totalScrollbackOverflow]
+                                             toX:0
+                                               y:0] retain];
         }
     }
 
-    if (startX > -1 && _delegate) {
+    if ([_selection hasSelection] && _delegate) {
         // if we want to copy our selection, do so
         if ([[PreferencePanel sharedInstance] copySelection]) {
             [self copySelectionAccordingToUserPreferences];
         }
     }
 
-    if (selectMode != SELECT_BOX) {
-        selectMode = SELECT_CHAR;
-    }
-    DebugLog([NSString stringWithFormat:@"Mouse up. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
+    DLog(@"Mouse up. selection=%@", _selection);
 
     [_delegate refreshAndStartTimerIfNeeded];
 }
@@ -4222,23 +3941,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     locationInTextView.y = MIN(self.frame.size.height - 1,
                                MAX(0, locationInTextView.y));
     NSRect  rectInTextView = [self visibleRect];
-    int x, y;
     int width = [dataSource width];
 
-    double logicalX = locationInTextView.x - MARGIN + charWidth * kCharWidthFractionOffset - charWidth;
-    if (logicalX >= 0) {
-        x = logicalX / charWidth;
-    } else {
-        x = -1;
-    }
-    if (x < -1) {
-        x = -1;
-    }
-    if (x >= width) {
-        x = width - 1;
-    }
-
-    y = locationInTextView.y / lineHeight;
+    NSPoint clickPoint = [self clickPoint:event];
+    int x = clickPoint.x;
+    int y = clickPoint.y;
 
     NSPoint mouseDownLocation = [mouseDownEvent locationInWindow];
     if (EuclideanDistance(mouseDownLocation, locationInWindow) >= kDragThreshold) {
@@ -4253,7 +3960,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"drag not ok");
         return;
     }
-    NSString *theSelectedText;
 
     if (([self xtermMouseReporting]) && reportingMouseDown) {
         // Mouse reporting is on.
@@ -4280,7 +3986,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                            atX:rx
                                                              Y:ry]];
                 case MOUSE_REPORTING_NORMAL:
-                    DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
+                    DLog(@"Mouse drag. selection=%@", _selection);
                     return;
                     break;
 
@@ -4308,21 +4014,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         dragThresholdMet) {
         DLog(@"drag and drop a selection");
         // Drag and drop a selection
-        if (selectMode == SELECT_BOX) {
-            theSelectedText = [self contentInBoxFromX:startX Y:startY ToX:endX Y:endY pad:NO];
-        } else {
-            theSelectedText = [self contentFromX:startX
-                                               Y:startY
-                                             ToX:endX
-                                               Y:endY
-                                             pad:NO
-                              includeLastNewline:[[PreferencePanel sharedInstance] copyLastNewline]
-                          trimTrailingWhitespace:[[PreferencePanel sharedInstance] trimTrailingWhitespace]];
-        }
+        NSString *theSelectedText = [self selectedTextWithPad:NO];
         if ([theSelectedText length] > 0) {
             [self _dragText:theSelectedText forEvent:event];
-            DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d",
-                      startX, startY, endX, endY]);
+            DLog(@"Mouse drag. selection=%@", _selection);
             return;
         }
     }
@@ -4343,7 +4038,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
 
-    if (startX < 0 && pressingCmdOnly && trouterDragged == NO) {
+    if (![_selection hasSelection] && pressingCmdOnly && trouterDragged == NO) {
         DLog(@"do trouter check");
         // Only one Trouter check per drag
         trouterDragged = YES;
@@ -4427,14 +4122,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
     int y = clickPoint.y;
-    NSString *prefix = [self wrappedStringAtX:x
-                                            y:y
-                                          dir:-1
-                          respectHardNewlines:NO];
-    NSString *suffix = [self wrappedStringAtX:x
-                                            y:y
-                                          dir:1
-                          respectHardNewlines:NO];
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
+    VT100GridCoord coord = VT100GridCoordMake(x, y);
+    NSString *prefix = [extractor wrappedStringAt:coord forward:NO respectHardNewlines:NO];
+    NSString *suffix = [extractor wrappedStringAt:coord forward:YES respectHardNewlines:NO];
 
     URLAction *action = [self urlActionForClickAtX:x y:y];
     if (action) {
@@ -4496,8 +4187,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int y = clickPoint.y;
 
     [self smartSelectAtX:x y:y ignoringNewlines:ignoringNewlines];
-    [self setSelectionTime];
-    if (startX > -1 && _delegate) {
+    if ([_selection hasSelection] && _delegate) {
         // if we want to copy our selection, do so
         if ([[PreferencePanel sharedInstance] copySelection]) {
             [self copySelectionAccordingToUserPreferences];
@@ -4505,21 +4195,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (void)openContextMenuWithEvent:(NSEvent *)event
+- (void)openContextMenuWithEvent:(NSEvent *)event {
+    NSPoint clickPoint = [self clickPoint:event];
+    openingContextMenu_ = YES;
+    
+    // Slowly moving away from using NSPoint for integer coordinates.
+    validationClickPoint_ = VT100GridCoordMake(clickPoint.x, clickPoint.y);
+    [NSMenu popUpContextMenu:[self contextMenuWithEvent:event] withEvent:event forView:self];
+    validationClickPoint_ = VT100GridCoordMake(-1, -1);
+    openingContextMenu_ = NO;
+}
+
+- (NSMenu *)contextMenuWithEvent:(NSEvent *)event
 {
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
     int y = clickPoint.y;
-    long long clickAt = y;
-    clickAt *= [dataSource width];
-    clickAt += x;
-
-    long long minAt = startY;
-    minAt *= [dataSource width];
-    minAt += startX;
-    long long maxAt = endY;
-    maxAt *= [dataSource width];
-    maxAt += endX;
 
     NSMenu *menu = nil;
     if (x < MARGIN) {
@@ -4534,14 +4225,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         ImageInfo *imageInfo = [self imageInfoAtCoord:coord];
 
         if (!imageInfo &&
-            (startX < 0 ||
-             clickAt < minAt ||
-             clickAt >= maxAt)) {
-            int savedStartX = startX;
-            int savedStartY = startY;
-            int savedEndX = endX;
-            int savedEndY = endY;
+            ![_selection containsCoord:VT100GridCoordMake(x, y)]) {
             // Didn't click on selection.
+            // Save the selection and do a smart selection. If we don't like the result, restore it.
+            iTermSelection *savedSelection = [[_selection copy] autorelease];
             [self smartSelectWithEvent:event];
             NSCharacterSet *nonWhiteSpaceSet = [[NSCharacterSet whitespaceAndNewlineCharacterSet] invertedSet];
             NSString *text = [self selectedText];
@@ -4549,43 +4236,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 !text.length ||
                 [text rangeOfCharacterFromSet:nonWhiteSpaceSet].location == NSNotFound) {
                 // If all we selected was white space, undo it.
-                startX = savedStartX;
-                startY = savedStartY;
-                endX = savedEndX;
-                endY = savedEndY;
+                [_selection release];
+                _selection = [savedSelection retain];
             }
         }
         [self setNeedsDisplay:YES];
         menu = [self menuAtCoord:coord];
     }
-    openingContextMenu_ = YES;
-
-    // Slowly moving away from using NSPoint for integer coordinates.
-    validationClickPoint_ = VT100GridCoordMake(clickPoint.x, clickPoint.y);
-    [NSMenu popUpContextMenu:menu withEvent:event forView:self];
-    validationClickPoint_ = VT100GridCoordMake(-1, -1);
-    openingContextMenu_ = NO;
+    return menu;
 }
 
 - (void)extendSelectionWithEvent:(NSEvent *)event
 {
-    if (startX > -1) {
+    if ([_selection hasSelection]) {
+        NSPoint locationInWindow = [event locationInWindow];
+        NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
         NSPoint clickPoint = [self clickPoint:event];
-        int x = clickPoint.x;
-        int y = clickPoint.y;
-
-        [self extendSelectionToX:x y:y];
-        if (startY > endY || (startY == endY && startX > endX)) {
-            // Make sure the start is before the end.
-            int t;
-            t = startY;
-            startY = endY;
-            endY = t;
-
-            t = startX;
-            startX = endX;
-            endX = t;
-        }
+        [_selection beginExtendingSelectionAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)];
+        [_selection endLiveSelection];
     }
 }
 
@@ -4735,44 +4403,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (NSString*)contentInBoxFromX:(int)startx
-                             Y:(int)starty
-                           ToX:(int)nonInclusiveEndx
-                             Y:(int)endy
-                           pad:(BOOL)pad
-{
-    int i;
-    int estimated_size = abs((endy-startx) * [dataSource width]) + abs(nonInclusiveEndx - startx);
-    const BOOL shouldTrim = [[PreferencePanel sharedInstance] trimTrailingWhitespace];
-    NSMutableString* result = [NSMutableString stringWithCapacity:estimated_size];
-    for (i = starty; i < endy; ++i) {
-        NSString* line = [self contentFromX:startx
-                                          Y:i
-                                        ToX:nonInclusiveEndx
-                                          Y:i
-                                        pad:pad
-                         includeLastNewline:NO
-                     trimTrailingWhitespace:shouldTrim];
-        [result appendString:line];
-        if (i < endy-1) {
-            [result appendString:@"\n"];
-        }
-    }
-    return result;
-}
-
-- (void)trimTrailingWhitespaceFromString:(NSMutableString *)string {
-    NSCharacterSet *nonWhitespaceSet = [[NSCharacterSet whitespaceCharacterSet] invertedSet];
-    NSRange rangeOfLastWantedCharacter = [string rangeOfCharacterFromSet:nonWhitespaceSet
-                                                                 options:NSBackwardsSearch];
-    if (rangeOfLastWantedCharacter.location == NSNotFound) {
-        [string deleteCharactersInRange:NSMakeRange(0, string.length)];
-    } else if (rangeOfLastWantedCharacter.location < string.length - 1) {
-        NSUInteger i = rangeOfLastWantedCharacter.location + 1;
-        [string deleteCharactersInRange:NSMakeRange(i, string.length - i)];
-    }
-}
-
 - (VT100GridCoordRange)rangeByTrimmingNullsFromRange:(VT100GridCoordRange)range
                                           trimSpaces:(BOOL)trimSpaces
 {
@@ -4824,107 +4454,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return result;
 }
 
-- (NSString *)contentFromX:(int)startx
-                         Y:(int)starty
-                       ToX:(int)nonInclusiveEndx
-                         Y:(int)endy
-                       pad:(BOOL)pad
-        includeLastNewline:(BOOL)includeLastNewline
-    trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
-{
-    DLog(@"Find selected text from %d,%d to %d,%d pad=%d, includeLastNewline=%d, trim=%d",
-         startx, starty, nonInclusiveEndx, endy, (int)pad, (int)includeLastNewline,
-         (int)trimSelectionTrailingSpaces);
-    int endx = nonInclusiveEndx-1;
-    int width = [dataSource width];
-    assert(endx <= width);
-    const int estimatedSize = (endy - starty + 1) * (width + 1) + (endx - startx + 1);
-    NSMutableString* result = [NSMutableString stringWithCapacity:estimatedSize];
-    int y, x1, x2;
-    screen_char_t *theLine;
-    BOOL endOfLine;
-    int i;
-
-    for (y = starty; y <= endy; y++) {
-        theLine = [dataSource getLineAtIndex:y];
-
-        x1 = y == starty ? startx : 0;
-        x2 = y == endy ? endx : width-1;
-        for ( ; x1 <= x2; x1++) {
-            if (theLine[x1].code == TAB_FILLER) {
-                // Convert orphan tab fillers (those without a subsequent
-                // tab character) into spaces.
-                if ([self isTabFillerOrphanAtX:x1 Y:y]) {
-                    [result appendString:@" "];
-                }
-            } else if (theLine[x1].code != DWC_RIGHT &&
-                       theLine[x1].code != DWC_SKIP) {
-                if (theLine[x1].code == 0) { // end of line?
-                    // If there is no text after this, insert a hard line break.
-                    endOfLine = YES;
-                    for (i = x1 + 1; i <= x2 && endOfLine; i++) {
-                        if (theLine[i].code != 0) {
-                            endOfLine = NO;
-                        }
-                    }
-                    if (endOfLine) {
-                        if (pad) {
-                            for (i = x1; i <= x2; i++) {
-                                [result appendString:@" "];
-                            }
-                        }
-                        if (theLine[width].code == EOL_HARD) {
-                            if (trimSelectionTrailingSpaces) {
-                                [self trimTrailingWhitespaceFromString:result];
-                            }
-                            if (includeLastNewline || y < endy) {
-                                [result appendString:@"\n"];
-                            }
-                        }
-                        break;
-                    } else {
-                        [result appendString:@" "]; // replace mid-line null char with space
-                    }
-                } else if (x1 == x2 &&
-                           y < endy &&
-                           theLine[width].code == EOL_HARD) {
-                    // Hard line break
-                    [result appendString:ScreenCharToStr(&theLine[x1])];
-                    if (trimSelectionTrailingSpaces) {
-                        [self trimTrailingWhitespaceFromString:result];
-                    }
-                    [result appendString:@"\n"];  // hard break
-                } else {
-                    // Normal character
-                    [result appendString:ScreenCharToStr(&theLine[x1])];
-                }
-            }
-        }
-    }
-
-    if (trimSelectionTrailingSpaces) {
-        [self trimTrailingWhitespaceFromString:result];
-    }
-    return result;
-}
-
 - (IBAction)selectAll:(id)sender
 {
-    // set the selection region for the whole text
-    startX = startY = 0;
-    endX = [dataSource width];
-    endY = [dataSource numberOfLines] - 1;
-    [self setSelectionTime];
-    [_delegate refreshAndStartTimerIfNeeded];
+    // Set the selection region to the whole text.
+    [_selection beginSelectionAt:VT100GridCoordMake(0, 0)
+                            mode:kiTermSelectionModeCharacter
+                          resume:NO
+                          append:NO];
+    [_selection moveSelectionEndpointTo:VT100GridCoordMake([dataSource width],
+                                                           [dataSource numberOfLines] - 1)];
+    [_selection endLiveSelection];
 }
 
 - (void)deselect
 {
-    if (startX > -1) {
-        startX = -1;
-        [self setSelectionTime];
-        [_delegate refreshAndStartTimerIfNeeded];
-    }
+    [_selection clearSelection];
 }
 
 - (NSString *)selectedText
@@ -4934,61 +4478,86 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (NSString *)selectedTextWithPad:(BOOL)pad
 {
-    if (startX <= -1) {
+    return [self selectedTextWithPad:pad cappedAtSize:0];
+}
+
+- (NSString *)selectedTextWithPad:(BOOL)pad
+                     cappedAtSize:(int)maxBytes
+{
+    if (![_selection hasSelection]) {
         DLog(@"startx < 0 so there is no selected text");
         return nil;
     }
-    if (selectMode == SELECT_BOX) {
-        DLog(@"find selected text in box");
-        return [self contentInBoxFromX:startX
-                                     Y:startY
-                                   ToX:endX
-                                     Y:endY
-                                   pad:pad];
-    } else {
-        DLog(@"find selected text in normal region");
-        return ([self contentFromX:startX
-                                 Y:startY
-                               ToX:endX
-                                 Y:endY
-                               pad:pad
-                includeLastNewline:[[PreferencePanel sharedInstance] copyLastNewline]
-            trimTrailingWhitespace:[[PreferencePanel sharedInstance] trimTrailingWhitespace]]);
-    }
+    BOOL copyLastNewline = [[PreferencePanel sharedInstance] copyLastNewline];
+    BOOL trimWhitespace = [[PreferencePanel sharedInstance] trimTrailingWhitespace];
+    NSMutableString *theSelectedText = [[NSMutableString alloc] init];
+    int width = [dataSource width];
+    [_selection enumerateSelectedRanges:^(VT100GridWindowedRange range, BOOL *stop, BOOL eol) {
+        int cap = INT_MAX;
+        if (maxBytes > 0) {
+            cap = maxBytes - [theSelectedText length];
+            if (cap <= 0) {
+                cap = 0;
+                *stop = YES;
+            }
+        }
+        if (cap != 0) {
+            iTermTextExtractor *extractor =
+                [iTermTextExtractor textExtractorWithDataSource:dataSource];
+            NSString *content = [extractor contentInRange:range
+                                                      pad:NO
+                                       includeLastNewline:copyLastNewline
+                                   trimTrailingWhitespace:trimWhitespace
+                                             cappedAtSize:cap];
+            [theSelectedText appendString:content];
+            if (eol && ![content hasSuffix:@"\n"]) {
+                [theSelectedText appendString:@"\n"];
+            }
+        }
+    }];
+    return theSelectedText;
 }
 
 - (NSAttributedString *)selectedAttributedTextWithPad:(BOOL)pad
 {
-    if (startX <= -1) {
+    if (![_selection hasSelection]) {
         DLog(@"startx < 0 so there is no selected text");
         return nil;
     }
-    if (selectMode == SELECT_BOX) {
-        DLog(@"find selected text in box");
-        return [self attributedContentInBoxFromX:startX
-                                               Y:startY
-                                             ToX:endX
-                                               Y:endY
-                                             pad:pad];
-    } else {
-        DLog(@"find selected text in normal region");
-        return [self attributedContentFromX:startX
-                                          Y:startY
-                                        ToX:endX
-                                          Y:endY
-                                        pad:pad];
-    }
+    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
+    [_selection enumerateSelectedRanges:^(VT100GridWindowedRange range, BOOL *stop, BOOL eol) {
+        NSAttributedString *attributedString =
+            [extractor attributedContentInRange:range
+                                            pad:pad
+                              attributeProvider:^NSDictionary *(screen_char_t theChar) {
+                                  return [self charAttributes:theChar];
+                              }];
+        [result appendAttributedString:attributedString];
+        if (eol && ![[attributedString string] hasSuffix:@"\n"]) {
+            NSDictionary *attributes = [result attributesAtIndex:[result length] - 1
+                                                  effectiveRange:NULL];
+            NSAttributedString *newline =
+            [[[NSAttributedString alloc] initWithString:@"\n"
+                                             attributes:attributes] autorelease];
+            [result appendAttributedString:newline];
+        }
+    }];
+    return result;
 }
 
 - (NSString *)content
 {
-    return [self contentFromX:0
-                            Y:0
-                          ToX:[dataSource width]
-                            Y:[dataSource numberOfLines] - 1
-                          pad:NO
-           includeLastNewline:YES
-       trimTrailingWhitespace:NO];
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
+    VT100GridCoordRange theRange = VT100GridCoordRangeMake(0,
+                                                           0,
+                                                           [dataSource width],
+                                                           [dataSource numberOfLines] - 1);
+    return [extractor contentInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
+                                 pad:NO
+                  includeLastNewline:YES
+              trimTrailingWhitespace:NO
+                        cappedAtSize:-1];
 }
 
 - (void)splitTextViewVertically:(id)sender
@@ -5024,9 +4593,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)addNote:(id)sender
 {
-    if (startY >= 0) {
+    if ([_selection hasSelection]) {
         PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-        [dataSource addNote:note inRange:VT100GridCoordRangeMake(startX, startY, endX, endY)];
+        [dataSource addNote:note inRange:_selection.lastRange.coordRange];
         
         // Make sure scrollback overflow is reset.
         [self refresh];
@@ -5040,6 +4609,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)downloadWithSCP:(id)sender
 {
+    if (![_selection hasSelection]) {
+        return;
+    }
     SCPPath *scpPath = nil;
     NSString *selectedText = [[self selectedText] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSArray *parts = [selectedText componentsSeparatedByString:@"\n"];
@@ -5048,9 +4620,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     NSString *unescapedText = parts[0];
     NSString *text = [unescapedText stringWithEscapedShellCharacters];
-    if (startY >= 0) {
-        scpPath = [dataSource scpPathForFile:text onLine:startY];
-    }
+    scpPath = [dataSource scpPathForFile:text onLine:_selection.lastRange.coordRange.start.y];
     [_delegate startDownloadOverSCP:scpPath];
     
     NSDictionary *attributes =
@@ -5064,8 +4634,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [selectedText drawAtPoint:NSMakePoint(0, 0) withAttributes:attributes];
     [image unlockFocus];
     
-    NSRect windowRect = [self convertRect:NSMakeRect(startX * charWidth + MARGIN,
-                                                     startY * lineHeight,
+    VT100GridCoordRange range = _selection.lastRange.coordRange;
+    NSRect windowRect = [self convertRect:NSMakeRect(range.start.x * charWidth + MARGIN,
+                                                     range.start.y * lineHeight,
                                                      0,
                                                      0)
                                    toView:nil];
@@ -5134,7 +4705,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     DLog(@"-[PTYTextView copy:] called");
     copyString = [self selectedText];
-    DLog(@"Have selected text of length %d. startX=%d, startY=%d, endX=%d, endY=%d", (int)[copyString length], startX, startY, endX, endY);
+    DLog(@"Have selected text of length %d. selection=%@", (int)[copyString length], _selection);
     if (copyString) {
         [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
         [pboard setString:copyString forType:NSStringPboardType];
@@ -5150,7 +4721,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"-[PTYTextView copyWithStyles:] called");
     NSString *copyString = [self selectedText];
     NSAttributedString *copyAttributedString = [self selectedAttributedTextWithPad:NO];
-    DLog(@"Have selected text of length %d. startX=%d, startY=%d, endX=%d, endY=%d", (int)[copyString length], startX, startY, endX, endY);
+    DLog(@"Have selected text of length %d. selection=%@", (int)[copyString length], _selection);
     NSMutableArray *types = [NSMutableArray array];
     if (copyString) {
         [types addObject:NSStringPboardType];
@@ -5169,28 +4740,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     
     [[PasteboardHistory sharedInstance] save:copyString];
-}
-
-- (NSAttributedString*)attributedContentInBoxFromX:(int)startx
-                                                 Y:(int)starty
-                                               ToX:(int)nonInclusiveEndx
-                                                 Y:(int)endy
-                                               pad:(BOOL)pad
-{
-    int i;
-    NSMutableAttributedString* result = [[[NSMutableAttributedString alloc] init] autorelease];
-    for (i = starty; i < endy; ++i) {
-        NSAttributedString* line = [self attributedContentFromX:startx
-                                                              Y:i
-                                                            ToX:nonInclusiveEndx
-                                                              Y:i
-                                                            pad:pad];
-        [result appendAttributedString:line];
-        if (i < endy - 1) {
-            [result iterm_appendString:@"\n"];
-        }
-    }
-    return result;
 }
 
 // Returns a dictionary to pass to NSAttributedString.
@@ -5222,80 +4771,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
               NSBackgroundColorAttributeName: bgColor,
               NSFontAttributeName: fontInfo.font,
               NSUnderlineStyleAttributeName: @(underlineStyle) };
-}
-
-
-- (NSAttributedString *)attributedContentFromX:(int)startx
-                                             Y:(int)starty
-                                           ToX:(int)nonInclusiveEndx
-                                             Y:(int)endy
-                                           pad:(BOOL)pad
-{
-    int endx = nonInclusiveEndx - 1;
-    int width = [dataSource width];
-    NSMutableAttributedString* result = [[[NSMutableAttributedString alloc] init] autorelease];
-    int y, x1, x2;
-    screen_char_t *theLine;
-    BOOL endOfLine;
-    int i;
-
-    for (y = starty; y <= endy; y++) {
-        theLine = [dataSource getLineAtIndex:y];
-
-        x1 = y == starty ? startx : 0;
-        x2 = y == endy ? endx : width-1;
-        for ( ; x1 <= x2; x1++) {
-            screen_char_t c = theLine[x1];
-            if (c.code == TAB_FILLER) {
-                // Convert orphan tab fillers (those without a subsequent
-                // tab character) into spaces.
-                if ([self isTabFillerOrphanAtX:x1 Y:y]) {
-                    [result iterm_appendString:@" " withAttributes:[self charAttributes:c]];
-                }
-            } else if (c.code != DWC_RIGHT &&
-                       c.code != DWC_SKIP) {
-                if (c.code == 0) { // end of line?
-                    // If there is no text after this, insert a hard line break.
-                    endOfLine = YES;
-                    for (i = x1 + 1; i <= x2 && endOfLine; i++) {
-                        if (theLine[i].code != 0) {
-                            endOfLine = NO;
-                        }
-                    }
-                    if (endOfLine) {
-                        if (pad) {
-                            for (i = x1; i <= x2; i++) {
-                                [result iterm_appendString:@" "
-                                            withAttributes:[self charAttributes:theLine[i]]];
-                            }
-                        }
-                        if (y < endy && theLine[width].code == EOL_HARD) {
-                            [result iterm_appendString:@"\n"
-                                        withAttributes:[self charAttributes:theLine[width - 1]]];
-                        }
-                        break;
-                    } else {
-                        // replace mid-line null char with space
-                        [result iterm_appendString:@" " withAttributes:[self charAttributes:c]];
-                    }
-                } else if (x1 == x2 &&
-                           y < endy &&
-                           theLine[width].code == EOL_HARD) {
-                    // Hard line break
-                    [result iterm_appendString:ScreenCharToStr(&c)
-                                withAttributes:[self charAttributes:c]];
-                    [result iterm_appendString:@"\n"
-                                withAttributes:[self charAttributes:theLine[width - 1]]];
-                } else {
-                    // Normal character
-                    [result iterm_appendString:ScreenCharToStr(&c)
-                                withAttributes:[self charAttributes:c]];
-                }
-            }
-        }
-    }
-
-    return result;
 }
 
 - (void)paste:(id)sender
@@ -5370,12 +4845,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [item action]==@selector(pasteSelection:) ||
         ([item action]==@selector(print:) && [item tag] == 1)) { // print selection
         // These commands are allowed only if there is a selection.
-        return startX > -1;
+        return [_selection hasSelection];
     }
     if ([item action] == @selector(downloadWithSCP:)) {
         return ([self _haveShortSelection] &&
-                startY >= 0 &&
-                [dataSource scpPathForFile:[self selectedText] onLine:startY] != nil);
+                [_selection hasSelection] &&
+                [dataSource scpPathForFile:[self selectedText]
+                                    onLine:_selection.lastRange.coordRange.start.y] != nil);
     }
     if ([item action]==@selector(showNotes:)) {
         return validationClickPoint_.x >= 0 &&
@@ -5408,7 +4884,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (BOOL)_haveShortSelection
 {
-    return startX > -1 && startY >= 0 && abs(startY - endY) <= 1;
+    int width = [dataSource width];
+    return [_selection hasSelection] && [_selection length] <= width;
 }
                                  
 - (SEL)selectorForSmartSelectionAction:(NSDictionary *)action
@@ -5528,12 +5005,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate insertText:command];
 }
 
-// Context menu is opened by mouseUp->PointerController->openContextMenuWithEvent, not
-// by AppKit calling this method directly. However, clicking the gear icon in the session title bar
-// calls this method.
+// This method is called by control-click or by clicking the gear icon in the session title bar.
+// Two-finger tap (or presumably right click with a mouse) would go through mouseUp->
+// PointerController->openContextMenuWithEvent.
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
 {
-    return [self menuAtCoord:VT100GridCoordMake(-1, -1)];
+    if (theEvent) {
+        // Control-click
+        return [self contextMenuWithEvent:theEvent];
+    } else {
+        // Gear icon in session title view.
+        return [self menuAtCoord:VT100GridCoordMake(-1, -1)];
+    }
 }
 
 - (void)saveImageAs:(id)sender {
@@ -5748,9 +5231,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Menu items for acting on text selections
     NSString *scpTitle = @"Download with scp";
-    if ([self _haveShortSelection] &&
-        startY >= 0) {
-        SCPPath *scpPath = [dataSource scpPathForFile:[self selectedText] onLine:startY];
+    if ([self _haveShortSelection]) {
+        SCPPath *scpPath = [dataSource scpPathForFile:[self selectedText]
+                                               onLine:_selection.lastRange.coordRange.start.y];
         if (scpPath) {
             scpTitle = [NSString stringWithFormat:@"Download with scp from %@", scpPath.hostname];
         }
@@ -5773,12 +5256,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [theMenu addItem:[NSMenuItem separatorItem]];
 
     // Custom actions
-    if (startX >= 0 && abs(endY - startY) < kMaxSelectedTextLinesForCustomActions) {
-        NSString *selectedText = [self selectedText];
-        if ([selectedText length] < kMaxSelectedTextLengthForCustomActions) {
-            if ([self addCustomActionsToMenu:theMenu matchingText:selectedText line:coord.y]) {
-                [theMenu addItem:[NSMenuItem separatorItem]];
-            }
+    if ([_selection hasSelection] &&
+        [_selection length] < kMaxSelectedTextLengthForCustomActions) {
+        NSString *selectedText = [self selectedTextWithPad:NO cappedAtSize:1024];
+        if ([self addCustomActionsToMenu:theMenu matchingText:selectedText line:coord.y]) {
+            [theMenu addItem:[NSMenuItem separatorItem]];
         }
     }
 
@@ -6140,6 +5622,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSRect visibleRect;
     int lineOffset, numLines;
     int type = sender ? [sender tag] : 0;
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
 
     switch (type) {
         case 0: // visible range
@@ -6148,13 +5631,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             lineOffset = visibleRect.origin.y/lineHeight;
             // How many lines do we need to draw?
             numLines = visibleRect.size.height/lineHeight;
-            [self printContent:[self contentFromX:0
-                                                Y:lineOffset
-                                              ToX:[dataSource width]
-                                                Y:lineOffset + numLines - 1
-                                               pad:NO
-                               includeLastNewline:YES
-                           trimTrailingWhitespace:NO]];
+            VT100GridCoordRange coordRange = VT100GridCoordRangeMake(0,
+                                                                     lineOffset,
+                                                                     [dataSource width],
+                                                                     lineOffset + numLines - 1);
+            [self printContent:[extractor contentInRange:VT100GridWindowedRangeMake(coordRange, 0, 0)
+                                                     pad:NO
+                                      includeLastNewline:YES
+                                  trimTrailingWhitespace:NO
+                                            cappedAtSize:-1]];
             break;
         case 1: // text selection
             [self printContent: [self selectedTextWithPad:NO]];
@@ -6231,7 +5716,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         markedText=nil;
         imeOffset = 0;
     }
-    if (startX == -1) {
+    if (![_selection hasSelection]) {
         [self resetFindCursor];
     }
 
@@ -6404,90 +5889,55 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (BOOL)growSelectionLeft
 {
-    if (startX == -1) {
+    if (![_selection hasSelection]) {
         return NO;
     }
-    int x = startX;
-    int y = startY;
-    --x;
-    if (x < 0) {
-        x = [dataSource width] - 1;
-        --y;
-        if (y < 0) {
-            return NO;
-        }
-        // Stop at a hard eol
-        screen_char_t* theLine = [dataSource getLineAtIndex:y];
-        if (theLine[[dataSource width]].code == EOL_HARD) {
-            return NO;
-        }
+    
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
+    VT100GridRange columnWindow = _selection.firstRange.columnWindow;;
+    if (columnWindow.length > 0) {
+        extractor.logicalWindow = columnWindow;
     }
+    VT100GridWindowedRange existingRange = _selection.firstRange;
+    VT100GridCoord previousCoord =
+        [extractor predecessorOfCoord:VT100GridWindowedRangeStart(existingRange)];
+    VT100GridWindowedRange previousWordRange = [extractor rangeForWordAt:previousCoord];
+    VT100GridWindowedRange newRange;
+    newRange.columnWindow = existingRange.columnWindow;
+    newRange.coordRange.start = previousWordRange.coordRange.start;
+    newRange.coordRange.end = existingRange.coordRange.end;
+    [_selection setFirstRange:newRange
+                         mode:kiTermSelectionModeCharacter];
 
-    int tmpX1;
-    int tmpX2;
-    int tmpY1;
-    int tmpY2;
-
-    [self getWordForX:x
-                    y:y
-               startX:&tmpX1
-               startY:&tmpY1
-                 endX:&tmpX2
-                 endY:&tmpY2];
-
-    startX = tmpX1;
-    startY = tmpY1;
-    [self setSelectionTime];
-    [_delegate refreshAndStartTimerIfNeeded];
     return YES;
 }
 
 - (void)growSelectionRight
 {
-    if (startX == -1) {
+    if (![_selection hasSelection]) {
         return;
     }
-    int x = endX;
-    int y = endY;
-    ++x;
-    if (x >= [dataSource width]) {
-        // Stop at a hard eol
-        screen_char_t* theLine = [dataSource getLineAtIndex:y];
-        if (theLine[[dataSource width]].code == EOL_HARD) {
-            return;
-        }
-        x = 0;
-        ++y;
-        if (y >= [dataSource numberOfLines]) {
-            return;
-        }
+    
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
+    VT100GridRange columnWindow = _selection.firstRange.columnWindow;;
+    if (columnWindow.length > 0) {
+        extractor.logicalWindow = columnWindow;
     }
-
-    int tmpX1;
-    int tmpX2;
-    int tmpY1;
-    int tmpY2;
-
-    [self getWordForX:x
-                    y:y
-               startX:&tmpX1
-               startY:&tmpY1
-                 endX:&tmpX2
-                 endY:&tmpY2];
-
-    endX = tmpX2;
-    endY = tmpY2;
-    [_delegate refreshAndStartTimerIfNeeded];
+    VT100GridWindowedRange existingRange = _selection.firstRange;
+    VT100GridCoord nextCoord =
+        [extractor successorOfCoord:VT100GridWindowedRangeEnd(existingRange)];
+    VT100GridWindowedRange nextWordRange = [extractor rangeForWordAt:nextCoord];
+    VT100GridWindowedRange newRange;
+    newRange.columnWindow = existingRange.columnWindow;
+    newRange.coordRange.start = existingRange.coordRange.start;
+    newRange.coordRange.end = nextWordRange.coordRange.end;
+    [_selection setFirstRange:newRange mode:kiTermSelectionModeCharacter];
 }
 
 // Add a match to resultMap_
-- (void)addResultFromX:(int)resStartX
-                  absY:(long long)absStartY
-                   toX:(int)resEndX
-                toAbsY:(long long)absEndY
-{
+- (void)addSearchResult:(SearchResult *)searchResult {
     int width = [dataSource width];
-    for (long long y = absStartY; y <= absEndY; y++) {
+    for (long long y = searchResult->absStartY; y <= searchResult->absEndY; y++) {
         NSNumber* key = [NSNumber numberWithLongLong:y];
         NSMutableData* data = [resultMap_ objectForKey:key];
         BOOL set = NO;
@@ -6498,12 +5948,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             set = YES;
         }
         char* b = [data mutableBytes];
-        int lineEndX = MIN(resEndX + 1, width);
-        int lineStartX = resStartX;
-        if (absEndY > y) {
+        int lineEndX = MIN(searchResult->endX + 1, width);
+        int lineStartX = searchResult->startX;
+        if (searchResult->absEndY > y) {
             lineEndX = width;
         }
-        if (y > absStartY) {
+        if (y > searchResult->absStartY) {
             lineStartX = 0;
         }
         for (int i = lineStartX; i < lineEndX; i++) {
@@ -6532,24 +5982,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (forward) {
         start = [findResults_ count] - 1;
         stride = -1;
-        if (absLastFindStartY < 0) {
+        if (!_lastFindCoord) {
             minPos = -1;
         } else {
-            minPos = lastFindStartX + (long long) absLastFindStartY * width + offset;
+            minPos = _lastFindCoord->startX + _lastFindCoord->absStartY * width + offset;
         }
     } else {
         start = 0;
         stride = 1;
-        if (absLastFindStartY < 0) {
+        if (!_lastFindCoord) {
             maxPos = (1 + [dataSource numberOfLines] + overflowAdustment) * width;
         } else {
-            maxPos = lastFindStartX + (long long) absLastFindStartY * width - offset;
+            maxPos = _lastFindCoord->startX + _lastFindCoord->absStartY * width - offset;
         }
     }
     BOOL found = NO;
     BOOL redraw = NO;
     int i = start;
-    for (int j = 0; j < [findResults_ count]; j++) {
+    for (int j = 0; !found && j < [findResults_ count]; j++) {
         SearchResult* r = [findResults_ objectAtIndex:i];
         long long pos = r->startX + (long long)r->absStartY * width;
         if (!found &&
@@ -6557,11 +6007,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
              (minPos >= 0 && pos >= minPos))) {
                 found = YES;
                 redraw = YES;
-                startX = r->startX;
-                startY = r->absStartY - overflowAdustment;
-                endX = r->endX;
-                endY = r->absEndY - overflowAdustment;
-                [self setSelectionTime];
+                [_selection clearSelection];
+                VT100GridCoordRange theRange =
+                    VT100GridCoordRangeMake(r->startX,
+                                            r->absStartY - overflowAdustment,
+                                            r->endX + 1,  // half-open
+                                            r->absEndY - overflowAdustment);
+                iTermSubSelection *sub;
+                sub = [iTermSubSelection subSelectionWithRange:VT100GridWindowedRangeMake(theRange,
+                                                                                          0, 0)
+                                                          mode:kiTermSelectionModeCharacter];
+                [_selection addSubSelection:sub];
         }
         i += stride;
     }
@@ -6570,11 +6026,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Wrap around
         SearchResult* r = [findResults_ objectAtIndex:start];
         found = YES;
-        startX = r->startX;
-        startY = r->absStartY - overflowAdustment;
-        endX = r->endX;
-        endY = r->absEndY - overflowAdustment;
-        [self setSelectionTime];
+        [_selection clearSelection];
+        VT100GridCoordRange theRange =
+            VT100GridCoordRangeMake(r->startX,
+                                    r->absStartY - overflowAdustment,
+                                    r->endX + 1,  // half-open
+                                    r->absEndY - overflowAdustment);
+        iTermSubSelection *sub;
+        sub = [iTermSubSelection subSelectionWithRange:VT100GridWindowedRangeMake(theRange, 0, 0)
+                                                  mode:kiTermSelectionModeCharacter];
+        [_selection addSubSelection:sub];
         if (forward) {
             [self beginFlash:FlashWrapToTop];
         } else {
@@ -6584,23 +6045,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if (found) {
         // Lock scrolling after finding text
-        ++endX; // make it half-open
         [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
 
-        [self _scrollToCenterLine:endY];
+        VT100GridCoordRange range = _selection.lastRange.coordRange;
+        [self _scrollToCenterLine:range.end.y];
         [self setNeedsDisplay:YES];
-        lastFindStartX = startX;
-        lastFindEndX = endX;
-        absLastFindStartY = (long long)startY + overflowAdustment;
-        absLastFindEndY = (long long)endY + overflowAdustment;
+        [_lastFindCoord release];
+        _lastFindCoord = [[SearchResult searchResultFromX:range.start.x
+                                                        y:(long long)range.start.y + overflowAdustment
+                                                      toX:0
+                                                        y:0] retain];
         foundResult_ = YES;
     }
 
     if (!_findInProgress && !foundResult_) {
         // Clear the selection.
-        startX = startY = endX = endY = -1;
-        [self setSelectionTime];
-        absLastFindStartY = absLastFindEndY = -1;
+        [_selection clearSelection];
+        [_lastFindCoord release];
+        _lastFindCoord = nil;
         redraw = YES;
     }
 
@@ -6639,10 +6101,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Add new results to map.
     for (int i = nextOffset_; i < [findResults_ count]; i++) {
         SearchResult* r = [findResults_ objectAtIndex:i];
-        [self addResultFromX:r->startX
-                        absY:r->absStartY
-                         toX:r->endX
-                      toAbsY:r->absEndY];
+        [self addSearchResult:r];
         redraw = YES;
     }
     nextOffset_ = [findResults_ count];
@@ -6663,7 +6122,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)resetFindCursor
 {
-    lastFindStartX = lastFindEndX = absLastFindStartY = absLastFindEndY = -1;
+    [_lastFindCoord release];
+    _lastFindCoord = nil;
 }
 
 - (BOOL)findString:(NSString *)aString
@@ -6691,8 +6151,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [[dataSource findContext] reset];
         }
 
-        lastFindStartX = lastFindEndX = 0;
-        absLastFindStartY = absLastFindEndY = (long long)([dataSource numberOfLines] + 1) + [dataSource totalScrollbackOverflow];
+        [_lastFindCoord release];
+        long long findY =
+            (long long)([dataSource numberOfLines] + 1) + [dataSource totalScrollbackOverflow];
+        _lastFindCoord = [[SearchResult searchResultFromX:0
+                                                        y:findY
+                                                      toX:0
+                                                        y:0] retain];
 
         // Search backwards from the end. This is slower than searching
         // forwards, but most searches are reverse searches begun at the end,
@@ -6807,19 +6272,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     NSString *copyString;
 
-    if (openingContextMenu_) {
-        // It is agonizingly slow to copy hundreds of thousands of lines just because the context
-        // menu is opening. Services use this to get access to the clipboard contents but
-        // it's lousy to hang for a few minutes for a feature that won't be used very much, esp. for
-        // such large selections.
-        int savedEndY = endY;
-        const int maxLinesToWrite = 10000;
-        endY = MIN(startY + maxLinesToWrite, endY);
-        copyString = [self selectedText];
-        endY = savedEndY;
-    } else {
-        copyString = [self selectedText];
-    }
+    // It is agonizingly slow to copy hundreds of thousands of lines just because the context
+    // menu is opening. Services use this to get access to the clipboard contents but
+    // it's lousy to hang for a few minutes for a feature that won't be used very much, esp. for
+    // such large selections. In OS 10.9 this is called when opening the context menu, even though
+    // it is deprecated by 10.9 (!).
+    copyString = [self selectedTextWithPad:NO cappedAtSize:100000];
 
     if (copyString && [copyString length]>0) {
         [pboard declareTypes: [NSArray arrayWithObject: NSStringPboardType] owner: self];
@@ -7171,158 +6629,32 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (BOOL)isAnyCharSelected
 {
-    if (startX <= -1 || (startY == endY && startX == endX)) {
-        return NO;
-    } else {
-        return YES;
-    }
+    return [_selection hasSelection];
 }
 
 - (NSString *)getWordForX:(int)x
                         y:(int)y
-                   startX:(int *)startx
-                   startY:(int *)starty
-                     endX:(int *)endx
-                     endY:(int *)endy
+                    range:(VT100GridWindowedRange *)rangePtr
+          respectDividers:(BOOL)respectDividers
 {
-    int tmpX;
-    int tmpY;
-    int x1;
-    int yStart;
-    int x2;
-    int y2;
-    int width = [dataSource width];
-
-    if (x < 0) {
-        x = 0;
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
+    VT100GridCoord coord = VT100GridCoordMake(x, y);
+    if (respectDividers) {
+        [extractor restrictToLogicalWindowIncludingCoord:coord];
     }
-    if (x >= width) {
-        x = width - 1;
+    VT100GridWindowedRange range = [extractor rangeForWordAt:coord];
+    if (rangePtr) {
+        *rangePtr = range;
     }
 
-    // Search backward from (x, y) to find the beginning of the word.
-    tmpX = x;
-    tmpY = y;
-    // If the char at (x,y) is not whitespace, then go into a mode where
-    // word characters are selected as blocks; else go into a mode where
-    // whitespace is selected as a block.
-    screen_char_t* initialLine = [dataSource getLineAtIndex:tmpY];
-    assert(initialLine);
-    screen_char_t sct = initialLine[tmpX];
-    BOOL selectWordChars = [self classifyChar:sct.code isComplex:sct.complexChar] != CHARTYPE_WHITESPACE;
-
-    while (tmpX >= 0) {
-        screen_char_t* theLine = [dataSource getLineAtIndex:tmpY];
-
-        if ([self shouldSelectCharForWord:theLine[tmpX].code isComplex:theLine[tmpX].complexChar selectWordChars:selectWordChars]) {
-            tmpX--;
-            if (tmpX < 0 && tmpY > 0) {
-                // Wrap tmpX, tmpY to the end of the previous line.
-                theLine = [dataSource getLineAtIndex:tmpY-1];
-                if (theLine[width].code != EOL_HARD) {
-                    // check if there's a hard line break
-                    tmpY--;
-                    tmpX = width - 1;
-                }
-            }
-        } else {
-            break;
-        }
-    }
-    if (tmpX != x) {
-        // Advance back to the right of the char that caused us to break.
-        tmpX++;
-    }
-
-    // Ensure the values are sane, although I think none of these cases will
-    // ever occur.
-    if (tmpX < 0) {
-        tmpX = 0;
-    }
-    if (tmpY < 0) {
-        tmpY = 0;
-    }
-    if (tmpX >= width) {
-        tmpX = 0;
-        tmpY++;
-    }
-    if (tmpY >= [dataSource numberOfLines]) {
-        tmpY = [dataSource numberOfLines] - 1;
-    }
-
-    // Save to startx, starty.
-    if (startx) {
-        *startx = tmpX;
-        [self setSelectionTime];
-    }
-    if (starty) {
-        *starty = tmpY;
-    }
-    x1 = tmpX;
-    yStart = tmpY;
-
-
-    // Search forward from x to find the end of the word.
-    tmpX = x;
-    tmpY = y;
-    while (tmpX < width) {
-        screen_char_t* theLine = [dataSource getLineAtIndex:tmpY];
-        if ([self shouldSelectCharForWord:theLine[tmpX].code isComplex:theLine[tmpX].complexChar selectWordChars:selectWordChars]) {
-            tmpX++;
-            if (tmpX >= width && tmpY < [dataSource numberOfLines]) {
-                if (theLine[width].code != EOL_HARD) {
-                    // check if there's a hard line break
-                    tmpY++;
-                    tmpX = 0;
-                }
-            }
-        } else {
-            break;
-        }
-    }
-
-    // Back off from trailing char.
-    if (tmpX != x) {
-        tmpX--;
-    }
-
-    // Sanity checks.
-    if (tmpX < 0) {
-        tmpX = width - 1;
-        tmpY--;
-    }
-    if (tmpY < 0) {
-        tmpY = 0;
-    }
-    if (tmpX >= width) {
-        tmpX = width - 1;
-    }
-    if (tmpY >= [dataSource numberOfLines]) {
-        tmpY = [dataSource numberOfLines] - 1;
-    }
-
-    // Save to endx, endy.
-    if (endx) {
-        *endx = tmpX+1;
-    }
-    if (endy) {
-        *endy = tmpY;
-    }
-
-    // Grab the contents to return.
-    x2 = tmpX+1;
-    y2 = tmpY;
-
-    return [self contentFromX:x1
-                            Y:yStart
-                          ToX:x2
-                            Y:y2
-                          pad:YES
-           includeLastNewline:NO
-       trimTrailingWhitespace:NO];
+    return [extractor contentInRange:range
+                                 pad:YES
+                  includeLastNewline:NO
+              trimTrailingWhitespace:NO
+                        cappedAtSize:-1];
 }
 
-- (double)perceivedBrightness:(NSColor*) c
+- (double)perceivedBrightness:(NSColor*)c
 {
     return PerceivedBrightness([c redComponent], [c greenComponent], [c blueComponent]);
 }
@@ -7380,36 +6712,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return theFont;
 }
 
-// Returns true if the sequence of characters starting at (x, y) is not repeated
-// TAB_FILLERs followed by a tab.
-- (BOOL)isTabFillerOrphanAtX:(int)x Y:(int)y
-{
-    const int realWidth = [dataSource width] + 1;
-    screen_char_t buffer[realWidth];
-    screen_char_t* theLine = [dataSource getLineAtIndex:y withBuffer:buffer];
-    int maxSearch = [dataSource width];
-    while (maxSearch > 0) {
-        if (x == [dataSource width]) {
-            x = 0;
-            ++y;
-            if (y == [dataSource numberOfLines]) {
-                return YES;
-            }
-            theLine = [dataSource getLineAtIndex:y withBuffer:buffer];
-        }
-        if (theLine[x].code != TAB_FILLER) {
-            if (theLine[x].code == '\t') {
-                return NO;
-            } else {
-                return YES;
-            }
-        }
-        ++x;
-        --maxSearch;
-    }
-    return YES;
-}
-
 // Returns true iff the tab character after a run of TAB_FILLERs starting at
 // (x,y) is selected.
 - (BOOL)isFutureTabSelectedAfterX:(int)x Y:(int)y
@@ -7420,7 +6722,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     while (x < [dataSource width] && theLine[x].code == TAB_FILLER) {
         ++x;
     }
-    if ([self _isCharSelectedInRow:y col:x checkOld:NO] &&
+    if ([_selection containsCoord:VT100GridCoordMake(x, y)] &&
         theLine[x].code == '\t') {
         return YES;
     } else {
@@ -7574,6 +6876,44 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return memoizedContrastingColor_;
 }
 
+- (NSRange)underlinedRangeOnLine:(int)row {
+    if (_underlineRange.coordRange.start.x < 0) {
+        return NSMakeRange(0, 0);
+    }
+    
+    if (row == _underlineRange.coordRange.start.y && row == _underlineRange.coordRange.end.y) {
+        // Whole underline is on one line.
+        const int start = VT100GridWindowedRangeStart(_underlineRange).x;
+        const int end = VT100GridWindowedRangeEnd(_underlineRange).x;
+        return NSMakeRange(start, end - start);
+    } else if (row == _underlineRange.coordRange.start.y) {
+        // Underline spans multiple lines, starting at this one.
+        const int start = VT100GridWindowedRangeStart(_underlineRange).x;
+        const int end =
+            _underlineRange.columnWindow.length > 0 ? VT100GridRangeMax(_underlineRange.columnWindow) + 1
+                                                    : [dataSource width];
+        return NSMakeRange(start, end - start);
+    } else if (row == _underlineRange.coordRange.end.y) {
+        // Underline spans multiple lines, ending at this one.
+        const int start =
+            _underlineRange.columnWindow.length > 0 ? _underlineRange.columnWindow.location : 0;
+        const int end = VT100GridWindowedRangeEnd(_underlineRange).x;
+        return NSMakeRange(start, end - start);
+    } else if (row > _underlineRange.coordRange.start.y && row < _underlineRange.coordRange.end.y) {
+        // Underline spans multiple lines. This is not the first or last line, so all chars
+        // in it are underlined.
+        const int start =
+            _underlineRange.columnWindow.length > 0 ? _underlineRange.columnWindow.location : 0;
+        const int end =
+            _underlineRange.columnWindow.length > 0 ? VT100GridRangeMax(_underlineRange.columnWindow) + 1
+                                                    : [dataSource width];
+        return NSMakeRange(start, end - start);
+    } else {
+        // No selection on this line.
+        return NSMakeRange(0, 0);
+    }
+}
+
 - (CRun *)_constructRuns:(NSPoint)initialPoint
                  theLine:(screen_char_t *)theLine
                      row:(int)row
@@ -7597,31 +6937,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int lastBold = 2;  // Bold is a one-bit field so it can never equal 2.
     NSColor *lastColor = nil;
     CGFloat curX = 0;
+    NSRange underlinedRange = [self underlinedRangeOnLine:row];
+    const int underlineStartsAt = underlinedRange.location;
+    const int underlineEndsAt = NSMaxRange(underlinedRange);
+    
     for (int i = indexRange.location; i < indexRange.location + indexRange.length; i++) {
+        inUnderlinedRange = (i >= underlineStartsAt && i < underlineEndsAt);
         if (theLine[i].code == DWC_RIGHT) {
             continue;
-        }
-        if (_underlineStartX >= 0) {
-            if (row == _underlineStartY && row == _underlineEndY) {
-                // Whole underline is on one line; this char is underlined if between start,end X.
-                inUnderlinedRange = (i >= _underlineStartX && i < _underlineEndX);
-            } else if (row == _underlineStartY && i >= _underlineStartX) {
-                // Underline spans multiple lines, starting at this one. This char is underlined if
-                // at least at the startX column.
-                inUnderlinedRange = YES;
-            } else if (row == _underlineEndY && i < _underlineEndX) {
-                // Underline spans multiple lines, ending at this one. This char is underlined if
-                // before or at the endX column.
-                inUnderlinedRange = YES;
-            } else if (row > _underlineStartY && row < _underlineEndY) {
-                // Underline spans multiple lines. This is not the first or last line, so all chars
-                // in it are underlined.
-                inUnderlinedRange = YES;
-            } else {
-                // Underline spans multiple lines. This is the first or last line, but outside the
-                // underlined range.
-                inUnderlinedRange = NO;
-            }
         }
 
         BOOL doubleWidth = i < width - 1 && (theLine[i + 1].code == DWC_RIGHT);
@@ -7734,6 +7057,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Chatacter hidden because of blinking.
             drawable = NO;
         }
+
         if (theLine[i].underline || inUnderlinedRange) {
             // This is not as fast as possible, but is nice and simple. Always draw underlined text
             // even if it's just a blank.
@@ -8459,6 +7783,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Iterate over each character in the line.
     // Go one past where we really need to go to simplify the code.  // TODO(georgen): Fix that.
     int limit = charRange.location + charRange.length;
+    NSIndexSet *selectedIndexes = [_selection selectedIndexesOnLine:line];
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
     while (j < limit) {
         if (theLine[j].code == DWC_RIGHT) {
             // Do not draw the right-hand side of double-width characters.
@@ -8473,15 +7799,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (theLine[j].code == DWC_SKIP) {
             selected = NO;
         } else if (theLine[j].code == TAB_FILLER) {
-            if ([self isTabFillerOrphanAtX:j Y:line]) {
+            if ([extractor isTabFillerOrphanAt:VT100GridCoordMake(j, line)]) {
                 // Treat orphaned tab fillers like spaces.
-                selected = [self _isCharSelectedInRow:line col:j checkOld:NO];
+                selected = [selectedIndexes containsIndex:j];
             } else {
                 // Select all leading tab fillers iff the tab is selected.
                 selected = [self isFutureTabSelectedAfterX:j Y:line];
             }
         } else {
-            selected = [self _isCharSelectedInRow:line col:j checkOld:NO];
+            selected = [selectedIndexes containsIndex:j];
         }
         BOOL double_width = j < WIDTH - 1 && (theLine[j+1].code == DWC_RIGHT);
         BOOL match = NO;
@@ -9419,72 +8745,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // afterString could be "cation Support/Screen Sharing foo bar baz". This searches outward from
 // the point between beforeString and afterString to find a valid path, and would return
 // "~/Library/Application Support/Screen sharing" if such a file exists.
-- (NSMutableString *)_bruteforcePathFromBeforeString:(NSMutableString *)beforeString
-                                         afterString:(NSMutableString *)afterString
-                                    workingDirectory:(NSString *)workingDirectory
-                                charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr
-{
-    // Remove escaping slashes
-    NSString *removeEscapingSlashes = @"\\\\([ \\(\\[\\]\\\\)])";
-
-    DLog(@"Brute force path from prefix <<%@>>, suffix <<%@>> directory=%@",
-         beforeString, afterString, workingDirectory);
-
-    [beforeString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
-    [afterString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
-    beforeString = [[beforeString copy] autorelease];
-    // The parens here cause "Foo bar" to become {"Foo", " ", "bar"} rather than {"Foo", "bar"}.
-    // Also, there is some kind of weird bug in regexkit. If you do [[beforeChunks mutableCopy] autoRelease]
-    // then the items in the array get over-released.
-    NSArray *beforeChunks = [beforeString componentsSeparatedByRegex:@"([\t ])"];
-    NSArray *afterChunks = [afterString componentsSeparatedByRegex:@"([\t ])"];
-    NSMutableString *left = [NSMutableString string];
-    // Bail after 100 iterations if nothing is still found.
-    int limit = 100;
-
-    NSMutableSet *paths = [NSMutableSet set];
-    NSMutableSet *befores = [NSMutableSet set];
-
-    DLog(@"before chunks=%@", beforeChunks);
-    DLog(@"after chunks=%@", afterChunks);
-
-    for (int i = [beforeChunks count]; i >= 0; i--) {
-        NSString *beforeChunk = @"";
-        if (i < [beforeChunks count]) {
-            beforeChunk = [beforeChunks objectAtIndex:i];
-        }
-
-        if ([befores containsObject:beforeChunk]) {
-            continue;
-        }
-        [befores addObject:beforeChunk];
-
-        [left insertString:beforeChunk atIndex:0];
-        NSMutableString *possiblePath = [NSMutableString stringWithString:left];
-
-        // Do not search more than 10 chunks forward to avoid starving leftward search.
-        for (int j = 0; j < [afterChunks count] && j < 10; j++) {
-            [possiblePath appendString:[afterChunks objectAtIndex:j]];
-            if ([paths containsObject:[NSString stringWithString:possiblePath]]) {
-                continue;
-            }
-            [paths addObject:[[possiblePath copy] autorelease]];
-
-            if ([trouter getFullPath:possiblePath workingDirectory:workingDirectory lineNumber:NULL]) {
-                if (charsTakenFromPrefixPtr) {
-                    *charsTakenFromPrefixPtr = left.length;
-                }
-                DLog(@"Using path %@", possiblePath);
-                return possiblePath;
-            }
-
-            if (--limit == 0) {
-                return nil;
-            }
-        }
-    }
-    return nil;
-}
 
 // Find the bounding rectangle of what could possibly be a single semantic
 // string with a character at xi,yi. Lines of | characters are treated as a
@@ -9553,170 +8813,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return NSMakeRect(minX, minY, maxX - minX + 1, maxY - minY + 1);
 }
 
-// Find the prefix (if dir < 0) or suffix (dir > 0) of a string having a
-// character at xi,yi.
-// If respectHardNewlines is true, then a hard newline always terminates the
-// string.
-- (NSString *)wrappedStringAtX:(int)xi
-                             y:(int)yi
-                           dir:(int)dir
-           respectHardNewlines:(BOOL)respectHardNewlines
-{
-    int w = [dataSource width];
-    int h = [dataSource height];
-    if (yi < 0 || yi >= [dataSource numberOfLines]) {
-        return @"";
-    }
-    int x = xi;
-    int y = yi;
-    NSRect bounds = [self boundingRectForCharAtX:xi y:yi];
-    int minX = bounds.origin.x;
-    int maxX = bounds.origin.x + bounds.size.width - 1;
-    int minY = bounds.origin.y;
-    int maxY = bounds.origin.y + bounds.size.height - 1;
 
-    // Walk characters until a hard newline (if respected) or the edge of the screen.
-    NSMutableString *s = [NSMutableString string];
-    screen_char_t *theLine = [dataSource getLineAtIndex:y];
-    BOOL first = YES;
-    while (y >= minY && y <= maxY) {
-        NSString* curChar = [self _getCharacterAtX:x Y:y];
-
-        if (first && dir < 0) {
-            // Skip first char when going backwards to avoid getting it in both directions
-            first = NO;
-        } else if ([curChar isEqualToString:@"\\"] && x == maxX) {
-            // Ignore backslash in last position of line
-        } else {
-            // This is the normal case. Append or prepend the character at (x,y) to s.
-            NSString *value = nil;
-            if (theLine[x].code == TAB_FILLER) {
-                if ([self isTabFillerOrphanAtX:x Y:y]) {
-                    value = @" ";
-                }
-            } else if (theLine[x].code != DWC_RIGHT &&
-                       theLine[x].code != DWC_SKIP) {
-                value = curChar;
-            }
-            if (value && [value length] > 0) {
-                if ([value length] == 1 && [value characterAtIndex:0] == 0) {
-                    value = @" ";
-                }
-                if (dir > 0) {
-                    [s appendString:value];
-                } else {
-                    [s insertString:value atIndex:0];
-                }
-            }
-        }
-
-        // Advance x and then wrap around to the next/previous line if possible.
-        x += dir;
-        if (x < minX) {
-            // We've gone off the left edge and would like to move to the right edge of the previous line.
-            x = maxX;
-            --y;
-            if (respectHardNewlines && y >= minY && minX == 0 && [self _haveHardNewlineAtY:y]) {
-                // Can't wrap because there is a hard newline in the way.
-                break;
-            }
-            if (y >= 0) {
-                theLine = [dataSource getLineAtIndex:y];
-            }
-        } else if (x > maxX) {
-            // We've gone off the right edge and would like to move to the left edge of the next line.
-            x = minX;
-            ++y;
-            if (respectHardNewlines && y <= maxY && maxX == w - 1 && [self _haveHardNewlineAtY:y-1]) {
-                // Can't wrap because there is a hard newline in the way.
-                break;
-            }
-            if (y < h) {
-                theLine = [dataSource getLineAtIndex:y];
-            }
-        }
-    }
-
-    return s;
-}
-
-// Returns a substring of contiguous characters only from a given character set
-// including some character in the middle of the "haystack" (source) string.
-- (NSString *)stringInString:(NSString *)haystack
-             includingOffset:(int)offset
-            fromCharacterSet:(NSCharacterSet *)charSet
-        charsTakenFromPrefix:(int*)charsTakenFromPrefixPtr
-{
-    if (![haystack length]) {
-        if (charsTakenFromPrefixPtr) {
-            *charsTakenFromPrefixPtr = 0;
-        }
-        return @"";
-    }
-    NSRange firstBadCharRange = [haystack rangeOfCharacterFromSet:[charSet invertedSet]
-                                                          options:NSBackwardsSearch
-                                                            range:NSMakeRange(0, offset)];
-    NSRange lastBadCharRange = [haystack rangeOfCharacterFromSet:[charSet invertedSet]
-                                                         options:0
-                                                           range:NSMakeRange(offset, [haystack length] - offset)];
-    int start = 0;
-    int end = [haystack length];
-    if (firstBadCharRange.location != NSNotFound) {
-        start = firstBadCharRange.location + 1;
-        if (charsTakenFromPrefixPtr) {
-            *charsTakenFromPrefixPtr = offset - start;
-        }
-    } else if (charsTakenFromPrefixPtr) {
-        *charsTakenFromPrefixPtr = offset;
-    }
-
-    if (lastBadCharRange.location != NSNotFound) {
-        end = lastBadCharRange.location;
-    }
-
-    return [haystack substringWithRange:NSMakeRange(start, end - start)];
-}
-
-// Returns the coord gotten by starting at |coord| and advancing |n| steps.
-- (VT100GridCoord)coord:(VT100GridCoord)coord plus:(int)n
-{
-    coord.x += n;
-    int width = [dataSource width];
-    while (coord.x < 0) {
-        coord.y--;
-        coord.x += width;
-    }
-    while (coord.x >= width) {
-        coord.x -= width;
-        coord.y++;
-    }
-    return coord;
-}
-                                 
-// Returns the range of coordinates gotten by starting at |coord|, backing up
-// |backup| steps, and having its terminus |length| cells after that location.
-- (VT100GridCoordRange)coordRangeFromCoord:(VT100GridCoord)coord
-                                       startingCharsBefore:(int)backup
-                                                    length:(int)length
-{
-    VT100GridCoordRange range;
-    range.start = [self coord:coord plus:-backup];
-    range.end = [self coord:coord plus:length - backup];
-    return range;
-}
-                                 
 - (URLAction *)urlActionForClickAtX:(int)x y:(int)y respectingHardNewlines:(BOOL)respectHardNewlines
 {
-    NSString *prefix = [self wrappedStringAtX:x y:y dir:-1 respectHardNewlines:respectHardNewlines];
-    NSString *suffix = [self wrappedStringAtX:x y:y dir:1 respectHardNewlines:respectHardNewlines];
-    NSString *possibleFilePart1 = [self stringInString:prefix
-                                       includingOffset:[prefix length] - 1
-                                      fromCharacterSet:[PTYTextView filenameCharacterSet]
-                                  charsTakenFromPrefix:NULL];
-    NSString *possibleFilePart2 = [self stringInString:suffix
-                                       includingOffset:0
-                                      fromCharacterSet:[PTYTextView filenameCharacterSet]
-                                   charsTakenFromPrefix:NULL];
+    const VT100GridCoord coord = VT100GridCoordMake(x, y);
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
+    if ([extractor characterAt:coord].code == 0) {
+        return nil;
+    }
+    [extractor restrictToLogicalWindowIncludingCoord:coord];
+    NSString *prefix = [extractor wrappedStringAt:coord
+                                          forward:NO
+                              respectHardNewlines:respectHardNewlines];
+    NSString *suffix = [extractor wrappedStringAt:coord
+                                          forward:YES
+                              respectHardNewlines:respectHardNewlines];
+
+    NSString *possibleFilePart1 =
+        [prefix substringIncludingOffset:[prefix length] - 1
+                        fromCharacterSet:[PTYTextView filenameCharacterSet]
+                    charsTakenFromPrefix:NULL];
+    NSString *possibleFilePart2 =
+        [suffix substringIncludingOffset:0
+                        fromCharacterSet:[PTYTextView filenameCharacterSet]
+                    charsTakenFromPrefix:NULL];
 
     int fileCharsTaken = 0;
 
@@ -9729,20 +8849,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         workingDirectory = @"";
     }
     // First, try to locate an existing filename at this location.
-    NSString *filename = [self _bruteforcePathFromBeforeString:[[possibleFilePart1 mutableCopy] autorelease]
-                                                   afterString:[[possibleFilePart2 mutableCopy] autorelease]
-                                              workingDirectory:workingDirectory
-                                          charsTakenFromPrefix:&fileCharsTaken];
+    NSString *filename = [trouter pathOfExistingFileFoundWithPrefix:possibleFilePart1
+                                                             suffix:possibleFilePart2
+                                                   workingDirectory:workingDirectory
+                                               charsTakenFromPrefix:&fileCharsTaken];
 
     // Don't consider / to be a valid filename because it's useless and single/double slashes are
     // pretty common.
-    if (filename && ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
+    if (filename &&
+        ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
         DLog(@"Accepting filename from brute force search: %@", filename);
         // If you clicked on an existing filename, use it.
         URLAction *action = [URLAction urlActionToOpenExistingFile:filename];
-        action.range = [self coordRangeFromCoord:VT100GridCoordMake(x, y)
-                             startingCharsBefore:fileCharsTaken
-                                          length:filename.length];
+        VT100GridWindowedRange range;
+        
+        range.coordRange.start = [extractor coord:coord plus:-fileCharsTaken];
+        range.coordRange.end = [extractor coord:range.coordRange.start plus:filename.length];
+        range.columnWindow = extractor.logicalWindow;
+        action.range = range;
+
         action.fullPath = [trouter getFullPath:filename
                               workingDirectory:workingDirectory
                                     lineNumber:NULL];
@@ -9752,28 +8877,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     DLog(@"Brute force search failed, try smart selection.");
     // Next, see if smart selection matches anything with an action.
-    int tx1, ty1, tx2, ty2;
+    VT100GridWindowedRange smartRange;
     NSDictionary *rule = [self smartSelectAtX:x
                                             y:y
-                                     toStartX:&tx1
-                                     toStartY:&ty1
-                                       toEndX:&tx2
-                                       toEndY:&ty2
+                                           to:&smartRange
                              ignoringNewlines:NO
-                               actionRequired:YES];
+                               actionRequired:YES
+                              respectDividers:YES];
     NSArray *actions = [SmartSelectionController actionsInRule:rule];
     DLog(@"  Smart selection produces these actions: %@", actions);
     if (actions.count) {
-        NSString *content = [self contentFromX:tx1
-                                             Y:ty1
-                                           ToX:tx2
-                                             Y:ty2
-                                           pad:NO
-                            includeLastNewline:NO
-                        trimTrailingWhitespace:NO];
+        NSString *content = [extractor contentInRange:smartRange
+                                                  pad:NO
+                                   includeLastNewline:NO
+                               trimTrailingWhitespace:NO
+                                         cappedAtSize:-1];
         DLog(@"  Actions match this content: %@", content);
         URLAction *action = [URLAction urlActionToPerformSmartSelectionRule:rule onString:content];
-        action.range = VT100GridCoordRangeMake(tx1, ty1, tx2, ty2);
+        action.range = smartRange;
         NSError *regexError;
         NSArray *components = [content captureComponentsMatchedByRegex:[SmartSelectionController regexInRule:rule]
                                                                options:0
@@ -9792,14 +8913,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString *joined = [prefix stringByAppendingString:suffix];
     DLog(@"Smart selection found nothing. Look for URL-like things in %@ around offset %d",
          joined, (int)[prefix length]);
-    NSString *possibleUrl = [self stringInString:joined
-                                 includingOffset:[prefix length]
-                                fromCharacterSet:[PTYTextView urlCharacterSet]
-                            charsTakenFromPrefix:&prefixChars];
+    NSString *possibleUrl = [joined substringIncludingOffset:[prefix length]
+                                            fromCharacterSet:[PTYTextView urlCharacterSet]
+                                        charsTakenFromPrefix:&prefixChars];
     DLog(@"String of just permissible chars is %@", possibleUrl);
     NSString *originalMatch = possibleUrl;
     int offset, length;
-    possibleUrl = [self urlInString:possibleUrl offset:&offset length:&length];
+    possibleUrl = [possibleUrl URLInStringWithOffset:&offset length:&length];
     DLog(@"URL in string is %@", possibleUrl);
     if (!possibleUrl) {
         return nil;
@@ -9817,9 +8937,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"%@ looks like a URL and it's not ruled out based on scheme. Go for it.",
              [originalMatch substringWithRange:NSMakeRange(offset, length)]);
         URLAction *action = [URLAction urlActionToOpenURL:possibleUrl];
-        action.range = [self coordRangeFromCoord:VT100GridCoordMake(x, y)
-                             startingCharsBefore:prefixChars - offset
-                                          length:length];
+        
+        VT100GridWindowedRange range;
+        range.coordRange.start = [extractor coord:coord
+                                             plus:-(prefixChars - offset)];
+        range.coordRange.end = [extractor coord:range.coordRange.start plus:length];
+        range.columnWindow = extractor.logicalWindow;
+        action.range = range;
         return action;
     } else {
         DLog(@"%@ is either not plausibly a URL or was ruled out based on scheme. Fail.",
@@ -9831,7 +8955,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)hostnameLookupFailed:(NSNotification *)notification {
     if ([[notification object] isEqualToString:self.currentUnderlineHostname]) {
         self.currentUnderlineHostname = nil;
-        _underlineStartX = _underlineStartY = _underlineEndX = _underlineEndY = -1;
+        [self removeUnderline];
+        _underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
         [self setNeedsDisplay:YES];
     }
 }
@@ -9850,119 +8975,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return [self urlActionForClickAtX:x
                                     y:y
                respectingHardNewlines:[self respectHardNewlinesForURLs]];
-}
-
-- (BOOL)_findMatchingParenthesis:(NSString *)parenthesis withX:(int)X Y:(int)Y
-{
-    unichar matchingParenthesis, sameParenthesis;
-    NSString* theChar;
-    int level = 0, direction;
-    int x1, yStart;
-    int w = [dataSource width];
-    int h = [dataSource numberOfLines];
-
-    if (!parenthesis || [parenthesis length]<1)
-        return NO;
-
-    [parenthesis getCharacters:&sameParenthesis range:NSMakeRange(0,1)];
-    switch (sameParenthesis) {
-        case '(':
-            matchingParenthesis = ')';
-            direction = 0;
-            break;
-        case ')':
-            matchingParenthesis = '(';
-            direction = 1;
-            break;
-        case '[':
-            matchingParenthesis = ']';
-            direction = 0;
-            break;
-        case ']':
-            matchingParenthesis = '[';
-            direction = 1;
-            break;
-        case '{':
-            matchingParenthesis = '}';
-            direction = 0;
-            break;
-        case '}':
-            matchingParenthesis = '{';
-            direction = 1;
-            break;
-        default:
-            return NO;
-    }
-
-    if (direction) {
-        x1 = X -1;
-        yStart = Y;
-        if (x1 < 0) {
-            yStart--;
-            x1 = w - 1;
-        }
-        for (; x1 >= 0 && yStart >= 0; ) {
-            theChar = [self _getCharacterAtX:x1 Y:yStart];
-            if ([theChar isEqualToString:[NSString stringWithCharacters:&sameParenthesis length:1]]) {
-                level++;
-            } else if ([theChar isEqualToString:[NSString stringWithCharacters:&matchingParenthesis length:1]]) {
-                level--;
-                if (level<0) break;
-            }
-            x1--;
-            if (x1 < 0) {
-                yStart--;
-                x1 = w - 1;
-            }
-        }
-        if (level < 0) {
-            startX = x1;
-            startY = yStart;
-            endX = X+1;
-            endY = Y;
-            [self setSelectionTime];
-
-            return YES;
-        } else {
-            return NO;
-        }
-    } else {
-        x1 = X +1;
-        yStart = Y;
-        if (x1 >= w) {
-            yStart++;
-            x1 = 0;
-        }
-
-        for (; x1 < w && yStart < h; ) {
-            theChar = [self _getCharacterAtX:x1 Y:yStart];
-            if ([theChar isEqualToString:[NSString stringWithCharacters:&sameParenthesis length:1]]) {
-                level++;
-            } else if ([theChar isEqualToString:[NSString stringWithCharacters:&matchingParenthesis length:1]]) {
-                level--;
-                if (level < 0) {
-                    break;
-                }
-            }
-            x1++;
-            if (x1 >= w) {
-                yStart++;
-                x1 = 0;
-            }
-        }
-        if (level < 0) {
-            startX = X;
-            startY = Y;
-            endX = x1+1;
-            endY = yStart;
-            [self setSelectionTime];
-
-            return YES;
-        } else {
-            return NO;
-        }
-    }
-
 }
 
 // Returns the drag operation to use. It is determined from the type of thing
@@ -10011,39 +9023,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (int)_lineLength:(int)y
-{
-    screen_char_t *theLine = [dataSource getLineAtIndex:y];
-    int x;
-    for (x = [dataSource width] - 1; x >= 0; x--) {
-        if (theLine[x].code) {
-            break;
-        }
-    }
-    return x + 1;
-}
-
-- (BOOL)_isBlankLine:(int)y
-{
-    NSString *lineContents;
-
-    lineContents = [self contentFromX:0
-                                    Y:y
-                                  ToX:[dataSource width]
-                                    Y:y
-                                  pad:YES
-                   includeLastNewline:NO
-               trimTrailingWhitespace:NO];
-    const char* utf8 = [lineContents UTF8String];
-    for (int i = 0; utf8[i]; ++i) {
-        if (utf8[i] != ' ') {
-            return NO;
-        }
-    }
-    return YES;
-}
-
-
 - (void)_openSemanticHistoryForUrl:(NSString *)aURLString
                             atLine:(long long)line
                       inBackground:(BOOL)background
@@ -10082,104 +9061,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-// This handles a few kinds of URLs, after trimming whitespace from the beginning and end:
-// 1. Well formed strings like:
-//    "http://example.com/foo?query#fragment"
-// 2. URLs in parens:
-//    "(http://example.com/foo?query#fragment)" -> http://example.com/foo?query#fragment
-// 3. URLs at the end of a sentence:
-//    "http://example.com/foo?query#fragment." -> http://example.com/foo?query#fragment
-// 4. Case 2 & 3 combined:
-//    "(http://example.com/foo?query#fragment)." -> http://example.com/foo?query#fragment
-// 5. Strings without a scheme (http is assumed, previous cases do not apply)
-//    "example.com/foo?query#fragment" -> http://example.com/foo?query#fragment
-// *offset will be set to the number of characters at the start of aURLString that were skipped past.
-// offset may be nil. If |length| is not nil, then *length will be set to the number of chars matched
-// in |aURLString|.
-- (NSString *)urlInString:(NSString *)aURLString offset:(int *)offset length:(int *)length
-{
-    NSString* trimmedURLString;
-    
-    trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    
-    if (![trimmedURLString length]) {
-        return nil;
-    }
-    if (offset) {
-        *offset = 0;
-    }
-    
-    NSRange range = [trimmedURLString rangeOfString:@":"];
-    if (range.location == NSNotFound) {
-        if (length) {
-            *length = trimmedURLString.length;
-        }
-        trimmedURLString = [NSString stringWithFormat:@"http://%@", trimmedURLString];
-    } else {
-        if (length) {
-            *length = trimmedURLString.length;
-        }
-        // Search backwards for the start of the scheme.
-        for (int i = range.location - 1; 0 <= i; i--) {
-            unichar c = [trimmedURLString characterAtIndex:i];
-            if (!isalnum(c)) {
-                // Remove garbage before the scheme part
-                trimmedURLString = [trimmedURLString substringFromIndex:i + 1];
-                if (offset) {
-                    *offset = i + 1;
-                }
-                if (length) {
-                    *length = trimmedURLString.length;
-                }
-                if (c == '(') {
-                    // If an open parenthesis is right before the
-                    // scheme part, remove the closing parenthesis
-                    NSRange closer = [trimmedURLString rangeOfString:@")"];
-                    if (closer.location != NSNotFound) {
-                        trimmedURLString = [trimmedURLString substringToIndex:closer.location];
-                        if (length) {
-                            *length = trimmedURLString.length;
-                        }
-                    }
-                }
-                break;
-            }
-        }
-    }
-    
-    // Remove trailing punctuation.
-    NSArray *punctuation = @[ @".", @",", @";", @":", @"!" ];
-    BOOL found;
-    do {
-        found = NO;
-        for (NSString *pchar in punctuation) {
-            if ([trimmedURLString hasSuffix:pchar]) {
-                trimmedURLString = [trimmedURLString substringToIndex:trimmedURLString.length - 1];
-                found = YES;
-                if (length) {
-                    (*length)--;
-                }
-            }
-        }
-    } while (found);
-
-    return trimmedURLString;
-}
-
 // If iTerm2 is the handler for the scheme, then the bookmark is launched directly.
 // Otherwise it's passed to the OS to launch.
 - (void)_findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background
 {
-    NSString *trimmedURLString = [self urlInString:aURLString offset:NULL length:NULL];
+    NSString *trimmedURLString = [aURLString URLInStringWithOffset:NULL length:NULL];
     if (!trimmedURLString) {
         return;
     }
-    NSString* escapedString =
-        (NSString *)CFURLCreateStringByAddingPercentEscapes(NULL,
-                                                            (CFStringRef)trimmedURLString,
-                                                            (CFStringRef)@"!*'();:@&=+$,/?%#[]",
-                                                            NULL,
-                                                            kCFStringEncodingUTF8);
+    NSString* escapedString = [trimmedURLString stringByEscapingForURL];
 
     NSURL *url = [NSURL URLWithString:escapedString];
     [escapedString release];
@@ -10301,63 +9191,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (BOOL)_wasAnyCharSelected
 {
-    if (oldStartX <= -1 || (oldStartY == oldEndY && oldStartX == oldEndX)) {
-        return NO;
-    } else {
-        return YES;
-    }
-}
-
-- (BOOL)_isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old
-{
-    int tempStartX;
-    int tempStartY;
-    int tempEndX;
-    int tempEndY;
-    char tempSelectMode;
-
-    if (!old) {
-        tempStartY = startY;
-        tempStartX = startX;
-        tempEndY = endY;
-        tempEndX = endX;
-        tempSelectMode = selectMode;
-    } else {
-        tempStartY = oldStartY;
-        tempStartX = oldStartX;
-        tempEndY = oldEndY;
-        tempEndX = oldEndX;
-        tempSelectMode = oldSelectMode;
-    }
-
-    if (tempStartX <= -1 || (tempStartY == tempEndY && tempStartX == tempEndX)) {
-        return NO;
-    }
-    if (tempStartY > tempEndY || (tempStartY == tempEndY && tempStartX > tempEndX)) {
-        int t;
-        // swap start and end.
-        t = tempStartY;
-        tempStartY = tempEndY;
-        tempEndY = t;
-
-        t = tempStartX;
-        tempStartX = tempEndX;
-        tempEndX = t;
-    }
-    if (tempSelectMode == SELECT_BOX) {
-        return (row >= tempStartY && row < tempEndY) && (col >= tempStartX && col < tempEndX);
-    }
-    if (row == tempStartY && tempStartY == tempEndY) {
-        return (col >= tempStartX && col < tempEndX);
-    } else if (row == tempStartY && col >= tempStartX) {
-        return YES;
-    } else if (row == tempEndY && col < tempEndX) {
-        return YES;
-    } else if (row > tempStartY && row < tempEndY) {
-        return YES;
-    } else {
-        return NO;
-    }
+    return [_oldSelection hasSelection];
 }
 
 - (void)_pointerSettingsChanged:(NSNotification *)notification
@@ -10446,11 +9280,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     anythingIsBlinking = [self _markChangedSelectionAndBlinkDirty:redrawBlink width:WIDTH];
 
     // Copy selection position to detect change in selected chars next call.
-    oldStartX = startX;
-    oldStartY = startY;
-    oldEndX = endX;
-    oldEndY = endY;
-    oldSelectMode = selectMode;
+    [_oldSelection release];
+    _oldSelection = [_selection copy];
 
     // Redraw lines with dirty characters
     int lineStart = [dataSource numberOfLines] - [dataSource height];
@@ -10558,169 +9389,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplayInRect:imeRect];
 }
 
-- (void)extendSelectionPastNulls
-{
-    if (endY >= 0 && [self _lineLength:endY] < endX) {
-        endX = [dataSource width];
-    }
-}
-
 - (void)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView
 {
-    DLog(@"Move selection endpoint to %d,%d", x, y);
-    int width = [dataSource width];
-    // if we are on an empty line, we select the current line to the end
-    if (y >= 0 && [self _isBlankLine: y]) {
-        x = width;
-    }
-
-    if (locationInTextView.x < MARGIN && startY < y) {
-        // complete selection of previous line
-        x = width;
-        y--;
-    }
-    if (y < 0) {
-        y = 0;
-    }
-    if (y >= [dataSource numberOfLines]) {
-        y=[dataSource numberOfLines] - 1;
-    }
-
-    int tmpX1, tmpX2, tmpY1, tmpY2;
-    switch (selectMode) {
-        case SELECT_CHAR:
-            endX = x + 1;
-            endY = y;
-            [self extendSelectionPastNulls];
-            break;
-
-        case SELECT_BOX:
-            endX = x + 1;
-            endY = y;
-            break;
-
-        case SELECT_SMART:
-        case SELECT_WORD:
-            // First, put the word around x,y in tmp[XY][12].
-            if (selectMode == SELECT_WORD) {
-                [self getWordForX:x
-                                y:y
-                           startX:&tmpX1
-                           startY:&tmpY1
-                             endX:&tmpX2
-                             endY:&tmpY2];
-            } else {
-                // Set start/end x/y to new word
-                [self smartSelectAtX:x
-                                   y:y
-                            toStartX:&tmpX1
-                            toStartY:&tmpY1
-                              toEndX:&tmpX2
-                              toEndY:&tmpY2
-                    ignoringNewlines:NO
-                      actionRequired:NO];
-            }
-
-            // Now the complicated bit...
-            if ((startX + (startY * width)) < (tmpX2 + (tmpY2 * width))) {
-                // We go forwards in our selection session... and...
-                if ((startX + (startY * width)) > (endX + (endY * width))) {
-                    // This will always be called, if the selection direction is changed from backwards to forwards,
-                    // that is the user changed his mind and now wants to select text AFTER the initial starting
-                    // word, AND we come back to the initial starting word.
-                    // In this case, our X starting and ending values will be SWAPPED, as swapping the values is
-                    // necessary for backwards selection (forward selection: start|(several) word(s)|end---->,
-                    //                                    backward selection: <----|end|(several) word(s)|start)
-                    // getWordForX will report a word range with a half open interval (a <= x < b). b-1 will thus be
-                    // the LAST character of the current word. If we call the function again with new_a = b, it will
-                    // report the boundaries for the next word in line (which by definition will always be a white
-                    // space, iff we're in SELECT_WORD mode.)
-                    // Thus calling the function with b-1 will report the correct values for the CURRENT (read as in
-                    // NOT next word).
-                    // Afterwards, selecting will continue normally.
-                    int tx1, tx2, ty1, ty2;
-                    if (selectMode == SELECT_WORD) {
-                        [self getWordForX:startX-1
-                                        y:startY
-                                   startX:&tx1
-                                   startY:&ty1
-                                     endX:&tx2
-                                     endY:&ty2];
-                    } else {
-                        [self smartSelectAtX:startX-1
-                                           y:startY
-                                    toStartX:&tx1
-                                    toStartY:&ty1
-                                      toEndX:&tx2
-                                      toEndY:&ty2
-                            ignoringNewlines:NO
-                              actionRequired:NO];
-                    }
-                    startX = tx1;
-                    startY = ty1;
-                }
-                // This will update the ending coordinates to the new selected word's end boundaries.
-                // If we had to swap the starting and ending value (see above), the ending value is set
-                // to the new value gathered from above (initial double-clicked word).
-                // Else, just extend the selection.
-                endX = tmpX2;
-                endY = tmpY2;
-            } else {
-                // This time, the user wants to go backwards in his selection session.
-                if ((startX + (startY * width)) < (endX + (endY * width))) {
-                    // This branch will re-select the current word with both start and end values swapped,
-                    // whenever the initial double clicked word is reached again (that is, we were already
-                    // selecting backwards.)
-                    // For an explanation why, read the long comment above.
-                    int tx1, tx2, ty1, ty2;
-                    if (selectMode == SELECT_WORD) {
-                        [self getWordForX:startX
-                                        y:startY
-                                   startX:&tx1
-                                   startY:&ty1
-                                     endX:&tx2
-                                     endY:&ty2];
-                    } else {
-                        [self smartSelectAtX:startX
-                                           y:startY
-                                    toStartX:&tx1
-                                    toStartY:&ty1
-                                      toEndX:&tx2
-                                      toEndY:&ty2
-                            ignoringNewlines:NO
-                              actionRequired:NO];
-                    }
-                    startX = tx2;
-                    startY = ty2;
-                }
-                // Continue selecting text backwards. For a complete explanation see above, but read
-                // it upside-down. :p
-                endX = tmpX1;
-                endY = tmpY1;
-            }
-            break;
-
-        case SELECT_LINE:
-            if (startY <= y) {
-                startX = 0;
-                endX = [dataSource width];
-                endY = y;
-            } else {
-                endX = 0;
-                endY = y;
-                startX = [dataSource width];
-            }
-            break;
-
-        case SELECT_WHOLE_LINE: {
-            [self extendWholeLineSelectionToX:x y:y withWidth:width];
-            break;
+    if (_selection.live) {
+        DLog(@"Move selection endpoint to %d,%d, coord=%@",
+             x, y, [NSValue valueWithPoint:locationInTextView]);
+        int width = [dataSource width];
+        if (locationInTextView.y == 0) {
+            x = y = 0;
+        } else if (locationInTextView.x < MARGIN && _selection.liveRange.coordRange.start.y < y) {
+            // complete selection of previous line
+            x = width;
+            y--;
         }
+        if (y >= [dataSource numberOfLines]) {
+            y = [dataSource numberOfLines] - 1;
+        }
+        [_selection moveSelectionEndpointTo:VT100GridCoordMake(x, y)];
+        DLog(@"moveSelectionEndpoint. selection=%@", _selection);
     }
-
-    DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
-    [self setSelectionTime];
-    [_delegate refreshAndStartTimerIfNeeded];
 }
 
 - (void)_deselectDirtySelectedText
@@ -10734,18 +9421,34 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int lineEnd = [dataSource numberOfLines];
     int cursorX = [dataSource cursorX] - 1;
     int cursorY = [dataSource cursorY] + [dataSource numberOfLines] - [dataSource height] - 1;
-    for (int y = lineStart; y < lineEnd && startX > -1; y++) {
-        for (int x = 0; x < width; x++) {
-            BOOL isSelected = [self _isCharSelectedInRow:y col:x checkOld:NO];
-            BOOL isCursor = (x == cursorX && y == cursorY);
-            if ([dataSource isDirtyAtX:x Y:y-lineStart] && isSelected && !isCursor) {
-                // Don't call [self deselect] as it would recurse back here
-                startX = -1;
-                [self setSelectionTime];
-                DebugLog(@"found selected dirty noncursor");
-                break;
-            }
+    for (int y = lineStart; y < lineEnd && [_selection hasSelection]; y++) {
+        NSIndexSet *selectedIndexes = [_selection selectedIndexesOnLine:y];
+        if ([selectedIndexes count] == 0) {
+            continue;
         }
+        NSIndexSet *dirtyIndexes = [dataSource dirtyIndexesOnLine:y - lineStart];
+        if ([dirtyIndexes count] == 0) {
+            continue;
+        }
+        
+        // Look for any character that is dirty, selected, and is NOT the cursor.
+        [dirtyIndexes enumerateRangesUsingBlock:^(NSRange range, BOOL *stop) {
+            [selectedIndexes enumerateRangesInRange:range
+                                            options:0
+                                         usingBlock:^(NSRange innerRange, BOOL *innerStop) {
+                // This condition is to test if the range we got is just the cursor. If it's not,
+                // then it satisfies the condition of being selected and dirty and not the cursor.
+                if (y != cursorY ||  // not the cursor's line
+                    innerRange.length > 1 ||  // cursor is only one character long (TODO: DWCs)
+                    innerRange.location != cursorX) {  // It's just 1 char, but it's not the cursor
+                    // Remove the selection and stop enumerating.
+                    *innerStop = YES;
+                    *stop = YES;
+                    [_selection clearSelection];
+                    DebugLog(@"found selected dirty noncursor");
+                }
+            }];
+        }];
     }
 }
 
@@ -10785,31 +9488,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (lineEnd > [dataSource numberOfLines]) {
         lineEnd = [dataSource numberOfLines];
     }
-    if ([self isAnyCharSelected] || [self _wasAnyCharSelected]) {
-        // Mark blinking or selection-changed characters as dirty
-        for (int y = lineStart; y < lineEnd; y++) {
-            screen_char_t* theLine = [dataSource getLineAtIndex:y];
-            for (int x = 0; x < width; x++) {
-                BOOL isSelected = [self _isCharSelectedInRow:y col:x checkOld:NO];
-                BOOL wasSelected = [self _isCharSelectedInRow:y col:x checkOld:YES];
-                BOOL charBlinks = [self _charBlinks:theLine[x]];
-                anyBlinkers |= charBlinks;
-                BOOL blinked = redrawBlink && charBlinks;
-                if (isSelected != wasSelected || blinked) {
-                    NSRect dirtyRect = [self visibleRect];
-                    dirtyRect.origin.y = y*lineHeight;
-                    dirtyRect.size.height = lineHeight;
-                    if (gDebugLogging) {
-                        DebugLog([NSString stringWithFormat:@"found selection change/blink at %d,%d", x, y]);
-                    }
-                    [self setNeedsDisplayInRect:dirtyRect];
-                    break;
-                }
-            }
-        }
-    } else {
-        // Mark blinking text as dirty
-        for (int y = lineStart; y < lineEnd; y++) {
+    for (int y = lineStart; y < lineEnd; y++) {
+        if (blinkAllowed_) {
+            // First, mark blinking chars as dirty.
             screen_char_t* theLine = [dataSource getLineAtIndex:y];
             for (int x = 0; x < width; x++) {
                 BOOL charBlinks = [self _charBlinks:theLine[x]];
@@ -10817,18 +9498,101 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 BOOL blinked = redrawBlink && charBlinks;
                 if (blinked) {
                     NSRect dirtyRect = [self visibleRect];
-                    dirtyRect.origin.y = y*lineHeight;
+                    dirtyRect.origin.y = y * lineHeight;
                     dirtyRect.size.height = lineHeight;
                     if (gDebugLogging) {
-                        DebugLog([NSString stringWithFormat:@"found selection change/blink at %d,%d", x, y]);
+                        DLog(@"Found blinking char on line %d", y);
                     }
                     [self setNeedsDisplayInRect:dirtyRect];
                     break;
                 }
             }
         }
+        
+        // Now mark chars whose selection status has changed as needing display.
+        NSIndexSet *areSelected = [_selection selectedIndexesOnLine:y];
+        NSIndexSet *wereSelected = [_oldSelection selectedIndexesOnLine:y];
+        if (![areSelected isEqualToIndexSet:wereSelected]) {
+            // Just redraw the whole line for simplicity.
+            NSRect dirtyRect = [self visibleRect];
+            dirtyRect.origin.y = y * lineHeight;
+            dirtyRect.size.height = lineHeight;
+            if (gDebugLogging) {
+                DLog(@"found selection change on line %d", y);
+            }
+            [self setNeedsDisplayInRect:dirtyRect];
+        }
     }
     return anyBlinkers;
+}
+
+#pragma mark - iTermSelectionDelegate
+
+- (void)selectionDidChange:(iTermSelection *)selection {
+    if ([selection hasSelection]) {
+        selectionTime_ = [[NSDate date] timeIntervalSince1970];
+    } else {
+        selectionTime_ = 0;
+    }
+    [_delegate refreshAndStartTimerIfNeeded];
+    DLog(@"Update selection time to %lf. selection=%@", (double)selectionTime_, selection);
+}
+
+- (VT100GridRange)selectionRangeOfTerminalNullsOnLine:(int)lineNumber {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
+    int length = [extractor lengthOfLine:lineNumber];
+    int width = [dataSource width];
+    return VT100GridRangeMake(length, width - length);
+}
+
+- (VT100GridWindowedRange)selectionRangeForParentheticalAt:(VT100GridCoord)coord {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
+    [extractor restrictToLogicalWindowIncludingCoord:coord];
+    return [extractor rangeOfParentheticalSubstringAtLocation:coord];
+}
+
+- (VT100GridWindowedRange)selectionRangeForWordAt:(VT100GridCoord)coord {
+    VT100GridWindowedRange range;
+    [self getWordForX:coord.x y:coord.y range:&range respectDividers:YES];
+    return range;
+}
+
+- (VT100GridWindowedRange)selectionRangeForSmartSelectionAt:(VT100GridCoord)coord {
+    VT100GridWindowedRange range;
+    [self smartSelectAtX:coord.x
+                       y:coord.y
+                      to:&range
+        ignoringNewlines:NO
+          actionRequired:NO
+         respectDividers:YES];
+    return range;
+}
+
+- (VT100GridCoordRange)selectionRangeForWrappedLineAt:(VT100GridCoord)coord {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
+    return [extractor rangeForWrappedLineEncompassing:coord respectContinuations:NO].coordRange;
+}
+
+- (VT100GridCoordRange)selectionRangeForLineAt:(VT100GridCoord)coord {
+    return VT100GridCoordRangeMake(0, coord.y, [dataSource width], coord.y);
+}
+
+- (VT100GridCoord)selectionPredecessorOfCoord:(VT100GridCoord)coord {
+    screen_char_t *theLine;
+    do {
+        coord.x--;
+        if (coord.x < 0) {
+            coord.x = [dataSource width] - 1;
+            coord.y--;
+            if (coord.y < 0) {
+                coord.x = coord.y = 0;
+                break;
+            }
+        }
+        
+        theLine = [dataSource getLineAtIndex:coord.y];
+    } while (theLine[coord.x].code == DWC_RIGHT);
+    return coord;
 }
 
 @end

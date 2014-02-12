@@ -684,4 +684,161 @@ int decode_utf8_char(const unsigned char *datap,
                                    encoding:NSISOLatin1StringEncoding] autorelease];
 }
 
+- (NSString *)stringByTrimmingTrailingWhitespace {
+    NSCharacterSet *nonWhitespaceSet = [[NSCharacterSet whitespaceCharacterSet] invertedSet];
+    NSRange rangeOfLastWantedCharacter = [self rangeOfCharacterFromSet:nonWhitespaceSet
+                                                               options:NSBackwardsSearch];
+    if (rangeOfLastWantedCharacter.location == NSNotFound) {
+        return self;
+    } else if (rangeOfLastWantedCharacter.location < self.length - 1) {
+        NSUInteger i = rangeOfLastWantedCharacter.location + 1;
+        return [self substringToIndex:i];
+    }
+    return self;
+}
+
+// Returns a substring of contiguous characters only from a given character set
+// including some character in the middle of the "haystack" (source) string.
+- (NSString *)substringIncludingOffset:(int)offset
+            fromCharacterSet:(NSCharacterSet *)charSet
+        charsTakenFromPrefix:(int*)charsTakenFromPrefixPtr
+{
+    if (![self length]) {
+        if (charsTakenFromPrefixPtr) {
+            *charsTakenFromPrefixPtr = 0;
+        }
+        return @"";
+    }
+    NSRange firstBadCharRange = [self rangeOfCharacterFromSet:[charSet invertedSet]
+                                                      options:NSBackwardsSearch
+                                                        range:NSMakeRange(0, offset)];
+    NSRange lastBadCharRange = [self rangeOfCharacterFromSet:[charSet invertedSet]
+                                                     options:0
+                                                       range:NSMakeRange(offset, [self length] - offset)];
+    int start = 0;
+    int end = [self length];
+    if (firstBadCharRange.location != NSNotFound) {
+        start = firstBadCharRange.location + 1;
+        if (charsTakenFromPrefixPtr) {
+            *charsTakenFromPrefixPtr = offset - start;
+        }
+    } else if (charsTakenFromPrefixPtr) {
+        *charsTakenFromPrefixPtr = offset;
+    }
+    
+    if (lastBadCharRange.location != NSNotFound) {
+        end = lastBadCharRange.location;
+    }
+    
+    return [self substringWithRange:NSMakeRange(start, end - start)];
+}
+
+// This handles a few kinds of URLs, after trimming whitespace from the beginning and end:
+// 1. Well formed strings like:
+//    "http://example.com/foo?query#fragment"
+// 2. URLs in parens:
+//    "(http://example.com/foo?query#fragment)" -> http://example.com/foo?query#fragment
+// 3. URLs at the end of a sentence:
+//    "http://example.com/foo?query#fragment." -> http://example.com/foo?query#fragment
+// 4. Case 2 & 3 combined:
+//    "(http://example.com/foo?query#fragment)." -> http://example.com/foo?query#fragment
+// 5. Strings without a scheme (http is assumed, previous cases do not apply)
+//    "example.com/foo?query#fragment" -> http://example.com/foo?query#fragment
+// *offset will be set to the number of characters at the start of self that were skipped past.
+// offset may be nil. If |length| is not nil, then *length will be set to the number of chars matched
+// in self.
+- (NSString *)URLInStringWithOffset:(int *)offset length:(int *)length
+{
+    NSString* trimmedURLString;
+    
+    trimmedURLString = [self stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    
+    if (![trimmedURLString length]) {
+        return nil;
+    }
+    if (offset) {
+        *offset = 0;
+    }
+    
+    NSRange range = [trimmedURLString rangeOfString:@":"];
+    if (range.location == NSNotFound) {
+        if (length) {
+            *length = trimmedURLString.length;
+        }
+        trimmedURLString = [NSString stringWithFormat:@"http://%@", trimmedURLString];
+    } else {
+        if (length) {
+            *length = trimmedURLString.length;
+        }
+        // Search backwards for the start of the scheme.
+        for (int i = range.location - 1; 0 <= i; i--) {
+            unichar c = [trimmedURLString characterAtIndex:i];
+            if (!isalnum(c)) {
+                // Remove garbage before the scheme part
+                trimmedURLString = [trimmedURLString substringFromIndex:i + 1];
+                if (offset) {
+                    *offset = i + 1;
+                }
+                if (length) {
+                    *length = trimmedURLString.length;
+                }
+                if (c == '(') {
+                    // If an open parenthesis is right before the
+                    // scheme part, remove the closing parenthesis
+                    NSRange closer = [trimmedURLString rangeOfString:@")"];
+                    if (closer.location != NSNotFound) {
+                        trimmedURLString = [trimmedURLString substringToIndex:closer.location];
+                        if (length) {
+                            *length = trimmedURLString.length;
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
+    
+    // Remove trailing punctuation.
+    NSArray *punctuation = @[ @".", @",", @";", @":", @"!" ];
+    BOOL found;
+    do {
+        found = NO;
+        for (NSString *pchar in punctuation) {
+            if ([trimmedURLString hasSuffix:pchar]) {
+                trimmedURLString = [trimmedURLString substringToIndex:trimmedURLString.length - 1];
+                found = YES;
+                if (length) {
+                    (*length)--;
+                }
+            }
+        }
+    } while (found);
+    
+    return trimmedURLString;
+}
+
+- (NSString *)stringByEscapingForURL {
+    return (NSString *)CFURLCreateStringByAddingPercentEscapes(NULL,
+                                                               (CFStringRef)self,
+                                                               (CFStringRef)@"!*'();:@&=+$,/?%#[]",
+                                                               NULL,
+                                                               kCFStringEncodingUTF8);
+}
+
+@end
+
+@implementation NSMutableString (iTerm)
+
+- (void)trimTrailingWhitespace {
+    NSCharacterSet *nonWhitespaceSet = [[NSCharacterSet whitespaceCharacterSet] invertedSet];
+    NSRange rangeOfLastWantedCharacter = [self rangeOfCharacterFromSet:nonWhitespaceSet
+                                                               options:NSBackwardsSearch];
+    if (rangeOfLastWantedCharacter.location == NSNotFound) {
+        [self deleteCharactersInRange:NSMakeRange(0, self.length)];
+    } else if (rangeOfLastWantedCharacter.location < self.length - 1) {
+        NSUInteger i = rangeOfLastWantedCharacter.location + 1;
+        [self deleteCharactersInRange:NSMakeRange(i, self.length - i)];
+    }
+}
+
 @end

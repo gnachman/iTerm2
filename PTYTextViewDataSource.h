@@ -73,6 +73,7 @@ typedef enum {
 
 // Check if any the character at x,y has been marked dirty.
 - (BOOL)isDirtyAtX:(int)x Y:(int)y;
+- (NSIndexSet *)dirtyIndexesOnLine:(int)line;
 - (void)resetDirty;
 
 // Save the current state to a new frame in the dvr.

@@ -18,5 +18,6 @@
 - (BOOL)isDirtyAtOffset:(int)x;
 - (BOOL)anyCharIsDirty;
 - (VT100GridRange)dirtyRange;
+- (NSIndexSet *)dirtyIndexes;
 
 @end

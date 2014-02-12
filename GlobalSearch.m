@@ -36,6 +36,8 @@
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "iTermSearchField.h"
+#import "iTermSelection.h"
+#import "iTermTextExtractor.h"
 
 const double GLOBAL_SEARCH_MARGIN = 10;
 
@@ -233,13 +235,18 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     }
     [matchLocations_ addObject:setObj];
 
-    NSString* theContext = [textView_ contentFromX:0
-                                                 Y:absY
-                                               ToX:[textViewDataSource_ width] - 1
-                                                 Y:absEndY - [[textView_ dataSource] totalScrollbackOverflow]
-                                               pad:NO
-                                includeLastNewline:NO
-                            trimTrailingWhitespace:YES];
+    VT100GridCoordRange theRange =
+        VT100GridCoordRangeMake(0,
+                                absY,
+                                [textViewDataSource_ width] - 1,
+                                absEndY - [[textView_ dataSource] totalScrollbackOverflow]);
+    iTermTextExtractor *extractor =
+        [iTermTextExtractor textExtractorWithDataSource:textViewDataSource_];
+    NSString* theContext = [extractor contentInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
+                                                 pad:NO
+                                  includeLastNewline:NO
+                              trimTrailingWhitespace:YES
+                                        cappedAtSize:-1];
     theContext = [theContext stringByReplacingOccurrencesOfString:@"\n"
                                                        withString:@" "];
     [results_ addObject:[[[GlobalSearchResult alloc] initWithInstance:self
@@ -691,7 +698,16 @@ const double GLOBAL_SEARCH_MARGIN = 10;
         theResult = [combinedResults_ objectAtIndex:i];
         inst = [theResult instance];
         tv = [inst textView];
-        [tv setSelectionFromX:[theResult x] fromY:[theResult y] toX:[theResult endX]+1 toY:[theResult endY]];
+        [tv.selection clearSelection];
+        VT100GridCoordRange theRange =
+            VT100GridCoordRangeMake([theResult x],
+                                    [theResult y],
+                                    [theResult endX] + 1,
+                                    [theResult endY]);
+        iTermSubSelection *sub;
+        sub = [iTermSubSelection subSelectionWithRange:VT100GridWindowedRangeMake(theRange, 0, 0)
+                                                  mode:kiTermSelectionModeCharacter];
+        [tv.selection addSubSelection:sub];
         [tv scrollToSelection];
         session = [inst session];
     } else {

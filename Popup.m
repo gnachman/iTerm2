@@ -235,6 +235,9 @@
 - (void)keyDown:(NSEvent*)event
 {
     if ([_delegate respondsToSelector:@selector(popupKeyDown:currentValue:)]) {
+        if ([tableView_ selectedRow] < 0) {
+            return;
+        }
         PopupEntry *entry = [[self model] objectAtIndex:[self convertIndex:[tableView_ selectedRow]]];
         if ([_delegate popupKeyDown:event currentValue:entry.mainValue]) {
             return;
@@ -307,7 +310,14 @@
                                     nil];
 
     [as appendAttributedString:[[[NSAttributedString alloc] initWithString:[entry prefix] attributes:lightAttributes] autorelease]];
-    NSString* value = [[entry mainValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+    NSString *truncatedMainValue;
+    static const int kMaxLength = 200;
+    if ([[entry mainValue] length] > kMaxLength) {
+        truncatedMainValue = [[entry mainValue] substringToIndex:kMaxLength];
+    } else {
+        truncatedMainValue = [entry mainValue];
+    }
+    NSString* value = [truncatedMainValue stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
 
     NSString* temp = value;
     for (int i = 0; i < [substring_ length]; ++i) {

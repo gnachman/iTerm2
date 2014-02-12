@@ -83,6 +83,10 @@
     return x >= start_ && x < bound_;
 }
 
+- (NSIndexSet *)dirtyIndexes {
+    return [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(start_, bound_ - start_)];
+}
+
 - (BOOL)anyCharIsDirty {
     return start_ >= 0;
 }

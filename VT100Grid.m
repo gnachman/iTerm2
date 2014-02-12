@@ -118,6 +118,14 @@
     return [lineInfo isDirtyAtOffset:coord.x];
 }
 
+- (NSIndexSet *)dirtyIndexesOnLine:(int)line {
+    if (allDirty_) {
+        return [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, self.size.width)];
+    }
+    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:line];
+    return [lineInfo dirtyIndexes];
+}
+
 - (BOOL)isAnyCharDirty {
     if (allDirty_) {
         return YES;
