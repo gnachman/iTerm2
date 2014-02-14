@@ -3790,6 +3790,9 @@ NSMutableArray* screens=0;
             // Possibly a drag coming up (if a cmd-drag follows)
             DLog(@"mouse down on selection");
             mouseDownOnSelection = YES;
+            [_selection beginLiveSelectionAt:VT100GridCoordMake(x, y)
+                                      extend:YES
+                                        mode:mode];
             return YES;
         } else if (!cmdPressed || altPressed) {
             // start a new selection
@@ -3814,6 +3817,9 @@ NSMutableArray* screens=0;
             [_selection updateLiveSelectionWithRange:matchedRange];
         } else {
             // No matching paren. Update selection bounds.
+            [_selection beginLiveSelectionAt:range.start
+                                      extend:isExtension
+                                        mode:kiTermSelectionModeWord];
             [_selection updateLiveSelectionWithRange:range];
         }
     } else if (clickCount == 3) {
@@ -3823,9 +3829,17 @@ NSMutableArray* screens=0;
             [_selection beginLiveSelectionAt:VT100GridCoordMake(0, startOfWholeLine)
                                       extend:isExtension
                                         mode:kiTermSelectionModeWholeLine];
-            [_selection updateLiveSelectionToRangeOfLines:VT100GridRangeMake(startOfWholeLine,
-                                                                             endOfWholeLine - startOfWholeLine)
-                                                    width:[dataSource width]];
+            VT100GridCoordRange range = _selection.selectedRange;
+            int keepStartY = [self lineNumberWithStartOfWholeLineIncludingLine:range.start.y];
+            int keepEndY = [self lineNumberWithEndOfWholeLineIncludingLine:range.end.y];
+            [_selection updateLiveSelectionWithRange:VT100GridCoordRangeMake(0,
+                                                                             startOfWholeLine,
+                                                                             [dataSource width],
+                                                                             endOfWholeLine)
+                                         rangeToKeep:VT100GridCoordRangeMake(0,
+                                                                             keepStartY,
+                                                                             [dataSource width],
+                                                                             keepEndY)];
         } else {
             // triple-click; select line
             [_selection beginLiveSelectionAt:VT100GridCoordMake(0, y)
@@ -3989,6 +4003,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         }
 
+        [_selection clearSelection];
         if (willFollowLink) {
             if (altPressed) {
                 [self openTargetInBackgroundWithEvent:event];
@@ -4000,10 +4015,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             _lastFindCoord = nil;
             if ([_selection hasSelection]) {
                 _lastFindCoord =
-                    [SearchResult searchResultFromX:_selection.selectedRange.end.x
-                                                  y:_selection.selectedRange.end.y + [dataSource totalScrollbackOverflow]
-                                                toX:0
-                                                  y:0];
+                    [[SearchResult searchResultFromX:_selection.selectedRange.end.x
+                                                   y:_selection.selectedRange.end.y + [dataSource totalScrollbackOverflow]
+                                                 toX:0
+                                                   y:0] retain];
             }
         }
     }
@@ -4561,7 +4576,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     int i;
     int estimated_size =
-        abs((range.end.y - range.start.x) * [dataSource width]) + abs(range.end.x - range.start.x);
+        abs((range.end.y - range.start.y) * [dataSource width]) + abs(range.end.x - range.start.x);
     const BOOL shouldTrim = [[PreferencePanel sharedInstance] trimTrailingWhitespace];
     NSMutableString* result = [NSMutableString stringWithCapacity:estimated_size];
     for (i = range.start.y; i < range.end.y; ++i) {
@@ -6221,11 +6236,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     y:y
                 range:&wordRange];
     
-    [_selection beginLiveSelectionAt:range.end
-                              extend:YES
-                                mode:kiTermSelectionModeCharacter];
-    [_selection updateLiveSelectionWithCoord:wordRange.start];
-    [_selection endLiveSelection];
+    VT100GridCoordRange existingRange = _selection.selectedRange;
+    _selection.selectedRange = VT100GridCoordRangeMake(wordRange.start.x,
+                                                       wordRange.start.y,
+                                                       existingRange.end.x,
+                                                       existingRange.end.y);
 
     return YES;
 }
@@ -6257,11 +6272,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     y:y
                 range:&wordRange];
 
-    [_selection beginLiveSelectionAt:range.start
-                              extend:YES
-                                mode:kiTermSelectionModeCharacter];
-    [_selection updateLiveSelectionWithCoord:wordRange.end];
-    [_selection endLiveSelection];
+    VT100GridCoordRange existingRange = _selection.selectedRange;
+    _selection.selectedRange = VT100GridCoordRangeMake(existingRange.start.x,
+                                                       existingRange.start.y,
+                                                       wordRange.end.x,
+                                                       wordRange.end.y);
 }
 
 // Add a match to resultMap_
@@ -6329,7 +6344,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL found = NO;
     BOOL redraw = NO;
     int i = start;
-    for (int j = 0; j < [findResults_ count]; j++) {
+    for (int j = 0; !found && j < [findResults_ count]; j++) {
         SearchResult* r = [findResults_ objectAtIndex:i];
         long long pos = r->startX + (long long)r->absStartY * width;
         if (!found &&
@@ -6368,10 +6383,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self setNeedsDisplay:YES];
         VT100GridCoordRange range = _selection.selectedRange;
         [_lastFindCoord release];
-        _lastFindCoord = [SearchResult searchResultFromX:range.start.x
-                                                       y:(long long)range.start.y + overflowAdustment
-                                                     toX:0
-                                                       y:0];
+        _lastFindCoord = [[SearchResult searchResultFromX:range.start.x
+                                                        y:(long long)range.start.y + overflowAdustment
+                                                      toX:0
+                                                        y:0] retain];
         foundResult_ = YES;
     }
 
@@ -6471,10 +6486,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [_lastFindCoord release];
         long long findY =
             (long long)([dataSource numberOfLines] + 1) + [dataSource totalScrollbackOverflow];
-        _lastFindCoord = [SearchResult searchResultFromX:0
-                                                       y:findY
-                                                     toX:0
-                                                       y:0];
+        _lastFindCoord = [[SearchResult searchResultFromX:0
+                                                        y:findY
+                                                      toX:0
+                                                        y:0] retain];
 
         // Search backwards from the end. This is slower than searching
         // forwards, but most searches are reverse searches begun at the end,
@@ -6589,22 +6604,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     NSString *copyString;
 
-    if (openingContextMenu_) {
-        // It is agonizingly slow to copy hundreds of thousands of lines just because the context
-        // menu is opening. Services use this to get access to the clipboard contents but
-        // it's lousy to hang for a few minutes for a feature that won't be used very much, esp. for
-        // such large selections.
-        iTermSelection *savedSelection = [_selection copy];
-        VT100GridCoordRange range = _selection.selectedRange;
-        const int maxLinesToWrite = 10000;
-        range.end.y = MIN(range.start.y + maxLinesToWrite, range.end.y);
-        _selection.selectedRange = range;
-        copyString = [self selectedText];
-        [_selection release];
-        _selection = savedSelection;
-    } else {
-        copyString = [self selectedText];
-    }
+    // It is agonizingly slow to copy hundreds of thousands of lines just because the context
+    // menu is opening. Services use this to get access to the clipboard contents but
+    // it's lousy to hang for a few minutes for a feature that won't be used very much, esp. for
+    // such large selections. In OS 10.9 this is called when opening the context menu, even though
+    // it is deprecated by 10.9 (!).
+    iTermSelection *savedSelection = [_selection copy];
+    VT100GridCoordRange range = _selection.selectedRange;
+    const int maxLinesToWrite = 10000;
+    range.end.y = MIN(range.start.y + maxLinesToWrite, range.end.y);
+    _selection.selectedRange = range;
+    copyString = [self selectedText];
+    [_selection release];
+    _selection = savedSelection;
 
     if (copyString && [copyString length]>0) {
         [pboard declareTypes: [NSArray arrayWithObject: NSStringPboardType] owner: self];
@@ -10339,9 +10351,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         case kiTermSelectionModeWholeLine: {
             int startOfWholeLine = [self lineNumberWithStartOfWholeLineIncludingLine:y];
             int endOfWholeLine = [self lineNumberWithEndOfWholeLineIncludingLine:y];
-            VT100GridRange theRange = VT100GridRangeMake(startOfWholeLine,
-                                                         endOfWholeLine - startOfWholeLine);
-            [_selection updateLiveSelectionToRangeOfLines:theRange width:width];
+            VT100GridCoordRange range = _selection.selectedRange;
+            int keepStartY = [self lineNumberWithStartOfWholeLineIncludingLine:range.start.y];
+            int keepEndY = [self lineNumberWithEndOfWholeLineIncludingLine:range.end.y];
+            [_selection updateLiveSelectionWithRange:VT100GridCoordRangeMake(0,
+                                                                             startOfWholeLine,
+                                                                             [dataSource width],
+                                                                             endOfWholeLine)
+                                         rangeToKeep:VT100GridCoordRangeMake(0,
+                                                                             keepStartY,
+                                                                             [dataSource width],
+                                                                             keepEndY)];
             break;
         }
     }
@@ -10460,9 +10480,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)selectionDidChange:(iTermSelection *)selection {
     if ([selection hasSelection]) {
-        selectionTime_ = 0;
-    } else {
         selectionTime_ = [[NSDate date] timeIntervalSince1970];
+    } else {
+        selectionTime_ = 0;
     }
     [_delegate refreshAndStartTimerIfNeeded];
     DLog(@"Update selection time to %lf. selection=%@", (double)selectionTime_, selection);

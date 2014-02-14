@@ -26,10 +26,19 @@
     DLog(@"Begin new selection. coord=%@, extend=%d", VT100GridCoordDescription(coord), extend);
     _live = YES;
     _extend = extend;
+    if ((mode == kiTermSelectionModeBox && mode != _selectionMode) ||
+        (_selectionMode == kiTermSelectionModeBox && mode != _selectionMode)) {
+        extend = NO;
+        _range = VT100GridCoordRangeMake(-1, -1, -1, -1);
+    }
     _selectionMode = mode;
     if (!extend) {
         _range.start = coord;
         _range.end = coord;
+    } else if (extend &&
+               ![self isFlipped] &&
+               VT100GridCoordOrder(_range.start, coord) == NSOrderedDescending) {
+        _range.start = _range.end;
     }
     [_delegate selectionDidChange:self];
 }
@@ -45,7 +54,6 @@
     }
     _extend = NO;
     _live = NO;
-    _selectionMode = kiTermSelectionModeCharacter;
 }
 
 - (BOOL)extending {
@@ -63,11 +71,8 @@
 }
 
 - (void)updateLiveSelectionWithCoord:(VT100GridCoord)coord {
-    assert(_live);
-    if (_extend &&
-        ![self isFlipped] &&
-        VT100GridCoordOrder(_range.start, coord) == NSOrderedDescending) {
-        _range.start = _range.end;
+    if (!_live) {
+        [self beginLiveSelectionAt:coord extend:NO mode:kiTermSelectionModeCharacter];
     }
     _range.end = coord;
 
@@ -117,7 +122,7 @@
 
 - (void)updateLiveSelectionToRangeOfLines:(VT100GridRange)lineRange width:(int)width {
     if (_extend) {
-        if (_range.start.y < _range.end.y) {
+        if ([self isFlipped]) {
             _range.start.y = lineRange.location;
             _range.end.y = lineRange.location + lineRange.length;
         } else {
@@ -178,7 +183,7 @@
 }
 
 - (BOOL)hasSelection {
-    return _range.start.x < 0 || VT100GridCoordEquals(_range.start, _range.end);
+    return _range.start.x >= 0 && !VT100GridCoordEquals(_range.start, _range.end);
 }
 
 - (void)moveUpByLines:(int)numLines {
@@ -208,7 +213,7 @@
                 coord.x < end.x &&
                 coord.y <= end.y);
     } else {
-        long long w = MAX(MAX(MAX(1, coord.x), start.x), end.x);
+        long long w = MAX(MAX(MAX(1, coord.x), start.x), end.x) + 1;
         long long coordPos = (long long)coord.y * w + coord.x;
         long long minPos = (long long)start.y * w + start.x;
         long long maxPos = (long long)end.y * w + end.x;
@@ -225,11 +230,8 @@
 }
 
 - (void)setSelectedRange:(VT100GridCoordRange)selectedRange {
-    [self beginLiveSelectionAt:selectedRange.start
-                        extend:NO
-                          mode:kiTermSelectionModeCharacter];
-    [self updateLiveSelectionWithCoord:selectedRange.end];
-    [self endLiveSelection];
+    _range = selectedRange;
+    [_delegate selectionDidChange:self];
 }
 
 - (id)copyWithZone:(NSZone *)zone {

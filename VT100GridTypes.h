@@ -117,7 +117,7 @@ NS_INLINE NSComparisonResult VT100GridCoordOrder(VT100GridCoord a, VT100GridCoor
     if (a.x > b.x) {
         return NSOrderedDescending;
     }
-    
+
     return NSOrderedSame;
 }
 
