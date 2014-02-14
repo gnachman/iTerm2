@@ -5,7 +5,6 @@
 #import "FakeWindow.h"
 #import "FileTransferManager.h"
 #import "HotkeyWindowController.h"
-#import "iTermSelection.h"
 #import "ITAddressBookMgr.h"
 #import "MovePaneController.h"
 #import "MovePaneController.h"
@@ -42,7 +41,7 @@
 #import "iTermController.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
-
+#import "iTermSelection.h"
 #import <apr-1/apr_base64.h>
 #include <stdlib.h>
 #include <sys/time.h>
