@@ -517,25 +517,24 @@ const int kMaxResultContextWords = 4;
                         ++endY;
                     }
                     
-                    VT100GridCoordRange wordRange;
-                    word = [[[self delegate] popupVT100TextView] getWordForX:endX y:endY range:&wordRange];
-                    AcLog(@"First candidate is at %@", VT100GridCoordRangeDescription(wordRange));
+                    word = [[[self delegate] popupVT100TextView] getWordForX:endX y:endY range:&range];
+                    AcLog(@"First candidate is at %@", VT100GridCoordRangeDescription(range));
                     if ([word rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
                         // word after match is all whitespace. Grab the next word.
-                        if (wordRange.end.x == [screen width]) {
-                            wordRange.end.x = 0;
-                            ++wordRange.end.y;
+                        if (range.end.x == [screen width]) {
+                            range.end.x = 0;
+                            ++range.end.y;
                         }
                         if (range.end.y < [screen numberOfLines]) {
-                            word = [[[self delegate] popupVT100TextView] getWordForX:wordRange.end.x
-                                                                                   y:wordRange.end.y
-                                                                               range:&wordRange];
+                            word = [[[self delegate] popupVT100TextView] getWordForX:range.end.x
+                                                                                   y:range.end.y
+                                                                               range:&range];
                             if (!whitespaceBeforeCursor_) {
                                 // Prepend a space if one is needed
                                 word = [NSString stringWithFormat:@" %@", word];
                             }
                             AcLog(@"Replacement candidate is at %@: '%@'",
-                                  VT100GridCoordRangeDescription(wordRange), word);
+                                  VT100GridCoordRangeDescription(range), word);
                         } else {
                             AcLog(@"Hit end of screen.");
                         }
