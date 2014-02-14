@@ -3792,7 +3792,7 @@ NSMutableArray* screens=0;
             mouseDownOnSelection = YES;
             [_selection beginLiveSelectionAt:VT100GridCoordMake(x, y)
                                       extend:YES
-                                        mode:mode];
+                                        mode:_selection.selectionMode];
             return YES;
         } else if (!cmdPressed || altPressed) {
             // start a new selection
@@ -4013,13 +4013,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         } else {
             [_lastFindCoord release];
             _lastFindCoord = nil;
-            if ([_selection hasSelection]) {
-                _lastFindCoord =
-                    [[SearchResult searchResultFromX:_selection.selectedRange.end.x
-                                                   y:_selection.selectedRange.end.y + [dataSource totalScrollbackOverflow]
-                                                 toX:0
-                                                   y:0] retain];
-            }
+            NSPoint clickPoint = [self clickPoint:event];
+            _lastFindCoord =
+                [[SearchResult searchResultFromX:clickPoint.x
+                                               y:clickPoint.y + [dataSource totalScrollbackOverflow]
+                                             toX:0
+                                               y:0] retain];
         }
     }
 
@@ -4368,7 +4367,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (void)openContextMenuWithEvent:(NSEvent *)event
+- (void)openContextMenuWithEvent:(NSEvent *)event {
+    NSPoint clickPoint = [self clickPoint:event];
+    openingContextMenu_ = YES;
+    
+    // Slowly moving away from using NSPoint for integer coordinates.
+    validationClickPoint_ = VT100GridCoordMake(clickPoint.x, clickPoint.y);
+    [NSMenu popUpContextMenu:[self contextMenuWithEvent:event] withEvent:event forView:self];
+    validationClickPoint_ = VT100GridCoordMake(-1, -1);
+    openingContextMenu_ = NO;
+}
+
+- (NSMenu *)contextMenuWithEvent:(NSEvent *)event
 {
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
@@ -4405,13 +4415,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self setNeedsDisplay:YES];
         menu = [self menuAtCoord:coord];
     }
-    openingContextMenu_ = YES;
-
-    // Slowly moving away from using NSPoint for integer coordinates.
-    validationClickPoint_ = VT100GridCoordMake(clickPoint.x, clickPoint.y);
-    [NSMenu popUpContextMenu:menu withEvent:event forView:self];
-    validationClickPoint_ = VT100GridCoordMake(-1, -1);
-    openingContextMenu_ = NO;
+    return menu;
 }
 
 - (void)extendSelectionWithEvent:(NSEvent *)event
@@ -5336,12 +5340,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate insertText:command];
 }
 
-// Context menu is opened by mouseUp->PointerController->openContextMenuWithEvent, not
-// by AppKit calling this method directly. However, clicking the gear icon in the session title bar
-// calls this method.
+// This method is called by control-click or by clicking the gear icon in the session title bar.
+// Two-finger tap (or presumably right click with a mouse) would go through mouseUp->
+// PointerController->openContextMenuWithEvent.
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
 {
-    return [self menuAtCoord:VT100GridCoordMake(-1, -1)];
+    if (theEvent) {
+        // Control-click
+        return [self contextMenuWithEvent:theEvent];
+    } else {
+        // Gear icon in session title view.
+        return [self menuAtCoord:VT100GridCoordMake(-1, -1)];
+    }
 }
 
 - (void)saveImageAs:(id)sender {
