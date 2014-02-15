@@ -158,16 +158,20 @@ NS_INLINE VT100GridCoord VT100GridCoordRangeMax(VT100GridCoordRange range) {
     }
 }
 
-NS_INLINE int VT100GridCoordRangeLength(VT100GridCoordRange range, int gridWidth) {
-    long long end = range.end.y;
-    end *= gridWidth;
-    end += range.end.x;
+NS_INLINE long long VT100GridCoordDistance(VT100GridCoord a, VT100GridCoord b, int gridWidth) {
+    long long aPos = a.y;
+    aPos *= gridWidth;
+    aPos += a.x;
 
-    long long start = range.start.y;
-    start *= gridWidth;
-    start += range.start.x;
+    long long bPos = b.y;
+    bPos *= gridWidth;
+    bPos += b.x;
 
-    return end - start;
+    return llabs(aPos - bPos);
+}
+
+NS_INLINE long long VT100GridCoordRangeLength(VT100GridCoordRange range, int gridWidth) {
+    return VT100GridCoordDistance(range.start, range.end, gridWidth);
 }
 
 // Returns the coord of the last char inside the run.

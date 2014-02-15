@@ -2788,10 +2788,8 @@ NSMutableArray* screens=0;
                                actionRequired:NO];
 
     // TODO: extension isn't supported properly.
-    [_selection beginLiveSelectionAt:VT100GridCoordMake(x, y)
-                              extend:NO
-                                mode:kiTermSelectionModeSmart];
-    [_selection updateLiveSelectionWithRange:range];
+    [_selection beginSelectionAt:VT100GridCoordMake(x, y) mode:kiTermSelectionModeSmart];
+    [_selection endLiveSelection];
     return rule != nil;
 }
 
@@ -3764,7 +3762,11 @@ NSMutableArray* screens=0;
     int clickCount = [event clickCount];
     DLog(@"clickCount=%d altPressed=%d cmdPressed=%d", clickCount, (int)altPressed, (int)cmdPressed);
     const BOOL isExtension = ([_selection hasSelection] && shiftPressed);
-    if (clickCount < 2) {
+    if (isExtension && [_selection hasSelection]) {
+        if (!_selection.live) {
+            [_selection beginExtendingSelectionAt:VT100GridCoordMake(x, y)];
+        }
+    } else if (clickCount < 2) {
         // single click
         iTermSelectionMode mode;
         if (altPressed && cmdPressed) {
@@ -3773,16 +3775,7 @@ NSMutableArray* screens=0;
             mode = kiTermSelectionModeCharacter;
         }
 
-        if (isExtension) {
-            [_selection beginLiveSelectionAt:VT100GridCoordMake(x, y)
-                                      extend:isExtension
-                                        mode:mode];
-            // holding down shfit key and there is an existing selection ->
-            // extend the selection.
-            DLog(@"extend selection to %d, %d", (int)x, (int)y);
-            [_selection updateLiveSelectionWithCoord:VT100GridCoordMake(x, y)];
-            // startX and endX may be reversed, but mouseUp fixes it.
-        } else if ((theImage = [self imageInfoAtCoord:VT100GridCoordMake(x, y)])) {
+        if ((theImage = [self imageInfoAtCoord:VT100GridCoordMake(x, y)])) {
             mouseDownOnImage = YES;
         } else if ([_selection hasSelection] &&
                    [self _isCharSelectedInRow:y col:x checkOld:NO]) {
@@ -3790,68 +3783,25 @@ NSMutableArray* screens=0;
             // Possibly a drag coming up (if a cmd-drag follows)
             DLog(@"mouse down on selection");
             mouseDownOnSelection = YES;
-            [_selection beginLiveSelectionAt:VT100GridCoordMake(x, y)
-                                      extend:YES
-                                        mode:_selection.selectionMode];
+            [_selection beginExtendingSelectionAt:VT100GridCoordMake(x, y)];
             return YES;
         } else if (!cmdPressed || altPressed) {
             // start a new selection
-            [_selection beginLiveSelectionAt:VT100GridCoordMake(x, y)
-                                      extend:NO
-                                        mode:mode];
+            [_selection beginSelectionAt:VT100GridCoordMake(x, y) mode:mode];
         }
     } else if (clickCount == 2) {
-        VT100GridCoordRange range;
-
-        // double-click; select word
-        NSString *selectedWord = [self getWordForX:x
-                                                 y:y
-                                             range:&range];
-        VT100GridCoordRange matchedRange = [self rangeForMatchingParen:selectedWord
-                                                               atCoord:range.start];
-        if (matchedRange.start.x >= 0) {
-            // Found a matching paren.
-            [_selection beginLiveSelectionAt:matchedRange.start
-                                      extend:isExtension
-                                        mode:kiTermSelectionModeWord];
-            [_selection updateLiveSelectionWithRange:matchedRange];
-        } else {
-            // No matching paren. Update selection bounds.
-            [_selection beginLiveSelectionAt:range.start
-                                      extend:isExtension
-                                        mode:kiTermSelectionModeWord];
-            [_selection updateLiveSelectionWithRange:range];
-        }
+        [_selection beginSelectionAt:VT100GridCoordMake(x, y)
+                                mode:kiTermSelectionModeWord];
     } else if (clickCount == 3) {
-        if ([[PreferencePanel sharedInstance] tripleClickSelectsFullLines]) {
-            int startOfWholeLine = [self lineNumberWithStartOfWholeLineIncludingLine:y];
-            int endOfWholeLine = [self lineNumberWithEndOfWholeLineIncludingLine:y];
-            [_selection beginLiveSelectionAt:VT100GridCoordMake(0, startOfWholeLine)
-                                      extend:isExtension
-                                        mode:kiTermSelectionModeWholeLine];
-            VT100GridCoordRange range = _selection.selectedRange;
-            int keepStartY = [self lineNumberWithStartOfWholeLineIncludingLine:range.start.y];
-            int keepEndY = [self lineNumberWithEndOfWholeLineIncludingLine:range.end.y];
-            [_selection updateLiveSelectionWithRange:VT100GridCoordRangeMake(0,
-                                                                             startOfWholeLine,
-                                                                             [dataSource width],
-                                                                             endOfWholeLine)
-                                         rangeToKeep:VT100GridCoordRangeMake(0,
-                                                                             keepStartY,
-                                                                             [dataSource width],
-                                                                             keepEndY)];
-        } else {
-            // triple-click; select line
-            [_selection beginLiveSelectionAt:VT100GridCoordMake(0, y)
-                                      extend:isExtension
-                                        mode:kiTermSelectionModeLine];
-            [_selection updateLiveSelectionToLine:y width:[dataSource width]];
-        }
+        BOOL wholeLines = [[PreferencePanel sharedInstance] tripleClickSelectsFullLines];
+        iTermSelectionMode mode =
+            wholeLines ? kiTermSelectionModeWholeLine : kiTermSelectionModeLine;
+
+        [_selection beginSelectionAt:VT100GridCoordMake(x, y)
+                                mode:mode];
     } else if (clickCount == 4) {
-        // quad-click: smart selection
-        // ignore status of shift key for smart selection because extending was messed up by
-        // triple click.
-        [self smartSelectWithEvent:event];
+        [_selection beginSelectionAt:VT100GridCoordMake(x, y)
+                                mode:kiTermSelectionModeSmart];
     }
 
     DLog(@"Mouse down. selection set to %@", _selection);
@@ -4421,11 +4371,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)extendSelectionWithEvent:(NSEvent *)event
 {
     if ([_selection hasSelection]) {
+        NSPoint locationInWindow = [event locationInWindow];
+        NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
         NSPoint clickPoint = [self clickPoint:event];
-        [_selection beginLiveSelectionAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)
-                                  extend:YES
-                                    mode:kiTermSelectionModeCharacter];
-        [_selection updateLiveSelectionWithCoord:VT100GridCoordMake(clickPoint.x, clickPoint.y)];
+        [_selection beginExtendingSelectionAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)];
         [_selection endLiveSelection];
     }
 }
@@ -4745,11 +4694,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (IBAction)selectAll:(id)sender
 {
     // Set the selection region to the whole text.
-    [_selection beginLiveSelectionAt:VT100GridCoordMake(0, 0)
-                              extend:NO
-                                mode:kiTermSelectionModeCharacter];
-    [_selection updateLiveSelectionWithCoord:VT100GridCoordMake([dataSource width],
-                                                                [dataSource numberOfLines] - 1)];
+    [_selection beginSelectionAt:VT100GridCoordMake(0, 0)
+                            mode:kiTermSelectionModeCharacter];
+    [_selection moveSelectionEndpointTo:VT100GridCoordMake([dataSource width],
+                                                           [dataSource numberOfLines] - 1)];
     [_selection endLiveSelection];
 }
 
@@ -5220,7 +5168,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (BOOL)_haveShortSelection
 {
     int width = [dataSource width];
-    return [_selection hasSelection] && [_selection lengthGivenWidth:width] <= width;
+    return [_selection hasSelection] && [_selection length] <= width;
 }
                                  
 - (SEL)selectorForSmartSelectionAction:(NSDictionary *)action
@@ -5592,7 +5540,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Custom actions
     if ([_selection hasSelection] &&
-        [_selection lengthGivenWidth:[dataSource width]] < kMaxSelectedTextLengthForCustomActions) {
+        [_selection length] < kMaxSelectedTextLengthForCustomActions) {
         NSString *selectedText = [self selectedText];
         if ([self addCustomActionsToMenu:theMenu matchingText:selectedText line:coord.y]) {
             [theMenu addItem:[NSMenuItem separatorItem]];
@@ -6261,9 +6209,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
     VT100GridCoordRange range = _selection.selectedRange;
-    int x = range.start.x;
+    int x = range.end.x;
     int y = range.start.y;
-    ++x;
     if (x >= [dataSource width]) {
         // Stop at a hard eol
         screen_char_t* theLine = [dataSource getLineAtIndex:y];
@@ -10291,91 +10238,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView
 {
-    DLog(@"Move selection endpoint to %d,%d", x, y);
+    DLog(@"Move selection endpoint to %d,%d, coord=%@",
+         x, y, [NSValue valueWithPoint:locationInTextView]);
     int width = [dataSource width];
-    // if we are on an empty line, we select the current line to the end
-    if (y >= 0 && [self _isBlankLine: y]) {
-        x = width;
-    }
-
-    if (locationInTextView.x < MARGIN && _selection.selectedRange.start.y < y) {
+    if (locationInTextView.y == 0) {
+        x = y = 0;
+    } else if (locationInTextView.x < MARGIN && _selection.selectedRange.start.y < y) {
         // complete selection of previous line
         x = width;
         y--;
     }
-    if (y < 0) {
-        y = 0;
-    }
     if (y >= [dataSource numberOfLines]) {
-        y=[dataSource numberOfLines] - 1;
+        y = [dataSource numberOfLines] - 1;
     }
-
-    VT100GridCoordRange range;
-    VT100GridCoordRange rangeToKeep;
-    int wordX;
-    switch (_selection.selectionMode) {
-        case kiTermSelectionModeCharacter:
-            [_selection updateLiveSelectionWithCoord:VT100GridCoordMake(x + 1, y)];
-            [self extendSelectionPastNulls];
-            break;
-
-        case kiTermSelectionModeBox:
-            [_selection updateLiveSelectionWithCoord:VT100GridCoordMake(x + 1, y)];
-            break;
-
-        case kiTermSelectionModeSmart:
-        case kiTermSelectionModeWord:
-            wordX = _selection.selectedRange.start.x;
-            if ([_selection isFlipped]) {
-                wordX--;
-            }
-
-            if (_selection.selectionMode == kiTermSelectionModeWord) {
-                [self getWordForX:x
-                                y:y
-                            range:&range];
-                
-                [self getWordForX:wordX
-                                y:_selection.selectedRange.start.y
-                            range:&rangeToKeep];
-            } else {
-                [self smartSelectAtX:x
-                                   y:y
-                                  to:&range
-                    ignoringNewlines:NO
-                      actionRequired:NO];
-                
-                [self smartSelectAtX:wordX
-                                   y:_selection.selectedRange.start.y
-                                  to:&rangeToKeep
-                    ignoringNewlines:NO
-                      actionRequired:NO];
-            }
-            [_selection updateLiveSelectionWithRange:range rangeToKeep:rangeToKeep];
-            break;
-
-        case kiTermSelectionModeLine:
-            [_selection updateLiveSelectionToLine:y width:[dataSource width]];
-            break;
-
-        case kiTermSelectionModeWholeLine: {
-            int startOfWholeLine = [self lineNumberWithStartOfWholeLineIncludingLine:y];
-            int endOfWholeLine = [self lineNumberWithEndOfWholeLineIncludingLine:y];
-            VT100GridCoordRange range = _selection.selectedRange;
-            int keepStartY = [self lineNumberWithStartOfWholeLineIncludingLine:range.start.y];
-            int keepEndY = [self lineNumberWithEndOfWholeLineIncludingLine:range.end.y];
-            [_selection updateLiveSelectionWithRange:VT100GridCoordRangeMake(0,
-                                                                             startOfWholeLine,
-                                                                             [dataSource width],
-                                                                             endOfWholeLine)
-                                         rangeToKeep:VT100GridCoordRangeMake(0,
-                                                                             keepStartY,
-                                                                             [dataSource width],
-                                                                             keepEndY)];
-            break;
-        }
-    }
-
+    [_selection moveSelectionEndpointTo:VT100GridCoordMake(x, y)];
     DLog(@"moveSelectionEndpoint. selection=%@", _selection);
 }
 
@@ -10496,6 +10372,68 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     [_delegate refreshAndStartTimerIfNeeded];
     DLog(@"Update selection time to %lf. selection=%@", (double)selectionTime_, selection);
+}
+
+- (VT100GridRange)selectionRangeOfTerminalNullsOnLine:(int)lineNumber {
+    int length = [self _lineLength:lineNumber];
+    int width = [dataSource width];
+    return VT100GridRangeMake(length, width - length);
+}
+
+- (VT100GridCoordRange)selectionRangeForParentheticalAt:(VT100GridCoord)coord {
+    NSString *theString = [self contentInRange:VT100GridCoordRangeMake(coord.x,
+                                                                       coord.y,
+                                                                       coord.x + 1,
+                                                                       coord.y)
+                                           pad:NO
+                            includeLastNewline:NO
+                        trimTrailingWhitespace:NO];
+    return [self rangeForMatchingParen:theString
+                               atCoord:coord];
+}
+
+- (VT100GridCoordRange)selectionRangeForWordAt:(VT100GridCoord)coord {
+    VT100GridCoordRange range;
+    [self getWordForX:coord.x y:coord.y range:&range];
+    return range;
+}
+
+- (VT100GridCoordRange)selectionRangeForSmartSelectionAt:(VT100GridCoord)coord {
+    VT100GridCoordRange range;
+    [self smartSelectAtX:coord.x
+                       y:coord.y
+                      to:&range
+        ignoringNewlines:NO
+          actionRequired:NO];
+    return range;
+}
+
+- (VT100GridCoordRange)selectionRangeForWrappedLineAt:(VT100GridCoord)coord {
+    int start = [self lineNumberWithStartOfWholeLineIncludingLine:coord.y];
+    int end = [self lineNumberWithEndOfWholeLineIncludingLine:coord.y];
+    return VT100GridCoordRangeMake(0, start, [dataSource width], end);
+}
+
+- (VT100GridCoordRange)selectionRangeForLineAt:(VT100GridCoord)coord {
+    return VT100GridCoordRangeMake(0, coord.y, [dataSource width], coord.y);
+}
+
+- (VT100GridCoord)selectionPredecessorOfCoord:(VT100GridCoord)coord {
+    screen_char_t *theLine;
+    do {
+        coord.x--;
+        if (coord.x < 0) {
+            coord.x = [dataSource width] - 1;
+            coord.y--;
+            if (coord.y < 0) {
+                coord.x = coord.y = 0;
+                break;
+            }
+        }
+        
+        theLine = [dataSource getLineAtIndex:coord.y];
+    } while (theLine[coord.x].code == DWC_RIGHT);
+    return coord;
 }
 
 @end
