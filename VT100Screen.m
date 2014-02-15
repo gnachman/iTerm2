@@ -303,6 +303,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 {
     DLog(@"Resize session to %d height", new_height);
 
+    if (commandStartX_ != -1) {
+        commandStartX_ = commandStartY_ = -1;
+        [delegate_ screenCommandDidEndWithRange:[self commandRange]];
+    }
+    
     if (currentGrid_.size.width == 0 ||
         currentGrid_.size.height == 0 ||
         (new_width == currentGrid_.size.width &&

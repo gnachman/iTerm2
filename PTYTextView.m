@@ -3783,7 +3783,9 @@ NSMutableArray* screens=0;
             // Possibly a drag coming up (if a cmd-drag follows)
             DLog(@"mouse down on selection");
             mouseDownOnSelection = YES;
-            [_selection beginExtendingSelectionAt:VT100GridCoordMake(x, y)];
+            if (!cmdPressed) {
+                [_selection beginExtendingSelectionAt:VT100GridCoordMake(x, y)];
+            }
             return YES;
         } else if (!cmdPressed || altPressed) {
             // start a new selection
@@ -10238,21 +10240,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView
 {
-    DLog(@"Move selection endpoint to %d,%d, coord=%@",
-         x, y, [NSValue valueWithPoint:locationInTextView]);
-    int width = [dataSource width];
-    if (locationInTextView.y == 0) {
-        x = y = 0;
-    } else if (locationInTextView.x < MARGIN && _selection.selectedRange.start.y < y) {
-        // complete selection of previous line
-        x = width;
-        y--;
+    if (_selection.live) {
+        DLog(@"Move selection endpoint to %d,%d, coord=%@",
+             x, y, [NSValue valueWithPoint:locationInTextView]);
+        int width = [dataSource width];
+        if (locationInTextView.y == 0) {
+            x = y = 0;
+        } else if (locationInTextView.x < MARGIN && _selection.selectedRange.start.y < y) {
+            // complete selection of previous line
+            x = width;
+            y--;
+        }
+        if (y >= [dataSource numberOfLines]) {
+            y = [dataSource numberOfLines] - 1;
+        }
+        [_selection moveSelectionEndpointTo:VT100GridCoordMake(x, y)];
+        DLog(@"moveSelectionEndpoint. selection=%@", _selection);
     }
-    if (y >= [dataSource numberOfLines]) {
-        y = [dataSource numberOfLines] - 1;
-    }
-    [_selection moveSelectionEndpointTo:VT100GridCoordMake(x, y)];
-    DLog(@"moveSelectionEndpoint. selection=%@", _selection);
 }
 
 - (void)_deselectDirtySelectedText

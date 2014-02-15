@@ -5538,6 +5538,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 // FinalTerm
 - (NSString *)commandInRange:(VT100GridCoordRange)range {
+    if (range.start.x == -1) {
+        return nil;
+    }
     NSString *command = [TEXTVIEW contentInRange:range
                                              pad:NO
                               includeLastNewline:NO
@@ -5592,15 +5595,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
     NSString *command = [self commandInRange:range];
-    NSString *trimmedCommand =
-        [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-    if (trimmedCommand.length) {
-        VT100ScreenMark *mark = [SCREEN markOnLine:range.start.y];
-        mark.command = command;
-        [[CommandHistory sharedInstance] addCommand:trimmedCommand
-                                             onHost:[SCREEN remoteHostOnLine:range.end.y]
-                                        inDirectory:[SCREEN workingDirectoryOnLine:range.end.y]
-                                           withMark:mark];
+    if (command) {
+        NSString *trimmedCommand =
+            [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+        if (trimmedCommand.length) {
+            VT100ScreenMark *mark = [SCREEN markOnLine:range.start.y];
+            mark.command = command;
+            [[CommandHistory sharedInstance] addCommand:trimmedCommand
+                                                 onHost:[SCREEN remoteHostOnLine:range.end.y]
+                                            inDirectory:[SCREEN workingDirectoryOnLine:range.end.y]
+                                               withMark:mark];
+        }
     }
     commandRange_ = VT100GridCoordRangeMake(-1, -1, -1, -1);
     DLog(@"Hide ACH because command ended");
