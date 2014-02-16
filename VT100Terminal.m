@@ -4009,7 +4009,7 @@ static VT100TCC decode_string(unsigned char *datap,
             break;
 
         case ANSI_RIS:
-            [delegate_ terminalResetPreservingPrompt:NO];
+            [self resetPreservingPrompt:NO];
             break;
         case VT100CSI_RM:
             break;
