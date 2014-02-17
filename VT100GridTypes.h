@@ -54,6 +54,7 @@ typedef struct {
 - (VT100GridRun)gridRunValue;
 - (VT100GridCoordRange)gridCoordRangeValue;
 
+// Use for sorting array of VT100GridCoorRange's in NSValue*s by the start coord.
 - (NSComparisonResult)compareGridCoordRangeStart:(NSValue *)other;
 
 @end

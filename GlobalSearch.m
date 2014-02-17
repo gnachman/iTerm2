@@ -242,7 +242,8 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     NSString* theContext = [textView_ contentInRange:theRange
                                                  pad:NO
                                   includeLastNewline:NO
-                              trimTrailingWhitespace:YES];
+                              trimTrailingWhitespace:YES
+                                        cappedAtSize:-1];
     theContext = [theContext stringByReplacingOccurrencesOfString:@"\n"
                                                        withString:@" "];
     [results_ addObject:[[[GlobalSearchResult alloc] initWithInstance:self

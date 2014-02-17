@@ -178,7 +178,8 @@ typedef enum {
 - (NSString *)contentInRange:(VT100GridCoordRange)range
                          pad:(BOOL)pad
           includeLastNewline:(BOOL)includeLastNewline
-      trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces;
+      trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
+                cappedAtSize:(int)maxBytes;
 
 // Returns the currently selected text.
 - (NSString *)selectedText;

@@ -123,7 +123,7 @@
         return [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, self.size.width)];
     }
     VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:line];
-    return [lineInfo dirtyIndexesOnLine:line];
+    return [lineInfo dirtyIndexes];
 }
 
 - (BOOL)isAnyCharDirty {

@@ -19,6 +19,12 @@
     return sub;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p range=%@ mode=%@>",
+            [self class], self, VT100GridCoordRangeDescription(_range),
+            [iTermSelection nameForMode:_selectionMode]];
+}
+
 - (BOOL)containsCoord:(VT100GridCoord)coord {
     VT100GridCoord start = VT100GridCoordRangeMin(_range);
     VT100GridCoord end = VT100GridCoordRangeMax(_range);
@@ -61,6 +67,25 @@
     NSMutableArray *_subSelections;  // iTermSubSelection array
 }
 
++ (NSString *)nameForMode:(iTermSelectionMode)mode {
+    switch (mode) {
+        case kiTermSelectionModeCharacter:
+            return @"character";
+        case kiTermSelectionModeBox:
+            return @"box";
+        case kiTermSelectionModeLine:
+            return @"line";
+        case kiTermSelectionModeSmart:
+            return @"smart";
+        case kiTermSelectionModeWholeLine:
+            return @"wholeLine";
+        case kiTermSelectionModeWord:
+            return @"word";
+        default:
+            return [NSString stringWithFormat:@"undefined-%d", (int)mode];
+    }
+}
+
 - (id)init {
     self = [super init];
     if (self) {
@@ -75,8 +100,11 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p range=%@ live=%d extend=%d>",
-            [self class], self, VT100GridCoordRangeDescription(_range), _live, _extend];
+    return [NSString stringWithFormat:@"<%@: %p liveRange=%@ initialRange=%@ live=%d extend=%d "
+            @"resumable=%d mode=%@ subselections=%@ delegate=%@>",
+            [self class], self, VT100GridCoordRangeDescription(_range),
+            VT100GridCoordRangeDescription(_initialRange), _live, _extend, _resumable,
+            [[self class] nameForMode:_selectionMode], _subSelections, _delegate];
 }
 
 - (void)flip {
@@ -94,7 +122,6 @@
     if (_live) {
         return;
     }
-    // enter an intermediate state where the next update doesn't look like we just reversed course
     if ([_subSelections count] == 0) {
         [self beginSelectionAt:coord mode:_selectionMode resume:NO append:NO];
         return;
@@ -212,8 +239,8 @@
     }
     if (_resumable && resume && [_subSelections count]) {
         _range = [self lastRange];
-        _appending = NO;
         [_subSelections removeLastObject];
+        // Preserve existing value of appending flag.
     } else {
         _appending = append;
     }
@@ -221,7 +248,6 @@
     if (!_appending) {
         [_subSelections removeAllObjects];
     }
-    // If you get here and it's already live, that's ok because it how you change mode.
     DLog(@"Begin new selection. coord=%@, extend=%d", VT100GridCoordDescription(coord), extend);
     _live = YES;
     _extend = NO;
@@ -235,6 +261,9 @@
 }
 
 - (void)endLiveSelection {
+    if (!_live) {
+        return;
+    }
     DLog(@"End live selection");
     if (_selectionMode == kiTermSelectionModeBox) {
         int left = MIN(_range.start.x, _range.end.x);
@@ -261,7 +290,6 @@
             _initialRange = _range;
         }
         if ([self haveLiveSelection]) {
-            // TODO: Clean up selections to avoid overlaps, remove empty ranges, join abutting ranges.
             iTermSubSelection *sub = [[[iTermSubSelection alloc] init] autorelease];
             sub.range = _range;
             sub.selectionMode = _selectionMode;
@@ -455,7 +483,6 @@
     
     theCopy.delegate = _delegate;
     theCopy.selectionMode = _selectionMode;
-
     
     return theCopy;
 }
@@ -562,6 +589,7 @@
     if ([_subSelections count] == 0) {
         if (_live) {
             _range = firstRange;
+            _selectionMode = mode;
         }
     } else {
         [_subSelections replaceObjectAtIndex:0
@@ -575,6 +603,7 @@
     lastRange = [self rangeByExtendingRangePastNulls:lastRange];
     if (_live) {
         _range = lastRange;
+        _selectionMode = mode;
     } else if ([_subSelections count]) {
         [_subSelections removeLastObject];
         [_subSelections addObject:[iTermSubSelection subSelectionWithRange:lastRange

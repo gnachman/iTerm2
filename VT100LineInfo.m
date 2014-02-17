@@ -83,7 +83,7 @@
     return x >= start_ && x < bound_;
 }
 
-- (NSIndexSet *)dirtyIndexesOnLine:(int)line {
+- (NSIndexSet *)dirtyIndexes {
     return [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(start_, bound_ - start_)];
 }
 

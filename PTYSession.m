@@ -5533,7 +5533,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSString *command = [TEXTVIEW contentInRange:range
                                              pad:NO
                               includeLastNewline:NO
-                          trimTrailingWhitespace:NO];
+                          trimTrailingWhitespace:NO
+                                    cappedAtSize:-1];
     NSRange newline = [command rangeOfString:@"\n"];
     if (newline.location != NSNotFound) {
         command = [command substringToIndex:newline.location];

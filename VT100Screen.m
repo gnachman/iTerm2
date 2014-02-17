@@ -319,7 +319,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     if (selection.live) {
         [selection endLiveSelection];
     }
-    BOOL hasSelection = [delegate_ screenHasView] && selection.hasSelection;
+    BOOL couldHaveSelection = [delegate_ screenHasView] && selection.hasSelection;
 
     int usedHeight = [currentGrid_ numberOfLinesUsed];
 
@@ -328,11 +328,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
     // This is an array of triplets:
     // [LineBufferPosition start, LineBufferPosition end, iTermSubSelection]
-    NSMutableArray *originalSubSelections = nil;
+    NSMutableArray *altScreenSubSelectionTriplets = nil;
     LineBufferPosition *originalLastPos = [linebuffer_ lastPosition];
     BOOL wasShowingAltScreen = (currentGrid_ == altGrid_);
 
-    if (hasSelection && wasShowingAltScreen) {
+    if (couldHaveSelection && wasShowingAltScreen) {
         // In alternate screen mode, get the original positions of the
         // selection. Later this will be used to set the selection positions
         // relative to the end of the udpated linebuffer (which could change as
@@ -343,8 +343,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
               toScrollback:lineBufferWithAltScreen
             withUsedHeight:usedHeight
                  newHeight:new_height];
-        originalSubSelections = [NSMutableArray array];
-        hasSelection = NO;  // Must find one valid range to set this back to yes.
+        altScreenSubSelectionTriplets = [NSMutableArray array];
         for (iTermSubSelection *sub in selection.allSubSelections) {
             VT100GridCoordRange range = sub.range;
 
@@ -358,8 +357,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                             inLineBuffer:lineBufferWithAltScreen
                                                 forRange:range];
             if (startOk && endOk) {
-                [originalSubSelections addObject:@[start, end, sub]];
-                hasSelection = YES;
+                [altScreenSubSelectionTriplets addObject:@[start, end, sub]];
             }
         }
     }
@@ -435,9 +433,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         withUsedHeight:[primaryGrid_ numberOfLinesUsed]
              newHeight:new_height];
 
+    // Contains iTermSubSelection*s updated for the new screen size. Used
+    // regardless of whether we were in the alt screen, as it's simply the set
+    // of new sub-selections.
     NSMutableArray *newSubSelections = [NSMutableArray array];
-    if (!wasShowingAltScreen && hasSelection) {
-        hasSelection = NO;  // Must find at least one valid range to become yes again
+    if (!wasShowingAltScreen && couldHaveSelection) {
         for (iTermSubSelection *sub in selection.allSubSelections) {
             VT100GridCoordRange newSelection;
             BOOL ok = [self convertRange:sub.range
@@ -445,7 +445,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                       to:&newSelection
                             inLineBuffer:linebuffer_];
             if (ok) {
-                hasSelection = YES;
                 [newSubSelections addObject:[iTermSubSelection subSelectionWithRange:newSelection
                                                                                 mode:sub.selectionMode]];
             }
@@ -553,26 +552,22 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             withUsedHeight:usedHeight
                  newHeight:new_height];
 
-        if (hasSelection) {
-            hasSelection = NO;  // Must be able to compute at least one range to have a selection
-            for (int i = 0; i < originalSubSelections.count; i++) {
-                LineBufferPosition *originalStartPos = originalSubSelections[i][0];
-                LineBufferPosition *originalEndPos = originalSubSelections[i][1];
-                iTermSelectionMode mode = [originalSubSelections[i][2] selectionMode];
-                VT100GridCoordRange newSelection;
-                BOOL ok = [self computeRangeFromOriginalLimit:originalLastPos
-                                                limitPosition:newLastPos
-                                                startPosition:originalStartPos
-                                                  endPosition:originalEndPos
-                                                     newWidth:new_width
-                                                   lineBuffer:appendOnlyLineBuffer
-                                                        range:&newSelection
-                                                 linesMovedUp:linesMovedUp];
-                if (ok) {
-                    hasSelection = YES;
-                    [newSubSelections addObject:[iTermSubSelection subSelectionWithRange:newSelection
-                                                                                    mode:mode]];
-                }
+        for (int i = 0; i < altScreenSubSelectionTriplets.count; i++) {
+            LineBufferPosition *originalStartPos = altScreenSubSelectionTriplets[i][0];
+            LineBufferPosition *originalEndPos = altScreenSubSelectionTriplets[i][1];
+            iTermSelectionMode mode = [altScreenSubSelectionTriplets[i][2] selectionMode];
+            VT100GridCoordRange newSelection;
+            BOOL ok = [self computeRangeFromOriginalLimit:originalLastPos
+                                            limitPosition:newLastPos
+                                            startPosition:originalStartPos
+                                              endPosition:originalEndPos
+                                                 newWidth:new_width
+                                               lineBuffer:appendOnlyLineBuffer
+                                                    range:&newSelection
+                                             linesMovedUp:linesMovedUp];
+            if (ok) {
+                [newSubSelections addObject:[iTermSubSelection subSelectionWithRange:newSelection
+                                                                                mode:mode]];
             }
         }
         DLog(@"Original limit=%@", originalLastPos);
@@ -674,7 +669,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     DebugLog(@"resizeWidth setDirty");
     [delegate_ screenNeedsRedraw];
     [selection clearSelection];
-    if (hasSelection) {
+    if (couldHaveSelection) {
         for (iTermSubSelection* sub in newSubSelections) {
             VT100GridCoordRange newSelection = sub.range;
             if (newSelection.start.y >= linesDropped &&

@@ -86,18 +86,27 @@ typedef enum {
 
 // The last range, including the live one if applicable. Ranges are ordered by endpoint.
 // The range will be -1,-1,-1,-1 if there are none.
-@property(nonatomic, assign) VT100GridCoordRange lastRange;
+@property(nonatomic, readonly) VT100GridCoordRange lastRange;
 
 // The first range, including the live one if applicable. Ranges are ordered by startpoint.
 // The range will be -1,-1,-1,-1 if ther are none.
-@property(nonatomic, assign) VT100GridCoordRange firstRange;
+@property(nonatomic, readonly) VT100GridCoordRange firstRange;
 
 // If set, then the current live selection can be resumed in a different mode.
+// This is used when a range is created by a single click which then becomes a double,
+// triple, etc. click.
 @property(nonatomic, assign) BOOL resumable;
 
 // Was the append property used on the last selection?
 @property(nonatomic, readonly) BOOL appending;
 
+// Returns the debugging name for a selection mode.
++ (NSString *)nameForMode:(iTermSelectionMode)mode;
+
+// Start a new selection, erasing the old one. Enters live selection.
+// Set |resume| to continue the previous live selection in a new mode.
+// Set |append| to create a new (possibly discontinuous) selection rathern than replacing the
+// existing set of subselections.
 // Start a new selection, erasing the old one. Enters live selection.
 - (void)beginSelectionAt:(VT100GridCoord)coord
                     mode:(iTermSelectionMode)mode
@@ -140,5 +149,9 @@ typedef enum {
 
 // Calls the block for each selected range.
 - (void)enumerateSelectedRanges:(void (^)(VT100GridCoordRange range, BOOL *stop))block;
-                                 
+
+// Changes the first/last range.
+- (void)setFirstRange:(VT100GridCoordRange)firstRange mode:(iTermSelectionMode)mode;
+- (void)setLastRange:(VT100GridCoordRange)lastRange mode:(iTermSelectionMode)mode;
+
 @end

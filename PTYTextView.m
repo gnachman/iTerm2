@@ -817,6 +817,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 - (void)setBlinkAllowed:(BOOL)value
 {
     blinkAllowed_ = value;
+    [self setNeedsDisplay:YES];
 }
 
 - (void)setCursorNeedsDisplay {
@@ -2787,7 +2788,6 @@ NSMutableArray* screens=0;
                              ignoringNewlines:ignoringNewlines
                                actionRequired:NO];
 
-    // TODO: extension isn't supported properly.
     [_selection beginSelectionAt:VT100GridCoordMake(x, y)
                             mode:kiTermSelectionModeSmart
                           resume:NO
@@ -3807,12 +3807,12 @@ NSMutableArray* screens=0;
         [_selection beginSelectionAt:VT100GridCoordMake(x, y)
                                 mode:mode
                               resume:YES
-                              append:NO];
+                              append:_selection.appending];
     } else if (clickCount == 4) {
         [_selection beginSelectionAt:VT100GridCoordMake(x, y)
                                 mode:kiTermSelectionModeSmart
                               resume:YES
-                              append:NO];
+                              append:_selection.appending];
     }
 
     DLog(@"Mouse down. selection set to %@", _selection);
@@ -3867,12 +3867,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint locationInWindow = [event locationInWindow];
     NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
-    BOOL haveReverseSelection = _selection.liveRangeIsFlipped;
     BOOL isUnshiftedSingleClick = ([event clickCount] < 2 &&
                                    !mouseDragged &&
                                    !([event modifierFlags] & NSShiftKeyMask));
-    BOOL willFollowLink = (!haveReverseSelection &&
-                           isUnshiftedSingleClick &&
+    BOOL willFollowLink = (isUnshiftedSingleClick &&
                            cmdPressed &&
                            [[PreferencePanel sharedInstance] cmdSelection]);
 
@@ -4585,6 +4583,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                          pad:(BOOL)pad
           includeLastNewline:(BOOL)includeLastNewline
       trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
+                cappedAtSize:(int)maxBytes
 {
     DLog(@"Find selected text in range %@ pad=%d, includeLastNewline=%d, trim=%d",
          VT100GridCoordRangeDescription(range), (int)pad, (int)includeLastNewline,
@@ -4598,7 +4597,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL endOfLine;
     int i;
 
-    for (y = range.start.y; y <= range.end.y; y++) {
+    if (maxBytes < 0) {
+        maxBytes = INT_MAX;
+    }
+    for (y = range.start.y; result.length < maxBytes && y <= range.end.y; y++) {
         theLine = [dataSource getLineAtIndex:y];
 
         x1 = y == range.start.y ? range.start.x : 0;
@@ -4701,16 +4703,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int width = [dataSource width];
     __block BOOL first = YES;
     [_selection enumerateSelectedRanges:^(VT100GridCoordRange range, BOOL *stop) {
+        int cap = INT_MAX;
         if (maxBytes > 0) {
-            int length = VT100GridCoordRangeLength(range, width);
-            if ([theSelectedText length] + length > maxBytes) {
-                length = maxBytes - [theSelectedText length];
-                if (length <= 0) {
-                    *stop = YES;
-                }
+            cap = maxBytes - [theSelectedText length];
+            if (cap <= 0) {
+                cap = 0;
+                *stop = YES;
             }
         }
-        if (!*stop) {
+        if (cap != 0) {
             if (!first) {
                 if (![theSelectedText hasSuffix:@"\n"]) {
                     [theSelectedText appendString:@"\n"];
@@ -4721,7 +4722,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [theSelectedText appendString:[self contentInRange:range
                                                            pad:NO
                                             includeLastNewline:copyLastNewline
-                                        trimTrailingWhitespace:trimWhitespace]];
+                                        trimTrailingWhitespace:trimWhitespace
+                                                  cappedAtSize:cap]];
         }
     }];
     return theSelectedText;
@@ -4762,7 +4764,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                         [dataSource numberOfLines] - 1)
                             pad:NO
              includeLastNewline:YES
-         trimTrailingWhitespace:NO];
+         trimTrailingWhitespace:NO
+                   cappedAtSize:-1];
 }
 
 - (void)splitTextViewVertically:(id)sender
@@ -5532,7 +5535,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Custom actions
     if ([_selection hasSelection] &&
         [_selection length] < kMaxSelectedTextLengthForCustomActions) {
-        NSString *selectedText = [self selectedText];
+        NSString *selectedText = [self selectedTextWithPad:NO cappedAtSize:1024];
         if ([self addCustomActionsToMenu:theMenu matchingText:selectedText line:coord.y]) {
             [theMenu addItem:[NSMenuItem separatorItem]];
         }
@@ -5910,7 +5913,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                             lineOffset + numLines - 1)
                                                 pad:NO
                                  includeLastNewline:YES
-                             trimTrailingWhitespace:NO]];
+                             trimTrailingWhitespace:NO
+                                       cappedAtSize:-1]];
             break;
         case 1: // text selection
             [self printContent: [self selectedTextWithPad:NO]];
@@ -6186,10 +6190,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 range:&wordRange];
     
     VT100GridCoordRange existingRange = _selection.firstRange;
-    _selection.firstRange = VT100GridCoordRangeMake(wordRange.start.x,
-                                                    wordRange.start.y,
-                                                    existingRange.end.x,
-                                                    existingRange.end.y);
+    [_selection setFirstRange:VT100GridCoordRangeMake(wordRange.start.x,
+                                                      wordRange.start.y,
+                                                      existingRange.end.x,
+                                                      existingRange.end.y)
+                         mode:kiTermSelectionModeCharacter];
 
     return YES;
 }
@@ -6221,10 +6226,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 range:&wordRange];
 
     VT100GridCoordRange existingRange = _selection.lastRange;
-    _selection.lastRange = VT100GridCoordRangeMake(existingRange.start.x,
-                                                   existingRange.start.y,
-                                                   wordRange.end.x,
-                                                   wordRange.end.y);
+    [_selection setLastRange:VT100GridCoordRangeMake(existingRange.start.x,
+                                                     existingRange.start.y,
+                                                     wordRange.end.x,
+                                                     wordRange.end.y)
+                        mode:kiTermSelectionModeCharacter];
 }
 
 // Add a match to resultMap_
@@ -7054,7 +7060,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return [self contentInRange:VT100GridCoordRangeMake(x1, yStart, x2, y2)
                             pad:YES
              includeLastNewline:NO
-         trimTrailingWhitespace:NO];
+         trimTrailingWhitespace:NO
+                   cappedAtSize:-1];
 }
 
 - (double)perceivedBrightness:(NSColor*)c
@@ -9315,6 +9322,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSMutableString *s = [NSMutableString string];
     screen_char_t *theLine = [dataSource getLineAtIndex:y];
     BOOL first = YES;
+    BOOL lastWasTabFiller = NO;
     while (y >= minY && y <= maxY) {
         NSString* curChar = [self _getCharacterAtX:x Y:y];
 
@@ -9330,9 +9338,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 if ([self isTabFillerOrphanAtX:x Y:y]) {
                     value = @" ";
                 }
-            } else if (theLine[x].code != DWC_RIGHT &&
+                lastWasTabFiller = YES;
+            } else {
+                // TODO: This will cause tabs to be double-inserted.
+                if (dir < 0 && lastWasTabFiller) {
+                    [s insertString:@"\t" atIndex:0];
+                }
+                lastWasTabFiller = NO;
+                if (theLine[x].code != DWC_RIGHT &&
                        theLine[x].code != DWC_SKIP) {
-                value = curChar;
+                    value = curChar;
+                }
             }
             if (value && [value length] > 0) {
                 if ([value length] == 1 && [value characterAtIndex:0] == 0) {
@@ -9500,7 +9516,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         NSString *content = [self contentInRange:smartRange
                                              pad:NO
                               includeLastNewline:NO
-                          trimTrailingWhitespace:NO];
+                          trimTrailingWhitespace:NO
+                                    cappedAtSize:-1];
         DLog(@"  Actions match this content: %@", content);
         URLAction *action = [URLAction urlActionToPerformSmartSelectionRule:rule onString:content];
         action.range = smartRange;
@@ -9746,7 +9763,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     lineContents = [self contentInRange:VT100GridCoordRangeMake(0, y, [dataSource width], y)
                                     pad:YES
                      includeLastNewline:NO
-                 trimTrailingWhitespace:NO];
+                 trimTrailingWhitespace:NO
+                           cappedAtSize:-1];
     const char* utf8 = [lineContents UTF8String];
     for (int i = 0; utf8[i]; ++i) {
         if (utf8[i] != ' ') {
@@ -10312,25 +10330,27 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         lineEnd = [dataSource numberOfLines];
     }
     for (int y = lineStart; y < lineEnd; y++) {
-        // First, mark blinking chars as dirty.
-        screen_char_t* theLine = [dataSource getLineAtIndex:y];
-        for (int x = 0; x < width; x++) {
-            BOOL charBlinks = [self _charBlinks:theLine[x]];
-            anyBlinkers |= charBlinks;
-            BOOL blinked = redrawBlink && charBlinks;
-            if (blinked) {
-                NSRect dirtyRect = [self visibleRect];
-                dirtyRect.origin.y = y * lineHeight;
-                dirtyRect.size.height = lineHeight;
-                if (gDebugLogging) {
-                    DLog(@"found selection change/blink at %d,%d", x, y);
+        if (blinkAllowed_) {
+            // First, mark blinking chars as dirty.
+            screen_char_t* theLine = [dataSource getLineAtIndex:y];
+            for (int x = 0; x < width; x++) {
+                BOOL charBlinks = [self _charBlinks:theLine[x]];
+                anyBlinkers |= charBlinks;
+                BOOL blinked = redrawBlink && charBlinks;
+                if (blinked) {
+                    NSRect dirtyRect = [self visibleRect];
+                    dirtyRect.origin.y = y * lineHeight;
+                    dirtyRect.size.height = lineHeight;
+                    if (gDebugLogging) {
+                        DLog(@"Found blinking char on line %d", y);
+                    }
+                    [self setNeedsDisplayInRect:dirtyRect];
+                    break;
                 }
-                [self setNeedsDisplayInRect:dirtyRect];
-                break;
             }
         }
         
-        // Now mark chars whose selection status has changed as dirty.
+        // Now mark chars whose selection status has changed as needing display.
         NSIndexSet *areSelected = [_selection selectedIndexesOnLine:y];
         NSIndexSet *wereSelected = [_oldSelection selectedIndexesOnLine:y];
         if (![areSelected isEqualToIndexSet:wereSelected]) {
@@ -10339,7 +10359,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             dirtyRect.origin.y = y * lineHeight;
             dirtyRect.size.height = lineHeight;
             if (gDebugLogging) {
-                DLog(@"found selection change/blink on line %d", y);
+                DLog(@"found selection change on line %d", y);
             }
             [self setNeedsDisplayInRect:dirtyRect];
         }
@@ -10372,7 +10392,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                        coord.y)
                                            pad:NO
                             includeLastNewline:NO
-                        trimTrailingWhitespace:NO];
+                        trimTrailingWhitespace:NO
+                                  cappedAtSize:-1];
     return [self rangeForMatchingParen:theString
                                atCoord:coord];
 }
