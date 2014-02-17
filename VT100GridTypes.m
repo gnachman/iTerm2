@@ -83,5 +83,9 @@ NSString *VT100GridCoordRangeDescription(VT100GridCoordRange range) {
   return coordRange;
 }
 
+- (NSComparisonResult)compareGridCoordRangeStart:(NSValue *)other {
+    return VT100GridCoordOrder([self gridCoordRangeValue].start, [other gridCoordRangeValue].start);
+}
+
 @end
 

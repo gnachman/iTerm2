@@ -5221,19 +5221,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [TEXTVIEW deselect];
 }
 
-- (VT100GridCoordRange)screenSelectionRange {
-    return TEXTVIEW.selection.selectedRange;
-}
-
-- (BOOL)screenHasSelection {
-    return [TEXTVIEW isAnyCharSelected];
-}
-
-- (void)screenSetSelectionFromX:(int)startX
-                          fromY:(int)startY
-                            toX:(int)endX
-                            toY:(int)endY {
-    TEXTVIEW.selection.selectedRange = VT100GridCoordRangeMake(startX, startY, endX, endY);
+- (iTermSelection *)screenSelection {
+    return TEXTVIEW.selection;
 }
 
 - (NSSize)screenCellSize {

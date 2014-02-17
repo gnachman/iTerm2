@@ -694,10 +694,16 @@ const double GLOBAL_SEARCH_MARGIN = 10;
         theResult = [combinedResults_ objectAtIndex:i];
         inst = [theResult instance];
         tv = [inst textView];
-        tv.selection.selectedRange = VT100GridCoordRangeMake([theResult x],
-                                                             [theResult y],
-                                                             [theResult endX] + 1,
-                                                             [theResult endY]);
+        [tv.selection clearSelection];
+        VT100GridCoordRange theRange =
+            VT100GridCoordRangeMake([theResult x],
+                                    [theResult y],
+                                    [theResult endX] + 1,
+                                    [theResult endY]);
+        iTermSubSelection *sub;
+        sub = [iTermSubSelection subSelectionWithRange:theRange
+                                                  mode:kiTermSelectionModeCharacter];
+        [tv.selection addSubSelection:sub];
         [tv scrollToSelection];
         session = [inst session];
     } else {

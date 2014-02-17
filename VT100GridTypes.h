@@ -54,6 +54,8 @@ typedef struct {
 - (VT100GridRun)gridRunValue;
 - (VT100GridCoordRange)gridCoordRangeValue;
 
+- (NSComparisonResult)compareGridCoordRangeStart:(NSValue *)other;
+
 @end
 
 NSString *VT100GridCoordRangeDescription(VT100GridCoordRange range);

@@ -73,6 +73,8 @@
 - (BOOL)isCharDirtyAt:(VT100GridCoord)coord;
 - (BOOL)isAnyCharDirty;
 - (VT100GridRange)dirtyRangeForLine:(int)y;
+// Returns the set of dirty indexes on |line|.
+- (NSIndexSet *)dirtyIndexesOnLine:(int)line;
 
 // Returns the count of lines excluding totally empty lines at the bottom, and always including the
 // line the cursor is on.

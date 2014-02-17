@@ -2,6 +2,7 @@
 #import "PTYTextViewDataSource.h"
 
 @class VT100RemoteHost;
+@class iTermSelection;
 
 @protocol VT100ScreenDelegate <NSObject>
 
@@ -140,14 +141,7 @@
 - (void)screenRemoveSelection;
 
 // Selection range
-- (VT100GridCoordRange)screenSelectionRange;
-- (BOOL)screenHasSelection;
-
-// Sets inclusive bounds of selection range.
-- (void)screenSetSelectionFromX:(int)startX
-                          fromY:(int)startY
-                            toX:(int)endX
-                            toY:(int)endY;
+- (iTermSelection *)screenSelection;
 
 // Returns the size in pixels of a single cell.
 - (NSSize)screenCellSize;
