@@ -1102,6 +1102,7 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_DECRC:
             [self restoreTextAttributes];
             [delegate_ terminalRestoreCursor];
+            [delegate_ terminalRestoreCharsetFlags];
             break;
         case VT100CSI_DECREPTPARM:
         case VT100CSI_DECREQTPARM:
@@ -1109,6 +1110,7 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_DECSC:
             [self saveTextAttributes];
             [delegate_ terminalSaveCursor];
+            [delegate_ terminalSaveCharsetFlags];
             break;
         case VT100CSI_DECSTBM:
             [delegate_ terminalSetScrollRegionTop:token.csi->p[0] == 0 ? 0 : token.csi->p[0] - 1
