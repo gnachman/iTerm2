@@ -558,14 +558,6 @@ static const int kMaxScreenRows = 4096;
         case VT100CC_DC3:
             xon_ = NO;
             break;
-        case VT100CSI_DECRC:
-            [self restoreTextAttributes];
-            [delegate_ terminalRestoreCursor];
-            break;
-        case VT100CSI_DECSC:
-            [self saveTextAttributes];
-            [delegate_ terminalSaveCursor];
-            break;
         case VT100CSI_DECSTR:
             self.wraparoundMode = YES;
             self.originMode = NO;
