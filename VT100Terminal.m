@@ -57,6 +57,7 @@
     int saveBgGreen_;
     int saveBgBlue_;
     ColorMode saveBgColorMode_;
+    BOOL saveOriginMode_;
     
     int sendModifiers_[NUM_MODIFIABLE_RESOURCES];
 }
@@ -206,6 +207,7 @@ static const int kMaxScreenRows = 4096;
     saveBgGreen_ = bgGreen_;
     saveBgBlue_ = bgBlue_;
     saveBgColorMode_ = bgColorMode_;
+    saveOriginMode_ = self.originMode;
 }
 
 - (void)restoreTextAttributes
@@ -224,6 +226,7 @@ static const int kMaxScreenRows = 4096;
     bgGreen_ = saveBgGreen_;
     bgBlue_ = saveBgBlue_;
     bgColorMode_ = saveBgColorMode_;
+    self.originMode = saveOriginMode_;
 }
 
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem
