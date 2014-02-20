@@ -345,7 +345,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                  newHeight:new_height];
         altScreenSubSelectionTriplets = [NSMutableArray array];
         for (iTermSubSelection *sub in selection.allSubSelections) {
-            VT100GridCoordRange range = sub.range;
+            VT100GridCoordRange range = sub.range.coordRange;  // TODO support window?
 
             BOOL startOk, endOk;
             LineBufferPosition *start;
@@ -440,13 +440,16 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     if (!wasShowingAltScreen && couldHaveSelection) {
         for (iTermSubSelection *sub in selection.allSubSelections) {
             VT100GridCoordRange newSelection;
-            BOOL ok = [self convertRange:sub.range
+            BOOL ok = [self convertRange:sub.range.coordRange  // TODO support window?
                                  toWidth:new_width
                                       to:&newSelection
                             inLineBuffer:linebuffer_];
             if (ok) {
-                [newSubSelections addObject:[iTermSubSelection subSelectionWithRange:newSelection
-                                                                                mode:sub.selectionMode]];
+                // TODO support window?
+                VT100GridWindowedRange theRange = VT100GridWindowedRangeMake(newSelection, 0, 0);
+                iTermSubSelection *theSub =
+                    [iTermSubSelection subSelectionWithRange:theRange mode:sub.selectionMode];
+                [newSubSelections addObject:theSub];
             }
         }
     }
@@ -566,7 +569,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                     range:&newSelection
                                              linesMovedUp:linesMovedUp];
             if (ok) {
-                [newSubSelections addObject:[iTermSubSelection subSelectionWithRange:newSelection
+                VT100GridWindowedRange theRange =  // TODO support window?
+                    VT100GridWindowedRangeMake(newSelection, 0, 0);
+                [newSubSelections addObject:[iTermSubSelection subSelectionWithRange:theRange
                                                                                 mode:mode]];
             }
         }
@@ -671,7 +676,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [selection clearSelection];
     if (couldHaveSelection) {
         for (iTermSubSelection* sub in newSubSelections) {
-            VT100GridCoordRange newSelection = sub.range;
+            VT100GridCoordRange newSelection = sub.range.coordRange;
             if (newSelection.start.y >= linesDropped &&
                 newSelection.end.y >= linesDropped) {
                 newSelection.start.y -= linesDropped;

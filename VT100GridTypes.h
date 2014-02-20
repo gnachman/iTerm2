@@ -38,6 +38,11 @@ typedef struct {
   VT100GridCoord end;
 } VT100GridCoordRange;
 
+typedef struct {
+    VT100GridCoordRange coordRange;
+    VT100GridRange columnWindow;
+} VT100GridWindowedRange;
+
 @interface NSValue (VT100Grid)
 
 + (NSValue *)valueWithGridCoord:(VT100GridCoord)coord;
@@ -60,6 +65,7 @@ typedef struct {
 @end
 
 NSString *VT100GridCoordRangeDescription(VT100GridCoordRange range);
+NSString *VT100GridWindowedRangeDescription(VT100GridWindowedRange range);
 
 NS_INLINE VT100GridCoord VT100GridCoordMake(int x, int y) {
     VT100GridCoord coord;
@@ -82,6 +88,10 @@ NS_INLINE VT100GridRange VT100GridRangeMake(int location, int length) {
     return range;
 }
 
+NS_INLINE BOOL VT100GridRangeContains(VT100GridRange range, int value) {
+    return value >= range.location && value < range.location + range.length;
+}
+
 NS_INLINE int VT100GridRangeMax(VT100GridRange range) {
     return range.location + range.length - 1;
 }
@@ -102,6 +112,32 @@ NS_INLINE BOOL VT100GridRectEquals(VT100GridRect a, VT100GridRect b) {
 
 NS_INLINE BOOL VT100GridCoordEquals(VT100GridCoord a, VT100GridCoord b) {
     return a.x == b.x && a.y == b.y;
+}
+
+NS_INLINE VT100GridWindowedRange VT100GridWindowedRangeMake(VT100GridCoordRange range,
+                                                            int windowStart,
+                                                            int windowWidth) {
+    VT100GridWindowedRange windowedRange;
+    windowedRange.coordRange = range;
+    windowedRange.columnWindow.location = windowStart;
+    windowedRange.columnWindow.length = windowWidth;
+    return windowedRange;
+}
+
+NS_INLINE VT100GridCoord VT100GridWindowedRangeStart(VT100GridWindowedRange range) {
+    VT100GridCoord coord = range.coordRange.start;
+    if (range.columnWindow.length) {
+        coord.x = MAX(coord.x, range.columnWindow.location);
+    }
+    return coord;
+}
+
+NS_INLINE VT100GridCoord VT100GridWindowedRangeEnd(VT100GridWindowedRange range) {
+    VT100GridCoord coord = range.coordRange.end;
+    if (range.columnWindow.length) {
+        coord.x = MIN(coord.x, VT100GridRangeMax(range.columnWindow) + 1);
+    }
+    return coord;
 }
 
 // Ascending: a < b

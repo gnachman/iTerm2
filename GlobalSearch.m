@@ -37,6 +37,7 @@
 #import "iTermExpose.h"
 #import "iTermSearchField.h"
 #import "iTermSelection.h"
+#import "iTermTextExtractor.h"
 
 const double GLOBAL_SEARCH_MARGIN = 10;
 
@@ -239,7 +240,9 @@ const double GLOBAL_SEARCH_MARGIN = 10;
                                 absY,
                                 [textViewDataSource_ width] - 1,
                                 absEndY - [[textView_ dataSource] totalScrollbackOverflow]);
-    NSString* theContext = [textView_ contentInRange:theRange
+    iTermTextExtractor *extractor =
+        [iTermTextExtractor textExtractorWithDataSource:textViewDataSource_];
+    NSString* theContext = [extractor contentInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
                                                  pad:NO
                                   includeLastNewline:NO
                               trimTrailingWhitespace:YES
@@ -702,7 +705,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
                                     [theResult endX] + 1,
                                     [theResult endY]);
         iTermSubSelection *sub;
-        sub = [iTermSubSelection subSelectionWithRange:theRange
+        sub = [iTermSubSelection subSelectionWithRange:VT100GridWindowedRangeMake(theRange, 0, 0)
                                                   mode:kiTermSelectionModeCharacter];
         [tv.selection addSubSelection:sub];
         [tv scrollToSelection];

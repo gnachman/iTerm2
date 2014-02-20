@@ -21,6 +21,13 @@ NSString *VT100GridCoordRangeDescription(VT100GridCoordRange range) {
             range.end.y];
 }
 
+NSString *VT100GridWindowedRangeDescription(VT100GridWindowedRange range) {
+    return [NSString stringWithFormat:@"<%@ restricted to cols [%d, %d]>",
+            VT100GridCoordRangeDescription(range.coordRange),
+            range.columnWindow.location,
+            range.columnWindow.location + range.columnWindow.length - 1];
+}
+
 @implementation NSValue (VT100Grid)
 
 + (NSValue *)valueWithGridCoord:(VT100GridCoord)coord {

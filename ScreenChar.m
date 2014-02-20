@@ -527,7 +527,7 @@ NSString* ScreenCharArrayToStringDebug(screen_char_t* screenChars,
 }
 
 int EffectiveLineLength(screen_char_t* theLine, int totalLength) {
-    for (int i = totalLength-1; i >= 0; i--) {
+    for (int i = totalLength - 1; i >= 0; i--) {
         if (theLine[i].complexChar || theLine[i].code) {
             return i + 1;
         }

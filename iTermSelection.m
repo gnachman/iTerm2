@@ -11,7 +11,7 @@
 
 @implementation iTermSubSelection
 
-+ (instancetype)subSelectionWithRange:(VT100GridCoordRange)range
++ (instancetype)subSelectionWithRange:(VT100GridWindowedRange)range
                                  mode:(iTermSelectionMode)mode {
     iTermSubSelection *sub = [[[iTermSubSelection alloc] init] autorelease];
     sub.range = range;
@@ -21,28 +21,33 @@
 
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p range=%@ mode=%@>",
-            [self class], self, VT100GridCoordRangeDescription(_range),
+            [self class], self, VT100GridWindowedRangeDescription(_range),
             [iTermSelection nameForMode:_selectionMode]];
 }
 
 - (BOOL)containsCoord:(VT100GridCoord)coord {
-    VT100GridCoord start = VT100GridCoordRangeMin(_range);
-    VT100GridCoord end = VT100GridCoordRangeMax(_range);
+    VT100GridCoord start = VT100GridCoordRangeMin(_range.coordRange);
+    VT100GridCoord end = VT100GridCoordRangeMax(_range.coordRange);
     
+    BOOL contained = NO;
     if (_selectionMode == kiTermSelectionModeBox) {
         int left = MIN(start.x, end.x);
         int right = MAX(start.x, end.x);
         int top = MIN(start.y, end.y);
         int bottom = MAX(start.y, end.y);
-        return (coord.x >= left && coord.x < right && coord.y >= top && coord.y <= bottom);
+        contained = (coord.x >= left && coord.x < right && coord.y >= top && coord.y <= bottom);
     } else {
         long long w = MAX(MAX(MAX(1, coord.x), start.x), end.x) + 1;
         long long coordPos = (long long)coord.y * w + coord.x;
         long long minPos = (long long)start.y * w + start.x;
         long long maxPos = (long long)end.y * w + end.x;
         
-        return coordPos >= minPos && coordPos < maxPos;
+        contained = coordPos >= minPos && coordPos < maxPos;
     }
+    if (_range.columnWindow.length) {
+        contained = contained && VT100GridRangeContains(_range.columnWindow, coord.x);
+    }
+    return contained;
 }
 
 - (instancetype)copyWithZone:(NSZone *)zone {
@@ -60,8 +65,8 @@
 @end
 
 @implementation iTermSelection {
-    VT100GridCoordRange _range;
-    VT100GridCoordRange _initialRange;
+    VT100GridWindowedRange _range;
+    VT100GridWindowedRange _initialRange;
     BOOL _live;
     BOOL _extend;
     NSMutableArray *_subSelections;  // iTermSubSelection array
@@ -102,19 +107,19 @@
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p liveRange=%@ initialRange=%@ live=%d extend=%d "
             @"resumable=%d mode=%@ subselections=%@ delegate=%@>",
-            [self class], self, VT100GridCoordRangeDescription(_range),
-            VT100GridCoordRangeDescription(_initialRange), _live, _extend, _resumable,
+            [self class], self, VT100GridWindowedRangeDescription(_range),
+            VT100GridCoordRangeDescription(_initialRange.coordRange), _live, _extend, _resumable,
             [[self class] nameForMode:_selectionMode], _subSelections, _delegate];
 }
 
 - (void)flip {
-    _range = VT100GridCoordRangeMake(_range.end.x,
-                                     _range.end.y,
-                                     _range.start.x,
-                                     _range.start.y);
+    _range.coordRange = VT100GridCoordRangeMake(_range.coordRange.end.x,
+                                                _range.coordRange.end.y,
+                                                _range.coordRange.start.x,
+                                                _range.coordRange.start.y);
 }
 
-- (VT100GridCoordRange)unflippedLiveRange {
+- (VT100GridWindowedRange)unflippedLiveRange {
     return [self unflippedRangeForRange:_range];
 }
 
@@ -141,52 +146,55 @@
         [self flip];
     }
     
-    VT100GridCoordRange range = [self rangeForCurrentModeAtCoord:coord
-                                           includeParentheticals:YES];
-    
-    if (range.start.x != -1) {
-        if (range.start.x == -1) {
+    VT100GridWindowedRange range = [self rangeForCurrentModeAtCoord:coord
+                                              includeParentheticals:YES];
+    // TODO support range.
+    if (range.coordRange.start.x != -1) {
+        if (range.coordRange.start.x == -1) {
             range = [_delegate selectionRangeForWordAt:coord];
         }
         if ([self coord:coord isInRange:_range]) {
             // The click point is inside old live range.
             int width = [self width];
-            long long distanceToStart = VT100GridCoordDistance(_range.start,
-                                                               range.start,
+            long long distanceToStart = VT100GridCoordDistance(_range.coordRange.start,
+                                                               range.coordRange.start,
                                                                width);
-            long long distanceToEnd = VT100GridCoordDistance(_range.end, range.end, width);
+            long long distanceToEnd = VT100GridCoordDistance(_range.coordRange.end,
+                                                             range.coordRange.end,
+                                                             width);
             if (distanceToEnd < distanceToStart) {
                 // Move the end point
-                _range.end = range.end;
-                _initialRange = [self rangeForCurrentModeAtCoord:_range.start
+                _range.coordRange.end = range.coordRange.end;
+                _initialRange = [self rangeForCurrentModeAtCoord:_range.coordRange.start
                                            includeParentheticals:NO];
                 ;
             } else {
                 // Flip and move what was the start point
                 [self flip];
-                _range.end = range.start;
-                VT100GridCoord anchor = [_delegate selectionPredecessorOfCoord:_range.start];
+                _range.coordRange.end = range.coordRange.start;
+                VT100GridCoord anchor =
+                    [_delegate selectionPredecessorOfCoord:_range.coordRange.start];
                 _initialRange = [self rangeForCurrentModeAtCoord:anchor
                                            includeParentheticals:NO];
             }
         } else {
             // The click point is outside the live range
-            VT100GridCoordRange determinant = _initialRange;
+            VT100GridCoordRange determinant = _initialRange.coordRange;
             if ([self coord:determinant.start isEqualToCoord:determinant.end]) {
                 // The initial range was empty, so use the live selection range to decide whether to
                 // move the start or end point of the live range.
-                determinant = [self unflippedLiveRange];
+                determinant = [self unflippedLiveRange].coordRange;
             }
-            if ([self coord:range.end isAfterCoord:determinant.end]) {
-                _range.end = range.end;
-                _initialRange = [self rangeForCurrentModeAtCoord:_range.start
+            if ([self coord:range.coordRange.end isAfterCoord:determinant.end]) {
+                _range.coordRange.end = range.coordRange.end;
+                _initialRange = [self rangeForCurrentModeAtCoord:_range.coordRange.start
                                            includeParentheticals:NO];
             }
-            if ([self coord:range.start isBeforeCoord:determinant.start]) {
+            if ([self coord:range.coordRange.start isBeforeCoord:determinant.start]) {
                 [self flip];
-                _range.end = range.start;
+                _range.coordRange.end = range.coordRange.start;
                 VT100GridCoord lastSelectedCharCoord =
-                    [_delegate selectionPredecessorOfCoord:_range.start];
+                    [_delegate selectionPredecessorOfCoord:_range.coordRange.start];
                 _initialRange = [self rangeForCurrentModeAtCoord:lastSelectedCharCoord
                                            includeParentheticals:NO];
 
@@ -197,37 +205,38 @@
     [_delegate selectionDidChange:self];
 }
 
- - (VT100GridCoordRange)rangeForCurrentModeAtCoord:(VT100GridCoord)coord
-                             includeParentheticals:(BOOL)includeParentheticals {
-     VT100GridCoordRange range = VT100GridCoordRangeMake(-1, -1, -1, -1);
+ - (VT100GridWindowedRange)rangeForCurrentModeAtCoord:(VT100GridCoord)coord
+                                includeParentheticals:(BOOL)includeParentheticals {
+     VT100GridWindowedRange windowedRange =
+        VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
      switch (_selectionMode) {
          case kiTermSelectionModeWord:
              if (includeParentheticals) {
-                 range = [_delegate selectionRangeForParentheticalAt:coord];
+                 windowedRange = [_delegate selectionRangeForParentheticalAt:coord];
              }
-             if (range.start.x == -1) {
-                 range = [_delegate selectionRangeForWordAt:coord];
+             if (windowedRange.coordRange.start.x == -1) {
+                 windowedRange = [_delegate selectionRangeForWordAt:coord];
              }
              break;
              
          case kiTermSelectionModeWholeLine:
-             range = [_delegate selectionRangeForWrappedLineAt:coord];
+             windowedRange.coordRange = [_delegate selectionRangeForWrappedLineAt:coord];
              break;
              
          case kiTermSelectionModeSmart:
-             range = [_delegate selectionRangeForSmartSelectionAt:coord];
+             windowedRange = [_delegate selectionRangeForSmartSelectionAt:coord];
              break;
              
          case kiTermSelectionModeLine:
-             range = [_delegate selectionRangeForLineAt:coord];
+             windowedRange.coordRange = [_delegate selectionRangeForLineAt:coord];
              break;
              
          case kiTermSelectionModeCharacter:
          case kiTermSelectionModeBox:
-             range = VT100GridCoordRangeMake(coord.x, coord.y, coord.x, coord.y);
+             windowedRange.coordRange = VT100GridCoordRangeMake(coord.x, coord.y, coord.x, coord.y);
              break;
      }
-     return range;
+     return windowedRange;
  }
                              
 - (void)beginSelectionAt:(VT100GridCoord)coord
@@ -255,7 +264,7 @@
     _range = [self rangeForCurrentModeAtCoord:coord includeParentheticals:YES];
     _initialRange = _range;
 
-    DLog(@"Begin selection, range=%@", VT100GridCoordRangeDescription(_range));
+    DLog(@"Begin selection, range=%@", VT100GridWindowedRangeDescription(_range));
     [self extendPastNulls];
     [_delegate selectionDidChange:self];
 }
@@ -266,13 +275,16 @@
     }
     DLog(@"End live selection");
     if (_selectionMode == kiTermSelectionModeBox) {
-        int left = MIN(_range.start.x, _range.end.x);
-        int right = MAX(_range.start.x, _range.end.x);
-        int top = MIN(_range.start.y, _range.end.y);
-        int bottom = MAX(_range.start.y, _range.end.y);
-        _range = VT100GridCoordRangeMake(left, top, right, bottom);
+        // TODO support window?
+        int left = MIN(_range.coordRange.start.x, _range.coordRange.end.x);
+        int right = MAX(_range.coordRange.start.x, _range.coordRange.end.x);
+        int top = MIN(_range.coordRange.start.y, _range.coordRange.end.y);
+        int bottom = MAX(_range.coordRange.start.y, _range.coordRange.end.y);
+        _range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(left, top, right, bottom),
+                                            0, 0);  // TODO support window
         for (int i = top; i <= bottom; i++) {
-            VT100GridCoordRange theRange = VT100GridCoordRangeMake(left, i, right, i);
+            VT100GridWindowedRange theRange =
+                VT100GridWindowedRangeMake(VT100GridCoordRangeMake(left, i, right, i), 0, 0);
             theRange = [self rangeByExtendingRangePastNulls:theRange];
             iTermSubSelection *sub =
                 [iTermSubSelection subSelectionWithRange:theRange
@@ -299,7 +311,7 @@
             _resumable = NO;
         }
     }
-    _range = VT100GridCoordRangeMake(-1, -1, -1, -1);
+    _range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
     _extend = NO;
     _live = NO;
     
@@ -307,7 +319,9 @@
 }
 
 - (BOOL)haveLiveSelection {
-    return _live && _range.start.x != -1 && VT100GridCoordRangeLength(_range, [self width]) > 0;
+    return (_live &&
+            _range.coordRange.start.x != -1 &&
+            VT100GridCoordRangeLength(_range.coordRange, [self width]) > 0);
 }
     
 - (BOOL)extending {
@@ -316,16 +330,16 @@
 
 - (void)clearSelection {
     DLog(@"Clear selection");
-    _range = VT100GridCoordRangeMake(-1, -1, -1, -1);
+    _range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
     [_subSelections removeAllObjects];
     [_delegate selectionDidChange:self];
 }
 
-- (VT100GridCoordRange)liveRange {
+- (VT100GridWindowedRange)liveRange {
     return _range;
 }
 
-- (BOOL)coord:(VT100GridCoord)coord isInRange:(VT100GridCoordRange)range {
+- (BOOL)coord:(VT100GridCoord)coord isInRange:(VT100GridWindowedRange)range {
     iTermSubSelection *temp = [iTermSubSelection subSelectionWithRange:range
                                                                   mode:_selectionMode];
     return [temp containsCoord:coord];
@@ -348,7 +362,7 @@
     if (coord.y < 0) {
         coord.x = coord.y = 0;
     }
-    VT100GridCoordRange range = [self rangeForCurrentModeAtCoord:coord includeParentheticals:NO];
+    VT100GridWindowedRange range = [self rangeForCurrentModeAtCoord:coord includeParentheticals:NO];
     
     if (!_live) {
         [self beginSelectionAt:coord mode:self.selectionMode resume:NO append:NO];
@@ -356,7 +370,7 @@
     switch (_selectionMode) {
         case kiTermSelectionModeBox:
         case kiTermSelectionModeCharacter:
-            _range.end = coord;
+            _range.coordRange.end = coord;
             break;
             
         case kiTermSelectionModeLine:
@@ -372,13 +386,14 @@
     [_delegate selectionDidChange:self];
 }
 
-- (void)moveSelectionEndpointToRange:(VT100GridCoordRange)range {
+- (void)moveSelectionEndpointToRange:(VT100GridWindowedRange)range {
     DLog(@"move selection endpoint to range=%@ selection=%@ initial=%@",
-         VT100GridCoordRangeDescription(range),
-         VT100GridCoordRangeDescription(_range),
-         VT100GridCoordRangeDescription(_initialRange));
-    VT100GridCoordRange newRange = _range;
-    if ([self coord:_range.start isBeforeCoord:range.end]) {
+         VT100GridWindowedRangeDescription(range),
+         VT100GridWindowedRangeDescription(_range),
+         VT100GridWindowedRangeDescription(_initialRange));
+    VT100GridWindowedRange newRange = _range;
+    // TODO support windows
+    if ([self coord:_range.coordRange.start isBeforeCoord:range.coordRange.end]) {
         // The word you clicked on ends after the start of the existing range.
         if ([self liveRangeIsFlipped]) {
             // The range is flipped. This happens when you were selecting backwards and
@@ -388,19 +403,19 @@
             //                                |...<-----------range----------->
             //                 <-initialRange->
             //            start<----------------newRange--------------------->end
-            newRange.start = _initialRange.start;
-            newRange.end = range.end;
+            newRange.coordRange.start = _initialRange.coordRange.start;
+            newRange.coordRange.end = range.coordRange.end;
         } else {
             // start<---------selection---------->end
             //      |<<<<<<<<<<<<<<<|
             //       ...<---range--->
             // start<---newRange---->end
-            if ([self coord:range.start isBeforeCoord:_range.start]) {
+            if ([self coord:range.coordRange.start isBeforeCoord:_range.coordRange.start]) {
                 // This happens with smart selection, where the new range is not just a subset of
                 // the old range.
-                newRange.start = range.start;
+                newRange.coordRange.start = range.coordRange.start;
             } else {
-                newRange.end = range.end;
+                newRange.coordRange.end = range.coordRange.end;
             }
         }
     } else {
@@ -411,16 +426,16 @@
             //    <----range---->...|
             //                      <-initialRange->
             // end<-----------newRange------------->start
-            newRange.start = _initialRange.end;
-            newRange.end = range.start;
+            newRange.coordRange.start = _initialRange.coordRange.end;
+            newRange.coordRange.end = range.coordRange.start;
         } else {
             // end<-------------selection-------------->start
             //                         <---range--->...|
             //                      end<---newRange---->start
-            newRange.end = range.start;
+            newRange.coordRange.end = range.coordRange.start;
         }
     }
-    DLog(@"  newrange=%@", VT100GridCoordRangeDescription(newRange));
+    DLog(@"  newrange=%@", VT100GridWindowedRangeDescription(newRange));
     _range = newRange;
 }
 
@@ -429,16 +444,16 @@
 }
 
 - (void)moveUpByLines:(int)numLines {
-    _range.start.y -= numLines;
-    _range.end.y -= numLines;
+    _range.coordRange.start.y -= numLines;
+    _range.coordRange.end.y -= numLines;
     
-    if (_range.start.y < 0 || _range.end.y < 0) {
+    if (_range.coordRange.start.y < 0 || _range.coordRange.end.y < 0) {
         [self clearSelection];
     }
 }
 
-- (BOOL)rangeIsFlipped:(VT100GridCoordRange)range {
-    return VT100GridCoordOrder(range.start, range.end) == NSOrderedDescending;
+- (BOOL)rangeIsFlipped:(VT100GridWindowedRange)range {
+    return VT100GridCoordOrder(range.coordRange.start, range.coordRange.end) == NSOrderedDescending;
 }
 
 - (BOOL)liveRangeIsFlipped {
@@ -464,10 +479,11 @@
 }
 
 - (long long)length {
-    return VT100GridCoordRangeLength(_range, [self width]);
+    // TODO support window
+    return VT100GridCoordRangeLength(_range.coordRange, [self width]);
 }
 
-- (void)setSelectedRange:(VT100GridCoordRange)selectedRange {
+- (void)setSelectedRange:(VT100GridWindowedRange)selectedRange {
     _range = selectedRange;
     [_delegate selectionDidChange:self];
 }
@@ -487,35 +503,37 @@
     return theCopy;
 }
 
-- (VT100GridCoordRange)unflippedRangeForRange:(VT100GridCoordRange)range {
-    if ([self coord:range.end isBeforeCoord:range.start]) {
-        return VT100GridCoordRangeMake(range.end.x, range.end.y, range.start.x, range.start.y);
-    } else {
-        return range;
+- (VT100GridWindowedRange)unflippedRangeForRange:(VT100GridWindowedRange)range {
+    if ([self coord:range.coordRange.end isBeforeCoord:range.coordRange.start]) {
+        range.coordRange = VT100GridCoordRangeMake(range.coordRange.end.x,
+                                                   range.coordRange.end.y,
+                                                   range.coordRange.start.x,
+                                                   range.coordRange.start.y);
     }
+    return range;
 }
 
-- (VT100GridCoordRange)rangeByExtendingRangePastNulls:(VT100GridCoordRange)range {
-    VT100GridCoordRange unflippedRange = [self unflippedRangeForRange:range];
+- (VT100GridWindowedRange)rangeByExtendingRangePastNulls:(VT100GridWindowedRange)range {
+    VT100GridWindowedRange unflippedRange = [self unflippedRangeForRange:range];
     VT100GridRange nulls =
-        [_delegate selectionRangeOfTerminalNullsOnLine:unflippedRange.start.y];
+        [_delegate selectionRangeOfTerminalNullsOnLine:unflippedRange.coordRange.start.y];
     
     // Fix the beginning of the range (start if unflipped, end if flipped)
-    if (unflippedRange.start.x > nulls.location) {
+    if (unflippedRange.coordRange.start.x > nulls.location) {
         if ([self rangeIsFlipped:range]) {
-            range.end.x = nulls.location;
+            range.coordRange.end.x = nulls.location;
         } else {
-            range.start.x = nulls.location;
+            range.coordRange.start.x = nulls.location;
         }
     }
     
     // Fix the terminus of the range (end if unflipped, start if flipped)
-    nulls = [_delegate selectionRangeOfTerminalNullsOnLine:unflippedRange.end.y];
-    if (unflippedRange.end.x > nulls.location) {
+    nulls = [_delegate selectionRangeOfTerminalNullsOnLine:unflippedRange.coordRange.end.y];
+    if (unflippedRange.coordRange.end.x > nulls.location) {
         if ([self rangeIsFlipped:range]) {
-            range.start.x = nulls.location + nulls.length;
+            range.coordRange.start.x = nulls.location + nulls.length;
         } else {
-            range.end.x = nulls.location + nulls.length;
+            range.coordRange.end.x = nulls.location + nulls.length;
         }
     }
     return range;
@@ -546,7 +564,7 @@
 - (VT100GridCoordRange)spanningRange {
     VT100GridCoordRange span = VT100GridCoordRangeMake(-1, -1, -1, -1);
     for (iTermSubSelection *sub in [self allSubSelections]) {
-        VT100GridCoordRange range = sub.range;
+        VT100GridCoordRange range = sub.range.coordRange;
         if (span.start.x == -1) {
             span.start = range.start;
             span.end = range.end;
@@ -562,29 +580,33 @@
     return span;
 }
 
-- (VT100GridCoordRange)lastRange {
-    VT100GridCoordRange best = VT100GridCoordRangeMake(-1, -1, -1, -1);
+- (VT100GridWindowedRange)lastRange {
+    VT100GridWindowedRange best =
+        VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
     for (iTermSubSelection *sub in [self allSubSelections]) {
-        VT100GridCoordRange range = sub.range;
-        if (best.start.x < 0 || [self coord:range.end isAfterCoord:best.end]) {
+        VT100GridWindowedRange range = sub.range;
+        if (best.coordRange.start.x < 0 ||
+            [self coord:range.coordRange.end isAfterCoord:best.coordRange.end]) {
             best = range;
         }
     }
     return best;
 }
 
-- (VT100GridCoordRange)firstRange {
-    VT100GridCoordRange best = VT100GridCoordRangeMake(-1, -1, -1, -1);
+- (VT100GridWindowedRange)firstRange {
+    VT100GridWindowedRange best =
+        VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
     for (iTermSubSelection *sub in [self allSubSelections]) {
-        VT100GridCoordRange range = sub.range;
-        if (best.start.x < 0 || [self coord:range.start isAfterCoord:best.start]) {
+        VT100GridWindowedRange range = sub.range;
+        if (best.coordRange.start.x < 0 ||
+            [self coord:range.coordRange.start isAfterCoord:best.coordRange.start]) {
             best = range;
         }
     }
     return best;
 }
 
-- (void)setFirstRange:(VT100GridCoordRange)firstRange mode:(iTermSelectionMode)mode {
+- (void)setFirstRange:(VT100GridWindowedRange)firstRange mode:(iTermSelectionMode)mode {
     firstRange = [self rangeByExtendingRangePastNulls:firstRange];
     if ([_subSelections count] == 0) {
         if (_live) {
@@ -599,7 +621,7 @@
     [_delegate selectionDidChange:self];
 }
 
-- (void)setLastRange:(VT100GridCoordRange)lastRange mode:(iTermSelectionMode)mode {
+- (void)setLastRange:(VT100GridWindowedRange)lastRange mode:(iTermSelectionMode)mode {
     lastRange = [self rangeByExtendingRangePastNulls:lastRange];
     if (_live) {
         _range = lastRange;
@@ -620,28 +642,59 @@
     [_delegate selectionDidChange:self];
 }
 
-- (NSRange)rangeOfIndexesInRange:(VT100GridCoordRange)range
+- (NSRange)rangeOfIndexesInRange:(VT100GridWindowedRange)range
                           onLine:(int)line
                             mode:(iTermSelectionMode)mode {
+    // TODO support window
     if (mode == kiTermSelectionModeBox) {
-        if (range.start.y <= line && range.end.y >= line) {
-            return NSMakeRange(range.start.x, range.end.x - range.start.x);
+        if (range.coordRange.start.y <= line && range.coordRange.end.y >= line) {
+            return NSMakeRange(range.coordRange.start.x,
+                               range.coordRange.end.x - range.coordRange.start.x);
         } else {
             return NSMakeRange(0, 0);
         }
     }
-    if (range.start.y < line && range.end.y > line) {
-        return NSMakeRange(0, [self width]);
-    }
-    if (range.start.y == line) {
-        if (range.end.y == line) {
-            return NSMakeRange(range.start.x, range.end.x - range.start.x);
+    if (range.coordRange.start.y < line && range.coordRange.end.y > line) {
+        if (range.columnWindow.length) {
+            return NSMakeRange(range.columnWindow.location,
+                               range.columnWindow.length);
         } else {
-            return NSMakeRange(range.start.x, [self width] - range.start.x);
+            return NSMakeRange(0, [self width]);
         }
     }
-    if (range.end.y == line) {
-        return NSMakeRange(0, range.end.x);
+    if (range.coordRange.start.y == line) {
+        if (range.coordRange.end.y == line) {
+            if (range.columnWindow.length) {
+                int limit = VT100GridRangeMax(range.columnWindow) + 1;
+                NSRange result;
+                result.location = MAX(range.columnWindow.location, range.coordRange.start.x);
+                result.length = MIN(limit, range.coordRange.end.x) - result.location;
+                return result;
+            } else {
+                return NSMakeRange(range.coordRange.start.x,
+                                   range.coordRange.end.x - range.coordRange.start.x);
+            }
+        } else {
+            if (range.columnWindow.length) {
+                int limit = VT100GridRangeMax(range.columnWindow) + 1;
+                NSRange result;
+                result.location = MAX(range.columnWindow.location, range.coordRange.start.x);
+                result.length = MIN(limit, [self width]) - result.location;
+                return result;
+            } else {
+                return NSMakeRange(range.coordRange.start.x,
+                                   [self width] - range.coordRange.start.x);
+            }
+        }
+    }
+    if (range.coordRange.end.y == line) {
+        if (range.columnWindow.length) {
+            int limit = VT100GridRangeMax(range.columnWindow) + 1;
+            return NSMakeRange(range.columnWindow.location,
+                               MIN(limit, range.coordRange.end.x) - range.columnWindow.location);
+        } else {
+            return NSMakeRange(0, range.coordRange.end.x);
+        }
     }
     return NSMakeRange(0, 0);
 }
@@ -667,7 +720,7 @@
     NSArray *subs = [self allSubSelections];
     NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
     for (iTermSubSelection *sub in [self allSubSelections]) {
-        VT100GridCoordRange range = sub.range;
+        VT100GridWindowedRange range = sub.range;
         NSRange theRange = [self rangeOfIndexesInRange:range
                                                 onLine:line
                                                   mode:sub.selectionMode];
@@ -689,7 +742,7 @@
     return indexes;
 }
 
-- (void)enumerateSelectedRanges:(void (^)(VT100GridCoordRange range, BOOL *stop))block {
+- (void)enumerateSelectedRanges:(void (^)(VT100GridWindowedRange, BOOL *, BOOL))block {
     if (_live) {
         // Live ranges can have box subs, which is just a pain to deal with, so make a copy,
         // end live selection in the copy (which converts boxes to individual selections), and
@@ -708,28 +761,42 @@
         // fast path
         iTermSubSelection *sub = allSubs[0];
         BOOL stop = NO;
-        block(sub.range, &stop);
+        block(sub.range, &stop, NO);
         return;
     }
     
     // NOTE: This assumes a 64-bit platform, otherwise the NSUInteger type used by index set would
     // overflow too quickly.
     assert(sizeof(NSUInteger) >= 8);
+    // Ranges ending at connectors don't get a newline following.
+    NSMutableIndexSet *connectors = [NSMutableIndexSet indexSet];
     NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
     int width = [self width];
     for (iTermSubSelection *outer in [self allSubSelections]) {
-        NSRange theRange = NSMakeRange(outer.range.start.x + outer.range.start.y * width,
-                                       VT100GridCoordRangeLength(outer.range, width));
-        
-        NSMutableIndexSet *indexesToAdd = [NSMutableIndexSet indexSetWithIndexesInRange:theRange];
-        NSMutableIndexSet *indexesToRemove = [NSMutableIndexSet indexSet];
-        [indexes enumerateRangesInRange:theRange options:0 usingBlock:^(NSRange range, BOOL *stop) {
-            // range exists in both indexes and theRange
-            [indexesToRemove addIndexesInRange:range];
-            [indexesToAdd removeIndexesInRange:range];
+        __block NSRange theRange = NSMakeRange(0, 0);
+        [self enumerateRangesInWindowedRange:outer.range
+                                       block:^(VT100GridCoordRange outerRange) {
+            theRange = NSMakeRange(outerRange.start.x + outerRange.start.y * width,
+                                   VT100GridCoordRangeLength(outerRange, width));
+            
+            NSMutableIndexSet *indexesToAdd = [NSMutableIndexSet indexSetWithIndexesInRange:theRange];
+            NSMutableIndexSet *indexesToRemove = [NSMutableIndexSet indexSet];
+            [indexes enumerateRangesInRange:theRange options:0 usingBlock:^(NSRange range, BOOL *stop) {
+                // range exists in both indexes and theRange
+                [indexesToRemove addIndexesInRange:range];
+                [indexesToAdd removeIndexesInRange:range];
+            }];
+            [indexes removeIndexes:indexesToRemove];
+            [indexes addIndexes:indexesToAdd];
+                                           
+            // In multipart windowed ranges, add connectors for the endpoint of all but the last
+            // range. Each enumerated range is on its own line.
+            if (outer.range.columnWindow.length &&
+                !VT100GridCoordEquals(outerRange.end, outer.range.coordRange.end) &&
+                theRange.length > 0) {
+                [connectors addIndex:NSMaxRange(theRange)];
+            }
         }];
-        [indexes removeIndexes:indexesToRemove];
-        [indexes addIndexes:indexesToAdd];
     }
     
     // enumerateRangesUsingBlock doesn't guarantee the ranges come in order, so put them in an array
@@ -748,11 +815,36 @@
         [allRanges sortedArrayUsingSelector:@selector(compareGridCoordRangeStart:)];
     for (NSValue *value in sortedRanges) {
         BOOL stop = NO;
-        block([value gridCoordRangeValue], &stop);
+        VT100GridCoordRange theRange = [value gridCoordRangeValue];
+        NSUInteger endIndex = (theRange.start.x + theRange.start.y * width +
+                               VT100GridCoordRangeLength(theRange, width));
+        block(VT100GridWindowedRangeMake(theRange, 0, 0),
+              &stop,
+              ![connectors containsIndex:endIndex] && value != [sortedRanges lastObject]);
         if (stop) {
             break;
         }
     }
 }
 
+- (void)enumerateRangesInWindowedRange:(VT100GridWindowedRange)windowedRange
+                                 block:(void (^)(VT100GridCoordRange))block {
+    if (windowedRange.columnWindow.length) {
+        int right = windowedRange.columnWindow.location + windowedRange.columnWindow.length;
+        int startX = VT100GridWindowedRangeStart(windowedRange).x;
+        for (int y = windowedRange.coordRange.start.y; y < windowedRange.coordRange.end.y; y++) {
+            block(VT100GridCoordRangeMake(startX, y, right, y));
+            startX = windowedRange.columnWindow.location;
+        }
+        block(VT100GridCoordRangeMake(startX,
+                                      windowedRange.coordRange.end.y,
+                                      VT100GridWindowedRangeEnd(windowedRange).x,
+                                      windowedRange.coordRange.end.y));
+    } else {
+        block(windowedRange.coordRange);
+    }
+}
+
 @end
+
+

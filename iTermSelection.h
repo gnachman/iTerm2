@@ -25,13 +25,13 @@ typedef enum {
 - (void)selectionDidChange:(iTermSelection *)selection;
 // Returns range of (parenthesized phrase) startin or ending at coord, or
 // -1,-1,-1,-1 if none.
-- (VT100GridCoordRange)selectionRangeForParentheticalAt:(VT100GridCoord)coord;
+- (VT100GridWindowedRange)selectionRangeForParentheticalAt:(VT100GridCoord)coord;
 
 // Returns range of word including coord.
-- (VT100GridCoordRange)selectionRangeForWordAt:(VT100GridCoord)coord;
+- (VT100GridWindowedRange)selectionRangeForWordAt:(VT100GridCoord)coord;
 
 // Returns range of smart selection at coord.
-- (VT100GridCoordRange)selectionRangeForSmartSelectionAt:(VT100GridCoord)coord;
+- (VT100GridWindowedRange)selectionRangeForSmartSelectionAt:(VT100GridCoord)coord;
 
 // Returns range of full wrapped line at coord.
 - (VT100GridCoordRange)selectionRangeForWrappedLineAt:(VT100GridCoord)coord;
@@ -51,10 +51,10 @@ typedef enum {
 // on selectionMode).
 @interface iTermSubSelection : NSObject <NSCopying>
 
-@property(nonatomic, assign) VT100GridCoordRange range;
+@property(nonatomic, assign) VT100GridWindowedRange range;
 @property(nonatomic, assign) iTermSelectionMode selectionMode;
 
-+ (instancetype)subSelectionWithRange:(VT100GridCoordRange)range
++ (instancetype)subSelectionWithRange:(VT100GridWindowedRange)range
                                  mode:(iTermSelectionMode)mode;
 - (BOOL)containsCoord:(VT100GridCoord)coord;
 
@@ -76,7 +76,7 @@ typedef enum {
 @property(nonatomic, readonly) BOOL liveRangeIsFlipped;
 
 // The range of selections. May be flipped.
-@property(nonatomic, assign) VT100GridCoordRange liveRange;
+@property(nonatomic, assign) VT100GridWindowedRange liveRange;
 
 // A selection is in progress.
 @property(nonatomic, readonly) BOOL live;
@@ -86,11 +86,11 @@ typedef enum {
 
 // The last range, including the live one if applicable. Ranges are ordered by endpoint.
 // The range will be -1,-1,-1,-1 if there are none.
-@property(nonatomic, readonly) VT100GridCoordRange lastRange;
+@property(nonatomic, readonly) VT100GridWindowedRange lastRange;
 
 // The first range, including the live one if applicable. Ranges are ordered by startpoint.
 // The range will be -1,-1,-1,-1 if ther are none.
-@property(nonatomic, readonly) VT100GridCoordRange firstRange;
+@property(nonatomic, readonly) VT100GridWindowedRange firstRange;
 
 // If set, then the current live selection can be resumed in a different mode.
 // This is used when a range is created by a single click which then becomes a double,
@@ -148,10 +148,10 @@ typedef enum {
 - (NSIndexSet *)selectedIndexesOnLine:(int)line;
 
 // Calls the block for each selected range.
-- (void)enumerateSelectedRanges:(void (^)(VT100GridCoordRange range, BOOL *stop))block;
+- (void)enumerateSelectedRanges:(void (^)(VT100GridWindowedRange range, BOOL *stop, BOOL eol))block;
 
 // Changes the first/last range.
-- (void)setFirstRange:(VT100GridCoordRange)firstRange mode:(iTermSelectionMode)mode;
-- (void)setLastRange:(VT100GridCoordRange)lastRange mode:(iTermSelectionMode)mode;
+- (void)setFirstRange:(VT100GridWindowedRange)firstRange mode:(iTermSelectionMode)mode;
+- (void)setLastRange:(VT100GridWindowedRange)lastRange mode:(iTermSelectionMode)mode;
 
 @end

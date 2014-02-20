@@ -10,6 +10,7 @@
 #import "VT100Screen.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
+#import "iTermTextExtractor.h"
 
 #define AcLog DLog
 
@@ -111,6 +112,9 @@ const int kMaxResultContextWords = 4;
     const int kMaxIterations = maxWords * 2;
     VT100Screen* screen = [[self delegate] popupVT100Screen];
     NSCharacterSet* nonWhitespace = [[NSCharacterSet whitespaceCharacterSet] invertedSet];
+
+    iTermTextExtractor *textExtractor = [self textExtractor];
+    // TODO support window
     for (int i = 0; i < kMaxIterations && [context count] < maxWords; ++i) {
         // Move back one position
         --x;
@@ -122,22 +126,24 @@ const int kMaxResultContextWords = 4;
             break;
         }
 
-        VT100GridCoordRange range;
-        NSString* s = [[[self delegate] popupVT100TextView] getWordForX:x
-                                                                      y:y
-                                                                  range:&range];
+        VT100GridWindowedRange range = [textExtractor rangeForWordAt:VT100GridCoordMake(x, y)];
+        NSString *s = [textExtractor contentInRange:range
+                                                pad:NO
+                                 includeLastNewline:NO
+                             trimTrailingWhitespace:NO
+                                       cappedAtSize:-1];
         if ([s rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
             // Add only if not whitespace.
             AcLog(@"Add to context (%d/%d): %@", (int) [context count], (int) maxWords, s);
             [context addObject:s];
         }
-        x = range.start.x;
+        x = range.coordRange.start.x;
     }
 }
 
 - (void)onOpen
 {
-    VT100GridCoordRange range;
+    VT100GridWindowedRange range;
     VT100Screen* screen = [[self delegate] popupVT100Screen];
 
     [wordSeparatorCharacterSet_ autorelease];
@@ -154,20 +160,26 @@ const int kMaxResultContextWords = 4;
     if (x < 0) {
         [prefix_ setString:@""];
     } else {
-        NSString* s = [[[self delegate] popupVT100TextView] getWordForX:x
-                                                                      y:y
-                                                                  range:&range];
+        iTermTextExtractor *extractor = [self textExtractor];
+        range = [extractor rangeForWordAt:VT100GridCoordMake(x, y)];
+        NSString *s = [extractor contentInRange:range
+                                            pad:NO
+                             includeLastNewline:NO
+                         trimTrailingWhitespace:NO
+                                   cappedAtSize:NO];
         int maxWords = kMaxQueryContextWords;
         if ([s rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
             ++maxWords;
         } else {
             [prefix_ setString:s];
         }
-        AcLog(@"Prefix is %@ starting at %d", s, range.start.x);
-        startX_ = range.start.x;
-        startY_ = range.start.y + [screen scrollbackOverflow];
+        AcLog(@"Prefix is %@ starting at %d", s, range.coordRange.start.x);
+        startX_ = range.coordRange.start.x;
+        startY_ = range.coordRange.start.y + [screen scrollbackOverflow];
 
-        [self appendContextAtX:range.start.x y:range.start.y into:context_ maxWords:maxWords];
+        [self appendContextAtX:range.coordRange.start.x
+                             y:range.coordRange.start.y
+                          into:context_ maxWords:maxWords];
         if (maxWords > kMaxQueryContextWords) {
             if ([context_ count] > 0) {
                 [prefix_ setString:[context_ objectAtIndex:0]];
@@ -451,6 +463,8 @@ const int kMaxResultContextWords = 4;
     gettimeofday(&begintime, NULL);
     NSCharacterSet* nonWhitespace = [[NSCharacterSet whitespaceCharacterSet] invertedSet];
 
+    iTermTextExtractor *extractor = [self textExtractor];
+    // TODO support window
     do {
         int startX;
         int startY;
@@ -482,15 +496,22 @@ const int kMaxResultContextWords = 4;
             [findResults_ removeObjectAtIndex:0];
 
             AcLog(@"Found match at %d-%d, line %d", startX, endX, startY);
-            VT100GridCoordRange range;
+            VT100GridWindowedRange range;
             // Get the word that includes the match.
-            NSMutableString* firstWord = [NSMutableString stringWithString:[[[self delegate] popupVT100TextView] getWordForX:startX
-                                                                                                                           y:startY
-                                                                                                                       range:&range]];
+            range = [extractor rangeForWordAt:VT100GridCoordMake(startX, startY)];
+            NSString *immutableWord = [extractor contentInRange:range
+                                                            pad:NO
+                                             includeLastNewline:NO
+                                         trimTrailingWhitespace:NO
+                                                   cappedAtSize:-1];
+            NSMutableString* firstWord = [NSMutableString stringWithString:immutableWord];
             while ([firstWord length] < [prefix_ length]) {
-                NSString* part = [[[self delegate] popupVT100TextView] getWordForX:range.end.x
-                                                                                 y:range.end.y
-                                                                             range:&range];
+                range = [extractor rangeForWordAt:range.coordRange.end];
+                NSString* part = [extractor contentInRange:range
+                                                       pad:NO
+                                        includeLastNewline:NO
+                                    trimTrailingWhitespace:NO
+                                              cappedAtSize:-1];
                 if ([part length] == 0) {
                     break;
                 }
@@ -517,24 +538,32 @@ const int kMaxResultContextWords = 4;
                         ++endY;
                     }
                     
-                    word = [[[self delegate] popupVT100TextView] getWordForX:endX y:endY range:&range];
-                    AcLog(@"First candidate is at %@", VT100GridCoordRangeDescription(range));
+                    range = [extractor rangeForWordAt:VT100GridCoordMake(endX, endY)];
+                    word = [extractor contentInRange:range
+                                                 pad:NO
+                                  includeLastNewline:NO
+                              trimTrailingWhitespace:NO
+                                        cappedAtSize:-1];
+                    AcLog(@"First candidate is at %@", VT100GridWindowedRangeDescription(range));
                     if ([word rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
                         // word after match is all whitespace. Grab the next word.
-                        if (range.end.x == [screen width]) {
-                            range.end.x = 0;
-                            ++range.end.y;
+                        if (range.coordRange.end.x == [screen width]) {
+                            range.coordRange.end.x = 0;
+                            ++range.coordRange.end.y;
                         }
-                        if (range.end.y < [screen numberOfLines]) {
-                            word = [[[self delegate] popupVT100TextView] getWordForX:range.end.x
-                                                                                   y:range.end.y
-                                                                               range:&range];
+                        if (range.coordRange.end.y < [screen numberOfLines]) {
+                            range = [extractor rangeForWordAt:range.coordRange.end];
+                            word = [extractor contentInRange:range
+                                                         pad:NO
+                                          includeLastNewline:NO
+                                      trimTrailingWhitespace:NO
+                                                cappedAtSize:-1];
                             if (!whitespaceBeforeCursor_) {
                                 // Prepend a space if one is needed
                                 word = [NSString stringWithFormat:@" %@", word];
                             }
                             AcLog(@"Replacement candidate is at %@: '%@'",
-                                  VT100GridCoordRangeDescription(range), word);
+                                  VT100GridWindowedRangeDescription(range), word);
                         } else {
                             AcLog(@"Hit end of screen.");
                         }
@@ -641,6 +670,10 @@ const int kMaxResultContextWords = 4;
         [[self unfilteredModel] addHit:e];
     }
     [self reloadData:YES];
+}
+
+- (iTermTextExtractor *)textExtractor {
+    return [iTermTextExtractor textExtractorWithDataSource:[[self delegate] popupVT100Screen]];
 }
 
 @end

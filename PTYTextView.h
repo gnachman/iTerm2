@@ -166,20 +166,14 @@ typedef enum {
 // a smart selection performed at (x, y).
 - (NSDictionary *)smartSelectAtX:(int)x
                                y:(int)y
-                              to:(VT100GridCoordRange *)range
+                              to:(VT100GridWindowedRange *)range
                 ignoringNewlines:(BOOL)ignoringNewlines
-                  actionRequired:(BOOL)actionRequred;
+                  actionRequired:(BOOL)actionRequred
+                 respectDividers:(BOOL)respectDividers;
 
 // Returns range modified by removing nulls (and possibly spaces) from its ends.
 - (VT100GridCoordRange)rangeByTrimmingNullsFromRange:(VT100GridCoordRange)range
                                           trimSpaces:(BOOL)trimSpaces;
-
-// Returns the content in a coord range.
-- (NSString *)contentInRange:(VT100GridCoordRange)range
-                         pad:(BOOL)pad
-          includeLastNewline:(BOOL)includeLastNewline
-      trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
-                cappedAtSize:(int)maxBytes;
 
 // Returns the currently selected text.
 - (NSString *)selectedText;
@@ -387,7 +381,8 @@ typedef enum {
 // Returns the range of coords for the word at (x,y).
 - (NSString *)getWordForX:(int)x
                         y:(int)y
-                    range:(VT100GridCoordRange *)range;
+                    range:(VT100GridWindowedRange *)range
+          respectDividers:(BOOL)respectDividers;
 
 // Draws a dotted outline (or just the top of the outline) if there is a maximized pane.
 - (void)drawOutlineInRect:(NSRect)rect topOnly:(BOOL)topOnly;

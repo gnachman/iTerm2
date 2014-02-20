@@ -56,4 +56,12 @@
     prefix:(NSString *)prefix
     suffix:(NSString *)suffix;
 
+// Do a brute force search by putting together suffixes of beforeString with prefixes of afterString
+// to find an existing file in |workingDirectory|. |charsSTakenFromPrefixPtr| will be filled in with
+// the number of characters from beforeString used.
+- (NSString *)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
+                                         suffix:(NSString *)afterStringIn
+                               workingDirectory:(NSString *)workingDirectory
+                           charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr;
+
 @end

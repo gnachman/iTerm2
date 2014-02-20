@@ -24,7 +24,7 @@ typedef enum {
 @property(nonatomic, readonly) NSString *string;
 
 // Always set. The range of |string| on screen.
-@property(nonatomic, assign) VT100GridCoordRange range;
+@property(nonatomic, assign) VT100GridWindowedRange range;
 
 // For kURLActionOpenExistingFile, the full path the the file.
 @property(nonatomic, copy) NSString *fullPath;

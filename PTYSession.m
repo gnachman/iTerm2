@@ -42,6 +42,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermSelection.h"
+#import "iTermTextExtractor.h"
 #import <apr-1/apr_base64.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -3616,13 +3617,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (coord.x < 0 || coord.y < 0 || coord.x >= SCREEN.width || coord.y >= SCREEN.height) {
         return VT100GridCoordRangeMake(0, 0, 0, 0);
     }
-    VT100GridCoordRange range;
+    VT100GridWindowedRange range;
     [TEXTVIEW smartSelectAtX:coord.x
                            y:coord.y + [SCREEN numberOfScrollbackLines]
                           to:&range
             ignoringNewlines:NO
-              actionRequired:NO];
-    return [TEXTVIEW rangeByTrimmingNullsFromRange:range trimSpaces:YES];
+              actionRequired:NO
+             respectDividers:YES];
+    return [TEXTVIEW rangeByTrimmingNullsFromRange:range.coordRange trimSpaces:YES];
 }
 
 - (void)addNoteAtCursor {
@@ -5530,11 +5532,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (range.start.x == -1) {
         return nil;
     }
-    NSString *command = [TEXTVIEW contentInRange:range
-                                             pad:NO
-                              includeLastNewline:NO
-                          trimTrailingWhitespace:NO
-                                    cappedAtSize:-1];
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:SCREEN];
+    NSString *command = [extractor contentInRange:VT100GridWindowedRangeMake(range, 0, 0)
+                                              pad:NO
+                               includeLastNewline:NO
+                           trimTrailingWhitespace:NO
+                                     cappedAtSize:-1];
     NSRange newline = [command rangeOfString:@"\n"];
     if (newline.location != NSNotFound) {
         command = [command substringToIndex:newline.location];
