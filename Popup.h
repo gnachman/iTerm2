@@ -13,12 +13,14 @@
 @class PTYTextView;
 @class VT100Screen;
 
-@protocol PopupDelegate
+@protocol PopupDelegate <NSObject>
 
 - (NSWindowController *)popupWindowController;
 - (VT100Screen *)popupVT100Screen;
 - (PTYTextView *)popupVT100TextView;
 - (void)popupInsertText:(NSString *)text;
+// Return YES if the delegate handles it, NO if Popup should handle it.
+- (BOOL)popupKeyDown:(NSEvent *)event currentValue:(NSString *)value;
 
 @end
 

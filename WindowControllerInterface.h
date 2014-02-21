@@ -320,4 +320,22 @@ typedef enum {
 
 - (void)sessionHostDidChange:(PTYSession *)session to:(VT100RemoteHost *)host;
 
+#pragma mark - Command history
+
+// Remove the ACH window. It won't come back until showAutoCommandHistoryForSession is called.
+- (void)hideAutoCommandHistoryForSession:(PTYSession *)session;
+
+// Set the current command prefix for a given session, updating the ACH window
+// if open. If it was shown with showAutoCommandHistoryForSession but then
+// taken offscreen because there were no entries, this may cause it to return
+// to visibility. It won't return to visibility if
+// hideAutoCommandHistoryForSession was called.
+- (void)updateAutoCommandHistoryForPrefix:(NSString *)prefix inSession:(PTYSession *)session;
+
+// Show the ACH window. Follow up with a call to updateAutoCommandHistoryForPrefix.
+- (void)showAutoCommandHistoryForSession:(PTYSession *)session;
+
+// Indicates if the ACH window is shown and visible for |session|.
+- (BOOL)autoCommandHistoryIsOpenForSession:(PTYSession *)session;
+
 @end

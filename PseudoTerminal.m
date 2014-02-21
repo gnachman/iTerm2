@@ -3,6 +3,7 @@
 #import "BottomBarView.h"
 #import "ColorsMenuItemView.h"
 #import "CommandHistory.h"
+#import "CommandHistoryEntry.h"
 #import "CommandHistoryPopup.h"
 #import "Coprocess.h"
 #import "FakeWindow.h"
@@ -24,6 +25,7 @@
 #import "PTYTask.h"
 #import "PTYTextView.h"
 #import "PasteboardHistory.h"
+#import "PopupModel.h"
 #import "PopupWindow.h"
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
@@ -61,7 +63,7 @@ static NSString* TERMINAL_ARRANGEMENT_X_ORIGIN = @"X Origin";
 static NSString* TERMINAL_ARRANGEMENT_Y_ORIGIN = @"Y Origin";
 static NSString* TERMINAL_ARRANGEMENT_WIDTH = @"Width";
 static NSString* TERMINAL_ARRANGEMENT_HEIGHT = @"Height";
-static NSString* TERMINAL_ARRANGEMENT_EDGE_SPANNING_OFF = @"Edge Spanning Off";
+static NSString* TERMINAL_ARRANGEMENT_EDGE_SPANNING_OFF = @"Edge Spanning Off";  // Deprecated. Included in window type now.
 static NSString* TERMINAL_ARRANGEMENT_TABS = @"Tabs";
 static NSString* TERMINAL_ARRANGEMENT_FULLSCREEN = @"Fullscreen";
 static NSString* TERMINAL_ARRANGEMENT_LION_FULLSCREEN = @"LionFullscreen";
@@ -289,13 +291,16 @@ NSString *kSessionsKVCKey = @"sessions";
     // forever.
     int desiredRows_, desiredColumns_;
     
-    // If set, then an edge window (top, left, bottom, right of screen) does
-    // not span the entire visible edge of the screen because the user has
-    // manually resized it. This will be remembered by saved arrangements and
-    // restored. When the window frames are canonicalized (e.g., because
-    // displays changed), this flag keeps the windows from getting resized to
-    // the full width/height of the screen.
-    BOOL edgeSpanningOff_;
+    // Session ID of session that currently has an auto-command history window open
+    int _autoCommandHistorySessionId;
+}
+
+- (id)initWithWindowNibName:(NSString *)windowNibName {
+    self = [super initWithWindowNibName:windowNibName];
+    if (self) {
+        _autoCommandHistorySessionId = -1;
+    }
+    return self;
 }
 
 - (id)init {
@@ -313,7 +318,7 @@ NSString *kSessionsKVCKey = @"sessions";
     // Causes insertInSessions:atIndex: to be called.
     // A followup call to finishInitializationWithSmartLayout:windowType:screen:isHotkey:
     // finishes intialization. -windowInited will return NO until that is done.
-    return [super initWithWindowNibName:@"PseudoTerminal"];
+    return [self initWithWindowNibName:@"PseudoTerminal"];
 }
 
 
@@ -329,7 +334,7 @@ NSString *kSessionsKVCKey = @"sessions";
                    screen:(int)screenNumber
                  isHotkey:(BOOL)isHotkey
 {
-    self = [super initWithWindowNibName:@"PseudoTerminal"];
+    self = [self initWithWindowNibName:@"PseudoTerminal"];
     NSAssert(self, @"initWithWindowNibName returned nil");
     if (self) {
         [self finishInitializationWithSmartLayout:smartLayout
@@ -373,8 +378,14 @@ NSString *kSessionsKVCKey = @"sessions";
             screenNumber = n;
         }
     }
-    if (windowType == WINDOW_TYPE_TOP || windowType == WINDOW_TYPE_BOTTOM
-        || windowType == WINDOW_TYPE_LEFT || windowType == WINDOW_TYPE_RIGHT) {
+    if (windowType == WINDOW_TYPE_TOP ||
+        windowType == WINDOW_TYPE_TOP_PARTIAL ||
+        windowType == WINDOW_TYPE_BOTTOM ||
+        windowType == WINDOW_TYPE_BOTTOM_PARTIAL ||
+        windowType == WINDOW_TYPE_LEFT ||
+        windowType == WINDOW_TYPE_LEFT_PARTIAL ||
+        windowType == WINDOW_TYPE_RIGHT ||
+        windowType == WINDOW_TYPE_RIGHT_PARTIAL) {
         PtyLog(@"Window type is %d so disable smart layout", windowType);
         smartLayout = NO;
     }
@@ -416,6 +427,10 @@ NSString *kSessionsKVCKey = @"sessions";
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
             initialFrame = [screen visibleFrame];
             break;
 
@@ -476,6 +491,10 @@ NSString *kSessionsKVCKey = @"sessions";
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
             styleMask = NSBorderlessWindowMask | NSResizableWindowMask;
             break;
         case WINDOW_TYPE_FORCE_FULL_SCREEN:
@@ -495,7 +514,11 @@ NSString *kSessionsKVCKey = @"sessions";
     if (windowType == WINDOW_TYPE_TOP ||
         windowType == WINDOW_TYPE_BOTTOM ||
         windowType == WINDOW_TYPE_LEFT ||
-        windowType == WINDOW_TYPE_RIGHT) {
+        windowType == WINDOW_TYPE_RIGHT ||
+        windowType == WINDOW_TYPE_TOP_PARTIAL ||
+        windowType == WINDOW_TYPE_BOTTOM_PARTIAL ||
+        windowType == WINDOW_TYPE_LEFT_PARTIAL ||
+        windowType == WINDOW_TYPE_RIGHT_PARTIAL) {
         [myWindow setHasShadow:YES];
     }
     [myWindow _setContentHasShadow:NO];
@@ -671,6 +694,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [bottomBar release];
     [_toolbarController release];
     [autocompleteView shutdown];
+    [commandHistoryPopup shutdown];
     [pbHistoryView shutdown];
     [pbHistoryView release];
     [commandHistoryPopup release];
@@ -811,6 +835,12 @@ NSString *kSessionsKVCKey = @"sessions";
 
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_LION_FULL_SCREEN:
             newWindowType = WINDOW_TYPE_NORMAL;
             break;
@@ -1426,40 +1456,81 @@ NSString *kSessionsKVCKey = @"sessions";
     double yOrigin = virtualScreenFrame.origin.y;
 
     NSRect rect = NSZeroRect;
-    if (windowType == WINDOW_TYPE_FULL_SCREEN || windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
-        rect = virtualScreenFrame;
-    } else if (windowType == WINDOW_TYPE_NORMAL) {
-        rect.origin.x = xOrigin + xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
-        double h = [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
-        double y = [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
-        // y is distance from bottom of screen to bottom of window
-        y += h;
-        // y is distance from bottom of screen to top of window
-        y = screenFrame.size.height - y;
-        // y is distance from top of screen to top of window
-        rect.origin.y = yOrigin + yScale * y;
-        rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
-        rect.size.height = yScale * h;
-    } else if (windowType == WINDOW_TYPE_TOP) {
-        rect.origin.x = xOrigin;
-        rect.origin.y = yOrigin;
-        rect.size.width = virtualScreenFrame.size.width;
-        rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
-    } else if (windowType == WINDOW_TYPE_BOTTOM) {
-        rect.origin.x = xOrigin;
-        rect.size.width = virtualScreenFrame.size.width;
-        rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
-        rect.origin.y = virtualScreenFrame.size.height - rect.size.height;
-    } else if (windowType == WINDOW_TYPE_LEFT) {
-      rect.origin.x = xOrigin;
-      rect.origin.y = yOrigin;
-      rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
-      rect.size.height = virtualScreenFrame.size.height;
-    } else if (windowType == WINDOW_TYPE_RIGHT) {
-        rect.origin.x = virtualScreenFrame.size.width - rect.size.width;
-        rect.origin.y = yOrigin;
-        rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
-        rect.size.height = virtualScreenFrame.size.height;
+    switch (windowType) {
+        case WINDOW_TYPE_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            rect = virtualScreenFrame;
+            break;
+            
+        case WINDOW_TYPE_NORMAL:
+            rect.origin.x = xOrigin + xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
+            double h = [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+            double y = [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
+            // y is distance from bottom of screen to bottom of window
+            y += h;
+            // y is distance from bottom of screen to top of window
+            y = screenFrame.size.height - y;
+            // y is distance from top of screen to top of window
+            rect.origin.y = yOrigin + yScale * y;
+            rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+            rect.size.height = yScale * h;
+            break;
+
+        case WINDOW_TYPE_TOP:
+            rect.origin.x = xOrigin;
+            rect.origin.y = yOrigin;
+            rect.size.width = virtualScreenFrame.size.width;
+            rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+            break;
+            
+        case WINDOW_TYPE_TOP_PARTIAL:
+            rect.origin.x = xOrigin;
+            rect.origin.y = yOrigin;
+            rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+            rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+            break;
+
+        case WINDOW_TYPE_BOTTOM:
+            rect.origin.x = xOrigin;
+            rect.size.width = virtualScreenFrame.size.width;
+            rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+            rect.origin.y = virtualScreenFrame.size.height - rect.size.height;
+            break;
+
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+            rect.origin.x = xOrigin;
+            rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+            rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+            rect.origin.y = virtualScreenFrame.size.height - rect.size.height;
+            break;
+            
+        case WINDOW_TYPE_LEFT:
+            rect.origin.x = xOrigin;
+            rect.origin.y = yOrigin;
+            rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+            rect.size.height = virtualScreenFrame.size.height;
+            break;
+            
+        case WINDOW_TYPE_LEFT_PARTIAL:
+            rect.origin.x = xOrigin;
+            rect.origin.y = yOrigin;
+            rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+            rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+            break;
+            
+        case WINDOW_TYPE_RIGHT:
+            rect.origin.x = virtualScreenFrame.size.width - rect.size.width;
+            rect.origin.y = yOrigin;
+            rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+            rect.size.height = virtualScreenFrame.size.height;
+            break;
+
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+            rect.origin.x = virtualScreenFrame.size.width - rect.size.width;
+            rect.origin.y = yOrigin;
+            rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+            rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+            break;
     }
 
     [[NSColor blackColor] set];
@@ -1517,7 +1588,28 @@ NSString *kSessionsKVCKey = @"sessions";
                                                      screen:screenIndex] autorelease];
         [term delayedEnterFullscreen];
     } else {
-        // TODO: this looks like a bug - are top-of-screen windows not restored to the right screen?
+        // Support legacy edge-spanning flag by adjusting the
+        // window type.
+        if ([arrangement[TERMINAL_ARRANGEMENT_EDGE_SPANNING_OFF] boolValue]) {
+            switch (windowType) {
+                case WINDOW_TYPE_TOP:
+                    windowType = WINDOW_TYPE_TOP_PARTIAL;
+                    break;
+                    
+                case WINDOW_TYPE_BOTTOM:
+                    windowType = WINDOW_TYPE_BOTTOM_PARTIAL;
+                    break;
+                    
+                case WINDOW_TYPE_LEFT:
+                    windowType = WINDOW_TYPE_LEFT_PARTIAL;
+                    break;
+                    
+                case WINDOW_TYPE_RIGHT:
+                    windowType = WINDOW_TYPE_RIGHT_PARTIAL;
+                    break;
+            }
+        }
+        // TODO: this looks like a bug - are X-of-screen windows not restored to the right screen?
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO windowType:windowType screen:-1] autorelease];
 
         NSRect rect;
@@ -1526,7 +1618,6 @@ NSString *kSessionsKVCKey = @"sessions";
         // TODO: for window type top, set width to screen width.
         rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
         rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
-        term->edgeSpanningOff_ = [arrangement[TERMINAL_ARRANGEMENT_EDGE_SPANNING_OFF] boolValue];
         [[term window] setFrame:rect display:NO];
     }
 
@@ -1703,7 +1794,6 @@ NSString *kSessionsKVCKey = @"sessions";
 
     [result setObject:[NSNumber numberWithInt:([self lionFullScreen] ? WINDOW_TYPE_LION_FULL_SCREEN : windowType_)]
                forKey:TERMINAL_ARRANGEMENT_WINDOW_TYPE];
-    [result setObject:@(edgeSpanningOff_) forKey:TERMINAL_ARRANGEMENT_EDGE_SPANNING_OFF];
     [result setObject:[NSNumber numberWithInt:[[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]]]
                                        forKey:TERMINAL_ARRANGEMENT_SCREEN_INDEX];
     [result setObject:[NSNumber numberWithInt:desiredRows_]
@@ -1988,7 +2078,10 @@ NSString *kSessionsKVCKey = @"sessions";
     NSSize decorationSize = [self windowDecorationSize];
     PtyLog(@"Decoration size is %@", [NSValue valueWithSize:decorationSize]);
     PtyLog(@"Line height is %f, char width is %f", (float) [[session TEXTVIEW] lineHeight], [[session TEXTVIEW] charWidth]);
+    BOOL edgeSpanning = YES;
     switch (windowType_) {
+        case WINDOW_TYPE_TOP_PARTIAL:
+            edgeSpanning = NO;
         case WINDOW_TYPE_TOP:
             PtyLog(@"Window type = TOP, desired rows=%d", desiredRows_);
             // If the screen grew and the window was smaller than the desired number of rows, grow it.
@@ -1998,7 +2091,7 @@ NSString *kSessionsKVCKey = @"sessions";
             } else {
                 frame.size.height = MIN([screen visibleFrame].size.height, frame.size.height);
             }
-            if (edgeSpanningOff_) {
+            if (!edgeSpanning) {
                 frame.size.width = MIN(frame.size.width, [screen visibleFrame].size.width);
                 frame.origin.x = MAX(frame.origin.x, screen.visibleFrame.origin.x);
                 double freeSpaceOnLeft = MIN(0, [screen visibleFrame].size.width - frame.size.width - (frame.origin.x - screen.visibleFrame.origin.x));
@@ -2020,6 +2113,8 @@ NSString *kSessionsKVCKey = @"sessions";
             }
             break;
 
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+            edgeSpanning = NO;
         case WINDOW_TYPE_BOTTOM:
             PtyLog(@"Window type = BOTTOM, desired rows=%d", desiredRows_);
             // If the screen grew and the window was smaller than the desired number of rows, grow it.
@@ -2029,7 +2124,7 @@ NSString *kSessionsKVCKey = @"sessions";
             } else {
                 frame.size.height = MIN([screen visibleFrame].size.height, frame.size.height);
             }
-            if (edgeSpanningOff_) {
+            if (!edgeSpanning) {
                 frame.size.width = MIN(frame.size.width, [screen visibleFrame].size.width);
                 frame.origin.x = MAX(frame.origin.x, screen.visibleFrame.origin.x);
                 double freeSpaceOnLeft = MIN(0, [screen visibleFrame].size.width - frame.size.width - (frame.origin.x - screen.visibleFrame.origin.x));
@@ -2051,6 +2146,8 @@ NSString *kSessionsKVCKey = @"sessions";
             }
             break;
 
+        case WINDOW_TYPE_LEFT_PARTIAL:
+            edgeSpanning = NO;
         case WINDOW_TYPE_LEFT:
             PtyLog(@"Window type = LEFT, desired cols=%d", desiredColumns_);
             // If the screen grew and the window was smaller than the desired number of columns, grow it.
@@ -2060,7 +2157,7 @@ NSString *kSessionsKVCKey = @"sessions";
             } else {
                 frame.size.width = MIN([screen visibleFrame].size.width, frame.size.width);
             }
-            if (edgeSpanningOff_) {
+            if (!edgeSpanning) {
                 frame.size.height = MIN(frame.size.height, [screen visibleFrame].size.height);
                 frame.origin.y = MAX(frame.origin.y, screen.visibleFrame.origin.y);
                 double freeSpaceOnBottom = MIN(0, [screen visibleFrame].size.height - frame.size.height - (frame.origin.y - screen.visibleFrame.origin.y));
@@ -2082,6 +2179,8 @@ NSString *kSessionsKVCKey = @"sessions";
             }
             break;
 
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+            edgeSpanning = NO;
         case WINDOW_TYPE_RIGHT:
             PtyLog(@"Window type = RIGHT, desired cols=%d", desiredColumns_);
             // If the screen grew and the window was smaller than the desired number of columns, grow it.
@@ -2091,7 +2190,7 @@ NSString *kSessionsKVCKey = @"sessions";
             } else {
                 frame.size.width = MIN([screen visibleFrame].size.width, frame.size.width);
             }
-            if (edgeSpanningOff_) {
+            if (!edgeSpanning) {
                 frame.size.height = MIN(frame.size.height, [screen visibleFrame].size.height);
                 frame.origin.y = MAX(frame.origin.y, screen.visibleFrame.origin.y);
                 double freeSpaceOnBottom = MIN(0, [screen visibleFrame].size.height - frame.size.height - (frame.origin.y - screen.visibleFrame.origin.y));
@@ -2250,6 +2349,10 @@ NSString *kSessionsKVCKey = @"sessions";
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
             return YES;
             
         default:
@@ -2285,9 +2388,21 @@ NSString *kSessionsKVCKey = @"sessions";
     BOOL snapWidth = !modifierDown;
     BOOL snapHeight = !modifierDown;
     if (sender != [self window]) {
-      snapWidth = snapHeight = false;
+      snapWidth = snapHeight = NO;
     }
 
+    // If resizing a full-width/height X-of-screen window in a direction perpindicular to the screen
+    // edge it's attached to, turn off snapping in the direction parallel to the edge.
+    if (windowType_ == WINDOW_TYPE_RIGHT || windowType_ == WINDOW_TYPE_LEFT) {
+        if (proposedFrameSize.height == self.window.frame.size.height) {
+            snapHeight = NO;
+        }
+    }
+    if (windowType_ == WINDOW_TYPE_TOP || windowType_ == WINDOW_TYPE_BOTTOM) {
+        if (proposedFrameSize.width == self.window.frame.size.width) {
+            snapWidth = NO;
+        }
+    }
     // Compute proposed tab size (window minus decorations).
     NSSize decorationSize = [self windowDecorationSize];
     NSSize tabSize = NSMakeSize(proposedFrameSize.width - decorationSize.width,
@@ -2619,7 +2734,8 @@ NSString *kSessionsKVCKey = @"sessions";
     newTerminal->hideAfterOpening_ = hideAfterOpening_;
     newTerminal->number_ = number_;
     newTerminal->broadcastMode_ = broadcastMode_;
-
+    [newTerminal->broadcastViewIds_ addObjectsFromArray:[broadcastViewIds_ allObjects]];
+    
     // Ensure that fullscreen windows (often hotkey windows) don't lose their collection behavior.
     [[newTerminal window] setCollectionBehavior:[[self window] collectionBehavior]];
 
@@ -2805,23 +2921,43 @@ NSString *kSessionsKVCKey = @"sessions";
     NSRect frame = self.window.frame;
     switch (windowType_) {
         case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_TOP_PARTIAL:
             frame.origin.y = [screen visibleFrame].origin.y + [screen visibleFrame].size.height - frame.size.height;
-            edgeSpanningOff_ = (frame.size.width < [screen visibleFrame].size.width);
+            if ((frame.size.width < [screen visibleFrame].size.width)) {
+                windowType_ = WINDOW_TYPE_TOP_PARTIAL;
+            } else {
+                windowType_ = WINDOW_TYPE_TOP;
+            }
             break;
             
         case WINDOW_TYPE_BOTTOM:
-            edgeSpanningOff_ = (frame.size.width < [screen visibleFrame].size.width);
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
             frame.origin.y = [screen visibleFrame].origin.y;
+            if (frame.size.width < [screen visibleFrame].size.width) {
+                windowType_ = WINDOW_TYPE_BOTTOM_PARTIAL;
+            } else {
+                windowType_ = WINDOW_TYPE_BOTTOM;
+            }
             break;
             
         case WINDOW_TYPE_LEFT:
-            edgeSpanningOff_ = (frame.size.height < [screen visibleFrame].size.height);
+        case WINDOW_TYPE_LEFT_PARTIAL:
             frame.origin.x = [screen visibleFrame].origin.x;
+            if (frame.size.height < [screen visibleFrame].size.height) {
+                windowType_ = WINDOW_TYPE_LEFT_PARTIAL;
+            } else {
+                windowType_ = WINDOW_TYPE_LEFT;
+            }
             break;
             
         case WINDOW_TYPE_RIGHT:
-            edgeSpanningOff_ = (frame.size.height < [screen visibleFrame].size.height);
+        case WINDOW_TYPE_RIGHT_PARTIAL:
             frame.origin.x = [screen visibleFrame].origin.x + [screen visibleFrame].size.width - frame.size.width;
+            if (frame.size.height < [screen visibleFrame].size.height) {
+                windowType_ = WINDOW_TYPE_RIGHT_PARTIAL;
+            } else {
+                windowType_ = WINDOW_TYPE_RIGHT;
+            }
             break;
             
         default:
@@ -3164,6 +3300,9 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem
 {
+    if (_autoCommandHistorySessionId != -1) {
+        [self hideAutoCommandHistory];
+    }
     for (PTYSession* aSession in [[tabViewItem identifier] sessions]) {
         [aSession setNewOutput:NO];
 
@@ -4038,11 +4177,69 @@ NSString *kSessionsKVCKey = @"sessions";
 {
     if ([[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
         [commandHistoryPopup popWithDelegate:[self currentSession]];
-        [commandHistoryPopup loadCommandsForHost:[[self currentSession] currentHost]
-                                  partialCommand:[[self currentSession] currentCommand]];
+        [commandHistoryPopup loadCommands:[commandHistoryPopup commandsForHost:[[self currentSession] currentHost]
+                                                                partialCommand:[[self currentSession] currentCommand]
+                                                                        expand:YES]
+                           partialCommand:[[self currentSession] currentCommand]];
     } else {
         [CommandHistory showInformationalMessage];
     }
+}
+
+- (void)hideAutoCommandHistory {
+    [commandHistoryPopup close];
+    _autoCommandHistorySessionId = -1;
+}
+
+- (void)hideAutoCommandHistoryForSession:(PTYSession *)session {
+    if ([session sessionID] == _autoCommandHistorySessionId) {
+        [self hideAutoCommandHistory];
+    }
+}
+
+- (void)updateAutoCommandHistoryForPrefix:(NSString *)prefix inSession:(PTYSession *)session {
+    if ([session sessionID] == _autoCommandHistorySessionId) {
+        NSArray *commands = [commandHistoryPopup commandsForHost:[session currentHost]
+                                                  partialCommand:prefix
+                                                          expand:NO];
+        if (![commands count]) {
+            [commandHistoryPopup close];
+            return;
+        }
+        if ([commands count] == 1) {
+            CommandHistoryEntry *entry = commands[0];
+            if ([entry.command isEqualToString:prefix]) {
+                [commandHistoryPopup close];
+                return;
+            }
+        }
+        if (![[commandHistoryPopup window] isVisible]) {
+            [self showAutoCommandHistoryForSession:session];
+        }
+        [commandHistoryPopup loadCommands:commands
+                           partialCommand:prefix];
+    }
+}
+
+- (void)showAutoCommandHistoryForSession:(PTYSession *)session {
+    if ([[PreferencePanel sharedInstance] autoCommandHistory]) {
+        // Use a delay so we don't get a flurry of windows appearing when restoring arrangements.
+        [self performSelector:@selector(reallyShowAutoCommandHistoryForSession:)
+                   withObject:session
+                   afterDelay:0.2];
+    }
+}
+
+- (void)reallyShowAutoCommandHistoryForSession:(PTYSession *)session {
+    if ([self currentSession] == session && [[self window] isKeyWindow]) {
+        _autoCommandHistorySessionId = [session sessionID];
+        [commandHistoryPopup popWithDelegate:session];
+        [self updateAutoCommandHistoryForPrefix:[session currentCommand] inSession:session];
+    }
+}
+
+- (BOOL)autoCommandHistoryIsOpenForSession:(PTYSession *)session {
+    return [[commandHistoryPopup window] isVisible] && _autoCommandHistorySessionId == [session sessionID];
 }
 
 - (IBAction)openAutocomplete:(id)sender
@@ -4233,6 +4430,9 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 - (void)tabActiveSessionDidChange {
+    if (_autoCommandHistorySessionId != -1) {
+        [self hideAutoCommandHistory];
+    }
     [[toolbelt_ commandHistoryView] updateCommands];
 }
 
@@ -4344,13 +4544,24 @@ NSString *kSessionsKVCKey = @"sessions";
     NSUInteger savedMask = TABVIEW.autoresizingMask;
     TABVIEW.autoresizingMask = 0;
 
-    if (!edgeSpanningOff_) {
-        if (windowType_ == WINDOW_TYPE_TOP || windowType_ == WINDOW_TYPE_BOTTOM) {
+    // Set the frame for X-of-scren windows. The size doesn't change
+    // for _PARTIAL window types.
+    switch (windowType_) {
+        case WINDOW_TYPE_BOTTOM:
+            frame.origin.y = self.screen.visibleFrame.origin.y;
             frame.size.width = [[self window] frame].size.width;
             frame.origin.x = [[self window] frame].origin.x;
-        }
+            break;
 
-        if (windowType_ == WINDOW_TYPE_LEFT || windowType_ == WINDOW_TYPE_RIGHT) {
+        case WINDOW_TYPE_TOP:
+            frame.origin.y = self.screen.visibleFrame.origin.y + self.screen.visibleFrame.size.height - frame.size.height;
+            frame.size.width = [[self window] frame].size.width;
+            frame.origin.x = [[self window] frame].origin.x;
+            break;
+
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+            frame.origin.y = self.screen.visibleFrame.origin.y;
             frame.size.height = self.screen.visibleFrame.size.height;
 
             PTYSession* session = [self currentSession];
@@ -4361,43 +4572,28 @@ NSString *kSessionsKVCKey = @"sessions";
             } else {
                 frame.size.width = winSize.width;
             }
+            if (windowType_ == WINDOW_TYPE_RIGHT) {
+                frame.origin.x = [[self window] frame].origin.x + [[self window] frame].size.width - frame.size.width;
+            } else {
+                frame.origin.x = [[self window] frame].origin.x;
+            }
+            break;
 
-        }
-
-        if (windowType_ == WINDOW_TYPE_LEFT) {
-            frame.origin.x = [[self window] frame].origin.x;
-        } else if (windowType_ == WINDOW_TYPE_RIGHT) {
-            frame.origin.x = [[self window] frame].origin.x + [[self window] frame].size.width - frame.size.width;
-        }
-
-        // Set the origin again to the bottom of screen
-        if (windowType_ == WINDOW_TYPE_BOTTOM ||
-            windowType_ == WINDOW_TYPE_LEFT ||
-            windowType_ == WINDOW_TYPE_RIGHT) {
+        case WINDOW_TYPE_TOP_PARTIAL:
+            frame.origin.y = self.screen.visibleFrame.origin.y + self.screen.visibleFrame.size.height - frame.size.height;
+            break;
+            
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
             frame.origin.y = self.screen.visibleFrame.origin.y;
-        }
-    } else {
-        double freeSpaceOnLeft;
-        double freeSpaceOnTop;
-        switch (windowType_) {
-            case WINDOW_TYPE_TOP:
-                frame.origin.y = self.screen.visibleFrame.origin.y + self.screen.visibleFrame.size.height - frame.size.height;
-                break;
-                
-            case WINDOW_TYPE_BOTTOM:
-                frame.origin.y = self.screen.visibleFrame.origin.y;
-                break;
-                
-            case WINDOW_TYPE_LEFT:
-                frame.origin.x = self.screen.visibleFrame.origin.x;
-                break;
-                
-            case WINDOW_TYPE_RIGHT:
-                frame.origin.x = self.screen.visibleFrame.origin.x + self.screen.visibleFrame.size.width - frame.size.width;
-                break;
-            default:
-                break;
-        }
+            break;
+
+        case WINDOW_TYPE_LEFT_PARTIAL:
+            frame.origin.x = self.screen.visibleFrame.origin.x;
+            break;
+            
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+            frame.origin.x = self.screen.visibleFrame.origin.x + self.screen.visibleFrame.size.width - frame.size.width;
+            break;
     }
     
     BOOL didResize = NSEqualRects([[self window] frame], frame);
@@ -5496,24 +5692,6 @@ NSString *kSessionsKVCKey = @"sessions";
                                  horizontalSpacing:[[tempPrefs objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
                                    verticalSpacing:[[tempPrefs objectForKey:KEY_VERTICAL_SPACING] floatValue]];
 
-    if (windowType_ == WINDOW_TYPE_TOP ||
-        windowType_ == WINDOW_TYPE_BOTTOM ||
-        windowType_ == WINDOW_TYPE_LEFT ||
-        windowType_ == WINDOW_TYPE_RIGHT) {
-        NSRect windowFrame = [[self window] frame];
-        BOOL hasScrollbar = [self scrollbarShouldBeVisible];
-        NSSize contentSize =
-            [NSScrollView contentSizeForFrameSize:windowFrame.size
-                      horizontalScrollerClass:nil
-                        verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
-                                   borderType:NSNoBorder
-                                  controlSize:NSRegularControlSize
-                                scrollerStyle:[self scrollerStyle]];
-        if (windowType_ != WINDOW_TYPE_LEFT &&
-            windowType_ != WINDOW_TYPE_RIGHT) {
-            columns = (contentSize.width - MARGIN*2) / charSize.width;
-        }
-    }
     if (size == nil && [TABVIEW numberOfTabViewItems] != 0) {
         NSSize contentSize = [[[self currentSession] SCROLLVIEW] documentVisibleRect].size;
         rows = (contentSize.height - VMARGIN*2) / charSize.height;
@@ -5886,6 +6064,16 @@ NSString *kSessionsKVCKey = @"sessions";
         result = [[self currentSession] canInstantReplayNext];
     } else if ([item action] == @selector(toggleShowTimestamps:)) {
         result = ([self currentSession] != nil);
+    } else if ([item action] == @selector(toggleAutoCommandHistory:)) {
+        result = [[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed];
+        if (result) {
+            PTYSession *currentSession = [self currentSession];
+            if ([item respondsToSelector:@selector(setState:)]) {
+                [item setState:[[PreferencePanel sharedInstance] autoCommandHistory] ? NSOnState : NSOffState];
+            }
+        } else {
+            [item setState:NSOffState];
+        }
     } else if ([item action] == @selector(toggleAlertOnNextMark:)) {
         PTYSession *currentSession = [self currentSession];
         if ([item respondsToSelector:@selector(setState:)]) {
@@ -5939,6 +6127,11 @@ NSString *kSessionsKVCKey = @"sessions";
 - (IBAction)toggleShowTimestamps:(id)sender
 {
     [[self currentSession] toggleShowTimestamps];
+}
+
+- (IBAction)toggleAutoCommandHistory:(id)sender
+{
+    [[PreferencePanel sharedInstance] setAutoCommandHistory:![[PreferencePanel sharedInstance] autoCommandHistory]];
 }
 
 // Turn on/off sending of input to all sessions. This causes a bunch of UI

@@ -143,6 +143,7 @@
 #define KEY_XTERM_MOUSE_REPORTING             @"Mouse Reporting"
 #define KEY_DISABLE_SMCUP_RMCUP               @"Disable Smcup Rmcup"
 #define KEY_ALLOW_TITLE_REPORTING             @"Allow Title Reporting"
+#define KEY_ALLOW_TITLE_SETTING               @"Allow Title Setting"
 #define KEY_DISABLE_PRINTING                  @"Disable Printing"
 #define KEY_SCROLLBACK_WITH_STATUS_BAR        @"Scrollback With Status Bar"
 #define KEY_SCROLLBACK_IN_ALTERNATE_SCREEN    @"Scrollback in Alternate Screen"
@@ -174,14 +175,27 @@
 #define KEY_SMART_SELECTION_RULES            @"Smart Selection Rules"
 #define KEY_TROUTER                          @"Semantic History"
 
-#define WINDOW_TYPE_NORMAL 0
-#define WINDOW_TYPE_FULL_SCREEN 1  // Creates a normal window but all callers to initWithSmartLayout will toggle fullscreen mode if this is the windowType.
-#define WINDOW_TYPE_TOP 2
-#define WINDOW_TYPE_FORCE_FULL_SCREEN 3  // Used internally, never reported by windowType API. Causes initWithSmartLayout to create a window with fullscreen chrome. It will set its windowType to FULL_SCREEN
-#define WINDOW_TYPE_LION_FULL_SCREEN 4  // Lion-native fullscreen
-#define WINDOW_TYPE_BOTTOM 5
-#define WINDOW_TYPE_LEFT 6
-#define WINDOW_TYPE_RIGHT 7
+// The numerical values for each enum matter because they are used in
+// the UI as "tag" values for each select list item. They are also
+// stored in saved arrangements.
+typedef enum {
+    WINDOW_TYPE_NORMAL = 0,
+    WINDOW_TYPE_FULL_SCREEN = 1,  // Creates a normal window but all callers to initWithSmartLayout will toggle fullscreen mode if this is the windowType.
+    WINDOW_TYPE_FORCE_FULL_SCREEN = 3,  // Used internally, never reported by windowType API. Causes initWithSmartLayout to create a window with fullscreen chrome. It will set its windowType to FULL_SCREEN
+    WINDOW_TYPE_LION_FULL_SCREEN = 4,  // Lion-native fullscreen
+
+    // These are glued to an edge of the screen and span the full width/height
+    WINDOW_TYPE_TOP = 2,  // note: number is out of order
+    WINDOW_TYPE_BOTTOM = 5,
+    WINDOW_TYPE_LEFT = 6,
+    WINDOW_TYPE_RIGHT = 7,
+
+    // These are glued to an edge of the screen but may vary in width/height
+    WINDOW_TYPE_BOTTOM_PARTIAL = 8,
+    WINDOW_TYPE_TOP_PARTIAL = 9,
+    WINDOW_TYPE_LEFT_PARTIAL = 10,
+    WINDOW_TYPE_RIGHT_PARTIAL = 11
+} iTermWindowType;
 
 typedef enum {
   iTermWindowObject,

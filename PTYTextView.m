@@ -5528,11 +5528,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate insertText:command];
 }
 
+// Context menu is opened by mouseUp->PointerController->openContextMenuWithEvent, not
+// by AppKit calling this method directly. However, clicking the gear icon in the session title bar
+// calls this method.
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
 {
-    // Context menu is opened by mouseUp->PointerController->openContextMenuWithEvent, not
-    // by AppKit calling this method directly.
-    return nil;
+    return [self menuAtCoord:VT100GridCoordMake(-1, -1)];
 }
 
 - (void)saveImageAs:(id)sender {
@@ -5634,6 +5635,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (ImageInfo *)imageInfoAtCoord:(VT100GridCoord)coord
 {
+    if (coord.x < 0) {
+        return nil;
+    }
     screen_char_t* theLine = [dataSource getLineAtIndex:coord.y];
     if (theLine && coord.x < [dataSource width] && theLine[coord.x].image) {
         return GetImageInfo(theLine[coord.x].code);
@@ -9080,8 +9084,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 case CURSOR_BOX:
                     // draw the box
                     DLog(@"draw cursor box at %f,%f size %fx%f", (float)curX, (float)curY, (float)ceil(cursorWidth * (double_width ? 2 : 1)), cursorHeight);
-                    if ([self isInKeyWindow] &&
-                        [_delegate textViewIsActiveSession]) {
+                    if (([self isInKeyWindow] && [_delegate textViewIsActiveSession]) ||
+                        [_delegate textViewShouldDrawFilledInCursor]) {
                         frameOnly = NO;
                         NSRectFill(NSMakeRect(curX,
                                               curY,

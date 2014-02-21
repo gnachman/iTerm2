@@ -53,7 +53,7 @@
 
 @implementation PTYWindow
 
-- (void) dealloc
+- (void)dealloc
 {
     [restoreState_ release];
 

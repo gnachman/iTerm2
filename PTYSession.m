@@ -2107,7 +2107,6 @@ static int gNextSessionID = 1;
     [TERMINAL setDisableSmcupRmcup:[[aDict objectForKey:KEY_DISABLE_SMCUP_RMCUP] boolValue]];
     [SCREEN setAllowTitleReporting:[[aDict objectForKey:KEY_ALLOW_TITLE_REPORTING] boolValue]];
     [TERMINAL setAllowKeypadMode:[aDict boolValueDefaultingToYesForKey:KEY_APPLICATION_KEYPAD_ALLOWED]];
-    [TERMINAL setUseCanonicalParser:[[aDict objectForKey:KEY_USE_CANONICAL_PARSER] boolValue]];
     [SCREEN setUnlimitedScrollback:[[aDict objectForKey:KEY_UNLIMITED_SCROLLBACK] intValue]];
     [SCREEN setMaxScrollbackLines:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
@@ -4598,6 +4597,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return commandRange_.start.x < 0;
 }
 
+- (BOOL)textViewShouldDrawFilledInCursor {
+    // If the auto-command history popup is open for this session, the filled-in cursor should be
+    // drawn even though the textview isn't in the key window.
+    return [self textViewIsActiveSession] && [[[self tab] realParentWindow] autoCommandHistoryIsOpenForSession:self];
+}
+
 - (void)textViewWillNeedUpdateForBlink
 {
     [self scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
@@ -5588,7 +5593,22 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                                                                onHost:host];
 }
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
+    BOOL hadCommand = commandRange_.start.x >= 0 && [[self commandInRange:commandRange_] length] > 0;
     commandRange_ = range;
+    BOOL haveCommand = commandRange_.start.x >= 0 && [[self commandInRange:commandRange_] length] > 0;
+    if (!haveCommand && hadCommand) {
+        DLog(@"Hide because don't have a command, but just had one");
+        [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
+    } else {
+        if (!hadCommand && range.start.x >= 0) {
+            DLog(@"Show because I have a range but didn't have a command");
+            [[[self tab] realParentWindow] showAutoCommandHistoryForSession:self];
+        }
+        NSString *command = haveCommand ? [self commandInRange:commandRange_] : @"";
+        DLog(@"Update command to %@", command);
+        [[[self tab] realParentWindow] updateAutoCommandHistoryForPrefix:command
+                                                               inSession:self];
+    }
 }
 
 - (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
@@ -5604,6 +5624,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                            withMark:mark];
     }
     commandRange_ = VT100GridCoordRangeMake(-1, -1, -1, -1);
+    DLog(@"Hide ACH because command ended");
+    [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
+}
+
+- (BOOL)screenAllowTitleSetting {
+    NSNumber *n = addressBookEntry[KEY_ALLOW_TITLE_SETTING];
+    if (!n) {
+        return YES;
+    } else {
+        return [n boolValue];
+    }
 }
 
 #pragma mark - PopupDelegate
@@ -5624,6 +5655,28 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self insertText:string];
 }
 
+- (BOOL)popupKeyDown:(NSEvent *)event currentValue:(NSString *)value {
+    if ([[[self tab] realParentWindow] autoCommandHistoryIsOpenForSession:self]) {
+        unichar c = [[event characters] characterAtIndex:0];
+        if (c == 27) {
+            [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
+            return YES;
+        } else if (c == '\r') {
+            if ([value isEqualToString:[self currentCommand]]) {
+                // Send the enter key on.
+                [TEXTVIEW keyDown:event];
+                return YES;
+            } else {
+                return NO;  // select the row
+            }
+        } else {
+            [TEXTVIEW keyDown:event];
+            return YES;
+        }
+    } else {
+        return NO;
+    }
+}
 @end
 
 @implementation PTYSession (ScriptingSupport)

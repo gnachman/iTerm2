@@ -445,7 +445,14 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         for (id<IntervalTreeObject> note in [intervalTree_ allObjects]) {
             VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
             VT100GridCoordRange newRange;
-            if ([self convertRange:noteRange toWidth:new_width to:&newRange inLineBuffer:linebuffer_]) {
+            if (noteRange.end.x < 0 && noteRange.end.y == 0 &&
+                noteRange.end.y < 0) {
+                // note has scrolled off top
+                [intervalTree_ removeObject:note];
+            } else if ([self convertRange:noteRange
+                                  toWidth:new_width
+                                       to:&newRange
+                             inLineBuffer:linebuffer_]) {
                 Interval *newInterval = [self intervalForGridCoordRange:newRange
                                                                   width:new_width
                                                             linesOffset:[self totalScrollbackOverflow]];
@@ -2297,12 +2304,14 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalSetWindowTitle:(NSString *)title {
-    NSString *newTitle = [[title copy] autorelease];
-    if ([delegate_ screenShouldSyncTitle]) {
-        newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
+    if ([delegate_ screenAllowTitleSetting]) {
+        NSString *newTitle = [[title copy] autorelease];
+        if ([delegate_ screenShouldSyncTitle]) {
+            newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
+        }
+        [delegate_ screenSetWindowTitle:newTitle];
     }
-    [delegate_ screenSetWindowTitle:newTitle];
-
+    
     // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
     // changes shouldn't override CurrentDirectory.
     if (![self remoteHostOnLine:[self numberOfScrollbackLines] + self.height]) {
@@ -2311,11 +2320,13 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalSetIconTitle:(NSString *)title {
-    NSString *newTitle = [[title copy] autorelease];
-    if ([delegate_ screenShouldSyncTitle]) {
-        newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
+    if ([delegate_ screenAllowTitleSetting]) {
+        NSString *newTitle = [[title copy] autorelease];
+        if ([delegate_ screenShouldSyncTitle]) {
+            newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
+        }
+        [delegate_ screenSetName:newTitle];
     }
-    [delegate_ screenSetName:newTitle];
 }
 
 - (void)terminalPasteString:(NSString *)string {
@@ -2504,11 +2515,15 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalPushCurrentTitleForWindow:(BOOL)isWindow {
-    [delegate_ screenPushCurrentTitleForWindow:isWindow];
+    if ([delegate_ screenAllowTitleSetting]) {
+        [delegate_ screenPushCurrentTitleForWindow:isWindow];
+    }
 }
 
 - (void)terminalPopCurrentTitleForWindow:(BOOL)isWindow {
-    [delegate_ screenPopCurrentTitleForWindow:isWindow];
+    if ([delegate_ screenAllowTitleSetting]) {
+        [delegate_ screenPopCurrentTitleForWindow:isWindow];
+    }
 }
 
 - (BOOL)terminalPostGrowlNotification:(NSString *)message {

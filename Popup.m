@@ -234,6 +234,13 @@
 
 - (void)keyDown:(NSEvent*)event
 {
+    if ([_delegate respondsToSelector:@selector(popupKeyDown:currentValue:)]) {
+        PopupEntry *entry = [[self model] objectAtIndex:[self convertIndex:[tableView_ selectedRow]]];
+        if ([_delegate popupKeyDown:event currentValue:entry.mainValue]) {
+            return;
+        }
+    }
+
     unichar c = [[event characters] characterAtIndex:0];
     if (c == '\r') {
         [self rowSelected:self];

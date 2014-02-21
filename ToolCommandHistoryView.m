@@ -54,7 +54,7 @@ static const CGFloat kMargin = 5;
                                                                      frame.size.height - kButtonHeight - 2 * kMargin - searchField_.frame.size.height)];
         [scrollView_ setHasVerticalScroller:YES];
         [scrollView_ setHasHorizontalScroller:NO];
-        NSSize contentSize = [scrollView_ contentSize];
+        NSSize contentSize = [self contentSize];
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
@@ -114,6 +114,14 @@ static const CGFloat kMargin = 5;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
+- (NSSize)contentSize
+{
+    NSSize size = [scrollView_ contentSize];
+    size.height = [[tableView_ headerView] frame].size.height;
+    size.height += [tableView_ numberOfRows] * ([tableView_ rowHeight] + [tableView_ intercellSpacing].height);
+    return size;
+}
+
 - (void)relayout
 {
     NSRect frame = self.frame;
@@ -123,7 +131,7 @@ static const CGFloat kMargin = 5;
                                    searchField_.frame.size.height + kMargin,
                                    frame.size.width,
                                    frame.size.height - kButtonHeight - 2 * kMargin - searchField_.frame.size.height);
-    NSSize contentSize = [scrollView_ contentSize];
+    NSSize contentSize = [self contentSize];
     [tableView_ setFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
 }
 

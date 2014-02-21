@@ -613,6 +613,12 @@ DQ
                                     <action selector="toggleShowTimestamps:" target="-1" id="oGg-h2-Ex7"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Automatic Command History" keyEquivalent="Y" id="9DF-nf-qif">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="toggleAutoCommandHistory:" target="-1" id="asy-Rr-9Eu"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="gzL-UV-S2y">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
@@ -925,15 +931,15 @@ DQ
         <window title="About iTerm" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" wantsToBeColor="NO" visibleAtLaunch="NO" animationBehavior="default" id="498" userLabel="About" customClass="iTermAboutWindow">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="386" y="524" width="259" height="16"/>
+            <rect key="contentRect" x="386" y="524" width="354" height="164"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
             <value key="minSize" type="size" width="213" height="107"/>
             <view key="contentView" id="499">
-                <rect key="frame" x="0.0" y="0.0" width="259" height="16"/>
+                <rect key="frame" x="0.0" y="0.0" width="354" height="164"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField verticalHuggingPriority="750" id="510">
-                        <rect key="frame" x="116" y="-31" width="90" height="27"/>
+                        <rect key="frame" x="211" y="117" width="90" height="27"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" title="iTerm2" id="929">
                             <font key="font" metaFont="system" size="22"/>
@@ -942,7 +948,7 @@ DQ
                         </textFieldCell>
                     </textField>
                     <scrollView borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" hasVerticalScroller="NO" usesPredominantAxisScrolling="NO" id="639">
-                        <rect key="frame" x="74" y="-128" width="165" height="92"/>
+                        <rect key="frame" x="169" y="20" width="165" height="92"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <clipView key="contentView" id="SLO-jw-GM5">
                             <rect key="frame" x="0.0" y="0.0" width="165" height="92"/>
@@ -970,7 +976,7 @@ DQ
                         </scroller>
                     </scrollView>
                     <imageView id="892">
-                        <rect key="frame" x="-75" y="-116" width="128" height="128"/>
+                        <rect key="frame" x="20" y="32" width="128" height="128"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="axesIndependently" image="NSApplicationIcon" id="930"/>
                     </imageView>

@@ -67,7 +67,9 @@ typedef void (^VoidBlock)(void);
             switch ([term windowType]) {
                 case WINDOW_TYPE_FULL_SCREEN:
                 case WINDOW_TYPE_TOP:
+                case WINDOW_TYPE_TOP_PARTIAL:
                 case WINDOW_TYPE_BOTTOM:
+                case WINDOW_TYPE_BOTTOM_PARTIAL:
                     [term performSelector:@selector(canonicalizeWindowFrame)
                                withObject:nil
                                afterDelay:0];

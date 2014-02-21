@@ -52,63 +52,10 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     }
     NSRect screenFrame = [screen visibleFrame];
 
-    NSRect rect = [[term window] frame];
     [NSApp activateIgnoringOtherApps:YES];
-    [[term window] setFrame:rect display:YES];
     [[term window] makeKeyAndOrderFront:nil];
-    switch ([term windowType]) {
-        case WINDOW_TYPE_NORMAL:
-            rect.origin.x = -rect.size.width;
-            rect.origin.y = -rect.size.height;
-            rect.origin.x = screenFrame.origin.x + (screenFrame.size.width - rect.size.width) / 2;
-            rect.origin.y = screenFrame.origin.y + (screenFrame.size.height - rect.size.height) / 2;
-            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[term window] setFrame:rect display:YES animate:YES];
-            [[[term window] animator] setAlphaValue:1];
-            break;
-
-        case WINDOW_TYPE_TOP:
-            rect.origin.y = screenFrame.origin.y + screenFrame.size.height - rect.size.height;
-            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[term window] setFrame:rect display:YES animate:YES];
-            [[[term window] animator] setAlphaValue:1];
-            break;
-
-        case WINDOW_TYPE_BOTTOM:
-            rect.origin.y = screenFrame.origin.y;
-            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[term window] setFrame:rect display:YES animate:YES];
-            [[[term window] animator] setAlphaValue:1];
-            break;
-
-        case WINDOW_TYPE_LEFT:
-            rect.origin.x = screenFrame.origin.x;
-            rect.origin.y = screenFrame.origin.y;
-
-            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[term window] setFrame:rect display:YES animate:YES];
-            [[[term window] animator] setAlphaValue:1];
-            break;
-
-        case WINDOW_TYPE_RIGHT:
-            rect.origin.x = screenFrame.origin.x + screenFrame.size.width - rect.size.width;
-            rect.origin.y = screenFrame.origin.y;
-
-            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[term window] setFrame:rect display:YES animate:YES];
-            [[[term window] animator] setAlphaValue:1];
-            break;
-
-        case WINDOW_TYPE_LION_FULL_SCREEN:  // Shouldn't happen
-        case WINDOW_TYPE_FULL_SCREEN:
-            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[[term window] animator] setAlphaValue:1];
-            [[term window] makeKeyAndOrderFront:nil];
-            // This prevents the findbar, when hidden, from taking focus (bug 1490)
-            [[term currentSession] takeFocus];
-            [term hideMenuBar];
-            break;
-    }
+    [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
+    [[[term window] animator] setAlphaValue:1];
     [[HotkeyWindowController sharedInstance] performSelector:@selector(rollInFinished)
                                                   withObject:nil
                                                   afterDelay:[[NSAnimationContext currentContext] duration]];
@@ -144,22 +91,8 @@ static BOOL OpenHotkeyWindow()
         PseudoTerminal* term = [[iTermController sharedInstance] terminalWithSession:session];
         [term setIsHotKeyWindow:YES];
 
-        if ([term windowType] == WINDOW_TYPE_FULL_SCREEN) {
-            [[term window] setAlphaValue:0];
-        } else {
-            // place it above the screen so it can be rolled in.
-            NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
-            NSRect rect = [[term window] frame];
-            if ([term windowType] == WINDOW_TYPE_TOP) {
-                rect.origin.y = screenFrame.origin.y + screenFrame.size.height + rect.size.height;
-            } else if ([term windowType] == WINDOW_TYPE_BOTTOM) {
-                rect.origin.y = screenFrame.origin.y - rect.size.height;
-            } else if ([term windowType] == WINDOW_TYPE_LEFT) {
-                rect.origin.x = screenFrame.origin.x - rect.size.width;
-            } else {
-                rect.origin.y = -rect.size.height;
-                rect.origin.x = -rect.size.width;
-            }
+        [[term window] setAlphaValue:0];
+        if ([term windowType] != WINDOW_TYPE_FULL_SCREEN) {
             [[term window] setCollectionBehavior:[[term window] collectionBehavior] & ~NSWindowCollectionBehaviorFullScreenPrimary];
         }
         RollInHotkeyTerm(term);
@@ -197,38 +130,8 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         return;
     }
     BOOL temp = [term isHotKeyWindow];
-    switch ([term windowType]) {
-        case WINDOW_TYPE_NORMAL:
-            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[[term window] animator] setAlphaValue:0];
-            break;
-
-        case WINDOW_TYPE_TOP:
-            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[[term window] animator] setAlphaValue:0];
-            break;
-
-        case WINDOW_TYPE_BOTTOM:
-            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[[term window] animator] setAlphaValue:0];
-            break;
-
-        case WINDOW_TYPE_LEFT:
-            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[[term window] animator] setAlphaValue:0];
-            break;
-
-        case WINDOW_TYPE_RIGHT:
-            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[[term window] animator] setAlphaValue:0];
-            break;
-
-        case WINDOW_TYPE_LION_FULL_SCREEN:  // Shouldn't happen
-        case WINDOW_TYPE_FULL_SCREEN:
-            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
-            [[[term window] animator] setAlphaValue:0];
-            break;
-    }
+    [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
+    [[[term window] animator] setAlphaValue:0];
 
     [[HotkeyWindowController sharedInstance] performSelector:@selector(restoreNormalcy:)
                                                   withObject:term
@@ -325,46 +228,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         // Immediately hide the hotkey window.
         [[term window] orderOut:nil];
 
-        // Move the hotkey window to its offscreen location or its natural alpha value.
-        NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
-        NSRect rect = [[term window] frame];
-        switch ([term windowType]) {
-            case WINDOW_TYPE_NORMAL:
-                rect.origin.x = -rect.size.width;
-                rect.origin.y = -rect.size.height;
-                [[term window] setFrame:rect display:YES];
-                break;
-
-            case WINDOW_TYPE_TOP:
-                // Note that this rect is different than in RollOutHotkeyTerm(). For some reason,
-                // in this code path, the screen's origin is not included. I don't know why.
-                rect.origin.y = screenFrame.size.height + screenFrame.origin.y;
-                HKWLog(@"FAST: Set y=%f", rect.origin.y);
-                [[term window] setFrame:rect display:YES];
-                break;
-            case WINDOW_TYPE_BOTTOM:
-                rect.origin.y = screenFrame.origin.y - rect.size.height;
-                HKWLog(@"FAST: Set y=%f", rect.origin.y);
-                [[term window] setFrame:rect display:YES];
-                break;
-
-            case WINDOW_TYPE_LEFT:
-                rect.origin.x = screenFrame.origin.x - rect.size.width;
-                HKWLog(@"FAST: Set y=%f", rect.origin.y);
-                [[term window] setFrame:rect display:YES];
-                break;
-
-            case WINDOW_TYPE_RIGHT:
-                rect.origin.x = screenFrame.origin.x + screenFrame.size.width;
-                HKWLog(@"FAST: Set y=%f", rect.origin.y);
-                [[term window] setFrame:rect display:YES];
-                break;
-
-            case WINDOW_TYPE_LION_FULL_SCREEN:  // Shouldn't happen.
-            case WINDOW_TYPE_FULL_SCREEN:
-                [[term window] setAlphaValue:0];
-                break;
-        }
+        [[term window] setAlphaValue:0];
 
         // Immediately show all other windows.
         [self showNonHotKeyWindowsAndSetAlphaTo:1];

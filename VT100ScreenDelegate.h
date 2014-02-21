@@ -26,6 +26,9 @@
 // Returns if the profile name should be included in the window title.
 - (BOOL)screenShouldSyncTitle;
 
+// Terminal can change title
+- (BOOL)screenAllowTitleSetting;
+
 // Called after text was added to the current line. Can be used to check triggers.
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string;
 
