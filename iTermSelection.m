@@ -207,6 +207,11 @@
 
  - (VT100GridWindowedRange)rangeForCurrentModeAtCoord:(VT100GridCoord)coord
                                 includeParentheticals:(BOOL)includeParentheticals {
+     if (_range.columnWindow.length > 0) {
+         coord.x = MAX(_range.columnWindow.location,
+                       MIN(_range.columnWindow.location + _range.columnWindow.length - 1,
+                           coord.x));
+     }
      VT100GridWindowedRange windowedRange =
         VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
      switch (_selectionMode) {

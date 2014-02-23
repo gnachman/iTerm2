@@ -62,10 +62,12 @@ static const int kNumCharsToSearchForDivider = 8;
 }
 
 - (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location {
+    location = [self coordLockedToWindow:location];
     iTermTextExtractorClass theClass =
         [self classForCharacterString:[self stringForCharacterAt:location]];
 
     __block VT100GridCoord end = location;
+    // TODO: Stop at hard EOL, conditionally.
     [self searchFrom:location forward:YES forCharacterMatchingFilter:^BOOL (screen_char_t theChar,
                                                                             VT100GridCoord coord) {
         NSString *string = [self stringForCharacter:theChar];
@@ -112,6 +114,7 @@ static const int kNumCharsToSearchForDivider = 8;
                     actionRequired:(BOOL)actionRequired
                              range:(VT100GridWindowedRange *)range
                   ignoringNewlines:(BOOL)ignoringNewlines {
+    location = [self coordLockedToWindow:location];
     int targetOffset;
     const int numLines = 2;
     NSMutableArray* coords = [NSMutableArray arrayWithCapacity:numLines * _logicalWindow.length];
@@ -119,7 +122,7 @@ static const int kNumCharsToSearchForDivider = 8;
                                      radius:2
                                targetOffset:&targetOffset
                                      coords:coords
-                           ignoringNewlines:ignoringNewlines];
+                           ignoringNewlines:ignoringNewlines || _logicalWindow.length > 0];
     
     NSArray* rulesArray = rules ?: [SmartSelectionController defaultRules];
     const int numRules = [rulesArray count];
@@ -158,8 +161,10 @@ static const int kNumCharsToSearchForDivider = 8;
                     if (!oldMatch || score > oldMatch.score) {
                         SmartMatch* match = [[[SmartMatch alloc] init] autorelease];
                         match.score = score;
-                        VT100GridCoord startCoord = [[coords objectAtIndex:i + temp.location] gridCoordValue];
-                        VT100GridCoord endCoord = [[coords objectAtIndex:MIN(numCoords - 1, i + temp.location + temp.length)] gridCoordValue];
+                        VT100GridCoord startCoord = [coords[i + temp.location] gridCoordValue];
+                        VT100GridCoord endCoord = [coords[MIN(numCoords - 1,
+                                                              i + temp.location + temp.length - 1)] gridCoordValue];
+                        endCoord = [self successorOfCoord:endCoord];
                         match.startX = startCoord.x;
                         match.absStartY = startCoord.y + [_dataSource totalScrollbackOverflow];
                         match.endX = endCoord.x;
@@ -339,76 +344,89 @@ static const int kNumCharsToSearchForDivider = 8;
     }
 }
 
+- (BOOL)shouldStopEnumeratingWithCode:(unichar)code
+                             numNulls:(int)numNulls
+              windowTouchesLeftMargin:(BOOL)windowTouchesLeftMargin
+             windowTouchesRightMargin:(BOOL)windowTouchesRightMargin
+                     ignoringNewlines:(BOOL)ignoringNewlines {
+    if (windowTouchesRightMargin && windowTouchesLeftMargin) {
+        return numNulls || (code == EOL_HARD && !ignoringNewlines);
+    } else {
+        return numNulls > 0;
+    }
+}
+
 - (NSString *)textAround:(VT100GridCoord)coord
                   radius:(int)radius
             targetOffset:(int *)targetOffset
                   coords:(NSMutableArray *)coords
         ignoringNewlines:(BOOL)ignoringNewlines {
+    int xLimit = [self xLimit];
     int trueWidth = [_dataSource width];
+    VT100GridCoordRange theRange = VT100GridCoordRangeMake(0,
+                                                           coord.y - radius,
+                                                           coord.x,
+                                                           coord.y);
     NSMutableString* joinedLines =
         [NSMutableString stringWithCapacity:radius * _logicalWindow.length];
+    VT100GridWindowedRange windowedRange = VT100GridWindowedRangeMake(theRange,
+                                                                      _logicalWindow.location,
+                                                                      _logicalWindow.length);
+    [self enumerateInReverseCharsInRange:windowedRange
+                               charBlock:^BOOL(screen_char_t theChar, VT100GridCoord charCoord) {
+                                   NSString* string = CharToStr(theChar.code, theChar.complexChar);
+                                   [joinedLines insertString:string atIndex:0];
+                                   NSLog(@"%@", joinedLines);
+                                   for (int i = 0; i < [string length]; i++) {
+                                     [coords insertObject:[NSValue valueWithGridCoord:charCoord] atIndex:0];
+                                   }
+                                   return NO;
+                               }
+                                eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                                    return [self shouldStopEnumeratingWithCode:code
+                                                                      numNulls:numPreceedingNulls
+                                                       windowTouchesLeftMargin:(_logicalWindow.location == 0)
+                                                      windowTouchesRightMargin:xLimit == trueWidth
+                                                              ignoringNewlines:ignoringNewlines];
+                                }];
+
+    NSLog(@"%@", joinedLines);
+    theRange = VT100GridCoordRangeMake(coord.x,
+                                       coord.y,
+                                       [_dataSource width],
+                                       coord.y + radius);
+    windowedRange = VT100GridWindowedRangeMake(theRange,
+                                               _logicalWindow.location,
+                                               _logicalWindow.length);
+
+    [self enumerateCharsInRange:windowedRange
+                      charBlock:^BOOL(screen_char_t theChar, VT100GridCoord charCoord) {
+                          NSString* string = CharToStr(theChar.code, theChar.complexChar);
+                          [joinedLines appendString:string];
+                          for (int i = 0; i < [string length]; i++) {
+                              [coords addObject:[NSValue valueWithGridCoord:charCoord]];
+                          }
+                          return NO;
+                      }
+                       eolBlock:^BOOL(unichar code, int numPreceedignNulls, int line) {
+                           return [self shouldStopEnumeratingWithCode:code
+                                                             numNulls:numPreceedignNulls
+                                              windowTouchesLeftMargin:(_logicalWindow.location == 0)
+                                             windowTouchesRightMargin:xLimit == trueWidth
+                                                     ignoringNewlines:ignoringNewlines];
+                       }];
     
     *targetOffset = -1;
-    
-    // If rejectAtHardEol is true, then stop when you hit a hard EOL.
-    // If false, stop when you hit a hard EOL that has an unused cell before it,
-    // otherwise keep going.
-    BOOL rejectAtHardEol = !ignoringNewlines;
-    int xMin, xMax;
-    xMin = _logicalWindow.location;
-    xMax = [self xLimit];
-    
-    // Any text preceding a hard line break on a line before |y| should not be considered.
-    int firstLine = coord.y - radius;
-    for (int i = coord.y - radius; i < coord.y; i++) {
-        if (i < 0 || i >= [_dataSource numberOfLines]) {
-            continue;
-        }
-        screen_char_t* theLine = [_dataSource getLineAtIndex:i];
-        if (xMax == trueWidth && i < coord.y && theLine[trueWidth].code == EOL_HARD) {
-            if (rejectAtHardEol || theLine[trueWidth - 1].code == 0) {
-                firstLine = i + 1;
-            }
+    for (int i = 0; i < coords.count; i++) {
+        NSComparisonResult order = VT100GridCoordOrder(coord, [coords[i] gridCoordValue]);
+        if (order != NSOrderedDescending) {
+            *targetOffset = i;
+            break;
         }
     }
-    
-    for (int i = MAX(0, firstLine); i <= coord.y + radius && i < [_dataSource numberOfLines]; i++) {
-        screen_char_t* theLine = [_dataSource getLineAtIndex:i];
-        if (i < coord.y && theLine[trueWidth].code == EOL_HARD) {
-            if (rejectAtHardEol || theLine[trueWidth - 1].code == 0) {
-                continue;
-            }
-        }
-        unichar* backingStore;
-        int* deltas;
-        NSString* string = ScreenCharArrayToString(theLine,
-                                                   xMin,
-                                                   MIN(EffectiveLineLength(theLine, trueWidth),
-                                                       xMax),
-                                                   &backingStore,
-                                                   &deltas);
-        int o = 0;
-        for (int k = 0; k < [string length]; k++) {
-            o = k + deltas[k];
-            VT100GridCoord cellCoord = VT100GridCoordMake(o + xMin, i);
-            if (*targetOffset == -1 && cellCoord.y == coord.y && cellCoord.x >= coord.x) {
-                *targetOffset = k + [joinedLines length];
-            }
-            [coords addObject:[NSValue valueWithGridCoord:VT100GridCoordMake(o + xMin, i)]];
-        }
-        [joinedLines appendString:string];
-        free(deltas);
-        free(backingStore);
-        
-        o++;
-        if (xMax == trueWidth && i >= coord.y && theLine[trueWidth].code == EOL_HARD) {
-            if (rejectAtHardEol || theLine[trueWidth - 1].code == 0) {
-                [coords addObject:[NSValue valueWithGridCoord:VT100GridCoordMake(o, i)]];
-                break;
-            }
-        }
+    if (*targetOffset == 1) {
+        NSLog(@"Didn't find coord!");
     }
-    // TODO: What if it's multiple lines ending in a soft eol and the selection goes to the end?
     return joinedLines;
 }
 
@@ -438,7 +456,7 @@ static const int kNumCharsToSearchForDivider = 8;
         maxBytes = INT_MAX;
     }
     [self enumerateCharsInRange:windowedRange
-                      charBlock:^(screen_char_t theChar, VT100GridCoord coord) {
+                      charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {
                           if (theChar.code == TAB_FILLER) {
                               // Convert orphan tab fillers (those without a subsequent
                               // tab character) into spaces.
@@ -452,8 +470,9 @@ static const int kNumCharsToSearchForDivider = 8;
                               // Normal character
                               [result appendString:ScreenCharToStr(&theChar)];
                           }
+                          return NO;
                       }
-                       eolBlock:^(unichar code, int numPreceedingNulls, int line) {
+                       eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
                                // If there is no text after this, insert a hard line break.
                                if (pad) {
                                    for (int i = 0; i < numPreceedingNulls; i++) {
@@ -469,6 +488,7 @@ static const int kNumCharsToSearchForDivider = 8;
                                        [result appendString:@"\n"];
                                    }
                                }
+                               return NO;
                            }];
     
     if (trimSelectionTrailingSpaces) {
@@ -485,7 +505,7 @@ static const int kNumCharsToSearchForDivider = 8;
     int width = [_dataSource width];
     NSMutableAttributedString* result = [[[NSMutableAttributedString alloc] init] autorelease];
     [self enumerateCharsInRange:range
-                      charBlock:^(screen_char_t theChar, VT100GridCoord coord) {
+                      charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {
                           if (theChar.code == 0 && !theChar.complexChar) {
                               [result iterm_appendString:@" "];
                           } else if (theChar.code == TAB_FILLER) {
@@ -501,8 +521,9 @@ static const int kNumCharsToSearchForDivider = 8;
                               [result iterm_appendString:ScreenCharToStr(&theChar)
                                           withAttributes:attributeProvider(theChar)];
                           }
+                          return NO;
                       }
-                       eolBlock:^(unichar code, int numPreceedingNulls, int line) {
+                       eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
                            if (pad) {
                                for (int i = 0; i < numPreceedingNulls; i++) {
                                    [result iterm_appendString:@" "
@@ -511,6 +532,7 @@ static const int kNumCharsToSearchForDivider = 8;
                            }
                            [result iterm_appendString:@"\n"
                                        withAttributes:attributeProvider([self defaultChar])];
+                           return NO;
                        }];
     
     return result;
@@ -580,17 +602,6 @@ static const int kNumCharsToSearchForDivider = 8;
     return result;
 }
 
-- (int)lengthOfLine:(int)line {
-    screen_char_t *theLine = [_dataSource getLineAtIndex:line];
-    int x;
-    for (x = [_dataSource width] - 1; x >= 0; x--) {
-        if (theLine[x].code || theLine[x].complexChar) {
-            break;
-        }
-    }
-    return x + 1;
-}
-
 - (NSString *)wrappedStringAt:(VT100GridCoord)coord
                       forward:(BOOL)forward
           respectHardNewlines:(BOOL)respectHardNewlines
@@ -634,36 +645,112 @@ static const int kNumCharsToSearchForDivider = 8;
 }
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
-                    charBlock:(void (^)(screen_char_t theChar, VT100GridCoord coord))charBlock
-                     eolBlock:(void (^)(unichar code, int numPreceedingNulls, int line))eolBlock {
+                    charBlock:(BOOL (^)(screen_char_t theChar, VT100GridCoord coord))charBlock
+                     eolBlock:(BOOL (^)(unichar code, int numPreceedingNulls, int line))eolBlock {
     int width = [_dataSource width];
     int startx = VT100GridWindowedRangeStart(range).x;
     int endx = range.columnWindow.length ? range.columnWindow.location + range.columnWindow.length
                                          : [_dataSource width];
     int bound = [_dataSource numberOfLines] - 1;
-    BOOL sendEOL = (range.columnWindow.length == 0);
+    BOOL fullWidth = _logicalWindow.location == 0 && _logicalWindow.length == width;
     int left = range.columnWindow.length ? range.columnWindow.location : 0;
     for (int y = MAX(0, range.coordRange.start.y); y <= MIN(bound, range.coordRange.end.y); y++) {
         if (y == range.coordRange.end.y) {
+            // Reduce endx for last line.
             endx = range.columnWindow.length ? VT100GridWindowedRangeEnd(range).x
                                              : range.coordRange.end.x;
         }
-        int length = [self lengthOfLine:y];
         screen_char_t *theLine = [_dataSource getLineAtIndex:y];
-        const int lineLimit = MIN(endx, length);
-        for (int i = MAX(range.columnWindow.location, startx); i < lineLimit; i++) {
-            if (charBlock) {
-                charBlock(theLine[i], VT100GridCoordMake(i, y));
+        
+        // Count number of nulls at end of line.
+        int numNulls = 0;
+        for (int x = endx - 1; x >= _logicalWindow.location; x--) {
+            if (theLine[x].code == 0) {
+                ++numNulls;
+            } else {
+                break;
             }
         }
-        if (sendEOL &&
-            (y < range.coordRange.end.y || VT100GridWindowedRangeEnd(range).x == width)) {
-            if (eolBlock) {
-                eolBlock(theLine[width].code, width - length, y);
+        
+        // Iterate over characters up to terminal nulls.
+        for (int x = MAX(range.columnWindow.location, startx); x < endx - numNulls; x++) {
+            if (charBlock) {
+                if (charBlock(theLine[x], VT100GridCoordMake(x, y))) {
+                    return;
+                }
+            }
+        }
+
+        if (eolBlock && y != range.coordRange.end.y) {
+            BOOL stop;
+            if (fullWidth) {
+                stop = eolBlock(theLine[width].code, numNulls, y);
+            } else {
+                stop = eolBlock(numNulls ? EOL_HARD : EOL_SOFT, numNulls, y);
+            }
+            if (stop) {
+                return;
             }
         }
         startx = left;
     }
+}
+
+- (void)enumerateInReverseCharsInRange:(VT100GridWindowedRange)range
+                             charBlock:(BOOL (^)(screen_char_t theChar, VT100GridCoord coord))charBlock
+                              eolBlock:(BOOL (^)(unichar code, int numPreceedingNulls, int line))eolBlock {
+    int xLimit = [self xLimit];
+    int initialX = MIN(xLimit - 1, range.coordRange.end.x - 1);
+    int trueWidth = [_dataSource width];
+    for (int y = MIN([_dataSource numberOfLines] - 1, range.coordRange.end.y);
+         y >= MAX(0, range.coordRange.start.y);
+         y--) {
+        screen_char_t *theLine = [_dataSource getLineAtIndex:y];
+        int x = initialX;
+        if (x == xLimit - 1) {
+            int numNulls = 0;
+            while (x >= 0 && theLine[x].code == 0 && !theLine[x].complexChar) {
+                ++numNulls;
+                --x;
+            }
+            if (eolBlock) {
+                if (xLimit == trueWidth) {
+                    if (eolBlock(theLine[trueWidth].code, numNulls, y)) {
+                        return;
+                    }
+                } else {
+                    if (numNulls) {
+                        if (eolBlock(EOL_HARD, numNulls, y)) {
+                            return;
+                        }
+                    } else {
+                        if (eolBlock(EOL_SOFT, 0, y)) {
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        if (charBlock) {
+            for (; x >= _logicalWindow.location; x--) {
+                if (charBlock(theLine[x], VT100GridCoordMake(x, y))) {
+                    return;
+                }
+            }
+        }
+        initialX = xLimit - 1;
+    }
+}
+
+- (int)lengthOfLine:(int)line {
+    screen_char_t *theLine = [_dataSource getLineAtIndex:line];
+    int x;
+    for (x = [_dataSource width] - 1; x >= 0; x--) {
+        if (theLine[x].code || theLine[x].complexChar) {
+            break;
+        }
+    }
+    return x + 1;
 }
 
 - (NSIndexSet *)possibleColumnDividerIndexesAround:(VT100GridCoord)coord {
@@ -671,10 +758,11 @@ static const int kNumCharsToSearchForDivider = 8;
     VT100GridCoordRange theRange =
         VT100GridCoordRangeMake(0, coord.y, [_dataSource width], coord.y);
     [self enumerateCharsInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
-                      charBlock:^(screen_char_t theChar, VT100GridCoord theCoord) {
+                      charBlock:^BOOL(screen_char_t theChar, VT100GridCoord theCoord) {
                           if (!theChar.complexChar && theChar.code == '|') {
                               [indexes addIndex:theCoord.x];
                           }
+                          return NO;
                       }
                        eolBlock:NULL];
     return indexes;
@@ -701,7 +789,11 @@ static const int kNumCharsToSearchForDivider = 8;
 }
 
 - (int)xLimit {
-    return _logicalWindow.location + _logicalWindow.length;
+    if (!_logicalWindow.length) {
+        return [_dataSource width];
+    } else {
+        return _logicalWindow.location + _logicalWindow.length;
+    }
 }
 
 - (screen_char_t)defaultChar {
@@ -718,6 +810,15 @@ static const int kNumCharsToSearchForDivider = 8;
     windowedRange.coordRange = range;
     windowedRange.columnWindow = _logicalWindow;
     return windowedRange;
+}
+
+- (VT100GridCoord)coordLockedToWindow:(VT100GridCoord)coord {
+    if (_logicalWindow.length == 0) {
+        return coord;
+    }
+    coord.x = MIN(MAX(coord.x, _logicalWindow.location),
+                  _logicalWindow.location + _logicalWindow.length - 1);
+    return coord;
 }
 
 @end

@@ -78,8 +78,8 @@ typedef enum {
                 cappedAtSize:(int)maxBytes;
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
-                    charBlock:(void (^)(screen_char_t, VT100GridCoord))block
-                     eolBlock:(void (^)(unichar code, int numPreceedignNulls, int line))eolBlock;
+                    charBlock:(BOOL (^)(screen_char_t theChar, VT100GridCoord coord))charBlock
+                     eolBlock:(BOOL (^)(unichar code, int numPreceedingNulls, int line))eolBlock;
 
 - (BOOL)isTabFillerOrphanAt:(VT100GridCoord)coord;
 
