@@ -9581,6 +9581,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (VT100GridWindowedRange)selectionRangeForParentheticalAt:(VT100GridCoord)coord {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
+    [extractor restrictToLogicalWindowIncludingCoord:coord];
     return [extractor rangeOfParentheticalSubstringAtLocation:coord];
 }
 

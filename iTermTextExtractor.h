@@ -13,10 +13,13 @@
 typedef enum {
     // Any kind of white space.
     kTextExtractorClassWhitespace,
-    
+
     // Characters that belong to a word.
     kTextExtractorClassWord,
-    
+
+    // Unset character
+    kTextExtractorClassNull,
+
     // Non-alphanumeric, non-whitespace, non-word, not double-width filler.
     // Miscellaneous symbols, etc.
     kTextExtractorClassOther
@@ -55,7 +58,7 @@ typedef enum {
                                   respectContinuations:(BOOL)respectContinuations;
 
 // Returns the class for a character.
-- (iTermTextExtractorClass)classForCharacterString:(NSString *)character;
+- (iTermTextExtractorClass)classForCharacter:(screen_char_t)theCharacter;
 
 // If the character at |location| is a paren, brace, or bracket, and there is a matching
 // open/close paren/brace/bracket, the range from the opening to closing paren/brace/bracket is

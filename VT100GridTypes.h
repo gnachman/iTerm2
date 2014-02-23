@@ -127,7 +127,8 @@ NS_INLINE VT100GridWindowedRange VT100GridWindowedRangeMake(VT100GridCoordRange 
 NS_INLINE VT100GridCoord VT100GridWindowedRangeStart(VT100GridWindowedRange range) {
     VT100GridCoord coord = range.coordRange.start;
     if (range.columnWindow.length) {
-        coord.x = MAX(coord.x, range.columnWindow.location);
+        coord.x = MIN(MAX(coord.x, range.columnWindow.location),
+                      range.columnWindow.location + range.columnWindow.length);
     }
     return coord;
 }
