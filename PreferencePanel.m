@@ -226,6 +226,10 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     IBOutlet NSButton* showWindowBorder;
     BOOL defaultShowWindowBorder;
     
+    // Title bar
+    IBOutlet NSButton* hideTitleBar;
+    BOOL defaultHideTitleBar;
+    
     // Lion-style fullscreen
     IBOutlet NSButton* lionStyleFullscreen;
     BOOL defaultLionStyleFullscreen;
@@ -990,6 +994,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                sender == threeFingerEmulatesMiddle ||
                sender == autoHideTmuxClientSession ||
                sender == showWindowBorder ||
+               sender == hideTitleBar ||
                sender == hotkeyAutoHides) {
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
         defaultOpenTmuxWindowsIn = [[openTmuxWindows selectedItem] tag];
@@ -1007,6 +1012,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         defaultDimOnlyText = ([dimOnlyText state] == NSOnState);
         defaultDimmingAmount = [dimmingAmount floatValue];
         defaultShowWindowBorder = ([showWindowBorder state] == NSOnState);
+        defaultHideTitleBar = ([hideTitleBar state] == NSOnState);
         defaultThreeFingerEmulatesMiddle=([threeFingerEmulatesMiddle state] == NSOnState);
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
         defaultDisableFullscreenTransparency = ([disableFullscreenTransparency state] == NSOnState);
@@ -3017,6 +3023,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultDimOnlyText = [prefs objectForKey:@"DimOnlyText"]?[[prefs objectForKey:@"DimOnlyText"] boolValue]: NO;
     defaultDimmingAmount = [prefs objectForKey:@"SplitPaneDimmingAmount"] ? [[prefs objectForKey:@"SplitPaneDimmingAmount"] floatValue] : 0.4;
     defaultShowWindowBorder = [[prefs objectForKey:@"UseBorder"] boolValue];
+    defaultHideTitleBar = [prefs objectForKey:@"HideTitleBar"] ? [[prefs objectForKey:@"HideTitleBar"] boolValue] : NO;
     defaultLionStyleFullscreen = [prefs objectForKey:@"UseLionStyleFullscreen"] ? [[prefs objectForKey:@"UseLionStyleFullscreen"] boolValue] : YES;
     defaultLoadPrefsFromCustomFolder = [prefs objectForKey:@"LoadPrefsFromCustomFolder"] ? [[prefs objectForKey:@"LoadPrefsFromCustomFolder"] boolValue] : NO;
     defaultPrefsCustomFolder = [prefs objectForKey:@"PrefsCustomFolder"] ? [prefs objectForKey:@"PrefsCustomFolder"] : @"";
@@ -3145,6 +3152,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setBool:defaultDimOnlyText forKey:@"DimOnlyText"];
     [prefs setFloat:defaultDimmingAmount forKey:@"SplitPaneDimmingAmount"];
     [prefs setBool:defaultShowWindowBorder forKey:@"UseBorder"];
+    [prefs setBool:defaultHideTitleBar forKey:@"HideTitleBar"];
     [prefs setBool:defaultLionStyleFullscreen forKey:@"UseLionStyleFullscreen"];
     [prefs setBool:defaultLoadPrefsFromCustomFolder forKey:@"LoadPrefsFromCustomFolder"];
     [prefs setObject:defaultPrefsCustomFolder forKey:@"PrefsCustomFolder"];
@@ -3895,6 +3903,11 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return defaultShowWindowBorder;
 }
 
+- (BOOL)hideTitleBar
+{
+    return defaultHideTitleBar;
+}
+
 - (BOOL)lionStyleFullscreen
 {
     return defaultLionStyleFullscreen;
@@ -4211,6 +4224,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [dimOnlyText setState:defaultDimOnlyText?NSOnState:NSOffState];
     [dimmingAmount setFloatValue:defaultDimmingAmount];
     [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];
+    [hideTitleBar setState:defaultHideTitleBar?NSOnState:NSOffState];
     [lionStyleFullscreen setState:defaultLionStyleFullscreen?NSOnState:NSOffState];
     [loadPrefsFromCustomFolder setState:defaultLoadPrefsFromCustomFolder?NSOnState:NSOffState];
     [prefsCustomFolder setStringValue:defaultPrefsCustomFolder ? defaultPrefsCustomFolder : @""];
