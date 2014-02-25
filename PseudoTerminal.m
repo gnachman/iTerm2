@@ -600,6 +600,9 @@ NSString *kSessionsKVCKey = @"sessions";
 
     // set the style of tabs to match window style
     [self setTabBarStyle];
+    
+    // update with user-set window style
+    [self updateWindowStyle];
 
     [[[self window] contentView] setAutoresizesSubviews: YES];
     [[self window] setDelegate: self];
@@ -5089,6 +5092,9 @@ NSString *kSessionsKVCKey = @"sessions";
 
     // If tab style or position changed.
     [self repositionWidgets];
+    
+    // If window style was changed.
+    [self updateWindowStyle];
 
     // In case scrollbars came or went:
     for (PTYTab *aTab in [self tabs]) {
@@ -5541,6 +5547,24 @@ NSString *kSessionsKVCKey = @"sessions";
     PtyLog(@"repositionWidgets - update tab bar");
     [tabBarControl update];
     PtyLog(@"repositionWidgets - return.");
+}
+
+// Update the window style with user-set settings.
+- (void)updateWindowStyle
+{
+    // On normal windows, turn the title bar on or off.
+    if (windowType_ == WINDOW_TYPE_NORMAL) {
+        NSUInteger styleMask = [[self ptyWindow] styleMask];
+        if ([[PreferencePanel sharedInstance] hideTitleBar]) {
+            // Hide the title bar.
+            styleMask &= ~NSTitledWindowMask;
+        }
+        else {
+            // Show the title bar.
+            styleMask |= NSTitledWindowMask;
+        }
+        [[self ptyWindow] setStyleMask: styleMask];
+    }
 }
 
 // Returns the width of characters in pixels in the session with the widest

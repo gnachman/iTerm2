@@ -195,6 +195,7 @@ typedef enum {
 - (NSTextField*)hotkeyField;
 
 - (BOOL)showWindowBorder;
+- (BOOL)hideTitleBar;
 - (BOOL)lionStyleFullscreen;
 - (BOOL)dimInactiveSplitPanes;
 - (BOOL)dimBackgroundWindows;
