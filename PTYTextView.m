@@ -5896,38 +5896,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (![_selection hasSelection]) {
         return NO;
     }
-    // TODO support window
-    VT100GridCoordRange range = _selection.firstRange.coordRange;
-    int x = range.start.x;
-    int y = range.start.y;
-    --x;
-    if (x < 0) {
-        x = [dataSource width] - 1;
-        --y;
-        if (y < 0) {
-            return NO;
-        }
-        // Stop at a hard eol
-        screen_char_t* theLine = [dataSource getLineAtIndex:y];
-        if (theLine[[dataSource width]].code == EOL_HARD) {
-            return NO;
-        }
-    }
-
-    VT100GridWindowedRange wordRange;
-    [self getWordForX:x
-                    y:y
-                range:&wordRange
-      respectDividers:NO];
     
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
+    VT100GridRange columnWindow = _selection.firstRange.columnWindow;;
+    if (columnWindow.length > 0) {
+        extractor.logicalWindow = columnWindow;
+    }
     VT100GridWindowedRange existingRange = _selection.firstRange;
-    // TODO support window
-    VT100GridWindowedRange newRange =
-        VT100GridWindowedRangeMake(VT100GridCoordRangeMake(wordRange.coordRange.start.x,
-                                                           wordRange.coordRange.start.y,
-                                                           existingRange.coordRange.end.x,
-                                                           existingRange.coordRange.end.y),
-                                   0, 0);
+    VT100GridCoord previousCoord =
+        [extractor predecessorOfCoord:VT100GridWindowedRangeStart(existingRange)];
+    VT100GridWindowedRange previousWordRange = [extractor rangeForWordAt:previousCoord];
+    VT100GridWindowedRange newRange;
+    newRange.columnWindow = existingRange.columnWindow;
+    newRange.coordRange.start = previousWordRange.coordRange.start;
+    newRange.coordRange.end = existingRange.coordRange.end;
     [_selection setFirstRange:newRange
                          mode:kiTermSelectionModeCharacter];
 
@@ -5939,38 +5921,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (![_selection hasSelection]) {
         return;
     }
-    VT100GridCoordRange range = _selection.lastRange.coordRange;
-    int x = range.end.x;
-    int y = range.start.y;
-    if (x >= [dataSource width]) {
-        // Stop at a hard eol
-        screen_char_t* theLine = [dataSource getLineAtIndex:y];
-        if (theLine[[dataSource width]].code == EOL_HARD) {
-            return;
-        }
-        x = 0;
-        ++y;
-        if (y >= [dataSource numberOfLines]) {
-            return;
-        }
+    
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
+    VT100GridRange columnWindow = _selection.firstRange.columnWindow;;
+    if (columnWindow.length > 0) {
+        extractor.logicalWindow = columnWindow;
     }
-
-    VT100GridWindowedRange wordRange;
-    [self getWordForX:x
-                    y:y
-                range:&wordRange
-      respectDividers:NO];
-
-    VT100GridWindowedRange existingRange = _selection.lastRange;
-    // TODO support window
-    VT100GridWindowedRange newRange =
-        VT100GridWindowedRangeMake(VT100GridCoordRangeMake(existingRange.coordRange.start.x,
-                                                           existingRange.coordRange.start.y,
-                                                           wordRange.coordRange.end.x,
-                                                           wordRange.coordRange.end.y),
-                                   0, 0);
-    [_selection setLastRange:newRange
-                        mode:kiTermSelectionModeCharacter];
+    VT100GridWindowedRange existingRange = _selection.firstRange;
+    VT100GridCoord nextCoord =
+        [extractor successorOfCoord:VT100GridWindowedRangeEnd(existingRange)];
+    VT100GridWindowedRange nextWordRange = [extractor rangeForWordAt:nextCoord];
+    VT100GridWindowedRange newRange;
+    newRange.columnWindow = existingRange.columnWindow;
+    newRange.coordRange.start = existingRange.coordRange.start;
+    newRange.coordRange.end = nextWordRange.coordRange.end;
+    [_selection setFirstRange:newRange mode:kiTermSelectionModeCharacter];
 }
 
 // Add a match to resultMap_

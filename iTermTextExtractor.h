@@ -27,7 +27,7 @@ typedef enum {
 
 @interface iTermTextExtractor : NSObject
 
-@property(nonatomic, readonly) VT100GridRange logicalWindow;
+@property(nonatomic, assign) VT100GridRange logicalWindow;
 @property(nonatomic, readonly) BOOL hasLogicalWindow;
 
 + (instancetype)textExtractorWithDataSource:(id<PTYTextViewDataSource>)dataSource;

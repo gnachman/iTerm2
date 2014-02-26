@@ -701,7 +701,6 @@
 - (NSRange)rangeOfIndexesInRange:(VT100GridWindowedRange)range
                           onLine:(int)line
                             mode:(iTermSelectionMode)mode {
-    // TODO support window
     if (mode == kiTermSelectionModeBox) {
         if (range.coordRange.start.y <= line && range.coordRange.end.y >= line) {
             return NSMakeRange(range.coordRange.start.x,
