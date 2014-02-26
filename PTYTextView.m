@@ -161,7 +161,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     PTYFontInfo *secondaryFont;  // non-ascii font, only used if self.useNonAsciiFont is set.
     
     NSColor* colorTable[256];
-    NSColor* defaultBoldColor;
     NSColor* defaultCursorColor;
     NSColor* selectionColor;
     NSColor* unfocusedSelectionColor;
@@ -558,7 +557,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [findString_ release];
     [_foregroundColor release];
     [_backgroundColor release];
-    [defaultBoldColor release];
+    [_boldColor release];
     [selectionColor release];
     [unfocusedSelectionColor release];
     [defaultCursorColor release];
@@ -838,9 +837,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setBoldColor:(NSColor*)color
 {
-    [defaultBoldColor release];
-    [color retain];
-    defaultBoldColor = color;
+    [_boldColor autorelease];
+    _boldColor = [color retain];
     [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
@@ -882,11 +880,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return selectedTextColor;
 }
 
-- (NSColor *) defaultBoldColor
-{
-    return defaultBoldColor;
-}
-
 - (NSColor *) defaultCursorColor
 {
     return defaultCursorColor;
@@ -925,7 +918,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                     break;
                 case ALTSEM_FG_DEFAULT:
                     if (isBold && _useBrightBold) {
-                        color = [self defaultBoldColor];
+                        color = _boldColor;
                     } else {
                         color = _foregroundColor;
                     }

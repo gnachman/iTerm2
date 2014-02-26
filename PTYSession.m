@@ -2565,9 +2565,9 @@ static int gNextSessionID = 1;
     [[self SCROLLVIEW] setBackgroundColor:color];
 }
 
-- (NSColor *) boldColor
+- (NSColor *)boldColor
 {
-    return [TEXTVIEW defaultBoldColor];
+    return [TEXTVIEW boldColor];
 }
 
 - (void)setBoldColor:(NSColor*)color
