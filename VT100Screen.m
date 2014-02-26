@@ -319,6 +319,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     if (selection.live) {
         [selection endLiveSelection];
     }
+    [selection removeWindows];
     BOOL couldHaveSelection = [delegate_ screenHasView] && selection.hasSelection;
 
     int usedHeight = [currentGrid_ numberOfLinesUsed];
@@ -445,10 +446,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                       to:&newSelection
                             inLineBuffer:linebuffer_];
             if (ok) {
-                // TODO support window?
                 VT100GridWindowedRange theRange = VT100GridWindowedRangeMake(newSelection, 0, 0);
                 iTermSubSelection *theSub =
                     [iTermSubSelection subSelectionWithRange:theRange mode:sub.selectionMode];
+                theSub.connected = sub.connected;
                 [newSubSelections addObject:theSub];
             }
         }
@@ -558,7 +559,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         for (int i = 0; i < altScreenSubSelectionTriplets.count; i++) {
             LineBufferPosition *originalStartPos = altScreenSubSelectionTriplets[i][0];
             LineBufferPosition *originalEndPos = altScreenSubSelectionTriplets[i][1];
-            iTermSelectionMode mode = [altScreenSubSelectionTriplets[i][2] selectionMode];
+            iTermSubSelection *originalSub = altScreenSubSelectionTriplets[i][2];
+            iTermSelectionMode mode = originalSub.selectionMode;
             VT100GridCoordRange newSelection;
             BOOL ok = [self computeRangeFromOriginalLimit:originalLastPos
                                             limitPosition:newLastPos
@@ -571,8 +573,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             if (ok) {
                 VT100GridWindowedRange theRange =  // TODO support window?
                     VT100GridWindowedRangeMake(newSelection, 0, 0);
-                [newSubSelections addObject:[iTermSubSelection subSelectionWithRange:theRange
-                                                                                mode:mode]];
+                iTermSubSelection *theSub = [iTermSubSelection subSelectionWithRange:theRange
+                                                                                mode:mode];
+                theSub.connected = originalSub.connected;
+                [newSubSelections addObject:theSub];
             }
         }
         DLog(@"Original limit=%@", originalLastPos);

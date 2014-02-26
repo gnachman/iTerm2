@@ -53,6 +53,7 @@ typedef enum {
 
 @property(nonatomic, assign) VT100GridWindowedRange range;
 @property(nonatomic, assign) iTermSelectionMode selectionMode;
+@property(nonatomic, assign) BOOL connected;  // If connected, no newline occurs before the next sub
 
 + (instancetype)subSelectionWithRange:(VT100GridWindowedRange)range
                                  mode:(iTermSelectionMode)mode;
@@ -153,5 +154,8 @@ typedef enum {
 // Changes the first/last range.
 - (void)setFirstRange:(VT100GridWindowedRange)firstRange mode:(iTermSelectionMode)mode;
 - (void)setLastRange:(VT100GridWindowedRange)lastRange mode:(iTermSelectionMode)mode;
+
+// Convert windowed selections to multiple discontinuous non-windowed selections.
+- (void)removeWindows;
 
 @end

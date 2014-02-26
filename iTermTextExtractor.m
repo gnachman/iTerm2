@@ -681,7 +681,8 @@ static const int kNumCharsToSearchForDivider = 8;
     int endx = range.columnWindow.length ? range.columnWindow.location + range.columnWindow.length
                                          : [_dataSource width];
     int bound = [_dataSource numberOfLines] - 1;
-    BOOL fullWidth = _logicalWindow.location == 0 && _logicalWindow.length == width;
+    BOOL fullWidth = ((range.columnWindow.location == 0 && range.columnWindow.length == width) ||
+                      range.columnWindow.length <= 0);
     int left = range.columnWindow.length ? range.columnWindow.location : 0;
     for (int y = MAX(0, range.coordRange.start.y); y <= MIN(bound, range.coordRange.end.y); y++) {
         if (y == range.coordRange.end.y) {
@@ -693,7 +694,7 @@ static const int kNumCharsToSearchForDivider = 8;
         
         // Count number of nulls at end of line.
         int numNulls = 0;
-        for (int x = endx - 1; x >= _logicalWindow.location; x--) {
+        for (int x = endx - 1; x >= range.columnWindow.location; x--) {
             if (theLine[x].code == 0) {
                 ++numNulls;
             } else {

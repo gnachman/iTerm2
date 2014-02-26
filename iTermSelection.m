@@ -58,6 +58,41 @@
     return theCopy;
 }
 
+- (NSArray *)nonwindowedComponents {
+    if (self.selectionMode == kiTermSelectionModeBox ||
+        self.range.columnWindow.length <= 0) {
+        return @[ self ];
+    }
+    NSMutableArray *result = [NSMutableArray array];
+    [[self class] enumerateRangesInWindowedRange:self.range block:^(VT100GridCoordRange theRange) {
+        iTermSubSelection *sub =
+            [iTermSubSelection subSelectionWithRange:VT100GridWindowedRangeMake(theRange, 0, 0)
+                                                mode:_selectionMode];
+        sub.connected = YES;
+        [result addObject:sub];
+    }];
+    [[result lastObject] setConnected:NO];
+    return result;
+}
+
++ (void)enumerateRangesInWindowedRange:(VT100GridWindowedRange)windowedRange
+                                 block:(void (^)(VT100GridCoordRange))block {
+    if (windowedRange.columnWindow.length) {
+        int right = windowedRange.columnWindow.location + windowedRange.columnWindow.length;
+        int startX = VT100GridWindowedRangeStart(windowedRange).x;
+        for (int y = windowedRange.coordRange.start.y; y < windowedRange.coordRange.end.y; y++) {
+            block(VT100GridCoordRangeMake(startX, y, right, y));
+            startX = windowedRange.columnWindow.location;
+        }
+        block(VT100GridCoordRangeMake(startX,
+                                      windowedRange.coordRange.end.y,
+                                      VT100GridWindowedRangeEnd(windowedRange).x,
+                                      windowedRange.coordRange.end.y));
+    } else {
+        block(windowedRange.coordRange);
+    }
+}
+
 @end
 
 @interface iTermSelection ()
@@ -647,6 +682,20 @@
     [_delegate selectionDidChange:self];
 }
 
+- (void)removeWindows {
+    if (_live) {
+        [self endLiveSelection];
+    }
+    NSMutableArray *newSubs = [NSMutableArray array];
+    for (iTermSubSelection *sub in _subSelections) {
+        for (iTermSubSelection *subsub in [sub nonwindowedComponents]) {
+            [newSubs addObject:subsub];
+        }
+    }
+    [_subSelections autorelease];
+    _subSelections = [newSubs retain];
+}
+
 - (NSRange)rangeOfIndexesInRange:(VT100GridWindowedRange)range
                           onLine:(int)line
                             mode:(iTermSelectionMode)mode {
@@ -778,9 +827,13 @@
     NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
     int width = [self width];
     for (iTermSubSelection *outer in [self allSubSelections]) {
+        if (outer.connected) {
+            int thePosition = outer.range.coordRange.end.x + outer.range.coordRange.end.y * width;
+            [connectors addIndex:thePosition];
+        }
         __block NSRange theRange = NSMakeRange(0, 0);
-        [self enumerateRangesInWindowedRange:outer.range
-                                       block:^(VT100GridCoordRange outerRange) {
+        [iTermSubSelection enumerateRangesInWindowedRange:outer.range
+                                                    block:^(VT100GridCoordRange outerRange) {
             theRange = NSMakeRange(outerRange.start.x + outerRange.start.y * width,
                                    VT100GridCoordRangeLength(outerRange, width));
             
@@ -829,24 +882,6 @@
         if (stop) {
             break;
         }
-    }
-}
-
-- (void)enumerateRangesInWindowedRange:(VT100GridWindowedRange)windowedRange
-                                 block:(void (^)(VT100GridCoordRange))block {
-    if (windowedRange.columnWindow.length) {
-        int right = windowedRange.columnWindow.location + windowedRange.columnWindow.length;
-        int startX = VT100GridWindowedRangeStart(windowedRange).x;
-        for (int y = windowedRange.coordRange.start.y; y < windowedRange.coordRange.end.y; y++) {
-            block(VT100GridCoordRangeMake(startX, y, right, y));
-            startX = windowedRange.columnWindow.location;
-        }
-        block(VT100GridCoordRangeMake(startX,
-                                      windowedRange.coordRange.end.y,
-                                      VT100GridWindowedRangeEnd(windowedRange).x,
-                                      windowedRange.coordRange.end.y));
-    } else {
-        block(windowedRange.coordRange);
     }
 }
 
