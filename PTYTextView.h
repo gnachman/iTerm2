@@ -156,6 +156,9 @@ typedef enum {
 // Ok to render italic text as italics?
 @property(nonatomic, assign) BOOL useItalicFont;
 
+// Should cursor blink?
+@property(nonatomic, assign) BOOL blinkingCursor;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -241,8 +244,6 @@ typedef enum {
     verticalSpacing:(double)verticalSpacing;
 - (NSRect)scrollViewContentSize;
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
-- (BOOL)blinkingCursor;
-- (void)setBlinkingCursor:(BOOL)bFlag;
 - (void)setBlinkAllowed:(BOOL)value;
 - (void)setCursorType:(ITermCursorType)value;
 - (void)setDimOnlyText:(BOOL)value;

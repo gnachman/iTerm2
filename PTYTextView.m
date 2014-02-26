@@ -190,7 +190,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     BOOL reportingMouseDown;
     
     // blinking cursor
-    BOOL blinkingCursor;
     BOOL showCursor;
     BOOL blinkShow;
     struct timeval lastBlink;
@@ -774,16 +773,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     _useBrightBold = flag;
     [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
-}
-
-- (BOOL)blinkingCursor
-{
-    return blinkingCursor;
-}
-
-- (void)setBlinkingCursor:(BOOL)bFlag
-{
-    blinkingCursor = bFlag;
 }
 
 - (void)setBlinkAllowed:(BOOL)value
@@ -1778,7 +1767,7 @@ NSMutableArray* screens=0;
 
 - (BOOL)_isCursorBlinking
 {
-    if ([self blinkingCursor] &&
+    if (_blinkingCursor &&
         [self isInKeyWindow] &&
         [_delegate textViewIsActiveSession]) {
         return YES;
@@ -8236,7 +8225,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (x1 != oldCursorX || yStart != oldCursorY) {
         lastTimeCursorMoved_ = now;
     }
-    if ([self blinkingCursor] &&
+    if (_blinkingCursor &&
         [self isInKeyWindow] &&
         [_delegate textViewIsActiveSession] &&
         now - lastTimeCursorMoved_ > 0.5) {
@@ -9400,7 +9389,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         lastBlink = now;
         redrawBlink = YES;
 
-        if ([self blinkingCursor] &&
+        if (_blinkingCursor &&
             [self isInKeyWindow]) {
             // Blink flag flipped and there is a blinking cursor. Make it redraw.
             [self setCursorNeedsDisplay];
