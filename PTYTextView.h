@@ -140,6 +140,9 @@ typedef enum {
 // The delegate. Interfaces to the rest of the app for this view.
 @property(nonatomic, assign) id<PTYTextViewDelegate> delegate;
 
+// Array of dictionaries.
+@property(nonatomic, copy) NSArray *smartSelectionRules;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -215,9 +218,6 @@ typedef enum {
 
 // Updates the preferences for semantic history.
 - (void)setTrouterPrefs:(NSDictionary *)prefs;
-
-// Updates the smart selection rules. Is an array of dictionaries.
-- (void)setSmartSelectionRules:(NSArray *)rules;
 
 // Various accessors (TODO: convert as many as possible into properties)
 - (NSFont *)font;

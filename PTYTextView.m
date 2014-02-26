@@ -354,9 +354,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     // Time the selection last changed at or 0 if there's no selection.
     NSTimeInterval selectionTime_;
     
-    // Dictionaries with a regex and a priority.
-    NSArray *smartSelectionRules_;
-    
     // Show a background indicator when in broadcast input mode
     BOOL useBackgroundIndicator_;
     
@@ -554,7 +551,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [drawRectDuration_ release];
     [drawRectInterval_ release];
     [_lastFindCoord release];
-    [smartSelectionRules_ release];
+    [_smartSelectionRules release];
     int i;
     
     if (mouseDownEvent != nil) {
@@ -2667,7 +2664,7 @@ NSMutableArray* screens=0;
         [extractor restrictToLogicalWindowIncludingCoord:coord];
     }
     return [extractor smartSelectionAt:coord
-                             withRules:smartSelectionRules_
+                             withRules:_smartSelectionRules
                         actionRequired:actionRequred
                                  range:rangePtr
                       ignoringNewlines:ignoringNewlines];
@@ -4888,7 +4885,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (BOOL)addCustomActionsToMenu:(NSMenu *)theMenu matchingText:(NSString *)textWindow line:(int)line
 {
     BOOL didAdd = NO;
-    NSArray* rulesArray = smartSelectionRules_ ? smartSelectionRules_ : [SmartSelectionController defaultRules];
+    NSArray* rulesArray = _smartSelectionRules ? _smartSelectionRules : [SmartSelectionController defaultRules];
     const int numRules = [rulesArray count];
 
     for (int j = 0; j < numRules; j++) {
@@ -5854,12 +5851,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)setTrouterPrefs:(NSDictionary *)prefs
 {
     trouter.prefs = prefs;
-}
-
-- (void)setSmartSelectionRules:(NSArray *)rules
-{
-    [smartSelectionRules_ autorelease];
-    smartSelectionRules_ = [rules copy];
 }
 
 - (BOOL)growSelectionLeft
