@@ -161,7 +161,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     PTYFontInfo *secondaryFont;  // non-ascii font, only used if self.useNonAsciiFont is set.
     
     NSColor* colorTable[256];
-    NSColor* defaultCursorColor;
     NSColor* unfocusedSelectionColor;
     NSColor* selectedTextColor;
     NSColor* cursorTextColor;
@@ -559,7 +558,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [_boldColor release];
     [_selectionColor release];
     [unfocusedSelectionColor release];
-    [defaultCursorColor release];
+    [_cursorColor release];
     
     [primaryFont release];
     [secondaryFont release];
@@ -844,9 +843,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setCursorColor:(NSColor*)color
 {
-    [defaultCursorColor release];
-    [color retain];
-    defaultCursorColor = color;
+    [_cursorColor autorelease];
+    _cursorColor = [color retain];
     [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
@@ -877,11 +875,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 - (NSColor*)selectedTextColor
 {
     return selectedTextColor;
-}
-
-- (NSColor *) defaultCursorColor
-{
-    return defaultCursorColor;
 }
 
 - (void)setColorTable:(int)theIndex color:(NSColor*)origColor
@@ -8285,7 +8278,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 [bgColor set];
                 DLog(@"Set cursor color=%@", bgColor);
             } else {
-                bgColor = [self defaultCursorColor];
+                bgColor = _cursorColor;
                 [[bgColor colorWithAlphaComponent:alpha] set];
                 DLog(@"Set cursor color=%@", [bgColor colorWithAlphaComponent:alpha]);
             }

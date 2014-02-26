@@ -180,6 +180,9 @@ typedef enum {
 // Color for selected background.
 @property(nonatomic, retain) NSColor *selectionColor;
 
+// Color for cursor background.
+@property(nonatomic, retain) NSColor *cursorColor;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -275,9 +278,6 @@ typedef enum {
             isBackground:(BOOL)isBackground;
 - (NSColor*)colorFromRed:(int)red green:(int)green blue:(int)blue;
 - (void)setColorTable:(int) theIndex color:(NSColor *) c;
-
-- (NSColor*)defaultCursorColor;
-- (void)setCursorColor:(NSColor*)color;
 
 - (NSColor*)selectedTextColor;
 - (void)setSelectedTextColor:(NSColor *)aColor;

@@ -2577,7 +2577,7 @@ static int gNextSessionID = 1;
 
 - (NSColor *)cursorColor
 {
-    return [TEXTVIEW defaultCursorColor];
+    return [TEXTVIEW cursorColor];
 }
 
 - (void)setCursorColor:(NSColor*)color
