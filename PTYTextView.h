@@ -147,6 +147,9 @@ typedef enum {
 @property(nonatomic, assign) double horizontalSpacing;
 @property(nonatomic, assign) double verticalSpacing;
 
+// Use a different font for bold, if available?
+@property(nonatomic, assign) BOOL useBoldFont;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -233,7 +236,6 @@ typedef enum {
 - (NSRect)scrollViewContentSize;
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
 - (BOOL)useBoldFont;
-- (void)setUseBoldFont:(BOOL)boldFlag;
 - (void)setUseBrightBold:(BOOL)flag;
 - (BOOL)useItalicFont;
 - (void)setUseItalicFont:(BOOL)italicFlag;

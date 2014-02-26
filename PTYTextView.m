@@ -141,9 +141,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     BOOL asciiAntiAlias;
     BOOL nonasciiAntiAlias;  // Only used if self.useNonAsciiFont is set.
     
-    // option to not render in bold
-    BOOL useBoldFont;
-    
     // Option to draw bold text as brighter colors.
     BOOL useBrightBold;
     
@@ -764,14 +761,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [self setNeedsDisplay:YES];
 }
 
-- (BOOL)useBoldFont
-{
-    return useBoldFont;
-}
-
 - (void)setUseBoldFont:(BOOL)boldFlag
 {
-    useBoldFont = boldFlag;
+    _useBoldFont = boldFlag;
     [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
@@ -6626,7 +6618,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     renderBold:(BOOL*)renderBold
                   renderItalic:(BOOL*)renderItalic
 {
-    BOOL isBold = *renderBold && useBoldFont;
+    BOOL isBold = *renderBold && _useBoldFont;
     BOOL isItalic = *renderItalic && useItalicFont;
     *renderBold = NO;
     *renderItalic = NO;
