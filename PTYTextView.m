@@ -165,8 +165,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     double lineWidth;
     double charWidth;
     double charWidthWithoutSpacing, charHeightWithoutSpacing;
-    double horizontalSpacing_;
-    double  verticalSpacing_;
     
     PTYFontInfo *primaryFont;
     PTYFontInfo *secondaryFont;  // non-ascii font, only used if self.useNonAsciiFont is set.
@@ -1198,16 +1196,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return [PTYTextView charSizeForFont:aFont horizontalSpacing:hspace verticalSpacing:vspace baseline:nil];
 }
 
-- (double)horizontalSpacing
-{
-    return horizontalSpacing_;
-}
-
-- (double)verticalSpacing
-{
-    return verticalSpacing_;
-}
-
 - (void)setFont:(NSFont*)aFont
          nafont:(NSFont *)naFont
     horizontalSpacing:(double)horizontalSpacing
@@ -1221,8 +1209,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
     charWidthWithoutSpacing = sz.width;
     charHeightWithoutSpacing = sz.height;
-    horizontalSpacing_ = horizontalSpacing;
-    verticalSpacing_ = verticalSpacing;
+    _horizontalSpacing = horizontalSpacing;
+    _verticalSpacing = verticalSpacing;
     charWidth = ceil(charWidthWithoutSpacing * horizontalSpacing);
     lineHeight = ceil(charHeightWithoutSpacing * verticalSpacing);
 

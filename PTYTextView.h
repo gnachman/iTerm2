@@ -143,6 +143,10 @@ typedef enum {
 // Array of dictionaries.
 @property(nonatomic, copy) NSArray *smartSelectionRules;
 
+// Intercell spacing as a proportion of cell size.
+@property(nonatomic, assign) double horizontalSpacing;
+@property(nonatomic, assign) double verticalSpacing;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -226,8 +230,6 @@ typedef enum {
          nafont:(NSFont *)naFont
     horizontalSpacing:(double)horizontalSpacing
     verticalSpacing:(double)verticalSpacing;
-- (double)horizontalSpacing;
-- (double)verticalSpacing;
 - (NSRect)scrollViewContentSize;
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
 - (BOOL)useBoldFont;
