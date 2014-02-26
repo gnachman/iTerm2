@@ -114,7 +114,6 @@ const int kMaxResultContextWords = 4;
     NSCharacterSet* nonWhitespace = [[NSCharacterSet whitespaceCharacterSet] invertedSet];
 
     iTermTextExtractor *textExtractor = [self textExtractor];
-    // TODO support window
     for (int i = 0; i < kMaxIterations && [context count] < maxWords; ++i) {
         // Move back one position
         --x;
@@ -464,7 +463,6 @@ const int kMaxResultContextWords = 4;
     NSCharacterSet* nonWhitespace = [[NSCharacterSet whitespaceCharacterSet] invertedSet];
 
     iTermTextExtractor *extractor = [self textExtractor];
-    // TODO support window
     do {
         int startX;
         int startY;
@@ -673,6 +671,8 @@ const int kMaxResultContextWords = 4;
 }
 
 - (iTermTextExtractor *)textExtractor {
+    // TODO: It would be nice to support windowed ranges, but it will hurt performance and not
+    // provide a huge benefit.
     return [iTermTextExtractor textExtractorWithDataSource:[[self delegate] popupVT100Screen]];
 }
 

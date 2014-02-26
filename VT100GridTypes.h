@@ -210,6 +210,19 @@ NS_INLINE long long VT100GridCoordDistance(VT100GridCoord a, VT100GridCoord b, i
     return llabs(aPos - bPos);
 }
 
+NS_INLINE long long VT100GridWindowedRangeLength(VT100GridWindowedRange range, int gridWidth) {
+    if (range.coordRange.start.y == range.coordRange.end.y) {
+        return VT100GridWindowedRangeEnd(range).x - VT100GridWindowedRangeStart(range).x;
+    } else {
+        int left = range.columnWindow.location;
+        int right = left + range.columnWindow.length;
+        int numFullLines = MAX(0, (range.coordRange.end.y - range.coordRange.start.y - 1));
+        return ((right - VT100GridWindowedRangeStart(range).x) +  // Chars on first line
+                (VT100GridWindowedRangeEnd(range).x - left) +  // Chars on second line
+                range.columnWindow.length * numFullLines);  // Chars inbetween
+    }
+}
+
 NS_INLINE long long VT100GridCoordRangeLength(VT100GridCoordRange range, int gridWidth) {
     return VT100GridCoordDistance(range.start, range.end, gridWidth);
 }

@@ -315,13 +315,12 @@
     }
     DLog(@"End live selection");
     if (_selectionMode == kiTermSelectionModeBox) {
-        // TODO support window?
         int left = MIN(_range.coordRange.start.x, _range.coordRange.end.x);
         int right = MAX(_range.coordRange.start.x, _range.coordRange.end.x);
         int top = MIN(_range.coordRange.start.y, _range.coordRange.end.y);
         int bottom = MAX(_range.coordRange.start.y, _range.coordRange.end.y);
         _range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(left, top, right, bottom),
-                                            0, 0);  // TODO support window
+                                            0, 0);
         for (int i = top; i <= bottom; i++) {
             VT100GridWindowedRange theRange =
                 VT100GridWindowedRangeMake(VT100GridCoordRangeMake(left, i, right, i), 0, 0);
@@ -432,7 +431,6 @@
          VT100GridWindowedRangeDescription(_range),
          VT100GridWindowedRangeDescription(_initialRange));
     VT100GridWindowedRange newRange = _range;
-    // TODO support windows
     if ([self coord:_range.coordRange.start isBeforeCoord:range.coordRange.end]) {
         // The word you clicked on ends after the start of the existing range.
         if ([self liveRangeIsFlipped]) {
@@ -519,8 +517,12 @@
 }
 
 - (long long)length {
-    // TODO support window
-    return VT100GridCoordRangeLength(_range.coordRange, [self width]);
+    __block int length = 0;
+    const int width = [self width];
+    [self enumerateSelectedRanges:^(VT100GridWindowedRange range, BOOL *stop, BOOL eol) {
+        length += VT100GridWindowedRangeLength(range, width);
+    }];
+    return length;
 }
 
 - (void)setSelectedRange:(VT100GridWindowedRange)selectedRange {
