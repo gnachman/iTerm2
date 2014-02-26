@@ -180,6 +180,9 @@ typedef enum {
 // Color for selected background.
 @property(nonatomic, retain) NSColor *selectionColor;
 
+// Color for selected text.
+@property(nonatomic, retain) NSColor *selectedTextColor;
+
 // Color for cursor background.
 @property(nonatomic, retain) NSColor *cursorColor;
 
@@ -278,9 +281,6 @@ typedef enum {
             isBackground:(BOOL)isBackground;
 - (NSColor*)colorFromRed:(int)red green:(int)green blue:(int)blue;
 - (void)setColorTable:(int) theIndex color:(NSColor *) c;
-
-- (NSColor*)selectedTextColor;
-- (void)setSelectedTextColor:(NSColor *)aColor;
 
 - (NSColor*)cursorTextColor;
 - (void)setCursorTextColor:(NSColor*)color;

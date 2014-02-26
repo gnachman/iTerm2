@@ -162,7 +162,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     
     NSColor* colorTable[256];
     NSColor* unfocusedSelectionColor;
-    NSColor* selectedTextColor;
     NSColor* cursorTextColor;
     
     // transparency
@@ -851,9 +850,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setSelectedTextColor:(NSColor *)aColor
 {
-    [selectedTextColor release];
-    [aColor retain];
-    selectedTextColor = aColor;
+    [_selectedTextColor autorelease];
+    _selectedTextColor = [aColor retain];
     [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
@@ -870,11 +868,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 - (NSColor*)cursorTextColor
 {
     return cursorTextColor;
-}
-
-- (NSColor*)selectedTextColor
-{
-    return selectedTextColor;
 }
 
 - (void)setColorTable:(int)theIndex color:(NSColor*)origColor
@@ -900,7 +893,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             ok = YES;
             switch (theIndex) {
                 case ALTSEM_SELECTED:
-                    color = selectedTextColor;
+                    color = _selectedTextColor;
                     break;
                 case ALTSEM_CURSOR:
                     color = cursorTextColor;
@@ -4512,7 +4505,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate startDownloadOverSCP:scpPath];
     
     NSDictionary *attributes =
-        @{ NSForegroundColorAttributeName: selectedTextColor,
+        @{ NSForegroundColorAttributeName: _selectedTextColor,
            NSBackgroundColorAttributeName: _selectionColor,
            NSFontAttributeName: primaryFont.font };
     NSSize size = [selectedText sizeWithAttributes:attributes];
@@ -6846,7 +6839,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Is a selection.
             isSelection = YES;
             // NOTE: This could be optimized by caching the color.
-            CRunAttrsSetColor(&attrs, storage, [self _dimmedColorFrom:selectedTextColor]);
+            CRunAttrsSetColor(&attrs, storage, [self _dimmedColorFrom:_selectedTextColor]);
         } else {
             // Not a selection.
             if (reversed &&
