@@ -165,6 +165,9 @@ typedef enum {
 // Cursor type
 @property(nonatomic, assign) ITermCursorType cursorType;
 
+// When dimming inactive views, should only text be dimmed (not bg?)
+@property(nonatomic, assign) BOOL dimOnlyText;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -250,7 +253,6 @@ typedef enum {
     verticalSpacing:(double)verticalSpacing;
 - (NSRect)scrollViewContentSize;
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
-- (void)setDimOnlyText:(BOOL)value;
 
 // Color stuff
 - (NSColor*)defaultFGColor;

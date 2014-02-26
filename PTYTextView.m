@@ -313,9 +313,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     // Brightness of background color
     double backgroundBrightness_;
     
-    // Dim everything but the default background color.
-    BOOL dimOnlyText_;
-    
     // For find-cursor animation
     NSWindow *findCursorWindow_;
     FindCursorView *findCursorView_;
@@ -797,7 +794,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setDimOnlyText:(BOOL)value
 {
-    dimOnlyText_ = value;
+    _dimOnlyText = value;
     [dimmedColorCache_ removeAllObjects];
     [[self superview] setNeedsDisplay:YES];
 }
@@ -998,7 +995,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
     // Find a linear interpolation between kCenter and the requested color component
     // in proportion to 1- dimmingAmount_.
-    if (!dimOnlyText_) {
+    if (!_dimOnlyText) {
         const double kCenter = 0.5;
 
         return [NSColor colorWithCalibratedRed:(1 - dimmingAmount_) * r + dimmingAmount_ * kCenter
@@ -1073,7 +1070,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                     bold:(BOOL)isBold
             isBackground:(BOOL)isBackground
 {
-    if (isBackground && dimOnlyText_) {
+    if (isBackground && _dimOnlyText) {
         NSColor *theColor = [self _colorForCode:theIndex
                                           green:green
                                            blue:blue
@@ -6462,7 +6459,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (![self useTransparency]) {
             alpha = 1;
         }
-        if (!dimOnlyText_) {
+        if (!_dimOnlyText) {
             [[self cachedDimmedBackgroundColorWithAlpha:alpha] set];
         } else {
             [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
@@ -6500,7 +6497,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (![self useTransparency]) {
             alpha = 1;
         }
-        if (!dimOnlyText_) {
+        if (!_dimOnlyText) {
             [[self cachedDimmedBackgroundColorWithAlpha:alpha] set];
         } else {
             [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
@@ -6531,7 +6528,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (![self useTransparency]) {
             alpha = 1;
         }
-        if (!dimOnlyText_) {
+        if (!_dimOnlyText) {
             [[self cachedDimmedBackgroundColorWithAlpha:alpha] set];
         } else {
             [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
@@ -6891,7 +6888,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 theLine[i].foregroundColor == ALTSEM_FG_DEFAULT &&
                 theLine[i].foregroundColorMode == ColorModeAlternate) {
                 // Has default foreground color so use background color.
-                if (!dimOnlyText_) {
+                if (!_dimOnlyText) {
                     CRunAttrsSetColor(&attrs, storage, [self _dimmedColorFrom:defaultBGColor]);
                 } else {
                     CRunAttrsSetColor(&attrs, storage, defaultBGColor);
@@ -7992,7 +7989,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                   y,
                                   charsInLine * charWidth,
                                   lineHeight);
-            if (!dimOnlyText_) {
+            if (!_dimOnlyText) {
                 [[self _dimmedColorFrom:defaultBGColor] set];
             } else {
                 [defaultBGColor set];
