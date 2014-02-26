@@ -168,6 +168,9 @@ typedef enum {
 // When dimming inactive views, should only text be dimmed (not bg?)
 @property(nonatomic, assign) BOOL dimOnlyText;
 
+// Foreground color (the default color)
+@property(nonatomic, retain) NSColor *foregroundColor;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -255,9 +258,6 @@ typedef enum {
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
 
 // Color stuff
-- (NSColor*)defaultFGColor;
-- (NSColor*)defaultBGColor;
-- (NSColor*)defaultBoldColor;
 - (NSColor*)colorForCode:(int)theIndex
                    green:(int)green
                     blue:(int)blue
@@ -265,18 +265,26 @@ typedef enum {
                     bold:(BOOL)isBold
             isBackground:(BOOL)isBackground;
 - (NSColor*)colorFromRed:(int)red green:(int)green blue:(int)blue;
-- (NSColor*)selectionColor;
-- (NSColor*)defaultCursorColor;
-- (NSColor*)selectedTextColor;
-- (NSColor*)cursorTextColor;
-- (void)setFGColor:(NSColor*)color;
-- (void)setBGColor:(NSColor*)color;
-- (void)setBoldColor:(NSColor*)color;
 - (void)setColorTable:(int) theIndex color:(NSColor *) c;
+
+- (NSColor*)defaultBGColor;
+- (void)setBGColor:(NSColor*)color;
+
+- (NSColor*)defaultBoldColor;
+- (void)setBoldColor:(NSColor*)color;
+
+- (NSColor*)selectionColor;
 - (void)setSelectionColor:(NSColor *)aColor;
+
+- (NSColor*)defaultCursorColor;
 - (void)setCursorColor:(NSColor*)color;
+
+- (NSColor*)selectedTextColor;
 - (void)setSelectedTextColor:(NSColor *)aColor;
+
+- (NSColor*)cursorTextColor;
 - (void)setCursorTextColor:(NSColor*)color;
+
 - (void)setSmartCursorColor:(BOOL)value;
 - (void)setMinimumContrast:(double)value;
 

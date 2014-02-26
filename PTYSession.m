@@ -2530,7 +2530,7 @@ static int gNextSessionID = 1;
 
 - (NSColor *)foregroundColor
 {
-    return [TEXTVIEW defaultFGColor];
+    return [TEXTVIEW foregroundColor];
 }
 
 - (void)setForegroundColor:(NSColor*)color
@@ -2539,10 +2539,10 @@ static int gNextSessionID = 1;
         return;
     }
 
-    if (([TEXTVIEW defaultFGColor] != color) ||
-       ([[TEXTVIEW defaultFGColor] alphaComponent] != [color alphaComponent])) {
+    if (([TEXTVIEW foregroundColor] != color) ||
+       ([[TEXTVIEW foregroundColor] alphaComponent] != [color alphaComponent])) {
         // Change the fg color for future stuff
-        [TEXTVIEW setFGColor:color];
+        [TEXTVIEW setForegroundColor:color];
     }
 }
 
@@ -5436,7 +5436,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenSetForegroundColor:(NSColor *)color {
-    [TEXTVIEW setFGColor:color];
+    [TEXTVIEW setForegroundColor:color];
 }
 
 - (void)screenSetBackgroundColor:(NSColor *)color {

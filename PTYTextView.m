@@ -161,7 +161,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     PTYFontInfo *secondaryFont;  // non-ascii font, only used if self.useNonAsciiFont is set.
     
     NSColor* colorTable[256];
-    NSColor* defaultFGColor;
     NSColor* defaultBGColor;
     NSColor* defaultBoldColor;
     NSColor* defaultCursorColor;
@@ -558,7 +557,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [resultMap_ release];
     [findResults_ release];
     [findString_ release];
-    [defaultFGColor release];
+    [_foregroundColor release];
     [defaultBGColor release];
     [defaultBoldColor release];
     [selectionColor release];
@@ -611,7 +610,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [self setMarkedTextAttributes:
      [NSDictionary dictionaryWithObjectsAndKeys:
       defaultBGColor, NSBackgroundColorAttributeName,
-      defaultFGColor, NSForegroundColorAttributeName,
+      _foregroundColor, NSForegroundColorAttributeName,
       [self nafont], NSFontAttributeName,
       [NSNumber numberWithInt:(NSUnderlineStyleSingle|NSUnderlineByWordMask)],
       NSUnderlineStyleAttributeName,
@@ -811,11 +810,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     markedTextAttributes = attr;
 }
 
-- (void)setFGColor:(NSColor*)color
+- (void)setForegroundColor:(NSColor*)color
 {
-    [defaultFGColor release];
-    [color retain];
-    defaultFGColor = color;
+    [_foregroundColor release];
+    _foregroundColor = [color retain];
     [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
@@ -886,11 +884,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return selectedTextColor;
 }
 
-- (NSColor*)defaultFGColor
-{
-    return defaultFGColor;
-}
-
 - (NSColor *) defaultBGColor
 {
     return defaultBGColor;
@@ -941,7 +934,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                     if (isBold && _useBrightBold) {
                         color = [self defaultBoldColor];
                     } else {
-                        color = defaultFGColor;
+                        color = _foregroundColor;
                     }
                     break;
                 default:
@@ -2120,7 +2113,7 @@ NSMutableArray* screens=0;
                 if ([[PreferencePanel sharedInstance] traditionalVisualBell]) {
                     image = [[[NSImage alloc] initWithSize: frame.size] autorelease];
                     [image lockFocus];
-                    [defaultFGColor drawSwatchInRect:NSMakeRect(0, 0, frame.size.width, frame.size.width)];
+                    [_foregroundColor drawSwatchInRect:NSMakeRect(0, 0, frame.size.width, frame.size.width)];
                     [image unlockFocus];
                 } else {
                     image = bellImage;
@@ -2203,8 +2196,8 @@ NSMutableArray* screens=0;
     int x = MAX(0, self.frame.size.width - w);
     CGFloat y = line * lineHeight;
     NSColor *bgColor = defaultBGColor;
-    NSColor *fgColor = defaultFGColor;
-    BOOL isDark = ([self perceivedBrightness:defaultFGColor] < kBackgroundConsideredDarkThreshold);
+    NSColor *fgColor = _foregroundColor;
+    BOOL isDark = ([self perceivedBrightness:_foregroundColor] < kBackgroundConsideredDarkThreshold);
     NSColor *shadowColor;
     if (isDark) {
         shadowColor = [NSColor whiteColor];
@@ -8014,7 +8007,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
 
             // Draw an underline.
-            [defaultFGColor set];
+            [_foregroundColor set];
             NSRect s = NSMakeRect(x,
                                   y + lineHeight - 1,
                                   charsInLine * charWidth,
