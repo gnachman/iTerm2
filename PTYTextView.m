@@ -162,7 +162,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     
     NSColor* colorTable[256];
     NSColor* unfocusedSelectionColor;
-    NSColor* cursorTextColor;
     
     // transparency
     double transparency;
@@ -858,16 +857,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setCursorTextColor:(NSColor*)aColor
 {
-    [cursorTextColor release];
-    [aColor retain];
-    cursorTextColor = aColor;
+    [_cursorTextColor autorelease];
+    _cursorTextColor = [aColor retain];
     [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
-}
-
-- (NSColor*)cursorTextColor
-{
-    return cursorTextColor;
 }
 
 - (void)setColorTable:(int)theIndex color:(NSColor*)origColor
@@ -896,7 +889,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                     color = _selectedTextColor;
                     break;
                 case ALTSEM_CURSOR:
-                    color = cursorTextColor;
+                    color = _cursorTextColor;
                     break;
                 case ALTSEM_BG_DEFAULT:
                     color = _backgroundColor;
