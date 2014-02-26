@@ -191,7 +191,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     id<PTYTextViewDelegate> _delegate;
     
     // Underlined selection range (inclusive of all values), indicating clickable url.
-    int _underlineStartX, _underlineStartY, _underlineEndX, _underlineEndY;
+    VT100GridWindowedRange _underlineRange;
     BOOL mouseDown;
     BOOL mouseDragged;
     BOOL mouseDownOnSelection;
@@ -481,7 +481,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         _selection = [[iTermSelection alloc] init];
         _selection.delegate = self;
         _oldSelection = [_selection copy];
-        _underlineStartX = _underlineStartY = _underlineEndX = _underlineEndY = -1;
+        _underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
         markedText = nil;
         gettimeofday(&lastBlink, NULL);
         [[self window] useOptimizedDrawing:YES];
@@ -3289,7 +3289,7 @@ NSMutableArray* screens=0;
 // Reset underlined chars indicating cmd-clicakble url.
 - (void)removeUnderline
 {
-    _underlineStartX = _underlineStartY = _underlineEndX = _underlineEndY = -1;
+    _underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
     if (self.currentUnderlineHostname) {
         [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
     }
@@ -3367,11 +3367,7 @@ NSMutableArray* screens=0;
                                                          y:y
                                     respectingHardNewlines:[self respectHardNewlinesForURLs]];
             if (action) {
-                // TODO: Make underline into windowed range.
-                _underlineStartX = action.range.coordRange.start.x;
-                _underlineStartY = action.range.coordRange.start.y;
-                _underlineEndX = action.range.coordRange.end.x;
-                _underlineEndY = action.range.coordRange.end.y;
+                _underlineRange = action.range;
                 
                 if (action.actionType == kURLActionOpenURL) {
                     NSURL *url = [NSURL URLWithString:action.string];
@@ -6880,6 +6876,44 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return memoizedContrastingColor_;
 }
 
+- (NSRange)underlinedRangeOnLine:(int)row {
+    if (_underlineRange.coordRange.start.x < 0) {
+        return NSMakeRange(0, 0);
+    }
+    
+    if (row == _underlineRange.coordRange.start.y && row == _underlineRange.coordRange.end.y) {
+        // Whole underline is on one line.
+        const int start = VT100GridWindowedRangeStart(_underlineRange).x;
+        const int end = VT100GridWindowedRangeEnd(_underlineRange).x;
+        return NSMakeRange(start, end - start);
+    } else if (row == _underlineRange.coordRange.start.y) {
+        // Underline spans multiple lines, starting at this one.
+        const int start = VT100GridWindowedRangeStart(_underlineRange).x;
+        const int end =
+            _underlineRange.columnWindow.length > 0 ? VT100GridRangeMax(_underlineRange.columnWindow) + 1
+                                                    : [dataSource width];
+        return NSMakeRange(start, end - start);
+    } else if (row == _underlineRange.coordRange.end.y) {
+        // Underline spans multiple lines, ending at this one.
+        const int start =
+            _underlineRange.columnWindow.length > 0 ? _underlineRange.columnWindow.location : 0;
+        const int end = VT100GridWindowedRangeEnd(_underlineRange).x;
+        return NSMakeRange(start, end - start);
+    } else if (row > _underlineRange.coordRange.start.y && row < _underlineRange.coordRange.end.y) {
+        // Underline spans multiple lines. This is not the first or last line, so all chars
+        // in it are underlined.
+        const int start =
+            _underlineRange.columnWindow.length > 0 ? _underlineRange.columnWindow.location : 0;
+        const int end =
+            _underlineRange.columnWindow.length > 0 ? VT100GridRangeMax(_underlineRange.columnWindow) + 1
+                                                    : [dataSource width];
+        return NSMakeRange(start, end - start);
+    } else {
+        // No selection on this line.
+        return NSMakeRange(0, 0);
+    }
+}
+
 - (CRun *)_constructRuns:(NSPoint)initialPoint
                  theLine:(screen_char_t *)theLine
                      row:(int)row
@@ -6903,31 +6937,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int lastBold = 2;  // Bold is a one-bit field so it can never equal 2.
     NSColor *lastColor = nil;
     CGFloat curX = 0;
+    NSRange underlinedRange = [self underlinedRangeOnLine:row];
+    const int underlineStartsAt = underlinedRange.location;
+    const int underlineEndsAt = NSMaxRange(underlinedRange);
+    
     for (int i = indexRange.location; i < indexRange.location + indexRange.length; i++) {
+        inUnderlinedRange = (i >= underlineStartsAt && i < underlineEndsAt);
         if (theLine[i].code == DWC_RIGHT) {
             continue;
-        }
-        if (_underlineStartX >= 0) {
-            if (row == _underlineStartY && row == _underlineEndY) {
-                // Whole underline is on one line; this char is underlined if between start,end X.
-                inUnderlinedRange = (i >= _underlineStartX && i < _underlineEndX);
-            } else if (row == _underlineStartY && i >= _underlineStartX) {
-                // Underline spans multiple lines, starting at this one. This char is underlined if
-                // at least at the startX column.
-                inUnderlinedRange = YES;
-            } else if (row == _underlineEndY && i < _underlineEndX) {
-                // Underline spans multiple lines, ending at this one. This char is underlined if
-                // before or at the endX column.
-                inUnderlinedRange = YES;
-            } else if (row > _underlineStartY && row < _underlineEndY) {
-                // Underline spans multiple lines. This is not the first or last line, so all chars
-                // in it are underlined.
-                inUnderlinedRange = YES;
-            } else {
-                // Underline spans multiple lines. This is the first or last line, but outside the
-                // underlined range.
-                inUnderlinedRange = NO;
-            }
         }
 
         BOOL doubleWidth = i < width - 1 && (theLine[i + 1].code == DWC_RIGHT);
@@ -7040,6 +7057,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Chatacter hidden because of blinking.
             drawable = NO;
         }
+
         if (theLine[i].underline || inUnderlinedRange) {
             // This is not as fast as possible, but is nice and simple. Always draw underlined text
             // even if it's just a blank.
@@ -8796,38 +8814,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 
-// Returns the coord gotten by starting at |coord| and advancing |n| steps.
-- (VT100GridCoord)coord:(VT100GridCoord)coord plus:(int)n
-{
-    coord.x += n;
-    int width = [dataSource width];
-    while (coord.x < 0) {
-        coord.y--;
-        coord.x += width;
-    }
-    while (coord.x >= width) {
-        coord.x -= width;
-        coord.y++;
-    }
-    return coord;
-}
-                                 
-// Returns the range of coordinates gotten by starting at |coord|, backing up
-// |backup| steps, and having its terminus |length| cells after that location.
-- (VT100GridCoordRange)coordRangeFromCoord:(VT100GridCoord)coord
-                                       startingCharsBefore:(int)backup
-                                                    length:(int)length
-{
-    VT100GridCoordRange range;
-    range.start = [self coord:coord plus:-backup];
-    range.end = [self coord:coord plus:length - backup];
-    return range;
-}
-                                 
 - (URLAction *)urlActionForClickAtX:(int)x y:(int)y respectingHardNewlines:(BOOL)respectHardNewlines
 {
-    VT100GridCoord coord = VT100GridCoordMake(x, y);
+    const VT100GridCoord coord = VT100GridCoordMake(x, y);
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
+    if ([extractor characterAt:coord].code == 0) {
+        return nil;
+    }
+    [extractor restrictToLogicalWindowIncludingCoord:coord];
     NSString *prefix = [extractor wrappedStringAt:coord
                                           forward:NO
                               respectHardNewlines:respectHardNewlines];
@@ -8867,10 +8861,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"Accepting filename from brute force search: %@", filename);
         // If you clicked on an existing filename, use it.
         URLAction *action = [URLAction urlActionToOpenExistingFile:filename];
-        VT100GridCoordRange coordRange = [self coordRangeFromCoord:VT100GridCoordMake(x, y)
-                                               startingCharsBefore:fileCharsTaken
-                                                            length:filename.length];
-        action.range = VT100GridWindowedRangeMake(coordRange, 0, 0);  // TOOD: Support window (trouter should return it?)
+        VT100GridWindowedRange range;
+        
+        range.coordRange.start = [extractor coord:coord plus:-fileCharsTaken];
+        range.coordRange.end = [extractor coord:range.coordRange.start plus:filename.length];
+        range.columnWindow = extractor.logicalWindow;
+        action.range = range;
+
         action.fullPath = [trouter getFullPath:filename
                               workingDirectory:workingDirectory
                                     lineNumber:NULL];
@@ -8940,10 +8937,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"%@ looks like a URL and it's not ruled out based on scheme. Go for it.",
              [originalMatch substringWithRange:NSMakeRange(offset, length)]);
         URLAction *action = [URLAction urlActionToOpenURL:possibleUrl];
-        VT100GridCoordRange coordRange = [self coordRangeFromCoord:VT100GridCoordMake(x, y)
-                                               startingCharsBefore:prefixChars - offset
-                                                            length:length];
-        action.range = VT100GridWindowedRangeMake(coordRange, 0, 0);
+        
+        VT100GridWindowedRange range;
+        range.coordRange.start = [extractor coord:coord
+                                             plus:-(prefixChars - offset)];
+        range.coordRange.end = [extractor coord:range.coordRange.start plus:length];
+        range.columnWindow = extractor.logicalWindow;
+        action.range = range;
         return action;
     } else {
         DLog(@"%@ is either not plausibly a URL or was ruled out based on scheme. Fail.",
@@ -8955,7 +8955,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)hostnameLookupFailed:(NSNotification *)notification {
     if ([[notification object] isEqualToString:self.currentUnderlineHostname]) {
         self.currentUnderlineHostname = nil;
-        _underlineStartX = _underlineStartY = _underlineEndX = _underlineEndY = -1;
+        [self removeUnderline];
+        _underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
         [self setNeedsDisplay:YES];
     }
 }

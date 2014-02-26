@@ -348,6 +348,32 @@ static const int kNumCharsToSearchForDivider = 8;
     return coord;
 }
 
+- (VT100GridCoord)coord:(VT100GridCoord)coord plus:(int)n {
+    int left = _logicalWindow.length >= 0 ? _logicalWindow.location : 0;
+    int right = [self xLimit];
+    int span = right - left;
+    
+    // Advance it by n.
+    coord.x += n;
+    
+    // If n was negative, move it right and up until it's legal.
+    while (coord.x < left) {
+        coord.y--;
+        coord.x += span;
+    }
+    
+    // If n was positive, move it left and down until it's legal.
+    while (coord.x >= right) {
+        coord.x -= span;
+        coord.y++;
+    }
+    
+    // Make sure y value is legit.
+    coord.y = MAX(0, MIN([_dataSource numberOfLines] - 1, coord.y));
+
+    return coord;
+}
+
 - (VT100GridCoord)searchFrom:(VT100GridCoord)start
                      forward:(BOOL)forward
   forCharacterMatchingFilter:(BOOL (^)(screen_char_t, VT100GridCoord))block {
@@ -513,9 +539,7 @@ static const int kNumCharsToSearchForDivider = 8;
                                    if (trimSelectionTrailingSpaces) {
                                        [result trimTrailingWhitespace];
                                    }
-                                   if (includeLastNewline) {
-                                       [result appendString:@"\n"];
-                                   }
+                                   [result appendString:@"\n"];
                                }
                                return NO;
                            }];
@@ -635,7 +659,7 @@ static const int kNumCharsToSearchForDivider = 8;
                       forward:(BOOL)forward
           respectHardNewlines:(BOOL)respectHardNewlines
 {
-    if ([self xLimit] != [_dataSource width]) {
+    if (_logicalWindow.length > 0) {
         respectHardNewlines = NO;
     }
     VT100GridWindowedRange range;
@@ -647,7 +671,7 @@ static const int kNumCharsToSearchForDivider = 8;
                                     MAX(0, coord.y - 10),
                                     [self xLimit],
                                     MIN([_dataSource numberOfLines] - 1, coord.y + 10));
-        range = VT100GridWindowedRangeMake(coordRange, 0, 0);
+        range = [self windowedRangeWithRange:coordRange];
     }
     if (forward) {
         range.coordRange.start = coord;
@@ -670,7 +694,7 @@ static const int kNumCharsToSearchForDivider = 8;
               includeLastNewline:NO
           trimTrailingWhitespace:NO
                     cappedAtSize:-1];
-    return [content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+    return content;
 }
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range

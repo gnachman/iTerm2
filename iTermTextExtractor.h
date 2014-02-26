@@ -68,6 +68,7 @@ typedef enum {
 // Returns next/previous coordinate. Returns first/last legal coord if none exists.
 - (VT100GridCoord)successorOfCoord:(VT100GridCoord)coord;
 - (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord;
+- (VT100GridCoord)coord:(VT100GridCoord)coord plus:(int)delta;
 
 // block should return YES to stop searching and use the coordinate it was passed as the result.
 - (VT100GridCoord)searchFrom:(VT100GridCoord)start
@@ -97,5 +98,7 @@ typedef enum {
 - (NSAttributedString *)attributedContentInRange:(VT100GridWindowedRange)range
                                              pad:(BOOL)pad
                                attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider;
+
+- (screen_char_t)characterAt:(VT100GridCoord)coord;
 
 @end
