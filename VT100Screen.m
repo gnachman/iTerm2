@@ -2092,18 +2092,23 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
 }
 
+- (void)scrollScreenIntoHistory {
+    // Scroll the top lines of the screen into history, up to and including the last non-
+    // empty line.
+    const int n = [currentGrid_ numberOfLinesUsed];
+    for (int i = 0; i < n; i++) {
+        [self incrementOverflowBy:
+            [currentGrid_ scrollWholeScreenUpIntoLineBuffer:linebuffer_
+                                        unlimitedScrollback:unlimitedScrollback_]];
+    }
+}
+
 - (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after
 {
     int x1, yStart, x2, y2;
 
     if (before && after) {
-        // Scroll the top lines of the screen into history, up to and including the last non-
-        // empty line.
-        const int n = [currentGrid_ numberOfLinesUsed];
-        for (int i = 0; i < n; i++) {
-            [self incrementOverflowBy:[currentGrid_ scrollWholeScreenUpIntoLineBuffer:linebuffer_
-                                                                  unlimitedScrollback:unlimitedScrollback_]];
-        }
+        [self scrollScreenIntoHistory];
         x1 = 0;
         yStart = 0;
         x2 = currentGrid_.size.width - 1;
@@ -2118,6 +2123,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         yStart = currentGrid_.cursor.y;
         x2 = currentGrid_.size.width - 1;
         y2 = currentGrid_.size.height - 1;
+        if (x1 == 0 && yStart == 0) {
+            // Save the whole screen. This helps the "screen" terminal, where CSI H CSI J is used to
+            // clear the screen.
+            [self scrollScreenIntoHistory];
+        }
     } else {
         return;
     }
