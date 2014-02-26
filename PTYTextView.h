@@ -137,6 +137,9 @@ typedef enum {
 // Provider for screen contents, plus misc. other stuff.
 @property(nonatomic, assign) id<PTYTextViewDataSource> dataSource;
 
+// The delegate. Interfaces to the rest of the app for this view.
+@property(nonatomic, assign) id<PTYTextViewDelegate> delegate;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -145,9 +148,6 @@ typedef enum {
 + (NSSize)charSizeForFont:(NSFont*)aFont
         horizontalSpacing:(double)hspace
           verticalSpacing:(double)vspace;
-
-- (id)delegate;
-- (void)setDelegate:(id)delegate;
 
 // Sets the "changed since last Exposé" flag to NO and returns its original value.
 - (BOOL)getAndResetChangedSinceLastExpose;

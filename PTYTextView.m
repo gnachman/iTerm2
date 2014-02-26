@@ -185,9 +185,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     double transparency;
     double blend;
     
-    // data source
-    id<PTYTextViewDelegate> _delegate;
-    
     // Underlined selection range (inclusive of all values), indicating clickable url.
     VT100GridWindowedRange _underlineRange;
     BOOL mouseDown;
@@ -1278,16 +1275,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     } else if ([[PreferencePanel sessionsInstance] onScreen]) {
         [[PreferencePanel sessionsInstance] changeFont:fontManager];
     }
-}
-
-- (id)delegate
-{
-    return _delegate;
-}
-
-- (void)setDelegate:(id)aDelegate
-{
-    _delegate = aDelegate;
 }
 
 - (double)lineHeight

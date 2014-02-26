@@ -4736,7 +4736,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (BOOL)textViewInSameTabAsTextView:(PTYTextView *)other {
-    return [self tab] == [other.delegate tab];
+    PTYTab *myTab = [self tab];
+    for (PTYSession *session in [myTab sessions]) {
+        if ([session TEXTVIEW] == other) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (BOOL)textViewIsActiveSession
