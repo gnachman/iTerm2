@@ -162,7 +162,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     
     NSColor* colorTable[256];
     NSColor* defaultCursorColor;
-    NSColor* selectionColor;
     NSColor* unfocusedSelectionColor;
     NSColor* selectedTextColor;
     NSColor* cursorTextColor;
@@ -558,7 +557,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [_foregroundColor release];
     [_backgroundColor release];
     [_boldColor release];
-    [selectionColor release];
+    [_selectionColor release];
     [unfocusedSelectionColor release];
     [defaultCursorColor release];
     
@@ -1076,16 +1075,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                      alpha:1];
 }
 
-- (NSColor *)selectionColor
-{
-    return selectionColor;
-}
-
 - (NSColor *)selectionColorForCurrentFocus
 {
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
     if (self == frontTextView) {
-        return selectionColor;
+        return _selectionColor;
     } else {
         return unfocusedSelectionColor;
     }
@@ -1093,9 +1087,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setSelectionColor:(NSColor *)aColor
 {
-    [selectionColor release];
-    [aColor retain];
-    selectionColor = aColor;
+    [_selectionColor autorelease];
+    _selectionColor = [aColor retain];
 
     [unfocusedSelectionColor autorelease];
     CGFloat r,g,b;
@@ -4527,7 +4520,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     
     NSDictionary *attributes =
         @{ NSForegroundColorAttributeName: selectedTextColor,
-           NSBackgroundColorAttributeName: selectionColor,
+           NSBackgroundColorAttributeName: _selectionColor,
            NSFontAttributeName: primaryFont.font };
     NSSize size = [selectedText sizeWithAttributes:attributes];
     size.height = lineHeight;

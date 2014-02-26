@@ -177,6 +177,9 @@ typedef enum {
 // Color for bold text
 @property(nonatomic, retain) NSColor *boldColor;
 
+// Color for selected background.
+@property(nonatomic, retain) NSColor *selectionColor;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -272,9 +275,6 @@ typedef enum {
             isBackground:(BOOL)isBackground;
 - (NSColor*)colorFromRed:(int)red green:(int)green blue:(int)blue;
 - (void)setColorTable:(int) theIndex color:(NSColor *) c;
-
-- (NSColor*)selectionColor;
-- (void)setSelectionColor:(NSColor *)aColor;
 
 - (NSColor*)defaultCursorColor;
 - (void)setCursorColor:(NSColor*)color;
