@@ -131,6 +131,12 @@ typedef enum {
 // Draw a highlight along the entire line the cursor is on.
 @property(nonatomic, assign) BOOL highlightCursorLine;
 
+// Use the non-ascii font? If not set, use the regular font for all characters.
+@property(nonatomic, assign) BOOL useNonAsciiFont;
+
+// Provider for screen contents, plus misc. other stuff.
+@property(nonatomic, assign) id<PTYTextViewDataSource> dataSource;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -140,8 +146,6 @@ typedef enum {
         horizontalSpacing:(double)hspace
           verticalSpacing:(double)vspace;
 
-- (id<PTYTextViewDataSource>)dataSource;
-- (void)setDataSource:(id<PTYTextViewDataSource>)aDataSource;
 - (id)delegate;
 - (void)setDelegate:(id)delegate;
 
@@ -226,7 +230,6 @@ typedef enum {
 - (double)verticalSpacing;
 - (NSRect)scrollViewContentSize;
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
-- (void)setUseNonAsciiFont:(BOOL)useNonAsciiFont;
 - (BOOL)useBoldFont;
 - (void)setUseBoldFont:(BOOL)boldFlag;
 - (void)setUseBrightBold:(BOOL)flag;

@@ -1324,8 +1324,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */,
-				A63BA39E18B27B92002BE075 /* iTermTextExtractor.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -1379,6 +1377,7 @@
 				DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */,
 				A60014FA18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m */,
 				A63BA39418A9CB43002BE075 /* iTermSelection.m */,
+				A63BA39E18B27B92002BE075 /* iTermTextExtractor.m */,
 				1D29732614082676004C5DBE /* MovePaneController.m */,
 				1D085F8B16F0328B00B7FCE9 /* PasteViewController.m */,
 				1D8255FF146881EC007CAE78 /* PointerController.m */,
@@ -1399,8 +1398,6 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
-				A63BA39318A9CB43002BE075 /* iTermSelection.h */,
-				A6E74755188C66CF005355CF /* iTermExposeTabView.h */,
 				1D9DCC14142D7FC10016228A /* AlertTrigger.h */,
 				1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */,
 				A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */,
@@ -1454,6 +1451,7 @@
 				1D4F359F1813386600699FDF /* iTermCursor.h */,
 				1DDBC61C12E2BCDC00BC3868 /* iTermExpose.h */,
 				A6E7475A188C6731005355CF /* iTermExposeGridView.h */,
+				A6E74755188C66CF005355CF /* iTermExposeTabView.h */,
 				A6E7475F188C679C005355CF /* iTermExposeView.h */,
 				A6E74750188C6692005355CF /* iTermExposeWindow.h */,
 				1D2F3B3B1516BA460044C337 /* iTermFontPanel.h */,
@@ -1461,6 +1459,8 @@
 				1D407A2814BABE8700BD5035 /* iTermKeyBindingMgr.h */,
 				A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */,
 				1DAED99012EDF923005E49ED /* iTermSearchField.h */,
+				A63BA39318A9CB43002BE075 /* iTermSelection.h */,
+				A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */,
 				A63F40A2183F3B78003A6A6D /* LineBlock.h */,
 				1D72438F11F416F300BD4924 /* LineBuffer.h */,
 				A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */,
