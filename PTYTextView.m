@@ -195,8 +195,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     struct timeval lastBlink;
     int oldCursorX, oldCursorY;
     
-    BOOL blinkAllowed_;
-    
     // trackingRect tab
     NSTrackingArea *trackingArea;
     
@@ -777,7 +775,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setBlinkAllowed:(BOOL)value
 {
-    blinkAllowed_ = value;
+    _blinkAllowed = value;
     [self setNeedsDisplay:YES];
 }
 
@@ -1778,7 +1776,7 @@ NSMutableArray* screens=0;
 
 - (BOOL)_charBlinks:(screen_char_t)sct
 {
-    return blinkAllowed_ && sct.blink;
+    return _blinkAllowed && sct.blink;
 }
 
 - (BOOL)_isTextBlinking
@@ -1806,7 +1804,7 @@ NSMutableArray* screens=0;
 
 - (BOOL)_isAnythingBlinking
 {
-    return [self _isCursorBlinking] || (blinkAllowed_ && [self _isTextBlinking]);
+    return [self _isCursorBlinking] || (_blinkAllowed && [self _isTextBlinking]);
 }
 
 - (BOOL)refresh
@@ -7715,7 +7713,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             j++;
             continue;
         }
-        if (blinkAllowed_ && theLine[j].blink) {
+        if (_blinkAllowed && theLine[j].blink) {
             anyBlinking = YES;
         }
 
@@ -9296,7 +9294,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DebugLog([_dataSource debugString]);
     }
 
-    return blinkAllowed_ && anythingIsBlinking;
+    return _blinkAllowed && anythingIsBlinking;
 }
 
 - (void)invalidateInputMethodEditorRect
@@ -9413,7 +9411,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         lineEnd = [_dataSource numberOfLines];
     }
     for (int y = lineStart; y < lineEnd; y++) {
-        if (blinkAllowed_) {
+        if (_blinkAllowed) {
             // First, mark blinking chars as dirty.
             screen_char_t* theLine = [_dataSource getLineAtIndex:y];
             for (int x = 0; x < width; x++) {

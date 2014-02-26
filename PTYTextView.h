@@ -159,6 +159,9 @@ typedef enum {
 // Should cursor blink?
 @property(nonatomic, assign) BOOL blinkingCursor;
 
+// Is blinking text drawn blinking?
+@property(nonatomic, assign) BOOL blinkAllowed;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -244,7 +247,6 @@ typedef enum {
     verticalSpacing:(double)verticalSpacing;
 - (NSRect)scrollViewContentSize;
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
-- (void)setBlinkAllowed:(BOOL)value;
 - (void)setCursorType:(ITermCursorType)value;
 - (void)setDimOnlyText:(BOOL)value;
 
