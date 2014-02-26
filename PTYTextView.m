@@ -141,9 +141,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     BOOL asciiAntiAlias;
     BOOL nonasciiAntiAlias;  // Only used if self.useNonAsciiFont is set.
     
-    // Option to draw bold text as brighter colors.
-    BOOL useBrightBold;
-    
     // option to not render in italic
     BOOL useItalicFont;
     
@@ -782,7 +779,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setUseBrightBold:(BOOL)flag
 {
-    useBrightBold = flag;
+    _useBrightBold = flag;
     [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
@@ -967,7 +964,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                     color = defaultBGColor;
                     break;
                 case ALTSEM_FG_DEFAULT:
-                    if (isBold && useBrightBold) {
+                    if (isBold && _useBrightBold) {
                         color = [self defaultBoldColor];
                     } else {
                         color = defaultFGColor;
@@ -992,7 +989,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             // display setting (esc[1m) as "bold or bright". We make it a
             // preference.
             if (isBold &&
-                useBrightBold &&
+                _useBrightBold &&
                 (theIndex < 8)) { // Only colors 0-7 can be made "bright".
                 theIndex |= 8;  // set "bright" bit.
             }
@@ -8420,8 +8417,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                 }
                             }
 
-                            BOOL saved = useBrightBold;
-                            useBrightBold = NO;
+                            BOOL saved = _useBrightBold;
+                            _useBrightBold = NO;
                             [self _drawCharacter:screenChar
                                          fgColor:fgColor
                                          fgGreen:fgGreen
@@ -8433,7 +8430,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                      doubleWidth:double_width
                                    overrideColor:overrideColor
                                          context:ctx];
-                            useBrightBold = saved;
+                            _useBrightBold = saved;
                         } else {
                             // Non-inverted cursor or cursor is frame
                             int theColor;
