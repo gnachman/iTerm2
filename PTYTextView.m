@@ -141,9 +141,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     BOOL asciiAntiAlias;
     BOOL nonasciiAntiAlias;  // Only used if self.useNonAsciiFont is set.
     
-    // option to not render in italic
-    BOOL useItalicFont;
-    
     // NSTextInput support
     BOOL IM_INPUT_INSERT;
     NSRange IM_INPUT_SELRANGE;
@@ -765,14 +762,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [self setNeedsDisplay:YES];
 }
 
-- (BOOL)useItalicFont
-{
-    return useItalicFont;
-}
-
 - (void)setUseItalicFont:(BOOL)italicFlag
 {
-    useItalicFont = italicFlag;
+    _useItalicFont = italicFlag;
     [self setNeedsDisplay:YES];
 }
 
@@ -6616,7 +6608,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                   renderItalic:(BOOL*)renderItalic
 {
     BOOL isBold = *renderBold && _useBoldFont;
-    BOOL isItalic = *renderItalic && useItalicFont;
+    BOOL isItalic = *renderItalic && _useItalicFont;
     *renderBold = NO;
     *renderItalic = NO;
     PTYFontInfo* theFont;

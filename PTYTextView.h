@@ -153,6 +153,9 @@ typedef enum {
 // Use a bright version of the text color for bold text?
 @property(nonatomic, assign) BOOL useBrightBold;
 
+// Ok to render italic text as italics?
+@property(nonatomic, assign) BOOL useItalicFont;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -238,8 +241,6 @@ typedef enum {
     verticalSpacing:(double)verticalSpacing;
 - (NSRect)scrollViewContentSize;
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
-- (BOOL)useItalicFont;
-- (void)setUseItalicFont:(BOOL)italicFlag;
 - (BOOL)blinkingCursor;
 - (void)setBlinkingCursor:(BOOL)bFlag;
 - (void)setBlinkAllowed:(BOOL)value;
