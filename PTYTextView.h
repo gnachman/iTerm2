@@ -171,6 +171,9 @@ typedef enum {
 // Foreground color (the default color)
 @property(nonatomic, retain) NSColor *foregroundColor;
 
+// Background color (the default color)
+@property(nonatomic, retain) NSColor *backgroundColor;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -266,9 +269,6 @@ typedef enum {
             isBackground:(BOOL)isBackground;
 - (NSColor*)colorFromRed:(int)red green:(int)green blue:(int)blue;
 - (void)setColorTable:(int) theIndex color:(NSColor *) c;
-
-- (NSColor*)defaultBGColor;
-- (void)setBGColor:(NSColor*)color;
 
 - (NSColor*)defaultBoldColor;
 - (void)setBoldColor:(NSColor*)color;

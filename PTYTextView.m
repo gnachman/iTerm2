@@ -161,7 +161,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     PTYFontInfo *secondaryFont;  // non-ascii font, only used if self.useNonAsciiFont is set.
     
     NSColor* colorTable[256];
-    NSColor* defaultBGColor;
     NSColor* defaultBoldColor;
     NSColor* defaultCursorColor;
     NSColor* selectionColor;
@@ -558,7 +557,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [findResults_ release];
     [findString_ release];
     [_foregroundColor release];
-    [defaultBGColor release];
+    [_backgroundColor release];
     [defaultBoldColor release];
     [selectionColor release];
     [unfocusedSelectionColor release];
@@ -609,7 +608,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 - (void)updateMarkedTextAttributes {
     [self setMarkedTextAttributes:
      [NSDictionary dictionaryWithObjectsAndKeys:
-      defaultBGColor, NSBackgroundColorAttributeName,
+      _backgroundColor, NSBackgroundColorAttributeName,
       _foregroundColor, NSForegroundColorAttributeName,
       [self nafont], NSFontAttributeName,
       [NSNumber numberWithInt:(NSUnderlineStyleSingle|NSUnderlineByWordMask)],
@@ -812,7 +811,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setForegroundColor:(NSColor*)color
 {
-    [_foregroundColor release];
+    [_foregroundColor autorelease];
     _foregroundColor = [color retain];
     [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
@@ -821,15 +820,14 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 - (void)updateScrollerForBackgroundColor
 {
     PTYScroller *scroller = [_delegate textViewVerticalScroller];
-    BOOL isDark = ([self perceivedBrightness:defaultBGColor] < kBackgroundConsideredDarkThreshold);
+    BOOL isDark = ([self perceivedBrightness:_backgroundColor] < kBackgroundConsideredDarkThreshold);
     [scroller setHasDarkBackground:isDark];
 }
 
-- (void)setBGColor:(NSColor*)color
+- (void)setBackgroundColor:(NSColor*)color
 {
-    [defaultBGColor release];
-    [color retain];
-    defaultBGColor = color;
+    [_backgroundColor autorelease];
+    _backgroundColor = [color retain];
     backgroundBrightness_ = PerceivedBrightness([color redComponent], [color greenComponent], [color blueComponent]);
     [self updateScrollerForBackgroundColor];
     [dimmedColorCache_ removeAllObjects];
@@ -884,11 +882,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return selectedTextColor;
 }
 
-- (NSColor *) defaultBGColor
-{
-    return defaultBGColor;
-}
-
 - (NSColor *) defaultBoldColor
 {
     return defaultBoldColor;
@@ -928,7 +921,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                     color = cursorTextColor;
                     break;
                 case ALTSEM_BG_DEFAULT:
-                    color = defaultBGColor;
+                    color = _backgroundColor;
                     break;
                 case ALTSEM_FG_DEFAULT:
                     if (isBold && _useBrightBold) {
@@ -2195,7 +2188,7 @@ NSMutableArray* screens=0;
     int w = size.width + MARGIN;
     int x = MAX(0, self.frame.size.width - w);
     CGFloat y = line * lineHeight;
-    NSColor *bgColor = defaultBGColor;
+    NSColor *bgColor = _backgroundColor;
     NSColor *fgColor = _foregroundColor;
     BOOL isDark = ([self perceivedBrightness:_foregroundColor] < kBackgroundConsideredDarkThreshold);
     NSColor *shadowColor;
@@ -2231,7 +2224,7 @@ NSMutableArray* screens=0;
 - (void)drawOutlineInRect:(NSRect)rect topOnly:(BOOL)topOnly
 {
     if ([_delegate textViewTabHasMaximizedPanel]) {
-        NSColor *color = [self defaultBGColor];
+        NSColor *color = _backgroundColor;
         double r = [color redComponent];
         double g = [color greenComponent];
         double b = [color blueComponent];
@@ -6420,7 +6413,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     if (!cachedBackgroundColor_ || cachedBackgroundColorAlpha_ != alpha) {
         [cachedBackgroundColor_ release];
-        cachedBackgroundColor_ = [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] retain];
+        cachedBackgroundColor_ = [[self _dimmedColorFrom:[_backgroundColor colorWithAlphaComponent:alpha]] retain];
         cachedBackgroundColorAlpha_ = alpha;
     }
     return cachedBackgroundColor_;
@@ -6455,7 +6448,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (!_dimOnlyText) {
             [[self cachedDimmedBackgroundColorWithAlpha:alpha] set];
         } else {
-            [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
+            [[_backgroundColor colorWithAlphaComponent:alpha] set];
         }
         NSRect fillDest = bgRect;
         fillDest.origin.y += fillDest.size.height;
@@ -6493,7 +6486,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (!_dimOnlyText) {
             [[self cachedDimmedBackgroundColorWithAlpha:alpha] set];
         } else {
-            [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
+            [[_backgroundColor colorWithAlphaComponent:alpha] set];
         }
         NSRectFillUsingOperation(bgRect, NSCompositeCopy);
     }
@@ -6524,7 +6517,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (!_dimOnlyText) {
             [[self cachedDimmedBackgroundColorWithAlpha:alpha] set];
         } else {
-            [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
+            [[_backgroundColor colorWithAlphaComponent:alpha] set];
         }
         NSRectFillUsingOperation(bgRect, NSCompositeCopy);
     }
@@ -6882,9 +6875,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 theLine[i].foregroundColorMode == ColorModeAlternate) {
                 // Has default foreground color so use background color.
                 if (!_dimOnlyText) {
-                    CRunAttrsSetColor(&attrs, storage, [self _dimmedColorFrom:defaultBGColor]);
+                    CRunAttrsSetColor(&attrs, storage, [self _dimmedColorFrom:_backgroundColor]);
                 } else {
-                    CRunAttrsSetColor(&attrs, storage, defaultBGColor);
+                    CRunAttrsSetColor(&attrs, storage, _backgroundColor);
                 }
             } else {
                 if (theLine[i].foregroundColor == lastForegroundColor &&
@@ -7177,7 +7170,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [transform scaleXBy:1.0 yBy:-1.0];
         [transform concat];
 
-        [defaultBGColor set];
+        [_backgroundColor set];
         NSRectFill(NSMakeRect(0, 0, charWidth * complexRun->numImageCells, lineHeight));
 
         [image drawInRect:NSMakeRect(0, 0, charWidth * complexRun->numImageCells, lineHeight)
@@ -7983,9 +7976,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                   charsInLine * charWidth,
                                   lineHeight);
             if (!_dimOnlyText) {
-                [[self _dimmedColorFrom:defaultBGColor] set];
+                [[self _dimmedColorFrom:_backgroundColor] set];
             } else {
-                [defaultBGColor set];
+                [_backgroundColor set];
             }
             NSRectFill(r);
 

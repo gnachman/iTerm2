@@ -380,7 +380,7 @@ static NSDate* lastResizeDate_;
     // Fill in background color in the area around a scrollview if it's smaller
     // than the session view.
     [super drawRect:dirtyRect];
-    NSColor *bgColor = [[session_ TEXTVIEW] defaultBGColor];
+    NSColor *bgColor = [[session_ TEXTVIEW] backgroundColor];
     [bgColor set];
     PTYScrollView *scrollView = [session_ SCROLLVIEW];
     NSRect svFrame = [scrollView frame];

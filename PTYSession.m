@@ -2548,7 +2548,7 @@ static int gNextSessionID = 1;
 
 - (NSColor *)backgroundColor
 {
-    return [TEXTVIEW defaultBGColor];
+    return [TEXTVIEW backgroundColor];
 }
 
 - (void)setBackgroundColor:(NSColor*) color {
@@ -2556,10 +2556,10 @@ static int gNextSessionID = 1;
         return;
     }
 
-    if (([TEXTVIEW defaultBGColor] != color) ||
-        ([[TEXTVIEW defaultBGColor] alphaComponent] != [color alphaComponent])) {
+    if (([TEXTVIEW backgroundColor] != color) ||
+        ([[TEXTVIEW backgroundColor] alphaComponent] != [color alphaComponent])) {
         // Change the bg color for future stuff
-        [TEXTVIEW setBGColor:color];
+        [TEXTVIEW setBackgroundColor:color];
     }
 
     [[self SCROLLVIEW] setBackgroundColor:color];
@@ -5440,7 +5440,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenSetBackgroundColor:(NSColor *)color {
-    [TEXTVIEW setBGColor:color];
+    [TEXTVIEW setBackgroundColor:color];
 }
 
 - (void)screenSetBoldColor:(NSColor *)color {
