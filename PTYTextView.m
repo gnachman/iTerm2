@@ -290,8 +290,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     // Image currently flashing.
     FlashImage flashImage_;
     
-    ITermCursorType cursorType_;
-    
     // Works around an apparent OS bug where we get drag events without a mousedown.
     BOOL dragOk_;
     
@@ -792,7 +790,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)setCursorType:(ITermCursorType)value
 {
-    cursorType_ = value;
+    _cursorType = value;
     [self setCursorNeedsDisplay];
     [self refresh];
 }
@@ -8328,7 +8326,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
 
             BOOL frameOnly;
-            switch (cursorType_) {
+            switch (_cursorType) {
                 case CURSOR_BOX:
                     // draw the box
                     DLog(@"draw cursor box at %f,%f size %fx%f", (float)curX, (float)curY, (float)ceil(cursorWidth * (double_width ? 2 : 1)), cursorHeight);
