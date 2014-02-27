@@ -5663,8 +5663,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 @implementation PTYSession (ScriptingSupport)
 
-    // Object specifier
-    - (NSScriptObjectSpecifier *)objectSpecifier
+// Object specifier
+- (NSScriptObjectSpecifier *)objectSpecifier
 {
     NSUInteger theIndex = 0;
     id classDescription = nil;
