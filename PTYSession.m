@@ -5266,15 +5266,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenSetCursorVisible:(BOOL)visible {
-    if (visible) {
-        [TEXTVIEW showCursor];
-    } else {
-        [TEXTVIEW hideCursor];
-    }
+    TEXTVIEW.cursorVisible = visible;
 }
 
 - (void)screenCursorDidMoveToLine:(int)line {
-    if ([TEXTVIEW cursorIsVisible]) {
+    if (TEXTVIEW.cursorVisible) {
         [TEXTVIEW setNeedsDisplayOnLine:line];
     }
 }

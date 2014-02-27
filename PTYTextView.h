@@ -224,6 +224,9 @@ typedef enum {
 @property(nonatomic, readonly) double lineHeight;
 @property(nonatomic, readonly) double charWidth;
 
+// Is the cursor visible? Defaults to YES.
+@property(nonatomic, assign) BOOL cursorVisible;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -319,11 +322,6 @@ typedef enum {
 // onscreen is blinking.
 - (BOOL)refresh;
 - (void)setNeedsDisplayOnLine:(int)line;
-
-// Change visibility of cursor
-- (void)showCursor;
-- (void)hideCursor;
-- (BOOL)cursorIsVisible;
 
 // selection
 - (IBAction)selectAll:(id)sender;

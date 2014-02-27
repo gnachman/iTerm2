@@ -148,7 +148,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     NSDictionary *markedTextAttributes;
     NSAttributedString *markedText;
     
-    BOOL CURSOR;
     BOOL _useSmartCursorColor;
     
     // geometry
@@ -434,7 +433,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
         dimmedColorCache_ = [[NSMutableDictionary alloc] init];
         [self updateMarkedTextAttributes];
-        CURSOR=YES;
+        _cursorVisible = YES;
         _selection = [[iTermSelection alloc] init];
         _selection.delegate = self;
         _oldSelection = [_selection copy];
@@ -1981,23 +1980,9 @@ NSMutableArray* screens=0;
   [_dataSource setCharDirtyAtCursorX:currentCursorX Y:currentCursorY];
 }
 
-- (void)hideCursor
-{
-    DLog(@"hideCursor");
+- (void)setCursorVisible:(BOOL)cursorVisible {
     [self markCursorDirty];
-    CURSOR = NO;
-}
-
-- (void)showCursor
-{
-    DLog(@"showCursor");
-    [self markCursorDirty];
-    CURSOR = YES;
-}
-
-- (BOOL)cursorIsVisible
-{
-    return CURSOR;
+    _cursorVisible = cursorVisible;
 }
 
 - (void)drawRect:(NSRect)rect
@@ -6289,7 +6274,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)beginFindCursor:(BOOL)hold
 {
-    [self showCursor];
+    self.cursorVisible = YES;
     if (!findCursorView_) {
         [self createFindCursorWindow];
     } else {
@@ -8158,9 +8143,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Draw the regular cursor only if there's not an IME open as it draws its
     // own cursor.
-    DLog(@"_drawCursorTo: hasMarkedText=%d, CURSOR=%d, showCursor=%d, x1=%d, yStart=%d, WIDTH=%d, HEIGHT=%d",
-         (int)[self hasMarkedText], (int)CURSOR, (int)showCursor, (int)x1, (int)yStart, (int)WIDTH, (int)HEIGHT);
-    if (![self hasMarkedText] && CURSOR) {
+    DLog(@"_drawCursorTo: hasMarkedText=%d, cursorVisible=%d, showCursor=%d, x1=%d, yStart=%d, WIDTH=%d, HEIGHT=%d",
+         (int)[self hasMarkedText], (int)_cursorVisible, (int)showCursor, (int)x1, (int)yStart, (int)WIDTH, (int)HEIGHT);
+    if (![self hasMarkedText] && _cursorVisible) {
         if (showCursor && x1 <= WIDTH && x1 >= 0 && yStart >= 0 && yStart < HEIGHT) {
             // get the cursor line
             screen_char_t* lineAbove = nil;
