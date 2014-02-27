@@ -216,6 +216,9 @@ typedef enum {
 // Returns the time (since 1970) when the selection was last modified, or 0 if there is no selection
 @property(nonatomic, readonly) NSTimeInterval selectionTime;
 
+// Regular and non-ascii fonts.
+@property(nonatomic, readonly) NSFont *font;
+@property(nonatomic, readonly) NSFont *nafont;
 
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
@@ -282,8 +285,6 @@ typedef enum {
 - (void)setTrouterPrefs:(NSDictionary *)prefs;
 
 // Various accessors (TODO: convert as many as possible into properties)
-- (NSFont *)font;
-- (NSFont *)nafont;
 - (void)setFont:(NSFont*)aFont
          nafont:(NSFont *)naFont
     horizontalSpacing:(double)horizontalSpacing
