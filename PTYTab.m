@@ -2397,14 +2397,14 @@ static NSString* FormatRect(NSRect r) {
 }
 
 + (void)setTmuxFont:(NSFont *)font
-             nafont:(NSFont *)nafont
+       nonAsciiFont:(NSFont *)nonAsciiFont
            hSpacing:(double)hs
            vSpacing:(double)vs
 {
     [[ProfileModel sharedInstance] setObject:[ITAddressBookMgr descFromFont:font]
                                        forKey:KEY_NORMAL_FONT
                                    inBookmark:[PTYTab tmuxBookmark]];
-    [[ProfileModel sharedInstance] setObject:[ITAddressBookMgr descFromFont:nafont]
+    [[ProfileModel sharedInstance] setObject:[ITAddressBookMgr descFromFont:nonAsciiFont]
                                        forKey:KEY_NON_ASCII_FONT
                                    inBookmark:[PTYTab tmuxBookmark]];
     [[ProfileModel sharedInstance] setObject:[NSNumber numberWithDouble:hs]

@@ -652,7 +652,7 @@ static int gNextSessionID = 1;
     [TEXTVIEW setDimOnlyText:[[PreferencePanel sharedInstance] dimOnlyText]];
     [TEXTVIEW setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [TEXTVIEW setFont:[ITAddressBookMgr fontWithDesc:[addressBookEntry objectForKey:KEY_NORMAL_FONT]]
-               nafont:[ITAddressBookMgr fontWithDesc:[addressBookEntry objectForKey:KEY_NON_ASCII_FONT]]
+        nonAsciiFont:[ITAddressBookMgr fontWithDesc:[addressBookEntry objectForKey:KEY_NON_ASCII_FONT]]
     horizontalSpacing:[[addressBookEntry objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
       verticalSpacing:[[addressBookEntry objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [self setTransparency:[[addressBookEntry objectForKey:KEY_TRANSPARENCY] floatValue]];
@@ -2114,7 +2114,7 @@ static int gNextSessionID = 1;
     SCREEN.appendToScrollbackWithStatusBar = [[aDict objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue];
     
     [self setFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NORMAL_FONT]]
-           nafont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NON_ASCII_FONT]]
+        nonAsciiFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NON_ASCII_FONT]]
         horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
         verticalSpacing:[[aDict objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [SCREEN setSaveToScrollbackInAlternateScreen:[aDict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] ? [[aDict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] boolValue] : YES];
@@ -3073,22 +3073,25 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)setFont:(NSFont*)font
-         nafont:(NSFont*)nafont
+     nonAsciiFont:(NSFont*)nonAsciiFont
     horizontalSpacing:(float)horizontalSpacing
     verticalSpacing:(float)verticalSpacing
 {
-    DLog(@"setFont:%@ nafont:%@", font, nafont);
+    DLog(@"setFont:%@ nonAsciiFont:%@", font, nonAsciiFont);
     NSWindow *window = [[[self tab] realParentWindow] window];
     DLog(@"Before:\n%@", [window.contentView iterm_recursiveDescription]);
     DLog(@"Window frame: %@", window);
     if ([[TEXTVIEW font] isEqualTo:font] &&
-        [[TEXTVIEW nafont] isEqualTo:nafont] &&
+        [[TEXTVIEW nonAsciiFont] isEqualTo:nonAsciiFont] &&
         [TEXTVIEW horizontalSpacing] == horizontalSpacing &&
         [TEXTVIEW verticalSpacing] == verticalSpacing) {
         return;
     }
     DLog(@"Line height was %f", (float)[TEXTVIEW lineHeight]);
-    [TEXTVIEW setFont:font nafont:nafont horizontalSpacing:horizontalSpacing verticalSpacing:verticalSpacing];
+    [TEXTVIEW setFont:font
+         nonAsciiFont:nonAsciiFont
+        horizontalSpacing:horizontalSpacing
+        verticalSpacing:verticalSpacing];
     DLog(@"Line height is now %f", (float)[TEXTVIEW lineHeight]);
     if (![[[self tab] parentWindow] anyFullScreen]) {
         if ([[PreferencePanel sharedInstance] adjustWindowForFontSizeChange]) {
@@ -3111,11 +3114,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (!EXIT && [self isTmuxClient]) {
         NSArray *fonts = [notification object];
         NSFont *font = [fonts objectAtIndex:0];
-        NSFont *nafont = [fonts objectAtIndex:1];
+        NSFont *nonAsciiFont = [fonts objectAtIndex:1];
         NSNumber *hSpacing = [fonts objectAtIndex:2];
         NSNumber *vSpacing = [fonts objectAtIndex:3];
         [TEXTVIEW setFont:font
-                   nafont:nafont
+            nonAsciiFont:nonAsciiFont
             horizontalSpacing:[hSpacing doubleValue]
             verticalSpacing:[vSpacing doubleValue]];
     }
@@ -3128,13 +3131,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         fontChangeNotificationInProgress = YES;
         [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxFontChanged
                                                             object:[NSArray arrayWithObjects:[TEXTVIEW font],
-                                                                    [TEXTVIEW nafont],
+                                                                    [TEXTVIEW nonAsciiFont],
                                                                     [NSNumber numberWithDouble:[TEXTVIEW horizontalSpacing]],
                                                                     [NSNumber numberWithDouble:[TEXTVIEW verticalSpacing]],
                                                                     nil]];
         fontChangeNotificationInProgress = NO;
         [PTYTab setTmuxFont:[TEXTVIEW font]
-                     nafont:[TEXTVIEW nafont]
+               nonAsciiFont:[TEXTVIEW nonAsciiFont]
                    hSpacing:[TEXTVIEW horizontalSpacing]
                    vSpacing:[TEXTVIEW verticalSpacing]];
         [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionTmuxFontDidChange
@@ -3156,13 +3159,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 {
     DLog(@"changeFontSizeDirection:%d", dir);
     NSFont* font;
-    NSFont* nafont;
+    NSFont* nonAsciiFont;
     float hs, vs;
     if (dir) {
         // Grow or shrink
         DLog(@"grow/shrink");
         font = [self fontWithRelativeSize:dir from:[TEXTVIEW font]];
-        nafont = [self fontWithRelativeSize:dir from:[TEXTVIEW nafont]];
+        nonAsciiFont = [self fontWithRelativeSize:dir from:[TEXTVIEW nonAsciiFont]];
         hs = [TEXTVIEW horizontalSpacing];
         vs = [TEXTVIEW verticalSpacing];
     } else {
@@ -3170,18 +3173,18 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         NSDictionary *abEntry = [self originalAddressBookEntry];
         NSString* fontDesc = [abEntry objectForKey:KEY_NORMAL_FONT];
         font = [ITAddressBookMgr fontWithDesc:fontDesc];
-        nafont = [ITAddressBookMgr fontWithDesc:[abEntry objectForKey:KEY_NON_ASCII_FONT]];
+        nonAsciiFont = [ITAddressBookMgr fontWithDesc:[abEntry objectForKey:KEY_NON_ASCII_FONT]];
         hs = [[abEntry objectForKey:KEY_HORIZONTAL_SPACING] floatValue];
         vs = [[abEntry objectForKey:KEY_VERTICAL_SPACING] floatValue];
     }
-    [self setFont:font nafont:nafont horizontalSpacing:hs verticalSpacing:vs];
+    [self setFont:font nonAsciiFont:nonAsciiFont horizontalSpacing:hs verticalSpacing:vs];
 
     if (dir || isDivorced) {
         // Move this bookmark into the sessions model.
         NSString* guid = [self divorceAddressBookEntryFromPreferences];
 
         [self setSessionSpecificProfileValues:@{ KEY_NORMAL_FONT: [ITAddressBookMgr descFromFont:font],
-                                                 KEY_NON_ASCII_FONT: [ITAddressBookMgr descFromFont:nafont] }];
+                                                 KEY_NON_ASCII_FONT: [ITAddressBookMgr descFromFont:nonAsciiFont] }];
         // Set the font in the bookmark dictionary
 
         // Update the model's copy of the bookmark.

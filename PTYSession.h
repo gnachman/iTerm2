@@ -312,7 +312,10 @@ typedef enum {
 - (int)columns;
 - (int)rows;
 - (void)changeFontSizeDirection:(int)dir;
-- (void)setFont:(NSFont*)font nafont:(NSFont*)nafont horizontalSpacing:(float)horizontalSpacing verticalSpacing:(float)verticalSpacing;
+- (void)setFont:(NSFont*)font
+    nonAsciiFont:(NSFont*)nonAsciiFont
+    horizontalSpacing:(float)horizontalSpacing
+    verticalSpacing:(float)verticalSpacing;
 
 // Assigns a new GUID to the session so that changes to the bookmark will not
 // affect it. Returns the GUID of a divorced bookmark. Does nothing if already

@@ -596,7 +596,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
      [NSDictionary dictionaryWithObjectsAndKeys:
       _backgroundColor, NSBackgroundColorAttributeName,
       _foregroundColor, NSForegroundColorAttributeName,
-      [self nafont], NSFontAttributeName,
+      [self nonAsciiFont], NSFontAttributeName,
       [NSNumber numberWithInt:(NSUnderlineStyleSingle|NSUnderlineByWordMask)],
       NSUnderlineStyleAttributeName,
       NULL]];
@@ -1079,7 +1079,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return primaryFont.font;
 }
 
-- (NSFont *)nafont
+- (NSFont *)nonAsciiFont
 {
     return _useNonAsciiFont ? secondaryFont.font : primaryFont.font;
 }
@@ -1102,7 +1102,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 }
 
 - (void)setFont:(NSFont*)aFont
-         nafont:(NSFont *)naFont
+    nonAsciiFont:(NSFont *)nonAsciiFont
     horizontalSpacing:(double)horizontalSpacing
     verticalSpacing:(double)verticalSpacing
 {
@@ -1125,7 +1125,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     primaryFont.italicVersion = [primaryFont computedItalicVersion];
     primaryFont.boldItalicVersion = [primaryFont computedBoldItalicVersion];
     
-    secondaryFont.font = naFont;
+    secondaryFont.font = nonAsciiFont;
     secondaryFont.baselineOffset = baseline;
     secondaryFont.boldVersion = [secondaryFont computedBoldVersion];
     secondaryFont.italicVersion = [secondaryFont computedItalicVersion];

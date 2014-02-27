@@ -218,7 +218,7 @@ typedef enum {
 
 // Regular and non-ascii fonts.
 @property(nonatomic, readonly) NSFont *font;
-@property(nonatomic, readonly) NSFont *nafont;
+@property(nonatomic, readonly) NSFont *nonAsciiFont;
 
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
@@ -286,7 +286,7 @@ typedef enum {
 
 // Various accessors (TODO: convert as many as possible into properties)
 - (void)setFont:(NSFont*)aFont
-         nafont:(NSFont *)naFont
+    nonAsciiFont:(NSFont *)nonAsciiFont
     horizontalSpacing:(double)horizontalSpacing
     verticalSpacing:(double)verticalSpacing;
 - (NSRect)scrollViewContentSize;

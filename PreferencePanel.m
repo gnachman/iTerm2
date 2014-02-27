@@ -462,7 +462,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     
     NSFont* normalFont;
     NSFont *nonAsciiFont;
-    BOOL changingNAFont; // true if font dialog is currently modifying the non-ascii font
+    BOOL changingNonAsciiFont; // true if font dialog is currently modifying the non-ascii font
     
     // Terminal tab
     IBOutlet NSButton* disableWindowResizing;
@@ -1165,7 +1165,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (IBAction)displaySelectFont:(id)sender
 {
-    changingNAFont = [sender tag] == 1;
+    changingNonAsciiFont = [sender tag] == 1;
     [self _showFontPanel];
 }
 
@@ -4662,7 +4662,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
     NSFontPanel* aFontPanel = [[NSFontManager sharedFontManager] fontPanel: YES];
     [aFontPanel setAccessoryView: displayFontAccessoryView];
-    [[NSFontManager sharedFontManager] setSelectedFont:(changingNAFont ? nonAsciiFont : normalFont) isMultiple:NO];
+    [[NSFontManager sharedFontManager] setSelectedFont:(changingNonAsciiFont ? nonAsciiFont : normalFont) isMultiple:NO];
     [[NSFontManager sharedFontManager] orderFrontFontPanel:self];
 }
 
@@ -4674,14 +4674,14 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 // sent by NSFontManager up the responder chain
 - (void)changeFont:(id)fontManager
 {
-        if (changingNAFont) {
+    if (changingNonAsciiFont) {
         NSFont* oldFont = nonAsciiFont;
         nonAsciiFont = [fontManager convertFont:oldFont];
         [nonAsciiFont retain];
         if (oldFont) {
             [oldFont release];
         }
-        } else {
+    } else {
         NSFont* oldFont = normalFont;
         normalFont = [fontManager convertFont:oldFont];
         [normalFont retain];
@@ -4689,7 +4689,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
             [oldFont release];
         }
     }
-
+    
     [self bookmarkSettingChanged:fontManager];
 }
 

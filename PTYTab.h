@@ -227,7 +227,7 @@
                        tmuxWindow:(int)tmuxWindow
                    tmuxController:(TmuxController *)tmuxController;
 + (void)setTmuxFont:(NSFont *)font
-             nafont:(NSFont *)nafont
+       nonAsciiFont:(NSFont *)nonAsciiFont
            hSpacing:(double)hs
            vSpacing:(double)vs;
 
