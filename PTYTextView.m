@@ -232,8 +232,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     
     BOOL changedSinceLastExpose_;
     
-    double dimmingAmount_;
-    
     // The string last searched for.
     NSString* findString_;
     
@@ -930,7 +928,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (NSColor*)_dimmedColorFrom:(NSColor*)orig
 {
-    if (dimmingAmount_ == 0) {
+    if (_dimmingAmount == 0) {
         return orig;
     }
     double r = [orig redComponent];
@@ -938,21 +936,21 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     double b = [orig blueComponent];
     double alpha = [orig alphaComponent];
     // This algorithm limits the dynamic range of colors as well as brightening
-    // them. Both attributes change in proportion to the dimmingAmount_.
+    // them. Both attributes change in proportion to the _dimmingAmount.
 
     // Find a linear interpolation between kCenter and the requested color component
-    // in proportion to 1- dimmingAmount_.
+    // in proportion to 1- _dimmingAmount.
     if (!_dimOnlyText) {
         const double kCenter = 0.5;
 
-        return [NSColor colorWithCalibratedRed:(1 - dimmingAmount_) * r + dimmingAmount_ * kCenter
-                                         green:(1 - dimmingAmount_) * g + dimmingAmount_ * kCenter
-                                          blue:(1 - dimmingAmount_) * b + dimmingAmount_ * kCenter
+        return [NSColor colorWithCalibratedRed:(1 - _dimmingAmount) * r + _dimmingAmount * kCenter
+                                         green:(1 - _dimmingAmount) * g + _dimmingAmount * kCenter
+                                          blue:(1 - _dimmingAmount) * b + _dimmingAmount * kCenter
                                          alpha:alpha];
     } else {
-        return [NSColor colorWithCalibratedRed:(1 - dimmingAmount_) * r + dimmingAmount_ * backgroundBrightness_
-                                         green:(1 - dimmingAmount_) * g + dimmingAmount_ * backgroundBrightness_
-                                          blue:(1 - dimmingAmount_) * b + dimmingAmount_ * backgroundBrightness_
+        return [NSColor colorWithCalibratedRed:(1 - _dimmingAmount) * r + _dimmingAmount * backgroundBrightness_
+                                         green:(1 - _dimmingAmount) * g + _dimmingAmount * backgroundBrightness_
+                                          blue:(1 - _dimmingAmount) * b + _dimmingAmount * backgroundBrightness_
                                          alpha:alpha];
     }
 }
@@ -966,7 +964,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                             bold:(BOOL)isBold
                       background:(BOOL)isBackground
 {
-    if (dimmingAmount_ == 0) {
+    if (_dimmingAmount == 0) {
         // No dimming: return plain-vanilla color.
         NSColor *theColor = [self _colorForCode:theIndex
                                           green:green
@@ -6069,7 +6067,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)setDimmingAmount:(double)value
 {
-    dimmingAmount_ = value;
+    _dimmingAmount = value;
     [cachedBackgroundColor_ release];
     cachedBackgroundColor_ = nil;
     [dimmedColorCache_ removeAllObjects];

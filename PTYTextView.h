@@ -236,6 +236,10 @@ typedef enum {
 // Returns the current find context, or one initialized to empty.
 @property(nonatomic, readonly) FindContext *findContext;
 
+// Degree (0 to 1) to which colors are dimmed towards gray.
+@property(nonatomic, assign) double dimmingAmount;
+
+
 
 
 // Returns the mouse cursor to use when the mouse is in this view.
@@ -337,9 +341,6 @@ typedef enum {
 // selection
 - (IBAction)selectAll:(id)sender;
 - (void)deselect;
-
-// Dim all colors towards gray
-- (void)setDimmingAmount:(double)value;
 
 // Scrolling control
 - (void)scrollLineNumberRangeIntoView:(VT100GridRange)range;
