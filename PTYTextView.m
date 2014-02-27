@@ -163,8 +163,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     NSColor* colorTable[256];
     NSColor* unfocusedSelectionColor;
     
-    double blend;
-    
     // Underlined selection range (inclusive of all values), indicating clickable url.
     VT100GridWindowedRange _underlineRange;
     BOOL mouseDown;
@@ -6075,14 +6073,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
-- (double)blend
-{
-    return blend;
-}
-
 - (void)setBlend:(double)fVal
 {
-    blend = MIN(MAX(0.3, fVal), 1);
+    _blend = MIN(MAX(0.3, fVal), 1);
     [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
@@ -6383,14 +6376,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                                      toPoint:dest
                                                              useTransparency:[self useTransparency]];
-                // Blend default bg color
+        // Blend default bg color
         NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
                                        green:0
                                         blue:0
                                    colorMode:ColorModeAlternate
                                         bold:NO
                                 isBackground:YES];
-        [[aColor colorWithAlphaComponent:1 - blend] set];
+        [[aColor colorWithAlphaComponent:1 - _blend] set];
         NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
                                             dest.y + bgRect.origin.y,
                                             bgRect.size.width,
@@ -6427,7 +6420,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                    colorMode:ColorModeAlternate
                                         bold:NO
                                 isBackground:YES];
-        [[aColor colorWithAlphaComponent:1 - blend] set];
+        [[aColor colorWithAlphaComponent:1 - _blend] set];
         NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
                                             dest.y + bgRect.origin.y,
                                             bgRect.size.width,
@@ -6455,14 +6448,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                              useTransparency:[self useTransparency]];
-                // Blend default bg color over bg iamge.
+        // Blend default bg color over bg iamge.
         NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
                                        green:0
                                         blue:0
                                    colorMode:ColorModeAlternate
                                         bold:NO
                                 isBackground:YES];
-        [[aColor colorWithAlphaComponent:1 - blend] set];
+        [[aColor colorWithAlphaComponent:1 - _blend] set];
         NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
     } else {
         // Either draw a normal bg or, if transparency is off, blend the default bg color over the bg image.
@@ -7469,7 +7462,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                           colorMode:ColorModeAlternate
                                bold:NO
                        isBackground:YES];
-        aColor = [aColor colorWithAlphaComponent:1 - blend];
+        aColor = [aColor colorWithAlphaComponent:1 - _blend];
         [aColor set];
         NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
     }
@@ -7568,7 +7561,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                             toPoint->y + rightMargin.size.height)
                                 useTransparency:[self useTransparency]];
             // Blend default bg color over bg iamge.
-            [[aColor colorWithAlphaComponent:1 - blend] set];
+            [[aColor colorWithAlphaComponent:1 - _blend] set];
             NSRectFillUsingOperation(NSMakeRect(toPoint->x + leftMargin.origin.x,
                                                 toPoint->y + leftMargin.origin.y,
                                                 leftMargin.size.width,
@@ -7584,7 +7577,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                 useTransparency:[self useTransparency]];
 
             // Blend default bg color over bg iamge.
-            [[aColor colorWithAlphaComponent:1 - blend] set];
+            [[aColor colorWithAlphaComponent:1 - _blend] set];
             NSRectFillUsingOperation(leftMargin, NSCompositeSourceOver);
             NSRectFillUsingOperation(rightMargin, NSCompositeSourceOver);
         }

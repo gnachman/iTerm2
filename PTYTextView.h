@@ -198,6 +198,9 @@ typedef enum {
 // Transparency level. 0 to 1.
 @property(nonatomic, assign) double transparency;
 
+// Blending level for background color over background image
+@property(nonatomic, assign) double blend;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -307,6 +310,8 @@ typedef enum {
 - (double)lineHeight;
 - (double)charWidth;
 
+- (BOOL)useTransparency;
+
 // Toggles whether line timestamps are displayed.
 - (void)toggleShowTimestamps;
 
@@ -323,11 +328,6 @@ typedef enum {
 // selection
 - (IBAction)selectAll:(id)sender;
 - (void)deselect;
-
-// transparency
-- (double)blend;
-- (void)setBlend:(double)blend;
-- (BOOL)useTransparency;
 
 // Dim all colors towards gray
 - (void)setDimmingAmount:(double)value;
