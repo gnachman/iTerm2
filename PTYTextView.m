@@ -5510,10 +5510,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                             cappedAtSize:-1]];
             break;
         case 1: // text selection
-            [self printContent: [self selectedTextWithPad:NO]];
+            [self printContent:[self selectedTextWithPad:NO]];
             break;
         case 2: // entire buffer
-            [self printContent: [self content]];
+            [self printContent:[self content]];
             break;
     }
 }

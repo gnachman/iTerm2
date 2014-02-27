@@ -210,6 +210,10 @@ typedef enum {
 // Returns the currently selected text.
 @property(nonatomic, readonly) NSString *selectedText;
 
+// Returns the entire content of the view as a string.
+@property(nonatomic, readonly) NSString *content;
+
+
 
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
@@ -250,9 +254,6 @@ typedef enum {
 // Returns the currently selected text. If pad is set, then the last line will be padded out to the
 // full width of the view with spaces.
 - (NSString *)selectedTextWithPad:(BOOL)pad;
-
-// Returns the entire content of the view as a string.
-- (NSString *)content;
 
 // Copy with or without styles, as set by user defaults. Not for use when a copy item in the menu is invoked.
 - (void)copySelectionAccordingToUserPreferences;
