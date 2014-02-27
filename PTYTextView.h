@@ -189,6 +189,9 @@ typedef enum {
 // Color for cursor text.
 @property(nonatomic, retain) NSColor *cursorTextColor;
 
+// Should smart cursor color be used.
+@property(nonatomic, assign) BOOL useSmartCursorColor;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -285,7 +288,6 @@ typedef enum {
 - (NSColor*)colorFromRed:(int)red green:(int)green blue:(int)blue;
 - (void)setColorTable:(int) theIndex color:(NSColor *) c;
 
-- (void)setSmartCursorColor:(BOOL)value;
 - (void)setMinimumContrast:(double)value;
 
 // Update the scroller color for light or dark backgrounds.

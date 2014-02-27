@@ -149,7 +149,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     NSAttributedString *markedText;
     
     BOOL CURSOR;
-    BOOL colorInvertedCursor;
+    BOOL _useSmartCursorColor;
     
     // geometry
     double lineHeight;
@@ -6099,7 +6099,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)setSmartCursorColor:(BOOL)value
 {
-    colorInvertedCursor = value;
+    _useSmartCursorColor = value;
     [dimmedColorCache_ removeAllObjects];
 }
 
@@ -8223,7 +8223,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 }
             }
             NSColor *bgColor;
-            if (colorInvertedCursor) {
+            if (_useSmartCursorColor) {
                 if (reversed) {
                     bgColor = [self colorForCode:screenChar.backgroundColor
                                            green:screenChar.bgGreen
@@ -8295,7 +8295,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     // draw any character on cursor if we need to
                     if (aChar) {
                         // Have a char at the cursor position.
-                        if (colorInvertedCursor && !frameOnly) {
+                        if (_useSmartCursorColor && !frameOnly) {
                             // Pick background color for text if is key window, otherwise use fg color for text.
                             int fgColor;
                             int fgGreen;

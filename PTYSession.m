@@ -2587,7 +2587,7 @@ static int gNextSessionID = 1;
 
 - (void)setSmartCursorColor:(BOOL)value
 {
-    [[self TEXTVIEW] setSmartCursorColor:value];
+    [[self TEXTVIEW] setUseSmartCursorColor:value];
 }
 
 - (void)setMinimumContrast:(float)value
