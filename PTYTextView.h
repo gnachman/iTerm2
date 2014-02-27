@@ -227,6 +227,10 @@ typedef enum {
 // Is the cursor visible? Defaults to YES.
 @property(nonatomic, assign) BOOL cursorVisible;
 
+// Indicates if a find is in progress.
+@property(nonatomic, readonly) BOOL findInProgress;
+
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -356,9 +360,6 @@ typedef enum {
 
 // Remove highlighted terms from previous search.
 - (void)clearHighlights;
-
-// Indicates if a find is in progress.
-- (BOOL)findInProgress;
 
 // Performs a find on the next chunk of text.
 - (BOOL)continueFind;
