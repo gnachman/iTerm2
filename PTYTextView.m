@@ -322,7 +322,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     BOOL useBackgroundIndicator_;
     
     // Find context just after initialization.
-    FindContext *initialFindContext_;
+    FindContext *_findContext;
     
     PointerController *pointer_;
         NSCursor *cursor_;
@@ -486,7 +486,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         primaryFont = [[PTYFontInfo alloc] init];
         secondaryFont = [[PTYFontInfo alloc] init];
 
-        initialFindContext_ = [[FindContext alloc] init];
+        _findContext = [[FindContext alloc] init];
         if ([pointer_ viewShouldTrackTouches]) {
             DLog(@"Begin tracking touches in view %@", self);
             [self setAcceptsTouchEvents:YES];
@@ -563,7 +563,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [threeFingerTapGestureRecognizer_ disconnectTarget];
     [threeFingerTapGestureRecognizer_ release];
     
-    [initialFindContext_ release];
+    [_findContext release];
     if (self.currentUnderlineHostname) {
         [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
     }
@@ -5913,11 +5913,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return found;
 }
 
-- (FindContext *)initialFindContext
-{
-    return initialFindContext_;
-}
-
 // continueFind is called by a timer in the client until it returns NO. It does
 // two things:
 // 1. If _findInProgress is true, search for more results in the _dataSource and
@@ -6012,8 +6007,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                          inContext:[_dataSource findContext]
                    multipleResults:YES];
 
-        [initialFindContext_ copyFromFindContext:[_dataSource findContext]];  // TODO test this
-        initialFindContext_.results = nil;
+        [_findContext copyFromFindContext:[_dataSource findContext]];
+        _findContext.results = nil;
         [_dataSource saveFindContextAbsPos];
         _findInProgress = YES;
 

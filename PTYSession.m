@@ -3505,7 +3505,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     // and a search was performed in the find window (vs select+cmd-e+cmd-f).
     return !tailFindTimer_ &&
            ![[[view findViewController] view] isHidden] &&
-           [TEXTVIEW initialFindContext].substring != nil;
+           [TEXTVIEW findContext].substring != nil;
 }
 
 - (void)hideSession
@@ -4931,14 +4931,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)beginTailFind
 {
-    FindContext *initialFindContext = [TEXTVIEW initialFindContext];
-    if (!initialFindContext.substring) {
+    FindContext *findContext = [TEXTVIEW findContext];
+    if (!findContext.substring) {
         return;
     }
-    [SCREEN setFindString:initialFindContext.substring
+    [SCREEN setFindString:findContext.substring
          forwardDirection:YES
-             ignoringCase:!!(initialFindContext.options & FindOptCaseInsensitive)
-                    regex:!!(initialFindContext.options & FindOptRegex)
+             ignoringCase:!!(findContext.options & FindOptCaseInsensitive)
+                    regex:!!(findContext.options & FindOptRegex)
               startingAtX:0
               startingAtY:0
                withOffset:0

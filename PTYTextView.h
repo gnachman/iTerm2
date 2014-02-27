@@ -233,6 +233,10 @@ typedef enum {
 // An absolute scroll position which won't change as lines in history are dropped.
 @property(nonatomic, readonly) long long absoluteScrollPosition;
 
+// Returns the current find context, or one initialized to empty.
+@property(nonatomic, readonly) FindContext *findContext;
+
+
 
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
@@ -397,10 +401,6 @@ typedef enum {
 
 // Stops the "find cursor" mode.
 - (void)endFindCursor;
-
-// Returns the current find context, or one initialized to empty. (TODO: I don't remember why it has
-// this dumb name)
-- (FindContext *)initialFindContext;
 
 // Begin click-to-move mode.
 - (void)movePane:(id)sender;
