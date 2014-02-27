@@ -220,6 +220,10 @@ typedef enum {
 @property(nonatomic, readonly) NSFont *font;
 @property(nonatomic, readonly) NSFont *nonAsciiFont;
 
+// Size of a character.
+@property(nonatomic, readonly) double lineHeight;
+@property(nonatomic, readonly) double charWidth;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -307,10 +311,6 @@ typedef enum {
 
 // Remove underline indicating clickable URL.
 - (void)removeUnderline;
-
-// Size of a character.
-- (double)lineHeight;
-- (double)charWidth;
 
 // Toggles whether line timestamps are displayed.
 - (void)toggleShowTimestamps;
