@@ -204,6 +204,9 @@ typedef enum {
 // Should transparency be used?
 @property(nonatomic, readonly) BOOL useTransparency;
 
+// Indicates if the last key pressed was a repeat.
+@property(nonatomic, readonly) BOOL keyIsARepeat;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -219,9 +222,6 @@ typedef enum {
 // Draw the given rect. If toOrigin is not NULL, then the NSPoint it points at is used as an origin
 // for all drawing.
 - (void)drawRect:(NSRect)rect to:(NSPoint*)toOrigin;
-
-// Indicates if the last key pressed was a repeat.
-- (BOOL)keyIsARepeat;
 
 // Changes the document cursor, if needed. The event is used to get modifier flags.
 - (void)updateCursor:(NSEvent *)event;
