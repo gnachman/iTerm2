@@ -30,6 +30,9 @@ typedef enum {
 @property(nonatomic, assign) VT100GridRange logicalWindow;
 @property(nonatomic, readonly) BOOL hasLogicalWindow;
 
+// Characters that divide words.
++ (NSCharacterSet *)wordSeparatorCharacterSet;
+
 + (instancetype)textExtractorWithDataSource:(id<PTYTextViewDataSource>)dataSource;
 - (id)initWithDataSource:(id<PTYTextViewDataSource>)dataSource;
 - (void)restrictToLogicalWindowIncludingCoord:(VT100GridCoord)coord;

@@ -146,7 +146,7 @@ const int kMaxResultContextWords = 4;
     VT100Screen* screen = [[self delegate] popupVT100Screen];
 
     [wordSeparatorCharacterSet_ autorelease];
-    wordSeparatorCharacterSet_ = [[[[self delegate] popupVT100TextView] wordSeparatorCharacterSet] retain];
+    wordSeparatorCharacterSet_ = [[iTermTextExtractor wordSeparatorCharacterSet] retain];
 
     int x = [screen cursorX]-2;
     int y = [screen cursorY] + [screen numberOfLines] - [screen height] - 1;

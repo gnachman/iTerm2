@@ -243,7 +243,6 @@ typedef enum {
 @property(nonatomic, readonly) BOOL isFindingCursor;
 
 
-
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -425,9 +424,6 @@ typedef enum {
 
 // Show a visual highlight of a mark on the given line number.
 - (void)highlightMarkOnLine:(int)line;
-
-// Characters that divide words.
-- (NSCharacterSet *)wordSeparatorCharacterSet;
 
 @end
 

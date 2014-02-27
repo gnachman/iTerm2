@@ -8458,20 +8458,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (NSCharacterSet *)wordSeparatorCharacterSet
-{
-    NSMutableCharacterSet *charset = [[[NSMutableCharacterSet alloc] init] autorelease];
-    [charset formUnionWithCharacterSet:[NSCharacterSet whitespaceCharacterSet]];
-
-    NSMutableCharacterSet *complement = [[[NSMutableCharacterSet alloc] init] autorelease];
-    [complement formUnionWithCharacterSet:[NSCharacterSet alphanumericCharacterSet]];
-    [complement addCharactersInString:[[PreferencePanel sharedInstance] wordChars]];
-    [complement addCharactersInRange:NSMakeRange(DWC_RIGHT, 1)];
-    [complement addCharactersInRange:NSMakeRange(DWC_SKIP, 1)];
-    [charset formUnionWithCharacterSet:[complement invertedSet]];
-    
-    return charset;
-}
 - (PTYCharType)classifyChar:(unichar)ch
                   isComplex:(BOOL)complex
 {
