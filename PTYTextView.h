@@ -230,6 +230,9 @@ typedef enum {
 // Indicates if a find is in progress.
 @property(nonatomic, readonly) BOOL findInProgress;
 
+// An absolute scroll position which won't change as lines in history are dropped.
+@property(nonatomic, readonly) long long absoluteScrollPosition;
+
 
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
@@ -379,9 +382,6 @@ typedef enum {
 
 // Draws a portion of this view's background to a different location whose origin is dest.
 - (void)drawBackground:(NSRect)bgRect toPoint:(NSPoint)dest;
-
-// Returns an absolute scroll position which won't change as lines in history are dropped.
-- (long long)absoluteScrollPosition;
 
 // Returns true if any character in the buffer is selected.
 - (BOOL)isAnyCharSelected;
