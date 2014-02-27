@@ -1214,6 +1214,7 @@ NSMutableArray* screens=0;
     return r;
 }
 
+// Number of extra lines below the last line of text that are always the background color.
 - (double)excess
 {
     NSRect visible = [self scrollViewContentSize];

@@ -308,9 +308,6 @@ typedef enum {
 // Remove underline indicating clickable URL.
 - (void)removeUnderline;
 
-// Number of extra lines below the last line of text that are always the background color.
-- (double)excess;
-
 // Size of a character.
 - (double)lineHeight;
 - (double)charWidth;
