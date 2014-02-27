@@ -207,6 +207,10 @@ typedef enum {
 // Indicates if the last key pressed was a repeat.
 @property(nonatomic, readonly) BOOL keyIsARepeat;
 
+// Returns the currently selected text.
+@property(nonatomic, readonly) NSString *selectedText;
+
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -242,9 +246,6 @@ typedef enum {
 // Returns range modified by removing nulls (and possibly spaces) from its ends.
 - (VT100GridCoordRange)rangeByTrimmingNullsFromRange:(VT100GridCoordRange)range
                                           trimSpaces:(BOOL)trimSpaces;
-
-// Returns the currently selected text.
-- (NSString *)selectedText;
 
 // Returns the currently selected text. If pad is set, then the last line will be padded out to the
 // full width of the view with spaces.
