@@ -213,6 +213,8 @@ typedef enum {
 // Returns the entire content of the view as a string.
 @property(nonatomic, readonly) NSString *content;
 
+// Returns the time (since 1970) when the selection was last modified, or 0 if there is no selection
+@property(nonatomic, readonly) NSTimeInterval selectionTime;
 
 
 // Returns the mouse cursor to use when the mouse is in this view.
@@ -268,9 +270,6 @@ typedef enum {
 
 // Paste from the pasteboard.
 - (void)paste:(id)sender;
-
-// Returns the time (since 1970) when the selection was last modified.
-- (NSTimeInterval)selectionTime;
 
 // Cause the next find to start at the top/bottom of the buffer
 - (void)resetFindCursor;

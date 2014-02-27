@@ -319,9 +319,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     // Is the mouse inside our view?
     BOOL mouseInRect_;
     
-    // Time the selection last changed at or 0 if there's no selection.
-    NSTimeInterval selectionTime_;
-    
     // Show a background indicator when in broadcast input mode
     BOOL useBackgroundIndicator_;
     
@@ -4651,11 +4648,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([_delegate respondsToSelector:@selector(paste:)]) {
         [_delegate paste:sender];
     }
-}
-
-- (NSTimeInterval)selectionTime
-{
-    return selectionTime_;
 }
 
 - (void)pasteSelection:(id)sender
@@ -9381,12 +9373,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)selectionDidChange:(iTermSelection *)selection {
     if ([selection hasSelection]) {
-        selectionTime_ = [[NSDate date] timeIntervalSince1970];
+        _selectionTime = [[NSDate date] timeIntervalSince1970];
     } else {
-        selectionTime_ = 0;
+        _selectionTime = 0;
     }
     [_delegate refreshAndStartTimerIfNeeded];
-    DLog(@"Update selection time to %lf. selection=%@", (double)selectionTime_, selection);
+    DLog(@"Update selection time to %lf. selection=%@", (double)_selectionTime, selection);
 }
 
 - (VT100GridRange)selectionRangeOfTerminalNullsOnLine:(int)lineNumber {
