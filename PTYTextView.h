@@ -201,6 +201,9 @@ typedef enum {
 // Blending level for background color over background image
 @property(nonatomic, assign) double blend;
 
+// Should transparency be used?
+@property(nonatomic, readonly) BOOL useTransparency;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -309,8 +312,6 @@ typedef enum {
 // Size of a character.
 - (double)lineHeight;
 - (double)charWidth;
-
-- (BOOL)useTransparency;
 
 // Toggles whether line timestamps are displayed.
 - (void)toggleShowTimestamps;
