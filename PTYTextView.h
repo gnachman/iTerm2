@@ -195,6 +195,9 @@ typedef enum {
 // Minimum contrast level. 0 to 1.
 @property(nonatomic, assign) double minimumContrast;
 
+// Transparency level. 0 to 1.
+@property(nonatomic, assign) double transparency;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -322,9 +325,7 @@ typedef enum {
 - (void)deselect;
 
 // transparency
-- (double)transparency;
 - (double)blend;
-- (void)setTransparency:(double)fVal;
 - (void)setBlend:(double)blend;
 - (BOOL)useTransparency;
 

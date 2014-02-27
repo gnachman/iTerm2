@@ -163,8 +163,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     NSColor* colorTable[256];
     NSColor* unfocusedSelectionColor;
     
-    // transparency
-    double transparency;
     double blend;
     
     // Underlined selection range (inclusive of all values), indicating clickable url.
@@ -6070,15 +6068,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     searchingForNextResult_ = NO;
 }
 
-// transparency
-- (double)transparency
-{
-    return (transparency);
-}
-
 - (void)setTransparency:(double)fVal
 {
-    transparency = fVal;
+    _transparency = fVal;
     [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
@@ -6386,7 +6378,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
     BOOL hasBGImage = [scrollView hasBackgroundImage];
-    double alpha = 1.0 - transparency;
+    double alpha = 1.0 - _transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                                      toPoint:dest
@@ -6423,7 +6415,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
     BOOL hasBGImage = [scrollView hasBackgroundImage];
-    double alpha = 1.0 - transparency;
+    double alpha = 1.0 - _transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                                      toPoint:dest
@@ -6459,7 +6451,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
     BOOL hasBGImage = [scrollView hasBackgroundImage];
-    double alpha = 1.0 - transparency;
+    double alpha = 1.0 - _transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                              useTransparency:[self useTransparency]];
@@ -7542,8 +7534,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     screen_char_t* theLine = [_dataSource getLineAtIndex:line];
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
     BOOL hasBGImage = [scrollView hasBackgroundImage];
-    double selectedAlpha = 1.0 - transparency;
-    double alphaIfTransparencyInUse = [self useTransparency] ? 1.0 - transparency : 1.0;
+    double selectedAlpha = 1.0 - _transparency;
+    double alphaIfTransparencyInUse = [self useTransparency] ? 1.0 - _transparency : 1.0;
     BOOL reversed = [[_dataSource terminal] screenMode];
     NSColor *aColor = nil;
 
@@ -8136,7 +8128,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     double cursorWidth, cursorHeight;
     double curX, curY;
     BOOL double_width;
-    double alpha = [self useTransparency] ? 1.0 - transparency : 1.0;
+    double alpha = [self useTransparency] ? 1.0 - _transparency : 1.0;
     const BOOL reversed = [[_dataSource terminal] screenMode];
 
     WIDTH = [_dataSource width];
