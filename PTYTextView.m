@@ -235,8 +235,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     int accX;
     int accY;
     
-    double minimumContrast_;
-    
     BOOL changedSinceLastExpose_;
     
     double dimmingAmount_;
@@ -6105,7 +6103,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)setMinimumContrast:(double)value
 {
-    minimumContrast_ = value;
+    _minimumContrast = value;
     [memoizedContrastingColor_ release];
     memoizedContrastingColor_ = nil;
     [dimmedColorCache_ removeAllObjects];
@@ -6677,13 +6675,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     double mainBrightness = PerceivedBrightness(r, g, b);
     double otherBrightness = PerceivedBrightness(or, og, ob);
     CGFloat brightnessDiff = fabs(mainBrightness - otherBrightness);
-    if (brightnessDiff < minimumContrast_) {
-        CGFloat error = fabs(brightnessDiff - minimumContrast_);
+    if (brightnessDiff < _minimumContrast) {
+        CGFloat error = fabs(brightnessDiff - _minimumContrast);
         CGFloat targetBrightness = mainBrightness;
         if (mainBrightness < otherBrightness) {
             targetBrightness -= error;
             if (targetBrightness < 0) {
-                const double alternative = otherBrightness + minimumContrast_;
+                const double alternative = otherBrightness + _minimumContrast;
                 const double baseContrast = otherBrightness;
                 const double altContrast = MIN(alternative, 1) - otherBrightness;
                 if (altContrast > baseContrast) {
@@ -6693,7 +6691,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         } else {
             targetBrightness += error;
             if (targetBrightness > 1) {
-                const double alternative = otherBrightness - minimumContrast_;
+                const double alternative = otherBrightness - _minimumContrast;
                 const double baseContrast = 1 - otherBrightness;
                 const double altContrast = otherBrightness - MAX(alternative, 0);
                 if (altContrast > baseContrast) {
@@ -6885,7 +6883,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         }
 
-        if (minimumContrast_ > 0.001 && bgColor) {
+        if (_minimumContrast > 0.001 && bgColor) {
             // TODO: Way too much time spent here. Use previous char's color if it is the same.
             CRunAttrsSetColor(&attrs,
                               storage,
