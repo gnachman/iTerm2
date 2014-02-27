@@ -239,6 +239,8 @@ typedef enum {
 // Degree (0 to 1) to which colors are dimmed towards gray.
 @property(nonatomic, assign) double dimmingAmount;
 
+// Indicates if the "find cursor" mode is active.
+@property(nonatomic, readonly) BOOL isFindingCursor;
 
 
 
@@ -393,9 +395,6 @@ typedef enum {
 
 // The "find cursor" mode will show for a bit and then hide itself.
 - (void)placeFindCursorOnAutoHide;
-
-// Indicates if the "find cursor" mode is active.
-- (BOOL)isFindingCursor;
 
 // Begins the "find cursor" mode.
 - (void)beginFindCursor:(BOOL)hold;
