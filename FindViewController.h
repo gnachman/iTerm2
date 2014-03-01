@@ -37,31 +37,31 @@
 // Delegate should call resetFindCursor in textview.
 - (void)resetFindCursor;
 
-// Return [[[self currentSession] TEXTVIEW] findInProgress]
+// Return [[[self currentSession] textview] findInProgress]
 - (BOOL)findInProgress;
 
-// Call [[[self currentSession] TEXTVIEW] continueFind];
+// Call [[[self currentSession] textview] continueFind];
 - (BOOL)continueFind;
 
-// Call [[self currentSession] TEXTVIEW] growSelectionLeft]
+// Call [[self currentSession] textview] growSelectionLeft]
 - (BOOL)growSelectionLeft;
 
-// call [[[self currentSession] TEXTVIEW] growSelectionRight];
+// call [[[self currentSession] textview] growSelectionRight];
 - (void)growSelectionRight;
 
-// Return [[[self currentSession] TEXTVIEW] selectedText];
+// Return [[[self currentSession] textview] selectedText];
 - (NSString*)selectedText;
 
 // Return [textview selectedTextWithPad:NO]
 - (NSString*)unpaddedSelectedText;
 
-// call [[[self currentSession] TEXTVIEW] copy:self];
+// call [[[self currentSession] textview] copy:self];
 - (void)copySelection;
 
 // call [[self currentSession] pasteString:text];
 - (void)pasteString:(NSString*)string;
 
-// call [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+// call [[self window] makeFirstResponder:[[self currentSession] textview]];
 - (void)takeFocus;
 
 // Remove highlighted matches

@@ -176,7 +176,7 @@ static const CGFloat kMargin = 4;
         return;
     }
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-    pid_t rootPid = [[[wrapper.term currentSession] SHELL] pid];
+    pid_t rootPid = [[[wrapper.term currentSession] shell] pid];
     NSSet *pids = [[ProcessCache sharedInstance] childrenOfPid:rootPid levelsToSkip:0];
     if (![pids isEqualToSet:[NSSet setWithArray:pids_]]) {
         // Something changed. Get job names, which is expensive.
@@ -214,7 +214,7 @@ static const CGFloat kMargin = 4;
 {
     if (!shutdown_) {
         ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-        [[[wrapper.term currentSession] TEXTVIEW] updateCursor:[[NSApplication sharedApplication] currentEvent]];
+        [[[wrapper.term currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
     }
 }
 

@@ -339,7 +339,7 @@ enum {
 
 - (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession
 {
-    [[aSession SCREEN] highlightTextMatchingRegex:self.regex
+    [[aSession screen] highlightTextMatchingRegex:self.regex
                                            colors:[self colors]];
 }
 

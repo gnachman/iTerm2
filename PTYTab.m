@@ -311,13 +311,13 @@ static const BOOL USE_THIN_SPLITTERS = YES;
             // -[PTYTextView respondsToSelector:] on a deallocated instance of the
             // first responder. This kind of hacky workaround keeps us from making
             // a invisible textview the first responder.
-            [[realParentWindow_ window] makeFirstResponder:[session TEXTVIEW]];
+            [[realParentWindow_ window] makeFirstResponder:[session textview]];
         }
                 [realParentWindow_ setDimmingForSessions];
     }
     for (PTYSession* aSession in [self sessions]) {
-        [[aSession TEXTVIEW] refresh];
-        [[aSession TEXTVIEW] setNeedsDisplay:YES];
+        [[aSession textview] refresh];
+        [[aSession textview] setNeedsDisplay:YES];
     }
     [self setLabelAttributes];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
@@ -891,12 +891,12 @@ static NSString* FormatRect(NSRect r) {
     // Put the new session in DVR mode and pass it the old session, which it
     // keeps a reference to.
 
-    [newSession setDvr:[[oldSession SCREEN] dvr] liveSession:oldSession];
+    [newSession setDvr:[[oldSession screen] dvr] liveSession:oldSession];
 
     activeSession_ = newSession;
 
     // TODO(georgen): the hidden window can resize itself and the FakeWindow
-    // needs to pass that on to the SCREEN. Otherwise the DVR playback into the
+    // needs to pass that on to the screen. Otherwise the DVR playback into the
     // time after cmd-d was pressed (but before the present) has the wrong
     // window size.
     [self setFakeParentWindow:[[[FakeWindow alloc] initFromRealWindow:realParentWindow_
@@ -908,9 +908,9 @@ static NSString* FormatRect(NSRect r) {
 
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession
 {
-    PtyLog(@"PTYTab showLiveSessio:%p", liveSession);
+    PtyLog(@"PTYTab showLiveSession:%p", liveSession);
     [replaySession cancelTimers];
-    [liveSession setAddressBookEntry:[replaySession addressBookEntry]];
+    [liveSession setProfile:[replaySession profile]];
 
     SessionView* oldView = [replaySession view];
     SessionView* newView = [liveSession view];
@@ -1127,7 +1127,7 @@ static NSString* FormatRect(NSRect r) {
     // Make scrollbars the right size and put them at the tops of their session views.
     for (PTYSession *theSession in [self sessions]) {
         NSSize theSize = [theSession idealScrollViewSizeWithStyle:[parentWindow_ scrollerStyle]];
-        [[theSession SCROLLVIEW] setFrame:NSMakeRect(0,
+        [[theSession scrollview] setFrame:NSMakeRect(0,
                                                      0,
                                                      theSize.width,
                                                      theSize.height)];
@@ -1349,7 +1349,7 @@ static NSString* FormatRect(NSRect r) {
 - (NSSize)_sessionSize:(SessionView*)sessionView
 {
     PTYSession *session = [sessionView session];
-    return [PTYTab _sessionSizeWithCellSize:NSMakeSize([[session TEXTVIEW] charWidth], [[session TEXTVIEW] lineHeight])
+    return [PTYTab _sessionSizeWithCellSize:NSMakeSize([[session textview] charWidth], [[session textview] lineHeight])
                                  dimensions:NSMakeSize([session columns], [session rows])
                                  showTitles:[sessionView showTitle]
                                  inTerminal:parentWindow_];
@@ -1359,8 +1359,8 @@ static NSString* FormatRect(NSRect r) {
 {
     NSSize size;
     PTYSession* session = [sessionView session];
-    size.width = kVT100ScreenMinColumns * [[session TEXTVIEW] charWidth] + MARGIN * 2;
-    size.height = kVT100ScreenMinRows * [[session TEXTVIEW] lineHeight] + VMARGIN * 2;
+    size.width = kVT100ScreenMinColumns * [[session textview] charWidth] + MARGIN * 2;
+    size.height = kVT100ScreenMinRows * [[session textview] lineHeight] + VMARGIN * 2;
 
     BOOL hasScrollbar = [parentWindow_ scrollbarShouldBeVisible];
     NSSize scrollViewSize =
@@ -1731,11 +1731,11 @@ static NSString* FormatRect(NSRect r) {
     PtyLog(@"PTYTab fitSessionToCurrentViewSzie");
     PtyLog(@"fitSessionToCurrentViewSize begins");
     BOOL hasScrollbar = [parentWindow_ scrollbarShouldBeVisible];
-    [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
+    [[aSession scrollview] setHasVerticalScroller:hasScrollbar];
     NSSize size = [[aSession view] maximumPossibleScrollViewContentSize];
     DLog(@"Max size is %@", [NSValue valueWithSize:size]);
-    int width = (size.width - MARGIN*2) / [[aSession TEXTVIEW] charWidth];
-    int height = (size.height - VMARGIN*2) / [[aSession TEXTVIEW] lineHeight];
+    int width = (size.width - MARGIN*2) / [[aSession textview] charWidth];
+    int height = (size.height - VMARGIN*2) / [[aSession textview] lineHeight];
     PtyLog(@"fitSessionToCurrentViewSize %@ gives %d rows", [NSValue valueWithSize:size], height);
     if (width <= 0) {
         NSLog(@"WARNING: Session has %d width", width);
@@ -1773,8 +1773,8 @@ static NSString* FormatRect(NSRect r) {
 
     [aSession setWidth:width height:height];
     PtyLog(@"fitSessionToCurrentViewSize -  calling setWidth:%d height:%d", width, height);
-    [[aSession SCROLLVIEW] setLineScroll:[[aSession TEXTVIEW] lineHeight]];
-    [[aSession SCROLLVIEW] setPageScroll:2*[[aSession TEXTVIEW] lineHeight]];
+    [[aSession scrollview] setLineScroll:[[aSession textview] lineHeight]];
+    [[aSession scrollview] setPageScroll:2*[[aSession textview] lineHeight]];
     if ([aSession backgroundImagePath]) {
         [aSession setBackgroundImagePath:[aSession backgroundImagePath]];
     }
@@ -1823,8 +1823,8 @@ static NSString* FormatRect(NSRect r) {
     NSArray* sessions = [self sessions];
     for (PTYSession* session in sessions) {
         if ([session transparency] > 0 &&
-            [[session TEXTVIEW] useTransparency] &&
-            [[[session addressBookEntry] objectForKey:KEY_BLUR] boolValue]) {
+            [[session textview] useTransparency] &&
+            [[[session profile] objectForKey:KEY_BLUR] boolValue]) {
             ++y;
         } else {
             ++n;
@@ -1839,8 +1839,8 @@ static NSString* FormatRect(NSRect r) {
     double count = 0;
     NSArray* sessions = [self sessions];
     for (PTYSession* session in sessions) {
-        if ([[[session addressBookEntry] objectForKey:KEY_BLUR] boolValue]) {
-            sum += [[session addressBookEntry] objectForKey:KEY_BLUR_RADIUS] ? [[[session addressBookEntry] objectForKey:KEY_BLUR_RADIUS] floatValue] : 2.0;
+        if ([[[session profile] objectForKey:KEY_BLUR] boolValue]) {
+            sum += [[session profile] objectForKey:KEY_BLUR_RADIUS] ? [[[session profile] objectForKey:KEY_BLUR_RADIUS] floatValue] : 2.0;
             ++count;
         }
     }
@@ -2454,7 +2454,7 @@ static NSString* FormatRect(NSRect r) {
 {
     [PTYTab setSizesInTmuxParseTree:parseTree_ inTerminal:realParentWindow_];
     [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree_];
-    [[root_ window] makeFirstResponder:[[self activeSession] TEXTVIEW]];
+    [[root_ window] makeFirstResponder:[[self activeSession] textview]];
 }
 
 + (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
@@ -2563,8 +2563,8 @@ static NSString* FormatRect(NSRect r) {
         } else {
             SessionView *sv = (SessionView *)view;
             PTYSession *session = [sv session];
-            NSRect svFrame = [[session SCROLLVIEW] frame];
-            NSRect visibleFrame = [[session SCROLLVIEW] documentVisibleRect];  // excludes scrollbar, if any
+            NSRect svFrame = [[session scrollview] frame];
+            NSRect visibleFrame = [[session scrollview] documentVisibleRect];  // excludes scrollbar, if any
             int chars = forHeight ? (svFrame.size.height - VMARGIN * 2) / cellSize.height :
                                     (visibleFrame.size.width - MARGIN * 2) / cellSize.width;
             [intervalMap incrementNumbersBy:chars
@@ -2743,7 +2743,7 @@ static NSString* FormatRect(NSRect r) {
         NSRect aFrame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
         [sv setFrame:aFrame];
         NSSize theSize = [theSession idealScrollViewSizeWithStyle:[parentWindow_ scrollerStyle]];
-        [[theSession SCROLLVIEW] setFrame:NSMakeRect(0,
+        [[theSession scrollview] setFrame:NSMakeRect(0,
                                                      0,
                                                      theSize.width,
                                                      theSize.height)];
@@ -2883,7 +2883,7 @@ static NSString* FormatRect(NSRect r) {
         [self replaceViewHierarchyWithParseTree:parseTree];
     }
     [self updateFlexibleViewColors];
-    [[root_ window] makeFirstResponder:[[self activeSession] TEXTVIEW]];
+    [[root_ window] makeFirstResponder:[[self activeSession] textview]];
     [parseTree_ release];
     parseTree_ = [parseTree retain];
 }
@@ -2930,7 +2930,7 @@ static NSString* FormatRect(NSRect r) {
     [root_ addSubview:temp];
     [temp release];
 
-    [[root_ window] makeFirstResponder:[activeSession_ TEXTVIEW]];
+    [[root_ window] makeFirstResponder:[activeSession_ textview]];
     [realParentWindow_ invalidateRestorableState];
 }
 
@@ -2963,7 +2963,7 @@ static NSString* FormatRect(NSRect r) {
     savedArrangement_ = nil;
     isMaximized_ = NO;
 
-    [[root_ window] makeFirstResponder:[activeSession_ TEXTVIEW]];
+    [[root_ window] makeFirstResponder:[activeSession_ textview]];
     [realParentWindow_ invalidateRestorableState];
 }
 
@@ -3834,9 +3834,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     if ([theView isKindOfClass:[SessionView class]]) {
         SessionView* sessionView = (SessionView*)theView;
         if (wantWidth) {
-            return [[[sessionView session] TEXTVIEW] charWidth];
+            return [[[sessionView session] textview] charWidth];
         } else {
-            return [[[sessionView session] TEXTVIEW] lineHeight];
+            return [[[sessionView session] textview] lineHeight];
         }
     } else {
         CGFloat maxStep = 0;
@@ -3907,7 +3907,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         if ([session newOutput]) {
             // Idle after new output
             if (![session growlIdle] &&
-                [[session SCREEN] postGrowlNotifications] &&
+                [[session screen] postGrowlNotifications] &&
                 [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC &&
                 now.tv_sec > [session lastOutput].tv_sec + 1) {
                 [[iTermGrowlDelegate sharedInstance] growlNotify:NSLocalizedStringFromTableInBundle(@"Idle",
@@ -3946,7 +3946,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 
     if (![[self activeSession] growlNewOutput] &&
         [[self realParentWindow] broadcastMode] == BROADCAST_OFF &&
-        [[[self activeSession] SCREEN] postGrowlNotifications] &&
+        [[[self activeSession] screen] postGrowlNotifications] &&
         [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC) {
         [[iTermGrowlDelegate sharedInstance] growlNotify:NSLocalizedStringFromTableInBundle(@"New Output",
                                                                                             @"iTerm",

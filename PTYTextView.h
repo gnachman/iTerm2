@@ -63,13 +63,13 @@ typedef enum {
 - (void)paste:(id)sender;
 - (void)textViewFontDidChange;
 - (void)textViewSizeDidChange;
-- (PTYScrollView *)SCROLLVIEW;
+- (PTYScrollView *)scrollview;
 - (void)sendEscapeSequence:(NSString *)text;
 - (void)sendHexCode:(NSString *)codes;
 - (void)sendText:(NSString *)text;
 - (void)launchCoprocessWithCommand:(NSString *)command;
 - (void)insertText:(NSString *)string;
-- (PTYTask *)SHELL;
+- (PTYTask *)shell;
 - (BOOL)alertOnNextMark;
 - (void)startDownloadOverSCP:(SCPPath *)path;
 - (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath;

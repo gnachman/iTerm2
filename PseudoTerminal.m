@@ -922,7 +922,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)swipeWithEvent:(NSEvent *)event
 {
-    [[[self currentSession] TEXTVIEW] swipeWithEvent:event];
+    [[[self currentSession] textview] swipeWithEvent:event];
 }
 
 - (void)setTabBarStyle
@@ -1179,9 +1179,9 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (IBAction)findCursor:(id)sender
 {
-    [[[self currentSession] TEXTVIEW] beginFindCursor:YES];
+    [[[self currentSession] textview] beginFindCursor:YES];
     if (!(GetCurrentKeyModifiers() & cmdKey)) {
-        [[[self currentSession] TEXTVIEW] placeFindCursorOnAutoHide];
+        [[[self currentSession] textview] placeFindCursorOnAutoHide];
     }
     findCursorStartTime_ = [[NSDate date] timeIntervalSince1970];
 }
@@ -1374,7 +1374,7 @@ NSString *kSessionsKVCKey = @"sessions";
         if ([aSession isTmuxClient]) {
             [aSession writeTaskNoBroadcast:data];
         } else if (![aSession isTmuxGateway]) {
-            [[aSession SHELL] writeTask:data];
+            [aSession.shell writeTask:data];
         }
     }
 }
@@ -1742,7 +1742,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [TABVIEW selectTabViewItemAtIndex:tabIndex];
     }
 
-    Profile* addressbookEntry = [[[[[self tabs] objectAtIndex:0] sessions] objectAtIndex:0] addressBookEntry];
+    Profile* addressbookEntry = [[[[[self tabs] objectAtIndex:0] sessions] objectAtIndex:0] profile];
     if ([addressbookEntry objectForKey:KEY_SPACE] &&
         [[addressbookEntry objectForKey:KEY_SPACE] intValue] == -1) {
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
@@ -1997,10 +1997,10 @@ NSString *kSessionsKVCKey = @"sessions";
     // svn history for the old impl.
 
     // update the cursor
-    if ([[[self currentSession] TEXTVIEW] refresh]) {
+    if ([[[self currentSession] textview] refresh]) {
         [[self currentSession] scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
     }
-    [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
+    [[[self currentSession] textview] setNeedsDisplay:YES];
     [self _loadFindStringFromSharedPasteboard];
 
     // Start the timers back up
@@ -2020,8 +2020,8 @@ NSString *kSessionsKVCKey = @"sessions";
 {
     if ([self currentSession]) {
         PtyLog(@"makeCurrentSessionFirstResponder. New first responder will be %@. The current first responder is %@",
-               [[self currentSession] TEXTVIEW], [[self window] firstResponder]);
-        [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+               [[self currentSession] textview], [[self window] firstResponder]);
+        [[self window] makeFirstResponder:[[self currentSession] textview]];
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
                                                             object:[self currentSession]
                                                           userInfo:nil];
@@ -2049,7 +2049,7 @@ NSString *kSessionsKVCKey = @"sessions";
 - (void)canonicalizeWindowFrame {
     PtyLog(@"canonicalizeWindowFrame");
     PTYSession* session = [self currentSession];
-    NSDictionary* abDict = [session addressBookEntry];
+    NSDictionary* abDict = [session profile];
     NSScreen* screen = [[self window] deepestScreen];
     if (!screen) {
         PtyLog(@"No deepest screen");
@@ -2077,7 +2077,7 @@ NSString *kSessionsKVCKey = @"sessions";
     // window's frame.
     NSSize decorationSize = [self windowDecorationSize];
     PtyLog(@"Decoration size is %@", [NSValue valueWithSize:decorationSize]);
-    PtyLog(@"Line height is %f, char width is %f", (float) [[session TEXTVIEW] lineHeight], [[session TEXTVIEW] charWidth]);
+    PtyLog(@"Line height is %f, char width is %f", (float) [[session textview] lineHeight], [[session textview] charWidth]);
     BOOL edgeSpanning = YES;
     switch (windowType_) {
         case WINDOW_TYPE_TOP_PARTIAL:
@@ -2087,7 +2087,7 @@ NSString *kSessionsKVCKey = @"sessions";
             // If the screen grew and the window was smaller than the desired number of rows, grow it.
             if (desiredRows_ > 0) {
                 frame.size.height = MIN([screen visibleFrame].size.height,
-                                        ceil([[session TEXTVIEW] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
+                                        ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
             } else {
                 frame.size.height = MIN([screen visibleFrame].size.height, frame.size.height);
             }
@@ -2120,7 +2120,7 @@ NSString *kSessionsKVCKey = @"sessions";
             // If the screen grew and the window was smaller than the desired number of rows, grow it.
             if (desiredRows_ > 0) {
                 frame.size.height = MIN([screen visibleFrame].size.height,
-                                        ceil([[session TEXTVIEW] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
+                                        ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
             } else {
                 frame.size.height = MIN([screen visibleFrame].size.height, frame.size.height);
             }
@@ -2153,7 +2153,7 @@ NSString *kSessionsKVCKey = @"sessions";
             // If the screen grew and the window was smaller than the desired number of columns, grow it.
             if (desiredColumns_ > 0) {
                 frame.size.width = MIN([screen visibleFrame].size.width,
-                                       [[session TEXTVIEW] charWidth] * desiredColumns_ + 2 * MARGIN);
+                                       [[session textview] charWidth] * desiredColumns_ + 2 * MARGIN);
             } else {
                 frame.size.width = MIN([screen visibleFrame].size.width, frame.size.width);
             }
@@ -2186,7 +2186,7 @@ NSString *kSessionsKVCKey = @"sessions";
             // If the screen grew and the window was smaller than the desired number of columns, grow it.
             if (desiredColumns_ > 0) {
                 frame.size.width = MIN([screen visibleFrame].size.width,
-                                       [[session TEXTVIEW] charWidth] * desiredColumns_ + 2 * MARGIN);
+                                       [[session textview] charWidth] * desiredColumns_ + 2 * MARGIN);
             } else {
                 frame.size.width = MIN([screen visibleFrame].size.width, frame.size.width);
             }
@@ -2251,10 +2251,10 @@ NSString *kSessionsKVCKey = @"sessions";
 - (void)windowDidResignKey:(NSNotification *)aNotification
 {
     for (PTYSession *aSession in [self sessions]) {
-        if ([[aSession TEXTVIEW] isFindingCursor]) {
-            [[aSession TEXTVIEW] endFindCursor];
+        if ([[aSession textview] isFindingCursor]) {
+            [[aSession textview] endFindCursor];
         }
-        [[aSession TEXTVIEW] removeUnderline];
+        [[aSession textview] removeUnderline];
     }
 
     PtyLog(@"PseudoTerminal windowDidResignKey");
@@ -2310,8 +2310,8 @@ NSString *kSessionsKVCKey = @"sessions";
         [self showMenuBar];
     }
     // update the cursor
-    [[[self currentSession] TEXTVIEW] refresh];
-    [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
+    [[[self currentSession] textview] refresh];
+    [[[self currentSession] textview] setNeedsDisplay:YES];
     if (![self lionFullScreen]) {
         // Don't dim Lion fullscreen because you can't see the window when it's not key.
         for (PTYSession* aSession in [self sessions]) {
@@ -2338,8 +2338,8 @@ NSString *kSessionsKVCKey = @"sessions";
     // }
 
     // update the cursor
-    [[[self currentSession] TEXTVIEW] refresh];
-    [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
+    [[[self currentSession] textview] refresh];
+    [[[self currentSession] textview] setNeedsDisplay:YES];
 }
 
 - (BOOL)isEdgeWindow
@@ -2380,8 +2380,8 @@ NSString *kSessionsKVCKey = @"sessions";
     PTYSession* session = [tab activeSession];
 
     // Get the width and height of characters in this session.
-    float charWidth = [[session TEXTVIEW] charWidth];
-    float charHeight = [[session TEXTVIEW] lineHeight];
+    float charWidth = [[session textview] charWidth];
+    float charHeight = [[session textview] lineHeight];
 
     // Decide when to snap.  (We snap unless control is held down.)
     BOOL modifierDown = (([[NSApp currentEvent] modifierFlags] & NSControlKeyMask) != 0);
@@ -2697,9 +2697,9 @@ NSString *kSessionsKVCKey = @"sessions";
 {
     for (PTYSession *aSession in [self sessions]) {
         BOOL hasScrollbar = [self scrollbarShouldBeVisible];
-        [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
-        [[aSession SCROLLVIEW] setScrollerStyle:[self scrollerStyle]];
-        [[aSession TEXTVIEW] updateScrollerForBackgroundColor];
+        [[aSession scrollview] setHasVerticalScroller:hasScrollbar];
+        [[aSession scrollview] setScrollerStyle:[self scrollerStyle]];
+        [[aSession textview] updateScrollerForBackgroundColor];
     }
 }
 
@@ -2785,8 +2785,8 @@ NSString *kSessionsKVCKey = @"sessions";
         aTabViewItem = [[TABVIEW tabViewItemAtIndex:0] retain];
         PTYTab* theTab = [aTabViewItem identifier];
         for (PTYSession* aSession in [theTab sessions]) {
-            [aSession setTransparency:[[[aSession addressBookEntry]
-                                                 objectForKey:KEY_TRANSPARENCY] floatValue]];
+            [aSession setTransparency:[[[aSession profile]
+                                        objectForKey:KEY_TRANSPARENCY] floatValue]];
         }
         // remove from our window
         PtyLog(@"toggleFullScreenMode - remove tab %d from old window", i);
@@ -2818,7 +2818,7 @@ NSString *kSessionsKVCKey = @"sessions";
         iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
         [newTerminal->toolbelt_ setHidden:![itad showToolbelt]];
         // The toolbelt may try to become the first responder.
-        [[newTerminal window] makeFirstResponder:[[newTerminal currentSession] TEXTVIEW]];
+        [[newTerminal window] makeFirstResponder:[[newTerminal currentSession] textview]];
     }
 
     if (!fs) {
@@ -3061,9 +3061,9 @@ NSString *kSessionsKVCKey = @"sessions";
     // panes then the margins probably won't turn out perfect. If other tabs have
     // a different char size, they will also have imperfect margins.
     float decorationHeight = [sender frame].size.height -
-        [[[self currentSession] SCROLLVIEW] documentVisibleRect].size.height + VMARGIN * 2;
+        [[[self currentSession] scrollview] documentVisibleRect].size.height + VMARGIN * 2;
     float decorationWidth = [sender frame].size.width -
-        [[[self currentSession] SCROLLVIEW] documentVisibleRect].size.width + MARGIN * 2;
+        [[[self currentSession] scrollview] documentVisibleRect].size.width + MARGIN * 2;
 
     float charHeight = [self maxCharHeight:nil];
     float charWidth = [self maxCharWidth:nil];
@@ -3179,7 +3179,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)editSession:(PTYSession*)session
 {
-    Profile* bookmark = [session addressBookEntry];
+    Profile* bookmark = [session profile];
     if (!bookmark) {
         return;
     }
@@ -3273,7 +3273,7 @@ NSString *kSessionsKVCKey = @"sessions";
     }
     // If the user is currently select-dragging the text view, stop it so it
     // doesn't keep going in the background.
-    [[[self currentSession] TEXTVIEW] aboutToHide];
+    [[[self currentSession] textview] aboutToHide];
 
     if ([[autocompleteView window] isVisible]) {
         [autocompleteView close];
@@ -3308,7 +3308,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
         // Background tabs' timers run infrequently so make sure the display is
         // up to date to avoid a jump when it's shown.
-        [[aSession TEXTVIEW] setNeedsDisplay:YES];
+        [[aSession textview] setNeedsDisplay:YES];
         [aSession updateDisplay];
         [aSession scheduleUpdateIn:kFastTimerIntervalSec];
                 [self setDimmingForSession:aSession];
@@ -3316,8 +3316,8 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 
     for (PTYSession *session in [self sessions]) {
-        if ([[session TEXTVIEW] isFindingCursor]) {
-            [[session TEXTVIEW] endFindCursor];
+        if ([[session textview] isFindingCursor]) {
+            [[session textview] endFindCursor];
         }
     }
     PTYSession* aSession = [[tabViewItem identifier] activeSession];
@@ -3328,7 +3328,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [self setWindowTitle];
     }
 
-    [[self window] makeFirstResponder:[[[tabViewItem identifier] activeSession] TEXTVIEW]];
+    [[self window] makeFirstResponder:[[[tabViewItem identifier] activeSession] textview]];
     if ([[aSession tab] blur]) {
         [self enableBlur:[[aSession tab] blurRadius]];
     } else {
@@ -3731,8 +3731,8 @@ NSString *kSessionsKVCKey = @"sessions";
 {
         PTYSession *session = [[aTabViewItem identifier] activeSession];
         return  [NSString stringWithFormat:@"Profile: %@\nCommand: %@",
-                                [[session addressBookEntry] objectForKey:KEY_NAME],
-                                [[session SHELL] command]];
+                                [[session profile] objectForKey:KEY_NAME],
+                                [session.shell command]];
 }
 
 - (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem
@@ -3875,7 +3875,7 @@ NSString *kSessionsKVCKey = @"sessions";
         }
     } else {
         // Live view
-        dvr = [[[self currentSession] SCREEN] dvr];
+        dvr = [[[self currentSession] screen] dvr];
         [irSlider setFloatValue:1.0];
         [currentTime setStringValue:@"Live View"];
         [currentTime sizeToFit];
@@ -3903,7 +3903,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [currentTime setFrameOrigin:NSMakePoint(newX, f.origin.y)];
 
     [bottomBar setNeedsDisplay:YES];
-    [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
+    [[[self currentSession] textview] setNeedsDisplay:YES];
 }
 
 - (IBAction)irButton:(id)sender
@@ -3918,7 +3918,7 @@ NSString *kSessionsKVCKey = @"sessions";
             break;
 
     }
-    [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+    [[self window] makeFirstResponder:[[self currentSession] textview]];
     [sender setSelected:NO forSegment:[sender selectedSegment]];
 }
 
@@ -3967,7 +3967,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [TABVIEW setFrame:tvframe];
     [[[self window] contentView] setAutoresizesSubviews:YES];
 
-    [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+    [[self window] makeFirstResponder:[[self currentSession] textview]];
 }
 
 - (IBAction)closeInstantReplay:(id)sender
@@ -3997,7 +3997,7 @@ NSString *kSessionsKVCKey = @"sessions";
     if (!oldTabViewItem) {
         return;
     }
-    if ([[[oldSession SCREEN] dvr] lastTimeStamp] == 0) {
+    if ([[[oldSession screen] dvr] lastTimeStamp] == 0) {
         // Nothing recorded (not enough memory for one frame, perhaps?).
         return;
     }
@@ -4008,8 +4008,8 @@ NSString *kSessionsKVCKey = @"sessions";
     // NSLog(@"New session for IR view is at %p", newSession);
 
     // set our preferences
-    [newSession setAddressBookEntry:[oldSession addressBookEntry]];
-    [[newSession SCREEN] setMaxScrollbackLines:0];
+    [newSession setProfile:[oldSession profile]];
+    [[newSession screen] setMaxScrollbackLines:0];
     [self setupSession:newSession title:nil withSize:nil];
     [[newSession view] setViewId:[[oldSession view] viewId]];
 
@@ -4029,15 +4029,15 @@ NSString *kSessionsKVCKey = @"sessions";
     [self updateInstantReplay];
 
     [self sessionInitiatedResize:replaySession
-                           width:[[liveSession SCREEN] width]
-                          height:[[liveSession SCREEN] height]];
+                           width:[[liveSession screen] width]
+                          height:[[liveSession screen] height]];
 
     [replaySession retain];
     [theTab showLiveSession:liveSession inPlaceOf:replaySession];
     [replaySession softTerminate];
     [replaySession release];
     [theTab setParentWindow:self];
-    [[self window] makeFirstResponder:[[theTab activeSession] TEXTVIEW]];
+    [[self window] makeFirstResponder:[[theTab activeSession] textview]];
 }
 
 - (void)windowSetFrameTopLeftPoint:(NSPoint)point
@@ -4100,13 +4100,13 @@ NSString *kSessionsKVCKey = @"sessions";
         return;
     }
     [self irAdvance:-1];
-    [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+    [[self window] makeFirstResponder:[[self currentSession] textview]];
 }
 
 - (IBAction)irNext:(id)sender
 {
     [self irAdvance:1];
-    [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+    [[self window] makeFirstResponder:[[self currentSession] textview]];
 }
 
 - (void)_openSplitSheetForVertical:(BOOL)vertical
@@ -4372,7 +4372,7 @@ NSString *kSessionsKVCKey = @"sessions";
     NSString *oldCWD = nil;
     /* Get currently selected tabviewitem */
     if ([self currentSession]) {
-        oldCWD = [[[self currentSession] SHELL] getWorkingDirectory];
+        oldCWD = [[[self currentSession] shell] getWorkingDirectory];
     }
 
     PTYSession* newSession = [[self newSessionWithBookmark:theBookmark] autorelease];
@@ -4390,16 +4390,16 @@ NSString *kSessionsKVCKey = @"sessions";
     Profile* theBookmark = nil;
 
     // Get the bookmark this session was originally created with. But look it up from its GUID because
-    // it might have changed since it was copied into originalAddressBookEntry when the bookmark was
+    // it might have changed since it was copied into originalProfile when the bookmark was
     // first created.
-    Profile* originalBookmark = [[self currentSession] originalAddressBookEntry];
+    Profile* originalBookmark = [[self currentSession] originalProfile];
     if (originalBookmark && [originalBookmark objectForKey:KEY_GUID]) {
         theBookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[originalBookmark objectForKey:KEY_GUID]];
     }
 
     // If that fails, use its current bookmark.
     if (!theBookmark) {
-        theBookmark = [[self currentSession] addressBookEntry];
+        theBookmark = [[self currentSession] profile];
     }
 
     // I don't think that'll ever fail, but to be safe try using the original bookmark.
@@ -4567,7 +4567,7 @@ NSString *kSessionsKVCKey = @"sessions";
             PTYSession* session = [self currentSession];
             if (desiredColumns_ > 0) {
                 frame.size.width = MIN(winSize.width,
-                                       ceil([[session TEXTVIEW] charWidth] *
+                                       ceil([[session textview] charWidth] *
                                             desiredColumns_) + decorationSize.width + 2 * MARGIN);
             } else {
                 frame.size.width = winSize.width;
@@ -4607,7 +4607,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
     PtyLog(@"fitWindowToTabs - refresh textview");
     for (PTYSession* session in [[self currentTab] sessions]) {
-        [[session TEXTVIEW] setNeedsDisplay:YES];
+        [[session textview] setNeedsDisplay:YES];
     }
     PtyLog(@"fitWindowToTabs - update tab bar");
     [tabBarControl update];
@@ -4654,28 +4654,28 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (IBAction)movePaneDividerRight:(id)sender
 {
-    int width = [[[self currentSession] TEXTVIEW] charWidth];
+    int width = [[[self currentSession] textview] charWidth];
     [[self currentTab] moveCurrentSessionDividerBy:width
                                       horizontally:YES];
 }
 
 - (IBAction)movePaneDividerLeft:(id)sender
 {
-    int width = [[[self currentSession] TEXTVIEW] charWidth];
+    int width = [[[self currentSession] textview] charWidth];
     [[self currentTab] moveCurrentSessionDividerBy:-width
                                       horizontally:YES];
 }
 
 - (IBAction)movePaneDividerDown:(id)sender
 {
-    int height = [[[self currentSession] TEXTVIEW] lineHeight];
+    int height = [[[self currentSession] textview] lineHeight];
     [[self currentTab] moveCurrentSessionDividerBy:height
                                       horizontally:NO];
 }
 
 - (IBAction)movePaneDividerUp:(id)sender
 {
-    int height = [[[self currentSession] TEXTVIEW] lineHeight];
+    int height = [[[self currentSession] textview] lineHeight];
     [[self currentTab] moveCurrentSessionDividerBy:-height
                                       horizontally:NO];
 }
@@ -5302,7 +5302,7 @@ NSString *kSessionsKVCKey = @"sessions";
     } else if ([self anyFullScreen] ||
                windowType_ == WINDOW_TYPE_RIGHT ) {
         return NO;
-    } else if (![[[self currentSession] SCROLLVIEW] isLegacyScroller] ||
+    } else if (![[[self currentSession] scrollview] isLegacyScroller] ||
                ![self scrollbarShouldBeVisible]) {
         // hidden scrollbar
         return YES;
@@ -5378,15 +5378,15 @@ NSString *kSessionsKVCKey = @"sessions";
 
     NSUInteger modifierFlags = [theEvent modifierFlags];
     if (!(modifierFlags & NSCommandKeyMask) &&
-        [[[self currentSession] TEXTVIEW] isFindingCursor]) {
+        [[[self currentSession] textview] isFindingCursor]) {
         // The cmd key was let up while finding the cursor
 
         if ([[NSDate date] timeIntervalSinceDate:[NSDate dateWithTimeIntervalSince1970:findCursorStartTime_]] > kFindCursorHoldTime) {
             // The time for it to hide automatically has passed, so just hide it
-            [[[self currentSession] TEXTVIEW] endFindCursor];
+            [[[self currentSession] textview] endFindCursor];
         } else {
             // Hide it after the minimum time
-            [[[self currentSession] TEXTVIEW] placeFindCursorOnAutoHide];
+            [[[self currentSession] textview] placeFindCursorOnAutoHide];
         }
     }
 
@@ -5428,7 +5428,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [fullScreenTabviewTimer_ release];
     fullScreenTabviewTimer_ = nil;
     // Don't show the tabbar if you're holding cmd while doing find cursor
-    if ([self anyFullScreen] && ![[[self currentSession] TEXTVIEW] isFindingCursor]) {
+    if ([self anyFullScreen] && ![[[self currentSession] textview] isFindingCursor]) {
         [self showFullScreenTabControl];
     }
 }
@@ -5535,7 +5535,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
     PtyLog(@"repositionWidgets - refresh textviews in this tab");
     for (PTYSession* session in [[self currentTab] sessions]) {
-        [[session TEXTVIEW] setNeedsDisplay:YES];
+        [[session textview] setNeedsDisplay:YES];
     }
 
     PtyLog(@"repositionWidgets - update tab bar");
@@ -5550,10 +5550,10 @@ NSString *kSessionsKVCKey = @"sessions";
     float max=0;
     for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
         for (PTYSession* session in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
-            float w =[[session TEXTVIEW] charWidth];
+            float w =[[session textview] charWidth];
             PtyLog(@"maxCharWidth - session %d has %dx%d, chars are %fx%f",
-                   i, [session columns], [session rows], [[session TEXTVIEW] charWidth],
-                   [[session TEXTVIEW] lineHeight]);
+                   i, [session columns], [session rows], [[session textview] charWidth],
+                   [[session textview] lineHeight]);
             if (w > max) {
                 max = w;
                 if (numChars) {
@@ -5572,9 +5572,9 @@ NSString *kSessionsKVCKey = @"sessions";
     float max=0;
     for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
         for (PTYSession* session in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
-            float h =[[session TEXTVIEW] lineHeight];
+            float h =[[session textview] lineHeight];
             PtyLog(@"maxCharHeight - session %d has %dx%d, chars are %fx%f", i, [session columns],
-                   [session rows], [[session TEXTVIEW] charWidth], [[session TEXTVIEW] lineHeight]);
+                   [session rows], [[session textview] charWidth], [[session textview] lineHeight]);
             if (h > max) {
                 max = h;
                 if (numChars) {
@@ -5594,13 +5594,13 @@ NSString *kSessionsKVCKey = @"sessions";
     float ch=0;
     for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
         for (PTYSession* session in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
-            float w = [[session TEXTVIEW] charWidth];
+            float w = [[session textview] charWidth];
             PtyLog(@"widestSessionWidth - session %d has %dx%d, chars are %fx%f", i,
-                   [session columns], [session rows], [[session TEXTVIEW] charWidth],
-                   [[session TEXTVIEW] lineHeight]);
+                   [session columns], [session rows], [[session textview] charWidth],
+                   [[session textview] lineHeight]);
             if (w * [session columns] > max) {
                 max = w;
-                ch = [[session TEXTVIEW] charWidth];
+                ch = [[session textview] charWidth];
                 *numChars = [session columns];
             }
         }
@@ -5616,11 +5616,11 @@ NSString *kSessionsKVCKey = @"sessions";
     float ch=0;
     for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
         for (PTYSession* session in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
-            float h = [[session TEXTVIEW] lineHeight];
-            PtyLog(@"tallestSessionheight - session %d has %dx%d, chars are %fx%f", i, [session columns], [session rows], [[session TEXTVIEW] charWidth], [[session TEXTVIEW] lineHeight]);
+            float h = [[session textview] lineHeight];
+            PtyLog(@"tallestSessionheight - session %d has %dx%d, chars are %fx%f", i, [session columns], [session rows], [[session textview] charWidth], [[session textview] lineHeight]);
             if (h * [session rows] > max) {
                 max = h * [session rows];
-                ch = [[session TEXTVIEW] lineHeight];
+                ch = [[session textview] lineHeight];
                 *numChars = [session rows];
             }
         }
@@ -5654,22 +5654,22 @@ NSString *kSessionsKVCKey = @"sessions";
     NSParameterAssert(aSession != nil);
 
     // set some default parameters
-    if ([aSession addressBookEntry] == nil) {
+    if ([aSession profile] == nil) {
         tempPrefs = [[ProfileModel sharedInstance] defaultBookmark];
         if (tempPrefs != nil) {
             // Use the default bookmark. This path is taken with applescript's
             // "make new session at the end of sessions" command.
-            [aSession setAddressBookEntry:tempPrefs];
+            [aSession setProfile:tempPrefs];
         } else {
             // get the hardcoded defaults
             NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
             [ITAddressBookMgr setDefaultsInBookmark:dict];
             [dict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-            [aSession setAddressBookEntry:dict];
+            [aSession setProfile:dict];
             tempPrefs = dict;
         }
     } else {
-        tempPrefs = [aSession addressBookEntry];
+        tempPrefs = [aSession profile];
     }
     PtyLog(@"Open session with prefs: %@", tempPrefs);
     int rows = [[tempPrefs objectForKey:KEY_ROWS] intValue];
@@ -5693,7 +5693,7 @@ NSString *kSessionsKVCKey = @"sessions";
                                    verticalSpacing:[[tempPrefs objectForKey:KEY_VERTICAL_SPACING] floatValue]];
 
     if (size == nil && [TABVIEW numberOfTabViewItems] != 0) {
-        NSSize contentSize = [[[self currentSession] SCROLLVIEW] documentVisibleRect].size;
+        NSSize contentSize = [[[self currentSession] scrollview] documentVisibleRect].size;
         rows = (contentSize.height - VMARGIN*2) / charSize.height;
         columns = (contentSize.width - MARGIN*2) / charSize.width;
     }
@@ -5790,7 +5790,7 @@ NSString *kSessionsKVCKey = @"sessions";
         NSSize maxGrowth;
         maxGrowth.width = maxTabSize.width - currentSize.width;
         maxGrowth.height = maxTabSize.height - currentSize.height;
-        int maxNewRows = maxGrowth.height / [[aSession TEXTVIEW] lineHeight];
+        int maxNewRows = maxGrowth.height / [[aSession textview] lineHeight];
 
         // 3. Compute the number of rows and columns we're trying to grow by.
         int newRows = rows - [aSession rows];
@@ -5801,9 +5801,9 @@ NSString *kSessionsKVCKey = @"sessions";
         }
         PtyLog(@"safelySetSessionSize - set to %dx%d", width, height);
         [aSession setWidth:width height:height];
-        [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
-        [[aSession SCROLLVIEW] setLineScroll:[[aSession TEXTVIEW] lineHeight]];
-        [[aSession SCROLLVIEW] setPageScroll:2*[[aSession TEXTVIEW] lineHeight]];
+        [[aSession scrollview] setHasVerticalScroller:hasScrollbar];
+        [[aSession scrollview] setLineScroll:[[aSession textview] lineHeight]];
+        [[aSession scrollview] setPageScroll:2*[[aSession textview] lineHeight]];
         if ([aSession backgroundImagePath]) {
             [aSession setBackgroundImagePath:[aSession backgroundImagePath]];
         }
@@ -5935,7 +5935,7 @@ NSString *kSessionsKVCKey = @"sessions";
     } else {
         NSMutableString *title = [NSMutableString string];
         NSString *progpath = [NSString stringWithFormat: @"%@ #%ld",
-                              [[[[aSession SHELL] path] pathComponents] lastObject],
+                              [[[[aSession shell] path] pathComponents] lastObject],
                               (long)[TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]]];
 
         if ([aSession exited]) {
@@ -5976,13 +5976,13 @@ NSString *kSessionsKVCKey = @"sessions";
 // Send a reset to the current session's terminal.
 - (void)reset:(id)sender
 {
-    [[[self currentSession] TERMINAL] resetPreservingPrompt:YES];
+    [[[self currentSession] terminal] resetPreservingPrompt:YES];
     [[self currentSession] updateDisplay];
 }
 
 - (IBAction)resetCharset:(id)sender
 {
-    [[[self currentSession] TERMINAL] resetCharset];
+    [[[self currentSession] terminal] resetCharset];
 }
 
 // Clear the buffer of the current session.
@@ -6096,26 +6096,26 @@ NSString *kSessionsKVCKey = @"sessions";
             result = NO;
         }
     } else if ([item action] == @selector(resetCharset:)) {
-        result = ![[[self currentSession] SCREEN] allCharacterSetPropertiesHaveDefaultValues];
+        result = ![[[self currentSession] screen] allCharacterSetPropertiesHaveDefaultValues];
     } else if ([item action] == @selector(openCommandHistory:)) {
         if (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
             return YES;
         }
         return [[CommandHistory sharedInstance] haveCommandsForHost:[[self currentSession] currentHost]];
     } else if ([item action] == @selector(movePaneDividerDown:)) {
-        int height = [[[self currentSession] TEXTVIEW] lineHeight];
+        int height = [[[self currentSession] textview] lineHeight];
         return [[self currentTab] canMoveCurrentSessionDividerBy:height
                                                     horizontally:NO];
     } else if ([item action] == @selector(movePaneDividerUp:)) {
-        int height = [[[self currentSession] TEXTVIEW] lineHeight];
+        int height = [[[self currentSession] textview] lineHeight];
         return [[self currentTab] canMoveCurrentSessionDividerBy:-height
                                                     horizontally:NO];
     } else if ([item action] == @selector(movePaneDividerRight:)) {
-        int width = [[[self currentSession] TEXTVIEW] charWidth];
+        int width = [[[self currentSession] textview] charWidth];
         return [[self currentTab] canMoveCurrentSessionDividerBy:width
                                                     horizontally:YES];
     } else if ([item action] == @selector(movePaneDividerLeft:)) {
-        int width = [[[self currentSession] TEXTVIEW] charWidth];
+        int width = [[[self currentSession] textview] charWidth];
         return [[self currentTab] canMoveCurrentSessionDividerBy:-width
                                                     horizontally:YES];
     } else if ([item action] == @selector(duplicateTab:)) {
@@ -6330,13 +6330,13 @@ NSString *kSessionsKVCKey = @"sessions";
 {
     int j = 0;
     for (PTYSession* session in [self allSessions]) {
-        Profile *oldBookmark = [session addressBookEntry];
+        Profile *oldBookmark = [session profile];
         NSString* oldName = [oldBookmark objectForKey:KEY_NAME];
         [oldName retain];
         NSString* guid = [oldBookmark objectForKey:KEY_GUID];
         if ([session reloadProfile]) {
             [[session tab] recheckBlur];
-            NSDictionary *profile = [session addressBookEntry];
+            NSDictionary *profile = [session profile];
             if (![[profile objectForKey:KEY_NAME] isEqualToString:oldName]) {
                 // Set name, which overrides any session-set icon name.
                 [session setName:[profile objectForKey:KEY_NAME]];
@@ -6386,11 +6386,11 @@ NSString *kSessionsKVCKey = @"sessions";
     // Initialize a new session
     aSession = [[PTYSession alloc] init];
 
-    [[aSession SCREEN] setUnlimitedScrollback:[[bookmark objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
-    [[aSession SCREEN] setMaxScrollbackLines:[[bookmark objectForKey:KEY_SCROLLBACK_LINES] intValue]];
+    [[aSession screen] setUnlimitedScrollback:[[bookmark objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
+    [[aSession screen] setMaxScrollbackLines:[[bookmark objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
     // set our preferences
-    [aSession setAddressBookEntry:bookmark];
+    [aSession setProfile:bookmark];
     return aSession;
 }
 
@@ -6401,13 +6401,13 @@ NSString *kSessionsKVCKey = @"sessions";
                       inCwd:(NSString*)oldCWD
               forObjectType:(iTermObjectType)objectType
 {
-    if ([aSession SCREEN]) {
+    if ([aSession screen]) {
         NSMutableString *cmd, *name;
         NSArray *arg;
         NSString *pwd;
         BOOL isUTF8;
         // Grab the addressbook command
-        Profile* addressbookEntry = [aSession addressBookEntry];
+        Profile* addressbookEntry = [aSession profile];
         cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
                                                                            forObjectType:objectType]] autorelease];
         name = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey:KEY_NAME]] autorelease];
@@ -6546,19 +6546,19 @@ NSString *kSessionsKVCKey = @"sessions";
     // Get active session's directory
     PTYSession* cwdSession = [[[iTermController sharedInstance] currentTerminal] currentSession];
     if (cwdSession) {
-        oldCWD = [[cwdSession SHELL] getWorkingDirectory];
+        oldCWD = [[cwdSession shell] getWorkingDirectory];
     }
 
     // Initialize a new session
     aSession = [[PTYSession alloc] init];
-    [[aSession SCREEN] setUnlimitedScrollback:[[addressbookEntry objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
-    [[aSession SCREEN] setMaxScrollbackLines:[[addressbookEntry objectForKey:KEY_SCROLLBACK_LINES] intValue]];
+    [[aSession screen] setUnlimitedScrollback:[[addressbookEntry objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
+    [[aSession screen] setMaxScrollbackLines:[[addressbookEntry objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
     // set our preferences
-    [aSession setAddressBookEntry:addressbookEntry];
+    [aSession setProfile:addressbookEntry];
     // Add this session to our term and make it current
     [self appendSession:aSession];
-    if ([aSession SCREEN]) {
+    if ([aSession screen]) {
         iTermObjectType objectType;
         if ([TABVIEW numberOfTabViewItems] == 1) {
             objectType = iTermWindowObject;
@@ -6673,7 +6673,7 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 // The 'uniqueID' argument might be an NSString or an NSNumber.
-- (id)valueWithID: (NSString *)uniqueID inPropertyWithKey: (NSString*)propertyKey
+- (id)valueWithID:(NSString *)uniqueID inPropertyWithKey:(NSString*)propertyKey
 {
     id result = nil;
     int i;
@@ -6683,7 +6683,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
         for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
             aSession = [[[TABVIEW tabViewItemAtIndex:i] identifier] activeSession];
-            if ([[aSession tty] isEqualToString: uniqueID] == YES) {
+            if ([[aSession tty] isEqualToString:uniqueID] == YES) {
                 return (aSession);
             }
         }
@@ -6701,13 +6701,13 @@ NSString *kSessionsKVCKey = @"sessions";
 
     // Initialize a new session
     aSession = [[PTYSession alloc] init];
-    [[aSession SCREEN] setUnlimitedScrollback:[[addressbookEntry objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
-    [[aSession SCREEN] setMaxScrollbackLines:[[addressbookEntry objectForKey:KEY_SCROLLBACK_LINES] intValue]];
+    [[aSession screen] setUnlimitedScrollback:[[addressbookEntry objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
+    [[aSession screen] setMaxScrollbackLines:[[addressbookEntry objectForKey:KEY_SCROLLBACK_LINES] intValue]];
     // set our preferences
-    [aSession setAddressBookEntry: addressbookEntry];
+    [aSession setProfile: addressbookEntry];
     // Add this session to our term and make it current
     [self appendSession: aSession];
-    if ([aSession SCREEN]) {
+    if ([aSession screen]) {
         // We process the cmd to insert URL parts
         NSMutableString *cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
                                                                                             forObjectType:objectType]] autorelease];
@@ -6772,13 +6772,13 @@ NSString *kSessionsKVCKey = @"sessions";
 
     // Initialize a new session
     aSession = [[PTYSession alloc] init];
-    [[aSession SCREEN] setUnlimitedScrollback:[[addressbookEntry objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
-    [[aSession SCREEN] setMaxScrollbackLines:[[addressbookEntry objectForKey:KEY_SCROLLBACK_LINES] intValue]];
+    [[aSession screen] setUnlimitedScrollback:[[addressbookEntry objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
+    [[aSession screen] setMaxScrollbackLines:[[addressbookEntry objectForKey:KEY_SCROLLBACK_LINES] intValue]];
     // set our preferences
-    [aSession setAddressBookEntry: addressbookEntry];
+    [aSession setProfile: addressbookEntry];
     // Add this session to our term and make it current
     [self appendSession: aSession];
-    if ([aSession SCREEN]) {
+    if ([aSession screen]) {
         NSMutableString *cmd, *name;
         NSArray *arg;
         NSString *pwd;
@@ -6818,7 +6818,7 @@ NSString *kSessionsKVCKey = @"sessions";
     ++tabViewItemsBeingAdded;
     [self setupSession:object title:nil withSize:nil];
     tabViewItemsBeingAdded--;
-    if ([object SCREEN]) {  // screen initialized ok
+    if ([object screen]) {  // screen initialized ok
         [self insertSession:object atIndex:[TABVIEW numberOfTabViewItems]];
     }
     [[self currentTab] numberOfSessionsDidChange];
@@ -6829,7 +6829,7 @@ NSString *kSessionsKVCKey = @"sessions";
     PtyLog(@"PseudoTerminal: -replaceInSessions: %p atIndex: %d", object, anIndex);
     // TODO: Test this
     [self setupSession:object title:nil withSize:nil];
-    if ([object SCREEN]) {  // screen initialized ok
+    if ([object screen]) {  // screen initialized ok
         [self replaceSession:object atIndex:anIndex];
     }
 }
@@ -6852,7 +6852,7 @@ NSString *kSessionsKVCKey = @"sessions";
     BOOL toggle = NO;
     if (![self windowInited]) {
         // call initWithSmartLayout:YES, etc, like this:
-        Profile *aDict = [object addressBookEntry];
+        Profile *aDict = [object profile];
         [self finishInitializationWithSmartLayout:YES
                                        windowType:[[iTermController sharedInstance] windowTypeForBookmark:aDict]
                                            screen:aDict[KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
@@ -6866,7 +6866,7 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 
     [self setupSession:object title:nil withSize:nil];
-    if ([object SCREEN]) {  // screen initialized ok
+    if ([object screen]) {  // screen initialized ok
         [self insertSession:object atIndex:anIndex];
     }
     [[self currentTab] numberOfSessionsDidChange];

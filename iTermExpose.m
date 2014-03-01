@@ -530,7 +530,7 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
         for (PTYTab* aTab in [term tabs]) {
             for (PTYSession* aSession in [aTab sessions]) {
-                PTYTextView* aTextView = [aSession TEXTVIEW];
+                PTYTextView* aTextView = [aSession textview];
                 if ([aTextView getAndResetChangedSinceLastExpose]) {
                     [self updateTab:aTab];
                     break;

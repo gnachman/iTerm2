@@ -571,7 +571,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<PTYTextView: %p frame=%@ visibleRect=%@ SCREEN=%@>",
+    return [NSString stringWithFormat:@"<PTYTextView: %p frame=%@ visibleRect=%@ dataSource=%@>",
             self,
             [NSValue valueWithRect:self.frame],
             [NSValue valueWithRect:[self visibleRect]],
@@ -3131,7 +3131,7 @@ NSMutableArray* screens=0;
         changed = [self setCursor:textViewCursor];
     }
     if (changed) {
-        [[_delegate SCROLLVIEW] setDocumentCursor:cursor_];
+        [[_delegate scrollview] setDocumentCursor:cursor_];
     }
 }
 

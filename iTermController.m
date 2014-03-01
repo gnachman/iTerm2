@@ -294,7 +294,7 @@ static BOOL initDone = NO;
 {
     Profile *bookmark = nil;
     if (FRONT) {
-        bookmark = [[FRONT currentSession] addressBookEntry];
+        bookmark = [[FRONT currentSession] profile];
     }
     [self launchBookmark:bookmark inTerminal:FRONT];
 }
@@ -563,7 +563,7 @@ static BOOL initDone = NO;
     for (PseudoTerminal *term in [self terminals]) {
         PTYTab *aTab = [term currentTab];
         for (PTYSession *aSession in [aTab sessions]) {
-            NSTimeInterval current = [[aSession TEXTVIEW] selectionTime];
+            NSTimeInterval current = [[aSession textview] selectionTime];
             if (current > latest) {
                 latest = current;
                 best = aSession;
@@ -1157,9 +1157,9 @@ static BOOL initDone = NO;
 
 }
 
-- (PTYTextView *) frontTextView
+- (PTYTextView *)frontTextView
 {
-    return ([[FRONT currentSession] TEXTVIEW]);
+    return ([[FRONT currentSession] textview]);
 }
 
 -(int)numberOfTerminals

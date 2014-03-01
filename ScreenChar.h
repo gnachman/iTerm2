@@ -349,7 +349,7 @@ void DumpScreenCharArray(screen_char_t* screenChars, int lineLength);
 // Pass prototype foreground and background colors in fg and bg.
 // *len is filled in with the number of elements of *buf that were set.
 // encoding is currently ignored and it's assumed to be UTF-16.
-// A good choice for ambiguousIsDoubleWidth is [SESSION doubleWidth].
+// A good choice for ambiguousIsDoubleWidth is [SESSION treatAmbiguousWidthAsDoubleWidth].
 // If not null, *cursorIndex gives an index into s and is changed into the
 //   corresponding index into buf.
 void StringToScreenChars(NSString *s,

@@ -747,7 +747,7 @@ static BOOL hasBecomeActive = NO;
     }
     if ([query objectForKey:@"command"]) {
         NSData *theData;
-        NSStringEncoding encoding = [[aSession TERMINAL] encoding];
+        NSStringEncoding encoding = [[aSession terminal] encoding];
         theData = [[[query objectForKey:@"command"] stringByReplacingPercentEscapesUsingEncoding:encoding] dataUsingEncoding:encoding];
         [aSession writeTask:theData];
         [aSession writeTask:[@"\r" dataUsingEncoding:encoding]];
@@ -1156,7 +1156,7 @@ static BOOL hasBecomeActive = NO;
     PTYSession *session = [frontTerminal currentSession];
     [session changeFontSizeDirection:0];
     if ([sender isAlternate]) {
-        NSDictionary *abEntry = [session originalAddressBookEntry];
+        NSDictionary *abEntry = [session originalProfile];
         [frontTerminal sessionInitiatedResize:session
                                         width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
                                        height:[[abEntry objectForKey:KEY_ROWS] intValue]];
@@ -1615,7 +1615,7 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)findWithSelection:(id)sender
 {
-    NSString* selection = [[[[[iTermController sharedInstance] currentTerminal] currentSession] TEXTVIEW] selectedText];
+    NSString* selection = [[[[[iTermController sharedInstance] currentTerminal] currentSession] textview] selectedText];
     if (selection) {
         for (PseudoTerminal* pty in [[iTermController sharedInstance] terminals]) {
             for (PTYSession* session in [pty sessions]) {

@@ -65,33 +65,189 @@ typedef enum {
 @property(nonatomic, readonly) int sessionID;
 @property(nonatomic, copy) NSColor *tabColor;
 
-// Return the current pasteboard value as a string.
-+ (NSString*)pasteboardString;
+@property(nonatomic, readonly) DVR *dvr;
+@property(nonatomic, readonly) DVRDecoder *dvrDecoder;
+// Returns the "real" session while in instant replay, else nil if not in IR.
+@property(nonatomic, readonly) PTYSession *liveSession;
+@property(nonatomic, readonly) BOOL canInstantReplayPrev;
+@property(nonatomic, readonly) BOOL canInstantReplayNext;
+
+@property(nonatomic, readonly) BOOL isTmuxClient;
+@property(nonatomic, readonly) BOOL isTmuxGateway;
+
+// Does the session have new output? Used by -[PTYTab setLabelAttributes] to color the tab's title
+// appropriately.
+@property(nonatomic, assign) BOOL newOutput;
+
+// Do we need to prompt on close for this session?
+@property(nonatomic, readonly) BOOL promptOnClose;
+
+// Array of subprocessess names.
+@property(nonatomic, readonly) NSArray *childJobNames;
+
+// The owning tab. TODO: Make this into a protocol because it's essentially a delegate.
+@property(nonatomic, assign) PTYTab *tab;
+
+@property(nonatomic, readonly) struct timeval lastOutput;
+
+// Is the session idle? Used by setLableAttribute to send a growl message when processing ends.
+@property(nonatomic, assign) BOOL growlIdle;
+
+// Is there new output for the purposes of growl notifications? They run on a different schedule
+// than tab colors.
+@property(nonatomic, assign) BOOL growlNewOutput;
+
+// Session name; can be changed via escape code. The getter will add formatting to it; to retrieve
+// the value that was set, use -rawName.
+@property(nonatomic, copy) NSString *name;
+
+// Unformatted version of -name.
+@property(nonatomic, readonly) NSString *rawName;
+
+// The original bookmark name.
+@property(nonatomic, copy) NSString *bookmarkName;
+
+// defaultName cannot be changed by the host. The getter returns a formatted name. Use
+// joblessDefaultName to get the value that was set.
+@property(nonatomic, copy) NSString *defaultName;
+
+// The value to which defaultName was last set, unadorned with additional formatting.
+@property(nonatomic, readonly) NSString *joblessDefaultName;
+
+// A temporary unique name (actually the tty) for this session.
+@property(nonatomic, readonly) NSString *uniqueID;
+
+// The window title that should be used when this session is current. Otherwise defaultName
+// should be used.
+@property(nonatomic, copy) NSString *windowTitle;
+
+// Shell wraps the underlying file descriptor pair.
+@property(nonatomic, retain) PTYTask *shell;
+
+@property(nonatomic, readonly) VT100Terminal *terminal;
+
+// The value of the $TERM environment var.
+@property(nonatomic, copy) NSString *termVariable;
+
+// The value of the $COLORFGBG environment var.
+@property(nonatomic, copy) NSString *colorFgBgVariable;
+
+// Screen contents, plus scrollback buffer.
+@property(nonatomic, retain) VT100Screen *screen;
+
+// The view in which this session's objects live.
+// NOTE! This is a weak reference.
+// TODO: SessionView should hold a weak reference to PTYSession, which should be an NSViewController.
+@property(nonatomic, assign) SessionView *view;
+
+// The view that contains all the visible text in this session and that does most input handling.
+// This is the one and only subview of the document view of -scrollview.
+@property(nonatomic, retain) PTYTextView *textview;
+
+// The scrollview. It is a subview of SessionView and contains -textview.
+@property(nonatomic, retain) PTYScrollView *scrollview;
+
+@property(nonatomic, assign) NSStringEncoding encoding;
+
+// Send a character periodically.
+@property(nonatomic, assign) BOOL antiIdle;
+
+// The code to send in the anti idle timer.
+@property(nonatomic, assign) char antiIdleCode;
+
+// If true, close the tab when the session ends.
+@property(nonatomic, assign) BOOL autoClose;
+
+// Should ambiguous-width characters (e.g., Greek) be treated as double-width? Usually a bad idea.
+@property(nonatomic, assign) BOOL treatAmbiguousWidthAsDoubleWidth;
+
+// True if mouse movements are sent to the host.
+@property(nonatomic, assign) BOOL xtermMouseReporting;
+
+// Profile for this session
+@property(nonatomic, copy) Profile *profile;
+
+// TODO(georgen): Actually use this. It's not well documented and the xterm code is a crazy mess :(.
+// For future reference, in tmux commit 8df3ec612a8c496fc2c975b8241f4e95faef5715 the list of xterm
+// keys gives a hint about how this is supposed to work (e.g., control-! sends a long CSI code). See also
+// the xterm manual (look for modifyOtherKeys, etc.) for valid values, and ctlseqs.html on invisible-island
+// for the meaning of the indices (under CSI > Ps; Pm m).
+@property(nonatomic, retain) NSArray *sendModifiers;
+
+// Return the address book that the session was originally created with.
+@property(nonatomic, readonly) Profile *originalProfile;
+
+// tty device
+@property(nonatomic, readonly) NSString *tty;
+
+// True if background image should be tiled
+@property(nonatomic, assign) BOOL backgroundImageTiled;
+
+// Filename of background image.
+@property(nonatomic, copy) NSString *backgroundImagePath;
+
+@property(nonatomic, retain) NSColor *foregroundColor;
+@property(nonatomic, retain) NSColor *backgroundColor;
+@property(nonatomic, retain) NSColor *selectionColor;
+@property(nonatomic, retain) NSColor *boldColor;
+@property(nonatomic, retain) NSColor *cursorColor;
+@property(nonatomic, retain) NSColor *selectedTextColor;
+@property(nonatomic, retain) NSColor *cursorTextColor;
+@property(nonatomic, assign) float transparency;
+@property(nonatomic, assign) float blend;
+@property(nonatomic, assign) BOOL useBoldFont;
+@property(nonatomic, assign) BOOL useItalicFont;
+
+@property(nonatomic, readonly) BOOL logging;
+@property(nonatomic, readonly) BOOL exited;
+
+// Is bell currently in ringing state?
+@property(nonatomic, assign) BOOL bell;
+
+@property(nonatomic, readonly) NSDictionary *arrangement;
+
+@property(nonatomic, readonly) int columns;
+@property(nonatomic, readonly) int rows;
+
+// Has this session's bookmark been divorced from the profile in the ProfileModel? Changes
+// in this bookmark may happen indepentendly of the persistent bookmark.
+@property(nonatomic, readonly) BOOL isDivorced;
+
+@property(nonatomic, readonly) NSString *jobName;
+
+// Ignore resize notifications. This would be set because the session's size musn't be changed
+// due to temporary changes in the window size, as code later on may need to know the session's
+// size to set the window size properly.
+@property(nonatomic, assign) BOOL ignoreResizeNotifications;
+
+// Last time this session became active
+@property(nonatomic, retain) NSDate *lastActiveAt;
+
+// Is there a saved scroll position?
+@property(nonatomic, readonly) BOOL hasSavedScrollPosition;
+
+// Image for dragging one session.
+@property(nonatomic, readonly) NSImage *dragImage;
+
+@property(nonatomic, readonly) BOOL hasCoprocess;
+
+@property(nonatomic, retain) TmuxController *tmuxController;
+
+@property(nonatomic, readonly) VT100RemoteHost *currentHost;
+
+@property(nonatomic, readonly) int tmuxPane;
+
+// FinalTerm
+@property(nonatomic, readonly) NSArray *autocompleteSuggestionsForCurrentCommand;
+@property(nonatomic, readonly) NSString *currentCommand;
+
+#pragma mark - methods
+
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
 + (void)selectMenuItem:(NSString*)theName;
 
-- (BOOL)isTmuxClient;
-- (BOOL)isTmuxGateway;
-
-// init/dealloc
-- (id)init;
-- (void)dealloc;
-
-// accessor
-- (DVR*)dvr;
-
-// accessor
-- (DVRDecoder*)dvrDecoder;
-
 // Jump to a particular point in time.
 - (long long)irSeekToAtLeast:(long long)timestamp;
-
-// accessor. nil if this session is live.
-- (PTYSession*)liveSession;
-
-// test if we're at the beginning/end of time.
-- (BOOL)canInstantReplayPrev;
-- (BOOL)canInstantReplayNext;
 
 // Disable all timers.
 - (void)cancelTimers;
@@ -133,8 +289,6 @@ typedef enum {
 - (void)softTerminate;
 - (void)terminate;
 
-- (void)setNewOutput:(BOOL)value;
-- (BOOL)newOutput;
 
 // Preferences
 - (void)setPreferencesFromAddressBookEntry: (NSDictionary *)aePrefs;
@@ -145,6 +299,8 @@ typedef enum {
 // shared profiles and merged, updating this object's addressBookEntry and
 // overriddenFields.
 - (BOOL)reloadProfile;
+
+- (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask;
 
 // PTYTask
 - (void)writeTask:(NSData*)data;
@@ -170,6 +326,10 @@ typedef enum {
 - (void)deleteForward:(id)sender;
 - (void)textViewDidChangeSelection: (NSNotification *)aNotification;
 - (void)textViewResized: (NSNotification *)aNotification;
+- (void)setSplitSelectionMode:(SplitSelectionMode)mode;
+- (void)setColorTable:(int)index color:(NSColor *)c;
+- (void)setSmartCursorColor:(BOOL)value;
+- (void)setMinimumContrast:(float)value;
 
 // Returns the frame size for a scrollview that perfectly contains the contents
 // of this session based on rows/cols, and taking into acount the presence of
@@ -179,11 +339,6 @@ typedef enum {
 // misc
 - (void)setWidth:(int)width height:(int)height;
 
-// Do we need to prompt on close for this session?
-- (BOOL)promptOnClose;
-
-- (void)setSplitSelectionMode:(SplitSelectionMode)mode;
-
 // Returns the number of pixels over or under the an ideal size.
 // Will never exceed +/- cell size/2.
 // If vertically is true, proposedSize is a height, else it's a width.
@@ -191,117 +346,18 @@ typedef enum {
 // 1 is returned. If you give a proposed size of 99, -1 is returned.
 - (int)overUnder:(int)proposedSize inVerticalDimension:(BOOL)vertically;
 
-// Array of subprocessess names.
-- (NSArray *)childJobNames;
-
-// get/set methods
-- (PTYTab*)tab;
-- (PTYTab*)ptytab;
-- (void)setTab:(PTYTab*)tab;
-- (struct timeval)lastOutput;
-- (void)setGrowlIdle:(BOOL)value;
-- (BOOL)growlIdle;
-- (void)setGrowlNewOutput:(BOOL)value;
-- (BOOL)growlNewOutput;
-
-- (NSString *)windowName;
-- (NSString *)name;
-- (NSString*)rawName;
-- (void)setBookmarkName:(NSString*)theName;
-- (void)setName: (NSString *)theName;
-- (NSString *)defaultName;
-- (NSString*)joblessDefaultName;
-- (void)setDefaultName: (NSString *)theName;
-- (NSString *)uniqueID;
-- (void)setUniqueID: (NSString *)uniqueID;
-- (NSString*)formattedName:(NSString*)base;
-- (NSString *)windowTitle;
-- (void)setWindowTitle: (NSString *)theTitle;
 - (void)pushWindowTitle;
 - (void)popWindowTitle;
 - (void)pushIconTitle;
 - (void)popIconTitle;
-- (PTYTask *)SHELL;
-- (void)setSHELL: (PTYTask *)theSHELL;
-- (VT100Terminal *)TERMINAL;
-- (NSString *)TERM_VALUE;
-- (void)setTERM_VALUE: (NSString *)theTERM_VALUE;
-- (NSString *)COLORFGBG_VALUE;
-- (void)setCOLORFGBG_VALUE: (NSString *)theCOLORFGBG_VALUE;
-- (VT100Screen *)SCREEN;
-- (void)setSCREEN: (VT100Screen *)theSCREEN;
-- (SessionView *)view;
-- (void)setView:(SessionView*)newView;
-- (PTYTextView *)TEXTVIEW;
-- (void)setTEXTVIEW: (PTYTextView *)theTEXTVIEW;
-- (void)setSCROLLVIEW: (PTYScrollView *)theSCROLLVIEW;
-- (NSStringEncoding)encoding;
-- (void)setEncoding:(NSStringEncoding)encoding;
-- (BOOL)antiIdle;
-- (int)antiCode;
-- (void)setAntiIdle:(BOOL)set;
-- (void)setAntiCode:(int)code;
-- (BOOL)autoClose;
-- (void)setAutoClose:(BOOL)set;
-- (BOOL)doubleWidth;
-- (void)setDoubleWidth:(BOOL)set;
-- (void)setXtermMouseReporting:(BOOL)set;
-- (NSDictionary *)addressBookEntry;
-- (void)setSendModifiers:(NSArray *)sendModifiers;
-
-// Return the address book that the session was originally created with.
-- (Profile *)originalAddressBookEntry;
-- (void)setAddressBookEntry:(NSDictionary*)entry;
-- (NSString *)tty;
-- (NSString *)contents;
-- (iTermGrowlDelegate*)growlDelegate;
 
 
 - (void)clearBuffer;
 - (void)clearScrollbackBuffer;
-- (BOOL)logging;
 - (void)logStart;
 - (void)logStop;
-- (BOOL)backgroundImageTiled;
-- (void)setBackgroundImageTiled:(BOOL)set;
-- (NSString *)backgroundImagePath;
-- (void)setBackgroundImagePath: (NSString *)imageFilePath;
-- (NSColor *)foregroundColor;
-- (void)setForegroundColor:(NSColor*)color;
-- (NSColor *)backgroundColor;
-- (void)setBackgroundColor:(NSColor*)color;
-- (NSColor *)selectionColor;
-- (void)setSelectionColor: (NSColor *)color;
-- (NSColor *)boldColor;
-- (void)setBoldColor:(NSColor*)color;
-- (NSColor *)cursorColor;
-- (void)setCursorColor:(NSColor*)color;
-- (void)setSmartCursorColor:(BOOL)value;
-- (void)setMinimumContrast:(float)value;
-- (NSColor *)selectedTextColor;
-- (void)setSelectedTextColor: (NSColor *)aColor;
-- (NSColor *)cursorTextColor;
-- (void)setCursorTextColor: (NSColor *)aColor;
-- (float)transparency;
-- (void)setTransparency:(float)transparency;
-- (float)blend;
-- (void)setBlend:(float)blend;
-- (BOOL)useBoldFont;
-- (void)setUseBoldFont:(BOOL)boldFlag;
-- (BOOL)useItalicFont;
-- (void)setUseItalicFont:(BOOL)boldFlag;
-- (void)setColorTable:(int)index color:(NSColor *)c;
-- (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask;
-
-// Session status
-
-- (BOOL)exited;
-- (BOOL)bell;
-- (void)setBell:(BOOL)flag;
 
 - (void)sendCommand:(NSString *)command;
-
-- (NSDictionary*)arrangement;
 
 // Display timer stuff
 - (void)updateDisplay;
@@ -309,8 +365,6 @@ typedef enum {
 - (NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Profile*)aDict;
 - (void)updateScroll;
 
-- (int)columns;
-- (int)rows;
 - (void)changeFontSizeDirection:(int)dir;
 - (void)setFont:(NSFont*)font
     nonAsciiFont:(NSFont*)nonAsciiFont
@@ -321,7 +375,6 @@ typedef enum {
 // affect it. Returns the GUID of a divorced bookmark. Does nothing if already
 // divorced, but still returns the divorced GUID.
 - (NSString*)divorceAddressBookEntryFromPreferences;
-- (BOOL)isDivorced;
 - (void)remarry;
 
 // Schedule the screen update timer to run in a specified number of seconds.
@@ -330,20 +383,9 @@ typedef enum {
 // Call refresh on the textview and schedule a timer if anything is blinking.
 - (void)refreshAndStartTimerIfNeeded;
 
-- (NSString*)jobName;
-- (NSString*)uncachedJobName;
-
-- (void)setIgnoreResizeNotifications:(BOOL)ignore;
-- (BOOL)ignoreResizeNotifications;
-
-- (void)setLastActiveAt:(NSDate*)date;
-- (NSDate*)lastActiveAt;
 
 // Jump to the saved scroll position
 - (void)jumpToSavedScrollPosition;
-
-// Is there a saved scroll position?
-- (BOOL)hasSavedScrollPosition;
 
 // Prepare to use the given string for the next search.
 - (void)useStringForFind:(NSString*)string;
@@ -360,12 +402,7 @@ typedef enum {
 
 // Bitmap of how the session looks.
 - (NSImage *)imageOfSession:(BOOL)flip;
-
-// Image for dragging one session.
-- (NSImage *)dragImage;
-
 - (void)setPasteboard:(NSString *)pbName;
-- (BOOL)hasCoprocess;
 - (void)stopCoprocess;
 - (void)launchSilentCoprocessWithCommand:(NSString *)command;
 
@@ -374,14 +411,10 @@ typedef enum {
 
 - (void)startTmuxMode;
 - (void)tmuxDetach;
-- (int)tmuxPane;
 // Two sessions are compatible if they may share the same tab. Tmux clients
 // impose this restriction because they must belong to the same controller.
 - (BOOL)isCompatibleWith:(PTYSession *)otherSession;
 - (void)setTmuxPane:(int)windowPane;
-- (void)setTmuxController:(TmuxController *)tmuxController;
-
-- (TmuxController *)tmuxController;
 
 - (void)toggleShowTimestamps;
 - (void)addNoteAtCursor;
@@ -390,18 +423,10 @@ typedef enum {
 - (void)nextMarkOrNote;
 - (void)scrollToMark:(VT100ScreenMark *)mark;
 
-- (VT100RemoteHost *)currentHost;
-
 // Select this session and tab and bring window to foreground.
 - (void)reveal;
 
-// FinalTerm
-- (NSArray *)autocompleteSuggestionsForCurrentCommand;
-- (NSString *)currentCommand;
-
-@end
-
-@interface PTYSession (ScriptingSupport)
+#pragma mark - Scripting Support
 
 // Object specifier
 - (NSScriptObjectSpecifier *)objectSpecifier;

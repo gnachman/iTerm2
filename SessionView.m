@@ -113,7 +113,7 @@ static NSDate* lastResizeDate_;
 {
     [session_ autorelease];
     session_ = [session retain];
-    [[session_ TEXTVIEW] setDimmingAmount:currentDimmingAmount_];
+    [[session_ textview] setDimmingAmount:currentDimmingAmount_];
 }
 
 - (void)fadeAnimation
@@ -125,9 +125,9 @@ static NSDate* lastResizeDate_;
     if ((changePerSecond_ > 0 && newDimmingAmount > targetDimmingAmount_) ||
         (changePerSecond_ < 0 && newDimmingAmount < targetDimmingAmount_)) {
         currentDimmingAmount_ = targetDimmingAmount_;
-        [[session_ TEXTVIEW] setDimmingAmount:targetDimmingAmount_];
+        [[session_ textview] setDimmingAmount:targetDimmingAmount_];
     } else {
-        [[session_ TEXTVIEW] setDimmingAmount:newDimmingAmount];
+        [[session_ textview] setDimmingAmount:newDimmingAmount];
         currentDimmingAmount_ = newDimmingAmount;
         [self markUpdateTime];
         timer_ = [NSTimer scheduledTimerWithTimeInterval:1.0/60.0
@@ -155,7 +155,7 @@ static NSDate* lastResizeDate_;
         }
         [self fadeAnimation];
     } else {
-        [[session_ TEXTVIEW] setDimmingAmount:newDimmingAmount];
+        [[session_ textview] setDimmingAmount:newDimmingAmount];
     }
 }
 
@@ -244,7 +244,7 @@ static NSDate* lastResizeDate_;
             return;
         }
         ++inme;
-        [[[self session] TEXTVIEW] rightMouseDown:event];
+        [[[self session] textview] rightMouseDown:event];
         --inme;
     }
 }
@@ -279,8 +279,8 @@ static NSDate* lastResizeDate_;
     }
     if (splitSelectionView_) {
         [splitSelectionView_ mouseDown:event];
-    } else if (NSPointInRect(pointInSessionView, [[[self session] SCROLLVIEW] frame]) &&
-               [[[self session] TEXTVIEW] mouseDownImpl:event]) {
+    } else if (NSPointInRect(pointInSessionView, [[[self session] scrollview] frame]) &&
+               [[[self session] textview] mouseDownImpl:event]) {
         [super mouseDown:event];
     }
     --inme;
@@ -380,9 +380,9 @@ static NSDate* lastResizeDate_;
     // Fill in background color in the area around a scrollview if it's smaller
     // than the session view.
     [super drawRect:dirtyRect];
-    NSColor *bgColor = [[session_ TEXTVIEW] backgroundColor];
+    NSColor *bgColor = [[session_ textview] backgroundColor];
     [bgColor set];
-    PTYScrollView *scrollView = [session_ SCROLLVIEW];
+    PTYScrollView *scrollView = [session_ scrollview];
     NSRect svFrame = [scrollView frame];
     if (svFrame.size.width < self.frame.size.width) {
         double widthDiff = self.frame.size.width - svFrame.size.width;
@@ -516,7 +516,7 @@ static NSDate* lastResizeDate_;
         return NO;
     }
     showTitle_ = value;
-    PTYScrollView *scrollView = [session_ SCROLLVIEW];
+    PTYScrollView *scrollView = [session_ scrollview];
     NSRect frame = [scrollView frame];
     if (showTitle_) {
         frame.size.height -= kTitleHeight;
@@ -546,18 +546,18 @@ static NSDate* lastResizeDate_;
 
 - (NSSize)compactFrame
 {
-    NSSize cellSize = NSMakeSize([[session_ TEXTVIEW] charWidth], [[session_ TEXTVIEW] lineHeight]);
+    NSSize cellSize = NSMakeSize([[session_ textview] charWidth], [[session_ textview] lineHeight]);
     NSSize dim = NSMakeSize([session_ columns], [session_ rows]);
     NSSize innerSize = NSMakeSize(cellSize.width * dim.width + MARGIN * 2,
                                   cellSize.height * dim.height + VMARGIN * 2);
-    const BOOL hasScrollbar = [[session_ SCROLLVIEW] hasVerticalScroller];
+    const BOOL hasScrollbar = [[session_ scrollview] hasVerticalScroller];
     NSSize size =
         [PTYScrollView frameSizeForContentSize:innerSize
                        horizontalScrollerClass:nil
                          verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
                                     borderType:NSNoBorder
                                    controlSize:NSRegularControlSize
-                                 scrollerStyle:[[session_ SCROLLVIEW] scrollerStyle]];
+                                 scrollerStyle:[[session_ scrollview] scrollerStyle]];
 
     if (showTitle_) {
         size.height += kTitleHeight;
@@ -574,24 +574,24 @@ static NSDate* lastResizeDate_;
         DLog(@"maximumPossibleScrollViewContentSize: sub title height. size=%@", [NSValue valueWithSize:size]);
     }
 
-    Class verticalScrollerClass = [[[session_ SCROLLVIEW] verticalScroller] class];
-    if (![[session_ SCROLLVIEW] hasVerticalScroller]) {
+    Class verticalScrollerClass = [[[session_ scrollview] verticalScroller] class];
+    if (![[session_ scrollview] hasVerticalScroller]) {
         verticalScrollerClass = nil;
     }
     NSSize contentSize =
             [NSScrollView contentSizeForFrameSize:size
                           horizontalScrollerClass:nil
                             verticalScrollerClass:verticalScrollerClass
-                                       borderType:[[session_ SCROLLVIEW] borderType]
+                                       borderType:[[session_ scrollview] borderType]
                                       controlSize:NSRegularControlSize
-                                    scrollerStyle:[[[session_ SCROLLVIEW] verticalScroller] scrollerStyle]];
+                                    scrollerStyle:[[[session_ scrollview] verticalScroller] scrollerStyle]];
     return contentSize;
 }
 
 - (void)updateTitleFrame
 {
     NSRect aRect = [self frame];
-    NSView *scrollView = (NSView *)[session_ SCROLLVIEW];
+    NSView *scrollView = (NSView *)[session_ scrollview];
     if (showTitle_) {
         [title_ setFrame:NSMakeRect(0,
                                     aRect.size.height - kTitleHeight,
@@ -605,7 +605,7 @@ static NSDate* lastResizeDate_;
 
 - (void)updateScrollViewFrame
 {
-    int lineHeight = [[session_ TEXTVIEW] lineHeight];
+    int lineHeight = [[session_ textview] lineHeight];
     int margins = VMARGIN * 2;
     CGFloat titleHeight = showTitle_ ? title_.frame.size.height : 0;
     NSRect rect = NSMakeRect(0,
@@ -615,7 +615,7 @@ static NSDate* lastResizeDate_;
     int rows = floor((rect.size.height - margins) / lineHeight);
     rect.size.height = rows * lineHeight + margins;
     rect.origin.y = self.frame.size.height - titleHeight - rect.size.height;
-    [session_ SCROLLVIEW].frame = rect;
+    [session_ scrollview].frame = rect;
 }
 
 - (void)setTitle:(NSString *)title
@@ -637,7 +637,7 @@ static NSDate* lastResizeDate_;
 
 - (NSMenu *)menu
 {
-    return [[session_ TEXTVIEW] menuForEvent:nil];
+    return [[session_ textview] menuForEvent:nil];
 }
 
 - (void)close

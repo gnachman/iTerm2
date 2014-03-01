@@ -208,7 +208,7 @@ static const CGFloat kMargin = 5;
         return;
     }
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-	[[[wrapper.term currentSession] TEXTVIEW] updateCursor:[[NSApplication sharedApplication] currentEvent]];
+	[[[wrapper.term currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
 }
 
 - (void)doubleClickOnTableView:(id)sender

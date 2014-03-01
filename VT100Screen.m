@@ -673,7 +673,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     int lines = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
     NSAssert(lines >= 0, @"Negative lines");
 
-    // An immediate refresh is needed so that the size of TEXTVIEW can be
+    // An immediate refresh is needed so that the size of textview can be
     // adjusted to fit the new size
     DebugLog(@"resizeWidth setDirty");
     [delegate_ screenNeedsRedraw];

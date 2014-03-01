@@ -66,7 +66,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     rollingIn_ = NO;
     PseudoTerminal* term = GetHotkeyWindow();
     [[term window] makeKeyAndOrderFront:nil];
-    [[term window] makeFirstResponder:[[term currentSession] TEXTVIEW]];
+    [[term window] makeFirstResponder:[[term currentSession] textview]];
 }
 
 static BOOL OpenHotkeyWindow()

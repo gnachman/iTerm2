@@ -143,7 +143,7 @@
     PTYSession *movingSession = session_;
     BOOL isVertical = (half == kWestHalf || half == kEastHalf);
     if (![[[dest tab] realParentWindow] canSplitPaneVertically:isVertical
-                                                  withBookmark:[movingSession addressBookEntry]]) {
+                                                  withBookmark:[movingSession profile]]) {
         return NO;
     }
 
