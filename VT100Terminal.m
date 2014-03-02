@@ -7,6 +7,10 @@
 #define STANDARD_STREAM_SIZE 100000
 #define MAX_XTERM_TEMP_BUFFER_LENGTH 1024
 
+@interface VT100Terminal ()
+@property(nonatomic, assign) BOOL reportFocus;
+@end
+
 @implementation VT100Terminal {
     // True if between BeginFile and EndFile codes.
     BOOL receivingFile_;
@@ -36,7 +40,6 @@
     BOOL numLock_;           // YES=ON, NO=OFF, default=YES;
     MouseMode mouseMode_;
     MouseFormat mouseFormat_;
-    BOOL reportFocus_;
     
     int fgColorCode_;
     int fgGreen_;
@@ -2202,7 +2205,7 @@ static VT100TCC decode_string(unsigned char *datap,
     mouseFormat_ = MOUSE_FORMAT_XTERM;
     [delegate_ terminalMouseModeDidChangeTo:mouseMode_];
     [delegate_ terminalSetUseColumnScrollRegion:NO];
-    reportFocus_ = NO;
+    _reportFocus = NO;
 
     strictAnsiMode_ = NO;
     allowColumnMode_ = NO;
@@ -2766,11 +2769,6 @@ static VT100TCC decode_string(unsigned char *datap,
     return [NSData dataWithBytes: buf length: strlen(buf)];
 }
 
-- (BOOL)reportFocus
-{
-    return reportFocus_;
-}
-
 - (BOOL)lineMode
 {
     return lineMode_;
@@ -3064,7 +3062,7 @@ static VT100TCC decode_string(unsigned char *datap,
                         [delegate_ terminalMouseModeDidChangeTo:mouseMode_];
                         break;
                     case 1004:
-                        reportFocus_ = mode;
+                        self.reportFocus = mode;
                         break;
 
                     case 1005:

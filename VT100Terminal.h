@@ -52,10 +52,10 @@ typedef enum {
 @property(nonatomic, assign) id<VT100TerminalDelegate> delegate;
 @property(nonatomic, copy) NSString *termType;
 @property(nonatomic, assign) NSStringEncoding encoding;
+@property(nonatomic, readonly) BOOL reportFocus;
 
 - (void)putStreamData:(NSData*)data;
 - (void)putStreamData:(const char *)buffer length:(int)length;
-;
 
 // Returns true if a new token was parsed, false if there was nothing left to do.
 - (BOOL)parseNextToken;
@@ -82,7 +82,6 @@ typedef enum {
 - (NSData *)keyFunction:(int)no;
 - (NSData *)keypadData: (unichar) unicode keystr: (NSString *) keystr;
 
-- (BOOL)reportFocus;
 - (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
 - (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
 - (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
