@@ -26,9 +26,9 @@
 
     id<VT100TerminalDelegate> delegate_;
     
-    unsigned char     *stream_;
-    int               current_stream_length;
-    int               total_stream_length;
+    unsigned char *stream_;
+    int current_stream_length;
+    int total_stream_length;
     
     BOOL lineMode_;         // YES=Newline, NO=Line feed
     BOOL ansiMode_;         // YES=ANSI, NO=VT52
@@ -102,8 +102,7 @@
 #define ESC  0x1b
 #define DEL  0x7f
 
-#define MAKE_CSI_COMMAND(first, second) ((first << 8) | second) // used by old parser
-#define PACK_CSI_COMMAND(first, second) ((first << 8) | second) // used by new parser
+#define PACK_CSI_COMMAND(first, second) ((first << 8) | second)
 #define ADVANCE(datap, datalen, rmlen) do { datap++; datalen--; (*rmlen)++; } while (0)
 
 // character attributes
@@ -170,8 +169,6 @@ typedef struct {
     int cmd;
     int sub[VT100CSIPARAM_MAX][VT100CSISUBPARAM_MAX];
     int subCount[VT100CSIPARAM_MAX];
-    BOOL question; // used by old parser
-    int modifier;  // used by old parser
 } CSIParam;
 
 // Sets the |n|th parameter's value in CSIParam |pm| to |d|, but only if it's currently negative.
@@ -392,8 +389,7 @@ static BOOL isDCS(unsigned char *code, int len)
     return NO;
 }
 
-static BOOL isString(unsigned char *code,
-                     NSStringEncoding encoding)
+static BOOL isString(unsigned char *code, NSStringEncoding encoding)
 {
     BOOL result = NO;
 
@@ -402,21 +398,26 @@ static BOOL isString(unsigned char *code,
             result = YES;
         }
     } else if (isGBEncoding(encoding)) {
-        if (iseuccn(*code))
+        if (iseuccn(*code)) {
             result = YES;
+        }
     } else if (isBig5Encoding(encoding)) {
-        if (isbig5(*code))
+        if (isbig5(*code)) {
             result = YES;
+        }
     } else if (isJPEncoding(encoding)) {
-        if (*code ==0x8e || *code==0x8f|| (*code>=0xa1&&*code<=0xfe))
+        if (*code == 0x8e || *code == 0x8f || (*code >= 0xa1 && *code <= 0xfe)) {
             result = YES;
+        }
     } else if (isSJISEncoding(encoding)) {
-        if (*code >= 0x80)
+        if (*code >= 0x80) {
             result = YES;
+        }
     } else if (isKREncoding(encoding)) {
-        if (iseuckr(*code))
+        if (iseuckr(*code)) {
             result = YES;
-    } else if (*code>=0x20) {
+        }
+    } else if (*code >= 0x20) {
         result = YES;
     }
 
@@ -500,7 +501,6 @@ static int getCSIParam(unsigned char *datap,
     // 2013/1/10 H.Saito
     //
     // The dispatching method for control functions becomes more simply and efficiently.
-    // VT100TCC.u.csi.modifier and VT100TCC.u.csi.question flags are dropped.
     // Now they are aggregated with VT100TCC.u.csi.cmd parameter.
     //
     // cmd parameter consists of following bytes:
