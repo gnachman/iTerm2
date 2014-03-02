@@ -51,10 +51,7 @@ typedef enum {
 
 @property(nonatomic, assign) id<VT100TerminalDelegate> delegate;
 @property(nonatomic, copy) NSString *termType;
-
-
-- (NSStringEncoding)encoding;
-- (void)setEncoding:(NSStringEncoding)encoding;
+@property(nonatomic, assign) NSStringEncoding encoding;
 
 - (void)putStreamData:(NSData*)data;
 - (void)putStreamData:(const char *)buffer length:(int)length;

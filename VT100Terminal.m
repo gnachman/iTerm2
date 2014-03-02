@@ -14,7 +14,6 @@
     // In FinalTerm command mode (user is at the prompt typing a command).
     BOOL inCommand_;
 
-    NSStringEncoding  encoding_;
     id<VT100TerminalDelegate> delegate_;
     
     unsigned char     *stream_;
@@ -479,7 +478,7 @@ static BOOL isString(unsigned char *code,
 {
     BOOL result = NO;
 
-    if (encoding== NSUTF8StringEncoding) {
+    if (encoding == NSUTF8StringEncoding) {
         if (*code >= 0x80) {
             result = YES;
         }
@@ -2023,7 +2022,7 @@ static VT100TCC decode_string(unsigned char *datap,
 {
     self = [super init];
     if (self) {
-        encoding_ = NSASCIIStringEncoding;
+        _encoding = NSASCIIStringEncoding;
         total_stream_length = STANDARD_STREAM_SIZE;
         stream_ = malloc(total_stream_length);
 
@@ -2231,16 +2230,6 @@ static VT100TCC decode_string(unsigned char *datap,
     allowColumnMode_ = flag;
 }
 
-- (NSStringEncoding)encoding
-{
-    return encoding_;
-}
-
-- (void)setEncoding:(NSStringEncoding)encoding
-{
-    encoding_ = encoding;
-}
-
 - (void)putStreamData:(NSData *)data
 {
     [self putStreamData:(const char *)[data bytes] length:[data length]];
@@ -2304,16 +2293,16 @@ static VT100TCC decode_string(unsigned char *datap,
             lastToken_->length = rmlen;
             lastToken_->position = datap;
         } else if (iscontrol(datap[0])) {
-            *lastToken_ = decode_control(datap, datalen, &rmlen, encoding_, delegate_);
+            *lastToken_ = decode_control(datap, datalen, &rmlen, _encoding, delegate_);
             lastToken_->length = rmlen;
             lastToken_->position = datap;
             [self updateModesFromToken:*lastToken_];
             [self updateCharacterAttributesFromToken:*lastToken_];
             [self handleProprietaryToken:*lastToken_];
         } else {
-            if (isString(datap, encoding_)) {
+            if (isString(datap, _encoding)) {
                 // If the encoding is UTF-8 then you get here only if *datap >= 0x80.
-                *lastToken_ = decode_string(datap, datalen, &rmlen, encoding_);
+                *lastToken_ = decode_string(datap, datalen, &rmlen, _encoding);
                 if (lastToken_->type != VT100_WAIT && rmlen == 0) {
                     lastToken_->type = VT100_UNKNOWNCHAR;
                     lastToken_->u.code = datap[0];
