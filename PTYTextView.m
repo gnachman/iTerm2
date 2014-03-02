@@ -7155,7 +7155,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL hasBGImage = [scrollView hasBackgroundImage];
     double selectedAlpha = 1.0 - _transparency;
     double alphaIfTransparencyInUse = [self useTransparency] ? 1.0 - _transparency : 1.0;
-    BOOL reversed = [[_dataSource terminal] screenMode];
+    BOOL reversed = [[_dataSource terminal] reverseVideo];
     NSColor *aColor = nil;
 
     // Redraw margins ------------------------------------------------------------------------------
@@ -7657,7 +7657,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (NSColor*)backgroundColorForChar:(screen_char_t)c
 {
-    if ([[_dataSource terminal] screenMode]) {
+    if ([[_dataSource terminal] reverseVideo]) {
         // reversed
         return [self colorForCode:c.foregroundColor
                             green:c.fgGreen
@@ -7752,7 +7752,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     double curX, curY;
     BOOL double_width;
     double alpha = [self useTransparency] ? 1.0 - _transparency : 1.0;
-    const BOOL reversed = [[_dataSource terminal] screenMode];
+    const BOOL reversed = [[_dataSource terminal] reverseVideo];
 
     WIDTH = [_dataSource width];
     HEIGHT = [_dataSource height];

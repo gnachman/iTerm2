@@ -62,7 +62,7 @@ typedef enum {
     BOOL ansiMode_;         // YES=ANSI, NO=VT52
     BOOL columnMode_;       // YES=132 Column, NO=80 Column
     BOOL scrollMode_;       // YES=Smooth, NO=Jump
-    BOOL screenMode_;       // YES=Reverse, NO=Normal
+    BOOL reverseVideo_;     // YES=Reverse, NO=Normal
     BOOL originMode_;       // YES=Relative, NO=Absolute
     BOOL wraparoundMode_;   // YES=On, NO=Off
     BOOL autorepeatMode_;   // YES=On, NO=Off
@@ -157,7 +157,7 @@ typedef enum {
 - (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
 - (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
 
-- (BOOL)screenMode;  // Reversed text?
+- (BOOL)reverseVideo;
 - (BOOL)originMode;
 - (BOOL)wraparoundMode;
 - (void)setWraparoundMode:(BOOL)mode;

@@ -1972,7 +1972,7 @@ static VT100TCC decode_string(unsigned char *datap,
         cursorMode_ = NO;
         columnMode_ = NO;
         scrollMode_ = NO;
-        screenMode_ = NO;
+        reverseVideo_ = NO;
         originMode_ = NO;
         [self setWraparoundMode:YES];
         autorepeatMode_ = YES;
@@ -2143,7 +2143,7 @@ static VT100TCC decode_string(unsigned char *datap,
     cursorMode_ = NO;
     columnMode_ = NO;
     scrollMode_ = NO;
-    screenMode_ = NO;
+    reverseVideo_ = NO;
     originMode_ = NO;
     [self setWraparoundMode:YES];
     autorepeatMode_ = YES;
@@ -2765,9 +2765,9 @@ static VT100TCC decode_string(unsigned char *datap,
     return scrollMode_;
 }
 
-- (BOOL)screenMode
+- (BOOL)reverseVideo
 {
-    return screenMode_;
+    return reverseVideo_;
 }
 
 - (BOOL)originMode
@@ -2962,7 +2962,7 @@ static VT100TCC decode_string(unsigned char *datap,
                         scrollMode_ = mode;
                         break;
                     case 5:
-                        screenMode_ = mode;
+                        reverseVideo_ = mode;
                         [delegate_ terminalNeedsRedraw];
                         break;
                     case 6:
