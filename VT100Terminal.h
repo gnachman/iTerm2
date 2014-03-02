@@ -4,16 +4,18 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermCursor.h"
 #import "ScreenChar.h"
+#import "VT100CSIParser.h"
 #import "VT100Grid.h"
 #import "VT100Output.h"
 #import "VT100TerminalDelegate.h"
-
-typedef struct VT100TCC VT100TCC;
+#import "VT100Parser.h"
 
 #define NUM_CHARSETS 4  // G0...G3. Values returned from -charset go from 0 to this.
 #define NUM_MODIFIABLE_RESOURCES 5
 
 @interface VT100Terminal : NSObject
+
+@property(nonatomic, readonly) VT100Parser *parser;
 
 @property(nonatomic, assign) id<VT100TerminalDelegate> delegate;
 @property(nonatomic, copy) NSString *termType;
@@ -46,14 +48,6 @@ typedef struct VT100TCC VT100TCC;
 @property(nonatomic, readonly) BOOL bracketedPasteMode;
 @property(nonatomic, readonly) VT100Output *output;
 
-- (void)putStreamData:(NSData*)data;
-- (void)putStreamData:(const char *)buffer length:(int)length;
-
-// Returns true if a new token was parsed, false if there was nothing left to do.
-- (BOOL)parseNextToken;
-- (NSData *)streamData;
-- (void)clearStream;
-
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem;
 - (void)setBackgroundColor:(int)bgColorCode alternateSemantics:(BOOL)altsem;
 
@@ -63,13 +57,18 @@ typedef struct VT100TCC VT100TCC;
 
 - (void)setDisableSmcupRmcup:(BOOL)value;
 
+- (void)executeIncidental:(VT100CSIIncidental *)incidental;
+
 // Call appropriate delegate methods to handle the last parsed token. Call this after -parseNextToken
 // returns YES.
-- (void)executeToken;
+- (void)executeToken:(VT100TCC *)token;
 
-// Inspect previous parsed token. Can use after -parseNextToken returns YES.
-- (BOOL)lastTokenWasASCII;
-- (NSString *)lastTokenString;
+// Inspect previous parsed token.
+- (BOOL)tokenIsAscii:(VT100TCC *)token;
+- (NSString *)stringForToken:(VT100TCC *)token;
+
+// If you just want to handle low level codes, you can use these methods instead of -executeToken:.
+- (void)executeModeUpdates:(VT100TCC *)token;
+- (void)executeSGR:(VT100TCC *)token;
 
 @end
-

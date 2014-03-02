@@ -485,7 +485,8 @@ static int gNextSessionID = 1;
         [[aSession screen] setTmuxState:state];
         NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
         if (pendingOutput && [pendingOutput length]) {
-            [[aSession terminal] putStreamData:pendingOutput];
+            [aSession.terminal.parser putStreamData:pendingOutput.bytes
+                                             length:pendingOutput.length];
         }
         [[aSession terminal] setInsertMode:[[state objectForKey:kStateDictInsertMode] boolValue]];
         [[aSession terminal] setCursorMode:[[state objectForKey:kStateDictKCursorMode] boolValue]];
@@ -1105,16 +1106,20 @@ static int gNextSessionID = 1;
             return;
         }
     }
-
-    [_terminal putStreamData:buffer length:length];
+    [_terminal.parser putStreamData:buffer length:length];
 
     // while loop to process all the tokens we can get
+    VT100TCC token;
+    NSMutableArray *incidentals = [NSMutableArray array];
     while (!_exited &&
            _terminal &&
            _tmuxMode != TMUX_GATEWAY &&
-           [_terminal parseNextToken]) {
+           [_terminal.parser parseNextToken:&token incidentals:incidentals]) {
         // process token
-        [_terminal executeToken];
+        for (VT100CSIIncidental *incidental in incidentals) {
+            [_terminal executeIncidental:incidental];
+        }
+        [_terminal executeToken:&token];
     }
 
     gettimeofday(&_lastOutput, NULL);
@@ -3116,8 +3121,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         [self hideSession];
     }
 
-    [_tmuxGateway readTask:[_terminal streamData]];
-    [_terminal clearStream];
+    [_tmuxGateway readTask:_terminal.parser.streamData];
+    [_terminal.parser clearStream];
 }
 
 - (BOOL)isTmuxClient

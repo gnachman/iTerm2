@@ -28,10 +28,14 @@
 {
     screen_char_t *screenChars;
     NSMutableData *result = [NSMutableData data];
-    [terminal putStreamData:[hist dataUsingEncoding:NSUTF8StringEncoding]];
-
-    while ([terminal parseNextToken]) {
-        NSString *string = [terminal lastTokenString];
+    NSData *histData = [hist dataUsingEncoding:NSUTF8StringEncoding];
+    [terminal.parser putStreamData:histData.bytes
+                            length:histData.length];
+    VT100TCC token;
+    NSMutableArray *incidentals = [NSMutableArray array];
+    while ([terminal.parser parseNextToken:&token incidentals:incidentals]) {
+        [terminal executeToken:&token];
+        NSString *string = [terminal stringForToken:&token];
         if (string) {
             // Allocate double space in case they're all double-width characters.
             screenChars = malloc(sizeof(screen_char_t) * 2 * string.length);
@@ -43,7 +47,7 @@
                                 &len,
                                 ambiguousIsDoubleWidth,
                                 NULL);
-            if ([terminal lastTokenWasASCII] && [terminal charset]) {
+            if ([terminal tokenIsAscii:&token] && [terminal charset]) {
                 ConvertCharsToGraphicsCharset(screenChars, len);
             }
             [result appendBytes:screenChars

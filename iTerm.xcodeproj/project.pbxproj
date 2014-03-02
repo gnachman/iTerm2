@@ -614,6 +614,21 @@
 		A63F40A9183F3CED003A6A6D /* LineBufferHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */; };
 		A63F40AA183F3CED003A6A6D /* LineBufferHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F40A8183F3CED003A6A6D /* LineBufferHelpers.m */; };
 		A63F40AB183F3CED003A6A6D /* LineBufferHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F40A8183F3CED003A6A6D /* LineBufferHelpers.m */; };
+		A647E39A18C3515900450FA1 /* VT100AnsiParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E39818C3515900450FA1 /* VT100AnsiParser.h */; };
+		A647E39B18C3515900450FA1 /* VT100AnsiParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E39918C3515900450FA1 /* VT100AnsiParser.m */; };
+		A647E39C18C3515900450FA1 /* VT100AnsiParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E39918C3515900450FA1 /* VT100AnsiParser.m */; };
+		A647E39F18C351F400450FA1 /* VT100DCSParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E39D18C351F400450FA1 /* VT100DCSParser.h */; };
+		A647E3A018C351F400450FA1 /* VT100DCSParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E39E18C351F400450FA1 /* VT100DCSParser.m */; };
+		A647E3A118C351F400450FA1 /* VT100DCSParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E39E18C351F400450FA1 /* VT100DCSParser.m */; };
+		A647E3A418C352B000450FA1 /* VT100OtherParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3A218C352B000450FA1 /* VT100OtherParser.h */; };
+		A647E3A518C352B000450FA1 /* VT100OtherParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3A318C352B000450FA1 /* VT100OtherParser.m */; };
+		A647E3A618C352B000450FA1 /* VT100OtherParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3A318C352B000450FA1 /* VT100OtherParser.m */; };
+		A647E3A918C353C500450FA1 /* VT100StringParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3A718C353C500450FA1 /* VT100StringParser.h */; };
+		A647E3AA18C353C500450FA1 /* VT100StringParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3A818C353C500450FA1 /* VT100StringParser.m */; };
+		A647E3AB18C353C500450FA1 /* VT100StringParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3A818C353C500450FA1 /* VT100StringParser.m */; };
+		A647E3AE18C3588800450FA1 /* VT100ControlParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3AC18C3588800450FA1 /* VT100ControlParser.h */; };
+		A647E3AF18C3588800450FA1 /* VT100ControlParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3AD18C3588800450FA1 /* VT100ControlParser.m */; };
+		A647E3B018C3588800450FA1 /* VT100ControlParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3AD18C3588800450FA1 /* VT100ControlParser.m */; };
 		A67E0AD0186E4B71009B2B68 /* TaskNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */; };
 		A67E0AD1186E4B71009B2B68 /* TaskNotifier.m in Sources */ = {isa = PBXBuildFile; fileRef = A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */; };
 		A67E0AD2186E4B71009B2B68 /* TaskNotifier.m in Sources */ = {isa = PBXBuildFile; fileRef = A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */; };
@@ -684,6 +699,15 @@
 		A6A13AAC18C3347200B241ED /* VT100Output.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AAA18C3347200B241ED /* VT100Output.h */; };
 		A6A13AAD18C3347200B241ED /* VT100Output.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AAB18C3347200B241ED /* VT100Output.m */; };
 		A6A13AAE18C3347200B241ED /* VT100Output.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AAB18C3347200B241ED /* VT100Output.m */; };
+		A6A13AB118C33ED300B241ED /* VT100CSIParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AAF18C33ED300B241ED /* VT100CSIParser.h */; };
+		A6A13AB218C33ED300B241ED /* VT100CSIParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AB018C33ED300B241ED /* VT100CSIParser.m */; };
+		A6A13AB318C33ED300B241ED /* VT100CSIParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AB018C33ED300B241ED /* VT100CSIParser.m */; };
+		A6A13AB618C33FC500B241ED /* VT100Parser.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AB418C33FC500B241ED /* VT100Parser.h */; };
+		A6A13AB718C33FC500B241ED /* VT100Parser.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AB518C33FC500B241ED /* VT100Parser.m */; };
+		A6A13AB818C33FC500B241ED /* VT100Parser.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AB518C33FC500B241ED /* VT100Parser.m */; };
+		A6A13ABB18C34F6400B241ED /* VT100XtermParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AB918C34F6400B241ED /* VT100XtermParser.h */; };
+		A6A13ABC18C34F6400B241ED /* VT100XtermParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */; };
+		A6A13ABD18C34F6400B241ED /* VT100XtermParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
 		A6A5991E1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
 		A6A5991F1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
@@ -1133,6 +1157,17 @@
 		A63F40A3183F3B78003A6A6D /* LineBlock.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBlock.m; sourceTree = "<group>"; };
 		A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferHelpers.h; sourceTree = "<group>"; };
 		A63F40A8183F3CED003A6A6D /* LineBufferHelpers.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferHelpers.m; sourceTree = "<group>"; };
+		A647E39718C3504100450FA1 /* VT100Token.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100Token.h; sourceTree = "<group>"; };
+		A647E39818C3515900450FA1 /* VT100AnsiParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100AnsiParser.h; sourceTree = "<group>"; };
+		A647E39918C3515900450FA1 /* VT100AnsiParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100AnsiParser.m; sourceTree = "<group>"; };
+		A647E39D18C351F400450FA1 /* VT100DCSParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100DCSParser.h; sourceTree = "<group>"; };
+		A647E39E18C351F400450FA1 /* VT100DCSParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100DCSParser.m; sourceTree = "<group>"; };
+		A647E3A218C352B000450FA1 /* VT100OtherParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100OtherParser.h; sourceTree = "<group>"; };
+		A647E3A318C352B000450FA1 /* VT100OtherParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100OtherParser.m; sourceTree = "<group>"; };
+		A647E3A718C353C500450FA1 /* VT100StringParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100StringParser.h; sourceTree = "<group>"; };
+		A647E3A818C353C500450FA1 /* VT100StringParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100StringParser.m; sourceTree = "<group>"; };
+		A647E3AC18C3588800450FA1 /* VT100ControlParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100ControlParser.h; sourceTree = "<group>"; };
+		A647E3AD18C3588800450FA1 /* VT100ControlParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ControlParser.m; sourceTree = "<group>"; };
 		A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TaskNotifier.h; sourceTree = "<group>"; };
 		A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TaskNotifier.m; sourceTree = "<group>"; };
 		A68A30BF186D0DC1007F550F /* FindCursorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindCursorView.h; sourceTree = "<group>"; };
@@ -1178,6 +1213,12 @@
 		A6A13AA618C2D45900B241ED /* NSColor+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSColor+iTerm.m"; sourceTree = "<group>"; };
 		A6A13AAA18C3347200B241ED /* VT100Output.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100Output.h; sourceTree = "<group>"; };
 		A6A13AAB18C3347200B241ED /* VT100Output.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Output.m; sourceTree = "<group>"; };
+		A6A13AAF18C33ED300B241ED /* VT100CSIParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100CSIParser.h; sourceTree = "<group>"; };
+		A6A13AB018C33ED300B241ED /* VT100CSIParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100CSIParser.m; sourceTree = "<group>"; };
+		A6A13AB418C33FC500B241ED /* VT100Parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100Parser.h; sourceTree = "<group>"; };
+		A6A13AB518C33FC500B241ED /* VT100Parser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Parser.m; sourceTree = "<group>"; };
+		A6A13AB918C34F6400B241ED /* VT100XtermParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100XtermParser.h; sourceTree = "<group>"; };
+		A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100XtermParser.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; };
@@ -1339,8 +1380,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				A6A13AAA18C3347200B241ED /* VT100Output.h */,
-				A6A13AAB18C3347200B241ED /* VT100Output.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -1370,6 +1409,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				A647E3B118C35DD900450FA1 /* VT100 */,
 				A68A30CA186D118E007F550F /* Data Structures */,
 				A6E74764188C6A2A005355CF /* Expose */,
 				A63F40AC1842988A003A6A6D /* Core */,
@@ -1576,16 +1616,26 @@
 				1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */,
 				1D3D21931483144600FAC8E7 /* TSVParser.h */,
 				A6CFDAD0185D2587005DC94B /* URLAction.h */,
+				A647E39818C3515900450FA1 /* VT100AnsiParser.h */,
+				A647E3AC18C3588800450FA1 /* VT100ControlParser.h */,
+				A6A13AAF18C33ED300B241ED /* VT100CSIParser.h */,
+				A647E39D18C351F400450FA1 /* VT100DCSParser.h */,
 				1D8B8A121806038F00C2DC25 /* VT100Grid.h */,
 				1DD39ACD180B785A004E56D5 /* VT100GridTypes.h */,
 				A63F409D183F3AF5003A6A6D /* VT100LineInfo.h */,
+				A647E3A218C352B000450FA1 /* VT100OtherParser.h */,
+				A6A13AAA18C3347200B241ED /* VT100Output.h */,
+				A6A13AB418C33FC500B241ED /* VT100Parser.h */,
 				A68A30F2186D150A007F550F /* VT100RemoteHost.h */,
 				1D407A3214BABE8700BD5035 /* VT100Screen.h */,
 				1DD39B7D180F969E004E56D5 /* VT100ScreenDelegate.h */,
 				A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */,
+				A647E3A718C353C500450FA1 /* VT100StringParser.h */,
 				1D407A3314BABE8700BD5035 /* VT100Terminal.h */,
 				1D53FD18181C700B00524D4F /* VT100TerminalDelegate.h */,
+				A647E39718C3504100450FA1 /* VT100Token.h */,
 				A68A30F3186D150A007F550F /* VT100WorkingDirectory.h */,
+				A6A13AB918C34F6400B241ED /* VT100XtermParser.h */,
 				1DCA5ECD13EE507800B7725E /* WindowArrangements.h */,
 				1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */,
 			);
@@ -1984,9 +2034,25 @@
 				1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */,
 				A63F409E183F3AF5003A6A6D /* VT100LineInfo.m */,
 				E8CF7562026DDA6303A80106 /* VT100Screen.m */,
-				E8CF7563026DDA6303A80106 /* VT100Terminal.m */,
 			);
 			name = Core;
+			sourceTree = "<group>";
+		};
+		A647E3B118C35DD900450FA1 /* VT100 */ = {
+			isa = PBXGroup;
+			children = (
+				A647E39918C3515900450FA1 /* VT100AnsiParser.m */,
+				A647E3AD18C3588800450FA1 /* VT100ControlParser.m */,
+				A6A13AB018C33ED300B241ED /* VT100CSIParser.m */,
+				A647E39E18C351F400450FA1 /* VT100DCSParser.m */,
+				A647E3A318C352B000450FA1 /* VT100OtherParser.m */,
+				A6A13AAB18C3347200B241ED /* VT100Output.m */,
+				A6A13AB518C33FC500B241ED /* VT100Parser.m */,
+				A647E3A818C353C500450FA1 /* VT100StringParser.m */,
+				E8CF7563026DDA6303A80106 /* VT100Terminal.m */,
+				A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */,
+			);
+			name = VT100;
 			sourceTree = "<group>";
 		};
 		A68A30C9186D101C007F550F /* Helpers */ = {
@@ -2180,6 +2246,7 @@
 				A68A3105186D2973007F550F /* TemporaryNumberAllocator.h in Headers */,
 				1D5FDD5B1208E8F000C46BA3 /* PSMOverflowPopUpButton.h in Headers */,
 				1D5FDD5C1208E8F000C46BA3 /* PSMProgressIndicator.h in Headers */,
+				A647E3A418C352B000450FA1 /* VT100OtherParser.h in Headers */,
 				A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */,
 				A693395C1851A61D00EBEA20 /* VT100ScreenMark.h in Headers */,
 				1D5FDD5D1208E8F000C46BA3 /* PSMRolloverButton.h in Headers */,
@@ -2193,7 +2260,9 @@
 				1D5FDD611208E8F000C46BA3 /* NSBezierPath_AMShading.h in Headers */,
 				1D5FDD621208E8F000C46BA3 /* PSMTabDragAssistant.h in Headers */,
 				1D5FDD631208E8F000C46BA3 /* PSMUnifiedTabStyle.h in Headers */,
+				A6A13ABB18C34F6400B241ED /* VT100XtermParser.h in Headers */,
 				1D5FDD641208E8F000C46BA3 /* PSMAdiumTabStyle.h in Headers */,
+				A647E3A918C353C500450FA1 /* VT100StringParser.h in Headers */,
 				1D5FDD651208E8F000C46BA3 /* PSMTabDragWindow.h in Headers */,
 				1D5FDD661208E8F000C46BA3 /* iTermGrowlDelegate.h in Headers */,
 				1D5FDD681208E8F000C46BA3 /* CarbonHelpers.h in Headers */,
@@ -2253,6 +2322,7 @@
 				1D94EAB412D64022008225A9 /* UKSystemInfo.h in Headers */,
 				1DDBC61E12E2BCDC00BC3868 /* iTermExpose.h in Headers */,
 				A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */,
+				A6A13AB618C33FC500B241ED /* VT100Parser.h in Headers */,
 				1DAED28812E9395E005E49ED /* GlobalSearch.h in Headers */,
 				1DAED99212EDF923005E49ED /* iTermSearchField.h in Headers */,
 				1D85D1ED1306687700A3E998 /* RegexKitLite.h in Headers */,
@@ -2290,6 +2360,7 @@
 				1D9DCC04142D7E570016228A /* GrowlTrigger.h in Headers */,
 				1D9DCC0A142D7F300016228A /* BounceTrigger.h in Headers */,
 				A68A310A186D2BCF007F550F /* BottomBarView.h in Headers */,
+				A647E39F18C351F400450FA1 /* VT100DCSParser.h in Headers */,
 				1D9DCC0E142D7F5F0016228A /* BellTrigger.h in Headers */,
 				A68A30FD186D150B007F550F /* VT100WorkingDirectory.h in Headers */,
 				1D9DCC12142D7F970016228A /* ScriptTrigger.h in Headers */,
@@ -2349,6 +2420,7 @@
 				1D407A4214BABE8700BD5035 /* PTYTextView.h in Headers */,
 				A6E74748188C6344005355CF /* CommandHistoryEntry.h in Headers */,
 				1D407A4314BABE8700BD5035 /* PTYWindow.h in Headers */,
+				A6A13AB118C33ED300B241ED /* VT100CSIParser.h in Headers */,
 				1D407A4414BABE8700BD5035 /* VT100Screen.h in Headers */,
 				1D407A4514BABE8700BD5035 /* VT100Terminal.h in Headers */,
 				1D06E7D314BC04510097C0ED /* ProfileTableRow.h in Headers */,
@@ -2357,8 +2429,10 @@
 				A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */,
 				1DB9D8F2183FE9EF0029F0B5 /* HotkeyWindowController.h in Headers */,
 				A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */,
+				A647E3AE18C3588800450FA1 /* VT100ControlParser.h in Headers */,
 				A63F40A9183F3CED003A6A6D /* LineBufferHelpers.h in Headers */,
 				A67E0AD0186E4B71009B2B68 /* TaskNotifier.h in Headers */,
+				A647E39A18C3515900450FA1 /* VT100AnsiParser.h in Headers */,
 				1DA26AC015007507004B5792 /* BackgroundThread.h in Headers */,
 				1D2F3B3D1516BA470044C337 /* iTermFontPanel.h in Headers */,
 				1D48B379167E809D000046EE /* CharacterRun.h in Headers */,
@@ -2620,6 +2694,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1D9A557C180FA87000B42CE9 /* ColorsMenuItemView.m in Sources */,
+				A647E39C18C3515900450FA1 /* VT100AnsiParser.m in Sources */,
 				A68A3111186E2EDA007F550F /* PopupEntry.m in Sources */,
 				1D9A552D180FA69900B42CE9 /* SearchResult.m in Sources */,
 				A63F409C183B3AA7003A6A6D /* PTYNoteView.m in Sources */,
@@ -2631,7 +2706,9 @@
 				A6CFDAD9185D53C2005DC94B /* AsyncHostLookupController.m in Sources */,
 				1D9A555C180FA83900B42CE9 /* EventMonitorView.m in Sources */,
 				A68A30E9186D1429007F550F /* VT100WorkingDirectory.m in Sources */,
+				A647E3AB18C353C500450FA1 /* VT100StringParser.m in Sources */,
 				A68A3116186E2F14007F550F /* PopupWindow.m in Sources */,
+				A6A13ABD18C34F6400B241ED /* VT100XtermParser.m in Sources */,
 				1D9A555B180FA83900B42CE9 /* ContextMenuActionPrefsController.m in Sources */,
 				A63F40AB183F3CED003A6A6D /* LineBufferHelpers.m in Sources */,
 				1D9A5531180FA73300B42CE9 /* FutureMethods.m in Sources */,
@@ -2662,6 +2739,7 @@
 				1D9A5560180FA83900B42CE9 /* TriggerController.m in Sources */,
 				1D78B560183EE1C000014D49 /* LineBufferPosition.m in Sources */,
 				1D9A5549180FA82E00B42CE9 /* TmuxDashboardController.m in Sources */,
+				A647E3A618C352B000450FA1 /* VT100OtherParser.m in Sources */,
 				1D9A5579180FA85D00B42CE9 /* ScriptTrigger.m in Sources */,
 				A6A13AAE18C3347200B241ED /* VT100Output.m in Sources */,
 				1D9A5551180FA82E00B42CE9 /* TSVParser.m in Sources */,
@@ -2681,6 +2759,7 @@
 				1D9A5584180FA87000B42CE9 /* iTermFontPanel.m in Sources */,
 				1D9A5578180FA85D00B42CE9 /* GrowlTrigger.m in Sources */,
 				1D9A5565180FA84700B42CE9 /* NSFileManager+iTerm.m in Sources */,
+				A647E3B018C3588800450FA1 /* VT100ControlParser.m in Sources */,
 				1D9A5585180FA87000B42CE9 /* iTermKeyBindingMgr.m in Sources */,
 				A68A30C8186D0F37007F550F /* SmartMatch.m in Sources */,
 				1D9A5595180FA87000B42CE9 /* PTYSession.m in Sources */,
@@ -2793,6 +2872,7 @@
 				1D9A55AE180FA8B700B42CE9 /* PSMTabBarControl.m in Sources */,
 				A6A13AA418C2D23300B241ED /* iTermColorMap.m in Sources */,
 				A635864B184BEA57009ED690 /* AATreeNode.m in Sources */,
+				A6A13AB318C33ED300B241ED /* VT100CSIParser.m in Sources */,
 				1D9A5543180FA81400B42CE9 /* ProfileTableRow.m in Sources */,
 				1D9A5588180FA87000B42CE9 /* MovePaneController.m in Sources */,
 				1D9A5536180FA79100B42CE9 /* DVRDecoder.m in Sources */,
@@ -2801,9 +2881,11 @@
 				1D9A5574180FA85D00B42CE9 /* AlertTrigger.m in Sources */,
 				1D9A55A9180FA8B700B42CE9 /* PSMMetalTabStyle.m in Sources */,
 				1D9A5523180FA46100B42CE9 /* iTermTests.m in Sources */,
+				A6A13AB818C33FC500B241ED /* VT100Parser.m in Sources */,
 				1D9A559C180FA87000B42CE9 /* SessionTitleView.m in Sources */,
 				1D9A55B0180FA8B700B42CE9 /* PSMTabDragWindow.m in Sources */,
 				1D9A554D180FA82E00B42CE9 /* TmuxSessionsTable.m in Sources */,
+				A647E3A118C351F400450FA1 /* VT100DCSParser.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2817,6 +2899,7 @@
 				1D5FDDA61208E93600C46BA3 /* PTYScrollView.m in Sources */,
 				A6A13AAD18C3347200B241ED /* VT100Output.m in Sources */,
 				1D5FDDA71208E93600C46BA3 /* PTYTextView.m in Sources */,
+				A6A13AB218C33ED300B241ED /* VT100CSIParser.m in Sources */,
 				1D5FDDA81208E93600C46BA3 /* PTYTask.m in Sources */,
 				1D0AABC217B59B3D0072B5AF /* SearchResult.m in Sources */,
 				A60014F718550F3900CE38D8 /* NSMutableAttributedString+iTerm.m in Sources */,
@@ -2837,6 +2920,7 @@
 				1D53FD16181C4B4B00524D4F /* FindContext.m in Sources */,
 				1D5FDDB21208E93600C46BA3 /* PTToolbarController.m in Sources */,
 				A6CFDAD3185D2587005DC94B /* URLAction.m in Sources */,
+				A647E39B18C3515900450FA1 /* VT100AnsiParser.m in Sources */,
 				A6E74753188C6693005355CF /* iTermExposeWindow.m in Sources */,
 				1DB9D8F3183FE9EF0029F0B5 /* HotkeyWindowController.m in Sources */,
 				A68A30E2186D1429007F550F /* TransferrableFileMenuItemView.m in Sources */,
@@ -2858,6 +2942,7 @@
 				1D5FDDC41208E93600C46BA3 /* PSMUnifiedTabStyle.m in Sources */,
 				1DC13AC418864E2200034DAE /* CommandHistoryPopup.m in Sources */,
 				1D78B55F183EE1C000014D49 /* LineBufferPosition.m in Sources */,
+				A647E3AA18C353C500450FA1 /* VT100StringParser.m in Sources */,
 				1D5FDDC51208E93600C46BA3 /* PSMAdiumTabStyle.m in Sources */,
 				A68A30D1186D1414007F550F /* NSArray+iTerm.m in Sources */,
 				1D5FDDC61208E93600C46BA3 /* PSMTabDragWindow.m in Sources */,
@@ -2886,13 +2971,16 @@
 				1D93D3B112697D53007F741B /* DVRIndexEntry.m in Sources */,
 				1D7C18821275D22900461E55 /* PasteboardHistory.m in Sources */,
 				A635864A184BEA57009ED690 /* AATreeNode.m in Sources */,
+				A647E3A018C351F400450FA1 /* VT100DCSParser.m in Sources */,
 				1D7C1D1312772ECC00461E55 /* NSDateFormatterExtras.m in Sources */,
 				1DE214E2128212EE004E3ADF /* Autocomplete.m in Sources */,
 				1DD736421283C2FA009B7829 /* Popup.m in Sources */,
 				1D44218D1290B34500891504 /* TextViewWrapper.m in Sources */,
 				1D2E802F129DA45A00F3D71E /* PTYTab.m in Sources */,
 				A6A13AA818C2D45900B241ED /* NSColor+iTerm.m in Sources */,
+				A6A13AB718C33FC500B241ED /* VT100Parser.m in Sources */,
 				1D2E813212A18F7500F3D71E /* SessionView.m in Sources */,
+				A6A13ABC18C34F6400B241ED /* VT100XtermParser.m in Sources */,
 				1D36155612CBF33E00803EA9 /* ScreenChar.m in Sources */,
 				A68A30E8186D1429007F550F /* VT100WorkingDirectory.m in Sources */,
 				1D94EAAF12D64022008225A9 /* UKCrashReporter.m in Sources */,
@@ -2989,6 +3077,8 @@
 				1D085F9316F03E5400B7FCE9 /* PasteView.m in Sources */,
 				1D085F9716F04D0900B7FCE9 /* NSBezierPath+iTerm.m in Sources */,
 				1D085F9B16F1135F00B7FCE9 /* PasteEvent.m in Sources */,
+				A647E3AF18C3588800450FA1 /* VT100ControlParser.m in Sources */,
+				A647E3A518C352B000450FA1 /* VT100OtherParser.m in Sources */,
 				1D085F9F16F137D900B7FCE9 /* RoundedRectView.m in Sources */,
 				1D085FA316F138A100B7FCE9 /* ToastWindowController.m in Sources */,
 				1D9053C717A5CCF100A0B64E /* MovingAverage.m in Sources */,

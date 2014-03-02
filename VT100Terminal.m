@@ -1,11 +1,9 @@
 #import "VT100Terminal.h"
 #import "DebugLogging.h"
 #import "NSColor+iTerm.h"
+#import "VT100Parser.h"
 #import <apr-1/apr_base64.h>  // for xterm's base64 decoding (paste64)
 #include <term.h>
-
-#define STANDARD_STREAM_SIZE 100000
-#define MAX_XTERM_TEMP_BUFFER_LENGTH 1024
 
 @interface VT100Terminal ()
 @property(nonatomic, assign) BOOL reportFocus;
@@ -15,6 +13,15 @@
 @property(nonatomic, assign) BOOL autorepeatMode;
 @property(nonatomic, assign) int charset;
 @property(nonatomic, assign) BOOL bracketedPasteMode;
+@property(nonatomic, assign) BOOL allowColumnMode;
+@property(nonatomic, assign) BOOL lineMode;  // YES=Newline, NO=Line feed
+@property(nonatomic, assign) BOOL columnMode;  // YES=132 Column, NO=80 Column
+@property(nonatomic, assign) BOOL scrollMode;  // YES=Smooth, NO=Jump
+@property(nonatomic, assign) BOOL disableSmcupRmcup;
+
+// A write-only property, at the moment. TODO: What should this do?
+@property(nonatomic, assign) BOOL strictAnsiMode;
+
 @end
 
 @implementation VT100Terminal {
@@ -26,14 +33,7 @@
 
     id<VT100TerminalDelegate> delegate_;
     
-    unsigned char *stream_;
-    int current_stream_length;
-    int total_stream_length;
-    
-    BOOL lineMode_;         // YES=Newline, NO=Line feed
     BOOL ansiMode_;         // YES=ANSI, NO=VT52
-    BOOL columnMode_;       // YES=132 Column, NO=80 Column
-    BOOL scrollMode_;       // YES=Smooth, NO=Jump
     BOOL xon_;               // YES=XON, NO=XOFF. Not currently used.
     BOOL numLock_;           // YES=ON, NO=OFF, default=YES;
     
@@ -58,52 +58,12 @@
     int saveBgBlue_;
     ColorMode saveBgColorMode_;
     
-    BOOL strictAnsiMode_;
-    BOOL allowColumnMode_;
-    
-    int streamOffset_;
-    
-    BOOL disableSmcupRmcup_;
-    
     int sendModifiers_[NUM_MODIFIABLE_RESOURCES];
-    
-    VT100TCC *lastToken_;
 }
 
 @synthesize delegate = delegate_;
 
-#define iscontrol(c)  ((c) <= 0x1f)
-
-// Code to detect if characters are properly encoded for each encoding.
-
-// Traditional Chinese (Big5)
-// 1st   0xa1-0xfe
-// 2nd   0x40-0x7e || 0xa1-0xfe
-//
-// Simplifed Chinese (EUC_CN)
-// 1st   0x81-0xfe
-// 2nd   0x40-0x7e || 0x80-0xfe
-#define iseuccn(c)   ((c) >= 0x81 && (c) <= 0xfe)
-#define isbig5(c)    ((c) >= 0xa1 && (c) <= 0xfe)
-#define issjiskanji(c)  (((c) >= 0x81 && (c) <= 0x9f) ||  \
-                         ((c) >= 0xe0 && (c) <= 0xef))
-#define iseuckr(c)   ((c) >= 0xa1 && (c) <= 0xfe)
-
-#define isGBEncoding(e)     ((e)==0x80000019 || (e)==0x80000421|| \
-                             (e)==0x80000631 || (e)==0x80000632|| \
-                             (e)==0x80000930)
-#define isBig5Encoding(e)   ((e)==0x80000002 || (e)==0x80000423|| \
-                             (e)==0x80000931 || (e)==0x80000a03|| \
-                             (e)==0x80000a06)
-#define isJPEncoding(e)     ((e)==0x80000001 || (e)==0x8||(e)==0x15)
-#define isSJISEncoding(e)   ((e)==0x80000628 || (e)==0x80000a01)
-#define isKREncoding(e)     ((e)==0x80000422 || (e)==0x80000003|| \
-                             (e)==0x80000840 || (e)==0x80000940)
-#define ESC  0x1b
 #define DEL  0x7f
-
-#define PACK_CSI_COMMAND(first, second) ((first << 8) | second)
-#define ADVANCE(datap, datalen, rmlen) do { datap++; datalen--; (*rmlen)++; } while (0)
 
 // character attributes
 #define VT100CHARATTR_ALLOFF   0
@@ -160,1780 +120,9 @@ typedef enum {
 #define VT100CHARATTR_BG_HI_BLACK     (VT100CHARATTR_BG_HI_BASE + COLORCODE_BLACK)
 #define VT100CHARATTR_BG_HI_WHITE     (VT100CHARATTR_BG_HI_BASE + COLORCODE_WHITE)
 
-#define VT100CSIPARAM_MAX    16  // Maximum number of CSI parameters in VT100TCC.u.csi.p.
-#define VT100CSISUBPARAM_MAX    16  // Maximum number of CSI sub-parameters in VT100TCC.u.csi.p.
-
-typedef struct {
-    int p[VT100CSIPARAM_MAX];
-    int count;
-    int cmd;
-    int sub[VT100CSIPARAM_MAX][VT100CSISUBPARAM_MAX];
-    int subCount[VT100CSIPARAM_MAX];
-} CSIParam;
-
-// Sets the |n|th parameter's value in CSIParam |pm| to |d|, but only if it's currently negative.
-// |pm|.count is incremented if necessary.
-#define SET_PARAM_DEFAULT(pm, n, d) \
-(((pm).p[(n)] = (pm).p[(n)] < 0 ? (d):(pm).p[(n)]), \
- ((pm).count  = (pm).count > (n) + 1 ? (pm).count : (n) + 1 ))
-
-typedef enum {
-    // Any control character between 0-0x1f inclusive can by a token type. For these, the value
-    // matters.
-    VT100CC_NULL = 0,
-    VT100CC_SOH = 1,   // Not used
-    VT100CC_STX = 2,   // Not used
-    VT100CC_ETX = 3,   // Not used
-    VT100CC_EOT = 4,   // Not used
-    VT100CC_ENQ = 5,   // Transmit ANSWERBACK message
-    VT100CC_ACK = 6,   // Not used
-    VT100CC_BEL = 7,   // Sound bell
-    VT100CC_BS = 8,    // Move cursor to the left
-    VT100CC_HT = 9,    // Move cursor to the next tab stop
-    VT100CC_LF = 10,   // line feed or new line operation
-    VT100CC_VT = 11,   // Same as <LF>.
-    VT100CC_FF = 12,   // Same as <LF>.
-    VT100CC_CR = 13,   // Move the cursor to the left margin
-    VT100CC_SO = 14,   // Invoke the G1 character set
-    VT100CC_SI = 15,   // Invoke the G0 character set
-    VT100CC_DLE = 16,  // Not used
-    VT100CC_DC1 = 17,  // Causes terminal to resume transmission (XON).
-    VT100CC_DC2 = 18,  // Not used
-    VT100CC_DC3 = 19,  // Causes terminal to stop transmitting all codes except XOFF and XON (XOFF).
-    VT100CC_DC4 = 20,  // Not used
-    VT100CC_NAK = 21,  // Not used
-    VT100CC_SYN = 22,  // Not used
-    VT100CC_ETB = 23,  // Not used
-    VT100CC_CAN = 24,  // Cancel a control sequence
-    VT100CC_EM = 25,   // Not used
-    VT100CC_SUB = 26,  // Same as <CAN>.
-    VT100CC_ESC = 27,  // Introduces a control sequence.
-    VT100CC_FS = 28,   // Not used
-    VT100CC_GS = 29,   // Not used
-    VT100CC_RS = 30,   // Not used
-    VT100CC_US = 31,   // Not used
-    VT100CC_DEL = 255, // Ignored on input; not stored in buffer.
-
-    VT100_WAIT = 1000,
-    VT100_NOTSUPPORT,
-    VT100_SKIP,
-    VT100_STRING,
-    VT100_ASCIISTRING,
-    VT100_UNKNOWNCHAR,
-    VT100_INVALID_SEQUENCE,
-
-    VT100CSI_CPR,                   // Cursor Position Report
-    VT100CSI_CUB,                   // Cursor Backward
-    VT100CSI_CUD,                   // Cursor Down
-    VT100CSI_CUF,                   // Cursor Forward
-    VT100CSI_CUP,                   // Cursor Position
-    VT100CSI_CUU,                   // Cursor Up
-    VT100CSI_DA,                    // Device Attributes
-    VT100CSI_DA2,                   // Secondary Device Attributes
-    VT100CSI_DECALN,                // Screen Alignment Display
-    VT100CSI_DECDHL,                // Double Height Line
-    VT100CSI_DECDWL,                // Double Width Line
-    VT100CSI_DECID,                 // Identify Terminal
-    VT100CSI_DECKPAM,               // Keypad Application Mode
-    VT100CSI_DECKPNM,               // Keypad Numeric Mode
-    VT100CSI_DECLL,                 // Load LEDS
-    VT100CSI_DECRC,                 // Restore Cursor
-    VT100CSI_DECREPTPARM,           // Report Terminal Parameters
-    VT100CSI_DECREQTPARM,           // Request Terminal Parameters
-    VT100CSI_DECRST,
-    VT100CSI_DECSC,                 // Save Cursor
-    VT100CSI_DECSET,
-    VT100CSI_DECSTBM,               // Set Top and Bottom Margins
-    VT100CSI_DECSWL,                // Single-width Line
-    VT100CSI_DECTST,                // Invoke Confidence Test
-    VT100CSI_DSR,                   // Device Status Report
-    VT100CSI_ED,                    // Erase In Display
-    VT100CSI_EL,                    // Erase In Line
-    VT100CSI_HTS,                   // Horizontal Tabulation Set
-    VT100CSI_HVP,                   // Horizontal and Vertical Position
-    VT100CSI_IND,                   // Index
-    VT100CSI_NEL,                   // Next Line
-    VT100CSI_RI,                    // Reverse Index
-    VT100CSI_RIS,                   // Reset To Initial State
-    VT100CSI_RM,                    // Reset Mode
-    VT100CSI_SCS,
-    VT100CSI_SCS0,                  // Select Character Set 0
-    VT100CSI_SCS1,                  // Select Character Set 1
-    VT100CSI_SCS2,                  // Select Character Set 2
-    VT100CSI_SCS3,                  // Select Character Set 3
-    VT100CSI_SGR,                   // Select Graphic Rendition
-    VT100CSI_SM,                    // Set Mode
-    VT100CSI_TBC,                   // Tabulation Clear
-    VT100CSI_DECSCUSR,              // Select the Style of the Cursor
-    VT100CSI_DECSTR,                // Soft reset
-    VT100CSI_DECDSR,                // Device Status Report (DEC specific)
-    VT100CSI_SET_MODIFIERS,         // CSI > Ps; Pm m (Whether to set modifiers for different kinds of key presses; no official name)
-    VT100CSI_RESET_MODIFIERS,       // CSI > Ps n (Set all modifiers values to -1, disabled)
-    VT100CSI_DECSLRM,               // Set left-right margin
-
-    // some xterm extensions
-    XTERMCC_WIN_TITLE,            // Set window title
-    XTERMCC_ICON_TITLE,
-    XTERMCC_WINICON_TITLE,
-    XTERMCC_INSBLNK,              // Insert blank
-    XTERMCC_INSLN,                // Insert lines
-    XTERMCC_DELCH,                // delete blank
-    XTERMCC_DELLN,                // delete lines
-    XTERMCC_WINDOWSIZE,           // (8,H,W) NK: added for Vim resizing window
-    XTERMCC_WINDOWSIZE_PIXEL,     // (8,H,W) NK: added for Vim resizing window
-    XTERMCC_WINDOWPOS,            // (3,Y,X) NK: added for Vim positioning window
-    XTERMCC_ICONIFY,
-    XTERMCC_DEICONIFY,
-    XTERMCC_RAISE,
-    XTERMCC_LOWER,
-    XTERMCC_SU,                  // scroll up
-    XTERMCC_SD,                  // scroll down
-    XTERMCC_REPORT_WIN_STATE,
-    XTERMCC_REPORT_WIN_POS,
-    XTERMCC_REPORT_WIN_PIX_SIZE,
-    XTERMCC_REPORT_WIN_SIZE,
-    XTERMCC_REPORT_SCREEN_SIZE,
-    XTERMCC_REPORT_ICON_TITLE,
-    XTERMCC_REPORT_WIN_TITLE,
-    XTERMCC_PUSH_TITLE,
-    XTERMCC_POP_TITLE,
-    XTERMCC_SET_RGB,
-    XTERMCC_PROPRIETARY_ETERM_EXT,
-    XTERMCC_SET_PALETTE,
-    XTERMCC_SET_KVP,
-    XTERMCC_PASTE64,
-    XTERMCC_FINAL_TERM,
-    
-    // Some ansi stuff
-    ANSICSI_CHA,     // Cursor Horizontal Absolute
-    ANSICSI_VPA,     // Vert Position Absolute
-    ANSICSI_VPR,     // Vert Position Relative
-    ANSICSI_ECH,     // Erase Character
-    ANSICSI_PRINT,   // Print to Ansi
-    ANSICSI_SCP,     // Save cursor position
-    ANSICSI_RCP,     // Restore cursor position
-    ANSICSI_CBT,     // Back tab
-
-    ANSI_RIS,        // Reset to initial state (there's also a CSI version)
-
-    // Toggle between ansi/vt52
-    STRICT_ANSI_MODE,
-
-    // iTerm extension
-    ITERM_GROWL,
-    DCS_TMUX,
-} VT100TerminalTokenType;
-
-// A parsed token.
-struct VT100TCC {
-    VT100TerminalTokenType type;
-    unsigned char *position;  // Pointer into stream of where this token's data began.
-    int length;  // Length of parsed data in stream.
-    union {
-        NSString *string;  // For VT100_STRING, VT100_ASCIISTRING
-        unsigned char code;  // For VT100_UNKNOWNCHAR and VT100CSI_SCS0...SCS3.
-        CSIParam csi;  // 'cmd' not used here.
-    } u;
-};
-
-
-// functions
-static BOOL isCSI(unsigned char *, int);
-static BOOL isXTERM(unsigned char *, int);
-static BOOL isString(unsigned char *, NSStringEncoding);
-static int getCSIParam(unsigned char *, int, CSIParam *, id<VT100TerminalDelegate>);
-static VT100TCC decode_csi(unsigned char *, int, int *, id<VT100TerminalDelegate>);
-static VT100TCC decode_xterm(unsigned char *, int, int *,NSStringEncoding);
-static VT100TCC decode_ansi(unsigned char *,int, int *, id<VT100TerminalDelegate>);
-static VT100TCC decode_other(unsigned char *, int, int *, NSStringEncoding);
-static VT100TCC decode_control(unsigned char *, int, int *, NSStringEncoding, id<VT100TerminalDelegate>);
-static VT100TCC decode_utf8(unsigned char *, int, int *);
-static VT100TCC decode_euccn(unsigned char *, int, int *);
-static VT100TCC decode_big5(unsigned char *,int, int *);
-static VT100TCC decode_string(unsigned char *, int, int *,
-                              NSStringEncoding);
-
 // Prevents runaway memory usage
 static const int kMaxScreenColumns = 4096;
 static const int kMaxScreenRows = 4096;
-
-static BOOL isCSI(unsigned char *code, int len)
-{
-    if (len >= 2 && code[0] == ESC && (code[1] == '[')) {
-        return YES;
-    }
-    return NO;
-}
-
-static BOOL isXTERM(unsigned char *code, int len)
-{
-    if (len >= 2 && code[0] == ESC && (code[1] == ']'))
-        return YES;
-    return NO;
-}
-
-static BOOL isANSI(unsigned char *code, int len)
-{
-    // Currently, we only support esc-c as an ANSI code (other ansi codes are CSI).
-    if (len >= 2 && code[0] == ESC && code[1] == 'c') {
-        return YES;
-    }
-    return NO;
-}
-
-static BOOL isDCS(unsigned char *code, int len)
-{
-    if (len >= 2 && code[0] == ESC && code[1] == 'P') {
-        return YES;
-    }
-    return NO;
-}
-
-static BOOL isString(unsigned char *code, NSStringEncoding encoding)
-{
-    BOOL result = NO;
-
-    if (encoding == NSUTF8StringEncoding) {
-        if (*code >= 0x80) {
-            result = YES;
-        }
-    } else if (isGBEncoding(encoding)) {
-        if (iseuccn(*code)) {
-            result = YES;
-        }
-    } else if (isBig5Encoding(encoding)) {
-        if (isbig5(*code)) {
-            result = YES;
-        }
-    } else if (isJPEncoding(encoding)) {
-        if (*code == 0x8e || *code == 0x8f || (*code >= 0xa1 && *code <= 0xfe)) {
-            result = YES;
-        }
-    } else if (isSJISEncoding(encoding)) {
-        if (*code >= 0x80) {
-            result = YES;
-        }
-    } else if (isKREncoding(encoding)) {
-        if (iseuckr(*code)) {
-            result = YES;
-        }
-    } else if (*code >= 0x20) {
-        result = YES;
-    }
-
-    return result;
-}
-
-static int advanceAndEatControlChars(unsigned char **ppdata,
-                                     int *pdatalen,
-                                     id<VT100TerminalDelegate> delegate)
-{
-    // return value represent "continuous" state.
-    // If it is YES, current control sequence parsing process was not canceled.
-    // If it is NO, current control sequence parsing process was canceled by CAN, SUB, or ESC.
-    while (*pdatalen > 0) {
-        ++*ppdata;
-        --*pdatalen;
-        switch (**ppdata) {
-            case VT100CC_ENQ:
-                // TODO: send answerback if it is needed
-                break;
-            case VT100CC_BEL:
-                [delegate terminalRingBell];
-                break;
-            case VT100CC_BS:
-                [delegate terminalBackspace];
-                break;
-            case VT100CC_HT:
-                [delegate terminalAppendTabAtCursor];
-                break;
-            case VT100CC_LF:
-            case VT100CC_VT:
-            case VT100CC_FF:
-                [delegate terminalLineFeed];
-                break;
-            case VT100CC_CR:
-                [delegate terminalCarriageReturn];
-                break;
-            case VT100CC_SO:
-                // TODO: ISO-2022 mode terminal should implement SO
-                break;
-            case VT100CC_SI:
-                // TODO: ISO-2022 mode terminal should implement SI
-                break;
-            case VT100CC_DC1:
-                break;
-            case VT100CC_DC3:
-                break;
-            case VT100CC_CAN:
-            case VT100CC_SUB:
-            case VT100CC_ESC:
-                return NO;
-            case VT100CC_DEL:
-                [delegate terminalDeleteCharactersAtCursor:1];
-                break;
-            default:
-                if (**ppdata >= 0x20)
-                    return YES;
-                break;
-        }
-    }
-    return YES;
-}
-
-static int getCSIParam(unsigned char *datap,
-                       int datalen,
-                       CSIParam *param,
-                       id<VT100TerminalDelegate> delegate)
-{
-    int i;
-    BOOL unrecognized = NO;
-    unsigned char *orgp = datap;
-    BOOL readNumericParameter = NO;
-    size_t commandBytesCount = 0;
-
-    NSCParameterAssert(datap != NULL);
-    NSCParameterAssert(datalen >= 2);
-    NSCParameterAssert(param != NULL);
-
-    param->count = 0;
-
-    // 2013/1/10 H.Saito
-    //
-    // The dispatching method for control functions becomes more simply and efficiently.
-    // Now they are aggregated with VT100TCC.u.csi.cmd parameter.
-    //
-    // cmd parameter consists of following bytes:
-    // - Parameter Prefix Byte (if present, range: \x3a-\x3f)
-    // - Intermediate Bytes (if present, range: \x20-\x2f)
-    // - Final byte (range: \x40-\x3e)
-    //
-    // Example: DECRQM sequence
-    // http://www.vt100.net/docs/vt510-rm/DECRQM
-    //
-    // ESC [ ? 3 6 $ p
-    //
-    // it can be parsed as...
-    //
-    // Parameter Prefix Byte --> '?' (\x3c)
-    // Parameters            --> [ 36 ]
-    // Intermediate Bytes    --> '$' (\x24)
-    // Final Byte            --> 'p' (\x70)
-    //
-    // With this case, packed cmd value is calculated as follows:
-    //
-    // (((0x3c << 8) | 0x24) << 8) | 0x70 = 3941488
-    //
-    // This value is always unique for each command functions.
-    //
-    const size_t COMMAND_BYTES_MAX = sizeof(param->cmd) / sizeof(*datap) + 1;
-    param->cmd = 0;
-
-    for (i = 0; i < VT100CSIPARAM_MAX; ++i ) {
-        param->p[i] = -1;
-    }
-
-    NSCParameterAssert(*datap == ESC);
-    datap++;
-    datalen--;
-
-    NSCParameterAssert(*datap == '[');
-
-    if (!advanceAndEatControlChars(&datap, &datalen, delegate)) {
-        goto cancel;
-    }
-
-    // Now we parse Parameter Bytes (ECMA-48, 5.4 - (b))
-    //
-    // CSI P...P I...I F
-    //     ^
-    //
-    // Parameter Bytes, which, if present, consist of bit combinations from \x30 to \x3f;
-    //
-    //     1. In DEC VT-series and some derived emulators,
-    //        the first 1 byte of P-bytes is sometimes treated as prefix.
-    //
-    //        ECMA-48, 5.4.2 - (d) says that;
-    //
-    //          > Bit combinations 03/12 to 03/15 are reserved for future
-    //          > standardization except when used as the first bit combination
-    //          > of the parameter string.
-    //
-    //          note: ECMA-48 is to write ascii codes as (decimal top nibble)/(decimal lower nibble),
-    //                and that a value like 03/15 = 0x3f (see ECMA-48, 4.1).
-    //
-    //        This description suggests that if the first byte of parameter bytes is one of
-    //        '<', '=', '>', '?' (\x3c-\x3f), it's well-formed and could be considered
-    //        as private CSI extention.
-    //
-    //        Example:
-    //
-    //          In DEC VT-series, '?' prefix is commonly used by such as DEC specific private modes.
-    //          "CSI > Ps c" is interpreted as the request of Secondary Device attributes(DA2).
-    //          In some highter version of VT treats "CSI = Ps c" as the request of Tirnary Device attributes(DA3).
-    //          The terminal emulator Tera Term and RLogin use '<'-prefixed extensions for IME support.
-    //          "CSI < Ps t" means "change the IME open/close state".
-    //          ref: supported control functions by Tera Term
-    //          http://ttssh2.sourceforge.jp/manual/en/about/ctrlseq.html
-    //
-    if (datalen > 0) {
-        switch (*datap) {
-            case '<':
-            case '=':
-            case '>':
-            case '?':
-                param->cmd = *datap;
-                if (!advanceAndEatControlChars(&datap, &datalen, delegate))
-                    goto cancel;
-                break;
-            default:
-                break;
-        }
-    }
-
-    //     2. parse parameters
-    //        Typically, it consists of '0'-'9' or ';'. If there are sub parameters, they'll
-    //        be colon-delimited. <parameter>:<sub 1>:<sub 2>:<sub 3>...:<sub N>
-    //        '<', '=', '>', '?' should be ignored, but if current sequence contains them,
-    //        this sequence should be mark as unrecognized.
-    BOOL isSub = NO;
-    while (datalen > 0 && *datap >= 0x30 && *datap <= 0x3f) {
-        switch (*datap) {
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                int n = 0;
-                while (datalen > 0 && *datap >= '0' && *datap <= '9') {
-                    if (n > (INT_MAX - 10) / 10) {
-                        unrecognized = YES;
-                    }
-                    n = n * 10 + *datap - '0';
-                    if (!advanceAndEatControlChars(&datap, &datalen, delegate)) {
-                        goto cancel;
-                    }
-                }
-                
-                if (isSub) {
-                    const int paramNum = param->count - 1;
-                    assert(paramNum >= 0 && paramNum < VT100CSIPARAM_MAX);
-                    int subParamNum = param->subCount[paramNum];
-                    if (subParamNum < VT100CSISUBPARAM_MAX) {
-                        param->sub[paramNum][subParamNum] = n;
-                        param->subCount[paramNum]++;
-                    }
-                } else if (param->count < VT100CSIPARAM_MAX) {
-                    param->p[param->count] = n;
-                    // increment the parameter count
-                    param->count++;
-                }
-
-                // set the numeric parameter flag
-                readNumericParameter = YES;
-
-                break;
-            }
-
-            case ';':
-                // If we got an implied (blank) parameter, increment the parameter count again
-                if (param->count < VT100CSIPARAM_MAX && readNumericParameter == NO) {
-                    param->count++;
-                }
-                // reset the parameter flag
-                readNumericParameter = NO;
-
-                if (!advanceAndEatControlChars(&datap, &datalen, delegate)) {
-                    goto cancel;
-                }
-                break;
-
-            case ':':
-                // 2013/1/10 H. Saito
-                // TODO: Now colon separator(":") used in SGR sequence by few terminals
-                // (xterm #282, TeraTerm, RLogin, mlterm, tanasinn).
-                // ECMA-48 suggests it may be used as a separator in a parameter sub-string (5.4.2 - (b)),
-                // but it seems the usage of ":" around SGR is confused a little.
-                //
-                // 1. Konsole's 3-byte color mode style:
-                //    CSI 38 ; 2 ; R ; G ; B m (Konsole, xterm, TeraTerm)
-                //
-                // 2. ITU-T T-416 like style:
-                //    CSI 38 ; 2 : R : G : B m (xterm, TeraTerm, RLogin)
-                //    CSI 38 ; 2 ; R : G : B m (xterm, TeraTerm, RLogin)
-                //    CSI 38 ; 2 ; R ; G : B m (xterm, RLogin)
-                //    CSI 38 ; 2 ; R : G ; B m (xterm, TeraTerm)
-                //    CSI 38 : 2 : R : G : B m (xterm, TeraTerm, RLogin)
-                //
-                // (* It seems mlterm/tanasinn don't distinguish ":" from ";")
-                //
-                // In other case, yaft proposes GWREPT(glyph width report, OSC 8900)
-                //
-                //   > OSC 8900 ; Ps ; Pt ; width : from : to ; width : from : to ; ... ST
-                //   http://uobikiemukot.github.io/yaft/glyph_width_report.html
-                //
-                // In this usage, ":" are certainly treated as sub-parameter separators.
-                isSub = YES;
-                if (!advanceAndEatControlChars(&datap, &datalen, delegate)) {
-                    goto cancel;
-                }
-                break;
-
-            default:
-                // '<', '=', '>', or '?'
-                unrecognized = YES;
-                if (!advanceAndEatControlChars(&datap, &datalen, delegate)) {
-                    goto cancel;
-                }
-                break;
-        }
-    }
-
-    // Now we parse intermediate bytes (ECMA-48, 5.4 - (c))
-    //
-    // CSI P...P I...I F
-    //           ^
-    // Intermediate Bytes, if present, consist of bit combinations from 02/00 to 02/15.
-    //
-    while (datalen > 0 && *datap >= 0x20 && *datap <= 0x2f) {
-        if (commandBytesCount < COMMAND_BYTES_MAX) {
-            param->cmd = PACK_CSI_COMMAND(param->cmd, *datap);
-        } else {
-            unrecognized = YES;
-        }
-        commandBytesCount++;
-        if (!advanceAndEatControlChars(&datap, &datalen, delegate)) {
-            goto cancel;
-        }
-    }
-
-    // compatibility HACK:
-    //
-    // CSI P...P I...I (G...G) F
-    //                  ^
-    // xterm allows "garbage bytes" before final byte.
-    // rxvt, urxvt, PuTTY, MinTTY, mlterm, TeraTerm also does so.
-    // We skip them, too.
-    //
-    while (datalen > 0) {
-        if (*datap >= 0x40 && *datap <= 0x7e) { // final byte
-            break;
-        } else {
-            if (*datap > 0x1f && *datap != 0x7f) {
-                // if "garbage bytes" contains non-control character,
-                // mark current sequence as "unrecognized".
-                unrecognized = YES;
-            }
-            if (!advanceAndEatControlChars(&datap, &datalen, delegate)) {
-                goto cancel;
-            }
-        }
-    }
-
-    // Now we parse final byte (ECMA-48, 5.4 - (d))
-    //
-    // CSI P...P I...I F
-    //                 ^
-    // Final Byte consists of a bit combination from 04/00 to 07/14.
-    //
-    if (datalen > 0) {
-        if (commandBytesCount < COMMAND_BYTES_MAX) {
-            param->cmd = PACK_CSI_COMMAND(param->cmd, *datap);
-        }
-        datap++;
-        datalen--;
-
-        if (unrecognized) {
-            param->cmd = 0xff;
-        }
-    } else {
-        param->cmd = 0x00;
-    }
-    return datap - orgp;
-
-cancel:
-    param->cmd = 0xff;
-    return datap - orgp;
-}
-
-static VT100TCC decode_ansi(unsigned char *datap,
-                            int datalen,
-                            int *rmlen,
-                            id<VT100TerminalDelegate> delegate)
-{
-    VT100TCC result;
-    result.type = VT100_UNKNOWNCHAR;
-    if (datalen >= 2 && datap[0] == ESC) {
-        switch (datap[1]) {
-            case 'c':
-                result.type = ANSI_RIS;
-                *rmlen = 2;
-                break;
-        }
-    }
-    return result;
-}
-
-
-static VT100TCC decode_csi(unsigned char *datap,
-                           int datalen,
-                           int *rmlen,
-                           id<VT100TerminalDelegate> delegate)
-{
-    VT100TCC result;
-    CSIParam param;
-    memset(&param, 0, sizeof(param));
-    memset(&result, 0, sizeof(result));
-    int paramlen;
-    int i;
-
-    paramlen = getCSIParam(datap, datalen, &param, delegate);
-    result.type = VT100_WAIT;
-
-    // Check for unkown
-    if (param.cmd == 0xff) {
-        result.type = VT100_UNKNOWNCHAR;
-        *rmlen = paramlen;
-    } else if (paramlen > 0 && param.cmd > 0) {
-        // process
-        switch (param.cmd) {
-            case 'D':       // Cursor Backward
-                result.type = VT100CSI_CUB;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                break;
-
-            case 'B':       // Cursor Down
-                result.type = VT100CSI_CUD;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                break;
-
-            case 'C':       // Cursor Forward
-                result.type = VT100CSI_CUF;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                break;
-
-            case 'A':       // Cursor Up
-                result.type = VT100CSI_CUU;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                break;
-
-            case 'H':
-                result.type = VT100CSI_CUP;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                SET_PARAM_DEFAULT(param, 1, 1);
-                break;
-
-            case 'c':
-                result.type = VT100CSI_DA;
-                SET_PARAM_DEFAULT(param, 0, 0);
-                break;
-
-            case PACK_CSI_COMMAND('>', 'c'):
-                result.type = VT100CSI_DA2;
-                SET_PARAM_DEFAULT(param, 0, 0);
-                break;
-
-            case 'q':
-                result.type = VT100CSI_DECLL;
-                SET_PARAM_DEFAULT(param, 0, 0);
-                break;
-
-            case 'x':
-                if (param.count == 1)
-                    result.type = VT100CSI_DECREQTPARM;
-                else
-                    result.type = VT100CSI_DECREPTPARM;
-                break;
-
-            case 'r':
-                result.type = VT100CSI_DECSTBM;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                SET_PARAM_DEFAULT(param, 1, [delegate terminalHeight]);
-                break;
-
-            case 'y':
-                if (param.count == 2)
-                    result.type = VT100CSI_DECTST;
-                else
-                {
-                    result.type = VT100_NOTSUPPORT;
-                }
-                break;
-
-            case 'n':
-                result.type = VT100CSI_DSR;
-                SET_PARAM_DEFAULT(param, 0, 0);
-                break;
-
-            case PACK_CSI_COMMAND('?', 'n'):
-                result.type = VT100CSI_DECDSR;
-                SET_PARAM_DEFAULT(param, 0, 0);
-                break;
-
-            case 'J':
-                result.type = VT100CSI_ED;
-                SET_PARAM_DEFAULT(param, 0, 0);
-                break;
-
-            case 'K':
-                result.type = VT100CSI_EL;
-                SET_PARAM_DEFAULT(param, 0, 0);
-                break;
-
-            case 'f':
-                result.type = VT100CSI_HVP;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                SET_PARAM_DEFAULT(param, 1, 1);
-                break;
-
-            case 'l':
-                result.type = VT100CSI_RM;
-                break;
-
-            case PACK_CSI_COMMAND('>', 'm'):
-                result.type = VT100CSI_SET_MODIFIERS;
-                break;
-
-            case PACK_CSI_COMMAND('>', 'n'):
-                result.type = VT100CSI_RESET_MODIFIERS;
-                break;
-
-            case 'm':
-                result.type = VT100CSI_SGR;
-                for (i = 0; i < param.count; ++i) {
-                    SET_PARAM_DEFAULT(param, i, 0);
-                    //                        NSLog(@"m[%d]=%d",i,param.p[i]);
-                }
-                break;
-
-            case 'h':
-                result.type = VT100CSI_SM;
-                break;
-
-            case 'g':
-                result.type = VT100CSI_TBC;
-                SET_PARAM_DEFAULT(param, 0, 0);
-                break;
-
-            case PACK_CSI_COMMAND(' ', 'q'):
-                result.type = VT100CSI_DECSCUSR;
-                SET_PARAM_DEFAULT(param, 0, 0);
-                break;
-
-            case PACK_CSI_COMMAND('!', 'p'):
-                result.type = VT100CSI_DECSTR;
-                SET_PARAM_DEFAULT(param, 0, 0);
-                break;
-
-            // these are xterm controls
-            case '@':
-                result.type = XTERMCC_INSBLNK;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                break;
-            case 'L':
-                result.type = XTERMCC_INSLN;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                break;
-            case 'P':
-                result.type = XTERMCC_DELCH;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                break;
-            case 'M':
-                result.type = XTERMCC_DELLN;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                break;
-            case 't':
-                switch (param.p[0]) {
-                    case 8:
-                        result.type = XTERMCC_WINDOWSIZE;
-                        SET_PARAM_DEFAULT(param, 1, 0);     // columns or Y
-                        SET_PARAM_DEFAULT(param, 2, 0);     // rows or X
-                        break;
-                    case 3:
-                        result.type = XTERMCC_WINDOWPOS;
-                        SET_PARAM_DEFAULT(param, 1, 0);     // columns or Y
-                        SET_PARAM_DEFAULT(param, 2, 0);     // rows or X
-                        break;
-                    case 4:
-                        result.type = XTERMCC_WINDOWSIZE_PIXEL;
-                        break;
-                    case 2:
-                        result.type = XTERMCC_ICONIFY;
-                        break;
-                    case 1:
-                        result.type = XTERMCC_DEICONIFY;
-                        break;
-                    case 5:
-                        result.type = XTERMCC_RAISE;
-                        break;
-                    case 6:
-                        result.type = XTERMCC_LOWER;
-                        break;
-                    case 11:
-                        result.type = XTERMCC_REPORT_WIN_STATE;
-                        break;
-                    case 13:
-                        result.type = XTERMCC_REPORT_WIN_POS;
-                        break;
-                    case 14:
-                        result.type = XTERMCC_REPORT_WIN_PIX_SIZE;
-                        break;
-                    case 18:
-                        result.type = XTERMCC_REPORT_WIN_SIZE;
-                        break;
-                    case 19:
-                        result.type = XTERMCC_REPORT_SCREEN_SIZE;
-                        break;
-                    case 20:
-                        result.type = XTERMCC_REPORT_ICON_TITLE;
-                        break;
-                    case 21:
-                        result.type = XTERMCC_REPORT_WIN_TITLE;
-                        break;
-                    default:
-                        result.type = VT100_NOTSUPPORT;
-                        break;
-                }
-                break;
-            case 'S':
-                result.type = XTERMCC_SU;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                break;
-            case 'T':
-                if (param.count < 2) {
-                    result.type = XTERMCC_SD;
-                    SET_PARAM_DEFAULT(param, 0, 1);
-                }
-                else
-                    result.type = VT100_NOTSUPPORT;
-                break;
-
-            // ANSI
-            case 'Z':
-                result.type = ANSICSI_CBT;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                break;
-            case 'G':
-                result.type = ANSICSI_CHA;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                break;
-            case 'd':
-                result.type = ANSICSI_VPA;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                break;
-            case 'e':
-                result.type = ANSICSI_VPR;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                break;
-            case 'X':
-                result.type = ANSICSI_ECH;
-                SET_PARAM_DEFAULT(param, 0, 1);
-                break;
-            case 'i':
-                result.type = ANSICSI_PRINT;
-                SET_PARAM_DEFAULT(param, 0, 0);
-                break;
-            case 's':
-                if ([delegate terminalUseColumnScrollRegion]) {
-                    result.type = VT100CSI_DECSLRM;
-                    SET_PARAM_DEFAULT(param, 0, 1);
-                    SET_PARAM_DEFAULT(param, 1, 1);
-                } else {
-                    result.type = ANSICSI_SCP;
-                    SET_PARAM_DEFAULT(param, 0, 0);
-                }
-                break;
-            case 'u':
-                result.type = ANSICSI_RCP;
-                SET_PARAM_DEFAULT(param, 0, 0);
-                break;
-            case PACK_CSI_COMMAND('?', 'h'):       // Dec private mode set
-                result.type = VT100CSI_DECSET;
-                SET_PARAM_DEFAULT(param, 0, 0);
-                break;
-            case PACK_CSI_COMMAND('?', 'l'):       // Dec private mode reset
-                result.type = VT100CSI_DECRST;
-                SET_PARAM_DEFAULT(param, 0, 0);
-                break;
-            default:
-                result.type = VT100_NOTSUPPORT;
-                break;
-
-        }
-
-        // copy CSI parameter
-        for (i = 0; i < VT100CSIPARAM_MAX; ++i) {
-            result.u.csi.p[i] = param.p[i];
-            result.u.csi.subCount[i] = param.subCount[i];
-            for (int j = 0; j < VT100CSISUBPARAM_MAX; j++) {
-                result.u.csi.sub[i][j] = param.sub[i][j];
-            }
-        }
-        result.u.csi.count = param.count;
-
-        *rmlen = paramlen;
-    }
-
-    return result;
-}
-
-static VT100TCC decode_dcs(unsigned char *datap,
-                           int datalen,
-                           int *rmlen,
-                           NSStringEncoding enc)
-{
-    // DCS is kind of messy to parse, but we only support one code, so we just check if it's that.
-    VT100TCC result;
-    result.type = VT100_WAIT;
-    // Can assume we have "ESC P" so skip past that.
-    datap += 2;
-    datalen -= 2;
-    *rmlen=2;
-    if (datalen >= 5) {
-        if (!strncmp((char *)datap, "1000p", 5)) {
-            result.type = DCS_TMUX;
-            *rmlen += 5;
-        } else {
-            result.type = VT100_NOTSUPPORT;
-        }
-    }
-    return result;
-}
-
-static VT100TCC decode_xterm(unsigned char *datap,
-                             int datalen,
-                             int *rmlen,
-                             NSStringEncoding enc)
-{
-    int mode = 0;
-    VT100TCC result;
-    NSData *data;
-    char tempBuffer[MAX_XTERM_TEMP_BUFFER_LENGTH] = { 0 };
-    char *outputPointer = NULL;
-
-    assert(datap != NULL);
-    assert(datalen >= 2);
-    *rmlen = 0;
-    assert(*datap == ESC);
-    ADVANCE(datap, datalen, rmlen);
-    assert(*datap == ']');
-    ADVANCE(datap, datalen, rmlen);
-
-    if (datalen > 0 && isdigit(*datap)) {
-        // read an integer from datap and store it in mode.
-        int n = *datap - '0';
-        ADVANCE(datap, datalen, rmlen);
-        while (datalen > 0 && isdigit(*datap)) {
-            // TODO(georgen): Handle integer overflow
-            n = n * 10 + *datap - '0';
-            ADVANCE(datap, datalen, rmlen);
-        }
-        mode = n;
-    }
-    BOOL unrecognized = NO;
-    if (datalen > 0) {
-        if (*datap != ';' && *datap != 'P') {
-            // Bogus first char after "esc ] [number]". Consume up to and
-            // including terminator and then return VT100_NOTSUPPORT.
-            unrecognized = YES;
-        } else {
-            if (*datap == 'P') {
-                mode = -1;
-            }
-            // Consume ';' or 'P'.
-            ADVANCE(datap, datalen, rmlen);
-        }
-        BOOL str_end = NO;
-        outputPointer = tempBuffer;
-        // Search for the end of a ^G/ST terminated string (but see the note below about other ways to terminate it).
-        while (datalen > 0) {
-            // broken OSC (ESC ] P NRRGGBB) does not need any terminator
-            if (mode == -1 && outputPointer - tempBuffer >= 7) {
-                str_end = YES;
-                break;
-            }
-            // A string control should be canceled by CAN or SUB.
-            if (*datap == VT100CC_CAN || *datap == VT100CC_SUB) {
-                ADVANCE(datap, datalen, rmlen);
-                str_end = YES;
-                unrecognized = YES;
-                break;
-            }
-            // BEL terminator
-            if (*datap == VT100CC_BEL) {
-                ADVANCE(datap, datalen, rmlen);
-                str_end = YES;
-                break;
-            }
-            if (*datap == VT100CC_ESC) {
-                if (datalen >= 2 && *(datap + 1) == ']') {
-                    // if Esc + ] is present recursively, simply skip it.
-                    //
-                    // Example:
-                    //
-                    //    ESC ] 0 ; a b c ESC ] d e f BEL
-                    //
-                    // title string "abcdef" should be accepted.
-                    //
-                    ADVANCE(datap, datalen, rmlen);
-                    ADVANCE(datap, datalen, rmlen);
-                    continue;
-                } else if (datalen >= 2 && *(datap + 1) == '\\') {
-                    // if Esc + \ is present, terminate OSC successfully.
-                    //
-                    // Example:
-                    //
-                    //    ESC ] 0 ; a b c ESC '\\'
-                    //
-                    // title string "abc" should be accepted.
-                    //
-                    ADVANCE(datap, datalen, rmlen);
-                    ADVANCE(datap, datalen, rmlen);
-                    str_end = YES;
-                    break;
-                } else {
-                    // otherwise, terminate OSC unsuccessfully and backtrack before ESC.
-                    //
-                    // Example:
-                    //
-                    //    ESC ] 0 ; a b c ESC c
-                    //
-                    // "abc" should be discarded.
-                    // ESC c is also accepted and causes hard reset(RIS).
-                    //
-                    str_end = YES;
-                    unrecognized = YES;
-                    break;
-                }
-            }
-            if ((mode == 50 || mode == 1337) &&
-                *datap == ':' &&
-                !memcmp(tempBuffer, "File=", MIN(outputPointer - tempBuffer, 5))) {
-                // Long base-64 encoded part of code begins. Terminate the OSC so we don't have to
-                // buffer the whole string here.
-                ADVANCE(datap, datalen, rmlen);
-                str_end = YES;
-                break;
-            } else if (outputPointer - tempBuffer < MAX_XTERM_TEMP_BUFFER_LENGTH) {
-                // if 0 <= mode <=2 and current *datap is a control character, replace it with '?'.
-                if ((*datap < 0x20 || *datap == 0x7f) && (mode == 0 || mode == 1 || mode == 2)) {
-                    *outputPointer = '?';
-                } else {
-                    *outputPointer = *datap;
-                }
-                outputPointer++;
-            }
-            ADVANCE(datap, datalen, rmlen);
-        }
-        if (!str_end && datalen == 0) {
-            // Ran out of data before terminator. Keep trying.
-            *rmlen = 0;
-        }
-    } else {
-        // No data yet, keep trying.
-        *rmlen = 0;
-    }
-
-    if (!(*rmlen)) {
-        result.type = VT100_WAIT;
-    } else if (unrecognized) {
-        // Found terminator but it's malformed.
-        result.type = VT100_NOTSUPPORT;
-    } else {
-        data = [NSData dataWithBytes:tempBuffer length:outputPointer - tempBuffer];
-        result.u.string = [[[NSString alloc] initWithData:data
-                                                 encoding:enc] autorelease];
-        switch (mode) {
-            case -1:
-                // Nonstandard Linux OSC P nrrggbb ST to change color palette
-                // entry.
-                result.type = XTERMCC_SET_PALETTE;
-                break;
-            case 0:
-                result.type = XTERMCC_WINICON_TITLE;
-                break;
-            case 1:
-                result.type = XTERMCC_ICON_TITLE;
-                break;
-            case 2:
-                result.type = XTERMCC_WIN_TITLE;
-                break;
-            case 4:
-                result.type = XTERMCC_SET_RGB;
-                break;
-            case 6:
-                // This is not a real xterm code. It is from eTerm, which extended the xterm
-                // protocol for its own purposes. We don't follow the eTerm protocol,
-                // but we follow the template it set.
-                // http://www.eterm.org/docs/view.php?doc=ref#escape
-                result.type = XTERMCC_PROPRIETARY_ETERM_EXT;
-                break;
-            case 9:
-                result.type = ITERM_GROWL;
-                break;
-            case 50:
-            case 1337:
-                // 50 is a nonstandard escape code implemented by Konsole.
-                // xterm since started using it for setting the font, so 1337 is the preferred code
-                // for this in iterm.
-                // <Esc>]50;key=value^G
-                // <Esc>]1337;key=value^G
-                result.type = XTERMCC_SET_KVP;
-                break;
-            case 52:
-                // base64 copy/paste (OPT_PASTE64)
-                result.type = XTERMCC_PASTE64;
-                break;
-            case 133:
-                // FinalTerm proprietary codes
-                result.type = XTERMCC_FINAL_TERM;
-                break;
-            default:
-                result.type = VT100_NOTSUPPORT;
-                break;
-        }
-    }
-
-    return result;
-}
-
-static VT100TCC decode_other(unsigned char *datap,
-                             int datalen,
-                             int *rmlen,
-                             NSStringEncoding enc)
-{
-    VT100TCC result;
-    int c1, c2;
-
-    NSCParameterAssert(datap[0] == ESC);
-    NSCParameterAssert(datalen > 1);
-
-    c1 = (datalen >= 2 ? datap[1]: -1);
-    c2 = (datalen >= 3 ? datap[2]: -1);
-    // A third parameter could be available but isn't currently used.
-    // c3 = (datalen >= 4 ? datap[3]: -1);
-
-    switch (c1) {
-        case 27: // esc: two esc's in a row. Ignore the first one.
-            result.type = VT100_NOTSUPPORT;
-            *rmlen = 1;
-            break;
-
-        case '#':
-            if (c2 < 0) {
-                result.type = VT100_WAIT;
-            } else {
-                switch (c2) {
-                    case '8': result.type=VT100CSI_DECALN; break;
-                    default:
-                        result.type = VT100_NOTSUPPORT;
-                }
-                *rmlen = 3;
-            }
-            break;
-
-        case '=':
-            result.type = VT100CSI_DECKPAM;
-            *rmlen = 2;
-            break;
-
-        case '>':
-            result.type = VT100CSI_DECKPNM;
-            *rmlen = 2;
-            break;
-
-        case '<':
-            result.type = STRICT_ANSI_MODE;
-            *rmlen = 2;
-            break;
-
-        case '(':
-            if (c2 < 0) {
-                result.type = VT100_WAIT;
-            } else {
-                result.type = VT100CSI_SCS0;
-                result.u.code = c2;
-                *rmlen = 3;
-            }
-            break;
-        case ')':
-            if (c2 < 0) {
-                result.type = VT100_WAIT;
-            } else {
-                result.type = VT100CSI_SCS1;
-                result.u.code=c2;
-                *rmlen = 3;
-            }
-            break;
-        case '*':
-            if (c2 < 0) {
-                result.type = VT100_WAIT;
-            } else {
-                result.type = VT100CSI_SCS2;
-                result.u.code=c2;
-                *rmlen = 3;
-            }
-            break;
-        case '+':
-            if (c2 < 0) {
-                result.type = VT100_WAIT;
-            } else {
-                result.type = VT100CSI_SCS3;
-                result.u.code=c2;
-                *rmlen = 3;
-            }
-            break;
-
-        case '8':
-            result.type = VT100CSI_DECRC;
-            *rmlen = 2;
-            break;
-
-        case '7':
-            result.type = VT100CSI_DECSC;
-            *rmlen = 2;
-            break;
-
-        case 'D':
-            result.type = VT100CSI_IND;
-            *rmlen = 2;
-            break;
-
-        case 'E':
-            result.type = VT100CSI_NEL;
-            *rmlen = 2;
-            break;
-
-        case 'H':
-            result.type = VT100CSI_HTS;
-            *rmlen = 2;
-            break;
-
-        case 'M':
-            result.type = VT100CSI_RI;
-            *rmlen = 2;
-            break;
-
-        case 'Z':
-            result.type = VT100CSI_DECID;
-            *rmlen = 2;
-            break;
-
-        case 'c':
-            result.type = VT100CSI_RIS;
-            *rmlen = 2;
-            break;
-
-        case 'k':
-            // The screen term uses <esc>k<title><cr|esc\> to set the title.
-            if (datalen > 0) {
-                int i;
-                BOOL found = NO;
-                // Search for esc or newline terminator.
-                for (i = 2; i < datalen; i++) {
-                    BOOL isTerminator = NO;
-                    int length = i - 2;
-                    if (datap[i] == ESC && i + 1 == datalen) {
-                        break;
-                    } else if (datap[i] == ESC && datap[i + 1] == '\\') {
-                        i++;  // cause the backslash to be consumed below
-                        isTerminator = YES;
-                    } else if (datap[i] == '\n' || datap[i] == '\r') {
-                        isTerminator = YES;
-                    }
-                    if (isTerminator) {
-                        // Found terminator. Grab text from datap to char before it
-                        // save in result.u.string.
-                        NSData *data = [NSData dataWithBytes:datap + 2 length:length];
-                        result.u.string = [[[NSString alloc] initWithData:data
-                                                                 encoding:enc] autorelease];
-                        // Consume everything up to the terminator
-                        *rmlen = i + 1;
-                        found = YES;
-                        break;
-                    }
-                }
-                if (found) {
-                    if (result.u.string.length == 0) {
-                        // Ignore 0-length titles to avoid getting bitten by a screen
-                        // feature/hack described here:
-                        // http://www.gnu.org/software/screen/manual/screen.html#Dynamic-Titles
-                        //
-                        // screen has a shell-specific heuristic that is enabled by setting the
-                        // window's name to search|name and arranging to have a null title
-                        // escape-sequence output as a part of your prompt. The search portion
-                        // specifies an end-of-prompt search string, while the name portion
-                        // specifies the default shell name for the window. If the name ends in
-                        // a Ô:Õ screen will add what it believes to be the current command
-                        // running in the window to the end of the specified name (e.g. name:cmd).
-                        // Otherwise the current command name supersedes the shell name while it
-                        // is running.
-                        //
-                        // Here's how it works: you must modify your shell prompt to output a null
-                        // title-escape-sequence (<ESC> k <ESC> \) as a part of your prompt. The
-                        // last part of your prompt must be the same as the string you specified
-                        // for the search portion of the title. Once this is set up, screen will
-                        // use the title-escape-sequence to clear the previous command name and
-                        // get ready for the next command. Then, when a newline is received from
-                        // the shell, a search is made for the end of the prompt. If found, it
-                        // will grab the first word after the matched string and use it as the
-                        // command name. If the command name begins with Ô!Õ, Ô%Õ, or Ô^Õ, screen
-                        // will use the first word on the following line (if found) in preference
-                        // to the just-found name. This helps csh users get more accurate titles
-                        // when using job control or history recall commands.
-                        result.type = VT100_NOTSUPPORT;
-                    } else {
-                        result.type = XTERMCC_WINICON_TITLE;
-                    }
-                } else {
-                    result.type = VT100_WAIT;
-                }
-            } else {
-                result.type = VT100_WAIT;
-            }
-            break;
-
-        case ' ':
-            if (c2 < 0) {
-                result.type = VT100_WAIT;
-            } else {
-                switch (c2) {
-                    case 'L':
-                    case 'M':
-                    case 'N':
-                    case 'F':
-                    case 'G':
-                        *rmlen = 3;
-                        result.type = VT100_NOTSUPPORT;
-                        break;
-                    default:
-                        *rmlen = 1;
-                        result.type = VT100_NOTSUPPORT;
-                        break;
-                }
-            }
-            break;
-
-        default:
-            result.type = VT100_NOTSUPPORT;
-            *rmlen = 2;
-            break;
-    }
-
-    return result;
-}
-
-static VT100TCC decode_control(unsigned char *datap,
-                               int datalen,
-                               int *rmlen,
-                               NSStringEncoding enc,
-                               id<VT100TerminalDelegate> delegate)
-{
-    VT100TCC result;
-
-    if (isCSI(datap, datalen)) {
-        result = decode_csi(datap, datalen, rmlen, delegate);
-    } else if (isXTERM(datap, datalen)) {
-        result = decode_xterm(datap, datalen, rmlen, enc);
-    } else if (isANSI(datap, datalen)) {
-        result = decode_ansi(datap, datalen, rmlen, delegate);
-    } else if (isDCS(datap, datalen)) {
-        result = decode_dcs(datap, datalen, rmlen, enc);
-    } else {
-        NSCParameterAssert(datalen > 0);
-
-        switch (*datap) {
-            case VT100CC_NULL:
-                result.type = VT100_SKIP;
-                *rmlen = 0;
-                while (datalen > 0 && *datap == '\0') {
-                    ++datap;
-                    --datalen;
-                    ++*rmlen;
-                }
-                break;
-
-            case VT100CC_ESC:
-                if (datalen == 1) {
-                    result.type = VT100_WAIT;
-                } else {
-                    result = decode_other(datap, datalen, rmlen, enc);
-                }
-                break;
-
-            default:
-                result.type = *datap;
-                *rmlen = 1;
-                break;
-        }
-    }
-    return result;
-}
-
-static VT100TCC decode_utf8(unsigned char *datap,
-                            int datalen,
-                            int *rmlen)
-{
-    VT100TCC result;
-    unsigned char *p = datap;
-    int len = datalen;
-    int utf8DecodeResult;
-    int theChar = 0;
-
-    while (true) {
-        utf8DecodeResult = decode_utf8_char(p, len, &theChar);
-        // Stop on error or end of stream.
-        if (utf8DecodeResult <= 0) {
-            break;
-        }
-        // Intentionally break out at ASCII characters. They are
-        // processed separately, e.g. they might get converted into
-        // line drawing characters.
-        if (theChar < 0x80) {
-            break;
-        }
-        p += utf8DecodeResult;
-        len -= utf8DecodeResult;
-    }
-
-    if (p > datap) {
-        // If some characters were successfully decoded, just return them
-        // and ignore the error or end of stream for now.
-        *rmlen = p - datap;
-        assert(p >= datap);
-        result.type = VT100_STRING;
-    } else {
-        // Report error or waiting state.
-        if (utf8DecodeResult == 0) {
-            result.type = VT100_WAIT;
-        } else {
-            *rmlen = -utf8DecodeResult;
-            result.type = VT100_INVALID_SEQUENCE;
-        }
-    }
-    return result;
-}
-
-
-static VT100TCC decode_euccn(unsigned char *datap,
-                             int datalen,
-                             int *rmlen)
-{
-    VT100TCC result;
-    unsigned char *p = datap;
-    int len = datalen;
-
-
-    while (len > 0) {
-        if (iseuccn(*p) && len > 1) {
-            if ((*(p+1) >= 0x40 &&
-                 *(p+1) <= 0x7e) ||
-                (*(p+1) >= 0x80 &&
-                 *(p+1) <= 0xfe)) {
-                p += 2;
-                len -= 2;
-            } else {
-                *p = ONECHAR_UNKNOWN;
-                p++;
-                len--;
-            }
-        } else {
-            break;
-        }
-    }
-    if (len == datalen) {
-        *rmlen = 0;
-        result.type = VT100_WAIT;
-    } else {
-        *rmlen = datalen - len;
-        result.type = VT100_STRING;
-    }
-
-    return result;
-}
-
-static VT100TCC decode_big5(unsigned char *datap,
-                            int datalen,
-                            int *rmlen)
-{
-    VT100TCC result;
-    unsigned char *p = datap;
-    int len = datalen;
-
-    while (len > 0) {
-        if (isbig5(*p) && len > 1) {
-            if ((*(p+1) >= 0x40 &&
-                 *(p+1) <= 0x7e) ||
-                (*(p+1) >= 0xa1 &&
-                 *(p+1)<=0xfe)) {
-                p += 2;
-                len -= 2;
-            } else {
-                *p = ONECHAR_UNKNOWN;
-                p++;
-                len--;
-            }
-        } else {
-            break;
-        }
-    }
-    if (len == datalen) {
-        *rmlen = 0;
-        result.type = VT100_WAIT;
-    } else {
-        *rmlen = datalen - len;
-        result.type = VT100_STRING;
-    }
-
-    return result;
-}
-
-static VT100TCC decode_euc_jp(unsigned char *datap,
-                              int datalen ,
-                              int *rmlen)
-{
-    VT100TCC result;
-    unsigned char *p = datap;
-    int len = datalen;
-
-    while (len > 0) {
-        if  (len > 1 && *p == 0x8e) {
-            p += 2;
-            len -= 2;
-        } else if (len > 2  && *p == 0x8f ) {
-            p += 3;
-            len -= 3;
-        } else if (len > 1 && *p >= 0xa1 && *p <= 0xfe ) {
-            p += 2;
-            len -= 2;
-        } else {
-            break;
-        }
-    }
-    if (len == datalen) {
-        *rmlen = 0;
-        result.type = VT100_WAIT;
-    } else {
-        *rmlen = datalen - len;
-        result.type = VT100_STRING;
-    }
-
-    return result;
-}
-
-
-static VT100TCC decode_sjis(unsigned char *datap,
-                            int datalen ,
-                            int *rmlen)
-{
-    VT100TCC result;
-    unsigned char *p = datap;
-    int len = datalen;
-
-    while (len > 0) {
-        if (issjiskanji(*p) && len > 1) {
-            p += 2;
-            len -= 2;
-        } else if (*p>=0x80) {
-            p++;
-            len--;
-        } else {
-            break;
-        }
-    }
-
-    if (len == datalen) {
-        *rmlen = 0;
-        result.type = VT100_WAIT;
-    }
-    else {
-        *rmlen = datalen - len;
-        result.type = VT100_STRING;
-    }
-
-    return result;
-}
-
-
-static VT100TCC decode_euckr(unsigned char *datap,
-                             int datalen,
-                             int *rmlen)
-{
-    VT100TCC result;
-    unsigned char *p = datap;
-    int len = datalen;
-
-    while (len > 0) {
-        if (iseuckr(*p) && len > 1) {
-            p += 2;
-            len -= 2;
-        } else {
-            break;
-        }
-    }
-    if (len == datalen) {
-        *rmlen = 0;
-        result.type = VT100_WAIT;
-    } else {
-        *rmlen = datalen - len;
-        result.type = VT100_STRING;
-    }
-
-    return result;
-}
-
-static VT100TCC decode_other_enc(unsigned char *datap,
-                                 int datalen,
-                                 int *rmlen)
-{
-    VT100TCC result;
-    unsigned char *p = datap;
-    int len = datalen;
-
-    while (len > 0) {
-        if (*p >= 0x80) {
-            p++;
-            len--;
-        } else {
-            break;
-        }
-    }
-    if (len == datalen) {
-        *rmlen = 0;
-        result.type = VT100_WAIT;
-    } else {
-        *rmlen = datalen - len;
-        result.type = VT100_STRING;
-    }
-
-    return result;
-}
-
-static VT100TCC decode_ascii_string(unsigned char *datap,
-                                 int datalen,
-                                 int *rmlen)
-{
-    VT100TCC result;
-    unsigned char *p = datap;
-    int len = datalen;
-
-    while (len > 0) {
-        if (*p >= 0x20 && *p <= 0x7f) {
-            p++;
-            len--;
-        } else {
-          break;
-        }
-    }
-    if (len == datalen) {
-        *rmlen = 0;
-        result.type = VT100_WAIT;
-    } else {
-        *rmlen = datalen - len;
-        assert(datalen >= len);
-        result.type = VT100_ASCIISTRING;
-    }
-
-    result.u.string = [[[NSString alloc] initWithBytes:datap
-                                                length:*rmlen
-                                              encoding:NSASCIIStringEncoding] autorelease];
-
-    if (result.u.string == nil) {
-        *rmlen = 0;
-        result.type = VT100_UNKNOWNCHAR;
-        result.u.code = datap[0];
-    }
-
-    return result;
-}
-
-// The datap buffer must be two bytes larger than *lenPtr.
-// Returns a string or nil if the array is not well formed UTF-8.
-static NSString* SetReplacementCharInArray(unsigned char* datap, int* lenPtr, int badIndex)
-{
-    // Example: "q?x" with badIndex==1.
-    // 01234
-    // q?x
-    memmove(datap + badIndex + 3, datap + badIndex + 1, *lenPtr - badIndex - 1);
-    // 01234
-    // q?  x
-    const char kUtf8Replacement[] = { 0xEF, 0xBF, 0xBD };
-    memmove(datap + badIndex, kUtf8Replacement, 3);
-    // q###x
-    *lenPtr += 2;
-    return [[[NSString alloc] initWithBytes:datap
-                                     length:*lenPtr
-                                   encoding:NSUTF8StringEncoding] autorelease];
-}
-
-static VT100TCC decode_string(unsigned char *datap,
-                              int datalen,
-                              int *rmlen,
-                              NSStringEncoding encoding)
-{
-    VT100TCC result;
-
-    *rmlen = 0;
-    result.type = VT100_UNKNOWNCHAR;
-    result.u.code = datap[0];
-
-    //    NSLog(@"data: %@",[NSData dataWithBytes:datap length:datalen]);
-    if (encoding == NSUTF8StringEncoding) {
-        result = decode_utf8(datap, datalen, rmlen);
-    } else if (isGBEncoding(encoding)) {
-        // Chinese-GB
-        result = decode_euccn(datap, datalen, rmlen);
-    } else if (isBig5Encoding(encoding)) {
-        result = decode_big5(datap, datalen, rmlen);
-    } else if (isJPEncoding(encoding)) {
-        result = decode_euc_jp(datap, datalen, rmlen);
-    } else if (isSJISEncoding(encoding)) {
-        result = decode_sjis(datap, datalen, rmlen);
-    } else if (isKREncoding(encoding)) {
-        // korean
-        result = decode_euckr(datap, datalen, rmlen);
-    } else {
-        result = decode_other_enc(datap, datalen, rmlen);
-    }
-
-    if (result.type == VT100_INVALID_SEQUENCE) {
-        // Output only one replacement symbol, even if rmlen is higher.
-        datap[0] = ONECHAR_UNKNOWN;
-        result.u.string = ReplacementString();
-        result.type = VT100_STRING;
-    } else if (result.type != VT100_WAIT) {
-        result.u.string = [[[NSString alloc] initWithBytes:datap
-                                                    length:*rmlen
-                                                  encoding:encoding] autorelease];
-
-        if (result.u.string == nil) {
-            // Invalid bytes, can't encode.
-            int i;
-            if (encoding == NSUTF8StringEncoding) {
-                unsigned char temp[*rmlen * 3];
-                memcpy(temp, datap, *rmlen);
-                int length = *rmlen;
-                // Replace every byte with unicode replacement char <?>.
-                for (i = *rmlen - 1; i >= 0 && !result.u.string; i--) {
-                    result.u.string = SetReplacementCharInArray(temp, &length, i);
-                }
-            } else {
-                // Repalce every byte with ?, the replacement char for non-unicode encodings.
-                for (i = *rmlen - 1; i >= 0 && !result.u.string; i--) {
-                    datap[i] = ONECHAR_UNKNOWN;
-                    result.u.string = [[[NSString alloc] initWithBytes:datap length:*rmlen encoding:encoding] autorelease];
-                }
-            }
-        }
-    }
-    return result;
-}
 
 #pragma mark - Instance methods
 
@@ -1943,9 +132,9 @@ static VT100TCC decode_string(unsigned char *datap,
     if (self) {
         _output = [[VT100Output alloc] init];
         _encoding = NSASCIIStringEncoding;
-        total_stream_length = STANDARD_STREAM_SIZE;
-        stream_ = malloc(total_stream_length);
-
+        _parser = [[VT100Parser alloc] init];
+        _parser.encoding = _encoding;
+        
         _wraparoundMode = YES;
         _autorepeatMode = YES;
         xon_ = YES;
@@ -1963,7 +152,6 @@ static VT100TCC decode_string(unsigned char *datap,
         _allowKeypadMode = YES;
 
         numLock_ = YES;
-        lastToken_ = malloc(sizeof(VT100TCC));
     }
     return self;
 }
@@ -1971,11 +159,15 @@ static VT100TCC decode_string(unsigned char *datap,
 - (void)dealloc
 {
     [_output release];
-    free(stream_);
+    [_parser release];
     [_termType release];
-    free(lastToken_);
 
     [super dealloc];
+}
+
+- (void)setEncoding:(NSStringEncoding)encoding {
+    _encoding = encoding;
+    _parser.encoding = encoding;
 }
 
 - (void)setTermType:(NSString *)termtype
@@ -2055,10 +247,10 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (void)resetPreservingPrompt:(BOOL)preservePrompt
 {
-    lineMode_ = NO;
+    self.lineMode = NO;
     self.cursorMode = NO;
-    columnMode_ = NO;
-    scrollMode_ = NO;
+    self.columnMode = NO;
+    self.scrollMode = NO;
     _reverseVideo = NO;
     _originMode = NO;
     self.wraparoundMode = YES;
@@ -2084,164 +276,10 @@ static VT100TCC decode_string(unsigned char *datap,
     [delegate_ terminalSetUseColumnScrollRegion:NO];
     _reportFocus = NO;
 
-    strictAnsiMode_ = NO;
-    allowColumnMode_ = NO;
+    self.strictAnsiMode = NO;
+    self.allowColumnMode = NO;
     receivingFile_ = NO;
     [delegate_ terminalResetPreservingPrompt:preservePrompt];
-}
-
-- (BOOL)strictAnsiMode
-{
-    return strictAnsiMode_;
-}
-
-- (void)setStrictAnsiMode: (BOOL)flag
-{
-    strictAnsiMode_ = flag;
-}
-
-- (BOOL)allowColumnMode_
-{
-    return allowColumnMode_;
-}
-
-- (void)setAllowColumnMode: (BOOL)flag
-{
-    allowColumnMode_ = flag;
-}
-
-- (void)putStreamData:(NSData *)data
-{
-    [self putStreamData:(const char *)[data bytes] length:[data length]];
-}
-
-- (void)putStreamData:(const char *)buffer length:(int)length {
-    if (current_stream_length + length > total_stream_length) {
-        // Grow the stream if needed.
-        int n = (length + current_stream_length) / STANDARD_STREAM_SIZE;
-
-        total_stream_length += n * STANDARD_STREAM_SIZE;
-        stream_ = reallocf(stream_, total_stream_length);
-    }
-
-    memcpy(stream_ + current_stream_length, buffer, length);
-    current_stream_length += length;
-    assert(current_stream_length >= 0);
-    if (current_stream_length == 0) {
-        streamOffset_ = 0;
-    }
-}
-
-- (NSData *)streamData
-{
-    return [NSData dataWithBytes:stream_ + streamOffset_
-                          length:current_stream_length - streamOffset_];
-}
-
-- (void)clearStream
-{
-    streamOffset_ = current_stream_length;
-    assert(streamOffset_ >= 0);
-}
-
-- (BOOL)parseNextToken
-{
-    unsigned char *datap;
-    int datalen;
-
-    // get our current position in the stream
-    datap = stream_ + streamOffset_;
-    datalen = current_stream_length - streamOffset_;
-
-    if (datalen == 0) {
-        lastToken_->type = VT100CC_NULL;
-        lastToken_->length = 0;
-        streamOffset_ = 0;
-        current_stream_length = 0;
-
-        if (total_stream_length >= STANDARD_STREAM_SIZE * 2) {
-            // We are done with this stream. Get rid of it and allocate a new one
-            // to avoid allowing this to grow too big.
-            free(stream_);
-            total_stream_length = STANDARD_STREAM_SIZE;
-            stream_ = malloc(total_stream_length);
-        }
-    } else {
-        int rmlen = 0;
-        if (*datap >= 0x20 && *datap <= 0x7f) {
-            *lastToken_ = decode_ascii_string(datap, datalen, &rmlen);
-            lastToken_->length = rmlen;
-            lastToken_->position = datap;
-        } else if (iscontrol(datap[0])) {
-            *lastToken_ = decode_control(datap, datalen, &rmlen, _encoding, delegate_);
-            lastToken_->length = rmlen;
-            lastToken_->position = datap;
-            [self updateModesFromToken:*lastToken_];
-            [self updateCharacterAttributesFromToken:*lastToken_];
-            [self handleProprietaryToken:*lastToken_];
-        } else {
-            if (isString(datap, _encoding)) {
-                // If the encoding is UTF-8 then you get here only if *datap >= 0x80.
-                *lastToken_ = decode_string(datap, datalen, &rmlen, _encoding);
-                if (lastToken_->type != VT100_WAIT && rmlen == 0) {
-                    lastToken_->type = VT100_UNKNOWNCHAR;
-                    lastToken_->u.code = datap[0];
-                    rmlen = 1;
-                }
-            } else {
-                // If the encoding is UTF-8 you shouldn't get here.
-                lastToken_->type = VT100_UNKNOWNCHAR;
-                lastToken_->u.code = datap[0];
-                rmlen = 1;
-            }
-            lastToken_->length = rmlen;
-            lastToken_->position = datap;
-        }
-
-
-        if (rmlen > 0) {
-            NSParameterAssert(current_stream_length >= streamOffset_ + rmlen);
-            // mark our current position in the stream
-            streamOffset_ += rmlen;
-            assert(streamOffset_ >= 0);
-        }
-    }
-
-    if (gDebugLogging) {
-        NSMutableString *loginfo = [NSMutableString string];
-        NSMutableString *ascii = [NSMutableString string];
-        int i = 0;
-        int start = 0;
-        while (i < lastToken_->length) {
-            unsigned char c = datap[i];
-            [loginfo appendFormat:@"%02x ", (int)c];
-            [ascii appendFormat:@"%c", (c>=32 && c<128) ? c : '.'];
-            if (i == lastToken_->length - 1 || loginfo.length > 60) {
-                DebugLog([NSString stringWithFormat:@"Bytes %d-%d of %d: %@ (%@)", start, i, (int)lastToken_->length, loginfo, ascii]);
-                [loginfo setString:@""];
-                [ascii setString:@""];
-                start = i;
-            }
-            i++;
-        }
-    }
-
-    return lastToken_->type != VT100_WAIT && lastToken_->type != VT100CC_NULL;
-}
-
-- (BOOL)lineMode
-{
-    return lineMode_;
-}
-
-- (BOOL)columnMode
-{
-    return columnMode_;
-}
-
-- (BOOL)scrollMode
-{
-    return scrollMode_;
 }
 
 - (void)setWraparoundMode:(BOOL)mode
@@ -2347,20 +385,23 @@ static VT100TCC decode_string(unsigned char *datap,
     }
 }
 
-- (void)updateModesFromToken:(VT100TCC)token
+- (void)executeModeUpdates:(VT100TCC *)token
 {
+    if (!token->isControl) {
+        return;
+    }
     BOOL mode;
     int i;
 
-    switch (token.type) {
+    switch (token->type) {
         case VT100CSI_DECSET:
         case VT100CSI_DECRST:
-            mode=(token.type == VT100CSI_DECSET);
+            mode=(token->type == VT100CSI_DECSET);
 
-            for (i = 0; i < token.u.csi.count; i++) {
-                switch (token.u.csi.p[i]) {
+            for (i = 0; i < token->u.csi.count; i++) {
+                switch (token->u.csi.p[i]) {
                     case 20:
-                        lineMode_ = mode;
+                        self.lineMode = mode;
                         break;
                     case 1:
                         self.cursorMode = mode;
@@ -2369,10 +410,10 @@ static VT100TCC decode_string(unsigned char *datap,
                         ansiMode_ = mode;
                         break;
                     case 3:
-                        columnMode_ = mode;
+                        self.columnMode = mode;
                         break;
                     case 4:
-                        scrollMode_ = mode;
+                        self.scrollMode = mode;
                         break;
                     case 5:
                         self.reverseVideo = mode;
@@ -2395,7 +436,7 @@ static VT100TCC decode_string(unsigned char *datap,
                         [delegate_ terminalSetCursorVisible:mode];
                         break;
                     case 40:
-                        allowColumnMode_ = mode;
+                        self.allowColumnMode = mode;
                         break;
                     case 69:
                         [delegate_ terminalSetUseColumnScrollRegion:mode];
@@ -2409,7 +450,7 @@ static VT100TCC decode_string(unsigned char *datap,
                         // clears the alternate screen when switching to it rather than when
                         // switching to the normal screen, thus retaining the alternate screen
                         // contents for select/paste operations.
-                        if (!disableSmcupRmcup_) {
+                        if (!self.disableSmcupRmcup) {
                             if (mode) {
                                 [self saveTextAttributes];
                                 [delegate_ terminalSaveCharsetFlags];
@@ -2430,7 +471,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
                     case 47:
                         // alternate screen buffer mode
-                        if (!disableSmcupRmcup_) {
+                        if (!self.disableSmcupRmcup) {
                             if (mode) {
                                 [delegate_ terminalShowAltBuffer];
                             } else {
@@ -2440,11 +481,12 @@ static VT100TCC decode_string(unsigned char *datap,
                         break;
 
                     case 1000:
-                    /* case 1001: */ /* MOUSE_REPORTING_HILITE not implemented yet */
+                    // case 1001:
+                        // TODO: MOUSE_REPORTING_HILITE not implemented.
                     case 1002:
                     case 1003:
                         if (mode) {
-                            self.mouseMode = token.u.csi.p[i] - 1000;
+                            self.mouseMode = token->u.csi.p[i] - 1000;
                         } else {
                             self.mouseMode = MOUSE_REPORTING_NONE;
                         }
@@ -2483,10 +525,10 @@ static VT100TCC decode_string(unsigned char *datap,
             break;
         case VT100CSI_SM:
         case VT100CSI_RM:
-            mode=(token.type == VT100CSI_SM);
+            mode = (token->type == VT100CSI_SM);
 
-            for (i = 0; i < token.u.csi.count; i++) {
-                switch (token.u.csi.p[i]) {
+            for (i = 0; i < token->u.csi.count; i++) {
+                switch (token->u.csi.p[i]) {
                     case 4:
                         self.insertMode = mode;
                         break;
@@ -2524,10 +566,10 @@ static VT100TCC decode_string(unsigned char *datap,
             self.originMode = NO;
             break;
         case VT100CSI_RESET_MODIFIERS:
-            if (token.u.csi.count == 0) {
+            if (token->u.csi.count == 0) {
                 sendModifiers_[2] = -1;
             } else {
-                int resource = token.u.csi.p[0];
+                int resource = token->u.csi.p[0];
                 if (resource >= 0 && resource <= NUM_MODIFIABLE_RESOURCES) {
                     sendModifiers_[resource] = -1;
                 }
@@ -2537,17 +579,17 @@ static VT100TCC decode_string(unsigned char *datap,
             break;
 
         case VT100CSI_SET_MODIFIERS: {
-            if (token.u.csi.count == 0) {
+            if (token->u.csi.count == 0) {
                 for (int i = 0; i < NUM_MODIFIABLE_RESOURCES; i++) {
                     sendModifiers_[i] = 0;
                 }
             } else {
-                int resource = token.u.csi.p[0];
+                int resource = token->u.csi.p[0];
                 int value;
-                if (token.u.csi.count == 1) {
+                if (token->u.csi.count == 1) {
                     value = 0;
                 } else {
-                    value = token.u.csi.p[1];
+                    value = token->u.csi.p[1];
                 }
                 if (resource >= 0 && resource < NUM_MODIFIABLE_RESOURCES && value >= 0) {
                     sendModifiers_[resource] = value;
@@ -2576,15 +618,18 @@ static VT100TCC decode_string(unsigned char *datap,
     bgColorMode_ = ColorModeAlternate;
 }
 
-- (void)updateCharacterAttributesFromToken:(VT100TCC)token
+- (void)executeSGR:(VT100TCC *)token
 {
-    if (token.type == VT100CSI_SGR) {
-        if (token.u.csi.count == 0) {
+    if (!token->isControl) {
+        return;
+    }
+    if (token->type == VT100CSI_SGR) {
+        if (token->u.csi.count == 0) {
             [self resetSGR];
         } else {
             int i;
-            for (i = 0; i < token.u.csi.count; ++i) {
-                int n = token.u.csi.p[i];
+            for (i = 0; i < token->u.csi.count; ++i) {
+                int n = token->u.csi.p[i];
                 switch (n) {
                     case VT100CHARATTR_ALLOFF:
                         // all attribute off
@@ -2661,69 +706,69 @@ static VT100TCC decode_string(unsigned char *datap,
                          5 in the CIELAB color space. The 0 at the 6th position has no meaning and
                          is just a filler. */
                         
-                        if (token.u.csi.subCount[i] > 0) {
+                        if (token->u.csi.subCount[i] > 0) {
                             // Preferred syntax using colons to delimit subparameters
-                            if (token.u.csi.subCount[i] >= 2 && token.u.csi.sub[i][0] == 5) {
+                            if (token->u.csi.subCount[i] >= 2 && token->u.csi.sub[i][0] == 5) {
                                 // CSI 38:5:P m
-                                fgColorCode_ = token.u.csi.sub[i][1];
+                                fgColorCode_ = token->u.csi.sub[i][1];
                                 fgGreen_ = 0;
                                 fgBlue_ = 0;
                                 fgColorMode_ = ColorModeNormal;
-                            } else if (token.u.csi.subCount[i] >= 4 && token.u.csi.sub[i][0] == 2) {
+                            } else if (token->u.csi.subCount[i] >= 4 && token->u.csi.sub[i][0] == 2) {
                                 // CSI 38:2:R:G:B m
                                 // 24-bit color
-                                fgColorCode_ = token.u.csi.sub[i][1];
-                                fgGreen_ = token.u.csi.sub[i][2];
-                                fgBlue_ = token.u.csi.sub[i][3];
+                                fgColorCode_ = token->u.csi.sub[i][1];
+                                fgGreen_ = token->u.csi.sub[i][2];
+                                fgBlue_ = token->u.csi.sub[i][3];
                                 fgColorMode_ = ColorMode24bit;
                             }
-                        } else if (token.u.csi.count - i >= 3 && token.u.csi.p[i + 1] == 5) {
+                        } else if (token->u.csi.count - i >= 3 && token->u.csi.p[i + 1] == 5) {
                             // CSI 38;5;P m
-                            fgColorCode_ = token.u.csi.p[i + 2];
+                            fgColorCode_ = token->u.csi.p[i + 2];
                             fgGreen_ = 0;
                             fgBlue_ = 0;
                             fgColorMode_ = ColorModeNormal;
                             i += 2;
-                        } else if (token.u.csi.count - i >= 5 && token.u.csi.p[i + 1] == 2) {
+                        } else if (token->u.csi.count - i >= 5 && token->u.csi.p[i + 1] == 2) {
                             // CSI 38;2;R;G;B m
                             // 24-bit color support
-                            fgColorCode_ = token.u.csi.p[i + 2];
-                            fgGreen_ = token.u.csi.p[i + 3];
-                            fgBlue_ = token.u.csi.p[i + 4];
+                            fgColorCode_ = token->u.csi.p[i + 2];
+                            fgGreen_ = token->u.csi.p[i + 3];
+                            fgBlue_ = token->u.csi.p[i + 4];
                             fgColorMode_ = ColorMode24bit;
                             i += 4;
                         }
                         break;
                     case VT100CHARATTR_BG_256:
-                        if (token.u.csi.subCount[i] > 0) {
+                        if (token->u.csi.subCount[i] > 0) {
                             // Preferred syntax using colons to delimit subparameters
-                            if (token.u.csi.subCount[i] >= 2 && token.u.csi.sub[i][0] == 5) {
+                            if (token->u.csi.subCount[i] >= 2 && token->u.csi.sub[i][0] == 5) {
                                 // CSI 48:5:P m
-                                bgColorCode_ = token.u.csi.sub[i][1];
+                                bgColorCode_ = token->u.csi.sub[i][1];
                                 bgGreen_ = 0;
                                 bgBlue_ = 0;
                                 bgColorMode_ = ColorModeNormal;
-                            } else if (token.u.csi.subCount[i] >= 4 && token.u.csi.sub[i][0] == 2) {
+                            } else if (token->u.csi.subCount[i] >= 4 && token->u.csi.sub[i][0] == 2) {
                                 // CSI 48:2:R:G:B m
                                 // 24-bit color
-                                bgColorCode_ = token.u.csi.sub[i][1];
-                                bgGreen_ = token.u.csi.sub[i][2];
-                                bgBlue_ = token.u.csi.sub[i][3];
+                                bgColorCode_ = token->u.csi.sub[i][1];
+                                bgGreen_ = token->u.csi.sub[i][2];
+                                bgBlue_ = token->u.csi.sub[i][3];
                                 bgColorMode_ = ColorMode24bit;
                             }
-                        } else if (token.u.csi.count - i >= 3 && token.u.csi.p[i + 1] == 5) {
+                        } else if (token->u.csi.count - i >= 3 && token->u.csi.p[i + 1] == 5) {
                             // CSI 48;5;P m
-                            bgColorCode_ = token.u.csi.p[i + 2];
+                            bgColorCode_ = token->u.csi.p[i + 2];
                             bgGreen_ = 0;
                             bgBlue_ = 0;
                             bgColorMode_ = ColorModeNormal;
                             i += 2;
-                        } else if (token.u.csi.count - i >= 5 && token.u.csi.p[i + 1] == 2) {
+                        } else if (token->u.csi.count - i >= 5 && token->u.csi.p[i + 1] == 2) {
                             // CSI 48;2;R;G;B m
                             // 24-bit color
-                            bgColorCode_ = token.u.csi.p[i + 2];
-                            bgGreen_ = token.u.csi.p[i + 3];
-                            bgBlue_ = token.u.csi.p[i + 4];
+                            bgColorCode_ = token->u.csi.p[i + 2];
+                            bgGreen_ = token->u.csi.p[i + 3];
+                            bgBlue_ = token->u.csi.p[i + 4];
                             bgColorMode_ = ColorMode24bit;
                             i += 4;
                         }
@@ -2760,7 +805,7 @@ static VT100TCC decode_string(unsigned char *datap,
                 }
             }
         }
-    } else if (token.type == VT100CSI_DECSTR) {
+    } else if (token->type == VT100CSI_DECSTR) {
         [self resetSGR];
     }
 }
@@ -2807,322 +852,15 @@ static VT100TCC decode_string(unsigned char *datap,
     return nil;
 }
 
-- (void)handleProprietaryToken:(VT100TCC)token
-{
-    if (token.type == XTERMCC_SET_RGB) {
-        // The format of this command is "<index>;rgb:<redhex>/<greenhex>/<bluehex>", e.g. "105;rgb:00/cc/ff"
-        // TODO(georgen): xterm has extended this quite a bit and we're behind. Catch up.
-        const char *s = [token.u.string UTF8String];
-        int theIndex = 0;
-        while (isdigit(*s)) {
-            theIndex = 10*theIndex + *s++ - '0';
-        }
-        if (*s++ != ';') {
-            return;
-        }
-        if (*s++ != 'r') {
-            return;
-        }
-        if (*s++ != 'g') {
-            return;
-        }
-        if (*s++ != 'b') {
-            return;
-        }
-        if (*s++ != ':') {
-            return;
-        }
-        int r = 0, g = 0, b = 0;
-
-        while (isxdigit(*s)) {
-            r = 16*r + (*s>='a' ? *s++ - 'a' + 10 : *s>='A' ? *s++ - 'A' + 10 : *s++ - '0');
-        }
-        if (*s++ != '/') {
-            return;
-        }
-        while (isxdigit(*s)) {
-            g = 16*g + (*s>='a' ? *s++ - 'a' + 10 : *s>='A' ? *s++ - 'A' + 10 : *s++ - '0');
-        }
-        if (*s++ != '/') {
-            return;
-        }
-        while (isxdigit(*s)) {
-            b = 16*b + (*s>='a' ? *s++ - 'a' + 10 : *s>='A' ? *s++ - 'A' + 10 : *s++ - '0');
-        }
-        if (theIndex >= 0 && theIndex <= 255 &&
-            r >= 0 && r <= 255 &&
-            g >= 0 && g <= 255 &&
-            b >= 0 && b <= 255) {
-            [delegate_ terminalSetColorTableEntryAtIndex:theIndex
-                                                   color:[NSColor colorWith8BitRed:r
-                                                                             green:g
-                                                                              blue:b]];
-        }
-    } else if (token.type == XTERMCC_SET_KVP) {
-        // argument is of the form key=value
-        // key: Sequence of characters not = or ^G
-        // value: Sequence of characters not ^G
-        NSString* argument = token.u.string;
-        NSRange eqRange = [argument rangeOfString:@"="];
-        NSString* key;
-        NSString* value;
-        if (eqRange.location != NSNotFound) {
-            key = [argument substringToIndex:eqRange.location];;
-            value = [argument substringFromIndex:eqRange.location+1];
-        } else {
-            key = argument;
-            value = @"";
-        }
-        if ([key isEqualToString:@"CursorShape"]) {
-            // Value must be an integer. Bogusly, non-numbers are treated as 0.
-            int shape = [value intValue];
-            ITermCursorType shapeMap[] = { CURSOR_BOX, CURSOR_VERTICAL, CURSOR_UNDERLINE };
-            if (shape >= 0 && shape < sizeof(shapeMap)/sizeof(int)) {
-                [delegate_ terminalSetCursorType:shapeMap[shape]];
-            }
-        } else if ([key isEqualToString:@"RemoteHost"]) {
-            [delegate_ terminalSetRemoteHost:value];
-        } else if ([key isEqualToString:@"SetMark"]) {
-            [delegate_ terminalSaveScrollPositionWithArgument:value];
-        } else if ([key isEqualToString:@"StealFocus"]) {
-            [delegate_ terminalStealFocus];
-        } else if ([key isEqualToString:@"ClearScrollback"]) {
-            [delegate_ terminalClearBuffer];
-        } else if ([key isEqualToString:@"CurrentDir"]) {
-            [delegate_ terminalCurrentDirectoryDidChangeTo:value];
-        } else if ([key isEqualToString:@"SetProfile"]) {
-            [delegate_ terminalProfileShouldChangeTo:(NSString *)value];
-        } else if ([key isEqualToString:@"AddNote"]) {
-            [delegate_ terminalAddNote:(NSString *)value show:YES];
-        } else if ([key isEqualToString:@"AddHiddenNote"]) {
-            [delegate_ terminalAddNote:(NSString *)value show:NO];
-        } else if ([key isEqualToString:@"HighlightCursorLine"]) {
-            [delegate_ terminalSetHighlightCursorLine:value.length ? [value boolValue] : YES];
-        } else if ([key isEqualToString:@"CopyToClipboard"]) {
-            [delegate_ terminalSetPasteboard:value];
-        } else if ([key isEqualToString:@"File"]) {
-            // Takes semicolon-delimited arguments.
-            // File=<arg>;<arg>;...;<arg>
-            // <arg> is one of:
-            //   name=<base64-encoded filename>    Default: Unnamed file
-            //   size=<integer file size>          Default: 0
-            //   width=auto|<integer>px|<integer>  Default: auto
-            //   height=auto|<integer>px|<integer> Default: auto
-            //   preserveAspectRatio=<bool>        Default: yes
-            //   inline=<bool>                     Default: no
-            NSArray *parts = [value componentsSeparatedByString:@";"];
-            NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-            dict[@"size"] = @(0);
-            dict[@"width"] = @"auto";
-            dict[@"height"] = @"auto";
-            dict[@"preserveAspectRatio"] = @YES;
-            dict[@"inline"] = @NO;
-            for (NSString *part in parts) {
-                NSRange eq = [part rangeOfString:@"="];
-                if (eq.location != NSNotFound && eq.location > 0) {
-                    NSString *left = [part substringToIndex:eq.location];
-                    NSString *right = [part substringFromIndex:eq.location + 1];
-                    dict[left] = right;
-                } else {
-                    dict[part] = @"";
-                }
-            }
-            
-            NSString *widthString = dict[@"width"];
-            VT100TerminalUnits widthUnits = kVT100TerminalUnitsCells;
-            NSString *heightString = dict[@"height"];
-            VT100TerminalUnits heightUnits = kVT100TerminalUnitsCells;
-            int width = [widthString intValue];
-            if ([widthString isEqualToString:@"auto"]) {
-                widthUnits = kVT100TerminalUnitsAuto;
-            } else if ([widthString hasSuffix:@"px"]) {
-                widthUnits = kVT100TerminalUnitsPixels;
-            }
-            int height = [heightString intValue];
-            if ([heightString isEqualToString:@"auto"]) {
-                heightUnits = kVT100TerminalUnitsAuto;
-            } else if ([heightString hasSuffix:@"px"]) {
-                heightUnits = kVT100TerminalUnitsPixels;
-            }
-
-            NSString *name = [dict[@"name"] stringByBase64DecodingStringWithEncoding:NSISOLatin1StringEncoding];
-            if (!name) {
-                name = @"Unnamed file";
-            }
-            if ([dict[@"inline"] boolValue]) {
-                [delegate_ terminalWillReceiveInlineFileNamed:name
-                                                       ofSize:[dict[@"size"] intValue]
-                                                        width:width
-                                                        units:widthUnits
-                                                       height:height
-                                                        units:heightUnits
-                                          preserveAspectRatio:[dict[@"preserveAspectRatio"] boolValue]];
-            } else {
-                [delegate_ terminalWillReceiveFileNamed:name ofSize:[dict[@"size"] intValue]];
-            }
-            receivingFile_ = YES;
-        } else if ([key isEqualToString:@"BeginFile"]) {
-            // DEPRECATED. Use File instead.
-            // Takes 2-5 args separated by newline. First is filename, second is size in bytes.
-            // Arg 3,4 are width,height in cells for an inline image.
-            // Arg 5 is whether to preserve the aspect ratio for an inline image.
-            NSArray *parts = [value componentsSeparatedByString:@"\n"];
-            NSString *name = nil;
-            int size = -1;
-            if (parts.count >= 1) {
-                name = [parts[0] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-            }
-            if (parts.count >= 2) {
-                size = [parts[1] intValue];
-            }
-            int width = 0, height = 0;
-            VT100TerminalUnits widthUnits = kVT100TerminalUnitsCells, heightUnits = kVT100TerminalUnitsCells;
-            if (parts.count >= 4) {
-                NSString *widthString =
-                    [parts[2] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-                NSString *heightString =
-                    [parts[3] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-                width = [widthString intValue];
-                if ([widthString isEqualToString:@"auto"]) {
-                    widthUnits = kVT100TerminalUnitsAuto;
-                    width = 1;
-                } else if ([widthString hasSuffix:@"px"]) {
-                    widthUnits = kVT100TerminalUnitsPixels;
-                }
-                height = [heightString intValue];
-                if ([heightString isEqualToString:@"auto"]) {
-                    heightUnits = kVT100TerminalUnitsAuto;
-                    height = 1;
-                } else if ([heightString hasSuffix:@"px"]) {
-                    heightUnits = kVT100TerminalUnitsPixels;
-                }
-            }
-            BOOL preserveAspectRatio = YES;
-            if (parts.count >= 5) {
-                preserveAspectRatio = [parts[4] boolValue];
-            }
-            if (width > 0 && height > 0) {
-                [delegate_ terminalWillReceiveInlineFileNamed:name
-                                                       ofSize:size
-                                                        width:width
-                                                        units:widthUnits
-                                                       height:height
-                                                        units:heightUnits
-                                          preserveAspectRatio:preserveAspectRatio];
-            } else {
-                [delegate_ terminalWillReceiveFileNamed:name ofSize:size];
-            }
-            receivingFile_ = YES;
-        } else if ([key isEqualToString:@"EndFile"]) {
-            [delegate_ terminalDidFinishReceivingFile];
-            receivingFile_ = NO;
-        } else if ([key isEqualToString:@"EndCopy"]) {
-            [delegate_ terminalCopyBufferToPasteboard];
-        } else if ([key isEqualToString:@"RequestAttention"]) {
-            [delegate_ terminalRequestAttention:[value boolValue]];  // true: request, false: cancel
-        }
-    } else if (token.type == XTERMCC_SET_PALETTE) {
-        int n;
-        NSColor *theColor = [self colorForXtermCCSetPaletteString:token.u.string
-                                                   colorNumberPtr:&n];
-        if (theColor) {
-            switch (n) {
-                case 16:
-                    [delegate_ terminalSetForegroundColor:theColor];
-                    break;
-                case 17:
-                    [delegate_ terminalSetBackgroundColor:theColor];
-                    break;
-                case 18:
-                    [delegate_ terminalSetBoldColor:theColor];
-                    break;
-                case 19:
-                    [delegate_ terminalSetSelectionColor:theColor];
-                    break;
-                case 20:
-                    [delegate_ terminalSetSelectedTextColor:theColor];
-                    break;
-                case 21:
-                    [delegate_ terminalSetCursorColor:theColor];
-                    break;
-                case 22:
-                    [delegate_ terminalSetCursorTextColor:theColor];
-                    break;
-                default:
-                    [delegate_ terminalSetColorTableEntryAtIndex:n color:theColor];
-                    break;
-            }
-        }
-    } else if (token.type == XTERMCC_PROPRIETARY_ETERM_EXT) {
-        NSString* argument = token.u.string;
-        NSArray* parts = [argument componentsSeparatedByString:@";"];
-        NSString* func = nil;
-        if ([parts count] >= 1) {
-            func = [parts objectAtIndex:0];
-        }
-        if (func) {
-            if ([func isEqualToString:@"1"]) {
-                // Adjusts a color modifier. This attempts to roughly follow the pattern that Eterm
-                // estabilshed.
-                //
-                // ESC ] 6 ; 1 ; class ; color ; attribute ; value BEL
-                //
-                // Adjusts a color modifier.
-                // class: determines which image class will have its color modifier altered:
-                //   legal values: bg (background), or a number 0-15 (color palette entries).
-                // color: The color component to modify.
-                //   legal values: red, green, or blue.
-                // attribute: how to modify it.
-                //   legal values: brightness
-                // value: the new value for this attribute.
-                //   legal values: decimal integers in 0-255.
-                if ([parts count] == 4) {
-                    NSString* class = [parts objectAtIndex:1];
-                    NSString* color = [parts objectAtIndex:2];
-                    NSString* attribute = [parts objectAtIndex:3];
-                    if ([class isEqualToString:@"bg"] &&
-                        [color isEqualToString:@"*"] &&
-                        [attribute isEqualToString:@"default"]) {
-                        [delegate_ terminalSetCurrentTabColor:nil];
-                    }
-                } else if ([parts count] == 5) {
-                    NSString* class = [parts objectAtIndex:1];
-                    NSString* color = [parts objectAtIndex:2];
-                    NSString* attribute = [parts objectAtIndex:3];
-                    NSString* value = [parts objectAtIndex:4];
-                    if ([class isEqualToString:@"bg"] &&
-                        [attribute isEqualToString:@"brightness"]) {
-                        double numValue = MIN(1, ([value intValue] / 255.0));
-                        if (numValue >= 0 && numValue <= 1) {
-                            if ([color isEqualToString:@"red"]) {
-                                [delegate_ terminalSetTabColorRedComponentTo:numValue];
-                            } else if ([color isEqualToString:@"green"]) {
-                                [delegate_ terminalSetTabColorGreenComponentTo:numValue];
-                            } else if ([color isEqualToString:@"blue"]) {
-                                [delegate_ terminalSetTabColorBlueComponentTo:numValue];
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-- (void)setDisableSmcupRmcup:(BOOL)value
-{
-    disableSmcupRmcup_ = value;
-}
-
 - (void)setMouseMode:(MouseMode)mode
 {
     _mouseMode = mode;
     [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
 }
 
-- (void)handleDeviceStatusReportWithToken:(VT100TCC)token withQuestion:(BOOL)withQuestion {
+- (void)handleDeviceStatusReportWithToken:(VT100TCC *)token withQuestion:(BOOL)withQuestion {
     if ([delegate_ terminalShouldSendReport]) {
-        switch (token.u.csi.p[0]) {
+        switch (token->u.csi.p[0]) {
             case 3: // response from VT100 -- Malfunction -- retry
                 break;
 
@@ -3221,44 +959,88 @@ static VT100TCC decode_string(unsigned char *datap,
     return resultString;
 }
 
-- (void)executeToken {
-    VT100TCC token = *lastToken_;
+- (void)executeIncidental:(VT100CSIIncidental *)incidental {
+    switch (incidental.type) {
+        case kIncidentalAppendTabAtCursor:
+            [delegate_ terminalAppendTabAtCursor];
+            break;
+        case kIncidentalBackspace:
+            [delegate_ terminalBackspace];
+            break;
+        case kIncidentalCarriageReturn:
+            [delegate_ terminalCarriageReturn];
+            break;
+        case kIncidentalDeleteCharacterAtCursor:
+            [delegate_ terminalDeleteCharactersAtCursor:incidental.intValue];
+            break;
+        case kIncidentalLineFeed:
+            [delegate_ terminalLineFeed];
+            break;
+        case kIncidentalRingBell:
+            [delegate_ terminalRingBell];
+            break;
+    }
+}
+
+- (void)executeToken:(VT100TCC *)token {
     // First, handle sending input to pasteboard/receving files.
     if (receivingFile_) {
-        if (token.type == VT100CC_BEL) {
+        if (token->type == VT100CC_BEL) {
             [delegate_ terminalDidFinishReceivingFile];
             receivingFile_ = NO;
             return;
-        } else if (token.type == VT100_ASCIISTRING) {
-            [delegate_ terminalDidReceiveBase64FileData:token.u.string];
+        } else if (token->type == VT100_ASCIISTRING) {
+            [delegate_ terminalDidReceiveBase64FileData:token->u.string];
             return;
-        } else if (token.type == VT100CC_CR ||
-                   token.type == VT100CC_LF ||
-                   token.type == XTERMCC_SET_KVP) {
+        } else if (token->type == VT100CC_CR ||
+                   token->type == VT100CC_LF ||
+                   token->type == XTERMCC_SET_KVP) {
             return;
         } else {
             [delegate_ terminalFileReceiptEndedUnexpectedly];
             receivingFile_ = NO;
         }
     }
-    if (token.type != VT100_SKIP) {  // VT100_SKIP = there was no data to read
+    if (token->type != VT100_SKIP) {  // VT100_SKIP = there was no data to read
         if ([delegate_ terminalIsAppendingToPasteboard]) {
             // We are probably copying text to the clipboard until esc]1337;EndCopy^G is received.
-            if (token.type != XTERMCC_SET_KVP ||
-                ![token.u.string hasPrefix:@"CopyToClipboard"]) {
+            if (token->type != XTERMCC_SET_KVP ||
+                ![token->u.string hasPrefix:@"CopyToClipboard"]) {
                 // Append text to clipboard except for initial command that turns on copying to
                 // the clipboard.
-                [delegate_ terminalAppendDataToPasteboard:[NSData dataWithBytes:token.position
-                                                                         length:token.length]];
+                [delegate_ terminalAppendDataToPasteboard:[NSData dataWithBytes:token->position
+                                                                         length:token->length]];
             }
         }
     }
 
-    switch (token.type) {
+    // Disambiguate
+    switch (token->type) {
+        case VT100CSI_DECSLRM_OR_ANSICSI_SCP:
+            if ([delegate_ terminalUseColumnScrollRegion]) {
+                token->type = VT100CSI_DECSLRM;
+                SET_PARAM_DEFAULT(token->u.csi, 0, 1);
+                SET_PARAM_DEFAULT(token->u.csi, 1, 1);
+            } else {
+                token->type = ANSICSI_SCP;
+                SET_PARAM_DEFAULT(token->u.csi, 0, 0);
+            }
+            break;
+            
+        default:
+            break;
+    }
+
+    // Update internal state.
+    [self executeModeUpdates:token];
+    [self executeSGR:token];
+    
+    // Farm out work to the delegate.
+    switch (token->type) {
             // our special code
         case VT100_STRING:
         case VT100_ASCIISTRING:
-            [delegate_ terminalAppendString:token.u.string isAscii:lastToken_->type == VT100_ASCIISTRING];
+            [delegate_ terminalAppendString:token->u.string isAscii:token->type == VT100_ASCIISTRING];
             break;
 
         case VT100_UNKNOWNCHAR:
@@ -3301,19 +1083,19 @@ static VT100TCC decode_string(unsigned char *datap,
         case VT100CSI_CPR:
             break;
         case VT100CSI_CUB:
-            [delegate_ terminalCursorLeft:token.u.csi.p[0] > 0 ? token.u.csi.p[0] : 1];
+            [delegate_ terminalCursorLeft:token->u.csi.p[0] > 0 ? token->u.csi.p[0] : 1];
             break;
         case VT100CSI_CUD:
-            [delegate_ terminalCursorDown:token.u.csi.p[0] > 0 ? token.u.csi.p[0] : 1];
+            [delegate_ terminalCursorDown:token->u.csi.p[0] > 0 ? token->u.csi.p[0] : 1];
             break;
         case VT100CSI_CUF:
-            [delegate_ terminalCursorRight:token.u.csi.p[0] > 0 ? token.u.csi.p[0] : 1];
+            [delegate_ terminalCursorRight:token->u.csi.p[0] > 0 ? token->u.csi.p[0] : 1];
             break;
         case VT100CSI_CUP:
-            [delegate_ terminalMoveCursorToX:token.u.csi.p[1] y:token.u.csi.p[0]];
+            [delegate_ terminalMoveCursorToX:token->u.csi.p[1] y:token->u.csi.p[0]];
             break;
         case VT100CSI_CUU:
-            [delegate_ terminalCursorUp:token.u.csi.p[0] > 0 ? token.u.csi.p[0] : 1];
+            [delegate_ terminalCursorUp:token->u.csi.p[0] > 0 ? token->u.csi.p[0] : 1];
             break;
         case VT100CSI_DA:
             if ([delegate_ terminalShouldSendReport]) {
@@ -3347,8 +1129,8 @@ static VT100TCC decode_string(unsigned char *datap,
             [delegate_ terminalSaveCursor];
             break;
         case VT100CSI_DECSTBM:
-            [delegate_ terminalSetScrollRegionTop:token.u.csi.p[0] == 0 ? 0 : token.u.csi.p[0] - 1
-                                           bottom:token.u.csi.p[1] == 0 ? [delegate_ terminalHeight] - 1 : token.u.csi.p[1] - 1];
+            [delegate_ terminalSetScrollRegionTop:token->u.csi.p[0] == 0 ? 0 : token->u.csi.p[0] - 1
+                                           bottom:token->u.csi.p[1] == 0 ? [delegate_ terminalHeight] - 1 : token->u.csi.p[1] - 1];
             break;
         case VT100CSI_DECSWL:
         case VT100CSI_DECTST:
@@ -3360,7 +1142,7 @@ static VT100TCC decode_string(unsigned char *datap,
             [self handleDeviceStatusReportWithToken:token withQuestion:YES];
             break;
         case VT100CSI_ED:
-            switch (token.u.csi.p[0]) {
+            switch (token->u.csi.p[0]) {
                 case 1:
                     [delegate_ terminalEraseInDisplayBeforeCursor:YES afterCursor:NO];
                     break;
@@ -3380,7 +1162,7 @@ static VT100TCC decode_string(unsigned char *datap,
             }
             break;
         case VT100CSI_EL:
-            switch (token.u.csi.p[0]) {
+            switch (token->u.csi.p[0]) {
                 case 1:
                     [delegate_ terminalEraseLineBeforeCursor:YES afterCursor:NO];
                     break;
@@ -3396,7 +1178,7 @@ static VT100TCC decode_string(unsigned char *datap,
             [delegate_ terminalSetTabStopAtCursor];
             break;
         case VT100CSI_HVP:
-            [delegate_ terminalMoveCursorToX:token.u.csi.p[1] y:token.u.csi.p[0]];
+            [delegate_ terminalMoveCursorToX:token->u.csi.p[1] y:token->u.csi.p[0]];
             break;
         case VT100CSI_NEL:
             [delegate_ terminalCarriageReturn];
@@ -3421,7 +1203,7 @@ static VT100TCC decode_string(unsigned char *datap,
             [delegate_ terminalSoftReset];
             break;
         case VT100CSI_DECSCUSR:
-            switch (token.u.csi.p[0]) {
+            switch (token->u.csi.p[0]) {
                 case 0:
                 case 1:
                     [delegate_ terminalSetCursorBlinking:true];
@@ -3451,8 +1233,8 @@ static VT100TCC decode_string(unsigned char *datap,
             break;
 
         case VT100CSI_DECSLRM: {
-            int scrollLeft = token.u.csi.p[0] - 1;
-            int scrollRight = token.u.csi.p[1] - 1;
+            int scrollLeft = token->u.csi.p[0] - 1;
+            int scrollRight = token->u.csi.p[1] - 1;
             int width = [delegate_ terminalWidth];
             if (scrollLeft < 0) {
                 scrollLeft = 0;
@@ -3504,22 +1286,22 @@ static VT100TCC decode_string(unsigned char *datap,
              * doesn't work well with common behavior (esp line drawing).
              */
         case VT100CSI_SCS0:
-            [delegate_ terminalSetCharset:0 toLineDrawingMode:(token.u.code=='0')];
+            [delegate_ terminalSetCharset:0 toLineDrawingMode:(token->u.code=='0')];
             break;
         case VT100CSI_SCS1:
-            [delegate_ terminalSetCharset:1 toLineDrawingMode:(token.u.code=='0')];
+            [delegate_ terminalSetCharset:1 toLineDrawingMode:(token->u.code=='0')];
             break;
         case VT100CSI_SCS2:
-            [delegate_ terminalSetCharset:2 toLineDrawingMode:(token.u.code=='0')];
+            [delegate_ terminalSetCharset:2 toLineDrawingMode:(token->u.code=='0')];
             break;
         case VT100CSI_SCS3:
-            [delegate_ terminalSetCharset:3 toLineDrawingMode:(token.u.code=='0')];
+            [delegate_ terminalSetCharset:3 toLineDrawingMode:(token->u.code=='0')];
             break;
         case VT100CSI_SGR:
         case VT100CSI_SM:
             break;
         case VT100CSI_TBC:
-            switch (token.u.csi.p[0]) {
+            switch (token->u.csi.p[0]) {
                 case 3:
                     [delegate_ terminalRemoveTabStops];
                     break;
@@ -3531,35 +1313,35 @@ static VT100TCC decode_string(unsigned char *datap,
 
         case VT100CSI_DECSET:
         case VT100CSI_DECRST:
-            if (token.u.csi.p[0] == 3 && // DECCOLM
-                allowColumnMode_) {
-                [delegate_ terminalSetWidth:([self columnMode] ? 132 : 80)];
+            if (token->u.csi.p[0] == 3 && // DECCOLM
+                self.allowColumnMode) {
+                [delegate_ terminalSetWidth:(self.columnMode ? 132 : 80)];
             }
             break;
 
             // ANSI CSI
         case ANSICSI_CBT:
-            [delegate_ terminalBackTab:token.u.csi.p[0]];
+            [delegate_ terminalBackTab:token->u.csi.p[0]];
             break;
         case ANSICSI_CHA:
-            [delegate_ terminalSetCursorX:token.u.csi.p[0]];
+            [delegate_ terminalSetCursorX:token->u.csi.p[0]];
             break;
         case ANSICSI_VPA:
-            [delegate_ terminalSetCursorY:token.u.csi.p[0]];
+            [delegate_ terminalSetCursorY:token->u.csi.p[0]];
             break;
         case ANSICSI_VPR:
-            [delegate_ terminalCursorDown:token.u.csi.p[0] > 0 ? token.u.csi.p[0] : 1];
+            [delegate_ terminalCursorDown:token->u.csi.p[0] > 0 ? token->u.csi.p[0] : 1];
             break;
         case ANSICSI_ECH:
-            [delegate_ terminalEraseCharactersAfterCursor:token.u.csi.p[0]];
+            [delegate_ terminalEraseCharactersAfterCursor:token->u.csi.p[0]];
             break;
 
         case STRICT_ANSI_MODE:
-            [self setStrictAnsiMode:!strictAnsiMode_];
+            self.strictAnsiMode = !self.strictAnsiMode;
             break;
 
         case ANSICSI_PRINT:
-            switch (token.u.csi.p[0]) {
+            switch (token->u.csi.p[0]) {
                 case 4:
                     [delegate_ terminalPrintBuffer];
                     break;
@@ -3581,48 +1363,48 @@ static VT100TCC decode_string(unsigned char *datap,
 
             // XTERM extensions
         case XTERMCC_WIN_TITLE:
-            [delegate_ terminalSetWindowTitle:token.u.string];
+            [delegate_ terminalSetWindowTitle:token->u.string];
             break;
         case XTERMCC_WINICON_TITLE:
-            [delegate_ terminalSetWindowTitle:token.u.string];
-            [delegate_ terminalSetIconTitle:token.u.string];
+            [delegate_ terminalSetWindowTitle:token->u.string];
+            [delegate_ terminalSetIconTitle:token->u.string];
             break;
         case XTERMCC_PASTE64: {
-            NSString *decoded = [self decodedBase64PasteCommand:token.u.string];
+            NSString *decoded = [self decodedBase64PasteCommand:token->u.string];
             if (decoded) {
                 [delegate_ terminalPasteString:decoded];
             }
-        }
             break;
+        }
         case XTERMCC_FINAL_TERM:
-            [self executeFinalTermToken];
+            [self executeFinalTermToken:token];
             break;
         case XTERMCC_ICON_TITLE:
-            [delegate_ terminalSetIconTitle:token.u.string];
+            [delegate_ terminalSetIconTitle:token->u.string];
             break;
         case XTERMCC_INSBLNK:
-            [delegate_ terminalInsertEmptyCharsAtCursor:token.u.csi.p[0]];
+            [delegate_ terminalInsertEmptyCharsAtCursor:token->u.csi.p[0]];
             break;
         case XTERMCC_INSLN:
-            [delegate_ terminalInsertBlankLinesAfterCursor:token.u.csi.p[0]];
+            [delegate_ terminalInsertBlankLinesAfterCursor:token->u.csi.p[0]];
             break;
         case XTERMCC_DELCH:
-            [delegate_ terminalDeleteCharactersAtCursor:token.u.csi.p[0]];
+            [delegate_ terminalDeleteCharactersAtCursor:token->u.csi.p[0]];
             break;
         case XTERMCC_DELLN:
-            [delegate_ terminalDeleteLinesAtCursor:token.u.csi.p[0]];
+            [delegate_ terminalDeleteLinesAtCursor:token->u.csi.p[0]];
             break;
         case XTERMCC_WINDOWSIZE:
-            [delegate_ terminalSetRows:MIN(token.u.csi.p[1], kMaxScreenRows)
-                            andColumns:MIN(token.u.csi.p[2], kMaxScreenColumns)];
+            [delegate_ terminalSetRows:MIN(token->u.csi.p[1], kMaxScreenRows)
+                            andColumns:MIN(token->u.csi.p[2], kMaxScreenColumns)];
             break;
         case XTERMCC_WINDOWSIZE_PIXEL:
-            [delegate_ terminalSetPixelWidth:token.u.csi.p[2]
-                                      height:token.u.csi.p[1]];
+            [delegate_ terminalSetPixelWidth:token->u.csi.p[2]
+                                      height:token->u.csi.p[1]];
 
             break;
         case XTERMCC_WINDOWPOS:
-            [delegate_ terminalMoveWindowTopLeftPointTo:NSMakePoint(token.u.csi.p[1], token.u.csi.p[2])];
+            [delegate_ terminalMoveWindowTopLeftPointTo:NSMakePoint(token->u.csi.p[1], token->u.csi.p[2])];
             break;
         case XTERMCC_ICONIFY:
             [delegate_ terminalMiniaturize:YES];
@@ -3637,10 +1419,10 @@ static VT100TCC decode_string(unsigned char *datap,
             [delegate_ terminalRaise:NO];
             break;
         case XTERMCC_SU:
-            [delegate_ terminalScrollUp:token.u.csi.p[0]];
+            [delegate_ terminalScrollUp:token->u.csi.p[0]];
             break;
         case XTERMCC_SD:
-            [delegate_ terminalScrollDown:token.u.csi.p[0]];
+            [delegate_ terminalScrollDown:token->u.csi.p[0]];
             break;
         case XTERMCC_REPORT_WIN_STATE: {
             NSString *s = [NSString stringWithFormat:@"\033[%dt",
@@ -3690,7 +1472,7 @@ static VT100TCC decode_string(unsigned char *datap,
             break;
         }
         case XTERMCC_PUSH_TITLE: {
-            switch (token.u.csi.p[1]) {
+            switch (token->u.csi.p[1]) {
                 case 0:
                     [delegate_ terminalPushCurrentTitleForWindow:YES];
                     [delegate_ terminalPushCurrentTitleForWindow:NO];
@@ -3705,7 +1487,7 @@ static VT100TCC decode_string(unsigned char *datap,
             break;
         }
         case XTERMCC_POP_TITLE: {
-            switch (token.u.csi.p[1]) {
+            switch (token->u.csi.p[1]) {
                 case 0:
                     [delegate_ terminalPopCurrentTitleForWindow:YES];
                     [delegate_ terminalPopCurrentTitleForWindow:NO];
@@ -3721,7 +1503,7 @@ static VT100TCC decode_string(unsigned char *datap,
         }
             // Our iTerm specific codes
         case ITERM_GROWL:
-            [delegate_ terminalPostGrowlNotification:token.u.string];
+            [delegate_ terminalPostGrowlNotification:token->u.string];
             break;
             
         case DCS_TMUX:
@@ -3729,6 +1511,7 @@ static VT100TCC decode_string(unsigned char *datap,
             break;
 
         case XTERMCC_SET_KVP:
+            [self executeXtermSetKvp:token];
             break;
 
         case VT100CC_NULL:
@@ -3755,20 +1538,333 @@ static VT100TCC decode_string(unsigned char *datap,
         case VT100CSI_RESET_MODIFIERS:
         case VT100CSI_SCS:
         case VT100CSI_SET_MODIFIERS:
+            break;
+
         case XTERMCC_PROPRIETARY_ETERM_EXT:
+            [self executeXtermProprietaryExtermExtension:token];
+            break;
+
         case XTERMCC_SET_PALETTE:
+            [self executeXtermSetPalette:token];
+            break;
+
         case XTERMCC_SET_RGB:
+            [self executeXtermSetRgb:token];
             break;
 
         default:
-            NSLog(@"Unexpected token type %d", (int)token.type);
+            NSLog(@"Unexpected token type %d", (int)token->type);
             break;
     }
 }
 
-- (void)executeFinalTermToken {
-    VT100TCC token = *lastToken_;
-    NSString *value = token.u.string;
+- (void)executeXtermSetRgb:(VT100TCC *)token {
+    // The format of this command is "<index>;rgb:<redhex>/<greenhex>/<bluehex>", e.g. "105;rgb:00/cc/ff"
+    // TODO(georgen): xterm has extended this quite a bit and we're behind. Catch up.
+    const char *s = [token->u.string UTF8String];
+    int theIndex = 0;
+    while (isdigit(*s)) {
+        theIndex = 10*theIndex + *s++ - '0';
+    }
+    if (*s++ != ';') {
+        return;
+    }
+    if (*s++ != 'r') {
+        return;
+    }
+    if (*s++ != 'g') {
+        return;
+    }
+    if (*s++ != 'b') {
+        return;
+    }
+    if (*s++ != ':') {
+        return;
+    }
+    int r = 0, g = 0, b = 0;
+    
+    while (isxdigit(*s)) {
+        r = 16*r + (*s>='a' ? *s++ - 'a' + 10 : *s>='A' ? *s++ - 'A' + 10 : *s++ - '0');
+    }
+    if (*s++ != '/') {
+        return;
+    }
+    while (isxdigit(*s)) {
+        g = 16*g + (*s>='a' ? *s++ - 'a' + 10 : *s>='A' ? *s++ - 'A' + 10 : *s++ - '0');
+    }
+    if (*s++ != '/') {
+        return;
+    }
+    while (isxdigit(*s)) {
+        b = 16*b + (*s>='a' ? *s++ - 'a' + 10 : *s>='A' ? *s++ - 'A' + 10 : *s++ - '0');
+    }
+    if (theIndex >= 0 && theIndex <= 255 &&
+        r >= 0 && r <= 255 &&
+        g >= 0 && g <= 255 &&
+        b >= 0 && b <= 255) {
+        [delegate_ terminalSetColorTableEntryAtIndex:theIndex
+                                               color:[NSColor colorWith8BitRed:r
+                                                                         green:g
+                                                                          blue:b]];
+    }
+}
+
+- (void)executeXtermSetKvp:(VT100TCC *)token {
+    // argument is of the form key=value
+    // key: Sequence of characters not = or ^G
+    // value: Sequence of characters not ^G
+    NSString* argument = token->u.string;
+    NSRange eqRange = [argument rangeOfString:@"="];
+    NSString* key;
+    NSString* value;
+    if (eqRange.location != NSNotFound) {
+        key = [argument substringToIndex:eqRange.location];;
+        value = [argument substringFromIndex:eqRange.location+1];
+    } else {
+        key = argument;
+        value = @"";
+    }
+    if ([key isEqualToString:@"CursorShape"]) {
+        // Value must be an integer. Bogusly, non-numbers are treated as 0.
+        int shape = [value intValue];
+        ITermCursorType shapeMap[] = { CURSOR_BOX, CURSOR_VERTICAL, CURSOR_UNDERLINE };
+        if (shape >= 0 && shape < sizeof(shapeMap)/sizeof(int)) {
+            [delegate_ terminalSetCursorType:shapeMap[shape]];
+        }
+    } else if ([key isEqualToString:@"RemoteHost"]) {
+        [delegate_ terminalSetRemoteHost:value];
+    } else if ([key isEqualToString:@"SetMark"]) {
+        [delegate_ terminalSaveScrollPositionWithArgument:value];
+    } else if ([key isEqualToString:@"StealFocus"]) {
+        [delegate_ terminalStealFocus];
+    } else if ([key isEqualToString:@"ClearScrollback"]) {
+        [delegate_ terminalClearBuffer];
+    } else if ([key isEqualToString:@"CurrentDir"]) {
+        [delegate_ terminalCurrentDirectoryDidChangeTo:value];
+    } else if ([key isEqualToString:@"SetProfile"]) {
+        [delegate_ terminalProfileShouldChangeTo:(NSString *)value];
+    } else if ([key isEqualToString:@"AddNote"]) {
+        [delegate_ terminalAddNote:(NSString *)value show:YES];
+    } else if ([key isEqualToString:@"AddHiddenNote"]) {
+        [delegate_ terminalAddNote:(NSString *)value show:NO];
+    } else if ([key isEqualToString:@"HighlightCursorLine"]) {
+        [delegate_ terminalSetHighlightCursorLine:value.length ? [value boolValue] : YES];
+    } else if ([key isEqualToString:@"CopyToClipboard"]) {
+        [delegate_ terminalSetPasteboard:value];
+    } else if ([key isEqualToString:@"File"]) {
+        // Takes semicolon-delimited arguments.
+        // File=<arg>;<arg>;...;<arg>
+        // <arg> is one of:
+        //   name=<base64-encoded filename>    Default: Unnamed file
+        //   size=<integer file size>          Default: 0
+        //   width=auto|<integer>px|<integer>  Default: auto
+        //   height=auto|<integer>px|<integer> Default: auto
+        //   preserveAspectRatio=<bool>        Default: yes
+        //   inline=<bool>                     Default: no
+        NSArray *parts = [value componentsSeparatedByString:@";"];
+        NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+        dict[@"size"] = @(0);
+        dict[@"width"] = @"auto";
+        dict[@"height"] = @"auto";
+        dict[@"preserveAspectRatio"] = @YES;
+        dict[@"inline"] = @NO;
+        for (NSString *part in parts) {
+            NSRange eq = [part rangeOfString:@"="];
+            if (eq.location != NSNotFound && eq.location > 0) {
+                NSString *left = [part substringToIndex:eq.location];
+                NSString *right = [part substringFromIndex:eq.location + 1];
+                dict[left] = right;
+            } else {
+                dict[part] = @"";
+            }
+        }
+        
+        NSString *widthString = dict[@"width"];
+        VT100TerminalUnits widthUnits = kVT100TerminalUnitsCells;
+        NSString *heightString = dict[@"height"];
+        VT100TerminalUnits heightUnits = kVT100TerminalUnitsCells;
+        int width = [widthString intValue];
+        if ([widthString isEqualToString:@"auto"]) {
+            widthUnits = kVT100TerminalUnitsAuto;
+        } else if ([widthString hasSuffix:@"px"]) {
+            widthUnits = kVT100TerminalUnitsPixels;
+        }
+        int height = [heightString intValue];
+        if ([heightString isEqualToString:@"auto"]) {
+            heightUnits = kVT100TerminalUnitsAuto;
+        } else if ([heightString hasSuffix:@"px"]) {
+            heightUnits = kVT100TerminalUnitsPixels;
+        }
+        
+        NSString *name = [dict[@"name"] stringByBase64DecodingStringWithEncoding:NSISOLatin1StringEncoding];
+        if (!name) {
+            name = @"Unnamed file";
+        }
+        if ([dict[@"inline"] boolValue]) {
+            [delegate_ terminalWillReceiveInlineFileNamed:name
+                                                   ofSize:[dict[@"size"] intValue]
+                                                    width:width
+                                                    units:widthUnits
+                                                   height:height
+                                                    units:heightUnits
+                                      preserveAspectRatio:[dict[@"preserveAspectRatio"] boolValue]];
+        } else {
+            [delegate_ terminalWillReceiveFileNamed:name ofSize:[dict[@"size"] intValue]];
+        }
+        receivingFile_ = YES;
+    } else if ([key isEqualToString:@"BeginFile"]) {
+        // DEPRECATED. Use File instead.
+        // Takes 2-5 args separated by newline. First is filename, second is size in bytes.
+        // Arg 3,4 are width,height in cells for an inline image.
+        // Arg 5 is whether to preserve the aspect ratio for an inline image.
+        NSArray *parts = [value componentsSeparatedByString:@"\n"];
+        NSString *name = nil;
+        int size = -1;
+        if (parts.count >= 1) {
+            name = [parts[0] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        }
+        if (parts.count >= 2) {
+            size = [parts[1] intValue];
+        }
+        int width = 0, height = 0;
+        VT100TerminalUnits widthUnits = kVT100TerminalUnitsCells, heightUnits = kVT100TerminalUnitsCells;
+        if (parts.count >= 4) {
+            NSString *widthString =
+            [parts[2] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            NSString *heightString =
+            [parts[3] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            width = [widthString intValue];
+            if ([widthString isEqualToString:@"auto"]) {
+                widthUnits = kVT100TerminalUnitsAuto;
+                width = 1;
+            } else if ([widthString hasSuffix:@"px"]) {
+                widthUnits = kVT100TerminalUnitsPixels;
+            }
+            height = [heightString intValue];
+            if ([heightString isEqualToString:@"auto"]) {
+                heightUnits = kVT100TerminalUnitsAuto;
+                height = 1;
+            } else if ([heightString hasSuffix:@"px"]) {
+                heightUnits = kVT100TerminalUnitsPixels;
+            }
+        }
+        BOOL preserveAspectRatio = YES;
+        if (parts.count >= 5) {
+            preserveAspectRatio = [parts[4] boolValue];
+        }
+        if (width > 0 && height > 0) {
+            [delegate_ terminalWillReceiveInlineFileNamed:name
+                                                   ofSize:size
+                                                    width:width
+                                                    units:widthUnits
+                                                   height:height
+                                                    units:heightUnits
+                                      preserveAspectRatio:preserveAspectRatio];
+        } else {
+            [delegate_ terminalWillReceiveFileNamed:name ofSize:size];
+        }
+        receivingFile_ = YES;
+    } else if ([key isEqualToString:@"EndFile"]) {
+        [delegate_ terminalDidFinishReceivingFile];
+        receivingFile_ = NO;
+    } else if ([key isEqualToString:@"EndCopy"]) {
+        [delegate_ terminalCopyBufferToPasteboard];
+    } else if ([key isEqualToString:@"RequestAttention"]) {
+        [delegate_ terminalRequestAttention:[value boolValue]];  // true: request, false: cancel
+    }
+}
+
+- (void)executeXtermSetPalette:(VT100TCC *)token {
+    int n;
+    NSColor *theColor = [self colorForXtermCCSetPaletteString:token->u.string
+                                               colorNumberPtr:&n];
+    if (theColor) {
+        switch (n) {
+            case 16:
+                [delegate_ terminalSetForegroundColor:theColor];
+                break;
+            case 17:
+                [delegate_ terminalSetBackgroundColor:theColor];
+                break;
+            case 18:
+                [delegate_ terminalSetBoldColor:theColor];
+                break;
+            case 19:
+                [delegate_ terminalSetSelectionColor:theColor];
+                break;
+            case 20:
+                [delegate_ terminalSetSelectedTextColor:theColor];
+                break;
+            case 21:
+                [delegate_ terminalSetCursorColor:theColor];
+                break;
+            case 22:
+                [delegate_ terminalSetCursorTextColor:theColor];
+                break;
+            default:
+                [delegate_ terminalSetColorTableEntryAtIndex:n color:theColor];
+                break;
+        }
+    }
+}
+
+- (void)executeXtermProprietaryExtermExtension:(VT100TCC *)token {
+    NSString* argument = token->u.string;
+    NSArray* parts = [argument componentsSeparatedByString:@";"];
+    NSString* func = nil;
+    if ([parts count] >= 1) {
+        func = [parts objectAtIndex:0];
+    }
+    if (func) {
+        if ([func isEqualToString:@"1"]) {
+            // Adjusts a color modifier. This attempts to roughly follow the pattern that Eterm
+            // estabilshed.
+            //
+            // ESC ] 6 ; 1 ; class ; color ; attribute ; value BEL
+            //
+            // Adjusts a color modifier.
+            // class: determines which image class will have its color modifier altered:
+            //   legal values: bg (background), or a number 0-15 (color palette entries).
+            // color: The color component to modify.
+            //   legal values: red, green, or blue.
+            // attribute: how to modify it.
+            //   legal values: brightness
+            // value: the new value for this attribute.
+            //   legal values: decimal integers in 0-255.
+            if ([parts count] == 4) {
+                NSString* class = [parts objectAtIndex:1];
+                NSString* color = [parts objectAtIndex:2];
+                NSString* attribute = [parts objectAtIndex:3];
+                if ([class isEqualToString:@"bg"] &&
+                    [color isEqualToString:@"*"] &&
+                    [attribute isEqualToString:@"default"]) {
+                    [delegate_ terminalSetCurrentTabColor:nil];
+                }
+            } else if ([parts count] == 5) {
+                NSString* class = [parts objectAtIndex:1];
+                NSString* color = [parts objectAtIndex:2];
+                NSString* attribute = [parts objectAtIndex:3];
+                NSString* value = [parts objectAtIndex:4];
+                if ([class isEqualToString:@"bg"] &&
+                    [attribute isEqualToString:@"brightness"]) {
+                    double numValue = MIN(1, ([value intValue] / 255.0));
+                    if (numValue >= 0 && numValue <= 1) {
+                        if ([color isEqualToString:@"red"]) {
+                            [delegate_ terminalSetTabColorRedComponentTo:numValue];
+                        } else if ([color isEqualToString:@"green"]) {
+                            [delegate_ terminalSetTabColorGreenComponentTo:numValue];
+                        } else if ([color isEqualToString:@"blue"]) {
+                            [delegate_ terminalSetTabColorBlueComponentTo:numValue];
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+- (void)executeFinalTermToken:(VT100TCC *)token {
+    NSString *value = token->u.string;
     NSArray *args = [value componentsSeparatedByString:@";"];
     if (args.count == 0) {
         return;
@@ -3859,14 +1955,14 @@ static VT100TCC decode_string(unsigned char *datap,
     }
 }
 
-- (BOOL)lastTokenWasASCII {
-    return lastToken_->type == VT100_ASCIISTRING;
+- (BOOL)tokenIsAscii:(VT100TCC *)token {
+    return token->type == VT100_ASCIISTRING;
 }
 
-- (NSString *)lastTokenString {
-    if (lastToken_->type == VT100_STRING ||
-        lastToken_->type == VT100_ASCIISTRING) {
-        return lastToken_->u.string;
+- (NSString *)stringForToken:(VT100TCC *)token {
+    if (token->type == VT100_STRING ||
+        token->type == VT100_ASCIISTRING) {
+        return token->u.string;
     } else {
         return nil;
     }
