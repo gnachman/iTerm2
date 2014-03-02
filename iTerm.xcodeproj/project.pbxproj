@@ -681,6 +681,9 @@
 		A6A13AA718C2D45900B241ED /* NSColor+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */; };
 		A6A13AA818C2D45900B241ED /* NSColor+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA618C2D45900B241ED /* NSColor+iTerm.m */; };
 		A6A13AA918C2D45900B241ED /* NSColor+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA618C2D45900B241ED /* NSColor+iTerm.m */; };
+		A6A13AAC18C3347200B241ED /* VT100Output.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AAA18C3347200B241ED /* VT100Output.h */; };
+		A6A13AAD18C3347200B241ED /* VT100Output.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AAB18C3347200B241ED /* VT100Output.m */; };
+		A6A13AAE18C3347200B241ED /* VT100Output.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AAB18C3347200B241ED /* VT100Output.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
 		A6A5991E1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
 		A6A5991F1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
@@ -1173,6 +1176,8 @@
 		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; };
 		A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+iTerm.h"; sourceTree = "<group>"; };
 		A6A13AA618C2D45900B241ED /* NSColor+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSColor+iTerm.m"; sourceTree = "<group>"; };
+		A6A13AAA18C3347200B241ED /* VT100Output.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100Output.h; sourceTree = "<group>"; };
+		A6A13AAB18C3347200B241ED /* VT100Output.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Output.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; };
@@ -1334,6 +1339,8 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A6A13AAA18C3347200B241ED /* VT100Output.h */,
+				A6A13AAB18C3347200B241ED /* VT100Output.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -2304,6 +2311,7 @@
 				1D825600146881EC007CAE78 /* PointerController.h in Headers */,
 				1D825604146B258A007CAE78 /* EventMonitorView.h in Headers */,
 				1D3BBD6B14759D6C00FAB389 /* HighlightTrigger.h in Headers */,
+				A6A13AAC18C3347200B241ED /* VT100Output.h in Headers */,
 				1D21EE3B147711300066E04A /* ContextMenuActionPrefsController.h in Headers */,
 				A63F40A4183F3B78003A6A6D /* LineBlock.h in Headers */,
 				1D3D21871482E0E500FAC8E7 /* TmuxGateway.h in Headers */,
@@ -2655,6 +2663,7 @@
 				1D78B560183EE1C000014D49 /* LineBufferPosition.m in Sources */,
 				1D9A5549180FA82E00B42CE9 /* TmuxDashboardController.m in Sources */,
 				1D9A5579180FA85D00B42CE9 /* ScriptTrigger.m in Sources */,
+				A6A13AAE18C3347200B241ED /* VT100Output.m in Sources */,
 				1D9A5551180FA82E00B42CE9 /* TSVParser.m in Sources */,
 				1D9A559B180FA87000B42CE9 /* RoundedRectView.m in Sources */,
 				1D9A5573180FA85D00B42CE9 /* Trigger.m in Sources */,
@@ -2806,6 +2815,7 @@
 				A6E7474E188C6394005355CF /* CommandUse.m in Sources */,
 				1D5FDDA51208E93600C46BA3 /* PseudoTerminal.m in Sources */,
 				1D5FDDA61208E93600C46BA3 /* PTYScrollView.m in Sources */,
+				A6A13AAD18C3347200B241ED /* VT100Output.m in Sources */,
 				1D5FDDA71208E93600C46BA3 /* PTYTextView.m in Sources */,
 				1D5FDDA81208E93600C46BA3 /* PTYTask.m in Sources */,
 				1D0AABC217B59B3D0072B5AF /* SearchResult.m in Sources */,

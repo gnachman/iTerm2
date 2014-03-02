@@ -1377,32 +1377,32 @@ static int gNextSessionID = 1;
 
 - (void)moveUp:(id)sender
 {
-    [self writeTask:[_terminal keyArrowUp:0]];
+    [self writeTask:[_terminal.output keyArrowUp:0]];
 }
 
 - (void)moveDown:(id)sender
 {
-    [self writeTask:[_terminal keyArrowDown:0]];
+    [self writeTask:[_terminal.output keyArrowDown:0]];
 }
 
 - (void)moveLeft:(id)sender
 {
-    [self writeTask:[_terminal keyArrowLeft:0]];
+    [self writeTask:[_terminal.output keyArrowLeft:0]];
 }
 
 - (void)moveRight:(id)sender
 {
-    [self writeTask:[_terminal keyArrowRight:0]];
+    [self writeTask:[_terminal.output keyArrowRight:0]];
 }
 
 - (void)pageUp:(id)sender
 {
-    [self writeTask:[_terminal keyPageUp:0]];
+    [self writeTask:[_terminal.output keyPageUp:0]];
 }
 
 - (void)pageDown:(id)sender
 {
-    [self writeTask:[_terminal keyPageDown:0]];
+    [self writeTask:[_terminal.output keyPageDown:0]];
 }
 
 - (void)emptyEventQueue {
@@ -3778,35 +3778,35 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
       switch (unicode) {
         case NSUpArrowFunctionKey:
-          data = [_terminal keyArrowUp:modflag];
+          data = [_terminal.output keyArrowUp:modflag];
           break;
         case NSDownArrowFunctionKey:
-          data = [_terminal keyArrowDown:modflag];
+          data = [_terminal.output keyArrowDown:modflag];
           break;
         case NSLeftArrowFunctionKey:
-          data = [_terminal keyArrowLeft:modflag];
+          data = [_terminal.output keyArrowLeft:modflag];
           break;
         case NSRightArrowFunctionKey:
-          data = [_terminal keyArrowRight:modflag];
+          data = [_terminal.output keyArrowRight:modflag];
           break;
         case NSInsertFunctionKey:
-          data = [_terminal keyInsert];
+          data = [_terminal.output keyInsert];
           break;
         case NSDeleteFunctionKey:
           // This is forward delete, not backspace.
-          data = [_terminal keyDelete];
+          data = [_terminal.output keyDelete];
           break;
         case NSHomeFunctionKey:
-          data = [_terminal keyHome:modflag];
+          data = [_terminal.output keyHome:modflag];
           break;
         case NSEndFunctionKey:
-          data = [_terminal keyEnd:modflag];
+          data = [_terminal.output keyEnd:modflag];
           break;
         case NSPageUpFunctionKey:
-          data = [_terminal keyPageUp:modflag];
+          data = [_terminal.output keyPageUp:modflag];
           break;
         case NSPageDownFunctionKey:
-          data = [_terminal keyPageDown:modflag];
+          data = [_terminal.output keyPageDown:modflag];
           break;
         case NSClearLineFunctionKey:
           data = [@"\e" dataUsingEncoding:NSUTF8StringEncoding];
@@ -3814,7 +3814,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
       }
 
       if (NSF1FunctionKey <= unicode && unicode <= NSF35FunctionKey) {
-        data = [_terminal keyFunction:unicode - NSF1FunctionKey + 1];
+        data = [_terminal.output keyFunction:unicode - NSF1FunctionKey + 1];
       }
 
       if (data != nil) {
@@ -3900,7 +3900,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                      NSLog(@"PTYSession keyDown numeric keyoad");
                    }
                    DebugLog(@"Numeric keypad mask");
-                   data = [_terminal keypadData:unicode keystr:keystr];
+                   data = [_terminal.output keypadData:unicode keystr:keystr];
                  }
 
                  int indMask = modflag & NSDeviceIndependentModifierFlagsMask;

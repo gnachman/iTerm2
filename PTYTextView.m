@@ -2568,7 +2568,7 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
                 reportingMouseDown = YES;
-                [_delegate writeTask:[terminal mousePress:buttonNumber
+                [_delegate writeTask:[terminal.output mousePress:buttonNumber
                                             withModifiers:[event modifierFlags]
                                                       atX:rx
                                                         Y:ry]];
@@ -2615,7 +2615,7 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [_delegate writeTask:[terminal mouseRelease:buttonNumber
+                [_delegate writeTask:[terminal.output mouseRelease:buttonNumber
                                              withModifiers:[event modifierFlags]
                                                        atX:rx
                                                          Y:ry]];
@@ -2668,7 +2668,7 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [_delegate writeTask:[terminal mouseMotion:buttonNumber
+                [_delegate writeTask:[terminal.output mouseMotion:buttonNumber
                                             withModifiers:[event modifierFlags]
                                                       atX:rx
                                                         Y:ry]];
@@ -2712,7 +2712,7 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
                 reportingMouseDown = YES;
-                [_delegate writeTask:[terminal mousePress:MOUSE_BUTTON_RIGHT
+                [_delegate writeTask:[terminal.output mousePress:MOUSE_BUTTON_RIGHT
                                            withModifiers:[event modifierFlags]
                                                      atX:rx
                                                        Y:ry]];
@@ -2761,7 +2761,7 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [_delegate writeTask:[terminal mouseRelease:MOUSE_BUTTON_RIGHT
+                [_delegate writeTask:[terminal.output mouseRelease:MOUSE_BUTTON_RIGHT
                                              withModifiers:[event modifierFlags]
                                                        atX:rx
                                                          Y:ry]];
@@ -2803,7 +2803,7 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [_delegate writeTask:[terminal mouseMotion:MOUSE_BUTTON_RIGHT
+                [_delegate writeTask:[terminal.output mouseMotion:MOUSE_BUTTON_RIGHT
                                             withModifiers:[event modifierFlags]
                                                       atX:rx
                                                         Y:ry]];
@@ -2852,7 +2852,7 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
                 if ([event deltaY] != 0) {
-                    [_delegate writeTask:[terminal mousePress:buttonNumber
+                    [_delegate writeTask:[terminal.output mousePress:buttonNumber
                                                withModifiers:[event modifierFlags]
                                                          atX:rx
                                                            Y:ry]];
@@ -3237,7 +3237,7 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_ALL_MOTION:
                 DebugLog(@"Do xterm mouse reporting");
                 reportingMouseDown = YES;
-                [_delegate writeTask:[terminal mousePress:MOUSE_BUTTON_LEFT
+                [_delegate writeTask:[terminal.output mousePress:MOUSE_BUTTON_LEFT
                                             withModifiers:[event modifierFlags]
                                                       atX:rx
                                                         Y:ry]];
@@ -3404,7 +3404,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [_delegate writeTask:[terminal mouseRelease:MOUSE_BUTTON_LEFT
+                [_delegate writeTask:[terminal.output mouseRelease:MOUSE_BUTTON_LEFT
                                               withModifiers:[event modifierFlags]
                                                         atX:rx
                                                           Y:ry]];
@@ -3532,7 +3532,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (rx != lastReportedX_ || ry != lastReportedY_) {
         lastReportedX_ = rx;
         lastReportedY_ = ry;
-        [_delegate writeTask:[terminal mouseMotion:MOUSE_BUTTON_NONE
+        [_delegate writeTask:[terminal.output mouseMotion:MOUSE_BUTTON_NONE
                                      withModifiers:[event modifierFlags]
                                                atX:rx
                                                  Y:ry]];
@@ -3595,7 +3595,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             switch ([terminal mouseMode]) {
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
-                    [_delegate writeTask:[terminal mouseMotion:MOUSE_BUTTON_LEFT
+                    [_delegate writeTask:[terminal.output mouseMotion:MOUSE_BUTTON_LEFT
                                                  withModifiers:[event modifierFlags]
                                                            atX:rx
                                                              Y:ry]];
@@ -3984,15 +3984,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // so first move to left, and (if necessary)
         // up or down afterwards
         while (i > 0) {
-            [_delegate writeTask:[terminal keyArrowLeft:0]];
+            [_delegate writeTask:[terminal.output keyArrowLeft:0]];
             i--;
         }
     }
     while (j > 0) {
         if (cursorY > y) {
-            [_delegate writeTask:[terminal keyArrowUp:0]];
+            [_delegate writeTask:[terminal.output keyArrowUp:0]];
         } else {
-            [_delegate writeTask:[terminal keyArrowDown:0]];
+            [_delegate writeTask:[terminal.output keyArrowDown:0]];
         }
         j--;
     }
@@ -4001,7 +4001,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // so first moved up/down (if necessary)
         // and then/now to the right
         while (i > 0) {
-            [_delegate writeTask:[terminal keyArrowRight:0]];
+            [_delegate writeTask:[terminal.output keyArrowRight:0]];
             i--;
         }
     }
