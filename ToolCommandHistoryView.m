@@ -156,8 +156,8 @@ static const CGFloat kMargin = 5;
         NSString* value = [entry.command stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
         ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
         if (entry.lastMark && [[wrapper.term currentSession] sessionID] == entry.lastMark.sessionID) {
-            return [[NSAttributedString alloc] initWithString:value
-                                                   attributes:@{ NSFontAttributeName: boldFont_ }];
+            return [[[NSAttributedString alloc] initWithString:value
+                                                   attributes:@{ NSFontAttributeName: boldFont_ }] autorelease];
         } else {
             return value;
         }

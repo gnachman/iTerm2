@@ -130,6 +130,8 @@ static const int kMaxCommandsToSavePerHost = 200;
         NSRange match;
         if (!emptyPartialCommand) {
             match = [entry.command rangeOfString:partialCommand];
+        } else {
+            match = NSMakeRange(0, partialCommand.length);
         }
         if (emptyPartialCommand || match.location == 0) {
             // The FinalTerm algorithm doesn't require |partialCommand| to be a prefix of the

@@ -394,7 +394,8 @@ static const int kNumCharsToSearchForDivider = 8;
   forCharacterMatchingFilter:(BOOL (^)(screen_char_t, VT100GridCoord))block {
     VT100GridCoord coord = start;
     screen_char_t *theLine;
-    int y = -1;
+    int y = coord.y;
+    theLine = [_dataSource getLineAtIndex:coord.y];
     while (1) {
         if (y != coord.y) {
             theLine = [_dataSource getLineAtIndex:coord.y];
@@ -540,7 +541,7 @@ static const int kNumCharsToSearchForDivider = 8;
                               // Normal character
                               [result appendString:ScreenCharToStr(&theChar)];
                           }
-                          return NO;
+                          return [result length] >= maxBytes;
                       }
                        eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
                                // If there is no text after this, insert a hard line break.
@@ -556,7 +557,7 @@ static const int kNumCharsToSearchForDivider = 8;
                                    }
                                    [result appendString:@"\n"];
                                }
-                               return NO;
+                               return [result length] >= maxBytes;
                            }];
     
     if (trimSelectionTrailingSpaces) {

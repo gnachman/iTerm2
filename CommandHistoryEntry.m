@@ -133,7 +133,7 @@ static NSString *const kUseTimes = @"use times";
     theCopy.lastUsed = self.lastUsed;
     theCopy.useTimes = [NSMutableArray array];
     for (CommandUse *use in self.useTimes) {
-        [theCopy.useTimes addObject:[use copy]];
+        [theCopy.useTimes addObject:[[use copy] autorelease]];
     }
     return theCopy;
 }

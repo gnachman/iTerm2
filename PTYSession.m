@@ -2863,7 +2863,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (offset < 0) {
         NSBeep();  // This really shouldn't ever happen
     } else {
-        self.currentMarkOrNotePosition = [mark.entry.interval retain];
+        self.currentMarkOrNotePosition = mark.entry.interval;
         offset += [_screen totalScrollbackOverflow];
         [_textview scrollToAbsoluteOffset:offset height:[_screen height]];
         [_textview highlightMarkOnLine:VT100GridRangeMax(range)];

@@ -3459,7 +3459,9 @@ static void SwapInt(int *a, int *b) {
         return NO;
     }
     if (selectionStartPositionIsValid) {
-        resultPtr->start = [lineBuffer coordinateForPosition:selectionStartPosition width:newWidth ok:NULL];
+        resultPtr->start = [lineBuffer coordinateForPosition:selectionStartPosition
+                                                       width:newWidth
+                                                          ok:NULL];
         if (selectionEndPostionIsValid) {
             VT100GridCoord newEnd = [lineBuffer coordinateForPosition:selectionEndPosition width:newWidth ok:NULL];
             newEnd.x++;
@@ -3472,11 +3474,13 @@ static void SwapInt(int *a, int *b) {
             resultPtr->end.x = currentGrid_.size.width;
             resultPtr->end.y = [lineBuffer numLinesWithWidth:newWidth] + currentGrid_.size.height - 1;
         }
+        if (selectionEndPosition.extendsToEndOfLine) {
+            resultPtr->end.x = newWidth;
+        }
+        return YES;
+    } else {
+        return NO;
     }
-    if (selectionEndPostionIsValid && selectionEndPosition.extendsToEndOfLine) {
-        resultPtr->end.x = newWidth;
-    }
-    return YES;
 }
 
 - (void)incrementOverflowBy:(int)overflowCount {

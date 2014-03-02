@@ -189,7 +189,7 @@ static NSImage* alertImage;
     // Dimmed background color with alpha.
     double _cachedBackgroundColorAlpha;  // cached alpha value (comparable to another double)
     
-    // Previuos contrasting color returned
+    // Previous contrasting color returned
     NSColor *memoizedContrastingColor_;
     double memoizedMainRGB_[4];  // rgba for "main" color memoized.
     double memoizedOtherRGB_[3];  // rgb for "other" color memoized.
@@ -310,7 +310,7 @@ static NSImage* alertImage;
     FindContext *_findContext;
     
     PointerController *pointer_;
-        NSCursor *cursor_;
+    NSCursor *cursor_;
     
     // True while the context menu is being opened.
     BOOL openingContextMenu_;
@@ -4746,7 +4746,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSMenu *theMenu;
 
     // Allocate a menu
-    theMenu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
+    theMenu = [[[NSMenu alloc] initWithTitle:@"Contextual Menu"] autorelease];
 
     NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
     theItem.title = [NSString stringWithFormat:@"Command: %@", mark.command];
@@ -4778,7 +4778,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSMenu *theMenu;
 
     // Allocate a menu
-    theMenu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
+    theMenu = [[[NSMenu alloc] initWithTitle:@"Contextual Menu"] autorelease];
     ImageInfo *imageInfo = [self imageInfoAtCoord:coord];
     if (imageInfo) {
         // Show context menu for an image.
@@ -4950,7 +4950,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [[self delegate] menuForEvent:nil menu:theMenu];
     }
 
-    return [theMenu autorelease];
+    return theMenu;
 }
 
 - (void)mail:(id)sender
@@ -8456,11 +8456,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // being dragged, the modifiers pressed, and where it's being dropped.
 - (NSDragOperation)dragOperationForSender:(id <NSDraggingInfo>)sender
 {
-    unsigned int iResult = 0;
-
-    iResult = NSDragOperationNone;
-
-    
     NSPasteboard *pb = [sender draggingPasteboard];
     NSArray *types = [pb types];
     NSPoint windowDropPoint = [sender draggingLocation];
@@ -8546,7 +8541,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString* escapedString = [trimmedURLString stringByEscapingForURL];
 
     NSURL *url = [NSURL URLWithString:escapedString];
-    [escapedString release];
 
     Profile *bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:[url scheme]];
 

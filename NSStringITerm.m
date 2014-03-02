@@ -818,11 +818,13 @@ int decode_utf8_char(const unsigned char *datap,
 }
 
 - (NSString *)stringByEscapingForURL {
-    return (NSString *)CFURLCreateStringByAddingPercentEscapes(NULL,
-                                                               (CFStringRef)self,
-                                                               (CFStringRef)@"!*'();:@&=+$,/?%#[]",
-                                                               NULL,
-                                                               kCFStringEncodingUTF8);
+    NSString *theString =
+        (NSString *) CFURLCreateStringByAddingPercentEscapes(NULL,
+                                                             (CFStringRef)self,
+                                                             (CFStringRef)@"!*'();:@&=+$,/?%#[]",
+                                                             NULL,
+                                                             kCFStringEncodingUTF8);
+    return [theString autorelease];
 }
 
 @end

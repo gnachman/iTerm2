@@ -46,10 +46,6 @@ static PseudoTerminal* GetHotkeyWindow()
 static void RollInHotkeyTerm(PseudoTerminal* term)
 {
     HKWLog(@"Roll in [show] hotkey window");
-    NSScreen* screen = [term screen];
-    if (!screen) {
-        screen = [NSScreen mainScreen];
-    }
 
     [NSApp activateIgnoringOtherApps:YES];
     [[term window] makeKeyAndOrderFront:nil];
