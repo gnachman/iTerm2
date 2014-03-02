@@ -13,6 +13,71 @@
     
     // In FinalTerm command mode (user is at the prompt typing a command).
     BOOL inCommand_;
+
+    NSStringEncoding  encoding_;
+    id<VT100TerminalDelegate> delegate_;
+    
+    unsigned char     *stream_;
+    int               current_stream_length;
+    int               total_stream_length;
+    
+    BOOL lineMode_;         // YES=Newline, NO=Line feed
+    BOOL cursorMode_;       // YES=Application, NO=Cursor
+    BOOL ansiMode_;         // YES=ANSI, NO=VT52
+    BOOL columnMode_;       // YES=132 Column, NO=80 Column
+    BOOL scrollMode_;       // YES=Smooth, NO=Jump
+    BOOL reverseVideo_;     // YES=Reverse, NO=Normal
+    BOOL originMode_;       // YES=Relative, NO=Absolute
+    BOOL wraparoundMode_;   // YES=On, NO=Off
+    BOOL autorepeatMode_;   // YES=On, NO=Off
+    BOOL keypadMode_;       // YES=Application, NO=Numeric
+    BOOL insertMode_;       // YES=Insert, NO=Replace
+    int  charset_;           // G0...G3
+    BOOL xon_;               // YES=XON, NO=XOFF. Not currently used.
+    BOOL numLock_;           // YES=ON, NO=OFF, default=YES;
+    MouseMode mouseMode_;
+    MouseFormat mouseFormat_;
+    BOOL reportFocus_;
+    
+    int fgColorCode_;
+    int fgGreen_;
+    int fgBlue_;
+    ColorMode fgColorMode_;
+    int bgColorCode_;
+    int bgGreen_;
+    int bgBlue_;
+    ColorMode bgColorMode_;
+    BOOL bold_, italic_, under_, blink_, reversed_;
+    
+    BOOL saveBold_, saveItalic_, saveUnder_, saveBlink_, saveReversed_;
+    int saveCharset_;
+    int saveForeground_;
+    int saveFgGreen_;
+    int saveFgBlue_;
+    ColorMode saveFgColorMode_;
+    int saveBackground_;
+    int saveBgGreen_;
+    int saveBgBlue_;
+    ColorMode saveBgColorMode_;
+    
+    BOOL strictAnsiMode_;
+    BOOL allowColumnMode_;
+    
+    BOOL allowKeypadMode_;
+    
+    int streamOffset_;
+    
+    BOOL isAnsi_;
+    BOOL disableSmcupRmcup_;
+    
+    // Indexed by values in VT100TerminalTerminfoKeys. Gives strings to send for various special keys.
+    char *keyStrings_[TERMINFO_KEYS];
+    
+    // http://www.xfree86.org/current/ctlseqs.html#Bracketed%20Paste%20Mode
+    BOOL bracketedPasteMode_;
+    int sendModifiers_[NUM_MODIFIABLE_RESOURCES];
+    
+    VT100TCC *lastToken_;
 }
 
 @synthesize delegate = delegate_;
@@ -1961,34 +2026,17 @@ static VT100TCC decode_string(unsigned char *datap,
         encoding_ = NSASCIIStringEncoding;
         total_stream_length = STANDARD_STREAM_SIZE;
         stream_ = malloc(total_stream_length);
-        current_stream_length = 0;
 
-        termType = nil;
         for (int i = 0; i < TERMINFO_KEYS; i ++) {
             keyStrings_[i] = NULL;
         }
 
-        lineMode_ = NO;
-        cursorMode_ = NO;
-        columnMode_ = NO;
-        scrollMode_ = NO;
-        reverseVideo_ = NO;
-        originMode_ = NO;
         [self setWraparoundMode:YES];
         autorepeatMode_ = YES;
-        keypadMode_ = NO;
-        insertMode_ = NO;
-        saveCharset_ = charset_ = NO;
         xon_ = YES;
-        bold_ = italic_ = blink_ = reversed_ = under_ = NO;
-        saveBold_ = saveItalic_ = saveBlink_ = saveReversed_ = saveUnder_ = NO;
         fgColorCode_ = ALTSEM_FG_DEFAULT;
-        fgGreen_ = 0;
-        fgBlue_ = 0;
         fgColorMode_ = ColorModeAlternate;
         bgColorCode_ = ALTSEM_BG_DEFAULT;
-        bgGreen_ = 0;
-        bgBlue_ = 0;
         bgColorMode_ = ColorModeAlternate;
         saveForeground_ = fgColorCode_;
         saveFgColorMode_ = fgColorMode_;
@@ -1997,11 +2045,7 @@ static VT100TCC decode_string(unsigned char *datap,
         mouseMode_ = MOUSE_REPORTING_NONE;
         mouseFormat_ = MOUSE_FORMAT_XTERM;
 
-        strictAnsiMode_ = NO;
-        allowColumnMode_ = NO;
         allowKeypadMode_ = YES;
-
-        streamOffset_ = 0;
 
         numLock_ = YES;
         lastToken_ = malloc(sizeof(VT100TCC));
@@ -2012,7 +2056,7 @@ static VT100TCC decode_string(unsigned char *datap,
 - (void)dealloc
 {
     free(stream_);
-    [termType release];
+    [_termType release];
 
     for (int i = 0; i < TERMINFO_KEYS; i ++) {
         if (keyStrings_[i]) {
@@ -2025,26 +2069,19 @@ static VT100TCC decode_string(unsigned char *datap,
     [super dealloc];
 }
 
-- (NSString *)termtype
-{
-    return termType;
-}
-
 - (void)setTermType:(NSString *)termtype
 {
-    if (termType) {
-        [termType autorelease];
-    }
-    termType = [termtype retain];
+    [_termType autorelease];
+    _termType = [termtype copy];
 
-    allowKeypadMode_ = [termType rangeOfString:@"xterm"].location != NSNotFound;
+    allowKeypadMode_ = [_termType rangeOfString:@"xterm"].location != NSNotFound;
 
     int r;
 
-    setupterm((char *)[termtype UTF8String], fileno(stdout), &r);
+    setupterm((char *)[_termType UTF8String], fileno(stdout), &r);
 
     if (r != 1) {
-        NSLog(@"Terminal type %s is not defined.\n",[termtype UTF8String]);
+        NSLog(@"Terminal type %s is not defined.\n",[_termType UTF8String]);
         for (int i = 0; i < TERMINFO_KEYS; i ++) {
             if (keyStrings_[i]) {
                 free(keyStrings_[i]);
@@ -2077,8 +2114,8 @@ static VT100TCC decode_string(unsigned char *datap,
         }
     }
 
-    isAnsi_ = [termType rangeOfString:@"ANSI"
-                              options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location != NSNotFound;
+    isAnsi_ = [_termType rangeOfString:@"ANSI"
+                               options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location !=  NSNotFound;
     [delegate_ terminalTypeDidChange];
 }
 

@@ -48,77 +48,10 @@ typedef enum {
 #define NUM_MODIFIABLE_RESOURCES 5
 
 @interface VT100Terminal : NSObject
-{
-    NSString          *termType;
-    NSStringEncoding  encoding_;
-    id<VT100TerminalDelegate> delegate_;
-
-    unsigned char     *stream_;
-    int               current_stream_length;
-    int               total_stream_length;
-
-    BOOL lineMode_;         // YES=Newline, NO=Line feed
-    BOOL cursorMode_;       // YES=Application, NO=Cursor
-    BOOL ansiMode_;         // YES=ANSI, NO=VT52
-    BOOL columnMode_;       // YES=132 Column, NO=80 Column
-    BOOL scrollMode_;       // YES=Smooth, NO=Jump
-    BOOL reverseVideo_;     // YES=Reverse, NO=Normal
-    BOOL originMode_;       // YES=Relative, NO=Absolute
-    BOOL wraparoundMode_;   // YES=On, NO=Off
-    BOOL autorepeatMode_;   // YES=On, NO=Off
-    BOOL keypadMode_;       // YES=Application, NO=Numeric
-    BOOL insertMode_;       // YES=Insert, NO=Replace
-    int  charset_;           // G0...G3
-    BOOL xon_;               // YES=XON, NO=XOFF. Not currently used.
-    BOOL numLock_;           // YES=ON, NO=OFF, default=YES;
-    MouseMode mouseMode_;
-    MouseFormat mouseFormat_;
-    BOOL reportFocus_;
-
-    int fgColorCode_;
-    int fgGreen_;
-    int fgBlue_;
-    ColorMode fgColorMode_;
-    int bgColorCode_;
-    int bgGreen_;
-    int bgBlue_;
-    ColorMode bgColorMode_;
-    BOOL bold_, italic_, under_, blink_, reversed_;
-
-    BOOL saveBold_, saveItalic_, saveUnder_, saveBlink_, saveReversed_;
-    int saveCharset_;
-    int saveForeground_;
-    int saveFgGreen_;
-    int saveFgBlue_;
-    ColorMode saveFgColorMode_;
-    int saveBackground_;
-    int saveBgGreen_;
-    int saveBgBlue_;
-    ColorMode saveBgColorMode_;
-
-    BOOL strictAnsiMode_;
-    BOOL allowColumnMode_;
-
-    BOOL allowKeypadMode_;
-
-    int streamOffset_;
-
-    BOOL isAnsi_;
-    BOOL disableSmcupRmcup_;
-
-    // Indexed by values in VT100TerminalTerminfoKeys. Gives strings to send for various special keys.
-    char *keyStrings_[TERMINFO_KEYS];
-
-    // http://www.xfree86.org/current/ctlseqs.html#Bracketed%20Paste%20Mode
-    BOOL bracketedPasteMode_;
-    int sendModifiers_[NUM_MODIFIABLE_RESOURCES];
-
-    VT100TCC *lastToken_;
-}
 
 @property(nonatomic, assign) id<VT100TerminalDelegate> delegate;
+@property(nonatomic, copy) NSString *termType;
 
-- (void)setTermType:(NSString *)termtype;
 
 - (NSStringEncoding)encoding;
 - (void)setEncoding:(NSStringEncoding)encoding;
