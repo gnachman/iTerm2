@@ -9,6 +9,13 @@
 
 @interface VT100Terminal ()
 @property(nonatomic, assign) BOOL reportFocus;
+@property(nonatomic, assign) BOOL reverseVideo;
+@property(nonatomic, assign) BOOL originMode;
+@property(nonatomic, assign) BOOL isAnsi;
+@property(nonatomic, assign) BOOL autorepeatMode;
+@property(nonatomic, assign) BOOL insertMode;
+@property(nonatomic, assign) int charset;
+@property(nonatomic, assign) MouseMode mouseMode;
 @end
 
 @implementation VT100Terminal {
@@ -29,16 +36,9 @@
     BOOL ansiMode_;         // YES=ANSI, NO=VT52
     BOOL columnMode_;       // YES=132 Column, NO=80 Column
     BOOL scrollMode_;       // YES=Smooth, NO=Jump
-    BOOL reverseVideo_;     // YES=Reverse, NO=Normal
-    BOOL originMode_;       // YES=Relative, NO=Absolute
-    BOOL wraparoundMode_;   // YES=On, NO=Off
-    BOOL autorepeatMode_;   // YES=On, NO=Off
     BOOL keypadMode_;       // YES=Application, NO=Numeric
-    BOOL insertMode_;       // YES=Insert, NO=Replace
-    int  charset_;           // G0...G3
     BOOL xon_;               // YES=XON, NO=XOFF. Not currently used.
     BOOL numLock_;           // YES=ON, NO=OFF, default=YES;
-    MouseMode mouseMode_;
     MouseFormat mouseFormat_;
     
     int fgColorCode_;
@@ -69,7 +69,6 @@
     
     int streamOffset_;
     
-    BOOL isAnsi_;
     BOOL disableSmcupRmcup_;
     
     // Indexed by values in VT100TerminalTerminfoKeys. Gives strings to send for various special keys.
@@ -2033,8 +2032,8 @@ static VT100TCC decode_string(unsigned char *datap,
             keyStrings_[i] = NULL;
         }
 
-        [self setWraparoundMode:YES];
-        autorepeatMode_ = YES;
+        _wraparoundMode = YES;
+        _autorepeatMode = YES;
         xon_ = YES;
         fgColorCode_ = ALTSEM_FG_DEFAULT;
         fgColorMode_ = ColorModeAlternate;
@@ -2044,7 +2043,7 @@ static VT100TCC decode_string(unsigned char *datap,
         saveFgColorMode_ = fgColorMode_;
         saveBackground_ = bgColorCode_;
         saveBgColorMode_ = bgColorMode_;
-        mouseMode_ = MOUSE_REPORTING_NONE;
+        _mouseMode = MOUSE_REPORTING_NONE;
         mouseFormat_ = MOUSE_FORMAT_XTERM;
 
         allowKeypadMode_ = YES;
@@ -2116,8 +2115,8 @@ static VT100TCC decode_string(unsigned char *datap,
         }
     }
 
-    isAnsi_ = [_termType rangeOfString:@"ANSI"
-                               options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location !=  NSNotFound;
+    self.isAnsi = [_termType rangeOfString:@"ANSI"
+                                   options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location !=  NSNotFound;
     [delegate_ terminalTypeDidChange];
 }
 
@@ -2128,7 +2127,7 @@ static VT100TCC decode_string(unsigned char *datap,
     saveUnder_ = under_;
     saveBlink_ = blink_;
     saveReversed_ = reversed_;
-    saveCharset_ = charset_;
+    saveCharset_ = _charset;
     saveForeground_ = fgColorCode_;
     saveFgGreen_ = fgGreen_;
     saveFgBlue_ = fgBlue_;
@@ -2146,7 +2145,7 @@ static VT100TCC decode_string(unsigned char *datap,
     under_ = saveUnder_;
     blink_ = saveBlink_;
     reversed_ = saveReversed_;
-    charset_ = saveCharset_;
+    _charset = saveCharset_;
     fgColorCode_ = saveForeground_;
     fgGreen_ = saveFgGreen_;
     fgBlue_ = saveFgBlue_;
@@ -2170,7 +2169,7 @@ static VT100TCC decode_string(unsigned char *datap,
 }
 
 - (void)resetCharset {
-    charset_ = NO;
+    _charset = 0;
     for (int i = 0; i < NUM_CHARSETS; i++) {
         [delegate_ terminalSetCharset:i toLineDrawingMode:NO];
     }
@@ -2182,14 +2181,14 @@ static VT100TCC decode_string(unsigned char *datap,
     cursorMode_ = NO;
     columnMode_ = NO;
     scrollMode_ = NO;
-    reverseVideo_ = NO;
-    originMode_ = NO;
-    [self setWraparoundMode:YES];
-    autorepeatMode_ = YES;
+    _reverseVideo = NO;
+    _originMode = NO;
+    self.wraparoundMode = YES;
+    self.autorepeatMode = YES;
     keypadMode_ = NO;
-    [self setInsertMode:NO];
+    self.insertMode = NO;
     bracketedPasteMode_ = NO;
-    saveCharset_ = charset_ = NO;
+    saveCharset_ = _charset = 0;
     xon_ = YES;
     bold_ = italic_ = blink_ = reversed_ = under_ = NO;
     saveBold_ = saveItalic_ = saveBlink_ = saveReversed_ = saveUnder_ = NO;
@@ -2201,9 +2200,9 @@ static VT100TCC decode_string(unsigned char *datap,
     bgGreen_ = 0;
     bgBlue_ = 0;
     bgColorMode_ = ColorModeAlternate;
-    mouseMode_ = MOUSE_REPORTING_NONE;
+    self.mouseMode = MOUSE_REPORTING_NONE;
     mouseFormat_ = MOUSE_FORMAT_XTERM;
-    [delegate_ terminalMouseModeDidChangeTo:mouseMode_];
+    [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
     [delegate_ terminalSetUseColumnScrollRegion:NO];
     _reportFocus = NO;
 
@@ -2789,37 +2788,12 @@ static VT100TCC decode_string(unsigned char *datap,
     return scrollMode_;
 }
 
-- (BOOL)reverseVideo
-{
-    return reverseVideo_;
-}
-
-- (BOOL)originMode
-{
-    return originMode_;
-}
-
-- (BOOL)wraparoundMode
-{
-    return wraparoundMode_;
-}
-
 - (void)setWraparoundMode:(BOOL)mode
 {
-    if (mode != wraparoundMode_) {
-        wraparoundMode_ = mode;
+    if (mode != _wraparoundMode) {
+        _wraparoundMode = mode;
         [delegate_ terminalWraparoundModeDidChangeTo:mode];
     }
-}
-
-- (BOOL)isAnsi
-{
-    return isAnsi_;
-}
-
-- (BOOL)autorepeatMode
-{
-    return autorepeatMode_;
 }
 
 - (BOOL)keypadMode
@@ -2838,21 +2812,6 @@ static VT100TCC decode_string(unsigned char *datap,
     if (!allow) {
         keypadMode_ = NO;
     }
-}
-
-- (BOOL)insertMode
-{
-    return insertMode_;
-}
-
-- (int)charset
-{
-    return charset_;
-}
-
-- (MouseMode)mouseMode
-{
-    return mouseMode_;
 }
 
 - (screen_char_t)foregroundColorCode
@@ -2947,8 +2906,8 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (void)setInsertMode:(BOOL)mode
 {
-    if (insertMode_ != mode) {
-        insertMode_ = mode;
+    if (_insertMode != mode) {
+        _insertMode = mode;
         [delegate_ terminalInsertModeDidChangeTo:mode];
     }
 }
@@ -2986,18 +2945,18 @@ static VT100TCC decode_string(unsigned char *datap,
                         scrollMode_ = mode;
                         break;
                     case 5:
-                        reverseVideo_ = mode;
+                        self.reverseVideo = mode;
                         [delegate_ terminalNeedsRedraw];
                         break;
                     case 6:
-                        originMode_ = mode;
+                        self.originMode = mode;
                         [delegate_ terminalMoveCursorToX:1 y:1];
                         break;
                     case 7:
-                        [self setWraparoundMode:mode];
+                        self.wraparoundMode = mode;
                         break;
                     case 8:
-                        autorepeatMode_ = mode;
+                        self.autorepeatMode = mode;
                         break;
                     case 9:
                         // TODO: This should send mouse x&y on button press.
@@ -3055,11 +3014,11 @@ static VT100TCC decode_string(unsigned char *datap,
                     case 1002:
                     case 1003:
                         if (mode) {
-                            mouseMode_ = token.u.csi.p[i] - 1000;
+                            self.mouseMode = token.u.csi.p[i] - 1000;
                         } else {
-                            mouseMode_ = MOUSE_REPORTING_NONE;
+                            self.mouseMode = MOUSE_REPORTING_NONE;
                         }
-                        [delegate_ terminalMouseModeDidChangeTo:mouseMode_];
+                        [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
                         break;
                     case 1004:
                         self.reportFocus = mode;
@@ -3099,7 +3058,8 @@ static VT100TCC decode_string(unsigned char *datap,
             for (i = 0; i < token.u.csi.count; i++) {
                 switch (token.u.csi.p[i]) {
                     case 4:
-                        [self setInsertMode:mode]; break;
+                        self.insertMode = mode;
+                        break;
                 }
             }
             break;
@@ -3110,10 +3070,10 @@ static VT100TCC decode_string(unsigned char *datap,
             [self setKeypadMode:NO];
             break;
         case VT100CC_SI:
-            charset_ = 0;
+            _charset = 0;
             break;
         case VT100CC_SO:
-            charset_ = 1;
+            _charset = 1;
             break;
         case VT100CC_DC1:
             xon_ = YES;
@@ -3130,8 +3090,8 @@ static VT100TCC decode_string(unsigned char *datap,
             [delegate_ terminalSaveCursor];
             break;
         case VT100CSI_DECSTR:
-            [self setWraparoundMode:YES];
-            originMode_ = NO;
+            self.wraparoundMode = YES;
+            self.originMode = NO;
             break;
         case VT100CSI_RESET_MODIFIERS:
             if (token.u.csi.count == 0) {
@@ -3731,8 +3691,8 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (void)setMouseMode:(MouseMode)mode
 {
-    mouseMode_ = mode;
-    [delegate_ terminalMouseModeDidChangeTo:mouseMode_];
+    _mouseMode = mode;
+    [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
 }
 
 - (void)setMouseFormat:(MouseFormat)format
@@ -3751,7 +3711,7 @@ static VT100TCC decode_string(unsigned char *datap,
                 break;
 
             case 6: // Command from host -- Please report active position
-                if ([self originMode]) {
+                if (self.originMode) {
                     // This is compatible with Terminal but not old xterm :(. it always did what
                     // we do in the else clause. This behavior of xterm is fixed by Patch #297.
                     [delegate_ terminalSendReport:[self reportActivePositionWithX:[delegate_ terminalRelativeCursorX]

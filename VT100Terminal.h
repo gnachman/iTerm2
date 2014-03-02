@@ -54,6 +54,23 @@ typedef enum {
 @property(nonatomic, assign) NSStringEncoding encoding;
 @property(nonatomic, readonly) BOOL reportFocus;
 
+@property(nonatomic, readonly) BOOL reverseVideo;
+@property(nonatomic, readonly) BOOL originMode;
+@property(nonatomic, assign) BOOL wraparoundMode;
+@property(nonatomic, readonly) BOOL isAnsi;
+@property(nonatomic, readonly) BOOL autorepeatMode;
+@property(nonatomic, readonly) BOOL insertMode;
+@property(nonatomic, readonly) int charset;  // G0 through G3
+@property(nonatomic, readonly) MouseMode mouseMode;
+
+// The current foreground/background color to display (they're swapped when reverseVideo is on).
+@property(nonatomic, readonly) screen_char_t foregroundColorCode;
+@property(nonatomic, readonly) screen_char_t backgroundColorCode;
+
+// The "real" foreground/background color, which doesn't change with reverseVideo.
+@property(nonatomic, readonly) screen_char_t foregroundColorCodeReal;
+@property(nonatomic, readonly) screen_char_t backgroundColorCodeReal;
+
 - (void)putStreamData:(NSData*)data;
 - (void)putStreamData:(const char *)buffer length:(int)length;
 
@@ -85,21 +102,6 @@ typedef enum {
 - (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
 - (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
 - (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
-
-- (BOOL)reverseVideo;
-- (BOOL)originMode;
-- (BOOL)wraparoundMode;
-- (void)setWraparoundMode:(BOOL)mode;
-- (BOOL)isAnsi;
-- (BOOL)autorepeatMode;
-- (BOOL)insertMode;
-- (int)charset;
-- (MouseMode)mouseMode;
-
-- (screen_char_t)foregroundColorCode;
-- (screen_char_t)backgroundColorCode;
-- (screen_char_t)foregroundColorCodeReal;
-- (screen_char_t)backgroundColorCodeReal;
 
 - (NSData *)reportActivePositionWithX:(int)x Y:(int)y withQuestion:(BOOL)q;
 
