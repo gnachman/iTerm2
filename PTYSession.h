@@ -31,6 +31,7 @@ extern NSString *const kPTYSessionTmuxFontDidChange;
 @class VT100RemoteHost;
 @class VT100Screen;
 @class VT100Terminal;
+@class iTermColorMap;
 @class iTermController;
 @class iTermGrowlDelegate;
 
@@ -186,13 +187,7 @@ typedef enum {
 // Filename of background image.
 @property(nonatomic, copy) NSString *backgroundImagePath;
 
-@property(nonatomic, retain) NSColor *foregroundColor;
-@property(nonatomic, retain) NSColor *backgroundColor;
-@property(nonatomic, retain) NSColor *selectionColor;
-@property(nonatomic, retain) NSColor *boldColor;
-@property(nonatomic, retain) NSColor *cursorColor;
-@property(nonatomic, retain) NSColor *selectedTextColor;
-@property(nonatomic, retain) NSColor *cursorTextColor;
+@property(nonatomic, retain) iTermColorMap *colorMap;
 @property(nonatomic, assign) float transparency;
 @property(nonatomic, assign) float blend;
 @property(nonatomic, assign) BOOL useBoldFont;
@@ -327,7 +322,6 @@ typedef enum {
 - (void)textViewDidChangeSelection: (NSNotification *)aNotification;
 - (void)textViewResized: (NSNotification *)aNotification;
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode;
-- (void)setColorTable:(int)index color:(NSColor *)c;
 - (void)setSmartCursorColor:(BOOL)value;
 - (void)setMinimumContrast:(float)value;
 

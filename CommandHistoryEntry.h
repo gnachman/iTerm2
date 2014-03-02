@@ -40,4 +40,6 @@
 
 - (NSDictionary *)dictionary;
 
+- (NSComparisonResult)compareUseTime:(CommandHistoryEntry *)other;
+
 @end

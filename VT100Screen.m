@@ -4,6 +4,7 @@
 #import "DVR.h"
 #import "IntervalTree.h"
 #import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "PTYNoteViewController.h"
 #import "PTYTextView.h"
 #import "RegexKitLite.h"
@@ -12,6 +13,7 @@
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
 #import "VT100WorkingDirectory.h"
+#import "iTermColorMap.h"
 #import "iTermExpose.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermSelection.h"
@@ -338,7 +340,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         // selection. Later this will be used to set the selection positions
         // relative to the end of the udpated linebuffer (which could change as
         // lines from the base screen are pushed onto it).
-        BOOL ok1, ok2;
         LineBuffer *lineBufferWithAltScreen = [[linebuffer_ newAppendOnlyCopy] autorelease];
         [self appendScreen:currentGrid_
               toScrollback:lineBufferWithAltScreen
@@ -2771,10 +2772,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [delegate_ screenModifiersDidChangeTo:array];
 }
 
-- (void)terminalColorTableEntryAtIndex:(int)theIndex didChangeToColor:(NSColor *)theColor {
-    [delegate_ screenSetColorTableEntryAtIndex:theIndex color:theColor];
-}
-
 - (void)terminalSaveScrollPositionWithArgument:(NSString *)argument {
     // The difference between an argument of saveScrollPosition and saveCursorLine (the default) is
     // subtle. When saving the scroll position, the entire region of visible lines is recorded and
@@ -3022,35 +3019,35 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalSetForegroundColor:(NSColor *)color {
-    [delegate_ screenSetForegroundColor:color];
+    [[delegate_ screenColorMap] setColor:color forKey:kColorMapForeground];
 }
 
-- (void)terminalSetBackgroundGColor:(NSColor *)color {
-    [delegate_ screenSetBackgroundColor:color];
+- (void)terminalSetBackgroundColor:(NSColor *)color {
+    [[delegate_ screenColorMap] setColor:color forKey:kColorMapBackground];
 }
 
 - (void)terminalSetBoldColor:(NSColor *)color {
-    [delegate_ screenSetBoldColor:color];
+    [[delegate_ screenColorMap] setColor:color forKey:kColorMapBold];
 }
 
 - (void)terminalSetSelectionColor:(NSColor *)color {
-    [delegate_ screenSetSelectionColor:color];
+    [[delegate_ screenColorMap] setColor:color forKey:kColorMapSelection];
 }
 
 - (void)terminalSetSelectedTextColor:(NSColor *)color {
-    [delegate_ screenSetSelectedTextColor:color];
+    [[delegate_ screenColorMap] setColor:color forKey:kColorMapSelectedText];
 }
 
 - (void)terminalSetCursorColor:(NSColor *)color {
-    [delegate_ screenSetCursorColor:color];
+    [[delegate_ screenColorMap] setColor:color forKey:kColorMapCursor];
 }
 
 - (void)terminalSetCursorTextColor:(NSColor *)color {
-    [delegate_ screenSetCursorTextColor:color];
+    [[delegate_ screenColorMap] setColor:color forKey:kColorMapCursorText];
 }
 
 - (void)terminalSetColorTableEntryAtIndex:(int)n color:(NSColor *)color {
-    [delegate_ screenSetColorTableEntryAtIndex:n color:color];
+    [[delegate_ screenColorMap] setColor:color forKey:kColorMap8bitBase + n];
 }
 
 - (void)terminalSetCurrentTabColor:(NSColor *)color {
@@ -3223,26 +3220,13 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     NSLog(@"%@", [self debugString]);
 }
 
-- (int)colorCodeForColor:(NSColor *)theColor
-{
-    if (theColor) {
-        theColor = [theColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-        int r = 5 * [theColor redComponent];
-        int g = 5 * [theColor greenComponent];
-        int b = 5 * [theColor blueComponent];
-        return 16 + b + g*6 + r*36;
-    } else {
-        return 0;
-    }
-}
-
 // Set the color of prototypechar to all chars between startPoint and endPoint on the screen.
 - (void)highlightRun:(VT100GridRun)run
     withForegroundColor:(NSColor *)fgColor
         backgroundColor:(NSColor *)bgColor
 {
-    int fgColorCode = [self colorCodeForColor:fgColor];
-    int bgColorCode = [self colorCodeForColor:bgColor];
+    int fgColorCode = [fgColor nearestIndexIntoAnsi256ColorTable];
+    int bgColorCode = [bgColor nearestIndexIntoAnsi256ColorTable];
 
     screen_char_t fg = { 0 };
     screen_char_t bg = { 0 };

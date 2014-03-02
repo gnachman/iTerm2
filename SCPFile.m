@@ -241,8 +241,7 @@ static NSError *SCPFileError(NSString *description) {
                                                                  keyboardInteractivePrompt:@"Passphrase for private key:"];
                     });
                 }
-                // Try an empty passphrase first
-                BOOL ok = [self.session authenticateByPublicKey:[kPublicKeyPath stringByExpandingTildeInPath]
+                [self.session authenticateByPublicKey:[kPublicKeyPath stringByExpandingTildeInPath]
                                                      privateKey:[kPrivateKeyPath stringByExpandingTildeInPath]
                                                     andPassword:password];
             

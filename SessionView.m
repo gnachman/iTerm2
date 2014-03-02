@@ -113,7 +113,7 @@ static NSDate* lastResizeDate_;
 {
     [session_ autorelease];
     session_ = [session retain];
-    [[session_ textview] setDimmingAmount:currentDimmingAmount_];
+    session_.colorMap.dimmingAmount = currentDimmingAmount_;
 }
 
 - (void)fadeAnimation
@@ -125,9 +125,9 @@ static NSDate* lastResizeDate_;
     if ((changePerSecond_ > 0 && newDimmingAmount > targetDimmingAmount_) ||
         (changePerSecond_ < 0 && newDimmingAmount < targetDimmingAmount_)) {
         currentDimmingAmount_ = targetDimmingAmount_;
-        [[session_ textview] setDimmingAmount:targetDimmingAmount_];
+        session_.colorMap.dimmingAmount = targetDimmingAmount_;
     } else {
-        [[session_ textview] setDimmingAmount:newDimmingAmount];
+        session_.colorMap.dimmingAmount = newDimmingAmount;
         currentDimmingAmount_ = newDimmingAmount;
         [self markUpdateTime];
         timer_ = [NSTimer scheduledTimerWithTimeInterval:1.0/60.0
@@ -155,7 +155,7 @@ static NSDate* lastResizeDate_;
         }
         [self fadeAnimation];
     } else {
-        [[session_ textview] setDimmingAmount:newDimmingAmount];
+        session_.colorMap.dimmingAmount = newDimmingAmount;
     }
 }
 
@@ -380,7 +380,7 @@ static NSDate* lastResizeDate_;
     // Fill in background color in the area around a scrollview if it's smaller
     // than the session view.
     [super drawRect:dirtyRect];
-    NSColor *bgColor = [[session_ textview] backgroundColor];
+    NSColor *bgColor = [session_.textview.colorMap colorForKey:kColorMapBackground];
     [bgColor set];
     PTYScrollView *scrollView = [session_ scrollview];
     NSRect svFrame = [scrollView frame];
@@ -591,7 +591,6 @@ static NSDate* lastResizeDate_;
 - (void)updateTitleFrame
 {
     NSRect aRect = [self frame];
-    NSView *scrollView = (NSView *)[session_ scrollview];
     if (showTitle_) {
         [title_ setFrame:NSMakeRect(0,
                                     aRect.size.height - kTitleHeight,

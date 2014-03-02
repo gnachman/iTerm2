@@ -772,7 +772,6 @@
     }
 
     // Slow path.
-    NSArray *subs = [self allSubSelections];
     NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
     for (iTermSubSelection *sub in [self allSubSelections]) {
         VT100GridWindowedRange range = sub.range;

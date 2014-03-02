@@ -1370,7 +1370,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="5343">
-                                            <rect key="frame" x="711" y="237" width="44" height="11"/>
+                                            <rect key="frame" x="711" y="227" width="44" height="11"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Very Dim" id="5344">
                                                 <font key="font" metaFont="miniSystem"/>
@@ -4098,11 +4098,11 @@ Gw
                                             <rect key="frame" x="363" y="30" width="508" height="379"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <clipView key="contentView" id="Dzn-LP-RyA">
-                                                <rect key="frame" x="1" y="17" width="506" height="361"/>
+                                                <rect key="frame" x="1" y="17" width="490" height="361"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveName="KeyBingingTable" headerView="3855" id="3852">
-                                                        <rect key="frame" x="0.0" y="0.0" width="506" height="361"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="490" height="361"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -4122,7 +4122,7 @@ Gw
                                                                 </textFieldCell>
                                                                 <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                                             </tableColumn>
-                                                            <tableColumn identifier="1" editable="NO" width="302.101" minWidth="42.10107" maxWidth="1000" id="3856">
+                                                            <tableColumn identifier="1" editable="NO" width="286.101" minWidth="42.10107" maxWidth="1000" id="3856">
                                                                 <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
                                                                     <font key="font" metaFont="smallSystem"/>
                                                                     <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -4153,7 +4153,7 @@ Gw
                                                 <autoresizingMask key="autoresizingMask"/>
                                             </scroller>
                                             <tableHeaderView key="headerView" id="3855">
-                                                <rect key="frame" x="0.0" y="0.0" width="506" height="17"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="490" height="17"/>
                                                 <autoresizingMask key="autoresizingMask"/>
                                             </tableHeaderView>
                                             <connections>

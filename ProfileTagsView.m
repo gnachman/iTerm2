@@ -157,9 +157,6 @@ static const CGFloat kRowHeight = 21;
             NSString *tagName = tags[i];
             NSArray *currentParts = [tagName componentsSeparatedByString:@"/"];
             int numPartsMatched = [self numberOfPartsMatchedBetween:previousParts and:currentParts];
-            NSArray *suffixArray =
-                [currentParts subarrayWithRange:NSMakeRange(numPartsMatched,
-                                                            currentParts.count - numPartsMatched)];
             while (numPartsMatched < currentParts.count) {
                 NSString *key = [NSString stringWithFormat:@"%@%@",
                                  [self stringForIndentLevel:numPartsMatched],

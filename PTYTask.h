@@ -8,7 +8,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 @class PTYTab;
 
 @protocol PTYTaskDelegate <NSObject>
-- (void)readTask:(char *)buffer length:length;
+- (void)readTask:(char *)buffer length:(int)length;
 - (void)brokenPipe;
 @end
 

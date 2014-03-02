@@ -7,6 +7,7 @@
 #import "ScreenChar.h"
 #import "Trouter.h"
 #import "iTerm.h"
+#import "iTermColorMap.h"
 #include <sys/time.h>
 
 @class CRunStorage;
@@ -123,7 +124,8 @@ typedef enum {
   NSDraggingDestination,
   NSTextInput,
   PointerControllerDelegate,
-  TrouterDelegate>
+  TrouterDelegate,
+  iTermColorMapDelegate>
 
 // Current selection
 @property(nonatomic, readonly) iTermSelection *selection;
@@ -167,27 +169,6 @@ typedef enum {
 
 // When dimming inactive views, should only text be dimmed (not bg?)
 @property(nonatomic, assign) BOOL dimOnlyText;
-
-// Foreground color (the default color)
-@property(nonatomic, retain) NSColor *foregroundColor;
-
-// Background color (the default color)
-@property(nonatomic, retain) NSColor *backgroundColor;
-
-// Color for bold text
-@property(nonatomic, retain) NSColor *boldColor;
-
-// Color for selected background.
-@property(nonatomic, retain) NSColor *selectionColor;
-
-// Color for selected text.
-@property(nonatomic, retain) NSColor *selectedTextColor;
-
-// Color for cursor background.
-@property(nonatomic, retain) NSColor *cursorColor;
-
-// Color for cursor text.
-@property(nonatomic, retain) NSColor *cursorTextColor;
 
 // Should smart cursor color be used.
 @property(nonatomic, assign) BOOL useSmartCursorColor;
@@ -236,12 +217,11 @@ typedef enum {
 // Returns the current find context, or one initialized to empty.
 @property(nonatomic, readonly) FindContext *findContext;
 
-// Degree (0 to 1) to which colors are dimmed towards gray.
-@property(nonatomic, assign) double dimmingAmount;
-
 // Indicates if the "find cursor" mode is active.
 @property(nonatomic, readonly) BOOL isFindingCursor;
 
+// Stores colors. This object is its delegate.
+@property(nonatomic, readonly) iTermColorMap *colorMap;
 
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
@@ -251,6 +231,11 @@ typedef enum {
 + (NSSize)charSizeForFont:(NSFont*)aFont
         horizontalSpacing:(double)hspace
           verticalSpacing:(double)vspace;
+
+// This is the designated initializer. The color map should have the
+// basic colors plus the 8-bit ansi colors set shortly after this is
+// called.
+- (id)initWithFrame:(NSRect)frame colorMap:(iTermColorMap *)colorMap;
 
 // Sets the "changed since last Exposé" flag to NO and returns its original value.
 - (BOOL)getAndResetChangedSinceLastExpose;
@@ -314,16 +299,6 @@ typedef enum {
     verticalSpacing:(double)verticalSpacing;
 - (NSRect)scrollViewContentSize;
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
-
-// Color stuff
-- (NSColor*)colorForCode:(int)theIndex
-                   green:(int)green
-                    blue:(int)blue
-               colorMode:(ColorMode)theMode
-                    bold:(BOOL)isBold
-            isBackground:(BOOL)isBackground;
-- (NSColor*)colorFromRed:(int)red green:(int)green blue:(int)blue;
-- (void)setColorTable:(int) theIndex color:(NSColor *) c;
 
 // Update the scroller color for light or dark backgrounds.
 - (void)updateScrollerForBackgroundColor;

@@ -1,5 +1,6 @@
 #import "VT100Terminal.h"
 #import "DebugLogging.h"
+#import "NSColor+iTerm.h"
 #import <apr-1/apr_base64.h>  // for xterm's base64 decoding (paste64)
 #include <term.h>
 
@@ -3438,11 +3439,10 @@ static VT100TCC decode_string(unsigned char *datap,
             r >= 0 && r <= 255 &&
             g >= 0 && g <= 255 &&
             b >= 0 && b <= 255) {
-            [delegate_ terminalColorTableEntryAtIndex:theIndex
-                                     didChangeToColor:[NSColor colorWithCalibratedRed:r/255.0
-                                                                                green:g/255.0
-                                                                                 blue:b/255.0
-                                                                                alpha:1]];
+            [delegate_ terminalSetColorTableEntryAtIndex:theIndex
+                                                   color:[NSColor colorWith8BitRed:r
+                                                                             green:g
+                                                                              blue:b]];
         }
     } else if (token.type == XTERMCC_SET_KVP) {
         // argument is of the form key=value
@@ -3617,7 +3617,7 @@ static VT100TCC decode_string(unsigned char *datap,
                     [delegate_ terminalSetForegroundColor:theColor];
                     break;
                 case 17:
-                    [delegate_ terminalSetBackgroundGColor:theColor];
+                    [delegate_ terminalSetBackgroundColor:theColor];
                     break;
                 case 18:
                     [delegate_ terminalSetBoldColor:theColor];
@@ -4441,7 +4441,7 @@ static VT100TCC decode_string(unsigned char *datap,
                 NSString *label = nil;
                 
                 if (args.count >= 3) {
-                    NSString *label = args[2];
+                    label = args[2];
                 }
 
                 [delegate_ terminalProgressAt:fraction label:label];

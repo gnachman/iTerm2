@@ -257,9 +257,6 @@ typedef enum {
 - (void)terminalSendModifiersDidChangeTo:(int *)modifiers
                                numValues:(int)numValues;
 
-// Sets a color table entry.
-- (void)terminalColorTableEntryAtIndex:(int)theIndex didChangeToColor:(NSColor *)theColor;
-
 // Saves the current scroll position in the window.
 - (void)terminalSaveScrollPositionWithArgument:(NSString *)argument;
 
@@ -316,7 +313,7 @@ typedef enum {
 
 // Set various colors.
 - (void)terminalSetForegroundColor:(NSColor *)color;
-- (void)terminalSetBackgroundGColor:(NSColor *)color;
+- (void)terminalSetBackgroundColor:(NSColor *)color;
 - (void)terminalSetBoldColor:(NSColor *)color;
 - (void)terminalSetSelectionColor:(NSColor *)color;
 - (void)terminalSetSelectedTextColor:(NSColor *)color;

@@ -8,6 +8,7 @@
 #import "ITAddressBookMgr.h"
 #import "MovePaneController.h"
 #import "MovePaneController.h"
+#import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
@@ -38,6 +39,7 @@
 #import "WindowControllerInterface.h"
 #import "iTerm.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermColorMap.h"
 #import "iTermController.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
@@ -214,7 +216,7 @@ static int gNextSessionID = 1;
         _lastOutput = _lastInput;
         _lastUpdate = _lastInput;
         _eventQueue = [[NSMutableArray alloc] init];
-
+        _colorMap = [[iTermColorMap alloc] init];
         // Allocate screen, shell, and terminal objects
         _shell = [[PTYTask alloc] init];
         _terminal = [[VT100Terminal alloc] init];
@@ -250,6 +252,7 @@ static int gNextSessionID = 1;
 - (void)dealloc
 {
     [self stopTailFind];  // This frees the substring in the tail find context, if needed.
+    [_colorMap release];
     [_triggerLine release];
     [_triggers release];
     [_pasteboard release];
@@ -542,8 +545,9 @@ static int gNextSessionID = 1;
     _wrapper = [[TextViewWrapper alloc] initWithFrame:NSMakeRect(0, 0, aSize.width, aSize.height)];
     [_wrapper setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
-    _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, VMARGIN, aSize.width, aSize.height)];
-    [_textview setDimOnlyText:[[PreferencePanel sharedInstance] dimOnlyText]];
+    _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, VMARGIN, aSize.width, aSize.height)
+                                          colorMap:_colorMap];
+    _colorMap.dimOnlyText = [[PreferencePanel sharedInstance] dimOnlyText];
     [_textview setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [_textview setFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NORMAL_FONT]]
           nonAsciiFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NON_ASCII_FONT]]
@@ -946,6 +950,7 @@ static int gNextSessionID = 1;
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
+    _colorMap.delegate = nil;
     _textview = nil;
 
     [_shell setDelegate:nil];
@@ -1426,7 +1431,6 @@ static int gNextSessionID = 1;
     NSArray *supportedTypes = [NSArray arrayWithObjects:NSFilenamesPboardType, nil];
     NSString *bestType = [board availableTypeFromArray:supportedTypes];
 
-    NSString* info = nil;
     if ([bestType isEqualToString:NSFilenamesPboardType]) {
         NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
         if (filenames.count > 0) {
@@ -1708,7 +1712,9 @@ static int gNextSessionID = 1;
     }
 }
 
-- (NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Profile*)aDict
+- (NSString *)ansiColorsMatchingForeground:(NSDictionary *)fg
+                             andBackground:(NSDictionary *)bg
+                                inBookmark:(Profile *)aDict
 {
     NSColor *fgColor;
     NSColor *bgColor;
@@ -1737,15 +1743,9 @@ static int gNextSessionID = 1;
 - (void)loadInitialColorTable
 {
     int i;
-    for (i = 0; i < 216; i++) {
-        [self setColorTable:i+16
-                      color:[NSColor colorWithCalibratedRed:(i/36) ? ((i/36)*40+55)/255.0 : 0
-                                                      green:(i%36)/6 ? (((i%36)/6)*40+55)/255.0:0
-                                                       blue:(i%6) ?((i%6)*40+55)/255.0:0
-                                                      alpha:1]];
-    }
-    for (i = 0; i < 24; i++) {
-        [self setColorTable:i+232 color:[NSColor colorWithCalibratedWhite:(i*10+8)/255.0 alpha:1]];
+    for (i = 16; i < 256; i++) {
+        NSColor *theColor = [NSColor colorForAnsi256ColorIndex:i];
+        [_colorMap setColor:theColor forKey:kColorMap8bitBase + i];
     }
 }
 
@@ -1860,7 +1860,6 @@ static int gNextSessionID = 1;
 
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs
 {
-    NSColor *colorTable[2][8];
     int i;
     NSDictionary *aDict = aePrefs;
 
@@ -1871,38 +1870,40 @@ static int gNextSessionID = 1;
         return;
     }
 
-    [self setForegroundColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_FOREGROUND_COLOR]]];
-    [self setBackgroundColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_BACKGROUND_COLOR]]];
-    [self setSelectionColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_SELECTION_COLOR]]];
-    [self setSelectedTextColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_SELECTED_TEXT_COLOR]]];
-    [self setBoldColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_BOLD_COLOR]]];
-    [self setCursorColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_CURSOR_COLOR]]];
-    [self setCursorTextColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_CURSOR_TEXT_COLOR]]];
+    NSDictionary *keyMap = @{ @(kColorMapForeground): KEY_FOREGROUND_COLOR,
+                              @(kColorMapBackground): KEY_BACKGROUND_COLOR,
+                              @(kColorMapSelection): KEY_SELECTION_COLOR,
+                              @(kColorMapSelectedText): KEY_SELECTED_TEXT_COLOR,
+                              @(kColorMapBold): KEY_BOLD_COLOR,
+                              @(kColorMapCursor): KEY_CURSOR_COLOR,
+                              @(kColorMapCursorText): KEY_CURSOR_TEXT_COLOR };
+    for (NSNumber *colorKey in keyMap) {
+        NSString *profileKey = keyMap[colorKey];
+        NSColor *theColor = [ITAddressBookMgr decodeColor:aDict[profileKey]];
+        [_colorMap setColor:theColor forKey:[colorKey intValue]];
+    }
 
-    BOOL scc;
+    for (i = 0; i < 16; i++) {
+        NSString *profileKey = [NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i];
+        NSColor *theColor = [ITAddressBookMgr decodeColor:aDict[profileKey]];
+        [_colorMap setColor:theColor forKey:kColorMap8bitBase + i];
+    }
+
+    BOOL useSmartCursorColor;
     if ([aDict objectForKey:KEY_SMART_CURSOR_COLOR]) {
-        scc = [[aDict objectForKey:KEY_SMART_CURSOR_COLOR] boolValue];
+        useSmartCursorColor = [[aDict objectForKey:KEY_SMART_CURSOR_COLOR] boolValue];
     } else {
-        scc = [[PreferencePanel sharedInstance] legacySmartCursorColor];
+        useSmartCursorColor = [[PreferencePanel sharedInstance] legacySmartCursorColor];
     }
-    [self setSmartCursorColor:scc];
+    [self setSmartCursorColor:useSmartCursorColor];
 
-    float mc;
+    float minimumContrast;
     if ([aDict objectForKey:KEY_MINIMUM_CONTRAST]) {
-        mc = [[aDict objectForKey:KEY_MINIMUM_CONTRAST] floatValue];
+        minimumContrast = [[aDict objectForKey:KEY_MINIMUM_CONTRAST] floatValue];
     } else {
-        mc = [[PreferencePanel sharedInstance] legacyMinimumContrast];
+        minimumContrast = [[PreferencePanel sharedInstance] legacyMinimumContrast];
     }
-    [self setMinimumContrast:mc];
-
-    for (i = 0; i < 8; i++) {
-        colorTable[0][i] = [ITAddressBookMgr decodeColor:[aDict objectForKey:[NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i]]];
-        colorTable[1][i] = [ITAddressBookMgr decodeColor:[aDict objectForKey:[NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i + 8]]];
-    }
-    for(i = 0; i < 8; i++) {
-        [self setColorTable:i color:colorTable[0][i]];
-        [self setColorTable:i+8 color:colorTable[1][i]];
-    }
+    [self setMinimumContrast:minimumContrast];
 
     // background image
     [self setBackgroundImagePath:[aDict objectForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
@@ -2275,63 +2276,6 @@ static int gNextSessionID = 1;
     [_textview setNeedsDisplay:YES];
 }
 
-- (NSColor *)foregroundColor
-{
-    return [_textview foregroundColor];
-}
-
-- (void)setForegroundColor:(NSColor*)color
-{
-    if (color == nil) {
-        return;
-    }
-
-    if (([_textview foregroundColor] != color) ||
-       ([[_textview foregroundColor] alphaComponent] != [color alphaComponent])) {
-        // Change the fg color for future stuff
-        [_textview setForegroundColor:color];
-    }
-}
-
-- (NSColor *)backgroundColor
-{
-    return [_textview backgroundColor];
-}
-
-- (void)setBackgroundColor:(NSColor*) color {
-    if (color == nil) {
-        return;
-    }
-
-    if (([_textview backgroundColor] != color) ||
-        ([[_textview backgroundColor] alphaComponent] != [color alphaComponent])) {
-        // Change the bg color for future stuff
-        [_textview setBackgroundColor:color];
-    }
-
-    [[self scrollview] setBackgroundColor:color];
-}
-
-- (NSColor *)boldColor
-{
-    return [_textview boldColor];
-}
-
-- (void)setBoldColor:(NSColor*)color
-{
-    [[self textview] setBoldColor:color];
-}
-
-- (NSColor *)cursorColor
-{
-    return [_textview cursorColor];
-}
-
-- (void)setCursorColor:(NSColor*)color
-{
-    [[self textview] setCursorColor:color];
-}
-
 - (void)setSmartCursorColor:(BOOL)value
 {
     [[self textview] setUseSmartCursorColor:value];
@@ -2340,36 +2284,6 @@ static int gNextSessionID = 1;
 - (void)setMinimumContrast:(float)value
 {
     [[self textview] setMinimumContrast:value];
-}
-
-- (NSColor *)selectionColor
-{
-    return [_textview selectionColor];
-}
-
-- (void)setSelectionColor:(NSColor *)color
-{
-    [_textview setSelectionColor:color];
-}
-
-- (NSColor *)selectedTextColor
-{
-    return [_textview selectedTextColor];
-}
-
-- (void)setSelectedTextColor:(NSColor *)aColor
-{
-    [_textview setSelectedTextColor:aColor];
-}
-
-- (NSColor *)cursorTextColor
-{
-    return [_textview cursorTextColor];
-}
-
-- (void)setCursorTextColor:(NSColor *)aColor
-{
-    [_textview setCursorTextColor:aColor];
 }
 
 // Changes transparency
@@ -2399,11 +2313,6 @@ static int gNextSessionID = 1;
 - (void)setBlend:(float)blendVal
 {
     [_textview setBlend:blendVal];
-}
-
-- (void)setColorTable:(int)theIndex color:(NSColor *)theColor
-{
-    [_textview setColorTable:theIndex color:theColor];
 }
 
 - (BOOL)antiIdle
@@ -5063,36 +4972,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
-- (void)screenSetForegroundColor:(NSColor *)color {
-    [_textview setForegroundColor:color];
-}
-
-- (void)screenSetBackgroundColor:(NSColor *)color {
-    [_textview setBackgroundColor:color];
-}
-
-- (void)screenSetBoldColor:(NSColor *)color {
-    [_textview setBoldColor:color];
-}
-
-- (void)screenSetSelectionColor:(NSColor *)color {
-    [_textview setSelectionColor:color];
-}
-
-- (void)screenSetSelectedTextColor:(NSColor *)color {
-    [_textview setSelectedTextColor:color];
-}
-
-- (void)screenSetCursorColor:(NSColor *)color {
-    [_textview setCursorColor:color];
-}
-
-- (void)screenSetCursorTextColor:(NSColor *)color {
-    [_textview setCursorTextColor:color];
-}
-
-- (void)screenSetColorTableEntryAtIndex:(int)n color:(NSColor *)color {
-    [_textview setColorTable:n color:color];
+- (iTermColorMap *)screenColorMap {
+    return _colorMap;
 }
 
 - (void)screenSetCurrentTabColor:(NSColor *)color {

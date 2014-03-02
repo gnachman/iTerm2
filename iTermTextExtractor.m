@@ -570,7 +570,6 @@ static const int kNumCharsToSearchForDivider = 8;
                                              pad:(BOOL)pad
                                attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider
 {
-    int width = [_dataSource width];
     NSMutableAttributedString* result = [[[NSMutableAttributedString alloc] init] autorelease];
     [self enumerateCharsInRange:range
                       charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {

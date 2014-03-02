@@ -50,7 +50,6 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     if (!screen) {
         screen = [NSScreen mainScreen];
     }
-    NSRect screenFrame = [screen visibleFrame];
 
     [NSApp activateIgnoringOtherApps:YES];
     [[term window] makeKeyAndOrderFront:nil];

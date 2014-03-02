@@ -2,6 +2,7 @@
 #import "PTYTextViewDataSource.h"
 
 @class VT100RemoteHost;
+@class iTermColorMap;
 @class iTermSelection;
 
 @protocol VT100ScreenDelegate <NSObject>
@@ -170,8 +171,6 @@
 // Returns if there is a view.
 - (BOOL)screenHasView;
 
-- (void)screenSetColorTableEntryAtIndex:(int)n color:(NSColor *)color;
-
 // Save the current scroll position
 - (void)screenSaveScrollPosition;
 - (void)screenAddMarkOnLine:(int)line;
@@ -192,13 +191,7 @@
 - (void)screenFileReceiptEndedUnexpectedly;
 
 - (void)screenRequestAttention:(BOOL)request;
-- (void)screenSetForegroundColor:(NSColor *)color;
-- (void)screenSetBackgroundColor:(NSColor *)color;
-- (void)screenSetBoldColor:(NSColor *)color;
-- (void)screenSetSelectionColor:(NSColor *)color;
-- (void)screenSetSelectedTextColor:(NSColor *)color;
-- (void)screenSetCursorColor:(NSColor *)color;
-- (void)screenSetCursorTextColor:(NSColor *)color;
+- (iTermColorMap *)screenColorMap;
 - (void)screenSetCurrentTabColor:(NSColor *)color;
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color;
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color;

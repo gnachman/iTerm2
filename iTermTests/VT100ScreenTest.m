@@ -14,6 +14,10 @@
 #import "TmuxStateParser.h"
 #import "VT100ScreenTest.h"
 #import "VT100Screen.h"
+#import "iTermSelection.h"
+
+@interface VT100ScreenTest () <iTermSelectionDelegate>
+@end
 
 @interface VT100Screen (Testing)
 // It's only safe to use this on a newly created screen.
@@ -29,7 +33,7 @@
 
 @implementation VT100ScreenTest {
     VT100Terminal *terminal_;
-    int startX_, endX_, startY_, endY_;
+    iTermSelection *selection_;
     int needsRedraw_;
     int sizeDidChange_;
     BOOL cursorVisible_;
@@ -57,7 +61,8 @@
 
 - (void)setup {
     terminal_ = [[[VT100Terminal alloc] init] autorelease];
-    startX_ = endX_ = startY_ = endY_ = -1;
+    selection_ = [[[iTermSelection alloc] init] autorelease];
+    selection_.delegate = self;
     needsRedraw_ = 0;
     sizeDidChange_ = 0;
     cursorVisible_ = YES;
@@ -274,34 +279,24 @@
     return YES;
 }
 
-- (int)screenSelectionStartX {
-    return startX_;
-}
-
-- (int)screenSelectionEndX {
-    return endX_;
-}
-
-- (int)screenSelectionStartY {
-    return startY_;
-}
-
-- (int)screenSelectionEndY {
-    return endY_;
+- (iTermSelection *)screenSelection {
+    return selection_;
 }
 
 - (void)screenSetSelectionFromX:(int)startX
                           fromY:(int)startY
                             toX:(int)endX
                             toY:(int)endY {
-    startX_ = startX;
-    startY_ = startY;
-    endX_ = endX;
-    endY_ = endY;
+    [selection_ clearSelection];
+    VT100GridWindowedRange theRange =
+        VT100GridWindowedRangeMake(VT100GridCoordRangeMake(startX, startY, endX, endY), 0, 0);
+    iTermSubSelection *theSub =
+        [iTermSubSelection subSelectionWithRange:theRange mode:kiTermSelectionModeCharacter];
+    [selection_ addSubSelection:theSub];
 }
 
 - (void)screenRemoveSelection {
-    startX_ = startY_ = endX_ = endY_ = -1;
+    [selection_ clearSelection];
 }
 
 - (void)screenNeedsRedraw {
@@ -362,33 +357,40 @@
 }
 
 - (NSString *)selectedStringInScreen:(VT100Screen *)screen {
-    if (startX_ < 0 ||
-        startY_ < 0 ||
-        endX_ < 0 ||
-        endY_ < 0) {
+    if (![selection_ hasSelection]) {
         return nil;
     }
     NSMutableString *s = [NSMutableString string];
-    int sx = startX_;
-    for (int y = startY_; y <= endY_; y++) {
-        screen_char_t *line = [screen getLineAtIndex:y];
-        int x;
-        int ex = y == endY_ ? endX_ : [screen width];
-        for (x = sx; x < ex; x++) {
-            if (line[x].code) {
-                [s appendString:ScreenCharArrayToStringDebug(line + x, 1)];
+    [selection_ enumerateSelectedRanges:^(VT100GridWindowedRange range, BOOL *stop, BOOL eol) {
+        int sx = range.coordRange.start.x;
+        for (int y = range.coordRange.start.y; y <= range.coordRange.end.y; y++) {
+            screen_char_t *line = [screen getLineAtIndex:y];
+            int x;
+            int ex = y == range.coordRange.end.y ? range.coordRange.end.x : [screen width];
+            BOOL newline = NO;
+            for (x = sx; x < ex; x++) {
+                if (line[x].code) {
+                    [s appendString:ScreenCharArrayToStringDebug(line + x, 1)];
+                } else {
+                    newline = YES;
+                    [s appendString:@"\n"];
+                    break;
+                }
             }
+            if (line[x].code == EOL_HARD && !newline && y != range.coordRange.end.y) {
+                [s appendString:@"\n"];
+            }
+            sx = 0;
         }
-        if ((y == endY_ &&
-             endX_ == [screen width] &&
-             line[x - 1].code == 0 &&
-             line[x].code == EOL_HARD) ||  // Last line of selection gets a newline iff there's a null char at the end
-            (y < endY_ && x == [screen width] && line[x].code == EOL_HARD)) {  // No null required for other lines
+        if (eol) {
             [s appendString:@"\n"];
         }
-        sx = 0;
-    }
+    }];
     return s;
+}
+
+- (BOOL)screenAllowTitleSetting {
+    return YES;
 }
 
 - (NSString *)screenCurrentWorkingDirectory {
@@ -431,6 +433,16 @@
 
 - (void)screenPrintVisibleArea {
     [self screenPrintString:@"(screen dump)"];
+}
+
+- (void)setSelectionRange:(VT100GridCoordRange)range {
+    [selection_ clearSelection];
+    VT100GridWindowedRange theRange =
+        VT100GridWindowedRangeMake(range, 0, 0);
+    iTermSubSelection *theSub =
+        [iTermSubSelection subSelectionWithRange:theRange
+                                            mode:kiTermSelectionModeCharacter];
+    [selection_ addSubSelection:theSub];
 }
 
 - (void)testResizeWidthHeight {
@@ -646,10 +658,7 @@
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     screen.delegate = (id<VT100ScreenDelegate>)self;
     // select "jk"
-    startX_ = 1;
-    startY_ = 2;
-    endX_ = 3;
-    endY_ = 2;
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 2, 3, 2)];
     [screen resizeWidth:3 height:3];
     assert([[screen compactLineDump] isEqualToString:
             @"ijk\n"
@@ -671,10 +680,7 @@
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     screen.delegate = (id<VT100ScreenDelegate>)self;
     // select "abcd"
-    startX_ = 0;
-    startY_ = 0;
-    endX_ = 4;
-    endY_ = 0;
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 4, 0)];
     [screen resizeWidth:3 height:3];
     assert([[screen compactLineDump] isEqualToString:
             @"ijk\n"
@@ -696,10 +702,7 @@
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     screen.delegate = (id<VT100ScreenDelegate>)self;
     // select "gh\ij"
-    startX_ = 1;
-    startY_ = 1;
-    endX_ = 2;
-    endY_ = 2;
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
     [screen resizeWidth:3 height:3];
     assert([[screen compactLineDump] isEqualToString:
             @"ijk\n"
@@ -717,10 +720,7 @@
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     screen.delegate = (id<VT100ScreenDelegate>)self;
     // select "gh\ij"
-    startX_ = 1;
-    startY_ = 1;
-    endX_ = 2;
-    endY_ = 2;
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
     [screen resizeWidth:9 height:4];
     assert([[screen compactLineDump] isEqualToString:
             @"abcdefgh.\n"
@@ -740,10 +740,7 @@
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self showAltAndUppercase:screen];
     // select "gh\ij"
-    startX_ = 1;
-    startY_ = 1;
-    endX_ = 2;
-    endY_ = 2;
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
     [screen resizeWidth:4 height:4];
     assert([[screen compactLineDump] isEqualToString:
             @"ABCD\n"
@@ -761,10 +758,7 @@
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self showAltAndUppercase:screen];
     // select "gh\nij"
-    startX_ = 1;
-    startY_ = 1;
-    endX_ = 2;
-    endY_ = 2;
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"GH\nIJ"]);
     [screen resizeWidth:3 height:3];
     assert([[screen compactLineDump] isEqualToString:
@@ -782,10 +776,7 @@
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self showAltAndUppercase:screen];
     // select "abc"
-    startX_ = 0;
-    startY_ = 0;
-    endX_ = 3;
-    endY_ = 0;
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 3, 0)];
     [screen resizeWidth:3 height:3];
     assert([[screen compactLineDump] isEqualToString:
             @"IJK\n"
@@ -802,10 +793,7 @@
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self showAltAndUppercase:screen];
     // select "gh\nij"
-    startX_ = 1;
-    startY_ = 1;
-    endX_ = 2;
-    endY_ = 2;
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"GH\nIJ"]);
     [screen resizeWidth:6 height:5];
     assert([[screen compactLineDump] isEqualToString:
@@ -841,10 +829,7 @@
             @"....."]);
     // select everything
     // TODO There's a bug when the selection is at the very end (5,6). It is deselected.
-    startX_ = 0;
-    startY_ = 0;
-    endX_ = 1;
-    endY_ = 6;
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 1, 6)];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nijkl\nMNOPQRST\nUVWXYZ"]);
     [screen resizeWidth:6 height:6];
     assert([[screen compactLineDump] isEqualToString:
@@ -881,10 +866,7 @@
     [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrst", @"uvwxyz"] toScreen:screen];
     [self showAltAndUppercase:screen];
     // select everything
-    startX_ = 0;
-    startY_ = 0;
-    endX_ = 5;
-    endY_ = 6;
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 5, 6)];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nijkl\nMNOPQRST\nUVWXYZ\n"]);
     [screen resizeWidth:6 height:6];
     ITERM_TEST_KNOWN_BUG([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nMNOPQRST\nUVWXYZ\n"],
@@ -928,10 +910,7 @@
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     screen.delegate = (id<VT100ScreenDelegate>)self;
     // select "efgh.."
-    startX_ = 4;
-    startY_ = 0;
-    endX_ = 5;
-    endY_ = 1;
+    [self setSelectionRange:VT100GridCoordRangeMake(4, 0, 5, 1)];
     [screen resizeWidth:3 height:3];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"efgh\n"]);
     needsRedraw_ = 0;
@@ -946,10 +925,7 @@
     // abcde
     // fgh..
     // ijkl.
-    startX_ = 0;
-    startY_ = 0;
-    endX_ = 1;
-    endY_ = 2;
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 1, 2)];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"\nabcdef"]);
     [screen resizeWidth:13 height:4];
     // TODO
@@ -975,10 +951,7 @@
             @"z....\n"
             @"....."]);
     [self showAltAndUppercase:screen];
-    startX_ = 0;
-    startY_ = 0;
-    endX_ = 2;
-    endY_ = 2;
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 2, 2)];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nij"]);
     [screen resizeWidth:6 height:6];
     assert([[screen compactLineDumpWithHistory] isEqualToString:
@@ -1008,10 +981,7 @@
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
     [self showAltAndUppercase:screen];
-    startX_ = 1;
-    startY_ = 2;
-    endX_ = 2;
-    endY_ = 3;
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 2, 2, 3)];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"jklmNO"]);
     [screen resizeWidth:6 height:6];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"NO"]);
@@ -1022,10 +992,7 @@
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
     [self showAltAndUppercase:screen];
-    startX_ = 0;
-    startY_ = 4;
-    endX_ = 2;
-    endY_ = 4;
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 4, 2, 4)];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"ST"]);
     [screen resizeWidth:6 height:6];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"ST"]);
@@ -1037,10 +1004,7 @@
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
     [self showAltAndUppercase:screen];
-    startX_ = 0;
-    startY_ = 2;
-    endX_ = 2;
-    endY_ = 2;
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 2, 2, 2)];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"ij"]);
     [screen resizeWidth:6 height:6];
     assert([self selectedStringInScreen:screen] == nil);
@@ -1052,10 +1016,7 @@
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
     [self showAltAndUppercase:screen];
-    startX_ = 0;
-    startY_ = 0;
-    endX_ = 1;
-    endY_ = 1;
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 1, 1)];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
     [screen resizeWidth:6 height:6];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
@@ -1065,10 +1026,7 @@
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
     [self showAltAndUppercase:screen];
-    startX_ = 0;
-    startY_ = 0;
-    endX_ = 5;
-    endY_ = 0;
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 5, 0)];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"abcde"]);
     [screen resizeWidth:6 height:6];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"abcde"]);
@@ -1078,10 +1036,7 @@
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
     [self showAltAndUppercase:screen];
-    startX_ = 0;
-    startY_ = 0;
-    endX_ = 2;
-    endY_ = 1;
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 2, 1)];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefg"]);
     [screen resizeWidth:6 height:6];
     assert([[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
@@ -1369,8 +1324,7 @@
 - (void)testClearScrollbackBuffer {
     VT100Screen *screen = [self screenWithWidth:5 height:4];
     screen.delegate = (id<VT100ScreenDelegate>)self;
-    startX_ = startY_ = 1;
-    endX_ = endY_ = 1;
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 1, 1)];
     [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrstuvwxyz"] toScreen:screen];
     assert([[screen compactLineDumpWithHistory] isEqualToString:
             @"abcde\n"
@@ -1387,10 +1341,7 @@
             @"wxyz.\n"
             @"....."]);
     assert(highlightsCleared_);
-    assert(startX_ == -1);
-    assert(startY_ == -1);
-    assert(endX_ == -1);
-    assert(endY_ == -1);
+    assert(![selection_ hasSelection]);
     assert([screen isAllDirty]);
 }
 
@@ -2387,8 +2338,7 @@
     [self showAltAndUppercase:screen];
     screen.saveToScrollbackInAlternateScreen = YES;
     [screen resetDirty];
-    startX_ = startY_ = 1;
-    endX_ = endY_ = 2;
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
     [screen terminalLineFeed];
     assert([screen scrollbackOverflow] == 1);
     assert([[screen compactLineDumpWithHistory] isEqualToString:
@@ -2403,13 +2353,11 @@
             @"dc\n"
             @"dd"]);
     [screen resetScrollbackOverflow];
-    assert(startX_ == 1);
+    assert([selection_ firstRange].coordRange.start.x == 1);
 
     screen.saveToScrollbackInAlternateScreen = NO;
     // scrollback overflow should be 0 and selection shoudn't be insane
-    startX_ = 1;
-    endX_ = 2;
-    startY_ = endY_ = 5;
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 5, 2, 5)];
     [screen terminalLineFeed];
     assert([screen scrollbackOverflow] == 0);
     assert([[screen compactLineDumpWithHistory] isEqualToString:
@@ -2423,7 +2371,10 @@
             @"dd\n"
             @"dd\n"
             @"dd"]);
-    ITERM_TEST_KNOWN_BUG(startY_ == 4, startY_ == -1);  // See comment in -linefeed about why this happens
+    VT100GridWindowedRange selectionRange = [selection_ firstRange];
+    ITERM_TEST_KNOWN_BUG(selectionRange.coordRange.start.y == 4,
+                         selectionRange.coordRange.start.y == -1);
+    // See comment in -linefeed about why this happens
     // When this bug is fixed, also test truncation with and without scroll regions, as well
     // as deselection because the whole selection scrolled off the top of the scroll region.
 }
@@ -3860,6 +3811,39 @@
   assert(range.start.y == 1);
   assert(range.end.x == 2);
   assert(range.end.y == 6);
+}
+
+#pragma mark - iTermSelectionDelegate
+
+- (void)selectionDidChange:(iTermSelection *)selection {
+}
+
+- (VT100GridWindowedRange)selectionRangeForParentheticalAt:(VT100GridCoord)coord {
+    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
+}
+
+- (VT100GridWindowedRange)selectionRangeForWordAt:(VT100GridCoord)coord {
+    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
+}
+
+- (VT100GridWindowedRange)selectionRangeForSmartSelectionAt:(VT100GridCoord)coord {
+    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
+}
+
+- (VT100GridCoordRange)selectionRangeForWrappedLineAt:(VT100GridCoord)coord {
+    return VT100GridCoordRangeMake(0, 0, 0, 0);
+}
+
+- (VT100GridCoordRange)selectionRangeForLineAt:(VT100GridCoord)coord {
+    return VT100GridCoordRangeMake(0, 0, 0, 0);
+}
+
+- (VT100GridRange)selectionRangeOfTerminalNullsOnLine:(int)lineNumber {
+    return VT100GridRangeMake(INT_MAX, 0);
+}
+
+- (VT100GridCoord)selectionPredecessorOfCoord:(VT100GridCoord)coord {
+    assert(false);
 }
 
 @end

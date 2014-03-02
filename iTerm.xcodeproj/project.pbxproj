@@ -675,6 +675,12 @@
 		A693395C1851A61D00EBEA20 /* VT100ScreenMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */; };
 		A693395D1851A61D00EBEA20 /* VT100ScreenMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */; };
 		A693395E1851A61D00EBEA20 /* VT100ScreenMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */; };
+		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
+		A6A13AA318C2D23300B241ED /* iTermColorMap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA118C2D23300B241ED /* iTermColorMap.m */; };
+		A6A13AA418C2D23300B241ED /* iTermColorMap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA118C2D23300B241ED /* iTermColorMap.m */; };
+		A6A13AA718C2D45900B241ED /* NSColor+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */; };
+		A6A13AA818C2D45900B241ED /* NSColor+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA618C2D45900B241ED /* NSColor+iTerm.m */; };
+		A6A13AA918C2D45900B241ED /* NSColor+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA618C2D45900B241ED /* NSColor+iTerm.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
 		A6A5991E1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
 		A6A5991F1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
@@ -1163,6 +1169,10 @@
 		A68A3118186E2F54007F550F /* PopupModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PopupModel.m; sourceTree = "<group>"; };
 		A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100ScreenMark.h; sourceTree = "<group>"; };
 		A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenMark.m; sourceTree = "<group>"; };
+		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; };
+		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; };
+		A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+iTerm.h"; sourceTree = "<group>"; };
+		A6A13AA618C2D45900B241ED /* NSColor+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSColor+iTerm.m"; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; };
@@ -1447,6 +1457,7 @@
 				1D407A2614BABE8700BD5035 /* iTerm.h */,
 				DDF0FD63062916F70080EF74 /* iTermApplication.h */,
 				20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */,
+				A6A13AA018C2D23300B241ED /* iTermColorMap.h */,
 				1D407A2714BABE8700BD5035 /* iTermController.h */,
 				1D4F359F1813386600699FDF /* iTermCursor.h */,
 				1DDBC61C12E2BCDC00BC3868 /* iTermExpose.h */,
@@ -1469,6 +1480,7 @@
 				1D9053C417A5CCF100A0B64E /* MovingAverage.h */,
 				A68A30EB186D150A007F550F /* NSArray+iTerm.h */,
 				1D085F9416F04D0900B7FCE9 /* NSBezierPath+iTerm.h */,
+				A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */,
 				1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */,
 				1D67ABA914285D6000D5DA4E /* NSFileManager+iTerm.h */,
 				A68A30EC186D150A007F550F /* NSObject+iTerm.h */,
@@ -1862,6 +1874,7 @@
 				1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */,
 				A68A30CD186D1414007F550F /* NSArray+iTerm.m */,
 				1D085F9516F04D0900B7FCE9 /* NSBezierPath+iTerm.m */,
+				A6A13AA618C2D45900B241ED /* NSColor+iTerm.m */,
 				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
 				A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */,
 				A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */,
@@ -1870,9 +1883,9 @@
 				A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */,
 				A68A30CE186D1414007F550F /* NSObject+iTerm.m */,
 				E8E901A202743CA303A80106 /* NSStringITerm.m */,
-				1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */,
 				A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */,
 				A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */,
+				1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -1982,6 +1995,7 @@
 				A68A30C0186D0DC1007F550F /* FindCursorView.m */,
 				1D237D27131D8741004DD60C /* FindView.m */,
 				1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */,
+				A6A13AA118C2D23300B241ED /* iTermColorMap.m */,
 				1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */,
 				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
 				1D9053C517A5CCF100A0B64E /* MovingAverage.m */,
@@ -2181,6 +2195,7 @@
 				1D5FDD6B1208E8F000C46BA3 /* CGSConnection.h in Headers */,
 				A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */,
 				A60014FB18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h in Headers */,
+				A6A13AA718C2D45900B241ED /* NSColor+iTerm.h in Headers */,
 				1D5FDD6C1208E8F000C46BA3 /* CGSCursor.h in Headers */,
 				A6057C041878CD30004A60AF /* ProfileTagsView.h in Headers */,
 				1D81F0C0183C3C2D00910838 /* NSView+RecursiveDescription.h in Headers */,
@@ -2194,6 +2209,7 @@
 				A6358649184BEA57009ED690 /* AATreeNode.h in Headers */,
 				A6358646184BEA57009ED690 /* AATree.h in Headers */,
 				1D5FDD721208E8F000C46BA3 /* CGSNotifications.h in Headers */,
+				A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */,
 				1D5FDD731208E8F000C46BA3 /* CGSRegion.h in Headers */,
 				1D5FDD741208E8F000C46BA3 /* CGSSession.h in Headers */,
 				1D5FDD751208E8F000C46BA3 /* CGSTransitions.h in Headers */,
@@ -2737,6 +2753,7 @@
 				1D9A5569180FA85000B42CE9 /* Autocomplete.m in Sources */,
 				A6057C10187BC4C3004A60AF /* CommandHistory.m in Sources */,
 				1D9A553D180FA7EA00B42CE9 /* ITAddressBookMgr.m in Sources */,
+				A6A13AA918C2D45900B241ED /* NSColor+iTerm.m in Sources */,
 				1D9A552A180FA63500B42CE9 /* VT100Screen.m in Sources */,
 				A68A30D0186D1414007F550F /* FileTransferManager.m in Sources */,
 				1D9A5594180FA87000B42CE9 /* PTYScrollView.m in Sources */,
@@ -2765,6 +2782,7 @@
 				A68A30E7186D1429007F550F /* VT100RemoteHost.m in Sources */,
 				1D9A557D180FA87000B42CE9 /* Coprocess.m in Sources */,
 				1D9A55AE180FA8B700B42CE9 /* PSMTabBarControl.m in Sources */,
+				A6A13AA418C2D23300B241ED /* iTermColorMap.m in Sources */,
 				A635864B184BEA57009ED690 /* AATreeNode.m in Sources */,
 				1D9A5543180FA81400B42CE9 /* ProfileTableRow.m in Sources */,
 				1D9A5588180FA87000B42CE9 /* MovePaneController.m in Sources */,
@@ -2834,6 +2852,7 @@
 				A68A30D1186D1414007F550F /* NSArray+iTerm.m in Sources */,
 				1D5FDDC61208E93600C46BA3 /* PSMTabDragWindow.m in Sources */,
 				1D5FDDC71208E93600C46BA3 /* iTermGrowlDelegate.m in Sources */,
+				A6A13AA318C2D23300B241ED /* iTermColorMap.m in Sources */,
 				A67E0AD1186E4B71009B2B68 /* TaskNotifier.m in Sources */,
 				1DD39ACF180B7884004E56D5 /* VT100GridTypes.m in Sources */,
 				A6057C0A187A1809004A60AF /* TerminalFile.m in Sources */,
@@ -2862,6 +2881,7 @@
 				1DD736421283C2FA009B7829 /* Popup.m in Sources */,
 				1D44218D1290B34500891504 /* TextViewWrapper.m in Sources */,
 				1D2E802F129DA45A00F3D71E /* PTYTab.m in Sources */,
+				A6A13AA818C2D45900B241ED /* NSColor+iTerm.m in Sources */,
 				1D2E813212A18F7500F3D71E /* SessionView.m in Sources */,
 				1D36155612CBF33E00803EA9 /* ScreenChar.m in Sources */,
 				A68A30E8186D1429007F550F /* VT100WorkingDirectory.m in Sources */,

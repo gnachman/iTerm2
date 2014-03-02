@@ -19,4 +19,6 @@
 
 - (void)waitForPid:(pid_t)pid;
 
+- (void)notifyCoprocessChange;
+
 @end

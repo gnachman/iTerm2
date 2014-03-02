@@ -10,6 +10,7 @@
 #import "ITAddressBookMgr.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
+#import "NSColor+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
 #import "PTYNoteView.h"
@@ -24,17 +25,19 @@
 #import "PreferencePanel.h"
 #import "RegexKitLite/RegexKitLite.h"
 #import "SCPPath.h"
-#import "SmartMatch.h"
 #import "SearchResult.h"
+#import "SmartMatch.h"
 #import "SmartSelectionController.h"
 #import "SolidColorView.h"
 #import "ThreeFingerTapGestureRecognizer.h"
 #import "URLAction.h"
-#import "VT100ScreenMark.h"
 #import "VT100RemoteHost.h"
+#import "VT100ScreenMark.h"
+#import "WindowControllerInterface.h"
 #import "charmaps.h"
 #import "iTerm.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermColorMap.h"
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "iTermNSKeyBindingEmulator.h"
@@ -59,11 +62,6 @@ static const int kMaxSelectedTextLengthForCustomActions = 8192;
 static const double kCharWidthFractionOffset = 0.35;
 
 //#define DEBUG_DRAWING
-
-// Constants for converting RGB to luma.
-#define RED_COEFFICIENT    0.30
-#define GREEN_COEFFICIENT  0.59
-#define BLUE_COEFFICIENT   0.11
 
 #define SWAPINT(a, b) { int temp; temp = a; a = b; b = temp; }
 
@@ -92,7 +90,6 @@ static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
 // Minimum distance that the mouse must move before a cmd+drag will be
 // recognized as a drag.
 static const int kDragThreshold = 3;
-static const double kBackgroundConsideredDarkThreshold = 0.5;
 static const int kBroadcastMargin = 4;
 static const int kCoprocessMargin = 4;
 static const int kAlertMargin = 4;
@@ -106,15 +103,13 @@ static NSImage* broadcastInputImage;
 static NSImage* coprocessImage;
 static NSImage* alertImage;
 
-static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
-    return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
-}
-
 @interface PTYTextView () <iTermSelectionDelegate>
 // Set the hostname this view is currently waiting for AsyncHostLookupController to finish looking
 // up.
 @property(nonatomic, copy) NSString *currentUnderlineHostname;
 @property(nonatomic, retain) iTermSelection *selection;
+@property(nonatomic, retain) NSColor *cachedBackgroundColor;
+@property(nonatomic, retain) NSColor *unfocusedSelectionColor;
 
 - (NSRect)cursorRect;
 - (URLAction *)urlActionForClickAtX:(int)x
@@ -159,9 +154,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     PTYFontInfo *primaryFont;
     PTYFontInfo *secondaryFont;  // non-ascii font, only used if self.useNonAsciiFont is set.
     
-    NSColor* colorTable[256];
-    NSColor* unfocusedSelectionColor;
-    
     // Underlined selection range (inclusive of all values), indicating clickable url.
     VT100GridWindowedRange _underlineRange;
     BOOL mouseDown;
@@ -194,13 +186,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     // Previous tracking rect to avoid expensive calls to addTrackingRect.
     NSRect _trackingRect;
     
-    // Maps a NSNumber int consisting of color index, alternate fg semantics
-    // flag, bold flag, and background flag to NSColor*s.
-    NSMutableDictionary* dimmedColorCache_;
-    
     // Dimmed background color with alpha.
-    NSColor *cachedBackgroundColor_;
-    double cachedBackgroundColorAlpha_;  // cached alpha value (comparable to another double)
+    double _cachedBackgroundColorAlpha;  // cached alpha value (comparable to another double)
     
     // Previuos contrasting color returned
     NSColor *memoizedContrastingColor_;
@@ -423,13 +410,19 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return textViewCursor;
 }
 
-- (id)initWithFrame:(NSRect)aRect
-{
-    self = [super initWithFrame: aRect];
+- (id)initWithFrame:(NSRect)frameRect {
+    // Must call initWithFrame:colorMap:.
+    assert(false);
+}
+
+- (id)initWithFrame:(NSRect)aRect colorMap:(iTermColorMap *)colorMap {
+    self = [super initWithFrame:aRect];
     if (self) {
+        _colorMap = [colorMap retain];
+        _colorMap.delegate = self;
+        
         firstMouseEventNumber_ = -1;
 
-        dimmedColorCache_ = [[NSMutableDictionary alloc] init];
         [self updateMarkedTextAttributes];
         _cursorVisible = YES;
         _selection = [[iTermSelection alloc] init];
@@ -514,7 +507,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [drawRectInterval_ release];
     [_lastFindCoord release];
     [_smartSelectionRules release];
-    int i;
     
     if (mouseDownEvent != nil) {
         [mouseDownEvent release];
@@ -529,22 +521,15 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     }
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [dimmedColorCache_ release];
+    _colorMap.delegate = nil;
+    [_colorMap release];
     [memoizedContrastingColor_ release];
-    for (i = 0; i < 256; i++) {
-        [colorTable[i] release];
-    }
     [lastFlashUpdate_ release];
-    [cachedBackgroundColor_ release];
+    [_cachedBackgroundColor release];
     [resultMap_ release];
     [findResults_ release];
     [findString_ release];
-    [_foregroundColor release];
-    [_backgroundColor release];
-    [_boldColor release];
-    [_selectionColor release];
-    [unfocusedSelectionColor release];
-    [_cursorColor release];
+    [_unfocusedSelectionColor release];
     
     [primaryFont release];
     [secondaryFont release];
@@ -589,14 +574,15 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 }
 
 - (void)updateMarkedTextAttributes {
-    [self setMarkedTextAttributes:
-     [NSDictionary dictionaryWithObjectsAndKeys:
-      _backgroundColor, NSBackgroundColorAttributeName,
-      _foregroundColor, NSForegroundColorAttributeName,
-      [self nonAsciiFont], NSFontAttributeName,
-      [NSNumber numberWithInt:(NSUnderlineStyleSingle|NSUnderlineByWordMask)],
-      NSUnderlineStyleAttributeName,
-      NULL]];
+    // During initialization, this may be called before the non-ascii font is set so we use a system
+    // font as a placeholder.
+    NSDictionary *theAttributes =
+        @{ NSBackgroundColorAttributeName: [_colorMap colorForKey:kColorMapBackground],
+           NSForegroundColorAttributeName: [_colorMap colorForKey:kColorMapForeground],
+           NSFontAttributeName: [self nonAsciiFont] ?: [NSFont systemFontOfSize:12],
+           NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle | NSUnderlineByWordMask) };
+
+    [self setMarkedTextAttributes:theAttributes];
 }
 
 - (void)sendFakeThreeFingerClickDown:(BOOL)isDown basedOnEvent:(NSEvent *)event {
@@ -731,7 +717,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 - (void)setUseBoldFont:(BOOL)boldFlag
 {
     _useBoldFont = boldFlag;
-    [dimmedColorCache_ removeAllObjects];
+    [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
 }
 
@@ -745,7 +731,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 - (void)setUseBrightBold:(BOOL)flag
 {
     _useBrightBold = flag;
-    [dimmedColorCache_ removeAllObjects];
+    [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
 }
 
@@ -773,13 +759,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [self refresh];
 }
 
-- (void)setDimOnlyText:(BOOL)value
-{
-    _dimOnlyText = value;
-    [dimmedColorCache_ removeAllObjects];
-    [[self superview] setNeedsDisplay:YES];
-}
-
 - (NSDictionary*)markedTextAttributes
 {
     return markedTextAttributes;
@@ -792,118 +771,38 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     markedTextAttributes = attr;
 }
 
-- (void)setForegroundColor:(NSColor*)color
-{
-    [_foregroundColor autorelease];
-    _foregroundColor = [color retain];
-    [dimmedColorCache_ removeAllObjects];
-    [self setNeedsDisplay:YES];
-}
-
 - (void)updateScrollerForBackgroundColor
 {
     PTYScroller *scroller = [_delegate textViewVerticalScroller];
-    BOOL isDark = ([self perceivedBrightness:_backgroundColor] < kBackgroundConsideredDarkThreshold);
-    [scroller setHasDarkBackground:isDark];
+    NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
+    [scroller setHasDarkBackground:[backgroundColor isDark]];
 }
 
-- (void)setBackgroundColor:(NSColor*)color
-{
-    [_backgroundColor autorelease];
-    _backgroundColor = [color retain];
-    backgroundBrightness_ = PerceivedBrightness([color redComponent], [color greenComponent], [color blueComponent]);
-    [self updateScrollerForBackgroundColor];
-    [dimmedColorCache_ removeAllObjects];
-    [cachedBackgroundColor_ release];
-    cachedBackgroundColor_ = nil;
-    [self setNeedsDisplay:YES];
-}
-
-- (void)setBoldColor:(NSColor*)color
-{
-    [_boldColor autorelease];
-    _boldColor = [color retain];
-    [dimmedColorCache_ removeAllObjects];
-    [self setNeedsDisplay:YES];
-}
-
-- (void)setCursorColor:(NSColor*)color
-{
-    [_cursorColor autorelease];
-    _cursorColor = [color retain];
-    [dimmedColorCache_ removeAllObjects];
-    [self setNeedsDisplay:YES];
-}
-
-- (void)setSelectedTextColor:(NSColor *)aColor
-{
-    [_selectedTextColor autorelease];
-    _selectedTextColor = [aColor retain];
-    [dimmedColorCache_ removeAllObjects];
-    [self setNeedsDisplay:YES];
-}
-
-- (void)setCursorTextColor:(NSColor*)aColor
-{
-    [_cursorTextColor autorelease];
-    _cursorTextColor = [aColor retain];
-    [dimmedColorCache_ removeAllObjects];
-    [self setNeedsDisplay:YES];
-}
-
-- (void)setColorTable:(int)theIndex color:(NSColor*)origColor
-{
-    NSColor* theColor = [origColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-    [colorTable[theIndex] release];
-    [theColor retain];
-    colorTable[theIndex] = theColor;
-    [dimmedColorCache_ removeAllObjects];
-    [self setNeedsDisplay:YES];
-}
-
-- (NSColor*)_colorForCode:(int)theIndex
-                    green:(int)green
-                     blue:(int)blue
-                colorMode:(ColorMode)theMode
-                     bold:(BOOL)isBold
-{
-    NSColor* color;
-    BOOL ok = NO;
+- (iTermColorMapKey)colorMapKeyForCode:(int)theIndex
+                                 green:(int)green
+                                  blue:(int)blue
+                             colorMode:(ColorMode)theMode
+                                  bold:(BOOL)isBold {
     switch (theMode) {
         case ColorModeAlternate:
-            ok = YES;
             switch (theIndex) {
                 case ALTSEM_SELECTED:
-                    color = _selectedTextColor;
-                    break;
+                    return kColorMapSelectedText;
                 case ALTSEM_CURSOR:
-                    color = _cursorTextColor;
-                    break;
+                    return kColorMapCursorText;
                 case ALTSEM_BG_DEFAULT:
-                    color = _backgroundColor;
-                    break;
+                    return kColorMapBackground;
                 case ALTSEM_FG_DEFAULT:
                     if (isBold && _useBrightBold) {
-                        color = _boldColor;
+                        return kColorMapBold;
                     } else {
-                        color = _foregroundColor;
+                        return kColorMapForeground;
                     }
-                    break;
-                default:
-                    // This should never happen, but if it does we should
-                    // get some bug reports by returning red.
-                    NSLog(@"Unexpected alternate-semantics color %d", theIndex);
-                    return [NSColor colorWithCalibratedRed:1 green:0 blue:0 alpha:1];
             }
             break;
         case ColorMode24bit:
-            ok = YES;
-            color = [self colorFromRed:theIndex
-                                 green:green
-                                  blue:blue];
-            break;
+            return [iTermColorMap keyFor8bitRed:theIndex green:green blue:blue];
         case ColorModeNormal:
-            ok = YES;
             // Render bold text as bright. The spec (ECMA-48) describes the intense
             // display setting (esc[1m) as "bold or bright". We make it a
             // preference.
@@ -912,100 +811,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 (theIndex < 8)) { // Only colors 0-7 can be made "bright".
                 theIndex |= 8;  // set "bright" bit.
             }
-            color = colorTable[theIndex];
-            break;
-
+            return kColorMap8bitBase + (theIndex & 0xff);
+            
         case ColorModeInvalid:
-            assert(false);
+            return kColorMapInvalid;
     }
     NSAssert(ok, @"Bogus color mode %d", (int)theMode);
-    if (!ok) {
-        color = [NSColor redColor];
-    }
-
-    return color;
-}
-
-- (NSColor*)_dimmedColorFrom:(NSColor*)orig
-{
-    if (_dimmingAmount == 0) {
-        return orig;
-    }
-    double r = [orig redComponent];
-    double g = [orig greenComponent];
-    double b = [orig blueComponent];
-    double alpha = [orig alphaComponent];
-    // This algorithm limits the dynamic range of colors as well as brightening
-    // them. Both attributes change in proportion to the _dimmingAmount.
-
-    // Find a linear interpolation between kCenter and the requested color component
-    // in proportion to 1- _dimmingAmount.
-    if (!_dimOnlyText) {
-        const double kCenter = 0.5;
-
-        return [NSColor colorWithCalibratedRed:(1 - _dimmingAmount) * r + _dimmingAmount * kCenter
-                                         green:(1 - _dimmingAmount) * g + _dimmingAmount * kCenter
-                                          blue:(1 - _dimmingAmount) * b + _dimmingAmount * kCenter
-                                         alpha:alpha];
-    } else {
-        return [NSColor colorWithCalibratedRed:(1 - _dimmingAmount) * r + _dimmingAmount * backgroundBrightness_
-                                         green:(1 - _dimmingAmount) * g + _dimmingAmount * backgroundBrightness_
-                                          blue:(1 - _dimmingAmount) * b + _dimmingAmount * backgroundBrightness_
-                                         alpha:alpha];
-    }
-}
-
-// Provide a dimmed version of a color. It includes a caching optimization that
-// really helps when dimming is on.
-- (NSColor *)_dimmedColorForCode:(int)theIndex
-                           green:(int)green
-                            blue:(int)blue
-                       colorMode:(ColorMode)theMode
-                            bold:(BOOL)isBold
-                      background:(BOOL)isBackground
-{
-    if (_dimmingAmount == 0) {
-        // No dimming: return plain-vanilla color.
-        NSColor *theColor = [self _colorForCode:theIndex
-                                          green:green
-                                           blue:blue
-                                      colorMode:theMode
-                                           bold:isBold];
-        return theColor;
-    }
-
-    // 24-bit colors are not cached, as they could increase cache size
-    // nontrivially up to to 2^27
-    if (theMode == ColorMode24bit) {
-        NSColor *theColor = [self _colorForCode:theIndex
-                                          green:green
-                                           blue:blue
-                                      colorMode:theMode
-                                           bold:isBold];
-        return [self _dimmedColorFrom:theColor];
-    }
-
-    // Dimming is on. See if the dimmed version of the color is cached.
-    // The max number of keys is 2^11 so this won't take too much memory.
-    // This cache provides a 20%ish performance gain when dimming is on.
-    int key = (((theIndex & 0xff) << 3) |
-               ((theMode == ColorModeAlternate ? 1 : 0) << 2) |
-               ((isBold ? 1 : 0) << 1) |
-               ((isBackground ? 1 : 0) << 0));
-    NSNumber *numKey = [NSNumber numberWithInt:key];
-    NSColor *cacheEntry = [dimmedColorCache_ objectForKey:numKey];
-    if (cacheEntry) {
-        return cacheEntry;
-    } else {
-        NSColor *theColor = [self _colorForCode:theIndex
-                                          green:green
-                                           blue:blue
-                                      colorMode:theMode
-                                           bold:isBold];
-        NSColor *dimmedColor = [self _dimmedColorFrom:theColor];
-        [dimmedColorCache_ setObject:dimmedColor forKey:numKey];
-        return dimmedColor;
-    }
+    return kColorMapInvalid;
 }
 
 - (NSColor*)colorForCode:(int)theIndex
@@ -1015,60 +827,26 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                     bold:(BOOL)isBold
             isBackground:(BOOL)isBackground
 {
-    if (isBackground && _dimOnlyText) {
-        NSColor *theColor = [self _colorForCode:theIndex
-                                          green:green
-                                           blue:blue
-                                      colorMode:theMode
-                                           bold:isBold];
-        return theColor;
+    iTermColorMapKey key = [self colorMapKeyForCode:theIndex
+                                              green:green
+                                               blue:blue
+                                          colorMode:theMode
+                                               bold:isBold];
+    if (isBackground && _colorMap.dimOnlyText) {
+        return [_colorMap colorForKey:key];
     } else {
-        return [self _dimmedColorForCode:theIndex
-                                   green:green
-                                    blue:blue
-                               colorMode:theMode
-                                    bold:isBold
-                              background:isBackground];
+        return [_colorMap dimmedColorForKey:key];
     }
-}
-
-- (NSColor *)colorFromRed:(int)red
-                    green:(int)green
-                     blue:(int)blue
-{
-    return [NSColor colorWithCalibratedRed:red/255.0
-                                     green:green/255.0
-                                      blue:blue/255.0
-                                     alpha:1];
 }
 
 - (NSColor *)selectionColorForCurrentFocus
 {
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
     if (self == frontTextView) {
-        return _selectionColor;
+        return [_colorMap colorForKey:kColorMapSelection];
     } else {
-        return unfocusedSelectionColor;
+        return _unfocusedSelectionColor;
     }
-}
-
-- (void)setSelectionColor:(NSColor *)aColor
-{
-    [_selectionColor autorelease];
-    _selectionColor = [aColor retain];
-
-    [unfocusedSelectionColor autorelease];
-    CGFloat r,g,b;
-    r = [aColor redComponent];
-    g = [aColor greenComponent];
-    b = [aColor blueComponent];
-    unfocusedSelectionColor = [[NSColor colorWithCalibratedRed:(r + 1) / 3
-                                                         green:(g + 1) / 3
-                                                          blue:(b + 1) / 3
-                                                         alpha:1] retain];
-
-    [dimmedColorCache_ removeAllObjects];
-    [self setNeedsDisplay:YES];
 }
 
 - (NSFont *)font
@@ -2046,7 +1824,11 @@ NSMutableArray* screens=0;
                 if ([[PreferencePanel sharedInstance] traditionalVisualBell]) {
                     image = [[[NSImage alloc] initWithSize: frame.size] autorelease];
                     [image lockFocus];
-                    [_foregroundColor drawSwatchInRect:NSMakeRect(0, 0, frame.size.width, frame.size.width)];
+                    NSColor *foregroundColor = [_colorMap colorForKey:kColorMapForeground];
+                    [foregroundColor drawSwatchInRect:NSMakeRect(0,
+                                                                 0,
+                                                                 frame.size.width,
+                                                                 frame.size.width)];
                     [image unlockFocus];
                 } else {
                     image = bellImage;
@@ -2128,11 +1910,10 @@ NSMutableArray* screens=0;
     int w = size.width + MARGIN;
     int x = MAX(0, self.frame.size.width - w);
     CGFloat y = line * lineHeight;
-    NSColor *bgColor = _backgroundColor;
-    NSColor *fgColor = _foregroundColor;
-    BOOL isDark = ([self perceivedBrightness:_foregroundColor] < kBackgroundConsideredDarkThreshold);
+    NSColor *bgColor = [_colorMap colorForKey:kColorMapBackground];
+    NSColor *fgColor = [_colorMap colorForKey:kColorMapForeground];
     NSColor *shadowColor;
-    if (isDark) {
+    if ([fgColor isDark]) {
         shadowColor = [NSColor whiteColor];
     } else {
         shadowColor = [NSColor blackColor];
@@ -2164,23 +1945,9 @@ NSMutableArray* screens=0;
 - (void)drawOutlineInRect:(NSRect)rect topOnly:(BOOL)topOnly
 {
     if ([_delegate textViewTabHasMaximizedPanel]) {
-        NSColor *color = _backgroundColor;
-        double r = [color redComponent];
-        double g = [color greenComponent];
-        double b = [color blueComponent];
-        double pb = PerceivedBrightness(r, g, b);
-        double k;
-        if (pb <= 0.5) {
-            k = 1;
-        } else {
-            k = 0;
-        }
-        const double alpha = 0.2;
-        r = alpha * k + (1 - alpha) * r;
-        g = alpha * k + (1 - alpha) * g;
-        b = alpha * k + (1 - alpha) * b;
-        color = [NSColor colorWithCalibratedRed:r green:g blue:b alpha:1];
-
+        NSColor *color = [_colorMap colorForKey:kColorMapBackground];
+        double grayLevel = [color isDark] ? 1 : 0;
+        color = [color colorDimmedBy:0.2 towardsGrayLevel:grayLevel];
         NSRect frame = [self visibleRect];
         if (!topOnly) {
             if (frame.origin.y < VMARGIN) {
@@ -3431,7 +3198,6 @@ NSMutableArray* screens=0;
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
     int y = clickPoint.y;
-    int width = [_dataSource width];
 
     locationInWindow = [event locationInWindow];
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
@@ -3790,7 +3556,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     locationInTextView.y = MIN(self.frame.size.height - 1,
                                MAX(0, locationInTextView.y));
     NSRect  rectInTextView = [self visibleRect];
-    int width = [_dataSource width];
 
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
@@ -4098,8 +3863,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)extendSelectionWithEvent:(NSEvent *)event
 {
     if ([_selection hasSelection]) {
-        NSPoint locationInWindow = [event locationInWindow];
-        NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
         NSPoint clickPoint = [self clickPoint:event];
         [_selection beginExtendingSelectionAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)];
         [_selection endLiveSelection];
@@ -4340,7 +4103,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL copyLastNewline = [[PreferencePanel sharedInstance] copyLastNewline];
     BOOL trimWhitespace = [[PreferencePanel sharedInstance] trimTrailingWhitespace];
     NSMutableString *theSelectedText = [[NSMutableString alloc] init];
-    int width = [_dataSource width];
     [_selection enumerateSelectedRanges:^(VT100GridWindowedRange range, BOOL *stop, BOOL eol) {
         int cap = INT_MAX;
         if (maxBytes > 0) {
@@ -4473,8 +4235,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate startDownloadOverSCP:scpPath];
     
     NSDictionary *attributes =
-        @{ NSForegroundColorAttributeName: _selectedTextColor,
-           NSBackgroundColorAttributeName: _selectionColor,
+        @{ NSForegroundColorAttributeName: [_colorMap colorForKey:kColorMapSelectedText],
+           NSBackgroundColorAttributeName: [_colorMap colorForKey:kColorMapSelection],
            NSFontAttributeName: primaryFont.font };
     NSSize size = [selectedText sizeWithAttributes:attributes];
     size.height = lineHeight;
@@ -6040,21 +5802,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)setTransparency:(double)fVal
 {
     _transparency = fVal;
-    [dimmedColorCache_ removeAllObjects];
+    [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
 }
 
 - (void)setBlend:(double)fVal
 {
     _blend = MIN(MAX(0.3, fVal), 1);
-    [dimmedColorCache_ removeAllObjects];
+    [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
 }
 
 - (void)setSmartCursorColor:(BOOL)value
 {
     _useSmartCursorColor = value;
-    [dimmedColorCache_ removeAllObjects];
+    [_colorMap invalidateCache];
 }
 
 - (void)setMinimumContrast:(double)value
@@ -6062,16 +5824,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     _minimumContrast = value;
     [memoizedContrastingColor_ release];
     memoizedContrastingColor_ = nil;
-    [dimmedColorCache_ removeAllObjects];
-}
-
-- (void)setDimmingAmount:(double)value
-{
-    _dimmingAmount = value;
-    [cachedBackgroundColor_ release];
-    cachedBackgroundColor_ = nil;
-    [dimmedColorCache_ removeAllObjects];
-    [[self superview] setNeedsDisplay:YES];
+    [_colorMap invalidateCache];
 }
 
 - (BOOL)useTransparency
@@ -6330,12 +6083,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // it may be used with different alpha values than foreground colors.
 - (NSColor *)cachedDimmedBackgroundColorWithAlpha:(double)alpha
 {
-    if (!cachedBackgroundColor_ || cachedBackgroundColorAlpha_ != alpha) {
-        [cachedBackgroundColor_ release];
-        cachedBackgroundColor_ = [[self _dimmedColorFrom:[_backgroundColor colorWithAlphaComponent:alpha]] retain];
-        cachedBackgroundColorAlpha_ = alpha;
+    if (!_cachedBackgroundColor || _cachedBackgroundColorAlpha != alpha) {
+        self.cachedBackgroundColor =
+            [[_colorMap dimmedColorForKey:kColorMapBackground] colorWithAlphaComponent:alpha];
+        _cachedBackgroundColorAlpha = alpha;
     }
-    return cachedBackgroundColor_;
+    return _cachedBackgroundColor;
 }
 
 - (void)drawFlippedBackground:(NSRect)bgRect toPoint:(NSPoint)dest
@@ -6364,10 +6117,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (![self useTransparency]) {
             alpha = 1;
         }
-        if (!_dimOnlyText) {
+        if (!_colorMap.dimOnlyText) {
             [[self cachedDimmedBackgroundColorWithAlpha:alpha] set];
         } else {
-            [[_backgroundColor colorWithAlphaComponent:alpha] set];
+            [[[_colorMap colorForKey:kColorMapBackground] colorWithAlphaComponent:alpha] set];
         }
         NSRect fillDest = bgRect;
         fillDest.origin.y += fillDest.size.height;
@@ -6402,10 +6155,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (![self useTransparency]) {
             alpha = 1;
         }
-        if (!_dimOnlyText) {
+        if (!_colorMap.dimOnlyText) {
             [[self cachedDimmedBackgroundColorWithAlpha:alpha] set];
         } else {
-            [[_backgroundColor colorWithAlphaComponent:alpha] set];
+            NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
+            [[backgroundColor colorWithAlphaComponent:alpha] set];
         }
         NSRectFillUsingOperation(bgRect, NSCompositeCopy);
     }
@@ -6433,10 +6187,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (![self useTransparency]) {
             alpha = 1;
         }
-        if (!_dimOnlyText) {
+        if (!_colorMap.dimOnlyText) {
             [[self cachedDimmedBackgroundColorWithAlpha:alpha] set];
         } else {
-            [[_backgroundColor colorWithAlphaComponent:alpha] set];
+            NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
+            [[backgroundColor colorWithAlphaComponent:alpha] set];
         }
         NSRectFillUsingOperation(bgRect, NSCompositeCopy);
     }
@@ -6474,11 +6229,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                   includeLastNewline:NO
               trimTrailingWhitespace:NO
                         cappedAtSize:-1];
-}
-
-- (double)perceivedBrightness:(NSColor*)c
-{
-    return PerceivedBrightness([c redComponent], [c greenComponent], [c blueComponent]);
 }
 
 #pragma mark - Trouter Delegate
@@ -6552,118 +6302,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (NSColor*)colorWithRed:(double)r green:(double)g blue:(double)b alpha:(double)a withPerceivedBrightness:(CGFloat)t
+- (NSColor *)colorWithRed:(double)r
+                    green:(double)g
+                     blue:(double)b
+                    alpha:(double)a
+     withPerceivedBrightness:(CGFloat)t
 {
-    /*
-     Given:
-     a vector c [c1, c2, c3] (the starting color)
-     a vector e [e1, e2, e3] (an extreme color we are moving to, normally black or white)
-     a vector A [a1, a2, a3] (the perceived brightness transform)
-     a linear function f(Y)=AY (perceived brightness for color Y)
-     a constant t (target perceived brightness)
-     find a vector X such that F(X)=t
-     and X lies on a straight line between c and e
-
-     Define a parametric vector x(p) = [x1(p), x2(p), x3(p)]:
-     x1(p) = p*e1 + (1-p)*c1
-     x2(p) = p*e2 + (1-p)*c2
-     x3(p) = p*e3 + (1-p)*c3
-
-     when p=0, x=c
-     when p=1, x=e
-
-     the line formed by x(p) from p=0 to p=1 is the line from c to e.
-
-     Our goal: find the value of p where f(x(p))=t
-
-     We know that:
-                            [x1(p)]
-     f(X) = AX = [a1 a2 a3] [x2(p)] = a1x1(p) + a2x2(p) + a3x3(p)
-                            [x3(p)]
-     Expand and solve for p:
-        t = a1*(p*e1 + (1-p)*c1) + a2*(p*e2 + (1-p)*c2) + a3*(p*e3 + (1-p)*c3)
-        t = a1*(p*e1 + c1 - p*c1) + a2*(p*e2 + c2 - p*c2) + a3*(p*e3 + c3 - p*c3)
-        t = a1*p*e1 + a1*c1 - a1*p*c1 + a2*p*e2 + a2*c2 - a2*p*c2 + a3*p*e3 + a3*c3 - a3*p*c3
-        t = a1*p*e1 - a1*p*c1 + a2*p*e2 - a2*p*c2 + a3*p*e3 - a3*p*c3 + a1*c1 + a2*c2 + a3*c3
-        t = p*(a2*e1 - a1*c1 + a2*e2 - a2*c2 + a3*e3 - a3*c3) + a1*c1 + a2*c2 + a3*c3
-        t - (a1*c1 + a2*c2 + a3*c3) = p*(a1*e1 - a1*c1 + a2*e2 - a2*c2 + a3*e3 - a3*c3)
-        p = (t - (a1*c1 + a2*c2 + a3*c3)) / (a1*e1 - a1*c1 + a2*e2 - a2*c2 + a3*e3 - a3*c3)
-     */
-    const CGFloat c1 = r;
-    const CGFloat c2 = g;
-    const CGFloat c3 = b;
-
-    CGFloat k;
-    if (PerceivedBrightness(r, g, b) < t) {
-        k = 1;
-    } else {
-        k = 0;
-    }
-    const CGFloat e1 = k;
-    const CGFloat e2 = k;
-    const CGFloat e3 = k;
-
-    const CGFloat a1 = RED_COEFFICIENT;
-    const CGFloat a2 = GREEN_COEFFICIENT;
-    const CGFloat a3 = BLUE_COEFFICIENT;
-
-    const CGFloat p = (t - (a1*c1 + a2*c2 + a3*c3)) / (a1*(e1 - c1) + a2*(e2 - c2) + a3*(e3 - c3));
-
-    const CGFloat x1 = p * e1 + (1 - p) * c1;
-    const CGFloat x2 = p * e2 + (1 - p) * c2;
-    const CGFloat x3 = p * e3 + (1 - p) * c3;
-
-    return [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:x1 green:x2 blue:x3 alpha:a]];
-}
-
-- (NSColor*)computeColorWithComponents:(double *)mainComponents
-         withContrastAgainstComponents:(double *)otherComponents
-{
-    const double r = mainComponents[0];
-    const double g = mainComponents[1];
-    const double b = mainComponents[2];
-    const double a = mainComponents[3];
-
-    const double or = otherComponents[0];
-    const double og = otherComponents[1];
-    const double ob = otherComponents[2];
-
-    double mainBrightness = PerceivedBrightness(r, g, b);
-    double otherBrightness = PerceivedBrightness(or, og, ob);
-    CGFloat brightnessDiff = fabs(mainBrightness - otherBrightness);
-    if (brightnessDiff < _minimumContrast) {
-        CGFloat error = fabs(brightnessDiff - _minimumContrast);
-        CGFloat targetBrightness = mainBrightness;
-        if (mainBrightness < otherBrightness) {
-            targetBrightness -= error;
-            if (targetBrightness < 0) {
-                const double alternative = otherBrightness + _minimumContrast;
-                const double baseContrast = otherBrightness;
-                const double altContrast = MIN(alternative, 1) - otherBrightness;
-                if (altContrast > baseContrast) {
-                    targetBrightness = alternative;
-                }
-            }
-        } else {
-            targetBrightness += error;
-            if (targetBrightness > 1) {
-                const double alternative = otherBrightness - _minimumContrast;
-                const double baseContrast = 1 - otherBrightness;
-                const double altContrast = otherBrightness - MAX(alternative, 0);
-                if (altContrast > baseContrast) {
-                    targetBrightness = alternative;
-                }
-            }
-        }
-        targetBrightness = MIN(MAX(0, targetBrightness), 1);
-        return [self colorWithRed:r
-                            green:g
-                             blue:b
-                            alpha:a
-                    withPerceivedBrightness:targetBrightness];
-    } else {
-        return nil;
-    }
+    NSColor *theColor = [NSColor calibratedColorWithRed:r
+                                                  green:g
+                                                   blue:b
+                                                  alpha:a
+                                    perceivedBrightness:t];
+    return [_colorMap dimmedColorForColor:theColor];
 }
 
 - (NSColor*)color:(NSColor*)mainColor withContrastAgainst:(NSColor*)otherColor
@@ -6686,9 +6336,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // consistency. It ensures that two consecutive calls for the same color
         // will return the same pointer. See the note at the call site in
         // _constructRuns:theLine:...matches:.
-        [memoizedContrastingColor_ release];
-        memoizedContrastingColor_ = [[self computeColorWithComponents:rgb
-                                        withContrastAgainstComponents:orgb] retain];
+        [memoizedContrastingColor_ autorelease];
+        NSColor *contrastingColor = [NSColor colorWithComponents:rgb
+                                        withContrastAgainstComponents:orgb
+                                                      minimumContrast:_minimumContrast];
+        NSColor *dimmedContrastingColor = [_colorMap dimmedColorForColor:contrastingColor];
+        memoizedContrastingColor_ = [dimmedContrastingColor retain];
         if (!memoizedContrastingColor_) {
             memoizedContrastingColor_ = [mainColor retain];
         }
@@ -6762,7 +6415,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSRange underlinedRange = [self underlinedRangeOnLine:row];
     const int underlineStartsAt = underlinedRange.location;
     const int underlineEndsAt = NSMaxRange(underlinedRange);
-    
+    const BOOL dimOnlyText = _colorMap.dimOnlyText;
     for (int i = indexRange.location; i < indexRange.location + indexRange.length; i++) {
         inUnderlinedRange = (i >= underlineStartsAt && i < underlineEndsAt);
         if (theLine[i].code == DWC_RIGHT) {
@@ -6786,17 +6439,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Is a selection.
             isSelection = YES;
             // NOTE: This could be optimized by caching the color.
-            CRunAttrsSetColor(&attrs, storage, [self _dimmedColorFrom:_selectedTextColor]);
+            CRunAttrsSetColor(&attrs, storage, [_colorMap dimmedColorForKey:kColorMapSelectedText]);
         } else {
             // Not a selection.
             if (reversed &&
                 theLine[i].foregroundColor == ALTSEM_FG_DEFAULT &&
                 theLine[i].foregroundColorMode == ColorModeAlternate) {
                 // Has default foreground color so use background color.
-                if (!_dimOnlyText) {
-                    CRunAttrsSetColor(&attrs, storage, [self _dimmedColorFrom:_backgroundColor]);
+                if (!dimOnlyText) {
+                    CRunAttrsSetColor(&attrs, storage,
+                                      [_colorMap dimmedColorForKey:kColorMapBackground]);
                 } else {
-                    CRunAttrsSetColor(&attrs, storage, _backgroundColor);
+                    CRunAttrsSetColor(&attrs, storage, [_colorMap colorForKey:kColorMapBackground]);
                 }
             } else {
                 if (theLine[i].foregroundColor == lastForegroundColor &&
@@ -7089,7 +6743,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [transform scaleXBy:1.0 yBy:-1.0];
         [transform concat];
 
-        [_backgroundColor set];
+        NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
+        [backgroundColor set];
         NSRectFill(NSMakeRect(0, 0, charWidth * complexRun->numImageCells, lineHeight));
 
         [image drawInRect:NSMakeRect(0, 0, charWidth * complexRun->numImageCells, lineHeight)
@@ -7413,7 +7068,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                        blue:bgBlue
                                   colorMode:bgColorMode
                                        bold:NO
-                               isBackground:(bgColor == ALTSEM_BG_DEFAULT)];
+                               isBackground:YES];
             }
         }
         aColor = [aColor colorWithAlphaComponent:alphaIfTransparencyInUse];
@@ -7589,7 +7244,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                   fraction:1.0];
     }
     // Draw text and background --------------------------------------------------------------------
-    // Contiguous sections of background with the same colour
+    // Contiguous sections of background with the same color
     // are combined into runs and draw as one operation
     int bgstart = -1;
     int j = charRange.location;
@@ -7894,10 +7549,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                   y,
                                   charsInLine * charWidth,
                                   lineHeight);
-            if (!_dimOnlyText) {
-                [[self _dimmedColorFrom:_backgroundColor] set];
+            if (!_colorMap.dimOnlyText) {
+                [[_colorMap dimmedColorForKey:kColorMapBackground] set];
             } else {
-                [_backgroundColor set];
+                [[_colorMap colorForKey:kColorMapBackground] set];
             }
             NSRectFill(r);
 
@@ -7919,7 +7574,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
 
             // Draw an underline.
-            [_foregroundColor set];
+            NSColor *foregroundColor = [_colorMap colorForKey:kColorMapForeground];
+            [foregroundColor set];
             NSRect s = NSMakeRect(x,
                                   y + lineHeight - 1,
                                   charsInLine * charWidth,
@@ -7978,7 +7634,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 [findCursorView_ setNeedsDisplay:YES];
             }
         }
-        [[self _dimmedColorFrom:[NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:1]] set];
+        [[_colorMap dimmedColorForColor:[NSColor colorWithCalibratedRed:1.0
+                                                                  green:1.0
+                                                                   blue:0
+                                                                  alpha:1.0]] set];
         NSRectFill(cursorFrame);
 
         return TRUE;
@@ -7996,7 +7655,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self _drawCursorTo:nil];
 }
 
-- (NSColor*)_charBackground:(screen_char_t)c
+- (NSColor*)backgroundColorForChar:(screen_char_t)c
 {
     if ([[_dataSource terminal] screenMode]) {
         // reversed
@@ -8019,7 +7678,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (double)_brightnessOfCharBackground:(screen_char_t)c
 {
-    return [self perceivedBrightness:[[self _charBackground:c] colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
+    return [[self backgroundColorForChar:c] perceivedBrightness];
 }
 
 // Return the value in 'values' closest to target.
@@ -8197,18 +7856,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 }
 
                 NSMutableArray* constraints = [NSMutableArray arrayWithCapacity:2];
-                CGFloat bgBrightness = [self perceivedBrightness:[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
+                CGFloat bgBrightness = [bgColor perceivedBrightness];
                 if (x1 > 0) {
-                    [constraints addObject:[NSNumber numberWithDouble:[self _brightnessOfCharBackground:theLine[x1 - 1]]]];
+                    [constraints addObject:@([self _brightnessOfCharBackground:theLine[x1 - 1]])];
                 }
                 if (x1 < WIDTH) {
-                    [constraints addObject:[NSNumber numberWithDouble:[self _brightnessOfCharBackground:theLine[x1 + 1]]]];
+                    [constraints addObject:@([self _brightnessOfCharBackground:theLine[x1 + 1]])];
                 }
                 if (lineAbove) {
-                    [constraints addObject:[NSNumber numberWithDouble:[self _brightnessOfCharBackground:lineAbove[x1]]]];
+                    [constraints addObject:@([self _brightnessOfCharBackground:lineAbove[x1]])];
                 }
                 if (lineBelow) {
-                    [constraints addObject:[NSNumber numberWithDouble:[self _brightnessOfCharBackground:lineBelow[x1]]]];
+                    [constraints addObject:@([self _brightnessOfCharBackground:lineBelow[x1]])];
                 }
                 if ([self _minimumDistanceOf:bgBrightness fromAnyValueIn:constraints] < gSmartCursorBgThreshold) {
                     CGFloat b = [self _farthestValueFromAnyValueIn:constraints];
@@ -8218,7 +7877,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 [bgColor set];
                 DLog(@"Set cursor color=%@", bgColor);
             } else {
-                bgColor = _cursorColor;
+                bgColor = [_colorMap colorForKey:kColorMapCursor];
                 [[bgColor colorWithAlphaComponent:alpha] set];
                 DLog(@"Set cursor color=%@", [bgColor colorWithAlphaComponent:alpha]);
             }
@@ -8284,15 +7943,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                     colorMode:fgColorMode
                                                                          bold:fgBold
                                                                  isBackground:NO] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-                            CGFloat fgBrightness = [self perceivedBrightness:proposedForeground];
-                            CGFloat bgBrightness = [self perceivedBrightness:[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
+                            CGFloat fgBrightness = [proposedForeground perceivedBrightness];
+                            CGFloat bgBrightness = [bgColor perceivedBrightness];
                             if (!frameOnly && fabs(fgBrightness - bgBrightness) < gSmartCursorFgThreshold) {
                                 // foreground and background are very similar. Just use black and
                                 // white.
                                 if (bgBrightness < 0.5) {
-                                    overrideColor = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:1 green:1 blue:1 alpha:1]];
+                                    overrideColor =
+                                        [_colorMap dimmedColorForColor:[NSColor colorWithCalibratedRed:1
+                                                                                                 green:1
+                                                                                                  blue:1
+                                                                                                 alpha:1]];
                                 } else {
-                                    overrideColor = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1]];
+                                    overrideColor =
+                                        [_colorMap dimmedColorForColor:[NSColor colorWithCalibratedRed:0
+                                                                                                 green:0
+                                                                                                  blue:0
+                                                                                                 alpha:1]];
                                 }
                             }
 
@@ -8789,7 +8456,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // being dragged, the modifiers pressed, and where it's being dropped.
 - (NSDragOperation)dragOperationForSender:(id <NSDraggingInfo>)sender
 {
-    NSString *sourceType;
     unsigned int iResult = 0;
 
     iResult = NSDragOperationNone;
@@ -9021,9 +8687,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)_settingsChanged:(NSNotification *)notification
 {
-    [dimmedColorCache_ removeAllObjects];
+    [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
-    [self setDimOnlyText:[[PreferencePanel sharedInstance] dimOnlyText]];
+    _colorMap.dimOnlyText = [[PreferencePanel sharedInstance] dimOnlyText];
 }
 
 - (NSRect)gridRect {
@@ -9224,7 +8890,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
 
-    int width = [_dataSource width];
     int lineStart = [_dataSource numberOfLines] - [_dataSource height];
     int lineEnd = [_dataSource numberOfLines];
     int cursorX = [_dataSource cursorX] - 1;
@@ -9401,6 +9066,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         theLine = [_dataSource getLineAtIndex:coord.y];
     } while (theLine[coord.x].code == DWC_RIGHT);
     return coord;
+}
+
+#pragma mark - iTermColorMapDelegate
+
+- (void)colorMap:(iTermColorMap *)colorMap didChangeColorForKey:(iTermColorMapKey)theKey {
+    if (theKey == kColorMapBackground) {
+        [self updateScrollerForBackgroundColor];
+        self.cachedBackgroundColor = nil;
+        [[self enclosingScrollView] setBackgroundColor:[colorMap colorForKey:theKey]];
+    } else if (theKey == kColorMapSelection) {
+        self.unfocusedSelectionColor = [[_colorMap colorForKey:theKey] colorDimmedBy:2.0/3.0
+                                                                    towardsGrayLevel:0.5];
+    }
+    [self setNeedsDisplay:YES];
+}
+
+- (void)colorMap:(iTermColorMap *)colorMap dimmingAmountDidChangeTo:(double)dimmingAmount {
+    self.cachedBackgroundColor = nil;
+    [[self superview] setNeedsDisplay:YES];
 }
 
 @end

@@ -117,7 +117,6 @@ const CGFloat rightMargin = 5;
     [rightAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
 
     const CGFloat leftMargin = 5;
-    const CGFloat y = NSMaxY(_progressIndicator.frame) + 5;
     NSFont *theFont = [NSFont systemFontOfSize:14];
     NSFont *smallFont = [NSFont systemFontOfSize:10];
     NSDictionary *filenameAttributes = @{ NSParagraphStyleAttributeName: leftAlignStyle,

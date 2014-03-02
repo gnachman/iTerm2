@@ -47,6 +47,9 @@ do { \
     return backgroundColor_;
 }
 
+- (void)gridCursorDidChangeLine {
+}
+
 - (void)testTypeFunctions {
     VT100GridCoord coord = VT100GridCoordMake(1, 2);
     VT100GridSize size = VT100GridSizeMake(3, 4);

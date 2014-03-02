@@ -2795,7 +2795,6 @@ NSString *kSessionsKVCKey = @"sessions";
         // add the session to the new terminal
         PtyLog(@"toggleFullScreenMode - add tab %d from old window", i);
         [newTerminal insertTab:theTab atIndex:i];
-        NSTabViewItem *newTabViewItem = [theTab tabViewItem];
         PtyLog(@"toggleFullScreenMode - done inserting session");
 
         // release the tabViewItem
@@ -6067,7 +6066,6 @@ NSString *kSessionsKVCKey = @"sessions";
     } else if ([item action] == @selector(toggleAutoCommandHistory:)) {
         result = [[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed];
         if (result) {
-            PTYSession *currentSession = [self currentSession];
             if ([item respondsToSelector:@selector(setState:)]) {
                 [item setState:[[PreferencePanel sharedInstance] autoCommandHistory] ? NSOnState : NSOffState];
             }
@@ -6328,7 +6326,6 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)reloadBookmarks
 {
-    int j = 0;
     for (PTYSession* session in [self allSessions]) {
         Profile *oldBookmark = [session profile];
         NSString* oldName = [oldBookmark objectForKey:KEY_NAME];
