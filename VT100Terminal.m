@@ -13,9 +13,8 @@
 @property(nonatomic, assign) BOOL originMode;
 @property(nonatomic, assign) BOOL isAnsi;
 @property(nonatomic, assign) BOOL autorepeatMode;
-@property(nonatomic, assign) BOOL insertMode;
 @property(nonatomic, assign) int charset;
-@property(nonatomic, assign) MouseMode mouseMode;
+@property(nonatomic, assign) BOOL bracketedPasteMode;
 @end
 
 @implementation VT100Terminal {
@@ -32,14 +31,11 @@
     int               total_stream_length;
     
     BOOL lineMode_;         // YES=Newline, NO=Line feed
-    BOOL cursorMode_;       // YES=Application, NO=Cursor
     BOOL ansiMode_;         // YES=ANSI, NO=VT52
     BOOL columnMode_;       // YES=132 Column, NO=80 Column
     BOOL scrollMode_;       // YES=Smooth, NO=Jump
-    BOOL keypadMode_;       // YES=Application, NO=Numeric
     BOOL xon_;               // YES=XON, NO=XOFF. Not currently used.
     BOOL numLock_;           // YES=ON, NO=OFF, default=YES;
-    MouseFormat mouseFormat_;
     
     int fgColorCode_;
     int fgGreen_;
@@ -65,8 +61,6 @@
     BOOL strictAnsiMode_;
     BOOL allowColumnMode_;
     
-    BOOL allowKeypadMode_;
-    
     int streamOffset_;
     
     BOOL disableSmcupRmcup_;
@@ -74,8 +68,6 @@
     // Indexed by values in VT100TerminalTerminfoKeys. Gives strings to send for various special keys.
     char *keyStrings_[TERMINFO_KEYS];
     
-    // http://www.xfree86.org/current/ctlseqs.html#Bracketed%20Paste%20Mode
-    BOOL bracketedPasteMode_;
     int sendModifiers_[NUM_MODIFIABLE_RESOURCES];
     
     VT100TCC *lastToken_;
@@ -2044,9 +2036,9 @@ static VT100TCC decode_string(unsigned char *datap,
         saveBackground_ = bgColorCode_;
         saveBgColorMode_ = bgColorMode_;
         _mouseMode = MOUSE_REPORTING_NONE;
-        mouseFormat_ = MOUSE_FORMAT_XTERM;
+        _mouseFormat = MOUSE_FORMAT_XTERM;
 
-        allowKeypadMode_ = YES;
+        _allowKeypadMode = YES;
 
         numLock_ = YES;
         lastToken_ = malloc(sizeof(VT100TCC));
@@ -2075,7 +2067,7 @@ static VT100TCC decode_string(unsigned char *datap,
     [_termType autorelease];
     _termType = [termtype copy];
 
-    allowKeypadMode_ = [_termType rangeOfString:@"xterm"].location != NSNotFound;
+    self.allowKeypadMode = [_termType rangeOfString:@"xterm"].location != NSNotFound;
 
     int r;
 
@@ -2178,16 +2170,16 @@ static VT100TCC decode_string(unsigned char *datap,
 - (void)resetPreservingPrompt:(BOOL)preservePrompt
 {
     lineMode_ = NO;
-    cursorMode_ = NO;
+    self.cursorMode = NO;
     columnMode_ = NO;
     scrollMode_ = NO;
     _reverseVideo = NO;
     _originMode = NO;
     self.wraparoundMode = YES;
     self.autorepeatMode = YES;
-    keypadMode_ = NO;
+    self.keypadMode = NO;
     self.insertMode = NO;
-    bracketedPasteMode_ = NO;
+    self.bracketedPasteMode = NO;
     saveCharset_ = _charset = 0;
     xon_ = YES;
     bold_ = italic_ = blink_ = reversed_ = under_ = NO;
@@ -2201,7 +2193,7 @@ static VT100TCC decode_string(unsigned char *datap,
     bgBlue_ = 0;
     bgColorMode_ = ColorModeAlternate;
     self.mouseMode = MOUSE_REPORTING_NONE;
-    mouseFormat_ = MOUSE_FORMAT_XTERM;
+    self.mouseFormat = MOUSE_FORMAT_XTERM;
     [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
     [delegate_ terminalSetUseColumnScrollRegion:NO];
     _reportFocus = NO;
@@ -2359,7 +2351,7 @@ static VT100TCC decode_string(unsigned char *datap,
 {
     NSData* prefix = nil;
     NSData* theSuffix;
-    if (keyStrings_[terminfo] && keypadMode_) {
+    if (keyStrings_[terminfo] && self.keypadMode) {
         // Application keypad mode
         theSuffix = [NSData dataWithBytes:keyStrings_[terminfo]
                                    length:strlen(keyStrings_[terminfo])];
@@ -2386,7 +2378,7 @@ static VT100TCC decode_string(unsigned char *datap,
             sprintf(buf, cursorMod, mod);
             theSuffix = [NSData dataWithBytes:buf length:strlen(buf)];
         } else {
-            if (cursorMode_) {
+            if (self.cursorMode) {
                 theSuffix = [NSData dataWithBytes:cursorSet
                                            length:strlen(cursorSet)];
             } else {
@@ -2594,7 +2586,7 @@ static VT100TCC decode_string(unsigned char *datap,
     NSData *theData = nil;
 
     // numeric keypad mode
-    if (![self keypadMode]) {
+    if (!self.keypadMode) {
         return ([keystr dataUsingEncoding:NSUTF8StringEncoding]);
     }
     // alternate keypad mode
@@ -2661,7 +2653,7 @@ static VT100TCC decode_string(unsigned char *datap,
 - (char *)mouseReport:(int)button atX:(int)x Y:(int)y
 {
     static char buf[64]; // This should be enough for all formats.
-    switch (mouseFormat_) {
+    switch (self.mouseFormat) {
         case MOUSE_FORMAT_XTERM_EXT:
             snprintf(buf, sizeof(buf), "\033[M%c%lc%lc",
                      (wint_t) (32 + button),
@@ -2720,7 +2712,7 @@ static VT100TCC decode_string(unsigned char *datap,
 {
     int cb;
 
-    if (mouseFormat_ == MOUSE_FORMAT_SGR) {
+    if (self.mouseFormat == MOUSE_FORMAT_SGR) {
         // for SGR 1006 mode
         cb = button | MOUSE_BUTTON_SGR_RELEASE_FLAG;
     } else {
@@ -2773,11 +2765,6 @@ static VT100TCC decode_string(unsigned char *datap,
     return lineMode_;
 }
 
-- (BOOL)cursorMode
-{
-    return cursorMode_;
-}
-
 - (BOOL)columnMode
 {
     return columnMode_;
@@ -2796,21 +2783,16 @@ static VT100TCC decode_string(unsigned char *datap,
     }
 }
 
-- (BOOL)keypadMode
-{
-    return keypadMode_;
-}
-
 - (void)setKeypadMode:(BOOL)mode
 {
-    keypadMode_ = mode && allowKeypadMode_;
+    _keypadMode = mode && self.allowKeypadMode;
 }
 
 - (void)setAllowKeypadMode:(BOOL)allow
 {
-    allowKeypadMode_ = allow;
+    _allowKeypadMode = allow;
     if (!allow) {
-        keypadMode_ = NO;
+        self.keypadMode = NO;
     }
 }
 
@@ -2912,11 +2894,6 @@ static VT100TCC decode_string(unsigned char *datap,
     }
 }
 
-- (void)setCursorMode:(BOOL)mode
-{
-    cursorMode_ = mode;
-}
-
 - (void)updateModesFromToken:(VT100TCC)token
 {
     BOOL mode;
@@ -2933,7 +2910,7 @@ static VT100TCC decode_string(unsigned char *datap,
                         lineMode_ = mode;
                         break;
                     case 1:
-                        [self setCursorMode:mode];
+                        self.cursorMode = mode;
                         break;
                     case 2:
                         ansiMode_ = mode;
@@ -2995,7 +2972,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
                     case 2004:
                         // Set bracketed paste mode
-                        bracketedPasteMode_ = mode;
+                        self.bracketedPasteMode = mode;
                         break;
 
                     case 47:
@@ -3026,26 +3003,26 @@ static VT100TCC decode_string(unsigned char *datap,
 
                     case 1005:
                         if (mode) {
-                            mouseFormat_ = MOUSE_FORMAT_XTERM_EXT;
+                            self.mouseFormat = MOUSE_FORMAT_XTERM_EXT;
                         } else {
-                            mouseFormat_ = MOUSE_FORMAT_XTERM;
+                            self.mouseFormat = MOUSE_FORMAT_XTERM;
                         }
                         break;
 
 
                     case 1006:
                         if (mode) {
-                            mouseFormat_ = MOUSE_FORMAT_SGR;
+                            self.mouseFormat = MOUSE_FORMAT_SGR;
                         } else {
-                            mouseFormat_ = MOUSE_FORMAT_XTERM;
+                            self.mouseFormat = MOUSE_FORMAT_XTERM;
                         }
                         break;
 
                     case 1015:
                         if (mode) {
-                            mouseFormat_ = MOUSE_FORMAT_URXVT;
+                            self.mouseFormat = MOUSE_FORMAT_URXVT;
                         } else {
-                            mouseFormat_ = MOUSE_FORMAT_XTERM;
+                            self.mouseFormat = MOUSE_FORMAT_XTERM;
                         }
                         break;
                 }
@@ -3064,10 +3041,10 @@ static VT100TCC decode_string(unsigned char *datap,
             }
             break;
         case VT100CSI_DECKPAM:
-            [self setKeypadMode:YES];
+            self.keypadMode = YES;
             break;
         case VT100CSI_DECKPNM:
-            [self setKeypadMode:NO];
+            self.keypadMode = NO;
             break;
         case VT100CC_SI:
             _charset = 0;
@@ -3684,20 +3661,10 @@ static VT100TCC decode_string(unsigned char *datap,
     disableSmcupRmcup_ = value;
 }
 
-- (BOOL)bracketedPasteMode
-{
-    return bracketedPasteMode_;
-}
-
 - (void)setMouseMode:(MouseMode)mode
 {
     _mouseMode = mode;
     [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
-}
-
-- (void)setMouseFormat:(MouseFormat)format
-{
-    mouseFormat_ = format;
 }
 
 - (void)handleDeviceStatusReportWithToken:(VT100TCC)token withQuestion:(BOOL)withQuestion {
