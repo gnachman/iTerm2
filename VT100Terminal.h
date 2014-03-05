@@ -57,18 +57,11 @@
 
 - (void)setDisableSmcupRmcup:(BOOL)value;
 
-- (void)executeIncidental:(VT100CSIIncidental *)incidental;
-
-// Call appropriate delegate methods to handle the last parsed token. Call this after -parseNextToken
-// returns YES.
-- (void)executeToken:(VT100TCC *)token;
-
-// Inspect previous parsed token.
-- (BOOL)tokenIsAscii:(VT100TCC *)token;
-- (NSString *)stringForToken:(VT100TCC *)token;
+// Calls appropriate delegate methods to handle a token.
+- (void)executeToken:(VT100Token *)token;
 
 // If you just want to handle low level codes, you can use these methods instead of -executeToken:.
-- (void)executeModeUpdates:(VT100TCC *)token;
-- (void)executeSGR:(VT100TCC *)token;
+- (void)executeModeUpdates:(VT100Token *)token;
+- (void)executeSGR:(VT100Token *)token;
 
 @end

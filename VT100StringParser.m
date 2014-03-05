@@ -13,7 +13,7 @@
 static void DecodeUTF8Bytes(unsigned char *datap,
                             int datalen,
                             int *rmlen,
-                            VT100TCC *token)
+                            VT100Token *token)
 {
     unsigned char *p = datap;
     int len = datalen;
@@ -57,7 +57,7 @@ static void DecodeUTF8Bytes(unsigned char *datap,
 static void DecodeEUCCNBytes(unsigned char *datap,
                              int datalen,
                              int *rmlen,
-                             VT100TCC *token)
+                             VT100Token *token)
 {
     unsigned char *p = datap;
     int len = datalen;
@@ -92,7 +92,7 @@ static void DecodeEUCCNBytes(unsigned char *datap,
 static void DecodeBIG5Bytes(unsigned char *datap,
                             int datalen,
                             int *rmlen,
-                            VT100TCC *token)
+                            VT100Token *token)
 {
     unsigned char *p = datap;
     int len = datalen;
@@ -126,7 +126,7 @@ static void DecodeBIG5Bytes(unsigned char *datap,
 static void DecodeEUCJPBytes(unsigned char *datap,
                              int datalen,
                              int *rmlen,
-                             VT100TCC *token)
+                             VT100Token *token)
 {
     unsigned char *p = datap;
     int len = datalen;
@@ -158,7 +158,7 @@ static void DecodeEUCJPBytes(unsigned char *datap,
 static void DecodeSJISBytes(unsigned char *datap,
                             int datalen,
                             int *rmlen,
-                            VT100TCC *token)
+                            VT100Token *token)
 {
     unsigned char *p = datap;
     int len = datalen;
@@ -187,9 +187,8 @@ static void DecodeSJISBytes(unsigned char *datap,
 static void DecodeEUCKRBytes(unsigned char *datap,
                              int datalen,
                              int *rmlen,
-                             VT100TCC *token)
+                             VT100Token *token)
 {
-    VT100TCC result;
     unsigned char *p = datap;
     int len = datalen;
     
@@ -213,9 +212,8 @@ static void DecodeEUCKRBytes(unsigned char *datap,
 static void DecodeOtherBytes(unsigned char *datap,
                              int datalen,
                              int *rmlen,
-                             VT100TCC *token)
+                             VT100Token *token)
 {
-    VT100TCC result;
     unsigned char *p = datap;
     int len = datalen;
     
@@ -258,7 +256,7 @@ static NSString* SetReplacementCharInArray(unsigned char* datap, int* lenPtr, in
 static void DecodeASCIIBytes(unsigned char *datap,
                              int datalen,
                              int *rmlen,
-                             VT100TCC *token) {
+                             VT100Token *token) {
     unsigned char *p = datap;
     int len = datalen;
     
@@ -278,16 +276,6 @@ static void DecodeASCIIBytes(unsigned char *datap,
         assert(datalen >= len);
         token->type = VT100_ASCIISTRING;
     }
-    
-    token->u.string = [[[NSString alloc] initWithBytes:datap
-                                               length:*rmlen
-                                             encoding:NSASCIIStringEncoding] autorelease];
-    
-    if (token->u.string == nil) {
-        *rmlen = 0;
-        token->type = VT100_UNKNOWNCHAR;
-        token->u.code = datap[0];
-    }
 }
 
 @implementation VT100StringParser
@@ -295,14 +283,15 @@ static void DecodeASCIIBytes(unsigned char *datap,
 + (void)decodeBytes:(unsigned char *)datap
              length:(int)datalen
           bytesUsed:(int *)rmlen
-              token:(VT100TCC *)result
+              token:(VT100Token *)result
            encoding:(NSStringEncoding)encoding {
     *rmlen = 0;
     result->type = VT100_UNKNOWNCHAR;
-    result->u.code = datap[0];
+    result->code = datap[0];
 
     if (isAsciiString(datap)) {
         DecodeASCIIBytes(datap, datalen, rmlen, result);
+        encoding = NSASCIIStringEncoding;
     } else if (encoding == NSUTF8StringEncoding) {
         DecodeUTF8Bytes(datap, datalen, rmlen, result);
     } else if (isGBEncoding(encoding)) {
@@ -324,13 +313,13 @@ static void DecodeASCIIBytes(unsigned char *datap,
     if (result->type == VT100_INVALID_SEQUENCE) {
         // Output only one replacement symbol, even if rmlen is higher.
         datap[0] = ONECHAR_UNKNOWN;
-        result->u.string = ReplacementString();
+        result.string = ReplacementString();
         result->type = VT100_STRING;
     } else if (result->type != VT100_WAIT) {
-        result->u.string = [[[NSString alloc] initWithBytes:datap
+        result.string = [[[NSString alloc] initWithBytes:datap
                                                     length:*rmlen
                                                   encoding:encoding] autorelease];
-        if (result->u.string == nil) {
+        if (result.string == nil) {
             // Invalid bytes, can't encode.
             int i;
             if (encoding == NSUTF8StringEncoding) {
@@ -338,14 +327,14 @@ static void DecodeASCIIBytes(unsigned char *datap,
                 memcpy(temp, datap, *rmlen);
                 int length = *rmlen;
                 // Replace every byte with unicode replacement char <?>.
-                for (i = *rmlen - 1; i >= 0 && !result->u.string; i--) {
-                    result->u.string = SetReplacementCharInArray(temp, &length, i);
+                for (i = *rmlen - 1; i >= 0 && !result.string; i--) {
+                    result.string = SetReplacementCharInArray(temp, &length, i);
                 }
             } else {
-                // Repalce every byte with ?, the replacement char for non-unicode encodings.
-                for (i = *rmlen - 1; i >= 0 && !result->u.string; i--) {
+                // Replace every byte with ?, the replacement char for non-unicode encodings.
+                for (i = *rmlen - 1; i >= 0 && !result.string; i--) {
                     datap[i] = ONECHAR_UNKNOWN;
-                    result->u.string = [[[NSString alloc] initWithBytes:datap
+                    result.string = [[[NSString alloc] initWithBytes:datap
                                                                  length:*rmlen
                                                                encoding:encoding] autorelease];
                 }

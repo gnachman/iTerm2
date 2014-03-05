@@ -31,11 +31,11 @@
     NSData *histData = [hist dataUsingEncoding:NSUTF8StringEncoding];
     [terminal.parser putStreamData:histData.bytes
                             length:histData.length];
-    VT100TCC token;
-    NSMutableArray *incidentals = [NSMutableArray array];
-    while ([terminal.parser parseNextToken:&token incidentals:incidentals]) {
-        [terminal executeToken:&token];
-        NSString *string = [terminal stringForToken:&token];
+    NSMutableArray *tokens = [NSMutableArray array];
+    [terminal.parser addParsedTokensToArray:tokens];
+    for (VT100Token *token in tokens) {
+        [terminal executeToken:token];
+        NSString *string = token.isStringType ? token.string : nil;
         if (string) {
             // Allocate double space in case they're all double-width characters.
             screenChars = malloc(sizeof(screen_char_t) * 2 * string.length);
@@ -47,13 +47,14 @@
                                 &len,
                                 ambiguousIsDoubleWidth,
                                 NULL);
-            if ([terminal tokenIsAscii:&token] && [terminal charset]) {
+            if ([token isAscii] && [terminal charset]) {
                 ConvertCharsToGraphicsCharset(screenChars, len);
             }
             [result appendBytes:screenChars
                          length:sizeof(screen_char_t) * len];
             free(screenChars);
         }
+        [token recycleObject];
     }
 
     return result;

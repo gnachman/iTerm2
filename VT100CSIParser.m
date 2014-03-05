@@ -10,43 +10,6 @@
 
 #define PACK_CSI_COMMAND(first, second) ((first << 8) | second)
 
-@implementation VT100CSIIncidental {
-    VT100CSIIncidentalType _type;
-}
-
-+ (VT100CSIIncidental *)ringBell {
-    return [[[self alloc] initWithType:kIncidentalRingBell] autorelease];
-}
-
-+ (VT100CSIIncidental *)backspace {
-    return [[[self alloc] initWithType:kIncidentalBackspace] autorelease];
-}
-
-+ (VT100CSIIncidental *)appendTabAtCursor {
-    return [[[self alloc] initWithType:kIncidentalAppendTabAtCursor] autorelease];
-}
-
-+ (VT100CSIIncidental *)lineFeed {
-    return [[[self alloc] initWithType:kIncidentalLineFeed] autorelease];
-}
-
-+ (VT100CSIIncidental *)carriageReturn {
-    return [[[self alloc] initWithType:kIncidentalCarriageReturn] autorelease];
-}
-
-+ (VT100CSIIncidental *)deleteCharacterAtCursor:(int)n {
-    return [[[self alloc] initWithType:kIncidentalDeleteCharacterAtCursor] autorelease];
-}
-
-- (id)initWithType:(VT100CSIIncidentalType)type {
-    self = [super init];
-    if (self) {
-        _type = type;
-    }
-    return self;
-}
-
-@end
 
 @implementation VT100CSIParser
 
@@ -65,38 +28,21 @@ static int advanceAndEatControlChars(unsigned char **ppdata,
                 // TODO: send answerback if it is needed
                 break;
             case VT100CC_BEL:
-                [incidentals addObject:[VT100CSIIncidental ringBell]];
-                break;
             case VT100CC_BS:
-                [incidentals addObject:[VT100CSIIncidental backspace]];
-                break;
             case VT100CC_HT:
-                [incidentals addObject:[VT100CSIIncidental appendTabAtCursor]];
-                break;
             case VT100CC_LF:
             case VT100CC_VT:
             case VT100CC_FF:
-                [incidentals addObject:[VT100CSIIncidental lineFeed]];
-                break;
             case VT100CC_CR:
-                [incidentals addObject:[VT100CSIIncidental carriageReturn]];
-                break;
             case VT100CC_SO:
-                // TODO: ISO-2022 mode terminal should implement SO
-                break;
             case VT100CC_SI:
-                // TODO: ISO-2022 mode terminal should implement SI
-                break;
             case VT100CC_DC1:
-                break;
             case VT100CC_DC3:
-                break;
             case VT100CC_CAN:
             case VT100CC_SUB:
             case VT100CC_ESC:
-                return NO;
             case VT100CC_DEL:
-                [incidentals addObject:[VT100CSIIncidental deleteCharacterAtCursor:1]];
+                [incidentals addObject:[VT100Token tokenForControlCharacter:*ppdata]];
                 break;
             default:
                 if (**ppdata >= 0x20)
@@ -127,7 +73,7 @@ static int getCSIParam(unsigned char *datap,
     // 2013/1/10 H.Saito
     //
     // The dispatching method for control functions becomes more simply and efficiently.
-    // Now they are aggregated with VT100TCC.u.csi.cmd parameter.
+    // Now they are aggregated with VT100Token.csi.cmd parameter.
     //
     // cmd parameter consists of following bytes:
     // - Parameter Prefix Byte (if present, range: \x3a-\x3f)
@@ -392,24 +338,22 @@ cancel:
              length:(int)datalen
           bytesUsed:(int *)rmlen
         incidentals:(NSMutableArray *)incidentals
-              token:(VT100TCC *)result
+              token:(VT100Token *)result
 {
-    CSIParam param;
-    memset(&param, 0, sizeof(param));
-    memset(result, 0, sizeof(*result));
+    CSIParam *param = result.csi;
     int paramlen;
     int i;
     
-    paramlen = getCSIParam(datap, datalen, &param, incidentals);
+    paramlen = getCSIParam(datap, datalen, param, incidentals);
     result->type = VT100_WAIT;
     
     // Check for unkown
-    if (param.cmd == 0xff) {
+    if (param->cmd == 0xff) {
         result->type = VT100_UNKNOWNCHAR;
         *rmlen = paramlen;
-    } else if (paramlen > 0 && param.cmd > 0) {
+    } else if (paramlen > 0 && param->cmd > 0) {
         // process
-        switch (param.cmd) {
+        switch (param->cmd) {
             case 'D':       // Cursor Backward
                 result->type = VT100CSI_CUB;
                 SET_PARAM_DEFAULT(param, 0, 1);
@@ -452,7 +396,7 @@ cancel:
                 break;
                 
             case 'x':
-                if (param.count == 1)
+                if (param->count == 1)
                     result->type = VT100CSI_DECREQTPARM;
                 else
                     result->type = VT100CSI_DECREPTPARM;
@@ -465,7 +409,7 @@ cancel:
                 break;
                 
             case 'y':
-                if (param.count == 2)
+                if (param->count == 2)
                     result->type = VT100CSI_DECTST;
                 else
                 {
@@ -513,7 +457,7 @@ cancel:
                 
             case 'm':
                 result->type = VT100CSI_SGR;
-                for (i = 0; i < param.count; ++i) {
+                for (i = 0; i < param->count; ++i) {
                     SET_PARAM_DEFAULT(param, i, 0);
                 }
                 break;
@@ -555,7 +499,7 @@ cancel:
                 SET_PARAM_DEFAULT(param, 0, 1);
                 break;
             case 't':
-                switch (param.p[0]) {
+                switch (param->p[0]) {
                     case 8:
                         result->type = XTERMCC_WINDOWSIZE;
                         SET_PARAM_DEFAULT(param, 1, 0);     // columns or Y
@@ -612,7 +556,7 @@ cancel:
                 SET_PARAM_DEFAULT(param, 0, 1);
                 break;
             case 'T':
-                if (param.count < 2) {
+                if (param->count < 2) {
                     result->type = XTERMCC_SD;
                     SET_PARAM_DEFAULT(param, 0, 1);
                 }
@@ -666,16 +610,6 @@ cancel:
                 break;
                 
         }
-        
-        // copy CSI parameter
-        for (i = 0; i < VT100CSIPARAM_MAX; ++i) {
-            result->u.csi.p[i] = param.p[i];
-            result->u.csi.subCount[i] = param.subCount[i];
-            for (int j = 0; j < VT100CSISUBPARAM_MAX; j++) {
-                result->u.csi.sub[i][j] = param.sub[i][j];
-            }
-        }
-        result->u.csi.count = param.count;
         
         *rmlen = paramlen;
     }

@@ -1,15 +1,18 @@
+#import <Foundation/Foundation.h>
+#import "iTermObjectPool.h"
+
 #define ESC 0x1b
 
-#define VT100CSIPARAM_MAX 16  // Maximum number of CSI parameters in VT100TCC.u.csi.p.
-#define VT100CSISUBPARAM_MAX 16  // Maximum number of CSI sub-parameters in VT100TCC.u.csi.p.
+#define VT100CSIPARAM_MAX 16  // Maximum number of CSI parameters in VT100Token.csi->p.
+#define VT100CSISUBPARAM_MAX 16  // Maximum number of CSI sub-parameters in VT100Token.csi->p.
 
 // If the n'th parameter has a negative (default) value, replace it with |value|.
 // CSI parameter values are all initialized to -1 before parsing, so this has the effect of setting
 // a value iff it hasn't already been set.
 // If there aren't yet n+1 parameters, increase the count to n+1.
 #define SET_PARAM_DEFAULT(csiParam, n, value) \
-(((csiParam).p[(n)] = (csiParam).p[(n)] < 0 ? (value) : (csiParam).p[(n)]), \
-((csiParam).count = (csiParam).count > (n) + 1 ? (csiParam).count : (n) + 1 ))
+    (((csiParam)->p[(n)] = (csiParam)->p[(n)] < 0 ? (value) : (csiParam)->p[(n)]), \
+    ((csiParam)->count = (csiParam)->count > (n) + 1 ? (csiParam)->count : (n) + 1 ))
 
 typedef enum {
     // Any control character between 0-0x1f inclusive can by a token type. For these, the value
@@ -169,16 +172,28 @@ typedef struct {
     int subCount[VT100CSIPARAM_MAX];
 } CSIParam;
 
-// A parsed token.
-typedef struct {
+@interface VT100Token : iTermPooledObject {
+@public
     VT100TerminalTokenType type;
-    unsigned char *position;  // Pointer into stream of where this token's data began.
-    int length;  // Length of parsed data in stream.
-    union {
-        NSString *string;  // For VT100_STRING, VT100_ASCIISTRING
-        unsigned char code;  // For VT100_UNKNOWNCHAR and VT100CSI_SCS0...SCS3.
-        CSIParam csi;  // 'cmd' not used here.
-    } u;
-    BOOL isControl;  // Is this a control code?
-} VT100TCC;
 
+    unsigned char code;  // For VT100_UNKNOWNCHAR and VT100CSI_SCS0...SCS3.
+    CSIParam *csi;
+
+    BOOL isControl;  // Is this a control code?
+}
+
+// For VT100_STRING, VT100_ASCIISTRING
+@property(nonatomic, retain) NSString *string;
+@property(nonatomic, retain) NSString *kvpKey;
+@property(nonatomic, retain) NSString *kvpValue;
+@property(nonatomic, retain) NSData *data;
+
++ (instancetype)token;
++ (instancetype)tokenForControlCharacter:(unsigned char)controlCharacter;
+
+- (CSIParam *)csi;
+- (BOOL)startsTmuxMode;
+- (BOOL)isAscii;
+- (BOOL)isStringType;
+
+@end

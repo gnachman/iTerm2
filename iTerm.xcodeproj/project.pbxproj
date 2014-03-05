@@ -629,6 +629,11 @@
 		A647E3AE18C3588800450FA1 /* VT100ControlParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3AC18C3588800450FA1 /* VT100ControlParser.h */; };
 		A647E3AF18C3588800450FA1 /* VT100ControlParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3AD18C3588800450FA1 /* VT100ControlParser.m */; };
 		A647E3B018C3588800450FA1 /* VT100ControlParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3AD18C3588800450FA1 /* VT100ControlParser.m */; };
+		A647E3B318C36D0300450FA1 /* VT100Token.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B218C36D0300450FA1 /* VT100Token.m */; };
+		A647E3B418C36D0300450FA1 /* VT100Token.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B218C36D0300450FA1 /* VT100Token.m */; };
+		A647E3B718C5884600450FA1 /* iTermObjectPool.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3B518C5884600450FA1 /* iTermObjectPool.h */; };
+		A647E3B818C5884600450FA1 /* iTermObjectPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B618C5884600450FA1 /* iTermObjectPool.m */; };
+		A647E3B918C5884600450FA1 /* iTermObjectPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B618C5884600450FA1 /* iTermObjectPool.m */; };
 		A67E0AD0186E4B71009B2B68 /* TaskNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */; };
 		A67E0AD1186E4B71009B2B68 /* TaskNotifier.m in Sources */ = {isa = PBXBuildFile; fileRef = A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */; };
 		A67E0AD2186E4B71009B2B68 /* TaskNotifier.m in Sources */ = {isa = PBXBuildFile; fileRef = A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */; };
@@ -1168,6 +1173,9 @@
 		A647E3A818C353C500450FA1 /* VT100StringParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100StringParser.m; sourceTree = "<group>"; };
 		A647E3AC18C3588800450FA1 /* VT100ControlParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100ControlParser.h; sourceTree = "<group>"; };
 		A647E3AD18C3588800450FA1 /* VT100ControlParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ControlParser.m; sourceTree = "<group>"; };
+		A647E3B218C36D0300450FA1 /* VT100Token.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Token.m; sourceTree = "<group>"; };
+		A647E3B518C5884600450FA1 /* iTermObjectPool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermObjectPool.h; sourceTree = "<group>"; };
+		A647E3B618C5884600450FA1 /* iTermObjectPool.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermObjectPool.m; sourceTree = "<group>"; };
 		A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TaskNotifier.h; sourceTree = "<group>"; };
 		A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TaskNotifier.m; sourceTree = "<group>"; };
 		A68A30BF186D0DC1007F550F /* FindCursorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindCursorView.h; sourceTree = "<group>"; };
@@ -1448,6 +1456,9 @@
 				1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */,
 				1D085FA116F138A000B7FCE9 /* ToastWindowController.m */,
 				1D06A04F134CDBED00C414EF /* Trouter.m */,
+				A647E3B218C36D0300450FA1 /* VT100Token.m */,
+				A647E3B518C5884600450FA1 /* iTermObjectPool.h */,
+				A647E3B618C5884600450FA1 /* iTermObjectPool.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -2337,6 +2348,7 @@
 				A63BA39518A9CB43002BE075 /* iTermSelection.h in Headers */,
 				1D624BEE1386E34F00111319 /* GTMObjectSingleton.h in Headers */,
 				1D624BF41386E39D00111319 /* GTMDebugSelectorValidation.h in Headers */,
+				A647E3B718C5884600450FA1 /* iTermObjectPool.h in Headers */,
 				1D624BF61386E3B400111319 /* GTMTypeCasting.h in Headers */,
 				1DA8117E13CEA30A00CCA89A /* FontSizeEstimator.h in Headers */,
 				1D8B8A141806038F00C2DC25 /* VT100Grid.h in Headers */,
@@ -2700,6 +2712,7 @@
 				A63F409C183B3AA7003A6A6D /* PTYNoteView.m in Sources */,
 				1D9A55AB180FA8B700B42CE9 /* PSMProgressIndicator.m in Sources */,
 				1D9A5593180FA87000B42CE9 /* PTYFontInfo.m in Sources */,
+				A647E3B918C5884600450FA1 /* iTermObjectPool.m in Sources */,
 				1D9A5546180FA82E00B42CE9 /* EquivalenceClassSet.m in Sources */,
 				A693395E1851A61D00EBEA20 /* VT100ScreenMark.m in Sources */,
 				1D9A5571180FA85900B42CE9 /* ToolProfiles.m in Sources */,
@@ -2802,6 +2815,7 @@
 				1D9A5576180FA85D00B42CE9 /* CoprocessTrigger.m in Sources */,
 				A68A3107186D2973007F550F /* TemporaryNumberAllocator.m in Sources */,
 				1D9A5580180FA87000B42CE9 /* FontSizeEstimator.m in Sources */,
+				A647E3B418C36D0300450FA1 /* VT100Token.m in Sources */,
 				1D9A5561180FA83900B42CE9 /* TrouterPrefsController.m in Sources */,
 				1D9A556F180FA85900B42CE9 /* ToolNotes.m in Sources */,
 				1D9A55A6180FA8B700B42CE9 /* NSBezierPath_AMShading.m in Sources */,
@@ -2938,6 +2952,7 @@
 				1D5FDDC01208E93600C46BA3 /* PSMTabBarCell.m in Sources */,
 				1D5FDDC11208E93600C46BA3 /* PSMTabBarControl.m in Sources */,
 				1D5FDDC21208E93600C46BA3 /* NSBezierPath_AMShading.m in Sources */,
+				A647E3B318C36D0300450FA1 /* VT100Token.m in Sources */,
 				1D5FDDC31208E93600C46BA3 /* PSMTabDragAssistant.m in Sources */,
 				1D5FDDC41208E93600C46BA3 /* PSMUnifiedTabStyle.m in Sources */,
 				1DC13AC418864E2200034DAE /* CommandHistoryPopup.m in Sources */,
@@ -3076,6 +3091,7 @@
 				1D085F8E16F0328B00B7FCE9 /* PasteViewController.m in Sources */,
 				1D085F9316F03E5400B7FCE9 /* PasteView.m in Sources */,
 				1D085F9716F04D0900B7FCE9 /* NSBezierPath+iTerm.m in Sources */,
+				A647E3B818C5884600450FA1 /* iTermObjectPool.m in Sources */,
 				1D085F9B16F1135F00B7FCE9 /* PasteEvent.m in Sources */,
 				A647E3AF18C3588800450FA1 /* VT100ControlParser.m in Sources */,
 				A647E3A518C352B000450FA1 /* VT100OtherParser.m in Sources */,

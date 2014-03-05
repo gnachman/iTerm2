@@ -66,7 +66,7 @@ static BOOL isString(unsigned char *code, NSStringEncoding encoding) {
 + (void)decodeBytes:(unsigned char *)datap
              length:(int)datalen
           bytesUsed:(int *)rmlen
-              token:(VT100TCC *)result
+              token:(VT100Token *)result
            encoding:(NSStringEncoding)encoding;
 
 @end

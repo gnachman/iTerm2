@@ -13,7 +13,7 @@
 + (void)decodeBytes:(unsigned char *)datap
              length:(int)datalen
           bytesUsed:(int *)rmlen
-              token:(VT100TCC *)result
+              token:(VT100Token *)result
            encoding:(NSStringEncoding)encoding {
     // DCS is kind of messy to parse, but we only support one code, so we just check if it's that.
     result->type = VT100_WAIT;

@@ -16,7 +16,7 @@
 + (void)decodeBytes:(unsigned char *)datap
              length:(int)datalen
           bytesUsed:(int *)rmlen
-              token:(VT100TCC *)result
+              token:(VT100Token *)result
            encoding:(NSStringEncoding)encoding {
     int mode = 0;
     NSData *data;
@@ -153,8 +153,8 @@
         result->type = VT100_NOTSUPPORT;
     } else {
         data = [NSData dataWithBytes:tempBuffer length:outputPointer - tempBuffer];
-        result->u.string = [[[NSString alloc] initWithData:data
-                                                 encoding:encoding] autorelease];
+        result.string = [[[NSString alloc] initWithData:data
+                                               encoding:encoding] autorelease];
         switch (mode) {
             case -1:
                 // Nonstandard Linux OSC P nrrggbb ST to change color palette
@@ -191,6 +191,7 @@
                 // <Esc>]50;key=value^G
                 // <Esc>]1337;key=value^G
                 result->type = XTERMCC_SET_KVP;
+                [self parseKeyValuePairInToken:result];
                 break;
             case 52:
                 // base64 copy/paste (OPT_PASTE64)
@@ -205,6 +206,26 @@
                 break;
         }
     }
+}
+
++ (void)parseKeyValuePairInToken:(VT100Token *)token {
+    // argument is of the form key=value
+    // key: Sequence of characters not = or ^G
+    // value: Sequence of characters not ^G
+    NSString* argument = token.string;
+    NSRange eqRange = [argument rangeOfString:@"="];
+    NSString* key;
+    NSString* value;
+    if (eqRange.location != NSNotFound) {
+        key = [argument substringToIndex:eqRange.location];;
+        value = [argument substringFromIndex:eqRange.location+1];
+    } else {
+        key = argument;
+        value = @"";
+    }
+    
+    token.kvpKey = key;
+    token.kvpValue = value;
 }
 
 @end

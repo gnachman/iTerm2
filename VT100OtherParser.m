@@ -13,7 +13,7 @@
 + (void)decodeBytes:(unsigned char *)datap
              length:(int)datalen
           bytesUsed:(int *)rmlen
-              token:(VT100TCC *)result
+              token:(VT100Token *)result
            encoding:(NSStringEncoding)encoding {
     int c1, c2;
     
@@ -66,7 +66,7 @@
                 result->type = VT100_WAIT;
             } else {
                 result->type = VT100CSI_SCS0;
-                result->u.code = c2;
+                result->code = c2;
                 *rmlen = 3;
             }
             break;
@@ -75,7 +75,7 @@
                 result->type = VT100_WAIT;
             } else {
                 result->type = VT100CSI_SCS1;
-                result->u.code=c2;
+                result->code = c2;
                 *rmlen = 3;
             }
             break;
@@ -84,7 +84,7 @@
                 result->type = VT100_WAIT;
             } else {
                 result->type = VT100CSI_SCS2;
-                result->u.code=c2;
+                result->code = c2;
                 *rmlen = 3;
             }
             break;
@@ -93,7 +93,7 @@
                 result->type = VT100_WAIT;
             } else {
                 result->type = VT100CSI_SCS3;
-                result->u.code=c2;
+                result->code = c2;
                 *rmlen = 3;
             }
             break;
@@ -157,9 +157,9 @@
                     }
                     if (isTerminator) {
                         // Found terminator. Grab text from datap to char before it
-                        // save in result->u.string.
+                        // save in result.string.
                         NSData *data = [NSData dataWithBytes:datap + 2 length:length];
-                        result->u.string = [[[NSString alloc] initWithData:data
+                        result.string = [[[NSString alloc] initWithData:data
                                                                   encoding:encoding] autorelease];
                         // Consume everything up to the terminator
                         *rmlen = i + 1;
@@ -168,7 +168,7 @@
                     }
                 }
                 if (found) {
-                    if (result->u.string.length == 0) {
+                    if (result.string.length == 0) {
                         // Ignore 0-length titles to avoid getting bitten by a screen
                         // feature/hack described here:
                         // http://www.gnu.org/software/screen/manual/screen.html#Dynamic-Titles

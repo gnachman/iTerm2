@@ -370,13 +370,9 @@ static void reapchild(int n)
 {
     [self logData:buffer length:length];
 
-    // forward the data to our delegate
-    // This is synchronous because otherwise we can read data from a child process faster than
-    // we can parse it. The main thread will quickly end up overloaded with calls to readTask:,
-    // never catching up, and never having a chance to draw or respond to input.
-    dispatch_sync(dispatch_get_main_queue(), ^() {
-        [delegate readTask:buffer length:length];
-    });
+    // The delegate is responsible for parsing VT100 tokens here and sending them off to the
+    // main thread for execution. If its queues get too large, it can block.
+    [delegate threadedReadTask:buffer length:length];
 
     @synchronized (self) {
         if (coprocess_) {

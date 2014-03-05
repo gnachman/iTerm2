@@ -18,6 +18,7 @@
     int _currentStreamLength;
     int _totalStreamLength;
     int _streamOffset;
+    BOOL _saveData;
 }
 
 - (id)init {
@@ -34,18 +35,21 @@
     [super dealloc];
 }
 
-- (BOOL)parseNextToken:(VT100TCC *)token incidentals:(NSMutableArray *)incidentals {
+- (BOOL)addNextParsedTokensToArray:(NSMutableArray *)output {
     unsigned char *datap;
     int datalen;
-    
+
+    VT100Token *token = [VT100Token token];
     token->isControl = NO;
+    token.string = nil;
     // get our current position in the stream
     datap = _stream + _streamOffset;
     datalen = _currentStreamLength - _streamOffset;
     
+    unsigned char *position = NULL;
+    int length = 0;
     if (datalen == 0) {
         token->type = VT100CC_NULL;
-        token->length = 0;
         _streamOffset = 0;
         _currentStreamLength = 0;
         
@@ -64,17 +68,24 @@
                                  bytesUsed:&rmlen
                                      token:token
                                   encoding:self.encoding];
-            token->length = rmlen;
-            token->position = datap;
+            length = rmlen;
+            position = datap;
         } else if (iscontrol(datap[0])) {
             [VT100ControlParser decodeBytes:datap
                                      length:datalen
                                   bytesUsed:&rmlen
-                                incidentals:incidentals
+                                incidentals:output
                                       token:token
                                    encoding:self.encoding];
-            token->length = rmlen;
-            token->position = datap;
+            if (token->type == XTERMCC_SET_KVP) {
+                if ([token.kvpKey isEqualToString:@"CopyToClipboard"]) {
+                    _saveData = YES;
+                } else if ([token.kvpKey isEqualToString:@"EndCopy"]) {
+                    _saveData = NO;
+                }
+            }
+            length = rmlen;
+            position = datap;
             token->isControl = YES;
         } else {
             if (isString(datap, self.encoding)) {
@@ -86,17 +97,17 @@
                 // If the encoding is UTF-8 then you get here only if *datap >= 0x80.
                 if (token->type != VT100_WAIT && rmlen == 0) {
                     token->type = VT100_UNKNOWNCHAR;
-                    token->u.code = datap[0];
+                    token->code = datap[0];
                     rmlen = 1;
                 }
             } else {
                 // If the encoding is UTF-8 you shouldn't get here.
                 token->type = VT100_UNKNOWNCHAR;
-                token->u.code = datap[0];
+                token->code = datap[0];
                 rmlen = 1;
             }
-            token->length = rmlen;
-            token->position = datap;
+            length = rmlen;
+            position = datap;
         }
         
         
@@ -113,12 +124,13 @@
         NSMutableString *ascii = [NSMutableString string];
         int i = 0;
         int start = 0;
-        while (i < token->length) {
+        while (i < length) {
             unsigned char c = datap[i];
             [loginfo appendFormat:@"%02x ", (int)c];
             [ascii appendFormat:@"%c", (c>=32 && c<128) ? c : '.'];
-            if (i == token->length - 1 || loginfo.length > 60) {
-                DebugLog([NSString stringWithFormat:@"Bytes %d-%d of %d: %@ (%@)", start, i, (int)token->length, loginfo, ascii]);
+            if (i == length - 1 || loginfo.length > 60) {
+                DebugLog([NSString stringWithFormat:@"Bytes %d-%d of %d: %@ (%@)", start, i,
+                          (int)length, loginfo, ascii]);
                 [loginfo setString:@""];
                 [ascii setString:@""];
                 start = i;
@@ -127,34 +139,67 @@
         }
     }
     
-    return token->type != VT100_WAIT && token->type != VT100CC_NULL;
+    if (token->type != VT100_WAIT && token->type != VT100CC_NULL) {
+        if (_saveData) {
+            token.data = [NSData dataWithBytes:position length:length];
+        }
+        [output addObject:token];
+        
+        // We return NO on DCS_TMUX because futher tokens should not be parsed (they are handled by
+        // the tmux parser, which does not speak VT100).
+        return token->type != DCS_TMUX;
+    } else {
+        [token recycleObject];
+        return NO;
+    }
 }
 
 - (void)putStreamData:(const char *)buffer length:(int)length {
-    if (_currentStreamLength + length > _totalStreamLength) {
-        // Grow the stream if needed.
-        int n = (length + _currentStreamLength) / kDefaultStreamSize;
+    @synchronized(self) {
+        if (_currentStreamLength + length > _totalStreamLength) {
+            // Grow the stream if needed.
+            int n = (length + _currentStreamLength) / kDefaultStreamSize;
 
-        _totalStreamLength += n * kDefaultStreamSize;
-        _stream = reallocf(_stream, _totalStreamLength);
+            _totalStreamLength += n * kDefaultStreamSize;
+            _stream = reallocf(_stream, _totalStreamLength);
+        }
+
+        memcpy(_stream + _currentStreamLength, buffer, length);
+        _currentStreamLength += length;
+        assert(_currentStreamLength >= 0);
+        if (_currentStreamLength == 0) {
+            _streamOffset = 0;
+        }
     }
+}
 
-    memcpy(_stream + _currentStreamLength, buffer, length);
-    _currentStreamLength += length;
-    assert(_currentStreamLength >= 0);
-    if (_currentStreamLength == 0) {
-        _streamOffset = 0;
+- (int)streamLength {
+    @synchronized(self) {
+        return _currentStreamLength - _streamOffset;
     }
 }
 
 - (NSData *)streamData {
-    return [NSData dataWithBytes:_stream + _streamOffset
-                          length:_currentStreamLength - _streamOffset];
+    @synchronized(self) {
+        return [NSData dataWithBytes:_stream + _streamOffset
+                              length:_currentStreamLength - _streamOffset];
+    }
 }
 
 - (void)clearStream {
-    _streamOffset = _currentStreamLength;
-    assert(_streamOffset >= 0);
+    @synchronized(self) {
+        _streamOffset = _currentStreamLength;
+        assert(_streamOffset >= 0);
+    }
 }
+
+- (void)addParsedTokensToArray:(NSMutableArray *)output {
+    @synchronized(self) {
+        while ([self addNextParsedTokensToArray:output]) {
+            // Nothing to do.
+        }
+    }
+}
+
 
 @end

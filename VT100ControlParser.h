@@ -19,7 +19,7 @@ static BOOL iscontrol(int c) {
              length:(int)datalen
           bytesUsed:(int *)rmlen
         incidentals:(NSMutableArray *)incidentals
-              token:(VT100TCC *)token
+              token:(VT100Token *)token
            encoding:(NSStringEncoding)encoding;
 
 @end

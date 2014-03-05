@@ -13,13 +13,11 @@
 
 @property(nonatomic, readonly) NSData *streamData;
 @property(atomic, assign) NSStringEncoding encoding;
+@property(nonatomic, readonly) int streamLength;
 
 - (void)putStreamData:(const char *)buffer length:(int)length;
 - (void)clearStream;
 
-// Returns true if a new token was parsed, false if there was nothing left to do. If stray control
-// characters are found, a VT100CSIIncidental* will be added to |incidentals|, which should be
-// executed before the token.
-- (BOOL)parseNextToken:(VT100TCC *)token incidentals:(NSMutableArray *)incidentals;
+- (void)addParsedTokensToArray:(NSMutableArray *)output;
 
 @end

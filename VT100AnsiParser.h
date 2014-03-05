@@ -23,7 +23,7 @@ static BOOL isANSI(unsigned char *code, int len) {
 + (void)decodeBytes:(unsigned char *)datap
              length:(int)datalen
           bytesUsed:(int *)rmlen
-              token:(VT100TCC *)result;
+              token:(VT100Token *)result;
 
 @end
 
