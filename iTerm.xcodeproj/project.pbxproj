@@ -3590,7 +3590,7 @@
 				);
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
-				"OTHER_CFLAGS[arch=*]" = "-DITERM_DEBUG";
+				"OTHER_CFLAGS[arch=*]" = "-DITERM_DEBUG=1";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",

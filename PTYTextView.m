@@ -3510,7 +3510,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"Mouse move event is dispatched but xtermMouseReporting is not enabled");
         return;
     }
-#if DEBUG
+#if ITERM_DEBUG
     assert([terminal mouseMode] == MOUSE_REPORTING_ALL_MOTION);
 #endif
     if ([terminal mouseMode] != MOUSE_REPORTING_ALL_MOTION) {

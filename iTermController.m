@@ -27,10 +27,6 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-// Debug option
-#define DEBUG_ALLOC           0
-#define DEBUG_METHOD_TRACE    0
-
 #import "iTermController.h"
 
 #import "FutureMethods.h"
@@ -137,10 +133,6 @@ static BOOL initDone = NO;
 // init
 - (id)init
 {
-#if DEBUG_ALLOC
-    NSLog(@"%s(%d):-[iTermController init]",
-          __FILE__, __LINE__);
-#endif
     self = [super init];
 
     if (self) {
@@ -181,10 +173,6 @@ static BOOL initDone = NO;
 
 - (void)dealloc
 {
-#if DEBUG_ALLOC
-    NSLog(@"%s(%d):-[iTermController dealloc]",
-        __FILE__, __LINE__);
-#endif
     // Close all terminal windows
     while ([terminalWindows count] > 0) {
         [[terminalWindows objectAtIndex:0] close];

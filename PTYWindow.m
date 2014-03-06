@@ -36,19 +36,10 @@
 #import "iTermController.h"
 #import "iTermApplicationDelegate.h"
 
-#define DEBUG_METHOD_ALLOC  0
-#define DEBUG_METHOD_TRACE  0
-#define DEBUG_WINDOW_LAYOUT 0
-
 #ifdef PSEUDOTERMINAL_VERBOSE_LOGGING
 #define PtyLog NSLog
 #else
-#define PtyLog(args...) \
-    do { \
-        if (gDebugLogging) { \
-            DebugLog([NSString stringWithFormat:args]); \
-        } \
-    } while (0)
+#define PtyLog DLog
 #endif
 
 @implementation PTYWindow
@@ -66,10 +57,6 @@
               backing:(NSBackingStoreType)bufferingType
                 defer:(BOOL)flag;
 {
-#if DEBUG_METHOD_ALLOC
-    NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
-#endif
-
     if ((self = [super initWithContentRect:contentRect
                  styleMask:aStyle
                    backing:bufferingType
@@ -343,10 +330,6 @@ end:
 
 - (void)toggleToolbarShown:(id)sender
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYWindow toggleToolbarShown]",
-          __FILE__, __LINE__);
-#endif
     id delegate = [self delegate];
 
     // Let our delegate know

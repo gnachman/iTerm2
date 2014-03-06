@@ -204,8 +204,7 @@ typedef enum {
     
     NSTimeInterval _timeOfLastScheduling;
 
-    NSCondition *_executingCond;
-    BOOL _executing;
+    dispatch_semaphore_t _executionSemaphore;
 }
 
 - (id)init
@@ -218,7 +217,12 @@ typedef enum {
         [[MovePaneController sharedInstance] exitMovePaneMode];
         _triggerLine = [[NSMutableString alloc] init];
         gettimeofday(&_lastInput, NULL);
-        _executingCond = [[NSCondition alloc] init];
+        
+        // Experimentally, this is enough to keep the queue primed but not overwhelmed.
+        // TODO: How do slower machines fare?
+        static const int kMaxOutstandingExecuteCalls = 8;
+        _executionSemaphore = dispatch_semaphore_create(kMaxOutstandingExecuteCalls);
+
         _lastOutput = _lastInput;
         _lastUpdate = _lastInput;
         _eventQueue = [[NSMutableArray alloc] init];
@@ -258,7 +262,7 @@ typedef enum {
 - (void)dealloc
 {
     [self stopTailFind];  // This frees the substring in the tail find context, if needed.
-    [_executingCond release];
+    dispatch_release(_executionSemaphore);
     [_colorMap release];
     [_triggerLine release];
     [_triggers release];
@@ -1120,10 +1124,6 @@ typedef enum {
     [_terminal.parser addParsedTokensToArray:tokens];
     STOPWATCH_LAP(parsing);
 
-    // If a previous execution was running, wait for it to finish. Otherwise, we can get ahead of it
-    // and the main thread will never get a chance to do anything but execute tokens.
-    [self waitForExecutionToFinish];
-
     if ([[tokens lastObject] startsTmuxMode]) {
         // Will become a tmux gateway when the last token is parsed. We don't want this method to be
         // called again before that happens because future tokens shouldn't be parsed until we're
@@ -1135,11 +1135,14 @@ typedef enum {
         });
         [tokens release];
     } else {
-        [_executingCond lock];
-        _executing = YES;
-        [_executingCond unlock];
-
+        // This limits the number of outstanding execution blocks to prevent the main thread from
+        // getting bogged down.
+        STOPWATCH_START(blocking);
+        dispatch_semaphore_wait(_executionSemaphore, DISPATCH_TIME_FOREVER);
+        STOPWATCH_LAP(blocking);
+        
         [self retain];
+        dispatch_retain(_executionSemaphore);
         dispatch_async(dispatch_get_main_queue(), ^{
             assert(self.tmuxMode != TMUX_GATEWAY);
 
@@ -1153,7 +1156,8 @@ typedef enum {
             
             // Unblock the background thread; if it's ready, it can send the main thread more tokens
             // now.
-            [self signalThatExecutionFinished];
+            dispatch_semaphore_signal(_executionSemaphore);
+            dispatch_release(_executionSemaphore);
             [self release];
         });
     }
@@ -1173,24 +1177,6 @@ typedef enum {
     
     [self finishedHandlingNewOutputOfLength:length];
     STOPWATCH_LAP(executing);
-}
-
-- (void)waitForExecutionToFinish {
-    STOPWATCH_START(blocking);
-    // Wait until the main thread has finished executing the last batch.
-    [_executingCond lock];
-    while (_executing) {
-        [_executingCond wait];
-    }
-    [_executingCond unlock];
-    STOPWATCH_LAP(blocking);
-}
-
-- (void)signalThatExecutionFinished {
-    [_executingCond lock];
-    _executing = NO;
-    [_executingCond signal];
-    [_executingCond unlock];
 }
 
 - (NSData *)handleTmuxGatewayInput:(NSData *)data {
