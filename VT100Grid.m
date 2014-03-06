@@ -566,7 +566,6 @@
 #ifdef VERBOSE_STRING
         NSLog(@"Begin inserting line. cursor_.x=%d, WIDTH=%d", cursor_.x, WIDTH);
 #endif
-        NSAssert(buffer[idx].code != DWC_RIGHT, @"DWC cut off");
 
         if (buffer[idx].code == DWC_SKIP) {
             // I'm pretty sure this can never happen and that this code is just a historical leftover.

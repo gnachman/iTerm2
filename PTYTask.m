@@ -72,6 +72,10 @@ setup_tty_param(struct termios* term,
     win->ws_ypixel = 0;
 }
 
+@interface PTYTask ()
+@property(atomic, assign) BOOL hasMuteCoprocess;
+@end
+
 @implementation PTYTask
 {
     pid_t pid;
@@ -276,7 +280,7 @@ static void reapchild(int n)
 
 - (void)processRead
 {
-    int iterations = 10;
+    int iterations = 4;
     int bytesRead = 0;
 
     char buffer[MAXRW * iterations];
@@ -614,6 +618,7 @@ static void reapchild(int n)
         [coprocess_ terminate];
         [coprocess_ release];
         coprocess_ = nil;
+        self.hasMuteCoprocess = NO;
     }
     if (thePid) {
         [[TaskNotifier sharedInstance] waitForPid:thePid];
@@ -628,6 +633,7 @@ static void reapchild(int n)
     @synchronized (self) {
         [coprocess_ autorelease];
         coprocess_ = [coprocess retain];
+        self.hasMuteCoprocess = coprocess_.mute;
     }
     [[TaskNotifier sharedInstance] unblock];
 }
@@ -644,14 +650,6 @@ static void reapchild(int n)
 {
     @synchronized (self) {
         return coprocess_ != nil;
-    }
-    return NO;
-}
-
-- (BOOL)hasMuteCoprocess
-{
-    @synchronized (self) {
-        return coprocess_ != nil && coprocess_.mute;
     }
     return NO;
 }

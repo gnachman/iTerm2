@@ -40,7 +40,6 @@
     int datalen;
 
     VT100Token *token = [VT100Token token];
-    token->isControl = NO;
     token.string = nil;
     // get our current position in the stream
     datap = _stream + _streamOffset;
@@ -86,7 +85,6 @@
             }
             length = rmlen;
             position = datap;
-            token->isControl = YES;
         } else {
             if (isString(datap, self.encoding)) {
                 [VT100StringParser decodeBytes:datap
@@ -139,8 +137,9 @@
         }
     }
     
+    token->savingData = _saveData;
     if (token->type != VT100_WAIT && token->type != VT100CC_NULL) {
-        if (_saveData) {
+        if (_saveData || token->type == VT100_ASCIISTRING) {
             token.data = [NSData dataWithBytes:position length:length];
         }
         [output addObject:token];

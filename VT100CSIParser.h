@@ -18,7 +18,7 @@ typedef enum {
     kIncidentalDeleteCharacterAtCursor
 } VT100CSIIncidentalType;
 
-static BOOL isCSI(unsigned char *code, int len) {
+NS_INLINE BOOL isCSI(unsigned char *code, int len) {
     if (len >= 2 && code[0] == ESC && (code[1] == '[')) {
         return YES;
     }

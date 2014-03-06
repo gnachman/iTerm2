@@ -289,7 +289,9 @@ static void DecodeASCIIBytes(unsigned char *datap,
     result->type = VT100_UNKNOWNCHAR;
     result->code = datap[0];
 
+    BOOL isAscii = NO;
     if (isAsciiString(datap)) {
+        isAscii = YES;
         DecodeASCIIBytes(datap, datalen, rmlen, result);
         encoding = NSASCIIStringEncoding;
     } else if (encoding == NSUTF8StringEncoding) {
@@ -315,7 +317,7 @@ static void DecodeASCIIBytes(unsigned char *datap,
         datap[0] = ONECHAR_UNKNOWN;
         result.string = ReplacementString();
         result->type = VT100_STRING;
-    } else if (result->type != VT100_WAIT) {
+    } else if (result->type != VT100_WAIT && !isAscii) {
         result.string = [[[NSString alloc] initWithBytes:datap
                                                     length:*rmlen
                                                   encoding:encoding] autorelease];

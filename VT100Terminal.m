@@ -387,16 +387,13 @@ static const int kMaxScreenRows = 4096;
 
 - (void)executeModeUpdates:(VT100Token *)token
 {
-    if (!token->isControl) {
-        return;
-    }
     BOOL mode;
     int i;
 
     switch (token->type) {
         case VT100CSI_DECSET:
         case VT100CSI_DECRST:
-            mode=(token->type == VT100CSI_DECSET);
+            mode = (token->type == VT100CSI_DECSET);
 
             for (i = 0; i < token.csi->count; i++) {
                 switch (token.csi->p[i]) {
@@ -620,9 +617,6 @@ static const int kMaxScreenRows = 4096;
 
 - (void)executeSGR:(VT100Token *)token
 {
-    if (!token->isControl) {
-        return;
-    }
     if (token->type == VT100CSI_SGR) {
         if (token.csi->count == 0) {
             [self resetSGR];
@@ -978,16 +972,16 @@ static const int kMaxScreenRows = 4096;
             receivingFile_ = NO;
         }
     }
-    if (token->type != VT100_SKIP) {  // VT100_SKIP = there was no data to read
-        if ([delegate_ terminalIsAppendingToPasteboard]) {
-            // We are probably copying text to the clipboard until esc]1337;EndCopy^G is received.
-            if (token->type != XTERMCC_SET_KVP ||
-                ![token.string hasPrefix:@"CopyToClipboard"]) {
-                // Append text to clipboard except for initial command that turns on copying to
-                // the clipboard.
-                
-                [delegate_ terminalAppendDataToPasteboard:token.data];
-            }
+    if (token->savingData &&
+        token->type != VT100_SKIP &&
+        [delegate_ terminalIsAppendingToPasteboard]) {
+        // We are probably copying text to the clipboard until esc]1337;EndCopy^G is received.
+        if (token->type != XTERMCC_SET_KVP ||
+            ![token.string hasPrefix:@"CopyToClipboard"]) {
+            // Append text to clipboard except for initial command that turns on copying to
+            // the clipboard.
+            
+            [delegate_ terminalAppendDataToPasteboard:token.data];
         }
     }
 
@@ -1016,8 +1010,10 @@ static const int kMaxScreenRows = 4096;
     switch (token->type) {
             // our special code
         case VT100_STRING:
+            [delegate_ terminalAppendString:token.string];
+            break;
         case VT100_ASCIISTRING:
-            [delegate_ terminalAppendString:token.string isAscii:token->type == VT100_ASCIISTRING];
+            [delegate_ terminalAppendAsciiData:token.data];
             break;
 
         case VT100_UNKNOWNCHAR:

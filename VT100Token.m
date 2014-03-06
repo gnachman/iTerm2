@@ -12,6 +12,10 @@
 
 static iTermObjectPool *gPool;
 
+@interface VT100Token ()
+@property(nonatomic, readwrite) CSIParam *csi;
+@end
+
 @implementation VT100Token
 
 + (void)initialize {
@@ -36,9 +40,9 @@ static iTermObjectPool *gPool;
 }
 
 - (void)destroyPooledObject {
-    if (csi) {
-        free(csi);
-        csi = NULL;
+    if (_csi) {
+        free(_csi);
+        _csi = NULL;
     }
     
     [_string release];
@@ -55,14 +59,13 @@ static iTermObjectPool *gPool;
     
     type = 0;
     code = 0;
-    isControl = NO;
 }
 
 - (CSIParam *)csi {
-    if (!csi) {
-        csi = calloc(sizeof(*csi), 1);
+    if (!_csi) {
+        _csi = calloc(sizeof(*_csi), 1);
     }
-    return csi;
+    return _csi;
 }
 
 - (BOOL)startsTmuxMode {

@@ -37,11 +37,11 @@
 #define isKREncoding(e)     ((e)==0x80000422 || (e)==0x80000003|| \
                              (e)==0x80000840 || (e)==0x80000940)
 
-static BOOL isAsciiString(unsigned char *code) {
+NS_INLINE BOOL isAsciiString(unsigned char *code) {
     return *code >= 0x20 && *code <= 0x7f;
 }
 
-static BOOL isString(unsigned char *code, NSStringEncoding encoding) {
+NS_INLINE BOOL isString(unsigned char *code, NSStringEncoding encoding) {
     if (encoding == NSUTF8StringEncoding) {
         return (*code >= 0x80);
     } else if (isGBEncoding(encoding)) {

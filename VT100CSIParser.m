@@ -42,7 +42,7 @@ static int advanceAndEatControlChars(unsigned char **ppdata,
             case VT100CC_SUB:
             case VT100CC_ESC:
             case VT100CC_DEL:
-                [incidentals addObject:[VT100Token tokenForControlCharacter:*ppdata]];
+                [incidentals addObject:[VT100Token tokenForControlCharacter:**ppdata]];
                 break;
             default:
                 if (**ppdata >= 0x20)

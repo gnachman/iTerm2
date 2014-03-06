@@ -176,24 +176,36 @@ typedef struct {
 @public
     VT100TerminalTokenType type;
 
-    unsigned char code;  // For VT100_UNKNOWNCHAR and VT100CSI_SCS0...SCS3.
-    CSIParam *csi;
+    // data is populated because the current mode uses the raw input. data is
+    // always set for ascii strings regardless of mode.
+    BOOL savingData;
 
-    BOOL isControl;  // Is this a control code?
+    unsigned char code;  // For VT100_UNKNOWNCHAR and VT100CSI_SCS0...SCS3.
 }
 
-// For VT100_STRING, VT100_ASCIISTRING
+// For VT100_STRING
 @property(nonatomic, retain) NSString *string;
+
+// For VT100_ASCIISTRING and when saving data.
+@property(nonatomic, retain) NSData *data;
+
+// For XTERMCC_SET_KVP.
 @property(nonatomic, retain) NSString *kvpKey;
 @property(nonatomic, retain) NSString *kvpValue;
-@property(nonatomic, retain) NSData *data;
+
+// For VT100CSI_ codes that take paramters.
+@property(nonatomic, readonly) CSIParam *csi;
+
+// Is this DCS_TMUX?
+@property(nonatomic, readonly) BOOL startsTmuxMode;
+
+// Is this an ascii string?
+@property(nonatomic, readonly) BOOL isAscii;
+
+// Is this a string or ascii string?
+@property(nonatomic, readonly) BOOL isStringType;
 
 + (instancetype)token;
 + (instancetype)tokenForControlCharacter:(unsigned char)controlCharacter;
-
-- (CSIParam *)csi;
-- (BOOL)startsTmuxMode;
-- (BOOL)isAscii;
-- (BOOL)isStringType;
 
 @end

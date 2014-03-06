@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "VT100Token.h"
 
-static BOOL iscontrol(int c) {
+NS_INLINE BOOL iscontrol(int c) {
     return c <= 0x1f;
 }
 

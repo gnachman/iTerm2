@@ -31,9 +31,9 @@ typedef enum {
 } VT100TerminalUnits;
 
 @protocol VT100TerminalDelegate
-// Append a string at the cursor's position and advance the cursor, scrolling if necessary. If
-// |ascii| is set then the string contains only ascii characters.
-- (void)terminalAppendString:(NSString *)string isAscii:(BOOL)isAscii;
+// Append a string at the cursor's position and advance the cursor, scrolling if necessary.
+- (void)terminalAppendString:(NSString *)string;
+- (void)terminalAppendAsciiData:(NSData *)asciiData;
 
 // Play/display the bell.
 - (void)terminalRingBell;

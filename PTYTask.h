@@ -16,6 +16,8 @@ extern NSString *kCoprocessStatusChangeNotification;
 
 @interface PTYTask : NSObject
 
+@property(atomic, readonly) BOOL hasMuteCoprocess;
+
 - (id)init;
 - (void)dealloc;
 - (BOOL)hasBrokenPipe;
@@ -60,7 +62,6 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (Coprocess *)coprocess;
 - (BOOL)writeBufferHasRoom;
 - (BOOL)hasCoprocess;
-- (BOOL)hasMuteCoprocess;
 - (void)stopCoprocess;
 
 - (void)logData:(const char *)buffer length:(int)length;

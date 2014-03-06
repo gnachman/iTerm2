@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "VT100Token.h"
 
-static BOOL isANSI(unsigned char *code, int len) {
+NS_INLINE BOOL isANSI(unsigned char *code, int len) {
     // Currently, we only support esc-c as an ANSI code (other ansi codes are CSI).
     if (len >= 2 && code[0] == ESC && code[1] == 'c') {
         return YES;

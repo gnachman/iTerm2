@@ -1116,7 +1116,7 @@ typedef enum {
     
     // Parse the input stream into an array of tokens.
     STOPWATCH_START(parsing);
-    NSMutableArray *tokens = [[NSMutableArray alloc] init];
+    NSMutableArray *tokens = [[NSMutableArray alloc] initWithCapacity:100];
     [_terminal.parser addParsedTokensToArray:tokens];
     STOPWATCH_LAP(parsing);
 
@@ -1225,7 +1225,7 @@ typedef enum {
         }
         [_terminal.parser putStreamData:buffer length:length];
 
-        NSMutableArray *tokens = [NSMutableArray array];
+        NSMutableArray *tokens = [NSMutableArray arrayWithCapacity:100];
         [_terminal.parser addParsedTokensToArray:tokens];
         for (VT100Token *token in tokens) {
             [_terminal executeToken:token];
@@ -3466,7 +3466,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)tmuxPrintLine:(NSString *)line
 {
-    [_screen appendStringAtCursor:line ascii:NO];
+    [_screen appendStringAtCursor:line];
     [_screen crlf];
 }
 
@@ -3480,7 +3480,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     _tmuxGateway = nil;
     [_tmuxController release];
     _tmuxController = nil;
-    [_screen appendStringAtCursor:@"Detached" ascii:YES];
+    [_screen appendStringAtCursor:@"Detached"];
     [_screen crlf];
     self.tmuxMode = TMUX_NONE;
     _tmuxLogging = NO;
@@ -4648,7 +4648,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                alternateSemantics:YES];
     [_terminal setBackgroundColor:ALTSEM_BG_DEFAULT
                alternateSemantics:YES];
-    [_screen appendStringAtCursor:message ascii:YES];
+    [_screen appendStringAtCursor:message];
     [_screen crlf];
     [_terminal setForegroundColor:savedFgColor.foregroundColor
                alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
@@ -4723,6 +4723,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string {
     [self appendStringToTriggerLine:string];
+}
+
+- (void)screenDidAppendAsciiDataToCurrentLine:(NSData *)asciiData {
+    if ([_triggers count]) {
+        NSString *string = [[NSString alloc] initWithData:asciiData encoding:NSASCIIStringEncoding];
+        [self screenDidAppendStringToCurrentLine:string];
+    }
 }
 
 - (void)screenSetCursorType:(ITermCursorType)type {

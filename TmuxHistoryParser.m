@@ -36,6 +36,10 @@
     for (VT100Token *token in tokens) {
         [terminal executeToken:token];
         NSString *string = token.isStringType ? token.string : nil;
+        if (!string && token.isStringType && token.data) {
+            string = [[[NSString alloc] initWithData:token.data encoding:NSASCIIStringEncoding] autorelease];
+        }
+        
         if (string) {
             // Allocate double space in case they're all double-width characters.
             screenChars = malloc(sizeof(screen_char_t) * 2 * string.length);
