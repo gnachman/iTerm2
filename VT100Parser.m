@@ -35,7 +35,7 @@
     [super dealloc];
 }
 
-- (BOOL)addNextParsedTokensToArray:(NSMutableArray *)output {
+- (BOOL)addNextParsedTokensToVector:(CVector *)vector {
     unsigned char *datap;
     int datalen;
 
@@ -73,7 +73,7 @@
             [VT100ControlParser decodeBytes:datap
                                      length:datalen
                                   bytesUsed:&rmlen
-                                incidentals:output
+                                incidentals:vector
                                       token:token
                                    encoding:self.encoding];
             if (token->type == XTERMCC_SET_KVP) {
@@ -142,7 +142,7 @@
         if (_saveData || token->type == VT100_ASCIISTRING) {
             token.data = [NSData dataWithBytes:position length:length];
         }
-        [output addObject:token];
+        CVectorAppend(vector, token);
         
         // We return NO on DCS_TMUX because futher tokens should not be parsed (they are handled by
         // the tmux parser, which does not speak VT100).
@@ -192,9 +192,9 @@
     }
 }
 
-- (void)addParsedTokensToArray:(NSMutableArray *)output {
+- (void)addParsedTokensToVector:(CVector *)vector {
     @synchronized(self) {
-        while ([self addNextParsedTokensToArray:output]) {
+        while ([self addNextParsedTokensToVector:vector]) {
             // Nothing to do.
         }
     }

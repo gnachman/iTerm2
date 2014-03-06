@@ -18,7 +18,7 @@
 + (void)decodeBytes:(unsigned char *)datap
              length:(int)datalen
           bytesUsed:(int *)rmlen
-        incidentals:(NSMutableArray *)incidentals
+        incidentals:(CVector *)incidentals
               token:(VT100Token *)token
            encoding:(NSStringEncoding)encoding
 {

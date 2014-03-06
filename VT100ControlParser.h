@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "CVector.h"
 #import "VT100Token.h"
 
 NS_INLINE BOOL iscontrol(int c) {
@@ -18,7 +19,7 @@ NS_INLINE BOOL iscontrol(int c) {
 + (void)decodeBytes:(unsigned char *)datap
              length:(int)datalen
           bytesUsed:(int *)rmlen
-        incidentals:(NSMutableArray *)incidentals
+        incidentals:(CVector *)incidentals
               token:(VT100Token *)token
            encoding:(NSStringEncoding)encoding;
 

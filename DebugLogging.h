@@ -10,7 +10,9 @@
 
 extern BOOL gDebugLogging;
 
-#if !ITERM_DEBUG
+#define USE_STOPWATCH 0
+
+#if !ITERM_DEBUG && USE_STOPWATCH
 #define STOPWATCH_START(name) \
   NSTimeInterval start_##name = [NSDate timeIntervalSinceReferenceDate]; \
   static int count_##name; \

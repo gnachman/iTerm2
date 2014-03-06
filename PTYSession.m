@@ -1,5 +1,6 @@
 #import "PTYSession.h"
 
+#import "CVector.h"
 #import "CommandHistory.h"
 #import "Coprocess.h"
 #import "FakeWindow.h"
@@ -1120,20 +1121,21 @@ typedef enum {
     
     // Parse the input stream into an array of tokens.
     STOPWATCH_START(parsing);
-    NSMutableArray *tokens = [[NSMutableArray alloc] initWithCapacity:100];
-    [_terminal.parser addParsedTokensToArray:tokens];
+    CVector vector;
+    CVectorCreate(&vector, 100);
+    [_terminal.parser addParsedTokensToVector:&vector];
     STOPWATCH_LAP(parsing);
 
-    if ([[tokens lastObject] startsTmuxMode]) {
+    if ([CVectorLastObject(&vector) startsTmuxMode]) {
         // Will become a tmux gateway when the last token is parsed. We don't want this method to be
         // called again before that happens because future tokens shouldn't be parsed until we're
         // no longer a tmux gateway. From now on, the main thread will do parsing.
         dispatch_sync(dispatch_get_main_queue(), ^{
-            [self executeTokens:tokens bytesHandled:length];
+            [self executeTokens:&vector bytesHandled:length];
             // Handle whatever is left in the parser's buffer.
             [self readTask:"" length:0];
         });
-        [tokens release];
+        CVectorDestroy(&vector);
     } else {
         // This limits the number of outstanding execution blocks to prevent the main thread from
         // getting bogged down.
@@ -1147,12 +1149,15 @@ typedef enum {
             assert(self.tmuxMode != TMUX_GATEWAY);
 
             if (![_shell hasMuteCoprocess]) {
-                [self executeTokens:tokens bytesHandled:length];
+                [self executeTokens:&vector bytesHandled:length];
                 assert(self.tmuxMode != TMUX_GATEWAY);
             } else {
-                [tokens makeObjectsPerformSelector:@selector(recycleObject)];
+                int n = CVectorCount(&vector);
+                for (int i = 0; i < n; i++) {
+                    [CVectorGetObject(&vector, i) recycleObject];
+                }
             }
-            [tokens release];
+            CVectorDestroy(&vector);
             
             // Unblock the background thread; if it's ready, it can send the main thread more tokens
             // now.
@@ -1163,17 +1168,18 @@ typedef enum {
     }
 }
 
-- (void)executeTokens:(NSArray *)tokens bytesHandled:(int)length {
+- (void)executeTokens:(const CVector *)vector bytesHandled:(int)length {
     STOPWATCH_START(executing);
-    for (id obj in tokens) {
+    int n = CVectorCount(vector);
+    for (int i = 0; i < n; i++) {
         if (_exited || !_terminal || [_shell hasMuteCoprocess] || self.tmuxMode == TMUX_GATEWAY) {
             break;
         }
         
-        [_terminal executeToken:obj];
+        VT100Token *token = CVectorGetObject(vector, i);
+        [_terminal executeToken:token];
+        [token recycleObject];
     }
-    
-    [tokens makeObjectsPerformSelector:@selector(recycleObject)];
     
     [self finishedHandlingNewOutputOfLength:length];
     STOPWATCH_LAP(executing);
@@ -1204,21 +1210,28 @@ typedef enum {
             NSData *data = [NSData dataWithBytes:buffer length:length];
             data = [self handleTmuxGatewayInput:data];
             if (!data) {
+                // Still a tmux gateway.
                 break;
             }
+            assert(self.tmuxMode == TMUX_NONE);
             buffer = data.bytes;
             length = data.length;
         }
         [_terminal.parser putStreamData:buffer length:length];
 
         NSMutableArray *tokens = [NSMutableArray arrayWithCapacity:100];
-        [_terminal.parser addParsedTokensToArray:tokens];
-        for (VT100Token *token in tokens) {
-            [_terminal executeToken:token];
-            if (_exited) {
-                break;
+        CVector vector;
+        CVectorCreate(&vector, 100);
+        [_terminal.parser addParsedTokensToVector:&vector];
+        int n = CVectorCount(&vector);
+        for (int i = 0; i < n; i++) {
+            VT100Token *token = CVectorGetObject(&vector, i);
+            if (!_exited) {
+                [_terminal executeToken:token];
             }
+            [token recycleObject];
         }
+        CVectorDestroy(&vector);
 
         if (!_exited && self.tmuxMode == TMUX_GATEWAY) {
             // The last token turned us into a tmux gateway. Re-run with the tail of the data.

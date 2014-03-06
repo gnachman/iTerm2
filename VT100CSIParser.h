@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "CVector.h"
 #import "VT100Token.h"
 
 typedef enum {
@@ -30,7 +31,7 @@ NS_INLINE BOOL isCSI(unsigned char *code, int len) {
 + (void)decodeBytes:(unsigned char *)datap
              length:(int)datalen
           bytesUsed:(int *)rmlen
-        incidentals:(NSMutableArray *)incidentals
+        incidentals:(CVector *)incidentals
               token:(VT100Token *)result;
 
 @end

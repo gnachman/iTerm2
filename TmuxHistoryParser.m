@@ -31,9 +31,13 @@
     NSData *histData = [hist dataUsingEncoding:NSUTF8StringEncoding];
     [terminal.parser putStreamData:histData.bytes
                             length:histData.length];
-    NSMutableArray *tokens = [NSMutableArray array];
-    [terminal.parser addParsedTokensToArray:tokens];
-    for (VT100Token *token in tokens) {
+    
+    CVector vector;
+    CVectorCreate(&vector, 100);
+    [terminal.parser addParsedTokensToVector:&vector];
+    int n = CVectorCount(&vector);
+    for (int i = 0; i < n; i++) {
+        VT100Token *token = CVectorGetObject(&vector, i);
         [terminal executeToken:token];
         NSString *string = token.isStringType ? token.string : nil;
         if (!string && token.isStringType && token.data) {
@@ -60,6 +64,7 @@
         }
         [token recycleObject];
     }
+    CVectorDestroy(&vector);
 
     return result;
 }

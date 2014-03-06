@@ -15,7 +15,7 @@
 
 static int advanceAndEatControlChars(unsigned char **ppdata,
                                      int *pdatalen,
-                                     NSMutableArray *incidentals)
+                                     CVector *incidentals)
 {
     // return value represent "continuous" state.
     // If it is YES, current control sequence parsing process was not canceled.
@@ -42,7 +42,7 @@ static int advanceAndEatControlChars(unsigned char **ppdata,
             case VT100CC_SUB:
             case VT100CC_ESC:
             case VT100CC_DEL:
-                [incidentals addObject:[VT100Token tokenForControlCharacter:**ppdata]];
+                CVectorAppend(incidentals, [VT100Token tokenForControlCharacter:**ppdata]);
                 break;
             default:
                 if (**ppdata >= 0x20)
@@ -56,7 +56,7 @@ static int advanceAndEatControlChars(unsigned char **ppdata,
 static int getCSIParam(unsigned char *datap,
                        int datalen,
                        CSIParam *param,
-                       NSMutableArray *incidentals)
+                       CVector *incidentals)
 {
     int i;
     BOOL unrecognized = NO;
@@ -337,7 +337,7 @@ cancel:
 + (void)decodeBytes:(unsigned char *)datap
              length:(int)datalen
           bytesUsed:(int *)rmlen
-        incidentals:(NSMutableArray *)incidentals
+        incidentals:(CVector *)incidentals
               token:(VT100Token *)result
 {
     CSIParam *param = result.csi;
