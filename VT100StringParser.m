@@ -260,6 +260,11 @@ static void DecodeASCIIBytes(unsigned char *datap,
     unsigned char *p = datap;
     int len = datalen;
     
+    // I tried the ideas mentioned here:
+    // http://stackoverflow.com/questions/22218605/is-this-function-a-good-candidate-for-simd-on-intel
+    // (using 8-bytes-at-a-time bit twiddling and SIMD)
+    // and although this while loop completed faster, the overall benchmark speed on spam.cc did
+    // not improve.
     while (len > 0) {
         if (*p >= 0x20 && *p <= 0x7f) {
             p++;
