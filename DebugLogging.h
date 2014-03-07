@@ -23,7 +23,7 @@ extern BOOL gDebugLogging;
     count_##name++; \
     sum_##name += [NSDate timeIntervalSinceReferenceDate] - start_##name; \
     if (count_##name % 10000 == 0) { \
-      NSLog(@"%s: %f (%d)", #name, sum_##name / count_##name, count_##name); \
+      NSLog(@"%s: %fms (%d)", #name, 1000.0 * sum_##name / count_##name, count_##name); \
     } \
   } while (0)
 #else
