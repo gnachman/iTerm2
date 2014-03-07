@@ -1542,9 +1542,10 @@
 
     NSMutableData *line = [NSMutableData dataWithLength:length];
 
+    [cachedDefaultLine_ release];
+    cachedDefaultLine_ = nil;
     [self clearLineData:line];
 
-    [cachedDefaultLine_ release];
     cachedDefaultLine_ = [line retain];
 
     return line;
@@ -1552,10 +1553,25 @@
 
 // Not double-width char safe.
 - (void)clearScreenChars:(screen_char_t *)chars inRange:(VT100GridRange)range {
-    screen_char_t c = [self defaultChar];
-
-    for (int i = range.location; i < range.location + range.length; i++) {
-        chars[i] = c;
+    if (cachedDefaultLine_) {
+        // Only do this if there is a cached line; otherwise there's an infinite recursion since
+        // -defaultLineOfWidth indirectly calls this method.
+        NSData *defaultLine = [self defaultLineOfWidth:size_.width];
+        memcpy(chars + range.location,
+               defaultLine.bytes,
+               sizeof(screen_char_t) * MIN(size_.width, range.length));
+        if (range.location + range.length > size_.width) {
+            screen_char_t c = [self defaultChar];
+            for (int i = size_.width; i < range.location + range.length; i++) {
+                chars[i] = c;
+            }
+        }
+    } else {
+        // Rarely called slow path.
+        screen_char_t c = [self defaultChar];
+        for (int i = range.location; i < range.location + range.length; i++) {
+            chars[i] = c;
+        }
     }
 }
 
