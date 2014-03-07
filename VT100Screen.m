@@ -17,6 +17,7 @@
 #import "iTermExpose.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermSelection.h"
+#import "VT100Token.h"
 
 #import <apr-1/apr_base64.h>
 #include <string.h>
@@ -761,14 +762,14 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [self reloadMarkCache];
 }
 
-- (void)appendAsciiDataAtCursor:(NSData *)asciiData
+- (void)appendAsciiDataAtCursor:(AsciiData *)asciiData
 {
-    int len = [asciiData length];
+    int len = asciiData->length;
     if (len < 1 || !asciiData) {
         return;
     }
     
-    char firstChar = ((char *)asciiData.bytes)[0];
+    char firstChar = asciiData->buffer[0];
     
     DLog(@"appendAsciiDataAtCursor: %ld chars starting with %c at x=%d, y=%d, line=%d",
          (unsigned long)len,
@@ -783,15 +784,15 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     screen_char_t *dynamicBuffer = 0;
     screen_char_t *buffer;
 
-    const char *bytes = [asciiData bytes];
+    const char *bytes = asciiData->buffer;
     assert(terminal_);
     screen_char_t fg = [terminal_ foregroundColorCode];
     screen_char_t bg = [terminal_ backgroundColorCode];
 
     BOOL zeroed = NO;
-    if ([asciiData length] > kStaticBufferElements) {
+    if (asciiData->length > kStaticBufferElements) {
         zeroed = YES;
-        buffer = dynamicBuffer = (screen_char_t *) calloc([asciiData length],
+        buffer = dynamicBuffer = (screen_char_t *) calloc(asciiData->length,
                                                           sizeof(screen_char_t));
         assert(dynamicBuffer);
         if (!buffer) {
@@ -1892,10 +1893,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [delegate_ screenDidAppendStringToCurrentLine:string];
 }
 
-- (void)terminalAppendAsciiData:(NSData *)asciiData {
+- (void)terminalAppendAsciiData:(AsciiData *)asciiData {
     if (collectInputForPrinting_) {
-        NSString *string = [[[NSString alloc] initWithData:asciiData
-                                                  encoding:NSASCIIStringEncoding] autorelease];
+        NSString *string = [[[NSString alloc] initWithBytes:asciiData->buffer
+                                                     length:asciiData->length
+                                                   encoding:NSASCIIStringEncoding] autorelease];
         [self terminalAppendString:string];
         return;
     } else {

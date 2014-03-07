@@ -4,6 +4,7 @@
 #import "SCPPath.h"
 #import "VT100ScreenDelegate.h"
 #import "VT100Terminal.h"
+#import "VT100Token.h"
 
 @class DVR;
 @class iTermGrowlDelegate;
@@ -147,7 +148,7 @@ extern int kVT100ScreenMinRows;
 // around modes are respected, the cursor is advanced, the screen may be scrolled, and the line
 // buffer may change.
 - (void)appendStringAtCursor:(NSString *)string;
-- (void)appendAsciiDataAtCursor:(NSData *)asciiData;
+- (void)appendAsciiDataAtCursor:(AsciiData *)asciiData;
 
 // This is a hacky thing that moves the cursor to the next line, not respecting scroll regions.
 // It's used for the tmux status screen.

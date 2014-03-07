@@ -40,8 +40,8 @@
         VT100Token *token = CVectorGetObject(&vector, i);
         [terminal executeToken:token];
         NSString *string = token.isStringType ? token.string : nil;
-        if (!string && token.isStringType && token.data) {
-            string = [[[NSString alloc] initWithData:token.data encoding:NSASCIIStringEncoding] autorelease];
+        if (!string && token->type == VT100_ASCIISTRING) {
+            string = [token stringForAsciiData];
         }
         
         if (string) {

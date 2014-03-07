@@ -37,6 +37,7 @@
 #import "VT100Screen.h"
 #import "VT100ScreenMark.h"
 #import "VT100Terminal.h"
+#import "VT100Token.h"
 #import "WindowControllerInterface.h"
 #import "iTerm.h"
 #import "iTermApplicationDelegate.h"
@@ -4722,9 +4723,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self appendStringToTriggerLine:string];
 }
 
-- (void)screenDidAppendAsciiDataToCurrentLine:(NSData *)asciiData {
+- (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData *)asciiData {
     if ([_triggers count]) {
-        NSString *string = [[NSString alloc] initWithData:asciiData encoding:NSASCIIStringEncoding];
+        NSString *string = [[[NSString alloc] initWithBytes:asciiData->buffer
+                                                     length:asciiData->length
+                                                   encoding:NSASCIIStringEncoding] autorelease];
         [self screenDidAppendStringToCurrentLine:string];
     }
 }

@@ -172,6 +172,15 @@ typedef struct {
     int subCount[VT100CSIPARAM_MAX];
 } CSIParam;
 
+// Tokens with type VT100_ASCIISTRING are stored in |asciiData| with this type.
+// |buffer| will point at |staticBuffer| or a malloc()ed buffer, depending on
+// |length|.
+typedef struct {
+    char *buffer;
+    int length;
+    char staticBuffer[128];
+} AsciiData;
+
 @interface VT100Token : iTermPooledObject {
 @public
     VT100TerminalTokenType type;
@@ -186,8 +195,8 @@ typedef struct {
 // For VT100_STRING
 @property(nonatomic, retain) NSString *string;
 
-// For VT100_ASCIISTRING and when saving data.
-@property(nonatomic, retain) NSData *data;
+// For saved data (when copying to clipboard)
+@property(nonatomic, retain) NSData *savedData;
 
 // For XTERMCC_SET_KVP.
 @property(nonatomic, retain) NSString *kvpKey;
@@ -205,7 +214,15 @@ typedef struct {
 // Is this a string or ascii string?
 @property(nonatomic, readonly) BOOL isStringType;
 
+// For ascii strings (type==VT100_ASCIISTRING).
+@property(nonatomic, readonly) AsciiData *asciiData;
+
 + (instancetype)token;
 + (instancetype)tokenForControlCharacter:(unsigned char)controlCharacter;
+
+- (void)setAsciiBytes:(char *)bytes length:(int)length;
+
+// Returns a string for |asciiData|, for convenience (this is slow).
+- (NSString *)stringForAsciiData;
 
 @end

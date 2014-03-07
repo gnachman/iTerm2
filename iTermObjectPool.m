@@ -137,16 +137,21 @@ typedef struct {
     return [[_class alloc] initWithPool:self collectionNumber:startIndex];
 }
 
+- (void)synchronizedRecycleObject:(iTermPooledObject *)obj
+                     toCollection:(ObjectCollection *)collection {
+    if (collection->count < _objectsPerCollection) {
+        [obj destroyPooledObject];
+        collection->objects[collection->count++] = obj;
+    } else {
+        [obj release];
+    }
+}
+
 - (void)recycleObject:(iTermPooledObject *)obj {
     int collectionIndex = [obj poolCollectionNumber];
     ObjectCollection *collection = _collections[collectionIndex];
     dispatch_sync(collection->queue, ^{
-        if (collection->count < _objectsPerCollection) {
-            [obj destroyPooledObject];
-            collection->objects[collection->count++] = obj;
-        } else {
-            [obj release];
-        }
+        [self synchronizedRecycleObject:obj toCollection:collection];
     });
 }
 

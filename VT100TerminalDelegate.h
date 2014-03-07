@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "VT100Token.h"
 
 typedef enum {
     MOUSE_REPORTING_NONE = -1,
@@ -33,7 +34,7 @@ typedef enum {
 @protocol VT100TerminalDelegate
 // Append a string at the cursor's position and advance the cursor, scrolling if necessary.
 - (void)terminalAppendString:(NSString *)string;
-- (void)terminalAppendAsciiData:(NSData *)asciiData;
+- (void)terminalAppendAsciiData:(AsciiData *)asciiData;
 
 // Play/display the bell.
 - (void)terminalRingBell;

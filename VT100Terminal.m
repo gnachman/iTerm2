@@ -961,7 +961,7 @@ static const int kMaxScreenRows = 4096;
             receivingFile_ = NO;
             return;
         } else if (token->type == VT100_ASCIISTRING) {
-            [delegate_ terminalDidReceiveBase64FileData:token.string];
+            [delegate_ terminalDidReceiveBase64FileData:[token stringForAsciiData]];
             return;
         } else if (token->type == VT100CC_CR ||
                    token->type == VT100CC_LF ||
@@ -981,7 +981,7 @@ static const int kMaxScreenRows = 4096;
             // Append text to clipboard except for initial command that turns on copying to
             // the clipboard.
             
-            [delegate_ terminalAppendDataToPasteboard:token.data];
+            [delegate_ terminalAppendDataToPasteboard:token.savedData];
         }
     }
 
@@ -1013,7 +1013,7 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalAppendString:token.string];
             break;
         case VT100_ASCIISTRING:
-            [delegate_ terminalAppendAsciiData:token.data];
+            [delegate_ terminalAppendAsciiData:token.asciiData];
             break;
 
         case VT100_UNKNOWNCHAR:

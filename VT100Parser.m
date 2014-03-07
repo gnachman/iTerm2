@@ -139,8 +139,11 @@
     
     token->savingData = _saveData;
     if (token->type != VT100_WAIT && token->type != VT100CC_NULL) {
-        if (_saveData || token->type == VT100_ASCIISTRING) {
-            token.data = [NSData dataWithBytes:position length:length];
+        if (_saveData) {
+            token.savedData = [NSData dataWithBytes:position length:length];
+        }
+        if (token->type == VT100_ASCIISTRING) {
+            [token setAsciiBytes:(char *)position length:length];
         }
         CVectorAppend(vector, token);
         

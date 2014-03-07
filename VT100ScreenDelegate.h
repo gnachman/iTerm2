@@ -1,5 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import "PTYTextViewDataSource.h"
+#import "VT100Token.h"
 
 @class VT100RemoteHost;
 @class iTermColorMap;
@@ -33,7 +34,7 @@
 
 // Called after text was added to the current line. Can be used to check triggers.
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string;
-- (void)screenDidAppendAsciiDataToCurrentLine:(NSData *)asciiData;
+- (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData *)asciiData;
 
 // Change the cursor's appearance.
 - (void)screenSetCursorBlinking:(BOOL)blink;

@@ -421,9 +421,10 @@
     [triggerLine_ appendString:string];
 }
 
-- (void)screenDidAppendAsciiDataToCurrentLine:(NSData *)asciiData {
-    [self screenDidAppendStringToCurrentLine:[[[NSString alloc] initWithData:asciiData
-                                                                    encoding:NSASCIIStringEncoding]
+- (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData *)asciiData {
+    [self screenDidAppendStringToCurrentLine:[[[NSString alloc] initWithBytes:asciiData->buffer
+                                                                       length:asciiData->length
+                                                                     encoding:NSASCIIStringEncoding]
                                               autorelease]];
 }
 

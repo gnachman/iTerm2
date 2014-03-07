@@ -16,7 +16,9 @@ static iTermObjectPool *gPool;
 @property(nonatomic, readwrite) CSIParam *csi;
 @end
 
-@implementation VT100Token
+@implementation VT100Token {
+    AsciiData _asciiData;
+}
 
 + (void)initialize {
     gPool = [[iTermObjectPool alloc] initWithClass:self collections:10 objectsPerCollection:100];
@@ -54,8 +56,14 @@ static iTermObjectPool *gPool;
     [_kvpValue release];
     _kvpValue = nil;
     
-    [_data release];
-    _data = nil;
+    [_savedData release];
+    _savedData = nil;
+    
+    if (_asciiData.buffer != _asciiData.staticBuffer) {
+        free(_asciiData.buffer);
+    }
+    _asciiData.buffer = NULL;
+    _asciiData.length = 0;
     
     type = 0;
     code = 0;
@@ -78,6 +86,28 @@ static iTermObjectPool *gPool;
 
 - (BOOL)isStringType {
     return (type == VT100_STRING || type == VT100_ASCIISTRING);
+}
+
+- (void)setAsciiBytes:(char *)bytes length:(int)length {
+    assert(_asciiData.buffer == NULL);
+    
+    _asciiData.length = length;
+    if (length > sizeof(_asciiData.staticBuffer)) {
+        _asciiData.buffer = malloc(length);
+    } else {
+        _asciiData.buffer = _asciiData.staticBuffer;
+    }
+    memcpy(_asciiData.buffer, bytes, length);
+}
+
+- (AsciiData *)asciiData {
+    return &_asciiData;
+}
+
+- (NSString *)stringForAsciiData {
+    return [[[NSString alloc] initWithBytes:_asciiData.buffer
+                                     length:_asciiData.length
+                                   encoding:NSASCIIStringEncoding] autorelease];
 }
 
 @end
