@@ -1560,9 +1560,11 @@
         memcpy(chars + range.location,
                defaultLine.bytes,
                sizeof(screen_char_t) * MIN(size_.width, range.length));
-        if (range.location + range.length > size_.width) {
-            screen_char_t c = [self defaultChar];
-            for (int i = size_.width; i < range.location + range.length; i++) {
+        if (range.length > size_.width) {
+            const screen_char_t c = chars[range.location];
+            for (int i = range.location + MIN(size_.width, range.length);
+                 i < range.location + range.length;
+                 i++) {
                 chars[i] = c;
             }
         }
