@@ -170,7 +170,7 @@ typedef enum {
 
     // After receiving new output, we keep running the updateDisplay timer for a few seconds to catch
     // changes in job name.
-    NSDate *_updateDisplayUntil;
+    NSTimeInterval _updateDisplayUntil;
 
     // If not nil, we're aggregating text to append to a pasteboard. The pasteboard will be
     // updated when this is set to nil.
@@ -273,7 +273,6 @@ typedef enum {
     if (_slowPasteTimer) {
         [_slowPasteTimer invalidate];
     }
-    [_updateDisplayUntil release];
     [_creationDate release];
     [_lastActiveAt release];
     [_bookmarkName release];
@@ -1249,8 +1248,7 @@ typedef enum {
     _newOutput = YES;
 
     // Make sure the screen gets redrawn soonish
-    [_updateDisplayUntil release];
-    _updateDisplayUntil = [[NSDate dateWithTimeIntervalSinceNow:10] retain];
+    _updateDisplayUntil = [NSDate timeIntervalSinceReferenceDate] + 10;
     if ([[[self tab] parentWindow] currentTab] == [self tab]) {
         if (length < 1024) {
             [self scheduleUpdateIn:kFastTimerIntervalSec];
@@ -2656,7 +2654,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     BOOL anotherUpdateNeeded = [NSApp isActive];
     if (!anotherUpdateNeeded &&
         _updateDisplayUntil &&
-        [[NSDate date] timeIntervalSinceDate:_updateDisplayUntil] < 0) {
+        [NSDate timeIntervalSinceReferenceDate] < _updateDisplayUntil) {
         // We're still in the time window after the last output where updates are needed.
         anotherUpdateNeeded = YES;
     }
