@@ -15,13 +15,12 @@
 
 @implementation VT100ControlParser
 
-+ (void)decodeBytes:(unsigned char *)datap
-             length:(int)datalen
-          bytesUsed:(int *)rmlen
-        incidentals:(CVector *)incidentals
-              token:(VT100Token *)token
-           encoding:(NSStringEncoding)encoding
-{
+void ParseControl(unsigned char *datap,
+                  int datalen,
+                  int *rmlen,
+                  CVector *incidentals,
+                  VT100Token *token,
+                  NSStringEncoding encoding) {
     if (isCSI(datap, datalen)) {
         [VT100CSIParser decodeBytes:datap
                              length:datalen

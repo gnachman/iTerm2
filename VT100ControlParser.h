@@ -16,11 +16,11 @@ NS_INLINE BOOL iscontrol(int c) {
 
 @interface VT100ControlParser : NSObject
 
-+ (void)decodeBytes:(unsigned char *)datap
-             length:(int)datalen
-          bytesUsed:(int *)rmlen
-        incidentals:(CVector *)incidentals
-              token:(VT100Token *)token
-           encoding:(NSStringEncoding)encoding;
+void ParseControl(unsigned char *datap,
+                  int datalen,
+                  int *rmlen,
+                  CVector *incidentals,
+                  VT100Token *token,
+                  NSStringEncoding encoding);
 
 @end

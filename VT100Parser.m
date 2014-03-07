@@ -62,20 +62,16 @@
     } else {
         int rmlen = 0;
         if (isAsciiString(datap)) {
-            [VT100StringParser decodeBytes:datap
-                                    length:datalen
-                                 bytesUsed:&rmlen
-                                     token:token
-                                  encoding:self.encoding];
+            ParseString(datap, datalen, &rmlen, token, self.encoding);
             length = rmlen;
             position = datap;
         } else if (iscontrol(datap[0])) {
-            [VT100ControlParser decodeBytes:datap
-                                     length:datalen
-                                  bytesUsed:&rmlen
-                                incidentals:vector
-                                      token:token
-                                   encoding:self.encoding];
+            ParseControl(datap,
+                         datalen,
+                         &rmlen,
+                         vector,
+                         token,
+                         self.encoding);
             if (token->type == XTERMCC_SET_KVP) {
                 if ([token.kvpKey isEqualToString:@"CopyToClipboard"]) {
                     _saveData = YES;
@@ -87,11 +83,7 @@
             position = datap;
         } else {
             if (isString(datap, self.encoding)) {
-                [VT100StringParser decodeBytes:datap
-                                        length:datalen
-                                     bytesUsed:&rmlen
-                                         token:token
-                                      encoding:self.encoding];
+                ParseString(datap, datalen, &rmlen, token, self.encoding);
                 // If the encoding is UTF-8 then you get here only if *datap >= 0x80.
                 if (token->type != VT100_WAIT && rmlen == 0) {
                     token->type = VT100_UNKNOWNCHAR;

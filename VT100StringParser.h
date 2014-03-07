@@ -57,16 +57,12 @@ NS_INLINE BOOL isString(unsigned char *code, NSStringEncoding encoding) {
     } else if (*code >= 0x20) {
         return YES;
     }
-    
+
     return NO;
 }
 
-@interface VT100StringParser : NSObject
-
-+ (void)decodeBytes:(unsigned char *)datap
-             length:(int)datalen
-          bytesUsed:(int *)rmlen
-              token:(VT100Token *)result
-           encoding:(NSStringEncoding)encoding;
-
-@end
+void ParseString(unsigned char *datap,
+                 int datalen,
+                 int *rmlen,
+                 VT100Token *result,
+                 NSStringEncoding encoding);

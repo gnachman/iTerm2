@@ -283,13 +283,11 @@ static void DecodeASCIIBytes(unsigned char *datap,
     }
 }
 
-@implementation VT100StringParser
-
-+ (void)decodeBytes:(unsigned char *)datap
-             length:(int)datalen
-          bytesUsed:(int *)rmlen
-              token:(VT100Token *)result
-           encoding:(NSStringEncoding)encoding {
+void ParseString(unsigned char *datap,
+                 int datalen,
+                 int *rmlen,
+                 VT100Token *result,
+                 NSStringEncoding encoding) {
     *rmlen = 0;
     result->type = VT100_UNKNOWNCHAR;
     result->code = datap[0];
@@ -349,5 +347,3 @@ static void DecodeASCIIBytes(unsigned char *datap,
         }
     }
 }
-
-@end
