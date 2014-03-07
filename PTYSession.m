@@ -1135,7 +1135,6 @@ typedef enum {
             // Handle whatever is left in the parser's buffer.
             [self readTask:"" length:0];
         });
-        CVectorDestroy(&vector);
     } else {
         // This limits the number of outstanding execution blocks to prevent the main thread from
         // getting bogged down.
@@ -1156,8 +1155,8 @@ typedef enum {
                 for (int i = 0; i < n; i++) {
                     [CVectorGetObject(&vector, i) recycleObject];
                 }
+                CVectorDestroy(&vector);
             }
-            CVectorDestroy(&vector);
             
             // Unblock the background thread; if it's ready, it can send the main thread more tokens
             // now.
@@ -1178,10 +1177,20 @@ typedef enum {
         
         VT100Token *token = CVectorGetObject(vector, i);
         [_terminal executeToken:token];
-        [token recycleObject];
     }
     
     [self finishedHandlingNewOutputOfLength:length];
+    
+    // When busy, we spend a lot of time performing recycleObject, so farm it
+    // off to a background thread.
+    CVector temp = *vector;
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+        for (int i = 0; i < n; i++) {
+            VT100Token *token = CVectorGetObject(&temp, i);
+            [token recycleObject];
+        }
+        CVectorDestroy(&temp);
+    })
     STOPWATCH_LAP(executing);
 }
 
