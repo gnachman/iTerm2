@@ -207,6 +207,10 @@ typedef enum {
     NSTimeInterval _timeOfLastScheduling;
 
     dispatch_semaphore_t _executionSemaphore;
+    
+    // Previous updateDisplay timer's timeout period (not the actual duration,
+    // but the kXXXTimerIntervalSec value).
+    NSTimeInterval _lastTimeout;
 }
 
 - (id)init
@@ -2735,13 +2739,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (_exited) {
         return;
     }
-    float kEpsilon = 0.001;
-    if (!_timerRunning &&
-        [_updateTimer isValid] &&
-        [[_updateTimer userInfo] floatValue] - (float)timeout < kEpsilon) {
-        // An update of at least the current frequency is already scheduled. Let
-        // it run to avoid pushing it back repeatedly (which prevents it from firing).
-        return;
+
+    if (!_timerRunning && [_updateTimer isValid]) {
+        if (_lastTimeout == kSlowTimerIntervalSec && timeout == kFastTimerIntervalSec) {
+            // Don't go from slow to fast
+            return;
+        }
+        if (_lastTimeout == timeout) {
+            // No change? No point.
+            return;
+        }
+        if (timeout > kSlowTimerIntervalSec && timeout > _lastTimeout) {
+            // This is a longer timeout than the existing one, and is background/blink.
+            return;
+        }
     }
 
     [_updateTimer invalidate];
@@ -2750,7 +2761,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     NSTimeInterval timeSinceLastUpdate = now - _timeOfLastScheduling;
     _timeOfLastScheduling = now;
-
+    _lastTimeout = timeout;
+    
     _updateTimer = [[NSTimer scheduledTimerWithTimeInterval:MAX(0, timeout - timeSinceLastUpdate)
                                                      target:self
                                                    selector:@selector(updateDisplay)
