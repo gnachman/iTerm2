@@ -70,6 +70,8 @@
     long long droppedChars;
 }
 
+@property(nonatomic, assign) BOOL mayHaveDoubleWidthCharacter;
+
 - (LineBuffer*) initWithBlockSize: (int) bs;
 
 - (LineBuffer*) init;

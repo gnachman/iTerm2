@@ -39,6 +39,7 @@
 - (LineBlock*) _addBlockOfSize: (int) size
 {
     LineBlock* block = [[LineBlock alloc] initWithRawBufferSize: size];
+    block.mayHaveDoubleWidthCharacter = self.mayHaveDoubleWidthCharacter;
     [blocks addObject:block];
     [block release];
     return block;
@@ -71,6 +72,15 @@
               waitUntilDone:NO];
     [blocks release];
     [super dealloc];
+}
+
+- (void)setMayHaveDoubleWidthCharacter:(BOOL)mayHaveDoubleWidthCharacter {
+    if (!_mayHaveDoubleWidthCharacter) {
+        _mayHaveDoubleWidthCharacter = mayHaveDoubleWidthCharacter;
+        for (LineBlock *block in blocks) {
+            block.mayHaveDoubleWidthCharacter = YES;
+        }
+    }
 }
 
 // This is called a lot so it's a C function to avoid obj_msgSend
@@ -223,7 +233,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         screen_char_t* prefix = NULL;
         if ([block hasPartial]) {
             // There is a line that's too long for the current block to hold.
-            // Remove its prefix fromt he current block and later add the
+            // Remove its prefix from the current block and later add the
             // concatenation of prefix + buffer to a larger block.
             screen_char_t* temp;
             BOOL ok = [block popLastLineInto:&temp
@@ -460,7 +470,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         screen_char_t* lastRawLine = [block rawLine: ([block numEntries]-1)];
         int num_overflow_lines = NumberOfFullLines(lastRawLine,
                                                    last_line_length,
-                                                   width);
+                                                   width,
+                                                   _mayHaveDoubleWidthCharacter);
         int min_x = OffsetOfWrappedLine(lastRawLine,
                                         num_overflow_lines,
                                         last_line_length,

@@ -143,17 +143,21 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     }
 }
 
-int NumberOfFullLines(screen_char_t* buffer, int length, int width)
+int NumberOfFullLines(screen_char_t* buffer, int length, int width,
+                      BOOL mayHaveDoubleWidthCharacter)
 {
-    // In the all-single-width case, it should return (length - 1) / width.
-    int fullLines = 0;
-    for (int i = width; i < length; i += width) {
-        if (buffer[i].code == DWC_RIGHT) {
-            --i;
+    if (mayHaveDoubleWidthCharacter) {
+        int fullLines = 0;
+        for (int i = width; i < length; i += width) {
+            if (buffer[i].code == DWC_RIGHT) {
+                --i;
+            }
+            ++fullLines;
         }
-        ++fullLines;
+        return fullLines;
+    } else {
+        return (length - 1) / width;
     }
-    return fullLines;
 }
 
 #ifdef TEST_LINEBUFFER_SANITY
@@ -201,8 +205,10 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width)
             int prev_cll = cll_entries > first_entry + 1 ? cumulative_line_lengths[cll_entries - 2] - start_offset : 0;
             int cll = cumulative_line_lengths[cll_entries - 1] - start_offset;
             int old_length = cll - prev_cll;
-            int oldnum = NumberOfFullLines(buffer_start + prev_cll, old_length, width);
-            int newnum = NumberOfFullLines(buffer_start + prev_cll, old_length + length, width);
+            int oldnum = NumberOfFullLines(buffer_start + prev_cll, old_length, width,
+                                           _mayHaveDoubleWidthCharacter);
+            int newnum = NumberOfFullLines(buffer_start + prev_cll, old_length + length, width,
+                                           _mayHaveDoubleWidthCharacter);
             cached_numlines += newnum - oldnum;
         }
         
@@ -218,7 +224,8 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width)
         if (width != cached_numlines_width) {
             cached_numlines_width = -1;
         } else {
-            cached_numlines += NumberOfFullLines(buffer, length, width) + 1;
+            cached_numlines += NumberOfFullLines(buffer, length, width,
+                                                 _mayHaveDoubleWidthCharacter) + 1;
         }
 #ifdef TEST_LINEBUFFER_SANITY
         [self checkAndResetCachedNumlines:"appendLine normal case" width: width];
@@ -280,7 +287,10 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
     for (i = first_entry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - start_offset;
         length = cll - prev;
-        int spans = NumberOfFullLines(buffer_start + prev, length, width);
+        int spans = NumberOfFullLines(buffer_start + prev,
+                                      length,
+                                      width,
+                                      _mayHaveDoubleWidthCharacter);
         if (lineNum > spans) {
             // Consume the entire raw line and keep looking for more.
             int consume = spans + 1;
@@ -323,7 +333,10 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
         } else {
             numEmptyLines = 0;
         }
-        int spans = NumberOfFullLines(buffer_start + prev, length, width);
+        int spans = NumberOfFullLines(buffer_start + prev,
+                                      length,
+                                      width,
+                                      _mayHaveDoubleWidthCharacter);
         if (*lineNum > spans) {
             // Consume the entire raw line and keep looking for more.
             int consume = spans + 1;
@@ -383,7 +396,10 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
     for (i = first_entry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - start_offset;
         int length = cll - prev;
-        count += NumberOfFullLines(buffer_start + prev, length, width) + 1;
+        count += NumberOfFullLines(buffer_start + prev,
+                                   length,
+                                   width,
+                                   _mayHaveDoubleWidthCharacter) + 1;
         prev = cll;
     }
     
@@ -431,7 +447,8 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
         int offset_from_start = OffsetOfWrappedLine(buffer_start + start,
                                                     NumberOfFullLines(buffer_start + start,
                                                                       available_len,
-                                                                      width),
+                                                                      width,
+                                                                      _mayHaveDoubleWidthCharacter),
                                                     available_len,
                                                     width);
         *length = available_len - offset_from_start;
@@ -540,7 +557,10 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
         // Get the number of full-length wrapped lines in this raw line. If there
         // were only single-width characters the formula would be:
         //     (length - 1) / width;
-        int spans = NumberOfFullLines(buffer_start + prev, length, width);
+        int spans = NumberOfFullLines(buffer_start + prev,
+                                      length,
+                                      width,
+                                      _mayHaveDoubleWidthCharacter);
         if (n > spans) {
             // Consume the entire raw line and keep looking for more.
             int consume = spans + 1;
@@ -1009,7 +1029,10 @@ static int Search(NSString* needle,
             // Get the number of full-width lines in the raw line. If there were
             // only single-width characters the formula would be:
             //     spans = (line_length - 1) / width;
-            int spans = NumberOfFullLines(raw_buffer + prev, line_length, width);
+            int spans = NumberOfFullLines(raw_buffer + prev,
+                                          line_length,
+                                          width,
+                                          _mayHaveDoubleWidthCharacter);
             *y += spans + 1;
         } else {
             // The position we're searching for is in this (unwrapped) line.
@@ -1028,7 +1051,8 @@ static int Search(NSString* needle,
             }
             int consume = NumberOfFullLines(raw_buffer + prev,
                                             MIN(line_length, bytes_to_consume_in_this_line + 1 + dwc_peek),
-                                            width);
+                                            width,
+                                            _mayHaveDoubleWidthCharacter);
             *y += consume;
             if (consume > 0) {
                 // Offset from prev where the consume'th line begin.

@@ -543,7 +543,8 @@ void StringToScreenChars(NSString *s,
                          screen_char_t bg,
                          int *len,
                          BOOL ambiguousIsDoubleWidth,
-                         int* cursorIndex) {
+                         int* cursorIndex,
+                         BOOL *foundDwc) {
     unichar *sc;
     int l = [s length];
     int i;
@@ -610,6 +611,9 @@ void StringToScreenChars(NSString *s,
             // This code path is for double-width characters in BMP only.
             j++;
             buf[j].code = DWC_RIGHT;
+            if (foundDwc) {
+                *foundDwc = YES;
+            }
             buf[j].complexChar = NO;
 
             buf[j].foregroundColor = fg.foregroundColor;
@@ -664,6 +668,9 @@ void StringToScreenChars(NSString *s,
                                   ambiguousIsDoubleWidth:ambiguousIsDoubleWidth]) {
                         j++;
                         buf[j].code = DWC_RIGHT;
+                        if (foundDwc) {
+                            *foundDwc = YES;
+                        }
                         buf[j].complexChar = NO;
 
                         buf[j].foregroundColor = fg.foregroundColor;

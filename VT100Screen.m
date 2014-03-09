@@ -876,14 +876,18 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     // Add DWC_RIGHT after each double-byte character, build complex characters out of surrogates
     // and combining marks, replace private codes with replacement characters, swallow zero-
     // width spaces, and set fg/bg colors and attributes.
+    BOOL dwc = NO;
     StringToScreenChars(string,
                         buffer,
                         [terminal_ foregroundColorCode],
                         [terminal_ backgroundColorCode],
                         &len,
                         [delegate_ screenShouldTreatAmbiguousCharsAsDoubleWidth],
-                        NULL);
-
+                        NULL,
+                        &dwc);
+    if (dwc) {
+        linebuffer_.mayHaveDoubleWidthCharacter = dwc;
+    }
     [self appendScreenCharArrayAtCursor:buffer
                                  length:len
                              shouldFree:(buffer == dynamicBuffer)];
@@ -992,6 +996,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     // line (excluding empty ones at the end) to the real line buffer.
     [self clearBuffer];
     LineBuffer *temp = [[[LineBuffer alloc] init] autorelease];
+    temp.mayHaveDoubleWidthCharacter = YES;
+    linebuffer_.mayHaveDoubleWidthCharacter = YES;
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     for (NSData *chars in history) {
         screen_char_t *line = (screen_char_t *) [chars bytes];
@@ -1042,6 +1048,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)setAltScreen:(NSArray *)lines
 {
+    linebuffer_.mayHaveDoubleWidthCharacter = YES;
     if (!altGrid_) {
         altGrid_ = [primaryGrid_ copy];
     }

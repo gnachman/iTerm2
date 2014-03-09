@@ -54,6 +54,7 @@
                                 [terminal backgroundColorCode],
                                 &len,
                                 ambiguousIsDoubleWidth,
+                                NULL,
                                 NULL);
             if ([token isAscii] && [terminal charset]) {
                 ConvertCharsToGraphicsCharset(screenChars, len);

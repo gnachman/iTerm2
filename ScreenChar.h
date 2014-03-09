@@ -359,7 +359,8 @@ void StringToScreenChars(NSString *s,
                          screen_char_t bg,
                          int *len,
                          BOOL ambiguousIsDoubleWidth,
-                         int* cursorIndex);
+                         int *cursorIndex,
+                         BOOL *foundDwc);
 
 // Translates normal characters into graphics characters, as defined in charsets.h. Must not contain
 // complex characters.

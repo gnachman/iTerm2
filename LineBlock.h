@@ -33,17 +33,23 @@
     
     // The number of values in the cumulative_line_lengths array.
     int cll_entries;
-    
+
     // If true, then the last raw line does not include a logical newline at its terminus.
     BOOL is_partial;
-    
+
     // The number of wrapped lines if width==cached_numlines_width.
     int cached_numlines;
-    
+
     // This is -1 if the cache is invalid; otherwise it specifies the width for which
     // cached_numlines is correct.
     int cached_numlines_width;
 }
+
+// Once this is set to true, it stays true. If double width characters are
+// possibly present then a slower algorithm is used to count the number of
+// lines. The default (fast) algorithm would give incorrect results for DWCs
+// that get wrapped to the next line.
+@property(nonatomic, assign) BOOL mayHaveDoubleWidthCharacter;
 
 - (LineBlock*) initWithRawBufferSize: (int) size;
 - (LineBlock *)copy;
@@ -167,7 +173,10 @@
 // |xxxxx|          |x     |        |xxxxxx|         |xxxxxx|
 // |xxxxx|                                           |x     |
 // |x    |
-int NumberOfFullLines(screen_char_t* buffer, int length, int width);
+int NumberOfFullLines(screen_char_t* buffer,
+                      int length,
+                      int width,
+                      BOOL mayHaveDoubleWidthCharacter);
 
 
 // Finds a where the nth line begins after wrapping and returns its offset from the start of the buffer.

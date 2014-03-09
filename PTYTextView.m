@@ -7478,6 +7478,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         bg,
                         &len,
                         [_delegate textViewAmbiguousWidthCharsAreDoubleWidth],
+                        NULL,
                         NULL);
 
     // Count how many additional cells are needed due to double-width chars
@@ -7525,7 +7526,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             bg,
                             &len,
                             [_delegate textViewAmbiguousWidthCharsAreDoubleWidth],
-                            &cursorIndex);
+                            &cursorIndex,
+                            NULL);
         int cursorX = 0;
         int baseX = floor(xStart * charWidth + MARGIN);
         int i;
