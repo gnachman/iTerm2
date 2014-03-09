@@ -768,7 +768,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     if (len < 1 || !asciiData) {
         return;
     }
-    
+    STOPWATCH_START(appendAsciiDataAtCursor);
     char firstChar = asciiData->buffer[0];
     
     DLog(@"appendAsciiDataAtCursor: %ld chars starting with %c at x=%d, y=%d, line=%d",
@@ -778,47 +778,19 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
          currentGrid_.cursorY,
          currentGrid_.cursorY + [linebuffer_ numLinesWithWidth:currentGrid_.size.width]);
 
-    // Allocate a buffer of screen_char_t and place the new string in it.
-    const int kStaticBufferElements = 1024;
-    screen_char_t staticBuffer[kStaticBufferElements];
-    screen_char_t *dynamicBuffer = 0;
     screen_char_t *buffer;
-
-    const char *bytes = asciiData->buffer;
-    assert(terminal_);
+    buffer = asciiData->screenChars->buffer;
+    
     screen_char_t fg = [terminal_ foregroundColorCode];
     screen_char_t bg = [terminal_ backgroundColorCode];
-
-    BOOL zeroed = NO;
-    if (asciiData->length > kStaticBufferElements) {
-        zeroed = YES;
-        buffer = dynamicBuffer = (screen_char_t *) calloc(asciiData->length,
-                                                          sizeof(screen_char_t));
-        assert(dynamicBuffer);
-        if (!buffer) {
-            NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
-            return;
-        }
-    } else {
-        buffer = staticBuffer;
-    }
-
-    if (zeroed) {
-        // This is a faster version for the dynamic buffer case.
+    screen_char_t zero = { 0 };
+    if (memcmp(&fg, &zero, sizeof(fg)) || memcmp(&bg, &zero, sizeof(bg))) {
+        STOPWATCH_START(setUpScreenCharArray);
         for (int i = 0; i < len; i++) {
-            buffer[i].code = bytes[i];
             CopyForegroundColor(&buffer[i], fg);
             CopyBackgroundColor(&buffer[i], bg);
         }
-    } else {
-        // Make sure that any changes made here are also made in the loop above.
-        for (int i = 0; i < len; i++) {
-            buffer[i].code = bytes[i];
-            buffer[i].complexChar = NO;
-            CopyForegroundColor(&buffer[i], fg);
-            CopyBackgroundColor(&buffer[i], bg);
-            buffer[i].unused = 0;
-        }
+        STOPWATCH_LAP(setUpScreenCharArray);
     }
 
     // If a graphics character set was selected then translate buffer
@@ -829,7 +801,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
     [self appendScreenCharArrayAtCursor:buffer
                                  length:len
-                             shouldFree:(buffer == dynamicBuffer)];
+                             shouldFree:NO];
+    STOPWATCH_LAP(appendAsciiDataAtCursor);
 }
 
 - (void)appendStringAtCursor:(NSString *)string

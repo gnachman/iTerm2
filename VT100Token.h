@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import "iTermObjectPool.h"
+#import "ScreenChar.h"
 
 #define ESC 0x1b
 
@@ -172,6 +173,15 @@ typedef struct {
     int subCount[VT100CSIPARAM_MAX];
 } CSIParam;
 
+// A preinitialized array of screen_char_t. When ASCII data is present, it will have the codes
+// populated and all other fields zeroed out.
+#define kStaticScreenCharsCount 16
+typedef struct {
+    screen_char_t *buffer;
+    int length;
+    screen_char_t staticBuffer[kStaticScreenCharsCount];
+} ScreenChars;
+
 // Tokens with type VT100_ASCIISTRING are stored in |asciiData| with this type.
 // |buffer| will point at |staticBuffer| or a malloc()ed buffer, depending on
 // |length|.
@@ -179,6 +189,7 @@ typedef struct {
     char *buffer;
     int length;
     char staticBuffer[128];
+    ScreenChars *screenChars;
 } AsciiData;
 
 @interface VT100Token : iTermPooledObject {

@@ -876,9 +876,9 @@ static const int kNumCharsToSearchForDivider = 8;
 - (screen_char_t)defaultChar {
     screen_char_t defaultChar = { 0 };
     defaultChar.foregroundColorMode = ColorModeAlternate;
-    defaultChar.foregroundColor = ALTSEM_FG_DEFAULT;
+    defaultChar.foregroundColor = ALTSEM_DEFAULT;
     defaultChar.backgroundColorMode = ColorModeAlternate;
-    defaultChar.backgroundColor = ALTSEM_BG_DEFAULT;
+    defaultChar.backgroundColor = ALTSEM_DEFAULT;
     return defaultChar;
 }
 

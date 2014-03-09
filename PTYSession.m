@@ -213,8 +213,7 @@ typedef enum {
     NSTimeInterval _lastTimeout;
 }
 
-- (id)init
-{
+- (id)init {
     self = [super init];
     if (self) {
         _sessionID = gNextSessionID++;
@@ -4663,9 +4662,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
     screen_char_t savedFgColor = [_terminal foregroundColorCode];
     screen_char_t savedBgColor = [_terminal backgroundColorCode];
-    [_terminal setForegroundColor:ALTSEM_FG_DEFAULT
+    [_terminal setForegroundColor:ALTSEM_DEFAULT
                alternateSemantics:YES];
-    [_terminal setBackgroundColor:ALTSEM_BG_DEFAULT
+    [_terminal setBackgroundColor:ALTSEM_DEFAULT
                alternateSemantics:YES];
     [_screen appendStringAtCursor:message];
     [_screen crlf];

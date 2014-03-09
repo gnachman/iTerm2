@@ -18,6 +18,7 @@ static iTermObjectPool *gPool;
 
 @implementation VT100Token {
     AsciiData _asciiData;
+    ScreenChars _screenChars;
 }
 
 + (void)initialize {
@@ -62,8 +63,13 @@ static iTermObjectPool *gPool;
     if (_asciiData.buffer != _asciiData.staticBuffer) {
         free(_asciiData.buffer);
     }
+    if (_asciiData.screenChars &&
+        _asciiData.screenChars->buffer != _asciiData.screenChars->staticBuffer) {
+        free(_asciiData.screenChars->buffer);
+    }
     _asciiData.buffer = NULL;
     _asciiData.length = 0;
+    _asciiData.screenChars = NULL;
     
     type = 0;
     code = 0;
@@ -98,6 +104,8 @@ static iTermObjectPool *gPool;
         _asciiData.buffer = _asciiData.staticBuffer;
     }
     memcpy(_asciiData.buffer, bytes, length);
+    
+    [self preInitializeScreenChars];
 }
 
 - (AsciiData *)asciiData {
@@ -108,6 +116,25 @@ static iTermObjectPool *gPool;
     return [[[NSString alloc] initWithBytes:_asciiData.buffer
                                      length:_asciiData.length
                                    encoding:NSASCIIStringEncoding] autorelease];
+}
+
+- (ScreenChars *)screenChars {
+    return &_screenChars;
+}
+
+- (void)preInitializeScreenChars {
+    // TODO: Expand this beyond just ascii characters.
+    if (_asciiData.length > kStaticScreenCharsCount) {
+        _screenChars.buffer = calloc(_asciiData.length, sizeof(screen_char_t));
+    } else {
+        _screenChars.buffer = _screenChars.staticBuffer;
+        memset(_screenChars.buffer, 0, _asciiData.length * sizeof(screen_char_t));
+    }
+    for (int i = 0; i < _asciiData.length; i++) {
+        _screenChars.buffer[i].code = _asciiData.buffer[i];
+    }
+    _screenChars.length = _asciiData.length;
+    _asciiData.screenChars = &_screenChars;
 }
 
 @end

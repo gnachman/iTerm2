@@ -138,9 +138,9 @@ static const int kMaxScreenRows = 4096;
         _wraparoundMode = YES;
         _autorepeatMode = YES;
         xon_ = YES;
-        fgColorCode_ = ALTSEM_FG_DEFAULT;
+        fgColorCode_ = ALTSEM_DEFAULT;
         fgColorMode_ = ColorModeAlternate;
-        bgColorCode_ = ALTSEM_BG_DEFAULT;
+        bgColorCode_ = ALTSEM_DEFAULT;
         bgColorMode_ = ColorModeAlternate;
         saveForeground_ = fgColorCode_;
         saveFgColorMode_ = fgColorMode_;
@@ -262,11 +262,11 @@ static const int kMaxScreenRows = 4096;
     xon_ = YES;
     bold_ = italic_ = blink_ = reversed_ = under_ = NO;
     saveBold_ = saveItalic_ = saveBlink_ = saveReversed_ = saveUnder_ = NO;
-    fgColorCode_ = ALTSEM_FG_DEFAULT;
+    fgColorCode_ = ALTSEM_DEFAULT;
     fgGreen_ = 0;
     fgBlue_ = 0;
     fgColorMode_ = ColorModeAlternate;
-    bgColorCode_ = ALTSEM_BG_DEFAULT;
+    bgColorCode_ = ALTSEM_DEFAULT;
     bgGreen_ = 0;
     bgBlue_ = 0;
     bgColorMode_ = ColorModeAlternate;
@@ -318,7 +318,11 @@ static const int kMaxScreenRows = 4096;
 {
     screen_char_t result = { 0 };
     if (reversed_) {
-        result.foregroundColor = bgColorCode_;
+        if (bgColorMode_ == ColorModeAlternate && bgColorCode_ == ALTSEM_DEFAULT) {
+            result.foregroundColor = ALTSEM_REVERSED_DEFAULT;
+        } else {
+            result.foregroundColor = bgColorCode_;
+        }
         result.fgGreen = bgGreen_;
         result.fgBlue = bgBlue_;
         result.foregroundColorMode = bgColorMode_;
@@ -340,7 +344,11 @@ static const int kMaxScreenRows = 4096;
 {
     screen_char_t result = { 0 };
     if (reversed_) {
-        result.backgroundColor = fgColorCode_;
+        if (fgColorMode_ == ColorModeAlternate && fgColorCode_ == ALTSEM_DEFAULT) {
+            result.backgroundColor = ALTSEM_REVERSED_DEFAULT;
+        } else {
+            result.backgroundColor = fgColorCode_;
+        }
         result.bgGreen = fgGreen_;
         result.bgBlue = fgBlue_;
         result.backgroundColorMode = fgColorMode_;
@@ -605,11 +613,11 @@ static const int kMaxScreenRows = 4096;
 - (void)resetSGR {
     // all attributes off
     bold_ = italic_ = under_ = blink_ = reversed_ = NO;
-    fgColorCode_ = ALTSEM_FG_DEFAULT;
+    fgColorCode_ = ALTSEM_DEFAULT;
     fgGreen_ = 0;
     fgBlue_ = 0;
     fgColorMode_ = ColorModeAlternate;
-    bgColorCode_ = ALTSEM_BG_DEFAULT;
+    bgColorCode_ = ALTSEM_DEFAULT;
     bgGreen_ = 0;
     bgBlue_ = 0;
     bgColorMode_ = ColorModeAlternate;
@@ -628,10 +636,10 @@ static const int kMaxScreenRows = 4096;
                     case VT100CHARATTR_ALLOFF:
                         // all attribute off
                         bold_ = italic_ = under_ = blink_ = reversed_ = NO;
-                        fgColorCode_ = ALTSEM_FG_DEFAULT;
+                        fgColorCode_ = ALTSEM_DEFAULT;
                         fgGreen_ = 0;
                         fgBlue_ = 0;
-                        bgColorCode_ = ALTSEM_BG_DEFAULT;
+                        bgColorCode_ = ALTSEM_DEFAULT;
                         bgGreen_ = 0;
                         bgBlue_ = 0;
                         fgColorMode_ = ColorModeAlternate;
@@ -668,13 +676,13 @@ static const int kMaxScreenRows = 4096;
                         reversed_ = NO;
                         break;
                     case VT100CHARATTR_FG_DEFAULT:
-                        fgColorCode_ = ALTSEM_FG_DEFAULT;
+                        fgColorCode_ = ALTSEM_DEFAULT;
                         fgGreen_ = 0;
                         fgBlue_ = 0;
                         fgColorMode_ = ColorModeAlternate;
                         break;
                     case VT100CHARATTR_BG_DEFAULT:
-                        bgColorCode_ = ALTSEM_BG_DEFAULT;
+                        bgColorCode_ = ALTSEM_DEFAULT;
                         bgGreen_ = 0;
                         bgBlue_ = 0;
                         bgColorMode_ = ColorModeAlternate;

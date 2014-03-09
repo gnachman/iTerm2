@@ -782,7 +782,9 @@ static NSImage* alertImage;
                                  green:(int)green
                                   blue:(int)blue
                              colorMode:(ColorMode)theMode
-                                  bold:(BOOL)isBold {
+                                  bold:(BOOL)isBold
+                          isBackground:(BOOL)isBackground {
+    BOOL isBackgroundForDefault = isBackground;
     switch (theMode) {
         case ColorModeAlternate:
             switch (theIndex) {
@@ -790,13 +792,18 @@ static NSImage* alertImage;
                     return kColorMapSelectedText;
                 case ALTSEM_CURSOR:
                     return kColorMapCursorText;
-                case ALTSEM_BG_DEFAULT:
-                    return kColorMapBackground;
-                case ALTSEM_FG_DEFAULT:
-                    if (isBold && _useBrightBold) {
-                        return kColorMapBold;
+                case ALTSEM_REVERSED_DEFAULT:
+                    isBackgroundForDefault = !isBackgroundForDefault;
+                    // Fall through.
+                case ALTSEM_DEFAULT:
+                    if (isBackgroundForDefault) {
+                        return kColorMapBackground;
                     } else {
-                        return kColorMapForeground;
+                        if (isBold && _useBrightBold) {
+                            return kColorMapBold;
+                        } else {
+                            return kColorMapForeground;
+                        }
                     }
             }
             break;
@@ -831,7 +838,8 @@ static NSImage* alertImage;
                                               green:green
                                                blue:blue
                                           colorMode:theMode
-                                               bold:isBold];
+                                               bold:isBold
+                                       isBackground:isBackground];
     if (isBackground && _colorMap.dimOnlyText) {
         return [_colorMap colorForKey:key];
     } else {
@@ -6098,7 +6106,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                      toPoint:dest
                                                              useTransparency:[self useTransparency]];
         // Blend default bg color
-        NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
+        NSColor *aColor = [self colorForCode:ALTSEM_DEFAULT
                                        green:0
                                         blue:0
                                    colorMode:ColorModeAlternate
@@ -6135,7 +6143,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                      toPoint:dest
                                                              useTransparency:[self useTransparency]];
         // Blend default bg color over bg image.
-        NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
+        NSColor *aColor = [self colorForCode:ALTSEM_DEFAULT
                                        green:0
                                         blue:0
                                    colorMode:ColorModeAlternate
@@ -6171,7 +6179,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                              useTransparency:[self useTransparency]];
         // Blend default bg color over bg iamge.
-        NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
+        NSColor *aColor = [self colorForCode:ALTSEM_DEFAULT
                                        green:0
                                         blue:0
                                    colorMode:ColorModeAlternate
@@ -6440,7 +6448,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         } else {
             // Not a selection.
             if (reversed &&
-                theLine[i].foregroundColor == ALTSEM_FG_DEFAULT &&
+                theLine[i].foregroundColor == ALTSEM_DEFAULT &&
                 theLine[i].foregroundColorMode == ColorModeAlternate) {
                 // Has default foreground color so use background color.
                 if (!dimOnlyText) {
@@ -7037,7 +7045,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     if (!hasBGImage ||
         (isMatch && !bgselected) ||
-        !(bgColor == ALTSEM_BG_DEFAULT && bgColorMode == ColorModeAlternate) ||
+        !(bgColor == ALTSEM_DEFAULT && bgColorMode == ColorModeAlternate) ||
         bgselected) {
         // There's no bg image, or there's a nondefault bg on a bg image.
         // We are not drawing an unmolested background image. Some
@@ -7049,10 +7057,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         } else if (bgselected) {
             aColor = [self selectionColorForCurrentFocus];
         } else {
-            if (reversed && bgColor == ALTSEM_BG_DEFAULT && bgColorMode == ColorModeAlternate) {
+            if (reversed && bgColor == ALTSEM_DEFAULT && bgColorMode == ColorModeAlternate) {
                 // Reverse video is only applied to default background-
                 // color chars.
-                aColor = [self colorForCode:ALTSEM_FG_DEFAULT
+                aColor = [self colorForCode:ALTSEM_DEFAULT
                                       green:0
                                        blue:0
                                   colorMode:ColorModeAlternate
@@ -7079,7 +7087,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     } else if (hasBGImage) {
         // There is a bg image and no special background on it. Blend
         // in the default background color.
-        aColor = [self colorForCode:ALTSEM_BG_DEFAULT
+        aColor = [self colorForCode:ALTSEM_DEFAULT
                               green:0
                                blue:0
                           colorMode:ColorModeAlternate
@@ -7164,7 +7172,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     rightMargin.size.width = visibleRect.size.width - rightMargin.origin.x;
     rightMargin.size.height = lineHeight;
 
-    aColor = [self colorForCode:ALTSEM_BG_DEFAULT
+    aColor = [self colorForCode:ALTSEM_DEFAULT
                           green:0
                            blue:0
                       colorMode:ColorModeAlternate
@@ -7502,7 +7510,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         const int maxLen = [str length] * kMaxParts;
         screen_char_t buf[maxLen];
         screen_char_t fg = {0}, bg = {0};
-        fg.foregroundColor = ALTSEM_FG_DEFAULT;
+        fg.foregroundColor = ALTSEM_DEFAULT;
         fg.foregroundColorMode = ColorModeAlternate;
         fg.bold = NO;
         fg.italic = NO;
