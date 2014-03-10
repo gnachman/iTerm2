@@ -225,7 +225,7 @@ typedef enum {
         
         // Experimentally, this is enough to keep the queue primed but not overwhelmed.
         // TODO: How do slower machines fare?
-        static const int kMaxOutstandingExecuteCalls = 8;
+        static const int kMaxOutstandingExecuteCalls = 4;
         _executionSemaphore = dispatch_semaphore_create(kMaxOutstandingExecuteCalls);
 
         _lastOutput = _lastInput;
