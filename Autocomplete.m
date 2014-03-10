@@ -165,7 +165,7 @@ const int kMaxResultContextWords = 4;
                                             pad:NO
                              includeLastNewline:NO
                          trimTrailingWhitespace:NO
-                                   cappedAtSize:NO];
+                                   cappedAtSize:-1];
         int maxWords = kMaxQueryContextWords;
         if ([s rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
             ++maxWords;
