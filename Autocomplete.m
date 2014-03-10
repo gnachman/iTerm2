@@ -348,8 +348,11 @@ const int kMaxResultContextWords = 4;
 
 - (void)onClose
 {
+    [stack_ removeAllObjects];
+    [moreText_ release];
+    moreText_ = nil;
+
     if (populateTimer_) {
-        [stack_ removeAllObjects];
         [populateTimer_ invalidate];
         populateTimer_ = nil;
     }
@@ -644,11 +647,23 @@ const int kMaxResultContextWords = 4;
     int i = 0;
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     for (CommandHistoryEntry *entry in entries) {
+        if (![entry.command hasPrefix:context]) {
+            continue;
+        }
+        NSString *command = [entry.command substringFromIndex:context.length];
+        NSArray *parts = [command componentsSeparatedByCharactersInSet:[iTermTextExtractor wordSeparatorCharacterSet]];
+        if ([parts count] == 0) {
+            continue;
+        }
+        command = parts[0];
+        if ([command length] == 0) {
+            continue;
+        }
         double score = [self scoreResultNumber:i++
                                   queryContext:context_
                                  resultContext:context_  // Maximize similarity because the whole prompt is in our favor
-                           joiningPrefixLength:[context length]
-                                          word:entry.command];
+                           joiningPrefixLength:[prefix_ length]
+                                          word:command];
         
         // Boost the score for more uses of the command
         score *= sqrt(entry.uses);
@@ -658,7 +673,7 @@ const int kMaxResultContextWords = 4;
         score /= MAX(1, sqrt(timeSinceLastUse / (24 * 60 * 60.0)));
         
         score = MIN(10, score);  // Limit score of commands so really relevant context has a chance.
-        PopupEntry* e = [PopupEntry entryWithString:[entry.command substringFromIndex:context.length]
+        PopupEntry* e = [PopupEntry entryWithString:command
                                               score:score];
         if (whitespaceBeforeCursor_) {
             [e setPrefix:[NSString stringWithFormat:@"%@ ", prefix_]];
