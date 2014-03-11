@@ -2,6 +2,9 @@
 
 #import <Foundation/Foundation.h>
 
+// Posted just before select() is called.
+extern NSString *const kTaskNotifierDidSpin;
+
 @class PTYTask;
 
 @interface TaskNotifier : NSObject

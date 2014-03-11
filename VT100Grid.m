@@ -294,7 +294,10 @@
     screenTop_ = (screenTop_ + 1) % size_.height;
 
     // Empty contents of last line on screen.
-    [self clearLineData:[self lineDataAtLineNumber:(size_.height - 1)]];
+    NSMutableData *lastLineData = [self lineDataAtLineNumber:(size_.height - 1)];
+    if (lastLineData) {  // This if statement is just to quiet the analyzer.
+        [self clearLineData:lastLineData];
+    }
 
     if (lineBuffer) {
         // Mark new line at bottom of screen dirty.
@@ -1881,6 +1884,7 @@ void DumpBuf(screen_char_t* p, int n) {
     for (NSObject *line in lines_) {
         [theCopy->lines_ addObject:[[line mutableCopy] autorelease]];
     }
+    [theCopy->lineInfos_ release];
     theCopy->lineInfos_ = [[NSMutableArray alloc] init];
     for (VT100LineInfo *line in lineInfos_) {
         [theCopy->lineInfos_ addObject:[[line copy] autorelease]];

@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "VT100ControlParser.h"
 #import "VT100StringParser.h"
+#import "VT100TmuxParser.h"
 
 #define kDefaultStreamSize 100000
 
@@ -32,6 +33,7 @@
 
 - (void)dealloc {
     free(_stream);
+    [_tmuxParser release];
     [super dealloc];
 }
 
@@ -61,7 +63,14 @@
         }
     } else {
         int rmlen = 0;
-        if (isAsciiString(datap)) {
+        VT100TmuxParser *tmuxParser = [self.tmuxParser retain];
+        if (tmuxParser) {
+            [tmuxParser decodeBytes:datap length:datalen bytesUsed:&rmlen token:token];
+            [tmuxParser release];
+            if (token->type == TMUX_EXIT) {
+                self.tmuxParser = nil;
+            }
+        } else if (isAsciiString(datap)) {
             ParseString(datap, datalen, &rmlen, token, self.encoding);
             length = rmlen;
             position = datap;
@@ -78,6 +87,8 @@
                 } else if ([token.kvpKey isEqualToString:@"EndCopy"]) {
                     _saveData = NO;
                 }
+            } else if (token->type == DCS_TMUX && !_tmuxParser) {
+                self.tmuxParser = [[[VT100TmuxParser alloc] init] autorelease];
             }
             length = rmlen;
             position = datap;
@@ -117,10 +128,9 @@
         while (i < length) {
             unsigned char c = datap[i];
             [loginfo appendFormat:@"%02x ", (int)c];
-            [ascii appendFormat:@"%c", (c>=32 && c<128) ? c : '.'];
+            [ascii appendFormat:@"%c", (c >= 32 && c < 128) ? c : '.'];
             if (i == length - 1 || loginfo.length > 60) {
-                DebugLog([NSString stringWithFormat:@"Bytes %d-%d of %d: %@ (%@)", start, i,
-                          (int)length, loginfo, ascii]);
+                DLog(@"Bytes %d-%d of %d: %@ (%@)", start, i, (int)length, loginfo, ascii);
                 [loginfo setString:@""];
                 [ascii setString:@""];
                 start = i;
@@ -138,10 +148,7 @@
             [token setAsciiBytes:(char *)position length:length];
         }
         CVectorAppend(vector, token);
-        
-        // We return NO on DCS_TMUX because futher tokens should not be parsed (they are handled by
-        // the tmux parser, which does not speak VT100).
-        return token->type != DCS_TMUX;
+        return YES;
     } else {
         [token recycleObject];
         return NO;

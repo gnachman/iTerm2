@@ -13,6 +13,8 @@
 
 #define PtyTaskDebugLog(args...)
 
+NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
+
 @implementation TaskNotifier
 {
     NSMutableArray* tasks;
@@ -85,7 +87,7 @@
     [self unblock];
 }
 
-- (void)deregisterTask:(PTYTask*)task
+- (void)deregisterTask:(PTYTask *)task
 {
     PtyTaskDebugLog(@"deregisterTask: lock\n");
     [tasksLock lock];
@@ -157,6 +159,9 @@
             // waitpid() on pids that we think are dead or will be dead soon.
             NSMutableSet* newDeadpool = [NSMutableSet setWithCapacity:[deadpool count]];
             for (NSNumber* pid in deadpool) {
+                if ([pid intValue] < 0) {
+                    continue;
+                }
                 int statLoc;
                 PtyTaskDebugLog(@"wait on %d", [pid intValue]);
                 if (waitpid([pid intValue], &statLoc, WNOHANG) < 0) {
@@ -228,7 +233,9 @@
         }
         PtyTaskDebugLog(@"run1: unlock");
         [tasksLock unlock];
-        
+
+        [[NSNotificationCenter defaultCenter] postNotificationName:kTaskNotifierDidSpin object:nil];
+
         // Poll...
         if (select(highfd+1, &rfds, &wfds, &efds, NULL) <= 0) {
             switch(errno) {

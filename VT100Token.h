@@ -153,14 +153,16 @@ typedef enum {
     ANSICSI_CBT,     // Back tab
     
     ANSI_RIS,        // Reset to initial state (there's also a CSI version)
-    
+
     // Toggle between ansi/vt52
     STRICT_ANSI_MODE,
-    
+
     // iTerm extension
     ITERM_GROWL,
-    DCS_TMUX,
-    
+    DCS_TMUX,  // Enter tmux mode
+    TMUX_LINE,  // A line of input from tmux
+    TMUX_EXIT,  // Exit tmux mode
+
     // Ambiguous codes - disambiguated at execution time.
     VT100CSI_DECSLRM_OR_ANSICSI_SCP
 } VT100TerminalTokenType;

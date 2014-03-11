@@ -227,6 +227,9 @@ typedef enum {
 // Enters Tmux mode.
 - (void)terminalStartTmuxMode;
 
+// Handles input during tmux mode. A single line of input will be in the token's string.
+- (void)terminalHandleTmuxInput:(VT100Token *)token;
+
 // Returns the size of the terminal in cells.
 - (int)terminalWidth;
 - (int)terminalHeight;

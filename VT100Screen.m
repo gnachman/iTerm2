@@ -110,6 +110,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [dvr_ release];
     [terminal_ release];
     [findContext_ release];
+    [savedIntervalTree_ release];
     [intervalTree_ release];
     [markCache_ release];
     [inlineFileInfo_ release];
@@ -2616,6 +2617,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)terminalStartTmuxMode {
     [delegate_ screenStartTmuxMode];
+}
+
+- (void)terminalHandleTmuxInput:(VT100Token *)token {
+    [delegate_ screenHandleTmuxInput:token];
 }
 
 - (int)terminalWidth {

@@ -10,11 +10,11 @@
 #import "TmuxController.h"
 #import "iTermApplicationDelegate.h"
 #import "NSStringITerm.h"
+#import "VT100Token.h"
 
 NSString * const kTmuxGatewayErrorDomain = @"kTmuxGatewayErrorDomain";;
 const int kTmuxGatewayCommandShouldTolerateErrors = (1 << 0);
 const int kTmuxGatewayCommandWantsData = (1 << 1);
-const int kTmuxGatewayCommandHasEndGuardBug = (1 << 2);
 
 #define NEWLINE @"\r"
 
@@ -22,12 +22,7 @@ const int kTmuxGatewayCommandHasEndGuardBug = (1 << 2);
 #ifdef TMUX_VERBOSE_LOGGING
 #define TmuxLog NSLog
 #else
-#define TmuxLog(args...) \
-do { \
-if (gDebugLogging) { \
-DebugLog([NSString stringWithFormat:args]); \
-} \
-} while (0)
+#define TmuxLog DLog
 #endif
 
 static NSString *kCommandTarget = @"target";
@@ -40,16 +35,18 @@ static NSString *kCommandId = @"id";
 static NSString *kCommandIsInList = @"inList";
 static NSString *kCommandIsLastInList = @"lastInList";
 
-@implementation TmuxGateway
+@implementation TmuxGateway {
+    // Set to YES when the remote host closed the connection. We won't send commands when this is
+    // set.
+    BOOL disconnected_;
+}
 
 - (id)initWithDelegate:(NSObject<TmuxGatewayDelegate> *)delegate
 {
     self = [super init];
     if (self) {
         delegate_ = delegate;
-        state_ = CONTROL_STATE_READY;
         commandQueue_ = [[NSMutableArray alloc] init];
-        stream_ = [[NSMutableData alloc] init];
         strayMessages_ = [[NSMutableString alloc] init];
     }
     return self;
@@ -58,7 +55,6 @@ static NSString *kCommandIsLastInList = @"lastInList";
 - (void)dealloc
 {
     [commandQueue_ release];
-    [stream_ release];
     [currentCommand_ release];
     [currentCommandResponse_ release];
     [currentCommandData_ release];
@@ -83,7 +79,6 @@ static NSString *kCommandIsLastInList = @"lastInList";
          informativeTextWithFormat:@"%@", message] runModal];
     [self detach];
     [delegate_ tmuxHostDisconnected];  // Force the client to quit
-    [stream_ replaceBytesInRange:NSMakeRange(0, stream_.length) withBytes:"" length:0];
 }
 
 - (NSData *)decodeEscapedOutput:(const char *)bytes
@@ -153,8 +148,7 @@ static NSString *kCommandIsLastInList = @"lastInList";
     NSData *decodedData = [self decodeEscapedOutput:space + 1];
 
     TmuxLog(@"Run tmux command: \"%%output %%%d %.*s", windowPane, (int)[decodedData length], [decodedData bytes]);
-    [[[delegate_ tmuxController] sessionForWindowPane:windowPane]  tmuxReadTask:decodedData];
-    state_ = CONTROL_STATE_READY;
+    [[[delegate_ tmuxController] sessionForWindowPane:windowPane] tmuxReadTask:decodedData];
 
     return;
 error:
@@ -174,7 +168,6 @@ error:
     NSString *layout = [components objectAtIndex:2];
     [delegate_ tmuxUpdateLayoutForWindow:window
                                   layout:layout];
-    state_ = CONTROL_STATE_READY;
 }
 
 - (void)broadcastWindowChange
@@ -190,7 +183,6 @@ error:
         return;
     }
     [delegate_ tmuxWindowAddedWithId:[[components objectAtIndex:1] intValue]];
-    state_ = CONTROL_STATE_READY;
 }
 
 - (void)parseWindowCloseCommand:(NSString *)command
@@ -201,7 +193,6 @@ error:
         return;
     }
     [delegate_ tmuxWindowClosedWithId:[[components objectAtIndex:1] intValue]];
-    state_ = CONTROL_STATE_READY;
 }
 
 - (void)parseWindowRenamedCommand:(NSString *)command
@@ -213,7 +204,6 @@ error:
     }
     [delegate_ tmuxWindowRenamedWithId:[[components objectAtIndex:1] intValue]
                                     to:[components objectAtIndex:2]];
-    state_ = CONTROL_STATE_READY;
 }
 
 - (void)parseSessionRenamedCommand:(NSString *)command
@@ -224,7 +214,6 @@ error:
         return;
     }
     [delegate_ tmuxSession:[[components objectAtIndex:1] intValue] renamed:[components objectAtIndex:2]];
-    state_ = CONTROL_STATE_READY;
 }
 
 - (void)parseSessionChangeCommand:(NSString *)command
@@ -235,7 +224,6 @@ error:
         return;
     }
     [delegate_ tmuxSessionChanged:[components objectAtIndex:2] sessionId:[[components objectAtIndex:1] intValue]];
-    state_ = CONTROL_STATE_READY;
 }
 
 - (void)parseSessionsChangedCommand:(NSString *)command
@@ -246,14 +234,13 @@ error:
         return;
     }
     [delegate_ tmuxSessionsChanged];
-    state_ = CONTROL_STATE_READY;
 }
 
 - (void)hostDisconnected
 {
-  [delegate_ tmuxHostDisconnected];
-  [commandQueue_ removeAllObjects];
-  state_ = CONTROL_STATE_DETACHED;
+    [delegate_ tmuxHostDisconnected];
+    [commandQueue_ removeAllObjects];
+    disconnected_ = YES;
 }
 
 // Accessors for objects in the current-command dictionary.
@@ -378,66 +365,23 @@ error:
     }
 }
 
-- (BOOL)parseCommand
-{
-    NSRange newlineRange = NSMakeRange(NSNotFound, 0);
-    unsigned char *streamBytes = [stream_ mutableBytes];
-    for (int i = 0; i < stream_.length; i++) {
-        if (streamBytes[i] == '\n') {
-            newlineRange.location = i;
-            newlineRange.length = 1;
-            break;
-        }
+- (void)executeToken:(VT100Token *)token {
+    NSString *command = token.string;
+    NSData *data = token.savedData;
+    if (_tmuxLogging) {
+        [delegate_ tmuxPrintLine:command];
     }
-    if (newlineRange.location == NSNotFound) {
-        return NO;
-    }
-    NSRange commandRange;
-    commandRange.location = 0;
-    commandRange.length = newlineRange.location; // Command range doesn't include the newline.
-
-    // Make a temp copy of the data, and remove linefeeds. Line drivers randomly add linefeeds.
-    NSMutableData *data = [NSMutableData dataWithCapacity:commandRange.length];
-    const char *bytes = [stream_ bytes] + commandRange.location;
-    int lastIndex = 0;
-    int i;
-    for (i = 0; i < commandRange.length; i++) {
-        if (bytes[i] == '\r') {
-            if (i > lastIndex) {
-                [data appendBytes:bytes + lastIndex length:i - lastIndex];
-            }
-            lastIndex = i + 1;
-        }
-    }
-    if (i > lastIndex) {
-        [data appendBytes:bytes + lastIndex length:i - lastIndex];
-    }
-
-    NSString *command = [[[NSString alloc] initWithData:data
-                                               encoding:NSUTF8StringEncoding] autorelease];
-    if (!command) {
-        // The command was not UTF-8. Unfortunately, this can happen. If tmux has a non-UTF-8
-        // character in a pane, it will just output it in capture-pane.
-        command = [[[NSString alloc] initWithUTF8DataIgnoringErrors:data] autorelease];
-    }
-    // At least on osx, the terminal driver adds \r at random places, sometimes adding two of them in a row!
-    // We split on \n, which is safe, and just throw out any \r's that we see.
-    command = [command stringByReplacingOccurrencesOfString:@"\r" withString:@""];
     if (![command hasPrefix:@"%output "] &&
         !currentCommand_) {
         TmuxLog(@"Read tmux command: \"%@\"", command);
     } else if (currentCommand_) {
         TmuxLog(@"Read command response: \"%@\"", command);
     }
-    // Advance range to include newline so we can chop it off
-    commandRange.length += newlineRange.length;
 
     // Work around a bug in tmux 1.8: if unlink-window causes the current
     // session to be destroyed, no end guard is printed but %exit may be
     // received.
-    int flags = [self currentCommandFlags];
     if (currentCommand_ &&
-        (flags & kTmuxGatewayCommandHasEndGuardBug) &&
         ([command hasPrefix:@"%exit "] ||
          [command isEqualToString:@"%exit"])) {
       // Work around the bug by ending the command so the %exit can be
@@ -514,35 +458,6 @@ error:
         NSLog(@"Unrecognized command \"%@\"", command);
         [strayMessages_ appendFormat:@"%@\n", command];
     }
-
-    // Erase the just-handled command from the stream.
-    if (stream_.length > 0) {  // length could be 0 if abortWtihErrorMessage: was called.
-        [stream_ replaceBytesInRange:commandRange withBytes:"" length:0];
-    }
-
-    return YES;
-}
-
-- (NSData *)readTask:(NSData *)data
-{
-    [stream_ appendData:data];
-
-    while ([stream_ length] > 0) {
-        switch (state_) {
-            case CONTROL_STATE_READY:
-                if (![self parseCommand]) {
-                    // Don't have a full command yet, need to read more.
-                    return nil;
-                }
-                break;
-
-            case CONTROL_STATE_DETACHED:
-                data = [[stream_ copy] autorelease];
-                [stream_ setLength:0];
-                return data;
-        }
-    }
-    return nil;
 }
 
 - (NSString *)keyEncodedByte:(char)byte
@@ -642,7 +557,7 @@ error:
      responseObject:(id)obj
               flags:(int)flags
 {
-    if (detachSent_ || state_ == CONTROL_STATE_DETACHED) {
+    if (detachSent_ || disconnected_) {
         return;
     }
     NSString *commandWithNewline = [command stringByAppendingString:NEWLINE];
@@ -663,7 +578,7 @@ error:
 
 - (void)sendCommandList:(NSArray *)commandDicts initial:(BOOL)initial
 {
-    if (detachSent_ || state_ == CONTROL_STATE_DETACHED) {
+    if (detachSent_ || disconnected_) {
         return;
     }
     NSMutableString *cmd = [NSMutableString string];

@@ -10,11 +10,14 @@
 #import "CVector.h"
 #import "VT100Token.h"
 
+@class VT100TmuxParser;
+
 @interface VT100Parser : NSObject
 
 @property(nonatomic, readonly) NSData *streamData;
 @property(atomic, assign) NSStringEncoding encoding;
 @property(nonatomic, readonly) int streamLength;
+@property(atomic, retain) VT100TmuxParser *tmuxParser;
 
 - (void)putStreamData:(const char *)buffer length:(int)length;
 - (void)clearStream;

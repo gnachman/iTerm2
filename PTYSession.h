@@ -297,11 +297,9 @@ typedef enum {
 
 - (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask;
 
-// PTYTask
+// Writing output.
 - (void)writeTask:(NSData*)data;
 - (void)writeTaskNoBroadcast:(NSData *)data;
-- (void)readTask:(const char *)bytes length:(int)length;
-- (void)brokenPipe;
 
 // PTYTextView
 - (BOOL)hasTextSendingKeyMappingForEvent:(NSEvent*)event;

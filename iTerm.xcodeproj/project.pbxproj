@@ -637,6 +637,12 @@
 		A67E0AD0186E4B71009B2B68 /* TaskNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */; };
 		A67E0AD1186E4B71009B2B68 /* TaskNotifier.m in Sources */ = {isa = PBXBuildFile; fileRef = A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */; };
 		A67E0AD2186E4B71009B2B68 /* TaskNotifier.m in Sources */ = {isa = PBXBuildFile; fileRef = A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */; };
+		A680AA1318CEA1040034D4F8 /* VT100TmuxParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A680AA1118CEA1040034D4F8 /* VT100TmuxParser.h */; };
+		A680AA1418CEA1040034D4F8 /* VT100TmuxParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */; };
+		A680AA1518CEA1040034D4F8 /* VT100TmuxParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */; };
+		A680AA1818CEBF5C0034D4F8 /* NSMutableData+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A680AA1618CEBF5C0034D4F8 /* NSMutableData+iTerm.h */; };
+		A680AA1918CEBF5C0034D4F8 /* NSMutableData+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */; };
+		A680AA1A18CEBF5C0034D4F8 /* NSMutableData+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */; };
 		A68A30C1186D0DC1007F550F /* FindCursorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30BF186D0DC1007F550F /* FindCursorView.h */; };
 		A68A30C2186D0DC1007F550F /* FindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* FindCursorView.m */; };
 		A68A30C3186D0DC1007F550F /* FindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* FindCursorView.m */; };
@@ -1179,6 +1185,10 @@
 		A647E3B618C5884600450FA1 /* iTermObjectPool.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermObjectPool.m; sourceTree = "<group>"; };
 		A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TaskNotifier.h; sourceTree = "<group>"; };
 		A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TaskNotifier.m; sourceTree = "<group>"; };
+		A680AA1118CEA1040034D4F8 /* VT100TmuxParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100TmuxParser.h; sourceTree = "<group>"; };
+		A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100TmuxParser.m; sourceTree = "<group>"; };
+		A680AA1618CEBF5C0034D4F8 /* NSMutableData+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableData+iTerm.h"; sourceTree = "<group>"; };
+		A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableData+iTerm.m"; sourceTree = "<group>"; };
 		A68A30BF186D0DC1007F550F /* FindCursorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindCursorView.h; sourceTree = "<group>"; };
 		A68A30C0186D0DC1007F550F /* FindCursorView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FindCursorView.m; sourceTree = "<group>"; };
 		A68A30C4186D0F36007F550F /* SmartMatch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SmartMatch.h; sourceTree = "<group>"; };
@@ -1542,9 +1552,13 @@
 				1D085F9416F04D0900B7FCE9 /* NSBezierPath+iTerm.h */,
 				A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */,
 				1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */,
+				A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */,
 				1D67ABA914285D6000D5DA4E /* NSFileManager+iTerm.h */,
+				A60014F418550F3900CE38D8 /* NSMutableAttributedString+iTerm.h */,
+				A680AA1618CEBF5C0034D4F8 /* NSMutableData+iTerm.h */,
 				A68A30EC186D150A007F550F /* NSObject+iTerm.h */,
 				1D407A2914BABE8700BD5035 /* NSStringITerm.h */,
+				A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */,
 				1D81F0BE183C3C2D00910838 /* NSView+RecursiveDescription.h */,
 				1D7C187F1275D22900461E55 /* PasteboardHistory.h */,
 				1D085F8416F02E7400B7FCE9 /* PasteContext.h */,
@@ -1646,6 +1660,7 @@
 				A647E3A718C353C500450FA1 /* VT100StringParser.h */,
 				1D407A3314BABE8700BD5035 /* VT100Terminal.h */,
 				1D53FD18181C700B00524D4F /* VT100TerminalDelegate.h */,
+				A680AA1118CEA1040034D4F8 /* VT100TmuxParser.h */,
 				A647E39718C3504100450FA1 /* VT100Token.h */,
 				A68A30F3186D150A007F550F /* VT100WorkingDirectory.h */,
 				A6A13AB918C34F6400B241ED /* VT100XtermParser.h */,
@@ -1946,14 +1961,12 @@
 				1D085F9516F04D0900B7FCE9 /* NSBezierPath+iTerm.m */,
 				A6A13AA618C2D45900B241ED /* NSColor+iTerm.m */,
 				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
-				A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */,
 				A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */,
 				1D67ABAA14285D6000D5DA4E /* NSFileManager+iTerm.m */,
-				A60014F418550F3900CE38D8 /* NSMutableAttributedString+iTerm.h */,
 				A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */,
+				A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */,
 				A68A30CE186D1414007F550F /* NSObject+iTerm.m */,
 				E8E901A202743CA303A80106 /* NSStringITerm.m */,
-				A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */,
 				A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */,
 				1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */,
 			);
@@ -2063,6 +2076,7 @@
 				A6A13AB518C33FC500B241ED /* VT100Parser.m */,
 				A647E3A818C353C500450FA1 /* VT100StringParser.m */,
 				E8CF7563026DDA6303A80106 /* VT100Terminal.m */,
+				A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */,
 				A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */,
 			);
 			name = VT100;
@@ -2314,6 +2328,7 @@
 				1D93D33512695442007F741B /* DVR.h in Headers */,
 				1D93D3471269741B007F741B /* DVRBuffer.h in Headers */,
 				1D93D34B1269746F007F741B /* DVRIndexEntry.h in Headers */,
+				A680AA1318CEA1040034D4F8 /* VT100TmuxParser.h in Headers */,
 				1D93D34F126974BC007F741B /* DVRDecoder.h in Headers */,
 				1D93D35312697529007F741B /* DVREncoder.h in Headers */,
 				1D173859126C820A004622DC /* FakeWindow.h in Headers */,
@@ -2459,6 +2474,7 @@
 				1D085F8616F02E7400B7FCE9 /* PasteContext.h in Headers */,
 				1D085F8D16F0328B00B7FCE9 /* PasteViewController.h in Headers */,
 				1D085F9216F03E5400B7FCE9 /* PasteView.h in Headers */,
+				A680AA1818CEBF5C0034D4F8 /* NSMutableData+iTerm.h in Headers */,
 				A6E74752188C6693005355CF /* iTermExposeWindow.h in Headers */,
 				1D085F9616F04D0900B7FCE9 /* NSBezierPath+iTerm.h in Headers */,
 				1D085F9A16F1135F00B7FCE9 /* PasteEvent.h in Headers */,
@@ -2776,6 +2792,7 @@
 				1D9A5584180FA87000B42CE9 /* iTermFontPanel.m in Sources */,
 				1D9A5578180FA85D00B42CE9 /* GrowlTrigger.m in Sources */,
 				1D9A5565180FA84700B42CE9 /* NSFileManager+iTerm.m in Sources */,
+				A680AA1A18CEBF5C0034D4F8 /* NSMutableData+iTerm.m in Sources */,
 				A647E3B018C3588800450FA1 /* VT100ControlParser.m in Sources */,
 				1D9A5585180FA87000B42CE9 /* iTermKeyBindingMgr.m in Sources */,
 				A68A30C8186D0F37007F550F /* SmartMatch.m in Sources */,
@@ -2787,6 +2804,7 @@
 				1D9A55A1180FA87000B42CE9 /* TextViewWrapper.m in Sources */,
 				1D9A5597180FA87000B42CE9 /* PTYTab.m in Sources */,
 				1D9A556A180FA85000B42CE9 /* Popup.m in Sources */,
+				A680AA1518CEA1040034D4F8 /* VT100TmuxParser.m in Sources */,
 				1D9A5530180FA70D00B42CE9 /* iTermController.m in Sources */,
 				1D53FD17181C4B4B00524D4F /* FindContext.m in Sources */,
 				1DD39B11180B817B004E56D5 /* VT100GridTypes.m in Sources */,
@@ -2929,12 +2947,14 @@
 				A63F40AA183F3CED003A6A6D /* LineBufferHelpers.m in Sources */,
 				1D5FDDAC1208E93600C46BA3 /* NSStringITerm.m in Sources */,
 				1D5FDDAD1208E93600C46BA3 /* PreferencePanel.m in Sources */,
+				A680AA1418CEA1040034D4F8 /* VT100TmuxParser.m in Sources */,
 				A68A30D3186D1414007F550F /* NSObject+iTerm.m in Sources */,
 				1D5FDDAE1208E93600C46BA3 /* PTYSession.m in Sources */,
 				A6C4E8E01846E13800CFAA77 /* IntervalTree.m in Sources */,
 				1D5FDDAF1208E93600C46BA3 /* PTYTabView.m in Sources */,
 				1D5FDDB01208E93600C46BA3 /* PTYWindow.m in Sources */,
 				A63F40A0183F3AF5003A6A6D /* VT100LineInfo.m in Sources */,
+				A680AA1918CEBF5C0034D4F8 /* NSMutableData+iTerm.m in Sources */,
 				1D53FD16181C4B4B00524D4F /* FindContext.m in Sources */,
 				1D5FDDB21208E93600C46BA3 /* PTToolbarController.m in Sources */,
 				A6CFDAD3185D2587005DC94B /* URLAction.m in Sources */,

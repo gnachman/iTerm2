@@ -8757,7 +8757,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Copy selection position to detect change in selected chars next call.
     [_oldSelection release];
     _oldSelection = [_selection copy];
-
+    _oldSelection.delegate = nil;
+    
     // Redraw lines with dirty characters
     int lineStart = [_dataSource numberOfLines] - [_dataSource height];
     int lineEnd = [_dataSource numberOfLines];

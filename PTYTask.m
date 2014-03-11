@@ -81,7 +81,6 @@ setup_tty_param(struct termios* term,
     pid_t pid;
     int fd;
     int status;
-    id<PTYTaskDelegate> delegate;
     NSString* tty;
     NSString* path;
     BOOL hasOutput;
@@ -94,7 +93,10 @@ setup_tty_param(struct termios* term,
 
     Coprocess *coprocess_;  // synchronized (self)
     BOOL brokenPipe_;
-	NSString *command_;  // Command that was run if launchWithPath:arguments:etc was called
+    NSString *command_;  // Command that was run if launchWithPath:arguments:etc was called
+    
+    // Number of spins of the select loop left before we tell the delegate we were deregistered.
+    int _spinsNeeded;
 }
 
 - (id)init
@@ -102,15 +104,7 @@ setup_tty_param(struct termios* term,
     self = [super init];
     if (self) {
         pid = (pid_t)-1;
-        status = 0;
-        delegate = nil;
         fd = -1;
-        tty = nil;
-        logPath = nil;
-        @synchronized(logHandle) {
-            logHandle = nil;
-        }
-        hasOutput = NO;
 
         writeBuffer = [[NSMutableData alloc] init];
         writeLock = [[NSLock alloc] init];
@@ -162,7 +156,7 @@ static void reapchild(int n)
 
 - (NSString *)command
 {
-        return command_;
+    return command_;
 }
 
 - (void)launchWithPath:(NSString*)progpath
@@ -350,16 +344,6 @@ static void reapchild(int n)
     return hasOutput;
 }
 
-- (void)setDelegate:(id)object
-{
-    delegate = object;
-}
-
-- (id)delegate
-{
-    return delegate;
-}
-
 - (void)logData:(const char *)buffer length:(int)length {
     @synchronized(logHandle) {
         if ([self logging]) {
@@ -376,7 +360,7 @@ static void reapchild(int n)
 
     // The delegate is responsible for parsing VT100 tokens here and sending them off to the
     // main thread for execution. If its queues get too large, it can block.
-    [delegate threadedReadTask:buffer length:length];
+    [self.delegate threadedReadTask:buffer length:length];
 
     @synchronized (self) {
         if (coprocess_) {
@@ -399,12 +383,9 @@ static void reapchild(int n)
 {
     brokenPipe_ = YES;
     [[TaskNotifier sharedInstance] deregisterTask:self];
-    if ([delegate respondsToSelector:@selector(brokenPipe)]) {
-        NSObject *delegateObj = delegate;
-        [delegateObj performSelectorOnMainThread:@selector(brokenPipe)
-                                      withObject:nil
-                                   waitUntilDone:YES];
-    }
+    [(NSObject *)self.delegate performSelectorOnMainThread:@selector(brokenPipe)
+                                                withObject:nil
+                                             waitUntilDone:YES];
 }
 
 - (void)sendSignal:(int)signo
@@ -448,12 +429,43 @@ static void reapchild(int n)
 
     if (fd >= 0) {
         close(fd);
+        [[TaskNotifier sharedInstance] deregisterTask:self];
+        // Require that it spin twice so we can be completely sure that the task won't get called
+        // again. If we add the observer just before select() was going to be called, it wouldn't
+        // mean anything; but after the second call, we know we've been moved into the dead pool.
+        @synchronized(self) {
+            _spinsNeeded = 2;
+        }
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(notifierDidSpin)
+                                                     name:kTaskNotifierDidSpin
+                                                   object:nil];
+        // Force a spin
+        [[TaskNotifier sharedInstance] unblock];
+
+        // This isn't an atomic update, but select() should be resilient to
+        // being passed a half-broken fd. We must change it because after this
+        // function returns, a new task may be created with this fd and then
+        // the select thread wouldn't know which task a fd belongs to.
+        fd = -1;
     }
-    // This isn't an atomic update, but select() should be resilient to
-    // being passed a half-broken fd. We must change it because after this
-    // function returns, a new task may be created with this fd and then
-    // the select thread wouldn't know which task a fd belongs to.
-    fd = -1;
+}
+
+// This runs in TaskNotifier's thread.
+- (void)notifierDidSpin
+{
+    BOOL unblock = NO;
+    @synchronized(self) {
+        unblock = (--_spinsNeeded) > 0;
+    }
+    if (unblock) {
+        // Force select() to return so we get another spin even if there is no
+        // activity on the file descriptors.
+        [[TaskNotifier sharedInstance] unblock];
+    } else {
+        [[NSNotificationCenter defaultCenter] removeObserver:self];
+        [self.delegate taskWasDeregistered];
+    }
 }
 
 - (int)status

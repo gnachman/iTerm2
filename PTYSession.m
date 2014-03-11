@@ -192,7 +192,6 @@ typedef enum {
 
     TmuxGateway *_tmuxGateway;
     int _tmuxPane;
-    BOOL _tmuxLogging;  // log to gateway client
     BOOL _tmuxSecureLogging;
 
     NSMutableArray *_eventQueue;
@@ -267,6 +266,7 @@ typedef enum {
 - (void)dealloc
 {
     [self stopTailFind];  // This frees the substring in the tail find context, if needed.
+    _shell.delegate = nil;
     dispatch_release(_executionSemaphore);
     [_colorMap release];
     [_triggerLine release];
@@ -918,7 +918,9 @@ typedef enum {
     if (_exited) {
         [self _maybeWarnAboutShortLivedSessions];
     }
+    BOOL isClient = NO;
     if (self.tmuxMode == TMUX_CLIENT) {
+        isClient = YES;
         assert([_tab tmuxWindow] >= 0);
         [_tmuxController deregisterWindow:[_tab tmuxWindow]
                                windowPane:_tmuxPane];
@@ -935,11 +937,20 @@ typedef enum {
             // changed size
             [_tmuxController fitLayoutToWindows];
         }
+        
+        // PTYTask will never call taskWasDeregistered since tmux clients are never registered in
+        // the first place. There can be calls queued in this queue from previous tmuxReadTask:
+        // calls, so queue up a fake call to taskWasDeregistered that will run after all of them,
+        // serving the same purpose.
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            [self taskWasDeregistered];
+        });
     } else if (self.tmuxMode == TMUX_GATEWAY) {
         [_tmuxController detach];
-                [_tmuxGateway release];
-                _tmuxGateway = nil;
+        [_tmuxGateway release];
+        _tmuxGateway = nil;
     }
+    _terminal.parser.tmuxParser = nil;
     self.tmuxMode = TMUX_NONE;
     [_tmuxController release];
     _tmuxController = nil;
@@ -957,6 +968,7 @@ typedef enum {
 
     _exited = YES;
     [_shell stop];
+    [self retain];  // We must live until -taskWasDeregistered is called.
 
     // final update of display
     [self updateDisplay];
@@ -969,7 +981,6 @@ typedef enum {
     _colorMap.delegate = nil;
     _textview = nil;
 
-    [_shell setDelegate:nil];
     _screen.delegate = nil;
     [_screen setTerminal:nil];
     _terminal.delegate = nil;
@@ -1049,8 +1060,8 @@ typedef enum {
     if (unicode == 27) {
         [self tmuxDetach];
     } else if (unicode == 'L') {
-        _tmuxLogging = !_tmuxLogging;
-        [self printTmuxMessage:[NSString stringWithFormat:@"tmux logging %@", (_tmuxLogging ? @"on" : @"off")]];
+        _tmuxGateway.tmuxLogging = !_tmuxGateway.tmuxLogging;
+        [self printTmuxMessage:[NSString stringWithFormat:@"tmux logging %@", (_tmuxGateway.tmuxLogging ? @"on" : @"off")]];
     } else if (unicode == 'C') {
         NSAlert *alert = [NSAlert alertWithMessageText:@"Enter command to send tmux:"
                                          defaultButton:@"Ok"
@@ -1099,82 +1110,51 @@ typedef enum {
     [self writeTaskImpl:data];
 }
 
+- (void)taskWasDeregistered {
+    DLog(@"taskWasDeregistered");
+    // This is called on the background thread. After this is called, we won't get any more calls
+    // on the background thread and it is safe for us to be dealloc'ed.
+    [self release];
+}
+
+// This is run in PTYTask's thread. It parses the input here and then queues an async task to run
+// in the main thread to execute the parsed tokens.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
-    // A lock isn't needed here.
-    // 1. If _exited becomes true through a race, it'll be caught later after some wasted parsing.
-    // 2. No guarantees are made about when mute coprocesses begin muting, though it would be nice
-    //    if it were immediate.
-    // 3. tmuxMode can only become TMUX_GATEWAY from a dispatch_sync() call in this method. If it
-    //    should become TMUX_NONE in the main thread, it's OK for this test to give the
-    //    wrong result (parsing will happen in the main thread).
-    if (length == 0 ||
-        _exited ||
-        [_shell hasMuteCoprocess] ||
-        self.tmuxMode == TMUX_GATEWAY) {
-      dispatch_sync(dispatch_get_main_queue(), ^{
-          [self readTask:buffer length:length];
-        });
-      return;
-    }
-    
     // Pass the input stream to the parser.
-    STOPWATCH_START(putStreamData);
     [_terminal.parser putStreamData:buffer length:length];
-    STOPWATCH_LAP(putStreamData);
     
     // Parse the input stream into an array of tokens.
-    STOPWATCH_START(parsing);
     CVector vector;
     CVectorCreate(&vector, 100);
     [_terminal.parser addParsedTokensToVector:&vector];
-    STOPWATCH_LAP(parsing);
 
-    if ([CVectorLastObject(&vector) startsTmuxMode]) {
-        // Will become a tmux gateway when the last token is parsed. We don't want this method to be
-        // called again before that happens because future tokens shouldn't be parsed until we're
-        // no longer a tmux gateway. From now on, the main thread will do parsing.
-        dispatch_sync(dispatch_get_main_queue(), ^{
-            [self executeTokens:&vector bytesHandled:length];
-            // Handle whatever is left in the parser's buffer.
-            [self readTask:"" length:0];
-        });
-    } else {
-        // This limits the number of outstanding execution blocks to prevent the main thread from
-        // getting bogged down.
-        STOPWATCH_START(blocking);
-        dispatch_semaphore_wait(_executionSemaphore, DISPATCH_TIME_FOREVER);
-        STOPWATCH_LAP(blocking);
-        
-        [self retain];
-        dispatch_retain(_executionSemaphore);
-        dispatch_async(dispatch_get_main_queue(), ^{
-            assert(self.tmuxMode != TMUX_GATEWAY);
-
-            if (![_shell hasMuteCoprocess]) {
-                [self executeTokens:&vector bytesHandled:length];
-                assert(self.tmuxMode != TMUX_GATEWAY);
-            } else {
-                int n = CVectorCount(&vector);
-                for (int i = 0; i < n; i++) {
-                    [CVectorGetObject(&vector, i) recycleObject];
-                }
-                CVectorDestroy(&vector);
-            }
-            
-            // Unblock the background thread; if it's ready, it can send the main thread more tokens
-            // now.
-            dispatch_semaphore_signal(_executionSemaphore);
-            dispatch_release(_executionSemaphore);
-            [self release];
-        });
+    if (CVectorCount(&vector) == 0) {
+        CVectorDestroy(&vector);
+        return;
     }
+    
+    // This limits the number of outstanding execution blocks to prevent the main thread from
+    // getting bogged down.
+    dispatch_semaphore_wait(_executionSemaphore, DISPATCH_TIME_FOREVER);
+
+    [self retain];
+    dispatch_retain(_executionSemaphore);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self executeTokens:&vector bytesHandled:length];
+        
+        // Unblock the background thread; if it's ready, it can send the main thread more tokens
+        // now.
+        dispatch_semaphore_signal(_executionSemaphore);
+        dispatch_release(_executionSemaphore);
+        [self release];
+    });
 }
 
 - (void)executeTokens:(const CVector *)vector bytesHandled:(int)length {
     STOPWATCH_START(executing);
     int n = CVectorCount(vector);
     for (int i = 0; i < n; i++) {
-        if (_exited || !_terminal || [_shell hasMuteCoprocess] || self.tmuxMode == TMUX_GATEWAY) {
+        if (_exited || !_terminal || (self.tmuxMode != TMUX_GATEWAY && [_shell hasMuteCoprocess])) {
             break;
         }
         
@@ -1195,65 +1175,6 @@ typedef enum {
         CVectorDestroy(&temp);
     })
     STOPWATCH_LAP(executing);
-}
-
-- (NSData *)handleTmuxGatewayInput:(NSData *)data {
-    if (_tmuxLogging) {
-        [self printTmuxCommandOutputToScreen:[[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]];
-    }
-    return [_tmuxGateway readTask:data];
-}
-
-// This runs in the main thread and handles tmux gateway input properly.
-- (void)readTask:(const char *)buffer length:(int)length
-{
-    do {
-        if ((length == 0 && _terminal.parser.streamLength == 0) || _exited) {
-            return;
-        }
-        if ([_shell hasMuteCoprocess]) {
-            return;
-        }
-        if (gDebugLogging) {
-          DebugLog([NSString stringWithFormat:@"readTask called with %d bytes. The last byte is %d", (int)length, (int)buffer[length-1]]);
-        }
-        
-        if (self.tmuxMode == TMUX_GATEWAY) {
-            NSData *data = [NSData dataWithBytes:buffer length:length];
-            data = [self handleTmuxGatewayInput:data];
-            if (!data) {
-                // Still a tmux gateway.
-                break;
-            }
-            assert(self.tmuxMode == TMUX_NONE);
-            buffer = data.bytes;
-            length = data.length;
-        }
-        [_terminal.parser putStreamData:buffer length:length];
-
-        NSMutableArray *tokens = [NSMutableArray arrayWithCapacity:100];
-        CVector vector;
-        CVectorCreate(&vector, 100);
-        [_terminal.parser addParsedTokensToVector:&vector];
-        int n = CVectorCount(&vector);
-        for (int i = 0; i < n; i++) {
-            VT100Token *token = CVectorGetObject(&vector, i);
-            if (!_exited) {
-                [_terminal executeToken:token];
-            }
-            [token recycleObject];
-        }
-        CVectorDestroy(&vector);
-
-        if (!_exited && self.tmuxMode == TMUX_GATEWAY) {
-            // The last token turned us into a tmux gateway. Re-run with the tail of the data.
-            NSData *gatewayInput = [[_terminal.parser.streamData copy] autorelease];
-            buffer = gatewayInput.bytes;
-            length = gatewayInput.length;
-            [_terminal.parser clearStream];
-        }
-    } while (!_exited && self.tmuxMode == TMUX_GATEWAY);
-    [self finishedHandlingNewOutputOfLength:length];
 }
 
 - (void)finishedHandlingNewOutputOfLength:(int)length {
@@ -3262,9 +3183,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if ([[PreferencePanel sharedInstance] autoHideTmuxClientSession]) {
         [self hideSession];
     }
-
-    [_tmuxGateway readTask:_terminal.parser.streamData];
-    [_terminal.parser clearStream];
 }
 
 - (BOOL)isTmuxClient
@@ -3500,8 +3418,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     _tmuxController = nil;
     [_screen appendStringAtCursor:@"Detached"];
     [_screen crlf];
+    // There's a not-so-bad race condition here. It's possible that tmux would exit and a new
+    // session would start right away and we'd wack the wrong tmux parser. However, it would be
+    // very unusual for that to happen so quickly.
+    _terminal.parser.tmuxParser = nil;
     self.tmuxMode = TMUX_NONE;
-    _tmuxLogging = NO;
 
     if ([[PreferencePanel sharedInstance] autoHideTmuxClientSession] &&
         [[[_tab realParentWindow] window] isMiniaturized]) {
@@ -3523,17 +3444,27 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     } else {
         DLog(@"Write to tmux: \"%@\"", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
     }
-    if (_tmuxLogging) {
+    if (_tmuxGateway.tmuxLogging) {
         [self printTmuxMessage:[[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]];
     }
     [self writeTaskImpl:data];
 }
 
+// This is called on the main thread.
 - (void)tmuxReadTask:(NSData *)data
 {
     if (!_exited) {
         [_shell logData:(const char *)[data bytes] length:[data length]];
-        [self readTask:(const char *)[data bytes] length:[data length]];
+        // Dispatch this in a background thread to keep threadedReadTask:
+        // simple. It always asynchronously dispatches to the main thread,
+        // which would deadlock if it were called on the main thread.
+        [data retain];
+        [self retain];
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            [self threadedReadTask:(char *)[data bytes] length:[data length]];
+            [data release];
+            [self release];
+        });
     }
 }
 
@@ -4892,6 +4823,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenStartTmuxMode {
     [self startTmuxMode];
+}
+
+- (void)screenHandleTmuxInput:(VT100Token *)token {
+    [_tmuxGateway executeToken:token];
 }
 
 - (void)screenModifiersDidChangeTo:(NSArray *)modifiers {

@@ -536,7 +536,7 @@
     theCopy->_initialRange = _initialRange;
     theCopy->_live = _live;
     theCopy->_extend = _extend;
-    theCopy->_subSelections = [_subSelections mutableCopy];
+    [theCopy->_subSelections addObjectsFromArray:_subSelections];
     theCopy->_resumable = _resumable;
     
     theCopy.delegate = _delegate;

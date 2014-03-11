@@ -134,6 +134,7 @@ typedef struct {
         collection->allocated++;
     });
     
+    // The analyzer complains here but it's actually correct because the pool implicitly owns the object.
     return [[_class alloc] initWithPool:self collectionNumber:startIndex];
 }
 

@@ -962,7 +962,16 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)executeToken:(VT100Token *)token {
-    // First, handle sending input to pasteboard/receving files.
+    // Handle tmux stuff, which completely bypasses all other normal execution steps.
+    if (token->type == DCS_TMUX) {
+        [delegate_ terminalStartTmuxMode];
+        return;
+    } else if (token->type == TMUX_EXIT || token->type == TMUX_LINE) {
+        [delegate_ terminalHandleTmuxInput:token];
+        return;
+    }
+    
+    // Handle sending input to pasteboard/receving files.
     if (receivingFile_) {
         if (token->type == VT100CC_BEL) {
             [delegate_ terminalDidFinishReceivingFile];
@@ -1487,10 +1496,6 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalPostGrowlNotification:token.string];
             break;
             
-        case DCS_TMUX:
-            [delegate_ terminalStartTmuxMode];
-            break;
-
         case XTERMCC_SET_KVP:
             [self executeXtermSetKvp:token];
             break;
