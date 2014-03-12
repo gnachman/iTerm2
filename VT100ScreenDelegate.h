@@ -1,5 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import "PTYTextViewDataSource.h"
+#import "VT100Token.h"
 
 @class VT100RemoteHost;
 @class iTermColorMap;
@@ -33,6 +34,7 @@
 
 // Called after text was added to the current line. Can be used to check triggers.
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string;
+- (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData *)asciiData;
 
 // Change the cursor's appearance.
 - (void)screenSetCursorBlinking:(BOOL)blink;
@@ -116,6 +118,9 @@
 
 // Requests that tmux integration mode begin.
 - (void)screenStartTmuxMode;
+
+// Handle a line of input in tmux mode in the token's string.
+- (void)screenHandleTmuxInput:(VT100Token *)token;
 
 // See comment in setSendModifiers:
 - (void)screenModifiersDidChangeTo:(NSArray *)modifiers;

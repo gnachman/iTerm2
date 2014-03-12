@@ -33,9 +33,9 @@ do { \
 // This is run before each test.
 - (void)setup {
     wraparoundMode_ = YES;
-    foregroundColor_.foregroundColor = ALTSEM_FG_DEFAULT;
+    foregroundColor_.foregroundColor = ALTSEM_DEFAULT;
     foregroundColor_.foregroundColorMode = ColorModeAlternate;
-    backgroundColor_.backgroundColor = ALTSEM_BG_DEFAULT;
+    backgroundColor_.backgroundColor = ALTSEM_DEFAULT;
     backgroundColor_.backgroundColorMode = ColorModeAlternate;
 }
 

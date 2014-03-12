@@ -28,10 +28,22 @@
 {
     screen_char_t *screenChars;
     NSMutableData *result = [NSMutableData data];
-    [terminal putStreamData:[hist dataUsingEncoding:NSUTF8StringEncoding]];
-
-    while ([terminal parseNextToken]) {
-        NSString *string = [terminal lastTokenString];
+    NSData *histData = [hist dataUsingEncoding:NSUTF8StringEncoding];
+    [terminal.parser putStreamData:histData.bytes
+                            length:histData.length];
+    
+    CVector vector;
+    CVectorCreate(&vector, 100);
+    [terminal.parser addParsedTokensToVector:&vector];
+    int n = CVectorCount(&vector);
+    for (int i = 0; i < n; i++) {
+        VT100Token *token = CVectorGetObject(&vector, i);
+        [terminal executeToken:token];
+        NSString *string = token.isStringType ? token.string : nil;
+        if (!string && token->type == VT100_ASCIISTRING) {
+            string = [token stringForAsciiData];
+        }
+        
         if (string) {
             // Allocate double space in case they're all double-width characters.
             screenChars = malloc(sizeof(screen_char_t) * 2 * string.length);
@@ -42,15 +54,18 @@
                                 [terminal backgroundColorCode],
                                 &len,
                                 ambiguousIsDoubleWidth,
+                                NULL,
                                 NULL);
-            if ([terminal lastTokenWasASCII] && [terminal charset]) {
+            if ([token isAscii] && [terminal charset]) {
                 ConvertCharsToGraphicsCharset(screenChars, len);
             }
             [result appendBytes:screenChars
                          length:sizeof(screen_char_t) * len];
             free(screenChars);
         }
+        [token recycleObject];
     }
+    CVectorDestroy(&vector);
 
     return result;
 }

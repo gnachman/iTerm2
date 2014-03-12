@@ -564,14 +564,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)unlinkWindowWithId:(int)windowId inSession:(NSString *)sessionName
 {
-    // see the notes in TmuxGateway.h about kTmuxGatewayCommandHasEndGuardBug.
-    // I submitted a patch to tmux on 4/6/13, but it's not clear how long the
-    // workaround should stick around.
     [gateway_ sendCommand:[NSString stringWithFormat:@"unlink-window -k -t @%d", windowId]
            responseTarget:nil
          responseSelector:nil
-                   responseObject:nil
-                                        flags:kTmuxGatewayCommandHasEndGuardBug];
+           responseObject:nil
+                    flags:0];
 }
 
 - (void)renameWindowWithId:(int)windowId inSession:(NSString *)sessionName toName:(NSString *)newName
@@ -587,7 +584,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
            responseTarget:nil
          responseSelector:nil
            responseObject:nil
-                    flags:kTmuxGatewayCommandHasEndGuardBug];
+                    flags:0];
 }
 
 - (void)breakOutWindowPane:(int)windowPane toPoint:(NSPoint)screenPoint

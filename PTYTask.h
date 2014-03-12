@@ -8,11 +8,17 @@ extern NSString *kCoprocessStatusChangeNotification;
 @class PTYTab;
 
 @protocol PTYTaskDelegate <NSObject>
-- (void)readTask:(char *)buffer length:(int)length;
+// Runs in a background thread. Should do as much work as possible in this
+// thread before kicking off a possibly async task in the main thread.
+- (void)threadedReadTask:(char *)buffer length:(int)length;
 - (void)brokenPipe;
+- (void)taskWasDeregistered;
 @end
 
 @interface PTYTask : NSObject
+
+@property(atomic, readonly) BOOL hasMuteCoprocess;
+@property(atomic, assign) id<PTYTaskDelegate> delegate;
 
 - (id)init;
 - (void)dealloc;
@@ -27,8 +33,6 @@ extern NSString *kCoprocessStatusChangeNotification;
 
 - (NSString*)currentJob:(BOOL)forceRefresh;
 
-- (void)setDelegate:(id<PTYTaskDelegate>)object;
-- (id<PTYTaskDelegate>)delegate;
 - (void)writeTask:(NSData*)data;
 
 - (void)sendSignal:(int)signo;
@@ -58,7 +62,6 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (Coprocess *)coprocess;
 - (BOOL)writeBufferHasRoom;
 - (BOOL)hasCoprocess;
-- (BOOL)hasMuteCoprocess;
 - (void)stopCoprocess;
 
 - (void)logData:(const char *)buffer length:(int)length;

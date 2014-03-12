@@ -113,7 +113,7 @@
 
     // Append some stuff to it to make sure we can retreive it.
     for (int i = 0; i < [screen height] - 1; i++) {
-        [screen terminalAppendString:[NSString stringWithFormat:@"Line %d", i] isAscii:YES];
+        [screen terminalAppendString:[NSString stringWithFormat:@"Line %d", i]];
         [screen terminalLineFeed];
         [screen terminalCarriageReturn];
     }
@@ -183,7 +183,7 @@
     for (int i = 0; i < w; i++) {
         NSString *toAppend = [NSString stringWithFormat:@"%c", letters[i % n]];
         [expected appendString:toAppend];
-        [screen appendStringAtCursor:toAppend ascii:YES];
+        [screen appendStringAtCursor:toAppend];
     }
     NSString* s;
     s = ScreenCharArrayToStringDebug([screen getLineAtScreenIndex:0],
@@ -199,7 +199,7 @@
 
 - (void)appendLines:(NSArray *)lines toScreen:(VT100Screen *)screen {
     for (NSString *line in lines) {
-        [screen appendStringAtCursor:line ascii:YES];
+        [screen appendStringAtCursor:line];
         [screen terminalCarriageReturn];
         [screen terminalLineFeed];
     }
@@ -208,7 +208,7 @@
 - (void)appendLinesNoNewline:(NSArray *)lines toScreen:(VT100Screen *)screen {
   for (int i = 0; i < lines.count; i++) {
     NSString *line = lines[i];
-    [screen appendStringAtCursor:line ascii:YES];
+    [screen appendStringAtCursor:line];
     if (i + 1 != lines.count) {
       [screen terminalCarriageReturn];
       [screen terminalLineFeed];
@@ -419,6 +419,13 @@
 
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string {
     [triggerLine_ appendString:string];
+}
+
+- (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData *)asciiData {
+    [self screenDidAppendStringToCurrentLine:[[[NSString alloc] initWithBytes:asciiData->buffer
+                                                                       length:asciiData->length
+                                                                     encoding:NSASCIIStringEncoding]
+                                              autorelease]];
 }
 
 - (void)screenDidReset {
@@ -1241,6 +1248,14 @@
     assert([screen allCharacterSetPropertiesHaveDefaultValues]);
 }
 
+- (void)sendDataToTerminal:(NSData *)data {
+    [terminal_.parser putStreamData:data.bytes length:data.length];
+    NSMutableArray *tokens = [NSMutableArray array];
+    [terminal_.parser addParsedTokensToArray:tokens];
+    assert(tokens.count == 1);
+    [terminal_ executeToken:tokens[0]];
+}
+
 - (void)testAllCharacterSetPropertiesHaveDefaultValues {
     VT100Screen *screen = [self screenWithWidth:5 height:3];
     assert([screen allCharacterSetPropertiesHaveDefaultValues]);
@@ -1251,9 +1266,7 @@
     char shiftOut = 14;
     char shiftIn = 15;
     NSData *data = [NSData dataWithBytes:&shiftOut length:1];
-    [terminal_ putStreamData:data];
-    assert([terminal_ parseNextToken]);
-    [terminal_ executeToken];
+    [self sendDataToTerminal:data];
     assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
     [screen terminalSetCharset:1 toLineDrawingMode:YES];
     assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
@@ -1262,9 +1275,7 @@
     assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
 
     data = [NSData dataWithBytes:&shiftIn length:1];
-    [terminal_ putStreamData:data];
-    assert([terminal_ parseNextToken]);
-    [terminal_ executeToken];
+    [self sendDataToTerminal:data];
     assert([screen allCharacterSetPropertiesHaveDefaultValues]);
 }
 
@@ -1351,9 +1362,11 @@
     codes = [codes stringByReplacingOccurrencesOfString:@"^[" withString:esc];
     codes = [codes stringByReplacingOccurrencesOfString:@"^G" withString:bel];
     NSData *data = [codes dataUsingEncoding:NSUTF8StringEncoding];
-    [terminal_ putStreamData:data];
-    while ([terminal_ parseNextToken]) {
-        [terminal_ executeToken];
+    [terminal_.parser putStreamData:data.bytes length:data.length];
+    NSMutableArray *tokens = [NSMutableArray array];
+    [terminal_.parser addParsedTokensToArray:tokens];
+    for (VT100Token *token in tokens) {
+        [terminal_ executeToken:token];
     }
 }
 
@@ -1366,7 +1379,7 @@
     [terminal_ setForegroundColor:5 alternateSemantics:NO];
     [terminal_ setBackgroundColor:6 alternateSemantics:NO];
     [self sendEscapeCodes:@"^[[1m^[[3m^[[4m^[[5m"];  // Bold, italic, blink, underline
-    [screen appendStringAtCursor:@"Hello world" ascii:YES];
+    [screen appendStringAtCursor:@"Hello world"];
 
     assert([[screen compactLineDump] isEqualToString:
             @"Hello\n"
@@ -1413,7 +1426,7 @@
 
     NSMutableString *s = [NSMutableString stringWithCharacters:chars
                                                         length:sizeof(chars) / sizeof(unichar)];
-    [screen appendStringAtCursor:s ascii:NO];
+    [screen appendStringAtCursor:s];
 
     screen_char_t *line = [screen getLineAtScreenIndex:0];
     assert(line[0].foregroundColor == 5);
@@ -1454,7 +1467,7 @@
     ambiguousIsDoubleWidth_ = YES;
     s = [NSMutableString stringWithCharacters:chars
                                        length:sizeof(chars) / sizeof(unichar)];
-    [screen appendStringAtCursor:s ascii:NO];
+    [screen appendStringAtCursor:s];
 
     line = [screen getLineAtScreenIndex:0];
 
@@ -1488,10 +1501,10 @@
     ambiguousIsDoubleWidth_ = NO;
     screen = [self screenWithWidth:20 height:2];
     screen.delegate = (id<VT100ScreenDelegate>)self;
-    [screen appendStringAtCursor:@"e" ascii:NO];
+    [screen appendStringAtCursor:@"e"];
     unichar combiningAcuteAccent = 0x301;
     s = [NSMutableString stringWithCharacters:&combiningAcuteAccent length:1];
-    [screen appendStringAtCursor:s ascii:NO];
+    [screen appendStringAtCursor:s];
     line = [screen getLineAtScreenIndex:0];
     a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
     e = [@"é" decomposedStringWithCompatibilityMapping];
@@ -1504,9 +1517,9 @@
     unichar highSurrogate = 0xD800;
     unichar lowSurrogate = 0xDD50;
     s = [NSMutableString stringWithCharacters:&highSurrogate length:1];
-    [screen appendStringAtCursor:s ascii:NO];
+    [screen appendStringAtCursor:s];
     s = [NSMutableString stringWithCharacters:&lowSurrogate length:1];
-    [screen appendStringAtCursor:s ascii:NO];
+    [screen appendStringAtCursor:s];
     line = [screen getLineAtScreenIndex:0];
     a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
     e = @"𐅐";
@@ -1516,9 +1529,9 @@
     ambiguousIsDoubleWidth_ = NO;
     screen = [self screenWithWidth:20 height:2];
     screen.delegate = (id<VT100ScreenDelegate>)self;
-    [screen appendStringAtCursor:@"g" ascii:NO];
+    [screen appendStringAtCursor:@"g"];
     s = [NSMutableString stringWithCharacters:&lowSurrogate length:1];
-    [screen appendStringAtCursor:s ascii:NO];
+    [screen appendStringAtCursor:s];
     line = [screen getLineAtScreenIndex:0];
 
     a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
@@ -2425,7 +2438,7 @@
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [screen resetDirty];
     assert(![screen isDirtyAtX:0 Y:0]);
-    [screen appendStringAtCursor:@"x" ascii:YES];
+    [screen appendStringAtCursor:@"x"];
     assert([screen isDirtyAtX:0 Y:0]);
     [screen clearBuffer];  // Marks everything dirty
     assert([screen isDirtyAtX:1 Y:1]);
@@ -2472,7 +2485,7 @@
     screen.delegate = (id<VT100ScreenDelegate>)self;
     printingAllowed_ = YES;
     [screen terminalBeginRedirectingToPrintBuffer];
-    [screen terminalAppendString:@"test" isAscii:YES];
+    [screen terminalAppendString:@"test"];
     [screen terminalLineFeed];
     [screen terminalPrintBuffer];
     assert([printed_ isEqualToString:@"test\n"]);
@@ -2480,7 +2493,7 @@
     
     printingAllowed_ = NO;
     [screen terminalBeginRedirectingToPrintBuffer];
-    [screen terminalAppendString:@"test" isAscii:YES];
+    [screen terminalAppendString:@"test"];
     assert([triggerLine_ isEqualToString:@"test"]);
     [screen terminalLineFeed];
     assert([triggerLine_ isEqualToString:@""]);
@@ -2499,7 +2512,7 @@
     // Normal case
     VT100Screen *screen = [self screenWithWidth:20 height:3];
     screen.delegate = (id<VT100ScreenDelegate>)self;
-    [screen appendStringAtCursor:@"Hello" ascii:YES];
+    [screen appendStringAtCursor:@"Hello"];
     [screen terminalMoveCursorToX:5 y:1];
     [screen terminalBackspace];
     assert(screen.cursorX == 4);
@@ -2508,7 +2521,7 @@
     // Wrap around soft eol
     screen = [self screenWithWidth:20 height:3];
     screen.delegate = (id<VT100ScreenDelegate>)self;
-    [screen appendStringAtCursor:@"12345678901234567890Hello" ascii:YES];
+    [screen appendStringAtCursor:@"12345678901234567890Hello"];
     [screen terminalMoveCursorToX:1 y:2];
     [screen terminalBackspace];
     assert(screen.cursorX == 20);
@@ -2535,7 +2548,7 @@
     // Over DWC_SKIP
     screen = [self screenWithWidth:20 height:3];
     screen.delegate = (id<VT100ScreenDelegate>)self;
-    [screen appendStringAtCursor:@"1234567890123456789Ｗ" ascii:NO];
+    [screen appendStringAtCursor:@"1234567890123456789Ｗ"];
     [screen terminalMoveCursorToX:1 y:2];
     [screen terminalBackspace];
     assert(screen.cursorX == 19);
@@ -2584,7 +2597,7 @@
     
     // Tabbing over text doesn't change it
     screen = [self screenWithWidth:20 height:3];
-    [screen appendStringAtCursor:@"0123456789" ascii:YES];
+    [screen appendStringAtCursor:@"0123456789"];
     [screen terminalMoveCursorToX:1 y:1];
     [screen terminalAppendTabAtCursor];
     assert([ScreenCharArrayToStringDebug([screen getLineAtScreenIndex:0],
@@ -2602,7 +2615,7 @@
     // If there is a single non-nil, then the cursor just moves.
     screen = [self screenWithWidth:20 height:3];
     [screen terminalMoveCursorToX:3 y:1];
-    [screen appendStringAtCursor:@"x" ascii:YES];
+    [screen appendStringAtCursor:@"x"];
     [screen terminalMoveCursorToX:1 y:1];
     [screen terminalAppendTabAtCursor];
     assert([ScreenCharArrayToStringDebug([screen getLineAtScreenIndex:0],
@@ -2712,7 +2725,7 @@
     assert(screen.cursorX == 1);
     assert(screen.cursorY == 1);
     [screen terminalMoveCursorToX:5 y:16];
-    [screen terminalAppendString:@"Hello" isAscii:YES];
+    [screen terminalAppendString:@"Hello"];
     assert([ScreenCharArrayToStringDebug([screen getLineAtScreenIndex:15],
                                          screen.width) isEqualToString:@"Hello"]);
     [screen terminalLineFeed];

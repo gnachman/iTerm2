@@ -12,8 +12,9 @@
 
 #include <sys/time.h>
 
-NSMutableString* gDebugLogStr = nil;
-NSMutableString* gDebugLogStr2 = nil;
+static NSMutableString* gDebugLogStr = nil;
+static NSMutableString* gDebugLogStr2 = nil;
+static NSRecursiveLock *gDebugLogLock = nil;
 BOOL gDebugLogging = NO;
 int gDebugLogFile = -1;
 
@@ -63,17 +64,21 @@ static void WriteDebugLogFooter() {
 }
 
 static void SwapDebugLog() {
+    [gDebugLogLock lock];
     NSMutableString* temp;
     temp = gDebugLogStr;
     gDebugLogStr = gDebugLogStr2;
     gDebugLogStr2 = temp;
+    [gDebugLogLock unlock];
 }
 
 static void FlushDebugLog() {
+    [gDebugLogLock lock];
     NSData* data = [gDebugLogStr dataUsingEncoding:NSUTF8StringEncoding];
     size_t written = write(gDebugLogFile, [data bytes], [data length]);
     assert(written == [data length]);
     [gDebugLogStr setString:@""];
+    [gDebugLogLock unlock];
 }
 
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value)
@@ -82,6 +87,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
         struct timeval tv;
         gettimeofday(&tv, NULL);
 
+        [gDebugLogLock lock];
         [gDebugLogStr appendFormat:@"%lld.%08lld %s:%d (%s): ", (long long)tv.tv_sec, (long long)tv.tv_usec, file, line, function];
         [gDebugLogStr appendString:value];
         [gDebugLogStr appendString:@"\n"];
@@ -89,6 +95,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
             SwapDebugLog();
             [gDebugLogStr2 setString:@""];
         }
+        [gDebugLogLock unlock];
     }
     return 1;
 }
@@ -98,12 +105,19 @@ void ToggleDebugLogging() {
         NSRunAlertPanel(@"Debug Logging Enabled",
                         @"Writing to /tmp/debuglog.txt",
                         @"OK", nil, nil);
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            gDebugLogLock = [[NSRecursiveLock alloc] init];
+        });
+        [gDebugLogLock lock];
         gDebugLogFile = open("/tmp/debuglog.txt", O_TRUNC | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
         WriteDebugLogHeader();
         gDebugLogStr = [[NSMutableString alloc] init];
         gDebugLogStr2 = [[NSMutableString alloc] init];
         gDebugLogging = !gDebugLogging;
+        [gDebugLogLock unlock];
     } else {
+        [gDebugLogLock lock];
         gDebugLogging = !gDebugLogging;
         SwapDebugLog();
         FlushDebugLog();
@@ -118,5 +132,6 @@ void ToggleDebugLogging() {
                         @"OK", nil, nil);
         [gDebugLogStr release];
         [gDebugLogStr2 release];
+        [gDebugLogLock unlock];
     }
 }

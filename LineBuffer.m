@@ -39,6 +39,7 @@
 - (LineBlock*) _addBlockOfSize: (int) size
 {
     LineBlock* block = [[LineBlock alloc] initWithRawBufferSize: size];
+    block.mayHaveDoubleWidthCharacter = self.mayHaveDoubleWidthCharacter;
     [blocks addObject:block];
     [block release];
     return block;
@@ -73,6 +74,15 @@
     [super dealloc];
 }
 
+- (void)setMayHaveDoubleWidthCharacter:(BOOL)mayHaveDoubleWidthCharacter {
+    if (!_mayHaveDoubleWidthCharacter) {
+        _mayHaveDoubleWidthCharacter = mayHaveDoubleWidthCharacter;
+        for (LineBlock *block in blocks) {
+            block.mayHaveDoubleWidthCharacter = YES;
+        }
+    }
+}
+
 // This is called a lot so it's a C function to avoid obj_msgSend
 static int RawNumLines(LineBuffer* buffer, int width) {
     if (buffer->num_wrapped_lines_width == width) {
@@ -80,7 +90,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
     int count = 0;
     int i;
-    for (i = 0; i < [buffer->blocks count]; ++i) {
+    const int numBlocks = [buffer->blocks count];
+    for (i = 0; i < numBlocks; ++i) {
         LineBlock* block = [buffer->blocks objectAtIndex: i];
         count += [block getNumLinesWithWrapWidth: width];
     }
@@ -89,37 +100,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return count;
 }
 
-// drop lines if needed until max_lines is reached.
-- (void) _dropLinesForWidth: (int) width
-{
-    if (max_lines == -1) {
-        // Do nothing: the buffer is infinite.
-        return;
-    }
-
-    int total_lines = RawNumLines(self, width);
-    while (total_lines > max_lines) {
-        int extra_lines = total_lines - max_lines;
-
-        NSAssert([blocks count] > 0, @"No blocks");
-        LineBlock* block = [blocks objectAtIndex: 0];
-        int block_lines = [block getNumLinesWithWrapWidth: width];
-        NSAssert(block_lines > 0, @"Empty leading block");
-        int toDrop = block_lines;
-        if (toDrop > extra_lines) {
-            toDrop = extra_lines;
-        }
-        int charsDropped;
-        int dropped = [block dropLines:toDrop withWidth:width chars:&charsDropped];
-        droppedChars += charsDropped;
-        if ([block isEmpty]) {
-            [blocks removeObjectAtIndex:0];
-            ++num_dropped_blocks;
-        }
-        total_lines -= dropped;
-    }
-    num_wrapped_lines_cache = total_lines;
-}
 
 - (void) setMaxLines: (int) maxLines
 {
@@ -128,13 +108,43 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 
-- (int) dropExcessLinesWithWidth: (int) width
+- (int)dropExcessLinesWithWidth: (int) width
 {
     int nl = RawNumLines(self, width);
-    if (nl > max_lines) {
-        [self _dropLinesForWidth: width];
+    int totalDropped = 0;
+    if (max_lines != -1 && nl > max_lines) {
+        LineBlock *block = blocks[0];
+        int total_lines = nl;
+        while (total_lines > max_lines) {
+            int extra_lines = total_lines - max_lines;
+            
+            int block_lines = [block getNumLinesWithWrapWidth: width];
+#if ITERM_DEBUG
+            NSAssert(block_lines > 0, @"Empty leading block");
+#endif
+            int toDrop = block_lines;
+            if (toDrop > extra_lines) {
+                toDrop = extra_lines;
+            }
+            int charsDropped;
+            int dropped = [block dropLines:toDrop withWidth:width chars:&charsDropped];
+            totalDropped += dropped;
+            droppedChars += charsDropped;
+            if ([block isEmpty]) {
+                [blocks removeObjectAtIndex:0];
+                ++num_dropped_blocks;
+                if ([blocks count] > 0) {
+                    block = blocks[0];
+                }
+            }
+            total_lines -= dropped;
+        }
+        num_wrapped_lines_cache = total_lines;
     }
-    return nl - RawNumLines(self, width);
+#if ITERM_DEBUG
+    assert(totalDropped == (nl - RawNumLines(self, width)));
+#endif
+    return totalDropped;
 }
 
 - (NSString *)debugString {
@@ -223,7 +233,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         screen_char_t* prefix = NULL;
         if ([block hasPartial]) {
             // There is a line that's too long for the current block to hold.
-            // Remove its prefix fromt he current block and later add the
+            // Remove its prefix from the current block and later add the
             // concatenation of prefix + buffer to a larger block.
             screen_char_t* temp;
             BOOL ok = [block popLastLineInto:&temp
@@ -460,7 +470,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         screen_char_t* lastRawLine = [block rawLine: ([block numEntries]-1)];
         int num_overflow_lines = NumberOfFullLines(lastRawLine,
                                                    last_line_length,
-                                                   width);
+                                                   width,
+                                                   _mayHaveDoubleWidthCharacter);
         int min_x = OffsetOfWrappedLine(lastRawLine,
                                         num_overflow_lines,
                                         last_line_length,

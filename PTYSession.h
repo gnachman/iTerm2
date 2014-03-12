@@ -37,7 +37,7 @@ extern NSString *const kPTYSessionTmuxFontDidChange;
 
 // The time period for just blinking is in -[PreferencePanel timeBetweenBlinks].
 // Timer period when receiving lots of data.
-static const float kSlowTimerIntervalSec = 1.0 / 10.0;
+static const float kSlowTimerIntervalSec = 1.0 / 15.0;
 // Timer period for interactive use.
 static const float kFastTimerIntervalSec = 1.0 / 30.0;
 // Timer period for background sessions. This changes the tab item's color
@@ -297,11 +297,9 @@ typedef enum {
 
 - (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask;
 
-// PTYTask
+// Writing output.
 - (void)writeTask:(NSData*)data;
 - (void)writeTaskNoBroadcast:(NSData *)data;
-- (void)readTask:(const char *)bytes length:(int)length;
-- (void)brokenPipe;
 
 // PTYTextView
 - (BOOL)hasTextSendingKeyMappingForEvent:(NSEvent*)event;

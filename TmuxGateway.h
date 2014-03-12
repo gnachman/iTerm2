@@ -14,11 +14,9 @@ extern const int kTmuxGatewayCommandShouldTolerateErrors;
 // Send NSData, not NSString, for output (allowing busted/partial utf-8
 // sequences).
 extern const int kTmuxGatewayCommandWantsData;
-// Bug in tmux 1.8. %end guard not printed, so watch for %error in command
-// output.
-extern const int kTmuxGatewayCommandHasEndGuardBug;
 
 @class TmuxController;
+@class VT100Token;
 
 extern NSString * const kTmuxGatewayErrorDomain;
 
@@ -52,15 +50,8 @@ typedef enum {
     CONTROL_COMMAND_NOOP
 } ControlCommand;
 
-typedef enum {
-    CONTROL_STATE_READY,
-    CONTROL_STATE_DETACHED,
-} ControlState;
-
 @interface TmuxGateway : NSObject {
     NSObject<TmuxGatewayDelegate> *delegate_;  // weak
-    ControlState state_;
-    NSMutableData *stream_;
 
     // Data from parsing an incoming command
     ControlCommand command_;
@@ -75,10 +66,15 @@ typedef enum {
     NSMutableString *strayMessages_;
 }
 
+// Should all protocol-level input be logged to the gateway's session?
+@property(nonatomic, assign) BOOL tmuxLogging;
+
 - (id)initWithDelegate:(NSObject<TmuxGatewayDelegate> *)delegate;
 
 // Returns any unconsumed data if tmux mode is exited.
-- (NSData *)readTask:(NSData *)data;
+// The token must be TMUX_xxx.
+- (void)executeToken:(VT100Token *)token;
+
 - (void)sendCommand:(NSString *)command
      responseTarget:(id)target
    responseSelector:(SEL)selector;

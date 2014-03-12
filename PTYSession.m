@@ -1,5 +1,6 @@
 #import "PTYSession.h"
 
+#import "CVector.h"
 #import "CommandHistory.h"
 #import "Coprocess.h"
 #import "FakeWindow.h"
@@ -36,6 +37,7 @@
 #import "VT100Screen.h"
 #import "VT100ScreenMark.h"
 #import "VT100Terminal.h"
+#import "VT100Token.h"
 #import "WindowControllerInterface.h"
 #import "iTerm.h"
 #import "iTermApplicationDelegate.h"
@@ -77,12 +79,19 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 static int gNextSessionID = 1;
 
+typedef enum {
+    TMUX_NONE,
+    TMUX_GATEWAY,  // Receiving tmux protocol messages
+    TMUX_CLIENT  // Session mirrors a tmux virtual window
+} PTYSessionTmuxMode;
+
 @interface PTYSession ()
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
 @property(nonatomic, assign) int sessionID;
 @property(nonatomic, readwrite) struct timeval lastOutput;
 @property(nonatomic, readwrite) BOOL isDivorced;
+@property(atomic, assign) PTYSessionTmuxMode tmuxMode;
 @end
 
 @implementation PTYSession
@@ -162,7 +171,7 @@ static int gNextSessionID = 1;
 
     // After receiving new output, we keep running the updateDisplay timer for a few seconds to catch
     // changes in job name.
-    NSDate *_updateDisplayUntil;
+    NSTimeInterval _updateDisplayUntil;
 
     // If not nil, we're aggregating text to append to a pasteboard. The pasteboard will be
     // updated when this is set to nil.
@@ -181,14 +190,8 @@ static int gNextSessionID = 1;
     FindContext *_tailFindContext;
     NSTimer *_tailFindTimer;
 
-    enum {
-        TMUX_NONE,
-        TMUX_GATEWAY,
-        TMUX_CLIENT
-    } _tmuxMode;
     TmuxGateway *_tmuxGateway;
     int _tmuxPane;
-    BOOL _tmuxLogging;  // log to gateway client
     BOOL _tmuxSecureLogging;
 
     NSMutableArray *_eventQueue;
@@ -201,10 +204,15 @@ static int gNextSessionID = 1;
     VT100GridCoordRange _commandRange;
     
     NSTimeInterval _timeOfLastScheduling;
+
+    dispatch_semaphore_t _executionSemaphore;
+    
+    // Previous updateDisplay timer's timeout period (not the actual duration,
+    // but the kXXXTimerIntervalSec value).
+    NSTimeInterval _lastTimeout;
 }
 
-- (id)init
-{
+- (id)init {
     self = [super init];
     if (self) {
         _sessionID = gNextSessionID++;
@@ -213,6 +221,12 @@ static int gNextSessionID = 1;
         [[MovePaneController sharedInstance] exitMovePaneMode];
         _triggerLine = [[NSMutableString alloc] init];
         gettimeofday(&_lastInput, NULL);
+        
+        // Experimentally, this is enough to keep the queue primed but not overwhelmed.
+        // TODO: How do slower machines fare?
+        static const int kMaxOutstandingExecuteCalls = 4;
+        _executionSemaphore = dispatch_semaphore_create(kMaxOutstandingExecuteCalls);
+
         _lastOutput = _lastInput;
         _lastUpdate = _lastInput;
         _eventQueue = [[NSMutableArray alloc] init];
@@ -252,6 +266,8 @@ static int gNextSessionID = 1;
 - (void)dealloc
 {
     [self stopTailFind];  // This frees the substring in the tail find context, if needed.
+    _shell.delegate = nil;
+    dispatch_release(_executionSemaphore);
     [_colorMap release];
     [_triggerLine release];
     [_triggers release];
@@ -261,7 +277,6 @@ static int gNextSessionID = 1;
     if (_slowPasteTimer) {
         [_slowPasteTimer invalidate];
     }
-    [_updateDisplayUntil release];
     [_creationDate release];
     [_lastActiveAt release];
     [_bookmarkName release];
@@ -485,7 +500,8 @@ static int gNextSessionID = 1;
         [[aSession screen] setTmuxState:state];
         NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
         if (pendingOutput && [pendingOutput length]) {
-            [[aSession terminal] putStreamData:pendingOutput];
+            [aSession.terminal.parser putStreamData:pendingOutput.bytes
+                                             length:pendingOutput.length];
         }
         [[aSession terminal] setInsertMode:[[state objectForKey:kStateDictInsertMode] boolValue]];
         [[aSession terminal] setCursorMode:[[state objectForKey:kStateDictKCursorMode] boolValue]];
@@ -902,7 +918,9 @@ static int gNextSessionID = 1;
     if (_exited) {
         [self _maybeWarnAboutShortLivedSessions];
     }
-    if (_tmuxMode == TMUX_CLIENT) {
+    BOOL isClient = NO;
+    if (self.tmuxMode == TMUX_CLIENT) {
+        isClient = YES;
         assert([_tab tmuxWindow] >= 0);
         [_tmuxController deregisterWindow:[_tab tmuxWindow]
                                windowPane:_tmuxPane];
@@ -919,12 +937,21 @@ static int gNextSessionID = 1;
             // changed size
             [_tmuxController fitLayoutToWindows];
         }
-    } else if (_tmuxMode == TMUX_GATEWAY) {
+        
+        // PTYTask will never call taskWasDeregistered since tmux clients are never registered in
+        // the first place. There can be calls queued in this queue from previous tmuxReadTask:
+        // calls, so queue up a fake call to taskWasDeregistered that will run after all of them,
+        // serving the same purpose.
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            [self taskWasDeregistered];
+        });
+    } else if (self.tmuxMode == TMUX_GATEWAY) {
         [_tmuxController detach];
-                [_tmuxGateway release];
-                _tmuxGateway = nil;
+        [_tmuxGateway release];
+        _tmuxGateway = nil;
     }
-    _tmuxMode = TMUX_NONE;
+    _terminal.parser.tmuxParser = nil;
+    self.tmuxMode = TMUX_NONE;
     [_tmuxController release];
     _tmuxController = nil;
 
@@ -941,6 +968,7 @@ static int gNextSessionID = 1;
 
     _exited = YES;
     [_shell stop];
+    [self retain];  // We must live until -taskWasDeregistered is called.
 
     // final update of display
     [self updateDisplay];
@@ -953,7 +981,6 @@ static int gNextSessionID = 1;
     _colorMap.delegate = nil;
     _textview = nil;
 
-    [_shell setDelegate:nil];
     _screen.delegate = nil;
     [_screen setTerminal:nil];
     _terminal.delegate = nil;
@@ -1020,7 +1047,7 @@ static int gNextSessionID = 1;
 
 - (void)writeTaskNoBroadcast:(NSData *)data
 {
-    if (_tmuxMode == TMUX_CLIENT) {
+    if (self.tmuxMode == TMUX_CLIENT) {
         [[_tmuxController gateway] sendKeys:data
                                toWindowPane:_tmuxPane];
         return;
@@ -1033,8 +1060,8 @@ static int gNextSessionID = 1;
     if (unicode == 27) {
         [self tmuxDetach];
     } else if (unicode == 'L') {
-        _tmuxLogging = !_tmuxLogging;
-        [self printTmuxMessage:[NSString stringWithFormat:@"tmux logging %@", (_tmuxLogging ? @"on" : @"off")]];
+        _tmuxGateway.tmuxLogging = !_tmuxGateway.tmuxLogging;
+        [self printTmuxMessage:[NSString stringWithFormat:@"tmux logging %@", (_tmuxGateway.tmuxLogging ? @"on" : @"off")]];
     } else if (unicode == 'C') {
         NSAlert *alert = [NSAlert alertWithMessageText:@"Enter command to send tmux:"
                                          defaultButton:@"Ok"
@@ -1059,7 +1086,7 @@ static int gNextSessionID = 1;
 
 - (void)writeTask:(NSData*)data
 {
-    if (_tmuxMode == TMUX_CLIENT) {
+    if (self.tmuxMode == TMUX_CLIENT) {
         [self setBell:NO];
         if ([[_tab realParentWindow] broadcastInputToSession:self]) {
             [[_tab realParentWindow] sendInputToAllSessions:data];
@@ -1070,7 +1097,7 @@ static int gNextSessionID = 1;
         PTYScroller* ptys = (PTYScroller*)[_scrollview verticalScroller];
         [ptys setUserScroll:NO];
         return;
-    } else if (_tmuxMode == TMUX_GATEWAY) {
+    } else if (self.tmuxMode == TMUX_GATEWAY) {
         // Use keypresses for tmux gateway commands for development and debugging.
         NSString *s = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
         for (int i = 0; i < s.length; i++) {
@@ -1083,46 +1110,79 @@ static int gNextSessionID = 1;
     [self writeTaskImpl:data];
 }
 
-- (void)readTask:(const char *)buffer length:(int)length
-{
-    if (length == 0 || _exited) {
+- (void)taskWasDeregistered {
+    DLog(@"taskWasDeregistered");
+    // This is called on the background thread. After this is called, we won't get any more calls
+    // on the background thread and it is safe for us to be dealloc'ed.
+    [self release];
+}
+
+// This is run in PTYTask's thread. It parses the input here and then queues an async task to run
+// in the main thread to execute the parsed tokens.
+- (void)threadedReadTask:(char *)buffer length:(int)length {
+    // Pass the input stream to the parser.
+    [_terminal.parser putStreamData:buffer length:length];
+    
+    // Parse the input stream into an array of tokens.
+    CVector vector;
+    CVectorCreate(&vector, 100);
+    [_terminal.parser addParsedTokensToVector:&vector];
+
+    if (CVectorCount(&vector) == 0) {
+        CVectorDestroy(&vector);
         return;
     }
-    if ([_shell hasMuteCoprocess]) {
-        return;
-    }
-    if (gDebugLogging) {
-      DebugLog([NSString stringWithFormat:@"readTask called with %d bytes. The last byte is %d", (int)length, (int)buffer[length-1]]);
-    }
-    if (_tmuxMode == TMUX_GATEWAY) {
-        NSData *data = [NSData dataWithBytes:buffer length:length];
-        if (_tmuxLogging) {
-            [self printTmuxCommandOutputToScreen:[[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]];
+    
+    // This limits the number of outstanding execution blocks to prevent the main thread from
+    // getting bogged down.
+    dispatch_semaphore_wait(_executionSemaphore, DISPATCH_TIME_FOREVER);
+
+    [self retain];
+    dispatch_retain(_executionSemaphore);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self executeTokens:&vector bytesHandled:length];
+        
+        // Unblock the background thread; if it's ready, it can send the main thread more tokens
+        // now.
+        dispatch_semaphore_signal(_executionSemaphore);
+        dispatch_release(_executionSemaphore);
+        [self release];
+    });
+}
+
+- (void)executeTokens:(const CVector *)vector bytesHandled:(int)length {
+    STOPWATCH_START(executing);
+    int n = CVectorCount(vector);
+    for (int i = 0; i < n; i++) {
+        if (_exited || !_terminal || (self.tmuxMode != TMUX_GATEWAY && [_shell hasMuteCoprocess])) {
+            break;
         }
-        data = [_tmuxGateway readTask:data];
-        if (!data) {
-            // All data was consumed.
-            return;
+        
+        VT100Token *token = CVectorGetObject(vector, i);
+        [_terminal executeToken:token];
+    }
+    
+    [self finishedHandlingNewOutputOfLength:length];
+    
+    // When busy, we spend a lot of time performing recycleObject, so farm it
+    // off to a background thread.
+    CVector temp = *vector;
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+        for (int i = 0; i < n; i++) {
+            VT100Token *token = CVectorGetObject(&temp, i);
+            [token recycleObject];
         }
-    }
+        CVectorDestroy(&temp);
+    })
+    STOPWATCH_LAP(executing);
+}
 
-    [_terminal putStreamData:buffer length:length];
-
-    // while loop to process all the tokens we can get
-    while (!_exited &&
-           _terminal &&
-           _tmuxMode != TMUX_GATEWAY &&
-           [_terminal parseNextToken]) {
-        // process token
-        [_terminal executeToken];
-    }
-
+- (void)finishedHandlingNewOutputOfLength:(int)length {
     gettimeofday(&_lastOutput, NULL);
     _newOutput = YES;
 
     // Make sure the screen gets redrawn soonish
-    [_updateDisplayUntil release];
-    _updateDisplayUntil = [[NSDate dateWithTimeIntervalSinceNow:10] retain];
+    _updateDisplayUntil = [NSDate timeIntervalSinceReferenceDate] + 10;
     if ([[[self tab] parentWindow] currentTab] == [self tab]) {
         if (length < 1024) {
             [self scheduleUpdateIn:kFastTimerIntervalSec];
@@ -2528,7 +2588,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     BOOL anotherUpdateNeeded = [NSApp isActive];
     if (!anotherUpdateNeeded &&
         _updateDisplayUntil &&
-        [[NSDate date] timeIntervalSinceDate:_updateDisplayUntil] < 0) {
+        [NSDate timeIntervalSinceReferenceDate] < _updateDisplayUntil) {
         // We're still in the time window after the last output where updates are needed.
         anotherUpdateNeeded = YES;
     }
@@ -2599,13 +2659,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (_exited) {
         return;
     }
-    float kEpsilon = 0.001;
-    if (!_timerRunning &&
-        [_updateTimer isValid] &&
-        [[_updateTimer userInfo] floatValue] - (float)timeout < kEpsilon) {
-        // An update of at least the current frequency is already scheduled. Let
-        // it run to avoid pushing it back repeatedly (which prevents it from firing).
-        return;
+
+    if (!_timerRunning && [_updateTimer isValid]) {
+        if (_lastTimeout == kSlowTimerIntervalSec && timeout == kFastTimerIntervalSec) {
+            // Don't go from slow to fast
+            return;
+        }
+        if (_lastTimeout == timeout) {
+            // No change? No point.
+            return;
+        }
+        if (timeout > kSlowTimerIntervalSec && timeout > _lastTimeout) {
+            // This is a longer timeout than the existing one, and is background/blink.
+            return;
+        }
     }
 
     [_updateTimer invalidate];
@@ -2614,7 +2681,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     NSTimeInterval timeSinceLastUpdate = now - _timeOfLastScheduling;
     _timeOfLastScheduling = now;
-
+    _lastTimeout = timeout;
+    
     _updateTimer = [[NSTimer scheduledTimerWithTimeInterval:MAX(0, timeout - timeSinceLastUpdate)
                                                      target:self
                                                    selector:@selector(updateDisplay)
@@ -3089,10 +3157,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         return;
     }
 
-    if (_tmuxMode != TMUX_NONE) {
+    if (self.tmuxMode != TMUX_NONE) {
         return;
     }
-    _tmuxMode = TMUX_GATEWAY;
+    self.tmuxMode = TMUX_GATEWAY;
     _tmuxGateway = [[TmuxGateway alloc] initWithDelegate:self];
     _tmuxController = [[TmuxController alloc] initWithGateway:_tmuxGateway];
     _tmuxController.ambiguousIsDoubleWidth = _treatAmbiguousWidthAsDoubleWidth;
@@ -3115,24 +3183,21 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if ([[PreferencePanel sharedInstance] autoHideTmuxClientSession]) {
         [self hideSession];
     }
-
-    [_tmuxGateway readTask:[_terminal streamData]];
-    [_terminal clearStream];
 }
 
 - (BOOL)isTmuxClient
 {
-    return _tmuxMode == TMUX_CLIENT;
+    return self.tmuxMode == TMUX_CLIENT;
 }
 
 - (BOOL)isTmuxGateway
 {
-    return _tmuxMode == TMUX_GATEWAY;
+    return self.tmuxMode == TMUX_GATEWAY;
 }
 
 - (void)tmuxDetach
 {
-    if (_tmuxMode != TMUX_GATEWAY) {
+    if (self.tmuxMode != TMUX_GATEWAY) {
         return;
     }
     [self printTmuxMessage:@"Detaching..."];
@@ -3142,7 +3207,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)setTmuxPane:(int)windowPane
 {
     _tmuxPane = windowPane;
-    _tmuxMode = TMUX_CLIENT;
+    self.tmuxMode = TMUX_CLIENT;
 }
 
 - (void)resizeFromArrangement:(NSDictionary *)arrangement
@@ -3153,10 +3218,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (BOOL)isCompatibleWith:(PTYSession *)otherSession
 {
-    if (_tmuxMode != TMUX_CLIENT && otherSession->_tmuxMode != TMUX_CLIENT) {
+    if (self.tmuxMode != TMUX_CLIENT && otherSession.tmuxMode != TMUX_CLIENT) {
         // Non-clients are always compatible
         return YES;
-    } else if (_tmuxMode == TMUX_CLIENT && otherSession->_tmuxMode == TMUX_CLIENT) {
+    } else if (self.tmuxMode == TMUX_CLIENT && otherSession.tmuxMode == TMUX_CLIENT) {
         // Clients are compatible with other clients from the same controller.
         return (_tmuxController == otherSession.tmuxController);
     } else {
@@ -3337,7 +3402,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)tmuxPrintLine:(NSString *)line
 {
-    [_screen appendStringAtCursor:line ascii:NO];
+    [_screen appendStringAtCursor:line];
     [_screen crlf];
 }
 
@@ -3351,10 +3416,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     _tmuxGateway = nil;
     [_tmuxController release];
     _tmuxController = nil;
-    [_screen appendStringAtCursor:@"Detached" ascii:YES];
+    [_screen appendStringAtCursor:@"Detached"];
     [_screen crlf];
-    _tmuxMode = TMUX_NONE;
-    _tmuxLogging = NO;
+    // There's a not-so-bad race condition here. It's possible that tmux would exit and a new
+    // session would start right away and we'd wack the wrong tmux parser. However, it would be
+    // very unusual for that to happen so quickly.
+    _terminal.parser.tmuxParser = nil;
+    self.tmuxMode = TMUX_NONE;
 
     if ([[PreferencePanel sharedInstance] autoHideTmuxClientSession] &&
         [[[_tab realParentWindow] window] isMiniaturized]) {
@@ -3376,17 +3444,27 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     } else {
         DLog(@"Write to tmux: \"%@\"", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
     }
-    if (_tmuxLogging) {
+    if (_tmuxGateway.tmuxLogging) {
         [self printTmuxMessage:[[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]];
     }
     [self writeTaskImpl:data];
 }
 
+// This is called on the main thread.
 - (void)tmuxReadTask:(NSData *)data
 {
     if (!_exited) {
         [_shell logData:(const char *)[data bytes] length:[data length]];
-        [self readTask:(const char *)[data bytes] length:[data length]];
+        // Dispatch this in a background thread to keep threadedReadTask:
+        // simple. It always asynchronously dispatches to the main thread,
+        // which would deadlock if it were called on the main thread.
+        [data retain];
+        [self retain];
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            [self threadedReadTask:(char *)[data bytes] length:[data length]];
+            [data release];
+            [self release];
+        });
     }
 }
 
@@ -3611,7 +3689,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
           }
         }
 
-    BOOL isTmuxGateway = (!_exited && _tmuxMode == TMUX_GATEWAY);
+    BOOL isTmuxGateway = (!_exited && self.tmuxMode == TMUX_GATEWAY);
 
     switch (keyBindingAction) {
       case KEY_ACTION_MOVE_TAB_LEFT:
@@ -3755,7 +3833,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
   } else {
     // Key is not bound to an action.
-    if (!_exited && _tmuxMode == TMUX_GATEWAY) {
+    if (!_exited && self.tmuxMode == TMUX_GATEWAY) {
       [self handleKeypressInTmuxGateway:unicode];
       return;
     }
@@ -4515,11 +4593,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
     screen_char_t savedFgColor = [_terminal foregroundColorCode];
     screen_char_t savedBgColor = [_terminal backgroundColorCode];
-    [_terminal setForegroundColor:ALTSEM_FG_DEFAULT
+    [_terminal setForegroundColor:ALTSEM_DEFAULT
                alternateSemantics:YES];
-    [_terminal setBackgroundColor:ALTSEM_BG_DEFAULT
+    [_terminal setBackgroundColor:ALTSEM_DEFAULT
                alternateSemantics:YES];
-    [_screen appendStringAtCursor:message ascii:YES];
+    [_screen appendStringAtCursor:message];
     [_screen crlf];
     [_terminal setForegroundColor:savedFgColor.foregroundColor
                alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
@@ -4594,6 +4672,15 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string {
     [self appendStringToTriggerLine:string];
+}
+
+- (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData *)asciiData {
+    if ([_triggers count]) {
+        NSString *string = [[[NSString alloc] initWithBytes:asciiData->buffer
+                                                     length:asciiData->length
+                                                   encoding:NSASCIIStringEncoding] autorelease];
+        [self screenDidAppendStringToCurrentLine:string];
+    }
 }
 
 - (void)screenSetCursorType:(ITermCursorType)type {
@@ -4736,6 +4823,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenStartTmuxMode {
     [self startTmuxMode];
+}
+
+- (void)screenHandleTmuxInput:(VT100Token *)token {
+    [_tmuxGateway executeToken:token];
 }
 
 - (void)screenModifiersDidChangeTo:(NSArray *)modifiers {
@@ -4912,6 +5003,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [_textview.window makeFirstResponder:_textview];
 }
 
+// Stop pasting (despited the name)
 - (void)screenCopyBufferToPasteboard {
     if ([[PreferencePanel sharedInstance] allowClipboardAccess]) {
         [self setPasteboard:nil];
@@ -5202,7 +5294,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 // Handlers for supported commands:
-    -(void)handleExecScriptCommand:(NSScriptCommand *)aCommand
+- (void)handleExecScriptCommand:(NSScriptCommand *)aCommand
 {
     // if we are already doing something, get out.
     if ([_shell pid] > 0) {
@@ -5224,17 +5316,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return;
 }
 
--(void)handleSelectScriptCommand:(NSScriptCommand *)command
+- (void)handleSelectScriptCommand:(NSScriptCommand *)command
 {
     [[[[self tab] parentWindow] tabView] selectTabViewItemWithIdentifier:[self tab]];
 }
 
--(void)handleClearScriptCommand:(NSScriptCommand *)command
+- (void)handleClearScriptCommand:(NSScriptCommand *)command
 {
     [self clearBuffer];
 }
 
--(void)handleWriteScriptCommand:(NSScriptCommand *)command
+- (void)handleWriteScriptCommand:(NSScriptCommand *)command
 {
     // Get the command's arguments:
     NSDictionary *args = [command evaluatedArguments];
@@ -5261,7 +5353,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         data = [aString dataUsingEncoding:[_terminal encoding]];
     }
 
-    if (_tmuxMode == TMUX_CLIENT) {
+    if (self.tmuxMode == TMUX_CLIENT) {
         [self writeTask:data];
     } else if (data != nil && [_shell pid] > 0) {
         int i = 0;

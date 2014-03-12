@@ -294,7 +294,10 @@
     screenTop_ = (screenTop_ + 1) % size_.height;
 
     // Empty contents of last line on screen.
-    [self clearLineData:[self lineDataAtLineNumber:(size_.height - 1)]];
+    NSMutableData *lastLineData = [self lineDataAtLineNumber:(size_.height - 1)];
+    if (lastLineData) {  // This if statement is just to quiet the analyzer.
+        [self clearLineData:lastLineData];
+    }
 
     if (lineBuffer) {
         // Mark new line at bottom of screen dirty.
@@ -566,7 +569,6 @@
 #ifdef VERBOSE_STRING
         NSLog(@"Begin inserting line. cursor_.x=%d, WIDTH=%d", cursor_.x, WIDTH);
 #endif
-        NSAssert(buffer[idx].code != DWC_RIGHT, @"DWC cut off");
 
         if (buffer[idx].code == DWC_SKIP) {
             // I'm pretty sure this can never happen and that this code is just a historical leftover.
@@ -1543,9 +1545,10 @@
 
     NSMutableData *line = [NSMutableData dataWithLength:length];
 
+    [cachedDefaultLine_ release];
+    cachedDefaultLine_ = nil;
     [self clearLineData:line];
 
-    [cachedDefaultLine_ release];
     cachedDefaultLine_ = [line retain];
 
     return line;
@@ -1553,10 +1556,27 @@
 
 // Not double-width char safe.
 - (void)clearScreenChars:(screen_char_t *)chars inRange:(VT100GridRange)range {
-    screen_char_t c = [self defaultChar];
-
-    for (int i = range.location; i < range.location + range.length; i++) {
-        chars[i] = c;
+    if (cachedDefaultLine_) {
+        // Only do this if there is a cached line; otherwise there's an infinite recursion since
+        // -defaultLineOfWidth indirectly calls this method.
+        NSData *defaultLine = [self defaultLineOfWidth:size_.width];
+        memcpy(chars + range.location,
+               defaultLine.bytes,
+               sizeof(screen_char_t) * MIN(size_.width, range.length));
+        if (range.length > size_.width) {
+            const screen_char_t c = chars[range.location];
+            for (int i = range.location + MIN(size_.width, range.length);
+                 i < range.location + range.length;
+                 i++) {
+                chars[i] = c;
+            }
+        }
+    } else {
+        // Rarely called slow path.
+        screen_char_t c = [self defaultChar];
+        for (int i = range.location; i < range.location + range.length; i++) {
+            chars[i] = c;
+        }
     }
 }
 
@@ -1864,6 +1884,7 @@ void DumpBuf(screen_char_t* p, int n) {
     for (NSObject *line in lines_) {
         [theCopy->lines_ addObject:[[line mutableCopy] autorelease]];
     }
+    [theCopy->lineInfos_ release];
     theCopy->lineInfos_ = [[NSMutableArray alloc] init];
     for (VT100LineInfo *line in lineInfos_) {
         [theCopy->lineInfos_ addObject:[[line copy] autorelease]];

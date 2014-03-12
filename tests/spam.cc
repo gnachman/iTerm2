@@ -24,13 +24,13 @@ void setline(char* s, int n) {
 int main(int argc, char*argv[]) {
   int n;
   if (argc == 1) {
-    n = 1000000;
+    n = 20000;
   } else {
     n = atoi(argv[1]);
   }
   cm = argc==3;
   for (int i = 0; n < 0 || i < n; ++i) {
-    char buffer[100];
+    char buffer[10000];
     setline(buffer, sizeof(buffer)-1);
     printf("%s\n", buffer);
   }

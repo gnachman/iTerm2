@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "VT100Token.h"
 
 typedef enum {
     MOUSE_REPORTING_NONE = -1,
@@ -31,9 +32,9 @@ typedef enum {
 } VT100TerminalUnits;
 
 @protocol VT100TerminalDelegate
-// Append a string at the cursor's position and advance the cursor, scrolling if necessary. If
-// |ascii| is set then the string contains only ascii characters.
-- (void)terminalAppendString:(NSString *)string isAscii:(BOOL)isAscii;
+// Append a string at the cursor's position and advance the cursor, scrolling if necessary.
+- (void)terminalAppendString:(NSString *)string;
+- (void)terminalAppendAsciiData:(AsciiData *)asciiData;
 
 // Play/display the bell.
 - (void)terminalRingBell;
@@ -225,6 +226,9 @@ typedef enum {
 
 // Enters Tmux mode.
 - (void)terminalStartTmuxMode;
+
+// Handles input during tmux mode. A single line of input will be in the token's string.
+- (void)terminalHandleTmuxInput:(VT100Token *)token;
 
 // Returns the size of the terminal in cells.
 - (int)terminalWidth;
