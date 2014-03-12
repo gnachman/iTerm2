@@ -17,7 +17,7 @@
 
 typedef enum {
     // Any control character between 0-0x1f inclusive can by a token type. For these, the value
-    // matters.
+    // matters. Make sure to update the -codeName method when changing this enum.
     VT100CC_NULL = 0,
     VT100CC_SOH = 1,   // Not used
     VT100CC_STX = 2,   // Not used
