@@ -144,16 +144,13 @@ static const int kMaxScreenRows = 4096;
         fgColorMode_ = ColorModeAlternate;
         bgColorCode_ = ALTSEM_DEFAULT;
         bgColorMode_ = ColorModeAlternate;
-        saveForeground_ = fgColorCode_;
-        saveFgColorMode_ = fgColorMode_;
-        saveBackground_ = bgColorCode_;
-        saveBgColorMode_ = bgColorMode_;
         _mouseMode = MOUSE_REPORTING_NONE;
         _mouseFormat = MOUSE_FORMAT_XTERM;
 
         _allowKeypadMode = YES;
 
         numLock_ = YES;
+        [self saveTextAttributes];  // initialize save area
     }
     return self;
 }
