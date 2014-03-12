@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="4514" systemVersion="13A2093" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="5053" systemVersion="13C64" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment version="1070" defaultVersion="1070" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="4514"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="5053"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="PreferencePanel">
@@ -911,13 +911,9 @@ Gw
                                             <rect key="frame" x="222" y="215" width="46" height="22"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="5058">
-                                                <numberFormatter key="formatter" formatterBehavior="default10_4" positiveFormat="#,##0.###" negativeFormat="#,##0.###" numberStyle="decimal" minimumIntegerDigits="1" maximumIntegerDigits="309" minimumFractionDigits="0" maximumFractionDigits="3" id="5059">
-                                                    <real key="roundingIncrement" value="0.0"/>
+                                                <numberFormatter key="formatter" formatterBehavior="default10_4" positiveFormat="#,##0.###" negativeFormat="#,##0.###" numberStyle="decimal" paddingCharacter="*" minimumIntegerDigits="1" maximumIntegerDigits="309" maximumFractionDigits="3" decimalSeparator="." groupingSeparator="," currencyDecimalSeparator="." plusSign="+" minusSign="-" notANumberSymbol="NaN" perMillSymbol="‰" percentSymbol="%" exponentSymbol="E" positivePrefix="" positiveSuffix="" negativePrefix="-" negativeSuffix="" id="5059">
                                                     <real key="minimum" value="0.0"/>
                                                     <real key="maximum" value="1024"/>
-                                                    <metadata>
-                                                        <bool key="localizesFormat" value="YES"/>
-                                                    </metadata>
                                                 </numberFormatter>
                                                 <font key="font" metaFont="system"/>
                                                 <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -2520,12 +2516,8 @@ Gw
                                                                 <rect key="frame" x="94" y="166" width="140" height="22"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="4951">
-                                                                    <numberFormatter key="formatter" formatterBehavior="default10_4" positiveFormat="#,##0.###" negativeFormat="#,##0.###" numberStyle="decimal" minimumIntegerDigits="1" maximumIntegerDigits="309" minimumFractionDigits="0" maximumFractionDigits="3" id="4952">
-                                                                        <real key="roundingIncrement" value="0.0"/>
+                                                                    <numberFormatter key="formatter" formatterBehavior="default10_4" positiveFormat="#,##0.###" negativeFormat="#,##0.###" numberStyle="decimal" paddingCharacter="*" minimumIntegerDigits="1" maximumIntegerDigits="309" maximumFractionDigits="3" decimalSeparator="." groupingSeparator="," currencyDecimalSeparator="." plusSign="+" minusSign="-" notANumberSymbol="NaN" perMillSymbol="‰" percentSymbol="%" exponentSymbol="E" positivePrefix="" positiveSuffix="" negativePrefix="-" negativeSuffix="" id="4952">
                                                                         <real key="minimum" value="1"/>
-                                                                        <metadata>
-                                                                            <bool key="localizesFormat" value="YES"/>
-                                                                        </metadata>
                                                                     </numberFormatter>
                                                                     <font key="font" metaFont="system"/>
                                                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -2558,12 +2550,8 @@ Gw
                                                                 <rect key="frame" x="94" y="136" width="140" height="22"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="4947">
-                                                                    <numberFormatter key="formatter" formatterBehavior="default10_4" positiveFormat="#,##0.###" negativeFormat="#,##0.###" numberStyle="decimal" minimumIntegerDigits="1" maximumIntegerDigits="309" minimumFractionDigits="0" maximumFractionDigits="3" id="4948">
-                                                                        <real key="roundingIncrement" value="0.0"/>
+                                                                    <numberFormatter key="formatter" formatterBehavior="default10_4" positiveFormat="#,##0.###" negativeFormat="#,##0.###" numberStyle="decimal" paddingCharacter="*" minimumIntegerDigits="1" maximumIntegerDigits="309" maximumFractionDigits="3" decimalSeparator="." groupingSeparator="," currencyDecimalSeparator="." plusSign="+" minusSign="-" notANumberSymbol="NaN" perMillSymbol="‰" percentSymbol="%" exponentSymbol="E" positivePrefix="" positiveSuffix="" negativePrefix="-" negativeSuffix="" id="4948">
                                                                         <real key="minimum" value="1"/>
-                                                                        <metadata>
-                                                                            <bool key="localizesFormat" value="YES"/>
-                                                                        </metadata>
                                                                     </numberFormatter>
                                                                     <font key="font" metaFont="system"/>
                                                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -3296,13 +3284,9 @@ Gw
                                                                 <rect key="frame" x="214" y="29" width="45" height="22"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="5699">
-                                                                    <numberFormatter key="formatter" formatterBehavior="default10_4" positiveFormat="#" negativeFormat="#" usesGroupingSeparator="NO" groupingSize="0" minimumIntegerDigits="0" maximumIntegerDigits="42" minimumFractionDigits="0" maximumFractionDigits="0" id="5700">
-                                                                        <real key="roundingIncrement" value="0.0"/>
+                                                                    <numberFormatter key="formatter" formatterBehavior="default10_4" positiveFormat="#" negativeFormat="#" usesGroupingSeparator="NO" paddingCharacter="*" groupingSize="0" minimumIntegerDigits="0" maximumIntegerDigits="42" decimalSeparator="." groupingSeparator="," currencyDecimalSeparator="." plusSign="+" minusSign="-" notANumberSymbol="NaN" perMillSymbol="‰" percentSymbol="%" exponentSymbol="E" positivePrefix="" positiveSuffix="" negativePrefix="-" negativeSuffix="" id="5700">
                                                                         <real key="minimum" value="0.0"/>
                                                                         <real key="maximum" value="255"/>
-                                                                        <metadata>
-                                                                            <bool key="localizesFormat" value="YES"/>
-                                                                        </metadata>
                                                                     </numberFormatter>
                                                                     <font key="font" metaFont="system"/>
                                                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -5317,13 +5301,14 @@ DQ
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="156" width="805" height="358"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
+            <value key="minSize" type="size" width="805" height="358"/>
             <view key="contentView" id="5911">
                 <rect key="frame" x="0.0" y="0.0" width="805" height="358"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <scrollView autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="5839">
                         <rect key="frame" x="20" y="54" width="765" height="265"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="gZI-PG-peZ">
                             <rect key="frame" x="1" y="17" width="763" height="247"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -5398,7 +5383,7 @@ DQ
                     </scrollView>
                     <button id="5840">
                         <rect key="frame" x="20" y="18" width="24" height="24"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSAddTemplate" imagePosition="only" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5843">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -5409,7 +5394,7 @@ DQ
                     </button>
                     <button id="5841">
                         <rect key="frame" x="43" y="18" width="24" height="24"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="only" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5842">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -5421,7 +5406,7 @@ DQ
                     </button>
                     <button id="5879">
                         <rect key="frame" x="66" y="18" width="106" height="24"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="square" title="Load Defaults" bezelStyle="shadowlessSquare" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5880">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -5432,7 +5417,7 @@ DQ
                     </button>
                     <button id="6269">
                         <rect key="frame" x="171" y="18" width="104" height="24"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="square" title="Edit Actions…" bezelStyle="shadowlessSquare" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="6270">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -5444,7 +5429,7 @@ DQ
                     </button>
                     <button horizontalHuggingPriority="750" verticalHuggingPriority="750" id="5897">
                         <rect key="frame" x="667" y="16" width="25" height="25"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5898">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -5455,7 +5440,7 @@ DQ
                     </button>
                     <button verticalHuggingPriority="750" id="5912">
                         <rect key="frame" x="695" y="12" width="96" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="push" title="Close" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5913">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -5478,7 +5463,7 @@ DQ
                     </textField>
                     <button id="5961">
                         <rect key="frame" x="283" y="20" width="217" height="18"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="check" title="Log debug info to Console.app" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5962">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                             <font key="font" metaFont="system"/>
