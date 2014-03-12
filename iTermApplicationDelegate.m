@@ -361,10 +361,15 @@ static BOOL hasBecomeActive = NO;
                 // If the setting is always copy, then ask. Copying isn't an option.
                 if (![[NSUserDefaults standardUserDefaults] objectForKey:@"NoSyncNeverRemindPrefsChangesLost"]) {
                     if (NSRunAlertPanel(@"Preference Changes Will be Lost!",
-                                        [NSString stringWithFormat:@"Your preferences are loaded from a URL and differ from your local preferences. To save your local preferences, copy ~/Library/Preferences/com.googlecode.iterm2.plist to %@ after quitting iTerm2.", remote],
+                                        @"Your preferences are loaded "
+                                        @"from a URL and differ from your local preferences. To "
+                                        @"save your local preferences, copy "
+                                        @"~/Library/Preferences/com.googlecode.iterm2.plist to "
+                                        @"%@ after quitting iTerm2.",
                                         @"OK",
                                         @"Never Remind Me Again",
-                                        nil) == NSAlertAlternateReturn) {
+                                        nil,
+                                        remote) == NSAlertAlternateReturn) {
                         [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES]
                                                                   forKey:@"NoSyncNeverRemindPrefsChangesLost"];
                     }

@@ -1089,10 +1089,11 @@ NSString *kSessionsKVCKey = @"sessions";
     // The PseudoTerminal might close while the dialog is open so keep it around for now.
     [[self retain] autorelease];
     return NSRunAlertPanel([NSString stringWithFormat:@"Close %@?", genericName],
-                           message,
+                           @"%@",
                            @"OK",
                            @"Cancel",
-                           nil) == NSAlertDefaultReturn;
+                           nil,
+                           message) == NSAlertDefaultReturn;
 }
 
 - (BOOL)confirmCloseTab:(PTYTab *)aTab

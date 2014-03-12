@@ -77,7 +77,7 @@ typedef enum {
 @property(nonatomic, readonly) BOOL liveRangeIsFlipped;
 
 // The range of selections. May be flipped.
-@property(nonatomic, assign) VT100GridWindowedRange liveRange;
+@property(nonatomic, readonly) VT100GridWindowedRange liveRange;
 
 // A selection is in progress.
 @property(nonatomic, readonly) BOOL live;

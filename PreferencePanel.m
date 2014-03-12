@@ -1570,13 +1570,14 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                               @"Cancel",
                               nil) == NSAlertDefaultReturn;
     } else if (![[[NSFileManager defaultManager] displayNameAtPath:[appURL path]] isEqualToString:@"iTerm 2"]) {
-        set = NSRunAlertPanel([NSString stringWithFormat:@"iTerm is not the default handler for %@. Would you like to set iTerm as the default handler?",
-                               scheme],
-                              [NSString stringWithFormat:@"The current handler is: %@",
-                               [[NSFileManager defaultManager] displayNameAtPath:[appURL path]]],
+        NSString *theTitle = [NSString stringWithFormat:@"iTerm is not the default handler for %@. "
+                              @"Would you like to set iTerm as the default handler?", scheme];
+        set = NSRunAlertPanel(theTitle,
+                              @"The current handler is: %@",
                               @"OK",
                               @"Cancel",
-                              nil) == NSAlertDefaultReturn;
+                              nil,
+                              [[NSFileManager defaultManager] displayNameAtPath:[appURL path]]) == NSAlertDefaultReturn;
     }
 
     if (set) {
