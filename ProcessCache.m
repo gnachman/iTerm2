@@ -268,10 +268,12 @@ NSString *PID_INFO_NAME = @"name";
 
         BOOL isForeground;
         NSString* name = [self getNameOfPid:thePid isForeground:&isForeground];
-        if (isForeground && name != nil) {
-            [temp setObject:name forKey:[NSNumber numberWithInt:thePid]];
+        if (name) {
+            if (isForeground) {
+                [temp setObject:name forKey:[NSNumber numberWithInt:thePid]];
+            }
+            [ancestry setObject:[NSNumber numberWithInt:ppid] forKey:n];
         }
-        [ancestry setObject:[NSNumber numberWithInt:ppid] forKey:n];
     }
 
     // For each pid in 'temp', follow the parent pid chain in 'ancestry' and add a map of

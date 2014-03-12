@@ -1731,9 +1731,7 @@
         theLine[cx].code = AppendToComplexChar(theLine[cx].code,
                                                combiningChar);
     } else {
-        theLine[cx].code = BeginComplexChar(theLine[cx].code,
-                                            combiningChar);
-        theLine[cx].complexChar = YES;
+        BeginComplexChar(theLine + cx, combiningChar);
     }
     return YES;
 }

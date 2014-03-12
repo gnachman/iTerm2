@@ -758,8 +758,11 @@ typedef enum {
             case NSAlertDefaultReturn:
                 if (system([cmd UTF8String])) {
                     NSRunAlertPanel(@"Error",
-                                    [NSString stringWithFormat:@"Sorry, an error occurred while running: %@", cmd],
-                                    @"Ok", nil, nil);
+                                    @"Sorry, an error occurred while running: %@",
+                                    @"Ok",
+                                    nil,
+                                    nil,
+                                    cmd);
                 }
                 break;
             case NSAlertAlternateReturn:
@@ -893,10 +896,12 @@ typedef enum {
         NSString* theKey = [NSString stringWithFormat:@"NeverWarnAboutShortLivedSessions_%@", [_profile objectForKey:KEY_GUID]];
         if (![[[NSUserDefaults standardUserDefaults] objectForKey:theKey] boolValue]) {
             if (NSRunAlertPanel(@"Short-Lived Session Warning",
-                                [NSString stringWithFormat:@"A session ended very soon after starting. Check that the command in profile \"%@\" is correct.", theName],
+                                @"A session ended very soon after starting. Check that the command "
+                                @"in profile \"%@\" is correct.",
                                 @"Ok",
                                 @"Don't Warn Again for This Profile",
-                                nil) != NSAlertDefaultReturn) {
+                                nil,
+                                theName) != NSAlertDefaultReturn) {
                 [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:theKey];
             }
         }
@@ -4937,10 +4942,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     self.currentMarkOrNotePosition = _lastMark.entry.interval;
     if (self.alertOnNextMark) {
         if (NSRunAlertPanel(@"Alert",
-                            [NSString stringWithFormat:@"Mark set in session “%@.”", [self name]],
+                            @"Mark set in session “%@.”",
                             @"Reveal",
                             @"OK",
-                            nil) == NSAlertDefaultReturn) {
+                            nil,
+                            [self name]) == NSAlertDefaultReturn) {
             [self reveal];
         }
         self.alertOnNextMark = NO;

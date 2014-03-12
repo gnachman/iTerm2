@@ -1185,7 +1185,7 @@ static const int kMaxScreenRows = 4096;
             break;
 
         case ANSI_RIS:
-            [delegate_ terminalResetPreservingPrompt:NO];
+            [self resetPreservingPrompt:NO];
             break;
         case VT100CSI_RM:
             break;

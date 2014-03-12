@@ -299,8 +299,10 @@ UTF32Char CharToLongChar(unichar code, BOOL isComplex);
 // returned.
 int AppendToComplexChar(int key, unichar codePoint);
 
-// Create a new complex char from two code points. A key is returned.
-int BeginComplexChar(unichar initialCodePoint, unichar combiningChar);
+// Takes a non-complex character and adds a combining mark to it. It may or may not
+// become complex as a result, depending on whether there is an NFC form for the
+// new composite.
+void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar);
 
 // Create or lookup & return the code for a complex char.
 int GetOrSetComplexChar(NSString* str);

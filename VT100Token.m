@@ -75,6 +75,170 @@ static iTermObjectPool *gPool;
     code = 0;
 }
 
+- (NSString *)codeName {
+    NSDictionary *map = @{@(VT100CC_NULL):                    @"VT100CC_NULL",
+                          @(VT100CC_SOH):                     @"VT100CC_SOH",
+                          @(VT100CC_STX):                     @"VT100CC_STX",
+                          @(VT100CC_ETX):                     @"VT100CC_ETX",
+                          @(VT100CC_EOT):                     @"VT100CC_EOT",
+                          @(VT100CC_ENQ):                     @"VT100CC_ENQ",
+                          @(VT100CC_ACK):                     @"VT100CC_ACK",
+                          @(VT100CC_BEL):                     @"VT100CC_BEL",
+                          @(VT100CC_BS):                      @"VT100CC_BS",
+                          @(VT100CC_HT):                      @"VT100CC_HT",
+                          @(VT100CC_LF):                      @"VT100CC_LF",
+                          @(VT100CC_VT):                      @"VT100CC_VT",
+                          @(VT100CC_FF):                      @"VT100CC_FF",
+                          @(VT100CC_CR):                      @"VT100CC_CR",
+                          @(VT100CC_SO):                      @"VT100CC_SO",
+                          @(VT100CC_SI):                      @"VT100CC_SI",
+                          @(VT100CC_DLE):                     @"VT100CC_DLE",
+                          @(VT100CC_DC1):                     @"VT100CC_DC1",
+                          @(VT100CC_DC2):                     @"VT100CC_DC2",
+                          @(VT100CC_DC3):                     @"VT100CC_DC3",
+                          @(VT100CC_DC4):                     @"VT100CC_DC4",
+                          @(VT100CC_NAK):                     @"VT100CC_NAK",
+                          @(VT100CC_SYN):                     @"VT100CC_SYN",
+                          @(VT100CC_ETB):                     @"VT100CC_ETB",
+                          @(VT100CC_CAN):                     @"VT100CC_CAN",
+                          @(VT100CC_EM):                      @"VT100CC_EM",
+                          @(VT100CC_SUB):                     @"VT100CC_SUB",
+                          @(VT100CC_ESC):                     @"VT100CC_ESC",
+                          @(VT100CC_FS):                      @"VT100CC_FS",
+                          @(VT100CC_GS):                      @"VT100CC_GS",
+                          @(VT100CC_RS):                      @"VT100CC_RS",
+                          @(VT100CC_US):                      @"VT100CC_US",
+                          @(VT100CC_DEL):                     @"VT100CC_DEL",
+                          @(VT100_WAIT):                      @"VT100_WAIT",
+                          @(VT100_NOTSUPPORT):                @"VT100_NOTSUPPORT",
+                          @(VT100_SKIP):                      @"VT100_SKIP",
+                          @(VT100_STRING):                    @"VT100_STRING",
+                          @(VT100_ASCIISTRING):               @"VT100_ASCIISTRING",
+                          @(VT100_UNKNOWNCHAR):               @"VT100_UNKNOWNCHAR",
+                          @(VT100_INVALID_SEQUENCE):          @"VT100_INVALID_SEQUENCE",
+                          @(VT100CSI_CPR):                    @"VT100CSI_CPR",
+                          @(VT100CSI_CUB):                    @"VT100CSI_CUB",
+                          @(VT100CSI_CUD):                    @"VT100CSI_CUD",
+                          @(VT100CSI_CUF):                    @"VT100CSI_CUF",
+                          @(VT100CSI_CUP):                    @"VT100CSI_CUP",
+                          @(VT100CSI_CUU):                    @"VT100CSI_CUU",
+                          @(VT100CSI_DA):                     @"VT100CSI_DA",
+                          @(VT100CSI_DA2):                    @"VT100CSI_DA2",
+                          @(VT100CSI_DECALN):                 @"VT100CSI_DECALN",
+                          @(VT100CSI_DECDHL):                 @"VT100CSI_DECDHL",
+                          @(VT100CSI_DECDWL):                 @"VT100CSI_DECDWL",
+                          @(VT100CSI_DECID):                  @"VT100CSI_DECID",
+                          @(VT100CSI_DECKPAM):                @"VT100CSI_DECKPAM",
+                          @(VT100CSI_DECKPNM):                @"VT100CSI_DECKPNM",
+                          @(VT100CSI_DECLL):                  @"VT100CSI_DECLL",
+                          @(VT100CSI_DECRC):                  @"VT100CSI_DECRC",
+                          @(VT100CSI_DECREPTPARM):            @"VT100CSI_DECREPTPARM",
+                          @(VT100CSI_DECREQTPARM):            @"VT100CSI_DECREQTPARM",
+                          @(VT100CSI_DECRST):                 @"VT100CSI_DECRST",
+                          @(VT100CSI_DECSC):                  @"VT100CSI_DECSC",
+                          @(VT100CSI_DECSET):                 @"VT100CSI_DECSET",
+                          @(VT100CSI_DECSTBM):                @"VT100CSI_DECSTBM",
+                          @(VT100CSI_DECSWL):                 @"VT100CSI_DECSWL",
+                          @(VT100CSI_DECTST):                 @"VT100CSI_DECTST",
+                          @(VT100CSI_DSR):                    @"VT100CSI_DSR",
+                          @(VT100CSI_ED):                     @"VT100CSI_ED",
+                          @(VT100CSI_EL):                     @"VT100CSI_EL",
+                          @(VT100CSI_HTS):                    @"VT100CSI_HTS",
+                          @(VT100CSI_HVP):                    @"VT100CSI_HVP",
+                          @(VT100CSI_IND):                    @"VT100CSI_IND",
+                          @(VT100CSI_NEL):                    @"VT100CSI_NEL",
+                          @(VT100CSI_RI):                     @"VT100CSI_RI",
+                          @(VT100CSI_RIS):                    @"VT100CSI_RIS",
+                          @(VT100CSI_RM):                     @"VT100CSI_RM",
+                          @(VT100CSI_SCS):                    @"VT100CSI_SCS",
+                          @(VT100CSI_SCS0):                   @"VT100CSI_SCS0",
+                          @(VT100CSI_SCS1):                   @"VT100CSI_SCS1",
+                          @(VT100CSI_SCS2):                   @"VT100CSI_SCS2",
+                          @(VT100CSI_SCS3):                   @"VT100CSI_SCS3",
+                          @(VT100CSI_SGR):                    @"VT100CSI_SGR",
+                          @(VT100CSI_SM):                     @"VT100CSI_SM",
+                          @(VT100CSI_TBC):                    @"VT100CSI_TBC",
+                          @(VT100CSI_DECSCUSR):               @"VT100CSI_DECSCUSR",
+                          @(VT100CSI_DECSTR):                 @"VT100CSI_DECSTR",
+                          @(VT100CSI_DECDSR):                 @"VT100CSI_DECDSR",
+                          @(VT100CSI_SET_MODIFIERS):          @"VT100CSI_SET_MODIFIERS",
+                          @(VT100CSI_RESET_MODIFIERS):        @"VT100CSI_RESET_MODIFIERS",
+                          @(VT100CSI_DECSLRM):                @"VT100CSI_DECSLRM",
+                          @(XTERMCC_WIN_TITLE):               @"XTERMCC_WIN_TITLE",
+                          @(XTERMCC_ICON_TITLE):              @"XTERMCC_ICON_TITLE",
+                          @(XTERMCC_WINICON_TITLE):           @"XTERMCC_WINICON_TITLE",
+                          @(XTERMCC_INSBLNK):                 @"XTERMCC_INSBLNK",
+                          @(XTERMCC_INSLN):                   @"XTERMCC_INSLN",
+                          @(XTERMCC_DELCH):                   @"XTERMCC_DELCH",
+                          @(XTERMCC_DELLN):                   @"XTERMCC_DELLN",
+                          @(XTERMCC_WINDOWSIZE):              @"XTERMCC_WINDOWSIZE",
+                          @(XTERMCC_WINDOWSIZE_PIXEL):        @"XTERMCC_WINDOWSIZE_PIXEL",
+                          @(XTERMCC_WINDOWPOS):               @"XTERMCC_WINDOWPOS",
+                          @(XTERMCC_ICONIFY):                 @"XTERMCC_ICONIFY",
+                          @(XTERMCC_DEICONIFY):               @"XTERMCC_DEICONIFY",
+                          @(XTERMCC_RAISE):                   @"XTERMCC_RAISE",
+                          @(XTERMCC_LOWER):                   @"XTERMCC_LOWER",
+                          @(XTERMCC_SU):                      @"XTERMCC_SU",
+                          @(XTERMCC_SD):                      @"XTERMCC_SD",
+                          @(XTERMCC_REPORT_WIN_STATE):        @"XTERMCC_REPORT_WIN_STATE",
+                          @(XTERMCC_REPORT_WIN_POS):          @"XTERMCC_REPORT_WIN_POS",
+                          @(XTERMCC_REPORT_WIN_PIX_SIZE):     @"XTERMCC_REPORT_WIN_PIX_SIZE",
+                          @(XTERMCC_REPORT_WIN_SIZE):         @"XTERMCC_REPORT_WIN_SIZE",
+                          @(XTERMCC_REPORT_SCREEN_SIZE):      @"XTERMCC_REPORT_SCREEN_SIZE",
+                          @(XTERMCC_REPORT_ICON_TITLE):       @"XTERMCC_REPORT_ICON_TITLE",
+                          @(XTERMCC_REPORT_WIN_TITLE):        @"XTERMCC_REPORT_WIN_TITLE",
+                          @(XTERMCC_PUSH_TITLE):              @"XTERMCC_PUSH_TITLE",
+                          @(XTERMCC_POP_TITLE):               @"XTERMCC_POP_TITLE",
+                          @(XTERMCC_SET_RGB):                 @"XTERMCC_SET_RGB",
+                          @(XTERMCC_PROPRIETARY_ETERM_EXT):   @"XTERMCC_PROPRIETARY_ETERM_EXT",
+                          @(XTERMCC_SET_PALETTE):             @"XTERMCC_SET_PALETTE",
+                          @(XTERMCC_SET_KVP):                 @"XTERMCC_SET_KVP",
+                          @(XTERMCC_PASTE64):                 @"XTERMCC_PASTE64",
+                          @(XTERMCC_FINAL_TERM):              @"XTERMCC_FINAL_TERM",
+                          @(ANSICSI_CHA):                     @"ANSICSI_CHA",
+                          @(ANSICSI_VPA):                     @"ANSICSI_VPA",
+                          @(ANSICSI_VPR):                     @"ANSICSI_VPR",
+                          @(ANSICSI_ECH):                     @"ANSICSI_ECH",
+                          @(ANSICSI_PRINT):                   @"ANSICSI_PRINT",
+                          @(ANSICSI_SCP):                     @"ANSICSI_SCP",
+                          @(ANSICSI_RCP):                     @"ANSICSI_RCP",
+                          @(ANSICSI_CBT):                     @"ANSICSI_CBT",
+                          @(ANSI_RIS):                        @"ANSI_RIS",
+                          @(STRICT_ANSI_MODE):                @"STRICT_ANSI_MODE",
+                          @(ITERM_GROWL):                     @"ITERM_GROWL",
+                          @(DCS_TMUX):                        @"DCS_TMUX",
+                          @(TMUX_LINE):                       @"TMUX_LINE",
+                          @(TMUX_EXIT):                       @"TMUX_EXIT",
+                          @(VT100CSI_DECSLRM_OR_ANSICSI_SCP): @"VT100CSI_DECSLRM_OR_ANSICSI_SCP" };
+    NSString *name = map[@(type)];
+    if (name) {
+        return name;
+    } else {
+        return [NSString stringWithFormat:@"%d", type];
+    }
+}
+
+- (NSString *)description {
+    NSMutableString *params = [NSMutableString string];
+    if (_csi && _csi->count > 0) {
+        [params appendString:@" params="];
+        for (int i = 0; i < _csi->count; i++) {
+            if (_csi->p[i] < 0) {
+                [params appendFormat:@"[default];"];
+            } else {
+                [params appendFormat:@"%d;", _csi->p[i]];
+            }
+        }
+    }
+    if (_string) {
+        [params appendFormat:@" string=“%@”", _string];
+    }
+    if (_asciiData.length) {
+        [params appendFormat:@" asciiData=“%.*s”", _asciiData.length, _asciiData.buffer];
+    }
+    return [NSString stringWithFormat:@"<%@: %p type=%@%@>", self.class, self, [self codeName], params];
+}
+
 - (CSIParam *)csi {
     if (!_csi) {
         _csi = calloc(sizeof(*_csi), 1);

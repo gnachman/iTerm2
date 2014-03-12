@@ -72,7 +72,6 @@
             }
         } else if (isAsciiString(datap)) {
             ParseString(datap, datalen, &rmlen, token, self.encoding);
-            length = rmlen;
             position = datap;
         } else if (iscontrol(datap[0])) {
             ParseControl(datap,
@@ -90,7 +89,6 @@
             } else if (token->type == DCS_TMUX && !_tmuxParser) {
                 self.tmuxParser = [[[VT100TmuxParser alloc] init] autorelease];
             }
-            length = rmlen;
             position = datap;
         } else {
             if (isString(datap, self.encoding)) {
@@ -107,35 +105,16 @@
                 token->code = datap[0];
                 rmlen = 1;
             }
-            length = rmlen;
             position = datap;
         }
-        
+        length = rmlen;
+
         
         if (rmlen > 0) {
             NSParameterAssert(_currentStreamLength >= _streamOffset + rmlen);
             // mark our current position in the stream
             _streamOffset += rmlen;
             assert(_streamOffset >= 0);
-        }
-    }
-    
-    if (gDebugLogging) {
-        NSMutableString *loginfo = [NSMutableString string];
-        NSMutableString *ascii = [NSMutableString string];
-        int i = 0;
-        int start = 0;
-        while (i < length) {
-            unsigned char c = datap[i];
-            [loginfo appendFormat:@"%02x ", (int)c];
-            [ascii appendFormat:@"%c", (c >= 32 && c < 128) ? c : '.'];
-            if (i == length - 1 || loginfo.length > 60) {
-                DLog(@"Bytes %d-%d of %d: %@ (%@)", start, i, (int)length, loginfo, ascii);
-                [loginfo setString:@""];
-                [ascii setString:@""];
-                start = i;
-            }
-            i++;
         }
     }
     
@@ -147,6 +126,28 @@
         if (token->type == VT100_ASCIISTRING) {
             [token setAsciiBytes:(char *)position length:length];
         }
+        
+        if (gDebugLogging) {
+            NSString *prefix = @"";
+            if (_tmuxParser) {
+                prefix = @"[TMUX GATEWAY] ";
+            }
+            NSMutableString *loginfo = [NSMutableString string];
+            NSMutableString *ascii = [NSMutableString string];
+            int i = 0;
+            int start = 0;
+            while (i < length) {
+                unsigned char c = datap[i];
+                [loginfo appendFormat:@"%02x ", (int)c];
+                [ascii appendFormat:@"%c", (c >= 32 && c < 128) ? c : '.'];
+                if (i == length - 1 || loginfo.length > 60) {
+                    DLog(@"%@Bytes %d-%d of %d: %@ (%@)", prefix, start, i, (int)length, loginfo, ascii);
+                }
+                i++;
+            }
+            DLog(@"%@Parsed as %@", prefix, token);
+        }
+
         CVectorAppend(vector, token);
         return YES;
     } else {

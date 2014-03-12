@@ -22,7 +22,6 @@ typedef enum {
 // VT100Terminal.
 @interface VT100Output : NSObject
 
-@property(nonatomic, assign) BOOL termTypeIsValid;
 @property(nonatomic, assign) BOOL keypadMode;
 @property(nonatomic, assign) MouseFormat mouseFormat;
 @property(nonatomic, assign) BOOL cursorMode;
@@ -49,5 +48,7 @@ typedef enum {
 - (NSData *)reportStatus;
 - (NSData *)reportDeviceAttribute;
 - (NSData *)reportSecondaryDeviceAttribute;
+
+- (void)setTermTypeIsValid:(BOOL)termTypeIsValid;
 
 @end
