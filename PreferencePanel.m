@@ -1046,12 +1046,12 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
             [self _generateHotkeyWindowProfile];
             [hotkeyBookmark selectItemWithTitle:kHotkeyWindowGeneratedProfileNameKey];
             NSRunAlertPanel(@"Set Up Hotkey Window",
-                            [NSString stringWithFormat:@"A new profile called \"%@\" was created for you. It is tuned to work well for the Hotkey Window feature, but you can change it in the Profiles tab.",
-                             kHotkeyWindowGeneratedProfileNameKey],
+                            @"A new profile called \"%@\" was created for you. It is tuned to work well"
+                            @"for the Hotkey Window feature, but you can change it in the Profiles tab.",
                             @"OK",
                             nil,
                             nil,
-                            nil);
+                            kHotkeyWindowGeneratedProfileNameKey);
         }
         defaultFsTabDelay = [fsTabDelay floatValue];
         defaultAllowClipboardAccess = ([allowClipboardAccessFromTerminal state]==NSOnState);
@@ -1970,10 +1970,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     if (!aDict) {
         NSRunAlertPanel(@"Import Failed.",
                         @"The selected file could not be read or did not contain a valid color scheme.",
-                        @"OK",
-                        nil,
-                        nil,
-                        nil);
+                        @"OK", nil, nil);
         return NO;
     } else {
         [self _addColorPreset:[self _presetNameFromFilename:filename]
@@ -2062,12 +2059,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [theDict setObject:[ITAddressBookMgr encodeColor:[wells[i++] color]] forKey:colorKey];
     }
     if (![theDict writeToFile:filename atomically:NO]) {
-        NSRunAlertPanel(@"Save Failed.",
-                        [NSString stringWithFormat:@"Could not save to %@", filename],
-                        @"OK",
-                        nil,
-                        nil,
-                        nil);
+        NSRunAlertPanel(@"Save Failed.", @"Could not save to %@",
+                        @"OK", nil, nil, filename);
     }
 }
 
@@ -4708,10 +4701,10 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     }
 
     switch (NSRunAlertPanel(@"Warning",
-                            @"You have chosen to have an option key act as Meta. This option is useful for backward compatibility with older systems. The \"+Esc\" option is recommended for most users.",
+                            @"You have chosen to have an option key act as Meta. This option is useful for backward"
+                            @"compatibility with older systems. The \"+Esc\" option is recommended for most users.",
                             @"OK",
                             @"Never warn me again",
-                            nil,
                             nil)) {
         case NSAlertDefaultReturn:
             break;
@@ -4728,10 +4721,10 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     }
 
     switch (NSRunAlertPanel(@"Notice",
-                            @"To have a new window open in a specific space, make sure that Spaces is enabled in System Preferences and that it is configured to switch directly to a space with ^ Number Keys.",
+                            @"To have a new window open in a specific space, make sure that Spaces is enabled in System "
+                            @"Preferences and that it is configured to switch directly to a space with ^ Number Keys.",
                             @"OK",
                             @"Never warn me again",
-                            nil,
                             nil)) {
         case NSAlertDefaultReturn:
             break;
@@ -4770,11 +4763,11 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         return YES;
     }
     switch (NSRunAlertPanel(@"Overriding Global Shortcut",
-                            @"The keyboard shortcut you have set for this profile will take precedence over an existing shortcut for the same key combination in a global shortcut.",
+                            @"The keyboard shortcut you have set for this profile will take precedence over "
+                            @"an existing shortcut for the same key combination in a global shortcut.",
                             @"OK",
                             @"Never warn me again",
-                            @"Cancel",
-                            nil)) {
+                            @"Cancel")) {
         case NSAlertDefaultReturn:
             return YES;
         case NSAlertAlternateReturn:
@@ -4793,11 +4786,11 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         return YES;
     }
     switch (NSRunAlertPanel(@"Some Profile Overrides this Shortcut",
-                            @"The global keyboard shortcut you have set is overridden by at least one profile. Check your profiles' keyboard settings if it does not work as expected.",
+                            @"The global keyboard shortcut you have set is overridden by at least one profile. "
+                            @"Check your profiles' keyboard settings if it does not work as expected.",
                             @"OK",
                             @"Never warn me again",
-                            @"Cancel",
-                            nil)) {
+                            @"Cancel")) {
         case NSAlertDefaultReturn:
             return YES;
         case NSAlertAlternateReturn:

@@ -564,11 +564,12 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
             return;
         }
         switch (NSRunAlertPanel(@"Could not enable hotkey",
-                                [self accessibilityMessageForHotkey],
+                                @"%@",
                                 @"OK",
                                 [self accessibilityActionMessage],
                                 @"Disable Hotkey",
-                                nil)) {
+                                nil,
+                                [self accessibilityMessageForHotkey])) {
             case NSAlertOtherReturn:
                 [[PreferencePanel sharedInstance] disableHotkey];
                 break;
@@ -624,11 +625,11 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
             return;
         }
         switch (NSRunAlertPanel(@"Could not remap modifiers",
-                                [self accessibilityMessageForModifier],
+                                @"%@",
                                 @"OK",
                                 [self accessibilityActionMessage],
                                 nil,
-                                nil)) {
+                                [self accessibilityMessageForModifier])) {
             case NSAlertAlternateReturn:
                 [self navigatePrefPane];
                 break;

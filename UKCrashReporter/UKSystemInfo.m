@@ -208,6 +208,8 @@ NSString*	UKMachineName(void)
 			cpuName = [[NSString stringWithFormat: @"Unknown (%@)", internalName] retain];
 		else
 			cpuName = humanReadableName;
+        
+        [translationDictionary release];
 	}
 	
 	return cpuName;
