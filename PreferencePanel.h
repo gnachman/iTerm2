@@ -209,6 +209,8 @@ typedef enum {
 - (int)minCompactTabWidth;
 - (int)optimumTabWidth;
 - (BOOL)traditionalVisualBell;
+
+// A hidden preference. If set, the scroll wheel sends arrow keys in alt screen mode.
 - (BOOL)alternateMouseScroll;
 - (float)hotkeyTermAnimationDuration;
 - (NSString *)searchCommand;

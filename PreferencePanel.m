@@ -3957,9 +3957,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return [prefs objectForKey:@"TraditionalVisualBell"] ? [[prefs objectForKey:@"TraditionalVisualBell"] boolValue] : NO;
 }
 
-- (BOOL) alternateMouseScroll
-{
-    assert(prefs);
+- (BOOL) alternateMouseScroll {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"AlternateMouseScroll"];
 }
 

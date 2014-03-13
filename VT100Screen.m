@@ -2717,9 +2717,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     commandStartX_ = commandStartY_ = -1;
 }
 
-- (BOOL)isAlternate
-{
-    return (currentGrid_ == altGrid_);
+- (BOOL)showingAlternateScreen {
+    return currentGrid_ == altGrid_;
 }
 
 - (void)hideOnScreenNotesAndTruncateSpanners
