@@ -2869,18 +2869,16 @@ NSMutableArray* screens=0;
                 break;
             case MOUSE_REPORTING_NONE:
                 if ([[PreferencePanel sharedInstance] alternateMouseScroll] &&
-                    terminal.isAlternate) {
+                    [_dataSource isAlternate]) {
                     CGFloat deltaY = [event deltaY];
+                    NSData* keyMove;
                     if (deltaY > 0) {
-                        NSData* keyMove = [terminal.output keyArrowUp:[event modifierFlags]];
-                        for (int i = (int)ceil(deltaY); i > 0; --i) {
-                            [_delegate writeTask:keyMove];
-                        }
+                        keyMove = [terminal.output keyArrowUp:[event modifierFlags]];
                     } else if (deltaY < 0) {
-                        NSData* keyMove = [terminal.output keyArrowDown:[event modifierFlags]];
-                        for (int i = (int)ceil(-deltaY); i > 0; --i) {
-                            [_delegate writeTask:keyMove];
-                        }
+                        keyMove = [terminal.output keyArrowDown:[event modifierFlags]];
+                    }
+                    for (int i = 0; i < ceil(fabs(deltaY)); i++) {
+                        [_delegate writeTask:keyMove];
                     }
                     return;
                 }

@@ -26,7 +26,6 @@
 @property(nonatomic, readonly) BOOL originMode;
 @property(nonatomic, assign) BOOL wraparoundMode;
 @property(nonatomic, readonly) BOOL isAnsi;
-@property(nonatomic, assign) BOOL isAlternate;
 @property(nonatomic, readonly) BOOL autorepeatMode;
 @property(nonatomic, assign) BOOL insertMode;
 @property(nonatomic, readonly) int charset;  // G0 through G3

@@ -74,7 +74,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                                          kDefaultScreenRows)
                                               delegate:self];
         currentGrid_ = primaryGrid_;
-        terminal_.isAlternate = false;
 
         maxScrollbackLines_ = kDefaultMaxScrollbackLines;
         tabStops_ = [[NSMutableSet alloc] init];
@@ -2711,14 +2710,17 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     currentGrid_ = altGrid_;
     currentGrid_.cursor = primaryGrid_.cursor;
 
-    terminal_.isAlternate = true;
-
     [self swapNotes];
     [self reloadMarkCache];
 
     [currentGrid_ markAllCharsDirty:YES];
     [delegate_ screenNeedsRedraw];
     commandStartX_ = commandStartY_ = -1;
+}
+
+- (BOOL)isAlternate
+{
+    return (currentGrid_ == altGrid_);
 }
 
 - (void)hideOnScreenNotesAndTruncateSpanners
@@ -2745,7 +2747,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     if (currentGrid_ == altGrid_) {
         [self hideOnScreenNotesAndTruncateSpanners];
         currentGrid_ = primaryGrid_;
-        terminal_.isAlternate = false;
         commandStartX_ = commandStartY_ = -1;
         [self swapNotes];
         [self reloadMarkCache];

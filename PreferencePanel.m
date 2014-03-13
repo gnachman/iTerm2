@@ -3960,7 +3960,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 - (BOOL) alternateMouseScroll
 {
     assert(prefs);
-    return [prefs objectForKey:@"AlternateMouseScroll"] ? [[prefs objectForKey:@"AlternateMouseScroll"] boolValue] : NO;
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"AlternateMouseScroll"];
 }
 
 - (float) hotkeyTermAnimationDuration
