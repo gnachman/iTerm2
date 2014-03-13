@@ -122,7 +122,7 @@ typedef enum {
 
 @interface PTYTextView : NSView <
   NSDraggingDestination,
-  NSTextInput,
+  NSTextInputClient,
   PointerControllerDelegate,
   TrouterDelegate,
   iTermColorMapDelegate>
