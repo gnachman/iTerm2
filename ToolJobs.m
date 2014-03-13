@@ -13,79 +13,10 @@
 #import "PTYTask.h"
 #import "ProcessCache.h"
 
-static const int kMaxJobs = 20;
-static const CGFloat kButtonHeight = 23;
-static const CGFloat kMargin = 4;
+// For SignalPicker
+static const int kDefaultSignal = 9;
 
-
-@implementation SignalPicker
-
-static const int DEFAULT_SIGNAL = 9;
-
-// NB: iteration should start from index 1
-static const char *signalNames[32] = {
-    NULL,   "HUP",  "INT",   "QUIT",
-    "ILL",  "TRAP", "ABRT",  "EMT",
-    "FPE",  "KILL", "BUS",   "SEGV",
-    "SYS",  "PIPE", "ALRM",  "TERM",
-    "URG",  "STOP", "TSTP",  "CONT",
-    "CHLD", "TTIN", "TTOU",  "IO",
-    "XCPU", "XFSZ", "VTALRM","PROF",
-    "WINCH","INFO", "USR1",  "USR2",
-};
-
-+ (int)signalForName:(NSString*)signalName {
-    signalName = [[signalName stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] uppercaseString];
-    if([signalName hasPrefix:@"SIG"])
-        signalName = [signalName substringFromIndex:3];
-    const char *name = [signalName UTF8String];
-    
-    int x = strtol(name, NULL, 0);
-    if(0 < x && x < 32)
-        return x;
-    
-    for(int i = 1; i < sizeof(signalNames)/sizeof(signalNames[0]); i++) {
-        if(strcmp(name, signalNames[i]) == 0)
-            return i;
-    }
-    return -1;
-}
-
-- (id)initWithFrame:(NSRect)frameRect {
-    if(!(self = [super initWithFrame:frameRect])) return nil;
-    [self setIntValue:DEFAULT_SIGNAL];
-    [self setUsesDataSource:YES];
-    [self setCompletes:YES];
-    [self setDataSource:self];
-    
-    [[self cell] setControlSize:NSSmallControlSize];
-    [[self cell] setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
-    
-    return self;
-}
-
-- (int)intValue {
-    int x = [[self class] signalForName:[self stringValue]];
-    return x == -1 ? DEFAULT_SIGNAL : x;
-}
-
-- (void)setIntValue:(int)i {
-    if(i <= 0 || 32 <= i) i = DEFAULT_SIGNAL;
-    [self setStringValue:[NSString stringWithUTF8String:signalNames[i]]];
-    [self setToolTip:[NSString stringWithFormat:@"SIG%s (%d)", signalNames[i], i]];
-}
-
-- (void)textDidEndEditing:(NSNotification *)aNotification {
-    [self setIntValue:[self intValue]];
-}
-
-- (void)sizeToFit {
-    NSRect frame = self.frame;
-    frame.size.width = 70; // Just wide enough for the widest signal name.
-    self.frame = frame;
-}
-
-static int signalsToList[] = {
+static int gSignalsToList[] = {
      1, // SIGHUP
      2, // SIGINTR
      3, // SIGQUIT
@@ -94,56 +25,149 @@ static int signalsToList[] = {
     15, // SIGTERM
 };
 
-- (NSInteger)numberOfItemsInComboBox:(NSComboBox *)aComboBox {
-    return sizeof(signalsToList)/sizeof(signalsToList[0]);
+
+// For ToolJobs
+static const int kMaxJobs = 20;
+static const CGFloat kButtonHeight = 23;
+static const CGFloat kMargin = 4;
+
+@implementation SignalPicker
+
++ (NSArray *)signalNames {
+    return @[[NSNull null], @"HUP",  @"INT",  @"QUIT",
+             @"ILL",   @"TRAP", @"ABRT",   @"EMT",
+             @"FPE",   @"KILL", @"BUS",    @"SEGV",
+             @"SYS",   @"PIPE", @"ALRM",   @"TERM",
+             @"URG",   @"STOP", @"TSTP",   @"CONT",
+             @"CHLD",  @"TTIN", @"TTOU",   @"IO",
+             @"XCPU",  @"XFSZ", @"VTALRM", @"PROF",
+             @"WINCH", @"INFO", @"USR1",   @"USR2"];
 }
+
++ (int)signalForName:(NSString*)signalName {
+    signalName = [[signalName stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] uppercaseString];
+    if ([signalName hasPrefix:@"SIG"]) {
+        signalName = [signalName substringFromIndex:3];
+    }
+    int x = [signalName intValue];
+    if (x > 0 && x < [[self signalNames] count]) {
+        return x;
+    }
+    
+    NSArray *signalNames = [self signalNames];
+    NSUInteger index = [signalNames indexOfObject:signalName];
+    if (index == NSNotFound) {
+        return -1;
+    } else {
+        return index;
+    }
+}
+
+- (id)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        [self setIntValue:kDefaultSignal];
+        [self setUsesDataSource:YES];
+        [self setCompletes:YES];
+        [self setDataSource:self];
+        
+        [[self cell] setControlSize:NSSmallControlSize];
+        [[self cell] setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
+    }
+    return self;
+}
+
+- (int)intValue {
+    int x = [[self class] signalForName:[self stringValue]];
+    return x == -1 ? kDefaultSignal : x;
+}
+
+- (void)setIntValue:(int)i {
+    NSArray *signalNames = [[self class] signalNames];
+    if (i <= 0 || i >= [signalNames count]) {
+        i = kDefaultSignal;
+    }
+    [self setStringValue:signalNames[i]];
+    [self setToolTip:[NSString stringWithFormat:@"SIG%@ (%d)", signalNames[i], i]];
+}
+
+- (BOOL)isValid {
+    return [[self class] signalForName:[self stringValue]] != -1;
+}
+
+- (void)textDidEndEditing:(NSNotification *)aNotification {
+    [self setIntValue:[self intValue]];
+    [self.delegate comboBoxSelectionIsChanging:nil];
+}
+
+- (void)textDidChange:(NSNotification *)notification {
+    [self.delegate comboBoxSelectionIsChanging:nil];
+}
+
+- (void)sizeToFit {
+    NSRect frame = self.frame;
+    frame.size.width = 70;  // Just wide enough for the widest signal name.
+    self.frame = frame;
+}
+
+- (NSInteger)numberOfItemsInComboBox:(NSComboBox *)aComboBox {
+    return sizeof(gSignalsToList) / sizeof(gSignalsToList[0]);
+}
+
 - (id)comboBox:(NSComboBox *)aComboBox objectValueForItemAtIndex:(NSInteger)index {
-    return [NSString stringWithUTF8String:signalNames[signalsToList[index]]];
+    NSArray *signalNames = [[self class] signalNames];
+    return signalNames[gSignalsToList[index]];
 }
 - (NSUInteger)comboBox:(NSComboBox *)aComboBox indexOfItemWithStringValue:(NSString *)aString {
-    if(strtol([aString UTF8String], NULL, 0) > 0) return NSNotFound; // Without this, "1","2", and "3" get replaced immediatly!
+    if ([aString intValue] > 0) {
+        return NSNotFound;  // Without this, "1", "2", and "3" get replaced immediatly!
+    }
 
     int sig = [[self class] signalForName:aString];
-    for(NSUInteger i = 0; i < sizeof(signalsToList)/sizeof(signalsToList[0]); i++) {
-        if(signalsToList[i] == sig) return i;
+    for (int i = 0; i < sizeof(gSignalsToList) / sizeof(gSignalsToList[0]); i++) {
+        if (gSignalsToList[i] == sig) {
+            return i;
+        }
     }
     return NSNotFound;
 }
 
 - (NSString *)comboBox:(NSComboBox *)aComboBox completedString:(NSString *)uncompletedString {
-    uncompletedString = [[uncompletedString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] uppercaseString];
-    if([uncompletedString hasPrefix:@"SIG"])
+    uncompletedString =
+        [[uncompletedString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] uppercaseString];
+    if ([uncompletedString hasPrefix:@"SIG"]) {
         uncompletedString = [uncompletedString substringFromIndex:3];
-    const char *name = [uncompletedString UTF8String];
+    }
     
-    if(name[0] == 0)
+    if ([uncompletedString length] == 0) {
         return @"";
-    if(name[0] == '0')
-        return uncompletedString;
+    }
     
-    int x = strtol(name, NULL, 0);
-    if(0 < x && x < 32)
+    NSArray *signalNames = [[self class] signalNames];
+    int x = [uncompletedString intValue];
+    if (x > 0 && x < [signalNames count]) {
         return uncompletedString;
+    }
     
-    for(int i = 1; i < sizeof(signalNames)/sizeof(signalNames[0]); i++) {
-        if(strncmp(name, signalNames[i], strlen(name)) == 0) // Find prefix match
-            return [NSString stringWithUTF8String:signalNames[i]];
+    for (int i = 1; i < [signalNames count]; i++) {
+        if ([signalNames[i] hasPrefix:uncompletedString]) {
+            // Found a prefix match
+            return signalNames[i];
+        }
     }
     
     return nil;
 }
-
 
 @end
 
 
 @interface ToolJobs ()
 - (void)updateTimer:(id)sender;
+@property(nonatomic, assign) BOOL killable;
 @end
 
 @implementation ToolJobs
-
-@synthesize hasSelection;
 
 - (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
@@ -158,14 +182,16 @@ static int signalsToList[] = {
         [kill_ setAction:@selector(kill:)];
         [kill_ setBezelStyle:NSSmallSquareBezelStyle];
         [kill_ sizeToFit];
-        [kill_ setAutoresizingMask:NSViewMinYMargin|NSViewMaxXMargin];
+        [kill_ setAutoresizingMask:NSViewMinYMargin | NSViewMaxXMargin];
         [self addSubview:kill_];
         [kill_ release];
-        [kill_ bind:@"enabled" toObject:self withKeyPath:@"hasSelection" options:nil];
-        signal_ = [[SignalPicker alloc] initWithFrame:NSMakeRect(
-            kill_.frame.size.width + kMargin, frame.size.height - kButtonHeight,
-            frame.size.width - kill_.frame.size.width - 2*kMargin, kButtonHeight )];
-        [signal_ setAutoresizingMask:NSViewMinYMargin|NSViewMaxXMargin];
+        [kill_ bind:@"enabled" toObject:self withKeyPath:@"killable" options:nil];
+        signal_ = [[SignalPicker alloc] initWithFrame:NSMakeRect(kill_.frame.size.width + kMargin,
+                                                                 frame.size.height - kButtonHeight,
+                                                                 frame.size.width - kill_.frame.size.width - 2*kMargin,
+                                                                 kButtonHeight)];
+        signal_.delegate = self;
+        [signal_ setAutoresizingMask:NSViewMinYMargin | NSViewMaxXMargin];
         [signal_ sizeToFit];
         [self addSubview:signal_];
         
@@ -229,7 +255,10 @@ static int signalsToList[] = {
     NSRect frame = self.frame;
     kill_.frame = NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight);
     [kill_ sizeToFit];
-    signal_.frame = NSMakeRect(kill_.frame.size.width + kMargin, frame.size.height - kButtonHeight, signal_.frame.size.width, kButtonHeight);
+    signal_.frame = NSMakeRect(kill_.frame.size.width + kMargin,
+                               frame.size.height - kButtonHeight,
+                               signal_.frame.size.width,
+                               kButtonHeight);
     [signal_ sizeToFit];
     scrollView_.frame = NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin);
 }
@@ -342,7 +371,7 @@ static int signalsToList[] = {
 
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification
 {
-    self.hasSelection = ([tableView_ selectedRow] >= 0);
+    self.killable = ([tableView_ selectedRow] >= 0 && [signal_ isValid]);
 }
 
 - (void)kill:(id)sender
@@ -355,6 +384,12 @@ static int signalsToList[] = {
 - (CGFloat)minimumHeight
 {
     return 60;
+}
+
+#pragma mark - NSComboBoxDelegate
+
+- (void)comboBoxSelectionIsChanging:(NSNotification *)notification {
+    self.killable = ([tableView_ selectedRow] >= 0 && [signal_ isValid]);
 }
 
 @end

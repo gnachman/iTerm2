@@ -116,7 +116,9 @@ static const CGFloat kButtonSize = 17;
 
 - (NSObject<ToolbeltTool> *)tool
 {
-    if([[container_ subviews] count] == 0) return nil;
+    if ([[container_ subviews] count] == 0) {
+        return nil;
+    }
     return (NSObject<ToolbeltTool>*) [[container_ subviews] objectAtIndex:0];
 }
 

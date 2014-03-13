@@ -209,7 +209,7 @@ NSString*	UKMachineName(void)
 		else
 			cpuName = humanReadableName;
         
-        [translationDictionary release];
+                [translationDictionary release];
 	}
 	
 	return cpuName;
