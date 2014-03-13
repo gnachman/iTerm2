@@ -87,7 +87,7 @@
                 }
                 [_pending removeObject:hostname];
             }
-            DLog(@"Host %@: %@", hostname, ok ? @"Ok" : @"Unknown");
+            DLog(@"Host %@: %@", hostname, ok ? @"OK" : @"Unknown");
             completion(ok, hostname);
         });
     });

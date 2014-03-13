@@ -1066,7 +1066,7 @@ typedef enum {
         [self printTmuxMessage:[NSString stringWithFormat:@"tmux logging %@", (_tmuxGateway.tmuxLogging ? @"on" : @"off")]];
     } else if (unicode == 'C') {
         NSAlert *alert = [NSAlert alertWithMessageText:@"Enter command to send tmux:"
-                                         defaultButton:@"Ok"
+                                         defaultButton:@"OK"
                                        alternateButton:@"Cancel"
                                            otherButton:nil
                              informativeTextWithFormat:@""];
@@ -4115,7 +4115,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 
     switch (NSRunAlertPanel(@"Confirm Multi-Line Paste",
-                            @"Ok to paste %d lines?",
+                            @"OK to paste %d lines?",
                             @"Yes",
                             @"No",
                             @"Yes and don‘t ask again",

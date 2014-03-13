@@ -73,7 +73,7 @@ static NSString *kCommandIsLastInList = @"lastInList";
 {
     // TODO: be more forgiving of errors.
     [[NSAlert alertWithMessageText:title
-                     defaultButton:@"Ok"
+                     defaultButton:@"OK"
                    alternateButton:@""
                        otherButton:@""
          informativeTextWithFormat:@"%@", message] runModal];

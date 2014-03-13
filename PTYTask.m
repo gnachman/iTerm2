@@ -237,7 +237,7 @@ static void reapchild(int n)
         PtyTaskDebugLog(@"%@ %s", progpath, strerror(errno));
         NSRunCriticalAlertPanel(@"Unable to Fork!",
                                 @"iTerm cannot launch the program for this session.",
-                                @"Ok",
+                                @"OK",
                                 nil,
                                 nil);
         return;

@@ -226,7 +226,7 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
         }
     } else {
         [[NSAlert alertWithMessageText:@"Error: malformed history line from tmux."
-                         defaultButton:@"Ok"
+                         defaultButton:@"OK"
                        alternateButton:@""
                            otherButton:@""
              informativeTextWithFormat:@"See Console.app for details"] runModal];

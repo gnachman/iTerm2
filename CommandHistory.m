@@ -69,7 +69,7 @@ static const int kMaxCommandsToSavePerHost = 200;
     if (NSRunInformationalAlertPanel(@"About Command History",
                                      @"To use command history your shell must be properly configured.",
                                      @"Learn More…",
-                                     @"Ok",
+                                     @"OK",
                                      nil) == NSAlertDefaultReturn) {
         [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://iterm2.com/shell_integration.html"]];
     }

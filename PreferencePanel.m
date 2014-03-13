@@ -1970,7 +1970,9 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     if (!aDict) {
         NSRunAlertPanel(@"Import Failed.",
                         @"The selected file could not be read or did not contain a valid color scheme.",
-                        @"OK", nil, nil);
+                        @"OK",
+                        nil,
+                        nil);
         return NO;
     } else {
         [self _addColorPreset:[self _presetNameFromFilename:filename]
@@ -2059,8 +2061,12 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [theDict setObject:[ITAddressBookMgr encodeColor:[wells[i++] color]] forKey:colorKey];
     }
     if (![theDict writeToFile:filename atomically:NO]) {
-        NSRunAlertPanel(@"Save Failed.", @"Could not save to %@",
-                        @"OK", nil, nil, filename);
+        NSRunAlertPanel(@"Save Failed.",
+                        @"Could not save to %@",
+                        @"OK",
+                        nil,
+                        nil,
+                        filename);
     }
 }
 
