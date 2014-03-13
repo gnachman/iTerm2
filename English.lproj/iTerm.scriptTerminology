@@ -233,6 +233,30 @@
 			<key>Name</key>
 			<string>select</string>
 		</dict>
+		<key>split</key>
+		<dict>
+			<key>Arguments</key>
+			<dict>
+				<key>direction</key>
+				<dict>
+					<key>Description</key>
+					<string>Direction to split the terminal. Can be either "horizontal" or "vertical".</string>
+					<key>Name</key>
+					<string>direction</string>
+				</dict>
+				<key>session</key>
+				<dict>
+					<key>Description</key>
+					<string>Name of session to be launched</string>
+					<key>Name</key>
+					<string>session</string>
+				</dict>
+			</dict>
+			<key>Description</key>
+			<string>Splits a terminal; same as Cmd+D or Cmd+Shift+D in a terminal. If no direction specified splits horizontally.</string>
+			<key>Name</key>
+			<string>split</string>
+		</dict>
 		<key>terminate</key>
 		<dict>
 			<key>Description</key>

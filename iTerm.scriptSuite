@@ -172,6 +172,8 @@
 				<string>handleLaunchScriptCommand:</string>
 				<key>select</key>
 				<string>handleSelectScriptCommand:</string>
+				<key>split</key>
+				<string>handleSplitScriptCommand:</string>
 			</dict>
 			<key>ToManyRelationships</key>
 			<dict>
@@ -304,6 +306,36 @@
 			<string>ITRM</string>
 			<key>AppleEventCode</key>
 			<string>Sclr</string>
+			<key>CommandClass</key>
+			<string>NSScriptCommand</string>
+		</dict>
+		<key>split</key>
+		<dict>
+			<key>AppleEventClassCode</key>
+			<string>ITRM</string>
+			<key>AppleEventCode</key>
+			<string>Splx</string>
+			<key>Arguments</key>
+			<dict>
+				<key>direction</key>
+				<dict>
+					<key>AppleEventCode</key>
+					<string>Drcn</string>
+					<key>Optional</key>
+					<string>YES</string>
+					<key>Type</key>
+					<string>NSString</string>
+				</dict>
+				<key>session</key>
+				<dict>
+					<key>AppleEventCode</key>
+					<string>Pssn</string>
+					<key>Optional</key>
+					<string>YES</string>
+					<key>Type</key>
+					<string>NSString</string>
+				</dict>
+			</dict>
 			<key>CommandClass</key>
 			<string>NSScriptCommand</string>
 		</dict>

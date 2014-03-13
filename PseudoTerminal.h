@@ -484,5 +484,7 @@
 
 -(id)handleLaunchScriptCommand: (NSScriptCommand *)command;
 
+-(void)handleSplitScriptCommand: (NSScriptCommand *)command;
+
 @end
 
