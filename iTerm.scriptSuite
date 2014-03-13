@@ -326,10 +326,10 @@
 					<key>Type</key>
 					<string>NSString</string>
 				</dict>
-				<key>session</key>
+				<key>profile</key>
 				<dict>
 					<key>AppleEventCode</key>
-					<string>Pssn</string>
+					<string>Prfl</string>
 					<key>Optional</key>
 					<string>YES</string>
 					<key>Type</key>

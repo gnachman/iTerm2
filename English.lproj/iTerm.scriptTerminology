@@ -244,12 +244,12 @@
 					<key>Name</key>
 					<string>direction</string>
 				</dict>
-				<key>session</key>
+				<key>profile</key>
 				<dict>
 					<key>Description</key>
-					<string>Name of session to be launched</string>
+					<string>Name of profile to be launched</string>
 					<key>Name</key>
-					<string>session</string>
+					<string>profile</string>
 				</dict>
 			</dict>
 			<key>Description</key>

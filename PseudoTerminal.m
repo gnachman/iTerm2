@@ -6982,10 +6982,10 @@ NSString *kSessionsKVCKey = @"sessions";
     NSDictionary *args = [command evaluatedArguments];
     NSString *direction = args[@"direction"];
     BOOL isVertical = [direction isEqualToString:@"vertical"];
-    NSString *session = args[@"session"];
+    NSString *profileName = args[@"profile"];
     NSDictionary *abEntry;
 
-    abEntry = [[ProfileModel sharedInstance] bookmarkWithName:session];
+    abEntry = [[ProfileModel sharedInstance] bookmarkWithName:profileName];
     if (abEntry == nil) {
         abEntry = [[ProfileModel sharedInstance] defaultBookmark];
     }

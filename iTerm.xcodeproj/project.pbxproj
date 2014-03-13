@@ -1866,20 +1866,20 @@
 		1D5FD9AD11F61CA900C46BA3 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */,
-				A6C4E8E71846E32600CFAA77 /* IntervalTreeTest.h */,
-				1D9A5521180FA46100B42CE9 /* iTermTests.m */,
-				1D9A5522180FA46100B42CE9 /* iTermTests.h */,
-				1D72477211F55E5700BD4924 /* LineBufferTest.h */,
-				1D72477311F55E5700BD4924 /* LineBufferTest.m */,
+				90A1E139186F9EA4003EC3E8 /* AppleScriptTest.h */,
+				90A1E13A186F9EA4003EC3E8 /* AppleScriptTest.m */,
 				1D82FF5F14ABC38700B34CEA /* EquivalenceClassSetTest.h */,
 				1D82FF6014ABC38700B34CEA /* EquivalenceClassSetTest.m */,
+				A6C4E8E71846E32600CFAA77 /* IntervalTreeTest.h */,
+				A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */,
+				1D9A5522180FA46100B42CE9 /* iTermTests.h */,
+				1D9A5521180FA46100B42CE9 /* iTermTests.m */,
+				1D72477211F55E5700BD4924 /* LineBufferTest.h */,
+				1D72477311F55E5700BD4924 /* LineBufferTest.m */,
 				1DD39B12180B819A004E56D5 /* VT100GridTest.h */,
 				1DD39B13180B819A004E56D5 /* VT100GridTest.m */,
 				1D9A5527180FA61700B42CE9 /* VT100ScreenTest.h */,
 				1D9A5528180FA61700B42CE9 /* VT100ScreenTest.m */,
-				90A1E139186F9EA4003EC3E8 /* AppleScriptTest.h */,
-				90A1E13A186F9EA4003EC3E8 /* AppleScriptTest.m */,
 			);
 			name = Tests;
 			sourceTree = "<group>";
