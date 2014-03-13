@@ -26,18 +26,25 @@
     // We inject the exact path of the executable to the script in order not
     // to interfere with other iTerm instances that may be present.
     NSString *script = [NSString stringWithFormat:
-        @"tell application\"%@\"                                                            \n"
-         "  activate                                                                        \n"
-         "  set oldSessionCount to (count of (sessions of current terminal))                \n"
-         "  -- by default splits horizontally                                               \n"
-         "  tell current terminal to split                                                  \n"
-         "  tell current terminal to split direction \"vertical\"                           \n"
-         "  tell current terminal to split direction \"horizontal\"                         \n"
-         "  tell current terminal to split direction \"vertical\" session \"Default\"       \n"
-         "  tell current terminal to split direction \"horizontal\" session \"Default\"     \n"
-         "  set newSessionCount to (count of (sessions of current terminal))                \n"
-         "end tell                                                                          \n"
-         "{oldSessionCount, newSessionCount}                                                \n",
+        @"tell application\"%@\"                                                                    \n"
+         "  activate                                                                                \n"
+         "  set oldSessionCount to (count of (sessions of current terminal))                        \n"
+         "  -- by default splits horizontally                                                       \n"
+         "  tell current terminal to split                                                          \n"
+         "  tell current terminal to split direction \"vertical\"                                   \n"
+         "  tell current terminal to split direction \"horizontal\"                                 \n"
+         "  tell current terminal to split direction \"vertical\" session \"Default\"               \n"
+         "  tell current terminal to split direction \"horizontal\" session \"Default\"             \n"
+         "  set newSessionCount to (count of (sessions of current terminal))                        \n"
+         " -- cleanup, close 6 sessions (so iTerm does not prompt to exit and quit application      \n"
+         "  tell current terminal                                                                   \n"
+         "      repeat 6 times                                                                      \n"
+         "          tell current session to terminate                                               \n"
+         "      end repeat                                                                          \n"
+         "  end tell                                                                                \n"
+         "  quit                                                                                    \n"
+         "end tell                                                                                  \n"
+         "{oldSessionCount, newSessionCount}                                                        \n",
         [appURL path]
     ];
     NSAppleScript *appleScript = [[[NSAppleScript alloc] initWithSource:script] autorelease];
@@ -55,23 +62,6 @@
 
     // newly created sessions are present
     assert(sessionCountBefore + 5 == sessionCountAfter);
-
-    // ---- Free/Clean up -----
-    for (NSRunningApplication *app in [sharedWorkspace runningApplications]) {
-        NSString *launchedAppPath = [appURL path];
-        NSString *appPath = [[app executableURL] path];
-
-        // Removing the "/Contents/MacOS/iTerm" part of the path to match
-        if([appPath hasSuffix:@"/Contents/MacOS/iTerm"]) {
-            NSUInteger lengthToTrim = [appPath length] - [@"/Contents/MacOS/iTerm" length];
-
-            appPath = [appPath substringToIndex:lengthToTrim];
-
-            if ([launchedAppPath isEqualToString:appPath] ) {
-                [app forceTerminate];
-            }
-        }
-    }
 }
 
 @end
