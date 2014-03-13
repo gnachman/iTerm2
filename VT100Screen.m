@@ -984,7 +984,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         [delegate_ screenFlashImage:FlashBell];
     }
     [delegate_ screenIncrementBadge];
-    [delegate_ screenRequestUserAttention:NO];
 }
 
 - (void)setHistory:(NSArray *)history
