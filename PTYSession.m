@@ -5375,4 +5375,60 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [[self tab] closeSession:self];
 }
 
+- (NSColor *)backgroundColor {
+    return [_colorMap colorForKey:kColorMapBackground];
+}
+
+- (void)setBackgroundColor:(NSColor *)color {
+    [_colorMap setColor:color forKey:kColorMapBackground];
+}
+
+- (NSColor *)boldColor {
+    return [_colorMap colorForKey:kColorMapBold];
+}
+
+- (void)setBoldColor:(NSColor *)color {
+    [_colorMap setColor:color forKey:kColorMapBold];
+}
+
+- (NSColor *)cursorColor {
+    return [_colorMap colorForKey:kColorMapCursor];
+}
+
+- (void)setCursorColor:(NSColor *)color {
+    [_colorMap setColor:color forKey:kColorMapCursor];
+}
+
+- (NSColor *)cursorTextColor {
+    return [_colorMap colorForKey:kColorMapCursorText];
+}
+
+- (void)setCursorTextColor:(NSColor *)color {
+    [_colorMap setColor:color forKey:kColorMapCursorText];
+}
+
+- (NSColor *)foregroundColor {
+    return [_colorMap colorForKey:kColorMapForeground];
+}
+
+- (void)setForegroundColor:(NSColor *)color {
+    [_colorMap setColor:color forKey:kColorMapForeground];
+}
+
+- (NSColor *)selectedTextColor {
+    return [_colorMap colorForKey:kColorMapSelectedText];
+}
+
+- (void)setSelectedTextColor:(NSColor *)color {
+    [_colorMap setColor:color forKey:kColorMapSelectedText];
+}
+
+- (NSColor *)selectionColor {
+    return [_colorMap colorForKey:kColorMapSelection];
+}
+
+- (void)setSelectionColor:(NSColor *)color {
+    [_colorMap setColor:color forKey:kColorMapSelection];
+}
+
 @end

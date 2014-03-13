@@ -236,6 +236,15 @@ typedef enum {
 @property(nonatomic, readonly) NSArray *autocompleteSuggestionsForCurrentCommand;
 @property(nonatomic, readonly) NSString *currentCommand;
 
+// Key-value coding compliance for Applescript. It's generally better to go through the |colorMap|.
+@property(nonatomic, retain) NSColor *backgroundColor;
+@property(nonatomic, retain) NSColor *boldColor;
+@property(nonatomic, retain) NSColor *cursorColor;
+@property(nonatomic, retain) NSColor *cursorTextColor;
+@property(nonatomic, retain) NSColor *foregroundColor;
+@property(nonatomic, retain) NSColor *selectedTextColor;
+@property(nonatomic, retain) NSColor *selectionColor;
+
 #pragma mark - methods
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
@@ -422,11 +431,11 @@ typedef enum {
 
 // Object specifier
 - (NSScriptObjectSpecifier *)objectSpecifier;
--(void)handleExecScriptCommand: (NSScriptCommand *)aCommand;
--(void)handleTerminateScriptCommand: (NSScriptCommand *)command;
--(void)handleSelectScriptCommand: (NSScriptCommand *)command;
--(void)handleWriteScriptCommand: (NSScriptCommand *)command;
--(void)handleClearScriptCommand: (NSScriptCommand *)command;
+- (void)handleExecScriptCommand:(NSScriptCommand *)aCommand;
+- (void)handleTerminateScriptCommand:(NSScriptCommand *)command;
+- (void)handleSelectScriptCommand:(NSScriptCommand *)command;
+- (void)handleWriteScriptCommand:(NSScriptCommand *)command;
+- (void)handleClearScriptCommand:(NSScriptCommand *)command;
 
 @end
 
