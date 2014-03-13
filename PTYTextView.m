@@ -2868,6 +2868,22 @@ NSMutableArray* screens=0;
                 }
                 break;
             case MOUSE_REPORTING_NONE:
+                if ([[PreferencePanel sharedInstance] alternateMouseScroll] &&
+                    terminal.isAlternate) {
+                    CGFloat deltaY = [event deltaY];
+                    if (deltaY > 0) {
+                        NSData* keyMove = [terminal.output keyArrowUp:[event modifierFlags]];
+                        for (int i = (int)ceil(deltaY); i > 0; --i) {
+                            [_delegate writeTask:keyMove];
+                        }
+                    } else if (deltaY < 0) {
+                        NSData* keyMove = [terminal.output keyArrowDown:[event modifierFlags]];
+                        for (int i = (int)ceil(-deltaY); i > 0; --i) {
+                            [_delegate writeTask:keyMove];
+                        }
+                    }
+                    return;
+                }
             case MOUSE_REPORTING_HILITE:
                 // fall through
                 break;

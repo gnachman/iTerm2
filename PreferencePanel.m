@@ -3925,6 +3925,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 //  defaults write com.googlecode.iterm2 MinCompactTabWidth -int 120
 //  defaults write com.googlecode.iterm2 OptimumTabWidth -int 100
 //  defaults write com.googlecode.iterm2 TraditionalVisualBell -bool true
+//  defaults write com.googlecode.iterm2 AlternateMouseScroll -bool true
 
 - (BOOL)useUnevenTabs
 {
@@ -3954,6 +3955,12 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 {
     assert(prefs);
     return [prefs objectForKey:@"TraditionalVisualBell"] ? [[prefs objectForKey:@"TraditionalVisualBell"] boolValue] : NO;
+}
+
+- (BOOL) alternateMouseScroll
+{
+    assert(prefs);
+    return [prefs objectForKey:@"AlternateMouseScroll"] ? [[prefs objectForKey:@"AlternateMouseScroll"] boolValue] : NO;
 }
 
 - (float) hotkeyTermAnimationDuration
