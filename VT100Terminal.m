@@ -57,6 +57,8 @@
     int saveBgGreen_;
     int saveBgBlue_;
     ColorMode saveBgColorMode_;
+    BOOL saveOriginMode_;
+    BOOL saveWraparoundMode_;
     
     int sendModifiers_[NUM_MODIFIABLE_RESOURCES];
 }
@@ -142,16 +144,13 @@ static const int kMaxScreenRows = 4096;
         fgColorMode_ = ColorModeAlternate;
         bgColorCode_ = ALTSEM_DEFAULT;
         bgColorMode_ = ColorModeAlternate;
-        saveForeground_ = fgColorCode_;
-        saveFgColorMode_ = fgColorMode_;
-        saveBackground_ = bgColorCode_;
-        saveBgColorMode_ = bgColorMode_;
         _mouseMode = MOUSE_REPORTING_NONE;
         _mouseFormat = MOUSE_FORMAT_XTERM;
 
         _allowKeypadMode = YES;
 
         numLock_ = YES;
+        [self saveTextAttributes];  // initialize save area
     }
     return self;
 }
@@ -206,6 +205,8 @@ static const int kMaxScreenRows = 4096;
     saveBgGreen_ = bgGreen_;
     saveBgBlue_ = bgBlue_;
     saveBgColorMode_ = bgColorMode_;
+    saveOriginMode_ = self.originMode;
+    saveWraparoundMode_ = self.wraparoundMode;
 }
 
 - (void)restoreTextAttributes
@@ -224,6 +225,8 @@ static const int kMaxScreenRows = 4096;
     bgGreen_ = saveBgGreen_;
     bgBlue_ = saveBgBlue_;
     bgColorMode_ = saveBgColorMode_;
+    self.originMode = saveOriginMode_;
+    self.wraparoundMode = saveWraparoundMode_;
 }
 
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem
@@ -258,10 +261,9 @@ static const int kMaxScreenRows = 4096;
     self.keypadMode = NO;
     self.insertMode = NO;
     self.bracketedPasteMode = NO;
-    saveCharset_ = _charset = 0;
+    _charset = 0;
     xon_ = YES;
     bold_ = italic_ = blink_ = reversed_ = under_ = NO;
-    saveBold_ = saveItalic_ = saveBlink_ = saveReversed_ = saveUnder_ = NO;
     fgColorCode_ = ALTSEM_DEFAULT;
     fgGreen_ = 0;
     fgBlue_ = 0;
@@ -272,6 +274,7 @@ static const int kMaxScreenRows = 4096;
     bgColorMode_ = ColorModeAlternate;
     self.mouseMode = MOUSE_REPORTING_NONE;
     self.mouseFormat = MOUSE_FORMAT_XTERM;
+    [self saveTextAttributes];  // reset saved text attributes
     [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
     [delegate_ terminalSetUseColumnScrollRegion:NO];
     _reportFocus = NO;
@@ -557,14 +560,6 @@ static const int kMaxScreenRows = 4096;
             break;
         case VT100CC_DC3:
             xon_ = NO;
-            break;
-        case VT100CSI_DECRC:
-            [self restoreTextAttributes];
-            [delegate_ terminalRestoreCursor];
-            break;
-        case VT100CSI_DECSC:
-            [self saveTextAttributes];
-            [delegate_ terminalSaveCursor];
             break;
         case VT100CSI_DECSTR:
             self.wraparoundMode = YES;
@@ -1110,6 +1105,7 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_DECRC:
             [self restoreTextAttributes];
             [delegate_ terminalRestoreCursor];
+            [delegate_ terminalRestoreCharsetFlags];
             break;
         case VT100CSI_DECREPTPARM:
         case VT100CSI_DECREQTPARM:
@@ -1117,6 +1113,7 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_DECSC:
             [self saveTextAttributes];
             [delegate_ terminalSaveCursor];
+            [delegate_ terminalSaveCharsetFlags];
             break;
         case VT100CSI_DECSTBM:
             [delegate_ terminalSetScrollRegionTop:token.csi->p[0] == 0 ? 0 : token.csi->p[0] - 1
