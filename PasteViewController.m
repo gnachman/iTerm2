@@ -9,7 +9,6 @@
 #import "PasteViewController.h"
 #import "PasteContext.h"
 
-static NSString * const kDisclosureKey = @"PasteViewControllerShowAdvancedControls";
 static float kAnimationDuration = 0.25;
 
 @implementation PasteViewController

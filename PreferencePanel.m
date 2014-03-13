@@ -4268,14 +4268,14 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     int i = 0;
     [screenButton addItemWithTitle:@"No Preference"];
     [[screenButton lastItem] setTag:-1];
-    for (NSScreen* screen in [NSScreen screens]) {
+    const int numScreens = [[NSScreen screens] count];
+    for (i = 0; i < numScreens; i++) {
         if (i == 0) {
             [screenButton addItemWithTitle:[NSString stringWithFormat:@"Main Screen"]];
         } else {
             [screenButton addItemWithTitle:[NSString stringWithFormat:@"Screen %d", i+1]];
         }
         [[screenButton lastItem] setTag:i];
-        i++;
     }
     if (selectedTag >= 0 && selectedTag < i) {
         [screenButton selectItemWithTag:selectedTag];

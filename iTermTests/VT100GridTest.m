@@ -1457,7 +1457,7 @@ do { \
 
     // Now test with combining marks.
     screen_char_t *line = [grid screenCharsAtLineNumber:0];
-    line[1].code = BeginComplexChar('e', 0x327);  // e + combining cedillia
+    BeginComplexChar(line + 1, 0x20dd);  // e + combining enclosing circle
     line[1].complexChar = YES;
     runs = [grid runsMatchingRegex:@"ge.?orge"];  // the regex lib doesn't handle combining marks well
     coverage = [self coverageForRuns:runs inGrid:grid];
@@ -2424,14 +2424,15 @@ do { \
 - (void)testAddCombiningCharToCoord {
     const unichar kCombiningAcuteAccent = 0x301;
     const unichar kCombiningCedilla = 0x327;
-
+    const unichar kCombiningEnclosingCircle = 0x20dd;
+    
     VT100Grid *grid = [self gridFromCompactLines:@"abcd"];
-    assert([grid addCombiningChar:kCombiningAcuteAccent
+    assert([grid addCombiningChar:kCombiningEnclosingCircle
                           toCoord:VT100GridCoordMake(0, 0)]);
     screen_char_t *line = [grid screenCharsAtLineNumber:0];
     assert(line[0].complexChar);
     NSString *str = ScreenCharToStr(&line[0]);
-    assert([[str decomposedStringWithCanonicalMapping] isEqualToString:[@"á" decomposedStringWithCanonicalMapping]]);
+    assert([[str decomposedStringWithCanonicalMapping] isEqualToString:[@"a⃝" decomposedStringWithCanonicalMapping]]);
 
     // Fail to modify null character
     grid = [self gridFromCompactLines:@".bcd"];

@@ -3702,7 +3702,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         double currentSumOfSizes = 0;
         if (sizeChangeCoeff == 0) {
             // Original size was 0 so make all subviews equal.
-            for (NSView* aSubview in [splitView subviews]) {
+            const int numSubviews = [[splitView subviews] count];
+            for (int subviewNumber = 0; subviewNumber < numSubviews; subviewNumber++) {
                 const double size = lround(targetSize / n);
                 currentSumOfSizes += size;
                 [sizes addObject:[NSNumber numberWithDouble:size]];

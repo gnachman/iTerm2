@@ -316,11 +316,11 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     }
 
     // Lay the frames out in a grid originating in the lower left.
-    i = 0;
     float x = screenFrame.origin.x;
     float y = screenFrame.origin.y;
     BOOL isOk = YES;
-    for (NSImage* anImage in images) {
+    const int numImages = [images count];
+    for (i = 0; i < numImages; i++) {
         if (!isOk) {
             return INFINITY;
         }
@@ -328,7 +328,7 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
                                          y,
                                          maxThumbSize.width,
                                          maxThumbSize.height);
-        frames[i++] = proposedRect;
+        frames[i] = proposedRect;
         isOk = AdvanceCell(&x, &y, screenFrame, maxThumbSize);
     }
 

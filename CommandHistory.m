@@ -17,10 +17,6 @@ NSString *const kCommandHistoryHasEverBeenUsed = @"kCommandHistoryHasEverBeenUse
 
 static const int kMaxResults = 200;
 
-// Top level serialization keys
-static NSString *const kHostname = @"hostname";
-static NSString *const kCommands = @"commands";
-
 static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
 static const int kMaxCommandsToSavePerHost = 200;
 

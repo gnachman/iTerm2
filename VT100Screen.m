@@ -3704,11 +3704,11 @@ static void SwapInt(int *a, int *b) {
                 // Found a match in the text.
                 NSArray *allPositions = [linebuffer_ convertPositions:context.results
                                                             withWidth:currentGrid_.size.width];
-                int k = 0;
-                for (ResultRange* currentResultRange in context.results) {
+                const int numResults = context.results.count;
+                for (int k = 0; k < numResults; k++) {
                     SearchResult* result = [[SearchResult alloc] init];
 
-                    XYRange* xyrange = [allPositions objectAtIndex:k++];
+                    XYRange* xyrange = [allPositions objectAtIndex:k];
 
                     result->startX = xyrange->xStart;
                     result->endX = xyrange->xEnd;

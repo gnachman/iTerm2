@@ -11,7 +11,6 @@
 
 // Keys for serializing an entry
 static NSString *const kCommand = @"command";
-static NSString *const kDirectory = @"directory";
 static NSString *const kUses = @"uses";
 static NSString *const kLastUsed = @"last used";
 static NSString *const kUseTimes = @"use times";

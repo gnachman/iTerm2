@@ -1250,10 +1250,12 @@
 
 - (void)sendDataToTerminal:(NSData *)data {
     [terminal_.parser putStreamData:data.bytes length:data.length];
-    NSMutableArray *tokens = [NSMutableArray array];
-    [terminal_.parser addParsedTokensToArray:tokens];
-    assert(tokens.count == 1);
-    [terminal_ executeToken:tokens[0]];
+    CVector vector;
+    CVectorCreate(&vector, 1);
+    [terminal_.parser addParsedTokensToVector:&vector];
+    assert(CVectorCount(&vector) == 1);
+    [terminal_ executeToken:CVectorGetObject(&vector, 0)];
+    CVectorDestroy(&vector);
 }
 
 - (void)testAllCharacterSetPropertiesHaveDefaultValues {
@@ -1363,11 +1365,15 @@
     codes = [codes stringByReplacingOccurrencesOfString:@"^G" withString:bel];
     NSData *data = [codes dataUsingEncoding:NSUTF8StringEncoding];
     [terminal_.parser putStreamData:data.bytes length:data.length];
-    NSMutableArray *tokens = [NSMutableArray array];
-    [terminal_.parser addParsedTokensToArray:tokens];
-    for (VT100Token *token in tokens) {
+
+    CVector vector;
+    CVectorCreate(&vector, 1);
+    [terminal_.parser addParsedTokensToVector:&vector];
+    for (int i = 0; i < CVectorCount(&vector); i++) {
+        VT100Token *token = CVectorGetObject(&vector, i);
         [terminal_ executeToken:token];
     }
+    CVectorDestroy(&vector);
 }
 
 // Most of the work is done by VT100Grid's appendCharsAtCursor, which is heavily tested already.
@@ -1606,6 +1612,7 @@
                         [terminal_ backgroundColorCode],
                         &len,
                         NO,
+                        NULL,
                         NULL);
     return data;
 }
