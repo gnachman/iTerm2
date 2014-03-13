@@ -750,19 +750,16 @@ typedef enum {
     NSString* cmd = [NSString stringWithFormat:@"tic -e xterm-256color %@", [filename stringWithEscapedShellCharacters]];
     if (system("infocmp xterm-256color > /dev/null")) {
         switch (NSRunAlertPanel(@"Warning",
-                                @"The terminfo file for the terminal type you're using, \"xterm-256color\", is not installed on your system. Would you like to install it now?",
+                                @"The terminfo file for the terminal type you're using, \"xterm-256color\", is"
+                                @"not installed on your system. Would you like to install it now?",
                                 @"Install",
                                 @"Never ask me again",
-                                @"Not Now",
-                                nil)) {
+                                @"Not Now")) {
             case NSAlertDefaultReturn:
                 if (system([cmd UTF8String])) {
                     NSRunAlertPanel(@"Error",
                                     @"Sorry, an error occurred while running: %@",
-                                    @"Ok",
-                                    nil,
-                                    nil,
-                                    cmd);
+                                    @"OK", nil, nil, cmd);
                 }
                 break;
             case NSAlertAlternateReturn:
@@ -898,7 +895,7 @@ typedef enum {
             if (NSRunAlertPanel(@"Short-Lived Session Warning",
                                 @"A session ended very soon after starting. Check that the command "
                                 @"in profile \"%@\" is correct.",
-                                @"Ok",
+                                @"OK",
                                 @"Don't Warn Again for This Profile",
                                 nil,
                                 theName) != NSAlertDefaultReturn) {
