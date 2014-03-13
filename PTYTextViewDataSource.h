@@ -103,6 +103,9 @@ typedef enum {
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line;
 - (VT100RemoteHost *)remoteHostOnLine:(int)line;
 
+// Check whether in alternate screen mode
+- (BOOL)isAlternate;
+
 - (void)clearBuffer;
 
 @end
