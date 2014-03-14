@@ -1,6 +1,3 @@
-/* -*- mode:objc -*- */
-/* $Id: PTYWindow.h,v 1.6 2008-09-07 21:54:44 yfabian Exp $ */
-/* Incorporated into iTerm.app by Ujwal S. Setlur */
 /*
  **  PTYWindow.h
  **
@@ -11,7 +8,7 @@
  **
  **  Project: iTerm
  **
- **  Description: NSWindow subclass. Implements transparency.
+ **  Description: NSWindow subclass. Implements smart window placement and blur.
  **
  **  This program is free software; you can redistribute it and/or modify
  **  it under the terms of the GNU General Public License as published by
@@ -32,29 +29,20 @@
 #import <Cocoa/Cocoa.h>
 
 @protocol PTYWindowDelegateProtocol
-- (void) windowWillToggleToolbarVisibility: (id) sender;
-- (void) windowDidToggleToolbarVisibility: (id) sender;
-- (BOOL) lionFullScreen;
+- (void)windowWillToggleToolbarVisibility:(id)sender;
+- (void)windowDidToggleToolbarVisibility:(id)sender;
+- (BOOL)lionFullScreen;
 @end
 
 // See http://www.google.com/search?sourceid=chrome&ie=UTF-8&q=_setContentHasShadow
 // Solves bug 299 (ghosting of contents with highly transparent windows--the window's
 // views cast a shadow, and the window shadow gets messed up, which you can see through
-// the transparent window.)
-@interface NSWindow (NSWindowPrivate) // new Tiger private method
-- (void) _setContentHasShadow:(BOOL) shadow;
+// the transparent window.) but causes bug 2925 (artifacts in the corners).
+@interface NSWindow (NSWindowPrivate)  // private method
+- (void)_setContentHasShadow:(BOOL)shadow;
 @end
 
-@interface PTYWindow : NSWindow 
-{
-    int blurFilter;
-    double blurRadius_;
-    BOOL layoutDone;
-
-    // True while in -[NSWindow toggleFullScreen:].
-    BOOL isTogglingLionFullScreen_;
-    NSObject *restoreState_;
-}
+@interface PTYWindow : NSWindow
 
 - initWithContentRect:(NSRect)contentRect
             styleMask:(NSUInteger)aStyle

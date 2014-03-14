@@ -1,6 +1,3 @@
-/* -*- mode:objc -*- */
-/* $Id: PTYWindow.m,v 1.17 2008-09-24 22:35:39 yfabian Exp $ */
-/* Incorporated into iTerm.app by Ujwal S. Setlur */
 /*
  **  PTYWindow.m
  **
@@ -8,10 +5,6 @@
  **
  **  Author: Fabian, Ujwal S. Setlur
  **      Initial code by Kiichi Kusama
- **
- **  Project: iTerm
- **
- **  Description: NSWindow subclass. Implements transparency.
  **
  **  This program is free software; you can redistribute it and/or modify
  **  it under the terms of the GNU General Public License as published by
@@ -42,25 +35,32 @@
 #define PtyLog DLog
 #endif
 
-@implementation PTYWindow
+@implementation PTYWindow {
+    int blurFilter;
+    double blurRadius_;
+    BOOL layoutDone;
+    
+    // True while in -[NSWindow toggleFullScreen:].
+    BOOL isTogglingLionFullScreen_;
+    NSObject *restoreState_;
+}
 
 - (void)dealloc
 {
     [restoreState_ release];
-
     [super dealloc];
 
 }
 
-- initWithContentRect:(NSRect)contentRect
-            styleMask:(NSUInteger)aStyle
-              backing:(NSBackingStoreType)bufferingType
-                defer:(BOOL)flag;
-{
-    if ((self = [super initWithContentRect:contentRect
-                 styleMask:aStyle
-                   backing:bufferingType
-                     defer:flag]) != nil) {
+- (id)initWithContentRect:(NSRect)contentRect
+                styleMask:(NSUInteger)aStyle
+                  backing:(NSBackingStoreType)bufferingType
+                    defer:(BOOL)flag {
+    self = [super initWithContentRect:contentRect
+                            styleMask:aStyle
+                              backing:bufferingType
+                                defer:flag];
+    if (self) {
         [self setAlphaValue:0.9999];
         blurFilter = 0;
         layoutDone = NO;
@@ -69,16 +69,14 @@
     return self;
 }
 
-- (NSString *)description
-{
+- (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p frame=%@>",
             [self class],
             self,
             [NSValue valueWithRect:self.frame]];
 }
 
-- (void)encodeRestorableStateWithCoder:(NSCoder *)coder
-{
+- (void)encodeRestorableStateWithCoder:(NSCoder *)coder {
     // This gives a warning, but this method won't be called except in 10.7 where this
     // method does exist in our superclass. The only way to avoid the warning
     // is to do some really gnarly stuff. See here for more:
@@ -92,12 +90,7 @@
     restoreState_ = [restoreState retain];
 }
 
-- (void)enableBlur:(double)radius
-{
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
-    // Only works in Leopard (or hopefully later)
-    if (!OSX_LEOPARDORLATER) return;
-
+- (void)enableBlur:(double)radius {
     const double kEpsilon = 0.001;
     if (blurFilter && fabs(blurRadius_ - radius) < kEpsilon) {
         return;
@@ -114,15 +107,9 @@
         NSLog(@"Couldn't get blur function");
     }
     blurRadius_ = radius;
-#endif
 }
 
-- (void)disableBlur
-{
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
-    //only works in Leopard (or hopefully later)
-    if (!OSX_LEOPARDORLATER) return;
-
+- (void)disableBlur {
     CGSConnectionID con = CGSMainConnectionID();
     if (!con) {
         return;
@@ -136,15 +123,13 @@
         CGSReleaseCIFilter(CGSMainConnectionID(), blurFilter);
         blurFilter = 0;
     }
-#endif
 }
 
 - (id<PTYWindowDelegateProtocol>)ptyDelegate {
     return (id<PTYWindowDelegateProtocol>)[self delegate];
 }
 
-- (void)toggleFullScreen:(id)sender
-{
+- (void)toggleFullScreen:(id)sender {
     if (![[self ptyDelegate] lionFullScreen]  &&
         ![[PreferencePanel sharedInstance] lionStyleFullscreen]) {
         // The user must have clicked on the toolbar arrow, but the pref is set
@@ -152,31 +137,22 @@
         [[self delegate] performSelector:@selector(toggleTraditionalFullScreenMode)
                               withObject:nil];
     } else {
-        // This is a way of calling [super toggleFullScreen:] that doesn't give a warning if
-        // the method doesn't exist (it's new in 10.7) but we build against 10.5 sdk.
-        IMP functionPointer = [NSWindow instanceMethodForSelector:_cmd];
-        isTogglingLionFullScreen_ = true;
-        functionPointer(self, _cmd, sender);
-        isTogglingLionFullScreen_ = false;
+        [super toggleFullScreen:sender];
     }
 }
 
-- (BOOL)isTogglingLionFullScreen
-{
+- (BOOL)isTogglingLionFullScreen {
     return isTogglingLionFullScreen_;
 }
 
-- (int)screenNumber
-{
+- (int)screenNumber {
     return [[[[self screen] deviceDescription] objectForKey:@"NSScreenNumber"] intValue];
 }
 
-- (void)smartLayout
-{
+- (void)smartLayout {
     PtyLog(@"enter smartLayout");
     NSEnumerator* iterator;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
     CGSWorkspaceID currentSpace = -1;  // Valid only before 10.8 Mountain Lion.
     CGSConnectionID con;
     if (!IsMountainLionOrLater()) {
@@ -187,7 +163,6 @@
         }
         CGSGetWorkspace(con, &currentSpace);
     }
-#endif
 
     int currentScreen = [self screenNumber];
     NSRect screenRect = [[self screen] visibleFrame];
@@ -210,8 +185,6 @@
             continue;
         }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
-
         if (IsMountainLionOrLater()) {
             // CGSGetWindowWorkspace broke in 10.8.
             if (![otherWindow isOnActiveSpace]) {
@@ -226,7 +199,7 @@
                 continue;
             }
         }
-#endif
+
         PtyLog(@" add window to array of windows");
         [windows addObject:otherWindow];
     }
@@ -305,14 +278,12 @@ end:
     [self setFrameOrigin:bestFrame.origin];
 }
 
-- (void)setLayoutDone
-{
+- (void)setLayoutDone {
     PtyLog(@"setLayoutDone %@", [NSThread callStackSymbols]);
     layoutDone = YES;
 }
 
-- (void)makeKeyAndOrderFront:(id)sender
-{
+- (void)makeKeyAndOrderFront:(id)sender {
     PtyLog(@"PTYWindow makeKeyAndOrderFront: layoutDone=%d %@", (int)layoutDone, [NSThread callStackSymbols]);
     if (!layoutDone) {
         PtyLog(@"try to call windowWillShowInitial");
@@ -328,8 +299,7 @@ end:
     [super makeKeyAndOrderFront:sender];
 }
 
-- (void)toggleToolbarShown:(id)sender
-{
+- (void)toggleToolbarShown:(id)sender {
     id delegate = [self delegate];
 
     // Let our delegate know
@@ -344,8 +314,7 @@ end:
 
 }
 
-- (BOOL)canBecomeKeyWindow
-{
+- (BOOL)canBecomeKeyWindow {
     return YES;
 }
 
