@@ -11,5 +11,6 @@
 @interface NSObject (iTerm)
 
 - (void)performSelectorOnMainThread:(SEL)selector withObjects:(NSArray *)objects;
++ (void)performAfterDuration:(NSTimeInterval)duration block:(void(^)())block;
 
 @end

@@ -1982,6 +1982,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification
 {
+    [self maybeHideHotkeyWindow];
     [[[NSApplication sharedApplication] dockTile] setBadgeLabel:@""];
     [[[NSApplication sharedApplication] dockTile] setShowsApplicationBadge:NO];
     PtyLog(@"%s(%d):-[PseudoTerminal windowDidBecomeKey:%@]",
@@ -1992,9 +1993,12 @@ NSString *kSessionsKVCKey = @"sessions";
     [itad updateMaximizePaneMenuItem];
     [itad updateUseTransparencyMenuItem];
     [itad updateBroadcastMenuState];
-    if (_fullScreen && [[self window] alphaValue] > 0) {
-        // Is a fullscreen window and is not a hidden hotkey window.
-        [self hideMenuBar];
+    if (_fullScreen) {
+        if (![self isHotKeyWindow] || [[HotkeyWindowController sharedInstance] rollingInHotkeyTerm]) {
+            // Either this is a regular (non-hotkey) fullscreen window, or else it's a fullscreen
+            // hotkey window that's getting rolled in.
+            [self hideMenuBar];
+        }
     }
 
     // Note: there was a bug in the old iterm that setting fonts didn't work
@@ -2265,29 +2269,12 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 
     PtyLog(@"PseudoTerminal windowDidResignKey");
-    if ([[self window] alphaValue] > 0 &&
-        [self isHotKeyWindow] &&
-        [[PreferencePanel sharedInstance] hotkeyAutoHides] &&
-        ![[HotkeyWindowController sharedInstance] rollingInHotkeyTerm]) {
-        PtyLog(@"windowDidResignKey: is hotkey and hotkey window auto-hides");
-        // We want to dismiss the hotkey window when some other window
-        // becomes key. Note that if a popup closes this function shouldn't
-        // be called at all because it makes us key before closing itself.
-        // If a popup is opening, though, we shouldn't close ourselves.
-        if (![[NSApp keyWindow] isKindOfClass:[PopupWindow class]] &&
-            ![[[NSApp keyWindow] windowController] isKindOfClass:[ProfilesWindow class]] &&
-            ![[[NSApp keyWindow] windowController] isKindOfClass:[PreferencePanel class]]) {
-            PtyLog(@"windowDidResignKey: new key window isn't popup so hide myself");
-            if ([[[NSApp keyWindow] windowController] isKindOfClass:[PseudoTerminal class]]) {
-                [[HotkeyWindowController sharedInstance] doNotOrderOutWhenHidingHotkeyWindow];
-            }
-            [[HotkeyWindowController sharedInstance] hideHotKeyWindow:self];
-        }
-    }
     if (togglingFullScreen_) {
         PtyLog(@"windowDidResignKey returning because togglingFullScreen.");
         return;
     }
+
+    [self maybeHideHotkeyWindow];
 
     if (fullScreenTabviewTimer_) {
         // If the window has been closed then it's possible that the
@@ -2330,19 +2317,72 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
+// Returns the hotkey window that should be hidden or nil if the hotkey window
+// shouldn't be hidden right now.
+- (PseudoTerminal *)hotkeyWindowToHide {
+    DLog(@"Checking if hotkey window should be hidden.");
+    BOOL haveMain = NO;
+    BOOL otherTerminalIsKey = NO;
+    for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
+        if ([window isMainWindow]) {
+            haveMain = YES;
+        }
+    }
+    PseudoTerminal *hotkeyTerminal = nil;
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        PTYWindow *window = [term ptyWindow];
+        DLog(@"Window %@ key=%d", window, [window isKeyWindow]);
+        if ([window isKeyWindow] && ![term isHotKeyWindow]) {
+            DLog(@"Key window is %@", window);
+            otherTerminalIsKey = YES;
+        }
+        if ([term isHotKeyWindow]) {
+            hotkeyTerminal = term;
+        }
+    }
+    
+    DLog(@"%@ haveMain=%d otherTerminalIsKey=%d", self.window, haveMain, otherTerminalIsKey);
+    if (hotkeyTerminal && (!haveMain || otherTerminalIsKey)) {
+        return hotkeyTerminal;
+    } else {
+        DLog(@"No need to hide hotkey window");
+        return nil;
+    }
+}
+
+- (void)maybeHideHotkeyWindow {
+    if (togglingFullScreen_) {
+        return;
+    }
+    PseudoTerminal *hotkeyTerminal = [self hotkeyWindowToHide];
+    if (hotkeyTerminal) {
+        DLog(@"Want to hide hotkey window");
+        if ([[hotkeyTerminal window] alphaValue] > 0 &&
+            [[PreferencePanel sharedInstance] hotkeyAutoHides] &&
+            ![[HotkeyWindowController sharedInstance] rollingInHotkeyTerm]) {
+            DLog(@"windowDidResignKey: is hotkey and hotkey window auto-hides");
+            // We want to dismiss the hotkey window when some other window
+            // becomes key. Note that if a popup closes this function shouldn't
+            // be called at all because it makes us key before closing itself.
+            // If a popup is opening, though, we shouldn't close ourselves.
+            if (![[NSApp keyWindow] isKindOfClass:[PopupWindow class]] &&
+                ![[[NSApp keyWindow] windowController] isKindOfClass:[ProfilesWindow class]] &&
+                ![[[NSApp keyWindow] windowController] isKindOfClass:[PreferencePanel class]]) {
+                PtyLog(@"windowDidResignKey: new key window isn't popup so hide myself");
+                if ([[[NSApp keyWindow] windowController] isKindOfClass:[PseudoTerminal class]]) {
+                    [[HotkeyWindowController sharedInstance] doNotOrderOutWhenHidingHotkeyWindow];
+                }
+                [[HotkeyWindowController sharedInstance] hideHotKeyWindow:hotkeyTerminal];
+            }
+        }
+    }
+}
+
 - (void)windowDidResignMain:(NSNotification *)aNotification
 {
     PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignMain:%@]",
           __FILE__, __LINE__, aNotification);
-    // Note: there used to be code here that would toggle fullscreen mode. I can't figure out
-    // why it existed. It was added in the original iTerm to help avoid users getting "stuck"
-    // in fullscreen mode, then commented out in a later revision without comment. During a big
-    // refactor, iTerm2 brought it back for reasons that were unclear. It was causing problems
-    // with toggling fullscreen from top-of-screen windows so I removed it because it didn't seem
-    // to provide any benefit. I'll leave this here as a reminder in case a bug pops up. 10/6/13
-    // if (_fullScreen && !togglingFullScreen_) {
-    //     [self toggleFullScreenMode:nil];
-    // }
+    [self maybeHideHotkeyWindow];
 
     // update the cursor
     [[[self currentSession] textview] refresh];

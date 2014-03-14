@@ -502,6 +502,11 @@ static BOOL hasBecomeActive = NO;
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app
 {
+    NSArray *terminals = [[iTermController sharedInstance] terminals];
+    if (terminals.count == 1 && [terminals[0] isHotKeyWindow]) {
+        // The last window wasn't really closed, it was just the hotkey window getting ordered out.
+        return NO;
+    }
     if (!userHasInteractedWithAnySession_) {
         NSNumber* pref = [[NSUserDefaults standardUserDefaults] objectForKey:@"MinRunningTime"];
         const double kMinRunningTime =  pref ? [pref floatValue] : 10;

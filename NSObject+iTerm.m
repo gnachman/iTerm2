@@ -34,4 +34,11 @@
                         waitUntilDone:NO];
 }
 
++ (void)performAfterDuration:(NSTimeInterval)duration block:(void(^)())block {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(duration * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+                       block();
+                   });
+}
+
 @end
