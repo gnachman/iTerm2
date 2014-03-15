@@ -1375,7 +1375,7 @@ typedef enum {
 + (BOOL)_recursiveSelectMenuItem:(NSString*)theName inMenu:(NSMenu*)menu
 {
     for (NSMenuItem* item in [menu itemArray]) {
-        if (![item isEnabled] || [item isHidden] || [item isAlternate]) {
+        if (![item isEnabled] || [item isHidden]) {
             continue;
         }
         if ([item hasSubmenu]) {
