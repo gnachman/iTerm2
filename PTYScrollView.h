@@ -10,7 +10,7 @@
  **
  **  Project: iTerm
  **
- **  Description: NSScrollView subclass. Currently does not do anything special.
+ **  Description: NSScrollView subclass. Handles user scroll detection.
  **
  **  This program is free software; you can redistribute it and/or modify
  **  it under the terms of the GNU General Public License as published by
@@ -30,48 +30,22 @@
 #import <Cocoa/Cocoa.h>
 
 @interface PTYScroller : NSScroller
-{
-    BOOL userScroll;
-    BOOL hasDarkBackground_;
-}
 
-@property (nonatomic, assign) BOOL hasDarkBackground;
+@property(nonatomic, assign) BOOL userScroll;
 
 + (BOOL)isCompatibleWithOverlayScrollers;
-- (id)init;
-- (void) mouseDown: (NSEvent *)theEvent;
+- (void)mouseDown: (NSEvent *)theEvent;
 - (void)trackScrollButtons:(NSEvent *)theEvent;
 - (void)trackKnob:(NSEvent *)theEvent;
-- (BOOL)userScroll;
-- (void)setUserScroll: (BOOL) scroll;
 
 @end
 
 @interface PTYScrollView : NSScrollView
-{
-    NSImage *backgroundImage;
-    // If the pattern is set, the backgroundImage is a cached rendered version of it.
-    NSColor *backgroundPattern;
-    float transparency;
 
-    // Used for working around Lion bug described in setHasVerticalScroller:inInit:
-    NSDate *creationDate_;
-    NSTimer *timer_;
-}
-
-- (void) dealloc;
 - (id)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller;
 - (void)scrollWheel:(NSEvent *)theEvent;
 - (void)detectUserScroll;
 - (BOOL)isLegacyScroller;
 
-// background image
-- (BOOL)hasBackgroundImage;
-- (void)setBackgroundImage: (NSImage *) anImage;
-- (void)setBackgroundImage: (NSImage *) anImage asPattern:(BOOL)asPattern;
-- (void)drawBackgroundImageRect:(NSRect)rect useTransparency:(BOOL)useTransparency;
-- (void)drawBackgroundImageRect:(NSRect)rect toPoint:(NSPoint)dest useTransparency:(BOOL)useTransparency;
-- (float)transparency;
-- (void)setTransparency: (float) theTransparency;
 
 @end

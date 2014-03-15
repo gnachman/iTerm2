@@ -186,6 +186,7 @@ typedef enum {
 
 // Filename of background image.
 @property(nonatomic, copy) NSString *backgroundImagePath;
+@property(nonatomic, retain) NSImage *backgroundImage;
 
 @property(nonatomic, retain) iTermColorMap *colorMap;
 @property(nonatomic, assign) float transparency;
@@ -401,8 +402,6 @@ typedef enum {
 - (void)searchNext;
 - (void)searchPrevious;
 
-// Bitmap of how the session looks.
-- (NSImage *)imageOfSession:(BOOL)flip;
 - (void)setPasteboard:(NSString *)pbName;
 - (void)stopCoprocess;
 - (void)launchSilentCoprocessWithCommand:(NSString *)command;
@@ -426,6 +425,9 @@ typedef enum {
 
 // Select this session and tab and bring window to foreground.
 - (void)reveal;
+
+// Refreshes the textview and takes a snapshot of the SessionView.
+- (NSImage *)snapshot;
 
 #pragma mark - Scripting Support
 

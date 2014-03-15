@@ -64,6 +64,10 @@ typedef enum {
 - (void)paste:(id)sender;
 - (void)textViewFontDidChange;
 - (void)textViewSizeDidChange;
+- (void)textViewDrawBackgroundImageInView:(NSView *)view
+                                 viewRect:(NSRect)rect
+                   blendDefaultBackground:(BOOL)blendDefaultBackground;
+- (BOOL)textViewHasBackgroundImage;
 - (PTYScrollView *)scrollview;
 - (void)sendEscapeSequence:(NSString *)text;
 - (void)sendHexCode:(NSString *)codes;
@@ -223,6 +227,9 @@ typedef enum {
 // Stores colors. This object is its delegate.
 @property(nonatomic, readonly) iTermColorMap *colorMap;
 
+// The default background color, dimmed if needed.
+@property(nonatomic, readonly) NSColor *dimmedDefaultBackgroundColor;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 
@@ -239,10 +246,6 @@ typedef enum {
 
 // Sets the "changed since last Exposé" flag to NO and returns its original value.
 - (BOOL)getAndResetChangedSinceLastExpose;
-
-// Draw the given rect. If toOrigin is not NULL, then the NSPoint it points at is used as an origin
-// for all drawing.
-- (void)drawRect:(NSRect)rect to:(NSPoint*)toOrigin;
 
 // Changes the document cursor, if needed. The event is used to get modifier flags.
 - (void)updateCursor:(NSEvent *)event;
@@ -354,16 +357,6 @@ typedef enum {
 // Flash a graphic.
 - (void)beginFlash:(FlashImage)image;
 
-// Draws a rectangle (in this view's coords) to a different location whose origin is dest. It's
-// drawn flipped.
-- (void)drawFlippedBackground:(NSRect)bgRect toPoint:(NSPoint)dest;
-
-// Draws a portion of this view's background.
-- (void)drawBackground:(NSRect)bgRect;
-
-// Draws a portion of this view's background to a different location whose origin is dest.
-- (void)drawBackground:(NSRect)bgRect toPoint:(NSPoint)dest;
-
 // Returns true if any character in the buffer is selected.
 - (BOOL)isAnyCharSelected;
 
@@ -384,9 +377,6 @@ typedef enum {
                         y:(int)y
                     range:(VT100GridWindowedRange *)range
           respectDividers:(BOOL)respectDividers;
-
-// Draws a dotted outline (or just the top of the outline) if there is a maximized pane.
-- (void)drawOutlineInRect:(NSRect)rect topOnly:(BOOL)topOnly;
 
 // Add a search result for highlighting in yellow.
 - (void)addSearchResult:(SearchResult *)searchResult;

@@ -30,11 +30,5 @@
 
 @class PTYTextView;
 
-@interface TextViewWrapper : NSView {
-    PTYTextView* child_;
-}
-
-- (void)addSubview:(NSView *)child;
-- (NSRect)adjustScroll:(NSRect)proposedVisibleRect;
-
+@interface TextViewWrapper : NSView
 @end

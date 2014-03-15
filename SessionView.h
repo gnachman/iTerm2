@@ -101,4 +101,7 @@
 
 - (void)updateScrollViewFrame;
 
+// The frame excluding the per-pane titlebar.
+- (NSRect)contentRect;
+
 @end

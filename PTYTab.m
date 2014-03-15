@@ -1570,7 +1570,7 @@ static NSString* FormatRect(NSRect r) {
 
 - (void)_drawSession:(PTYSession*)session inImage:(NSImage*)viewImage atOrigin:(NSPoint)origin
 {
-    NSImage *textviewImage = [session imageOfSession:YES];
+    NSImage *textviewImage = [session snapshot];
 
     origin.y = [viewImage size].height - [textviewImage size].height - origin.y;
     [viewImage lockFocus];

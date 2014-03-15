@@ -324,10 +324,10 @@ static NSImage* alertImage;
     int prevCursorX, prevCursorY;
 
     MovingAverage *drawRectDuration_, *drawRectInterval_;
-        // Current font. Only valid for the duration of a single drawing context.
+    // Current font. Only valid for the duration of a single drawing context.
     NSFont *selectedFont_;
 
-    // Used by _drawCursorTo: to remember the last time the cursor moved to avoid drawing a blinked-out
+    // Used by _drawCursor: to remember the last time the cursor moved to avoid drawing a blinked-out
     // cursor while it's moving.
     NSTimeInterval lastTimeCursorMoved_;
 
@@ -775,7 +775,8 @@ static NSImage* alertImage;
 {
     PTYScroller *scroller = [_delegate textViewVerticalScroller];
     NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
-    [scroller setHasDarkBackground:[backgroundColor isDark]];
+    scroller.knobStyle =
+        [backgroundColor isDark] ? NSScrollerKnobStyleLight : NSScrollerKnobStyleDefault;
 }
 
 - (iTermColorMapKey)colorMapKeyForCode:(int)theIndex
@@ -845,6 +846,15 @@ static NSImage* alertImage;
     } else {
         return [_colorMap dimmedColorForKey:key];
     }
+}
+
+- (NSColor *)dimmedDefaultBackgroundColor {
+    return [self colorForCode:ALTSEM_DEFAULT
+                        green:0
+                         blue:0
+                    colorMode:ColorModeAlternate
+                         bold:NO
+                 isBackground:YES];
 }
 
 - (NSColor *)selectionColorForCurrentFocus
@@ -1788,7 +1798,7 @@ NSMutableArray* screens=0;
     [self getRectsBeingDrawn:&rectArray count:&rectCount];
     for (int i = 0; i < rectCount; i++) {
         DLog(@"drawRect - draw sub rectangle %@", [NSValue valueWithRect:rectArray[i]]);
-        [self drawRect:rectArray[i] to:nil];
+        [self drawOneRect:rectArray[i]];
     }
     if (drawRectDuration_) {
         [drawRectDuration_ addValue:[drawRectDuration_ timeSinceTimerStarted]];
@@ -1859,8 +1869,6 @@ NSMutableArray* screens=0;
                  operation:NSCompositeSourceOver
                   fraction:flashing_];
     }
-
-    [self drawOutlineInRect:rect topOnly:NO];
 
     if (showTimestamps_) {
         [self drawTimestamps];
@@ -1950,47 +1958,7 @@ NSMutableArray* screens=0;
     [s drawAtPoint:NSMakePoint(x, y + offset) withAttributes:attributes];
 }
 
-- (void)drawOutlineInRect:(NSRect)rect topOnly:(BOOL)topOnly
-{
-    if ([_delegate textViewTabHasMaximizedPanel]) {
-        NSColor *color = [_colorMap colorForKey:kColorMapBackground];
-        double grayLevel = [color isDark] ? 1 : 0;
-        color = [color colorDimmedBy:0.2 towardsGrayLevel:grayLevel];
-        NSRect frame = [self visibleRect];
-        if (!topOnly) {
-            if (frame.origin.y < VMARGIN) {
-                frame.size.height += (VMARGIN - frame.origin.y);
-                frame.origin.y -= (VMARGIN - frame.origin.y);
-            }
-        }
-        NSBezierPath *path = [[[NSBezierPath alloc] init] autorelease];
-        CGFloat left = frame.origin.x + 0.5;
-        CGFloat right = frame.origin.x + frame.size.width - 0.5;
-        CGFloat top = frame.origin.y + 0.5;
-        CGFloat bottom = frame.origin.y + frame.size.height - 0.5;
-
-        if (topOnly) {
-            [path moveToPoint:NSMakePoint(left, top + VMARGIN)];
-            [path lineToPoint:NSMakePoint(left, top)];
-            [path lineToPoint:NSMakePoint(right, top)];
-            [path lineToPoint:NSMakePoint(right, top + VMARGIN)];
-        } else {
-            [path moveToPoint:NSMakePoint(left, top + VMARGIN)];
-            [path lineToPoint:NSMakePoint(left, top)];
-            [path lineToPoint:NSMakePoint(right, top)];
-            [path lineToPoint:NSMakePoint(right, bottom)];
-            [path lineToPoint:NSMakePoint(left, bottom)];
-            [path lineToPoint:NSMakePoint(left, top + VMARGIN)];
-        }
-
-        CGFloat dashPattern[2] = { 5, 5 };
-        [path setLineDash:dashPattern count:2 phase:0];
-        [color set];
-        [path stroke];
-    }
-}
-
-- (void)drawRect:(NSRect)rect to:(NSPoint*)toOrigin
+- (void)drawOneRect:(NSRect)rect
 {
     // The range of chars in the line that need to be drawn.
     NSRange charRange = NSMakeRange(MAX(0, (rect.origin.x - MARGIN) / charWidth),
@@ -2077,13 +2045,8 @@ NSMutableArray* screens=0;
                 // it overflowed. Continue to draw text in this out-of-alignment
                 // manner until refresh is called and gets things in sync again.
                 NSPoint temp;
-                if (toOrigin) {
-                    const CGFloat offsetFromTopOfScreen = y - initialY;
-                    temp = NSMakePoint(toOrigin->x, toOrigin->y + offsetFromTopOfScreen);
-                }
                 anyBlinking |= [self _drawLine:line-overflow
                                            AtY:y
-                                       toPoint:toOrigin ? &temp : nil
                                      charRange:charRange
                                        context:ctx];
             }
@@ -2151,22 +2114,18 @@ NSMutableArray* screens=0;
     [[NSColor colorWithCalibratedRed:rc green:gc blue:bc alpha:1] set];
     NSRectFill(excessRect);
 #else
-    if (toOrigin) {
-        [self drawBackground:excessRect toPoint:*toOrigin];
-    } else {
-        [self drawBackground:excessRect];
-    }
+    [_delegate textViewDrawBackgroundImageInView:self
+                                        viewRect:excessRect
+                          blendDefaultBackground:YES];
 #endif
 
     // Draw a margin at the top of the visible area.
     NSRect topMarginRect = [self visibleRect];
     if (topMarginRect.origin.y > 0) {
         topMarginRect.size.height = VMARGIN;
-        if (toOrigin) {
-            [self drawBackground:topMarginRect toPoint:*toOrigin];
-        } else {
-            [self drawBackground:topMarginRect];
-        }
+        [_delegate textViewDrawBackgroundImageInView:self
+                                            viewRect:topMarginRect
+                              blendDefaultBackground:YES];
     }
 
 #ifdef DEBUG_DRAWING
@@ -2205,7 +2164,7 @@ NSMutableArray* screens=0;
                                height:[_dataSource height]
                          cursorHeight:[self cursorHeight]
                                   ctx:ctx];
-    [self _drawCursorTo:toOrigin];
+    [self _drawCursor];
     anyBlinking |= [self _isCursorBlinking];
 
 #ifdef DEBUG_DRAWING
@@ -6123,112 +6082,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return _cachedBackgroundColor;
 }
 
-- (void)drawFlippedBackground:(NSRect)bgRect toPoint:(NSPoint)dest
-{
-    PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
-    BOOL hasBGImage = [scrollView hasBackgroundImage];
-    double alpha = 1.0 - _transparency;
-    if (hasBGImage) {
-        [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
-                                                                     toPoint:dest
-                                                             useTransparency:[self useTransparency]];
-        // Blend default bg color
-        NSColor *aColor = [self colorForCode:ALTSEM_DEFAULT
-                                       green:0
-                                        blue:0
-                                   colorMode:ColorModeAlternate
-                                        bold:NO
-                                isBackground:YES];
-        [[aColor colorWithAlphaComponent:1 - _blend] set];
-        NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
-                                            dest.y + bgRect.origin.y,
-                                            bgRect.size.width,
-                                            bgRect.size.height), NSCompositeSourceOver);
-    } else {
-        // No bg image
-        if (![self useTransparency]) {
-            alpha = 1;
-        }
-        if (!_colorMap.dimOnlyText) {
-            [[self cachedDimmedBackgroundColorWithAlpha:alpha] set];
-        } else {
-            [[[_colorMap colorForKey:kColorMapBackground] colorWithAlphaComponent:alpha] set];
-        }
-        NSRect fillDest = bgRect;
-        fillDest.origin.y += fillDest.size.height;
-        NSRectFillUsingOperation(fillDest, NSCompositeCopy);
-    }
-}
-
-- (void)drawBackground:(NSRect)bgRect toPoint:(NSPoint)dest
-{
-    PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
-    BOOL hasBGImage = [scrollView hasBackgroundImage];
-    double alpha = 1.0 - _transparency;
-    if (hasBGImage) {
-        [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
-                                                                     toPoint:dest
-                                                             useTransparency:[self useTransparency]];
-        // Blend default bg color over bg image.
-        NSColor *aColor = [self colorForCode:ALTSEM_DEFAULT
-                                       green:0
-                                        blue:0
-                                   colorMode:ColorModeAlternate
-                                        bold:NO
-                                isBackground:YES];
-        [[aColor colorWithAlphaComponent:1 - _blend] set];
-        NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
-                                            dest.y + bgRect.origin.y,
-                                            bgRect.size.width,
-                                            bgRect.size.height),
-                                 NSCompositeSourceOver);
-    } else {
-        // No bg image
-        if (![self useTransparency]) {
-            alpha = 1;
-        }
-        if (!_colorMap.dimOnlyText) {
-            [[self cachedDimmedBackgroundColorWithAlpha:alpha] set];
-        } else {
-            NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
-            [[backgroundColor colorWithAlphaComponent:alpha] set];
-        }
-        NSRectFillUsingOperation(bgRect, NSCompositeCopy);
-    }
-}
-
-- (void)drawBackground:(NSRect)bgRect
-{
-    PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
-    BOOL hasBGImage = [scrollView hasBackgroundImage];
-    double alpha = 1.0 - _transparency;
-    if (hasBGImage) {
-        [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
-                                                             useTransparency:[self useTransparency]];
-        // Blend default bg color over bg iamge.
-        NSColor *aColor = [self colorForCode:ALTSEM_DEFAULT
-                                       green:0
-                                        blue:0
-                                   colorMode:ColorModeAlternate
-                                        bold:NO
-                                isBackground:YES];
-        [[aColor colorWithAlphaComponent:1 - _blend] set];
-        NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
-    } else {
-        // Either draw a normal bg or, if transparency is off, blend the default bg color over the bg image.
-        if (![self useTransparency]) {
-            alpha = 1;
-        }
-        if (!_colorMap.dimOnlyText) {
-            [[self cachedDimmedBackgroundColorWithAlpha:alpha] set];
-        } else {
-            NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
-            [[backgroundColor colorWithAlphaComponent:alpha] set];
-        }
-        NSRectFillUsingOperation(bgRect, NSCompositeCopy);
-    }
-}
-
 - (BOOL)getAndResetChangedSinceLastExpose
 {
     BOOL temp = changedSinceLastExpose_;
@@ -7036,7 +6889,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                            row:(int)row               // Row number of line
                          endAt:(const int)lastIndex   // Index into line of last char
                        yOrigin:(const double)yOrigin  // Top left corner of rect to draw into
-                       toPoint:(NSPoint * const)toPoint  // If not nil, an offset for drawing
                     hasBGImage:(const BOOL)hasBGImage  // If set, draw a bg image (else solid colors only)
              defaultBgColorPtr:(NSColor **)defaultBgColorPtr  // Pass in default bg color; may be changed.
       alphaIfTransparencyInUse:(const double)alphaIfTransparencyInUse  // Alpha value to use if transparency is on
@@ -7060,15 +6912,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                lineHeight);
 
     if (hasBGImage) {
-        if (toPoint) {
-            [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
-                                                                         toPoint:NSMakePoint(toPoint->x + bgRect.origin.x,
-                                                                                             toPoint->y + bgRect.size.height)
-                                                                 useTransparency:[self useTransparency]];
-        } else {
-            [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
-                                                                 useTransparency:[self useTransparency]];
-        }
+        [_delegate textViewDrawBackgroundImageInView:self
+                                            viewRect:bgRect
+                              blendDefaultBackground:NO];
     }
     if (!hasBGImage ||
         (isMatch && !bgselected) ||
@@ -7105,10 +6951,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
         aColor = [aColor colorWithAlphaComponent:alphaIfTransparencyInUse];
         [aColor set];
-        if (toPoint) {
-            bgRect.origin.x += toPoint->x;
-            bgRect.origin.y = toPoint->y;
-        }
         NSRectFillUsingOperation(bgRect,
                                  hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
     } else if (hasBGImage) {
@@ -7132,13 +6974,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     NSPoint textOrigin;
-    if (toPoint) {
-        textOrigin = NSMakePoint(toPoint->x + MARGIN + firstIndex * charWidth,
-                                 toPoint->y);
-    } else {
-        textOrigin = NSMakePoint(MARGIN + firstIndex * charWidth,
-                                 yOrigin);
-    }
+    textOrigin = NSMakePoint(MARGIN + firstIndex * charWidth, yOrigin);
 
     // Highlight cursor line
     int cursorLine = [_dataSource cursorY] - 1 + [_dataSource numberOfScrollbackLines];
@@ -7171,7 +7007,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (BOOL)_drawLine:(int)line
               AtY:(double)curY
-          toPoint:(NSPoint*)toPoint
         charRange:(NSRange)charRange
           context:(CGContextRef)ctx
 {
@@ -7184,7 +7019,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int WIDTH = [_dataSource width];
     screen_char_t* theLine = [_dataSource getLineAtIndex:line];
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
-    BOOL hasBGImage = [scrollView hasBackgroundImage];
+    BOOL hasBGImage = [_delegate textViewHasBackgroundImage];
     double selectedAlpha = 1.0 - _transparency;
     double alphaIfTransparencyInUse = [self useTransparency] ? 1.0 - _transparency : 1.0;
     BOOL reversed = [[_dataSource terminal] reverseVideo];
@@ -7206,64 +7041,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                            bold:NO
                    isBackground:YES];
 
+    // Draw background in margins
+    [_delegate textViewDrawBackgroundImageInView:self viewRect:leftMargin blendDefaultBackground:YES];
+    [_delegate textViewDrawBackgroundImageInView:self viewRect:rightMargin blendDefaultBackground:YES];
+
     aColor = [aColor colorWithAlphaComponent:selectedAlpha];
     [aColor set];
-    if (hasBGImage) {
-        if (toPoint) {
-            [scrollView drawBackgroundImageRect:leftMargin
-                                        toPoint:NSMakePoint(toPoint->x + leftMargin.origin.x,
-                                                            toPoint->y + leftMargin.size.height)
-                                useTransparency:[self useTransparency]];
-            [scrollView drawBackgroundImageRect:rightMargin
-                                        toPoint:NSMakePoint(toPoint->x + rightMargin.origin.x,
-                                                            toPoint->y + rightMargin.size.height)
-                                useTransparency:[self useTransparency]];
-            // Blend default bg color over bg iamge.
-            [[aColor colorWithAlphaComponent:1 - _blend] set];
-            NSRectFillUsingOperation(NSMakeRect(toPoint->x + leftMargin.origin.x,
-                                                toPoint->y + leftMargin.origin.y,
-                                                leftMargin.size.width,
-                                                leftMargin.size.height), NSCompositeSourceOver);
-            NSRectFillUsingOperation(NSMakeRect(toPoint->x + rightMargin.origin.x,
-                                                toPoint->y + rightMargin.origin.y,
-                                                rightMargin.size.width,
-                                                rightMargin.size.height), NSCompositeSourceOver);
-        } else {
-            [scrollView drawBackgroundImageRect:leftMargin
-                                useTransparency:[self useTransparency]];
-            [scrollView drawBackgroundImageRect:rightMargin
-                                useTransparency:[self useTransparency]];
-
-            // Blend default bg color over bg iamge.
-            [[aColor colorWithAlphaComponent:1 - _blend] set];
-            NSRectFillUsingOperation(leftMargin, NSCompositeSourceOver);
-            NSRectFillUsingOperation(rightMargin, NSCompositeSourceOver);
-        }
-        [aColor set];
-    } else {
-        // No BG image
-        if (toPoint) {
-            NSRectFill(NSMakeRect(toPoint->x + leftMargin.origin.x,
-                                  toPoint->y,
-                                  leftMargin.size.width,
-                                  leftMargin.size.height));
-            NSRectFill(NSMakeRect(toPoint->x + rightMargin.origin.x,
-                                  toPoint->y,
-                                  rightMargin.size.width,
-                                  rightMargin.size.height));
-        } else {
-            if (hasBGImage) {
-                NSRectFillUsingOperation(leftMargin, NSCompositeSourceOver);
-                NSRectFillUsingOperation(rightMargin, NSCompositeSourceOver);
-            } else {
-                aColor = [aColor colorWithAlphaComponent:alphaIfTransparencyInUse];
-                [aColor set];
-                NSRectFill(leftMargin);
-                NSRectFill(rightMargin);
-            }
-        }
-    }
-
     // Indicate marks in margin --
     VT100ScreenMark *mark = [_dataSource markOnLine:line];
     if (mark) {
@@ -7354,7 +7137,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                      row:line
                                    endAt:j
                                  yOrigin:curY
-                                 toPoint:toPoint
                               hasBGImage:hasBGImage
                        defaultBgColorPtr:&aColor
                 alphaIfTransparencyInUse:alphaIfTransparencyInUse
@@ -7383,7 +7165,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                  row:line
                                endAt:j
                              yOrigin:curY
-                             toPoint:toPoint
                           hasBGImage:hasBGImage
                    defaultBgColorPtr:&aColor
             alphaIfTransparencyInUse:alphaIfTransparencyInUse
@@ -7684,11 +7465,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return lineHeight;
 }
 
-- (void)_drawCursor
-{
-    [self _drawCursorTo:nil];
-}
-
 - (NSColor*)backgroundColorForChar:(screen_char_t)c
 {
     if ([[_dataSource terminal] reverseVideo]) {
@@ -7775,9 +7551,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                  alpha:1];
 }
 
-- (void)_drawCursorTo:(NSPoint*)toOrigin
-{
-    DLog(@"_drawCursorTo:%@", toOrigin ? (id)[NSValue valueWithPoint:*toOrigin] : (id)@"nil");
+- (void)_drawCursor {
+    DLog(@"_drawCursor");
 
     int WIDTH, HEIGHT;
     screen_char_t* theLine;
@@ -7829,7 +7604,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Draw the regular cursor only if there's not an IME open as it draws its
     // own cursor.
-    DLog(@"_drawCursorTo: hasMarkedText=%d, cursorVisible=%d, showCursor=%d, x1=%d, yStart=%d, WIDTH=%d, HEIGHT=%d",
+    DLog(@"_drawCursor: hasMarkedText=%d, cursorVisible=%d, showCursor=%d, x1=%d, yStart=%d, WIDTH=%d, HEIGHT=%d",
          (int)[self hasMarkedText], (int)_cursorVisible, (int)showCursor, (int)x1, (int)yStart, (int)WIDTH, (int)HEIGHT);
     if (![self hasMarkedText] && _cursorVisible) {
         if (showCursor && x1 <= WIDTH && x1 >= 0 && yStart >= 0 && yStart < HEIGHT) {
@@ -7860,9 +7635,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 double_width = (x1 < WIDTH-1) && (theLine[x1+1].code == DWC_RIGHT);
             }
             curX = floor(x1 * charWidth + MARGIN);
-            curY = toOrigin ? toOrigin->y + (yStart + 1) * lineHeight - cursorHeight :
-                (yStart + [_dataSource numberOfLines] - HEIGHT + 1) * lineHeight - cursorHeight;
-            if (!toOrigin && [self isFindingCursor]) {
+            curY = (yStart + [_dataSource numberOfLines] - HEIGHT + 1) * lineHeight - cursorHeight;
+            if ([self isFindingCursor]) {
                 NSPoint cp = [self globalCursorLocation];
                 if (!NSEqualPoints(findCursorView_.cursor, cp)) {
                     findCursorView_.cursor = cp;

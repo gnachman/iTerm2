@@ -12,6 +12,7 @@
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PTYScrollView.h"
 #import "PTYTab.h"
@@ -210,6 +211,12 @@ typedef enum {
     // Previous updateDisplay timer's timeout period (not the actual duration,
     // but the kXXXTimerIntervalSec value).
     NSTimeInterval _lastTimeout;
+    
+    // In order to correctly draw a tiled background image, we must first draw
+    // it into an image the size of the session view, and then blit from it
+    // onto the background of whichever view needs a background. This ensures
+    // the tesselation is consistent.
+    NSImage *_patternedImage;
 }
 
 - (id)init {
@@ -290,6 +297,7 @@ typedef enum {
     [_overriddenFields release];
     [_eventQueue release];
     [_backgroundImagePath release];
+    [_backgroundImage release];
     [_antiIdleTimer invalidate];
     [_antiIdleTimer release];
     [_updateTimer invalidate];
@@ -310,6 +318,7 @@ typedef enum {
     [_tailFindContext release];
     _currentMarkOrNotePosition = nil;
     [_lastMark release];
+    [_patternedImage release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -2306,35 +2315,22 @@ typedef enum {
 - (void)setBackgroundImagePath:(NSString *)imageFilePath
 {
     if ([imageFilePath length]) {
-        [imageFilePath retain];
-        [_backgroundImagePath autorelease];
-        _backgroundImagePath = nil;
-
         if ([imageFilePath isAbsolutePath] == NO) {
             NSBundle *myBundle = [NSBundle bundleForClass:[self class]];
-            _backgroundImagePath = [myBundle pathForResource:imageFilePath ofType:@""];
-            [imageFilePath autorelease];
-            [_backgroundImagePath retain];
-        } else {
-            _backgroundImagePath = imageFilePath;
+            imageFilePath = [myBundle pathForResource:imageFilePath ofType:@""];
         }
-        NSImage *anImage = [[NSImage alloc] initWithContentsOfFile:_backgroundImagePath];
-        if (anImage != nil) {
-            [_scrollview setDrawsBackground:NO];
-            [_scrollview setBackgroundImage:anImage asPattern:[self backgroundImageTiled]];
-            [anImage release];
-        } else {
-            [_scrollview setDrawsBackground:YES];
-            [_backgroundImagePath autorelease];
-            _backgroundImagePath = nil;
-        }
+        [_backgroundImagePath release];
+        _backgroundImagePath = [imageFilePath copy];
+        self.backgroundImage = [[[NSImage alloc] initWithContentsOfFile:_backgroundImagePath] autorelease];
     } else {
-        [_scrollview setDrawsBackground:YES];
-        [_scrollview setBackgroundImage:nil];
-        [_backgroundImagePath autorelease];
+        self.backgroundImage = nil;
+        [_backgroundImagePath release];
         _backgroundImagePath = nil;
     }
 
+    [_patternedImage release];
+    _patternedImage = nil;
+    
     [_textview setNeedsDisplay:YES];
 }
 
@@ -2361,9 +2357,6 @@ typedef enum {
     if (transparency > 0.9) {
         transparency = 0.9;
     }
-
-    // set transparency of background image
-    [_scrollview setTransparency:transparency];
     [_textview setTransparency:transparency];
 }
 
@@ -3040,37 +3033,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [_textview clearHighlights];
 }
 
+- (NSImage *)snapshot {
+    [_textview refresh];
+    return [_view snapshot];
+}
+
 - (NSImage *)dragImage
 {
-    NSImage *image = [self imageOfSession:YES];
+    NSImage *image = [self snapshot];
+    // Dial the alpha down to 50%
     NSImage *dragImage = [[[NSImage alloc] initWithSize:[image size]] autorelease];
     [dragImage lockFocus];
     [image compositeToPoint:NSZeroPoint fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:0.5];
     [dragImage unlockFocus];
     return dragImage;
-}
-
-- (NSImage *)imageOfSession:(BOOL)flip
-{
-    [_textview refresh];
-    NSRect theRect = [_scrollview documentVisibleRect];
-    NSImage *textviewImage = [[[NSImage alloc] initWithSize:theRect.size] autorelease];
-
-    [textviewImage lockFocus];
-    if (flip) {
-        NSAffineTransform *transform = [NSAffineTransform transform];
-        [transform scaleXBy:1.0 yBy:-1];
-        [transform translateXBy:0 yBy:-theRect.size.height];
-        [transform concat];
-    }
-
-    [_textview drawBackground:theRect toPoint:NSMakePoint(0, 0)];
-    // Draw the background flipped, which is actually the right way up.
-    NSPoint temp = NSMakePoint(0, 0);
-    [_textview drawRect:theRect to:&temp];
-    [textviewImage unlockFocus];
-
-    return textviewImage;
 }
 
 - (void)setPasteboard:(NSString *)pbName
@@ -4185,6 +4161,109 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)textViewSizeDidChange
 {
     [_view updateScrollViewFrame];
+}
+
+- (BOOL)textViewHasBackgroundImage {
+    return _backgroundImage != nil;
+}
+
+- (NSImage *)patternedImage {
+    // If there is a tiled background image, tesselate _backgroundImage onto
+    // _patternedImage, which will be the source for future background image
+    // drawing operations.
+    if (!_patternedImage || !NSEqualSizes(_patternedImage.size, _view.contentRect.size)) {
+        [_patternedImage release];
+        _patternedImage = [[NSImage alloc] initWithSize:_view.contentRect.size];
+        [_patternedImage lockFocus];
+        NSColor *pattern = [[NSColor colorWithPatternImage:_backgroundImage] retain];
+        [pattern drawSwatchInRect:NSMakeRect(0,
+                                             0,
+                                             _patternedImage.size.width,
+                                             _patternedImage.size.height)];
+        [_patternedImage unlockFocus];
+    }
+    return _patternedImage;
+}
+
+// Lots of different views need to draw the background image.
+// - Obviously, PTYTextView uses it for the area where text appears.
+// - SessionView will draw it for an area below the scroll view when the cell size doesn't evenly
+// divide its size.
+// - TextViewWrapper will draw it for a few pixels above the scrollview in the VMARGIN.
+// This combines drawing into these different views in a consistent way.
+// It also draws the dotted border when there is a maximized pane.
+//
+// view: the view whose -drawRect is currently running and is being drawn into.
+// rect: the rectangle in the coordinate system of |view|.
+// blendDefaultBackground: If set, the default background color will be blended over the background
+// image. If there is no image and this flag is set then the background color is drawn instead. This
+// way SessionView and TextViewWrapper don't have to worry about whether a background image is
+// present.
+- (void)textViewDrawBackgroundImageInView:(NSView *)view
+                                 viewRect:(NSRect)rect
+                   blendDefaultBackground:(BOOL)blendDefaultBackground {
+    const float alpha = _textview.useTransparency ? (1.0 - _textview.transparency) : 1.0;
+    if (_backgroundImage) {
+        NSRect localRect = [_view convertRect:rect fromView:view];
+        NSImage *image;
+        if (_backgroundImageTiled) {
+            image = [self patternedImage];
+        } else {
+            image = _backgroundImage;
+        }
+        double dx = image.size.width / _view.frame.size.width;
+        double dy = image.size.height / _view.frame.size.height;
+        
+        NSRect sourceRect = NSMakeRect(localRect.origin.x * dx,
+                                       localRect.origin.y * dy,
+                                       localRect.size.width * dx,
+                                       localRect.size.height * dy);
+        [image drawInRect:rect
+                 fromRect:sourceRect
+                operation:NSCompositeCopy
+                 fraction:alpha
+           respectFlipped:YES
+                    hints:nil];
+        
+        if (blendDefaultBackground) {
+            // Blend default background color over background image.
+            [[_textview.dimmedDefaultBackgroundColor colorWithAlphaComponent:1 - _textview.blend] set];
+            NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+        }
+    } else if (blendDefaultBackground) {
+        // No image, so just draw background color.
+        [[_textview.dimmedDefaultBackgroundColor colorWithAlphaComponent:alpha] set];
+        NSRectFill(rect);
+    }
+    
+    [self drawMaximizedPaneDottedOutlineIndicatorInView:view];
+}
+
+- (void)drawMaximizedPaneDottedOutlineIndicatorInView:(NSView *)view {
+    if ([self textViewTabHasMaximizedPanel]) {
+        NSColor *color = [_colorMap colorForKey:kColorMapBackground];
+        double grayLevel = [color isDark] ? 1 : 0;
+        color = [color colorDimmedBy:0.2 towardsGrayLevel:grayLevel];
+        NSRect frame = [_view convertRect:[_view contentRect] toView:view];
+
+        NSBezierPath *path = [[[NSBezierPath alloc] init] autorelease];
+        CGFloat left = frame.origin.x + 0.5;
+        CGFloat right = frame.origin.x + frame.size.width - 0.5;
+        CGFloat top = frame.origin.y + 0.5;
+        CGFloat bottom = frame.origin.y + frame.size.height - 0.5;
+        
+        [path moveToPoint:NSMakePoint(left, top + VMARGIN)];
+        [path lineToPoint:NSMakePoint(left, top)];
+        [path lineToPoint:NSMakePoint(right, top)];
+        [path lineToPoint:NSMakePoint(right, bottom)];
+        [path lineToPoint:NSMakePoint(left, bottom)];
+        [path lineToPoint:NSMakePoint(left, top + VMARGIN)];
+        
+        CGFloat dashPattern[2] = { 5, 5 };
+        [path setLineDash:dashPattern count:2 phase:0];
+        [color set];
+        [path stroke];
+    }
 }
 
 - (void)textViewPostTabContentsChangedNotification

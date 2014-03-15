@@ -30,17 +30,15 @@
 #import "TextViewWrapper.h"
 #import "PTYTextView.h"
 
-@implementation TextViewWrapper
+@implementation TextViewWrapper {
+    PTYTextView* child_;
+}
 
 - (void)drawRect:(NSRect)rect
 {
-    [child_ drawFlippedBackground:NSMakeRect(0,
-                                      [[child_ enclosingScrollView] documentVisibleRect].origin.y - VMARGIN,
-                                      [self frame].size.width,
-                                      VMARGIN)
-                   toPoint:NSMakePoint(0, VMARGIN)];
-
-    [child_ drawOutlineInRect:rect topOnly:YES];
+    [child_.delegate textViewDrawBackgroundImageInView:self
+                                              viewRect:rect
+                                blendDefaultBackground:YES];
 }
 
 - (void)addSubview:(NSView *)child

@@ -374,25 +374,43 @@ static NSDate* lastResizeDate_;
     }
 }
 
+- (void)drawBackgroundInRect:(NSRect)rect {
+    [session_ textViewDrawBackgroundImageInView:self
+                                       viewRect:rect
+                         blendDefaultBackground:YES];
+}
+
 - (void)drawRect:(NSRect)dirtyRect
 {
     // Fill in background color in the area around a scrollview if it's smaller
     // than the session view.
     [super drawRect:dirtyRect];
-    NSColor *bgColor = [session_.textview.colorMap colorForKey:kColorMapBackground];
-    [bgColor set];
     PTYScrollView *scrollView = [session_ scrollview];
     NSRect svFrame = [scrollView frame];
     if (svFrame.size.width < self.frame.size.width) {
         double widthDiff = self.frame.size.width - svFrame.size.width;
-        NSRectFill(NSMakeRect(self.frame.size.width - widthDiff, 0, widthDiff, self.frame.size.height));
+        [self drawBackgroundInRect:NSMakeRect(self.frame.size.width - widthDiff,
+                                              0,
+                                              widthDiff,
+                                              self.frame.size.height)];
     }
     if (svFrame.origin.y != 0) {
-        NSRectFill(NSMakeRect(0, 0, self.frame.size.width, svFrame.origin.y));
+        [self drawBackgroundInRect:NSMakeRect(0, 0, self.frame.size.width, svFrame.origin.y)];
     }
     CGFloat maxY = svFrame.origin.y + svFrame.size.height;
     if (maxY < self.frame.size.height) {
-        NSRectFill(NSMakeRect(dirtyRect.origin.x, maxY, dirtyRect.size.width, self.frame.size.height - maxY));
+        [self drawBackgroundInRect:NSMakeRect(dirtyRect.origin.x,
+                                              maxY,
+                                              dirtyRect.size.width,
+                                              self.frame.size.height - maxY)];
+    }
+}
+
+- (NSRect)contentRect {
+    if (showTitle_) {
+        return NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height - kTitleHeight);
+    } else {
+        return self.frame;
     }
 }
 
