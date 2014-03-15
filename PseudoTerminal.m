@@ -521,7 +521,7 @@ NSString *kSessionsKVCKey = @"sessions";
         windowType == WINDOW_TYPE_RIGHT_PARTIAL) {
         [myWindow setHasShadow:YES];
     }
-    [myWindow _setContentHasShadow:NO];
+    [self updateContentShadow];
 
     PtyLog(@"finishInitializationWithSmartLayout - new window is at %p", myWindow);
     [self setWindow:myWindow];
@@ -2639,6 +2639,22 @@ NSString *kSessionsKVCKey = @"sessions";
     [self fitWindowToTabs];
 }
 
+// See issue 2925.
+// tl;dr: Content shadow on with a transparent view produces ghosting.
+//        Content shadow off causes artifacts in the corners of the window.
+// So turn the shadow off only when there's a transparent view.
+- (void)updateContentShadow {
+    if (useTransparency_) {
+        for (PTYSession *aSession in [self sessions]) {
+            if (aSession.textview.transparency > 0) {
+                [self.ptyWindow _setContentHasShadow:NO];
+                return;
+            }
+        }
+    }
+    [self.ptyWindow _setContentHasShadow:YES];
+}
+
 - (IBAction)toggleUseTransparency:(id)sender
 {
     useTransparency_ = !useTransparency_;
@@ -2648,6 +2664,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [[aSession view] setNeedsDisplay:YES];
     }
     restoreUseTransparency_ = NO;
+    [self updateContentShadow];
     [[self currentTab] recheckBlur];
 }
 

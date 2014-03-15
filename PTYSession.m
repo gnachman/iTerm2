@@ -2358,6 +2358,7 @@ typedef enum {
         transparency = 0.9;
     }
     [_textview setTransparency:transparency];
+    [[[self tab] realParentWindow] updateContentShadow];
 }
 
 - (float)blend
