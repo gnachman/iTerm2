@@ -14,6 +14,7 @@
 
 - (NSString *)title;
 - (BOOL)takesParameter;
+- (BOOL)paramIsPopupButton;
 - (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession;
 
 @end
