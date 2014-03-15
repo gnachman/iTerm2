@@ -168,7 +168,8 @@ typedef enum {
 - (BOOL)optionClickMovesCursor;
 - (BOOL)passOnControlLeftClick;
 - (BOOL)maxVertically;
-- (BOOL)useCompactLabel;
+- (BOOL)hideTabNumber;
+- (BOOL)hideTabCloseButton;
 - (BOOL)hideActivityIndicator;
 - (BOOL)highlightTabLabels;
 - (BOOL)hideMenuBarInFullscreen;

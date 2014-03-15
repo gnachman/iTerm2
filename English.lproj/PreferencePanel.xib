@@ -146,6 +146,8 @@
                 <outlet property="hideMenuBarInFullscreen" destination="awA-hH-ziY" id="zyE-TX-Uzo"/>
                 <outlet property="hideScrollbar" destination="4561" id="4613"/>
                 <outlet property="hideTab" destination="4462" id="4614"/>
+                <outlet property="hideTabCloseButton" destination="1dE-aB-uR8" id="q8D-cw-nSw"/>
+                <outlet property="hideTabNumber" destination="4446" id="nzs-wd-Eoc"/>
                 <outlet property="highlightTabLabels" destination="4467" id="4615"/>
                 <outlet property="hotkey" destination="5104" id="5121"/>
                 <outlet property="hotkeyAutoHides" destination="rG7-dO-Nxw" id="JTl-kM-C6D"/>
@@ -243,7 +245,6 @@
                 <outlet property="unlimitedScrollback" destination="3647" id="3650"/>
                 <outlet property="useBoldFont" destination="4765" id="4861"/>
                 <outlet property="useBrightBold" destination="4766" id="4862"/>
-                <outlet property="useCompactLabel" destination="4446" id="4624"/>
                 <outlet property="useItalicFont" destination="6400" id="6404"/>
                 <outlet property="useNonAsciiFont" destination="vNf-D5-cU4" id="dv1-fh-orK"/>
                 <outlet property="useTabColor" destination="j7F-r8-oes" id="9Sc-No-oC4"/>
@@ -1047,7 +1048,7 @@ Gw
                                         <button id="4446">
                                             <rect key="frame" x="133" y="282" width="263" height="18"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <buttonCell key="cell" type="check" title="Hide tab number and tab close button" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4447">
+                                            <buttonCell key="cell" type="check" title="Hide tab number" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4447">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
@@ -1056,8 +1057,20 @@ Gw
                                                 <outlet property="nextKeyView" destination="5330" id="5347"/>
                                             </connections>
                                         </button>
-                                        <button id="5374">
+                                        <button id="1dE-aB-uR8">
                                             <rect key="frame" x="133" y="262" width="263" height="18"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <buttonCell key="cell" type="check" title="Hide tab close button" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="GRU-c6-tJK">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <connections>
+                                                <action selector="settingChanged:" target="-2" id="PTe-7A-MYL"/>
+                                                <outlet property="nextKeyView" destination="5330" id="7Ai-fQ-sXx"/>
+                                            </connections>
+                                        </button>
+                                        <button id="5374">
+                                            <rect key="frame" x="133" y="242" width="263" height="18"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="check" title="Hide tab activity indicator" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5375">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -1350,7 +1363,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="5383">
-                                            <rect key="frame" x="134" y="236" width="265" height="17"/>
+                                            <rect key="frame" x="134" y="223" width="265" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Show tabs in fullscreen by holding ⌘ for:" id="5384">
                                                 <font key="font" metaFont="system"/>
@@ -1359,7 +1372,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" id="5393">
-                                            <rect key="frame" x="147" y="205" width="235" height="25"/>
+                                            <rect key="frame" x="147" y="192" width="235" height="25"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="0.10000000000000001" maxValue="10" doubleValue="2" tickMarkPosition="below" numberOfTickMarks="11" sliderType="linear" id="5398"/>
                                             <connections>
@@ -1368,7 +1381,7 @@ Gw
                                             </connections>
                                         </slider>
                                         <textField verticalHuggingPriority="750" id="5394">
-                                            <rect key="frame" x="151" y="186" width="71" height="11"/>
+                                            <rect key="frame" x="151" y="173" width="71" height="11"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="0 seconds" id="5397">
                                                 <font key="font" metaFont="miniSystem"/>
@@ -1377,7 +1390,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="5395">
-                                            <rect key="frame" x="322" y="186" width="54" height="11"/>
+                                            <rect key="frame" x="322" y="173" width="54" height="11"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="10 seconds" id="5396">
                                                 <font key="font" metaFont="miniSystem"/>
@@ -2989,7 +3002,7 @@ Gw
                                                                 </connections>
                                                             </comboBox>
                                                             <textField verticalHuggingPriority="750" id="2434">
-                                                                <rect key="frame" x="26" y="384" width="117" height="17"/>
+                                                                <rect key="frame" x="26" y="384" width="118" height="17"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Scrollback Buffer" id="2435">
                                                                     <font key="font" metaFont="systemBold"/>

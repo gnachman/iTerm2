@@ -160,8 +160,10 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     BOOL defaultMaxVertically;
     
     // use compact tab labels
-    IBOutlet NSButton *useCompactLabel;
-    BOOL defaultUseCompactLabel;
+    IBOutlet NSButton *hideTabNumber;
+    IBOutlet NSButton *hideTabCloseButton;
+    BOOL defaultHideTabNumber;
+    BOOL defaultHideTabCloseButton;
     
     // hide activity indicator
     IBOutlet NSButton *hideActivityIndicator;
@@ -970,7 +972,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     } else if (sender == windowStyle ||
                sender == tabPosition ||
                sender == hideTab ||
-               sender == useCompactLabel ||
+               sender == hideTabCloseButton ||
+               sender == hideTabNumber ||
                sender == hideActivityIndicator ||
                sender == highlightTabLabels ||
                sender == hideMenuBarInFullscreen ||
@@ -991,7 +994,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         defaultOpenTmuxWindowsIn = [[openTmuxWindows selectedItem] tag];
         defaultAutoHideTmuxClientSession = ([autoHideTmuxClientSession state] == NSOnState);
         defaultTabViewType=[tabPosition indexOfSelectedItem];
-        defaultUseCompactLabel = ([useCompactLabel state] == NSOnState);
+        defaultHideTabCloseButton = ([hideTabCloseButton state] == NSOnState);
+        defaultHideTabNumber = ([hideTabNumber state] == NSOnState);
         defaultHideActivityIndicator = ([hideActivityIndicator state] == NSOnState);
         defaultHighlightTabLabels = ([highlightTabLabels state] == NSOnState);
         defaultHideMenuBarInFullscreen = ([hideMenuBarInFullscreen state] == NSOnState);
@@ -2975,7 +2979,9 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
     defaultMaxVertically = [prefs objectForKey:@"MaxVertically"] ? [[prefs objectForKey:@"MaxVertically"] boolValue] : NO;
     defaultFsTabDelay = [prefs objectForKey:@"FsTabDelay"] ? [[prefs objectForKey:@"FsTabDelay"] floatValue] : 1.0;
-    defaultUseCompactLabel = [prefs objectForKey:@"UseCompactLabel"]?[[prefs objectForKey:@"UseCompactLabel"] boolValue]: YES;
+
+    defaultHideTabCloseButton = [prefs boolForKey:@"HideTabCloseButton"];
+    defaultHideTabNumber = [prefs boolForKey:@"HideTabNumber"];
     defaultHideActivityIndicator = [prefs objectForKey:@"HideActivityIndicator"]?[[prefs objectForKey:@"HideActivityIndicator"] boolValue]: NO;
     defaultHighlightTabLabels = [prefs objectForKey:@"HighlightTabLabels"]?[[prefs objectForKey:@"HighlightTabLabels"] boolValue]: YES;
     defaultHideMenuBarInFullscreen = [prefs objectForKey:@"HideMenuBarInFullscreen"]?[[prefs objectForKey:@"HideMenuBarInFullscreen"] boolValue] : YES;
@@ -3105,7 +3111,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setFloat:defaultFsTabDelay forKey:@"FsTabDelay"];
     [prefs setBool:defaultPassOnControlLeftClick forKey:@"PassOnControlClick"];
     [prefs setBool:defaultMaxVertically forKey:@"MaxVertically"];
-    [prefs setBool:defaultUseCompactLabel forKey:@"UseCompactLabel"];
+    [prefs setBool:defaultHideTabNumber forKey:@"HideTabNumber"];
+    [prefs setBool:defaultHideTabCloseButton forKey:@"HideTabCloseButton"];
     [prefs setBool:defaultHideActivityIndicator forKey:@"HideActivityIndicator"];
     [prefs setBool:defaultHighlightTabLabels forKey:@"HighlightTabLabels"];
     [prefs setBool:defaultHideMenuBarInFullscreen forKey:@"HideMenuBarInFullscreen"];
@@ -3686,9 +3693,12 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return defaultMaxVertically;
 }
 
-- (BOOL)useCompactLabel
-{
-    return defaultUseCompactLabel;
+- (BOOL)hideTabNumber {
+    return defaultHideTabNumber;
+}
+
+- (BOOL)hideTabCloseButton {
+    return defaultHideTabCloseButton;
 }
 
 - (BOOL)hideActivityIndicator
@@ -4167,7 +4177,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [optionClickMovesCursor setState: defaultOptionClickMovesCursor?NSOnState:NSOffState];
     [controlLeftClickActsLikeRightClick setState: defaultPassOnControlLeftClick?NSOffState:NSOnState];
     [maxVertically setState: defaultMaxVertically?NSOnState:NSOffState];
-    [useCompactLabel setState: defaultUseCompactLabel?NSOnState:NSOffState];
+    [hideTabCloseButton setState: defaultHideTabCloseButton?NSOnState:NSOffState];
+    [hideTabNumber setState: defaultHideTabNumber?NSOnState:NSOffState];
     [hideActivityIndicator setState:defaultHideActivityIndicator?NSOnState:NSOffState];
     [highlightTabLabels setState: defaultHighlightTabLabels?NSOnState:NSOffState];
     [hideMenuBarInFullscreen setState:defaultHideMenuBarInFullscreen ? NSOnState:NSOffState];

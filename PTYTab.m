@@ -564,9 +564,8 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return objectCount_;
 }
 
-- (int)objectCount
-{
-    return [[PreferencePanel sharedInstance] useCompactLabel] ? 0 : objectCount_;
+- (int)objectCount {
+    return [[PreferencePanel sharedInstance] hideTabNumber] ? 0 : objectCount_;
 }
 
 - (void)setObjectCount:(int)value
@@ -3940,8 +3939,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 
 - (void)_setLabelAttributesForActiveBackgroundTab
 {
-    if ([self isProcessing] == NO &&
-        ![[PreferencePanel sharedInstance] useCompactLabel]) {
+    const BOOL compactTab = ([[PreferencePanel sharedInstance] hideTabNumber] &&
+                             [[PreferencePanel sharedInstance] hideTabCloseButton]);
+    if ([self isProcessing] == NO && !compactTab) {
         [self setIsProcessing:YES];
     }
 

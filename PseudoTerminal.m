@@ -5588,8 +5588,9 @@ NSString *kSessionsKVCKey = @"sessions";
     // Update the tab style.
     [self setTabBarStyle];
 
-    [tabBarControl setDisableTabClose:[[PreferencePanel sharedInstance] useCompactLabel]];
-    if ([[PreferencePanel sharedInstance] useCompactLabel]) {
+    [tabBarControl setDisableTabClose:[[PreferencePanel sharedInstance] hideTabCloseButton]];
+    if ([[PreferencePanel sharedInstance] hideTabCloseButton] &&
+        [[PreferencePanel sharedInstance] hideTabNumber]) {
         [tabBarControl setCellMinWidth:[[PreferencePanel sharedInstance] minCompactTabWidth]];
     } else {
         [tabBarControl setCellMinWidth:[[PreferencePanel sharedInstance] minTabWidth]];
