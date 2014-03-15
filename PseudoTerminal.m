@@ -1994,9 +1994,13 @@ NSString *kSessionsKVCKey = @"sessions";
     [itad updateUseTransparencyMenuItem];
     [itad updateBroadcastMenuState];
     if (_fullScreen) {
-        if (![self isHotKeyWindow] || [[HotkeyWindowController sharedInstance] rollingInHotkeyTerm]) {
-            // Either this is a regular (non-hotkey) fullscreen window, or else it's a fullscreen
-            // hotkey window that's getting rolled in.
+        if (![self isHotKeyWindow] ||
+            [[HotkeyWindowController sharedInstance] rollingInHotkeyTerm] ||
+            [[self window] alphaValue] > 0) {
+            // One of the following is true:
+            // - This is a regular (non-hotkey) fullscreen window
+            // - It's a fullscreen hotkey window that's getting rolled in (but its alpha is 0)
+            // - It's a fullscreen hotkey window that's already visible (e.g., switching back from settings dialog)
             [self hideMenuBar];
         }
     }
@@ -2340,7 +2344,7 @@ NSString *kSessionsKVCKey = @"sessions";
             hotkeyTerminal = term;
         }
     }
-    
+
     DLog(@"%@ haveMain=%d otherTerminalIsKey=%d", self.window, haveMain, otherTerminalIsKey);
     if (hotkeyTerminal && (!haveMain || otherTerminalIsKey)) {
         return hotkeyTerminal;
