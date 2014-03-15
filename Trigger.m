@@ -134,4 +134,8 @@ NSString * const kTriggerParameterKey = @"parameter";
     return [dict keysSortedByValueUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
 }
 
+- (int)defaultIndex {
+    return 0;
+}
+
 @end

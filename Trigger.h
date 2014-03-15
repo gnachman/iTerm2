@@ -52,4 +52,7 @@ extern NSString * const kTriggerParameterKey;
 
 - (NSComparisonResult)compareTitle:(Trigger *)other;
 
+// If no parameter is present, the parameter index to select by default.
+- (int)defaultIndex;
+
 @end

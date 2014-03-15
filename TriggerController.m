@@ -197,9 +197,9 @@ static NSMutableArray *gTriggerClasses;
             if ([triggerObj paramIsPopupButton]) {
                 if (!param) {
                     // Force popup buttons to have the first item selected by default
-                    return [NSNumber numberWithInt:0];
+                    return @([triggerObj defaultIndex]);
                 } else {
-                    return [NSNumber numberWithInt:[triggerObj indexOfTag:[param intValue]]];
+                    return @([triggerObj indexOfTag:[param intValue]]);
                 }
             } else {
                 return param;
