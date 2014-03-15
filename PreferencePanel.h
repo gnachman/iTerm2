@@ -214,6 +214,7 @@ typedef enum {
 - (BOOL)alternateMouseScroll;
 - (float)hotkeyTermAnimationDuration;
 - (NSString *)searchCommand;
+- (NSTimeInterval)antiIdleTimerPeriod;
 - (Profile *)handlerBookmarkForURL:(NSString *)url;
 - (void)changeFont:(id)fontManager;
 - (BOOL)prefsDifferFromRemote;

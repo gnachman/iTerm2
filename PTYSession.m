@@ -2389,7 +2389,7 @@ typedef enum {
     }
 
     if (set) {
-        _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:30
+        _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:[[PreferencePanel sharedInstance] antiIdleTimerPeriod]
                                                            target:self
                                                          selector:@selector(doAntiIdle)
                                                          userInfo:nil

@@ -3972,6 +3972,15 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return [prefs objectForKey:@"SearchCommand"] ? [prefs objectForKey:@"SearchCommand"] : @"http://google.com/search?q=%@";
 }
 
+- (NSTimeInterval)antiIdleTimerPeriod {
+    NSTimeInterval period = [[NSUserDefaults standardUserDefaults] doubleForKey:@"AntiIdleTimerPeriod"];
+    if (period > 0) {
+        return period;
+    } else {
+        return 30;
+    }
+}
+
 - (BOOL)hotkeyTogglesWindow
 {
     return defaultHotkeyTogglesWindow;
