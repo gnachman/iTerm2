@@ -168,7 +168,6 @@ typedef enum {
 - (BOOL)optionClickMovesCursor;
 - (BOOL)passOnControlLeftClick;
 - (BOOL)maxVertically;
-- (BOOL)closingHotkeySwitchesSpaces;
 - (BOOL)useCompactLabel;
 - (BOOL)hideActivityIndicator;
 - (BOOL)highlightTabLabels;

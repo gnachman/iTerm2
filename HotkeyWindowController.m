@@ -153,15 +153,14 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         }
     }
 
-    if ([[PreferencePanel sharedInstance] closingHotkeySwitchesSpaces]) {
-        [[term window] orderOut:self];
-    } else {
-        // Place behind all other windows at this level
-        [[term window] orderWindow:NSWindowBelow relativeTo:0];
-        // If you orderOut the hotkey term (term variable) then it switches to the
-        // space in which your next window exists. So leave key status in the hotkey
-        // window although it's invisible.
-    }
+    // NOTE: There used be an option called "closing hotkey switches spaces". I've removed the
+    // "off" behavior and made the "on" behavior the only option. Various things didn't work
+    // right, and the worst one was in this thread: "[iterm2-discuss] Possible bug when using Hotkey window?"
+    // where clicks would be swallowed up by the invisible hotkey window. The "off" mode would do
+    // this:
+    // [[term window] orderWindow:NSWindowBelow relativeTo:0];
+    // And the window was invisible only because its alphaValue was set to 0 elsewhere.
+    [[term window] orderOut:self];
 }
 
 - (void)unhide

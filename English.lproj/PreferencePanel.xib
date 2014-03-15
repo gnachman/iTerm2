@@ -89,7 +89,6 @@
                 <outlet property="checkTestRelease" destination="5049" id="5136"/>
                 <outlet property="checkUpdate" destination="5048" id="5135"/>
                 <outlet property="closeSessionsOnEnd" destination="5681" id="5737"/>
-                <outlet property="closingHotkeySwitchesSpaces" destination="5164" id="5167"/>
                 <outlet property="cmdSelection" destination="6107" id="6211"/>
                 <outlet property="columnsField" destination="4911" id="4959"/>
                 <outlet property="columnsLabel" destination="4912" id="4961"/>
@@ -655,9 +654,9 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="6331">
-                                            <rect key="frame" x="431" y="133" width="65" height="17"/>
+                                            <rect key="frame" x="431" y="163" width="118" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="tmux" id="6332">
+                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="tmux Integration" id="6332">
                                                 <font key="font" metaFont="systemBold"/>
                                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -764,11 +763,10 @@ Gw
                                             </buttonCell>
                                             <connections>
                                                 <action selector="settingChanged:" target="-2" id="4542"/>
-                                                <outlet property="nextKeyView" destination="5164" id="5186"/>
                                             </connections>
                                         </button>
                                         <button id="5319">
-                                            <rect key="frame" x="432" y="153" width="268" height="18"/>
+                                            <rect key="frame" x="432" y="188" width="268" height="18"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <buttonCell key="cell" type="check" title="Use Lion-style Fullscreen windows" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5320">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -776,11 +774,10 @@ Gw
                                             </buttonCell>
                                             <connections>
                                                 <action selector="settingChanged:" target="-2" id="5322"/>
-                                                <outlet property="nextKeyView" destination="5164" id="5321"/>
                                             </connections>
                                         </button>
                                         <button id="6366">
-                                            <rect key="frame" x="432" y="56" width="398" height="18"/>
+                                            <rect key="frame" x="432" y="86" width="398" height="18"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <buttonCell key="cell" type="check" title="Automatically hide the tmux client session after connecting" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6367">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -788,19 +785,6 @@ Gw
                                             </buttonCell>
                                             <connections>
                                                 <action selector="settingChanged:" target="-2" id="6368"/>
-                                                <outlet property="nextKeyView" destination="5164" id="6369"/>
-                                            </connections>
-                                        </button>
-                                        <button id="5164">
-                                            <rect key="frame" x="432" y="190" width="292" height="18"/>
-                                            <autoresizingMask key="autoresizingMask"/>
-                                            <buttonCell key="cell" type="check" title="Closing Hotkey Window restores focus to" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5165">
-                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                <font key="font" metaFont="system"/>
-                                            </buttonCell>
-                                            <connections>
-                                                <action selector="settingChanged:" target="-2" id="5166"/>
-                                                <outlet property="nextKeyView" destination="5055" id="5187"/>
                                             </connections>
                                         </button>
                                         <button id="4570">
@@ -936,15 +920,6 @@ Gw
                                                 <outlet property="nextKeyView" destination="1988" id="5189"/>
                                             </connections>
                                         </button>
-                                        <textField verticalHuggingPriority="750" id="5317">
-                                            <rect key="frame" x="452" y="175" width="230" height="17"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="last window, but may switch Spaces" id="5318">
-                                                <font key="font" metaFont="system"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
                                         <textField verticalHuggingPriority="750" id="5610">
                                             <rect key="frame" x="93" y="63" width="83" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -1005,7 +980,7 @@ Gw
                                             <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="Warning" id="5629"/>
                                         </imageView>
                                         <textField verticalHuggingPriority="750" id="6335">
-                                            <rect key="frame" x="431" y="110" width="307" height="17"/>
+                                            <rect key="frame" x="431" y="140" width="307" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="When attaching, open unrecognized windows in" id="6336">
                                                 <font key="font" metaFont="system"/>
@@ -1014,7 +989,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <popUpButton verticalHuggingPriority="750" id="6337">
-                                            <rect key="frame" x="740" y="104" width="89" height="26"/>
+                                            <rect key="frame" x="740" y="134" width="89" height="26"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <popUpButtonCell key="cell" type="push" title="Windows" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="6340" id="6338">
                                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -1031,7 +1006,7 @@ Gw
                                             </connections>
                                         </popUpButton>
                                         <textField verticalHuggingPriority="750" id="6343">
-                                            <rect key="frame" x="431" y="82" width="252" height="17"/>
+                                            <rect key="frame" x="431" y="112" width="252" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Open dashboard if there are more than" id="6344">
                                                 <font key="font" metaFont="system"/>
@@ -1040,7 +1015,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="6347">
-                                            <rect key="frame" x="727" y="82" width="252" height="17"/>
+                                            <rect key="frame" x="727" y="112" width="252" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="tmux windows" id="6348">
                                                 <font key="font" metaFont="system"/>
@@ -1049,7 +1024,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="6345">
-                                            <rect key="frame" x="686" y="80" width="36" height="22"/>
+                                            <rect key="frame" x="686" y="110" width="36" height="22"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="6346">
                                                 <font key="font" metaFont="system"/>
