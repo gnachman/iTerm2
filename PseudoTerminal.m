@@ -2655,17 +2655,21 @@ NSString *kSessionsKVCKey = @"sessions";
     [self.ptyWindow _setContentHasShadow:YES];
 }
 
-- (IBAction)toggleUseTransparency:(id)sender
-{
-    useTransparency_ = !useTransparency_;
+- (void)updateUseTransparency {
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     [itad updateUseTransparencyMenuItem];
     for (PTYSession* aSession in [self sessions]) {
         [[aSession view] setNeedsDisplay:YES];
     }
-    restoreUseTransparency_ = NO;
     [self updateContentShadow];
     [[self currentTab] recheckBlur];
+}
+
+- (IBAction)toggleUseTransparency:(id)sender
+{
+    useTransparency_ = !useTransparency_;
+    [self updateUseTransparency];
+    restoreUseTransparency_ = NO;
 }
 
 - (BOOL)useTransparency
@@ -2771,177 +2775,135 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
+- (NSUInteger)styleMask {
+    switch (windowType_) {
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+            return NSBorderlessWindowMask | NSResizableWindowMask;
+
+        case WINDOW_TYPE_FORCE_FULL_SCREEN:
+        case WINDOW_TYPE_FULL_SCREEN:
+            return NSBorderlessWindowMask;
+            
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_NORMAL:
+        default:
+            return (NSTitledWindowMask |
+                    NSClosableWindowMask |
+                    NSMiniaturizableWindowMask |
+                    NSResizableWindowMask |
+                    NSTexturedBackgroundWindowMask);
+    }
+}
+
 - (void)toggleTraditionalFullScreenMode
 {
     [SessionView windowDidResize];
     PtyLog(@"toggleFullScreenMode called");
-    PseudoTerminal *newTerminal;
     if (!_fullScreen) {
-        NSScreen *currentScreen = [[[[iTermController sharedInstance] currentTerminal] window] screen];
-        newTerminal = [[PseudoTerminal alloc] initWithSmartLayout:NO
-                                                       windowType:WINDOW_TYPE_FORCE_FULL_SCREEN
-                                                           screen:[[NSScreen screens] indexOfObjectIdenticalTo:currentScreen]];
-        newTerminal->oldFrame_ = [[self window] frame];
-        newTerminal->savedWindowType_ = windowType_;
-        [[newTerminal window] setOpaque:NO];
+        oldFrame_ = self.window.frame;
+        savedWindowType_ = windowType_;
+        windowType_ = WINDOW_TYPE_FULL_SCREEN;
+        [self.window setOpaque:NO];
+        self.window.alphaValue = 0;
+        [self.window setStyleMask:[self styleMask]];
+        [self.window setFrame:self.window.screen.frame display:YES];
+        self.window.alphaValue = 1;
     } else {
-        // If a window is created while the menu bar is hidden then its
-        // miniaturize button will be disabled, even if the menu bar is later
-        // shown. Thus, we must show the menu bar before creating the new window.
-        // It is not hidden in the other clause of this if statement because
-        // hiding the menu bar must be done after setting the window's frame.
         [self showMenuBar];
+        windowType_ = savedWindowType_;
+        [self.window setStyleMask:[self styleMask]];
+        [self.window setFrame:oldFrame_ display:YES];
         PtyLog(@"toggleFullScreenMode - allocate new terminal");
-        NSScreen *currentScreen = [[[[iTermController sharedInstance] currentTerminal] window] screen];
-        newTerminal = [[PseudoTerminal alloc] initWithSmartLayout:NO
-                                                       windowType:savedWindowType_
-                                                       screen:[[NSScreen screens] indexOfObjectIdenticalTo:currentScreen]];
-        PtyLog(@"toggleFullScreenMode - set new frame to old frame: %fx%f", oldFrame_.size.width, oldFrame_.size.height);
-        [[newTerminal window] setFrame:oldFrame_ display:YES];
     }
-    newTerminal->hideAfterOpening_ = hideAfterOpening_;
-    newTerminal->number_ = number_;
-    newTerminal->broadcastMode_ = broadcastMode_;
-    [newTerminal->broadcastViewIds_ addObjectsFromArray:[broadcastViewIds_ allObjects]];
-    
-    // Ensure that fullscreen windows (often hotkey windows) don't lose their collection behavior.
-    [[newTerminal window] setCollectionBehavior:[[self window] collectionBehavior]];
 
     if (!_fullScreen &&
         [[PreferencePanel sharedInstance] disableFullscreenTransparency]) {
-        newTerminal->useTransparency_ = NO;
-        newTerminal->oldUseTransparency_ = useTransparency_;
-        newTerminal->restoreUseTransparency_ = YES;
+        oldUseTransparency_ = useTransparency_;
+        useTransparency_ = NO;
+        restoreUseTransparency_ = YES;
     } else {
         if (_fullScreen && restoreUseTransparency_) {
-            newTerminal->useTransparency_ = oldUseTransparency_;
+            useTransparency_ = oldUseTransparency_;
         } else {
-            newTerminal->useTransparency_ = useTransparency_;
             restoreUseTransparency_ = NO;
         }
     }
-    [newTerminal setIsHotKeyWindow:isHotKeyWindow_];
-
     _fullScreen = !_fullScreen;
-    togglingFullScreen_ = true;
-    newTerminal->togglingFullScreen_ = YES;
-
-    // Save the current session so it can be made current after moving
-    // tabs over to the new window.
-    PTYSession *currentSession = [self currentSession];
-    NSAssert(currentSession, @"No current session");
+    togglingFullScreen_ = YES;
+    [self _updateToolbeltParentage];
+    [self updateUseTransparency];
+    
     if (_fullScreen) {
-        // TODO(georgen): I'm highly skeptical that this does anything since there's no graphics context
-        [newTerminal _drawFullScreenBlackBackground];
-    }
-    PtyLog(@"toggleFullScreenMode - copy settings");
-    [newTerminal copySettingsFrom:self];
-
-    newTerminal->isHotKeyWindow_ = isHotKeyWindow_;
-    isHotKeyWindow_ = NO;
-
-    PtyLog(@"toggleFullScreenMode - calling addInTerminals");
-    [[iTermController sharedInstance] addInTerminals:newTerminal];
-    [newTerminal release];
-
-    int n = [TABVIEW numberOfTabViewItems];
-    int i;
-    NSTabViewItem *aTabViewItem;
-
-    newTerminal->_resizeInProgressFlag = YES;
-    for (i = 0; i < n; ++i) {
-        aTabViewItem = [[TABVIEW tabViewItemAtIndex:0] retain];
-        PTYTab* theTab = [aTabViewItem identifier];
-        for (PTYSession* aSession in [theTab sessions]) {
-            [aSession setTransparency:[[[aSession profile]
-                                        objectForKey:KEY_TRANSPARENCY] floatValue]];
-        }
-        // remove from our window
-        PtyLog(@"toggleFullScreenMode - remove tab %d from old window", i);
-        [TABVIEW removeTabViewItem:aTabViewItem];
-
-        // add the session to the new terminal
-        PtyLog(@"toggleFullScreenMode - add tab %d from old window", i);
-        [newTerminal insertTab:theTab atIndex:i];
-        PtyLog(@"toggleFullScreenMode - done inserting session");
-
-        // release the tabViewItem
-        [aTabViewItem release];
-    }
-    newTerminal->_resizeInProgressFlag = NO;
-    [[newTerminal tabView] selectTabViewItemWithIdentifier:[currentSession tab]];
-    BOOL fs = _fullScreen;
-    PtyLog(@"toggleFullScreenMode - close old window");
-    // The window close call below also releases the window controller (self).
-    // This causes havoc because we keep running for a while, so we'll retain a
-    // copy of ourselves and release it when we're all done.
-    [self retain];
-    [[self window] close];
-    if (fs) {
         PtyLog(@"toggleFullScreenMode - call adjustFullScreenWindowForBottomBarChange");
-        [newTerminal fitTabsToWindow];
-        [newTerminal hideMenuBar];
+        [self fitTabsToWindow];
+        [self hideMenuBar];
 
-        iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-        [newTerminal->toolbelt_ setHidden:![itad showToolbelt]];
+        iTermApplicationDelegate *itad =
+            (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+        [toolbelt_ setHidden:![itad showToolbelt]];
         // The toolbelt may try to become the first responder.
-        [[newTerminal window] makeFirstResponder:[[newTerminal currentSession] textview]];
-    }
-
-    if (!fs) {
+        [[self window] makeFirstResponder:[[self currentSession] textview]];
+    } else {
         // Find the largest possible session size for the existing window frame
         // and fit the window to an imaginary session of that size.
-        NSSize contentSize = [[[newTerminal window] contentView] frame].size;
-        if (![newTerminal->bottomBar isHidden]) {
-            contentSize.height -= [newTerminal->bottomBar frame].size.height;
+        NSSize contentSize = [[[self window] contentView] frame].size;
+        if (![bottomBar isHidden]) {
+            contentSize.height -= [bottomBar frame].size.height;
         }
-        if ([newTerminal tabBarShouldBeVisible]) {
-            contentSize.height -= [newTerminal->tabBarControl frame].size.height;
+        if ([self tabBarShouldBeVisible]) {
+            contentSize.height -= [tabBarControl frame].size.height;
         }
-        if ([newTerminal _haveLeftBorder]) {
+        if ([self _haveLeftBorder]) {
             --contentSize.width;
         }
-        if ([newTerminal _haveRightBorder]) {
+        if ([self _haveRightBorder]) {
             --contentSize.width;
         }
-        if ([newTerminal _haveBottomBorder]) {
+        if ([self _haveBottomBorder]) {
             --contentSize.height;
         }
-        if ([newTerminal _haveTopBorder]) {
+        if ([self _haveTopBorder]) {
             --contentSize.height;
         }
 
-        [newTerminal fitWindowToTabSize:contentSize];
+        [self fitWindowToTabSize:contentSize];
     }
-    newTerminal->togglingFullScreen_ = NO;
+    togglingFullScreen_ = NO;
     PtyLog(@"toggleFullScreenMode - calling updateSessionScrollbars");
-    [newTerminal updateSessionScrollbars];
+    [self updateSessionScrollbars];
     PtyLog(@"toggleFullScreenMode - calling fitTabsToWindow");
-    [newTerminal repositionWidgets];
-    [newTerminal fitTabsToWindow];
+    [self repositionWidgets];
+    [self fitTabsToWindow];
     PtyLog(@"toggleFullScreenMode - calling fitWindowToTabs");
-    [newTerminal fitWindowToTabsExcludingTmuxTabs:YES];
-    for (TmuxController *c in [newTerminal uniqueTmuxControllers]) {
-        [c windowDidResize:newTerminal];
+    [self fitWindowToTabsExcludingTmuxTabs:YES];
+    for (TmuxController *c in [self uniqueTmuxControllers]) {
+        [c windowDidResize:self];
     }
 
     PtyLog(@"toggleFullScreenMode - calling setWindowTitle");
-    [newTerminal setWindowTitle];
+    [self setWindowTitle];
     PtyLog(@"toggleFullScreenMode - calling window update");
-    [[newTerminal window] update];
-    for (PTYTab *aTab in [newTerminal tabs]) {
-      [aTab notifyWindowChanged];
+    [[self window] update];
+    for (PTYTab *aTab in [self tabs]) {
+        [aTab notifyWindowChanged];
     }
-    if (fs) {
-        [newTerminal notifyTmuxOfWindowResize];
+    if (_fullScreen) {
+        [self notifyTmuxOfWindowResize];
     }
     PtyLog(@"toggleFullScreenMode returning");
     togglingFullScreen_ = false;
 
-    [newTerminal.window performSelector:@selector(makeKeyAndOrderFront:) withObject:nil afterDelay:0];
-    [newTerminal refreshTools];
-    [newTerminal updateTabColors];
-    [self release];
+    [self.window performSelector:@selector(makeKeyAndOrderFront:) withObject:nil afterDelay:0];
+    [self.window makeFirstResponder:[[self currentSession] textview]];
+    [self refreshTools];
+    [self updateTabColors];
 }
 
 - (BOOL)fullScreen

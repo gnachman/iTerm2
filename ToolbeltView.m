@@ -324,10 +324,9 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 #pragma mark - ToolWrapperDelegate
 
-- (void)hideToolbelt
-{
-        iTermApplicationDelegate *itad = [[iTermApplication sharedApplication] delegate];
-        [itad toggleToolbelt:self];
+- (void)hideToolbelt {
+    iTermApplicationDelegate *itad = [[iTermApplication sharedApplication] delegate];
+    [itad toggleToolbelt:self];
 }
 
 - (BOOL)haveOnlyOneTool
