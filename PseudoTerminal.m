@@ -1,6 +1,5 @@
 #import "PseudoTerminal.h"
 
-#import "BottomBarView.h"
 #import "ColorsMenuItemView.h"
 #import "CommandHistory.h"
 #import "CommandHistoryEntry.h"
@@ -48,6 +47,7 @@
 #import "iTermController.h"
 #import "iTermFontPanel.h"
 #import "iTermGrowlDelegate.h"
+#import "iTermInstantReplayWindowController.h"
 #include <unistd.h>
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
@@ -103,15 +103,8 @@ NSString *kSessionsKVCKey = @"sessions";
     IBOutlet NSTextField *parameterPrompt;
 
     ////////////////////////////////////////////////////////////////////////////
-    // BottomBar
-    // UI elements for searching the current session.
-
-    // This contains all the other elements.
-    IBOutlet BottomBarView* instantReplaySubview;
-
-    // Contains only bottomBarSubview. For whatever reason, adding the BottomBarView
-    // directly to the window doesn't work.
-    NSView* bottomBar;
+    // Instant Replay
+    iTermInstantReplayWindowController *_instantReplayWindowController;
 
     ////////////////////////////////////////////////////////////////////////////
     // Tab View
@@ -193,18 +186,9 @@ NSString *kSessionsKVCKey = @"sessions";
     // True while entering lion fullscreen (the animation is going on)
     BOOL togglingLionFullScreen_;
 
-    // Instant Replay widgets.
-    IBOutlet NSSlider* irSlider;
-    IBOutlet NSTextField* earliestTime;
-    IBOutlet NSTextField* latestTime;
-    IBOutlet NSTextField* currentTime;
-
     PasteboardHistoryWindowController* pbHistoryView;
     CommandHistoryPopupWindowController *commandHistoryPopup;
     AutocompleteView* autocompleteView;
-
-    // True if preBottomBarFrame is valid.
-    BOOL pbbfValid;
 
     NSTimer* fullScreenTabviewTimer_;
 
@@ -361,7 +345,6 @@ NSString *kSessionsKVCKey = @"sessions";
     [self window];
     [commandField retain];
     [commandField setDelegate:self];
-    [bottomBar retain];
     if (windowType == WINDOW_TYPE_LION_FULL_SCREEN &&
         ![[PreferencePanel sharedInstance] lionStyleFullscreen]) {
         windowType = WINDOW_TYPE_FULL_SCREEN;
@@ -399,7 +382,6 @@ NSString *kSessionsKVCKey = @"sessions";
     [self window];
     [commandField retain];
     [commandField setDelegate:self];
-    [bottomBar retain];
     windowType_ = windowType;
     broadcastViewIds_ = [[NSMutableSet alloc] init];
     pbHistoryView = [[PasteboardHistoryWindowController alloc] init];
@@ -567,16 +549,6 @@ NSString *kSessionsKVCKey = @"sessions";
     [[[self window] contentView] addSubview:tabBarControl];
     [tabBarControl release];
 
-    // Set up bottomBar
-    NSRect irFrame = [instantReplaySubview frame];
-    bottomBar = [[NSView alloc] initWithFrame:NSMakeRect(0,
-                                                         0,
-                                                         irFrame.size.width,
-                                                         irFrame.size.height)];
-    [bottomBar addSubview:instantReplaySubview];
-    [bottomBar setHidden:YES];
-    [instantReplaySubview setHidden:NO];
-
     // create the tabview
     aRect = [[[self window] contentView] bounds];
 
@@ -589,8 +561,6 @@ NSString *kSessionsKVCKey = @"sessions";
     // Add to the window
     [[[self window] contentView] addSubview:TABVIEW];
     [TABVIEW release];
-
-    [[[self window] contentView] addSubview:bottomBar];
 
     // assign tabview and delegates
     [tabBarControl setTabView:TABVIEW];
@@ -662,6 +632,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)dealloc
 {
+    [self closeInstantReplayWindow];
     doNotSetRestorableState_ = YES;
     wellFormed_ = NO;
     [toolbelt_ shutdown];
@@ -691,7 +662,6 @@ NSString *kSessionsKVCKey = @"sessions";
     }
     [broadcastViewIds_ release];
     [commandField release];
-    [bottomBar release];
     [_toolbarController release];
     [autocompleteView shutdown];
     [commandHistoryPopup shutdown];
@@ -793,9 +763,6 @@ NSString *kSessionsKVCKey = @"sessions";
             [toolbelt_ setHidden:NO];
         } else {
             [toolbelt_ setHidden:YES];
-        }
-        if (![bottomBar isHidden]) {
-            [self fitBottomBarToWindow];
         }
         [self repositionWidgets];
         [self notifyTmuxOfWindowResize];
@@ -1916,6 +1883,13 @@ NSString *kSessionsKVCKey = @"sessions";
     return shouldClose;
 }
 
+- (void)closeInstantReplayWindow {
+    [_instantReplayWindowController close];
+    _instantReplayWindowController.delegate = nil;
+    [_instantReplayWindowController release];
+    _instantReplayWindowController = nil;
+}
+
 - (void)windowWillClose:(NSNotification *)aNotification
 {
     // Close popups.
@@ -1935,14 +1909,9 @@ NSString *kSessionsKVCKey = @"sessions";
 
     // Save frame position for last window
     if ([[[iTermController sharedInstance] terminals] count] == 1) {
-        // Close the bottomBar because otherwise the wrong size
-        // frame is saved.  You wouldn't want the bottomBar to
-        // open automatically anyway.
-        // TODO(georgen): There's a tiny bug here. If you're in instant replay
-        // then the window size for the IR window is saved instead of the live
-        // window.
-        if (![bottomBar isHidden]) {
-            [self showHideInstantReplay];
+        if (_instantReplayWindowController) {
+            // We don't want the IR window to survive us, nor be saved in the restorable state.
+            [self closeInstantReplayWindow];
         }
         if ([[PreferencePanel sharedInstance] smartPlacement]) {
             [[self window] saveFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, 0]];
@@ -2878,7 +2847,6 @@ NSString *kSessionsKVCKey = @"sessions";
     [self retain];
     [[self window] close];
     if (fs) {
-        PtyLog(@"toggleFullScreenMode - call adjustFullScreenWindowForBottomBarChange");
         [newTerminal fitTabsToWindow];
         [newTerminal hideMenuBar];
 
@@ -2892,9 +2860,6 @@ NSString *kSessionsKVCKey = @"sessions";
         // Find the largest possible session size for the existing window frame
         // and fit the window to an imaginary session of that size.
         NSSize contentSize = [[[newTerminal window] contentView] frame].size;
-        if (![newTerminal->bottomBar isHidden]) {
-            contentSize.height -= [newTerminal->bottomBar frame].size.height;
-        }
         if ([newTerminal tabBarShouldBeVisible]) {
             contentSize.height -= [newTerminal->tabBarControl frame].size.height;
         }
@@ -3402,9 +3367,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [self disableBlur];
     }
 
-    if (![bottomBar isHidden]) {
-        [self updateInstantReplay];
-    }
+    [_instantReplayWindowController updateInstantReplayView];
     // Post notifications
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
                                                         object:[[tabViewItem identifier] activeSession]];
@@ -3900,97 +3863,63 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
-- (NSString*)stringForTimestamp:(long long)timestamp
-{
-    time_t startTime = timestamp / 1000000;
-    time_t now = time(NULL);
-    struct tm startTimeParts;
-    struct tm nowParts;
-    localtime_r(&startTime, &startTimeParts);
-    localtime_r(&now, &nowParts);
-    NSDateFormatter* fmt = [[[NSDateFormatter alloc] init] autorelease];
-    [fmt setDateStyle:NSDateFormatterShortStyle];
-    if (startTimeParts.tm_year != nowParts.tm_year ||
-        startTimeParts.tm_yday != nowParts.tm_yday) {
-        [fmt setDateStyle:NSDateFormatterShortStyle];
-    } else {
-        [fmt setDateStyle:NSDateFormatterNoStyle];
-    }
-    [fmt setTimeStyle:NSDateFormatterMediumStyle];
-    NSDate* date = [NSDate dateWithTimeIntervalSince1970:startTime];
-    NSString* result = [fmt stringFromDate:date];
-    return result;
-}
+#pragma mark - iTermInstantReplayDelegate
 
-// Refresh the widgets in the instant replay bar.
-- (void)updateInstantReplay
-{
+- (long long)instantReplayCurrentTimestamp {
     DVR* dvr = [[self currentSession] dvr];
     DVRDecoder* decoder = nil;
-
+    
     if (dvr) {
         decoder = [[self currentSession] dvrDecoder];
     }
     if (dvr && [decoder timestamp] != [dvr lastTimeStamp]) {
-        [currentTime setStringValue:[self stringForTimestamp:[decoder timestamp]]];
-        [currentTime sizeToFit];
-        float range = ((float)([dvr lastTimeStamp] - [dvr firstTimeStamp])) / 1000000.0;
-        if (range > 0) {
-            float offset = ((float)([decoder timestamp] - [dvr firstTimeStamp])) / 1000000.0;
-            float frac = offset / range;
-            [irSlider setFloatValue:frac];
-        }
+        return [decoder timestamp];
     } else {
-        // Live view
-        dvr = [[[self currentSession] screen] dvr];
-        [irSlider setFloatValue:1.0];
-        [currentTime setStringValue:@"Live View"];
-        [currentTime sizeToFit];
+        return -1;
     }
-    [earliestTime setStringValue:[self stringForTimestamp:[dvr firstTimeStamp]]];
-    [earliestTime sizeToFit];
-    [latestTime setStringValue:@"Now"];
-
-    // Align the currentTime with the slider
-    NSRect f = [currentTime frame];
-    NSRect sf = [irSlider frame];
-    NSRect etf = [earliestTime frame];
-    float newSliderX = etf.origin.x + etf.size.width + 10;
-    float dx = newSliderX - sf.origin.x;
-    sf.origin.x = newSliderX;
-    sf.size.width -= dx;
-    [irSlider setFrame:sf];
-    float newX = [irSlider floatValue] * sf.size.width + sf.origin.x - f.size.width / 2;
-    if (newX + f.size.width > sf.origin.x + sf.size.width) {
-        newX = sf.origin.x + sf.size.width - f.size.width;
-    }
-    if (newX < sf.origin.x) {
-        newX = sf.origin.x;
-    }
-    [currentTime setFrameOrigin:NSMakePoint(newX, f.origin.y)];
-
-    [bottomBar setNeedsDisplay:YES];
-    [[[self currentSession] textview] setNeedsDisplay:YES];
 }
 
-- (IBAction)irButton:(id)sender
-{
-    switch ([sender selectedSegment]) {
-        case 0:
-            [self irAdvance:-1];
-            break;
-
-        case 1:
-            [self irAdvance:1];
-            break;
-
+- (long long)instantReplayFirstTimestamp {
+    DVR* dvr = [[self currentSession] dvr];
+    DVRDecoder* decoder = nil;
+    
+    if (dvr) {
+        return [dvr firstTimeStamp];
+    } else {
+        return -1;
     }
+}
+
+- (long long)instantReplayLastTimestamp {
+    DVR* dvr = [[self currentSession] dvr];
+    DVRDecoder* decoder = nil;
+    
+    if (dvr) {
+        return [dvr lastTimeStamp];
+    } else {
+        return -1;
+    }
+}
+
+- (void)instantReplayClose {
+    if ([[self currentSession] liveSession]) {
+        [self showLiveSession:[[self currentSession] liveSession] inPlaceOf:[self currentSession]];
+    }
+}
+
+- (void)instantReplaySeekTo:(float)position {
+    if (![[self currentSession] liveSession]) {
+        [self replaySession:[self currentSession]];
+    }
+    [[self currentSession] irSeekToAtLeast:[self timestampForFraction:position]];
+}
+
+- (void)instantReplayStep:(int)direction {
+    [self irAdvance:direction];
     [[self window] makeFirstResponder:[[self currentSession] textview]];
-    [sender setSelected:NO forSegment:[sender selectedSegment]];
 }
 
-- (void)irAdvance:(int)dir
-{
+- (void)irAdvance:(int)dir {
     if (![[self currentSession] liveSession]) {
         if (dir > 0) {
             // Can't go forward in time from live view (though that would be nice!)
@@ -4000,51 +3929,29 @@ NSString *kSessionsKVCKey = @"sessions";
         [self replaySession:[self currentSession]];
     }
     [[self currentSession] irAdvance:dir];
-    if (![bottomBar isHidden]) {
-        [self updateInstantReplay];
-    }
 }
 
 - (BOOL)inInstantReplay
 {
-    return ![bottomBar isHidden];
+    return _instantReplayWindowController != nil;
 }
 
 // Toggle instant replay bar.
 - (void)showHideInstantReplay
 {
-    BOOL hide = ![bottomBar isHidden];
-    if (!hide) {
-        [self updateInstantReplay];
-    }
-    [bottomBar setHidden:hide];
-    if (_fullScreen) {
-        [self adjustFullScreenWindowForBottomBarChange];
+    BOOL hide = [self inInstantReplay];
+    if (hide) {
+        [self closeInstantReplayWindow];
     } else {
-        [[[self window] contentView] setAutoresizesSubviews:NO];
-        [self fitWindowToTabs];
+        _instantReplayWindowController = [[iTermInstantReplayWindowController alloc] init];
+        _instantReplayWindowController.delegate = self;
+        [_instantReplayWindowController.window makeKeyAndOrderFront:nil];
     }
-    [self repositionWidgets];
-
-    // On OS X 10.5.8, the scroll bar and resize indicator are messed up at this point. Resizing the tabview fixes it. This seems to be fixed in 10.6.
-    NSRect tvframe = [TABVIEW frame];
-    tvframe.size.height += 1;
-    [TABVIEW setFrame:tvframe];
-    tvframe.size.height -= 1;
-    [TABVIEW setFrame:tvframe];
-    [[[self window] contentView] setAutoresizesSubviews:YES];
-
     [[self window] makeFirstResponder:[[self currentSession] textview]];
 }
 
-- (IBAction)closeInstantReplay:(id)sender
-{
-    if (![bottomBar isHidden]) {
-        if ([[self currentSession] liveSession]) {
-            [self showLiveSession:[[self currentSession] liveSession] inPlaceOf:[self currentSession]];
-        }
-        [self showOrHideInstantReplayBar];
-    }
+- (void)closeInstantReplay:(id)sender {
+    [self closeInstantReplayWindow];
 }
 
 - (void)fitWindowToTab:(PTYTab*)tab
@@ -4085,7 +3992,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [newSession setTab:theTab];
     [theTab setDvrInSession:newSession];
     [newSession release];
-    if ([bottomBar isHidden]) {
+    if (![self inInstantReplay]) {
         [self showHideInstantReplay];
     }
 }
@@ -4093,7 +4000,7 @@ NSString *kSessionsKVCKey = @"sessions";
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession
 {
     PTYTab* theTab = [replaySession tab];
-    [self updateInstantReplay];
+    [_instantReplayWindowController updateInstantReplayView];
 
     [self sessionInitiatedResize:replaySession
                            width:[[liveSession screen] width]
@@ -4147,15 +4054,6 @@ NSString *kSessionsKVCKey = @"sessions";
     return [[self window] screen];
 }
 
-- (IBAction)irSliderMoved:(id)sender
-{
-    if (![[self currentSession] liveSession]) {
-        [self replaySession:[self currentSession]];
-    }
-    [[self currentSession] irSeekToAtLeast:[self timestampForFraction:[irSlider floatValue]]];
-    [self updateInstantReplay];
-}
-
 - (IBAction)irPrev:(id)sender
 {
     if (![[PreferencePanel sharedInstance] instantReplay]) {
@@ -4168,12 +4066,14 @@ NSString *kSessionsKVCKey = @"sessions";
     }
     [self irAdvance:-1];
     [[self window] makeFirstResponder:[[self currentSession] textview]];
+    [_instantReplayWindowController updateInstantReplayView];
 }
 
 - (IBAction)irNext:(id)sender
 {
     [self irAdvance:1];
     [[self window] makeFirstResponder:[[self currentSession] textview]];
+    [_instantReplayWindowController updateInstantReplayView];
 }
 
 - (void)_openSplitSheetForVertical:(BOOL)vertical
@@ -4323,7 +4223,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Profile*)theBookmark
 {
-    if (![bottomBar isHidden]) {
+    if ([self inInstantReplay]) {
     // Things get very complicated in this case. Just disallow it.
         return NO;
     }
@@ -4670,7 +4570,6 @@ NSString *kSessionsKVCKey = @"sessions";
     TABVIEW.autoresizingMask = savedMask;
     [bugFixView removeFromSuperview];
     [[[self window] contentView] setAutoresizesSubviews:YES];
-    [self fitBottomBarToWindow];
 
     PtyLog(@"fitWindowToTabs - refresh textview");
     for (PTYSession* session in [[self currentTab] sessions]) {
@@ -5106,11 +5005,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [[[self window] contentView] lockFocus];
     [[NSColor blackColor] set];
     NSRect frame = [[self window] frame];
-    if (![bottomBar isHidden]) {
-        int h = [bottomBar frame].size.height;
-        frame.origin.y += h;
-        frame.size.height -= h;
-    }
+    frame.origin = NSZeroPoint;
     NSRectFill(frame);
     [[[self window] contentView] unlockFocus];
 }
@@ -5259,59 +5154,10 @@ NSString *kSessionsKVCKey = @"sessions";
                     display:YES];
 }
 
-// Grow or shrink the tabview to make room for the find bar in fullscreen mode
-// and then fit sessions to new window size.
-- (void)adjustFullScreenWindowForBottomBarChange
-{
-    if (![self anyFullScreen]) {
-        return;
-    }
-    PtyLog(@"adjustFullScreenWindowForBottomBarChange");
-
-    NSRect aRect = [[self window] frame];
-    aRect.origin.x = [self _haveLeftBorder] ? 1 : 0;
-    aRect.origin.y = [self _haveBottomBorder] ? 1 : 0;
-    if (![bottomBar isHidden]) {
-        aRect.origin.y += [bottomBar frame].size.height;
-        aRect.size.height -= aRect.origin.y;
-    } else {
-        aRect.origin.y = 0;
-    }
-    if (![tabBarControl isHidden]) {
-        aRect.size.height -= [tabBarControl frame].size.height;
-    }
-    aRect.size.width = [self tabviewWidth];
-    [TABVIEW setFrame:aRect];
-    PtyLog(@"adjustFullScreenWindowForBottomBarChange - call fitTabsToWindow");
-    [self fitTabsToWindow];
-    [self fitBottomBarToWindow];
-}
-
-// Adjust the find bar's width to match the window's.
-- (void)fitBottomBarToWindow
-{
-    // Adjust the position of the bottom bar to fit properly below the tabview.
-    NSRect bottomBarFrame = [bottomBar frame];
-    bottomBarFrame.size.width = [TABVIEW frame].size.width;
-    bottomBarFrame.origin.x = [TABVIEW frame].origin.x;
-    [bottomBar setFrame:bottomBarFrame];
-
-    NSRect instantReplayFrame = [instantReplaySubview frame];
-    float dWidth = instantReplayFrame.size.width - bottomBarFrame.size.width;
-    NSRect sliderFrame = [irSlider frame];
-    sliderFrame.size.width -= dWidth;
-    instantReplayFrame.size.width = bottomBarFrame.size.width;
-    [instantReplaySubview setFrame:instantReplayFrame];
-    [irSlider setFrame:sliderFrame];
-
-    [self updateInstantReplay];
-}
-
 // Show or hide instant replay bar.
 - (void)setInstantReplayBarVisible:(BOOL)visible
 {
-    BOOL hide = !visible;
-    if ([bottomBar isHidden] != hide) {
+    if ([self inInstantReplay] != visible) {
         [self showHideInstantReplay];
     }
 }
@@ -5336,9 +5182,6 @@ NSString *kSessionsKVCKey = @"sessions";
         return NO;
     } else if ([self anyFullScreen] ||
                windowType_ == WINDOW_TYPE_BOTTOM) {
-        return NO;
-    } else if (![bottomBar isHidden]) {
-        // Bottom bar visible so no need for a lower border
         return NO;
     } else if (topTabBar) {
         // Nothing on the bottom, so need a border.
@@ -5386,9 +5229,6 @@ NSString *kSessionsKVCKey = @"sessions";
 
     if ([self tabBarShouldBeVisibleWithAdditionalTabs:tabViewItemsBeingAdded]) {
         contentSize.height += [tabBarControl frame].size.height;
-    }
-    if (![bottomBar isHidden]) {
-        contentSize.height += [bottomBar frame].size.height;
     }
 
     // Add 1px border
@@ -5514,9 +5354,6 @@ NSString *kSessionsKVCKey = @"sessions";
         NSRect aRect;
         aRect.origin.x = [self _haveLeftBorder] ? 1 : 0;
         aRect.origin.y = [self _haveBottomBorder] ? 1 : 0;
-        if (![bottomBar isHidden]) {
-            aRect.origin.y += [bottomBar frame].size.height;
-        }
         aRect.size = [[thisWindow contentView] frame].size;
         aRect.size.height -= aRect.origin.y;
         if ([self _haveTopBorder] || _divisionView) {
@@ -5538,9 +5375,6 @@ NSString *kSessionsKVCKey = @"sessions";
             aRect.origin.x = [self _haveLeftBorder] ? 1 : 0;
             aRect.origin.y = [self _haveBottomBorder] ? 1 : 0;
             aRect.size = [[thisWindow contentView] frame].size;
-            if (![bottomBar isHidden]) {
-                aRect.origin.y += [bottomBar frame].size.height;
-            }
             aRect.size.height -= aRect.origin.y;
             aRect.size.height -= [tabBarControl frame].size.height;
             if ([self _haveTopBorder]) {
@@ -5562,9 +5396,6 @@ NSString *kSessionsKVCKey = @"sessions";
             aRect.size = [[thisWindow contentView] frame].size;
             aRect.size.height = [tabBarControl frame].size.height;
             aRect.size.width = [self tabviewWidth];
-            if (![bottomBar isHidden]) {
-                aRect.origin.y += [bottomBar frame].size.height;
-            }
             [tabBarControl setFrame:aRect];
             [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMaxYMargin)];
             aRect.origin.y += [tabBarControl frame].size.height;
@@ -5597,9 +5428,6 @@ NSString *kSessionsKVCKey = @"sessions";
     }
     [tabBarControl setSizeCellsToFit:[[PreferencePanel sharedInstance] useUnevenTabs]];
     [tabBarControl setCellOptimumWidth:[[PreferencePanel sharedInstance] optimumTabWidth]];
-
-    PtyLog(@"repositionWidgets - call fitBottomBarToWindow");
-    [self fitBottomBarToWindow];
 
     PtyLog(@"repositionWidgets - refresh textviews in this tab");
     for (PTYSession* session in [[self currentTab] sessions]) {
@@ -5699,11 +5527,10 @@ NSString *kSessionsKVCKey = @"sessions";
 // Copy state from 'other' to this terminal.
 - (void)copySettingsFrom:(PseudoTerminal*)other
 {
-    [bottomBar setHidden:YES];
-    if (![other->bottomBar isHidden]) {
+    if ([other inInstantReplay]) {
+        [other closeInstantReplayWindow];
         [self showHideInstantReplay];
     }
-    [bottomBar setHidden:[other->bottomBar isHidden]];
 }
 
 // Set the session's address book and initialize its screen and name. Sets the

@@ -588,6 +588,11 @@
 		A61B66CA18D4D855009AC9D5 /* NSView+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A61B66C818D4D855009AC9D5 /* NSView+iTerm.h */; };
 		A61B66CB18D4D855009AC9D5 /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */; };
 		A61B66CC18D4D855009AC9D5 /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */; };
+		A61B66CF18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A61B66CD18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h */; };
+		A61B66D018D51EAC009AC9D5 /* iTermInstantReplayWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */; };
+		A61B66D118D51EAC009AC9D5 /* iTermInstantReplayWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */; };
+		A61B66D318D63758009AC9D5 /* InstantReplay.xib in Resources */ = {isa = PBXBuildFile; fileRef = A61B66D218D63758009AC9D5 /* InstantReplay.xib */; };
+		A61B66D418D63758009AC9D5 /* InstantReplay.xib in Resources */ = {isa = PBXBuildFile; fileRef = A61B66D218D63758009AC9D5 /* InstantReplay.xib */; };
 		A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */; };
 		A628C7A918764AA4009B0818 /* NSDictionary+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */; };
 		A628C7AA18764AA4009B0818 /* NSDictionary+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */; };
@@ -1167,6 +1172,9 @@
 		A6057C161883D12E004A60AF /* broken_image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = broken_image.png; path = images/broken_image.png; sourceTree = "<group>"; };
 		A61B66C818D4D855009AC9D5 /* NSView+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSView+iTerm.h"; sourceTree = "<group>"; };
 		A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSView+iTerm.m"; sourceTree = "<group>"; };
+		A61B66CD18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermInstantReplayWindowController.h; sourceTree = "<group>"; };
+		A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermInstantReplayWindowController.m; sourceTree = "<group>"; };
+		A61B66D218D63758009AC9D5 /* InstantReplay.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = InstantReplay.xib; sourceTree = "<group>"; };
 		A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+iTerm.h"; sourceTree = "<group>"; };
 		A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+iTerm.m"; sourceTree = "<group>"; };
 		A6358642184BEA57009ED690 /* AATree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AATree.h; path = "objc-aatree-master/AATree.h"; sourceTree = "<group>"; };
@@ -1418,6 +1426,9 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A61B66CD18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h */,
+				A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */,
+				A61B66D218D63758009AC9D5 /* InstantReplay.xib */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -2441,6 +2452,7 @@
 				A63F40A4183F3B78003A6A6D /* LineBlock.h in Headers */,
 				1D3D21871482E0E500FAC8E7 /* TmuxGateway.h in Headers */,
 				1D3D21901482F18A00FAC8E7 /* TmuxController.h in Headers */,
+				A61B66CF18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h in Headers */,
 				1D3D21951483144600FAC8E7 /* TSVParser.h in Headers */,
 				1D3D21AF14839AAB00FAC8E7 /* TmuxLayoutParser.h in Headers */,
 				1DB67CED14850D53005849A1 /* TmuxWindowOpener.h in Headers */,
@@ -2594,6 +2606,7 @@
 				1D81F0CA183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */,
 				1DC13AC81886507D00034DAE /* CommandHistoryPopup.xib in Resources */,
 				1D01609E1852AA6F0014D26A /* mark.png in Resources */,
+				A61B66D418D63758009AC9D5 /* InstantReplay.xib in Resources */,
 				1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */,
 				1DD39AEF180B8118004E56D5 /* Images.xcassets in Resources */,
 				1DEF5E6E185F889600300319 /* Alert.png in Resources */,
@@ -2665,6 +2678,7 @@
 				1D94EAB012D64022008225A9 /* UKCrashReporter.nib in Resources */,
 				1D94EAB112D64022008225A9 /* UKCrashReporter.strings in Resources */,
 				1D99785312EEB3D600F0794D /* GlobalSearch.xib in Resources */,
+				A61B66D318D63758009AC9D5 /* InstantReplay.xib in Resources */,
 				1D237D90131D8BEE004DD60C /* FindView.xib in Resources */,
 				1DC13ABF1886146B00034DAE /* mark_err@2x.png in Resources */,
 				1DA02CFB1327612600D7E7DB /* bell.png in Resources */,
@@ -2935,6 +2949,7 @@
 				A6A13AA418C2D23300B241ED /* iTermColorMap.m in Sources */,
 				A635864B184BEA57009ED690 /* AATreeNode.m in Sources */,
 				A6A13AB318C33ED300B241ED /* VT100CSIParser.m in Sources */,
+				A61B66D118D51EAC009AC9D5 /* iTermInstantReplayWindowController.m in Sources */,
 				1D9A5543180FA81400B42CE9 /* ProfileTableRow.m in Sources */,
 				1D9A5588180FA87000B42CE9 /* MovePaneController.m in Sources */,
 				1D9A5536180FA79100B42CE9 /* DVRDecoder.m in Sources */,
@@ -2981,6 +2996,7 @@
 				1D5FDDB01208E93600C46BA3 /* PTYWindow.m in Sources */,
 				A63F40A0183F3AF5003A6A6D /* VT100LineInfo.m in Sources */,
 				A680AA1918CEBF5C0034D4F8 /* NSMutableData+iTerm.m in Sources */,
+				A61B66D018D51EAC009AC9D5 /* iTermInstantReplayWindowController.m in Sources */,
 				1D53FD16181C4B4B00524D4F /* FindContext.m in Sources */,
 				1D5FDDB21208E93600C46BA3 /* PTToolbarController.m in Sources */,
 				A6CFDAD3185D2587005DC94B /* URLAction.m in Sources */,

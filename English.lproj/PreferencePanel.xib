@@ -3002,7 +3002,7 @@ Gw
                                                                 </connections>
                                                             </comboBox>
                                                             <textField verticalHuggingPriority="750" id="2434">
-                                                                <rect key="frame" x="26" y="384" width="118" height="17"/>
+                                                                <rect key="frame" x="26" y="384" width="125" height="17"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Scrollback Buffer" id="2435">
                                                                     <font key="font" metaFont="systemBold"/>

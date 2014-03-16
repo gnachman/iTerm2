@@ -1,17 +1,17 @@
 #import <Cocoa/Cocoa.h>
+#import "Autocomplete.h"
+#import "FutureMethods.h"
 #import "PSMTabBarControl.h"
 #import "PTYTabView.h"
 #import "PTYWindow.h"
-#import "ProfileListView.h"
-#import "WindowControllerInterface.h"
 #import "PasteboardHistory.h"
 #import "Popup.h"
-#import "Autocomplete.h"
-#import "ToolbeltView.h"
+#import "ProfileListView.h"
 #import "SolidColorView.h"
-#import "FutureMethods.h"
+#import "ToolbeltView.h"
+#import "WindowControllerInterface.h"
+#import "iTermInstantReplayWindowController.h"
 
-@class BottomBarView;
 @class PTYSession;
 @class PSMTabBarControl;
 @class PTToolbarController;
@@ -20,11 +20,12 @@
 
 @class TmuxController;
 
-// This class is 1:1 with windows. It controls the tabs, bottombar, toolbar,
+// This class is 1:1 with windows. It controls the tabs, toolbar,
 // fullscreen, and coordinates resizing of sessions (either session-initiated
 // or window-initiated).
 // OS 10.5 doesn't support window delegates
 @interface PseudoTerminal : NSWindowController <
+  iTermInstantReplayDelegate,
   iTermWindowController,
   NSWindowDelegate,
   PSMTabBarControlDelegate,
@@ -151,12 +152,6 @@
 - (ToolbeltView *)toolbelt;
 
 - (void)refreshTools;
-
-#pragma mark - NSTextField Delegate Methods
-
-// Called when return or tab is pressed in the bottombar text field or the command
-// field.
-- (void)controlTextDidEndEditing:(NSNotification *)aNotification;
 
 #pragma mark - NSWindowController Delegate Methods
 
@@ -302,9 +297,6 @@
 // you anticipate its response). Does nothing if all tabs are tmux tabs.
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux;
 
-// Update irBar.
-- (void)updateInstantReplay;
-
 // Show or hide as needed for current session.
 - (void)showOrHideInstantReplayBar;
 
@@ -381,11 +373,6 @@
 // Turn full-screen mode on or off. Creates a new PseudoTerminal and moves this
 // one's state into it.
 - (IBAction)toggleFullScreenMode:(id)sender;
-// Called when next/prev frame button is clicked.
-- (IBAction)irButton:(id)sender;
-// Called when the close button in the find bar is pressed.
-- (IBAction)closeInstantReplay:(id)sender;
-- (IBAction)irSliderMoved:(id)sender;
 // Advance to next or previous time step
 - (IBAction)irPrev:(id)sender;
 - (IBAction)irNext:(id)sender;
