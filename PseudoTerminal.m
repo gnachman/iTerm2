@@ -362,11 +362,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [commandField retain];
     [commandField setDelegate:self];
     [bottomBar retain];
-    if (windowType == WINDOW_TYPE_LION_FULL_SCREEN &&
-        ![[PreferencePanel sharedInstance] lionStyleFullscreen]) {
-        windowType = WINDOW_TYPE_FULL_SCREEN;
-    }
-    if ((windowType == WINDOW_TYPE_FULL_SCREEN ||
+    if ((windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
          windowType == WINDOW_TYPE_LION_FULL_SCREEN) &&
         screenNumber == -1) {
         NSUInteger n = [[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]];
@@ -434,11 +430,6 @@ NSString *kSessionsKVCKey = @"sessions";
             initialFrame = [screen visibleFrame];
             break;
 
-        case WINDOW_TYPE_FORCE_FULL_SCREEN:
-            oldFrame_ = [[self window] frame];
-            initialFrame = [self traditionalFullScreenFrameForScreen:screen];
-            break;
-
         default:
             PtyLog(@"Unknown window type: %d", (int)windowType);
             NSLog(@"Unknown window type: %d", (int)windowType);
@@ -447,10 +438,15 @@ NSString *kSessionsKVCKey = @"sessions";
             haveScreenPreference_ = NO;
             // fall through
         case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_FULL_SCREEN:
-            // Use the system-supplied frame which has a reasonable origin. It may
-            // be overridden by smart window placement or a saved window location.
-            initialFrame = [[self window] frame];
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
+                oldFrame_ = [[self window] frame];
+                initialFrame = [self traditionalFullScreenFrameForScreen:screen];
+            } else {
+                // Use the system-supplied frame which has a reasonable origin. It may
+                // be overridden by smart window placement or a saved window location.
+                initialFrame = [[self window] frame];
+            }
             if (screenNumber_ != 0) {
                 DLog(@"Moving fullscreen window to screen %d", screenNumber_);
                 // Move the frame to the desired screen
@@ -497,7 +493,7 @@ NSString *kSessionsKVCKey = @"sessions";
         case WINDOW_TYPE_RIGHT_PARTIAL:
             styleMask = NSBorderlessWindowMask | NSResizableWindowMask;
             break;
-        case WINDOW_TYPE_FORCE_FULL_SCREEN:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             styleMask = NSBorderlessWindowMask;
             break;
 
@@ -527,7 +523,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [self setWindow:myWindow];
     [myWindow release];
 
-    _fullScreen = (windowType == WINDOW_TYPE_FORCE_FULL_SCREEN);
+    _fullScreen = (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN);
     background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor windowBackgroundColor]];
     [[self window] setAlphaValue:1];
     [[self window] setOpaque:NO];
@@ -536,7 +532,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
     _resizeInProgressFlag = NO;
 
-    if (!smartLayout || windowType == WINDOW_TYPE_FORCE_FULL_SCREEN) {
+    if (!smartLayout || windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         PtyLog(@"no smart layout or is full screen, so set layout done");
         [(PTYWindow*)[self window] setLayoutDone];
     }
@@ -630,8 +626,7 @@ NSString *kSessionsKVCKey = @"sessions";
     fullscreenTabs_ = [[NSUserDefaults standardUserDefaults] objectForKey:@"ShowFullScreenTabBar"] ?
       [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowFullScreenTabBar"] : false;
     number_ = [[iTermController sharedInstance] allocateWindowNumber];
-    if (windowType == WINDOW_TYPE_FORCE_FULL_SCREEN) {
-        windowType_ = WINDOW_TYPE_FULL_SCREEN;
+    if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         [self hideMenuBar];
     }
 
@@ -829,8 +824,8 @@ NSString *kSessionsKVCKey = @"sessions";
     // create a new terminal window
     int newWindowType;
     switch (windowType_) {
-        case WINDOW_TYPE_FULL_SCREEN:
-            newWindowType = WINDOW_TYPE_FORCE_FULL_SCREEN;
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            newWindowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
             break;
 
         case WINDOW_TYPE_TOP:
@@ -861,7 +856,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
     if (newWindowType == WINDOW_TYPE_NORMAL) {
         [[term window] setFrameOrigin:point];
-    } else if (newWindowType == WINDOW_TYPE_FORCE_FULL_SCREEN) {
+    } else if (newWindowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         [[term window] makeKeyAndOrderFront:nil];
         [term hideMenuBar];
     }
@@ -1426,7 +1421,7 @@ NSString *kSessionsKVCKey = @"sessions";
     } else {
         if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_FULLSCREEN] &&
             [[arrangement objectForKey:TERMINAL_ARRANGEMENT_FULLSCREEN] boolValue]) {
-            windowType = WINDOW_TYPE_FULL_SCREEN;
+            windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
         } else if ([[arrangement objectForKey:TERMINAL_ARRANGEMENT_LION_FULLSCREEN] boolValue]) {
             windowType = WINDOW_TYPE_LION_FULL_SCREEN;
         } else {
@@ -1464,7 +1459,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
     NSRect rect = NSZeroRect;
     switch (windowType) {
-        case WINDOW_TYPE_FULL_SCREEN:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
             rect = virtualScreenFrame;
             break;
@@ -1575,9 +1570,9 @@ NSString *kSessionsKVCKey = @"sessions";
     PseudoTerminal* term;
     int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     int screenIndex = [PseudoTerminal _screenIndexForArrangement:arrangement];
-    if (windowType == WINDOW_TYPE_FULL_SCREEN) {
+    if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
-                                                 windowType:WINDOW_TYPE_FORCE_FULL_SCREEN
+                                                 windowType:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN
                                                      screen:screenIndex] autorelease];
 
         NSRect rect;
@@ -2236,11 +2231,11 @@ NSString *kSessionsKVCKey = @"sessions";
             // fall through
         case WINDOW_TYPE_LION_FULL_SCREEN:
             PtyLog(@"Window type = LION");
-        case WINDOW_TYPE_FULL_SCREEN:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             PtyLog(@"Window type = FULL SCREEN");
             if ([screen frame].size.width > 0) {
                 PtyLog(@"set window to screen's frame");
-                if (windowType_ == WINDOW_TYPE_FULL_SCREEN) {
+                if (windowType_ == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
                     [[self window] setFrame:[self traditionalFullScreenFrameForScreen:screen] display:YES];
                 } else {
                     [[self window] setFrame:[screen frame] display:YES];
@@ -2728,15 +2723,18 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (IBAction)toggleFullScreenMode:(id)sender
 {
+    DLog(@"toggleFullScreenMode:. window type is %d", windowType_);
     if ([self lionFullScreen] ||
-        (windowType_ != WINDOW_TYPE_FULL_SCREEN &&
+        (windowType_ != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
          !isHotKeyWindow_ &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
          [[PreferencePanel sharedInstance] lionStyleFullscreen])) {
         // Is 10.7 Lion or later.
         [[self ptyWindow] performSelector:@selector(toggleFullScreen:) withObject:self];
         if (lionFullScreen_) {
+            DLog(@"Set window type to lion fs");
             windowType_ = WINDOW_TYPE_LION_FULL_SCREEN;
         } else {
+            DLog(@"Set window type to normal");
             windowType_ = WINDOW_TYPE_NORMAL;
         }
         // TODO(georgen): toggle enabled status of use transparency menu item
@@ -2787,8 +2785,7 @@ NSString *kSessionsKVCKey = @"sessions";
         case WINDOW_TYPE_RIGHT_PARTIAL:
             return NSBorderlessWindowMask | NSResizableWindowMask;
 
-        case WINDOW_TYPE_FORCE_FULL_SCREEN:
-        case WINDOW_TYPE_FULL_SCREEN:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             return NSBorderlessWindowMask;
             
         case WINDOW_TYPE_LION_FULL_SCREEN:
@@ -2809,7 +2806,7 @@ NSString *kSessionsKVCKey = @"sessions";
     if (!_fullScreen) {
         oldFrame_ = self.window.frame;
         savedWindowType_ = windowType_;
-        windowType_ = WINDOW_TYPE_FULL_SCREEN;
+        windowType_ = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
         [self.window setOpaque:NO];
         self.window.alphaValue = 0;
         [self.window setStyleMask:[self styleMask]];
@@ -3011,6 +3008,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification
 {
+    DLog(@"Window will enter lion fullscreen");
     [self repositionWidgets];
     togglingLionFullScreen_ = YES;
     [_divisionView removeFromSuperview];
@@ -3020,6 +3018,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
 {
+    DLog(@"Window did enter lion fullscreen");
     [toolbelt_ setUseDarkDividers:YES];
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
@@ -3037,6 +3036,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
 {
+    DLog(@"Window will exit lion fullscreen");
     exitingLionFullscreen_ = YES;
     [fullScreenTabviewTimer_ invalidate];
     fullScreenTabviewTimer_ = nil;
@@ -3055,6 +3055,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification
 {
+    DLog(@"Window did exit lion fullscreen");
     [toolbelt_ setUseDarkDividers:NO];
     exitingLionFullscreen_ = NO;
     zooming_ = NO;
@@ -6889,8 +6890,7 @@ NSString *kSessionsKVCKey = @"sessions";
             [self hideAfterOpening];
         }
         [[iTermController sharedInstance] addInTerminals:self];
-        toggle = ([self windowType] == WINDOW_TYPE_FULL_SCREEN) ||
-                 ([self windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
+        toggle = ([self windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
     }
 
     [self setupSession:object title:nil withSize:nil];

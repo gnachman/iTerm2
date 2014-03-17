@@ -921,7 +921,7 @@ static BOOL initDone = NO;
 {
     if ([aDict objectForKey:KEY_WINDOW_TYPE]) {
         int windowType = [[aDict objectForKey:KEY_WINDOW_TYPE] intValue];
-        if (windowType == WINDOW_TYPE_FULL_SCREEN &&
+        if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
             [[PreferencePanel sharedInstance] lionStyleFullscreen]) {
             return WINDOW_TYPE_LION_FULL_SCREEN;
         } else {
@@ -1064,15 +1064,8 @@ static BOOL initDone = NO;
     if (theTerm == nil || ![theTerm windowInited]) {
         [iTermController switchToSpaceInBookmark:aDict];
         int windowType = [self windowTypeForBookmark:aDict];
-        if (isHotkey) {
-            if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
-                windowType = WINDOW_TYPE_FULL_SCREEN;
-            }
-            if (windowType == WINDOW_TYPE_FULL_SCREEN) {
-                // This is a shortcut to make fullscreen hotkey windows open
-                // directly in fullscreen mode.
-                windowType = WINDOW_TYPE_FORCE_FULL_SCREEN;
-            }
+        if (isHotkey && windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+            windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
         }
         if (theTerm) {
             term = theTerm;
@@ -1094,8 +1087,7 @@ static BOOL initDone = NO;
             // See comment above regarding hotkey windows.
             toggle = NO;
         } else {
-            toggle = ([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
-                     ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
+            toggle = ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
         }
     } else {
         term = theTerm;

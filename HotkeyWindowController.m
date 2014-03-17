@@ -74,7 +74,7 @@ static BOOL OpenHotkeyWindow()
             // Lion fullscreen doesn't make sense with hotkey windows. Change
             // window type to traditional fullscreen.
             NSMutableDictionary* replacement = [NSMutableDictionary dictionaryWithDictionary:bookmark];
-            [replacement setObject:[NSNumber numberWithInt:WINDOW_TYPE_FULL_SCREEN]
+            [replacement setObject:[NSNumber numberWithInt:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN]
                             forKey:KEY_WINDOW_TYPE];
             bookmark = replacement;
         }
@@ -87,7 +87,7 @@ static BOOL OpenHotkeyWindow()
         [term setIsHotKeyWindow:YES];
 
         [[term window] setAlphaValue:0];
-        if ([term windowType] != WINDOW_TYPE_FULL_SCREEN) {
+        if ([term windowType] != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
             [[term window] setCollectionBehavior:[[term window] collectionBehavior] & ~NSWindowCollectionBehaviorFullScreenPrimary];
         }
         RollInHotkeyTerm(term);

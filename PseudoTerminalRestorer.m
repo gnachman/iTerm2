@@ -65,7 +65,7 @@ typedef void (^VoidBlock)(void);
             // to do with those, and we'd set it to some crazy wrong size.
             // Normal, top, and bottom windows take care of themselves.
             switch ([term windowType]) {
-                case WINDOW_TYPE_FULL_SCREEN:
+                case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
                 case WINDOW_TYPE_TOP:
                 case WINDOW_TYPE_TOP_PARTIAL:
                 case WINDOW_TYPE_BOTTOM:
