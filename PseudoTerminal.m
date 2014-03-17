@@ -82,6 +82,10 @@ static const CGFloat kToolbeltMargin = 8;
 - (void)setBottomCornerRounded:(BOOL)rounded;
 @end
 
+@interface PseudoTerminal ()
+@property(nonatomic, retain) PTToolbarController *toolbarController;
+@end
+
 // keys for attributes:
 NSString *kColumnsKVCKey = @"columns";
 NSString *kRowsKVCKey = @"rows";
@@ -126,13 +130,6 @@ NSString *kSessionsKVCKey = @"sessions";
     // added and the tabBarControl will be shown if it is added successfully
     // if it's not currently shown.
     int tabViewItemsBeingAdded;
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Toolbar
-    // A toolbar may be shown at the top of the window.
-
-    // This does the dirty work of running the toolbar.
-    PTToolbarController* _toolbarController;
 
     // A text field into which you may type a command. When you press enter in it
     // then the text is sent to the terminal.
@@ -524,7 +521,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [(PTYWindow*)[self window] setLayoutDone];
     }
 
-    if (windowType == WINDOW_TYPE_NORMAL) {
+    if (styleMask & NSTitledWindowMask) {
         _toolbarController = [[PTToolbarController alloc] initWithPseudoTerminal:self];
         if ([[self window] respondsToSelector:@selector(setBottomCornerRounded:)])
             // TODO: Why is this here?
@@ -2788,6 +2785,17 @@ NSString *kSessionsKVCKey = @"sessions";
                       VMARGIN * 2 + sessionSize.height * cellSize.height + decorationSize.height);
 }
 
+- (void)setWindowStyleMask:(NSUInteger)newStyleMask {
+    if (!(newStyleMask & NSTitledWindowMask)) {
+        [self.window setToolbar:nil];
+        self.toolbarController = nil;
+        [self.window setStyleMask:newStyleMask];
+    } else if (!_toolbarController) {
+        [self.window setStyleMask:newStyleMask];
+        self.toolbarController = [[PTToolbarController alloc] initWithPseudoTerminal:self];
+    }
+}
+
 - (void)toggleTraditionalFullScreenMode
 {
     [SessionView windowDidResize];
@@ -2799,14 +2807,16 @@ NSString *kSessionsKVCKey = @"sessions";
         windowType_ = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
         [self.window setOpaque:NO];
         self.window.alphaValue = 0;
-        [self.window setStyleMask:[self styleMask]];
+        // The toolbar goes away for traditional fullscreen windows because a
+        // borderless window doesn't support a toolbar.
+        [self setWindowStyleMask:[self styleMask]];
         [self.window setFrame:self.window.screen.frame display:YES];
         self.window.alphaValue = 1;
     } else {
         [self showMenuBar];
         windowType_ = savedWindowType_;
-        [self.window setStyleMask:[self styleMask]];
-        
+        [self setWindowStyleMask:[self styleMask]];
+
         // This will be close but probably not quite right because tweaking to the decoration size
         // happens later.
         if (oldFrameSizeIsBogus_) {
@@ -3509,7 +3519,10 @@ NSString *kSessionsKVCKey = @"sessions";
     [[self window] close];
 }
 
-- (NSImage *)tabView:(NSTabView *)aTabView imageForTabViewItem:(NSTabViewItem *)tabViewItem offset:(NSSize *)offset styleMask:(unsigned int *)styleMask
+- (NSImage *)tabView:(NSTabView *)aTabView
+    imageForTabViewItem:(NSTabViewItem *)tabViewItem
+                 offset:(NSSize *)offset
+              styleMask:(unsigned int *)styleMask
 {
     NSImage *viewImage;
 
@@ -5950,7 +5963,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [item action] == @selector(openDashboard:)) {
         result = [[iTermController sharedInstance] haveTmuxConnection];
     } else if ([item action] == @selector(wrapToggleToolbarShown:)) {
-        result = ![self lionFullScreen];
+        result = ![self lionFullScreen] && (self.window.styleMask & NSTitledWindowMask);
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         result = ([[self sessions] count] > 1);
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||

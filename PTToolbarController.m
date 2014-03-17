@@ -46,18 +46,19 @@ NSString *CommandToolbarItem = @"Command";
 
 @implementation PTToolbarController
 
-- (id)initWithPseudoTerminal:(PseudoTerminal*)terminal;
-{
+- (id)initWithPseudoTerminal:(PseudoTerminal*)terminal; {
     self = [super init];
-    _pseudoTerminal = terminal; // don't retain;
+    if (self) {
+        _pseudoTerminal = terminal; // don't retain;
 
-    // Add ourselves as an observer for notifications to reload the addressbook.
-    [[NSNotificationCenter defaultCenter] addObserver: self
-                                             selector: @selector(reloadAddressBookMenu:)
-                                                 name: @"iTermReloadAddressBook"
-                                               object: nil];
+        // Add ourselves as an observer for notifications to reload the addressbook.
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(reloadAddressBookMenu:)
+                                                     name:@"iTermReloadAddressBook"
+                                                   object:nil];
 
-    [self setupToolbar];
+        [self setupToolbar];
+    }
     return self;
 }
 
@@ -70,37 +71,28 @@ NSString *CommandToolbarItem = @"Command";
     [super dealloc];
 }
 
-- (NSArray *)toolbarDefaultItemIdentifiers: (NSToolbar *) toolbar
-{
-    NSMutableArray* itemIdentifiers= [[[NSMutableArray alloc]init] autorelease];
-
-    [itemIdentifiers addObject: NewToolbarItem];
-    [itemIdentifiers addObject: ConfigToolbarItem];
-    [itemIdentifiers addObject: NSToolbarSeparatorItemIdentifier];
-    [itemIdentifiers addObject: NSToolbarCustomizeToolbarItemIdentifier];
-    [itemIdentifiers addObject: CloseToolbarItem];
-    [itemIdentifiers addObject: NSToolbarSeparatorItemIdentifier];
-    [itemIdentifiers addObject: CommandToolbarItem];
-    [itemIdentifiers addObject: BookmarksToolbarItem];
-
-    return itemIdentifiers;
+- (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar {
+    return @[ NewToolbarItem,
+              ConfigToolbarItem,
+              NSToolbarSeparatorItemIdentifier,
+              NSToolbarCustomizeToolbarItemIdentifier,
+              CloseToolbarItem,
+              NSToolbarSeparatorItemIdentifier,
+              CommandToolbarItem,
+              BookmarksToolbarItem ];
 }
 
 - (NSArray *)toolbarAllowedItemIdentifiers: (NSToolbar *) toolbar
 {
-    NSMutableArray* itemIdentifiers = [[[NSMutableArray alloc]init] autorelease];
-
-    [itemIdentifiers addObject: NewToolbarItem];
-    [itemIdentifiers addObject: BookmarksToolbarItem];
-    [itemIdentifiers addObject: ConfigToolbarItem];
-    [itemIdentifiers addObject: NSToolbarCustomizeToolbarItemIdentifier];
-    [itemIdentifiers addObject: CloseToolbarItem];
-    [itemIdentifiers addObject: CommandToolbarItem];
-    [itemIdentifiers addObject: NSToolbarFlexibleSpaceItemIdentifier];
-    [itemIdentifiers addObject: NSToolbarSpaceItemIdentifier];
-    [itemIdentifiers addObject: NSToolbarSeparatorItemIdentifier];
-
-    return itemIdentifiers;
+    return @[ NewToolbarItem,
+              BookmarksToolbarItem,
+              ConfigToolbarItem,
+              NSToolbarCustomizeToolbarItemIdentifier,
+              CloseToolbarItem,
+              CommandToolbarItem,
+              NSToolbarFlexibleSpaceItemIdentifier,
+              NSToolbarSpaceItemIdentifier,
+              NSToolbarSeparatorItemIdentifier ];
 }
 
 - (NSToolbarItem *)toolbar:(NSToolbar *)toolbar
