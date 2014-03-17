@@ -97,7 +97,10 @@
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;
 - (NSArray*)sortedEncodingList;
 - (void)addBookmarksToMenu:(NSMenu *)aMenu startingAt:(int)startingAt;
-- (void)addBookmarksToMenu:(NSMenu *)aMenu withSelector:(SEL)selector openAllSelector:(SEL)openAllSelector startingAt:(int)startingAt;
+- (void)addBookmarksToMenu:(NSMenu *)aMenu
+              withSelector:(SEL)selector
+           openAllSelector:(SEL)openAllSelector
+                startingAt:(int)startingAt;
 - (PseudoTerminal *)openWindow;
 - (id)launchBookmark:(NSDictionary *)bookmarkData
           inTerminal:(PseudoTerminal *)theTerm

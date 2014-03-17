@@ -853,7 +853,11 @@ static BOOL hasBecomeActive = NO;
     [[iTermController sharedInstance] irAdvance:1];
 }
 
-- (void)_newSessionMenu:(NSMenu*)superMenu title:(NSString*)title target:(id)aTarget selector:(SEL)selector openAllSelector:(SEL)openAllSelector
+- (void)newSessionMenu:(NSMenu*)superMenu
+                 title:(NSString*)title
+                target:(id)aTarget
+              selector:(SEL)selector
+       openAllSelector:(SEL)openAllSelector
 {
     //new window menu
     NSMenuItem *newMenuItem;
@@ -900,16 +904,16 @@ static BOOL hasBecomeActive = NO;
                      action:@selector(newWindow:)
               keyEquivalent:@""];
     [aMenu addItem:[NSMenuItem separatorItem]];
-    [self _newSessionMenu:aMenu
-                    title:@"New Window…"
-                   target:[iTermController sharedInstance]
-                 selector:@selector(newSessionInWindowAtIndex:)
-          openAllSelector:@selector(newSessionsInNewWindow:)];
-    [self _newSessionMenu:aMenu
-                    title:@"New Tab…"
-                   target:frontTerminal
-                 selector:@selector(newSessionInTabAtIndex:)
-          openAllSelector:@selector(newSessionsInWindow:)];
+    [self newSessionMenu:aMenu
+                   title:@"New Window…"
+                  target:[iTermController sharedInstance]
+                selector:@selector(newSessionInWindowAtIndex:)
+         openAllSelector:@selector(newSessionsInNewWindow:)];
+    [self newSessionMenu:aMenu
+                   title:@"New Tab…"
+                  target:frontTerminal
+                selector:@selector(newSessionInTabAtIndex:)
+         openAllSelector:@selector(newSessionsInWindow:)];
     [self _addArrangementsMenuTo:aMenu];
 
     return ([aMenu autorelease]);

@@ -49,6 +49,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermWarning.h"
 #include <objc/runtime.h>
 
 @interface NSApplication (Undocumented)
@@ -686,7 +687,13 @@ static BOOL initDone = NO;
     }
 }
 
-- (void)_addBookmarksForTag:(NSString*)tag toMenu:(NSMenu*)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts selector:(SEL)selector alternateSelector:(SEL)alternateSelector openAllSelector:(SEL)openAllSelector
+- (void)_addBookmarksForTag:(NSString*)tag
+                     toMenu:(NSMenu*)aMenu
+                     target:(id)aTarget
+              withShortcuts:(BOOL)withShortcuts
+                   selector:(SEL)selector
+          alternateSelector:(SEL)alternateSelector
+            openAllSelector:(SEL)openAllSelector
 {
     NSMenuItem* aMenuItem = [[NSMenuItem alloc] initWithTitle:tag action:@selector(noAction:) keyEquivalent:@""];
     NSMenu* subMenu = [[[NSMenu alloc] init] autorelease];
@@ -802,18 +809,58 @@ static BOOL initDone = NO;
     return nil;
 }
 
-- (PseudoTerminal *)_openNewSessionsFromMenu:(NSMenu*)parent
-                                 inNewWindow:(BOOL)newWindow
-                                   usedGuids:(NSMutableSet*)usedGuids
-                                   bookmarks:(NSMutableArray*)bookmarks
+- (BOOL)shouldOpenManyProfiles:(int)count {
+    NSString *theTitle = [NSString stringWithFormat:@"You are about to open %d profiles.", count];
+    iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:theTitle
+                                   actions:@[ @"OK", @"Cancel" ]
+                                identifier:@"AboutToOpenManyProfiles"
+                               silenceable:kiTermWarningTypePermanentlySilenceable];
+    switch (selection) {
+        case kiTermWarningSelection0:
+            return YES;
+            
+        case kiTermWarningSelection1:
+            return NO;
+            
+        default:
+            return YES;
+    }
+}
+
+- (void)openNewSessionsFromMenu:(NSMenu*)theMenu inNewWindow:(BOOL)newWindow
 {
-    BOOL doOpen = usedGuids == nil;
-    if (doOpen) {
-        usedGuids = [NSMutableSet setWithCapacity:[[ProfileModel sharedInstance] numberOfBookmarks]];
-        bookmarks = [NSMutableArray arrayWithCapacity:[[ProfileModel sharedInstance] numberOfBookmarks]];
+    NSArray *bookmarks = [self bookmarksInMenu:theMenu];
+    static const int kWarningThreshold = 10;
+    if ([bookmarks count] > kWarningThreshold) {
+        if (![self shouldOpenManyProfiles:bookmarks.count]) {
+            return;
+        }
     }
 
     PseudoTerminal* term = newWindow ? nil : [self currentTerminal];
+    for (Profile* bookmark in bookmarks) {
+        if (!term) {
+            PTYSession* session = [self launchBookmark:bookmark inTerminal:nil];
+            term = [self terminalWithSession:session];
+        } else {
+            [self launchBookmark:bookmark inTerminal:term];
+        }
+    }
+}
+
+- (NSArray *)bookmarksInMenu:(NSMenu *)theMenu {
+    NSMutableSet *usedGuids = [NSMutableSet set];
+    NSMutableArray *bookmarks = [NSMutableArray array];
+    [self getBookmarksInMenu:theMenu usedGuids:usedGuids bookmarks:bookmarks];
+    return bookmarks;
+}
+
+// Recursively descends the menu, finding all bookmarks that aren't already in usedGuids (which
+// should be empty when called from outside).
+- (void)getBookmarksInMenu:(NSMenu *)parent
+                 usedGuids:(NSMutableSet *)usedGuids
+                 bookmarks:(NSMutableArray *)bookmarks {
     for (NSMenuItem* item in [parent itemArray]) {
         if (![item isSeparatorItem] && ![item submenu] && ![item isAlternate]) {
             NSString* guid = [item representedObject];
@@ -826,41 +873,27 @@ static BOOL initDone = NO;
             }
         } else if (![item isSeparatorItem] && [item submenu] && ![item isAlternate]) {
             NSMenu* sub = [item submenu];
-            term = [self _openNewSessionsFromMenu:sub inNewWindow:newWindow usedGuids:usedGuids bookmarks:bookmarks];
+            [self getBookmarksInMenu:sub
+                           usedGuids:usedGuids
+                           bookmarks:bookmarks];
         }
     }
-
-    if (doOpen) {
-        for (Profile* bookmark in bookmarks) {
-            if (!term) {
-                PTYSession* session = [self launchBookmark:bookmark inTerminal:nil];
-                term = [self terminalWithSession:session];
-            } else {
-                [self launchBookmark:bookmark inTerminal:term];
-            }
-        }
-    }
-
-    return term;
 }
 
 - (void)newSessionsInWindow:(id)sender
 {
-    [self _openNewSessionsFromMenu:[sender menu]
-                       inNewWindow:[sender isAlternate]
-                         usedGuids:nil
-                         bookmarks:nil];
+    [self openNewSessionsFromMenu:[sender menu] inNewWindow:[sender isAlternate]];
 }
 
 - (void)newSessionsInNewWindow:(id)sender
 {
-    [self _openNewSessionsFromMenu:[sender menu]
-                       inNewWindow:YES
-                         usedGuids:nil
-                         bookmarks:nil];
+    [self openNewSessionsFromMenu:[sender menu] inNewWindow:YES];
 }
 
-- (void)addBookmarksToMenu:(NSMenu *)aMenu withSelector:(SEL)selector openAllSelector:(SEL)openAllSelector startingAt:(int)startingAt
+- (void)addBookmarksToMenu:(NSMenu *)aMenu
+              withSelector:(SEL)selector
+           openAllSelector:(SEL)openAllSelector
+                startingAt:(int)startingAt
 {
     JournalParams params;
     params.selector = selector;
