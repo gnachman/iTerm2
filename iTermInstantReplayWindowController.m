@@ -28,7 +28,7 @@
     [super windowDidLoad];
 
     self.window.level = NSFloatingWindowLevel;
-    self.window.alphaValue = 0.7;
+    self.window.alphaValue = 0.9;
 }
 
 - (void)windowWillClose:(NSNotification *)notification {

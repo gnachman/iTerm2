@@ -150,7 +150,8 @@ NSString *kSessionsKVCKey = @"sessions";
     // When you enter full-screen mode the old frame size is saved here. When
     // full-screen mode is exited that frame is restored.
     NSRect oldFrame_;
-
+    BOOL oldFrameSizeIsBogus_;  // If set, the size in oldFrame_ shouldn't be used.
+    
     // When you enter fullscreen mode, the old use transparency setting is
     // saved, and then restored when you exit FS unless it was changed
     // by the user.
@@ -423,6 +424,10 @@ NSString *kSessionsKVCKey = @"sessions";
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
                 oldFrame_ = [[self window] frame];
+                // The size is just whatever was in the .xib file's window, which is silly.
+                // By setting this flag, we'll use the window size necessary to hold the current
+                // session's rows/columns setting when exiting fullscreen.
+                oldFrameSizeIsBogus_ = YES;
                 initialFrame = [self traditionalFullScreenFrameForScreen:screen];
             } else {
                 // Use the system-supplied frame which has a reasonable origin. It may
@@ -2768,12 +2773,28 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
+// This is a hack to fix the problem of exiting a fullscreen window that as never not-fullscreen.
+// We need to have some size to go to. This method computes the size based on the current session's
+// profile's rows and columns setting plus the window decoration size. It's sort of arbitrary
+// because split panes will have to share that space, but there's no perfect solution to this issue.
+- (NSSize)preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration {
+    PTYSession *session = [self currentSession];
+    PTYTextView *textView = session.textview;
+    NSSize cellSize = NSMakeSize(textView.charWidth, textView.lineHeight);
+    NSSize decorationSize = [self windowDecorationSize];
+    VT100GridSize sessionSize = VT100GridSizeMake([session.profile[KEY_COLUMNS] intValue],
+                                                  [session.profile[KEY_ROWS] intValue]);
+    return NSMakeSize(MARGIN * 2 + sessionSize.width * cellSize.width + decorationSize.width,
+                      VMARGIN * 2 + sessionSize.height * cellSize.height + decorationSize.height);
+}
+
 - (void)toggleTraditionalFullScreenMode
 {
     [SessionView windowDidResize];
     PtyLog(@"toggleFullScreenMode called");
     if (!_fullScreen) {
         oldFrame_ = self.window.frame;
+        oldFrameSizeIsBogus_ = NO;
         savedWindowType_ = windowType_;
         windowType_ = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
         [self.window setOpaque:NO];
@@ -2785,6 +2806,12 @@ NSString *kSessionsKVCKey = @"sessions";
         [self showMenuBar];
         windowType_ = savedWindowType_;
         [self.window setStyleMask:[self styleMask]];
+        
+        // This will be close but probably not quite right because tweaking to the decoration size
+        // happens later.
+        if (oldFrameSizeIsBogus_) {
+            oldFrame_.size = [self preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration];
+        }
         [self.window setFrame:oldFrame_ display:YES];
         PtyLog(@"toggleFullScreenMode - allocate new terminal");
     }
@@ -2843,6 +2870,15 @@ NSString *kSessionsKVCKey = @"sessions";
     [self updateSessionScrollbars];
     PtyLog(@"toggleFullScreenMode - calling fitTabsToWindow");
     [self repositionWidgets];
+    
+    if (!_fullScreen && oldFrameSizeIsBogus_) {
+        // The window frame can be established exactly, now.
+        if (oldFrameSizeIsBogus_) {
+            oldFrame_.size = [self preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration];
+        }
+        [self.window setFrame:oldFrame_ display:YES];
+    }
+
     [self fitTabsToWindow];
     PtyLog(@"toggleFullScreenMode - calling fitWindowToTabs");
     [self fitWindowToTabsExcludingTmuxTabs:YES];
