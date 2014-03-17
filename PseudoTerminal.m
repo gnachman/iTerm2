@@ -3871,12 +3871,9 @@ NSString *kSessionsKVCKey = @"sessions";
     
     if (dvr) {
         decoder = [[self currentSession] dvrDecoder];
-    }
-    if (dvr && [decoder timestamp] != [dvr lastTimeStamp]) {
         return [decoder timestamp];
-    } else {
-        return -1;
     }
+    return -1;
 }
 
 - (long long)instantReplayFirstTimestamp {
@@ -3936,6 +3933,25 @@ NSString *kSessionsKVCKey = @"sessions";
     return _instantReplayWindowController != nil;
 }
 
+- (NSPoint)originForAccessoryOfSize:(NSSize)size {
+    NSPoint p;
+    NSRect screenRect = self.window.screen.visibleFrame;
+    NSRect windowRect = self.window.frame;
+    
+    p.x = windowRect.origin.x + round((windowRect.size.width - size.width) / 2);
+    if (screenRect.origin.y + size.height < windowRect.origin.y) {
+        // Is there space below?
+        p.y = windowRect.origin.y - size.height;
+    } else if (screenRect.origin.y + screenRect.size.height >
+               windowRect.origin.y + windowRect.size.height + size.height) {
+        // Is there space above?
+        p.y = windowRect.origin.y + windowRect.size.height;
+    } else {
+        p.y = [TABVIEW convertRect:NSMakeRect(0, 0, 0, 0) toView:nil].origin.y - size.height;
+    }
+    return p;
+}
+
 // Toggle instant replay bar.
 - (void)showHideInstantReplay
 {
@@ -3944,8 +3960,11 @@ NSString *kSessionsKVCKey = @"sessions";
         [self closeInstantReplayWindow];
     } else {
         _instantReplayWindowController = [[iTermInstantReplayWindowController alloc] init];
+        NSPoint origin =
+            [self originForAccessoryOfSize:_instantReplayWindowController.window.frame.size];
+        [_instantReplayWindowController.window setFrameOrigin:origin];
         _instantReplayWindowController.delegate = self;
-        [_instantReplayWindowController.window makeKeyAndOrderFront:nil];
+        [_instantReplayWindowController.window orderFront:nil];
     }
     [[self window] makeFirstResponder:[[self currentSession] textview]];
 }

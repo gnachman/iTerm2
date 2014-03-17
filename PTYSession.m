@@ -377,10 +377,8 @@ typedef enum {
 
     }
     if (dir > 0) {
-        if (![_dvrDecoder next] || [_dvrDecoder timestamp] == [_dvr lastTimeStamp]) {
-            // Switch to the live view
-            [[[self tab] realParentWindow] showLiveSession:_liveSession inPlaceOf:self];
-            return;
+        if (![_dvrDecoder next]) {
+            NSBeep();
         }
     } else {
         if (![_dvrDecoder prev]) {

@@ -8,7 +8,37 @@
 
 #import "iTermInstantReplayWindowController.h"
 
-@interface iTermInstantReplayWindowController ()
+@implementation iTermInstantReplayPanel
+
+- (BOOL)canBecomeKeyWindow {
+    return NO;
+}
+
+@end
+
+@implementation iTermInstantReplayView {
+    NSTrackingArea *_trackingArea;
+}
+
+- (void)updateTrackingAreas {
+    int trackingOptions;
+    
+    if ([self window]) {
+        if (_trackingArea) {
+            [self removeTrackingArea:_trackingArea];
+            [_trackingArea release];
+        }
+        _trackingArea = [[NSTrackingArea alloc] initWithRect:[self visibleRect]
+                                                     options:NSTrackingMouseMoved |NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways
+                                                       owner:self
+                                                    userInfo:nil];
+        [self addTrackingArea:_trackingArea];
+    }
+}
+
+- (void)mouseEntered:(NSEvent *)theEvent {
+    [[NSCursor arrowCursor] set];
+}
 
 @end
 
