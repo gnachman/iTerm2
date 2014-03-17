@@ -8,6 +8,8 @@
 
 #import "iTermInstantReplayWindowController.h"
 
+static const float kAlphaValue = 0.9;
+
 @implementation iTermInstantReplayPanel
 
 - (BOOL)canBecomeKeyWindow {
@@ -38,6 +40,14 @@
 
 - (void)mouseEntered:(NSEvent *)theEvent {
     [[NSCursor arrowCursor] set];
+    NSLog(@"Animate alpha to 1");
+//    [[self animator] setAlphaValue:1];
+    self.window.animator.alphaValue = 1;
+}
+
+- (void)mouseExited:(NSEvent *)theEvent {
+    NSLog(@"Animate alpha to .9");
+    self.window.animator.alphaValue = kAlphaValue;
 }
 
 @end
@@ -58,7 +68,7 @@
     [super windowDidLoad];
 
     self.window.level = NSFloatingWindowLevel;
-    self.window.alphaValue = 0.9;
+    self.window.alphaValue = kAlphaValue;
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
