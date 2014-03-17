@@ -18,71 +18,52 @@
         <window title="Instant Replay Control" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" oneShot="NO" releasedWhenClosed="NO" showsToolbarButton="NO" visibleAtLaunch="NO" animationBehavior="default" id="UYp-FA-gZP" customClass="iTermInstantReplayPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" utility="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="120" y="65" width="601" height="65"/>
+            <rect key="contentRect" x="120" y="65" width="527" height="43"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1280" height="778"/>
             <view key="contentView" id="fmG-yW-YZh" customClass="iTermInstantReplayView">
-                <rect key="frame" x="0.0" y="0.0" width="601" height="65"/>
+                <rect key="frame" x="0.0" y="0.0" width="527" height="43"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <slider verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GFt-3P-LVv">
-                        <rect key="frame" x="99" y="34" width="393" height="19"/>
+                        <rect key="frame" x="86" y="21" width="391" height="16"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                        <sliderCell key="cell" controlSize="small" continuous="YES" state="on" alignment="left" maxValue="1" doubleValue="1" tickMarkPosition="above" numberOfTickMarks="10" sliderType="linear" id="cdM-e9-PPO"/>
+                        <sliderCell key="cell" controlSize="mini" continuous="YES" state="on" alignment="left" maxValue="1" doubleValue="1" tickMarkPosition="above" numberOfTickMarks="10" sliderType="linear" id="cdM-e9-PPO"/>
                         <connections>
                             <action selector="sliderMoved:" target="-2" id="RBj-j4-8vn"/>
                         </connections>
                     </slider>
                     <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rwM-La-RBW">
-                        <rect key="frame" x="18" y="35" width="75" height="14"/>
+                        <rect key="frame" x="18" y="22" width="62" height="14"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="XX:XX:XX MM" id="vJo-pj-XsO">
-                            <font key="font" metaFont="smallSystem"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="XX:XX:XX MM" id="vJo-pj-XsO">
+                            <font key="font" metaFont="miniSystem"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
                     <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EbS-W5-6is">
-                        <rect key="frame" x="498" y="35" width="28" height="14"/>
+                        <rect key="frame" x="483" y="22" width="26" height="14"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Now" id="Hau-2E-Qk8">
-                            <font key="font" metaFont="smallSystem"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="Now" id="Hau-2E-Qk8">
+                            <font key="font" metaFont="miniSystem"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
                     <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eW9-Ho-L9H">
-                        <rect key="frame" x="454" y="20" width="63" height="14"/>
+                        <rect key="frame" x="454" y="6" width="63" height="14"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="justified" title="Live View" id="gh2-Nt-9U7">
-                            <font key="font" metaFont="smallSystem"/>
+                            <font key="font" metaFont="miniSystem"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
-                    <segmentedControl verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vQv-jS-vaX">
-                        <rect key="frame" x="535" y="33" width="46" height="21"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                        <segmentedCell key="cell" controlSize="small" refusesFirstResponder="YES" alignment="left" style="capsule" trackingMode="momentary" id="kEd-jb-6FH">
-                            <font key="font" metaFont="smallSystem"/>
-                            <segments>
-                                <segment image="NSGoLeftTemplate" width="20"/>
-                                <segment image="NSGoRightTemplate" width="19" tag="1"/>
-                            </segments>
-                        </segmentedCell>
-                        <connections>
-                            <action selector="stepButtonPressed:" target="-2" id="gCZ-cZ-eTH"/>
-                        </connections>
-                    </segmentedControl>
                 </subviews>
             </view>
             <connections>
                 <outlet property="delegate" destination="-2" id="nDM-Ga-ZTv"/>
-                <outlet property="initialFirstResponder" destination="vQv-jS-vaX" id="b9G-h6-Tmm"/>
             </connections>
         </window>
     </objects>
-    <resources>
-        <image name="NSGoLeftTemplate" width="9" height="9"/>
-        <image name="NSGoRightTemplate" width="9" height="9"/>
-    </resources>
 </document>

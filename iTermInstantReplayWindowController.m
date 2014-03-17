@@ -72,23 +72,6 @@
     [self release];
 }
 
-- (IBAction)stepButtonPressed:(id)sender {
-    [self retain];
-    switch ([sender selectedSegment]) {
-        case 0:
-            [_delegate instantReplayStep:-1];
-            break;
-            
-        case 1:
-            [_delegate instantReplayStep:1];
-            break;
-            
-    }
-    [sender setSelected:NO forSegment:[sender selectedSegment]];
-    [self updateInstantReplayView];
-    [self release];
-}
-
 - (void)keyDown:(NSEvent *)theEvent {
     NSString *characters = [theEvent characters];
     [self retain];  // In case delegate releases us
@@ -164,18 +147,24 @@
         [_currentTimeLabel sizeToFit];
     }
     [_earliestTimeLabel setStringValue:[self stringForTimestamp:firstTimestamp]];
-    [_earliestTimeLabel sizeToFit];
     [_latestTimeLabel setStringValue:@"Now"];
-    
+
+    // Adjust the width of the "earliest time" label, and keep the margin between it and the
+    // slider the same.
+    NSRect labelFrame = _earliestTimeLabel.frame;
+    CGFloat margin = _slider.frame.origin.x - labelFrame.origin.x - labelFrame.size.width;
+    [_earliestTimeLabel sizeToFit];
+    [_latestTimeLabel sizeToFit];
+    labelFrame = _earliestTimeLabel.frame;
+    CGFloat newXOrigin = labelFrame.origin.x + labelFrame.size.width + margin;
+    _slider.frame = NSMakeRect(newXOrigin,
+                               _slider.frame.origin.y,
+                               _slider.frame.origin.x + _slider.frame.size.width - newXOrigin,
+                               _slider.frame.size.height);
+
     // Align the currentTime with the slider
     NSRect f = [_currentTimeLabel frame];
     NSRect sf = [_slider frame];
-    NSRect etf = [_earliestTimeLabel frame];
-    float newSliderX = etf.origin.x + etf.size.width + 10;
-    float dx = newSliderX - sf.origin.x;
-    sf.origin.x = newSliderX;
-    sf.size.width -= dx;
-    [_slider setFrame:sf];
     float newX = [_slider floatValue] * sf.size.width + sf.origin.x - f.size.width / 2;
     if (newX + f.size.width > sf.origin.x + sf.size.width) {
         newX = sf.origin.x + sf.size.width - f.size.width;
