@@ -40,13 +40,10 @@ static const float kAlphaValue = 0.9;
 
 - (void)mouseEntered:(NSEvent *)theEvent {
     [[NSCursor arrowCursor] set];
-    NSLog(@"Animate alpha to 1");
-//    [[self animator] setAlphaValue:1];
     self.window.animator.alphaValue = 1;
 }
 
 - (void)mouseExited:(NSEvent *)theEvent {
-    NSLog(@"Animate alpha to .9");
     self.window.animator.alphaValue = kAlphaValue;
 }
 
@@ -107,6 +104,15 @@ static const float kAlphaValue = 0.9;
 #pragma mark - NSWindowController
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
+    [self updateInstantReplayView];
+}
+
+- (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)frameSize {
+    static const CGFloat kMinWidth = 270;
+    return NSMakeSize(MAX(kMinWidth, frameSize.width), self.window.frame.size.height);
+}
+
+- (void)windowDidResize:(NSNotification *)notification {
     [self updateInstantReplayView];
 }
 
