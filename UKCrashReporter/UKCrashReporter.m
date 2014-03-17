@@ -12,7 +12,6 @@
 
 #import "UKCrashReporter.h"
 #import "UKSystemInfo.h"
-#import <AddressBook/AddressBook.h>
 
 
 NSString*    UKCrashReporterFindTenFiveCrashReportPath( NSString* appName, NSArray *folders );
@@ -187,18 +186,7 @@ NSString*    gCrashLogString = nil;
         userMessage = [[NSLocalizedStringFromTable(@"FEEDBACK_MESSAGE_TEXT",@"UKCrashReporter",@"") mutableCopy] autorelease];
     [userMessage replaceOccurrencesOfString: @"%%LONGUSERNAME" withString: NSFullUserName()
                 options: 0 range: NSMakeRange(0, [userMessage length])];
-    ABMultiValue*    emailAddresses = [[[ABAddressBook sharedAddressBook] me] valueForProperty: kABEmailProperty];
     NSString*        emailAddr = NSLocalizedStringFromTable(@"MISSING_EMAIL_ADDRESS",@"UKCrashReporter",@"");
-    if( emailAddresses )
-    {
-        NSString*        defaultKey = [emailAddresses primaryIdentifier];
-        if( defaultKey )
-        {
-            NSUInteger    defaultIndex = [emailAddresses indexForIdentifier: defaultKey];
-            if( defaultIndex != NSNotFound )
-                emailAddr = [emailAddresses valueAtIndex: defaultIndex];
-        }
-    }
     [userMessage replaceOccurrencesOfString: @"%%EMAILADDRESS" withString: emailAddr
                 options: 0 range: NSMakeRange(0, [userMessage length])];
     [informationField setString: userMessage];
