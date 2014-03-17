@@ -494,8 +494,8 @@ static NSImage* alertImage;
             drawRectInterval_ = [[MovingAverage alloc] init];
         }
         [self viewDidChangeBackingProperties];
-        markImage_ = [NSImage imageNamed:@"mark"];
-        markErrImage_ = [NSImage imageNamed:@"mark_err"];
+        markImage_ = [[NSImage imageNamed:@"mark"] retain];
+        markErrImage_ = [[NSImage imageNamed:@"mark_err"] retain];
     }
     return self;
 }
@@ -503,6 +503,8 @@ static NSImage* alertImage;
 - (void)dealloc
 {
     [_selection release];
+    [markImage_ release];
+    [markErrImage_ release];
     [drawRectDuration_ release];
     [drawRectInterval_ release];
     [_lastFindCoord release];
