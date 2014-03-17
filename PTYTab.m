@@ -2101,18 +2101,18 @@ static NSString* FormatRect(NSRect r) {
 
 - (void)notifyWindowChanged
 {
-  if (![self isTmuxTab]) {
-    return;
-  }
-  if (!flexibleView_) {
-    [self enableFlexibleView];
-  }
-  [self updateFlexibleViewColors];
-  [flexibleView_ setFrameSize:[[realParentWindow_ tabView] frame].size];
-  for (PTYSession *aSession in [self sessions]) {
-    [[aSession view] setAutoresizesSubviews:NO];  // This is ok because it is a tmux tab
-    [[aSession view] updateTitleFrame];
-  }
+    if (![self isTmuxTab]) {
+        return;
+    }
+    if (!flexibleView_) {
+        [self enableFlexibleView];
+    }
+    [self updateFlexibleViewColors];
+    [flexibleView_ setFrameSize:[[realParentWindow_ tabView] frame].size];
+    for (PTYSession *aSession in [self sessions]) {
+        [[aSession view] setAutoresizesSubviews:NO];  // This is ok because it is a tmux tab
+        [[aSession view] updateTitleFrame];
+    }
 }
 
 + (NSString *)htmlNameForColor:(NSColor *)color {
