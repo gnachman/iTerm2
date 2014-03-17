@@ -2827,22 +2827,25 @@ NSMutableArray* screens=0;
                 }
                 break;
             case MOUSE_REPORTING_NONE:
-                if ([[PreferencePanel sharedInstance] alternateMouseScroll] &&
-                    [_dataSource showingAlternateScreen]) {
-                    CGFloat deltaY = [event deltaY];
-                    NSData *keyMove = nil;
-                    if (deltaY > 0) {
-                        keyMove = [terminal.output keyArrowUp:[event modifierFlags]];
-                    } else if (deltaY < 0) {
-                        keyMove = [terminal.output keyArrowDown:[event modifierFlags]];
+                if ([[PreferencePanel sharedInstance] alternateMouseScroll] ||
+                    [terminal alternateScrollMode]) {
+                    if ([_dataSource showingAlternateScreen]) {
+                        CGFloat deltaY = [event deltaY];
+                        NSData *keyMove = nil;
+                        if (deltaY > 0) {
+                            keyMove = [terminal.output keyArrowUp:[event modifierFlags]];
+                        } else if (deltaY < 0) {
+                            keyMove = [terminal.output keyArrowDown:[event modifierFlags]];
+                        }
+                        if (keyMove) {
+                          for (int i = 0; i < ceil(fabs(deltaY)); i++) {
+                              [_delegate writeTask:keyMove];
+                          }
+                        }
+                        return;
                     }
-                    if (keyMove) {
-                      for (int i = 0; i < ceil(fabs(deltaY)); i++) {
-                          [_delegate writeTask:keyMove];
-                      }
-                    }
-                    return;
                 }
+                break;
             case MOUSE_REPORTING_HILITE:
                 // fall through
                 break;
