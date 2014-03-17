@@ -1429,7 +1429,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				A61B66D218D63758009AC9D5 /* InstantReplay.xib */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -1716,12 +1715,14 @@
 				FB094A14033D58AE01F955DB /* addressbook.png */,
 				1DE2154112821F1C004E3ADF /* Autocomplete.xib */,
 				FB094A16033D58B601F955DB /* close.png */,
+				1DC13AC61886507D00034DAE /* CommandHistoryPopup.xib */,
 				FB754C5F036EFC5301F955DB /* config.png */,
 				F6DA0AFC0AF066EE0098EFEB /* edit.png */,
 				FB47BCC403686CAC01F955DB /* exec.png */,
 				1D237D8E131D8BEE004DD60C /* FindView.xib */,
 				F6CDC4E60AE6D3E2005E7D4F /* folder.png */,
 				1D99785112EEB3D600F0794D /* GlobalSearch.xib */,
+				A61B66D218D63758009AC9D5 /* InstantReplay.xib */,
 				DD9C1AE2051F45C000A8A065 /* iTerm-Aqua.jpg */,
 				E8EDCE69015E0A5703000001 /* iTerm.icns */,
 				DD57633605653C5F00F1905E /* iTerm.plist */,
@@ -1742,7 +1743,6 @@
 				F6C9AFEF0EA70D0200D318A8 /* sort.png */,
 				1D844C8B13FD8B7700CD4F85 /* SplitPanel.xib */,
 				1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */,
-				1DC13AC61886507D00034DAE /* CommandHistoryPopup.xib */,
 			);
 			name = Interfaces;
 			sourceTree = "<group>";
