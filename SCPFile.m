@@ -185,7 +185,10 @@ static NSError *SCPFileError(NSString *description) {
         }
     }
     if (!self.session.isConnected) {
-        NSError *theError = self.session.lastError;
+        NSError *theError = nil;
+        if (self.session.rawSession) {
+            theError = self.session.lastError;
+        }
         self.error = [NSString stringWithFormat:@"Connection failed: %@", theError.localizedDescription];
         dispatch_sync(dispatch_get_main_queue(), ^() {
             [[FileTransferManager sharedInstance] transferrableFile:self
