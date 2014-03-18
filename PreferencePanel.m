@@ -45,6 +45,7 @@
 #import "iTermController.h"
 #import "iTermFontPanel.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermAdvancedSettingsController.h"
 #include <stdlib.h>
 
 static NSString * const kCustomColorPresetsKey = @"Custom Color Presets";
@@ -336,12 +337,15 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     IBOutlet NSTabViewItem* bookmarksTabViewItem;
     IBOutlet NSToolbarItem* mouseToolbarItem;
     IBOutlet NSTabViewItem* mouseTabViewItem;
-    NSString* globalToolbarId;
-    NSString* appearanceToolbarId;
-    NSString* keyboardToolbarId;
-    NSString* arrangementsToolbarId;
-    NSString* bookmarksToolbarId;
+    IBOutlet NSToolbarItem* advancedToolbarItem;
+    IBOutlet NSTabViewItem* advancedTabViewItem;
+    NSString *globalToolbarId;
+    NSString *appearanceToolbarId;
+    NSString *keyboardToolbarId;
+    NSString *arrangementsToolbarId;
+    NSString *bookmarksToolbarId;
     NSString *mouseToolbarId;
+    NSString *advancedToolbarId;
     
     // url handler stuff
     NSMutableDictionary *urlHandlersByGuid;
@@ -690,6 +694,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     keyboardToolbarId = [keyboardToolbarItem itemIdentifier];
     arrangementsToolbarId = [arrangementsToolbarItem itemIdentifier];
     mouseToolbarId = [mouseToolbarItem itemIdentifier];
+    advancedToolbarId = [advancedToolbarItem itemIdentifier];
 
     [globalToolbarItem setEnabled:YES];
     [toolbar setSelectedItemIdentifier:globalToolbarId];
@@ -1680,6 +1685,11 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 - (IBAction)showMouseTabView:(id)sender
 {
     [tabView selectTabViewItem:mouseTabViewItem];
+}
+
+- (IBAction)showAdvancedTabView:(id)sender
+{
+    [tabView selectTabViewItem:advancedTabViewItem];
 }
 
 - (IBAction)closeWindow:(id)sender
@@ -2904,6 +2914,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         return arrangementsToolbarItem;
     } else if ([itemIdentifier isEqual:mouseToolbarId]) {
         return mouseToolbarItem;
+    } else if ([itemIdentifier isEqual:advancedToolbarId]) {
+        return advancedToolbarItem;
     } else {
         return nil;
     }
@@ -2911,13 +2923,13 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (NSArray *)toolbarAllowedItemIdentifiers:(NSToolbar *)toolbar
 {
-    return [NSArray arrayWithObjects:globalToolbarId,
-                                     appearanceToolbarId,
-                                     bookmarksToolbarId,
-                                     keyboardToolbarId,
-                                     arrangementsToolbarId,
-                                     mouseToolbarId,
-                                     nil];
+    return @[ globalToolbarId,
+              appearanceToolbarId,
+              bookmarksToolbarId,
+              keyboardToolbarId,
+              arrangementsToolbarId,
+              mouseToolbarId,
+              advancedToolbarId ];
 }
 
 - (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar
@@ -2930,13 +2942,13 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 {
     // Optional delegate method: Returns the identifiers of the subset of
     // toolbar items that are selectable.
-    return [NSArray arrayWithObjects:globalToolbarId,
-                                     appearanceToolbarId,
-                                     bookmarksToolbarId,
-                                     keyboardToolbarId,
-                                     arrangementsToolbarId,
-                                     mouseToolbarId,
-                                     nil];
+    return @[ globalToolbarId,
+              appearanceToolbarId,
+              bookmarksToolbarId,
+              keyboardToolbarId,
+              arrangementsToolbarId,
+              mouseToolbarId,
+              advancedToolbarId ];
 }
 
 #pragma mark - NSUserDefaults wrangling
@@ -3924,34 +3936,24 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 //  defaults write com.googlecode.iterm2 TraditionalVisualBell -bool true
 //  defaults write com.googlecode.iterm2 AlternateMouseScroll -bool true
 
-- (BOOL)useUnevenTabs
-{
-    assert(prefs);
-    return [prefs objectForKey:@"UseUnevenTabs"] ? [[prefs objectForKey:@"UseUnevenTabs"] boolValue] : NO;
+- (BOOL)useUnevenTabs {
+    return [iTermAdvancedSettingsController boolForIdentifier:kAdvancedSettingIdentiferUseUnevenTabs];
 }
 
-- (int) minTabWidth
-{
-    assert(prefs);
-    return [prefs objectForKey:@"MinTabWidth"] ? [[prefs objectForKey:@"MinTabWidth"] intValue] : 75;
+- (int)minTabWidth {
+    return [iTermAdvancedSettingsController intForIdentifier:kAdvancedSettingIdentiferMinTabWidth];
 }
 
-- (int) minCompactTabWidth
-{
-    assert(prefs);
-    return [prefs objectForKey:@"MinCompactTabWidth"] ? [[prefs objectForKey:@"MinCompactTabWidth"] intValue] : 60;
+- (int)minCompactTabWidth {
+    return [iTermAdvancedSettingsController intForIdentifier:kAdvancedSettingIdentiferMinCompactTabWidth];
 }
 
-- (int) optimumTabWidth
-{
-    assert(prefs);
-    return [prefs objectForKey:@"OptimumTabWidth"] ? [[prefs objectForKey:@"OptimumTabWidth"] intValue] : 175;
+- (int)optimumTabWidth {
+    return [iTermAdvancedSettingsController intForIdentifier:kAdvancedSettingIdentiferOptimumTabWidth];
 }
 
-- (BOOL) traditionalVisualBell
-{
-    assert(prefs);
-    return [prefs objectForKey:@"TraditionalVisualBell"] ? [[prefs objectForKey:@"TraditionalVisualBell"] boolValue] : NO;
+- (BOOL)traditionalVisualBell {
+    return [iTermAdvancedSettingsController boolForIdentifier:kAdvancedSettingIdentiferTraditionalVisualBell];
 }
 
 - (BOOL) alternateMouseScroll {
