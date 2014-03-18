@@ -2551,7 +2551,9 @@ NSMutableArray* screens=0;
         }
     }
 
-    [pointer_ mouseDown:event withTouches:numTouches_];
+    [pointer_ mouseDown:event
+            withTouches:numTouches_
+           ignoreOption:[_delegate xtermMouseReporting]];
 }
 
 - (void)otherMouseUp:(NSEvent *)event
@@ -2659,7 +2661,7 @@ NSMutableArray* screens=0;
         DLog(@"Cancel right mouse down");
         return;
     }
-    if ([pointer_ mouseDown:event withTouches:numTouches_]) {
+    if ([pointer_ mouseDown:event withTouches:numTouches_ ignoreOption:[_delegate xtermMouseReporting]]) {
         return;
     }
     NSPoint locationInWindow, locationInTextView;
@@ -3154,13 +3156,17 @@ NSMutableArray* screens=0;
             [self emulateThirdButtonPressDown:YES withEvent:event];
         } else {
             // Perform user-defined gesture action, if any
-            [pointer_ mouseDown:event withTouches:numTouches_];
+            [pointer_ mouseDown:event
+                    withTouches:numTouches_
+                   ignoreOption:[_delegate xtermMouseReporting]];
             mouseDown = YES;
         }
         return NO;
     }
     if ([pointer_ eventEmulatesRightClick:event]) {
-        [pointer_ mouseDown:event withTouches:numTouches_];
+        [pointer_ mouseDown:event
+                withTouches:numTouches_
+               ignoreOption:[_delegate xtermMouseReporting]];
         return NO;
     }
 

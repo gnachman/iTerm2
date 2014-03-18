@@ -39,15 +39,11 @@
 
 @end
 
-@interface PointerController : NSObject {
-    NSObject<PointerControllerDelegate> *delegate_;
-    int mouseDownButton_;
-    int clicks_;
-}
+@interface PointerController : NSObject
 
 @property (nonatomic, assign) NSObject<PointerControllerDelegate> *delegate;
 
-- (BOOL)mouseDown:(NSEvent *)event withTouches:(int)numTouches;
+- (BOOL)mouseDown:(NSEvent *)event withTouches:(int)numTouches ignoreOption:(BOOL)ignoreOption;
 - (BOOL)mouseUp:(NSEvent *)event withTouches:(int)numTouches;
 - (void)swipeWithEvent:(NSEvent *)event;
 - (BOOL)eventEmulatesRightClick:(NSEvent *)event;

@@ -11,7 +11,15 @@
 #import "PointerPrefsController.h"
 #import "PreferencePanel.h"
 
-@implementation PointerController
+@implementation PointerController {
+    NSObject<PointerControllerDelegate> *delegate_;
+    int mouseDownButton_;
+    int clicks_;
+
+    // If the mouse-down occurred while xterm mouse reporting was on, then when
+    // the mouse-up is received, act as though the option key was not pressed.
+    BOOL ignoreOption_;
+}
 
 @synthesize delegate = delegate_;
 
@@ -93,6 +101,11 @@
                       clicks:(int)clicks
                  withTouches:(int)numTouches
 {
+    NSUInteger modifierFlags = [event modifierFlags];
+    if (ignoreOption_) {
+        modifierFlags &= ~NSAlternateKeyMask;
+    }
+
     DLog(@"actionForEvent:%@ cicks:%d withTouches:%d", event, clicks, numTouches);
     if (clicks == 1 && [self eventEmulatesRightClick:event]) {
         // Ctrl-click emulates right button
@@ -103,11 +116,11 @@
         DLog(@"Look up action for a two or one-finger touch click");
         return [PointerPrefsController actionWithButton:[event buttonNumber]
                                               numClicks:clicks
-                                              modifiers:[event modifierFlags]];
+                                              modifiers:modifierFlags];
     } else {
         DLog(@"Look up action for a three-or-more finger tap");
         return [PointerPrefsController actionForTapWithTouches:numTouches
-                                                     modifiers:[event modifierFlags]];
+                                                     modifiers:modifierFlags];
     }
 }
 
@@ -137,7 +150,7 @@
 }
 
 
-- (BOOL)mouseDown:(NSEvent *)event withTouches:(int)numTouches
+- (BOOL)mouseDown:(NSEvent *)event withTouches:(int)numTouches ignoreOption:(BOOL)ignoreOption
 {
     // A double left click plus an immediate right click reports a triple right
     // click! So we keep our own click count and use the lower of the OS's
@@ -148,6 +161,7 @@
         clicks_++;
     }
     clicks_ = MIN(clicks_, [event clickCount]);
+    ignoreOption_ = ignoreOption;
     mouseDownButton_ = [event buttonNumber];
     return [self actionForEvent:event
                          clicks:clicks_
