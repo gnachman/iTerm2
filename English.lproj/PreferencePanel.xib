@@ -1132,7 +1132,7 @@ Gw
                                             </connections>
                                         </popUpButton>
                                         <textField verticalHuggingPriority="750" id="4465">
-                                            <rect key="frame" x="134" y="374" width="87" height="19"/>
+                                            <rect key="frame" x="133" y="374" width="88" height="19"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Tab style:" id="4488">
                                                 <font key="font" metaFont="system"/>
@@ -1141,7 +1141,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="4577">
-                                            <rect key="frame" x="122" y="346" width="99" height="19"/>
+                                            <rect key="frame" x="133" y="346" width="88" height="19"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Tab position:" id="4578">
                                                 <font key="font" metaFont="system"/>
@@ -1150,7 +1150,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="4556">
-                                            <rect key="frame" x="132" y="397" width="140" height="17"/>
+                                            <rect key="frame" x="133" y="397" width="140" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Tabs" id="4557">
                                                 <font key="font" metaFont="systemBold"/>
@@ -1207,7 +1207,7 @@ Gw
                                             </connections>
                                         </button>
                                         <textField verticalHuggingPriority="750" id="4532">
-                                            <rect key="frame" x="455" y="397" width="153" height="17"/>
+                                            <rect key="frame" x="456" y="397" width="153" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Window &amp; Tab Titles" id="4533">
                                                 <font key="font" metaFont="systemBold"/>
@@ -1300,7 +1300,7 @@ Gw
                                             </connections>
                                         </button>
                                         <textField verticalHuggingPriority="750" id="4562">
-                                            <rect key="frame" x="455" y="290" width="66" height="17"/>
+                                            <rect key="frame" x="456" y="290" width="66" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Dimming" id="4563">
                                                 <font key="font" metaFont="systemBold"/>
@@ -1309,7 +1309,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="5335">
-                                            <rect key="frame" x="455" y="126" width="57" height="17"/>
+                                            <rect key="frame" x="456" y="126" width="57" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Window" id="5336">
                                                 <font key="font" metaFont="systemBold"/>
@@ -1318,7 +1318,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="6049">
-                                            <rect key="frame" x="132" y="143" width="44" height="17"/>
+                                            <rect key="frame" x="133" y="143" width="44" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Panes" id="6050">
                                                 <font key="font" metaFont="systemBold"/>
@@ -1336,7 +1336,7 @@ Gw
                                             </connections>
                                         </slider>
                                         <textField verticalHuggingPriority="750" id="5339">
-                                            <rect key="frame" x="455" y="243" width="119" height="17"/>
+                                            <rect key="frame" x="456" y="243" width="119" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Dimming amount:" id="5340">
                                                 <font key="font" metaFont="system"/>
@@ -1363,7 +1363,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="5383">
-                                            <rect key="frame" x="134" y="223" width="265" height="17"/>
+                                            <rect key="frame" x="133" y="223" width="265" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Show tabs in fullscreen by holding ⌘ for:" id="5384">
                                                 <font key="font" metaFont="system"/>
@@ -1381,7 +1381,7 @@ Gw
                                             </connections>
                                         </slider>
                                         <textField verticalHuggingPriority="750" id="5394">
-                                            <rect key="frame" x="151" y="173" width="71" height="11"/>
+                                            <rect key="frame" x="151" y="178" width="71" height="11"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="0 seconds" id="5397">
                                                 <font key="font" metaFont="miniSystem"/>
@@ -1390,7 +1390,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="5395">
-                                            <rect key="frame" x="322" y="173" width="54" height="11"/>
+                                            <rect key="frame" x="322" y="178" width="54" height="11"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="10 seconds" id="5396">
                                                 <font key="font" metaFont="miniSystem"/>
@@ -1410,7 +1410,7 @@ Gw
                                             </connections>
                                         </button>
                                         <textField verticalHuggingPriority="750" id="Gs7-G7-B8C">
-                                            <rect key="frame" x="132" y="86" width="49" height="17"/>
+                                            <rect key="frame" x="133" y="86" width="49" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Screen" id="MWf-jU-9g4">
                                                 <font key="font" metaFont="systemBold"/>
@@ -1429,6 +1429,15 @@ Gw
                                                 <action selector="settingChanged:" target="-2" id="24v-W8-i7d"/>
                                             </connections>
                                         </button>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="gOi-bz-NH1">
+                                            <rect key="frame" x="151" y="165" width="230" height="11"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" controlSize="mini" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Or select Show Tabs in Fullscreen in the View menu." id="y80-TX-tcC">
+                                                <font key="font" metaFont="miniSystem"/>
+                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
                                     </subviews>
                                 </view>
                             </tabViewItem>
