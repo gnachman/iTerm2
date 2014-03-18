@@ -3382,10 +3382,12 @@ static void SwapInt(int *a, int *b) {
                       toStartX:(VT100GridCoord *)startPtr
                         toEndX:(VT100GridCoord *)endPtr
 {
-    assert(start.x >= 0);
-    assert(end.x >= 0);
-    assert(start.y >= 0);
-    assert(end.y >= 0);
+    if (start.x < 0 || end.x < 0 ||
+        start.y < 0 || end.y < 0) {
+        *startPtr = start;
+        *endPtr = end;
+        return;
+    }
 
     if (!XYIsBeforeXY(start.x, start.y, end.x, end.y)) {
         SwapInt(&start.x, &end.x);
@@ -3450,6 +3452,11 @@ static void SwapInt(int *a, int *b) {
         if (actualEndY < 0) {
             return NO;
         }
+    }
+    
+    if (actualStartX < 0 || actualStartY < 0 ||
+        actualEndX < 0 || actualEndY < 0) {
+        return NO;
     }
 
     VT100GridCoord trimmedStart;
