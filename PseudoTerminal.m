@@ -3363,9 +3363,7 @@ NSString *kSessionsKVCKey = @"sessions";
         }
     }
     PTYSession* aSession = [[tabViewItem identifier] activeSession];
-    if (_fullScreen) {
-        [self _drawFullScreenBlackBackground];
-    } else {
+    if (!_fullScreen) {
         [[aSession tab] setLabelAttributes];
         [self setWindowTitle];
     }
@@ -5028,18 +5026,6 @@ NSString *kSessionsKVCKey = @"sessions";
 
     NSLog(@"Point %lf,%lf not in any screen", p.x, p.y);
     return 0;
-}
-
-// For full screen mode, draw the window contents in black except for the find
-// bar area.
-- (void)_drawFullScreenBlackBackground
-{
-    [[[self window] contentView] lockFocus];
-    [[NSColor blackColor] set];
-    NSRect frame = [[self window] frame];
-    frame.origin = NSZeroPoint;
-    NSRectFill(frame);
-    [[[self window] contentView] unlockFocus];
 }
 
 - (void)_refreshTitle:(NSNotification*)aNotification
