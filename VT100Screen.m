@@ -2932,6 +2932,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             width = ceil((double)width / cellSize.width);
             break;
             
+        case kVT100TerminalUnitsPercentage:
+            width = [self width];
+            break;
+            
         case kVT100TerminalUnitsCells:
             break;
             
@@ -2946,6 +2950,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     switch (heightUnits) {
         case kVT100TerminalUnitsPixels:
             height = ceil((double)height / cellSize.height);
+            break;
+            
+        case kVT100TerminalUnitsPercentage:
+            height = [self height];
             break;
             
         case kVT100TerminalUnitsCells:
@@ -2988,17 +2996,19 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
     // Allocate cells for the image.
     // TODO: Support scroll regions.
-    int xOffset = self.cursorX;
+    int xOffset = self.cursorX - 1;
     int screenWidth = currentGrid_.size.width;
     screen_char_t c = ImageCharForNewImage(name, width, height, preserveAspectRatio);
     for (int y = 0; y < height; y++) {
+        if (y > 0) {
+            [self linefeed];
+        }
         for (int x = xOffset; x < xOffset + width && x < screenWidth; x++) {
             SetPositionInImageChar(&c, x - xOffset, y);
             [currentGrid_ setCharsFrom:VT100GridCoordMake(x, currentGrid_.cursorY)
                                     to:VT100GridCoordMake(x, currentGrid_.cursorY)
                                 toChar:c];
         }
-        [self linefeed];
     }
     currentGrid_.cursorX = currentGrid_.cursorX + width + 1;
     

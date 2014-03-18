@@ -1671,14 +1671,18 @@ static const int kMaxScreenRows = 4096;
             widthUnits = kVT100TerminalUnitsAuto;
         } else if ([widthString hasSuffix:@"px"]) {
             widthUnits = kVT100TerminalUnitsPixels;
+        } else if ([widthString hasSuffix:@"%"]) {
+            widthUnits = kVT100TerminalUnitsPercentage;
         }
         int height = [heightString intValue];
         if ([heightString isEqualToString:@"auto"]) {
             heightUnits = kVT100TerminalUnitsAuto;
         } else if ([heightString hasSuffix:@"px"]) {
             heightUnits = kVT100TerminalUnitsPixels;
+        } else if ([heightString hasSuffix:@"%"]) {
+            heightUnits = kVT100TerminalUnitsPercentage;
         }
-        
+
         NSString *name = [dict[@"name"] stringByBase64DecodingStringWithEncoding:NSISOLatin1StringEncoding];
         if (!name) {
             name = @"Unnamed file";

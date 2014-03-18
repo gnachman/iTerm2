@@ -28,6 +28,7 @@ typedef enum {
 typedef enum {
     kVT100TerminalUnitsCells,
     kVT100TerminalUnitsPixels,
+    kVT100TerminalUnitsPercentage,
     kVT100TerminalUnitsAuto,
 } VT100TerminalUnits;
 
