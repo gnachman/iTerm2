@@ -2023,7 +2023,7 @@ NSString *kSessionsKVCKey = @"sessions";
     NSRect toolbeltFrame = NSMakeRect(self.window.frame.size.width - width,
                                       0,
                                       width,
-                                      self.window.frame.size.height - kToolbeltMargin);
+                                      self.window.frame.size.height);
     return toolbeltFrame;
 }
 
@@ -6359,6 +6359,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [toolbelt_ removeFromSuperview];
         [toolbelt_ setFrame:[self fullscreenToolbeltFrame]];
         [toolbelt_ setHidden:![itad showToolbelt]];
+        toolbelt_.topMargin = kToolbeltMargin;
         [[[self window] contentView] addSubview:toolbelt_
                                      positioned:NSWindowBelow
                                      relativeTo:TABVIEW];
@@ -6373,6 +6374,7 @@ NSString *kSessionsKVCKey = @"sessions";
         }
         NSSize contentSize = [drawer_ contentSize];
         NSRect toolbeltFrame = NSMakeRect(0, 0, contentSize.width, contentSize.height);
+        toolbelt_.topMargin = 0;
         [toolbelt_ retain];
         [toolbelt_ removeFromSuperview];
         [toolbelt_ setFrame:toolbeltFrame];

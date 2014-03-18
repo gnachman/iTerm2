@@ -100,7 +100,10 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
             [[NSUserDefaults standardUserDefaults] setObject:items forKey:kToolbeltPrefKey];
         }
 
-        splitter_ = [[ToolbeltSplitView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height)];
+        splitter_ = [[ToolbeltSplitView alloc] initWithFrame:NSMakeRect(0,
+                                                                        0,
+                                                                        frame.size.width,
+                                                                        frame.size.height)];
         [splitter_ setVertical:NO];
         [splitter_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [splitter_ setDividerStyle:NSSplitViewDividerStyleThin];
@@ -122,6 +125,17 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     [splitter_ release];
     [tools_ release];
     [super dealloc];
+}
+
+- (void)setTopMargin:(CGFloat)topMargin {
+    _topMargin = topMargin;
+    [self relayoutAllTools];
+}
+
+- (void)drawRect:(NSRect)dirtyRect {
+    [[NSColor colorWithWhite:237.0/255.0 alpha:1] set];
+    NSRectFill(dirtyRect);
+    [super drawRect:dirtyRect];
 }
 
 - (void)setUseDarkDividers:(BOOL)useDarkDividers {
@@ -317,6 +331,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 - (void)relayoutAllTools
 {
+    splitter_.frame = NSMakeRect(0, _topMargin, self.frame.size.width, self.frame.size.height - _topMargin);
     for (ToolWrapper *wrapper in [splitter_ subviews]) {
         [wrapper relayout];
     }

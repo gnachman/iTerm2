@@ -20,6 +20,8 @@
     PseudoTerminal *term_;   // weak
 }
 
+@property(nonatomic, assign) CGFloat topMargin;
+
 + (void)registerToolWithName:(NSString *)name withClass:(Class)c;
 + (void)populateMenu:(NSMenu *)menu;
 + (void)toggleShouldShowTool:(NSString *)theName;
