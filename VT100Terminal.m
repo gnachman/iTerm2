@@ -523,7 +523,8 @@ static const int kMaxScreenRows = 4096;
                         }
                         break;
 
-                    case 1007:
+                    case 1007:  // xterm style
+                    case 7786:  // mintty style
                         self.alternateScrollMode = mode;
                         break;
 
