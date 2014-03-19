@@ -827,6 +827,15 @@ int decode_utf8_char(const unsigned char *datap,
     return [theString autorelease];
 }
 
+- (NSString *)stringByCapitalizingFirstLetter {
+    if ([self length] == 0) {
+        return self;
+    }
+    NSString *prefix = [self substringToIndex:1];
+    NSString *suffix = [self substringFromIndex:1];
+    return [[prefix uppercaseString] stringByAppendingString:suffix];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

@@ -7,6 +7,8 @@
 //
 
 #import "iTermAdvancedSettingsController.h"
+#import "iTermAdvancedSettingsModel.h"
+#import <objc/runtime.h>
 
 typedef enum {
     kiTermAdvancedSettingTypeBoolean,
@@ -18,13 +20,6 @@ static NSString *const kAdvancedSettingIdentifier = @"kAdvancedSettingIdentifier
 static NSString *const kAdvancedSettingType = @"kAdvancedSettingType";
 static NSString *const kAdvancedSettingDefaultValue = @"kAdvancedSettingDefaultValue";
 static NSString *const kAdvancedSettingDescription = @"kAdvancedSettingDescription";
-
-NSString *const kAdvancedSettingIdentiferUseUnevenTabs = @"UseUnevenTabs";
-NSString *const kAdvancedSettingIdentiferMinTabWidth = @"MinTabWidth";
-NSString *const kAdvancedSettingIdentiferMinCompactTabWidth = @"MinCompactTabWidth";
-NSString *const kAdvancedSettingIdentiferOptimumTabWidth = @"OptimumTabWidth";
-NSString *const kAdvancedSettingIdentiferAlternateMouseScroll = @"AlternateMouseScroll";
-NSString *const kAdvancedSettingIdentiferTraditionalVisualBell = @"TraditionalVisualBell";
 
 @interface NSDictionary (AdvancedSettings)
 - (iTermAdvancedSettingType)advancedSettingType;
@@ -38,6 +33,9 @@ NSString *const kAdvancedSettingIdentiferTraditionalVisualBell = @"TraditionalVi
 
 @end
 
+static BOOL gIntrospecting;
+static NSDictionary *gIntrospection;
+
 @implementation iTermAdvancedSettingsController {
     IBOutlet NSTableColumn *_settingColumn;
     IBOutlet NSTableColumn *_valueColumn;
@@ -45,34 +43,61 @@ NSString *const kAdvancedSettingIdentiferTraditionalVisualBell = @"TraditionalVi
     IBOutlet NSTableView *_tableView;
 }
 
-+ (BOOL)boolForIdentifier:(NSString *)identifier {
-    NSDictionary *dict = [self settingsDictionary][identifier];
-    assert([dict advancedSettingType] == kiTermAdvancedSettingTypeBoolean);
++ (BOOL)boolForIdentifier:(NSString *)identifier
+             defaultValue:(BOOL)defaultValue
+              description:(NSString *)description {
+    if (gIntrospecting) {
+        [gIntrospection autorelease];
+        gIntrospection = [@{ kAdvancedSettingIdentifier: identifier,
+                             kAdvancedSettingType: @(kiTermAdvancedSettingTypeBoolean),
+                             kAdvancedSettingDefaultValue: @(defaultValue),
+                             kAdvancedSettingDescription: description } retain];
+        return defaultValue;
+    }
+    
     NSNumber *value = [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
     if (!value) {
-        return [dict[kAdvancedSettingDefaultValue] boolValue];
+        return defaultValue;
     } else {
         return [value boolValue];
     }
 }
 
-+ (int)intForIdentifier:(NSString *)identifier {
-    NSDictionary *dict = [self settingsDictionary][identifier];
-    assert([dict advancedSettingType] == kiTermAdvancedSettingTypeInteger);
++ (int)intForIdentifier:(NSString *)identifier
+           defaultValue:(int)defaultValue
+            description:(NSString *)description {
+    if (gIntrospecting) {
+        [gIntrospection autorelease];
+        gIntrospection = [@{ kAdvancedSettingIdentifier: identifier,
+                             kAdvancedSettingType: @(kiTermAdvancedSettingTypeInteger),
+                             kAdvancedSettingDefaultValue: @(defaultValue),
+                             kAdvancedSettingDescription: description } retain];
+        return defaultValue;
+    }
+
     NSNumber *value = [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
     if (!value) {
-        return [dict[kAdvancedSettingDefaultValue] intValue];
+        return defaultValue;
     } else {
         return [value intValue];
     }
 }
 
-+ (double)floatForIdentifier:(NSString *)identifier {
-    NSDictionary *dict = [self settingsDictionary][identifier];
-    assert([dict advancedSettingType] == kiTermAdvancedSettingTypeFloat);
++ (double)floatForIdentifier:(NSString *)identifier
+                defaultValue:(int)defaultValue
+                 description:(NSString *)description {
+    if (gIntrospecting) {
+        [gIntrospection autorelease];
+        gIntrospection = [@{ kAdvancedSettingIdentifier: identifier,
+                             kAdvancedSettingType: @(kiTermAdvancedSettingTypeFloat),
+                             kAdvancedSettingDefaultValue: @(defaultValue),
+                             kAdvancedSettingDescription: description } retain];
+        return defaultValue;
+    }
+
     NSNumber *value = [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
     if (!value) {
-        return [dict[kAdvancedSettingDefaultValue] doubleValue];
+        return defaultValue;
     } else {
         return [value doubleValue];
     }
@@ -91,41 +116,26 @@ NSString *const kAdvancedSettingIdentiferTraditionalVisualBell = @"TraditionalVi
 }
 
 + (NSArray *)advancedSettings {
-    static NSArray *settings;
+    static NSMutableArray *settings;
     if (!settings) {
-        settings = @[
-            @{ kAdvancedSettingIdentifier: kAdvancedSettingIdentiferUseUnevenTabs,
-               kAdvancedSettingType: @(kiTermAdvancedSettingTypeBoolean),
-               kAdvancedSettingDefaultValue: @NO,
-               kAdvancedSettingDescription: @"Uneven tab widths allowed" },
+        settings = [NSMutableArray array];
+        NSArray *internalMethods = @[ @"initialize", @"load" ];
+        unsigned int methodCount = 0;
+        Method *methods = class_copyMethodList(object_getClass([iTermAdvancedSettingsModel class]), &methodCount);
+        gIntrospecting = YES;
+        for (int i = 0; i < methodCount; i++) {
+            SEL name = method_getName(methods[i]);
+            NSString *stringName = NSStringFromSelector(name);
+            if (![internalMethods containsObject:stringName]) {
+                [iTermAdvancedSettingsModel performSelector:name withObject:nil];
+                [settings addObject:gIntrospection];
+                [gIntrospection release];
+                gIntrospection = nil;
+            }
+        }
+        gIntrospecting = NO;
+        free(methods);
 
-            @{ kAdvancedSettingIdentifier: kAdvancedSettingIdentiferMinTabWidth,
-               kAdvancedSettingType: @(kiTermAdvancedSettingTypeInteger),
-               kAdvancedSettingDefaultValue: @75,
-               kAdvancedSettingDescription: @"Minimum tab width" },
-
-            @{ kAdvancedSettingIdentifier: kAdvancedSettingIdentiferMinCompactTabWidth,
-               kAdvancedSettingType: @(kiTermAdvancedSettingTypeInteger),
-               kAdvancedSettingDefaultValue: @60,
-               kAdvancedSettingDescription: @"Minimum tab width for tabs without close button or number" },
-
-            @{ kAdvancedSettingIdentifier: kAdvancedSettingIdentiferOptimumTabWidth,
-               kAdvancedSettingType: @(kiTermAdvancedSettingTypeInteger),
-               kAdvancedSettingDefaultValue: @175,
-               kAdvancedSettingDescription: @"Preferred tab width" },
-
-            @{ kAdvancedSettingIdentifier: kAdvancedSettingIdentiferAlternateMouseScroll,
-               kAdvancedSettingType: @(kiTermAdvancedSettingTypeBoolean),
-               kAdvancedSettingDefaultValue: @NO,
-               kAdvancedSettingDescription: @"Scroll wheel sends arrow keys in alternate screen mode" },
-
-            @{ kAdvancedSettingIdentifier: kAdvancedSettingIdentiferTraditionalVisualBell,
-               kAdvancedSettingType: @(kiTermAdvancedSettingTypeBoolean),
-               kAdvancedSettingDefaultValue: @NO,
-               kAdvancedSettingDescription: @"Visual bell flashes the whole screen, not just a bell icon" },
-
-
-            ];
         [settings retain];
     }
     return settings;

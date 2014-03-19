@@ -8,17 +8,20 @@
 
 #import <Cocoa/Cocoa.h>
 
-extern NSString *const kAdvancedSettingIdentiferUseUnevenTabs;
-extern NSString *const kAdvancedSettingIdentiferMinTabWidth;
-extern NSString *const kAdvancedSettingIdentiferMinCompactTabWidth;
-extern NSString *const kAdvancedSettingIdentiferOptimumTabWidth;
-extern NSString *const kAdvancedSettingIdentiferAlternateMouseScroll;
-extern NSString *const kAdvancedSettingIdentiferTraditionalVisualBell;
-
 @interface iTermAdvancedSettingsController : NSObject <NSTableViewDataSource, NSTableViewDelegate>
 
-+ (BOOL)boolForIdentifier:(NSString *)identifier;
-+ (int)intForIdentifier:(NSString *)identifier;
-+ (double)floatForIdentifier:(NSString *)identifier;
+// Don't call these methods directly. Instead, go through iTermAdvancedSettingsModel.
++ (BOOL)boolForIdentifier:(NSString*)identifier
+             defaultValue:(BOOL)defaultValue
+              description:(NSString*)description;
+
++ (int)intForIdentifier:(NSString *)identifier
+           defaultValue:(int)defaultValue
+            description:(NSString *)description;
+
++ (double)floatForIdentifier:(NSString *)identifier
+                defaultValue:(int)defaultValue
+                 description:(NSString *)description;
+
 
 @end

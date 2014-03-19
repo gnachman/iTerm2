@@ -45,7 +45,7 @@
 #import "iTermController.h"
 #import "iTermFontPanel.h"
 #import "iTermKeyBindingMgr.h"
-#import "iTermAdvancedSettingsController.h"
+#import "iTermAdvancedSettingsModel.h"
 #include <stdlib.h>
 
 static NSString * const kCustomColorPresetsKey = @"Custom Color Presets";
@@ -3937,27 +3937,27 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 //  defaults write com.googlecode.iterm2 AlternateMouseScroll -bool true
 
 - (BOOL)useUnevenTabs {
-    return [iTermAdvancedSettingsController boolForIdentifier:kAdvancedSettingIdentiferUseUnevenTabs];
+    return [iTermAdvancedSettingsModel useUnevenTabs];
 }
 
 - (int)minTabWidth {
-    return [iTermAdvancedSettingsController intForIdentifier:kAdvancedSettingIdentiferMinTabWidth];
+    return [iTermAdvancedSettingsModel minTabWidth];
 }
 
 - (int)minCompactTabWidth {
-    return [iTermAdvancedSettingsController intForIdentifier:kAdvancedSettingIdentiferMinCompactTabWidth];
+    return [iTermAdvancedSettingsModel minCompactTabWidth];
 }
 
 - (int)optimumTabWidth {
-    return [iTermAdvancedSettingsController intForIdentifier:kAdvancedSettingIdentiferOptimumTabWidth];
+    return [iTermAdvancedSettingsModel optimumTabWidth];
 }
 
 - (BOOL)traditionalVisualBell {
-    return [iTermAdvancedSettingsController boolForIdentifier:kAdvancedSettingIdentiferTraditionalVisualBell];
+    return [iTermAdvancedSettingsModel traditionalVisualBell];
 }
 
 - (BOOL) alternateMouseScroll {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"AlternateMouseScroll"];
+    return [iTermAdvancedSettingsModel alternateMouseScroll];
 }
 
 - (float) hotkeyTermAnimationDuration

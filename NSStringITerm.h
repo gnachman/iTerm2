@@ -96,6 +96,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)URLInStringWithOffset:(int *)offset length:(int *)length;
 
 - (NSString *)stringByEscapingForURL;
+- (NSString *)stringByCapitalizingFirstLetter;
 
 @end
 
