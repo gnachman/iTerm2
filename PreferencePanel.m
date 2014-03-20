@@ -4659,6 +4659,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
     // Session tab
     [promptBeforeClosing_ selectCellWithTag:[[dict objectForKey:KEY_PROMPT_CLOSE] intValue]];
+    [jobsTable_ reloadData];
 
     // Epilogue
     [bookmarksTableView reloadData];
