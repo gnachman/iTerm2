@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="4514" systemVersion="13A2093" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="5053" systemVersion="13C64" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment defaultVersion="1070" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="4514"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="5053"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -355,8 +355,14 @@ DQ
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Paste Special" id="1159">
                                     <items>
-                                        <menuItem title="Paste Escaping Special Characters" tag="1" alternate="YES" keyEquivalent="v" id="1163">
+                                        <menuItem title="Paste Escaping Special Characters" tag="1" keyEquivalent="v" id="tnr-HI-5ah">
                                             <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="paste:" target="-1" id="9zb-Wl-GF2"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Paste with Literal Tabs (ctrl-v tab)" tag="4" id="1163">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="paste:" target="-1" id="1170"/>
                                             </connections>
@@ -366,10 +372,16 @@ DQ
                                                 <action selector="pasteSelection:" target="-1" id="1167"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Paste Selection Escaping Special Characters" tag="1" alternate="YES" keyEquivalent="V" id="1165">
-                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                        <menuItem title="Paste Selection Escaping Special Characters" tag="1" id="1165">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="pasteSelection:" target="-1" id="1168"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Paste Selection with Literal Tabs" tag="4" id="IVX-cX-2lC">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="pasteSelection:" target="-1" id="ac5-bf-u92"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Paste Slowly" tag="2" id="1166">
@@ -384,7 +396,7 @@ DQ
                                                 <action selector="pasteBase64Encoded:" target="-1" id="OMO-E1-H3J"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem isSeparatorItem="YES" id="1491"/>
+                                        <menuItem isSeparatorItem="YES" id="alj-TE-sXE"/>
                                         <menuItem title="Paste Faster" tag="2" id="1483">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
@@ -928,7 +940,7 @@ DQ
             </connections>
         </customObject>
         <customObject id="266" userLabel="Font Manager" customClass="NSFontManager"/>
-        <window title="About iTerm" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" wantsToBeColor="NO" visibleAtLaunch="NO" animationBehavior="default" id="498" userLabel="About" customClass="iTermAboutWindow">
+        <window title="About iTerm" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="498" userLabel="About" customClass="iTermAboutWindow">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="386" y="524" width="354" height="164"/>

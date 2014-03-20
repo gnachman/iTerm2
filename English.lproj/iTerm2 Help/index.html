@@ -742,6 +742,13 @@ set t_Co=256
 
 <p><br/><br/></p>
 
+<h4>Edit &gt; Paste Special &gt; Paste with Literal Tabs (ctrl-v tab)</h4>
+
+<p>"Paste with Literal Tabs (ctrl-v tab)" pastes the current string in the clipboard, but places a CTRL-V character (ASCII 22/SYN) before each tab.</p>
+<p>Many shells (e.g. bash) use the tab character as the command completion key, so it is not possible to paste text containing tabs directly onto the shell command-line without first disabling the tab key binding in some way. When a CTRL-V is received prior to a tab however, the shell interprets the tab character literally and inserts it into the text.</p>
+
+<p><br/><br/></p>
+
 <h4>Edit &gt; Paste Slowly</h4>
 
 <p>"Paste Slowly" pastes the current string in the clipboard, but it doesn't send the whole string at once. It is sent in batches of 16 bytes with a 125ms delay between batches. These values can be tweaked with hidden settings. For example:</p>

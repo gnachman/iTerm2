@@ -92,6 +92,7 @@ typedef enum {
 @property(nonatomic, assign) int sessionID;
 @property(nonatomic, readwrite) struct timeval lastOutput;
 @property(nonatomic, readwrite) BOOL isDivorced;
+@property(nonatomic, assign) BOOL pasteShouldLeaveControlCodesIntact;
 @property(atomic, assign) PTYSessionTmuxMode tmuxMode;
 @end
 
@@ -1621,9 +1622,10 @@ typedef enum {
     if ([aString length] > 0) {
         NSData *data = [aString dataUsingEncoding:[_terminal encoding]
                              allowLossyConversion:YES];
-        NSData *safeData = [self dataByRemovingControlCodes:data];
-        [self writeTask:safeData];
-
+		if ( ! _pasteShouldLeaveControlCodesIntact ) {
+	        data = [self dataByRemovingControlCodes:data];
+		}
+        [self writeTask:data];
     }
 }
 
@@ -4119,6 +4121,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         // paste escaping special characters
         str = [str stringWithEscapedShellCharacters];
     }
+	if (flags & 4) {
+		str = [str stringWithShellEscapedTabs];
+		_pasteShouldLeaveControlCodesIntact = YES;
+	}
     if ([_terminal bracketedPasteMode]) {
         [self writeTask:[[NSString stringWithFormat:@"%c[200~", 27]
                          dataUsingEncoding:[_terminal encoding]
@@ -4130,6 +4136,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     } else {
         [self _pasteString:str];
     }
+	if (flags & 4) {
+		_pasteShouldLeaveControlCodesIntact = NO;
+	}
 }
 
 // Pastes the current string in the clipboard. Uses the sender's tag to get flags.
@@ -4368,13 +4377,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [[self class] pasteboardString];
 }
 
-- (void)textViewPasteFromSessionWithMostRecentSelection
+- (void)textViewPasteFromSessionWithMostRecentSelection:(int) flags
 {
     PTYSession *session = [[iTermController sharedInstance] sessionWithMostRecentSelection];
     if (session) {
         PTYTextView *textview = [session textview];
         if ([textview isAnyCharSelected]) {
-            [self pasteString:[textview selectedText]];
+            [self pasteString:[textview selectedText] flags: flags];
         }
     }
 }
