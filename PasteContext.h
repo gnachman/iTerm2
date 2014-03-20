@@ -13,6 +13,7 @@
     int bytesPerCall_;
     NSString *delayBetweenCallsKey_;
     float delayBetweenCalls_;
+	BOOL pasteShouldLeaveControlCodesIntact_;
 }
 
 - (id)initWithBytesPerCallPrefKey:(NSString*)bytesPerCallKey
@@ -25,5 +26,7 @@
 - (float)delayBetweenCalls;
 - (void)setDelayBetweenCalls:(float)newDelayBetweenCalls;
 - (void)updateValues;
+- (BOOL)pasteShouldLeaveControlCodesIntact;
+- (void)setPasteShouldLeaveControlCodesIntact:(BOOL)pasteShouldLeaveControlCodesIntact;
 
 @end

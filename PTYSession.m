@@ -1633,6 +1633,9 @@ typedef enum {
     NSRange range;
     range.location = 0;
     range.length = MIN(_pasteContext.bytesPerCall, [_slowPasteBuffer length]);
+
+	_pasteShouldLeaveControlCodesIntact = [_pasteContext pasteShouldLeaveControlCodesIntact];
+		
     [self _pasteStringImmediately:[_slowPasteBuffer substringWithRange:range]];
     [_slowPasteBuffer deleteCharactersInRange:range];
     [self updatePasteUI];
@@ -1653,6 +1656,7 @@ typedef enum {
         [self hidePasteUI];
         [_pasteContext release];
         _pasteContext = nil;
+		_pasteShouldLeaveControlCodesIntact = NO;	// restore default paste mode
         [self emptyEventQueue];
     }
 }
@@ -1667,6 +1671,10 @@ typedef enum {
                                                          defaultValue:bytesPerCallDefault
                                              delayBetweenCallsPrefKey:delayBetweenCallsKey
                                                          defaultValue:delayBetweenCallsDefault];
+
+	// save off paste-special -> paste with literal tabs state
+	[_pasteContext setPasteShouldLeaveControlCodesIntact: _pasteShouldLeaveControlCodesIntact];
+
     const int kPasteBytesPerSecond = 10000;  // This is a wild-ass guess.
     if (_pasteContext.delayBetweenCalls * _slowPasteBuffer.length / _pasteContext.bytesPerCall + _slowPasteBuffer.length / kPasteBytesPerSecond > 3) {
         [self showPasteUI];

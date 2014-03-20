@@ -54,4 +54,12 @@
                                              forKey:delayBetweenCallsKey_];
 }
 
+- (BOOL)pasteShouldLeaveControlCodesIntact {
+	return pasteShouldLeaveControlCodesIntact_;
+}
+
+- (void)setPasteShouldLeaveControlCodesIntact:(BOOL)pasteShouldLeaveControlCodesIntact {
+	pasteShouldLeaveControlCodesIntact_ = pasteShouldLeaveControlCodesIntact;
+}
+
 @end
