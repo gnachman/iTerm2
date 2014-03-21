@@ -1,16 +1,16 @@
 //
-//  iTermAdvancedSettingsModel.m
+//  iTermSettingsModel.m
 //  iTerm
 //
 //  Created by George Nachman on 3/18/14.
 //
 //
 
-#import "iTermAdvancedSettingsModel.h"
+#import "iTermSettingsModel.h"
 #import "iTermAdvancedSettingsController.h"
 #import "NSStringITerm.h"
 
-@implementation iTermAdvancedSettingsModel
+@implementation iTermSettingsModel
 
 #define DEFINE_BOOL(name, theDefault, theDescription) \
 + (BOOL)name { \
@@ -42,5 +42,6 @@ DEFINE_INT(minCompactTabWidth, 60, @"Minimum tab width for tabs without close bu
 DEFINE_INT(optimumTabWidth, 175, @"Preferred tab width")
 DEFINE_BOOL(alternateMouseScroll, NO, @"Scroll wheel sends arrow keys in alternate screen mode")
 DEFINE_BOOL(traditionalVisualBell, NO, @"Visual bell flashes the whole screen, not just a bell icon")
+DEFINE_FLOAT(hotkeyTermAnimationDuration, 0.25, @"Duration in seconds of the hotkey window animation")
 
 @end

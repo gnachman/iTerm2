@@ -7,7 +7,7 @@
 //
 
 #import "iTermAdvancedSettingsController.h"
-#import "iTermAdvancedSettingsModel.h"
+#import "iTermSettingsModel.h"
 #import <objc/runtime.h>
 
 typedef enum {
@@ -121,13 +121,13 @@ static NSDictionary *gIntrospection;
         settings = [NSMutableArray array];
         NSArray *internalMethods = @[ @"initialize", @"load" ];
         unsigned int methodCount = 0;
-        Method *methods = class_copyMethodList(object_getClass([iTermAdvancedSettingsModel class]), &methodCount);
+        Method *methods = class_copyMethodList(object_getClass([iTermSettingsModel class]), &methodCount);
         gIntrospecting = YES;
         for (int i = 0; i < methodCount; i++) {
             SEL name = method_getName(methods[i]);
             NSString *stringName = NSStringFromSelector(name);
             if (![internalMethods containsObject:stringName]) {
-                [iTermAdvancedSettingsModel performSelector:name withObject:nil];
+                [iTermSettingsModel performSelector:name withObject:nil];
                 [settings addObject:gIntrospection];
                 [gIntrospection release];
                 gIntrospection = nil;
@@ -269,7 +269,9 @@ static NSDictionary *gIntrospection;
 #pragma mark - NSControl Delegate
 
 - (void)controlTextDidChange:(NSNotification *)aNotification {
-    [_tableView reloadData];
+    if ([aNotification object] == _searchField) {
+        [_tableView reloadData];
+    }
 }
 
 @end

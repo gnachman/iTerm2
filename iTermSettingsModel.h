@@ -1,5 +1,5 @@
 //
-//  iTermAdvancedSettingsModel.h
+//  iTermSettingsModel.h
 //  iTerm
 //
 //  Created by George Nachman on 3/18/14.
@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@interface iTermAdvancedSettingsModel : NSObject
+@interface iTermSettingsModel : NSObject
 
 + (BOOL)useUnevenTabs;
 + (int)minTabWidth;
@@ -16,5 +16,6 @@
 + (int)optimumTabWidth;
 + (BOOL)alternateMouseScroll;
 + (BOOL)traditionalVisualBell;
++ (double)hotkeyTermAnimationDuration;
 
 @end

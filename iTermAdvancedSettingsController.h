@@ -10,7 +10,7 @@
 
 @interface iTermAdvancedSettingsController : NSObject <NSTableViewDataSource, NSTableViewDelegate>
 
-// Don't call these methods directly. Instead, go through iTermAdvancedSettingsModel.
+// Don't call these methods directly. Instead, go through iTermSettingsModel.
 + (BOOL)boolForIdentifier:(NSString*)identifier
              defaultValue:(BOOL)defaultValue
               description:(NSString*)description;

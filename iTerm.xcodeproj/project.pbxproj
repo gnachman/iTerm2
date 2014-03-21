@@ -719,9 +719,9 @@
 		A697100618D82E79007E901D /* iTermAdvancedSettingsController.h in Headers */ = {isa = PBXBuildFile; fileRef = A697100418D82E79007E901D /* iTermAdvancedSettingsController.h */; };
 		A697100718D82E79007E901D /* iTermAdvancedSettingsController.m in Sources */ = {isa = PBXBuildFile; fileRef = A697100518D82E79007E901D /* iTermAdvancedSettingsController.m */; };
 		A697100818D82E79007E901D /* iTermAdvancedSettingsController.m in Sources */ = {isa = PBXBuildFile; fileRef = A697100518D82E79007E901D /* iTermAdvancedSettingsController.m */; };
-		A697100B18D94CDA007E901D /* iTermAdvancedSettingsModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A697100918D94CDA007E901D /* iTermAdvancedSettingsModel.h */; };
-		A697100C18D94CDA007E901D /* iTermAdvancedSettingsModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A697100A18D94CDA007E901D /* iTermAdvancedSettingsModel.m */; };
-		A697100D18D94CDA007E901D /* iTermAdvancedSettingsModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A697100A18D94CDA007E901D /* iTermAdvancedSettingsModel.m */; };
+		A697100B18D94CDA007E901D /* iTermSettingsModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A697100918D94CDA007E901D /* iTermSettingsModel.h */; };
+		A697100C18D94CDA007E901D /* iTermSettingsModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A697100A18D94CDA007E901D /* iTermSettingsModel.m */; };
+		A697100D18D94CDA007E901D /* iTermSettingsModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A697100A18D94CDA007E901D /* iTermSettingsModel.m */; };
 		A699BAE618C8394700D425A7 /* CVector.h in Headers */ = {isa = PBXBuildFile; fileRef = A699BAE418C8394700D425A7 /* CVector.h */; };
 		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		A6A13AA318C2D23300B241ED /* iTermColorMap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA118C2D23300B241ED /* iTermColorMap.m */; };
@@ -1270,8 +1270,8 @@
 		A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenMark.m; sourceTree = "<group>"; };
 		A697100418D82E79007E901D /* iTermAdvancedSettingsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAdvancedSettingsController.h; sourceTree = "<group>"; };
 		A697100518D82E79007E901D /* iTermAdvancedSettingsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAdvancedSettingsController.m; sourceTree = "<group>"; };
-		A697100918D94CDA007E901D /* iTermAdvancedSettingsModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAdvancedSettingsModel.h; sourceTree = "<group>"; };
-		A697100A18D94CDA007E901D /* iTermAdvancedSettingsModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAdvancedSettingsModel.m; sourceTree = "<group>"; };
+		A697100918D94CDA007E901D /* iTermSettingsModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSettingsModel.h; sourceTree = "<group>"; };
+		A697100A18D94CDA007E901D /* iTermSettingsModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSettingsModel.m; sourceTree = "<group>"; };
 		A699BAE418C8394700D425A7 /* CVector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CVector.h; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; };
 		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; };
@@ -1523,7 +1523,7 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
-				A697100918D94CDA007E901D /* iTermAdvancedSettingsModel.h */,
+				A697100918D94CDA007E901D /* iTermSettingsModel.h */,
 				1D9DCC14142D7FC10016228A /* AlertTrigger.h */,
 				1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */,
 				A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */,
@@ -1875,7 +1875,7 @@
 				1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */,
 				1D21EE3A147711300066E04A /* ContextMenuActionPrefsController.m */,
 				1D825603146B258A007CAE78 /* EventMonitorView.m */,
-				A697100A18D94CDA007E901D /* iTermAdvancedSettingsModel.m */,
+				A697100A18D94CDA007E901D /* iTermSettingsModel.m */,
 				1D8255FB14687EE8007CAE78 /* PointerPrefsController.m */,
 				FB019DE103670C6501F955DB /* PreferencePanel.m */,
 				1D24C2C4142FEACF006B246F /* SmartSelectionController.m */,
@@ -2506,7 +2506,7 @@
 				1D407A3A14BABE8700BD5035 /* iTermKeyBindingMgr.h in Headers */,
 				1D407A3B14BABE8700BD5035 /* NSStringITerm.h in Headers */,
 				A68A30F5186D150A007F550F /* NSArray+iTerm.h in Headers */,
-				A697100B18D94CDA007E901D /* iTermAdvancedSettingsModel.h in Headers */,
+				A697100B18D94CDA007E901D /* iTermSettingsModel.h in Headers */,
 				1D407A3C14BABE8700BD5035 /* PreferencePanel.h in Headers */,
 				1D407A3D14BABE8700BD5035 /* PseudoTerminal.h in Headers */,
 				1D407A3E14BABE8700BD5035 /* PTYScrollView.h in Headers */,
@@ -2811,7 +2811,7 @@
 				A6CFDAD9185D53C2005DC94B /* AsyncHostLookupController.m in Sources */,
 				1D9A555C180FA83900B42CE9 /* EventMonitorView.m in Sources */,
 				A68A30E9186D1429007F550F /* VT100WorkingDirectory.m in Sources */,
-				A697100D18D94CDA007E901D /* iTermAdvancedSettingsModel.m in Sources */,
+				A697100D18D94CDA007E901D /* iTermSettingsModel.m in Sources */,
 				A647E3AB18C353C500450FA1 /* VT100StringParser.m in Sources */,
 				A68A3116186E2F14007F550F /* PopupWindow.m in Sources */,
 				A6A13ABD18C34F6400B241ED /* VT100XtermParser.m in Sources */,
@@ -3177,7 +3177,7 @@
 				A68A30C2186D0DC1007F550F /* FindCursorView.m in Sources */,
 				1DA9AEEB14A51CA000BEB37B /* TmuxSessionsTable.m in Sources */,
 				1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */,
-				A697100C18D94CDA007E901D /* iTermAdvancedSettingsModel.m in Sources */,
+				A697100C18D94CDA007E901D /* iTermSettingsModel.m in Sources */,
 				1D0B613D14A7C76500C57C33 /* TmuxWindowsTable.m in Sources */,
 				1DAE714E14AAF24200DA144B /* EquivalenceClassSet.m in Sources */,
 				A68A3115186E2F14007F550F /* PopupWindow.m in Sources */,
