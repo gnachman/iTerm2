@@ -1136,7 +1136,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
             NSString *appCast = defaultCheckTestRelease ?
             [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
             [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForFinal"];
-            [prefs setObject: appCast forKey:@"SUFeedURL"];
+            [prefs setObject:appCast forKey:@"SUFeedURL"];
         }
     }
 
@@ -1554,7 +1554,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [pty reloadBookmarks];
     }
     if (prefs) {
-        [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
+        [prefs setObject:[dataSource rawData] forKey:@"New Bookmarks"];
     }
 }
 
@@ -3548,12 +3548,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (BOOL)trimTrailingWhitespace
 {
-    NSNumber *n = [[NSUserDefaults standardUserDefaults] objectForKey:@"TrimWhitespaceOnCopy"];
-    if (n) {
-        return [n boolValue];
-    } else {
-        return YES;
-    }
+    return [iTermSettingsModel trimWhitespaceOnCopy];
 }
 
 - (float)legacyMinimumContrast
@@ -4734,25 +4729,16 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (BOOL)_warnAboutPossibleOverride
 {
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutPossibleOverrides"] != nil) {
-        return YES;
-    }
-    switch (NSRunAlertPanel(@"Some Profile Overrides this Shortcut",
-                            @"The global keyboard shortcut you have set is overridden by at least one profile. "
-                            @"Check your profiles' keyboard settings if it does not work as expected.",
-                            @"OK",
-                            @"Never warn me again",
-                            @"Cancel")) {
-        case NSAlertDefaultReturn:
-            return YES;
-        case NSAlertAlternateReturn:
-            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:@"NeverWarnAboutPossibleOverrides"];
-            return YES;
-        case NSAlertOtherReturn:
+    switch ([iTermWarning showWarningWithTitle:@"The global keyboard shortcut you have set is overridden by at least one profile. "
+                                               @"Check your profiles’ keyboard settings if it doesn't work as expected."
+                                       actions:@[ @"OK", @"Cancel" ]
+                                    identifier:@"NeverWarnAboutPossibleOverrides"
+                                   silenceable:kiTermWarningTypePermanentlySilenceable]) {
+        case kiTermWarningSelection1:
             return NO;
+        default:
+            return YES;
     }
-
-    return YES;
 }
 
 - (BOOL)confirmProfileDeletion:(NSArray *)guids {

@@ -57,6 +57,11 @@ DEFINE_BOOL(dockIconTogglesWindow, NO, @"If the only window is a hotkey window, 
 DEFINE_FLOAT(timeBetweenBlinks, 0.5, @"Time in seconds between cursor blinking on/off when a blinking cursor is enabled")
 DEFINE_BOOL(neverWarnAboutMeta, NO, @"Suppress a warning when Option Key Acts as Meta is enabled");
 DEFINE_BOOL(neverWarnAboutSpaces, NO, @"Suppress a warning about how to configure Spaces when setting a window's Space")
-DEFINE_BOOL(neverWarnAboutOverrides, NO, @"Suppress a warning about a Profile key setting overriding a global setting")
+DEFINE_BOOL(neverWarnAboutOverrides, NO, @"Suppress a warning about a change to a Profile key setting that overrides a global setting")
+DEFINE_BOOL(neverWarnAboutPossibleOverrides, NO, @"Suppress a warning about a change to a global key that's overridden by a Profile")
+DEFINE_BOOL(trimWhitespaceOnCopy, YES, @"Trim whitespace when copying to pasteboard")
+DEFINE_INT(autocompleteMaxOptions, 20, @"Number of autocomplete options to present (less than 100 recommended)")
+DEFINE_BOOL(noSyncNeverRemindPrefsChangesLostForUrl, NO, @"Suppress warning shown when a setting changed but prefs are loaded from a URL")
+DEFINE_BOOL(noSyncNeverRemindPrefsChangesLostForFile, NO, @"Suppress warning shown when a setting changed but prefs are loaded from a custom folder")
 
 @end

@@ -23,5 +23,10 @@
 + (double)timeBetweenBlinks;
 + (BOOL)neverWarnAboutMeta;
 + (BOOL)neverWarnAboutOverrides;
++ (BOOL)neverWarnAboutPossibleOverrides;
++ (BOOL)trimWhitespaceOnCopy;
++ (int)autocompleteMaxOptions;
++ (BOOL)noSyncNeverRemindPrefsChangesLostForUrl;
++ (BOOL)noSyncNeverRemindPrefsChangesLostForFile;
 
 @end

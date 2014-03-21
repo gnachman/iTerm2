@@ -11,6 +11,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermTextExtractor.h"
+#import "iTermSettingsModel.h"
 
 #define AcLog DLog
 
@@ -66,13 +67,7 @@ const int kMaxResultContextWords = 4;
 
 + (int)maxOptions
 {
-    NSNumber *n = [[NSUserDefaults standardUserDefaults] objectForKey:@"AutocompleteMaxOptions"];
-    if (n) {
-        int i = [n intValue];
-        return MAX(MIN(i, 100), 2);
-    } else {
-        return 20;
-    }
+    return [iTermSettingsModel autocompleteMaxOptions];
 }
 
 - (id)init

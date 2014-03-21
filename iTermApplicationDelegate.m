@@ -45,6 +45,7 @@
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "iTermFontPanel.h"
+#import "iTermWarning.h"
 #import <objc/runtime.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -359,62 +360,39 @@ static BOOL hasBecomeActive = NO;
             if ([remote hasPrefix:@"http://"] ||
                 [remote hasPrefix:@"https://"]) {
                 // If the setting is always copy, then ask. Copying isn't an option.
-                if (![[NSUserDefaults standardUserDefaults] objectForKey:@"NoSyncNeverRemindPrefsChangesLost"]) {
-                    if (NSRunAlertPanel(@"Preference Changes Will be Lost!",
-                                        @"Your preferences are loaded from a URL "
-                                        @"and differ from your local preferences. "
-                                        @"To save your local preferences, copy "
-                                        @"~/Library/Preferences/com.googlecode.iterm2.plist "
-                                        @"to %@ after quitting iTerm2.",
-                                        @"OK",
-                                        @"Never Remind Me Again",
-                                        nil,
-                                        remote) == NSAlertAlternateReturn) {
-                        [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES]
-                                                                  forKey:@"NoSyncNeverRemindPrefsChangesLost"];
-                    }
-                }
+                NSString *theTitle = [NSString stringWithFormat:
+                                      @"Your preferences are loaded from a URL "
+                                      @"and differ from your local preferences. "
+                                      @"To save your local preferences, copy "
+                                      @"~/Library/Preferences/com.googlecode.iterm2.plist "
+                                      @"to %@ after quitting iTerm2.",
+                                      remote];
+                [iTermWarning showWarningWithTitle:theTitle
+                                           actions:@[ @"OK" ]
+                                        identifier:@"NoSyncNeverRemindPrefsChangesLostForUrl"
+                                       silenceable:kiTermWarningTypePermanentlySilenceable];
             } else {
                 // Not a URL
-                NSString *format;
+                NSString *theTitle;
                 if ([ProfileModel migrated]) {
-                    format = @"Your preferences were modified by iTerm2 as part of an upgrade process (and you might have changed them, too). "
-                    @"Since you load prefs from a custom location, your local preferences will be lost if not copied to %@.";
+                    theTitle = [NSString stringWithFormat:@"Your preferences were modified by iTerm2 "
+                                @"as part of an upgrade process (and you might have changed them, too). "
+                                @"Since you load prefs from a custom location, your local preferences "
+                                @"will be lost if not copied to %@.", remote];
                 } else {
-                    format = @"Your preferences are loaded from a custom location and differ from your local preferences."
-                    @"Your local preferences will be lost if not copied to %@.";
+                    theTitle = [NSString stringWithFormat:@"Your preferences are loaded from a custom "
+                                @"location and differ from your local preferences. "
+                                @"Your local preferences will be lost if not copied to %@.",
+                                remote];
                 }
-                if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NoSyncNeverRemindPrefsChangesCopy"]) {
-                    // Always copy
-                    [[PreferencePanel sharedInstance] pushToCustomFolder:nil];
-                } else if (![[NSUserDefaults standardUserDefaults] objectForKey:@"NoSyncNeverRemindPrefsChangesLost"]) {
-                    // No "always" action.
-                    NSAlert *alert;
-                    alert = [NSAlert alertWithMessageText:@"Preference Changes Will be Lost!"
-                                            defaultButton:@"Copy"
-                                          alternateButton:@"Lose Changes"
-                                              otherButton:nil
-                                informativeTextWithFormat:format, remote];
-                    [alert setShowsSuppressionButton:YES];
-                    [[alert suppressionButton] setTitle:@"Always use this option."];
-                    BOOL doCopy = NO;
-                    switch ([alert runModal]) {
-                        case NSAlertDefaultReturn:
-                            doCopy = YES;
-                            break;
 
-                        case NSAlertAlternateReturn:
-                            break;
-                    }
-                    if ([[alert suppressionButton] state] == NSOnState) {
-                            [[NSUserDefaults standardUserDefaults]
-                                setObject:[NSNumber numberWithBool:YES]
-                                   forKey:doCopy ? @"NoSyncNeverRemindPrefsChangesCopy" :
-                                                   @"NoSyncNeverRemindPrefsChangesLost"];
-                    }
-                    if (doCopy) {
-                        [[PreferencePanel sharedInstance] pushToCustomFolder:nil];
-                    }
+                iTermWarningSelection selection =
+                    [iTermWarning showWarningWithTitle:theTitle
+                                               actions:@[ @"Copy", @"Lose Changes" ]
+                                            identifier:@"NoSyncNeverRemindPrefsChangesLostForFile"
+                                           silenceable:kiTermWarningTypePermanentlySilenceable];
+                if (selection == kiTermWarningSelection0) {
+                    [[PreferencePanel sharedInstance] pushToCustomFolder:nil];
                 }
             }
         }
