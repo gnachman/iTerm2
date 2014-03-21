@@ -23,5 +23,9 @@
                 defaultValue:(int)defaultValue
                  description:(NSString *)description;
 
++ (NSString *)stringForIdentifier:(NSString *)identifier
+                     defaultValue:(NSString *)defaultValue
+                      description:(NSString *)description;
+
 
 @end

@@ -16,7 +16,7 @@
 + (BOOL)name { \
     NSString *theIdentifier = [@#name stringByCapitalizingFirstLetter]; \
     return [iTermAdvancedSettingsController boolForIdentifier:theIdentifier \
-                                                      defaultValue:theDefault \
+                                                 defaultValue:theDefault \
                                                   description:theDescription]; \
 }
 
@@ -24,7 +24,7 @@
 + (int)name { \
     NSString *theIdentifier = [@#name stringByCapitalizingFirstLetter]; \
     return [iTermAdvancedSettingsController intForIdentifier:theIdentifier \
-                                                     defaultValue:theDefault \
+                                                defaultValue:theDefault \
                                                  description:theDescription]; \
 }
 
@@ -32,8 +32,16 @@
 + (double)name { \
     NSString *theIdentifier = [@#name stringByCapitalizingFirstLetter]; \
     return [iTermAdvancedSettingsController floatForIdentifier:theIdentifier \
-                                                       defaultValue:theDefault \
+                                                  defaultValue:theDefault \
                                                    description:theDescription]; \
+}
+
+#define DEFINE_STRING(name, theDefault, theDescription) \
++ (NSString *)name { \
+    NSString *theIdentifier = [@#name stringByCapitalizingFirstLetter]; \
+    return [iTermAdvancedSettingsController stringForIdentifier:theIdentifier \
+                                                   defaultValue:theDefault \
+                                                    description:theDescription]; \
 }
 
 DEFINE_BOOL(useUnevenTabs, NO, @"Uneven tab widths allowed")
@@ -43,5 +51,6 @@ DEFINE_INT(optimumTabWidth, 175, @"Preferred tab width")
 DEFINE_BOOL(alternateMouseScroll, NO, @"Scroll wheel sends arrow keys in alternate screen mode")
 DEFINE_BOOL(traditionalVisualBell, NO, @"Visual bell flashes the whole screen, not just a bell icon")
 DEFINE_FLOAT(hotkeyTermAnimationDuration, 0.25, @"Duration in seconds of the hotkey window animation")
+DEFINE_STRING(searchCommand, @"http://google.com/search?q=%@", @"Template for URL of search engine")
 
 @end

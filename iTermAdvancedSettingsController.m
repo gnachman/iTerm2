@@ -13,7 +13,8 @@
 typedef enum {
     kiTermAdvancedSettingTypeBoolean,
     kiTermAdvancedSettingTypeInteger,
-    kiTermAdvancedSettingTypeFloat
+    kiTermAdvancedSettingTypeFloat,
+    kiTermAdvancedSettingTypeString
 } iTermAdvancedSettingType;
 
 static NSString *const kAdvancedSettingIdentifier = @"kAdvancedSettingIdentifier";
@@ -103,6 +104,26 @@ static NSDictionary *gIntrospection;
     }
 }
 
++ (NSString *)stringForIdentifier:(NSString *)identifier
+                     defaultValue:(NSString *)defaultValue
+                      description:(NSString *)description {
+    if (gIntrospecting) {
+        [gIntrospection autorelease];
+        gIntrospection = [@{ kAdvancedSettingIdentifier: identifier,
+                             kAdvancedSettingType: @(kiTermAdvancedSettingTypeString),
+                             kAdvancedSettingDefaultValue: defaultValue,
+                             kAdvancedSettingDescription: description } retain];
+        return defaultValue;
+    }
+
+    NSString *value = [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
+    if (!value) {
+        return defaultValue;
+    } else {
+        return value;
+    }
+}
+
 + (NSDictionary *)settingsDictionary {
     static NSDictionary *settings;
     if (!settings) {
@@ -166,6 +187,9 @@ static NSDictionary *gIntrospection;
             case kiTermAdvancedSettingTypeFloat:
             case kiTermAdvancedSettingTypeInteger:
                 return [NSString stringWithFormat:@"%@", value];
+                
+            case kiTermAdvancedSettingTypeString:
+                return value;
         }
     } else {
         return nil;
@@ -219,6 +243,7 @@ static NSDictionary *gIntrospection;
                 [cell setBordered:NO];
                 return cell;
             }
+            case kiTermAdvancedSettingTypeString:
             case kiTermAdvancedSettingTypeFloat:
             case kiTermAdvancedSettingTypeInteger: {
                 NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@"scalar"] autorelease];
@@ -227,6 +252,7 @@ static NSDictionary *gIntrospection;
                 [cell setTruncatesLastVisibleLine:YES];
                 [cell setLineBreakMode:NSLineBreakByTruncatingTail];
                 return cell;
+                
             }
         }
     }
@@ -262,6 +288,11 @@ static NSDictionary *gIntrospection;
             case kiTermAdvancedSettingTypeInteger:
                 [[NSUserDefaults standardUserDefaults] setInteger:[anObject integerValue]
                                                            forKey:identifier];
+                break;
+
+            case kiTermAdvancedSettingTypeString:
+                [[NSUserDefaults standardUserDefaults] setObject:anObject forKey:identifier];
+                break;
         }
     }
 }

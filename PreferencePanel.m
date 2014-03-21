@@ -3962,8 +3962,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (float) hotkeyTermAnimationDuration
 {
-    assert(prefs);
-    return [prefs objectForKey:@"HotkeyTermAnimationDuration"] ? [[prefs objectForKey:@"HotkeyTermAnimationDuration"] floatValue] : 0.25;
+    return [iTermSettingsModel hotkeyTermAnimationDuration];
 }
 
 - (NSString *)searchCommand
