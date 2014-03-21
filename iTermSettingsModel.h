@@ -21,5 +21,7 @@
 + (double)antiIdleTimerPeriod;
 + (BOOL)dockIconTogglesWindow;
 + (double)timeBetweenBlinks;
++ (BOOL)neverWarnAboutMeta;
++ (BOOL)neverWarnAboutOverrides;
 
 @end

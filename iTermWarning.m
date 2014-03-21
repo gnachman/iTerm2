@@ -1,6 +1,7 @@
 #import "iTermWarning.h"
 
 static const NSTimeInterval kTemporarySilenceTime = 600;
+static NSString *const kCancel = @"Cancel";
 
 @implementation iTermWarning
 
@@ -10,7 +11,7 @@ static const NSTimeInterval kTemporarySilenceTime = 600;
                                   silenceable:(iTermWarningType)warningType
 {
     if ([self identifierIsSilenced:identifier]) {
-        return kItermWarningSelectionNotShown;
+        return [self savedSelectionForIdentifier:identifier];
     }
     
     NSAlert *alert = [NSAlert alertWithMessageText:@"Warning"
@@ -18,16 +19,53 @@ static const NSTimeInterval kTemporarySilenceTime = 600;
                                    alternateButton:actions.count > 1 ? actions[1] : nil
                                        otherButton:actions.count > 2 ? actions[2] : nil
                          informativeTextWithFormat:@"%@", title];
+    int numNonCancelActions = [actions count];
+    for (NSString *string in actions) {
+        if ([string isEqualToString:kCancel]) {
+            --numNonCancelActions;
+        }
+    }
+    // If this is silenceable and at least one button is not "Cancel" then offer to remember the
+    // selection. But a "Cancel" action is not remembered.
     if (warningType == kiTermWarningTypeTemporarilySilenceable) {
-        alert.suppressionButton.title = @"Suppress this warning temporarily";
+        if (numNonCancelActions == 1) {
+            alert.suppressionButton.title = @"Suppress this warning temporarily";
+        } else if (numNonCancelActions > 1) {
+            alert.suppressionButton.title = @"Suppress this warning temporarily and use my choice from now on";
+        }
         alert.showsSuppressionButton = YES;
     } else if (warningType == kiTermWarningTypePermanentlySilenceable) {
-        alert.suppressionButton.title = @"Do not warn again";
+        if (numNonCancelActions == 1) {
+            alert.suppressionButton.title = @"Do not warn again";
+        } else if (numNonCancelActions > 1) {
+            alert.suppressionButton.title = @"Do not warn again and use my choice from now on";
+        }
         alert.showsSuppressionButton = YES;
     }
     
     NSInteger result = [alert runModal];
-    if (alert.suppressionButton.state == NSOnState) {
+
+    BOOL remember = NO;
+    iTermWarningSelection selection;
+    switch (result) {
+        case NSAlertDefaultReturn:
+            selection = kiTermWarningSelection0;
+            remember = ![actions[0] isEqualToString:kCancel];
+            break;
+        case NSAlertAlternateReturn:
+            selection = kiTermWarningSelection1;
+            remember = ![actions[1] isEqualToString:kCancel];
+            break;
+        case NSAlertOtherReturn:
+            selection = kiTermWarningSelection2;
+            remember = ![actions[2] isEqualToString:kCancel];
+            break;
+        default:
+            selection = kItermWarningSelectionError;
+    }
+
+    // Save info if suppression was enabled.
+    if (remember && alert.suppressionButton.state == NSOnState) {
         NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
         if (warningType == kiTermWarningTypeTemporarilySilenceable) {
             NSString *theKey = [self temporarySilenceKeyForIdentifier:identifier];
@@ -37,18 +75,11 @@ static const NSTimeInterval kTemporarySilenceTime = 600;
             NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
             [userDefaults setBool:YES forKey:theKey];
         }
+        [[NSUserDefaults standardUserDefaults] setObject:@(selection)
+                                                  forKey:[self selectionKeyForIdentifier:identifier]];
     }
-    
-    switch (result) {
-        case NSAlertDefaultReturn:
-            return kiTermWarningSelection0;
-        case NSAlertAlternateReturn:
-            return kiTermWarningSelection1;
-        case NSAlertOtherReturn:
-            return kiTermWarningSelection2;
-        default:
-            return kItermWarningSelectionError;
-    }
+
+    return selection;
 }
 
 #pragma mark - Private
@@ -89,6 +120,15 @@ static const NSTimeInterval kTemporarySilenceTime = 600;
     }
     
     return NO;
+}
+
++ (NSString *)selectionKeyForIdentifier:(NSString *)identifier {
+    return [NSString stringWithFormat:@"%@_selection", identifier];
+}
+
++ (iTermWarningSelection)savedSelectionForIdentifier:(NSString *)identifier {
+    NSString *theKey = [self selectionKeyForIdentifier:identifier];
+    return [[NSUserDefaults standardUserDefaults] integerForKey:theKey];
 }
 
 @end

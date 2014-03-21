@@ -55,5 +55,8 @@ DEFINE_STRING(searchCommand, @"http://google.com/search?q=%@", @"Template for UR
 DEFINE_FLOAT(antiIdleTimerPeriod, 60, @"Anti-idle interval in seconds. Will not go faster than 60 seconds.")
 DEFINE_BOOL(dockIconTogglesWindow, NO, @"If the only window is a hotkey window, then clicking the dock icon shows/hides it")
 DEFINE_FLOAT(timeBetweenBlinks, 0.5, @"Time in seconds between cursor blinking on/off when a blinking cursor is enabled")
+DEFINE_BOOL(neverWarnAboutMeta, NO, @"Suppress a warning when Option Key Acts as Meta is enabled");
+DEFINE_BOOL(neverWarnAboutSpaces, NO, @"Suppress a warning about how to configure Spaces when setting a window's Space")
+DEFINE_BOOL(neverWarnAboutOverrides, NO, @"Suppress a warning about a Profile key setting overriding a global setting")
 
 @end

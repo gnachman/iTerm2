@@ -11,7 +11,6 @@ typedef enum {
     kiTermWarningSelection0,  // First passed-in action
     kiTermWarningSelection1,  // Second passed-in action
     kiTermWarningSelection2,  // Third passed-in action
-    kItermWarningSelectionNotShown,  // Warning not shown; previously silenced.
     kItermWarningSelectionError,  // Something went wrong.
 } iTermWarningSelection;
 

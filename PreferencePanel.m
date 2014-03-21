@@ -46,6 +46,7 @@
 #import "iTermFontPanel.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermSettingsModel.h"
+#import "iTermWarning.h"
 #include <stdlib.h>
 
 static NSString * const kCustomColorPresetsKey = @"Custom Color Presets";
@@ -4701,88 +4702,34 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (void)_maybeWarnAboutMeta
 {
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutMeta"]) {
-        return;
-    }
-
-    switch (NSRunAlertPanel(@"Warning",
-                            @"You have chosen to have an option key act as Meta. This option is useful for backward"
-                            @"compatibility with older systems. The \"+Esc\" option is recommended for most users.",
-                            @"OK",
-                            @"Never warn me again",
-                            nil)) {
-        case NSAlertDefaultReturn:
-            break;
-        case NSAlertAlternateReturn:
-            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:@"NeverWarnAboutMeta"];
-            break;
-    }
+    [iTermWarning showWarningWithTitle:@"You have chosen to have an option key act as Meta. This option is useful for backward "
+                                       @"compatibility with older systems. The \"+Esc\" option is recommended for most users."
+                               actions:@[ @"OK" ]
+                            identifier:@"NeverWarnAboutMeta"
+                           silenceable:kiTermWarningTypePermanentlySilenceable];
 }
 
 - (void)_maybeWarnAboutSpaces
 {
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutSpaces"]) {
-        return;
-    }
-
-    switch (NSRunAlertPanel(@"Notice",
-                            @"To have a new window open in a specific space, make sure that Spaces is enabled in System "
-                            @"Preferences and that it is configured to switch directly to a space with ^ Number Keys.",
-                            @"OK",
-                            @"Never warn me again",
-                            nil)) {
-        case NSAlertDefaultReturn:
-            break;
-        case NSAlertAlternateReturn:
-            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:@"NeverWarnAboutSpaces"];
-            break;
-    }
-}
-
-- (BOOL)_warnAboutDeleteOverride
-{
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutDeleteOverride"] != nil) {
-        return YES;
-    }
-    switch (NSRunAlertPanel(@"Some Profile Overrides the Delete Key",
-                            @"Careful! You have at least one profile that has a key mapping for the Delete key. It will take precedence over this setting. Check your profiles' keyboard settings if Delete does not work as expected.",
-                            @"OK",
-                            @"Never warn me again",
-                            @"Cancel",
-                            nil)) {
-        case NSAlertDefaultReturn:
-            return YES;
-        case NSAlertAlternateReturn:
-            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:@"NeverWarnAboutDeleteOverride"];
-            return YES;
-        case NSAlertOtherReturn:
-            return NO;
-    }
-
-    return YES;
+    [iTermWarning showWarningWithTitle:@"To have a new window open in a specific space, make sure that Spaces is enabled in System "
+                                       @"Preferences and that it is configured to switch directly to a space with ^ Number Keys."
+                               actions:@[ @"OK" ]
+                            identifier:@"NeverWarnAboutSpaces"
+                           silenceable:kiTermWarningTypePermanentlySilenceable];
 }
 
 - (BOOL)_warnAboutOverride
 {
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutOverrides"] != nil) {
-        return YES;
-    }
-    switch (NSRunAlertPanel(@"Overriding Global Shortcut",
-                            @"The keyboard shortcut you have set for this profile will take precedence over "
-                            @"an existing shortcut for the same key combination in a global shortcut.",
-                            @"OK",
-                            @"Never warn me again",
-                            @"Cancel")) {
-        case NSAlertDefaultReturn:
-            return YES;
-        case NSAlertAlternateReturn:
-            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:@"NeverWarnAboutOverrides"];
-            return YES;
-        case NSAlertOtherReturn:
+    switch ([iTermWarning showWarningWithTitle:@"The keyboard shortcut you have set for this profile will take precedence over "
+                                               @"an existing shortcut for the same key combination in a global shortcut."
+                                       actions:@[ @"OK", @"Cancel" ]
+                                    identifier:@"NeverWarnAboutOverrides"
+                                   silenceable:kiTermWarningTypePermanentlySilenceable]) {
+        case kiTermWarningSelection1:
             return NO;
+        default:
+            return YES;
     }
-
-    return YES;
 }
 
 - (BOOL)_warnAboutPossibleOverride
