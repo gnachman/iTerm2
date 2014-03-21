@@ -85,7 +85,7 @@ static NSDictionary *gIntrospection;
 }
 
 + (double)floatForIdentifier:(NSString *)identifier
-                defaultValue:(int)defaultValue
+                defaultValue:(double)defaultValue
                  description:(NSString *)description {
     if (gIntrospecting) {
         [gIntrospection autorelease];

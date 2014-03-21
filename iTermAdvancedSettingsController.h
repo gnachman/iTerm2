@@ -20,7 +20,7 @@
             description:(NSString *)description;
 
 + (double)floatForIdentifier:(NSString *)identifier
-                defaultValue:(int)defaultValue
+                defaultValue:(double)defaultValue
                  description:(NSString *)description;
 
 + (NSString *)stringForIdentifier:(NSString *)identifier

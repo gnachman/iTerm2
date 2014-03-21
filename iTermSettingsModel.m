@@ -52,5 +52,8 @@ DEFINE_BOOL(alternateMouseScroll, NO, @"Scroll wheel sends arrow keys in alterna
 DEFINE_BOOL(traditionalVisualBell, NO, @"Visual bell flashes the whole screen, not just a bell icon")
 DEFINE_FLOAT(hotkeyTermAnimationDuration, 0.25, @"Duration in seconds of the hotkey window animation")
 DEFINE_STRING(searchCommand, @"http://google.com/search?q=%@", @"Template for URL of search engine")
+DEFINE_FLOAT(antiIdleTimerPeriod, 60, @"Anti-idle interval in seconds. Will not go faster than 60 seconds.")
+DEFINE_BOOL(dockIconTogglesWindow, NO, @"If the only window is a hotkey window, then clicking the dock icon shows/hides it")
+DEFINE_FLOAT(timeBetweenBlinks, 0.5, @"Time in seconds between cursor blinking on/off when a blinking cursor is enabled")
 
 @end

@@ -3967,12 +3967,11 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (NSString *)searchCommand
 {
-    assert(prefs);
-    return [prefs objectForKey:@"SearchCommand"] ? [prefs objectForKey:@"SearchCommand"] : @"http://google.com/search?q=%@";
+    return [iTermSettingsModel searchCommand];
 }
 
 - (NSTimeInterval)antiIdleTimerPeriod {
-    NSTimeInterval period = [[NSUserDefaults standardUserDefaults] doubleForKey:@"AntiIdleTimerPeriod"];
+    NSTimeInterval period = [iTermSettingsModel antiIdleTimerPeriod];
     if (period > 0) {
         return period;
     } else {
@@ -3992,20 +3991,12 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (BOOL)dockIconTogglesWindow
 {
-    assert(prefs);
-    return [prefs boolForKey:@"dockIconTogglesWindow"];
+    return [iTermSettingsModel dockIconTogglesWindow];
 }
 
 - (NSTimeInterval)timeBetweenBlinks
 {
-    static NSTimeInterval timeBetweenBlinks;
-    if (!timeBetweenBlinks) {
-        timeBetweenBlinks = [[NSUserDefaults standardUserDefaults] doubleForKey:@"TimeBetweenBlinks"];
-        if (!timeBetweenBlinks) {
-            timeBetweenBlinks = 0.5;
-        }
-    }
-    return timeBetweenBlinks;
+    return [iTermSettingsModel timeBetweenBlinks];
 }
 
 - (BOOL)autoCommandHistory
