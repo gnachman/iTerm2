@@ -45,6 +45,7 @@
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "iTermFontPanel.h"
+#import "iTermSettingsModel.h"
 #import "iTermWarning.h"
 #import <objc/runtime.h>
 #include <sys/stat.h>
@@ -408,7 +409,7 @@ static BOOL hasBecomeActive = NO;
 
 - (PseudoTerminal *)terminalToOpenFileIn
 {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"OpenFileInNewWindows"]) {
+    if ([iTermSettingsModel openFileInNewWindows]) {
         return nil;
     } else {
         return [self currentTerminal];
@@ -486,9 +487,7 @@ static BOOL hasBecomeActive = NO;
         return NO;
     }
     if (!userHasInteractedWithAnySession_) {
-        NSNumber* pref = [[NSUserDefaults standardUserDefaults] objectForKey:@"MinRunningTime"];
-        const double kMinRunningTime =  pref ? [pref floatValue] : 10;
-        if ([[NSDate date] timeIntervalSinceDate:launchTime_] < kMinRunningTime) {
+        if ([[NSDate date] timeIntervalSinceDate:launchTime_] < [iTermSettingsModel minRunningTime]) {
             NSLog(@"Not quitting iTerm2 because it ran very briefly and had no user interaction. Set the MinRunningTime float preference to 0 to turn this feature off.");
             return NO;
         }
@@ -528,13 +527,9 @@ static BOOL hasBecomeActive = NO;
     // The screens' -visibleFrame is not updated when this is called. Doing a delayed perform with
     // a delay of 0 is usually, but not always enough. Not that 1 second is always enough either,
     // I suppose, but I don't want to die on this hill.
-    NSNumber *delay = [[NSUserDefaults standardUserDefaults] objectForKey:@"UpdateScreenParamsDelay"];
-    if (!delay) {
-        delay = [NSNumber numberWithInt:1];
-    }
     [self performSelector:@selector(updateScreenParametersInAllTerminals)
                withObject:nil
-               afterDelay:[delay intValue]];
+               afterDelay:[iTermSettingsModel updateScreenParamsDelay]];
 }
 
 - (void)updateScreenParametersInAllTerminals {

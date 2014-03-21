@@ -47,7 +47,9 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermSelection.h"
+#import "iTermSettingsModel.h"
 #import "iTermTextExtractor.h"
+#import "iTermWarning.h"
 #import <apr-1/apr_base64.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -745,33 +747,24 @@ typedef enum {
 // tic -e xterm-256color $FILENAME
 - (void)_maybeAskAboutInstallXtermTerminfo
 {
-    NSString* NEVER_WARN = @"NeverWarnAboutXterm256ColorTerminfo";
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:NEVER_WARN]) {
-        return;
-    }
-
     NSString* filename = [[NSBundle bundleForClass:[self class]] pathForResource:@"xterm-terminfo" ofType:@"txt"];
     if (!filename) {
         return;
     }
     NSString* cmd = [NSString stringWithFormat:@"tic -e xterm-256color %@", [filename stringWithEscapedShellCharacters]];
     if (system("infocmp xterm-256color > /dev/null")) {
-        switch (NSRunAlertPanel(@"Warning",
-                                @"The terminfo file for the terminal type you're using, \"xterm-256color\", is"
-                                @"not installed on your system. Would you like to install it now?",
-                                @"Install",
-                                @"Never ask me again",
-                                @"Not Now")) {
-            case NSAlertDefaultReturn:
-                if (system([cmd UTF8String])) {
-                    NSRunAlertPanel(@"Error",
-                                    @"Sorry, an error occurred while running: %@",
-                                    @"OK", nil, nil, cmd);
-                }
-                break;
-            case NSAlertAlternateReturn:
-                [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:NEVER_WARN];
-                break;
+        iTermWarningSelection selection =
+            [iTermWarning showWarningWithTitle:@"The terminfo file for the terminal type you're using, \"xterm-256color\", is"
+                                               @"not installed on your system. Would you like to install it now?"
+                                       actions:@[ @"Install", @"Do not Install" ]
+                                    identifier:@"NeverWarnAboutXterm256ColorTerminfo"
+                                   silenceable:kiTermWarningTypePermanentlySilenceable];
+        if (selection == kiTermWarningSelection0) {
+            if (system([cmd UTF8String])) {
+                NSRunAlertPanel(@"Error",
+                                @"Sorry, an error occurred while running: %@",
+                                @"OK", nil, nil, cmd);
+            }
         }
     }
 }
@@ -791,7 +784,7 @@ typedef enum {
 }
 
 - (BOOL)shouldSetCtype {
-    return ![[NSUserDefaults standardUserDefaults] boolForKey:@"DoNotSetCtype"];
+    return ![iTermSettingsModel doNotSetCtype];
 }
 
 - (void)startProgram:(NSString *)program
@@ -898,18 +891,15 @@ typedef enum {
     if ([[NSDate date] timeIntervalSinceDate:_creationDate] < 3) {
         NSString* theName = [_profile objectForKey:KEY_NAME];
         NSString* theKey = [NSString stringWithFormat:@"NeverWarnAboutShortLivedSessions_%@", [_profile objectForKey:KEY_GUID]];
-        if (![[[NSUserDefaults standardUserDefaults] objectForKey:theKey] boolValue]) {
-            if (NSRunAlertPanel(@"Short-Lived Session Warning",
-                                @"A session ended very soon after starting. Check that the command "
-                                @"in profile \"%@\" is correct.",
-                                @"OK",
-                                @"Don't Warn Again for This Profile",
-                                nil,
-                                theName) != NSAlertDefaultReturn) {
-                [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:theKey];
-            }
-        }
-    }
+        NSString *theTitle = [NSString stringWithFormat:
+                              @"A session ended very soon after starting. Check that the command "
+                              @"in profile \"%@\" is correct.",
+                              theName];
+        [iTermWarning showWarningWithTitle:theTitle
+                                   actions:@[ @"OK" ]
+                                identifier:theKey
+                               silenceable:kiTermWarningTypePermanentlySilenceable];
+ }
 }
 
 // Terminate a replay session but not the live session
@@ -1017,7 +1007,7 @@ typedef enum {
     static BOOL checkedDebug;
     static BOOL debugKeyDown;
     if (!checkedDebug) {
-        debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+        debugKeyDown = [iTermSettingsModel debugKeyDown];
         checkedDebug = YES;
     }
     if (debugKeyDown || gDebugLogging) {
@@ -1229,7 +1219,7 @@ typedef enum {
 
 - (BOOL)_growlOnForegroundTabs
 {
-    return [[[NSUserDefaults standardUserDefaults] objectForKey:@"GrowlOnForegroundTabs"] boolValue];
+    return [iTermSettingsModel growlOnForegroundTabs];
 }
 
 - (void)brokenPipe
@@ -3547,7 +3537,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 // pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event
 {
-  BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+  BOOL debugKeyDown = [iTermSettingsModel debugKeyDown];
   unsigned char *send_str = NULL;
   unsigned char *dataPtr = NULL;
   int dataLength = 0;

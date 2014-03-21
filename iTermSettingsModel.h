@@ -28,5 +28,17 @@
 + (int)autocompleteMaxOptions;
 + (BOOL)noSyncNeverRemindPrefsChangesLostForUrl;
 + (BOOL)noSyncNeverRemindPrefsChangesLostForFile;
++ (BOOL)openFileInNewWindows;
++ (double)minRunningTime;
++ (double)updateScreenParamsDelay;
++ (int)quickPasteBytesPerCall;
++ (double)quickPasteDelayBetweenCalls;
++ (int)slowPasteBytesPerCall;
++ (double)slowPasteDelayBetweenCalls;
++ (int)pasteHistoryMaxOptions;
++ (BOOL)pinchToChangeFontSizeDisabled;
++ (BOOL)doNotSetCtype;
++ (BOOL)debugKeyDown;
++ (BOOL)growlOnForegroundTabs;
 
 @end

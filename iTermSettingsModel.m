@@ -63,5 +63,17 @@ DEFINE_BOOL(trimWhitespaceOnCopy, YES, @"Trim whitespace when copying to pastebo
 DEFINE_INT(autocompleteMaxOptions, 20, @"Number of autocomplete options to present (less than 100 recommended)")
 DEFINE_BOOL(noSyncNeverRemindPrefsChangesLostForUrl, NO, @"Suppress warning shown when a setting changed but prefs are loaded from a URL")
 DEFINE_BOOL(noSyncNeverRemindPrefsChangesLostForFile, NO, @"Suppress warning shown when a setting changed but prefs are loaded from a custom folder")
+DEFINE_BOOL(openFileInNewWindows, NO, @"Open files (like shell scripts opened from Finder) in new windows, not new tabs")
+DEFINE_FLOAT(minRunningTime, 10, @"Don't let iTerm2 quit automatically until it's been running for this many seconds (0 disables)")
+DEFINE_FLOAT(updateScreenParamsDelay, 1, @"Wait this long after display settings change before updating windows")
+DEFINE_INT(quickPasteBytesPerCall, 1024, @"Bytes to paste in each chunk when pasting normally")
+DEFINE_FLOAT(quickPasteDelayBetweenCalls, 0.01, @"Delay in seconds between chunks when pasting normally")
+DEFINE_INT(slowPasteBytesPerCall, 16, @"Bytes to paste in each chunk when pasting slowly")
+DEFINE_FLOAT(slowPasteDelayBetweenCalls, 0.125, @"Delay in seconds between chunks when pasting slowly")
+DEFINE_INT(pasteHistoryMaxOptions, 20, @"Number of entires to show in Paste History (will not go below 2 or above 100)")
+DEFINE_BOOL(pinchToChangeFontSizeDisabled, NO, @"Disable using a pinch gesture to change font size")
+DEFINE_BOOL(doNotSetCtype, NO, @"Never set the CTYPE environment variable")
+DEFINE_BOOL(debugKeyDown, NO, @"Log verbose debug info about key presses")
+DEFINE_BOOL(growlOnForegroundTabs, NO, @"Enable Growl or Notification Center notifications for the foreground tab")
 
 @end

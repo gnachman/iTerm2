@@ -7,6 +7,7 @@
 //
 
 #import "PasteContext.h"
+#import "iTermSettingsModel.h"
 
 @implementation PasteContext
 

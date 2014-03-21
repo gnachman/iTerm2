@@ -48,9 +48,11 @@
 #import "iTermFontPanel.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermInstantReplayWindowController.h"
+#import "iTermSettingsModel.h"
 #include <unistd.h>
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
+static NSString *const kShowFullscreenTabBarKey = @"ShowFullScreenTabBar";
 
 #define PtyLog DLog
 
@@ -595,8 +597,7 @@ NSString *kSessionsKVCKey = @"sessions";
     PtyLog(@"set window inited");
     [self setWindowInited: YES];
     useTransparency_ = YES;
-    fullscreenTabs_ = [[NSUserDefaults standardUserDefaults] objectForKey:@"ShowFullScreenTabBar"] ?
-      [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowFullScreenTabBar"] : false;
+    fullscreenTabs_ = [[NSUserDefaults standardUserDefaults] boolForKey:kShowFullscreenTabBarKey];
     number_ = [[iTermController sharedInstance] allocateWindowNumber];
     if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         [self hideMenuBar];
@@ -860,7 +861,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)magnifyWithEvent:(NSEvent *)event
 {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"PinchToChangeFontSizeDisabled"]) {
+    if ([iTermSettingsModel pinchToChangeFontSizeDisabled]) {
         return;
     }
     const double kMagTimeout = 0.2;
@@ -1174,7 +1175,7 @@ NSString *kSessionsKVCKey = @"sessions";
     fullscreenTabs_ = !fullscreenTabs_;
     if (!temporarilyShowingTabs_) {
         [[NSUserDefaults standardUserDefaults] setBool:fullscreenTabs_
-                                                forKey:@"ShowFullScreenTabBar"];
+                                                forKey:kShowFullscreenTabBarKey];
     }
     [self repositionWidgets];
     [self fitTabsToWindow];

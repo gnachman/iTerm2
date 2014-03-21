@@ -29,6 +29,8 @@
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
 
+static NSString *const kCloseBookmarksWindowAfterOpeningKey = @"CloseBookmarksWindowAfterOpening";
+
 typedef enum {
     HORIZONTAL_PANE,
     VERTICAL_PANE,
@@ -68,7 +70,7 @@ typedef enum {
     [tableView_ multiColumns];
 
     NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
-    NSNumber* n = [prefs objectForKey:@"CloseBookmarksWindowAfterOpening"];
+    NSNumber* n = [prefs objectForKey:kCloseBookmarksWindowAfterOpeningKey];
     [closeAfterOpeningBookmark_ setState:[n boolValue] ? NSOnState : NSOffState];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -279,7 +281,7 @@ typedef enum {
 {
     NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
     [prefs setObject:[NSNumber numberWithBool:[closeAfterOpeningBookmark_ state] == NSOnState]
-              forKey:@"CloseBookmarksWindowAfterOpening"];
+              forKey:kCloseBookmarksWindowAfterOpeningKey];
 }
 
 - (IBAction)newTabsInNewWindow:(id)sender

@@ -32,6 +32,7 @@
 #import "PopupModel.h"
 #import "PreferencePanel.h"
 #import "iTermController.h"
+#import "iTermSettingsModel.h"
 
 #define PBHKEY_ENTRIES @"Entries"
 #define PBHKEY_VALUE @"Value"
@@ -59,13 +60,7 @@
 
 + (int)maxEntries
 {
-    NSNumber *n = [[NSUserDefaults standardUserDefaults] objectForKey:@"PasteHistoryMaxOptions"];
-    if (n) {
-        int i = [n intValue];
-        return MAX(MIN(i, 100), 2);
-    } else {
-        return 20;
-    }
+    return [iTermSettingsModel pasteHistoryMaxOptions];
 }
 
 + (PasteboardHistory*)sharedInstance
@@ -73,6 +68,8 @@
     static PasteboardHistory* instance;
     if (!instance) {
         int maxEntries = [PasteboardHistory maxEntries];
+        // MaxPasteHistoryEntries is a legacy thing. I'm not removing it because it's a security
+        // issue for some people.
         if ([[NSUserDefaults standardUserDefaults] objectForKey:@"MaxPasteHistoryEntries"]) {
             maxEntries = [[NSUserDefaults standardUserDefaults] integerForKey:@"MaxPasteHistoryEntries"];
             if (maxEntries < 0) {
