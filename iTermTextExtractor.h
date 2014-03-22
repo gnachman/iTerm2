@@ -25,6 +25,12 @@ typedef enum {
     kTextExtractorClassOther
 } iTermTextExtractorClass;
 
+typedef enum {
+    kiTermTextExtractorNullPolicyFromStartToFirst,
+    kiTermTextExtractorNullPolicyFromLastToEnd,
+    kiTermTextExtractorNullPolicyTreatAsSpace
+} iTermTextExtractorNullPolicy;
+
 @interface iTermTextExtractor : NSObject
 
 @property(nonatomic, assign) VT100GridRange logicalWindow;
@@ -78,7 +84,10 @@ typedef enum {
                      forward:(BOOL)forward
       forCharacterMatchingFilter:(BOOL (^)(screen_char_t, VT100GridCoord))block;
 
+// Returns content in the specified range, ignoring hard newlines. If |forward| is set then content
+// is captured up to the first null; otherwise, content after the last null in the range is returned.
 - (NSString *)contentInRange:(VT100GridWindowedRange)range
+                  nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
                          pad:(BOOL)pad
           includeLastNewline:(BOOL)includeLastNewline
       trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces

@@ -75,5 +75,9 @@ DEFINE_BOOL(pinchToChangeFontSizeDisabled, NO, @"Disable using a pinch gesture t
 DEFINE_BOOL(doNotSetCtype, NO, @"Never set the CTYPE environment variable")
 DEFINE_BOOL(debugKeyDown, NO, @"Log verbose debug info about key presses")
 DEFINE_BOOL(growlOnForegroundTabs, NO, @"Enable Growl or Notification Center notifications for the foreground tab")
+DEFINE_FLOAT(smartCursorColorBgThreshold, 0.5, @"Threshold for Smart Cursor Color for background color (0 to 1, larger values are more aggressive)")
+DEFINE_FLOAT(smartCursorColorFgThreshold, 0.75, @"Threshold for Smart Cursor Color for text color (0 to 1, larger values are more aggressive)")
+DEFINE_BOOL(logDrawingPerformance, NO, @"Log stats about text drawing performance to console")
+DEFINE_BOOL(ignoreHardNewlinesInURLs, NO, @"Ignore hard newlines for the purposes of locating URLs for Cmd-click")
 
 @end

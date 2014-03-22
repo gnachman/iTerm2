@@ -122,6 +122,7 @@ const int kMaxResultContextWords = 4;
 
         VT100GridWindowedRange range = [textExtractor rangeForWordAt:VT100GridCoordMake(x, y)];
         NSString *s = [textExtractor contentInRange:range
+                                         nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                                 pad:NO
                                  includeLastNewline:NO
                              trimTrailingWhitespace:NO
@@ -157,6 +158,7 @@ const int kMaxResultContextWords = 4;
         iTermTextExtractor *extractor = [self textExtractor];
         range = [extractor rangeForWordAt:VT100GridCoordMake(x, y)];
         NSString *s = [extractor contentInRange:range
+                                     nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                             pad:NO
                              includeLastNewline:NO
                          trimTrailingWhitespace:NO
@@ -496,6 +498,7 @@ const int kMaxResultContextWords = 4;
             // Get the word that includes the match.
             range = [extractor rangeForWordAt:VT100GridCoordMake(startX, startY)];
             NSString *immutableWord = [extractor contentInRange:range
+                                                     nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                                             pad:NO
                                              includeLastNewline:NO
                                          trimTrailingWhitespace:NO
@@ -504,6 +507,7 @@ const int kMaxResultContextWords = 4;
             while ([firstWord length] < [prefix_ length]) {
                 range = [extractor rangeForWordAt:range.coordRange.end];
                 NSString* part = [extractor contentInRange:range
+                                                nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                                        pad:NO
                                         includeLastNewline:NO
                                     trimTrailingWhitespace:NO
@@ -533,9 +537,10 @@ const int kMaxResultContextWords = 4;
                         endX -= [screen width];
                         ++endY;
                     }
-                    
+
                     range = [extractor rangeForWordAt:VT100GridCoordMake(endX, endY)];
                     word = [extractor contentInRange:range
+                                          nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                                  pad:NO
                                   includeLastNewline:NO
                               trimTrailingWhitespace:NO
@@ -550,6 +555,7 @@ const int kMaxResultContextWords = 4;
                         if (range.coordRange.end.y < [screen numberOfLines]) {
                             range = [extractor rangeForWordAt:range.coordRange.end];
                             word = [extractor contentInRange:range
+                                                  nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                                          pad:NO
                                           includeLastNewline:NO
                                       trimTrailingWhitespace:NO

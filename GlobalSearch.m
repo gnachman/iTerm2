@@ -243,6 +243,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     iTermTextExtractor *extractor =
         [iTermTextExtractor textExtractorWithDataSource:textViewDataSource_];
     NSString* theContext = [extractor contentInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
+                                          nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                                  pad:NO
                                   includeLastNewline:NO
                               trimTrailingWhitespace:YES

@@ -52,7 +52,7 @@ static const int kNumCharsToSearchForDivider = 8;
 }
 
 - (BOOL)hasLogicalWindow {
-    return _logicalWindow.location == 0 && [self xLimit] == [_dataSource width];
+    return !(_logicalWindow.location == 0 && [self xLimit] == [_dataSource width]);
 }
 
 - (void)restrictToLogicalWindowIncludingCoord:(VT100GridCoord)coord {
@@ -163,11 +163,11 @@ static const int kNumCharsToSearchForDivider = 8;
                                      radius:2
                                targetOffset:&targetOffset
                                      coords:coords
-                           ignoringNewlines:ignoringNewlines || _logicalWindow.length > 0];
-    
+                           ignoringNewlines:ignoringNewlines || [self hasLogicalWindow]];
+
     NSArray* rulesArray = rules ?: [SmartSelectionController defaultRules];
     const int numRules = [rulesArray count];
-    
+
     NSMutableDictionary* matches = [NSMutableDictionary dictionaryWithCapacity:13];
     int numCoords = [coords count];
     
@@ -514,6 +514,7 @@ static const int kNumCharsToSearchForDivider = 8;
 }
 
 - (NSString *)contentInRange:(VT100GridWindowedRange)windowedRange
+                  nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
                          pad:(BOOL)pad
           includeLastNewline:(BOOL)includeLastNewline
       trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
@@ -535,7 +536,18 @@ static const int kNumCharsToSearchForDivider = 8;
                                   [result appendString:@" "];
                               }
                           } else if (theChar.code == 0 && !theChar.complexChar) {
-                              [result appendString:@" "];
+                              // This is only reached for midline nulls; nulls at the end of the
+                              // line end up in eolBlock.
+                              switch (nullPolicy) {
+                                  case kiTermTextExtractorNullPolicyFromLastToEnd:
+                                      [result deleteCharactersInRange:NSMakeRange(0, result.length)];
+                                      break;
+                                  case kiTermTextExtractorNullPolicyFromStartToFirst:
+                                      return YES;
+                                  case kiTermTextExtractorNullPolicyTreatAsSpace:
+                                      [result appendString:@" "];
+                                      break;
+                              }
                           } else if (theChar.code != DWC_RIGHT &&
                                      theChar.code != DWC_SKIP) {
                               // Normal character
@@ -548,6 +560,17 @@ static const int kNumCharsToSearchForDivider = 8;
                                if (pad) {
                                    for (int i = 0; i < numPreceedingNulls; i++) {
                                        [result appendString:@" "];
+                                   }
+                               } else if (numPreceedingNulls > 0) {
+                                   switch (nullPolicy) {
+                                       case kiTermTextExtractorNullPolicyFromLastToEnd:
+                                           [result deleteCharactersInRange:NSMakeRange(0, result.length)];
+                                           break;
+                                       case kiTermTextExtractorNullPolicyFromStartToFirst:
+                                           return YES;
+                                       case kiTermTextExtractorNullPolicyTreatAsSpace:
+                                           [result appendString:@" "];
+                                           break;
                                    }
                                }
                                if (code == EOL_HARD &&
@@ -674,7 +697,7 @@ static const int kNumCharsToSearchForDivider = 8;
                       forward:(BOOL)forward
           respectHardNewlines:(BOOL)respectHardNewlines
 {
-    if (_logicalWindow.length > 0) {
+    if ([self hasLogicalWindow]) {
         respectHardNewlines = NO;
     }
     VT100GridWindowedRange range;
@@ -688,13 +711,16 @@ static const int kNumCharsToSearchForDivider = 8;
                                     MIN([_dataSource numberOfLines] - 1, coord.y + 10));
         range = [self windowedRangeWithRange:coordRange];
     }
+    iTermTextExtractorNullPolicy nullPolicy;
     if (forward) {
+        nullPolicy = kiTermTextExtractorNullPolicyFromStartToFirst;
         range.coordRange.start = coord;
         if (VT100GridCoordOrder(range.coordRange.start,
                                 range.coordRange.end) != NSOrderedAscending) {
             return @"";
         }
     } else {
+        nullPolicy = kiTermTextExtractorNullPolicyFromLastToEnd;
         // This doesn't include the boundary character when returning a prefix because we don't
         // want it twice when getting the prefix and suffix at the same coord.
         range.coordRange.end = coord;
@@ -705,10 +731,14 @@ static const int kNumCharsToSearchForDivider = 8;
     }
     NSString *content =
             [self contentInRange:range
+                      nullPolicy:nullPolicy
                              pad:NO
               includeLastNewline:NO
           trimTrailingWhitespace:NO
                     cappedAtSize:-1];
+    if (!respectHardNewlines) {
+        content = [content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+    }
     return content;
 }
 

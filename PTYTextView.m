@@ -42,6 +42,7 @@
 #import "iTermExpose.h"
 #import "iTermNSKeyBindingEmulator.h"
 #import "iTermSelection.h"
+#import "iTermSettingsModel.h"
 #import "iTermTextExtractor.h"
 #include <math.h>
 #include <sys/time.h>
@@ -70,16 +71,6 @@ const unsigned int kUploadDragOperation = NSDragOperationCopy;
 const unsigned int kPasteDragOperation = NSDragOperationGeneric;
 
 const int kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
-
-// If the cursor's background color is too close to nearby background colors,
-// force it to the "most different" color. This is the difference threshold
-// that triggers that change. 0 means always trigger, 1 means never trigger.
-static double gSmartCursorBgThreshold = 0.5;
-
-// The cursor's text is forced to black or white if it is too similar to the
-// background. If the brightness difference is below a threshold then the
-// B/W text mode is triggered. 0 means always trigger, 1 means never trigger.
-static double gSmartCursorFgThreshold = 0.75;
 
 // Notifications posted when hostname lookups finish. Notifications are used to
 // avoid dangling references.
@@ -387,21 +378,6 @@ static NSImage* alertImage;
     alertImage = [NSImage imageNamed:@"Alert"];
     [alertImage setFlipped:YES];
 
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"SmartCursorColorBgThreshold"]) {
-        // Override the default.
-        double d = [[NSUserDefaults standardUserDefaults] doubleForKey:@"SmartCursorColorBgThreshold"];
-        if (d > 0) {
-            gSmartCursorBgThreshold = d;
-        }
-    }
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"SmartCursorColorFgThreshold"]) {
-        // Override the default.
-        double d = [[NSUserDefaults standardUserDefaults] doubleForKey:@"SmartCursorColorFgThreshold"];
-        if (d > 0) {
-            gSmartCursorFgThreshold = d;
-        }
-    }
-
     [iTermNSKeyBindingEmulator sharedInstance];  // Load and parse DefaultKeyBindings.dict if needed.
 }
 
@@ -488,7 +464,7 @@ static NSImage* alertImage;
                                                                    selector:@selector(threeFingerTap:)];
             }
         }
-        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"LogDrawingPerformance"]) {
+        if ([iTermSettingsModel logDrawingPerformance]) {
             NSLog(@"** Drawing performance timing enabled **");
             drawRectDuration_ = [[MovingAverage alloc] init];
             drawRectInterval_ = [[MovingAverage alloc] init];
@@ -2343,7 +2319,7 @@ NSMutableArray* screens=0;
         isFirstInteraction = NO;
     }
 
-    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+    BOOL debugKeyDown = [iTermSettingsModel debugKeyDown];
 
     if (debugKeyDown) {
         NSLog(@"PTYTextView keyDown BEGIN %@", event);
@@ -2901,16 +2877,6 @@ NSMutableArray* screens=0;
     [self updateTrackingAreas];  // Cause mouseMoved to be (not) called on movement if cmd is down (up).
 }
 
-- (BOOL)respectHardNewlinesForURLs {
-    static BOOL initialized;
-    static BOOL respect;
-    if (!initialized) {
-        respect = ![[NSUserDefaults standardUserDefaults] boolForKey:@"IgnoreHardNewlinesInURLs"];
-        initialized = YES;
-    }
-    return respect;
-}
-
 - (BOOL)reportingMouseClicks {
     if ([self xtermMouseReporting]) {
         VT100Terminal *terminal = [_dataSource terminal];
@@ -2968,7 +2934,7 @@ NSMutableArray* screens=0;
         } else {
             URLAction *action = [self urlActionForClickAtX:x
                                                          y:y
-                                    respectingHardNewlines:[self respectHardNewlinesForURLs]];
+                                    respectingHardNewlines:![iTermSettingsModel ignoreHardNewlinesInURLs]];
             if (action) {
                 _underlineRange = action.range;
 
@@ -4104,6 +4070,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             iTermTextExtractor *extractor =
                 [iTermTextExtractor textExtractorWithDataSource:_dataSource];
             NSString *content = [extractor contentInRange:range
+                                               nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                                       pad:NO
                                        includeLastNewline:copyLastNewline
                                    trimTrailingWhitespace:trimWhitespace
@@ -4153,6 +4120,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                            [_dataSource width],
                                                            [_dataSource numberOfLines] - 1);
     return [extractor contentInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
+                          nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                  pad:NO
                   includeLastNewline:YES
               trimTrailingWhitespace:NO
@@ -5230,6 +5198,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                      [_dataSource width],
                                                                      lineOffset + numLines - 1);
             [self printContent:[extractor contentInRange:VT100GridWindowedRangeMake(coordRange, 0, 0)
+                                              nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                                      pad:NO
                                       includeLastNewline:YES
                                   trimTrailingWhitespace:NO
@@ -6118,6 +6087,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     return [extractor contentInRange:range
+                          nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                  pad:YES
                   includeLastNewline:NO
               trimTrailingWhitespace:NO
@@ -7685,7 +7655,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 if (lineBelow) {
                     [constraints addObject:@([self _brightnessOfCharBackground:lineBelow[x1]])];
                 }
-                if ([self _minimumDistanceOf:bgBrightness fromAnyValueIn:constraints] < gSmartCursorBgThreshold) {
+                if ([self _minimumDistanceOf:bgBrightness fromAnyValueIn:constraints] < [iTermSettingsModel smartCursorColorBgThreshold]) {
                     CGFloat b = [self _farthestValueFromAnyValueIn:constraints];
                     bgColor = [NSColor colorWithCalibratedRed:b green:b blue:b alpha:1];
                 }
@@ -7761,7 +7731,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                  isBackground:NO] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
                             CGFloat fgBrightness = [proposedForeground perceivedBrightness];
                             CGFloat bgBrightness = [bgColor perceivedBrightness];
-                            if (!frameOnly && fabs(fgBrightness - bgBrightness) < gSmartCursorFgThreshold) {
+                            if (!frameOnly && fabs(fgBrightness - bgBrightness) < [iTermSettingsModel smartCursorColorFgThreshold]) {
                                 // foreground and background are very similar. Just use black and
                                 // white.
                                 if (bgBrightness < 0.5) {
@@ -8172,17 +8142,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSDictionary *rule = [self smartSelectAtX:x
                                             y:y
                                            to:&smartRange
-                             ignoringNewlines:NO
+                             ignoringNewlines:[iTermSettingsModel ignoreHardNewlinesInURLs]
                                actionRequired:YES
                               respectDividers:YES];
     NSArray *actions = [SmartSelectionController actionsInRule:rule];
     DLog(@"  Smart selection produces these actions: %@", actions);
     if (actions.count) {
         NSString *content = [extractor contentInRange:smartRange
+                                           nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                                   pad:NO
                                    includeLastNewline:NO
                                trimTrailingWhitespace:NO
                                          cappedAtSize:-1];
+        if (!respectHardNewlines) {
+            content = [content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+        }
         DLog(@"  Actions match this content: %@", content);
         URLAction *action = [URLAction urlActionToPerformSmartSelectionRule:rule onString:content];
         action.range = smartRange;
@@ -8264,8 +8238,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // I tried respecting hard newlines if that is a legal URL, but that's such a broad definition
     // that it doesn't work well. Hard EOLs mid-url are very common. Let's try always ignoring them.
     return [self urlActionForClickAtX:x
-                                    y:y
-               respectingHardNewlines:[self respectHardNewlinesForURLs]];
+                                y:y
+           respectingHardNewlines:![iTermSettingsModel ignoreHardNewlinesInURLs]];
 }
 
 // Returns the drag operation to use. It is determined from the type of thing

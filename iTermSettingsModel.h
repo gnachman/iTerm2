@@ -41,4 +41,16 @@
 + (BOOL)debugKeyDown;
 + (BOOL)growlOnForegroundTabs;
 
+// The cursor's background goes to the "most different" color from its neighbors if the difference
+// in brightness between the proposed background color and the neighbors' background color is less
+// than this threshold.
++ (double)smartCursorColorBgThreshold;
+// The cursor's text is forced to black or white if it is too similar to the
+// background. If the brightness difference is less than this value then the text color becomes
+// black or white.
++ (double)smartCursorColorFgThreshold;
+
++ (BOOL)logDrawingPerformance;
++ (BOOL)ignoreHardNewlinesInURLs;
+
 @end
