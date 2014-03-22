@@ -3915,7 +3915,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event
 {
-    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+    BOOL debugKeyDown = [iTermSettingsModel debugKeyDown];
 
     if (debugKeyDown) {
         NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
@@ -4258,7 +4258,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)copySelectionAccordingToUserPreferences
 {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"CopyWithStylesByDefault"]) {
+    if ([iTermSettingsModel copyWithStylesByDefault]) {
         [self copyWithStyles:self];
     } else {
         [self copy:self];
@@ -5269,7 +5269,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     DLog(@"PTYTextView insertText:%@", aString);
     if ([self hasMarkedText]) {
-        BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+        BOOL debugKeyDown = [iTermSettingsModel debugKeyDown];
         if (debugKeyDown) {
             NSLog(@"insertText: clear marked text");
         }
@@ -5312,7 +5312,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // TODO: Respect replacementRange
 - (void)setMarkedText:(id)aString selectedRange:(NSRange)selRange replacementRange:(NSRange)replacementRange
 {
-    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+    BOOL debugKeyDown = [iTermSettingsModel debugKeyDown];
     if (debugKeyDown) {
         NSLog(@"set marked text to %@; range %@", aString, [NSValue valueWithRange:selRange]);
     }
@@ -5357,7 +5357,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)unmarkText
 {
-    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+    BOOL debugKeyDown = [iTermSettingsModel debugKeyDown];
     if (debugKeyDown) {
         NSLog(@"clear marked text");
     }
@@ -7958,12 +7958,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     static NSMutableCharacterSet* urlChars;
     if (!urlChars) {
-        NSString *chars = [[NSUserDefaults standardUserDefaults] stringForKey:@"URLCharacterSet"];
-        if (!chars) {
-            // Note: square brackets are included for ipv6 addresses like http://[2600:3c03::f03c:91ff:fe96:6a7a]/
-            chars = @".?\\/:;%=&_-,+~#@!*'()|[]";
-
-        }
+        NSString *chars = [iTermSettingsModel URLCharacterSet];
         urlChars = [[NSMutableCharacterSet characterSetWithCharactersInString:chars] retain];
         [urlChars formUnionWithCharacterSet:[NSCharacterSet alphanumericCharacterSet]];
         [urlChars retain];

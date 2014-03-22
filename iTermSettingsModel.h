@@ -52,5 +52,7 @@
 
 + (BOOL)logDrawingPerformance;
 + (BOOL)ignoreHardNewlinesInURLs;
++ (BOOL)copyWithStylesByDefault;
++ (NSString *)URLCharacterSet;
 
 @end

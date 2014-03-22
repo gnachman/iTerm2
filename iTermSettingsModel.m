@@ -79,5 +79,9 @@ DEFINE_FLOAT(smartCursorColorBgThreshold, 0.5, @"Threshold for Smart Cursor Colo
 DEFINE_FLOAT(smartCursorColorFgThreshold, 0.75, @"Threshold for Smart Cursor Color for text color (0 to 1, larger values are more aggressive)")
 DEFINE_BOOL(logDrawingPerformance, NO, @"Log stats about text drawing performance to console")
 DEFINE_BOOL(ignoreHardNewlinesInURLs, NO, @"Ignore hard newlines for the purposes of locating URLs for Cmd-click")
+DEFINE_BOOL(copyWithStylesByDefault, NO, @"Copy to pasteboard includes color and font style")
+
+// Note: square brackets are included for ipv6 addresses like http://[2600:3c03::f03c:91ff:fe96:6a7a]/
+DEFINE_STRING(URLCharacterSet, @".?\\/:;%=&_-,+~#@!*'()|[]", @"Non-alphanumeric characters considered part of a URL for Cmd-click")
 
 @end
