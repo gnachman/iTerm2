@@ -24,12 +24,17 @@ static NSString *const kAdvancedSettingDescription = @"kAdvancedSettingDescripti
 
 @interface NSDictionary (AdvancedSettings)
 - (iTermAdvancedSettingType)advancedSettingType;
+- (NSComparisonResult)compareAdvancedSettingDicts:(NSDictionary *)other;
 @end
 
 @implementation NSDictionary (AdvancedSettings)
 
 - (iTermAdvancedSettingType)advancedSettingType {
     return (iTermAdvancedSettingType)[[self objectForKey:kAdvancedSettingType] intValue];
+}
+
+- (NSComparisonResult)compareAdvancedSettingDicts:(NSDictionary *)other {
+    return [self[kAdvancedSettingDescription] compare:other[kAdvancedSettingDescription]];
 }
 
 @end
@@ -136,6 +141,10 @@ static NSDictionary *gIntrospection;
     return settings;
 }
 
++ (NSArray *)sortedAdvancedSettings {
+    return [[self advancedSettings] sortedArrayUsingSelector:@selector(compareAdvancedSettingDicts:)];
+}
+
 + (NSArray *)advancedSettings {
     static NSMutableArray *settings;
     if (!settings) {
@@ -210,11 +219,11 @@ static NSDictionary *gIntrospection;
 
 - (NSArray *)filteredAdvancedSettings {
     if (_searchField.stringValue.length == 0) {
-        return [[self class] advancedSettings];
+        return [[self class] sortedAdvancedSettings];
     } else {
         NSMutableArray *result = [NSMutableArray array];
         NSArray *parts = [_searchField.stringValue componentsSeparatedByString:@" "];
-        for (NSDictionary *dict in [[self class] advancedSettings]) {
+        for (NSDictionary *dict in [[self class] sortedAdvancedSettings]) {
             NSString *description = dict[kAdvancedSettingDescription];
             if ([self description:description matchesQuery:parts]) {
                 [result addObject:dict];
