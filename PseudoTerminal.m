@@ -6733,7 +6733,11 @@ NSString *kSessionsKVCKey = @"sessions";
     [self setupSession:object title:nil withSize:nil];
     tabViewItemsBeingAdded--;
     if ([object screen]) {  // screen initialized ok
-        [self insertSession:object atIndex:[TABVIEW numberOfTabViewItems]];
+        if ([iTermSettingsModel addNewTabAtEndOfTabs] || ![self currentTab]) {
+            [self insertSession:object atIndex:[TABVIEW numberOfTabViewItems]];
+        } else {
+            [self insertSession:object atIndex:[self indexOfTab:[self currentTab]] + 1];
+        }
     }
     [[self currentTab] numberOfSessionsDidChange];
 }

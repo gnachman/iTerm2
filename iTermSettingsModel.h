@@ -54,5 +54,6 @@
 + (BOOL)ignoreHardNewlinesInURLs;
 + (BOOL)copyWithStylesByDefault;
 + (NSString *)URLCharacterSet;
++ (BOOL)addNewTabAtEndOfTabs;
 
 @end
