@@ -58,7 +58,7 @@ DEFINE_BOOL(pinchToChangeFontSizeDisabled, NO, @"Mouse: Disable using a pinch ge
 #pragma mark Terminal
 DEFINE_BOOL(traditionalVisualBell, NO, @"Terminal: Visual bell flashes the whole screen, not just a bell icon")
 DEFINE_FLOAT(antiIdleTimerPeriod, 60, @"Terminal: Anti-idle interval in seconds. Will not go faster than 60 seconds.")
-DEFINE_FLOAT(timeBetweenBlinks, 0.5, @"Terminal: Time in seconds between cursor blinking on/off when a blinking cursor is enabled")
+DEFINE_FLOAT(timeBetweenBlinks, 0.5, @"Terminal: Cursor blink speed (seconds)")
 DEFINE_BOOL(doNotSetCtype, NO, @"Terminal: Never set the CTYPE environment variable")
 // For these, 1 is more aggressive and 0 turns the feature off:
 DEFINE_FLOAT(smartCursorColorBgThreshold, 0.5, @"Terminal: Threshold for Smart Cursor Color for background color (0 to 1)")
