@@ -2307,7 +2307,7 @@ typedef enum {
             NSBundle *myBundle = [NSBundle bundleForClass:[self class]];
             imageFilePath = [myBundle pathForResource:imageFilePath ofType:@""];
         }
-        [_backgroundImagePath release];
+        [_backgroundImagePath autorelease];
         _backgroundImagePath = [imageFilePath copy];
         self.backgroundImage = [[[NSImage alloc] initWithContentsOfFile:_backgroundImagePath] autorelease];
     } else {

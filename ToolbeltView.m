@@ -133,7 +133,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    [[NSColor colorWithWhite:237.0/255.0 alpha:1] set];
+    [[NSColor colorWithCalibratedWhite:237.0/255.0 alpha:1] set];
     NSRectFill(dirtyRect);
     [super drawRect:dirtyRect];
 }

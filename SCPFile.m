@@ -51,6 +51,16 @@ static NSError *SCPFileError(NSString *description) {
     [super dealloc];
 }
 
+// In NMSSH 2.0, -[NMSSHSession lastError] crashes if there is no rawSession.
+// When upgrading, remove this method (the bug was fixed in January, 2014).
+- (NSError *)lastError {
+  if (self.session.rawSession) {
+    return self.session.lastError;
+  } else {
+    return nil;
+  }
+}
+
 - (void)setQueue:(dispatch_queue_t)queue {
     @synchronized(self) {
         if (queue != _queue) {
@@ -185,8 +195,16 @@ static NSError *SCPFileError(NSString *description) {
         }
     }
     if (!self.session.isConnected) {
-        NSError *theError = self.session.lastError;
-        self.error = [NSString stringWithFormat:@"Connection failed: %@", theError.localizedDescription];
+        NSError *theError = [self lastError];
+        if (!theError) {
+            // If connection fails, there is no rawSession in NMSSHSession, so it can't return an
+            // error. Should that ever change, this clause will not execute.
+            theError = [NSError errorWithDomain:@"com.googlecode.iterm2"
+                                           code:-1
+                                       userInfo:@{ NSLocalizedDescriptionKey: @"Could not connect." }];
+        }
+        self.error = [NSString stringWithFormat:@"Connection failed: %@",
+                         theError.localizedDescription];
         dispatch_sync(dispatch_get_main_queue(), ^() {
             [[FileTransferManager sharedInstance] transferrableFile:self
                                      didFinishTransmissionWithError:theError];
@@ -259,7 +277,7 @@ static NSError *SCPFileError(NSString *description) {
         return;
     }
     if (!self.session.isAuthorized) {
-        __block NSError *error = self.session.lastError;
+        __block NSError *error = [self lastError];
         dispatch_sync(dispatch_get_main_queue(), ^() {
             if (!error) {
                 error = [NSError errorWithDomain:@"com.googlecode.iterm2.SCPFile"
@@ -347,7 +365,7 @@ static NSError *SCPFileError(NSString *description) {
                 });
                 return;
             } else {
-                NSString *errorDescription = [[self.session lastError] localizedDescription];
+                NSString *errorDescription = [[self lastError] localizedDescription];
                 if (errorDescription.length) {
                     self.error = errorDescription;
                 } else {
@@ -394,7 +412,7 @@ static NSError *SCPFileError(NSString *description) {
                 });
                 return;
             } else {
-                NSString *errorDescription = [[self.session lastError] localizedDescription];
+                NSString *errorDescription = [[self lastError] localizedDescription];
                 if (errorDescription.length) {
                     self.error = errorDescription;
                 } else {
