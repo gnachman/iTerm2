@@ -11,7 +11,7 @@
 @implementation NSView (iTerm)
 
 - (NSImage *)snapshot {
-    return [[NSImage alloc] initWithData:[self dataWithPDFInsideRect:[self bounds]]];
+    return [[[NSImage alloc] initWithData:[self dataWithPDFInsideRect:[self bounds]]] autorelease];
 }
 
 @end

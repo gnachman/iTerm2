@@ -2793,7 +2793,8 @@ NSString *kSessionsKVCKey = @"sessions";
         [self.window setStyleMask:newStyleMask];
     } else if (!_toolbarController) {
         [self.window setStyleMask:newStyleMask];
-        self.toolbarController = [[PTToolbarController alloc] initWithPseudoTerminal:self];
+        self.toolbarController =
+            [[[PTToolbarController alloc] initWithPseudoTerminal:self] autorelease];
     }
 }
 

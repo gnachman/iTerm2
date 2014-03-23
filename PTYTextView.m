@@ -2003,7 +2003,6 @@ NSMutableArray* screens=0;
     NSMutableString* lineDebug = [NSMutableString stringWithFormat:@"drawRect:%d,%d %dx%d drawing these lines with scrollback overflow of %d, iteration=%d:\n", (int)rect.origin.x, (int)rect.origin.y, (int)rect.size.width, (int)rect.size.height, (int)[_dataSource scrollbackOverflow], iteration];
 #endif
     double y = lineStart * lineHeight;
-    const double initialY = y;
     BOOL anyBlinking = NO;
 
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
@@ -6996,7 +6995,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     const BOOL stripes = useBackgroundIndicator_ && [_delegate textViewSessionIsBroadcastingInput];
     int WIDTH = [_dataSource width];
     screen_char_t* theLine = [_dataSource getLineAtIndex:line];
-    PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
     BOOL hasBGImage = [_delegate textViewHasBackgroundImage];
     double selectedAlpha = 1.0 - _transparency;
     double alphaIfTransparencyInUse = [self useTransparency] ? 1.0 - _transparency : 1.0;

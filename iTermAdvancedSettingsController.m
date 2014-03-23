@@ -158,6 +158,7 @@ static NSDictionary *gIntrospection;
             NSString *stringName = NSStringFromSelector(name);
             if (![internalMethods containsObject:stringName]) {
                 [iTermSettingsModel performSelector:name withObject:nil];
+                assert(gIntrospection != nil);
                 [settings addObject:gIntrospection];
                 [gIntrospection release];
                 gIntrospection = nil;

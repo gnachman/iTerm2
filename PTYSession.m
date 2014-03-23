@@ -917,9 +917,7 @@ typedef enum {
     if (_exited) {
         [self _maybeWarnAboutShortLivedSessions];
     }
-    BOOL isClient = NO;
     if (self.tmuxMode == TMUX_CLIENT) {
-        isClient = YES;
         assert([_tab tmuxWindow] >= 0);
         [_tmuxController deregisterWindow:[_tab tmuxWindow]
                                windowPane:_tmuxPane];
@@ -4164,7 +4162,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         [_patternedImage release];
         _patternedImage = [[NSImage alloc] initWithSize:_view.contentRect.size];
         [_patternedImage lockFocus];
-        NSColor *pattern = [[NSColor colorWithPatternImage:_backgroundImage] retain];
+        NSColor *pattern = [NSColor colorWithPatternImage:_backgroundImage];
         [pattern drawSwatchInRect:NSMakeRect(0,
                                              0,
                                              _patternedImage.size.width,
