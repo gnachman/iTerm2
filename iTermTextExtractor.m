@@ -80,7 +80,12 @@ static const int kNumCharsToSearchForDivider = 8;
     location = [self coordLockedToWindow:location];
     iTermTextExtractorClass theClass =
         [self classForCharacter:[self characterAt:location]];
-
+    if (theClass == kTextExtractorClassOther) {
+        return [self windowedRangeWithRange:VT100GridCoordRangeMake(location.x,
+                                                                    location.y,
+                                                                    location.x + 1,
+                                                                    location.y)];
+    }
     const int xLimit = [self xLimit];
     const int width = [_dataSource width];
     const BOOL windowTouchesLeftMargin = (_logicalWindow.location == 0);
