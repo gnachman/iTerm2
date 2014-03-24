@@ -1471,7 +1471,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [newDict setObject:[NSNumber numberWithBool:([preventTab state]==NSOnState)] forKey:KEY_PREVENT_TAB];
     [newDict setObject:[NSNumber numberWithBool:([hideAfterOpening state]==NSOnState)] forKey:KEY_HIDE_AFTER_OPENING];
     [newDict setObject:[NSNumber numberWithBool:([syncTitle state]==NSOnState)] forKey:KEY_SYNC_TITLE];
-    [newDict setObject:[NSNumber numberWithBool:([closeSessionsOnEnd state]==NSOnState)] forKey:KEY_CLOSE_SESSIONS_ON_END];
     [newDict setObject:[NSNumber numberWithBool:([nonAsciiDoubleWidth state]==NSOnState)] forKey:KEY_AMBIGUOUS_DOUBLE_WIDTH];
     [newDict setObject:[NSNumber numberWithBool:([silenceBell state]==NSOnState)] forKey:KEY_SILENCE_BELL];
     [newDict setObject:[NSNumber numberWithBool:([visualBell state]==NSOnState)] forKey:KEY_VISUAL_BELL];
@@ -1485,11 +1484,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [newDict setObject:[NSNumber numberWithBool:([scrollbackInAlternateScreen state]==NSOnState)] forKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN];
     [newDict setObject:[NSNumber numberWithBool:([bookmarkGrowlNotifications state]==NSOnState)] forKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS];
     [newDict setObject:[NSNumber numberWithBool:([setLocaleVars state]==NSOnState)] forKey:KEY_SET_LOCALE_VARS];
-    [newDict setObject:[NSNumber numberWithBool:([autoLog state]==NSOnState)] forKey:KEY_AUTOLOG];
-    [newDict setObject:[logDir stringValue] forKey:KEY_LOGDIR];
-    [logDir setEnabled:[autoLog state] == NSOnState];
-    [changeLogDir setEnabled:[autoLog state] == NSOnState];
-    [self _updateLogDirWarning];
     [self _updatePrefsDirWarning];
     [newDict setObject:[NSNumber numberWithUnsignedInt:[[characterEncoding selectedItem] tag]] forKey:KEY_CHARACTER_ENCODING];
     [newDict setObject:[NSNumber numberWithInt:[[[scrollbackLines stringValue] stringWithOnlyDigits] intValue]] forKey:KEY_SCROLLBACK_LINES];
@@ -1502,8 +1496,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     }
 
     [newDict setObject:[terminalType stringValue] forKey:KEY_TERMINAL_TYPE];
-    [newDict setObject:[NSNumber numberWithBool:([sendCodeWhenIdle state]==NSOnState)] forKey:KEY_SEND_CODE_WHEN_IDLE];
-    [newDict setObject:[NSNumber numberWithInt:[idleCode intValue]] forKey:KEY_IDLE_CODE];
 
     // Keyboard tab
     [newDict setObject:[origBookmark objectForKey:KEY_KEYBOARD_MAP] forKey:KEY_KEYBOARD_MAP];
@@ -1527,10 +1519,18 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     }
 
     // Session tab
+    [newDict setObject:[NSNumber numberWithBool:([closeSessionsOnEnd state]==NSOnState)] forKey:KEY_CLOSE_SESSIONS_ON_END];
     [newDict setObject:[NSNumber numberWithInt:[[promptBeforeClosing_ selectedCell] tag]]
                 forKey:KEY_PROMPT_CLOSE];
     [newDict setObject:[origBookmark objectForKey:KEY_JOBS] ? [origBookmark objectForKey:KEY_JOBS] : [NSArray array]
                 forKey:KEY_JOBS];
+    [newDict setObject:[NSNumber numberWithBool:([autoLog state]==NSOnState)] forKey:KEY_AUTOLOG];
+    [newDict setObject:[logDir stringValue] forKey:KEY_LOGDIR];
+    [logDir setEnabled:[autoLog state] == NSOnState];
+    [changeLogDir setEnabled:[autoLog state] == NSOnState];
+    [self _updateLogDirWarning];
+    [newDict setObject:[NSNumber numberWithBool:([sendCodeWhenIdle state]==NSOnState)] forKey:KEY_SEND_CODE_WHEN_IDLE];
+    [newDict setObject:[NSNumber numberWithInt:[idleCode intValue]] forKey:KEY_IDLE_CODE];
 
     // Advanced tab
     [newDict setObject:[triggerWindowController_ triggers] forKey:KEY_TRIGGERS];
@@ -3348,9 +3348,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         nil
     };
     NSString* terminalKeys[] = {
-        KEY_SILENCE_BELL,
-        KEY_VISUAL_BELL,
-        KEY_FLASHING_BELL,
         KEY_XTERM_MOUSE_REPORTING,
         KEY_DISABLE_SMCUP_RMCUP,
         KEY_ALLOW_TITLE_REPORTING,
@@ -3363,16 +3360,22 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         KEY_UNLIMITED_SCROLLBACK,
         KEY_TERMINAL_TYPE,
         KEY_USE_CANONICAL_PARSER,
+        KEY_SILENCE_BELL,
+        KEY_VISUAL_BELL,
+        KEY_FLASHING_BELL,
+        KEY_BOOKMARK_GROWL_NOTIFICATIONS,
+        KEY_SET_LOCALE_VARS,
         nil
     };
     NSString *sessionKeys[] = {
         KEY_CLOSE_SESSIONS_ON_END,
-        KEY_BOOKMARK_GROWL_NOTIFICATIONS,
-        KEY_SET_LOCALE_VARS,
+        KEY_PROMPT_CLOSE,
+        KEY_JOBS,
         KEY_AUTOLOG,
         KEY_LOGDIR,
         KEY_SEND_CODE_WHEN_IDLE,
         KEY_IDLE_CODE,
+        nil
     };
 
     NSString* keyboardKeys[] = {
@@ -4589,7 +4592,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [preventTab setState:[[dict objectForKey:KEY_PREVENT_TAB] boolValue] ? NSOnState : NSOffState];
     [hideAfterOpening setState:[[dict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue] ? NSOnState : NSOffState];
     [syncTitle setState:[[dict objectForKey:KEY_SYNC_TITLE] boolValue] ? NSOnState : NSOffState];
-    [closeSessionsOnEnd setState:[[dict objectForKey:KEY_CLOSE_SESSIONS_ON_END] boolValue] ? NSOnState : NSOffState];
     [nonAsciiDoubleWidth setState:[[dict objectForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH] boolValue] ? NSOnState : NSOffState];
     [silenceBell setState:[[dict objectForKey:KEY_SILENCE_BELL] boolValue] ? NSOnState : NSOffState];
     [visualBell setState:[[dict objectForKey:KEY_VISUAL_BELL] boolValue] ? NSOnState : NSOffState];
@@ -4608,11 +4610,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
          ([[dict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] boolValue] ? NSOnState : NSOffState) : NSOnState];
     [bookmarkGrowlNotifications setState:[[dict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue] ? NSOnState : NSOffState];
     [setLocaleVars setState:[dict objectForKey:KEY_SET_LOCALE_VARS] ? ([[dict objectForKey:KEY_SET_LOCALE_VARS] boolValue] ? NSOnState : NSOffState) : NSOnState];
-    [autoLog setState:[[dict objectForKey:KEY_AUTOLOG] boolValue] ? NSOnState : NSOffState];
-    [logDir setStringValue:[dict objectForKey:KEY_LOGDIR] ? [dict objectForKey:KEY_LOGDIR] : @""];
-    [logDir setEnabled:[autoLog state] == NSOnState];
-    [changeLogDir setEnabled:[autoLog state] == NSOnState];
-    [self _updateLogDirWarning];
     [characterEncoding setTitle:[NSString localizedNameOfStringEncoding:[[dict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]]];
     [scrollbackLines setIntValue:[[dict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
     [unlimitedScrollback setState:[[dict objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue] ? NSOnState : NSOffState];
@@ -4621,8 +4618,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [scrollbackLines setStringValue:@""];
     }
     [terminalType setStringValue:[dict objectForKey:KEY_TERMINAL_TYPE]];
-    [sendCodeWhenIdle setState:[[dict objectForKey:KEY_SEND_CODE_WHEN_IDLE] boolValue] ? NSOnState : NSOffState];
-    [idleCode setIntValue:[[dict objectForKey:KEY_IDLE_CODE] intValue]];
 
     // Keyboard tab
     int rowIndex = [keyMappings selectedRow];
@@ -4646,7 +4641,16 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [applicationKeypadAllowed setState:[dict boolValueDefaultingToYesForKey:KEY_APPLICATION_KEYPAD_ALLOWED] ? NSOnState : NSOffState];
 
     // Session tab
+    [closeSessionsOnEnd setState:[[dict objectForKey:KEY_CLOSE_SESSIONS_ON_END] boolValue] ? NSOnState : NSOffState];
     [promptBeforeClosing_ selectCellWithTag:[[dict objectForKey:KEY_PROMPT_CLOSE] intValue]];
+    [jobsTable_ reloadData];
+    [autoLog setState:[[dict objectForKey:KEY_AUTOLOG] boolValue] ? NSOnState : NSOffState];
+    [logDir setStringValue:[dict objectForKey:KEY_LOGDIR] ? [dict objectForKey:KEY_LOGDIR] : @""];
+    [logDir setEnabled:[autoLog state] == NSOnState];
+    [changeLogDir setEnabled:[autoLog state] == NSOnState];
+    [self _updateLogDirWarning];
+    [sendCodeWhenIdle setState:[[dict objectForKey:KEY_SEND_CODE_WHEN_IDLE] boolValue] ? NSOnState : NSOffState];
+    [idleCode setIntValue:[[dict objectForKey:KEY_IDLE_CODE] intValue]];
 
     // Epilogue
     [bookmarksTableView reloadData];
