@@ -1,0 +1,5 @@
+[2J[1;1HThe word NOTE should have an annotation
+The word ]1337;AddAnnotation=4|This is the word notenote should have an annotation.
+There should be an annotation from here ->]1337;AddAnnotation=A note til EOLtil the end of the line
+The word ]1337;AddHiddenAnnotation=4|Hidden annotationnote should have a hidden annotation
+]1337;AddAnnotation=9|0|4|Absolute position

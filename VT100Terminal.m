@@ -1626,9 +1626,11 @@ static const int kMaxScreenRows = 4096;
         [delegate_ terminalCurrentDirectoryDidChangeTo:value];
     } else if ([key isEqualToString:@"SetProfile"]) {
         [delegate_ terminalProfileShouldChangeTo:(NSString *)value];
-    } else if ([key isEqualToString:@"AddNote"]) {
+    } else if ([key isEqualToString:@"AddNote"] ||  // Deprecated
+               [key isEqualToString:@"AddAnnotation"]) {
         [delegate_ terminalAddNote:(NSString *)value show:YES];
-    } else if ([key isEqualToString:@"AddHiddenNote"]) {
+    } else if ([key isEqualToString:@"AddHiddenNote"] ||  // Deprecated
+               [key isEqualToString:@"AddHiddenAnnotation"]) {
         [delegate_ terminalAddNote:(NSString *)value show:NO];
     } else if ([key isEqualToString:@"HighlightCursorLine"]) {
         [delegate_ terminalSetHighlightCursorLine:value.length ? [value boolValue] : YES];
