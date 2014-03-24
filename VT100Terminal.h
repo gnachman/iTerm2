@@ -31,6 +31,7 @@
 @property(nonatomic, readonly) int charset;  // G0 through G3
 @property(nonatomic, assign) MouseMode mouseMode;
 @property(nonatomic, assign) MouseFormat mouseFormat;
+@property(nonatomic, assign) BOOL alternateScrollMode;
 
 // The current foreground/background color to display (they're swapped when reverseVideo is on).
 @property(nonatomic, readonly) screen_char_t foregroundColorCode;

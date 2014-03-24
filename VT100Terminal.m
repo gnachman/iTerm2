@@ -145,6 +145,7 @@ static const int kMaxScreenRows = 4096;
         bgColorCode_ = ALTSEM_DEFAULT;
         bgColorMode_ = ColorModeAlternate;
         _mouseMode = MOUSE_REPORTING_NONE;
+        _alternateScrollMode = NO;
         _mouseFormat = MOUSE_FORMAT_XTERM;
 
         _allowKeypadMode = YES;
@@ -261,6 +262,7 @@ static const int kMaxScreenRows = 4096;
     self.keypadMode = NO;
     self.insertMode = NO;
     self.bracketedPasteMode = NO;
+    self.alternateScrollMode = NO;
     _charset = 0;
     xon_ = YES;
     bold_ = italic_ = blink_ = reversed_ = under_ = NO;
@@ -519,6 +521,11 @@ static const int kMaxScreenRows = 4096;
                         } else {
                             self.mouseFormat = MOUSE_FORMAT_XTERM;
                         }
+                        break;
+
+                    case 1007:  // xterm style
+                    case 7786:  // mintty style
+                        self.alternateScrollMode = mode;
                         break;
 
                     case 1015:
