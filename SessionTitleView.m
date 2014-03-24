@@ -36,8 +36,7 @@ static const CGFloat kButtonSize = 17;
         const double kMargin = 5;
         double x = kMargin;
 
-        NSImage *closeImage = [[[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"closebutton"
-                                                                                                       ofType:@"tif"]] autorelease];
+        NSImage *closeImage = [NSImage imageNamed:@"closebutton"];
         closeButton_ = [[NoFirstResponderButton alloc] initWithFrame:NSMakeRect(x, (frame.size.height - kButtonSize) / 2, kButtonSize, kButtonSize)];
         [closeButton_ setButtonType:NSMomentaryPushInButton];
         [closeButton_ setImage:closeImage];

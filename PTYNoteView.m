@@ -9,12 +9,13 @@
 #import "PTYNoteView.h"
 
 static const CGFloat kMinWidth = 50;
-static const CGFloat kMinHeight = 30;
+static const CGFloat kMinHeight = 33;
 
 static const CGFloat kLeftMargin = 5;
 static const CGFloat kRightMargin = 14;
-static const CGFloat kTopMargin = 2;
-static const CGFloat kBottomMargin = 2;
+static const CGFloat kTopMargin = 4;
+static const CGFloat kBottomMargin = 0;
+static const CGFloat kKillButtonTopMargin = 3;
 
 static const CGFloat kInset = 5;
 static const CGFloat kRadius = 5;
@@ -37,8 +38,7 @@ const CGFloat kDragAreaSize = 5;
     self = [super initWithFrame:frame];
     if (self) {
         backgroundColor_ = [[self defaultBackgroundColor] retain];
-        NSImage *closeImage = [[[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"closebutton"
-                                                                                                       ofType:@"tif"]] autorelease];
+        NSImage *closeImage = [NSImage imageNamed:@"closebutton"];
         killButton_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, kButtonSize, kButtonSize)];
         [killButton_ setButtonType:NSMomentaryPushInButton];
         [killButton_ setImage:closeImage];
@@ -434,13 +434,14 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
                                            inset:kInset
                                    pointerLength:kPointerLength
                                        tipOnEdge:[self tipEdge]];
+    bubbleFrame = NSIntegralRect(bubbleFrame);
     self.contentView.frame = FlipRect(NSMakeRect(NSMinX(bubbleFrame) + kLeftMargin,
                                                  NSMinY(bubbleFrame) + kTopMargin,
                                                  bubbleFrame.size.width - kLeftMargin - kRightMargin,
                                                  bubbleFrame.size.height - kTopMargin - kBottomMargin),
                                       self.frame.size.height);
     killButton_.frame = FlipRect(NSMakeRect(NSMaxX(bubbleFrame) - kButtonSize,
-                                            NSMinY(bubbleFrame) + 1,
+                                            NSMinY(bubbleFrame) + kKillButtonTopMargin,
                                             kButtonSize,
                                             kButtonSize),
                                  self.frame.size.height);

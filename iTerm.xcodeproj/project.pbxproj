@@ -42,7 +42,6 @@
 		1D1158CE13444D29009B366F /* iTerm2 Help in Resources */ = {isa = PBXBuildFile; fileRef = 1D1158C913444D29009B366F /* iTerm2 Help */; };
 		1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
 		1D173859126C820A004622DC /* FakeWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D173857126C820A004622DC /* FakeWindow.h */; };
-		1D19C3631415998E00617E08 /* closebutton.tif in Resources */ = {isa = PBXBuildFile; fileRef = 1D19C3621415998E00617E08 /* closebutton.tif */; };
 		1D19C71414171F1D00617E08 /* ToolJobs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D19C71214171F1D00617E08 /* ToolJobs.h */; };
 		1D19C71514171F1D00617E08 /* ToolJobs.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D19C71314171F1D00617E08 /* ToolJobs.m */; };
 		1D21EE3B147711300066E04A /* ContextMenuActionPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D21EE39147711300066E04A /* ContextMenuActionPrefsController.h */; };
@@ -722,6 +721,10 @@
 		A697100B18D94CDA007E901D /* iTermSettingsModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A697100918D94CDA007E901D /* iTermSettingsModel.h */; };
 		A697100C18D94CDA007E901D /* iTermSettingsModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A697100A18D94CDA007E901D /* iTermSettingsModel.m */; };
 		A697100D18D94CDA007E901D /* iTermSettingsModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A697100A18D94CDA007E901D /* iTermSettingsModel.m */; };
+		A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A697101018DFA7D5007E901D /* closebutton@2x.png */; };
+		A697101318DFA7D5007E901D /* closebutton.png in Resources */ = {isa = PBXBuildFile; fileRef = A697101118DFA7D5007E901D /* closebutton.png */; };
+		A697101418DFA7F9007E901D /* closebutton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A697101018DFA7D5007E901D /* closebutton@2x.png */; };
+		A697101518DFA7FC007E901D /* closebutton.png in Resources */ = {isa = PBXBuildFile; fileRef = A697101118DFA7D5007E901D /* closebutton.png */; };
 		A699BAE618C8394700D425A7 /* CVector.h in Headers */ = {isa = PBXBuildFile; fileRef = A699BAE418C8394700D425A7 /* CVector.h */; };
 		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		A6A13AA318C2D23300B241ED /* iTermColorMap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA118C2D23300B241ED /* iTermColorMap.m */; };
@@ -854,7 +857,6 @@
 		1D13EADB12113A2D00909F9C /* libncurses.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libncurses.dylib; path = usr/lib/libncurses.dylib; sourceTree = SDKROOT; };
 		1D173857126C820A004622DC /* FakeWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FakeWindow.h; sourceTree = "<group>"; };
 		1D173858126C820A004622DC /* FakeWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FakeWindow.m; sourceTree = "<group>"; };
-		1D19C3621415998E00617E08 /* closebutton.tif */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = closebutton.tif; path = images/closebutton.tif; sourceTree = "<group>"; };
 		1D19C71214171F1D00617E08 /* ToolJobs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolJobs.h; sourceTree = "<group>"; };
 		1D19C71314171F1D00617E08 /* ToolJobs.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolJobs.m; sourceTree = "<group>"; };
 		1D21EE39147711300066E04A /* ContextMenuActionPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ContextMenuActionPrefsController.h; sourceTree = "<group>"; };
@@ -1272,6 +1274,8 @@
 		A697100518D82E79007E901D /* iTermAdvancedSettingsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAdvancedSettingsController.m; sourceTree = "<group>"; };
 		A697100918D94CDA007E901D /* iTermSettingsModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSettingsModel.h; sourceTree = "<group>"; };
 		A697100A18D94CDA007E901D /* iTermSettingsModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSettingsModel.m; sourceTree = "<group>"; };
+		A697101018DFA7D5007E901D /* closebutton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "closebutton@2x.png"; path = "images/closebutton@2x.png"; sourceTree = "<group>"; };
+		A697101118DFA7D5007E901D /* closebutton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = closebutton.png; path = images/closebutton.png; sourceTree = "<group>"; };
 		A699BAE418C8394700D425A7 /* CVector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CVector.h; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; };
 		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; };
@@ -1817,6 +1821,8 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				A697101018DFA7D5007E901D /* closebutton@2x.png */,
+				A697101118DFA7D5007E901D /* closebutton.png */,
 				A67F117E18D82B9500B23C7B /* PrefsAdvanced.png */,
 				A67F117F18D82B9500B23C7B /* PrefsAdvanced@2x.png */,
 				1DEF5E6B185F889600300319 /* Alert.png */,
@@ -1824,7 +1830,6 @@
 				1DA02CFA1327612600D7E7DB /* bell.png */,
 				1D8F396A13EB7A2C0025B80B /* BroadcastInput.png */,
 				A6057C161883D12E004A60AF /* broken_image.png */,
-				1D19C3621415998E00617E08 /* closebutton.tif */,
 				1D6C4D59122329F000E0AA3E /* ColorPresets.plist */,
 				1D9DDE9D142E855D00275650 /* Coprocess.png */,
 				1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */,
@@ -2634,6 +2639,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1D81F0CA183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */,
+				A697101418DFA7F9007E901D /* closebutton@2x.png in Resources */,
 				A67F118318D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
 				1DC13AC81886507D00034DAE /* CommandHistoryPopup.xib in Resources */,
 				A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
@@ -2643,6 +2649,7 @@
 				1DD39AEF180B8118004E56D5 /* Images.xcassets in Resources */,
 				1DEF5E6E185F889600300319 /* Alert.png in Resources */,
 				1D01609C1852AA6F0014D26A /* mark@2x.png in Resources */,
+				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
 				1DC13ABE1886146B00034DAE /* mark_err.png in Resources */,
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
 				1D81F0CC183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */,
@@ -2719,11 +2726,12 @@
 				1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */,
 				1D1158CE13444D29009B366F /* iTerm2 Help in Resources */,
 				1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */,
+				A697101318DFA7D5007E901D /* closebutton.png in Resources */,
 				1DB72CF61396059200EB1005 /* xterm-terminfo.txt in Resources */,
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
 				1D844C8D13FD8B7700CD4F85 /* SplitPanel.xib in Resources */,
+				A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */,
 				1D6A5FDF140D7AA000DE19F8 /* IBarCursorXMR.png in Resources */,
-				1D19C3631415998E00617E08 /* closebutton.tif in Resources */,
 				1D9DDE9E142E855D00275650 /* Coprocess.png in Resources */,
 				5ECE4AEA14514058002A9CC2 /* Growl Registration Ticket.growlRegDict in Resources */,
 				1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */,
