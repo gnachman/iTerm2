@@ -4761,25 +4761,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([self _haveShortSelection]) {
         BOOL addedItem = NO;
         NSString *text = [self selectedText];
-        if ([text intValue]) {
+        if ([text longLongValue]) {
             NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
-            theItem.title = [NSString stringWithFormat:@"%d = 0x%x", [text intValue], [text intValue]];
+            theItem.title = [NSString stringWithFormat:@"%lld = 0x%llx", [text longLongValue], [text longLongValue]];
             [theMenu addItem:theItem];
             addedItem = YES;
         } else if ([text hasPrefix:@"0x"] && [text length] <= 10) {
             NSScanner *scanner = [NSScanner scannerWithString:text];
 
             [scanner setScanLocation:2]; // bypass 0x
-            unsigned result;
-            if ([scanner scanHexInt:&result]) {
+            unsigned long long result;
+            if ([scanner scanHexLongLong:&result]) {
                 if ((int)result >= 0) {
                     NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
-                    theItem.title = [NSString stringWithFormat:@"0x%x = %d", result, result];
+                    theItem.title = [NSString stringWithFormat:@"0x%llx = %lld", result, result];
                     [theMenu addItem:theItem];
                     addedItem = YES;
                 } else {
                     NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
-                    theItem.title = [NSString stringWithFormat:@"0x%x = %d or %u", result, result, result];
+                    theItem.title = [NSString stringWithFormat:@"0x%llx = %lld or %llu", result, result, result];
                     [theMenu addItem:theItem];
                     addedItem = YES;
                 }
