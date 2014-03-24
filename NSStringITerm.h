@@ -98,6 +98,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)stringByEscapingForURL;
 - (NSString *)stringByCapitalizingFirstLetter;
 
+- (NSString *)hexOrDecimalConversionHelp;
+
 @end
 
 @interface NSMutableString (iTerm)

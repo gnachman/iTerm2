@@ -836,6 +836,54 @@ int decode_utf8_char(const unsigned char *datap,
     return [[prefix uppercaseString] stringByAppendingString:suffix];
 }
 
+- (NSString *)hexOrDecimalConversionHelp {
+    unsigned long long value;
+    BOOL decToHex;
+    if ([self hasPrefix:@"0x"] && [self length] <= 18) {
+        decToHex = NO;
+        NSScanner *scanner = [NSScanner scannerWithString:self];
+        
+        [scanner setScanLocation:2]; // bypass 0x
+        if (![scanner scanHexLongLong:&value]) {
+            return nil;
+        }
+    } else {
+        decToHex = YES;
+        value = [self longLongValue];
+    }
+    if (!value) {
+        return nil;
+    }
+    
+    BOOL is32bit;
+    if (decToHex) {
+        is32bit = ((long long)value >= -2147483648LL && (long long)value <= 2147483647LL);
+    } else {
+        is32bit = [self length] <= 10;
+    }
+    
+    if (is32bit) {
+        // Value fits in a signed 32-bit value, so treat it as such
+        int intValue = (int)value;
+        if (decToHex) {
+            return [NSString stringWithFormat:@"%d = 0x%x", intValue, intValue];
+        } else if (intValue >= 0) {
+            return [NSString stringWithFormat:@"0x%x = %d", intValue, intValue];
+        } else {
+            return [NSString stringWithFormat:@"0x%x = %d or %u", intValue, intValue, intValue];
+        }
+    } else {
+        // 64-bit value
+        if (decToHex) {
+            return [NSString stringWithFormat:@"%lld = 0x%llx", value, value];
+        } else if ((long long)value >= 0) {
+            return [NSString stringWithFormat:@"0x%llx = %lld", value, value];
+        } else {
+            return [NSString stringWithFormat:@"0x%llx = %lld or %llu", value, value, value];
+        }
+    }
+}
+
 @end
 
 @implementation NSMutableString (iTerm)
