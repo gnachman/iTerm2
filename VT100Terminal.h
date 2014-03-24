@@ -64,4 +64,6 @@
 - (void)executeModeUpdates:(VT100Token *)token;
 - (void)executeSGR:(VT100Token *)token;
 
+- (void)stopReceivingFile;
+
 @end

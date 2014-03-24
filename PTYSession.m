@@ -268,6 +268,10 @@ typedef enum {
                                                  selector:@selector(synchronizeTmuxFonts:)
                                                      name:kTmuxFontChanged
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(terminalFileShouldStop:)
+                                                     name:kTerminalFileShouldStopNotification
+                                                   object:nil];
     }
     return self;
 }
@@ -2760,6 +2764,15 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     DLog(@"Window frame: %@", window);
 }
 
+- (void)terminalFileShouldStop:(NSNotification *)notification
+{
+  if ([notification object] == _download) {
+        [_screen.terminal stopReceivingFile];
+        [_download endOfData];
+        self.download = nil;
+    }
+}
+
 - (void)synchronizeTmuxFonts:(NSNotification *)notification
 {
     if (!_exited && [self isTmuxClient]) {
@@ -5118,6 +5131,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)screenFileReceiptEndedUnexpectedly {
     [self.download stop];
     [self.download endOfData];
+    self.download = nil;
 }
 
 - (void)setAlertOnNextMark:(BOOL)alertOnNextMark {
