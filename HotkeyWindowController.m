@@ -47,7 +47,9 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 {
     HKWLog(@"Roll in [show] hotkey window");
 
-    [NSApp activateIgnoringOtherApps:YES];
+    if (![[PreferencePanel sharedInstance] hotkeyTogglesWindow]) {
+        [NSApp activateIgnoringOtherApps:YES];
+    }
     [[term window] makeKeyAndOrderFront:nil];
     [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
     [[[term window] animator] setAlphaValue:1];
@@ -178,6 +180,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
     [[iTermController sharedInstance] storePreviouslyActiveApp];
     itermWasActiveWhenHotkeyOpened_ = [NSApp isActive];
     PseudoTerminal* hotkeyTerm = GetHotkeyWindow();
+    PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
     if (hotkeyTerm) {
         HKWLog(@"Showing existing hotkey window");
         int i = 0;
@@ -191,7 +194,9 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
             i++;
         }
         HKWLog(@"Activate iterm2");
-        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+        if (![prefPanel hotkeyTogglesWindow]) {
+            [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+        }
         rollingIn_ = YES;
         RollInHotkeyTerm(hotkeyTerm);
     } else {

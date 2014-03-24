@@ -482,8 +482,8 @@ static BOOL hasBecomeActive = NO;
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app
 {
     NSArray *terminals = [[iTermController sharedInstance] terminals];
-    if (terminals.count == 1 && [terminals[0] isHotKeyWindow]) {
-        // The last window wasn't really closed, it was just the hotkey window getting ordered out.
+    if (terminals.count > 0) {
+        // The OS doesn't count panels as windows, and the hotkey window is a panel.
         return NO;
     }
     if (!userHasInteractedWithAnySession_) {
