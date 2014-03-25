@@ -136,10 +136,10 @@
             responder = [[self keyWindow] firstResponder];
             bool inTextView = [responder isKindOfClass:[PTYTextView class]];
 
-            if (inTextView &&
-                [(PTYTextView *)responder hasMarkedText]) {
-                // Let the IM process it
-                [(PTYTextView *)responder interpretKeyEvents:[NSArray arrayWithObject:event]];
+            if (inTextView && [(PTYTextView *)responder hasMarkedText]) {
+                // Let the IM process it (I used to call interpretKeyEvents:
+                // here but it caused bug 2882).
+                [super sendEvent:event];
                 return;
             }
 
@@ -185,7 +185,7 @@
         }
     }
 
-    [super sendEvent: event];
+    [super sendEvent:event];
 }
 
 - (NSString *)uriToken
