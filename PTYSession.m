@@ -4129,10 +4129,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         // paste escaping special characters
         str = [str stringWithEscapedShellCharacters];
     }
-	if (flags & 4) {
+    if (flags & 4) {
         str = [str stringWithShellEscapedTabs];
         [controlSet removeCharactersInString:@"\x16"];
-	}
+    }
     if ([_terminal bracketedPasteMode]) {
         [self writeTask:[[NSString stringWithFormat:@"%c[200~", 27]
                          dataUsingEncoding:[_terminal encoding]
