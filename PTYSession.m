@@ -92,7 +92,6 @@ typedef enum {
 @property(nonatomic, assign) int sessionID;
 @property(nonatomic, readwrite) struct timeval lastOutput;
 @property(nonatomic, readwrite) BOOL isDivorced;
-@property(nonatomic, assign) BOOL pasteShouldLeaveControlCodesIntact;
 @property(atomic, assign) PTYSessionTmuxMode tmuxMode;
 @end
 
@@ -1622,9 +1621,6 @@ typedef enum {
     if ([aString length] > 0) {
         NSData *data = [aString dataUsingEncoding:[_terminal encoding]
                              allowLossyConversion:YES];
-		if ( ! _pasteShouldLeaveControlCodesIntact ) {
-	        data = [self dataByRemovingControlCodes:data];
-		}
         [self writeTask:data];
     }
 }
@@ -1633,9 +1629,6 @@ typedef enum {
     NSRange range;
     range.location = 0;
     range.length = MIN(_pasteContext.bytesPerCall, [_slowPasteBuffer length]);
-
-	_pasteShouldLeaveControlCodesIntact = [_pasteContext pasteShouldLeaveControlCodesIntact];
-		
     [self _pasteStringImmediately:[_slowPasteBuffer substringWithRange:range]];
     [_slowPasteBuffer deleteCharactersInRange:range];
     [self updatePasteUI];
@@ -1656,7 +1649,6 @@ typedef enum {
         [self hidePasteUI];
         [_pasteContext release];
         _pasteContext = nil;
-		_pasteShouldLeaveControlCodesIntact = NO;	// restore default paste mode
         [self emptyEventQueue];
     }
 }
@@ -1671,10 +1663,6 @@ typedef enum {
                                                          defaultValue:bytesPerCallDefault
                                              delayBetweenCallsPrefKey:delayBetweenCallsKey
                                                          defaultValue:delayBetweenCallsDefault];
-
-	// save off paste-special -> paste with literal tabs state
-	[_pasteContext setPasteShouldLeaveControlCodesIntact: _pasteShouldLeaveControlCodesIntact];
-
     const int kPasteBytesPerSecond = 10000;  // This is a wild-ass guess.
     if (_pasteContext.delayBetweenCalls * _slowPasteBuffer.length / _pasteContext.bytesPerCall + _slowPasteBuffer.length / kPasteBytesPerSecond > 3) {
         [self showPasteUI];
@@ -4125,28 +4113,41 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (![self maybeWarnAboutMultiLinePaste:str]) {
         return;
     }
+
+    // 2014.03.25 bd - Control code removal was handled previously in dataByRemovingControlCodes:.
+    // The logic here is the same except we operate on NSString instead of NSData.  All control
+    // codes except tab (\x09), newline (\x0a), form feed (\x0c), and carriage return (\x0d) are
+    // removed unless we are pasting with literal tabs, in which case we also keep syn (\x16).
+    NSString *controlCharacters =
+        @"\x00\x01\x02\x03\x04\x05\x06\x07\x08"      "\x0b"      "\x0e\x0f"
+         "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f";
+
+    NSMutableCharacterSet *controlSet =
+        [NSMutableCharacterSet characterSetWithCharactersInString:controlCharacters];
+
     if (flags & 1) {
         // paste escaping special characters
         str = [str stringWithEscapedShellCharacters];
     }
 	if (flags & 4) {
-		str = [str stringWithShellEscapedTabs];
-		_pasteShouldLeaveControlCodesIntact = YES;
+        str = [str stringWithShellEscapedTabs];
+		[controlSet removeCharactersInString: @"\x16"];
 	}
     if ([_terminal bracketedPasteMode]) {
         [self writeTask:[[NSString stringWithFormat:@"%c[200~", 27]
                          dataUsingEncoding:[_terminal encoding]
                          allowLossyConversion:YES]];
     }
+
+	// remove control characters
+    str = [[str componentsSeparatedByCharactersInSet:controlSet] componentsJoinedByString:@""];
+	
     if (flags & 2) {
         [_slowPasteBuffer appendString:[str stringWithLinefeedNewlines]];
         [self _pasteSlowly:nil];
     } else {
         [self _pasteString:str];
     }
-	if (flags & 4) {
-		_pasteShouldLeaveControlCodesIntact = NO;
-	}
 }
 
 // Pastes the current string in the clipboard. Uses the sender's tag to get flags.
@@ -4385,13 +4386,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [[self class] pasteboardString];
 }
 
-- (void)textViewPasteFromSessionWithMostRecentSelection:(int) flags
+- (void)textViewPasteFromSessionWithMostRecentSelection:(int)flags
 {
     PTYSession *session = [[iTermController sharedInstance] sessionWithMostRecentSelection];
     if (session) {
         PTYTextView *textview = [session textview];
         if ([textview isAnyCharSelected]) {
-            [self pasteString:[textview selectedText] flags: flags];
+            [self pasteString:[textview selectedText] flags:flags];
         }
     }
 }
