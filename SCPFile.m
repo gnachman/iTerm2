@@ -212,6 +212,8 @@ static NSError *SCPFileError(NSString *description) {
         return;
     }
     
+    [self.session connectToAgent];
+
     if (!self.session.isAuthorized) {
         NSArray *authTypes = [self.session supportedAuthenticationMethods];
         if (!authTypes) {
