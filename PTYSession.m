@@ -4131,7 +4131,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 	if (flags & 4) {
         str = [str stringWithShellEscapedTabs];
-		[controlSet removeCharactersInString: @"\x16"];
+		[controlSet removeCharactersInString:@"\x16"];
 	}
     if ([_terminal bracketedPasteMode]) {
         [self writeTask:[[NSString stringWithFormat:@"%c[200~", 27]
