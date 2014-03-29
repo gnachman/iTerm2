@@ -747,6 +747,9 @@
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
 		A6A5991E1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
 		A6A5991F1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
+		A6B5133018E3CD2900D249A5 /* iTermPollHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5132E18E3CD2900D249A5 /* iTermPollHelper.h */; };
+		A6B5133118E3CD2900D249A5 /* iTermPollHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B5132F18E3CD2900D249A5 /* iTermPollHelper.m */; };
+		A6B5133218E3CD2900D249A5 /* iTermPollHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B5132F18E3CD2900D249A5 /* iTermPollHelper.m */; };
 		A6C4E8E01846E13800CFAA77 /* IntervalTree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */; };
 		A6C4E8E11846E13800CFAA77 /* IntervalTree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */; };
 		A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
@@ -1291,6 +1294,8 @@
 		A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100XtermParser.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; };
+		A6B5132E18E3CD2900D249A5 /* iTermPollHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPollHelper.h; sourceTree = "<group>"; };
+		A6B5132F18E3CD2900D249A5 /* iTermPollHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPollHelper.m; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; };
 		A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntervalTree.h; sourceTree = "<group>"; };
 		A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IntervalTreeTest.m; path = iTermTests/IntervalTreeTest.m; sourceTree = "<group>"; };
@@ -1449,6 +1454,8 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A6B5132E18E3CD2900D249A5 /* iTermPollHelper.h */,
+				A6B5132F18E3CD2900D249A5 /* iTermPollHelper.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -2448,6 +2455,7 @@
 				1D9F6AB8140C9DC4009B5CD4 /* FutureMethods.h in Headers */,
 				1DE8DC891415513A00F83147 /* ToolbeltView.h in Headers */,
 				1DE8DC8D1415546000F83147 /* ToolProfiles.h in Headers */,
+				A6B5133018E3CD2900D249A5 /* iTermPollHelper.h in Headers */,
 				1DE8DDAD1415648600F83147 /* ToolPasteHistory.h in Headers */,
 				1DE8DF361415799700F83147 /* ToolWrapper.h in Headers */,
 				1D19C71414171F1D00617E08 /* ToolJobs.h in Headers */,
@@ -2809,6 +2817,7 @@
 				A647E39C18C3515900450FA1 /* VT100AnsiParser.m in Sources */,
 				A68A3111186E2EDA007F550F /* PopupEntry.m in Sources */,
 				1D9A552D180FA69900B42CE9 /* SearchResult.m in Sources */,
+				A6B5133218E3CD2900D249A5 /* iTermPollHelper.m in Sources */,
 				A63F409C183B3AA7003A6A6D /* PTYNoteView.m in Sources */,
 				1D9A55AB180FA8B700B42CE9 /* PSMProgressIndicator.m in Sources */,
 				1D9A5593180FA87000B42CE9 /* PTYFontInfo.m in Sources */,
@@ -3127,6 +3136,7 @@
 				1D988598135D23BD0072023F /* ProcessCache.m in Sources */,
 				A68A30DC186D1429007F550F /* SCPFile.m in Sources */,
 				1D624BC81386E09E00111319 /* GTMCarbonEvent.m in Sources */,
+				A6B5133118E3CD2900D249A5 /* iTermPollHelper.m in Sources */,
 				1DA8117F13CEA30A00CCA89A /* FontSizeEstimator.m in Sources */,
 				1D81F0C1183C3C2D00910838 /* NSView+RecursiveDescription.m in Sources */,
 				1DCA5ED013EE507800B7725E /* WindowArrangements.m in Sources */,

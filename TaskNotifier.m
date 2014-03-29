@@ -10,8 +10,9 @@
 #import "Coprocess.h"
 #import "DebugLogging.h"
 #import "PTYTask.h"
+#import "iTermPollHelper.h"
 
-#define PtyTaskDebugLog(args...)
+#define PtyTaskDebugLog DLog
 
 NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
 
@@ -129,17 +130,13 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     NSEnumerator* iter;
     PTYTask* task;
     NSAutoreleasePool* autoreleasePool = [[NSAutoreleasePool alloc] init];
+    iTermPollHelper *pollHelper = [[iTermPollHelper alloc] init];
     
-    // FIXME: replace this with something better...
-    for(;;) {
-        
-        FD_ZERO(&rfds);
-        FD_ZERO(&wfds);
-        FD_ZERO(&efds);
+    while (1) {
+        [pollHelper reset];
         
         // Unblock pipe to interrupt select() whenever a PTYTask register/unregisters
-        highfd = unblockPipeR;
-        FD_SET(unblockPipeR, &rfds);
+        [pollHelper addFileDescriptor:unblockPipeR forReading:YES writing:NO identifier:nil];
         NSMutableSet* handledFds = [[NSMutableSet alloc] initWithCapacity:[tasks count]];
         
         // Add all the PTYTask pipes
@@ -184,48 +181,26 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
         while ((task = [iter nextObject])) {
             PtyTaskDebugLog(@"Got task %d\n", i);
             int fd = [task fd];
-            if (fd < 0) {
-                PtyTaskDebugLog(@"Task has fd of %d\n", fd);
-            } else {
-                // PtyTaskDebugLog(@"Select on fd %d\n", fd);
-                if (fd > highfd)
-                    highfd = fd;
-                if ([task wantsRead])
-                    FD_SET(fd, &rfds);
-                if ([task wantsWrite])
-                    FD_SET(fd, &wfds);
-                FD_SET(fd, &efds);
+            PtyTaskDebugLog(@"Task has fd of %d\n", fd);
+            if (fd >= 0) {
+                [pollHelper addFileDescriptor:fd
+                                   forReading:[task wantsRead]
+                                      writing:[task wantsWrite]
+                                   identifier:task];
             }
             @synchronized (task) {
                 Coprocess *coprocess = [task coprocess];
                 if (coprocess) {
-                    if ([coprocess wantToRead] && [task writeBufferHasRoom]) {
-                        int rfd = [coprocess readFileDescriptor];
-                        if (rfd > highfd) {
-                            highfd = rfd;
-                        }
-                        FD_SET(rfd, &rfds);
-                    }
-                    if ([coprocess wantToWrite]) {
-                        int wfd = [coprocess writeFileDescriptor];
-                        if (wfd > highfd) {
-                            highfd = wfd;
-                        }
-                        FD_SET(wfd, &wfds);
-                    }
-                    if (![coprocess eof]) {
-                        int rfd = [coprocess readFileDescriptor];
-                        if (rfd > highfd) {
-                            highfd = rfd;
-                        }
-                        FD_SET(rfd, &efds);
-                        
-                        int wfd = [coprocess writeFileDescriptor];
-                        if (wfd > highfd) {
-                            highfd = wfd;
-                        }
-                        FD_SET(wfd, &efds);
-                    }
+                    BOOL reading = ([coprocess wantToRead] && [task writeBufferHasRoom]) || ![coprocess eof];
+                    [pollHelper addFileDescriptor:[coprocess readFileDescriptor]
+                                       forReading:reading
+                                          writing:NO
+                                       identifier:coprocess];
+                    
+                    [pollHelper addFileDescriptor:[coprocess writeFileDescriptor]
+                                       forReading:NO
+                                          writing:[coprocess wantToWrite]
+                                       identifier:coprocess];
                 }
             }
             ++i;
@@ -237,18 +212,13 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
         [[NSNotificationCenter defaultCenter] postNotificationName:kTaskNotifierDidSpin object:nil];
 
         // Poll...
-        if (select(highfd+1, &rfds, &wfds, &efds, NULL) <= 0) {
-            switch(errno) {
-                case EAGAIN:
-                case EINTR:
-                default:
-                    goto breakloop;
-                    // If the file descriptor is closed in the main thread there's a race where sometimes you'll get an EBADF.
-            }
-        }
+        DLog(@"call poll...");
+        [pollHelper poll];
+        DLog(@"continuing after poll");
         
         // Interrupted?
-        if (FD_ISSET(unblockPipeR, &rfds)) {
+        if ([pollHelper flagsForFd:unblockPipeR] & kiTermPollHelperFlagReadable) {
+            DLog(@"Interrupted");
             char dummy[32];
             do {
                 read(unblockPipeR, dummy, sizeof(dummy));
@@ -264,8 +234,8 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
         BOOL notifyOfCoprocessChange = NO;
         
         while ((task = [iter nextObject])) {
-            PtyTaskDebugLog(@"Got task %d\n", i);
             int fd = [task fd];
+            PtyTaskDebugLog(@"Got task %d, fd=%d\n", i, fd);
             if (fd >= 0) {
                 // This is mostly paranoia, but if two threads
                 // end up with the same fd (because one closed
@@ -279,7 +249,8 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                 [task retain];
                 [handledFds addObject:[NSNumber numberWithInt:fd]];
                 
-                if (FD_ISSET(fd, &rfds)) {
+                NSUInteger taskFlags = [pollHelper flagsForFd:fd];
+                if (taskFlags & kiTermPollHelperFlagReadable) {
                     PtyTaskDebugLog(@"run/processRead: unlock");
                     [tasksLock unlock];
                     [task processRead];
@@ -291,25 +262,11 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                         iter = [tasks objectEnumerator];
                     }
                 }
-                if (FD_ISSET(fd, &wfds)) {
+                if (taskFlags & kiTermPollHelperFlagWritable) {
                     PtyTaskDebugLog(@"run/processWrite: unlock");
                     [tasksLock unlock];
                     [task processWrite];
                     PtyTaskDebugLog(@"run/processWrite: lock");
-                    [tasksLock lock];
-                    if (tasksChanged) {
-                        PtyTaskDebugLog(@"Restart iteration\n");
-                        tasksChanged = NO;
-                        iter = [tasks objectEnumerator];
-                    }
-                }
-                if (FD_ISSET(fd, &efds)) {
-                    PtyTaskDebugLog(@"run/brokenPipe: unlock");
-                    [tasksLock unlock];
-                    // brokenPipe will call deregisterTask and add the pid to
-                    // deadpool.
-                    [task brokenPipe];
-                    PtyTaskDebugLog(@"run/brokenPipe: lock");
                     [tasksLock lock];
                     if (tasksChanged) {
                         PtyTaskDebugLog(@"Restart iteration\n");
@@ -329,7 +286,8 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                                 continue;
                             }
                             [handledFds addObject:[NSNumber numberWithInt:fd]];
-                            if (![coprocess eof] && FD_ISSET(fd, &rfds)) {
+                            NSUInteger coprocessFlags = [pollHelper flagsForFd:fd];
+                            if (![coprocess eof] && (coprocessFlags & kiTermPollHelperFlagReadable)) {
                                 [coprocess read];
                                 [task writeTask:coprocess.inputBuffer];
                                 [coprocess.inputBuffer setLength:0];
@@ -339,15 +297,13 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                             }
                             
                             fd = [coprocess writeFileDescriptor];
+                            coprocessFlags = [pollHelper flagsForFd:fd];
                             if ([handledFds containsObject:[NSNumber numberWithInt:fd]]) {
                                 NSLog(@"Duplicate fd %d", fd);
                                 continue;
                             }
                             [handledFds addObject:[NSNumber numberWithInt:fd]];
-                            if (FD_ISSET(fd, &efds)) {
-                                coprocess.eof = YES;
-                            }
-                            if (FD_ISSET(fd, &wfds)) {
+                            if (coprocessFlags & kiTermPollHelperFlagWritable) {
                                 if (![coprocess eof]) {
                                     [coprocess write];
                                 }

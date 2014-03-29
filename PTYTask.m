@@ -4,7 +4,7 @@
 // Use this instead to debug this module:
 // #define PtyTaskDebugLog NSLog
 
-#define MAXRW 1024
+#define MAXRW 1
 
 #import "PTYTask.h"
 #import "Coprocess.h"
@@ -23,6 +23,8 @@
 #include <sys/user.h>
 #include <unistd.h>
 #include <util.h>
+#import "DebugLogging.h"
+#import "iTermPollHelper.h"
 
 #define CTRLKEY(c) ((c)-'A'+1)
 
@@ -175,8 +177,13 @@ static void reapchild(int n)
     path = [progpath copy];
 
     setup_tty_param(&term, &win, width, height, isUTF8);
-    // Register a handler for the child death signal.
-    signal(SIGCHLD, reapchild);
+    // Block SIGCHLD
+    sigset_t signal_set;
+    sigemptyset(&signal_set);
+    sigaddset(&signal_set, SIGCHLD);
+    sigprocmask(SIG_BLOCK, &signal_set, NULL);
+    
+    
     const char* argpath;
     argpath = [[progpath stringByStandardizingPath] UTF8String];
 
@@ -281,6 +288,12 @@ static void reapchild(int n)
     for (int i = 0; i < iterations; ++i) {
         // Only read up to MAXRW*iterations bytes, then release control
         ssize_t n = read(fd, buffer + bytesRead, MAXRW);
+        LOG(@"read returns %d", (int)n);
+        int theError = errno;
+        if (n == 0) {
+            [self brokenPipe];
+            return;
+        }
         if (n < 0) {
             // There was a read error.
             if (errno != EAGAIN && errno != EINTR) {
@@ -305,6 +318,7 @@ static void reapchild(int n)
 
     hasOutput = YES;
 
+//    NSLog(@"%.*s", bytesRead, buffer);
     // Send data to the terminal
     [self readTask:buffer length:bytesRead];
 }
@@ -381,6 +395,7 @@ static void reapchild(int n)
 
 - (void)brokenPipe
 {
+    NSLog(@"* BROKEN PIPE *");
     brokenPipe_ = YES;
     [[TaskNotifier sharedInstance] deregisterTask:self];
     [(NSObject *)self.delegate performSelectorOnMainThread:@selector(brokenPipe)
@@ -447,6 +462,7 @@ static void reapchild(int n)
         // being passed a half-broken fd. We must change it because after this
         // function returns, a new task may be created with this fd and then
         // the select thread wouldn't know which task a fd belongs to.
+        DLog(@"Stop called from %@", [NSThread callStackSymbols]);
         fd = -1;
     }
 }
