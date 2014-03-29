@@ -1532,7 +1532,6 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
-				A697100918D94CDA007E901D /* iTermSettingsModel.h */,
 				1D9DCC14142D7FC10016228A /* AlertTrigger.h */,
 				1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */,
 				A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */,
@@ -1595,8 +1594,10 @@
 				A61B66CD18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h */,
 				1D407A2814BABE8700BD5035 /* iTermKeyBindingMgr.h */,
 				A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */,
+				A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */,
 				1DAED99012EDF923005E49ED /* iTermSearchField.h */,
 				A63BA39318A9CB43002BE075 /* iTermSelection.h */,
+				A697100918D94CDA007E901D /* iTermSettingsModel.h */,
 				A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */,
 				A6099B0318D6B0FD00081FA9 /* iTermWarning.h */,
 				A63F40A2183F3B78003A6A6D /* LineBlock.h */,
@@ -2166,6 +2167,7 @@
 				A6A13AA118C2D23300B241ED /* iTermColorMap.m */,
 				1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */,
 				A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */,
+				A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */,
 				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
 				A6099B0418D6B0FD00081FA9 /* iTermWarning.m */,
 				1D9053C517A5CCF100A0B64E /* MovingAverage.m */,
@@ -2179,8 +2181,6 @@
 				A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */,
 				A6CFDAD1185D2587005DC94B /* URLAction.m */,
 				A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */,
-				A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */,
-				A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
