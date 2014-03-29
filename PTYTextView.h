@@ -2,6 +2,7 @@
 #import "CharacterRun.h"
 #import "LineBuffer.h"
 #import "PTYFontInfo.h"
+#import "PasteEvent.h"
 #import "PointerController.h"
 #import "PreferencePanel.h"
 #import "ScreenChar.h"
@@ -106,7 +107,7 @@ typedef enum {
 - (void)textViewToggleBroadcastingInput;
 - (void)textViewCloseWithConfirmation;
 - (NSString *)textViewPasteboardString;
-- (void)textViewPasteFromSessionWithMostRecentSelection:(int)flags;
+- (void)textViewPasteFromSessionWithMostRecentSelection:(PTYSessionPasteFlags)flags;
 - (void)textViewPasteWithEncoding:(TextViewPasteEncoding)encoding;
 - (BOOL)textViewCanPasteFile;
 - (BOOL)textViewWindowUsesTransparency;

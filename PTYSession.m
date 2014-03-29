@@ -1696,15 +1696,7 @@ typedef enum {
 
 - (void)pasteString:(NSString *)aString
 {
-    if (![self maybeWarnAboutMultiLinePaste:aString]) {
-        return;
-    }
-    if ([_terminal bracketedPasteMode]) {
-        [self writeTask:[[NSString stringWithFormat:@"%c[200~", 27]
-                         dataUsingEncoding:[_terminal encoding]
-                         allowLossyConversion:YES]];
-    }
-    [self _pasteString:aString];
+    [self pasteString:aString flags:0];
 }
 
 - (void)deleteBackward:(id)sender
@@ -4107,32 +4099,44 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return YES;
 }
 
-// Pastes a specific string. The API for pasting not-from-clipboard. All pastes go through here.
-// If queued, this is called just before the paste occurs, not when getting queued.
-- (void)pasteString:(NSString *)str flags:(int)flags
+// Pastes a specific string. All pastes go through this method. Adds to the event queue if a paste
+// is in progress.
+- (void)pasteString:(NSString *)theString flags:(PTYSessionPasteFlags)flags
 {
-    if (![self maybeWarnAboutMultiLinePaste:str]) {
+    if ([theString length] == 0) {
+        DLog(@"Tried to paste 0-byte string. Beep.");
+        NSBeep();
+        return;
+    }
+    if ([self isPasting]) {
+        [_eventQueue addObject:[PasteEvent pasteEventWithString:theString flags:flags]];
+        return;
+    }
+    if (![self maybeWarnAboutMultiLinePaste:theString]) {
         return;
     }
 
-    // 2014.03.25 bd - Control code removal was handled previously in dataByRemovingControlCodes:.
-    // The logic here is the same except we operate on NSString instead of NSData.  All control
-    // codes except tab (\x09), newline (\x0a), form feed (\x0c), and carriage return (\x0d) are
-    // removed unless we are pasting with literal tabs, in which case we also keep lnext (\x16).
-    NSString *controlCharacters =
-        @"\x00\x01\x02\x03\x04\x05\x06\x07\x08"      "\x0b"      "\x0e\x0f"
-         "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f";
+    // Convert DOS (\r\n) newlines and carriage returns (\n) into linefeeds (\r).
+    theString = [theString stringWithLinefeedNewlines];
 
-    NSMutableCharacterSet *controlSet =
-        [NSMutableCharacterSet characterSetWithCharactersInString:controlCharacters];
+    // All control codes except tab (9), newline (10), and form feed (12) are removed unless we are
+    // pasting with literal tabs, in which case we also keep LNEXT (22, ^V).
+    NSMutableCharacterSet *controlSet = [[[NSMutableCharacterSet alloc] init] autorelease];
+    [controlSet addCharactersInRange:NSMakeRange(0, 32)];
+    [controlSet removeCharactersInRange:NSMakeRange(9, 2)];  // Tab and newline
+    [controlSet removeCharactersInRange:NSMakeRange(12, 1)];  // Form feed
 
-    if (flags & 1) {
-        // paste escaping special characters
-        str = [str stringWithEscapedShellCharacters];
+    if (flags & kPTYSessionPasteEscapingSpecialCharacters) {
+        // Paste escaping special characters
+        theString = [theString stringWithEscapedShellCharacters];
     }
-    if (flags & 4) {
-        str = [str stringWithShellEscapedTabs];
-        [controlSet removeCharactersInString:@"\x16"];
+    if (flags & kPTYSessionPasteWithShellEscapedTabs) {
+        // Remove ^Vs before adding them
+        theString = [theString stringByReplacingOccurrencesOfString:@"\x16" withString:@""];
+        // Add ^Vs before each tab.
+        theString = [theString stringWithShellEscapedTabs];
+        // Allow the ^Vs that were just added to survive cleaning up control chars.
+        [controlSet removeCharactersInRange:NSMakeRange(22, 1)];  // LNEXT (^V)
     }
     if ([_terminal bracketedPasteMode]) {
         [self writeTask:[[NSString stringWithFormat:@"%c[200~", 27]
@@ -4140,32 +4144,22 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                          allowLossyConversion:YES]];
     }
 
-	// remove control characters
-    str = [[str componentsSeparatedByCharactersInSet:controlSet] componentsJoinedByString:@""];
+    // Remove control characters
+    theString =
+        [[theString componentsSeparatedByCharactersInSet:controlSet] componentsJoinedByString:@""];
 	
-    if (flags & 2) {
-        [_slowPasteBuffer appendString:[str stringWithLinefeedNewlines]];
+    if (flags & kPTYSessionPasteSlowly) {
+        [_slowPasteBuffer appendString:theString];
         [self _pasteSlowly:nil];
     } else {
-        [self _pasteString:str];
+        [self _pasteString:theString];
     }
 }
 
 // Pastes the current string in the clipboard. Uses the sender's tag to get flags.
 - (void)paste:(id)sender
 {
-    NSString* pbStr = [PTYSession pasteboardString];
-    if (pbStr) {
-        if ([self isPasting]) {
-            if ([pbStr length] == 0) {
-                NSBeep();
-            } else {
-                [_eventQueue addObject:[PasteEvent pasteEventWithString:pbStr flags:[sender tag]]];
-            }
-        } else {
-            [self pasteString:pbStr flags:[sender tag]];
-        }
-    }
+    [self pasteString:[PTYSession pasteboardString] flags:[sender tag]];
 }
 
 - (void)textViewFontDidChange
@@ -4387,7 +4381,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [[self class] pasteboardString];
 }
 
-- (void)textViewPasteFromSessionWithMostRecentSelection:(int)flags
+- (void)textViewPasteFromSessionWithMostRecentSelection:(PTYSessionPasteFlags)flags
 {
     PTYSession *session = [[iTermController sharedInstance] sessionWithMostRecentSelection];
     if (session) {
