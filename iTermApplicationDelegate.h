@@ -33,6 +33,8 @@
 
 @class PseudoTerminal;
 extern NSString *kUseBackgroundPatternIndicatorChangedNotification;
+extern NSString *const kMultiLinePasteWarningUserDefaultsKey;
+
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 
 @interface iTermAboutWindow : NSPanel

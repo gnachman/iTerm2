@@ -6,7 +6,6 @@
 #import "LineBuffer.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
-#import "PasteViewController.h"
 #import "Popup.h"
 #import "ProfileModel.h"
 #import "TextViewWrapper.h"
@@ -55,7 +54,6 @@ typedef enum {
 @class SessionView;
 @interface PTYSession : NSResponder <
     FindViewControllerDelegate,
-    PasteViewControllerDelegate,
     PopupDelegate,
     PTYTaskDelegate,
     PTYTextViewDelegate,

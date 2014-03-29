@@ -20,7 +20,6 @@
 #import "PTYTextView.h"
 #import "PasteContext.h"
 #import "PasteEvent.h"
-#import "PasteViewController.h"
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
 #import "SCPFile.h"
@@ -46,6 +45,7 @@
 #import "iTermController.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermPasteHelper.h"
 #import "iTermSelection.h"
 #import "iTermSettingsModel.h"
 #import "iTermTextExtractor.h"
@@ -88,7 +88,7 @@ typedef enum {
     TMUX_CLIENT  // Session mirrors a tmux virtual window
 } PTYSessionTmuxMode;
 
-@interface PTYSession ()
+@interface PTYSession () <iTermPasteHelperDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
 @property(nonatomic, assign) int sessionID;
@@ -162,10 +162,6 @@ typedef enum {
     // Is the update timer's callback currently running?
     BOOL _timerRunning;
 
-    // Paste from the head of this string from a timer until it's empty.
-    NSMutableString *_slowPasteBuffer;
-    NSTimer *_slowPasteTimer;
-
     // The name of the foreground job at the moment as best we can tell.
     NSString *_jobName;
 
@@ -197,10 +193,8 @@ typedef enum {
     int _tmuxPane;
     BOOL _tmuxSecureLogging;
 
-    NSMutableArray *_eventQueue;
-    PasteViewController *_pasteViewController;
-    PasteContext *_pasteContext;
-
+    iTermPasteHelper *_pasteHelper;
+    
     NSInteger _requestAttentionId;  // Last request-attention identifier
     VT100ScreenMark *_lastMark;
 
@@ -238,7 +232,8 @@ typedef enum {
 
         _lastOutput = _lastInput;
         _lastUpdate = _lastInput;
-        _eventQueue = [[NSMutableArray alloc] init];
+        _pasteHelper = [[iTermPasteHelper alloc] init];
+        _pasteHelper.delegate = self;
         _colorMap = [[iTermColorMap alloc] init];
         // Allocate screen, shell, and terminal objects
         _shell = [[PTYTask alloc] init];
@@ -247,7 +242,6 @@ typedef enum {
         NSParameterAssert(_shell != nil && _terminal != nil && _screen != nil);
 
         _overriddenFields = [[NSMutableSet alloc] init];
-        _slowPasteBuffer = [[NSMutableString alloc] init];
         _creationDate = [[NSDate date] retain];
         _tmuxSecureLogging = NO;
         _tailFindContext = [[FindContext alloc] init];
@@ -286,10 +280,6 @@ typedef enum {
     [_triggers release];
     [_pasteboard release];
     [_pbtext release];
-    [_slowPasteBuffer release];
-    if (_slowPasteTimer) {
-        [_slowPasteTimer invalidate];
-    }
     [_creationDate release];
     [_lastActiveAt release];
     [_bookmarkName release];
@@ -301,7 +291,8 @@ typedef enum {
     [_iconTitleStack release];
     [_profile release];
     [_overriddenFields release];
-    [_eventQueue release];
+    _pasteHelper.delegate = nil;
+    [_pasteHelper release];
     [_backgroundImagePath release];
     [_backgroundImage release];
     [_antiIdleTimer invalidate];
@@ -313,8 +304,6 @@ typedef enum {
     [_tmuxGateway release];
     [_tmuxController release];
     [_sendModifiers release];
-    [_pasteViewController release];
-    [_pasteContext release];
     [_download stop];
     [_download endOfData];
     [_download release];
@@ -993,11 +982,7 @@ typedef enum {
     [_updateTimer release];
     _updateTimer = nil;
 
-    if (_slowPasteTimer) {
-        [_slowPasteTimer invalidate];
-        _slowPasteTimer = nil;
-        [_eventQueue removeAllObjects];
-    }
+    [_pasteHelper abort];
 
     [[_tab realParentWindow]  sessionDidTerminate:self];
 
@@ -1466,22 +1451,6 @@ typedef enum {
     [self writeTask:[_terminal.output keyPageDown:0]];
 }
 
-- (void)emptyEventQueue {
-    int eventsSent = 0;
-    for (NSEvent *event in _eventQueue) {
-        ++eventsSent;
-        if ([event isKindOfClass:[PasteEvent class]]) {
-            PasteEvent *pasteEvent = (PasteEvent *)event;
-            [self pasteString:pasteEvent.string flags:pasteEvent.flags];
-            // Can't empty while pasting.
-            break;
-        } else {
-            [_textview keyDown:event];
-        }
-    }
-    [_eventQueue removeObjectsInRange:NSMakeRange(0, eventsSent)];
-}
-
 + (NSData *)pasteboardFile
 {
     NSPasteboard *board;
@@ -1567,28 +1536,6 @@ typedef enum {
     }
 }
 
-- (void)showPasteUI {
-    _pasteViewController = [[PasteViewController alloc] initWithContext:_pasteContext
-                                                                 length:_slowPasteBuffer.length];
-    _pasteViewController.delegate = self;
-    _pasteViewController.view.frame = NSMakeRect(20,
-                                                 _view.frame.size.height - _pasteViewController.view.frame.size.height,
-                                                 _pasteViewController.view.frame.size.width,
-                                                 _pasteViewController.view.frame.size.height);
-    [_view addSubview:_pasteViewController.view];
-    [_pasteViewController updateFrame];
-}
-
-- (void)hidePasteUI {
-    [_pasteViewController close];
-    [_pasteViewController release];
-    _pasteViewController = nil;
-}
-
-- (void)updatePasteUI {
-    [_pasteViewController setRemainingLength:_slowPasteBuffer.length];
-}
-
 - (NSData *)dataByRemovingControlCodes:(NSData *)data {
     NSMutableData *output = [NSMutableData dataWithCapacity:[data length]];
     const unsigned char *p = data.bytes;
@@ -1606,92 +1553,6 @@ typedef enum {
         [output appendBytes:p + start length:i - start];
     }
     return output;
-}
-
-- (void)_pasteStringImmediately:(NSString*)aString
-{
-    if ([aString length] > 0) {
-        NSData *data = [aString dataUsingEncoding:[_terminal encoding]
-                             allowLossyConversion:YES];
-        [self writeTask:data];
-    }
-}
-
-- (void)_pasteAgain {
-    NSRange range;
-    range.location = 0;
-    range.length = MIN(_pasteContext.bytesPerCall, [_slowPasteBuffer length]);
-    [self _pasteStringImmediately:[_slowPasteBuffer substringWithRange:range]];
-    [_slowPasteBuffer deleteCharactersInRange:range];
-    [self updatePasteUI];
-    if ([_slowPasteBuffer length] > 0) {
-        [_pasteContext updateValues];
-        _slowPasteTimer = [NSTimer scheduledTimerWithTimeInterval:_pasteContext.delayBetweenCalls
-                                                           target:self
-                                                         selector:@selector(_pasteAgain)
-                                                         userInfo:nil
-                                                          repeats:NO];
-    } else {
-        if ([_terminal bracketedPasteMode]) {
-            [self writeTask:[[NSString stringWithFormat:@"%c[201~", 27]
-                             dataUsingEncoding:[_terminal encoding]
-                             allowLossyConversion:YES]];
-        }
-        _slowPasteTimer = nil;
-        [self hidePasteUI];
-        [_pasteContext release];
-        _pasteContext = nil;
-        [self emptyEventQueue];
-    }
-}
-
-- (void)_pasteWithBytePerCallPrefKey:(NSString*)bytesPerCallKey
-                        defaultValue:(int)bytesPerCallDefault
-            delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
-                        defaultValue:(float)delayBetweenCallsDefault
-{
-    [_pasteContext release];
-    _pasteContext = [[PasteContext alloc] initWithBytesPerCallPrefKey:bytesPerCallKey
-                                                         defaultValue:bytesPerCallDefault
-                                             delayBetweenCallsPrefKey:delayBetweenCallsKey
-                                                         defaultValue:delayBetweenCallsDefault];
-    const int kPasteBytesPerSecond = 10000;  // This is a wild-ass guess.
-    if (_pasteContext.delayBetweenCalls * _slowPasteBuffer.length / _pasteContext.bytesPerCall + _slowPasteBuffer.length / kPasteBytesPerSecond > 3) {
-        [self showPasteUI];
-    }
-
-    [self _pasteAgain];
-}
-
-// Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.
-// Override the constants by setting defaults SlowPasteBytesPerCall and SlowPasteDelayBetweenCalls
-- (void)_pasteSlowly:(id)sender
-{
-    [self _pasteWithBytePerCallPrefKey:@"SlowPasteBytesPerCall"
-                          defaultValue:16
-              delayBetweenCallsPrefKey:@"SlowPasteDelayBetweenCalls"
-                          defaultValue:0.125];
-}
-
-- (void)_pasteStringMore
-{
-    [self _pasteWithBytePerCallPrefKey:@"QuickPasteBytesPerCall"
-                          defaultValue:1024
-              delayBetweenCallsPrefKey:@"QuickPasteDelayBetweenCalls"
-                          defaultValue:0.01];
-}
-
-- (void)_pasteString:(NSString *)aString
-{
-    if ([aString length] > 0) {
-        // This is the "normal" way of pasting. It's fast but tends not to
-        // outrun a shell's ability to read from its buffer. Why this crazy
-        // thing? See bug 1031.
-        [_slowPasteBuffer appendString:[aString stringWithLinefeedNewlines]];
-        [self _pasteStringMore];
-    } else {
-        NSBeep();
-    }
 }
 
 - (void)pasteString:(NSString *)aString
@@ -3474,16 +3335,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         }
 }
 
-- (void)pasteViewControllerDidCancel
-{
-    [self hidePasteUI];
-    [_slowPasteTimer invalidate];
-    _slowPasteTimer = nil;
-    [_slowPasteBuffer release];
-    _slowPasteBuffer = [[NSMutableString alloc] init];
-    [self emptyEventQueue];
-}
-
 - (NSString*)encodingName
 {
     // Get the encoding, perhaps as a fully written out name.
@@ -3527,11 +3378,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 #pragma mark PTYTextViewDelegate
 
 - (BOOL)isPasting {
-    return _slowPasteTimer != nil;
+    return _pasteHelper.isPasting;
 }
 
 - (void)queueKeyDown:(NSEvent *)event {
-    [_eventQueue addObject:event];
+    [_pasteHelper enqueueEvent:event];
 }
 
 // Handle bookmark- and global-scope keybindings. If there is no keybinding then
@@ -4069,91 +3920,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
-- (BOOL)maybeWarnAboutMultiLinePaste:(NSString *)string
-{
-    iTermApplicationDelegate *ad = [[NSApplication sharedApplication] delegate];
-    if (![ad warnBeforeMultiLinePaste]) {
-        return YES;
-    }
-
-    if ([string rangeOfString:@"\n"].length == 0) {
-        return YES;
-    }
-
-    switch (NSRunAlertPanel(@"Confirm Multi-Line Paste",
-                            @"OK to paste %d lines?",
-                            @"Yes",
-                            @"No",
-                            @"Yes and don‘t ask again",
-                            (int)[[string componentsSeparatedByString:@"\n"] count])) {
-        case NSAlertDefaultReturn:
-            return YES;
-        case NSAlertAlternateReturn:
-            return NO;
-        case NSAlertOtherReturn:
-            [ad toggleMultiLinePasteWarning:nil];
-            return YES;
-    }
-
-    assert(false);
-    return YES;
-}
-
 // Pastes a specific string. All pastes go through this method. Adds to the event queue if a paste
 // is in progress.
 - (void)pasteString:(NSString *)theString flags:(PTYSessionPasteFlags)flags
 {
-    if ([theString length] == 0) {
-        DLog(@"Tried to paste 0-byte string. Beep.");
-        NSBeep();
-        return;
-    }
-    if ([self isPasting]) {
-        [_eventQueue addObject:[PasteEvent pasteEventWithString:theString flags:flags]];
-        return;
-    }
-    if (![self maybeWarnAboutMultiLinePaste:theString]) {
-        return;
-    }
-
-    // Convert DOS (\r\n) newlines and carriage returns (\n) into linefeeds (\r).
-    theString = [theString stringWithLinefeedNewlines];
-
-    // All control codes except tab (9), newline (10), and form feed (12) are removed unless we are
-    // pasting with literal tabs, in which case we also keep LNEXT (22, ^V).
-    NSMutableCharacterSet *controlSet = [[[NSMutableCharacterSet alloc] init] autorelease];
-    [controlSet addCharactersInRange:NSMakeRange(0, 32)];
-    [controlSet removeCharactersInRange:NSMakeRange(9, 2)];  // Tab and newline
-    [controlSet removeCharactersInRange:NSMakeRange(12, 1)];  // Form feed
-
-    if (flags & kPTYSessionPasteEscapingSpecialCharacters) {
-        // Paste escaping special characters
-        theString = [theString stringWithEscapedShellCharacters];
-    }
-    if (flags & kPTYSessionPasteWithShellEscapedTabs) {
-        // Remove ^Vs before adding them
-        theString = [theString stringByReplacingOccurrencesOfString:@"\x16" withString:@""];
-        // Add ^Vs before each tab.
-        theString = [theString stringWithShellEscapedTabs];
-        // Allow the ^Vs that were just added to survive cleaning up control chars.
-        [controlSet removeCharactersInRange:NSMakeRange(22, 1)];  // LNEXT (^V)
-    }
-    if ([_terminal bracketedPasteMode]) {
-        [self writeTask:[[NSString stringWithFormat:@"%c[200~", 27]
-                         dataUsingEncoding:[_terminal encoding]
-                         allowLossyConversion:YES]];
-    }
-
-    // Remove control characters
-    theString =
-        [[theString componentsSeparatedByCharactersInSet:controlSet] componentsJoinedByString:@""];
-	
-    if (flags & kPTYSessionPasteSlowly) {
-        [_slowPasteBuffer appendString:theString];
-        [self _pasteSlowly:nil];
-    } else {
-        [self _pasteString:theString];
-    }
+    [_pasteHelper pasteString:theString flags:flags];
 }
 
 // Pastes the current string in the clipboard. Uses the sender's tag to get flags.
@@ -5522,6 +5293,28 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)setSelectionColor:(NSColor *)color {
     [_colorMap setColor:color forKey:kColorMapSelection];
+}
+
+#pragma mark - iTermPasteHelperDelegate
+
+- (void)pasteHelperWriteData:(NSData *)data {
+    [self writeTask:data];
+}
+
+- (void)pasteHelperKeyDown:(NSEvent *)event {
+    [_textview keyDown:event];
+}
+
+- (BOOL)pasteHelperShouldBracket {
+    return [_terminal bracketedPasteMode];
+}
+
+- (NSStringEncoding)pasteHelperEncoding {
+    return [_terminal encoding];
+}
+
+- (NSView *)pasteHelperViewForIndicator {
+    return _view;
 }
 
 @end

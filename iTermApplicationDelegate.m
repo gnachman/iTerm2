@@ -58,7 +58,11 @@ static NSString *ITERM2_FLAG = @"~/Library/Application Support/iTerm/version.txt
 static NSString *ITERM2_QUIET = @"~/Library/Application Support/iTerm/quiet";
 static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern indicator";
 NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPatternIndicatorChangedNotification";
-static NSString *const kMultiLinePasteWarningUserDefaultsKey = @"Multi-Line Paste Warning";
+
+// There was an older userdefaults key "Multi-Line Paste Warning" that had the opposite semantics.
+// This was changed for compatibility with the iTermWarning mechanism.
+NSString *const kMultiLinePasteWarningUserDefaultsKey = @"NoSyncDoNotWarnBeforeMultilinePaste";
+
 static BOOL gStartupActivitiesPerformed = NO;
 // Prior to 8/7/11, there was only one window arrangement, always called Default.
 static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
@@ -1021,7 +1025,7 @@ static BOOL hasBecomeActive = NO;
 
 - (BOOL)warnBeforeMultiLinePaste {
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    return [userDefaults boolForKey:kMultiLinePasteWarningUserDefaultsKey];
+    return ![userDefaults boolForKey:kMultiLinePasteWarningUserDefaultsKey];
 }
 
 - (IBAction)maximizePane:(id)sender
