@@ -180,47 +180,6 @@ static const int ambiguous_chars[] = {
     return NO;
 }
 
-//
-// Replace Substring
-//
-- (NSMutableString *) stringReplaceSubstringFrom:(NSString *)oldSubstring to:(NSString *)newSubstring
-{
-    unsigned int     len;
-    NSMutableString *mstr;
-    NSRange          searchRange;
-    NSRange          resultRange;
-
-#define ADDON_SPACE 10
-
-    searchRange.location = 0;
-    searchRange.length = len = [self length];
-    mstr = [NSMutableString stringWithCapacity:(len + ADDON_SPACE)];
-    NSParameterAssert(mstr != nil);
-
-    for (;;)
-    {
-        resultRange = [self rangeOfString:oldSubstring options:NSLiteralSearch range:searchRange];
-        if (resultRange.length == 0)
-            break;  // Not found!
-
-        // append and replace
-        [mstr appendString:[self substringWithRange:
-            NSMakeRange(searchRange.location, resultRange.location - searchRange.location)] ];
-        [mstr appendString:newSubstring];
-
-        // update search Range
-        searchRange.location = resultRange.location + resultRange.length;
-        searchRange.length   = len - searchRange.location;
-
-        //  NSLog(@"resultRange.location=%d\n", resultRange.location);
-        //  NSLog(@"resultRange.length=%d\n", resultRange.length);
-    }
-
-    [mstr appendString:[self substringWithRange:searchRange]];
-
-    return mstr;
-}
-
 - (NSString *)stringWithEscapedShellCharacters
 {
     NSMutableString *aMutableString = [[[NSMutableString alloc] initWithString: self] autorelease];
@@ -258,7 +217,8 @@ static const int ambiguous_chars[] = {
 
 - (NSString*)stringWithLinefeedNewlines
 {
-    return [[self stringReplaceSubstringFrom:@"\r\n" to:@"\r"] stringReplaceSubstringFrom:@"\n" to:@"\r"];
+    return [[self stringByReplacingOccurrencesOfString:@"\r\n" withString:@"\r"]
+               stringByReplacingOccurrencesOfString:@"\n" withString:@"\r"];
 }
 
 - (void)breakDownCommandToPath:(NSString **)cmd cmdArgs:(NSArray **)path
