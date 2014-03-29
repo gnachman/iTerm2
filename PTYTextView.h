@@ -106,7 +106,7 @@ typedef enum {
 - (void)textViewToggleBroadcastingInput;
 - (void)textViewCloseWithConfirmation;
 - (NSString *)textViewPasteboardString;
-- (void)textViewPasteFromSessionWithMostRecentSelection;
+- (void)textViewPasteFromSessionWithMostRecentSelection:(int)flags;
 - (void)textViewPasteWithEncoding:(TextViewPasteEncoding)encoding;
 - (BOOL)textViewCanPasteFile;
 - (BOOL)textViewWindowUsesTransparency;

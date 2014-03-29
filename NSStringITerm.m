@@ -237,6 +237,14 @@ static const int ambiguous_chars[] = {
     return [NSString stringWithString:aMutableString];
 }
 
+- (NSString *)stringWithShellEscapedTabs
+{
+    const int kLNEXT = 22;
+    NSString *replacement = [NSString stringWithFormat:@"%c\t", kLNEXT];
+
+    return [self stringByReplacingOccurrencesOfString:@"\t" withString:replacement];
+}
+
 - (NSString*)stringWithPercentEscape
 {
     // From

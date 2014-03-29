@@ -355,8 +355,14 @@ DQ
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Paste Special" id="1159">
                                     <items>
-                                        <menuItem title="Paste Escaping Special Characters" tag="1" alternate="YES" keyEquivalent="v" id="1163">
+                                        <menuItem title="Paste Escaping Special Characters" tag="1" keyEquivalent="v" id="tnr-HI-5ah">
                                             <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="paste:" target="-1" id="9zb-Wl-GF2"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Paste with Literal Tabs (ctrl-v tab)" tag="4" id="1163">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="paste:" target="-1" id="1170"/>
                                             </connections>
@@ -366,10 +372,16 @@ DQ
                                                 <action selector="pasteSelection:" target="-1" id="1167"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Paste Selection Escaping Special Characters" tag="1" alternate="YES" keyEquivalent="V" id="1165">
-                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                        <menuItem title="Paste Selection Escaping Special Characters" tag="1" id="1165">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="pasteSelection:" target="-1" id="1168"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Paste Selection with Literal Tabs" tag="4" id="IVX-cX-2lC">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="pasteSelection:" target="-1" id="ac5-bf-u92"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Paste Slowly" tag="2" id="1166">
@@ -384,7 +396,7 @@ DQ
                                                 <action selector="pasteBase64Encoded:" target="-1" id="OMO-E1-H3J"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem isSeparatorItem="YES" id="1491"/>
+                                        <menuItem isSeparatorItem="YES" id="alj-TE-sXE"/>
                                         <menuItem title="Paste Faster" tag="2" id="1483">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>

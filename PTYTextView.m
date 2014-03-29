@@ -4353,7 +4353,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)pasteSelection:(id)sender
 {
-    [_delegate textViewPasteFromSessionWithMostRecentSelection];
+    [_delegate textViewPasteFromSessionWithMostRecentSelection:[sender tag]];
 }
 
 - (IBAction)pasteBase64Encoded:(id)sender {
