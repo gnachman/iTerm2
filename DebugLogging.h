@@ -50,4 +50,4 @@ extern BOOL gDebugLogging;
 
 void ToggleDebugLogging();
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
-
+void EnsureDebugLoggingStarted();

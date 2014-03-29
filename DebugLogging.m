@@ -107,6 +107,12 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     return 1;
 }
 
+void EnsureDebugLoggingStarted() {
+    if (!gDebugLogging) {
+        ToggleDebugLogging();
+    }
+}
+
 void ToggleDebugLogging() {
     if (!gDebugLogging) {
         NSRunAlertPanel(@"Debug Logging Enabled",

@@ -1882,6 +1882,7 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 - (void)closeInstantReplayWindow {
+    DLog(@"Close IR window");
     [_instantReplayWindowController close];
     _instantReplayWindowController.delegate = nil;
     [_instantReplayWindowController release];
@@ -3972,6 +3973,7 @@ NSString *kSessionsKVCKey = @"sessions";
     if (hide) {
         [self closeInstantReplayWindow];
     } else {
+        DLog(@"Opening IR window");
         _instantReplayWindowController = [[iTermInstantReplayWindowController alloc] init];
         NSPoint origin =
             [self originForAccessoryOfSize:_instantReplayWindowController.window.frame.size];

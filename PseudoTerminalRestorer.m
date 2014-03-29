@@ -8,6 +8,7 @@
 // This ifndef affects only the Leopard configuration.
 
 #import "PseudoTerminalRestorer.h"
+#import "DebugLogging.h"
 #import "PseudoTerminal.h"
 #import "iTermController.h"
 
@@ -41,6 +42,7 @@ typedef void (^VoidBlock)(void);
                               state:(NSCoder *)state
                   completionHandler:(void (^)(NSWindow *, NSError *))completionHandler
 {
+    EnsureDebugLoggingStarted();
     if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"OpenArrangementAtStartup"] boolValue]) {
         completionHandler(nil, nil);
         return;
