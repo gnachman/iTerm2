@@ -340,11 +340,11 @@ static NSImage* alertImage;
 {
     NSPoint hotspot = NSMakePoint(4, 5);
     NSBundle* bundle = [NSBundle bundleForClass:[self class]];
-    NSImage* image = [NSImage imageNamed:@"IBarCursor"];
+    NSImage* image = [[NSImage imageNamed:@"IBarCursor"] retain];
 
     textViewCursor = [[NSCursor alloc] initWithImage:image hotSpot:hotspot];
 
-    NSImage* xmrImage = [NSImage imageNamed:@"IBarCursorXMR"];
+    NSImage* xmrImage = [[NSImage imageNamed:@"IBarCursorXMR"] retain];
     xmrCursor = [[NSCursor alloc] initWithImage:xmrImage hotSpot:hotspot];
 
     NSString* bellFile = [bundle
@@ -375,7 +375,7 @@ static NSImage* alertImage;
     coprocessImage = [[NSImage alloc] initWithContentsOfFile:coprocessFile];
     [coprocessImage setFlipped:YES];
 
-    alertImage = [NSImage imageNamed:@"Alert"];
+    alertImage = [[NSImage imageNamed:@"Alert"] retain];
     [alertImage setFlipped:YES];
 
     [iTermNSKeyBindingEmulator sharedInstance];  // Load and parse DefaultKeyBindings.dict if needed.

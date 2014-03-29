@@ -11,6 +11,8 @@
 #import "FutureMethods.h"
 #import <apr-1/apr_base64.h>
 
+NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopNotification";
+
 @interface TerminalFile ()
 @property(nonatomic, retain) NSMutableString *data;
 @property(nonatomic, copy) NSString *filename;  // No path, just a name.
@@ -83,6 +85,8 @@
     self.status = kTransferrableFileStatusCancelling;
     [[FileTransferManager sharedInstance] transferrableFileWillStop:self];
     self.data = nil;
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTerminalFileShouldStopNotification
+                                                        object:self];
 }
 
 - (NSString *)destination  {

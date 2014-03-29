@@ -164,6 +164,10 @@ static const int kMaxScreenRows = 4096;
     [super dealloc];
 }
 
+- (void)stopReceivingFile {
+    receivingFile_ = NO;
+}
+
 - (void)setEncoding:(NSStringEncoding)encoding {
     _encoding = encoding;
     _parser.encoding = encoding;
@@ -976,9 +980,17 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalDidReceiveBase64FileData:[token stringForAsciiData]];
             return;
         } else if (token->type == VT100CC_CR ||
-                   token->type == VT100CC_LF ||
-                   token->type == XTERMCC_SET_KVP) {
-            return;
+                   token->type == VT100CC_LF) {
+          return;
+        } else  if (token->type == XTERMCC_SET_KVP) {
+          NSArray *kvp = [self keyValuePairInToken:token];
+          if ([kvp[0] isEqualToString:@"EndFile"]) {
+            [self executeXtermSetKvp:token];
+          } else {
+            [delegate_ terminalFileReceiptEndedUnexpectedly];
+            receivingFile_ = NO;
+          }
+          return;
         } else {
             [delegate_ terminalFileReceiptEndedUnexpectedly];
             receivingFile_ = NO;
@@ -1592,21 +1604,28 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
+- (NSArray *)keyValuePairInToken:(VT100Token *)token {
+  // argument is of the form key=value
+  // key: Sequence of characters not = or ^G
+  // value: Sequence of characters not ^G
+  NSString* argument = token.string;
+  NSRange eqRange = [argument rangeOfString:@"="];
+  NSString* key;
+  NSString* value;
+  if (eqRange.location != NSNotFound) {
+    key = [argument substringToIndex:eqRange.location];;
+    value = [argument substringFromIndex:eqRange.location+1];
+  } else {
+    key = argument;
+    value = @"";
+  }
+  return @[ key, value ];
+}
+
 - (void)executeXtermSetKvp:(VT100Token *)token {
-    // argument is of the form key=value
-    // key: Sequence of characters not = or ^G
-    // value: Sequence of characters not ^G
-    NSString* argument = token.string;
-    NSRange eqRange = [argument rangeOfString:@"="];
-    NSString* key;
-    NSString* value;
-    if (eqRange.location != NSNotFound) {
-        key = [argument substringToIndex:eqRange.location];;
-        value = [argument substringFromIndex:eqRange.location+1];
-    } else {
-        key = argument;
-        value = @"";
-    }
+    NSArray *kvp = [self keyValuePairInToken:token];
+    NSString *key = kvp[0];
+    NSString *value = kvp[1];
     if ([key isEqualToString:@"CursorShape"]) {
         // Value must be an integer. Bogusly, non-numbers are treated as 0.
         int shape = [value intValue];
