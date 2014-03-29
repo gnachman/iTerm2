@@ -1,4 +1,3 @@
-// -*- mode:objc -*-
 /*
  **  DVRDecoder.m
  **
@@ -28,8 +27,20 @@
  */
 
 #import "DVRDecoder.h"
+#import "DebugLogging.h"
 #import "DVRIndexEntry.h"
 #import "LineBuffer.h"
+
+@interface DVRDecoder ()
+
+// Seek directly to a particular key.
+- (void)_seekToEntryWithKey:(long long)key;
+
+// Load a key or diff frame from a particular key.
+- (void)_loadKeyFrameWithKey:(long long)key;
+- (void)_loadDiffFrameWithKey:(long long)key;
+
+@end
 
 @implementation DVRDecoder
 
@@ -120,9 +131,7 @@
     return info_;
 }
 
-@end
-
-@implementation DVRDecoder (Private)
+#pragma mark - Private
 
 - (NSString *)stringForFrame
 {
@@ -210,6 +219,7 @@
     }
     char* data = [buffer_ blockForKey:key];
     info_ = entry->info;
+    DLog(@"Frame with key %lld has size %dx%d", key, info_.width, info_.height);
     memcpy(frame_,  data, length_);
 }
 

@@ -1,4 +1,3 @@
-// -*- mode:objc -*-
 /*
  **  DVRDecoder.h
  **
@@ -73,13 +72,3 @@
 
 @end
 
-@interface DVRDecoder (Private)
-
-// Seek directly to a particular key.
-- (void)_seekToEntryWithKey:(long long)key;
-
-// Load a key or diff frame from a particular key.
-- (void)_loadKeyFrameWithKey:(long long)key;
-- (void)_loadDiffFrameWithKey:(long long)key;
-
-@end

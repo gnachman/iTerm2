@@ -1,4 +1,3 @@
-// -*- mode:objc -*-
 /*
  **  DVREncoder.h
  **
@@ -69,21 +68,3 @@
 - (BOOL)reserve:(int)length;
 
 @end
-
-@interface DVREncoder (Private)
-// Save a key frame into DVRBuffer.
-- (void)_appendKeyFrame:(NSArray *)frameLines length:(int)length info:(DVRFrameInfo*)info;
-
-// Save a diff frame into DVRBuffer.
-- (void)_appendDiffFrame:(NSArray *)frameLine length:(int)length info:(DVRFrameInfo*)info;
-
-// Save a frame into DVRBuffer.
-- (void)_appendFrameImpl:(char *)buffer length:(int)length type:(DVRFrameType)type info:(DVRFrameInfo*)info;
-
-// Calculate the diff between buffer,length and the previous frame. Saves results into
-// scratch. Won't use more than maxSize bytes in scratch. Returns number of bytes used or
-// -1 if the diff was larger than maxSize.
-- (int)_computeDiff:(NSArray *)frameLines length:(int)length dest:(char*)scratch maxSize:(int)maxSize;
-
-@end
-
