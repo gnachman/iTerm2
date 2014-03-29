@@ -59,6 +59,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (NSMutableString *)stringReplaceSubstringFrom:(NSString *)oldSubstring to:(NSString *)newSubstring;
 - (NSString *)stringWithEscapedShellCharacters;
+- (NSString *)stringWithShellEscapedTabs;
 
 // Properly escapes chars for a string to stick in a URL query param.
 - (NSString*)stringWithPercentEscape;
