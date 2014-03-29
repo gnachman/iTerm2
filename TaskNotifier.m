@@ -116,6 +116,8 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
 
 - (void)unblock
 {
+    // This is called in a signal handler and must only call functions listed
+    // as safe in sigaction(2)'s man page.
     char dummy = 0;
     write(unblockPipeW, &dummy, 1);
 }
