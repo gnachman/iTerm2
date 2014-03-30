@@ -8496,10 +8496,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DebugLog(@"updateDirtyRects called");
 #endif
 
-    // Check each line for dirty selected text
-    // If any is found then deselect everything
-    [self _deselectDirtySelectedText];
-
     // Flip blink bit if enough time has passed. Mark blinking cursor dirty
     // when it blinks.
     BOOL redrawBlink = [self _updateBlink];
@@ -8637,47 +8633,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
         [_selection moveSelectionEndpointTo:VT100GridCoordMake(x, y)];
         DLog(@"moveSelectionEndpoint. selection=%@", _selection);
-    }
-}
-
-- (void)_deselectDirtySelectedText
-{
-    if (![self isAnyCharSelected]) {
-        return;
-    }
-
-    int lineStart = [_dataSource numberOfLines] - [_dataSource height];
-    int lineEnd = [_dataSource numberOfLines];
-    int cursorX = [_dataSource cursorX] - 1;
-    int cursorY = [_dataSource cursorY] + [_dataSource numberOfLines] - [_dataSource height] - 1;
-    for (int y = lineStart; y < lineEnd && [_selection hasSelection]; y++) {
-        NSIndexSet *selectedIndexes = [_selection selectedIndexesOnLine:y];
-        if ([selectedIndexes count] == 0) {
-            continue;
-        }
-        NSIndexSet *dirtyIndexes = [_dataSource dirtyIndexesOnLine:y - lineStart];
-        if ([dirtyIndexes count] == 0) {
-            continue;
-        }
-
-        // Look for any character that is dirty, selected, and is NOT the cursor.
-        [dirtyIndexes enumerateRangesUsingBlock:^(NSRange range, BOOL *stop) {
-            [selectedIndexes enumerateRangesInRange:range
-                                            options:0
-                                         usingBlock:^(NSRange innerRange, BOOL *innerStop) {
-                // This condition is to test if the range we got is just the cursor. If it's not,
-                // then it satisfies the condition of being selected and dirty and not the cursor.
-                if (y != cursorY ||  // not the cursor's line
-                    innerRange.length > 1 ||  // cursor is only one character long (TODO: DWCs)
-                    innerRange.location != cursorX) {  // It's just 1 char, but it's not the cursor
-                    // Remove the selection and stop enumerating.
-                    *innerStop = YES;
-                    *stop = YES;
-                    [_selection clearSelection];
-                    DebugLog(@"found selected dirty noncursor");
-                }
-            }];
-        }];
     }
 }
 
