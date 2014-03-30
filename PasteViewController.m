@@ -47,6 +47,7 @@ static float kAnimationDuration = 0.25;
     double ratio = remainingLength;
     ratio /= (double)totalLength_;
     [progressIndicator_ setDoubleValue:1.0 - ratio];
+    [progressIndicator_ displayIfNeeded];
 }
 
 - (void)updateFrame {
