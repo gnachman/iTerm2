@@ -163,9 +163,8 @@
 
 - (void)screenIncrementBadge;
 
-// TODO: Pretty sure these two are the same.
-- (void)screenRequestAttention:(BOOL)request;
-- (void)screenRequestUserAttention:(BOOL)isCritical;
+// Bounce the dock. Set request to false to cancel.
+- (void)screenRequestAttention:(BOOL)request isCritical:(BOOL)isCritical;
 - (NSString *)screenCurrentWorkingDirectory;
 
 // Show/hide the cursor.

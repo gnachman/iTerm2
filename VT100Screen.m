@@ -3059,7 +3059,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalRequestAttention:(BOOL)request {
-    [delegate_ screenRequestAttention:request];
+    [delegate_ screenRequestAttention:request isCritical:YES];
 }
 
 - (void)terminalSetForegroundColor:(NSColor *)color {

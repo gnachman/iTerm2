@@ -4741,10 +4741,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [[_tab realParentWindow] incrementBadge];
 }
 
-- (void)screenRequestUserAttention:(BOOL)isCritical {
-  [NSApp requestUserAttention:isCritical ? NSCriticalRequest : NSInformationalRequest];
-}
-
 - (NSString *)screenCurrentWorkingDirectory {
     return [_shell getWorkingDirectory];
 }
@@ -4913,9 +4909,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [_textview setNeedsDisplay:YES];
 }
 
-- (void)screenRequestAttention:(BOOL)request {
+- (void)screenRequestAttention:(BOOL)request isCritical:(BOOL)isCritical {
     if (request) {
-        _requestAttentionId = [NSApp requestUserAttention:NSCriticalRequest];
+        _requestAttentionId =
+            [NSApp requestUserAttention:isCritical ? NSCriticalRequest : NSInformationalRequest];
     } else {
         [NSApp cancelUserAttentionRequest:_requestAttentionId];
     }
