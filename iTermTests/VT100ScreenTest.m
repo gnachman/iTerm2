@@ -16,7 +16,7 @@
 #import "VT100Screen.h"
 #import "iTermSelection.h"
 
-@interface VT100ScreenTest () <iTermSelectionDelegate>
+@interface VT100ScreenTest () <iTermSelectionDelegate, VT100ScreenDelegate>
 @end
 
 @interface VT100Screen (Testing)
@@ -3613,6 +3613,163 @@
 - (void)screenDidChangeNumberOfScrollbackLines {
 }
 
+- (int)screenSessionID {
+    return 0;
+}
+
+- (void)screenSetCursorBlinking:(BOOL)blink {
+}
+
+- (void)screenSetCursorType:(ITermCursorType)type {
+}
+
+- (NSString *)screenWindowTitle {
+    return windowTitle_;
+}
+
+- (NSString *)screenDefaultName {
+    return @"Default name";
+}
+
+- (NSString *)screenName {
+    return name_;
+}
+
+- (NSPoint)screenWindowTopLeftPixelCoordinate {
+    return NSZeroPoint;
+}
+
+- (void)screenMoveWindowTopLeftPointTo:(NSPoint)point {
+}
+
+- (void)screenMiniaturizeWindow:(BOOL)flag {
+}
+
+- (void)screenRaise:(BOOL)flag {
+}
+
+- (BOOL)screenWindowIsMiniaturized {
+    return NO;
+}
+
+- (NSSize)screenSize {
+    return NSMakeSize(100, 100);
+}
+
+- (void)screenPushCurrentTitleForWindow:(BOOL)flag {
+}
+
+- (void)screenPopCurrentTitleForWindow:(BOOL)flag {
+}
+
+- (int)screenNumber {
+    return 0;
+}
+
+- (int)screenTabIndex {
+    return 0;
+}
+
+- (int)screenViewIndex {
+    return 0;
+}
+
+- (int)screenWindowIndex {
+    return 0;
+}
+
+- (void)screenStartTmuxMode {
+}
+
+- (void)screenHandleTmuxInput:(VT100Token *)token {
+}
+
+- (void)screenModifiersDidChangeTo:(NSArray *)modifiers {
+}
+
+- (void)screenShowBellIndicator {
+}
+
+- (NSSize)screenCellSize {
+    return NSMakeSize(10, 10);
+}
+
+- (void)screenMouseModeDidChange {
+}
+
+- (void)screenFlashImage:(FlashImage)image {
+}
+
+- (void)screenIncrementBadge {
+}
+
+- (void)screenRequestUserAttention:(BOOL)isCritical {
+}
+
+- (void)screenSetHighlightCursorLine:(BOOL)highlight {
+}
+
+- (void)screenCursorDidMoveToLine:(int)line {
+}
+
+- (void)screenSaveScrollPosition {
+}
+
+- (void)screenAddMarkOnLine:(int)line {
+}
+
+- (void)screenActivateWindow {
+}
+
+- (void)screenSetProfileToProfileNamed:(NSString *)value {
+}
+
+- (void)screenDidAddNote:(PTYNoteViewController *)note {
+}
+
+- (void)screenDidEndEditingNote {
+}
+
+- (void)screenWillReceiveFileNamed:(NSString *)name ofSize:(int)size {
+}
+
+- (void)screenDidFinishReceivingFile {
+}
+
+- (void)screenDidReceiveBase64FileData:(NSString *)data {
+}
+
+- (void)screenFileReceiptEndedUnexpectedly {
+}
+
+- (void)screenRequestAttention:(BOOL)request {
+}
+
+- (iTermColorMap *)screenColorMap {
+    return nil;
+}
+
+- (void)screenSetCurrentTabColor:(NSColor *)color {
+}
+
+- (void)screenSetTabColorGreenComponentTo:(CGFloat)color {
+}
+
+- (void)screenSetTabColorBlueComponentTo:(CGFloat)color {
+}
+
+- (void)screenSetTabColorRedComponentTo:(CGFloat)color {
+}
+
+- (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
+}
+
+- (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
+}
+
+- (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
+}
+
 - (void)testPasting {
     VT100Screen *screen = [self screen];
     screen.delegate = (id<VT100ScreenDelegate>)self;
@@ -3668,6 +3825,39 @@
   assert(range.start.y == 1);
   assert(range.end.x == 3);
   assert(range.end.y == 1);
+}
+
+- (void)testResizeWithNoteOnLineOfNulls {
+    VT100Screen *screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
+    assert([[screen compactLineDump] isEqualToString:
+            @"abcde\n"
+            @"fgh..\n"
+            @"ijkl.\n"
+            @"....."]);
+    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+    [screen addNote:note inRange:VT100GridCoordRangeMake(0, 3, 2, 3)];  // First two chars on last line
+    [screen resizeWidth:4 height:4];
+    NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 5, 3)];
+    assert(notes.count == 0);
+}
+
+- (void)testResizeWithSelectionOfJustNullsInAltScreen {
+    VT100Screen *screen = [self screenWithWidth:5 height:4];
+    screen.delegate = self;
+    [screen terminalShowAltBuffer];
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
+    assert([selection_ hasSelection]);
+    [screen resizeWidth:4 height:4];
+    assert(![selection_ hasSelection]);
+}
+
+- (void)testResizeWithSelectionOfJustNullsInMainScreen {
+    VT100Screen *screen = [self screenWithWidth:5 height:4];
+    screen.delegate = self;
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
+    assert([selection_ hasSelection]);
+    [screen resizeWidth:4 height:4];
+    assert(![selection_ hasSelection]);
 }
 
 - (void)testResizeNoteInPrimaryWhileInAltAndSomeHistory {

@@ -10,6 +10,12 @@
     return [[[self alloc] init] autorelease];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p abs=%@ yoff=%@ extends=%@>",
+            [self class], self,
+            @(absolutePosition_), @(yOffset_), @(extendsToEndOfLine_)];
+}
+
 - (LineBufferPosition *)predecessor {
     LineBufferPosition *predecessor = [LineBufferPosition position];
     predecessor.absolutePosition = absolutePosition_;
@@ -28,3 +34,18 @@
 }
 
 @end
+
+@implementation LineBufferPositionRange : NSObject
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p start=%@ end=%@>", [self class], self, _start, _end];
+}
+
+- (void)dealloc {
+    [_start release];
+    [_end release];
+    [super dealloc];
+}
+
+@end
+

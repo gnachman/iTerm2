@@ -162,6 +162,9 @@
 - (void)screenFlashImage:(FlashImage)image;
 
 - (void)screenIncrementBadge;
+
+// TODO: Pretty sure these two are the same.
+- (void)screenRequestAttention:(BOOL)request;
 - (void)screenRequestUserAttention:(BOOL)isCritical;
 - (NSString *)screenCurrentWorkingDirectory;
 
@@ -195,7 +198,6 @@
 - (void)screenDidReceiveBase64FileData:(NSString *)data;
 - (void)screenFileReceiptEndedUnexpectedly;
 
-- (void)screenRequestAttention:(BOOL)request;
 - (iTermColorMap *)screenColorMap;
 - (void)screenSetCurrentTabColor:(NSColor *)color;
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color;

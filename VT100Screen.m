@@ -350,18 +350,14 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         altScreenSubSelectionTriplets = [NSMutableArray array];
         for (iTermSubSelection *sub in selection.allSubSelections) {
             VT100GridCoordRange range = sub.range.coordRange;
-
-            BOOL startOk, endOk;
-            LineBufferPosition *start;
-            LineBufferPosition *end;
-            [self getNullCorrectedSelectionStartPosition:&start
-                                             endPosition:&end
-                           selectionStartPositionIsValid:&startOk
-                              selectionEndPostionIsValid:&endOk
-                                            inLineBuffer:lineBufferWithAltScreen
-                                                forRange:range];
-            if (startOk && endOk) {
-                [altScreenSubSelectionTriplets addObject:@[start, end, sub]];
+            LineBufferPositionRange *positionRange =
+                [self positionRangeForCoordRange:range
+                                    inLineBuffer:lineBufferWithAltScreen];
+            if (positionRange) {
+                [altScreenSubSelectionTriplets addObject:@[positionRange.start, positionRange.end, sub]];
+            } else {
+                DLog(@"Failed to get position range for selection on alt screen %@",
+                     VT100GridCoordRangeDescription(range));
             }
         }
     }
@@ -405,22 +401,18 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
             [[note retain] autorelease];
             [intervalTree_ removeObject:note];
-            
-            BOOL ok1, ok2;
-            LineBufferPosition *startPosition = nil;
-            LineBufferPosition *endPosition = nil;
-            
-            [self getNullCorrectedSelectionStartPosition:&startPosition
-                                             endPosition:&endPosition
-                           selectionStartPositionIsValid:&ok1
-                              selectionEndPostionIsValid:&ok2
-                                            inLineBuffer:appendOnlyLineBuffer
-                                                forRange:range];
-            DLog(@"Add note on alt screen at %@ (position %@ to %@) to altScreenNotes",
-                  VT100GridCoordRangeDescription(range),
-                  startPosition,
-                  endPosition);
-            [altScreenNotes addObject:@[ note, startPosition, endPosition ]];
+            LineBufferPositionRange *positionRange =
+                [self positionRangeForCoordRange:range inLineBuffer:appendOnlyLineBuffer];
+            if (positionRange) {
+                DLog(@"Add note on alt screen at %@ (position %@ to %@) to altScreenNotes",
+                     VT100GridCoordRangeDescription(range),
+                     positionRange.start,
+                     positionRange.end);
+                [altScreenNotes addObject:@[ note, positionRange.start, positionRange.end ]];
+            } else {
+                DLog(@"Failed to get position range while in alt screen for note %@ with range %@",
+                     note, VT100GridCoordRangeDescription(range));
+            }
         }
     }
     
@@ -444,6 +436,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     if (!wasShowingAltScreen && couldHaveSelection) {
         for (iTermSubSelection *sub in selection.allSubSelections) {
             VT100GridCoordRange newSelection;
+            DLog(@"convert sub %@", sub);
             BOOL ok = [self convertRange:sub.range.coordRange
                                  toWidth:new_width
                                       to:&newSelection
@@ -3421,23 +3414,15 @@ static void SwapInt(int *a, int *b) {
     *endPtr = max;
 }
 
-- (BOOL)getNullCorrectedSelectionStartPosition:(LineBufferPosition **)startPos
-                                   endPosition:(LineBufferPosition **)endPos
-                 selectionStartPositionIsValid:(BOOL *)selectionStartPositionIsValid
-                    selectionEndPostionIsValid:(BOOL *)selectionEndPostionIsValid
-                                  inLineBuffer:(LineBuffer *)lineBuffer
-                                      forRange:(VT100GridCoordRange)range
-{
-    int actualStartX = range.start.x;
-    int actualStartY = range.start.y;
-    int actualEndX = range.end.x;
-    int actualEndY = range.end.y;
-
+- (LineBufferPositionRange *)positionRangeForCoordRange:(VT100GridCoordRange)range
+                                           inLineBuffer:(LineBuffer *)lineBuffer {
+    LineBufferPositionRange *positionRange = [[[LineBufferPositionRange alloc] init] autorelease];
+    
     BOOL endExtends = NO;
     // Use the predecessor of endx,endy so it will have a legal position in the line buffer.
-    if (actualEndX == [self width]) {
-        screen_char_t *line = [self getLineAtIndex:actualEndY];
-        if (line[actualEndX - 1].code == 0 && line[actualEndX].code == EOL_HARD) {
+    if (range.end.x == [self width]) {
+        screen_char_t *line = [self getLineAtIndex:range.end.y];
+        if (line[range.end.x - 1].code == 0 && line[range.end.x].code == EOL_HARD) {
             // The selection goes all the way to the end of the line and there is a null at the
             // end of the line, so it extends to the end of the line. The linebuffer can't recover
             // this from its position because the trailing null in the line wouldn't be in the
@@ -3445,45 +3430,43 @@ static void SwapInt(int *a, int *b) {
             endExtends = YES;
         }
     }
-    actualEndX--;
-    if (actualEndX < 0) {
-        actualEndY--;
-        actualEndX = [self width] - 1;
-        if (actualEndY < 0) {
-            return NO;
+    range.end.x--;
+    if (range.end.x < 0) {
+        range.end.y--;
+        range.end.x = [self width] - 1;
+        if (range.end.y < 0) {
+            return nil;
         }
     }
     
-    if (actualStartX < 0 || actualStartY < 0 ||
-        actualEndX < 0 || actualEndY < 0) {
-        return NO;
+    if (range.start.x < 0 || range.start.y < 0 ||
+        range.end.x < 0 || range.end.y < 0) {
+        return nil;
     }
 
     VT100GridCoord trimmedStart;
     VT100GridCoord trimmedEnd;
-    [self trimSelectionFromStart:VT100GridCoordMake(actualStartX, actualStartY)
-                             end:VT100GridCoordMake(actualEndX, actualEndY)
+    [self trimSelectionFromStart:VT100GridCoordMake(range.start.x, range.start.y)
+                             end:VT100GridCoordMake(range.end.x, range.end.y)
                         toStartX:&trimmedStart
                           toEndX:&trimmedEnd];
     if (VT100GridCoordOrder(trimmedStart, trimmedEnd) == NSOrderedDescending) {
-        return NO;
+        return nil;
     }
 
-    *startPos = [lineBuffer positionForCoordinate:trimmedStart
-                                            width:currentGrid_.size.width
-                                           offset:0];
-    if (selectionStartPositionIsValid) {
-        *selectionStartPositionIsValid = (*startPos != nil);
-    }
-    *endPos = [lineBuffer positionForCoordinate:trimmedEnd
-                                          width:currentGrid_.size.width
-                                         offset:0];
-    (*endPos).extendsToEndOfLine = endExtends;
+    positionRange.start = [lineBuffer positionForCoordinate:trimmedStart
+                                                      width:currentGrid_.size.width
+                                                     offset:0];
+    positionRange.end = [lineBuffer positionForCoordinate:trimmedEnd
+                                                    width:currentGrid_.size.width
+                                                   offset:0];
+    positionRange.end.extendsToEndOfLine = endExtends;
 
-    if (selectionEndPostionIsValid) {
-        *selectionEndPostionIsValid = (*endPos != nil);
+    if (positionRange.start && positionRange.end) {
+        return positionRange;
+    } else {
+        return nil;
     }
-    return YES;
 }
 
 - (BOOL)convertRange:(VT100GridCoordRange)range
@@ -3491,47 +3474,46 @@ static void SwapInt(int *a, int *b) {
                   to:(VT100GridCoordRange *)resultPtr
         inLineBuffer:(LineBuffer *)lineBuffer
 {
-    LineBufferPosition *selectionStartPosition;
-    LineBufferPosition *selectionEndPosition;
-    BOOL selectionStartPositionIsValid;
-    BOOL selectionEndPostionIsValid;
+    LineBufferPositionRange *selectionRange;
     
     // Temporarily swap in the passed-in linebuffer so the call below can access lines in the right line buffer.
     LineBuffer *savedLineBuffer = linebuffer_;
     linebuffer_ = lineBuffer;
-    BOOL hasSelection = [self getNullCorrectedSelectionStartPosition:&selectionStartPosition
-                                                         endPosition:&selectionEndPosition
-                                       selectionStartPositionIsValid:&selectionStartPositionIsValid
-                                          selectionEndPostionIsValid:&selectionEndPostionIsValid
-                                                        inLineBuffer:lineBuffer
-                                                            forRange:range];
+    selectionRange = [self positionRangeForCoordRange:range inLineBuffer:lineBuffer];
+    DLog(@"%@ -> %@", VT100GridCoordRangeDescription(range), selectionRange);
     linebuffer_ = savedLineBuffer;
-    if (!hasSelection) {
+    if (!selectionRange) {
+        // One case where this happens is when the start and end of the range are past the last
+        // character in the line buffer (e.g., all nulls). It could occur when a note exists on a
+        // null line.
         return NO;
     }
-    if (selectionStartPositionIsValid) {
-        resultPtr->start = [lineBuffer coordinateForPosition:selectionStartPosition
-                                                       width:newWidth
-                                                          ok:NULL];
-        if (selectionEndPostionIsValid) {
-            VT100GridCoord newEnd = [lineBuffer coordinateForPosition:selectionEndPosition width:newWidth ok:NULL];
-            newEnd.x++;
-            if (newEnd.x > newWidth) {
-                newEnd.y++;
-                newEnd.x -= newWidth;
-            }
-            resultPtr->end = newEnd;
-        } else {
-            resultPtr->end.x = currentGrid_.size.width;
-            resultPtr->end.y = [lineBuffer numLinesWithWidth:newWidth] + currentGrid_.size.height - 1;
+
+    resultPtr->start = [lineBuffer coordinateForPosition:selectionRange.start
+                                                   width:newWidth
+                                                      ok:NULL];
+    BOOL ok = NO;
+    VT100GridCoord newEnd = [lineBuffer coordinateForPosition:selectionRange.end
+                                                        width:newWidth
+                                                           ok:&ok];
+    if (ok) {
+        newEnd.x++;
+        if (newEnd.x > newWidth) {
+            newEnd.y++;
+            newEnd.x -= newWidth;
         }
-        if (selectionEndPosition.extendsToEndOfLine) {
-            resultPtr->end.x = newWidth;
-        }
-        return YES;
+        resultPtr->end = newEnd;
     } else {
-        return NO;
+        // I'm not sure how to get here. It would happen if the endpoint of the selection could
+        // be converted into a LineBufferPosition with the original width but that LineBufferPosition
+        // could not be converted back into a VT100GridCoord with the new width.
+        resultPtr->end.x = currentGrid_.size.width;
+        resultPtr->end.y = [lineBuffer numLinesWithWidth:newWidth] + currentGrid_.size.height - 1;
     }
+    if (selectionRange.end.extendsToEndOfLine) {
+        resultPtr->end.x = newWidth;
+    }
+    return YES;
 }
 
 - (void)incrementOverflowBy:(int)overflowCount {

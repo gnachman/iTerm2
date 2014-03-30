@@ -23,3 +23,8 @@
 - (LineBufferPosition *)predecessor;
 
 @end
+
+@interface LineBufferPositionRange : NSObject
+@property(nonatomic, retain) LineBufferPosition *start;
+@property(nonatomic, retain) LineBufferPosition *end;
+@end
