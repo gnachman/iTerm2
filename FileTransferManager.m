@@ -181,9 +181,9 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     for (id child in children) {
         AXUIElementRef element = (AXUIElementRef)child;
         id title;
-        AXError error = AXUIElementCopyAttributeValue(element,
-                                                      kAXTitleAttribute,
-                                                      (CFTypeRef *)&title);
+        error = AXUIElementCopyAttributeValue(element,
+                                              kAXTitleAttribute,
+                                              (CFTypeRef *)&title);
         if (error) {
             continue;
         }

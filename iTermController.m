@@ -115,7 +115,7 @@ BOOL IsMavericksOrLater(void) {
 static iTermController* shared = nil;
 static BOOL initDone = NO;
 
-+ (iTermController*)sharedInstance;
++ (iTermController*)sharedInstance
 {
     if(!shared && !initDone) {
         shared = [[iTermController alloc] init];

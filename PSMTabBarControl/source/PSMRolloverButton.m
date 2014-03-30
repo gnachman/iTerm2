@@ -51,7 +51,7 @@
 }
 
 // override for rollover effect
-- (void)mouseEntered:(NSEvent *)theEvent;
+- (void)mouseEntered:(NSEvent *)theEvent
 {
     // set rollover image
     [self setImage:_rolloverImage];
@@ -59,7 +59,7 @@
     [[self superview] setNeedsDisplay:YES]; // eliminates a drawing artifact
 }
 
-- (void)mouseExited:(NSEvent *)theEvent;
+- (void)mouseExited:(NSEvent *)theEvent
 {
     // restore usual image
     [self setImage:_usualImage];

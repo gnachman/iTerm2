@@ -4,6 +4,7 @@
 // which iTerm2 needs to be able to do. This is meant to be run this way:
 //   /usr/bin/login -fpl $USER iTerm.app --launch_shell
 
+#include "shell_launcher.h"
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,7 +12,7 @@
 #include <unistd.h>
 #include <util.h>
 
-int launch_shell()
+int launch_shell(void)
 {
 	const char *shell = getenv("SHELL");
     if (!shell) {

@@ -46,7 +46,7 @@ NSString *CommandToolbarItem = @"Command";
 
 @implementation PTToolbarController
 
-- (id)initWithPseudoTerminal:(PseudoTerminal*)terminal; {
+- (id)initWithPseudoTerminal:(PseudoTerminal*)terminal {
     self = [super init];
     if (self) {
         _pseudoTerminal = terminal; // don't retain;
@@ -62,7 +62,7 @@ NSString *CommandToolbarItem = @"Command";
     return self;
 }
 
-- (void)dealloc;
+- (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [iconMenu_ release];
@@ -186,7 +186,7 @@ NSString *CommandToolbarItem = @"Command";
 
 #pragma mark - Private
 
-- (void)setupToolbar;
+- (void)setupToolbar
 {
     _toolbar = [[NSToolbar alloc] initWithIdentifier:@"Terminal Toolbar"];
     [_toolbar setVisible:false];

@@ -569,7 +569,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     IBOutlet WindowArrangements *arrangements_;
 }
 
-+ (PreferencePanel*)sharedInstance;
++ (PreferencePanel*)sharedInstance
 {
     static PreferencePanel* shared = nil;
 
@@ -582,7 +582,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return shared;
 }
 
-+ (PreferencePanel*)sessionsInstance;
++ (PreferencePanel*)sessionsInstance
 {
     static PreferencePanel* shared = nil;
 
@@ -2161,7 +2161,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [self bookmarkSettingChanged:self];  // this causes existing sessions to be updated
 }
 
-- (void)loadColorPreset:(id)sender;
+- (void)loadColorPreset:(id)sender
 {
     [self _loadPresetColors:[sender title]];
 }

@@ -88,7 +88,7 @@
     }
 }
 
-- (void)rowSelected:(id)sender;
+- (void)rowSelected:(id)sender
 {
     if ([_tableView selectedRow] >= 0) {
         CommandHistoryPopupEntry* entry = [[self model] objectAtIndex:[self convertIndex:[_tableView selectedRow]]];

@@ -786,7 +786,7 @@ static NSString* FormatRect(NSRect r) {
     }
 }
 
-- (void)closeSession:(PTYSession*)session;
+- (void)closeSession:(PTYSession*)session
 {
     [[self parentWindow] closeSession:session];
 }

@@ -18,7 +18,7 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     return (int)a.width == (int)b.width && (int)a.height == (int)b.height;
 }
 
-NSScreen *ExposeScreen() {
++ (NSScreen *)exposeScreen {
     return [[[NSApplication sharedApplication] keyWindow] deepestScreen];
 }
 
@@ -32,7 +32,7 @@ NSScreen *ExposeScreen() {
 {
     self = [super initWithFrame:frame];
     if (self) {
-        NSScreen* theScreen = ExposeScreen();
+        NSScreen* theScreen = [iTermExposeGridView exposeScreen];
         NSRect screenFrame = [theScreen frame];
         screenFrame.origin = NSZeroPoint;
         NSRect visibleScreenFrame = [theScreen visibleFrame];

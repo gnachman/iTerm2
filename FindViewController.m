@@ -278,7 +278,7 @@ static NSString *gSearchString;
     [self _newSearch:timer];
 }
 
-- (void)searchPrevious;
+- (void)searchPrevious
 {
     [self _setSearchDefaults];
     BOOL timer = [self findSubString:gSearchString

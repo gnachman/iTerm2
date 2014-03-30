@@ -44,10 +44,10 @@
 
 @interface PTYWindow : NSWindow
 
-- initWithContentRect:(NSRect)contentRect
-            styleMask:(NSUInteger)aStyle
-              backing:(NSBackingStoreType)bufferingType
-                defer:(BOOL)flag;
+- (id)initWithContentRect:(NSRect)contentRect
+                styleMask:(NSUInteger)aStyle
+                  backing:(NSBackingStoreType)bufferingType
+                    defer:(BOOL)flag;
 
 - (void)toggleToolbarShown:(id)sender;
 

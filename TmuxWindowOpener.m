@@ -97,7 +97,7 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
     [gateway_ sendCommandList:cmdList initial:initial];
 }
 
-- (void)updateLayoutInTab:(PTYTab *)tab;
+- (void)updateLayoutInTab:(PTYTab *)tab
 {
     if (!self.layout) {
         NSLog(@"Bad layout");

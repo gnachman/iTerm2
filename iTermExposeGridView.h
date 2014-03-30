@@ -20,6 +20,9 @@
     NSImage* cache_;  // background image
 }
 
+// Screen to use for Expose.
++ (NSScreen *)exposeScreen;
+
 - (id)initWithFrame:(NSRect)frame
              images:(NSArray*)images
              labels:(NSArray*)labels
@@ -49,5 +52,3 @@
 
 @end
 
-// Screen to use for Expose.
-NSScreen *ExposeScreen();

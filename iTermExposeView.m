@@ -94,7 +94,7 @@
     [[iTermExpose sharedInstance] toggleOff];
 }
 
-- (void)globalSearchViewDidResize:(NSRect)origSize;
+- (void)globalSearchViewDidResize:(NSRect)origSize
 {
     // If we were called because a window closed, make sure we're up to date (there's a race where
     // GlobalSearch's notification may be run before ours).
@@ -141,7 +141,7 @@
     }
     
     NSRect* frames = (NSRect*)calloc([images count], sizeof(NSRect));
-    NSScreen* theScreen = ExposeScreen();
+    NSScreen* theScreen = [iTermExposeGridView exposeScreen];
     NSRect screenFrame = [theScreen visibleFrame];
     screenFrame.origin = NSZeroPoint;
     if ([search_ numResults] > 0) {

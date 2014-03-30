@@ -402,7 +402,7 @@ static CGImageRef CGImageCreateWithNSImage(NSImage *image, CGRect sourceRect) {
   [NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)drawTabCell:(PSMTabBarCell *)cell;
+- (void)drawTabCell:(PSMTabBarCell *)cell
 {
     NSRect cellFrame = [cell frame];
 

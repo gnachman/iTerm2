@@ -1575,13 +1575,6 @@ typedef enum {
     [self writeTask:[NSData dataWithBytes:&p length:1]];
 }
 
-- (void)textViewDidChangeSelection:(NSNotification *) aNotification
-{
-    if ([[PreferencePanel sharedInstance] copySelection]) {
-        [_textview copySelectionAccordingToUserPreferences];
-    }
-}
-
 - (PTYScroller *)textViewVerticalScroller
 {
     return (PTYScroller *)[_scrollview verticalScroller];
@@ -1589,18 +1582,6 @@ typedef enum {
 
 - (BOOL)textViewHasCoprocess {
     return [_shell hasCoprocess];
-}
-
-- (void) textViewResized:(NSNotification *) aNotification;
-{
-    int w;
-    int h;
-
-    w = (int)(([[_scrollview contentView] frame].size.width - MARGIN * 2) / [_textview charWidth]);
-    h = (int)(([[_scrollview contentView] frame].size.height) / [_textview lineHeight]);
-    //NSLog(@"%s: w = %d; h = %d; old w = %d; old h = %d", __PRETTY_FUNCTION__, w, h, [_screen width], [_screen height]);
-
-    [self setWidth:w height:h];
 }
 
 - (void)setBell:(BOOL)flag
@@ -4137,7 +4118,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [[self tab] nextSession];
 }
 
-- (void)textViewSelectPreviousPane;
+- (void)textViewSelectPreviousPane
 {
     [[self tab] previousSession];
 }

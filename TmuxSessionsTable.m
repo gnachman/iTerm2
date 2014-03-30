@@ -44,7 +44,7 @@ extern NSString *kWindowPasteboardType;
     [super dealloc];
 }
 
-- (void)setDelegate:(NSObject<TmuxSessionsTableProtocol> *)delegate;
+- (void)setDelegate:(NSObject<TmuxSessionsTableProtocol> *)delegate
 {
     delegate_ = delegate;
     [self setSessions:[delegate_ sessions]];

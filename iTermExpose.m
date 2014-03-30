@@ -446,7 +446,7 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     NSRect* frames = (NSRect*)calloc([images count], sizeof(NSRect));
 
     // Figure out the right size for a thumbnail.
-    NSScreen* theScreen = ExposeScreen();
+    NSScreen* theScreen = [iTermExposeGridView exposeScreen];
     SetSystemUIMode(kUIModeAllHidden, 0);
     NSRect screenFrame = [theScreen frame];
     // Create the window and its view.

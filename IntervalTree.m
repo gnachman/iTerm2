@@ -255,9 +255,9 @@ static const long long kMaxLimit = kMinLocation + LLONG_MAX;
                                                              object:object];
     IntervalTreeValue *value = [_tree objectForKey:@(interval.location)];
     if (!value) {
-        IntervalTreeValue *value = [[[IntervalTreeValue alloc] init] autorelease];
-        [value.entries addObject:entry];
-        [_tree setObject:value forKey:@(interval.location)];
+        IntervalTreeValue *newValue = [[[IntervalTreeValue alloc] init] autorelease];
+        [newValue.entries addObject:entry];
+        [_tree setObject:newValue forKey:@(interval.location)];
     } else {
         [value.entries addObject:entry];
         [_tree notifyValueChangedForKey:@(interval.location)];
@@ -337,8 +337,8 @@ static const long long kMaxLimit = kMinLocation + LLONG_MAX;
 - (void)aaTree:(AATree *)tree didChangeValueAtNode:(AATreeNode *)node {
     NSArray *parents = [tree pathFromNode:node];
     NSMutableSet *parentSet = [NSMutableSet setWithArray:parents];
-    for (AATreeNode *node in parents) {
-        [self recalculateMaxLimitInSubtreeAtNode:node
+    for (AATreeNode *theNode in parents) {
+        [self recalculateMaxLimitInSubtreeAtNode:theNode
                            removeFromToVisitList:parentSet];
     }
 }

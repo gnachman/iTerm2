@@ -784,10 +784,10 @@
         NSMutableIndexSet *indexesToAdd = [NSMutableIndexSet indexSetWithIndexesInRange:theRange];
         NSMutableIndexSet *indexesToRemove = [NSMutableIndexSet indexSet];
         
-        [indexes enumerateRangesInRange:theRange options:0 usingBlock:^(NSRange range, BOOL *stop) {
-            // range exists in both indexes and theRange
-            [indexesToRemove addIndexesInRange:range];
-            [indexesToAdd removeIndexesInRange:range];
+        [indexes enumerateRangesInRange:theRange options:0 usingBlock:^(NSRange innerRange, BOOL *stop) {
+            // innerRange exists in both indexes and theRange
+            [indexesToRemove addIndexesInRange:innerRange];
+            [indexesToAdd removeIndexesInRange:innerRange];
         }];
         [indexes removeIndexes:indexesToRemove];
         [indexes addIndexes:indexesToAdd];

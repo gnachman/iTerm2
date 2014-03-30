@@ -2656,8 +2656,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                 [self width],
                                 screenOrigin + self.height);
     DLog(@"  moveNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
-    Interval *interval = [self intervalForGridCoordRange:screenRange];
-    for (id<IntervalTreeObject> obj in [source objectsInInterval:interval]) {
+    Interval *sourceInterval = [self intervalForGridCoordRange:screenRange];
+    for (id<IntervalTreeObject> obj in [source objectsInInterval:sourceInterval]) {
         Interval *interval = [[obj.entry.interval retain] autorelease];
         [[obj retain] autorelease];
         DLog(@"  found note with interval %@", interval);
@@ -3126,7 +3126,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [delegate_ screenSetHighlightCursorLine:highlight];
 }
 
-- (void)terminalPromptDidStart; {
+- (void)terminalPromptDidStart {
     // FinalTerm uses this to define the start of a collapsable region. That would be a nightmare
     // to add to iTerm, and our answer to this is marks, which already existed anyway.
     [delegate_ screenAddMarkOnLine:[self numberOfScrollbackLines] + self.cursorY - 1];
@@ -3529,8 +3529,7 @@ static void SwapInt(int *a, int *b) {
 }
 
 // sets scrollback lines.
-- (void)setMaxScrollbackLines:(unsigned int)lines;
-{
+- (void)setMaxScrollbackLines:(unsigned int)lines {
     maxScrollbackLines_ = lines;
     [linebuffer_ setMaxLines: lines];
     if (!unlimitedScrollback_) {
@@ -3591,7 +3590,7 @@ static void SwapInt(int *a, int *b) {
     DebugLog(@"cursorToX:Y");
 }
 
-- (void)setUseColumnScrollRegion:(BOOL)mode;
+- (void)setUseColumnScrollRegion:(BOOL)mode
 {
     currentGrid_.useScrollRegionCols = mode;
     altGrid_.useScrollRegionCols = mode;

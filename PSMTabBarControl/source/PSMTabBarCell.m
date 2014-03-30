@@ -224,17 +224,17 @@
     return _hasCloseButton;
 }
 
-- (void)setHasCloseButton:(BOOL)set;
+- (void)setHasCloseButton:(BOOL)set
 {
     _hasCloseButton = set;
 }
 
-- (void)setCloseButtonSuppressed:(BOOL)suppress;
+- (void)setCloseButtonSuppressed:(BOOL)suppress
 {
     _isCloseButtonSuppressed = suppress;
 }
 
-- (BOOL)isCloseButtonSuppressed;
+- (BOOL)isCloseButtonSuppressed
 {
     return _isCloseButtonSuppressed;
 }
@@ -266,7 +266,7 @@
     return _isPlaceholder;
 }
 
-- (void)setIsPlaceholder:(BOOL)value;
+- (void)setIsPlaceholder:(BOOL)value
 {
     _isPlaceholder = value;
 }

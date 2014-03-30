@@ -277,7 +277,7 @@
     }
 }
 
-- (void)rowSelected:(id)sender;
+- (void)rowSelected:(id)sender
 {
     if ([table_ selectedRow] >= 0) {
         PasteboardEntry* entry = [[self model] objectAtIndex:[self convertIndex:[table_ selectedRow]]];

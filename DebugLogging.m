@@ -107,7 +107,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     return 1;
 }
 
-void ToggleDebugLogging() {
+void ToggleDebugLogging(void) {
     if (!gDebugLogging) {
         NSRunAlertPanel(@"Debug Logging Enabled",
                         @"Writing to /tmp/debuglog.txt",

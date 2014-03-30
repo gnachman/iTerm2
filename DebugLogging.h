@@ -48,6 +48,6 @@ extern BOOL gDebugLogging;
     } while (0)
 #endif
 
-void ToggleDebugLogging();
+void ToggleDebugLogging(void);
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 

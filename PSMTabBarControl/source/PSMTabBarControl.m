@@ -73,7 +73,7 @@
 @implementation PSMTabBarControl
 #pragma mark -
 #pragma mark Characteristics
-+ (NSBundle *)bundle;
++ (NSBundle *)bundle
 {
     static NSBundle *bundle = nil;
     if (!bundle) bundle = [NSBundle bundleForClass:[PSMTabBarControl class]];
@@ -2003,7 +2003,7 @@
     return NO;
 }
 
-- (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
+- (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender
 {
     return nil;
 }

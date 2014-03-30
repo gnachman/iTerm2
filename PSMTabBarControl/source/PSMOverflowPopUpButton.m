@@ -112,7 +112,7 @@
 	}
 }
 
-- (BOOL)animatingAlternateImage;
+- (BOOL)animatingAlternateImage
 {
 	return _animatingAlternateImage;
 }

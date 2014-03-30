@@ -34,7 +34,7 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
                                                object:nil];
 }
 
-+ (BOOL)hasWindowArrangement:(NSString *)name;
++ (BOOL)hasWindowArrangement:(NSString *)name
 {
     NSDictionary *arrangements = [[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS];
     return [arrangements objectForKey:name] != nil;

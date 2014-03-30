@@ -543,7 +543,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
     [self changeBufferSize: [self rawSpaceUsed]];
 }
 
-- (int)dropLines:(int)n withWidth:(int)width chars:(int *)charsDropped;
+- (int)dropLines:(int)n withWidth:(int)width chars:(int *)charsDropped
 {
     int orig_n = n;
     int prev = 0;

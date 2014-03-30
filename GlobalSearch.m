@@ -94,7 +94,13 @@ const double GLOBAL_SEARCH_MARGIN = 10;
 
 @implementation GlobalSearchResult
 
-- (id)initWithInstance:(GlobalSearchInstance*)instance context:(NSString*)theContext x:(int)x absY:(long long)absY endX:(int)endX y:(long long)absEndY findString:(NSString*)findString;
+- (id)initWithInstance:(GlobalSearchInstance*)instance
+               context:(NSString*)theContext
+                     x:(int)x
+                  absY:(long long)absY
+                  endX:(int)endX
+                     y:(long long)absEndY
+            findString:(NSString*)findString
 {
     assert(findString);
     assert(theContext);
@@ -683,7 +689,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
 
 }
 
-- (void)setDelegate:(id<GlobalSearchDelegate>)delegate;
+- (void)setDelegate:(id<GlobalSearchDelegate>)delegate
 {
     delegate_ = delegate;
 }

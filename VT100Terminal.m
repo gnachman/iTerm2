@@ -584,8 +584,8 @@ static const int kMaxScreenRows = 4096;
 
         case VT100CSI_SET_MODIFIERS: {
             if (token.csi->count == 0) {
-                for (int i = 0; i < NUM_MODIFIABLE_RESOURCES; i++) {
-                    sendModifiers_[i] = 0;
+                for (int j = 0; j < NUM_MODIFIABLE_RESOURCES; j++) {
+                    sendModifiers_[j] = 0;
                 }
             } else {
                 int resource = token.csi->p[0];
