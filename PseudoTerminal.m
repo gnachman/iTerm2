@@ -5953,7 +5953,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [item action] == @selector(openDashboard:)) {
         result = [[iTermController sharedInstance] haveTmuxConnection];
     } else if ([item action] == @selector(wrapToggleToolbarShown:)) {
-        result = ![self lionFullScreen] && (self.window.styleMask & NSTitledWindowMask);
+        result = ![iTermSettingsModel disableToolbar] && (self.window.styleMask & NSTitledWindowMask);
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         result = ([[self sessions] count] > 1);
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||

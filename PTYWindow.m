@@ -28,6 +28,7 @@
 #import "FutureMethods.h"
 #import "iTermController.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermSettingsModel.h"
 
 #ifdef PSEUDOTERMINAL_VERBOSE_LOGGING
 #define PtyLog NSLog
@@ -297,6 +298,13 @@ end:
     PtyLog(@"PTYWindow - calling makeKeyAndOrderFont, which triggers a window resize");
     PtyLog(@"The current window frame is %fx%f", [self frame].size.width, [self frame].size.height);
     [super makeKeyAndOrderFront:sender];
+}
+
+- (void)setToolbar:(NSToolbar *)toolbar {
+    if ([iTermSettingsModel disableToolbar]) {
+        return;
+    }
+    [super setToolbar:toolbar];
 }
 
 - (void)toggleToolbarShown:(id)sender {
