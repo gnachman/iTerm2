@@ -1145,6 +1145,7 @@ typedef enum {
         }
         
         VT100Token *token = CVectorGetObject(vector, i);
+        DLog(@"Execute token %@ cursor=(%d, %d)", token, _screen.cursorX - 1, _screen.cursorY - 1);
         [_terminal executeToken:token];
     }
     
@@ -3279,6 +3280,15 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self writeTaskImpl:data];
 }
 
++ (dispatch_queue_t)tmuxQueue {
+    static dispatch_queue_t tmuxQueue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        tmuxQueue = dispatch_queue_create("com.iterm2.tmuxReadTask", 0);
+    });
+    return tmuxQueue;
+}
+
 // This is called on the main thread.
 - (void)tmuxReadTask:(NSData *)data
 {
@@ -3289,7 +3299,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         // which would deadlock if it were called on the main thread.
         [data retain];
         [self retain];
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        dispatch_async([[self class] tmuxQueue], ^{
             [self threadedReadTask:(char *)[data bytes] length:[data length]];
             [data release];
             [self release];
