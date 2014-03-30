@@ -81,6 +81,7 @@ DEFINE_BOOL(logDrawingPerformance, NO, @"General: Log stats about text drawing p
 DEFINE_BOOL(ignoreHardNewlinesInURLs, NO, @"General: Ignore hard newlines for the purposes of locating URLs for Cmd-click")
 // Note: square brackets are included for ipv6 addresses like http://[2600:3c03::f03c:91ff:fe96:6a7a]/
 DEFINE_STRING(URLCharacterSet, @".?\\/:;%=&_-,+~#@!*'()|[]", @"General: Non-alphanumeric characters considered part of a URL for Cmd-click")
+DEFINE_BOOL(rememberWindowPositions, YES, @"General: Remember window locations even after they’re closed");
 
 #pragma mark Warnings
 DEFINE_BOOL(neverWarnAboutMeta, NO, @"Warnings: Suppress a warning when Option Key Acts as Meta is enabled");

@@ -3177,16 +3177,18 @@ NSString *kSessionsKVCKey = @"sessions";
     }
     if (([[[iTermController sharedInstance] terminals] count] == 1) ||
         (![[PreferencePanel sharedInstance] smartPlacement])) {
-        PtyLog(@"No smart layout");
-        NSRect frame = [window frame];
-        [self assignUniqueNumberToWindow];
-        if ([window setFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, uniqueNumber_]]) {
-            frame.origin = [window frame].origin;
-            frame.origin.y += [window frame].size.height - frame.size.height;
-        } else {
-            frame.origin = preferredOrigin_;
+        if ([iTermSettingsModel rememberWindowPositions]) {
+            PtyLog(@"No smart layout");
+            NSRect frame = [window frame];
+            [self assignUniqueNumberToWindow];
+            if ([window setFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, uniqueNumber_]]) {
+                frame.origin = [window frame].origin;
+                frame.origin.y += [window frame].size.height - frame.size.height;
+            } else {
+                frame.origin = preferredOrigin_;
+            }
+            [window setFrame:frame display:NO];
         }
-        [window setFrame:frame display:NO];
     } else {
         PtyLog(@"Invoking smartLayout");
         [window smartLayout];
