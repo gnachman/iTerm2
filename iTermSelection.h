@@ -156,6 +156,7 @@ typedef enum {
 - (void)setLastRange:(VT100GridWindowedRange)lastRange mode:(iTermSelectionMode)mode;
 
 // Convert windowed selections to multiple discontinuous non-windowed selections.
-- (void)removeWindows;
+// If a subselection's window spans 0 to width, then it is windowless.
+- (void)removeWindowsWithWidth:(int)width;
 
 @end

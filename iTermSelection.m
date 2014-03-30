@@ -684,14 +684,21 @@
     [_delegate selectionDidChange:self];
 }
 
-- (void)removeWindows {
+- (void)removeWindowsWithWidth:(int)width {
+    _initialRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
     if (_live) {
         [self endLiveSelection];
     }
     NSMutableArray *newSubs = [NSMutableArray array];
     for (iTermSubSelection *sub in _subSelections) {
-        for (iTermSubSelection *subsub in [sub nonwindowedComponents]) {
-            [newSubs addObject:subsub];
+        if (sub.range.columnWindow.location == 0 &&
+            sub.range.columnWindow.length == width) {
+            [newSubs addObject:sub];
+        } else {
+            // There is a nontrivial window
+            for (iTermSubSelection *subsub in [sub nonwindowedComponents]) {
+                [newSubs addObject:subsub];
+            }
         }
     }
     [_subSelections autorelease];

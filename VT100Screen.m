@@ -323,7 +323,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     if (selection.live) {
         [selection endLiveSelection];
     }
-    [selection removeWindows];
+    [selection removeWindowsWithWidth:self.width];
     BOOL couldHaveSelection = [delegate_ screenHasView] && selection.hasSelection;
 
     int usedHeight = [currentGrid_ numberOfLinesUsed];
@@ -331,9 +331,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     VT100Grid *copyOfAltGrid = [[altGrid_ copy] autorelease];
     LineBuffer *realLineBuffer = linebuffer_;
 
-    // This is an array of triplets:
-    // [LineBufferPosition start, LineBufferPosition end, iTermSubSelection]
-    NSMutableArray *altScreenSubSelectionTriplets = nil;
+    // This is an array of tuples:
+    // [LineBufferPositionRange, iTermSubSelection]
+    NSMutableArray *altScreenSubSelectionTuples = nil;
     LineBufferPosition *originalLastPos = [linebuffer_ lastPosition];
     BOOL wasShowingAltScreen = (currentGrid_ == altGrid_);
 
@@ -347,14 +347,14 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
               toScrollback:lineBufferWithAltScreen
             withUsedHeight:usedHeight
                  newHeight:new_height];
-        altScreenSubSelectionTriplets = [NSMutableArray array];
+        altScreenSubSelectionTuples = [NSMutableArray array];
         for (iTermSubSelection *sub in selection.allSubSelections) {
             VT100GridCoordRange range = sub.range.coordRange;
             LineBufferPositionRange *positionRange =
                 [self positionRangeForCoordRange:range
                                     inLineBuffer:lineBufferWithAltScreen];
             if (positionRange) {
-                [altScreenSubSelectionTriplets addObject:@[positionRange.start, positionRange.end, sub]];
+                [altScreenSubSelectionTuples addObject:@[ positionRange, sub ]];
             } else {
                 DLog(@"Failed to get position range for selection on alt screen %@",
                      VT100GridCoordRangeDescription(range));
@@ -552,16 +552,14 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             withUsedHeight:usedHeight
                  newHeight:new_height];
 
-        for (int i = 0; i < altScreenSubSelectionTriplets.count; i++) {
-            LineBufferPosition *originalStartPos = altScreenSubSelectionTriplets[i][0];
-            LineBufferPosition *originalEndPos = altScreenSubSelectionTriplets[i][1];
-            iTermSubSelection *originalSub = altScreenSubSelectionTriplets[i][2];
-            iTermSelectionMode mode = originalSub.selectionMode;
+        for (int i = 0; i < altScreenSubSelectionTuples.count; i++) {
+            LineBufferPositionRange *positionRange = altScreenSubSelectionTuples[i][0];
+            iTermSubSelection *originalSub = altScreenSubSelectionTuples[i][2];
             VT100GridCoordRange newSelection;
             BOOL ok = [self computeRangeFromOriginalLimit:originalLastPos
                                             limitPosition:newLastPos
-                                            startPosition:originalStartPos
-                                              endPosition:originalEndPos
+                                            startPosition:positionRange.start
+                                              endPosition:positionRange.end
                                                  newWidth:new_width
                                                lineBuffer:appendOnlyLineBuffer
                                                     range:&newSelection
@@ -570,7 +568,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                 VT100GridWindowedRange theRange =
                     VT100GridWindowedRangeMake(newSelection, 0, 0);
                 iTermSubSelection *theSub = [iTermSubSelection subSelectionWithRange:theRange
-                                                                                mode:mode];
+                                                                                mode:originalSub.selectionMode];
                 theSub.connected = originalSub.connected;
                 [newSubSelections addObject:theSub];
             }
