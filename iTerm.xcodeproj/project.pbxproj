@@ -3973,7 +3973,7 @@
 				GCC_WARN_SIGN_COMPARE = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				SDKROOT = macosx;
-				VALID_ARCHS = "i386 ppc x86_64";
+				VALID_ARCHS = "x86_64 i386";
 				WARNING_CFLAGS = "-Wall";
 			};
 			name = Deployment;

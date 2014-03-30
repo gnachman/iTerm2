@@ -2021,7 +2021,6 @@ NSMutableArray* screens=0;
                 // view is what the first line of the _dataSource was before
                 // it overflowed. Continue to draw text in this out-of-alignment
                 // manner until refresh is called and gets things in sync again.
-                NSPoint temp;
                 anyBlinking |= [self _drawLine:line-overflow
                                            AtY:y
                                      charRange:charRange

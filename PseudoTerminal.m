@@ -3893,7 +3893,6 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (long long)instantReplayFirstTimestamp {
     DVR* dvr = [[self currentSession] dvr];
-    DVRDecoder* decoder = nil;
     
     if (dvr) {
         return [dvr firstTimeStamp];
@@ -3904,7 +3903,6 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (long long)instantReplayLastTimestamp {
     DVR* dvr = [[self currentSession] dvr];
-    DVRDecoder* decoder = nil;
     
     if (dvr) {
         return [dvr lastTimeStamp];

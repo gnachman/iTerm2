@@ -283,7 +283,6 @@ static NSDictionary *gIntrospection;
         NSArray *settings = [self filteredAdvancedSettings];
         NSDictionary *dict = settings[row];
         NSString *identifier = dict[kAdvancedSettingIdentifier];
-        NSObject *value = nil;
         switch ([dict advancedSettingType]) {
             case kiTermAdvancedSettingTypeBoolean:
                 [[NSUserDefaults standardUserDefaults] setBool:!![anObject intValue]

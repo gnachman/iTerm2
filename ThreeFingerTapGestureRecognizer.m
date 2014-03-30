@@ -10,8 +10,6 @@
 #import "FutureMethods.h"
 #import "iTermApplicationDelegate.h"
 
-static const NSTimeInterval kDelay = 0.35;  // Just a bit longer than the system's default delay for detecting a two-finger tap.
-
 @implementation ThreeFingerTapGestureRecognizer
 
 - (id)initWithTarget:(NSView *)target selector:(SEL)selector {

@@ -23,7 +23,6 @@ static const float kAlphaValue = 0.9;
 }
 
 - (void)updateTrackingAreas {
-    int trackingOptions;
     
     if ([self window]) {
         if (_trackingArea) {
