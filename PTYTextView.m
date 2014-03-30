@@ -2310,6 +2310,7 @@ NSMutableArray* screens=0;
 
 - (void)keyDown:(NSEvent*)event
 {
+    [self deselect];
     static BOOL isFirstInteraction = YES;
     if (isFirstInteraction) {
         iTermApplicationDelegate *appDelegate = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
@@ -4032,6 +4033,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)deselect
 {
+    [_selection endLiveSelection];
     [_selection clearSelection];
 }
 

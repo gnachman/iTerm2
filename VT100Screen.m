@@ -2128,6 +2128,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     int x1, yStart, x2, y2;
 
     if (before && after) {
+        [delegate_ screenRemoveSelection];
         [self scrollScreenIntoHistory];
         x1 = 0;
         yStart = 0;
@@ -2146,6 +2147,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         if (x1 == 0 && yStart == 0) {
             // Save the whole screen. This helps the "screen" terminal, where CSI H CSI J is used to
             // clear the screen.
+            [delegate_ screenRemoveSelection];
             [self scrollScreenIntoHistory];
         }
     } else {
@@ -2507,6 +2509,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalScrollUp:(int)n {
+    [delegate_ screenRemoveSelection];
     for (int i = 0;
          i < MIN(currentGrid_.size.height, n);
          i++) {
@@ -2518,6 +2521,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalScrollDown:(int)n {
+    [delegate_ screenRemoveSelection];
     [currentGrid_ scrollRect:[currentGrid_ scrollRegionRect]
                       downBy:MIN(currentGrid_.size.height, n)];
     [delegate_ screenTriggerableChangeDidOccur];
@@ -2693,6 +2697,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     if (currentGrid_ == altGrid_) {
         return;
     }
+    [delegate_ screenRemoveSelection];
     if (!altGrid_) {
         altGrid_ = [[VT100Grid alloc] initWithSize:primaryGrid_.size delegate:self];
     }
@@ -2736,6 +2741,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (void)terminalShowPrimaryBufferRestoringCursor:(BOOL)restore
 {
     if (currentGrid_ == altGrid_) {
+        [delegate_ screenRemoveSelection];
         [self hideOnScreenNotesAndTruncateSpanners];
         currentGrid_ = primaryGrid_;
         commandStartX_ = commandStartY_ = -1;
@@ -2784,6 +2790,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     // used to move the cursor's wrapped line to the top of the screen. It's only used from
     // DECSET 1049, and neither xterm nor terminal have this behavior, and I'm not sure why it
     // would be desirable anyway. Like xterm (and unlike Terminal) we leave the cursor put.
+    [delegate_ screenRemoveSelection];
     [currentGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                             to:VT100GridCoordMake(currentGrid_.size.width - 1,
                                                   currentGrid_.size.height - 1)
