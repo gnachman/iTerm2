@@ -3703,9 +3703,6 @@
 - (void)screenIncrementBadge {
 }
 
-- (void)screenRequestUserAttention:(BOOL)isCritical {
-}
-
 - (void)screenSetHighlightCursorLine:(BOOL)highlight {
 }
 
@@ -3742,7 +3739,7 @@
 - (void)screenFileReceiptEndedUnexpectedly {
 }
 
-- (void)screenRequestAttention:(BOOL)request {
+- (void)screenRequestAttention:(BOOL)request isCritical:(BOOL)isCritical {
 }
 
 - (iTermColorMap *)screenColorMap {
