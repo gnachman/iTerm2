@@ -11,6 +11,9 @@
 #import <AppKit/NSWorkspace.h>
 #import "iTermTests.h"
 
+// NOTE: This test is finicky because its behavior can change depending on user preferences and how
+// iTerm windows are restored. It might also require the user to interact with a close confirmation
+// dialog.
 @implementation AppleScriptTest
 
 - (void)testAppleScriptSplitCommand {
