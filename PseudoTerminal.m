@@ -3368,7 +3368,7 @@ NSString *kSessionsKVCKey = @"sessions";
     }
     PTYSession* aSession = [[tabViewItem identifier] activeSession];
     if (!_fullScreen) {
-        [[aSession tab] setLabelAttributes];
+        [[aSession tab] updateLabelAttributes];
         [self setWindowTitle];
     }
 

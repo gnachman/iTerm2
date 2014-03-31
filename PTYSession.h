@@ -74,7 +74,7 @@ typedef enum {
 @property(nonatomic, readonly) BOOL isTmuxClient;
 @property(nonatomic, readonly) BOOL isTmuxGateway;
 
-// Does the session have new output? Used by -[PTYTab setLabelAttributes] to color the tab's title
+// Does the session have new output? Used by -[PTYTab updateLabelAttributes] to color the tab's title
 // appropriately.
 @property(nonatomic, assign) BOOL newOutput;
 
@@ -89,12 +89,12 @@ typedef enum {
 
 @property(nonatomic, readonly) struct timeval lastOutput;
 
-// Is the session idle? Used by setLableAttribute to send a growl message when processing ends.
-@property(nonatomic, assign) BOOL growlIdle;
+// Is the session idle? Used by updateLabelAttributes to send a growl message when processing ends.
+@property(nonatomic, assign) BOOL havePostedIdleNotification;
 
 // Is there new output for the purposes of growl notifications? They run on a different schedule
 // than tab colors.
-@property(nonatomic, assign) BOOL growlNewOutput;
+@property(nonatomic, assign) BOOL havePostedNewOutputNotification;
 
 // Session name; can be changed via escape code. The getter will add formatting to it; to retrieve
 // the value that was set, use -rawName.
@@ -243,6 +243,9 @@ typedef enum {
 @property(nonatomic, retain) NSColor *foregroundColor;
 @property(nonatomic, retain) NSColor *selectedTextColor;
 @property(nonatomic, retain) NSColor *selectionColor;
+
+// Session is not in foreground and notifications are enabled on the screen.
+@property(nonatomic, readonly) BOOL shouldPostGrowlNotification;
 
 #pragma mark - methods
 

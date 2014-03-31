@@ -157,9 +157,8 @@
 - (BOOL)realIsProcessing;
 - (void)setIsProcessing:(BOOL)aFlag;
 - (BOOL)isActiveSession;
-- (BOOL)anySessionHasNewOutput;
 // Returns true if another update may be needed later (so the timer should be scheduled).
-- (BOOL)setLabelAttributes;
+- (BOOL)updateLabelAttributes;
 - (void)closeSession:(PTYSession*)session;
 - (void)terminateAllSessions;
 - (NSArray*)sessions;

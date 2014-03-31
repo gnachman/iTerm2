@@ -76,7 +76,6 @@ DEFINE_FLOAT(minRunningTime, 10, @"General: Automatic quit suspended for this ma
 DEFINE_FLOAT(updateScreenParamsDelay, 1, @"General: Delay after changing number of screens/resolution until refresh (seconds)")
 DEFINE_INT(pasteHistoryMaxOptions, 20, @"General: Number of entires to show in Paste History (will not go below 2 or above 100)")
 DEFINE_BOOL(debugKeyDown, NO, @"General: Log verbose debug info about key presses")
-DEFINE_BOOL(growlOnForegroundTabs, NO, @"General: Enable Growl or Notification Center notifications for the foreground tab")
 DEFINE_BOOL(logDrawingPerformance, NO, @"General: Log stats about text drawing performance to console")
 DEFINE_BOOL(ignoreHardNewlinesInURLs, NO, @"General: Ignore hard newlines for the purposes of locating URLs for Cmd-click")
 // Note: square brackets are included for ipv6 addresses like http://[2600:3c03::f03c:91ff:fe96:6a7a]/

@@ -1205,15 +1205,9 @@ typedef enum {
     }
 }
 
-- (BOOL)_growlOnForegroundTabs
-{
-    return [iTermSettingsModel growlOnForegroundTabs];
-}
-
 - (void)brokenPipe
 {
-    if (_screen.postGrowlNotifications &&
-        (![[self tab] isForegroundTab] || [self _growlOnForegroundTabs])) {
+    if ([self shouldPostGrowlNotification]) {
         [[iTermGrowlDelegate sharedInstance] growlNotify:@"Session Ended"
                                          withDescription:[NSString stringWithFormat:@"Session \"%@\" in tab #%d just terminated.",
                                                           [self name],
@@ -1222,7 +1216,7 @@ typedef enum {
     }
 
     _exited = YES;
-    [[self tab] setLabelAttributes];
+    [[self tab] updateLabelAttributes];
 
     if ([self autoClose]) {
         [[self tab] closeSession:self];
@@ -1584,6 +1578,18 @@ typedef enum {
     return [_shell hasCoprocess];
 }
 
+- (BOOL)shouldPostGrowlNotification {
+    if (!_screen.postGrowlNotifications) {
+        return NO;
+    }
+    if (![[self tab] isForegroundTab]) {
+        return YES;
+    }
+    BOOL windowIsObscured =
+        ([[iTermController sharedInstance] terminalIsObscured:self.tab.realParentWindow]);
+    return (windowIsObscured);
+}
+
 - (void)setBell:(BOOL)flag
 {
     if (flag != _bell) {
@@ -1591,8 +1597,7 @@ typedef enum {
         [[self tab] setBell:flag];
         if (_bell) {
             if ([_textview keyIsARepeat] == NO &&
-                ![[_textview window] isKeyWindow] &&
-                _screen.postGrowlNotifications) {
+                [self shouldPostGrowlNotification]) {
                 [[iTermGrowlDelegate sharedInstance] growlNotify:@"Bell"
                                                  withDescription:[NSString stringWithFormat:@"Session %@ #%d just rang a bell!",
                                                                   [self name],
@@ -2412,11 +2417,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         anotherUpdateNeeded = YES;
     }
 
-    BOOL isForegroundTab = [[self tab] isForegroundTab];
-    if (!isForegroundTab) {
-        // Set color, other attributes of a background tab.
-        anotherUpdateNeeded |= [[self tab] setLabelAttributes];
-    }
+    // Set color, other attributes of a tab.
+    anotherUpdateNeeded |= [[self tab] updateLabelAttributes];
+
     if ([[self tab] activeSession] == self) {
         // Update window info for the active tab.
         struct timeval now;
@@ -2425,7 +2428,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             timeInTenthsOfSeconds(now) >= timeInTenthsOfSeconds(_lastUpdate) + 7) {
             // It has been more than 700ms since the last time we were here or
             // the job doesn't have a name
-            if (isForegroundTab && [[[self tab] parentWindow] tempTitle]) {
+            if ([[self tab] isForegroundTab] && [[[self tab] parentWindow] tempTitle]) {
                 // Revert to the permanent tab title.
                 [[[self tab] parentWindow] setWindowTitle];
                 [[[self tab] parentWindow] resetTempTitle];

@@ -65,10 +65,10 @@
 
 // Generate a Growl message with no description and a notification type
 // of "Miscellaneous".
-- (void)growlNotify: (NSString *)title;
+- (void)growlNotify:(NSString *)title;
 
 // Generate a Growl message with a notification type of "Miscellaneous".
-- (void)growlNotify: (NSString *)title withDescription: (NSString *)description;
+- (void)growlNotify:(NSString *)title withDescription:(NSString *)description;
 
 //  Generate a 'full' Growl message with a specified notification type.
 - (void)growlNotify:(NSString *)title
