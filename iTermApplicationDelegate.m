@@ -899,12 +899,6 @@ static BOOL hasBecomeActive = NO;
 - (void)applicationWillBecomeActive:(NSNotification *)aNotification
 {
     DLog(@"******** Become Active");
-    for (PseudoTerminal* term in [self terminals]) {
-        if ([term isHotKeyWindow]) {
-            //NSLog(@"Visor is open; not rescuing orphans.");
-            return;
-        }
-    }
 }
 
 - (void)hideToolTipsInView:(NSView *)aView {
