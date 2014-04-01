@@ -3946,7 +3946,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     BOOL isBackgroundTab = [[tabViewItem_ tabView] selectedTabViewItem] != [self tabViewItem];
     const BOOL compactTab = ([[PreferencePanel sharedInstance] hideTabNumber] &&
                              [[PreferencePanel sharedInstance] hideTabCloseButton]);
-    if ([self isProcessing] == NO && !compactTab) {
+    if ([self isProcessing] == NO && !compactTab && ![self isForegroundTab]) {
         [self setIsProcessing:YES];
     }
 
@@ -3999,13 +3999,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
             shouldResetLabel = YES;
         }
     }
-    if (shouldResetLabel) {
+    if (shouldResetLabel && [self isForegroundTab]) {
         [self setIsProcessing:NO];
-        BOOL isBackgroundTab = [[tabViewItem_ tabView] selectedTabViewItem] != [self tabViewItem];
-        if (!isBackgroundTab) {
-            [[self parentWindow] setLabelColor:chosenStateColor
-                                forTabViewItem:[self tabViewItem]];
-        }
+        [[self parentWindow] setLabelColor:chosenStateColor
+                            forTabViewItem:[self tabViewItem]];
     }
 }
 
