@@ -62,8 +62,9 @@ extern NSString *kTmuxControllerSessionWasRenamed;
 @property (nonatomic, copy) NSString *sessionName;
 @property (nonatomic, retain) NSArray *sessions;
 @property (nonatomic, assign) BOOL ambiguousIsDoubleWidth;
+@property (nonatomic, readonly) NSString *clientName;
 
-- (id)initWithGateway:(TmuxGateway *)gateway;
+- (id)initWithGateway:(TmuxGateway *)gateway clientName:(NSString *)clientName;
 - (void)openWindowsInitial;
 - (void)openWindowWithId:(int)windowId
 			 intentional:(BOOL)intentional;

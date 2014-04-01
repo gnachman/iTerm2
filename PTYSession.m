@@ -34,6 +34,7 @@
 #import "TmuxStateParser.h"
 #import "TmuxWindowOpener.h"
 #import "Trigger.h"
+#import "VT100RemoteHost.h"
 #import "VT100Screen.h"
 #import "VT100ScreenMark.h"
 #import "VT100Terminal.h"
@@ -2961,22 +2962,24 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [[[_tab realParentWindow] window] miniaturize:self];
 }
 
+- (NSString *)preferredTmuxClientName {
+    VT100RemoteHost *remoteHost = [self currentHost];
+    if (remoteHost) {
+        return [NSString stringWithFormat:@"%@@%@", remoteHost.username, remoteHost.hostname];
+    } else {
+        return _name;
+    }
+}
+
 - (void)startTmuxMode
 {
-    if ([[TmuxControllerRegistry sharedInstance] numberOfClients]) {
-        const char *message = "detach\n";
-        [self printTmuxMessage:@"Can't enter tmux mode: another tmux is already attached"];
-        [_screen crlf];
-        [self writeTaskImpl:[NSData dataWithBytes:message length:strlen(message)]];
-        return;
-    }
-
     if (self.tmuxMode != TMUX_NONE) {
         return;
     }
     self.tmuxMode = TMUX_GATEWAY;
     _tmuxGateway = [[TmuxGateway alloc] initWithDelegate:self];
-    _tmuxController = [[TmuxController alloc] initWithGateway:_tmuxGateway];
+    _tmuxController = [[TmuxController alloc] initWithGateway:_tmuxGateway
+                                                   clientName:[self preferredTmuxClientName]];
     _tmuxController.ambiguousIsDoubleWidth = _treatAmbiguousWidthAsDoubleWidth;
     NSSize theSize;
     Profile *tmuxBookmark = [PTYTab tmuxBookmark];

@@ -34,6 +34,7 @@
 #import "SessionView.h"
 #import "SplitPanel.h"
 #import "TemporaryNumberAllocator.h"
+#import "TmuxControllerRegistry.h"
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
 #import "ToolCommandHistoryView.h"
@@ -1271,7 +1272,12 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 
     if ([[PreferencePanel sharedInstance] windowNumber]) {
-        title = [NSString stringWithFormat:@"%d. %@", number_+1, title];
+        NSString *tmuxId = @"";
+        if ([[self currentSession] isTmuxClient]) {
+            tmuxId = [NSString stringWithFormat:@" [%@]",
+                      [[[self currentSession] tmuxController] clientName]];
+        }
+        title = [NSString stringWithFormat:@"%d. %@%@", number_+1, title, tmuxId];
     }
     
     // In bug 2593, we see a crazy thing where setting the window title right
@@ -1608,12 +1614,22 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (IBAction)detachTmux:(id)sender
 {
-    [[[[iTermController sharedInstance] anyTmuxSession] tmuxController] requestDetach];
+    [[self currentTmuxController] requestDetach];
+}
+
+- (TmuxController *)currentTmuxController {
+    TmuxController *controller = [[self currentSession] tmuxController];
+    if (!controller) {
+        controller = [[[iTermController sharedInstance] anyTmuxSession] tmuxController];
+        DLog(@"No controller for current session %@, picking one at random: %@",
+             [self currentSession], controller);
+    }
+    return controller;
 }
 
 - (IBAction)newTmuxWindow:(id)sender
 {
-    [[[[iTermController sharedInstance] anyTmuxSession] tmuxController] newWindowWithAffinity:nil];
+    [[self currentTmuxController] newWindowWithAffinity:nil];
 }
 
 - (IBAction)newTmuxTab:(id)sender
@@ -1622,7 +1638,7 @@ NSString *kSessionsKVCKey = @"sessions";
     if (tmuxWindow < 0) {
         tmuxWindow = -(number_ + 1);
     }
-    [[[[iTermController sharedInstance] anyTmuxSession] tmuxController] newWindowWithAffinity:[NSString stringWithFormat:@"%d", tmuxWindow]];
+    [[self currentTmuxController] newWindowWithAffinity:[NSString stringWithFormat:@"%d", tmuxWindow]];
 }
 
 - (NSSize)tmuxCompatibleSize

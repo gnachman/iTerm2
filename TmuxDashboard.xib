@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="4510" systemVersion="12F37" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="5053" systemVersion="13C64" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
-        <deployment defaultVersion="1050" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="4510"/>
+        <deployment defaultVersion="1070" identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="5053"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="TmuxDashboardController">
             <connections>
+                <outlet property="connectionsButton_" destination="HcS-21-y1k" id="9Lv-Ib-q3w"/>
                 <outlet property="sessionsTable_" destination="50" id="73"/>
                 <outlet property="window" destination="1" id="72"/>
                 <outlet property="windowsTable_" destination="106" id="120"/>
@@ -14,7 +15,7 @@
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application"/>
-        <window title="tmux Dashboard" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" wantsToBeColor="NO" animationBehavior="default" id="1">
+        <window title="tmux Dashboard" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" animationBehavior="default" id="1">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="0.0" y="500" width="576" height="378"/>
@@ -25,14 +26,14 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <scrollView autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="3">
-                        <rect key="frame" x="20" y="47.999999999999993" width="210" height="310"/>
+                        <rect key="frame" x="20" y="74" width="210" height="284"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="rAA-e6-j5u">
-                            <rect key="frame" x="1" y="17" width="208" height="292"/>
+                            <rect key="frame" x="1" y="17" width="208" height="266"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" headerView="6" id="4">
-                                    <rect key="frame" x="0.0" y="0.0" width="230" height="292"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="230" height="266"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -71,11 +72,11 @@
                             </subviews>
                             <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </clipView>
-                        <scroller key="horizontalScroller" verticalHuggingPriority="750" id="5">
-                            <rect key="frame" x="1" y="293" width="208" height="16"/>
+                        <scroller key="horizontalScroller" verticalHuggingPriority="750" horizontal="YES" id="5">
+                            <rect key="frame" x="1" y="267" width="208" height="16"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
-                        <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="37" id="7">
+                        <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="7">
                             <rect key="frame" x="224" y="17" width="15" height="102"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
@@ -120,11 +121,11 @@
                             </subviews>
                             <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </clipView>
-                        <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" id="15">
+                        <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="15">
                             <rect key="frame" x="1" y="268" width="315.52734375" height="15"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
-                        <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="37" id="13">
+                        <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="13">
                             <rect key="frame" x="224" y="17" width="15" height="102"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
@@ -178,7 +179,7 @@
                         </connections>
                     </button>
                     <searchField verticalHuggingPriority="750" id="30">
-                        <rect key="frame" x="238.00000000000003" y="48" width="318" height="22"/>
+                        <rect key="frame" x="238" y="48" width="318" height="22"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxY="YES"/>
                         <searchFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" borderStyle="bezel" placeholderString="Search Windows" usesSingleLineMode="YES" bezelStyle="round" id="31">
                             <font key="font" metaFont="system"/>
@@ -244,6 +245,18 @@
                             <action selector="hideWindow:" target="106" id="116"/>
                         </connections>
                     </button>
+                    <popUpButton verticalHuggingPriority="750" id="HcS-21-y1k">
+                        <rect key="frame" x="18" y="45" width="215" height="26"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="IH8-hx-eB7">
+                            <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                            <menu key="menu" title="OtherViews" id="Zbp-7h-4Gi"/>
+                        </popUpButtonCell>
+                        <connections>
+                            <action selector="connectionSelectionDidChange:" target="-2" id="QdS-g1-uSH"/>
+                        </connections>
+                    </popUpButton>
                 </subviews>
             </view>
         </window>

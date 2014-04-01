@@ -72,6 +72,10 @@
                                                  selector:@selector(tmuxControllerSessionWasRenamed:)
                                                      name:kTmuxControllerSessionWasRenamed
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(tmuxControllerRegistryDidChange:)
+                                                     name:kTmuxControllerRegistryDidChange
+                                                   object:nil];
     }
 
     return self;
@@ -84,6 +88,10 @@
 - (void)windowDidLoad
 {
     [super windowDidLoad];
+    [self tmuxControllerRegistryDidChange:nil];
+    if ([connectionsButton_ numberOfItems] > 0) {
+        [connectionsButton_ selectItemAtIndex:0];
+    }
     [sessionsTable_ setDelegate:self];
     [windowsTable_ setDelegate:self];
 }
@@ -248,7 +256,7 @@
 
 - (void)tmuxControllerSessionsDidChange:(NSNotification *)notification
 {
-    [sessionsTable_ setSessions:[notification object]];
+    [sessionsTable_ setSessions:[[self tmuxController] sessions]];
 }
 
 - (void)tmuxControllerWindowsDidChange:(NSNotification *)notification
@@ -290,9 +298,32 @@
     [[self tmuxController] listSessions];
 }
 
+- (void)tmuxControllerRegistryDidChange:(NSNotification *)notification {
+    NSString *previousSelection = [[[self currentClient] copy] autorelease];
+    [connectionsButton_.menu cancelTracking];
+    [connectionsButton_.cell dismissPopUp];
+    [connectionsButton_ removeAllItems];
+    [connectionsButton_ addItemsWithTitles:[[TmuxControllerRegistry sharedInstance] clientNames]];
+    if (previousSelection && [connectionsButton_ itemWithTitle:previousSelection]) {
+        [connectionsButton_ selectItemWithTitle:previousSelection];
+    } else if ([connectionsButton_ numberOfItems] > 0) {
+        [connectionsButton_ selectItemAtIndex:0];
+    }
+    [self connectionSelectionDidChange:nil];
+}
+
 - (TmuxController *)tmuxController
 {
-    return [[TmuxControllerRegistry sharedInstance] controllerForClient:@""];  // TODO: track the current client when multiples are supported
+    return [[TmuxControllerRegistry sharedInstance] controllerForClient:[self currentClient]];  // TODO: track the current client when multiples are supported
+}
+
+- (NSString *)currentClient {
+    return [[connectionsButton_ selectedItem] title];
+}
+
+- (IBAction)connectionSelectionDidChange:(id)sender {
+    [sessionsTable_ setSessions:[[self tmuxController] sessions]];
+    [self reloadWindows];
 }
 
 @end
