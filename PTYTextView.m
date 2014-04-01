@@ -333,6 +333,9 @@ static NSImage* alertImage;
     VT100GridCoord validationClickPoint_;
 
     iTermSelection *_oldSelection;
+    
+    // The most recent mouse-down was a "first mouse" (activated the window).
+    BOOL _mouseDownWasFirstMouse;
 }
 
 
@@ -3099,6 +3102,7 @@ NSMutableArray* screens=0;
 // Returns yes if [super mouseDown:event] should be run by caller.
 - (BOOL)mouseDownImpl:(NSEvent*)event
 {
+    _mouseDownWasFirstMouse = ([event eventNumber] == firstMouseEventNumber_);
     const BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
     const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
     const BOOL shiftPressed = ([event modifierFlags] & NSShiftKeyMask) != 0;
@@ -3169,7 +3173,7 @@ NSMutableArray* screens=0;
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
 
-    if ([event eventNumber] != firstMouseEventNumber_ &&   // Not first mouse in formerly non-key app
+    if (!_mouseDownWasFirstMouse &&                        // Not first mouse
         frontTextView == self &&                           // Is active session's textview
         ([self xtermMouseReporting]) &&                    // Xterm mouse reporting is on
         (locationInTextView.y > visibleRect.origin.y)) {   // Not inside the top margin
@@ -3207,7 +3211,7 @@ NSMutableArray* screens=0;
         }
     }
 
-    if ([event eventNumber] != firstMouseEventNumber_) {
+    if (!_mouseDownWasFirstMouse) {
         // Lock auto scrolling while the user is selecting text, but not for a first-mouse event
         // because drags are ignored for those.
         [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
@@ -3405,8 +3409,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"is a click in the window");
 
         BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
-        if (altPressed && [[PreferencePanel sharedInstance] optionClickMovesCursor]) {
+        if (altPressed &&
+            [[PreferencePanel sharedInstance] optionClickMovesCursor] &&
+            !_mouseDownWasFirstMouse) {
             // This moves the cursor, but not if mouse reporting is on for button clicks.
+            // It's also off for first mouse because of issue 2943 (alt-click to activate an app
+            // is used to order-back all of the previously active app's windows).
             VT100Terminal *terminal = [_dataSource terminal];
             switch ([terminal mouseMode]) {
                 case MOUSE_REPORTING_NORMAL:
