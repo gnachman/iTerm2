@@ -8,6 +8,7 @@
 
 #import "TmuxControllerRegistry.h"
 
+NSString *const kTmuxControllerRegistryDidChange = @"kTmuxControllerRegistryDidChange";
 
 @implementation TmuxControllerRegistry
 
@@ -29,22 +30,38 @@
     return self;
 }
 
-- (TmuxController *)controllerForClient:(TmuxClient *)client
+- (TmuxController *)controllerForClient:(NSString *)client
 {
     return [controllers_ objectForKey:client];
 }
 
-- (void)setController:(TmuxController *)controller forClient:(TmuxClient *)client
+- (NSString *)uniqueClientNameBasedOn:(NSString *)preferredName {
+    int i = 1;
+    NSString *candidate = preferredName;
+    while (controllers_[candidate]) {
+        i++;
+        candidate = [NSString stringWithFormat:@"%@ (%d)", preferredName, i];
+    }
+    return candidate;
+}
+
+- (void)setController:(TmuxController *)controller forClient:(NSString *)client
 {
     if (controller) {
         [controllers_ setObject:controller forKey:client];
     } else {
         [controllers_ removeObjectForKey:client];
     }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerRegistryDidChange
+                                                        object:client];
 }
 
 - (int)numberOfClients {
     return controllers_.count;
+}
+
+- (NSArray *)clientNames {
+    return [[controllers_ allKeys] sortedArrayUsingSelector:@selector(compare:)];
 }
 
 @end
