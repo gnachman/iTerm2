@@ -440,8 +440,7 @@ typedef enum {
     return buf;
 }
 
-- (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
-{
+- (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord {
     int cb;
     
     cb = button;
@@ -460,13 +459,12 @@ typedef enum {
     if (modflag & NSCommandKeyMask) {
         cb |= MOUSE_BUTTON_META_FLAG;
     }
-    char *buf = [self mouseReport:cb atX:(x + 1) Y:(y + 1)];
+    char *buf = [self mouseReport:cb atX:(coord.x + 1) Y:(coord.y + 1)];
     
     return [NSData dataWithBytes: buf length: strlen(buf)];
 }
 
-- (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
-{
+- (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord {
     int cb;
     
     if (self.mouseFormat == MOUSE_FORMAT_SGR) {
@@ -474,6 +472,9 @@ typedef enum {
         cb = button | MOUSE_BUTTON_SGR_RELEASE_FLAG;
     } else {
         // for 1000/1005/1015 mode
+        // To quote the xterm docs:
+        // The low two bits of C b encode button information:
+        // 0=MB1 pressed, 1=MB2 pressed, 2=MB3 pressed, 3=release.
         cb = 3;
     }
     
@@ -486,13 +487,12 @@ typedef enum {
     if (modflag & NSCommandKeyMask) {
         cb |= MOUSE_BUTTON_META_FLAG;
     }
-    char *buf = [self mouseReport:cb atX:(x + 1) Y:(y + 1)];
+    char *buf = [self mouseReport:cb atX:(coord.x + 1) Y:(coord.y + 1)];
     
     return [NSData dataWithBytes: buf length: strlen(buf)];
 }
 
-- (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
-{
+- (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord {
     int cb;
     
     if (button == MOUSE_BUTTON_NONE) {
@@ -512,7 +512,7 @@ typedef enum {
     if (modflag & NSCommandKeyMask) {
         cb |= MOUSE_BUTTON_META_FLAG;
     }
-    char *buf = [self mouseReport:(32 + cb) atX:(x + 1) Y:(y + 1)];
+    char *buf = [self mouseReport:(32 + cb) atX:(coord.x + 1) Y:(coord.y + 1)];
     
     return [NSData dataWithBytes: buf length: strlen(buf)];
 }

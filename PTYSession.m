@@ -97,8 +97,7 @@ typedef enum {
 @property(atomic, assign) PTYSessionTmuxMode tmuxMode;
 @end
 
-@implementation PTYSession
-{
+@implementation PTYSession {
     // name can be changed by the host.
     NSString *_name;
 
@@ -213,6 +212,10 @@ typedef enum {
     // onto the background of whichever view needs a background. This ensures
     // the tesselation is consistent.
     NSImage *_patternedImage;
+
+    // Mouse reporting state
+    VT100GridCoord _lastReportedCoord;
+    BOOL _reportingMouseDown;
 }
 
 - (id)init {
@@ -4245,6 +4248,141 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)textViewDidBecomeFirstResponder
 {
     [[self tab] setActiveSession:self];
+}
+
+- (BOOL)textViewReportMouseEvent:(NSEventType)eventType
+                       modifiers:(NSUInteger)modifiers
+                          button:(MouseButtonNumber)button
+                      coordinate:(VT100GridCoord)coord
+                          deltaY:(CGFloat)deltaY {
+    DLog(@"Report event type %lu, modifiers=%lu, button=%d, coord=%@",
+         (unsigned long)eventType, (unsigned long)modifiers, button,
+         VT100GridCoordDescription(coord));
+    
+    switch (eventType) {
+        case NSLeftMouseDown:
+        case NSRightMouseDown:
+        case NSOtherMouseDown:
+            switch ([_terminal mouseMode]) {
+                case MOUSE_REPORTING_NORMAL:
+                case MOUSE_REPORTING_BUTTON_MOTION:
+                case MOUSE_REPORTING_ALL_MOTION:
+                    _reportingMouseDown = YES;
+                    _lastReportedCoord = coord;
+                    [self writeTask:[_terminal.output mousePress:button
+                                                   withModifiers:modifiers
+                                                              at:coord]];
+                    return YES;
+                    
+                case MOUSE_REPORTING_NONE:
+                case MOUSE_REPORTING_HILITE:
+                    break;
+            }
+            break;
+            
+        case NSLeftMouseUp:
+        case NSRightMouseUp:
+        case NSOtherMouseUp:
+            if (_reportingMouseDown) {
+                _reportingMouseDown = NO;
+                _lastReportedCoord = VT100GridCoordMake(-1, -1);
+                
+                switch ([_terminal mouseMode]) {
+                    case MOUSE_REPORTING_NORMAL:
+                    case MOUSE_REPORTING_BUTTON_MOTION:
+                    case MOUSE_REPORTING_ALL_MOTION:
+                        _lastReportedCoord = coord;
+                        [self writeTask:[_terminal.output mouseRelease:button
+                                                         withModifiers:modifiers
+                                                                    at:coord]];
+                        return YES;
+                        
+                    case MOUSE_REPORTING_NONE:
+                    case MOUSE_REPORTING_HILITE:
+                        break;
+                }
+            }
+            break;
+            
+            
+        case NSMouseMoved:
+            if ([_terminal mouseMode] == MOUSE_REPORTING_ALL_MOTION &&
+                !VT100GridCoordEquals(coord, _lastReportedCoord)) {
+                _lastReportedCoord = coord;
+                [self writeTask:[_terminal.output mouseMotion:MOUSE_BUTTON_NONE
+                                                withModifiers:modifiers
+                                                           at:coord]];
+                return YES;
+            }
+            break;
+            
+        case NSLeftMouseDragged:
+        case NSRightMouseDragged:
+        case NSOtherMouseDragged:
+            if (_reportingMouseDown &&
+                !VT100GridCoordEquals(coord, _lastReportedCoord)) {
+                _lastReportedCoord = coord;
+                
+                switch ([_terminal mouseMode]) {
+                    case MOUSE_REPORTING_BUTTON_MOTION:
+                    case MOUSE_REPORTING_ALL_MOTION:
+                        [self writeTask:[_terminal.output mouseMotion:button
+                                                        withModifiers:modifiers
+                                                                   at:coord]];
+                        // Fall through
+                    case MOUSE_REPORTING_NORMAL:
+                        // Don't do selection when mouse reporting during a drag, even if the drag
+                        // is not reported (the clicks are).
+                        return YES;
+                        
+                    case MOUSE_REPORTING_NONE:
+                    case MOUSE_REPORTING_HILITE:
+                        break;
+                }
+            }
+            break;
+            
+        case NSScrollWheel:
+            switch ([_terminal mouseMode]) {
+                case MOUSE_REPORTING_NORMAL:
+                case MOUSE_REPORTING_BUTTON_MOTION:
+                case MOUSE_REPORTING_ALL_MOTION:
+                    if (deltaY != 0) {
+                        [self writeTask:[_terminal.output mousePress:button
+                                                       withModifiers:modifiers
+                                                                  at:coord]];
+                        return YES;
+                    }
+                    break;
+
+                case MOUSE_REPORTING_NONE:
+                    if ([[PreferencePanel sharedInstance] alternateMouseScroll] &&
+                        [_screen showingAlternateScreen]) {
+                        NSData *arrowKeyData = nil;
+                        if (deltaY > 0) {
+                            arrowKeyData = [_terminal.output keyArrowUp:modifiers];
+                        } else if (deltaY < 0) {
+                            arrowKeyData = [_terminal.output keyArrowDown:modifiers];
+                        }
+                        if (arrowKeyData) {
+                            for (int i = 0; i < ceil(fabs(deltaY)); i++) {
+                                [self writeTask:arrowKeyData];
+                            }
+                        }
+                        return YES;
+                    }
+                    break;
+
+                case MOUSE_REPORTING_HILITE:
+                    break;
+            }
+            break;
+                
+        default:
+            assert(NO);
+            break;
+    }
+    return NO;
 }
 
 - (void)sendEscapeSequence:(NSString *)text

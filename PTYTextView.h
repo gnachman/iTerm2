@@ -9,6 +9,7 @@
 #import "Trouter.h"
 #import "iTerm.h"
 #import "iTermColorMap.h"
+#import "VT100Output.h"
 #include <sys/time.h>
 
 @class CRunStorage;
@@ -123,6 +124,13 @@ typedef enum {
 // If the textview isn't in the key window, the delegate can return YES in this
 // method to cause the cursor to be drawn as though it were key.
 - (BOOL)textViewShouldDrawFilledInCursor;
+
+// Send the appropriate mouse-reporting escape codes.
+- (BOOL)textViewReportMouseEvent:(NSEventType)eventType
+                       modifiers:(NSUInteger)modifiers
+                          button:(MouseButtonNumber)button
+                      coordinate:(VT100GridCoord)coord
+                          deltaY:(CGFloat)deltaY;
 @end
 
 @interface PTYTextView : NSView <

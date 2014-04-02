@@ -153,12 +153,10 @@ static NSImage* alertImage;
     BOOL mouseDownOnImage;
     ImageInfo *theImage;
     NSEvent *mouseDownEvent;
-    int lastReportedX_, lastReportedY_;
 
     // Find cursor. Only the start coordinate is used. Is nil if there is no cursor.
     SearchResult *_lastFindCoord;
 
-    BOOL reportingMouseDown;
 
     // blinking cursor
     BOOL showCursor;
@@ -2483,51 +2481,9 @@ NSMutableArray* screens=0;
 }
 
 // TODO: disable other, right mouse for inactive panes
-- (void)otherMouseDown: (NSEvent *) event
+- (void)otherMouseDown:(NSEvent *)event
 {
-    NSPoint locationInWindow, locationInTextView;
-    locationInWindow = [event locationInWindow];
-    locationInTextView = [self convertPoint: locationInWindow fromView: nil];
-
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if ([self xtermMouseReporting] &&
-        locationInTextView.y > visibleRect.origin.y) {
-        // Mouse reporting is on
-        int rx, ry;
-        rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
-        if (rx < 0) {
-            rx = -1;
-        }
-        if (ry < 0) {
-            ry = -1;
-        }
-        VT100Terminal *terminal = [_dataSource terminal];
-
-        int buttonNumber = [event buttonNumber];
-        if (buttonNumber == 2) {
-            // convert NSEvent's "middle button" to X11's one
-            buttonNumber = MOUSE_BUTTON_MIDDLE;
-        }
-
-        switch ([terminal mouseMode]) {
-            case MOUSE_REPORTING_NORMAL:
-            case MOUSE_REPORTING_BUTTON_MOTION:
-            case MOUSE_REPORTING_ALL_MOTION:
-                reportingMouseDown = YES;
-                [_delegate writeTask:[terminal.output mousePress:buttonNumber
-                                            withModifiers:[event modifierFlags]
-                                                      atX:rx
-                                                        Y:ry]];
-                return;
-                break;
-
-            case MOUSE_REPORTING_NONE:
-            case MOUSE_REPORTING_HILITE:
-                // fall through
-                break;
-        }
-    }
+    [self reportMouseEvent:event];
 
     [pointer_ mouseDown:event
             withTouches:numTouches_
@@ -2536,47 +2492,10 @@ NSMutableArray* screens=0;
 
 - (void)otherMouseUp:(NSEvent *)event
 {
-    NSPoint locationInWindow, locationInTextView;
-    locationInWindow = [event locationInWindow];
-    locationInTextView = [self convertPoint: locationInWindow fromView: nil];
-
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([self xtermMouseReporting]) && reportingMouseDown) {
-        reportingMouseDown = NO;
-        int rx, ry;
-        rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
-        if (rx < 0) {
-            rx = -1;
-        }
-        if (ry < 0) {
-            ry = -1;
-        }
-        VT100Terminal *terminal = [_dataSource terminal];
-
-        int buttonNumber = [event buttonNumber];
-        if (buttonNumber == 2) {
-            // convert NSEvent's "middle button" to X11's one
-            buttonNumber = MOUSE_BUTTON_MIDDLE;
-        }
-
-        switch ([terminal mouseMode]) {
-            case MOUSE_REPORTING_NORMAL:
-            case MOUSE_REPORTING_BUTTON_MOTION:
-            case MOUSE_REPORTING_ALL_MOTION:
-                [_delegate writeTask:[terminal.output mouseRelease:buttonNumber
-                                             withModifiers:[event modifierFlags]
-                                                       atX:rx
-                                                         Y:ry]];
-                return;
-                break;
-
-            case MOUSE_REPORTING_NONE:
-            case MOUSE_REPORTING_HILITE:
-                // fall through
-                break;
-        }
+    if ([self reportMouseEvent:event]) {
+        return;
     }
+
     if (!mouseDownIsThreeFingerClick_) {
         DLog(@"Sending third button press up to super");
         [super otherMouseUp:event];
@@ -2587,48 +2506,8 @@ NSMutableArray* screens=0;
 
 - (void)otherMouseDragged:(NSEvent *)event
 {
-    NSPoint locationInWindow, locationInTextView;
-    locationInWindow = [event locationInWindow];
-    locationInTextView = [self convertPoint: locationInWindow fromView: nil];
-
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([self xtermMouseReporting]) &&
-        (locationInTextView.y > visibleRect.origin.y) &&
-        reportingMouseDown) {
-        // Mouse reporting is on.
-        int rx, ry;
-        rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
-        if (rx < 0) {
-            rx = -1;
-        }
-        if (ry < 0) {
-            ry = -1;
-        }
-        VT100Terminal *terminal = [_dataSource terminal];
-
-        int buttonNumber = [event buttonNumber];
-        if (buttonNumber == 2) {
-            // convert NSEvent's "middle button" to X11's one
-            buttonNumber = MOUSE_BUTTON_MIDDLE;
-        }
-
-        switch ([terminal mouseMode]) {
-            case MOUSE_REPORTING_NORMAL:
-            case MOUSE_REPORTING_BUTTON_MOTION:
-            case MOUSE_REPORTING_ALL_MOTION:
-                [_delegate writeTask:[terminal.output mouseMotion:buttonNumber
-                                            withModifiers:[event modifierFlags]
-                                                      atX:rx
-                                                        Y:ry]];
-                return;
-                break;
-
-            case MOUSE_REPORTING_NONE:
-            case MOUSE_REPORTING_HILITE:
-                // fall through
-                break;
-        }
+    if ([self reportMouseEvent:event]) {
+        return;
     }
     [super otherMouseDragged:event];
 }
@@ -2642,36 +2521,8 @@ NSMutableArray* screens=0;
     if ([pointer_ mouseDown:event withTouches:numTouches_ ignoreOption:[_delegate xtermMouseReporting]]) {
         return;
     }
-    NSPoint locationInWindow, locationInTextView;
-    locationInWindow = [event locationInWindow];
-    locationInTextView = [self convertPoint: locationInWindow fromView: nil];
-
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([self xtermMouseReporting]) &&
-        (locationInTextView.y > visibleRect.origin.y)) {
-        int rx, ry;
-        rx = (locationInTextView.x-MARGIN - visibleRect.origin.x)/charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y)/lineHeight;
-        if (rx < 0) rx = -1;
-        if (ry < 0) ry = -1;
-        VT100Terminal *terminal = [_dataSource terminal];
-
-        switch ([terminal mouseMode]) {
-            case MOUSE_REPORTING_NORMAL:
-            case MOUSE_REPORTING_BUTTON_MOTION:
-            case MOUSE_REPORTING_ALL_MOTION:
-                reportingMouseDown = YES;
-                [_delegate writeTask:[terminal.output mousePress:MOUSE_BUTTON_RIGHT
-                                           withModifiers:[event modifierFlags]
-                                                     atX:rx
-                                                       Y:ry]];
-                return;
-                break;
-            case MOUSE_REPORTING_NONE:
-            case MOUSE_REPORTING_HILITE:
-                // fall through
-                break;
-        }
+    if ([self reportMouseEvent:event]) {
+        return;
     }
 
     [super rightMouseDown:event];
@@ -2686,84 +2537,16 @@ NSMutableArray* screens=0;
     if ([pointer_ mouseUp:event withTouches:numTouches_]) {
         return;
     }
-    NSPoint locationInWindow, locationInTextView;
-    locationInWindow = [event locationInWindow];
-    locationInTextView = [self convertPoint: locationInWindow fromView: nil];
-
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([self xtermMouseReporting]) &&
-        reportingMouseDown) {
-        // Mouse reporting is on
-        reportingMouseDown = NO;
-        int rx, ry;
-        rx = (locationInTextView.x-MARGIN - visibleRect.origin.x)/charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y)/lineHeight;
-        if (rx < 0) {
-            rx = -1;
-        }
-        if (ry < 0) {
-            ry = -1;
-        }
-        VT100Terminal *terminal = [_dataSource terminal];
-
-        switch ([terminal mouseMode]) {
-            case MOUSE_REPORTING_NORMAL:
-            case MOUSE_REPORTING_BUTTON_MOTION:
-            case MOUSE_REPORTING_ALL_MOTION:
-                [_delegate writeTask:[terminal.output mouseRelease:MOUSE_BUTTON_RIGHT
-                                             withModifiers:[event modifierFlags]
-                                                       atX:rx
-                                                         Y:ry]];
-                return;
-                break;
-
-            case MOUSE_REPORTING_NONE:
-            case MOUSE_REPORTING_HILITE:
-                // fall through
-                break;
-        }
+    if ([self reportMouseEvent:event]) {
+        return;
     }
     [super rightMouseUp:event];
 }
 
 - (void)rightMouseDragged:(NSEvent *)event
 {
-    NSPoint locationInWindow, locationInTextView;
-    locationInWindow = [event locationInWindow];
-    locationInTextView = [self convertPoint: locationInWindow fromView: nil];
-
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([self xtermMouseReporting]) &&
-        (locationInTextView.y > visibleRect.origin.y) &&
-        reportingMouseDown) {
-        // Mouse reporting is on.
-        int rx, ry;
-        rx = (locationInTextView.x -MARGIN - visibleRect.origin.x) / charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
-        if (rx < 0) {
-            rx = -1;
-        }
-        if (ry < 0) {
-            ry = -1;
-        }
-        VT100Terminal *terminal = [_dataSource terminal];
-
-        switch ([terminal mouseMode]) {
-            case MOUSE_REPORTING_NORMAL:
-            case MOUSE_REPORTING_BUTTON_MOTION:
-            case MOUSE_REPORTING_ALL_MOTION:
-                [_delegate writeTask:[terminal.output mouseMotion:MOUSE_BUTTON_RIGHT
-                                            withModifiers:[event modifierFlags]
-                                                      atX:rx
-                                                        Y:ry]];
-                return;
-                break;
-
-            case MOUSE_REPORTING_NONE:
-            case MOUSE_REPORTING_HILITE:
-                // fall through
-                break;
-        }
+    if ([self reportMouseEvent:event]) {
+        return;
     }
     [super rightMouseDragged:event];
 }
@@ -2775,60 +2558,8 @@ NSMutableArray* screens=0;
     locationInWindow = [event locationInWindow];
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([self xtermMouseReporting]) &&
-        (locationInTextView.y > visibleRect.origin.y)) {
-        // Mouse reporting is on.
-        int rx, ry;
-        rx = (locationInTextView.x-MARGIN - visibleRect.origin.x) / charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
-        if (rx < 0) {
-            rx = -1;
-        }
-        if (ry < 0) {
-            ry = -1;
-        }
-        VT100Terminal *terminal = [_dataSource terminal];
-
-        int buttonNumber;
-        if ([event deltaY] > 0)
-            buttonNumber = MOUSE_BUTTON_SCROLLDOWN;
-        else
-            buttonNumber = MOUSE_BUTTON_SCROLLUP;
-
-        switch ([terminal mouseMode]) {
-            case MOUSE_REPORTING_NORMAL:
-            case MOUSE_REPORTING_BUTTON_MOTION:
-            case MOUSE_REPORTING_ALL_MOTION:
-                if ([event deltaY] != 0) {
-                    [_delegate writeTask:[terminal.output mousePress:buttonNumber
-                                               withModifiers:[event modifierFlags]
-                                                         atX:rx
-                                                           Y:ry]];
-                    return;
-                }
-                break;
-            case MOUSE_REPORTING_NONE:
-                if ([[PreferencePanel sharedInstance] alternateMouseScroll] &&
-                    [_dataSource showingAlternateScreen]) {
-                    CGFloat deltaY = [event deltaY];
-                    NSData *keyMove = nil;
-                    if (deltaY > 0) {
-                        keyMove = [terminal.output keyArrowUp:[event modifierFlags]];
-                    } else if (deltaY < 0) {
-                        keyMove = [terminal.output keyArrowDown:[event modifierFlags]];
-                    }
-                    if (keyMove) {
-                      for (int i = 0; i < ceil(fabs(deltaY)); i++) {
-                          [_delegate writeTask:keyMove];
-                      }
-                    }
-                    return;
-                }
-            case MOUSE_REPORTING_HILITE:
-                // fall through
-                break;
-        }
+    if ([self reportMouseEvent:event]) {
+        return;
     }
 
     [super scrollWheel:event];
@@ -3028,6 +2759,13 @@ NSMutableArray* screens=0;
     }
 }
 
+- (VT100GridCoord)coordForPointInWindow:(NSPoint)point
+{
+    // TODO: Merge this function with windowLocationToRowCol.
+    NSPoint p = [self windowLocationToRowCol:point];
+    return VT100GridCoordMake(p.x, p.y);
+}
+
 - (NSPoint)windowLocationToRowCol:(NSPoint)locationInWindow
 {
     NSPoint locationInTextView = [self convertPoint:locationInWindow fromView: nil];
@@ -3069,19 +2807,32 @@ NSMutableArray* screens=0;
 // effect of setting mouseDownIsThreeFingerClick_, which (when set) indicates
 // that the current mouse-down state is "special" and disables certain actions
 // such as dragging.
+// The NSEvent method for creating an event can't be used because it doesn't let you set the
+// buttonNumber field.
 - (void)emulateThirdButtonPressDown:(BOOL)isDown withEvent:(NSEvent *)event {
     if (isDown) {
         mouseDownIsThreeFingerClick_ = isDown;
         DLog(@"emulateThirdButtonPressDown - set mouseDownIsThreeFingerClick=YES");
     }
+
     CGEventRef cgEvent = [event CGEvent];
-    CGEventRef fakeCgEvent = CGEventCreateMouseEvent(NULL,
+    CGEventSourceRef source = CGEventCreateSourceFromEvent(cgEvent);
+    CGPoint globalCoord = CGEventGetLocation(cgEvent);
+    // Because the fakeEvent will have a nil window, adjust the coordinate to report a proper
+    // locationInWindow. Not quite sure what's going on here, but this works :/.
+    NSPoint windowOrigin = self.window.frame.origin;
+    globalCoord.x -= windowOrigin.x;
+    globalCoord.y -= self.window.screen.frame.origin.y;
+    globalCoord.y += windowOrigin.y;
+    CGEventRef fakeCgEvent = CGEventCreateMouseEvent(source,
                                                      isDown ? kCGEventOtherMouseDown : kCGEventOtherMouseUp,
-                                                     CGEventGetLocation(cgEvent),
+                                                     globalCoord,
                                                      2);
+    CFRelease(source);
     CGEventSetIntegerValueField(fakeCgEvent, kCGMouseEventClickState, [event clickCount]);
     CGEventSetFlags(fakeCgEvent, CGEventGetFlags(cgEvent));
     NSEvent *fakeEvent = [NSEvent eventWithCGEvent:fakeCgEvent];
+
     int saved = numTouches_;
     numTouches_ = 1;
     if (isDown) {
@@ -3171,44 +2922,8 @@ NSMutableArray* screens=0;
         }
     }
 
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-
-    if (!_mouseDownWasFirstMouse &&                        // Not first mouse
-        frontTextView == self &&                           // Is active session's textview
-        ([self xtermMouseReporting]) &&                    // Xterm mouse reporting is on
-        (locationInTextView.y > visibleRect.origin.y)) {   // Not inside the top margin
-        // Mouse reporting is on.
-        int rx, ry;
-        rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
-        if (rx < 0) {
-            rx = -1;
-        }
-        if (ry < 0) {
-            ry = -1;
-        }
-        lastReportedX_ = rx;
-        lastReportedY_ = ry;
-        VT100Terminal *terminal = [_dataSource terminal];
-
-        switch ([terminal mouseMode]) {
-            case MOUSE_REPORTING_NORMAL:
-            case MOUSE_REPORTING_BUTTON_MOTION:
-            case MOUSE_REPORTING_ALL_MOTION:
-                DebugLog(@"Do xterm mouse reporting");
-                reportingMouseDown = YES;
-                [_delegate writeTask:[terminal.output mousePress:MOUSE_BUTTON_LEFT
-                                            withModifiers:[event modifierFlags]
-                                                      atX:rx
-                                                        Y:ry]];
-                return NO;
-                break;
-
-            case MOUSE_REPORTING_NONE:
-            case MOUSE_REPORTING_HILITE:
-                // fall through
-                break;
-        }
+    if ([self reportMouseEvent:event]) {
+        return NO;
     }
 
     if (!_mouseDownWasFirstMouse) {
@@ -3330,9 +3045,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     selectionScrollDirection = 0;
 
-    NSPoint locationInWindow = [event locationInWindow];
-    NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
-
     BOOL isUnshiftedSingleClick = ([event clickCount] < 2 &&
                                    !mouseDragged &&
                                    !([event modifierFlags] & NSShiftKeyMask));
@@ -3341,52 +3053,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                            [[PreferencePanel sharedInstance] cmdSelection]);
 
     // Send mouse up event to host if xterm mouse reporting is on
-    if (frontTextView == self &&
-        [self xtermMouseReporting] &&
-        reportingMouseDown) {
-        // Mouse reporting is on.
-        reportingMouseDown = NO;
-        int rx, ry;
-        NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-        rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
-        if (rx < 0) {
-            rx = -1;
+    if ([self reportMouseEvent:event]) {
+        if (willFollowLink) {
+            // This is a special case. Cmd-click is treated like alt-click at the protocol
+            // level (because we use alt to disable mouse reporting, unfortunately). Few
+            // apps interpret alt-clicks specially, and we really want to handle cmd-click
+            // on links even when mouse reporting is on. Link following has to be done on
+            // mouse up to allow the user to drag links and to cancel accidental clicks (by
+            // doing mouseUp far away from mouseDown). So we report the cmd-click as an
+            // alt-click and then open the link. Note that cmd-alt-click isn't handled here
+            // because you won't get here if alt is pressed. Note that openTargetWithEvent:
+            // may not do anything if the pointer isn't over a clickable string.
+            [self openTargetWithEvent:event];
         }
-        if (ry < 0) {
-            ry = -1;
-        }
-        lastReportedX_ = rx;
-        lastReportedY_ = ry;
-        VT100Terminal *terminal = [_dataSource terminal];
-
-        switch ([terminal mouseMode]) {
-            case MOUSE_REPORTING_NORMAL:
-            case MOUSE_REPORTING_BUTTON_MOTION:
-            case MOUSE_REPORTING_ALL_MOTION:
-                [_delegate writeTask:[terminal.output mouseRelease:MOUSE_BUTTON_LEFT
-                                              withModifiers:[event modifierFlags]
-                                                        atX:rx
-                                                          Y:ry]];
-                if (willFollowLink) {
-                    // This is a special case. Cmd-click is treated like alt-click at the protocol
-                    // level (because we use alt to disable mouse reporting, unfortunately). Few
-                    // apps interpret alt-clicks specially, and we really want to handle cmd-click
-                    // on links even when mouse reporting is on. Link following has to be done on
-                    // mouse up to allow the user to drag links and to cancel accidental clicks (by
-                    // doing mouseUp far away from mouseDown). So we report the cmd-click as an
-                    // alt-click and then open the link. Note that cmd-alt-click isn't handled here
-                    // because you won't get here if alt is pressed. Note that openTargetWithEvent:
-                    // may not do anything if the pointer isn't over a clickable string.
-                    [self openTargetWithEvent:event];
-                }
-                return;
-
-            case MOUSE_REPORTING_NONE:
-            case MOUSE_REPORTING_HILITE:
-                // fall through
-                break;
-        }
+        return;
     }
 
     // Unlock auto scrolling as the user as finished selecting text
@@ -3468,36 +3148,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)mouseMoved:(NSEvent *)event
 {
     DLog(@"mouseMoved");
-    VT100Terminal *terminal = [_dataSource terminal];
     [self updateUnderlinedURLs:event];
-    if (![self xtermMouseReporting]) {
-        DLog(@"Mouse move event is dispatched but xtermMouseReporting is not enabled");
-        return;
-    }
-    if ([terminal mouseMode] != MOUSE_REPORTING_ALL_MOTION) {
-        DLog(@"Mouse move event is dispatched but mouseMode is not MOUSE_REPORTING_ALL_MOTION");
-        return;
-    }
-    NSPoint locationInWindow = [event locationInWindow];
-    NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
-    int rx, ry;
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
-    ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
-    if (rx < 0) {
-        rx = -1;
-    }
-    if (ry < 0) {
-        ry = -1;
-    }
-    if (rx != lastReportedX_ || ry != lastReportedY_) {
-        lastReportedX_ = rx;
-        lastReportedY_ = ry;
-        [_delegate writeTask:[terminal.output mouseMotion:MOUSE_BUTTON_NONE
-                                     withModifiers:[event modifierFlags]
-                                               atX:rx
-                                                 Y:ry]];
-    }
+    [self reportMouseEvent:event];
 }
 
 - (void)mouseDragged:(NSEvent *)event
@@ -3536,41 +3188,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
 
-    if (([self xtermMouseReporting]) && reportingMouseDown) {
-        // Mouse reporting is on.
-        int rx, ry;
-        NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-        rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
-        if (rx < 0) {
-            rx = -1;
-        }
-        if (ry < 0) {
-            ry = -1;
-        }
-        if (rx != lastReportedX_ || ry != lastReportedY_) {
-            lastReportedX_ = rx;
-            lastReportedY_ = ry;
-            VT100Terminal *terminal = [_dataSource terminal];
-
-            switch ([terminal mouseMode]) {
-                case MOUSE_REPORTING_BUTTON_MOTION:
-                case MOUSE_REPORTING_ALL_MOTION:
-                    [_delegate writeTask:[terminal.output mouseMotion:MOUSE_BUTTON_LEFT
-                                                 withModifiers:[event modifierFlags]
-                                                           atX:rx
-                                                             Y:ry]];
-                case MOUSE_REPORTING_NORMAL:
-                    DLog(@"Mouse drag. selection=%@", _selection);
-                    return;
-                    break;
-
-                case MOUSE_REPORTING_NONE:
-                case MOUSE_REPORTING_HILITE:
-                    // fall through
-                    break;
-            }
-        }
+    if ([self reportMouseEvent:event]) {
+        return;
     }
 
     BOOL pressingCmdOnly = ([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask;
@@ -8805,6 +8424,65 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)colorMap:(iTermColorMap *)colorMap dimmingAmountDidChangeTo:(double)dimmingAmount {
     self.cachedBackgroundColor = nil;
     [[self superview] setNeedsDisplay:YES];
+}
+
+#pragma mark - Mouse reporting
+
+- (BOOL)shouldReportMouseEvent:(NSEvent *)event at:(NSPoint)point {
+    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+    if (point.y < visibleRect.origin.y) {
+        return NO;
+    }
+    if (event.type == NSLeftMouseDown && _mouseDownWasFirstMouse) {
+        return NO;
+    }
+    PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
+    return (frontTextView == self && [self xtermMouseReporting]);
+}
+
+- (MouseButtonNumber)mouseReportingButtonNumberForEvent:(NSEvent *)event {
+    if (event.type == NSLeftMouseDragged ||
+        event.type == NSLeftMouseDown ||
+        event.type == NSLeftMouseUp) {
+        return MOUSE_BUTTON_LEFT;
+    }
+
+    if (event.type == NSScrollWheel) {
+        if ([event deltaY] > 0) {
+            return MOUSE_BUTTON_SCROLLDOWN;
+        } else {
+            return MOUSE_BUTTON_SCROLLUP;
+        }
+    }
+    
+    MouseButtonNumber buttonNumber = (MouseButtonNumber) [event buttonNumber];
+    if (buttonNumber == 2) {
+        // convert NSEvent's "middle button" to X11's middle button number
+        buttonNumber = MOUSE_BUTTON_MIDDLE;
+    }
+    
+    return buttonNumber;
+}
+
+// Returns YES if the click was reported.
+- (BOOL)reportMouseEvent:(NSEvent *)event {
+    NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+
+    if (![self shouldReportMouseEvent:event at:point]) {
+        return NO;
+    }
+    
+    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+    VT100GridCoord coord = VT100GridCoordMake((point.x - MARGIN - visibleRect.origin.x) / charWidth,
+                                              (point.y - visibleRect.origin.y) / lineHeight);
+    coord.x = MAX(0, coord.x);
+    coord.y = MAX(0, coord.y);
+    
+    return [_delegate textViewReportMouseEvent:event.type
+                                     modifiers:event.modifierFlags
+                                        button:[self mouseReportingButtonNumberForEvent:event]
+                                    coordinate:coord
+                                        deltaY:[event deltaY]];
 }
 
 @end
