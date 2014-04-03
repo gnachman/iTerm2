@@ -3,6 +3,8 @@
 //
 
 #import "iTermRemotePreferences.h"
+#import "iTermWarning.h"
+#import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 
 static NSString *const kLoadPrefsFromCustomFolderKey = @"LoadPrefsFromCustomFolder";
@@ -16,7 +18,21 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
     BOOL _haveTriedToLoadRemotePrefs;
 }
 
-+ (BOOL)loadingPrefsFromCustomFolder
++ (instancetype)sharedInstance {
+    static id instance;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        instance = [[self alloc] init];
+    });
+    return instance;
+}
+
+- (void)dealloc {
+    [_savedRemotePrefs release];
+    [super dealloc];
+}
+
+- (BOOL)loadingPrefsFromCustomFolder
 {
     NSNumber *n =
         [[NSUserDefaults standardUserDefaults] objectForKey:kLoadPrefsFromCustomFolderKey];
@@ -24,18 +40,25 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
 }
 
 // Returns a URL or containing folder
-+ (NSString *)customFolderOrURL {
+- (NSString *)customFolderOrURL {
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    NSString *theString = [userDefaults objectForKey:kPrefsCustomFolderKey];
+    return [userDefaults objectForKey:kPrefsCustomFolderKey];
+}
+
+- (NSString *)expandedCustomFolderOrURL {
+    NSString *theString = [self customFolderOrURL];
     return theString ? [theString stringByExpandingTildeInPath] : @"";
 }
 
+- (void)setCustomFolderOrURL:(NSString *)customLocation {
+    [[NSUserDefaults standardUserDefaults] setObject:customLocation forKey:kPrefsCustomFolderKey];
+}
+
 // Returns a URL or filename
-+ (NSString *)remotePrefsLocation
+- (NSString *)remotePrefsLocation
 {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    NSString *folder = [self customFolderOrURL];
-    NSString *filename = [[self class] prefsFilenameWithBaseDir:folder];
+    NSString *folder = [self expandedCustomFolderOrURL];
+    NSString *filename = [self prefsFilenameWithBaseDir:folder];
     if ([folder stringIsUrlLike]) {
         filename = folder;
     } else {
@@ -44,13 +67,13 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
     return filename;
 }
 
-+ (NSString *)prefsFilenameWithBaseDir:(NSString *)base
+- (NSString *)prefsFilenameWithBaseDir:(NSString *)base
 {
     return [NSString stringWithFormat:@"%@/%@.plist",
            base, [[NSBundle mainBundle] bundleIdentifier]];
 }
 
-+ (BOOL)preferenceKeyIsSyncable:(NSString *)key
+- (BOOL)preferenceKeyIsSyncable:(NSString *)key
 {
     NSArray *exemptKeys = @[ @"LoadPrefsFromCustomFolder",
                              kPrefsCustomFolderKey,
@@ -62,7 +85,7 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
             ![key hasPrefix:@"UK"];
 }
 
-+ (NSDictionary *)freshCopyOfRemotePreferences
+- (NSDictionary *)freshCopyOfRemotePreferences
 {
     if (![self loadingPrefsFromCustomFolder]) {
         return nil;
@@ -121,7 +144,7 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
     return remotePrefs;
 }
 
-+ (NSString *)localPrefsFilename {
+- (NSString *)localPrefsFilename {
     NSString *prefDir = [[NSHomeDirectory()
                           stringByAppendingPathComponent:@"Library"]
                          stringByAppendingPathComponent:@"Preferences"];
@@ -129,16 +152,72 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
                                                     [[NSBundle mainBundle] bundleIdentifier]]];
 }
 
-+ (BOOL)folderIsWritable:(NSString *)path {
+- (BOOL)folderIsWritable:(NSString *)path {
     NSString *fullPath = [path stringByExpandingTildeInPath];
     return [[NSFileManager defaultManager] directoryIsWritable:fullPath];
 }
 
-#pragma mark - Instance methods
+- (BOOL)remoteLocationIsValid
+{
+    NSString *remoteLocation = [self customFolderOrURL];
+    if ([remoteLocation stringIsUrlLike]) {
+        // URLs are too expensive to check, so just make sure it's reasonably
+        // well formed.
+        return [NSURL URLWithString:remoteLocation] != nil;
+    }
+    return [self folderIsWritable:remoteLocation];
+}
 
-- (void)dealloc {
-    [_savedRemotePrefs release];
-    [super dealloc];
+- (void)saveLocalUserDefaultsToRemotePrefs
+{
+    if ([self remotePrefsHaveChanged]) {
+        NSString *theTitle =
+            [NSString stringWithFormat:@"Preferences at %@ changed since iTerm2 started. "
+                                       @"Overwrite it?",
+                                       [self customFolderOrURL]];
+        if ([iTermWarning showWarningWithTitle:theTitle actions:@[ @"Overwrite",
+                                                                   @"Discard Local Changes" ]
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent] == kiTermWarningSelection1) {
+            return;
+        }
+    }
+    
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    
+    NSString *folder = [self expandedCustomFolderOrURL];
+    if ([folder stringIsUrlLike]) {
+        NSString *informativeText =
+            @"To make it available, first quit iTerm2 and then manually "
+            @"copy ~/Library/Preferences/com.googlecode.iterm2.plist to "
+            @"your hosting provider.";
+        [[NSAlert alertWithMessageText:@"Sorry, preferences cannot be copied to a URL by iTerm2."
+                         defaultButton:@"OK"
+                       alternateButton:nil
+                           otherButton:nil
+             informativeTextWithFormat:@"%@", informativeText] runModal];
+        return;
+    }
+    
+    NSString *filename = [self prefsFilenameWithBaseDir:folder];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    
+    // Copy fails if the destination exists.
+    [fileManager removeItemAtPath:filename error:nil];
+    
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSDictionary *myDict =
+    [userDefaults persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
+    BOOL isOk;
+    isOk = [myDict writeToFile:filename atomically:YES];
+    if (!isOk) {
+        [[NSAlert alertWithMessageText:@"Failed to copy preferences to custom directory."
+                         defaultButton:@"OK"
+                       alternateButton:nil
+                           otherButton:nil
+             informativeTextWithFormat:@"Tried to copy %@ to %@",
+          [self remotePrefsLocation], filename] runModal];
+    }
 }
 
 - (void)copyRemotePrefsToLocalUserDefaults {
@@ -147,24 +226,24 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
     }
     _haveTriedToLoadRemotePrefs = YES;
 
-    if (![[self class] loadingPrefsFromCustomFolder]) {
+    if (![self loadingPrefsFromCustomFolder]) {
         return;
     }
     NSDictionary *remotePrefs = [self freshCopyOfRemotePreferences];
     self.savedRemotePrefs = remotePrefs;
 
     if (remotePrefs && [remotePrefs count]) {
-        NSString *theFilename = [[self class] localPrefsFilename];
+        NSString *theFilename = [self localPrefsFilename];
         NSDictionary *localPrefs = [NSDictionary dictionaryWithContentsOfFile:theFilename];
         // Empty out the current prefs
         for (NSString *key in localPrefs) {
-            if ([[self class] preferenceKeyIsSyncable:key]) {
+            if ([self preferenceKeyIsSyncable:key]) {
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
             }
         }
 
         for (NSString *key in remotePrefs) {
-            if ([[self class] preferenceKeyIsSyncable:key]) {
+            if ([self preferenceKeyIsSyncable:key]) {
                 [[NSUserDefaults standardUserDefaults] setObject:[remotePrefs objectForKey:key]
                                                           forKey:key];
             }
@@ -177,97 +256,81 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
                        alternateButton:nil
                            otherButton:nil
              informativeTextWithFormat:@"Missing or malformed file at \"%@\"",
-                                       [[self class] remotePrefsLocation]] runModal];
+                                       [self customFolderOrURL]] runModal];
     }
     return;
 }
 
 - (BOOL)localPrefsDifferFromSavedRemotePrefs
 {
-    if (![[self class] loadingPrefsFromCustomFolder]) {
+    if (![self loadingPrefsFromCustomFolder]) {
         return NO;
     }
     if (_savedRemotePrefs && [_savedRemotePrefs count]) {
         // Grab all prefs from our bundle only (no globals, etc.).
+        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
         NSDictionary *localPrefs =
-            [prefs persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
+            [userDefaults persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
         // Iterate over each set of prefs and validate that the other has the same value for each
         // key.
         for (NSString *key in localPrefs) {
-            if ([[self class] preferenceKeyIsSyncable:key] &&
+            if ([self preferenceKeyIsSyncable:key] &&
                 ![[_savedRemotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
                 return YES;
             }
         }
 
         for (NSString *key in _savedRemotePrefs) {
-            if ([[self class] preferenceKeyIsSyncable:key] &&
+            if ([self preferenceKeyIsSyncable:key] &&
                 ![[_savedRemotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
                 return YES;
             }
         }
-        return NO;
     }
+    return NO;
 }
 
 - (BOOL)remotePrefsHaveChanged {
-    if (![[self class] loadingPrefsFromCustomFolder]) {
+    if (![self loadingPrefsFromCustomFolder]) {
         return NO;
     }
     if (!_savedRemotePrefs) {
         return NO;
     }
-    return ![[[self class] freshCopyOfRemotePreferences] isEqual:_savedRemotePrefs];
+    if ([[self customFolderOrURL] stringIsUrlLike]) {
+        return NO;
+    }
+    return ![[self freshCopyOfRemotePreferences] isEqual:_savedRemotePrefs];
 }
 
-- (void)saveLocalUserDefaultsToRemotePrefs
-{
-    [[NSUserDefaults standardUserDefaults] synchronize];
+- (void)applicationWillTerminate {
+    if ([self localPrefsDifferFromSavedRemotePrefs]) {
+        NSString *customFolderOrURL = [self expandedCustomFolderOrURL];
+        if ([customFolderOrURL stringIsUrlLike]) {
+            // If the setting is always copy, then ask. Copying isn't an option.
+            NSString *theTitle = [NSString stringWithFormat:
+                                  @"Changes made to preferences will be lost when iTerm2 is restarted "
+                                  @"because they are loaded from a URL at startup."];
+            [iTermWarning showWarningWithTitle:theTitle
+                                       actions:@[ @"OK" ]
+                                    identifier:@"NoSyncNeverRemindPrefsChangesLostForUrl"
+                                   silenceable:kiTermWarningTypePermanentlySilenceable];
+        } else {
+            // Not a URL
+            NSString *theTitle = [NSString stringWithFormat:
+                                  @"Preferences have changed. Copy them to %@?",
+                                  [self customFolderOrURL]];
 
-    NSString *folder = [[self class] customFolderOrURL];
-    if ([folder stringIsUrlLike]) {
-        NSString *informativeText = 
-            @"To make it available, first quit iTerm2 and then manually "
-            @"copy ~/Library/Preferences/com.googlecode.iterm2.plist to "
-            @"your hosting provider.";
-        [[NSAlert alertWithMessageText:@"Sorry, preferences cannot be copied to a URL by iTerm2."
-                         defaultButton:@"OK"
-                       alternateButton:nil
-                           otherButton:nil
-             informativeTextWithFormat:informativeText] runModal];
-        return;
+            iTermWarningSelection selection =
+                [iTermWarning showWarningWithTitle:theTitle
+                                           actions:@[ @"Copy", @"Lose Changes" ]
+                                        identifier:@"NoSyncNeverRemindPrefsChangesLostForFile"
+                                       silenceable:kiTermWarningTypePermanentlySilenceable];
+            if (selection == kiTermWarningSelection0) {
+                [self saveLocalUserDefaultsToRemotePrefs];
+            }
+        }
     }
-
-    NSString *filename = [[self class] prefsFilenameWithBaseDir:folder];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-
-    // Copy fails if the destination exists.
-    [fileManager removeItemAtPath:filename error:nil];
-
-    [self savePreferences];
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    NSDictionary *myDict =
-        [userDefaults persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
-    BOOL isOk;
-    isOk = [myDict writeToFile:filename atomically:YES];
-    if (!isOk) {
-        [[NSAlert alertWithMessageText:@"Failed to copy preferences to custom directory."
-                         defaultButton:@"OK"
-                       alternateButton:nil
-                           otherButton:nil
-             informativeTextWithFormat:@"Tried to copy %@ to %@: %s",
-                                       [self _prefsFilename], filename, strerror(errno)] runModal];
-    }
-}
-
-- (BOOL)remoteLocationIsValid:(NSString *)remoteLocation
-{
-    if ([remoteLocation stringIsUrlLike]) {
-        // URLs are too expensive to check, so just make sure it's reasonably
-        // well formed.
-        return [NSURL URLWithString:remoteLocation] != nil;
-    }
-    return [[self class] folderIsWritable:remoteLocation];
 }
 
 @end

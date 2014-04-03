@@ -89,12 +89,10 @@ typedef enum {
 + (PreferencePanel*)sharedInstance;
 + (PreferencePanel*)sessionsInstance;
 + (BOOL)migratePreferences;
-+ (BOOL)loadingPrefsFromCustomFolder;
 + (void)populatePopUpButtonWithBookmarks:(NSPopUpButton*)button selectedGuid:(NSString*)selectedGuid;
 
 - (void)openToBookmark:(NSString*)guid;
 
-- (BOOL)loadPrefs;
 - (void)updateBookmarkFields:(NSDictionary *)dict;
 
 - (void)triggerChanged:(TriggerController *)triggerController;
@@ -217,8 +215,6 @@ typedef enum {
 - (NSTimeInterval)antiIdleTimerPeriod;
 - (Profile *)handlerBookmarkForURL:(NSString *)url;
 - (void)changeFont:(id)fontManager;
-- (BOOL)prefsDifferFromRemote;
-- (NSString *)remotePrefsLocation;
 - (BOOL)customFolderChanged;
 - (BOOL)onScreen;
 - (NSTextField*)shortcutKeyTextField;

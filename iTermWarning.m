@@ -10,7 +10,7 @@ static NSString *const kCancel = @"Cancel";
                                    identifier:(NSString *)identifier
                                   silenceable:(iTermWarningType)warningType
 {
-    if ([self identifierIsSilenced:identifier]) {
+    if (warningType != kiTermWarningTypePersistent && [self identifierIsSilenced:identifier]) {
         return [self savedSelectionForIdentifier:identifier];
     }
     

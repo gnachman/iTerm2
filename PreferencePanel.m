@@ -44,6 +44,7 @@
 #import "iTermController.h"
 #import "iTermFontPanel.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermRemotePreferences.h"
 #import "iTermSettingsModel.h"
 #import "iTermWarning.h"
 #include <stdlib.h>
@@ -244,7 +245,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     IBOutlet NSButton *loadPrefsFromCustomFolder;
     BOOL defaultLoadPrefsFromCustomFolder;
     IBOutlet NSTextField *prefsCustomFolder;
-    NSString *defaultPrefsCustomFolder;
     IBOutlet NSButton *browseCustomFolder;
     IBOutlet NSButton *pushToCustomFolder;
     IBOutlet NSImageView *prefsDirWarning;
@@ -635,7 +635,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         dataSource = model;
         prefs = userDefaults;
         if (userDefaults) {
-            [_remotePrefs copyRemotePrefsToLocalUserDefaults];
+            [[iTermRemotePreferences sharedInstance] copyRemotePrefsToLocalUserDefaults];
         }
         // Override smooth scrolling, which breaks various things (such as the
         // assumption, when detectUserScroll is called, that scrolls happen
@@ -950,7 +950,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                 // Field was initially empty so browse for a dir.
                 if ([self choosePrefsCustomFolder]) {
                     // User didn't hit cancel; if he chose a writable directory ask if he wants to write to it.
-                    if ([self _prefsDirIsWritable]) {
+                    if ([[iTermRemotePreferences sharedInstance] remoteLocationIsValid]) {
                         if ([[NSAlert alertWithMessageText:@"Copy local preferences to custom folder now?"
                                              defaultButton:@"Copy"
                                            alternateButton:@"Don't Copy"
@@ -968,9 +968,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [self _updatePrefsDirWarning];
     } else if (sender == prefsCustomFolder) {
         // The OS will never call us directly with this sender, but we do call ourselves this way.
-        [prefs setObject:[prefsCustomFolder stringValue]
-                  forKey:@"PrefsCustomFolder"];
-        defaultPrefsCustomFolder = [prefs objectForKey:@"PrefsCustomFolder"];
+        [[iTermRemotePreferences sharedInstance] setCustomFolderOrURL:[prefsCustomFolder stringValue]];
         customFolderChanged_ = YES;
         [self _updatePrefsDirWarning];
     } else if (sender == windowStyle ||
@@ -1211,7 +1209,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (IBAction)pushToCustomFolder:(id)sender
 {
-    [_remotePrefs saveLocalUserDefaultsToRemotePrefs];
+    [self savePreferences];
+    [[iTermRemotePreferences sharedInstance] saveLocalUserDefaultsToRemotePrefs];
 }
 
 - (NSString*)_chooseBackgroundImage
@@ -2146,16 +2145,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (void)_updatePrefsDirWarning
 {
-  [prefsDirWarning setHidden:[_remotePrefs remoteLocationIsValid:defaultPrefsCustomFolder]];
-}
-
-- (NSString *)loadPrefsFromCustomFolder
-{
-    if (defaultLoadPrefsFromCustomFolder) {
-        return defaultPrefsCustomFolder;
-    } else {
-        return nil;
-    }
+    [prefsDirWarning setHidden:[[iTermRemotePreferences sharedInstance] remoteLocationIsValid]];
 }
 
 - (BOOL)customFolderChanged
@@ -2182,7 +2172,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     if (!defaultLoadPrefsFromCustomFolder) {
         return YES;
     }
-    return [_remotePrefs remoteLocationIsValid:defaultPrefsCustomFolder];
+    return [[iTermRemotePreferences sharedInstance] remoteLocationIsValid];
 }
 
 #pragma mark - Sheet handling
@@ -2826,7 +2816,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultShowWindowBorder = [[prefs objectForKey:@"UseBorder"] boolValue];
     defaultLionStyleFullscreen = [prefs objectForKey:@"UseLionStyleFullscreen"] ? [[prefs objectForKey:@"UseLionStyleFullscreen"] boolValue] : YES;
     defaultLoadPrefsFromCustomFolder = [prefs objectForKey:@"LoadPrefsFromCustomFolder"] ? [[prefs objectForKey:@"LoadPrefsFromCustomFolder"] boolValue] : NO;
-    defaultPrefsCustomFolder = [prefs objectForKey:@"PrefsCustomFolder"] ? [prefs objectForKey:@"PrefsCustomFolder"] : @"";
 
     defaultControl = [prefs objectForKey:@"Control"] ? [[prefs objectForKey:@"Control"] intValue] : MOD_TAG_CONTROL;
     defaultLeftOption = [prefs objectForKey:@"LeftOption"] ? [[prefs objectForKey:@"LeftOption"] intValue] : MOD_TAG_LEFT_OPTION;
@@ -2954,7 +2943,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setBool:defaultShowWindowBorder forKey:@"UseBorder"];
     [prefs setBool:defaultLionStyleFullscreen forKey:@"UseLionStyleFullscreen"];
     [prefs setBool:defaultLoadPrefsFromCustomFolder forKey:@"LoadPrefsFromCustomFolder"];
-    [prefs setObject:defaultPrefsCustomFolder forKey:@"PrefsCustomFolder"];
 
     [prefs setInteger:defaultControl forKey:@"Control"];
     [prefs setInteger:defaultLeftOption forKey:@"LeftOption"];
@@ -4010,7 +3998,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];
     [lionStyleFullscreen setState:defaultLionStyleFullscreen?NSOnState:NSOffState];
     [loadPrefsFromCustomFolder setState:defaultLoadPrefsFromCustomFolder?NSOnState:NSOffState];
-    [prefsCustomFolder setStringValue:defaultPrefsCustomFolder ? defaultPrefsCustomFolder : @""];
+    [prefsCustomFolder setStringValue:[[iTermRemotePreferences sharedInstance] customFolderOrURL]];
 
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];
