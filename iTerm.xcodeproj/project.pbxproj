@@ -786,6 +786,9 @@
 		F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = FB151F2903648AC401F955DB /* iTerm.strings */; };
 		F6CDC4E70AE6D3E2005E7D4F /* folder.png in Resources */ = {isa = PBXBuildFile; fileRef = F6CDC4E60AE6D3E2005E7D4F /* folder.png */; };
 		F6E2DEDA0AE2F67200D20B3B /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F6E2DED70AE2F67200D20B3B /* Sparkle.framework */; };
+		FB4CE4BB3E3E413B051DAFBC /* iTermRemotePreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = FB4CEAC661436E55F3B3A668 /* iTermRemotePreferences.m */; };
+		FB4CE863CA46CC65A727807B /* iTermRemotePreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = FB4CEAC661436E55F3B3A668 /* iTermRemotePreferences.m */; };
+		FB4CEC973C7E9235362E3F26 /* iTermRemotePreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1408,6 +1411,8 @@
 		FB094A18033D58BD01F955DB /* new.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = new.png; path = images/new.png; sourceTree = "<group>"; };
 		FB151F2603648AB401F955DB /* iTerm.strings */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.strings; name = iTerm.strings; path = English.lproj/iTerm.strings; sourceTree = "<group>"; };
 		FB47BCC403686CAC01F955DB /* exec.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = exec.png; path = images/exec.png; sourceTree = "<group>"; };
+		FB4CEAC661436E55F3B3A668 /* iTermRemotePreferences.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRemotePreferences.m; sourceTree = "<group>"; };
+		FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermRemotePreferences.h; sourceTree = "<group>"; };
 		FB754C5F036EFC5301F955DB /* config.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = config.png; path = images/config.png; sourceTree = "<group>"; };
 		FB896717038D935801F955DB /* newwin.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = newwin.png; path = images/newwin.png; sourceTree = "<group>"; };
 		FBB2EBCD040AC7C201F955DB /* important.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = important.png; path = images/important.png; sourceTree = "<group>"; };
@@ -1595,6 +1600,7 @@
 				1D407A2814BABE8700BD5035 /* iTermKeyBindingMgr.h */,
 				A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */,
 				A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */,
+				FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */,
 				1DAED99012EDF923005E49ED /* iTermSearchField.h */,
 				A63BA39318A9CB43002BE075 /* iTermSelection.h */,
 				A697100918D94CDA007E901D /* iTermSettingsModel.h */,
@@ -1893,6 +1899,7 @@
 				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
 				1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */,
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
+				FB4CEAC661436E55F3B3A668 /* iTermRemotePreferences.m */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -2560,6 +2567,7 @@
 				1D085FA216F138A100B7FCE9 /* ToastWindowController.h in Headers */,
 				1D9053C617A5CCF100A0B64E /* MovingAverage.h in Headers */,
 				1D699BC417CABC060094F0C1 /* CharacterRunInline.h in Headers */,
+				FB4CEC973C7E9235362E3F26 /* iTermRemotePreferences.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3017,6 +3025,7 @@
 				1D9A55B0180FA8B700B42CE9 /* PSMTabDragWindow.m in Sources */,
 				1D9A554D180FA82E00B42CE9 /* TmuxSessionsTable.m in Sources */,
 				A647E3A118C351F400450FA1 /* VT100DCSParser.m in Sources */,
+				FB4CE4BB3E3E413B051DAFBC /* iTermRemotePreferences.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3226,6 +3235,7 @@
 				A68A30CF186D1414007F550F /* FileTransferManager.m in Sources */,
 				A68A30E4186D1429007F550F /* TransferrableFileMenuItemViewController.m in Sources */,
 				1D8FC67C17E67FA700A82402 /* shell_launcher.c in Sources */,
+				FB4CE863CA46CC65A727807B /* iTermRemotePreferences.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

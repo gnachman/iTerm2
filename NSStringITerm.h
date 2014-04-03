@@ -102,6 +102,10 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (NSString *)hexOrDecimalConversionHelp;
 
+// String starts with http:// or https://. Used to tell if a custom prefs
+// location is a path or URL.
+- (BOOL)stringIsUrlLike;
+
 @end
 
 @interface NSMutableString (iTerm)

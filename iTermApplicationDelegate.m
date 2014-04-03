@@ -30,23 +30,24 @@
 #import "ColorsMenuItemView.h"
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermController.h"
+#import "iTermExpose.h"
+#import "iTermFontPanel.h"
+#import "iTermRemotePreferences.h"
+#import "iTermSettingsModel.h"
+#import "iTermWarning.h"
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
-#import "PTYSession.h"
-#import "PTYTab.h"
-#import "PTYTextView.h"
-#import "PTYWindow.h"
 #import "PreferencePanel.h"
 #import "ProfilesWindow.h"
 #import "PseudoTerminal.h"
 #import "PseudoTerminalRestorer.h"
+#import "PTYSession.h"
+#import "PTYTab.h"
+#import "PTYTextView.h"
+#import "PTYWindow.h"
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
-#import "iTermController.h"
-#import "iTermExpose.h"
-#import "iTermFontPanel.h"
-#import "iTermSettingsModel.h"
-#import "iTermWarning.h"
 #import <objc/runtime.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -358,49 +359,11 @@ static BOOL hasBecomeActive = NO;
     [iTermController sharedInstanceRelease];
 
     // save preferences
-    [[PreferencePanel sharedInstance] savePreferences];
-    if (![[PreferencePanel sharedInstance] customFolderChanged]) {
-        if ([[PreferencePanel sharedInstance] prefsDifferFromRemote]) {
-            NSString *remote = [[PreferencePanel sharedInstance] remotePrefsLocation];
-            if ([remote hasPrefix:@"http://"] ||
-                [remote hasPrefix:@"https://"]) {
-                // If the setting is always copy, then ask. Copying isn't an option.
-                NSString *theTitle = [NSString stringWithFormat:
-                                      @"Your preferences are loaded from a URL "
-                                      @"and differ from your local preferences. "
-                                      @"To save your local preferences, copy "
-                                      @"~/Library/Preferences/com.googlecode.iterm2.plist "
-                                      @"to %@ after quitting iTerm2.",
-                                      remote];
-                [iTermWarning showWarningWithTitle:theTitle
-                                           actions:@[ @"OK" ]
-                                        identifier:@"NoSyncNeverRemindPrefsChangesLostForUrl"
-                                       silenceable:kiTermWarningTypePermanentlySilenceable];
-            } else {
-                // Not a URL
-                NSString *theTitle;
-                if ([ProfileModel migrated]) {
-                    theTitle = [NSString stringWithFormat:@"Your preferences were modified by iTerm2 "
-                                @"as part of an upgrade process (and you might have changed them, too). "
-                                @"Since you load prefs from a custom location, your local preferences "
-                                @"will be lost if not copied to %@.", remote];
-                } else {
-                    theTitle = [NSString stringWithFormat:@"Your preferences are loaded from a custom "
-                                @"location and differ from your local preferences. "
-                                @"Your local preferences will be lost if not copied to %@.",
-                                remote];
-                }
-
-                iTermWarningSelection selection =
-                    [iTermWarning showWarningWithTitle:theTitle
-                                               actions:@[ @"Copy", @"Lose Changes" ]
-                                            identifier:@"NoSyncNeverRemindPrefsChangesLostForFile"
-                                           silenceable:kiTermWarningTypePermanentlySilenceable];
-                if (selection == kiTermWarningSelection0) {
-                    [[PreferencePanel sharedInstance] pushToCustomFolder:nil];
-                }
-            }
-        }
+    PreferencePanel *preferencePanel = [PreferencePanel sharedInstance];
+    [preferencePanel savePreferences];
+    if (![preferencePanel customFolderChanged]) {
+        [preferencePanel savePreferences];
+        [[iTermRemotePreferences sharedInstance] applicationWillTerminate];
     }
 
     return YES;
