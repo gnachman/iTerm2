@@ -360,10 +360,10 @@ static BOOL hasBecomeActive = NO;
     // save preferences
     [[PreferencePanel sharedInstance] savePreferences];
     if (![[PreferencePanel sharedInstance] customFolderChanged]) {
-        if ([[PreferencePanel sharedInstance] prefsDifferFromRemote]) {
+        if ([[PreferencePanel sharedInstance] localPrefsDifferFromSavedRemotePrefs]) {
+          // TODO: localPrefsDifferFromCurrentRemotePrefs
             NSString *remote = [[PreferencePanel sharedInstance] remotePrefsLocation];
-            if ([remote hasPrefix:@"http://"] ||
-                [remote hasPrefix:@"https://"]) {
+            if ([remote stringIsUrlLike]) {
                 // If the setting is always copy, then ask. Copying isn't an option.
                 NSString *theTitle = [NSString stringWithFormat:
                                       @"Your preferences are loaded from a URL "

@@ -852,6 +852,10 @@ int decode_utf8_char(const unsigned char *datap,
     }
 }
 
+- (BOOL)stringIsUrlLike {
+    return [self hasPrefix:@"http://"] || [self hasPrefix:@"https://"];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

@@ -102,6 +102,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (NSString *)hexOrDecimalConversionHelp;
 
+- (BOOL)stringIsUrlLike;
+
 @end
 
 @interface NSMutableString (iTerm)
