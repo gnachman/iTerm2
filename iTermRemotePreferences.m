@@ -7,7 +7,10 @@
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 
+// Are we loading prefs from a custom location?
 static NSString *const kLoadPrefsFromCustomFolderKey = @"LoadPrefsFromCustomFolder";
+
+// Path/URL to location with prefs. Path may have ~ in it.
 static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
 
 @interface iTermRemotePreferences ()
@@ -32,11 +35,14 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
     [super dealloc];
 }
 
-- (BOOL)loadingPrefsFromCustomFolder
-{
-    NSNumber *n =
-        [[NSUserDefaults standardUserDefaults] objectForKey:kLoadPrefsFromCustomFolderKey];
-    return n ? [n boolValue] : NO;
+- (BOOL)shouldLoadRemotePrefs {
+    return [[NSUserDefaults standardUserDefaults]
+               boolForKey:kLoadPrefsFromCustomFolderKey];
+}
+
+- (void)setShouldLoadRemotePrefs:(BOOL)value {
+    return [[NSUserDefaults standardUserDefaults] setBool:value
+                                                   forKey:kLoadPrefsFromCustomFolderKey];
 }
 
 // Returns a URL or containing folder
@@ -47,14 +53,18 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
 
 - (NSString *)expandedCustomFolderOrURL {
     NSString *theString = [self customFolderOrURL];
+    if ([theString stringIsUrlLike]) {
+        return theString;
+    }
     return theString ? [theString stringByExpandingTildeInPath] : @"";
 }
 
 - (void)setCustomFolderOrURL:(NSString *)customLocation {
-    [[NSUserDefaults standardUserDefaults] setObject:customLocation forKey:kPrefsCustomFolderKey];
+    [[NSUserDefaults standardUserDefaults] setObject:customLocation
+                                              forKey:kPrefsCustomFolderKey];
 }
 
-// Returns a URL or filename
+// Returns a URL or expanded filename
 - (NSString *)remotePrefsLocation
 {
     NSString *folder = [self expandedCustomFolderOrURL];
@@ -87,7 +97,7 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
 
 - (NSDictionary *)freshCopyOfRemotePreferences
 {
-    if (![self loadingPrefsFromCustomFolder]) {
+    if (!self.shouldLoadRemotePrefs) {
         return nil;
     }
 
@@ -226,7 +236,7 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
     }
     _haveTriedToLoadRemotePrefs = YES;
 
-    if (![self loadingPrefsFromCustomFolder]) {
+    if (!self.shouldLoadRemotePrefs) {
         return;
     }
     NSDictionary *remotePrefs = [self freshCopyOfRemotePreferences];
@@ -263,7 +273,7 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
 
 - (BOOL)localPrefsDifferFromSavedRemotePrefs
 {
-    if (![self loadingPrefsFromCustomFolder]) {
+    if (!self.shouldLoadRemotePrefs) {
         return NO;
     }
     if (_savedRemotePrefs && [_savedRemotePrefs count]) {
@@ -291,7 +301,7 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
 }
 
 - (BOOL)remotePrefsHaveChanged {
-    if (![self loadingPrefsFromCustomFolder]) {
+    if (!self.shouldLoadRemotePrefs) {
         return NO;
     }
     if (!_savedRemotePrefs) {

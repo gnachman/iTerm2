@@ -28,25 +28,25 @@
 
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
-#import "NSDictionary+iTerm.h"
-#import "NSFileManager+iTerm.h"
-#import "NSStringITerm.h"
-#import "PTYSession.h"
-#import "PasteboardHistory.h"
-#import "PointerPrefsController.h"
-#import "ProfileModel.h"
-#import "PseudoTerminal.h"
-#import "SessionView.h"
-#import "SmartSelectionController.h"
-#import "TriggerController.h"
-#import "TrouterPrefsController.h"
-#import "WindowArrangements.h"
 #import "iTermController.h"
 #import "iTermFontPanel.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermRemotePreferences.h"
 #import "iTermSettingsModel.h"
 #import "iTermWarning.h"
+#import "NSDictionary+iTerm.h"
+#import "NSFileManager+iTerm.h"
+#import "NSStringITerm.h"
+#import "PasteboardHistory.h"
+#import "PointerPrefsController.h"
+#import "ProfileModel.h"
+#import "PseudoTerminal.h"
+#import "PTYSession.h"
+#import "SessionView.h"
+#import "SmartSelectionController.h"
+#import "TriggerController.h"
+#import "TrouterPrefsController.h"
+#import "WindowArrangements.h"
 #include <stdlib.h>
 
 static NSString * const kCustomColorPresetsKey = @"Custom Color Presets";
@@ -174,10 +174,10 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     IBOutlet NSButton *highlightTabLabels;
     BOOL defaultHighlightTabLabels;
     
-        // Hide menu bar in non-lion fullscreen
-        IBOutlet NSButton *hideMenuBarInFullscreen;
-        BOOL defaultHideMenuBarInFullscreen;
-        
+    // Hide menu bar in non-lion fullscreen
+    IBOutlet NSButton *hideMenuBarInFullscreen;
+    BOOL defaultHideMenuBarInFullscreen;
+    
     // Minimum contrast
     IBOutlet NSSlider* minimumContrast;
     
@@ -243,7 +243,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     
     // Load prefs from custom folder
     IBOutlet NSButton *loadPrefsFromCustomFolder;
-    BOOL defaultLoadPrefsFromCustomFolder;
     IBOutlet NSTextField *prefsCustomFolder;
     IBOutlet NSButton *browseCustomFolder;
     IBOutlet NSButton *pushToCustomFolder;
@@ -746,9 +745,10 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [dimmingAmount setContinuous:YES];
     [minimumContrast setContinuous:YES];
 
-    [prefsCustomFolder setEnabled:defaultLoadPrefsFromCustomFolder];
-    [browseCustomFolder setEnabled:defaultLoadPrefsFromCustomFolder];
-    [pushToCustomFolder setEnabled:defaultLoadPrefsFromCustomFolder];
+    BOOL shouldLoadRemotePrefs = [[iTermRemotePreferences sharedInstance] shouldLoadRemotePrefs];
+    [prefsCustomFolder setEnabled:shouldLoadRemotePrefs];
+    [browseCustomFolder setEnabled:shouldLoadRemotePrefs];
+    [pushToCustomFolder setEnabled:shouldLoadRemotePrefs];
     [self _updatePrefsDirWarning];
 }
 
@@ -943,8 +943,9 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     if (sender == lionStyleFullscreen) {
         defaultLionStyleFullscreen = ([lionStyleFullscreen state] == NSOnState);
     } else if (sender == loadPrefsFromCustomFolder) {
-        defaultLoadPrefsFromCustomFolder = [loadPrefsFromCustomFolder state] == NSOnState;
-        if (defaultLoadPrefsFromCustomFolder) {
+        BOOL shouldLoadRemotePrefs = [loadPrefsFromCustomFolder state] == NSOnState;
+        [[iTermRemotePreferences sharedInstance] setShouldLoadRemotePrefs:shouldLoadRemotePrefs];
+        if (shouldLoadRemotePrefs) {
             // Just turned it on.
             if ([[prefsCustomFolder stringValue] length] == 0) {
                 // Field was initially empty so browse for a dir.
@@ -962,9 +963,9 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                 }
             }
         }
-        [prefsCustomFolder setEnabled:defaultLoadPrefsFromCustomFolder];
-        [browseCustomFolder setEnabled:defaultLoadPrefsFromCustomFolder];
-        [pushToCustomFolder setEnabled:defaultLoadPrefsFromCustomFolder];
+        [prefsCustomFolder setEnabled:shouldLoadRemotePrefs];
+        [browseCustomFolder setEnabled:shouldLoadRemotePrefs];
+        [pushToCustomFolder setEnabled:shouldLoadRemotePrefs];
         [self _updatePrefsDirWarning];
     } else if (sender == prefsCustomFolder) {
         // The OS will never call us directly with this sender, but we do call ourselves this way.
@@ -2169,7 +2170,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 }
 
 - (BOOL)remoteLocationIsValid {
-    if (!defaultLoadPrefsFromCustomFolder) {
+    if (![[iTermRemotePreferences sharedInstance] shouldLoadRemotePrefs]) {
         return YES;
     }
     return [[iTermRemotePreferences sharedInstance] remoteLocationIsValid];
@@ -2815,7 +2816,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultDimmingAmount = [prefs objectForKey:@"SplitPaneDimmingAmount"] ? [[prefs objectForKey:@"SplitPaneDimmingAmount"] floatValue] : 0.4;
     defaultShowWindowBorder = [[prefs objectForKey:@"UseBorder"] boolValue];
     defaultLionStyleFullscreen = [prefs objectForKey:@"UseLionStyleFullscreen"] ? [[prefs objectForKey:@"UseLionStyleFullscreen"] boolValue] : YES;
-    defaultLoadPrefsFromCustomFolder = [prefs objectForKey:@"LoadPrefsFromCustomFolder"] ? [[prefs objectForKey:@"LoadPrefsFromCustomFolder"] boolValue] : NO;
 
     defaultControl = [prefs objectForKey:@"Control"] ? [[prefs objectForKey:@"Control"] intValue] : MOD_TAG_CONTROL;
     defaultLeftOption = [prefs objectForKey:@"LeftOption"] ? [[prefs objectForKey:@"LeftOption"] intValue] : MOD_TAG_LEFT_OPTION;
@@ -2942,7 +2942,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setFloat:defaultDimmingAmount forKey:@"SplitPaneDimmingAmount"];
     [prefs setBool:defaultShowWindowBorder forKey:@"UseBorder"];
     [prefs setBool:defaultLionStyleFullscreen forKey:@"UseLionStyleFullscreen"];
-    [prefs setBool:defaultLoadPrefsFromCustomFolder forKey:@"LoadPrefsFromCustomFolder"];
 
     [prefs setInteger:defaultControl forKey:@"Control"];
     [prefs setInteger:defaultLeftOption forKey:@"LeftOption"];
@@ -3997,7 +3996,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [dimmingAmount setFloatValue:defaultDimmingAmount];
     [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];
     [lionStyleFullscreen setState:defaultLionStyleFullscreen?NSOnState:NSOffState];
-    [loadPrefsFromCustomFolder setState:defaultLoadPrefsFromCustomFolder?NSOnState:NSOffState];
+    [loadPrefsFromCustomFolder setState:[[iTermRemotePreferences sharedInstance] shouldLoadRemotePrefs] ? NSOnState : NSOffState];
     [prefsCustomFolder setStringValue:[[iTermRemotePreferences sharedInstance] customFolderOrURL]];
 
     [self showWindow: self];
