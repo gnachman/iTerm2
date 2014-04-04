@@ -2,6 +2,7 @@
 #@ Copyright: © 2011 Chris F.A. Johnson
 #@ Released under the terms of the GNU General Public License V2
 #@ See the file COPYING for the full license
+# Originally from http://cfajohnson.com/shell/listing1.txt
 
 ESC="" ##  A literal escape character
 x10_format="${ESC}[?1005l"  # Turn off extended xterm to get x10
