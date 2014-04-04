@@ -1,5 +1,5 @@
-
-#@ Copyright: © 2011 Chris F.A. Johnson
+#!/bin/bash
+#@ Copyright: Â© 2011 Chris F.A. Johnson
 #@ Released under the terms of the GNU General Public License V2
 #@ See the file COPYING for the full license
 
@@ -39,7 +39,13 @@ ESC="" ##  A literal escape character
 but_row=1
 
 clear
-mv=9  ## mv=1000 for press and release reporting; mv=9 for press only
+normal_tracking=1000  # Just button presses
+# iterm2 doesn't support 1001, highlight tracking
+button_tracking=1002 # clicks and drags are reported
+any_event_tracking=1003 # clicks, drags, and motion
+
+mv=$normal_tracking  ## I hacked this to use 1003 so everything is reported.
+#printf "[?1006h"  ## SGR
 
 trap clean_up EXIT
 
@@ -50,7 +56,10 @@ printf "${ESC}[?25l"  ## Turn off cursor
 
 while :
 do
-  [ $mv -eq 9 ] && mv_str="Show Press & Release" || mv_str="Show Press Only"
+  [ $mv -eq $normal_tracking ] && mv_str="Normal Tracking"
+  [ $mv -eq $button_tracking ] && mv_str="Button Tracking"
+  [ $mv -eq $any_event_tracking ] && mv_str="Any Event Tracking"
+
   print_buttons "$mv_str" "Exit"
 
   x=$(dd bs=1 count=6 2>/dev/null) ## Read six characters
@@ -74,9 +83,12 @@ do
                  button=$(( ($MOUSEX - $gutter) / $but_width + 1 ))
                  case $button in
                       1) printf "${ESC}[?${mv}l"
-                         [ $mv -eq 9 ] && mv=1000 || mv=9
+                         [ $mv -eq $normal_tracking ] && next_mode=$button_tracking
+                         [ $mv -eq $button_tracking ] && next_mode=$any_event_tracking
+                         [ $mv -eq $any_event_tracking ] && next_mode=$normal_tracking
+                         mv=$next_mode
                          printf "${ESC}[?${mv}h"
-                         [ $mv -eq 1000 ] && x=$(dd bs=1 count=6 2>/dev/null)
+                         x=$(dd bs=1 count=6 2>/dev/null)
                          ;;
                       2) break ;;
                  esac
@@ -87,4 +99,3 @@ do
   esac
 
 done
-
