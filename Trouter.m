@@ -326,6 +326,16 @@
     // then the items in the array get over-released.
     NSArray *beforeChunks = [beforeString componentsSeparatedByRegex:@"([\t ])"];
     NSArray *afterChunks = [afterString componentsSeparatedByRegex:@"([\t ])"];
+    
+    // If the before/after string didn't produce any chunks, allow the other
+    // half to stand alone.
+    if (!beforeChunks.count) {
+        beforeChunks = [beforeChunks arrayByAddingObject:@""];
+    }
+    if (!afterChunks.count) {
+        afterChunks = [afterChunks arrayByAddingObject:@""];
+    }
+    
     NSMutableString *left = [NSMutableString string];
     // Bail after 100 iterations if nothing is still found.
     int limit = 100;

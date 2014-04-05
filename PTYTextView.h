@@ -239,6 +239,9 @@ typedef enum {
 // The default background color, dimmed if needed.
 @property(nonatomic, readonly) NSColor *dimmedDefaultBackgroundColor;
 
+// Semantic history. TODO: Move this into PTYSession.
+@property(nonatomic, readonly) Trouter *trouter;
+
 // Returns the mouse cursor to use when the mouse is in this view.
 + (NSCursor *)textViewCursor;
 

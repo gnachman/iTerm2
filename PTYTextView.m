@@ -101,6 +101,7 @@ static NSImage* alertImage;
 @property(nonatomic, retain) iTermSelection *selection;
 @property(nonatomic, retain) NSColor *cachedBackgroundColor;
 @property(nonatomic, retain) NSColor *unfocusedSelectionColor;
+@property(nonatomic, retain) Trouter *trouter;
 
 - (NSRect)cursorRect;
 - (URLAction *)urlActionForClickAtX:(int)x
@@ -252,9 +253,6 @@ static NSImage* alertImage;
 
     // Works around an apparent OS bug where we get drag events without a mousedown.
     BOOL dragOk_;
-
-    // Semantic history controller
-    Trouter* trouter;
 
     // Flag to make sure a Trouter drag check is only one once per drag
     BOOL trouterDragged;
@@ -445,8 +443,8 @@ static NSImage* alertImage;
         imeOffset = 0;
         resultMap_ = [[NSMutableDictionary alloc] init];
 
-        trouter = [[Trouter alloc] init];
-        trouter.delegate = self;
+        _trouter = [[Trouter alloc] init];
+        _trouter.delegate = self;
         trouterDragged = NO;
 
         pointer_ = [[PointerController alloc] init];
@@ -518,7 +516,7 @@ static NSImage* alertImage;
 
     [selectionScrollTimer release];
 
-    [trouter release];
+    [_trouter release];
 
     [pointer_ release];
     [cursor_ release];
@@ -2636,7 +2634,7 @@ NSMutableArray* screens=0;
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:charsToTrim];
 
     NSString *workingDirectory = [_dataSource workingDirectoryOnLine:line];
-    if ([trouter canOpenPath:trimmedURLString workingDirectory:workingDirectory]) {
+    if ([self.trouter canOpenPath:trimmedURLString workingDirectory:workingDirectory]) {
         return YES;
     }
 
@@ -3325,7 +3323,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (action) {
         switch (action.actionType) {
             case kURLActionOpenExistingFile:
-                if (![trouter openPath:action.string
+                if (![self.trouter openPath:action.string
                       workingDirectory:action.workingDirectory
                                 prefix:prefix
                                 suffix:suffix]) {
@@ -4605,17 +4603,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return result;
 }
 
-- (BOOL)hostIsLocal:(NSString *)host {
-    NSArray *hostAddresses = [[NSHost hostWithName:host] addresses];
-    NSArray *localAddresses = [[NSHost currentHost] addresses];
-    for (NSString *hostAddress in hostAddresses) {
-        if ([localAddresses containsObject:hostAddress]) {
-            return YES;
-        }
-    }
-    return NO;
-}
-
 - (BOOL)confirmUploadOfFiles:(NSArray *)files toPath:(SCPPath *)path {
     NSString *text;
     if (files.count == 0) {
@@ -5058,7 +5045,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)setTrouterPrefs:(NSDictionary *)prefs
 {
-    trouter.prefs = prefs;
+    self.trouter.prefs = prefs;
 }
 
 - (BOOL)growSelectionLeft
@@ -7708,10 +7695,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         workingDirectory = @"";
     }
     // First, try to locate an existing filename at this location.
-    NSString *filename = [trouter pathOfExistingFileFoundWithPrefix:possibleFilePart1
-                                                             suffix:possibleFilePart2
-                                                   workingDirectory:workingDirectory
-                                               charsTakenFromPrefix:&fileCharsTaken];
+    NSString *filename = [self.trouter pathOfExistingFileFoundWithPrefix:possibleFilePart1
+                                                                  suffix:possibleFilePart2
+                                                        workingDirectory:workingDirectory
+                                                    charsTakenFromPrefix:&fileCharsTaken];
 
     // Don't consider / to be a valid filename because it's useless and single/double slashes are
     // pretty common.
@@ -7727,9 +7714,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         range.columnWindow = extractor.logicalWindow;
         action.range = range;
 
-        action.fullPath = [trouter getFullPath:filename
-                              workingDirectory:workingDirectory
-                                    lineNumber:NULL];
+        action.fullPath = [self.trouter getFullPath:filename
+                                   workingDirectory:workingDirectory
+                                         lineNumber:NULL];
         action.workingDirectory = workingDirectory;
         return action;
     }
@@ -7836,8 +7823,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // I tried respecting hard newlines if that is a legal URL, but that's such a broad definition
     // that it doesn't work well. Hard EOLs mid-url are very common. Let's try always ignoring them.
     return [self urlActionForClickAtX:x
-                                y:y
-           respectingHardNewlines:![iTermSettingsModel ignoreHardNewlinesInURLs]];
+                                    y:y
+               respectingHardNewlines:![iTermSettingsModel ignoreHardNewlinesInURLs]];
 }
 
 // Returns the drag operation to use. It is determined from the type of thing
@@ -7891,10 +7878,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
     NSString *workingDirectory = [_dataSource workingDirectoryOnLine:line];
-    if (![trouter openPath:trimmedURLString
-              workingDirectory:workingDirectory
-                    prefix:prefix
-                    suffix:suffix]) {
+    if (![self.trouter openPath:trimmedURLString
+               workingDirectory:workingDirectory
+                         prefix:prefix
+                         suffix:suffix]) {
         [self _findUrlInString:aURLString
               andOpenInBackground:background];
     }

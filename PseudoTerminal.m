@@ -6065,6 +6065,8 @@ NSString *kSessionsKVCKey = @"sessions";
                [item action] == @selector(jumpToSelection:) ||
                [item action] == @selector(findUrls:)) {
         result = ([self currentSession] != nil);
+    } else if ([item action] == @selector(openSelection:)) {
+        result = [[self currentSession] hasSelection];
     }
     return result;
 }
@@ -6865,6 +6867,10 @@ NSString *kSessionsKVCKey = @"sessions";
     if (commandHistoryPopup.delegate == session) {
         commandHistoryPopup.delegate = nil;
     }
+}
+
+- (IBAction)openSelection:(id)sender {
+    [[self currentSession] openSelection];
 }
 
 #pragma mark - Find

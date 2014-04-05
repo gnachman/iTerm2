@@ -247,6 +247,8 @@ typedef enum {
 // Session is not in foreground and notifications are enabled on the screen.
 @property(nonatomic, readonly) BOOL shouldPostGrowlNotification;
 
+@property(nonatomic, readonly) BOOL hasSelection;
+
 #pragma mark - methods
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
@@ -384,6 +386,8 @@ typedef enum {
 // Call refresh on the textview and schedule a timer if anything is blinking.
 - (void)refreshAndStartTimerIfNeeded;
 
+// Open the current selection with semantic history.
+- (void)openSelection;
 
 // Jump to the saved scroll position
 - (void)jumpToSavedScrollPosition;

@@ -7,6 +7,17 @@
 #import "FileTransferManager.h"
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm.h"
+#import "iTermApplicationDelegate.h"
+#import "iTermColorMap.h"
+#import "iTermController.h"
+#import "iTermGrowlDelegate.h"
+#import "iTermKeyBindingMgr.h"
+#import "iTermPasteHelper.h"
+#import "iTermSelection.h"
+#import "iTermSettingsModel.h"
+#import "iTermTextExtractor.h"
+#import "iTermWarning.h"
 #import "MovePaneController.h"
 #import "MovePaneController.h"
 #import "NSColor+iTerm.h"
@@ -34,23 +45,13 @@
 #import "TmuxStateParser.h"
 #import "TmuxWindowOpener.h"
 #import "Trigger.h"
+#import "Trouter.h"
 #import "VT100RemoteHost.h"
 #import "VT100Screen.h"
 #import "VT100ScreenMark.h"
 #import "VT100Terminal.h"
 #import "VT100Token.h"
 #import "WindowControllerInterface.h"
-#import "iTerm.h"
-#import "iTermApplicationDelegate.h"
-#import "iTermColorMap.h"
-#import "iTermController.h"
-#import "iTermGrowlDelegate.h"
-#import "iTermKeyBindingMgr.h"
-#import "iTermPasteHelper.h"
-#import "iTermSelection.h"
-#import "iTermSettingsModel.h"
-#import "iTermTextExtractor.h"
-#import "iTermWarning.h"
 #import <apr-1/apr_base64.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -1592,6 +1593,51 @@ typedef enum {
     BOOL windowIsObscured =
         ([[iTermController sharedInstance] terminalIsObscured:self.tab.realParentWindow]);
     return (windowIsObscured);
+}
+
+- (BOOL)hasSelection {
+    return [_textview.selection hasSelection];
+}
+
+- (void)openSelection {
+    Trouter *trouter = _textview.trouter;
+    int lineNumber;
+    NSArray *subSelections = _textview.selection.allSubSelections;
+    if ([subSelections count]) {
+        iTermSubSelection *firstSub = subSelections[0];
+        lineNumber = firstSub.range.coordRange.start.y;
+    } else {
+        lineNumber = _textview.selection.liveRange.coordRange.start.y;
+    }
+    
+    // TODO: Figure out if this is a remote host and download/open if that's the case.
+    NSString *workingDirectory = [_screen workingDirectoryOnLine:lineNumber];
+    NSString *selection = [_textview selectedText];
+    if (!selection.length) {
+        NSBeep();
+        return;
+    }
+    
+    int charsTakenFromPrefix;
+    NSString *filename = [trouter pathOfExistingFileFoundWithPrefix:selection
+                                                             suffix:@""
+                                                   workingDirectory:workingDirectory
+                                               charsTakenFromPrefix:&charsTakenFromPrefix];
+    if (filename &&
+        ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
+        if ([trouter openPath:filename workingDirectory:workingDirectory prefix:selection suffix:@""]) {
+            return;
+        }
+    }
+
+    // Try to open it as a URL.
+    NSURL *url = [NSURL URLWithString:selection];
+    if (url) {
+        [[NSWorkspace sharedWorkspace] openURL:url];
+        return;
+    }
+    
+    NSBeep();
 }
 
 - (void)setBell:(BOOL)flag

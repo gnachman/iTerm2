@@ -431,6 +431,13 @@ DQ
                                     </items>
                                 </menu>
                             </menuItem>
+                            <menuItem title="Open Selection" keyEquivalent="o" id="upW-1r-eM7">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="openSelection:" target="-1" id="iqq-zv-3ZQ"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="EC1-3K-Gyr"/>
                             <menuItem title="Select All" keyEquivalent="a" id="172">
                                 <connections>
                                     <action selector="selectAll:" target="-1" id="179"/>
@@ -498,53 +505,52 @@ DQ
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="765">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                                <menu key="submenu" id="1149">
+                            </menuItem>
+                            <menuItem title="Marks and Annotations" id="Lfh-pN-XLJ">
+                                <menu key="submenu" title="Marks and Annotations" id="8TS-w9-E3t">
                                     <items>
-                                        <menuItem title="Item 1" enabled="NO" id="1150">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        <menuItem title="Set Mark" keyEquivalent="M" id="1243">
+                                            <connections>
+                                                <action selector="saveScrollPosition:" target="-1" id="1247"/>
+                                            </connections>
                                         </menuItem>
-                                        <menuItem title="Item 2" enabled="NO" id="1151">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        <menuItem title="Add Annotation at Cursor" keyEquivalent="m" id="Fna-Ng-9y6">
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="addNoteAtCursor:" target="-1" id="B5P-c8-bDe"/>
+                                            </connections>
                                         </menuItem>
-                                        <menuItem title="Item 3" enabled="NO" id="1152">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        <menuItem isSeparatorItem="YES" id="Pvx-sU-bPM">
+                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                        </menuItem>
+                                        <menuItem title="Jump to Mark" keyEquivalent="J" id="1245">
+                                            <connections>
+                                                <action selector="jumpToSavedScrollPosition:" target="-1" id="1248"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Previous Mark/Annotation" keyEquivalent="" id="sZa-7I-YDa">
+                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="previousMarkOrNote:" target="-1" id="Qrg-Y8-KM2"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Next Mark/Annotation" keyEquivalent="" id="mcu-LX-9Aj">
+                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="nextMarkOrNote:" target="-1" id="HSR-a4-u0F"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="OqF-Et-Rt4">
+                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                        </menuItem>
+                                        <menuItem title="Alert on Next Mark" keyEquivalent="a" id="Qj6-xH-l9X">
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="toggleAlertOnNextMark:" target="-1" id="hTO-Iy-yuC"/>
+                                            </connections>
                                         </menuItem>
                                     </items>
                                 </menu>
-                            </menuItem>
-                            <menuItem title="Set Mark" keyEquivalent="M" id="1243">
-                                <connections>
-                                    <action selector="saveScrollPosition:" target="-1" id="1247"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Jump to Mark" keyEquivalent="J" id="1245">
-                                <connections>
-                                    <action selector="jumpToSavedScrollPosition:" target="-1" id="1248"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Previous Mark/Annotation" keyEquivalent="" id="sZa-7I-YDa">
-                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
-                                <connections>
-                                    <action selector="previousMarkOrNote:" target="-1" id="Qrg-Y8-KM2"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Next Mark/Annotation" keyEquivalent="" id="mcu-LX-9Aj">
-                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
-                                <connections>
-                                    <action selector="nextMarkOrNote:" target="-1" id="HSR-a4-u0F"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Alert on Next Mark" keyEquivalent="a" id="Qj6-xH-l9X">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="toggleAlertOnNextMark:" target="-1" id="hTO-Iy-yuC"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Add Annotation at Cursor" keyEquivalent="m" id="Fna-Ng-9y6">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="addNoteAtCursor:" target="-1" id="B5P-c8-bDe"/>
-                                </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="1238">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
@@ -1005,58 +1011,6 @@ DQ
             </view>
         </window>
         <customObject id="879" userLabel="SUUpdater" customClass="SUUpdater"/>
-        <menu id="1422">
-            <items>
-                <menuItem title="Item 1" id="1423">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                </menuItem>
-                <menuItem title="Item 2" id="1424">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                </menuItem>
-                <menuItem title="Item 3" id="1425">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                </menuItem>
-            </items>
-        </menu>
-        <menuItem title="tmux" id="1426">
-            <modifierMask key="keyEquivalentModifierMask"/>
-            <menu key="submenu" title="tmux" id="1427">
-                <items>
-                    <menuItem title="Show Toolbelt" keyEquivalent="B" id="1429">
-                        <connections>
-                            <action selector="toggleToolbelt:" target="201" id="1430"/>
-                        </connections>
-                    </menuItem>
-                    <menuItem isSeparatorItem="YES" id="1428"/>
-                </items>
-            </menu>
-        </menuItem>
-        <menuItem isSeparatorItem="YES" id="1435">
-            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-        </menuItem>
-        <menuItem title="New Window" alternate="YES" keyEquivalent="n" id="1442">
-            <connections>
-                <action selector="newWindow:" target="201" id="1443"/>
-            </connections>
-        </menuItem>
-        <sliderCell controlSize="small" state="on" alignment="left" maxValue="100" doubleValue="50" tickMarkPosition="below" sliderType="linear" id="1482"/>
-        <menuItem title="Paste Slowly" tag="2" id="1485">
-            <modifierMask key="keyEquivalentModifierMask"/>
-            <connections>
-                <action selector="paste:" target="-1" id="1486"/>
-            </connections>
-        </menuItem>
-        <menuItem title="Paste Slowly" tag="2" id="1487">
-            <modifierMask key="keyEquivalentModifierMask"/>
-            <connections>
-                <action selector="paste:" target="-1" id="1488"/>
-            </connections>
-        </menuItem>
-        <menuItem title="Show/Hide notes" keyEquivalent="\" id="Dat-IK-oIH">
-            <connections>
-                <action selector="jumpToSavedScrollPosition:" target="-1" id="1KQ-rp-6ZM"/>
-            </connections>
-        </menuItem>
     </objects>
     <resources>
         <image name="NSApplicationIcon" width="128" height="128"/>
