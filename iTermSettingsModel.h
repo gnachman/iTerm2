@@ -60,4 +60,7 @@
 
 + (BOOL)disableToolbar;
 
+// Regular expression for finding URLs for Edit>Find>Find URLs
++ (NSString *)findUrlsRegex;
+
 @end

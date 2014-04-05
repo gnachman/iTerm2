@@ -63,6 +63,10 @@ DEFINE_BOOL(doNotSetCtype, NO, @"Terminal: Never set the CTYPE environment varia
 // For these, 1 is more aggressive and 0 turns the feature off:
 DEFINE_FLOAT(smartCursorColorBgThreshold, 0.5, @"Terminal: Threshold for Smart Cursor Color for background color (0 to 1)")
 DEFINE_FLOAT(smartCursorColorFgThreshold, 0.75, @"Terminal: Threshold for Smart Cursor Color for text color (0 to 1)")
+DEFINE_STRING(findUrlsRegex,
+              @"https?://([a-z0-9A-Z]+(:[a-zA-Z0-9]+)?@)?[-a-z0-9A-Z\\-]+(\\.[-a-z0-9A-Z\\-]+)*"
+              @"((:[0-9]+)?)(/[a-zA-Z0-9;:/\\.\\-_+%~?&amp;@=#\\(\\)]*)?",
+              @"Terminal: Regular expression for “Find URLs” command");
 
 #pragma mark Hotkey
 DEFINE_FLOAT(hotkeyTermAnimationDuration, 0.25, @"Hotkey: Duration in seconds of the hotkey window animation")

@@ -484,6 +484,15 @@ DQ
                                                 <action selector="jumpToSelection:" target="-1" id="770"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="PJB-Pw-4PO">
+                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                        </menuItem>
+                                        <menuItem title="Find URLs" keyEquivalent="u" id="VPn-YM-CGp">
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="findUrls:" target="-1" id="PCp-uW-FfK"/>
+                                            </connections>
+                                        </menuItem>
                                     </items>
                                 </menu>
                             </menuItem>

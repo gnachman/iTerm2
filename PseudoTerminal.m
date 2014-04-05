@@ -1612,6 +1612,14 @@ NSString *kSessionsKVCKey = @"sessions";
     return term;
 }
 
+- (IBAction)findUrls:(id)sender {
+    FindViewController *findViewController = [[[self currentSession] view] findViewController];
+    NSString *regex = [iTermSettingsModel findUrlsRegex];
+    [findViewController closeViewAndDoTemporarySearchForString:regex
+                                                  ignoringCase:NO
+                                                         regex:YES];
+}
+
 - (IBAction)detachTmux:(id)sender
 {
     [[self currentTmuxController] requestDetach];
@@ -6050,6 +6058,8 @@ NSString *kSessionsKVCKey = @"sessions";
                                                     horizontally:YES];
     } else if ([item action] == @selector(duplicateTab:)) {
         return ![[self currentTab] isTmuxTab];
+    } else if ([item action] == @selector(findUrls:)) {
+        return [self currentSession] != nil;
     }
     return result;
 }

@@ -345,6 +345,7 @@
 
 #pragma mark - IBActions
 
+- (IBAction)findUrls:(id)sender;
 - (IBAction)toggleShowTimestamps:(id)sender;
 - (IBAction)toggleAutoCommandHistory:(id)sender;
 - (IBAction)openDashboard:(id)sender;

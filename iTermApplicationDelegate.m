@@ -1533,13 +1533,10 @@ static BOOL hasBecomeActive = NO;
 }
 
 
-@end
+#pragma mark - Find
 
-@implementation iTermApplicationDelegate (Find_Actions)
-
-- (IBAction) showFindPanel: (id) sender
-{
-        [[iTermController sharedInstance] showHideFindBar];
+- (IBAction)showFindPanel:(id)sender {
+    [[iTermController sharedInstance] showHideFindBar];
 }
 
 // findNext and findPrevious are reversed here because in the search UI next
