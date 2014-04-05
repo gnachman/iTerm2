@@ -22,4 +22,6 @@
 // Cancels the lookup for |hostname|.
 - (void)cancelRequestForHostname:(NSString *)hostname;
 
+- (BOOL)isLookingUpHostname:(NSString *)hostname;
+
 @end

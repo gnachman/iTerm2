@@ -54,6 +54,7 @@ typedef enum {
 @property(nonatomic, assign) VT100GridWindowedRange range;
 @property(nonatomic, assign) iTermSelectionMode selectionMode;
 @property(nonatomic, assign) BOOL connected;  // If connected, no newline occurs before the next sub
+@property(nonatomic, retain) NSObject *object;  // User-supplied object.
 
 + (instancetype)subSelectionWithRange:(VT100GridWindowedRange)range
                                  mode:(iTermSelectionMode)mode;
@@ -145,11 +146,23 @@ typedef enum {
 // Add a range to the set of selections.
 - (void)addSubSelection:(iTermSubSelection *)sub;
 
+// Remove a subselection.
+- (void)removeSubSelection:(iTermSubSelection *)sub;
+
+// Contains an equal subselection?
+- (BOOL)containsSubSelection:(iTermSubSelection *)sub;
+
 // Returns the indexes of characters selected on a given line.
 - (NSIndexSet *)selectedIndexesOnLine:(int)line;
 
 // Calls the block for each selected range.
 - (void)enumerateSelectedRanges:(void (^)(VT100GridWindowedRange range, BOOL *stop, BOOL eol))block;
+
+// Calls the block for all subselections that intersect |range|. If a subselection has multiple
+// intersecting ranges (due to a window) then the block will be called more than once for the same
+// subselection.
+- (void)enumerateSubSelectionsInRange:(VT100GridRange)range
+                                block:(void (^)(iTermSubSelection *, VT100GridCoordRange))block;
 
 // Changes the first/last range.
 - (void)setFirstRange:(VT100GridWindowedRange)firstRange mode:(iTermSelectionMode)mode;

@@ -141,6 +141,13 @@ NS_INLINE VT100GridCoord VT100GridWindowedRangeEnd(VT100GridWindowedRange range)
     return coord;
 }
 
+NS_INLINE BOOL VT100GridWindowedRangeEquals(VT100GridWindowedRange a, VT100GridWindowedRange b) {
+    return (VT100GridCoordEquals(a.coordRange.start, b.coordRange.start) &&
+            VT100GridCoordEquals(a.coordRange.end, b.coordRange.end) &&
+            a.columnWindow.location == b.columnWindow.location &&
+            a.columnWindow.length == b.columnWindow.length);
+}
+
 // Ascending: a < b
 // Descending: a > b
 // Same: a == b
@@ -225,6 +232,53 @@ NS_INLINE long long VT100GridWindowedRangeLength(VT100GridWindowedRange range, i
 
 NS_INLINE long long VT100GridCoordRangeLength(VT100GridCoordRange range, int gridWidth) {
     return VT100GridCoordDistance(range.start, range.end, gridWidth);
+}
+
+// Returns a range where start is before end.
+NS_INLINE VT100GridCoordRange VT100GridCoordRangeAscending(VT100GridCoordRange range) {
+    if (VT100GridCoordOrder(range.start, range.end) == NSOrderedDescending) {
+        return VT100GridCoordRangeMake(range.end.x, range.end.y, range.start.x, range.start.y);
+    } else {
+        return range;
+    }
+}
+
+NS_INLINE VT100GridCoordRange VT100GridCoordRangeIntersection(VT100GridCoordRange a, VT100GridCoordRange b) {
+    a = VT100GridCoordRangeAscending(a);
+    b = VT100GridCoordRangeAscending(b);
+
+    VT100GridCorod maxOfMins;
+    if (VT100GridCoordOrder(a.start, b.start) == NSOrderedAscending) { // a < b
+        maxOfMins = b.start;
+    } else {
+        maxOfMins = a.start;
+    }
+
+    VT100GridCoord minOfMaxes;
+    if (VT100GridCoordOrder(a.end, b.end) == NSOrderedDescending) { // a < b
+        minOfMaxes = a.end;
+    } else {
+        minOfMaxes = b.end;
+    }
+
+    // If maxOfMins (X) < minOfMaxes (Y) then there is an intersection.
+    //      X  Y        X,Y*       X  Y        X Y       Y X*
+    /       |  |        |          |  |        | |       | |
+    //    aaaaa     aaaa         aaaaaaaa      aaaaa       aaaa
+    //      bbbbbb      bbbb       bbb       bbbb      bb
+    if (VT100GridCoordOrder(maxOfMins, minOfMaxes) == NSOrderedAscending) {
+        return VT100GridCoordRangeMake(maxOfMins.x, maxOfMins.y, minOfMaxes.x, minOfMaxes.y);
+    } else {
+        return VT100GridCoordRangeMake(-1, -1, -1, -1);
+    }
+}
+
+NS_INLINE BOOL VT100GridCoordRangesIntersect(VT100GridCoordRange a, VT100GridCoordRange b) {
+    VT100GridCoordRange intersection = VT100GridCoordRangeIntersection(a, b);
+    return !(intersection.start.x == -1 &&
+             intersection.start.y == -1 &&
+             intersection.end.x == -1 &&
+             intersection.end.y == -1);
 }
 
 // Returns the coord of the last char inside the run.

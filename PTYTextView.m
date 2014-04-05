@@ -97,7 +97,6 @@ static NSImage* alertImage;
 @interface PTYTextView () <iTermSelectionDelegate>
 // Set the hostname this view is currently waiting for AsyncHostLookupController to finish looking
 // up.
-@property(nonatomic, copy) NSString *currentUnderlineHostname;
 @property(nonatomic, retain) iTermSelection *selection;
 @property(nonatomic, retain) NSColor *cachedBackgroundColor;
 @property(nonatomic, retain) NSColor *unfocusedSelectionColor;
@@ -146,7 +145,8 @@ static NSImage* alertImage;
     PTYFontInfo *secondaryFont;  // non-ascii font, only used if self.useNonAsciiFont is set.
 
     // Underlined selection range (inclusive of all values), indicating clickable url.
-    VT100GridWindowedRange _underlineRange;
+    // Each subselection's object, if set, is a string whose name lookup is pending.
+    iTermSelection _underlinedLinks;
     BOOL mouseDown;
     BOOL mouseDragged;
     BOOL mouseDownOnSelection;
@@ -405,7 +405,7 @@ static NSImage* alertImage;
         _selection = [[iTermSelection alloc] init];
         _selection.delegate = self;
         _oldSelection = [_selection copy];
-        _underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
+        _underlinedLinks = [[iTermSelection alloc] init];
         markedText = nil;
         gettimeofday(&lastBlink, NULL);
         [[self window] useOptimizedDrawing:YES];
@@ -526,12 +526,21 @@ static NSImage* alertImage;
     [threeFingerTapGestureRecognizer_ release];
 
     [_findContext release];
-    if (self.currentUnderlineHostname) {
-        [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
-    }
-    [_currentUnderlineHostname release];
+    [self removeUnderlines];
+    [_underlinedLinks release];
 
     [super dealloc];
+}
+
+- (void)removeUnderlines {
+    for (iTermSubSelection *sub in [_underlinedLinks allSubSelections]) {
+        if (sub.object) {
+            [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:(NSString *)sub.object];
+        }
+    }
+    [_underlinedLinks clearSelection];
+    [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
+    [self updateTrackingAreas];  // Cause mouseMoved to be (not) called on movement if cmd is down (up).
 }
 
 - (NSString *)description {
@@ -619,7 +628,7 @@ static NSImage* alertImage;
 
 - (BOOL)resignFirstResponder
 {
-    [self removeUnderline];
+    [self removeUnderlines];
     return YES;
 }
 
@@ -2598,18 +2607,6 @@ NSMutableArray* screens=0;
     }
 }
 
-// Reset underlined chars indicating cmd-clicakble url.
-- (void)removeUnderline
-{
-    _underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
-    if (self.currentUnderlineHostname) {
-        [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
-    }
-    self.currentUnderlineHostname = nil;
-    [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
-    [self updateTrackingAreas];  // Cause mouseMoved to be (not) called on movement if cmd is down (up).
-}
-
 - (BOOL)reportingMouseClicks {
     if ([self xtermMouseReporting]) {
         VT100Terminal *terminal = [_dataSource terminal];
@@ -2654,61 +2651,45 @@ NSMutableArray* screens=0;
                                                                             0,
                                                                             0)];
         NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView: nil];
-        if (!NSPointInRect(locationInTextView, [self bounds])) {
-            [self removeUnderline];
-            return;
-        }
-        NSPoint viewPoint = [self windowLocationToRowCol:windowRect.origin];
-        int x = viewPoint.x;
-        int y = viewPoint.y;
-        if (y < 0) {
-            [self removeUnderline];
-            return;
-        } else {
-            URLAction *action = [self urlActionForClickAtX:x
-                                                         y:y
-                                    respectingHardNewlines:![iTermSettingsModel ignoreHardNewlinesInURLs]];
-            if (action) {
-                _underlineRange = action.range;
+        if (NSPointInRect(locationInTextView, [self bounds])) {
+            NSPoint viewPoint = [self windowLocationToRowCol:windowRect.origin];
+            int x = viewPoint.x;
+            int y = viewPoint.y;
+            if (y >= 0) {
+                URLAction *action = [self urlActionForClickAtX:x
+                                                             y:y
+                                        respectingHardNewlines:![iTermSettingsModel ignoreHardNewlinesInURLs]];
+                if (action) {
+                    iTermSubSelection *sub = [iTermSubSelection subSelectionWithRange:action.range
+                                                                                 mode:kiTermSelectionModeCharacter];
+                    if ([_underlinedLinks containsSubSelection:sub]) {
+                        return;
+                    }
+                    [self removeUnderlines];
+                    [_underlinedLinks addSubSelection:sub];
 
-                if (action.actionType == kURLActionOpenURL) {
-                    NSURL *url = [NSURL URLWithString:action.string];
-                    if (![url.host isEqualToString:self.currentUnderlineHostname]) {
-                        if (self.currentUnderlineHostname) {
-                            [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
-                        }
+                    if (action.actionType == kURLActionOpenURL) {
+                        NSURL *url = [NSURL URLWithString:action.string];
                         if (url && url.host) {
-                            self.currentUnderlineHostname = url.host;
+                            sub.object = url.host;
                             [[AsyncHostLookupController sharedInstance] getAddressForHost:url.host
                                                                                completion:^(BOOL ok, NSString *hostname) {
-                                                                                   if (!ok) {
-                                                                                       [[NSNotificationCenter defaultCenter] postNotificationName:kHostnameLookupFailed
-                                                                                                                                           object:hostname];
-                                                                                   } else {
-                                                                                       [[NSNotificationCenter defaultCenter] postNotificationName:kHostnameLookupSucceeded
-                                                                                                                                           object:hostname];
-                                                                                   }
-                                                                               }];
+                                if (!ok) {
+                                    [[NSNotificationCenter defaultCenter] postNotificationName:kHostnameLookupFailed
+                                                                                        object:hostname];
+                                } else {
+                                    [[NSNotificationCenter defaultCenter] postNotificationName:kHostnameLookupSucceeded
+                                                                                        object:hostname];
+                                }
+                            }];
                         }
                     }
-                } else {
-                    if (self.currentUnderlineHostname) {
-                        [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
-                    }
-                    self.currentUnderlineHostname = nil;
+                    return;
                 }
-            } else {
-                [self removeUnderline];
-                return;
             }
         }
-    } else {
-        [self removeUnderline];
-        return;
     }
-
-    [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
-    [self updateTrackingAreas];  // Cause mouseMoved to be (not) called on movement if cmd is down (up).
+    [self removeUnderlines];
 }
 
 - (void)flagsChanged:(NSEvent *)theEvent
@@ -5820,44 +5801,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return memoizedContrastingColor_;
 }
 
-- (NSRange)underlinedRangeOnLine:(int)row {
-    if (_underlineRange.coordRange.start.x < 0) {
-        return NSMakeRange(0, 0);
-    }
-
-    if (row == _underlineRange.coordRange.start.y && row == _underlineRange.coordRange.end.y) {
-        // Whole underline is on one line.
-        const int start = VT100GridWindowedRangeStart(_underlineRange).x;
-        const int end = VT100GridWindowedRangeEnd(_underlineRange).x;
-        return NSMakeRange(start, end - start);
-    } else if (row == _underlineRange.coordRange.start.y) {
-        // Underline spans multiple lines, starting at this one.
-        const int start = VT100GridWindowedRangeStart(_underlineRange).x;
-        const int end =
-            _underlineRange.columnWindow.length > 0 ? VT100GridRangeMax(_underlineRange.columnWindow) + 1
-                                                    : [_dataSource width];
-        return NSMakeRange(start, end - start);
-    } else if (row == _underlineRange.coordRange.end.y) {
-        // Underline spans multiple lines, ending at this one.
-        const int start =
-            _underlineRange.columnWindow.length > 0 ? _underlineRange.columnWindow.location : 0;
-        const int end = VT100GridWindowedRangeEnd(_underlineRange).x;
-        return NSMakeRange(start, end - start);
-    } else if (row > _underlineRange.coordRange.start.y && row < _underlineRange.coordRange.end.y) {
-        // Underline spans multiple lines. This is not the first or last line, so all chars
-        // in it are underlined.
-        const int start =
-            _underlineRange.columnWindow.length > 0 ? _underlineRange.columnWindow.location : 0;
-        const int end =
-            _underlineRange.columnWindow.length > 0 ? VT100GridRangeMax(_underlineRange.columnWindow) + 1
-                                                    : [_dataSource width];
-        return NSMakeRange(start, end - start);
-    } else {
-        // No selection on this line.
-        return NSMakeRange(0, 0);
-    }
-}
-
 - (CRun *)_constructRuns:(NSPoint)initialPoint
                  theLine:(screen_char_t *)theLine
                      row:(int)row
@@ -5881,12 +5824,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int lastBold = 2;  // Bold is a one-bit field so it can never equal 2.
     NSColor *lastColor = nil;
     CGFloat curX = 0;
-    NSRange underlinedRange = [self underlinedRangeOnLine:row];
-    const int underlineStartsAt = underlinedRange.location;
-    const int underlineEndsAt = NSMaxRange(underlinedRange);
+    NSIndexSet *underlinedIndices = [_underlinedLinks selectedIndexesOnLine:row];
+    NSMutableIndexSet *resolvedUnderlinedIndices = nil;
+    if ([underlinedIndices count]) {
+        resolvedUnderlinedIndices = [NSMutableIndexSet indexSet];
+        VT100GridCoordRange rowRange = VT100GridRangeMake(indexRange.location,
+                                                          row,
+                                                          indexRange.location + indexRange.length,
+                                                          row);
+        [_underlinedLinks enumerateSubSelectionsInRange:rowRange
+                                                  block:^(iTermSubSelection *sub,
+                                                          VT100GridCoordRange intersectingCoordRange) {
+            NSRange intersectingRange = NSMakeRange(intersectingCoordRange.start.x,
+                                                    intersectingCoordRange.end.x);
+            [resolvedUnderlinedIndices addIndexesInRange:intersectingRange];
+        }];
+    }
     const BOOL dimOnlyText = _colorMap.dimOnlyText;
     for (int i = indexRange.location; i < indexRange.location + indexRange.length; i++) {
-        inUnderlinedRange = (i >= underlineStartsAt && i < underlineEndsAt);
+        inUnderlinedRange = [underlinedIndices containsIndex:i];
         if (theLine[i].code == DWC_RIGHT) {
             continue;
         }
@@ -6031,8 +5987,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (theLine[i].image) {
                 thisCharString = @"I";
             }
-            if (inUnderlinedRange && !self.currentUnderlineHostname) {
-                attrs.color = [NSColor colorWithCalibratedRed:0.023 green:0.270 blue:0.678 alpha:1];
+            if (inUnderlinedRange && [resolvedUnderlinedIndices containsIndex:i]) {
+                // Underlined URLs with valid resolved hostnames get a blue underline, otherwise
+                // they get the same color as text.
+                attrs.color = [NSColor colorWithCalibratedRed:0.023
+                                                        green:0.270
+                                                         blue:0.678
+                                                        alpha:1];
             }
             if (!currentRun) {
                 firstRun = currentRun = malloc(sizeof(CRun));
@@ -7818,17 +7779,37 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)hostnameLookupFailed:(NSNotification *)notification {
-    if ([[notification object] isEqualToString:self.currentUnderlineHostname]) {
-        self.currentUnderlineHostname = nil;
-        [self removeUnderline];
-        _underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
+    NSString *hostname = [notification object];
+    NSMutableArray *subsToRemove = [NSMutableArray array];
+    for (iTermSubSelection *sub in [_underlinedLinks allSubSelections]) {
+        NSString *subHostname = (NSString *)sub.object;
+        if ([subHostname isEqualToString:hostname]) {
+            [subsToRemove addObject:sub];
+        }
+    }
+    for (iTermSubSelection *sub in subsToRemove) {
+        [_underlinedLinks removeSubSelection:sub];
+    }
+
+    if ([subsToRemove count]) {
         [self setNeedsDisplay:YES];
     }
 }
 
 - (void)hostnameLookupSucceeded:(NSNotification *)notification {
-    if ([[notification object] isEqualToString:self.currentUnderlineHostname]) {
-        self.currentUnderlineHostname = nil;
+    NSString *hostname = [notification object];
+
+    // If any hostname in the current set of underlined links matches the lookup, redraw ourselves.
+    BOOL found = NO;
+    for (iTermSubSelection *sub in [_underlinedLinks allSubSelections]) {
+        NSString *subHostname = (NSString *)sub.object;
+        if ([subHostname isEqualToString:hostname]) {
+            found = YES;
+            sub.object = nil;
+        }
+    }
+
+    if (found) {
         [self setNeedsDisplay:YES];
     }
 }

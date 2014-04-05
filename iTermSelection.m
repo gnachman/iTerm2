@@ -19,6 +19,18 @@
     return sub;
 }
 
+- (void)dealloc {
+    [_object release];
+    [super dealloc];
+}
+
+- (BOOL)isEqual:(id)object {
+    return (VT100GridWindowedRangeEquals(self.range, other.range) &&
+            self.selectionMode == other.selectionMode &&
+            self.connected == other.connected &&
+            [self.object isEqual:other.object]);
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p range=%@ mode=%@>",
             [self class], self, VT100GridWindowedRangeDescription(_range),
@@ -64,7 +76,7 @@
         return @[ self ];
     }
     NSMutableArray *result = [NSMutableArray array];
-    [[self class] enumerateRangesInWindowedRange:self.range block:^(VT100GridCoordRange theRange) {
+    [[self class] enumerateRangesInWindowedRange:self.range block:^(VT100GridCoordRange theRange, BOOL *stop) {
         iTermSubSelection *sub =
             [iTermSubSelection subSelectionWithRange:VT100GridWindowedRangeMake(theRange, 0, 0)
                                                 mode:_selectionMode];
@@ -76,20 +88,25 @@
 }
 
 + (void)enumerateRangesInWindowedRange:(VT100GridWindowedRange)windowedRange
-                                 block:(void (^)(VT100GridCoordRange))block {
+                                 block:(void (^)(VT100GridCoordRange, BOOL *))block {
     if (windowedRange.columnWindow.length) {
+        BOOL stop = NO;
         int right = windowedRange.columnWindow.location + windowedRange.columnWindow.length;
         int startX = VT100GridWindowedRangeStart(windowedRange).x;
         for (int y = windowedRange.coordRange.start.y; y < windowedRange.coordRange.end.y; y++) {
-            block(VT100GridCoordRangeMake(startX, y, right, y));
+            block(VT100GridCoordRangeMake(startX, y, right, y), &stop);
+            if (stop) {
+                return;
+            }
             startX = windowedRange.columnWindow.location;
         }
         block(VT100GridCoordRangeMake(startX,
                                       windowedRange.coordRange.end.y,
                                       VT100GridWindowedRangeEnd(windowedRange).x,
-                                      windowedRange.coordRange.end.y));
+                                      windowedRange.coordRange.end.y),
+              &stop);
     } else {
-        block(windowedRange.coordRange);
+        block(windowedRange.coordRange, &stop);
     }
 }
 
@@ -684,6 +701,15 @@
     [_delegate selectionDidChange:self];
 }
 
+- (void)removeSubSelection:(iTermSubSelection *)sub {
+    [_subSelections removeObject:sub];
+    [_delegate selectionDidChange:self];
+}
+
+- (BOOL)containsSubSelection:(iTermSubSelection *)sub {
+    return [_subSelections containsObject:sub];
+}
+
 - (void)removeWindowsWithWidth:(int)width {
     _initialRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
     if (_live) {
@@ -803,6 +829,40 @@
     return indexes;
 }
 
+- (void)enumerateSubSelectionsInRange:(VT100GridRange)range
+                                block:(void (^)(iTermSubSelection *, VT100GridCoordRange))block {
+    if (_live) {
+        // Live ranges can have box subs, which is just a pain to deal with, so make a copy,
+        // end live selection in the copy (which converts boxes to individual selections), and
+        // then try again on the copy.
+        iTermSelection *temp = [[self copy] autorelease];
+        [temp endLiveSelection];
+        [temp enumerateSubSelectionsInRange:range block:block];
+        return;
+    }
+
+
+    for (iTermSubSelection *sub in [self allSubSelections]) {
+        VT100GridCoordRange intersection = VT100GridCoordRangeIntersection(range, sub.range.coordRange);
+        if (intersection.start.x != -1) {
+            VT100GridWindowedRange windowedRange;
+            windowedRange.coordRange = intersection;
+            windowedRange.columnWindow = sub.range.columnWindow;
+            [iTermSubSelection enumerateRangesInWindowedRange:windowedRange
+                                                        block:^(VT100GridCoordRange subRange, BOOL *stop) {
+                if (VT100GridCoordRangesIntersect(range, subRange)) {
+                    block(sub, subRange);
+                } else if (VT100GridCoordOrder(range.end, subRange.start) == NSOrderedAscending) {
+                    // We're called sequentially from top to bottom in the sub's range.
+                    // Once we're called with a range that starts after the end of |range| we can
+                    // stop enumerating because we'll never re-enter |range|.
+                    *stop = YES;
+                }
+            }];
+        }
+    }
+}
+
 - (void)enumerateSelectedRanges:(void (^)(VT100GridWindowedRange, BOOL *, BOOL))block {
     if (_live) {
         // Live ranges can have box subs, which is just a pain to deal with, so make a copy,
@@ -840,7 +900,7 @@
         }
         __block NSRange theRange = NSMakeRange(0, 0);
         [iTermSubSelection enumerateRangesInWindowedRange:outer.range
-                                                    block:^(VT100GridCoordRange outerRange) {
+                                                    block:^(VT100GridCoordRange outerRange, BOOL *outerStop) {
             theRange = NSMakeRange(outerRange.start.x + outerRange.start.y * width,
                                    VT100GridCoordRangeLength(outerRange, width));
             
