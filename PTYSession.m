@@ -2780,13 +2780,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)useStringForFind:(NSString*)string
 {
-    [[_view findViewController] findString:string];
+    [[_view findViewController] setFindString:string];
 }
 
 - (void)findWithSelection
 {
     if ([_textview selectedText]) {
-        [[_view findViewController] findString:[_textview selectedText]];
+        [[_view findViewController] setFindString:[_textview selectedText]];
     }
 }
 

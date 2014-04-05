@@ -276,11 +276,6 @@ static BOOL initDone = NO;
     return windowIsObscured;
 }
 
-- (void)showHideFindBar
-{
-    [[[self currentTerminal] currentSession] toggleFind];
-}
-
 - (int)keyWindowIndexMemo
 {
     return keyWindowIndexMemo_;

@@ -410,7 +410,7 @@ static NSString *gSearchString;
     }
 }
 
-- (void)findString:(NSString*)string
+- (void)setFindString:(NSString*)string
 {
     [findBarTextField_ setStringValue:string];
     [self _loadFindStringIntoSharedPasteboard];

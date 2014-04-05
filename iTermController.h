@@ -78,7 +78,6 @@
 - (void)arrangeHorizontally;
 - (void)newSessionInTabAtIndex:(id)sender;
 - (void)newSessionInWindowAtIndex:(id)sender;
-- (void)showHideFindBar;
 - (PseudoTerminal*)keyTerminalWindow;
 - (BOOL)haveTmuxConnection;
 - (PTYSession *)anyTmuxSession;

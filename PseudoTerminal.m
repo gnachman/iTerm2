@@ -6058,8 +6058,13 @@ NSString *kSessionsKVCKey = @"sessions";
                                                     horizontally:YES];
     } else if ([item action] == @selector(duplicateTab:)) {
         return ![[self currentTab] isTmuxTab];
-    } else if ([item action] == @selector(findUrls:)) {
-        return [self currentSession] != nil;
+    } else if ([item action] == @selector(showFindPanel:) ||
+               [item action] == @selector(findPrevious:) ||
+               [item action] == @selector(findNext:) ||
+               [item action] == @selector(findWithSelection:) ||
+               [item action] == @selector(jumpToSelection:) ||
+               [item action] == @selector(findUrls:)) {
+        result = ([self currentSession] != nil);
     }
     return result;
 }
@@ -6862,6 +6867,44 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
+#pragma mark - Find
+
+- (IBAction)showFindPanel:(id)sender {
+    [[self currentSession] toggleFind];
+}
+
+// findNext and findPrevious are reversed here because in the search UI next
+// goes backwards and previous goes forwards.
+// Internally, next=forward and prev=backwards.
+- (IBAction)findPrevious:(id)sender {
+    [[self currentSession] searchNext];
+}
+
+- (IBAction)findNext:(id)sender {
+    [[self currentSession] searchPrevious];
+}
+
+- (IBAction)findWithSelection:(id)sender {
+    NSString* selection = [[[self currentSession] textview] selectedText];
+    if (selection) {
+        for (PseudoTerminal* pty in [[iTermController sharedInstance] terminals]) {
+            for (PTYSession* session in [pty sessions]) {
+                [session useStringForFind:selection];
+            }
+        }
+    }
+}
+
+- (IBAction)jumpToSelection:(id)sender
+{
+    PTYTextView *textView = [[self currentSession] textview];
+    if (textView) {
+        [textView scrollToSelection];
+    } else {
+        NSBeep();
+    }
+}
+
 #pragma mark - Scripting Support
 
 // Object specifier
@@ -6890,12 +6933,12 @@ NSString *kSessionsKVCKey = @"sessions";
 
 // Handlers for supported commands:
 
--(void)handleSelectScriptCommand: (NSScriptCommand *)command
+- (void)handleSelectScriptCommand:(NSScriptCommand *)command
 {
     [[iTermController sharedInstance] setCurrentTerminal: self];
 }
 
--(id)handleLaunchScriptCommand: (NSScriptCommand *)command
+- (id)handleLaunchScriptCommand:(NSScriptCommand *)command
 {
     // Get the command's arguments:
     NSDictionary *args = [command evaluatedArguments];
@@ -6916,7 +6959,7 @@ NSString *kSessionsKVCKey = @"sessions";
     return [[iTermController sharedInstance] launchBookmark:abEntry inTerminal:self];
 }
 
--(void)handleSplitScriptCommand: (NSScriptCommand *)command
+- (void)handleSplitScriptCommand:(NSScriptCommand *)command
 {
     // Get the command's arguments:
     NSDictionary *args = [command evaluatedArguments];

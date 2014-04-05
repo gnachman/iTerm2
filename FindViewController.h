@@ -91,7 +91,7 @@
 - (IBAction)toggleRegex:(id)sender;
 - (void)searchNext;
 - (void)searchPrevious;
-- (void)findString:(NSString*)string;
+- (void)setFindString:(NSString*)string;
 
 - (void)setDelegate:(id<FindViewControllerDelegate>)delegate;
 - (id<FindViewControllerDelegate>)delegate;

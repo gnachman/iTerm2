@@ -1533,54 +1533,6 @@ static BOOL hasBecomeActive = NO;
 }
 
 
-#pragma mark - Find
-
-- (IBAction)showFindPanel:(id)sender {
-    [[iTermController sharedInstance] showHideFindBar];
-}
-
-// findNext and findPrevious are reversed here because in the search UI next
-// goes backwards and previous goes forwards.
-// Internally, next=forward and prev=backwards.
-- (IBAction)findPrevious:(id)sender
-{
-    PseudoTerminal* pty = [[iTermController sharedInstance] currentTerminal];
-    if (pty) {
-        [[pty currentSession] searchNext];
-    }
-}
-
-- (IBAction)findNext:(id)sender
-{
-    PseudoTerminal* pty = [[iTermController sharedInstance] currentTerminal];
-    if (pty) {
-        [[pty currentSession] searchPrevious];
-    }
-}
-
-- (IBAction)findWithSelection:(id)sender
-{
-    NSString* selection = [[[[[iTermController sharedInstance] currentTerminal] currentSession] textview] selectedText];
-    if (selection) {
-        for (PseudoTerminal* pty in [[iTermController sharedInstance] terminals]) {
-            for (PTYSession* session in [pty sessions]) {
-                [session useStringForFind:selection];
-            }
-        }
-    }
-}
-
-- (IBAction)jumpToSelection:(id)sender
-{
-    id obj = [[NSApp mainWindow] firstResponder];
-    PTYTextView *textView = 
-        (obj && [obj isKindOfClass:[PTYTextView class]]) ? obj : nil;
-    if (textView) {
-        [textView scrollToSelection];
-    } else {
-        NSBeep();
-    }
-}
 
 @end
 
