@@ -68,7 +68,7 @@
 - (void)clearHighlights;
 
 // Preform a search
-- (BOOL)findString:(NSString *)aString
+- (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
       ignoringCase:(BOOL)ignoreCase
              regex:(BOOL)regex
@@ -77,29 +77,7 @@
 @end
 
 
-@interface FindViewController : NSViewController <NSTextFieldDelegate> {
-    IBOutlet NSSearchField* findBarTextField_;
-    IBOutlet NSProgressIndicator* findBarProgressIndicator_;
-    // These pointers are just "prototypes" and do not refer to any actual menu
-    // items.
-    IBOutlet NSMenuItem* ignoreCaseMenuItem_;
-    IBOutlet NSMenuItem* regexMenuItem_;
-    BOOL ignoreCase_;
-    BOOL regex_;
-
-    // Find happens incrementally. This remembers the string to search for.
-    NSMutableString* previousFindString_;
-
-    // Find runs out of a timer so that if you have a huge buffer then it
-    // doesn't lock up. This timer runs the show.
-    NSTimer* timer_;
-    
-    id<FindViewControllerDelegate> delegate_;
-    NSRect fullFrame_;
-    NSSize textFieldSize_;
-    NSSize textFieldSmallSize_;
-}
-
+@interface FindViewController : NSViewController <NSTextFieldDelegate>
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil;
 - (void)dealloc;
 - (void)close;
@@ -118,4 +96,11 @@
 - (void)setDelegate:(id<FindViewControllerDelegate>)delegate;
 - (id<FindViewControllerDelegate>)delegate;
 
+// Performs a "temporary" search. The current state (case sensitivity, regex)
+// is saved and the find view is hidden. A search is performed and the user can
+// navigate with with next-previous. When the find window is opened, the state
+// is restored.
+- (void)closeViewAndDoTemporarySearchForString:(NSString *)string
+                                  ignoringCase:(BOOL)ignoringCase
+                                         regex:(BOOL)regex;
 @end

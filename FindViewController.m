@@ -1,4 +1,3 @@
-// -*- mode:objc -*-
 /*
  **  FindViewController.m
  **
@@ -35,7 +34,55 @@ static BOOL gDefaultIgnoresCase;
 static BOOL gDefaultRegex;
 static NSString *gSearchString;
 
-@implementation FindViewController
+@interface FindState : NSObject
+
+@property(nonatomic, assign) BOOL ignoreCase;
+@property(nonatomic, assign) BOOL regex;
+@property(nonatomic, copy) NSString *string;
+
+@end
+
+@implementation FindState
+
+- (id)init {
+    self = [super init];
+    if (self) {
+        _string = [@"" retain];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_string release];
+    [super dealloc];
+}
+
+@end
+
+@implementation FindViewController {
+    IBOutlet NSSearchField* findBarTextField_;
+    IBOutlet NSProgressIndicator* findBarProgressIndicator_;
+    // These pointers are just "prototypes" and do not refer to any actual menu
+    // items.
+    IBOutlet NSMenuItem* ignoreCaseMenuItem_;
+    IBOutlet NSMenuItem* regexMenuItem_;
+    
+    FindState *savedState_;
+    FindState *state_;
+    
+    // Find happens incrementally. This remembers the string to search for.
+    NSMutableString* previousFindString_;
+    
+    // Find runs out of a timer so that if you have a huge buffer then it
+    // doesn't lock up. This timer runs the show.
+    NSTimer* timer_;
+    
+    id<FindViewControllerDelegate> delegate_;
+    NSRect fullFrame_;
+    NSSize textFieldSize_;
+    NSSize textFieldSmallSize_;
+}
+
 
 + (void)initialize
 {
@@ -52,8 +99,9 @@ static NSString *gSearchString;
     if (self) {
         previousFindString_ = [[NSMutableString alloc] init];
         [findBarTextField_ setDelegate:self];
-        ignoreCase_ = gDefaultIgnoresCase;
-        regex_ = gDefaultRegex;
+        state_ = [[FindState alloc] init];
+        state_.ignoreCase = gDefaultIgnoresCase;
+        state_.regex = gDefaultRegex;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(_loadFindStringFromSharedPasteboard)
                                                      name:@"iTermLoadFindStringFromSharedPasteboard"
@@ -73,6 +121,8 @@ static NSString *gSearchString;
         timer_ = nil;
     }
     [previousFindString_ release];
+    [state_ release];
+    [savedState_ release];
     [super dealloc];
 }
 
@@ -102,6 +152,9 @@ static NSString *gSearchString;
         if ([[findBoard types] containsObject:NSStringPboardType]) {
             NSString *value = [findBoard stringForType:NSStringPboardType];
             if (value && [value length] > 0) {
+                if (savedState_ && ![value isEqualTo:savedState_.string]) {
+                    [self restoreState];
+                }
                 [findBarTextField_ setStringValue:value];
             }
         }
@@ -153,8 +206,29 @@ static NSString *gSearchString;
     [[[[self view] window] contentView] setNeedsDisplay:YES];
 }
 
+- (void)restoreState {
+    [state_ release];
+    state_ = savedState_;
+    savedState_ = nil;
+}
+
+- (void)saveState {
+    [savedState_ release];
+    savedState_ = state_;
+    state_ = [[FindState alloc] init];
+    state_.ignoreCase = savedState_.ignoreCase;
+    state_.regex = savedState_.regex;
+    state_.string = savedState_.string;
+}
+
 - (void)open
 {
+    if (savedState_) {
+        [self restoreState];
+        ignoreCaseMenuItem_.state = state_.ignoreCase ? NSOnState : NSOffState;
+        regexMenuItem_.state = state_.regex ? NSOnState : NSOffState;
+        findBarTextField_.stringValue = state_.string;
+    }
     [[self view] setFrame:[self collapsedFrame]];
     [[self view] setHidden:NO];
     [[NSAnimationContext currentContext] setDuration:FINDVIEW_DURATION];
@@ -201,10 +275,61 @@ static NSString *gSearchString;
     }
 }
 
-- (void)_newSearch:(BOOL)needTimer
+- (void)_setSearchString:(NSString *)s
 {
-    if (needTimer && !timer_) {
-        // NSLog(@"creating timer");
+    if (!savedState_) {
+        [gSearchString autorelease];
+        gSearchString = [s retain];
+        state_.string = s;
+    }
+}
+
+- (void)_setIgnoreCase:(BOOL)set
+{
+    if (!savedState_) {
+        gDefaultIgnoresCase = set;
+        [[NSUserDefaults standardUserDefaults] setBool:set
+                                                forKey:@"findIgnoreCase_iTerm"];
+    }
+}
+
+- (void)_setRegex:(BOOL)set
+{
+    if (!savedState_) {
+        gDefaultRegex = set;
+        [[NSUserDefaults standardUserDefaults] setBool:set
+                                                forKey:@"findRegex_iTerm"];
+    }
+}
+
+- (void)_setSearchDefaults
+{
+    [self _setSearchString:[findBarTextField_ stringValue]];
+    [self _setIgnoreCase:state_.ignoreCase];
+    [self _setRegex:state_.regex];
+}
+
+- (void)findSubString:(NSString *)subString
+     forwardDirection:(BOOL)direction
+         ignoringCase:(BOOL)ignoringCase
+                regex:(BOOL)regex
+           withOffset:(int)offset
+{
+    BOOL ok = NO;
+    if ([delegate_ canSearch]) {
+        if ([subString length] <= 0) {
+            NSBeep();
+        } else {
+            [delegate_ findString:subString
+                 forwardDirection:direction
+                     ignoringCase:ignoringCase
+                            regex:regex
+                       withOffset:offset];
+            ok = YES;
+        }
+    }
+
+    if (ok && !timer_) {
         timer_ = [NSTimer scheduledTimerWithTimeInterval:0.01
                                                   target:self
                                                 selector:@selector(_continueSearch)
@@ -212,81 +337,31 @@ static NSString *gSearchString;
                                                  repeats:YES];
         [findBarProgressIndicator_ setHidden:NO];
         [findBarProgressIndicator_ startAnimation:self];
-    } else if (!needTimer && timer_) {
+    } else if (!ok && timer_) {
         [timer_ invalidate];
         timer_ = nil;
         [findBarProgressIndicator_ setHidden:YES];
     }
 }
 
-- (void)_setSearchString:(NSString *)s
-{
-    [gSearchString autorelease];
-    gSearchString = [s retain];
-}
-
-- (void)_setIgnoreCase:(BOOL)set
-{
-    gDefaultIgnoresCase = set;
-    [[NSUserDefaults standardUserDefaults] setBool:set
-                                            forKey:@"findIgnoreCase_iTerm"];
-}
-
-- (void)_setRegex:(BOOL)set
-{
-    gDefaultRegex = set;
-    [[NSUserDefaults standardUserDefaults] setBool:set
-                                            forKey:@"findRegex_iTerm"];
-}
-
-- (void)_setSearchDefaults
-{
-    [self _setSearchString:[findBarTextField_ stringValue]];
-    [self _setIgnoreCase:ignoreCase_];
-    [self _setRegex:regex_];
-}
-
-- (BOOL)findSubString:(NSString *)subString
-     forwardDirection:(BOOL)direction
-         ignoringCase:(BOOL)caseCheck
-                regex:(BOOL)regex
-           withOffset:(int)offset
-{
-    if ([delegate_ canSearch]) {
-        if ([subString length] <= 0) {
-            NSBeep();
-            return NO;
-        }
-
-        return [delegate_ findString:subString
-                   forwardDirection:direction
-                       ignoringCase:caseCheck
-                              regex:regex
-                         withOffset:offset];
-    }
-    return NO;
-}
-
 - (void)searchNext
 {
     [self _setSearchDefaults];
-    BOOL timer = [self findSubString:gSearchString
-                    forwardDirection:YES
-                        ignoringCase:ignoreCase_
-                               regex:regex_
-                          withOffset:1];
-    [self _newSearch:timer];
+    [self findSubString:savedState_ ? state_.string : gSearchString
+       forwardDirection:YES
+           ignoringCase:state_.ignoreCase
+                  regex:state_.regex
+             withOffset:1];
 }
 
 - (void)searchPrevious
 {
     [self _setSearchDefaults];
-    BOOL timer = [self findSubString:gSearchString
-                    forwardDirection:NO
-                        ignoringCase:ignoreCase_
-                               regex:regex_
-                          withOffset:1];
-    [self _newSearch:timer];
+    [self findSubString:savedState_ ? state_.string : gSearchString
+       forwardDirection:NO
+           ignoringCase:state_.ignoreCase
+                  regex:state_.regex
+             withOffset:1];
 }
 
 - (IBAction)searchNextPrev:(id)sender
@@ -303,27 +378,30 @@ static NSString *gSearchString;
 - (BOOL)validateUserInterfaceItem:(NSMenuItem*)item
 {
     if ([item action] == @selector(toggleIgnoreCase:)) {
-        [item setState:(ignoreCase_ ? NSOnState : NSOffState)];
+        [item setState:(state_.ignoreCase ? NSOnState : NSOffState)];
     } else if ([item action] == @selector(toggleRegex:)) {
-        [item setState:(regex_ ? NSOnState : NSOffState)];
+        [item setState:(state_.regex ? NSOnState : NSOffState)];
     }
     return YES;
 }
 
 - (IBAction)toggleIgnoreCase:(id)sender
 {
-    ignoreCase_ = !ignoreCase_;
-    [self _setIgnoreCase:ignoreCase_];
+    state_.ignoreCase = !state_.ignoreCase;
+    [self _setIgnoreCase:state_.ignoreCase];
 }
 
 - (IBAction)toggleRegex:(id)sender
 {
-    regex_ = !regex_;
-    [self _setRegex:regex_];
+    state_.regex = !state_.regex;
+    [self _setRegex:state_.regex];
 }
 
 - (void)_loadFindStringIntoSharedPasteboard
 {
+    if (savedState_) {
+        return;
+    }
     // Copy into the NSFindPboard
     NSPasteboard *findPB = [NSPasteboard pasteboardWithName:NSFindPboard];
     if (findPB) {
@@ -338,6 +416,20 @@ static NSString *gSearchString;
     [self _loadFindStringIntoSharedPasteboard];
 }
 
+- (void)closeViewAndDoTemporarySearchForString:(NSString *)string
+                                 ignoringCase:(BOOL)ignoringCase
+                                        regex:(BOOL)regex {
+    [self close];
+    if (!savedState_) {
+        [self saveState];
+    }
+    state_.ignoreCase = ignoringCase;
+    state_.regex = regex;
+    state_.string = string;
+    findBarTextField_.stringValue = string;
+    [previousFindString_ setString:@""];
+    [self doSearch];
+}
 
 - (void)controlTextDidChange:(NSNotification *)aNotification
 {
@@ -345,27 +437,32 @@ static NSString *gSearchString;
     if (field != findBarTextField_) {
         return;
     }
+    [self doSearch];
+}
 
-    [self _loadFindStringIntoSharedPasteboard];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermLoadFindStringFromSharedPasteboard"
-                                                        object:nil];
+- (void)doSearch {
+    NSString *theString = savedState_ ? state_.string : [findBarTextField_ stringValue];
+    if (!savedState_) {
+        [self _loadFindStringIntoSharedPasteboard];
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermLoadFindStringFromSharedPasteboard"
+                                                            object:nil];
+    }
     // Search.
     if ([previousFindString_ length] == 0) {
         [delegate_ resetFindCursor];
     } else {
-        NSRange range =  [[findBarTextField_ stringValue] rangeOfString:previousFindString_];
+        NSRange range =  [theString rangeOfString:previousFindString_];
         if (range.location != 0) {
             [delegate_ resetFindCursor];
         }
     }
-    [previousFindString_ setString:[findBarTextField_ stringValue]];
+    [previousFindString_ setString:theString];
     [self _setSearchDefaults];
-    BOOL timer = [self findSubString:gSearchString
-                    forwardDirection:NO
-                        ignoringCase:ignoreCase_
-                               regex:regex_
-                          withOffset:0];
-    [self _newSearch:timer];
+    [self findSubString:theString
+       forwardDirection:NO
+           ignoringCase:state_.ignoreCase
+                  regex:state_.regex
+             withOffset:0];
 }
 
 - (void)deselectFindBarTextField

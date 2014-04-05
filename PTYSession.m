@@ -2840,17 +2840,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return _textview != nil && _tab && [_tab realParentWindow];
 }
 
-- (BOOL)findString:(NSString *)aString
+- (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
       ignoringCase:(BOOL)ignoreCase
              regex:(BOOL)regex
         withOffset:(int)offset
 {
-    return [_textview findString:aString
-                forwardDirection:direction
-                    ignoringCase:ignoreCase
-                           regex:regex
-                      withOffset:offset];
+    [_textview findString:aString
+         forwardDirection:direction
+             ignoringCase:ignoreCase
+                    regex:regex
+               withOffset:offset];
 }
 
 - (NSString*)unpaddedSelectedText
@@ -3645,6 +3645,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         break;
       case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
         [[[self tab] realParentWindow] splitVertically:YES withBookmarkGuid:keyBindingText];
+        break;
+      case KEY_ACTION_FIND_REGEX:
+        [[_view findViewController] closeViewAndDoTemporarySearchForString:keyBindingText
+                                                              ignoringCase:NO
+                                                                     regex:YES];
         break;
       default:
         NSLog(@"Unknown key action %d", keyBindingAction);

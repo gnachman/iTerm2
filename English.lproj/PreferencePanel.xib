@@ -3829,7 +3829,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="3866">
-                                            <rect key="frame" x="360" y="417" width="144" height="17"/>
+                                            <rect key="frame" x="361" y="416" width="151" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Global Shortcut Keys" id="3867">
                                                 <font key="font" metaFont="systemBold"/>
@@ -4081,11 +4081,11 @@ Gw
                                             <rect key="frame" x="363" y="30" width="508" height="379"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <clipView key="contentView" id="Dzn-LP-RyA">
-                                                <rect key="frame" x="1" y="17" width="490" height="361"/>
+                                                <rect key="frame" x="1" y="17" width="506" height="361"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveName="KeyBingingTable" headerView="3855" id="3852">
-                                                        <rect key="frame" x="0.0" y="0.0" width="490" height="361"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="506" height="361"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -4105,7 +4105,7 @@ Gw
                                                                 </textFieldCell>
                                                                 <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                                             </tableColumn>
-                                                            <tableColumn identifier="1" editable="NO" width="286.101" minWidth="42.10107" maxWidth="1000" id="3856">
+                                                            <tableColumn identifier="1" editable="NO" width="302.101" minWidth="42.10107" maxWidth="1000" id="3856">
                                                                 <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
                                                                     <font key="font" metaFont="smallSystem"/>
                                                                     <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -4136,7 +4136,7 @@ Gw
                                                 <autoresizingMask key="autoresizingMask"/>
                                             </scroller>
                                             <tableHeaderView key="headerView" id="3855">
-                                                <rect key="frame" x="0.0" y="0.0" width="490" height="17"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="506" height="17"/>
                                                 <autoresizingMask key="autoresizingMask"/>
                                             </tableHeaderView>
                                             <connections>
@@ -4824,12 +4824,12 @@ Gw
                     <popUpButton verticalHuggingPriority="750" id="2661">
                         <rect key="frame" x="146" y="88" width="243" height="26"/>
                         <autoresizingMask key="autoresizingMask"/>
-                        <popUpButtonCell key="cell" type="push" title="Ignore" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" tag="13" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="5152" id="2682">
+                        <popUpButtonCell key="cell" type="push" title="Find Regular Expression…" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" tag="36" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="HLy-fr-uJd" id="2682">
                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="menu"/>
                             <menu key="menu" title="OtherViews" id="2683">
                                 <items>
-                                    <menuItem title="Ignore" state="on" tag="13" id="5152"/>
+                                    <menuItem title="Ignore" tag="13" id="5152"/>
                                     <menuItem isSeparatorItem="YES" id="4723"/>
                                     <menuItem title="Do Not Remap Modifiers" tag="22" id="4427"/>
                                     <menuItem title="Remap Modifiers in iTerm2 Only" tag="24" id="4722"/>
@@ -4897,6 +4897,10 @@ Gw
                                     <menuItem title="Send Hex Code" tag="11" id="2691"/>
                                     <menuItem title="Send Text" tag="12" id="2697"/>
                                     <menuItem isSeparatorItem="YES" id="4428"/>
+                                    <menuItem title="Find Regular Expression…" state="on" tag="36" id="HLy-fr-uJd">
+                                        <modifierMask key="keyEquivalentModifierMask"/>
+                                    </menuItem>
+                                    <menuItem isSeparatorItem="YES" id="YBB-ZY-fWM"/>
                                     <menuItem title="Toggle Fullscreen" tag="23" id="4429"/>
                                     <menuItem isSeparatorItem="YES" id="4749"/>
                                     <menuItem title="Run Coprocess" tag="35" id="6330"/>

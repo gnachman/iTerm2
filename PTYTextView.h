@@ -346,9 +346,8 @@ typedef enum {
 - (void)print:(id)sender;
 - (void)printContent:(NSString *)aString;
 
-// Begins a new search. You may need to call continueFind repeatedly after this. Returns YES if
-// continueFind should be called.
-- (BOOL)findString:(NSString*)aString
+// Begins a new search. You may need to call continueFind repeatedly after this.
+- (void)findString:(NSString*)aString
   forwardDirection:(BOOL)direction
       ignoringCase:(BOOL)ignoreCase
              regex:(BOOL)regex

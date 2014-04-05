@@ -3048,6 +3048,13 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [bookmarkPopupButton setHidden:YES];
         [profileLabel setHidden:YES];
         [menuToSelect setHidden:YES];
+    } else if (tag == KEY_ACTION_FIND_REGEX) {
+        [valueToSend setHidden:NO];
+        [[valueToSend cell] setPlaceholderString:@"Regular Expression"];
+        [escPlus setHidden:YES];
+        [bookmarkPopupButton setHidden:YES];
+        [profileLabel setHidden:YES];
+        [menuToSelect setHidden:YES];
     } else {
         [valueToSend setHidden:YES];
         [valueToSend setStringValue:@""];

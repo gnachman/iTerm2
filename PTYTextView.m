@@ -5295,7 +5295,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     _lastFindCoord = nil;
 }
 
-- (BOOL)findString:(NSString *)aString
+- (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
       ignoringCase:(BOOL)ignoreCase
              regex:(BOOL)regex
@@ -5313,7 +5313,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // some reason). So we return YES and continueFind is run from a timer
         // and everything works fine. The 100ms delay introduced is not
         // noticable.
-        return YES;
     } else {
         // Begin a brand new search.
         if (_findInProgress) {
@@ -5357,7 +5356,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         findString_ = [aString copy];
 
         [self setNeedsDisplay:YES];
-        return YES;
     }
 }
 

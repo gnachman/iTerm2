@@ -306,100 +306,50 @@ static NSDictionary* globalKeyMap;
             actionString = @"Previous Pane";
             break;
         case KEY_ACTION_NEXT_SESSION:
-            actionString = NSLocalizedStringFromTableInBundle(@"Next Tab",
-                                                              @"iTerm",
-                                                              [NSBundle bundleForClass: [self class]],
-                                                              @"Key Binding Actions");
+            actionString = @"Next Tab";
             break;
         case KEY_ACTION_NEXT_WINDOW:
-            actionString = NSLocalizedStringFromTableInBundle(@"Next Window",
-                                                              @"iTerm",
-                                                              [NSBundle bundleForClass: [self class]],
-                                                              @"Key Binding Actions");
+            actionString = @"Next Window";
             break;
         case KEY_ACTION_PREVIOUS_SESSION:
-            actionString = NSLocalizedStringFromTableInBundle(@"Previous Tab",
-                                                              @"iTerm",
-                                                              [NSBundle bundleForClass: [self class]],
-                                                              @"Key Binding Actions");
+            actionString = @"Previous Tab";
             break;
         case KEY_ACTION_PREVIOUS_WINDOW:
-            actionString = NSLocalizedStringFromTableInBundle(@"Previous Window",
-                                                              @"iTerm",
-                                                              [NSBundle bundleForClass: [self class]],
-                                                              @"Key Binding Actions");
+            actionString = @"Previous Window";
             break;
         case KEY_ACTION_SCROLL_END:
-            actionString = NSLocalizedStringFromTableInBundle(@"Scroll To End",
-                                                              @"iTerm",
-                                                              [NSBundle bundleForClass: [self class]],
-                                                              @"Key Binding Actions");
+            actionString = @"Scroll To End";
             break;
         case KEY_ACTION_SCROLL_HOME:
-            actionString = NSLocalizedStringFromTableInBundle(@"Scroll To Top",
-                                                              @"iTerm",
-                                                              [NSBundle bundleForClass: [self class]],
-                                                              @"Key Binding Actions");
+            actionString = @"Scroll To Top";
             break;
         case KEY_ACTION_SCROLL_LINE_DOWN:
-            actionString = NSLocalizedStringFromTableInBundle(@"Scroll One Line Down",
-                                                              @"iTerm",
-                                                              [NSBundle bundleForClass: [self class]],
-                                                              @"Key Binding Actions");
+            actionString = @"Scroll One Line Down";
             break;
         case KEY_ACTION_SCROLL_LINE_UP:
-            actionString = NSLocalizedStringFromTableInBundle(@"Scroll One Line Up",
-                                                              @"iTerm",
-                                                              [NSBundle bundleForClass: [self class]],
-                                                              @"Key Binding Actions");
+            actionString = @"Scroll One Line Up";
             break;
         case KEY_ACTION_SCROLL_PAGE_DOWN:
-            actionString = NSLocalizedStringFromTableInBundle(@"Scroll One Page Down",
-                                                              @"iTerm",
-                                                              [NSBundle bundleForClass: [self class]],
-                                                              @"Key Binding Actions");
+            actionString = @"Scroll One Page Down";
             break;
         case KEY_ACTION_SCROLL_PAGE_UP:
-            actionString = NSLocalizedStringFromTableInBundle(@"Scroll One Page Up",
-                                                              @"iTerm",
-                                                              [NSBundle bundleForClass: [self class]],
-                                                              @"Key Binding Actions");
+            actionString = @"Scroll One Page Up";
             break;
         case KEY_ACTION_ESCAPE_SEQUENCE:
-            actionString = [NSString stringWithFormat:@"%@ %@",
-                NSLocalizedStringFromTableInBundle(@"Send ^[",
-                                                   @"iTerm",
-                                                   [NSBundle bundleForClass: [self class]],
-                                                   @"Key Binding Actions"),
-                auxText];
+            actionString = [NSString stringWithFormat:@"%@ %@", @"Send ^[", auxText];
             break;
         case KEY_ACTION_HEX_CODE:
-            actionString = [NSString stringWithFormat: @"%@ %@",
-                NSLocalizedStringFromTableInBundle(@"Send Hex Codes:",
-                                                   @"iTerm",
-                                                   [NSBundle bundleForClass: [self class]],
-                                                   @"Key Binding Actions"),
-                auxText];
+            actionString = [NSString stringWithFormat: @"%@ %@", @"Send Hex Codes:", auxText];
             break;
         case KEY_ACTION_TEXT:
-            actionString = [NSString stringWithFormat:@"%@ \"%@\"",
-                NSLocalizedStringFromTableInBundle(@"Send:",
-                                                   @"iTerm",
-                                                   [NSBundle bundleForClass: [self class]],
-                                                   @"Key Binding Actions"),
-                auxText];
+            actionString = [NSString stringWithFormat:@"%@ \"%@\"", @"Send:", auxText];
             break;
         case KEY_ACTION_RUN_COPROCESS:
             actionString = [NSString stringWithFormat:@"Run Coprocess \"%@\"",
 						    auxText];
             break;
         case KEY_ACTION_SELECT_MENU_ITEM:
-            actionString = [NSString stringWithFormat:@"%@ \"%@\"",
-                            NSLocalizedStringFromTableInBundle(@"Select Menu Item",
-                                                               @"iTerm",
-                                                               [NSBundle bundleForClass: [self class]],
-                                                               @"Key Binding Actions"),
-                            auxText];
+            actionString = [NSString stringWithFormat:@"%@ \"%@\"", @"Select Menu Item", auxText];
             break;
         case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
             actionString = [NSString stringWithFormat:@"New Window with \"%@\" Profile", [self _bookmarkNameForGuid:auxText]];
@@ -421,10 +371,7 @@ static NSDictionary* globalKeyMap;
             actionString = @"Send ^? Backspace";
             break;
         case KEY_ACTION_IGNORE:
-            actionString = NSLocalizedStringFromTableInBundle(@"Ignore",
-                                                              @"iTerm",
-                                                              [NSBundle bundleForClass:[self class]],
-                                                              @"Key Binding Actions");
+            actionString = @"Ignore";
             break;
         case KEY_ACTION_IR_FORWARD:
             actionString = @"Forward in Time";
@@ -453,13 +400,11 @@ static NSDictionary* globalKeyMap;
         case KEY_ACTION_TOGGLE_FULLSCREEN:
             actionString = @"Toggle Fullscreen";
             break;
+        case KEY_ACTION_FIND_REGEX:
+            actionString = [NSString stringWithFormat:@"Find Regex “%@”", auxText];
+            break;
         default:
-            actionString = [NSString stringWithFormat: @"%@ %d",
-                NSLocalizedStringFromTableInBundle(@"Unknown Action ID",
-                                                   @"iTerm",
-                                                   [NSBundle bundleForClass:[self class]],
-                                                   @"Key Binding Actions"),
-                action];
+            actionString = [NSString stringWithFormat: @"%@ %d", @"Unknown Action ID", action];
             break;
     }
 
