@@ -7,8 +7,11 @@
 //
 
 #import "GeneralPreferencesViewController.h"
+
+#import "CommandHistory.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermPreferences.h"
+#import "PasteboardHistory.h"
 #import "WindowArrangements.h"
 
 typedef enum {
@@ -75,6 +78,9 @@ typedef enum {
     // Instant replay memory usage.
     IBOutlet NSTextField *_irMemory;
 
+    // Save copy paste history
+    IBOutlet NSButton *_savePasteHistory;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -102,32 +108,40 @@ typedef enum {
     
     PreferenceInfo *info;
     
-    info = [self defineControl:_openBookmark
-                           key:kPreferenceKeyOpenBookmark
-                          type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_openBookmark
+                    key:kPreferenceKeyOpenBookmark
+                   type:kPreferenceInfoTypeCheckbox];
     
     info = [self defineControl:_openArrangementAtStartup
                            key:kPreferenceKeyOpenArrangementAtStartup
                           type:kPreferenceInfoTypeCheckbox];
-    
-    info = [self defineControl:_quitWhenAllWindowsClosed
-                           key:kPreferenceKeyQuitWhenAllWindowsClosed
-                          type:kPreferenceInfoTypeCheckbox];
-
-    info = [self defineControl:_confirmClosingMultipleSessions
-                           key:kPreferenceKeyConfirmClosingMultipleTabs
-                          type:kPreferenceInfoTypeCheckbox];
-    
-    info = [self defineControl:_promptOnQuit
-                           key:kPreferenceKeyPromptOnQuit
-                          type:kPreferenceInfoTypeCheckbox];
-
-    info = [self defineControl:_irMemory
-                           key:kPreferenceKeyInstantReplayMemoryMegabytes
-                          type:kPreferenceInfoTypeIntegerTextField];
-
     info.shouldBeEnabled = ^BOOL() { return [WindowArrangements count] > 0; };
+
+    [self defineControl:_quitWhenAllWindowsClosed
+                    key:kPreferenceKeyQuitWhenAllWindowsClosed
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_confirmClosingMultipleSessions
+                    key:kPreferenceKeyConfirmClosingMultipleTabs
+                   type:kPreferenceInfoTypeCheckbox];
     
+    [self defineControl:_promptOnQuit
+                    key:kPreferenceKeyPromptOnQuit
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_irMemory
+                    key:kPreferenceKeyInstantReplayMemoryMegabytes
+                   type:kPreferenceInfoTypeIntegerTextField];
+
+    info = [self defineControl:_savePasteHistory
+                           key:kPreferenceKeySavePasteAndCommandHistory
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() {
+        if (![iTermPreferences boolForKey:kPreferenceKeySavePasteAndCommandHistory]) {
+            [[PasteboardHistory sharedInstance] eraseHistory];
+            [[CommandHistory sharedInstance] eraseHistory];
+        }
+    };
 }
 
 - (void)updateValueForInfo:(PreferenceInfo *)info {

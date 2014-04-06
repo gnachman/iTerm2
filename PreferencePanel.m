@@ -287,10 +287,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     int defaultHotkeyCode;
     int defaultHotkeyModifiers;
     
-    // Save copy paste history
-    IBOutlet NSButton *savePasteHistory;
-    BOOL defaultSavePasteHistory;
-    
     // prompt for test-release updates
     IBOutlet NSButton *checkTestRelease;
     BOOL defaultCheckTestRelease;
@@ -1064,10 +1060,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         defaultCheckUpdate = ([checkUpdate state] == NSOnState);
         defaultSmartPlacement = ([smartPlacement state] == NSOnState);
         defaultAdjustWindowForFontSizeChange = ([adjustWindowForFontSizeChange state] == NSOnState);
-        defaultSavePasteHistory = ([savePasteHistory state] == NSOnState);
-        if (!defaultSavePasteHistory) {
-            [[PasteboardHistory sharedInstance] eraseHistory];
-        }
 
         BOOL oldDefaultHotkey = defaultHotkey;
         defaultHotkey = ([hotkey state] == NSOnState);
@@ -2760,7 +2752,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultHotkeyCode = [prefs objectForKey:@"HotkeyCode"]?[[prefs objectForKey:@"HotkeyCode"] intValue]: 0;
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
     defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
-    defaultSavePasteHistory = [prefs objectForKey:@"SavePasteHistory"]?[[prefs objectForKey:@"SavePasteHistory"] boolValue]: NO;
     defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
     defaultDimInactiveSplitPanes = [prefs objectForKey:@"DimInactiveSplitPanes"]?[[prefs objectForKey:@"DimInactiveSplitPanes"] boolValue]: YES;
     defaultDimBackgroundWindows = [prefs objectForKey:@"DimBackgroundWindows"]?[[prefs objectForKey:@"DimBackgroundWindows"] boolValue]: NO;
@@ -2880,7 +2871,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setInteger:defaultHotkeyCode forKey:@"HotkeyCode"];
     [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
     [prefs setInteger:defaultHotkeyModifiers forKey:@"HotkeyModifiers"];
-    [prefs setBool:defaultSavePasteHistory forKey:@"SavePasteHistory"];
     [prefs setBool:defaultCheckTestRelease forKey:@"CheckTestRelease"];
     [prefs setBool:defaultDimInactiveSplitPanes forKey:@"DimInactiveSplitPanes"];
     [prefs setBool:defaultDimBackgroundWindows forKey:@"DimBackgroundWindows"];
@@ -3527,7 +3517,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (BOOL)savePasteHistory
 {
-    return defaultSavePasteHistory;
+    return [iTermPreferences boolForKey:kPreferenceKeySavePasteAndCommandHistory];
 }
 
 - (int)control
@@ -3920,7 +3910,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [windowNumber setState: defaultWindowNumber?NSOnState:NSOffState];
     [jobName setState: defaultJobName?NSOnState:NSOffState];
     [showBookmarkName setState: defaultShowBookmarkName?NSOnState:NSOffState];
-    [savePasteHistory setState: defaultSavePasteHistory?NSOnState:NSOffState];
     [hotkey setState: defaultHotkey?NSOnState:NSOffState];
     if (defaultHotkeyCode || defaultHotkeyChar) {
         [hotkeyField setStringValue:[iTermKeyBindingMgr formatKeyCombination:[NSString stringWithFormat:@"0x%x-0x%x", defaultHotkeyChar, defaultHotkeyModifiers]]];

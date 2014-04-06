@@ -202,7 +202,6 @@
                 <outlet property="rightOptionKeySends" destination="4293" id="4308"/>
                 <outlet property="rowsField" destination="4914" id="4960"/>
                 <outlet property="rowsLabel" destination="4913" id="4962"/>
-                <outlet property="savePasteHistory" destination="5056" id="5087"/>
                 <outlet property="screenButton" destination="4917" id="4965"/>
                 <outlet property="screenLabel" destination="4919" id="4966"/>
                 <outlet property="scrollbackInAlternateScreen" destination="5758" id="5762"/>
@@ -914,7 +913,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="5068"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="EhX-hk-oZL"/>
                                                 <outlet property="nextKeyView" destination="1988" id="5189"/>
                                             </connections>
                                         </button>
@@ -5957,6 +5956,7 @@ DQ
                 <outlet property="_openBookmark" destination="1959" id="PNp-By-R5Y"/>
                 <outlet property="_promptOnQuit" destination="4757" id="apf-8s-46r"/>
                 <outlet property="_quitWhenAllWindowsClosed" destination="1950" id="g5I-3X-QQe"/>
+                <outlet property="_savePasteHistory" destination="5056" id="BPO-mF-vKm"/>
             </connections>
         </customObject>
     </objects>

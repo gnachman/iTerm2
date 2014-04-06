@@ -23,6 +23,7 @@ NSString *const kPreferenceKeyQuitWhenAllWindowsClosed = @"QuitWhenAllWindowsClo
 NSString *const kPreferenceKeyConfirmClosingMultipleTabs = @"OnlyWhenMoreTabs";  // The key predates split panes
 NSString *const kPreferenceKeyPromptOnQuit = @"PromptOnQuit";
 NSString *const kPreferenceKeyInstantReplayMemoryMegabytes = @"IRMemory";
+NSString *const kPreferenceKeySavePasteAndCommandHistory = @"SavePasteHistory";  // The key predates command history
 
 @implementation iTermPreferences
 
@@ -36,7 +37,8 @@ NSString *const kPreferenceKeyInstantReplayMemoryMegabytes = @"IRMemory";
                   kPreferenceKeyQuitWhenAllWindowsClosed: @NO,
                   kPreferenceKeyConfirmClosingMultipleTabs: @YES,
                   kPreferenceKeyPromptOnQuit: @YES,
-                  kPreferenceKeyInstantReplayMemoryMegabytes: @4 };
+                  kPreferenceKeyInstantReplayMemoryMegabytes: @4,
+                  kPreferenceKeySavePasteAndCommandHistory: @NO };
         [dict retain];
     }
     return dict;
