@@ -135,10 +135,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     IBOutlet NSPopUpButton* hotkeyBookmark;
     NSString* defaultHotKeyBookmarkGuid;
     
-    // Enable bonjour
-    IBOutlet NSButton *enableBonjour;
-    BOOL defaultEnableBonjour;
-    
     // cmd-click to launch url
     IBOutlet NSButton *cmdSelection;
     BOOL defaultCmdSelection;
@@ -617,9 +613,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"NSScrollAnimationEnabled"];
 
         [self readPreferences];
-        if (defaultEnableBonjour == YES) {
-            [[ITAddressBookMgr sharedInstance] locateBonjourServices];
-        }
 
         // get the version
         NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
@@ -1027,28 +1020,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         defaultHotkeyTogglesWindow = ([hotkeyTogglesWindow state] == NSOnState);
         [defaultHotKeyBookmarkGuid release];
         defaultHotKeyBookmarkGuid = [[[hotkeyBookmark selectedItem] representedObject] copy];
-        BOOL bonjourBefore = defaultEnableBonjour;
-        defaultEnableBonjour = ([enableBonjour state] == NSOnState);
-        if (bonjourBefore != defaultEnableBonjour) {
-            if (defaultEnableBonjour == YES) {
-                [[ITAddressBookMgr sharedInstance] locateBonjourServices];
-            } else {
-                [[ITAddressBookMgr sharedInstance] stopLocatingBonjourServices];
-
-                // Remove existing bookmarks with the "bonjour" tag. Even if
-                // network browsing is re-enabled, these bookmarks would never
-                // be automatically removed.
-                ProfileModel* model = [ProfileModel sharedInstance];
-                NSString* kBonjourTag = @"bonjour";
-                int n = [model numberOfBookmarksWithFilter:kBonjourTag];
-                for (int i = n - 1; i >= 0; --i) {
-                    Profile* bookmark = [model profileAtIndex:i withFilter:kBonjourTag];
-                    if ([model bookmark:bookmark hasTag:kBonjourTag]) {
-                        [model removeBookmarkAtIndex:i withFilter:kBonjourTag];
-                    }
-                }
-            }
-        }
 
         defaultCmdSelection = ([cmdSelection state] == NSOnState);
         defaultOptionClickMovesCursor = ([optionClickMovesCursor state] == NSOnState);
@@ -2724,7 +2695,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultHotkeyTogglesWindow = [prefs objectForKey:@"HotKeyTogglesWindow"]?[[prefs objectForKey:@"HotKeyTogglesWindow"] boolValue]: NO;
     defaultHotkeyAutoHides = [prefs objectForKey:@"HotkeyAutoHides"] ? [[prefs objectForKey:@"HotkeyAutoHides"] boolValue] : YES;
     defaultHotKeyBookmarkGuid = [[prefs objectForKey:@"HotKeyBookmark"] copy];
-    defaultEnableBonjour = [prefs objectForKey:@"EnableRendezvous"]?[[prefs objectForKey:@"EnableRendezvous"] boolValue]: NO;
     defaultCmdSelection = [prefs objectForKey:@"CommandSelection"]?[[prefs objectForKey:@"CommandSelection"] boolValue]: YES;
     defaultOptionClickMovesCursor = [prefs objectForKey:@"OptionClickMovesCursor"]?[[prefs objectForKey:@"OptionClickMovesCursor"] boolValue]: YES;
     defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
@@ -2843,7 +2813,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setBool:defaultHotkeyTogglesWindow forKey:@"HotKeyTogglesWindow"];
     [prefs setBool:defaultHotkeyAutoHides forKey:@"HotkeyAutoHides"];
     [prefs setValue:defaultHotKeyBookmarkGuid forKey:@"HotKeyBookmark"];
-    [prefs setBool:defaultEnableBonjour forKey:@"EnableRendezvous"];
     [prefs setBool:defaultCmdSelection forKey:@"CommandSelection"];
     [prefs setBool:defaultOptionClickMovesCursor forKey:@"OptionClickMovesCursor"];
     [prefs setFloat:defaultFsTabDelay forKey:@"FsTabDelay"];
@@ -3391,7 +3360,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (BOOL)enableBonjour
 {
-    return defaultEnableBonjour;
+    return [iTermPreferences boolForKey:kPreferenceKeyAddBonjourHostsToProfiles];
 }
 
 - (BOOL)enableGrowl
@@ -3887,7 +3856,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [hotkeyTogglesWindow setState: defaultHotkeyTogglesWindow?NSOnState:NSOffState];
     [hotkeyAutoHides setState: defaultHotkeyAutoHides?NSOnState:NSOffState];
     [self _populateHotKeyBookmarksMenu];
-    [enableBonjour setState: defaultEnableBonjour?NSOnState:NSOffState];
     [cmdSelection setState: defaultCmdSelection?NSOnState:NSOffState];
     [optionClickMovesCursor setState: defaultOptionClickMovesCursor?NSOnState:NSOffState];
     [controlLeftClickActsLikeRightClick setState: defaultPassOnControlLeftClick?NSOffState:NSOnState];

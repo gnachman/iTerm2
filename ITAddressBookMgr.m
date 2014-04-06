@@ -26,6 +26,7 @@
  */
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
+#import "iTermPreferences.h"
 #import "ProfileModel.h"
 #import "PreferencePanel.h"
 #import "iTermKeyBindingMgr.h"
@@ -51,34 +52,49 @@
 - (id)init
 {
     self = [super init];
+    if (self) {
+        NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
 
-    NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
+        if ([prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] &&
+            [[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] isKindOfClass:[NSDictionary class]] &&
+            ![prefs objectForKey:KEY_NEW_BOOKMARKS]) {
+            // Have only old-style bookmarks. Load them and convert them to new-style
+            // bookmarks.
+            [self recursiveMigrateBookmarks:[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] path:[NSArray arrayWithObjects:nil]];
+            [prefs removeObjectForKey:KEY_DEPRECATED_BOOKMARKS];
+            [prefs setObject:[[ProfileModel sharedInstance] rawData] forKey:KEY_NEW_BOOKMARKS];
+            [[ProfileModel sharedInstance] removeAllBookmarks];
+        }
 
-    if ([prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] &&
-        [[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] isKindOfClass:[NSDictionary class]] &&
-        ![prefs objectForKey:KEY_NEW_BOOKMARKS]) {
-        // Have only old-style bookmarks. Load them and convert them to new-style
-        // bookmarks.
-        [self recursiveMigrateBookmarks:[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] path:[NSArray arrayWithObjects:nil]];
-        [prefs removeObjectForKey:KEY_DEPRECATED_BOOKMARKS];
-        [prefs setObject:[[ProfileModel sharedInstance] rawData] forKey:KEY_NEW_BOOKMARKS];
-        [[ProfileModel sharedInstance] removeAllBookmarks];
+        // Load new-style bookmarks.
+        if ([prefs objectForKey:KEY_NEW_BOOKMARKS]) {
+            [self setBookmarks:[prefs objectForKey:KEY_NEW_BOOKMARKS]
+                   defaultGuid:[prefs objectForKey:KEY_DEFAULT_GUID]];
+        }
+
+        // Make sure there is at least one bookmark.
+        if ([[ProfileModel sharedInstance] numberOfBookmarks] == 0) {
+            NSMutableDictionary* aDict = [[NSMutableDictionary alloc] init];
+            [ITAddressBookMgr setDefaultsInBookmark:aDict];
+            [[ProfileModel sharedInstance] addBookmark:aDict];
+            [aDict release];
+        }
+
+        if ([iTermPreferences boolForKey:kPreferenceKeyAddBonjourHostsToProfiles]) {
+            [self locateBonjourServices];
+        }
+        
+        [iTermPreferences addObserverForKey:kPreferenceKeyAddBonjourHostsToProfiles
+                                      block:^(id previousValue, id newValue) {
+                                          if ([newValue boolValue]) {
+                                              [self locateBonjourServices];
+                                          } else {
+                                              [self stopLocatingBonjourServices];
+                                              [self removeBonjourProfiles];
+                                          }
+                                      }];
     }
-
-    // Load new-style bookmarks.
-    if ([prefs objectForKey:KEY_NEW_BOOKMARKS]) {
-        [self setBookmarks:[prefs objectForKey:KEY_NEW_BOOKMARKS]
-               defaultGuid:[prefs objectForKey:KEY_DEFAULT_GUID]];
-    }
-
-    // Make sure there is at least one bookmark.
-    if ([[ProfileModel sharedInstance] numberOfBookmarks] == 0) {
-        NSMutableDictionary* aDict = [[NSMutableDictionary alloc] init];
-        [ITAddressBookMgr setDefaultsInBookmark:aDict];
-        [[ProfileModel sharedInstance] addBookmark:aDict];
-        [aDict release];
-    }
-
+    
     return self;
 }
 
@@ -95,6 +111,21 @@
     [telnetBonjourBrowser release];
 
     [super dealloc];
+}
+
+- (void)removeBonjourProfiles {
+    // Remove existing bookmarks with the "bonjour" tag. Even if
+    // network browsing is re-enabled, these bookmarks would never
+    // be automatically removed.
+    ProfileModel* model = [ProfileModel sharedInstance];
+    NSString* kBonjourTag = @"bonjour";
+    int n = [model numberOfBookmarksWithFilter:kBonjourTag];
+    for (int i = n - 1; i >= 0; --i) {
+        Profile* bookmark = [model profileAtIndex:i withFilter:kBonjourTag];
+        if ([model bookmark:bookmark hasTag:kBonjourTag]) {
+            [model removeBookmarkAtIndex:i withFilter:kBonjourTag];
+        }
+    }
 }
 
 - (void)locateBonjourServices

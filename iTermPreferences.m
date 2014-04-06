@@ -24,6 +24,9 @@ NSString *const kPreferenceKeyConfirmClosingMultipleTabs = @"OnlyWhenMoreTabs"; 
 NSString *const kPreferenceKeyPromptOnQuit = @"PromptOnQuit";
 NSString *const kPreferenceKeyInstantReplayMemoryMegabytes = @"IRMemory";
 NSString *const kPreferenceKeySavePasteAndCommandHistory = @"SavePasteHistory";  // The key predates command history
+NSString *const kPreferenceKeyAddBonjourHostsToProfiles = @"EnableRendezvous";  // The key predates the name Bonjour
+
+static NSMutableDictionary *gObservers;
 
 @implementation iTermPreferences
 
@@ -38,7 +41,8 @@ NSString *const kPreferenceKeySavePasteAndCommandHistory = @"SavePasteHistory"; 
                   kPreferenceKeyConfirmClosingMultipleTabs: @YES,
                   kPreferenceKeyPromptOnQuit: @YES,
                   kPreferenceKeyInstantReplayMemoryMegabytes: @4,
-                  kPreferenceKeySavePasteAndCommandHistory: @NO };
+                  kPreferenceKeySavePasteAndCommandHistory: @NO,
+                  kPreferenceKeyAddBonjourHostsToProfiles: @NO };
         [dict retain];
     }
     return dict;
@@ -82,6 +86,30 @@ NSString *const kPreferenceKeySavePasteAndCommandHistory = @"SavePasteHistory"; 
     return object;
 }
 
++ (void)setObject:(id)object forKey:(NSString *)key {
+    NSArray *observers = gObservers[key];
+    id before = nil;
+    if (observers) {
+        before = [self objectForKey:key];
+        
+        // nil out observers if there is no change.
+        if (before && object && [before isEqual:object]) {
+            observers = nil;
+        } else if (!before && !object) {
+            observers = nil;
+        }
+    }
+    if (object) {
+        [[NSUserDefaults standardUserDefaults] setObject:object forKey:key];
+    } else {
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
+    }
+
+    for (void (^block)(id, id) in observers) {
+        block(before, object);
+    }
+}
+
 #pragma mark - APIs
 
 + (BOOL)keyHasDefaultValue:(NSString *)key {
@@ -93,7 +121,7 @@ NSString *const kPreferenceKeySavePasteAndCommandHistory = @"SavePasteHistory"; 
 }
 
 + (void)setBool:(BOOL)value forKey:(NSString *)key {
-    [[NSUserDefaults standardUserDefaults] setBool:value forKey:key];
+    [self setObject:@(value) forKey:key];
 }
 
 + (int)intForKey:(NSString *)key {
@@ -101,7 +129,19 @@ NSString *const kPreferenceKeySavePasteAndCommandHistory = @"SavePasteHistory"; 
 }
 
 + (void)setInt:(int)value forKey:(NSString *)key {
-    [[NSUserDefaults standardUserDefaults] setInteger:value forKey:key];
+    [self setObject:@(value) forKey:key];
+}
+
++ (void)addObserverForKey:(NSString *)key block:(void (^)(id before, id after))block {
+    if (!gObservers) {
+        gObservers = [[NSMutableDictionary alloc] init];
+    }
+    NSMutableArray *observersForKey = gObservers[key];
+    if (!observersForKey) {
+        observersForKey = [NSMutableArray array];
+        gObservers[key] = observersForKey;
+    }
+    [observersForKey addObject:[block copy]];
 }
 
 #pragma mark - Value Computation Methods

@@ -131,7 +131,6 @@
                 <outlet property="displayRegularFontButton" destination="4774" id="4869"/>
                 <outlet property="editAdvancedConfigButton" destination="5975" id="6028"/>
                 <outlet property="editKeyMappingWindow" destination="2567" id="3197"/>
-                <outlet property="enableBonjour" destination="5051" id="5132"/>
                 <outlet property="escPlus" destination="3221" id="3223"/>
                 <outlet property="flashingBell" destination="3553" id="3557"/>
                 <outlet property="focusFollowsMouse" destination="6062" id="6209"/>
@@ -866,7 +865,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="5070"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="eVv-Yn-zdl"/>
                                                 <outlet property="nextKeyView" destination="5048" id="5196"/>
                                             </connections>
                                         </button>
@@ -5951,6 +5950,7 @@ DQ
         <customObject id="9Se-ld-UJa" customClass="GeneralPreferencesViewController">
             <connections>
                 <outlet property="_confirmClosingMultipleSessions" destination="1996" id="1wi-R8-LGb"/>
+                <outlet property="_enableBonjour" destination="5051" id="lpI-Ub-bAd"/>
                 <outlet property="_irMemory" destination="5055" id="dYT-8S-UeF"/>
                 <outlet property="_openArrangementAtStartup" destination="3590" id="hIR-Ca-buG"/>
                 <outlet property="_openBookmark" destination="1959" id="PNp-By-R5Y"/>

@@ -81,6 +81,9 @@ typedef enum {
     // Save copy paste history
     IBOutlet NSButton *_savePasteHistory;
 
+    // Enable bonjour
+    IBOutlet NSButton *_enableBonjour;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -142,6 +145,10 @@ typedef enum {
             [[CommandHistory sharedInstance] eraseHistory];
         }
     };
+    
+    info = [self defineControl:_enableBonjour
+                           key:kPreferenceKeyAddBonjourHostsToProfiles
+                          type:kPreferenceInfoTypeCheckbox];
 }
 
 - (void)updateValueForInfo:(PreferenceInfo *)info {

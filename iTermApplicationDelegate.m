@@ -102,6 +102,8 @@ static BOOL hasBecomeActive = NO;
     // read preferences
     [PreferencePanel migratePreferences];
     [PreferencePanel sharedInstance];
+    
+    // This sets up bonjour and migrates bookmarks if needed.
     [ITAddressBookMgr sharedInstance];
 
     [ToolbeltView populateMenu:toolbeltMenu];
