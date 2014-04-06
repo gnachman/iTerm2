@@ -106,6 +106,9 @@ typedef enum {
     // Copy to clipboard on selection
     IBOutlet NSButton *_selectionCopiesText;
 
+    // Copy includes trailing newline
+    IBOutlet NSButton *_copyLastNewline;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -206,6 +209,10 @@ typedef enum {
     // ---------------------------------------------------------------------------------------------
     [self defineControl:_selectionCopiesText
                     key:kPreferenceKeySelectionCopiesText
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_copyLastNewline
+                    key:kPreferenceKeyCopyLastNewline
                    type:kPreferenceInfoTypeCheckbox];
 }
 

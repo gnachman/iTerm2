@@ -99,7 +99,6 @@
                 <outlet property="copyColors" destination="3525" id="3542"/>
                 <outlet property="copyDisplay" destination="3527" id="3543"/>
                 <outlet property="copyKeyboard" destination="3531" id="3547"/>
-                <outlet property="copyLastNewline" destination="5747" id="5751"/>
                 <outlet property="copyPanel" destination="3517" id="3548"/>
                 <outlet property="copySession" destination="5711" id="5714"/>
                 <outlet property="copyTerminal" destination="3529" id="3546"/>
@@ -670,7 +669,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="5750"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="GEe-gf-ALm"/>
                                             </connections>
                                         </button>
                                         <button id="6383">
@@ -5944,6 +5943,7 @@ DQ
                 <outlet property="_checkTestRelease" destination="5049" id="mCk-NA-PO2"/>
                 <outlet property="_checkUpdate" destination="5048" id="Oi0-3Y-fu1"/>
                 <outlet property="_confirmClosingMultipleSessions" destination="1996" id="1wi-R8-LGb"/>
+                <outlet property="_copyLastNewline" destination="5747" id="y4f-IT-rUT"/>
                 <outlet property="_enableBonjour" destination="5051" id="lpI-Ub-bAd"/>
                 <outlet property="_irMemory" destination="5055" id="dYT-8S-UeF"/>
                 <outlet property="_loadPrefsFromCustomFolder" destination="5614" id="9l7-ub-H9J"/>
