@@ -172,10 +172,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     // Minimum contrast
     IBOutlet NSSlider* minimumContrast;
     
-    // check for updates automatically
-    IBOutlet NSButton *checkUpdate;
-    BOOL defaultCheckUpdate;
-    
     // cursor type: underline/vertical bar/box
     // See ITermCursorType. One of: CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX
     IBOutlet NSMatrix *cursorType;
@@ -1028,7 +1024,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [defaultWordChars release];
         defaultWordChars = [[wordChars stringValue] retain];
         defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];
-        defaultCheckUpdate = ([checkUpdate state] == NSOnState);
         defaultSmartPlacement = ([smartPlacement state] == NSOnState);
         defaultAdjustWindowForFontSizeChange = ([adjustWindowForFontSizeChange state] == NSOnState);
 
@@ -2709,7 +2704,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [defaultWordChars release];
     defaultWordChars = [prefs objectForKey: @"WordCharacters"]?[[prefs objectForKey: @"WordCharacters"] retain]:@"/-+\\~_.";
     defaultTmuxDashboardLimit = [prefs objectForKey: @"TmuxDashboardLimit"]?[[prefs objectForKey:@"TmuxDashboardLimit"] intValue]:10;
-    defaultCheckUpdate = [prefs objectForKey:@"SUEnableAutomaticChecks"]?[[prefs objectForKey:@"SUEnableAutomaticChecks"] boolValue]: YES;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
     defaultShowPaneTitles = [prefs objectForKey:@"ShowPaneTitles"]?[[prefs objectForKey:@"ShowPaneTitles"] boolValue]: YES;
     defaultDisableFullscreenTransparency = [prefs objectForKey:@"DisableFullscreenTransparency"] ? [[prefs objectForKey:@"DisableFullscreenTransparency"] boolValue] : NO;
@@ -2827,7 +2821,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setObject:[NSNumber numberWithInt:defaultTmuxDashboardLimit]
                           forKey:@"TmuxDashboardLimit"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
-    [prefs setBool:defaultCheckUpdate forKey:@"SUEnableAutomaticChecks"];
     [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
     [prefs setBool:defaultShowPaneTitles forKey:@"ShowPaneTitles"];
     [prefs setBool:defaultDisableFullscreenTransparency forKey:@"DisableFullscreenTransparency"];
@@ -3869,7 +3862,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
     [wordChars setStringValue: ([defaultWordChars length] > 0)?defaultWordChars:@""];
     [tmuxDashboardLimit setIntValue:defaultTmuxDashboardLimit];
-    [checkUpdate setState: defaultCheckUpdate?NSOnState:NSOffState];
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
     [showPaneTitles setState:defaultShowPaneTitles?NSOnState:NSOffState];
     [disableFullscreenTransparency setState:defaultDisableFullscreenTransparency ? NSOnState : NSOffState];

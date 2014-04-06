@@ -84,6 +84,9 @@ typedef enum {
     // Enable bonjour
     IBOutlet NSButton *_enableBonjour;
 
+    // Check for updates automatically
+    IBOutlet NSButton *_checkUpdate;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -146,9 +149,13 @@ typedef enum {
         }
     };
     
-    info = [self defineControl:_enableBonjour
-                           key:kPreferenceKeyAddBonjourHostsToProfiles
-                          type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_enableBonjour
+                    key:kPreferenceKeyAddBonjourHostsToProfiles
+                            type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_checkUpdate
+                    key:kPreferenceKeyCheckForUpdatesAutomatically
+                   type:kPreferenceInfoTypeCheckbox];
 }
 
 - (void)updateValueForInfo:(PreferenceInfo *)info {

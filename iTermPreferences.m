@@ -25,6 +25,7 @@ NSString *const kPreferenceKeyPromptOnQuit = @"PromptOnQuit";
 NSString *const kPreferenceKeyInstantReplayMemoryMegabytes = @"IRMemory";
 NSString *const kPreferenceKeySavePasteAndCommandHistory = @"SavePasteHistory";  // The key predates command history
 NSString *const kPreferenceKeyAddBonjourHostsToProfiles = @"EnableRendezvous";  // The key predates the name Bonjour
+NSString *const kPreferenceKeyCheckForUpdatesAutomatically = @"SUEnableAutomaticChecks";  // Key defined by Sparkle
 
 static NSMutableDictionary *gObservers;
 
@@ -42,7 +43,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyPromptOnQuit: @YES,
                   kPreferenceKeyInstantReplayMemoryMegabytes: @4,
                   kPreferenceKeySavePasteAndCommandHistory: @NO,
-                  kPreferenceKeyAddBonjourHostsToProfiles: @NO };
+                  kPreferenceKeyAddBonjourHostsToProfiles: @NO,
+                  kPreferenceKeyCheckForUpdatesAutomatically: @YES };
         [dict retain];
     }
     return dict;

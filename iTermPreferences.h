@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
+// General
 extern NSString *const kPreferenceKeyOpenBookmark;
 extern NSString *const kPreferenceKeyOpenArrangementAtStartup;
 extern NSString *const kPreferenceKeyQuitWhenAllWindowsClosed;
@@ -16,6 +17,7 @@ extern NSString *const kPreferenceKeyPromptOnQuit;
 extern NSString *const kPreferenceKeyInstantReplayMemoryMegabytes;
 extern NSString *const kPreferenceKeySavePasteAndCommandHistory;
 extern NSString *const kPreferenceKeyAddBonjourHostsToProfiles;
+extern NSString *const kPreferenceKeyCheckForUpdatesAutomatically;
 
 @interface iTermPreferences : NSObject
 
