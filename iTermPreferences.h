@@ -19,7 +19,8 @@ extern NSString *const kPreferenceKeySavePasteAndCommandHistory;
 extern NSString *const kPreferenceKeyAddBonjourHostsToProfiles;
 extern NSString *const kPreferenceKeyCheckForUpdatesAutomatically;
 extern NSString *const kPreferenceKeyCheckForTestReleases;
-
+extern NSString *const kPreferenceKeyLoadPrefsFromCustomFolder;
+extern NSString *const kPreferenceKeyCustomFolder;  // Path/URL to location with prefs. Path may have ~ in it.
 
 @interface iTermPreferences : NSObject
 
@@ -28,6 +29,9 @@ extern NSString *const kPreferenceKeyCheckForTestReleases;
 
 + (int)intForKey:(NSString *)key;
 + (void)setInt:(int)value forKey:(NSString *)key;
+
++ (NSString *)stringForKey:(NSString *)key;
++ (void)setString:(NSString *)value forKey:(NSString *)key;
 
 // This is used for ensuring that all controls have default values.
 + (BOOL)keyHasDefaultValue:(NSString *)key;

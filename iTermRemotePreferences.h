@@ -9,7 +9,8 @@
 
 // These properties are backed to user defaults.
 @property(nonatomic, assign) BOOL shouldLoadRemotePrefs;
-@property(nonatomic, copy) NSString *customFolderOrURL;
+@property(nonatomic, readonly) NSString *customFolderOrURL;
+@property(nonatomic, assign) BOOL customFolderChanged;  // Path has changed since startup?
 
 + (instancetype)sharedInstance;
 

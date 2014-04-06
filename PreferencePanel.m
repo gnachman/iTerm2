@@ -220,14 +220,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     IBOutlet NSButton *autoHideTmuxClientSession;
     BOOL defaultAutoHideTmuxClientSession;
     
-    // Load prefs from custom folder
-    IBOutlet NSButton *loadPrefsFromCustomFolder;
-    IBOutlet NSTextField *prefsCustomFolder;
-    IBOutlet NSButton *browseCustomFolder;
-    IBOutlet NSButton *pushToCustomFolder;
-    IBOutlet NSImageView *prefsDirWarning;
-    BOOL customFolderChanged_;
-    
     // hide scrollbar and resize
     IBOutlet NSButton *hideScrollbar;
     BOOL defaultHideScrollbar;
@@ -699,12 +691,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [blend setContinuous:YES];
     [dimmingAmount setContinuous:YES];
     [minimumContrast setContinuous:YES];
-
-    BOOL shouldLoadRemotePrefs = [[iTermRemotePreferences sharedInstance] shouldLoadRemotePrefs];
-    [prefsCustomFolder setEnabled:shouldLoadRemotePrefs];
-    [browseCustomFolder setEnabled:shouldLoadRemotePrefs];
-    [pushToCustomFolder setEnabled:shouldLoadRemotePrefs];
-    [self _updatePrefsDirWarning];
 }
 
 - (void)layoutSubviewsForSingleBookmarkMode
@@ -888,36 +874,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 {
     if (sender == lionStyleFullscreen) {
         defaultLionStyleFullscreen = ([lionStyleFullscreen state] == NSOnState);
-    } else if (sender == loadPrefsFromCustomFolder) {
-        BOOL shouldLoadRemotePrefs = [loadPrefsFromCustomFolder state] == NSOnState;
-        [[iTermRemotePreferences sharedInstance] setShouldLoadRemotePrefs:shouldLoadRemotePrefs];
-        if (shouldLoadRemotePrefs) {
-            // Just turned it on.
-            if ([[prefsCustomFolder stringValue] length] == 0) {
-                // Field was initially empty so browse for a dir.
-                if ([self choosePrefsCustomFolder]) {
-                    // User didn't hit cancel; if he chose a writable directory ask if he wants to write to it.
-                    if ([[iTermRemotePreferences sharedInstance] remoteLocationIsValid]) {
-                        if ([[NSAlert alertWithMessageText:@"Copy local preferences to custom folder now?"
-                                             defaultButton:@"Copy"
-                                           alternateButton:@"Don't Copy"
-                                               otherButton:nil
-                                 informativeTextWithFormat:@""] runModal] == NSOKButton) {
-                            [self pushToCustomFolder:nil];
-                        }
-                    }
-                }
-            }
-        }
-        [prefsCustomFolder setEnabled:shouldLoadRemotePrefs];
-        [browseCustomFolder setEnabled:shouldLoadRemotePrefs];
-        [pushToCustomFolder setEnabled:shouldLoadRemotePrefs];
-        [self _updatePrefsDirWarning];
-    } else if (sender == prefsCustomFolder) {
-        // The OS will never call us directly with this sender, but we do call ourselves this way.
-        [[iTermRemotePreferences sharedInstance] setCustomFolderOrURL:[prefsCustomFolder stringValue]];
-        customFolderChanged_ = YES;
-        [self _updatePrefsDirWarning];
     } else if (sender == windowStyle ||
                sender == tabPosition ||
                sender == hideTab ||
@@ -1108,17 +1064,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [[NSUserDefaults standardUserDefaults] setObject:[[ProfileModel sharedInstance] rawData]
                                                   forKey: @"New Bookmarks"];
     }
-}
-
-- (IBAction)browseCustomFolder:(id)sender
-{
-    [self choosePrefsCustomFolder];
-}
-
-- (IBAction)pushToCustomFolder:(id)sender
-{
-    [self savePreferences];
-    [[iTermRemotePreferences sharedInstance] saveLocalUserDefaultsToRemotePrefs];
 }
 
 - (NSString*)_chooseBackgroundImage
@@ -1357,7 +1302,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [newDict setObject:[NSNumber numberWithBool:([scrollbackInAlternateScreen state]==NSOnState)] forKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN];
     [newDict setObject:[NSNumber numberWithBool:([bookmarkGrowlNotifications state]==NSOnState)] forKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS];
     [newDict setObject:[NSNumber numberWithBool:([setLocaleVars state]==NSOnState)] forKey:KEY_SET_LOCALE_VARS];
-    [self _updatePrefsDirWarning];
     [newDict setObject:[NSNumber numberWithUnsignedInt:[[characterEncoding selectedItem] tag]] forKey:KEY_CHARACTER_ENCODING];
     [newDict setObject:[NSNumber numberWithInt:[[[scrollbackLines stringValue] stringWithOnlyDigits] intValue]] forKey:KEY_SCROLLBACK_LINES];
     [newDict setObject:[NSNumber numberWithBool:([unlimitedScrollback state]==NSOnState)] forKey:KEY_UNLIMITED_SCROLLBACK];
@@ -2050,31 +1994,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 }
 
 #pragma mark - Preferences folder
-
-- (void)_updatePrefsDirWarning
-{
-    [prefsDirWarning setHidden:[[iTermRemotePreferences sharedInstance] remoteLocationIsValid]];
-}
-
-- (BOOL)customFolderChanged
-{
-    return customFolderChanged_;
-}
-
-- (BOOL)choosePrefsCustomFolder {
-    NSOpenPanel* panel = [NSOpenPanel openPanel];
-    [panel setCanChooseFiles:NO];
-    [panel setCanChooseDirectories:YES];
-    [panel setAllowsMultipleSelection:NO];
-
-    if ([panel runModal] == NSOKButton) {
-        [prefsCustomFolder setStringValue:[panel legacyDirectory]];
-        [self settingChanged:prefsCustomFolder];
-        return YES;
-    }  else {
-        return NO;
-    }
-}
 
 - (BOOL)remoteLocationIsValid {
     if (![[iTermRemotePreferences sharedInstance] shouldLoadRemotePrefs]) {
@@ -3868,8 +3787,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [dimmingAmount setFloatValue:defaultDimmingAmount];
     [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];
     [lionStyleFullscreen setState:defaultLionStyleFullscreen?NSOnState:NSOffState];
-    [loadPrefsFromCustomFolder setState:[[iTermRemotePreferences sharedInstance] shouldLoadRemotePrefs] ? NSOnState : NSOffState];
-    [prefsCustomFolder setStringValue:[[iTermRemotePreferences sharedInstance] customFolderOrURL] ?: @""];
 
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];
@@ -4558,8 +4475,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [self bookmarkSettingChanged:nil];
     } else if (obj == logDir) {
         [self _updateLogDirWarning];
-    } else if (obj == prefsCustomFolder) {
-        [self settingChanged:prefsCustomFolder];
     } else if (obj == tagFilter) {
         NSLog(@"Tag filter changed");
     }

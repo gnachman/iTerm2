@@ -372,7 +372,7 @@ static BOOL hasBecomeActive = NO;
     // save preferences
     PreferencePanel *preferencePanel = [PreferencePanel sharedInstance];
     [preferencePanel savePreferences];
-    if (![preferencePanel customFolderChanged]) {
+    if (![[iTermRemotePreferences sharedInstance] customFolderChanged]) {
         [preferencePanel savePreferences];
         [[iTermRemotePreferences sharedInstance] applicationWillTerminate];
     }

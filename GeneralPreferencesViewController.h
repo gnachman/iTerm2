@@ -15,4 +15,9 @@
 // Enable or disable controls as needed.
 - (void)updateEnabledState;
 
+// Custom folder stuff
+- (IBAction)browseCustomFolder:(id)sender;
+- (IBAction)pushToCustomFolder:(id)sender;
+
+
 @end

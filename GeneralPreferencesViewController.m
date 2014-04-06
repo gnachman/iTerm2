@@ -12,12 +12,14 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
+#import "iTermRemotePreferences.h"
 #import "PasteboardHistory.h"
 #import "WindowArrangements.h"
 
 typedef enum {
     kPreferenceInfoTypeCheckbox,
-    kPreferenceInfoTypeIntegerTextField
+    kPreferenceInfoTypeIntegerTextField,
+    kPreferenceInfoTypeStringTextField
 } PreferenceInfoType;
 
 @interface PreferenceInfo : NSObject
@@ -31,7 +33,7 @@ typedef enum {
 @property(nonatomic, copy) BOOL (^shouldBeEnabled)();
 
 // Called when value changes with PreferenceInfo as object.
-@property(nonatomic, assign) void (^onChange)();
+@property(nonatomic, copy) void (^onChange)();
 
 + (instancetype)infoForPreferenceWithKey:(NSString *)key
                                     type:(PreferenceInfoType)type
@@ -58,6 +60,9 @@ typedef enum {
     [super dealloc];
 }
 
+@end
+
+@interface GeneralPreferencesViewController ()
 @end
 
 @implementation GeneralPreferencesViewController {
@@ -90,6 +95,13 @@ typedef enum {
 
     // Prompt for test-release updates
     IBOutlet NSButton *_checkTestRelease;
+
+    // Load prefs from custom folder
+    IBOutlet NSButton *_loadPrefsFromCustomFolder;  // Should load?
+    IBOutlet NSTextField *_prefsCustomFolder;  // Path or URL text field
+    IBOutlet NSImageView *_prefsDirWarning;  // Image shown when path is not writable
+    IBOutlet NSButton *_browseCustomFolder;  // Push button to open file browser
+    IBOutlet NSButton *_pushToCustomFolder;  // Push button to copy local to remote
 
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
@@ -164,6 +176,27 @@ typedef enum {
     [self defineControl:_checkTestRelease
                     key:kPreferenceKeyCheckForTestReleases
                    type:kPreferenceInfoTypeCheckbox];
+    
+    info = [self defineControl:_loadPrefsFromCustomFolder
+                           key:kPreferenceKeyLoadPrefsFromCustomFolder
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() {
+        [self loadPrefsFromCustomFolderDidChange];
+    };
+    [self updateEnabledStateForCustomFolderButtons];
+
+    
+    info = [self defineControl:_prefsCustomFolder
+                           key:kPreferenceKeyCustomFolder
+                          type:kPreferenceInfoTypeStringTextField];
+    info.shouldBeEnabled = ^BOOL() {
+        return [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
+    };
+    info.onChange = ^() {
+        [iTermRemotePreferences sharedInstance].customFolderChanged = YES;
+        [self updatePrefsDirWarning];
+    };
+    [self updatePrefsDirWarning];
 }
 
 - (void)updateValueForInfo:(PreferenceInfo *)info {
@@ -179,6 +212,13 @@ typedef enum {
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
             field.intValue = [iTermPreferences intForKey:info.key];
+            break;
+        }
+            
+        case kPreferenceInfoTypeStringTextField: {
+            assert([info.control isKindOfClass:[NSTextField class]]);
+            NSTextField *field = (NSTextField *)info.control;
+            field.stringValue = [iTermPreferences stringForKey:info.key];
             break;
         }
             
@@ -223,12 +263,24 @@ typedef enum {
             [iTermPreferences setInt:[sender intValue] forKey:info.key];
             break;
 
+        case kPreferenceInfoTypeStringTextField:
+            [iTermPreferences setString:[sender stringValue] forKey:info.key];
+            break;
+
         default:
             assert(false);
     }
     if (info.onChange) {
         info.onChange();
     }
+}
+
+- (IBAction)browseCustomFolder:(id)sender {
+    [self choosePrefsCustomFolder];
+}
+
+- (IBAction)pushToCustomFolder:(id)sender {
+    [[iTermRemotePreferences sharedInstance] saveLocalUserDefaultsToRemotePrefs];
 }
 
 - (void)updateEnabledStateForInfo:(PreferenceInfo *)info {
@@ -252,5 +304,76 @@ typedef enum {
     [self updateEnabledStateForInfo:info];
 }
 
+// This is a notification signature but it gets called because we're the delegate of text fields.
+- (void)controlTextDidChange:(NSNotification *)aNotification {
+    id control = [aNotification object];
+    if (control == _prefsCustomFolder) {
+        [self settingChanged:control];
+    }
+}
+
+
+#pragma mark - Remote Prefs
+
+- (void)updatePrefsDirWarning
+{
+    BOOL shouldLoadRemotePrefs =
+        [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
+    if (!shouldLoadRemotePrefs) {
+        [_prefsDirWarning setHidden:YES];
+        return;
+    }
+    
+    BOOL remoteLocationIsValid = [[iTermRemotePreferences sharedInstance] remoteLocationIsValid];
+    [_prefsDirWarning setHidden:remoteLocationIsValid];
+}
+
+
+- (void)updateEnabledStateForCustomFolderButtons {
+    BOOL shouldLoadRemotePrefs = [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
+    [_browseCustomFolder setEnabled:shouldLoadRemotePrefs];
+    [_pushToCustomFolder setEnabled:shouldLoadRemotePrefs];
+    [_prefsCustomFolder setEnabled:shouldLoadRemotePrefs];
+    [self updatePrefsDirWarning];
+}
+
+- (void)loadPrefsFromCustomFolderDidChange {
+    BOOL shouldLoadRemotePrefs = [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
+    [self updateEnabledStateForCustomFolderButtons];
+    if (shouldLoadRemotePrefs) {
+        // Just turned it on.
+        if ([[_prefsCustomFolder stringValue] length] == 0) {
+            // Field was initially empty so browse for a dir.
+            if ([self choosePrefsCustomFolder]) {
+                // User didn't hit cancel; if he chose a writable directory, ask if he wants to write to it.
+                if ([[iTermRemotePreferences sharedInstance] remoteLocationIsValid]) {
+                    if ([[NSAlert alertWithMessageText:@"Copy local preferences to custom folder now?"
+                                         defaultButton:@"Copy"
+                                       alternateButton:@"Don't Copy"
+                                           otherButton:nil
+                             informativeTextWithFormat:@""] runModal] == NSOKButton) {
+                        [[iTermRemotePreferences sharedInstance] saveLocalUserDefaultsToRemotePrefs];
+                    }
+                }
+            }
+        }
+    }
+    [self updatePrefsDirWarning];
+}
+
+- (BOOL)choosePrefsCustomFolder {
+    NSOpenPanel* panel = [NSOpenPanel openPanel];
+    [panel setCanChooseFiles:NO];
+    [panel setCanChooseDirectories:YES];
+    [panel setAllowsMultipleSelection:NO];
+    
+    if ([panel runModal] == NSOKButton) {
+        [_prefsCustomFolder setStringValue:[panel legacyDirectory]];
+        [self settingChanged:_prefsCustomFolder];
+        return YES;
+    }  else {
+        return NO;
+    }
+}
 
 @end

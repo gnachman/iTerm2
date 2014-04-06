@@ -27,6 +27,8 @@ NSString *const kPreferenceKeySavePasteAndCommandHistory = @"SavePasteHistory"; 
 NSString *const kPreferenceKeyAddBonjourHostsToProfiles = @"EnableRendezvous";  // The key predates the name Bonjour
 NSString *const kPreferenceKeyCheckForUpdatesAutomatically = @"SUEnableAutomaticChecks";  // Key defined by Sparkle
 NSString *const kPreferenceKeyCheckForTestReleases = @"CheckTestRelease";
+NSString *const kPreferenceKeyLoadPrefsFromCustomFolder = @"LoadPrefsFromCustomFolder";
+NSString *const kPreferenceKeyCustomFolder = @"PrefsCustomFolder";
 
 static NSMutableDictionary *gObservers;
 
@@ -46,14 +48,21 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeySavePasteAndCommandHistory: @NO,
                   kPreferenceKeyAddBonjourHostsToProfiles: @NO,
                   kPreferenceKeyCheckForUpdatesAutomatically: @YES,
-                  kPreferenceKeyCheckForTestReleases: @YES };
+                  kPreferenceKeyCheckForTestReleases: @YES,
+                  kPreferenceKeyLoadPrefsFromCustomFolder: @NO,
+                  kPreferenceKeyCustomFolder: [NSNull null] };
         [dict retain];
     }
     return dict;
 }
 
 + (id)defaultObjectForKey:(NSString *)key {
-    return [self defaultValueMap][key];
+    id obj = [self defaultValueMap][key];
+    if ([obj isKindOfClass:[NSNull class]]) {
+        return nil;
+    } else {
+        return obj;
+    }
 }
 
 #pragma mark - Computed values
@@ -64,7 +73,8 @@ static NSMutableDictionary *gObservers;
 + (NSDictionary *)computedObjectDictionary {
     static NSDictionary *dict;
     if (!dict) {
-        dict = @{ kPreferenceKeyOpenArrangementAtStartup: BLOCK(computedOpenArrangementAtStartup) };
+        dict = @{ kPreferenceKeyOpenArrangementAtStartup: BLOCK(computedOpenArrangementAtStartup),
+                  kPreferenceKeyCustomFolder: BLOCK(computedCustomFolder) };
         [dict retain];
     }
     return dict;
@@ -117,7 +127,7 @@ static NSMutableDictionary *gObservers;
 #pragma mark - APIs
 
 + (BOOL)keyHasDefaultValue:(NSString *)key {
-    return [self defaultObjectForKey:key] != nil;
+    return ([self defaultValueMap][key] != nil);
 }
 
 + (BOOL)boolForKey:(NSString *)key {
@@ -134,6 +144,14 @@ static NSMutableDictionary *gObservers;
 
 + (void)setInt:(int)value forKey:(NSString *)key {
     [self setObject:@(value) forKey:key];
+}
+
++ (NSString *)stringForKey:(NSString *)key {
+    return [self objectForKey:key];
+}
+
++ (void)setString:(NSString *)value forKey:(NSString *)key {
+    [self setObject:value forKey:key];
 }
 
 + (void)addObserverForKey:(NSString *)key block:(void (^)(id before, id after))block {
@@ -156,6 +174,13 @@ static NSMutableDictionary *gObservers;
     } else {
         return nil;
     }
+}
+
+// Text fields don't like nil strings.
++ (NSString *)computedCustomFolder {
+    NSString *prefsCustomFolder =
+        [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyCustomFolder];
+    return prefsCustomFolder ?: @"";
 }
 
 @end

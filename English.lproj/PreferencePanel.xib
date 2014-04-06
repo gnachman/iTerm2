@@ -84,7 +84,6 @@
                 <outlet property="bookmarksTabViewItem" destination="1945" id="2863"/>
                 <outlet property="bookmarksTableView" destination="3260" id="3274"/>
                 <outlet property="bookmarksToolbarItem" destination="5886" id="6039"/>
-                <outlet property="browseCustomFolder" destination="5618" id="5624"/>
                 <outlet property="bulkCopyLabel" destination="3519" id="3552"/>
                 <outlet property="changeProfileButton" destination="5768" id="5770"/>
                 <outlet property="characterEncoding" destination="2390" id="3148"/>
@@ -168,7 +167,6 @@
                 <outlet property="leftCommandButton" destination="4393" id="4421"/>
                 <outlet property="leftOptionButton" destination="4383" id="4419"/>
                 <outlet property="lionStyleFullscreen" destination="5319" id="5323"/>
-                <outlet property="loadPrefsFromCustomFolder" destination="5614" id="5622"/>
                 <outlet property="logDir" destination="5686" id="5715"/>
                 <outlet property="maxVertically" destination="4540" id="4608"/>
                 <outlet property="menuToSelect" destination="6358" id="6364"/>
@@ -183,14 +181,11 @@
                 <outlet property="openTmuxWindows" destination="6337" id="6349"/>
                 <outlet property="optionClickMovesCursor" destination="6407" id="6415"/>
                 <outlet property="optionKeySends" destination="4291" id="4307"/>
-                <outlet property="prefsCustomFolder" destination="5616" id="5623"/>
-                <outlet property="prefsDirWarning" destination="5628" id="5631"/>
                 <outlet property="presetsMenu" destination="3215" id="3561"/>
                 <outlet property="presetsPopupButton" destination="3182" id="5306"/>
                 <outlet property="preventTab" destination="6416" id="6420"/>
                 <outlet property="profileLabel" destination="5100" id="5102"/>
                 <outlet property="promptBeforeClosing_" destination="5728" id="5733"/>
-                <outlet property="pushToCustomFolder" destination="5620" id="5625"/>
                 <outlet property="removeBookmarkButton" destination="2113" id="3275"/>
                 <outlet property="removeJobButton_" destination="5669" id="5723"/>
                 <outlet property="removeMappingButton" destination="2444" id="3209"/>
@@ -931,7 +926,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="5632"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="2m8-OE-cnA"/>
                                             </connections>
                                         </button>
                                         <textField verticalHuggingPriority="750" id="5616">
@@ -943,7 +938,7 @@ Gw
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                             <connections>
-                                                <outlet property="delegate" destination="-2" id="5630"/>
+                                                <outlet property="delegate" destination="9Se-ld-UJa" id="iKq-Sd-Ewl"/>
                                             </connections>
                                         </textField>
                                         <button verticalHuggingPriority="750" id="5618">
@@ -954,7 +949,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="browseCustomFolder:" target="-2" id="5626"/>
+                                                <action selector="browseCustomFolder:" target="9Se-ld-UJa" id="Qyg-mv-oRH"/>
                                             </connections>
                                         </button>
                                         <button verticalHuggingPriority="750" id="5620">
@@ -965,7 +960,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="pushToCustomFolder:" target="-2" id="5627"/>
+                                                <action selector="pushToCustomFolder:" target="9Se-ld-UJa" id="XU1-4a-fHX"/>
                                             </connections>
                                         </button>
                                         <imageView id="5628">
@@ -5946,14 +5941,19 @@ DQ
         </customObject>
         <customObject id="9Se-ld-UJa" customClass="GeneralPreferencesViewController">
             <connections>
+                <outlet property="_browseCustomFolder" destination="5618" id="0Ty-gp-K5Q"/>
                 <outlet property="_checkTestRelease" destination="5049" id="mCk-NA-PO2"/>
                 <outlet property="_checkUpdate" destination="5048" id="Oi0-3Y-fu1"/>
                 <outlet property="_confirmClosingMultipleSessions" destination="1996" id="1wi-R8-LGb"/>
                 <outlet property="_enableBonjour" destination="5051" id="lpI-Ub-bAd"/>
                 <outlet property="_irMemory" destination="5055" id="dYT-8S-UeF"/>
+                <outlet property="_loadPrefsFromCustomFolder" destination="5614" id="9l7-ub-H9J"/>
                 <outlet property="_openArrangementAtStartup" destination="3590" id="hIR-Ca-buG"/>
                 <outlet property="_openBookmark" destination="1959" id="PNp-By-R5Y"/>
+                <outlet property="_prefsCustomFolder" destination="5616" id="GlX-Oe-rRX"/>
+                <outlet property="_prefsDirWarning" destination="5628" id="HjH-wN-ecG"/>
                 <outlet property="_promptOnQuit" destination="4757" id="apf-8s-46r"/>
+                <outlet property="_pushToCustomFolder" destination="5620" id="o2m-78-Wc6"/>
                 <outlet property="_quitWhenAllWindowsClosed" destination="1950" id="g5I-3X-QQe"/>
                 <outlet property="_savePasteHistory" destination="5056" id="BPO-mF-vKm"/>
             </connections>

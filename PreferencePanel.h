@@ -111,7 +111,6 @@ typedef enum {
 - (IBAction)saveKeyMapping:(id)sender;
 - (IBAction)closeKeyMapping:(id)sender;
 - (IBAction)settingChanged:(id)sender;
-- (IBAction)pushToCustomFolder:(id)sender;
 - (IBAction)bookmarkSettingChanged:(id)sender;
 - (IBAction)copyToProfile:(id)sender;
 - (IBAction)bookmarkUrlSchemeHandlerChanged:(id)sender;
@@ -215,7 +214,6 @@ typedef enum {
 - (NSTimeInterval)antiIdleTimerPeriod;
 - (Profile *)handlerBookmarkForURL:(NSString *)url;
 - (void)changeFont:(id)fontManager;
-- (BOOL)customFolderChanged;
 - (BOOL)onScreen;
 - (NSTextField*)shortcutKeyTextField;
 - (void)shortcutKeyDown:(NSEvent*)event;
