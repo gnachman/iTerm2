@@ -18,6 +18,8 @@ extern NSString *const kPreferenceKeyInstantReplayMemoryMegabytes;
 extern NSString *const kPreferenceKeySavePasteAndCommandHistory;
 extern NSString *const kPreferenceKeyAddBonjourHostsToProfiles;
 extern NSString *const kPreferenceKeyCheckForUpdatesAutomatically;
+extern NSString *const kPreferenceKeyCheckForTestReleases;
+
 
 @interface iTermPreferences : NSObject
 

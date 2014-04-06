@@ -89,7 +89,6 @@
                 <outlet property="changeProfileButton" destination="5768" id="5770"/>
                 <outlet property="characterEncoding" destination="2390" id="3148"/>
                 <outlet property="checkColorInvertedCursor" destination="4889" id="4893"/>
-                <outlet property="checkTestRelease" destination="5049" id="5136"/>
                 <outlet property="closeSessionsOnEnd" destination="5681" id="5737"/>
                 <outlet property="cmdSelection" destination="6107" id="6211"/>
                 <outlet property="columnsField" destination="4911" id="4959"/>
@@ -835,7 +834,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="5067"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="jqK-dm-ssy"/>
                                             </connections>
                                         </button>
                                         <textField verticalHuggingPriority="750" id="5050">
@@ -5947,6 +5946,7 @@ DQ
         </customObject>
         <customObject id="9Se-ld-UJa" customClass="GeneralPreferencesViewController">
             <connections>
+                <outlet property="_checkTestRelease" destination="5049" id="mCk-NA-PO2"/>
                 <outlet property="_checkUpdate" destination="5048" id="Oi0-3Y-fu1"/>
                 <outlet property="_confirmClosingMultipleSessions" destination="1996" id="1wi-R8-LGb"/>
                 <outlet property="_enableBonjour" destination="5051" id="lpI-Ub-bAd"/>

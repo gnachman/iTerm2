@@ -50,6 +50,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermPreferences.h"
 #import "iTermWarning.h"
 #include <objc/runtime.h>
 
@@ -61,6 +62,9 @@
 static NSString* APPLICATION_SUPPORT_DIRECTORY = @"~/Library/Application Support";
 static NSString *SUPPORT_DIRECTORY = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
+
+// keys for to-many relationships:
+static NSString *const kTerminalsKey = @"terminals";
 
 // Comparator for sorting encodings
 static NSInteger _compareEncodingByLocalizedName(id a, id b, void *unused)
@@ -1279,13 +1283,15 @@ static BOOL initDone = NO;
     }
 }
 
-@end
+- (void)refreshSoftwareUpdateUserDefaults {
+    BOOL checkForTestReleases = [iTermPreferences boolForKey:kPreferenceKeyCheckForTestReleases];
+    NSString *appCast = checkForTestReleases ?
+        [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
+        [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForFinal"];
+    [[NSUserDefaults standardUserDefaults] setObject:appCast forKey:@"SUFeedURL"];
+}
 
-// keys for to-many relationships:
-NSString *terminalsKey = @"terminals";
-
-// Scripting support
-@implementation iTermController (KeyValueCoding)
+#pragma mark - Scripting support
 
 - (BOOL)application:(NSApplication *)sender delegateHandlesKey:(NSString *)key
 {
@@ -1370,8 +1376,7 @@ NSString *terminalsKey = @"terminals";
 {
     static NSArray *_kvcKeys = nil;
     if( nil == _kvcKeys ){
-        _kvcKeys = [[NSArray alloc] initWithObjects:
-            terminalsKey,  nil ];
+        _kvcKeys = [[NSArray alloc] initWithObjects:kTerminalsKey,  nil ];
     }
     return _kvcKeys;
 }

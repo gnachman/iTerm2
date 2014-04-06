@@ -279,10 +279,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     int defaultHotkeyCode;
     int defaultHotkeyModifiers;
     
-    // prompt for test-release updates
-    IBOutlet NSButton *checkTestRelease;
-    BOOL defaultCheckTestRelease;
-    
     IBOutlet NSTabView* bookmarksSettingsTabViewParent;
     IBOutlet NSTabViewItem* bookmarkSettingsGeneralTab;
     
@@ -1042,16 +1038,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [hotkeyTogglesWindow setEnabled:defaultHotkey];
         [hotkeyAutoHides setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
         [hotkeyBookmark setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
-
-        if (prefs &&
-            defaultCheckTestRelease != ([checkTestRelease state] == NSOnState)) {
-            defaultCheckTestRelease = ([checkTestRelease state] == NSOnState);
-
-            NSString *appCast = defaultCheckTestRelease ?
-            [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
-            [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForFinal"];
-            [prefs setObject:appCast forKey:@"SUFeedURL"];
-        }
     }
 
     if (sender == hotkey || sender == hotkeyBookmark) {
@@ -2716,7 +2702,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultHotkeyCode = [prefs objectForKey:@"HotkeyCode"]?[[prefs objectForKey:@"HotkeyCode"] intValue]: 0;
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
     defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
-    defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
     defaultDimInactiveSplitPanes = [prefs objectForKey:@"DimInactiveSplitPanes"]?[[prefs objectForKey:@"DimInactiveSplitPanes"] boolValue]: YES;
     defaultDimBackgroundWindows = [prefs objectForKey:@"DimBackgroundWindows"]?[[prefs objectForKey:@"DimBackgroundWindows"] boolValue]: NO;
     defaultAnimateDimming = [prefs objectForKey:@"AnimateDimming"]?[[prefs objectForKey:@"AnimateDimming"] boolValue]: NO;
@@ -2738,11 +2723,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     }
     defaultSwitchTabModifier = [prefs objectForKey:@"SwitchTabModifier"] ? [[prefs objectForKey:@"SwitchTabModifier"] intValue] : MOD_TAG_ANY_COMMAND;
     defaultSwitchWindowModifier = [prefs objectForKey:@"SwitchWindowModifier"] ? [[prefs objectForKey:@"SwitchWindowModifier"] intValue] : MOD_TAG_CMD_OPT;
-
-    NSString *appCast = defaultCheckTestRelease ?
-        [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
-        [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForFinal"];
-    [prefs setObject:appCast forKey:@"SUFeedURL"];
 
     // Migrate old-style (iTerm 0.x) URL handlers.
     // make sure bookmarks are loaded
@@ -2833,7 +2813,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setInteger:defaultHotkeyCode forKey:@"HotkeyCode"];
     [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
     [prefs setInteger:defaultHotkeyModifiers forKey:@"HotkeyModifiers"];
-    [prefs setBool:defaultCheckTestRelease forKey:@"CheckTestRelease"];
     [prefs setBool:defaultDimInactiveSplitPanes forKey:@"DimInactiveSplitPanes"];
     [prefs setBool:defaultDimBackgroundWindows forKey:@"DimBackgroundWindows"];
     [prefs setBool:defaultAnimateDimming forKey:@"AnimateDimming"];
@@ -3598,7 +3577,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (BOOL)checkTestRelease
 {
-    return defaultCheckTestRelease;
+    return [iTermPreferences boolForKey:kPreferenceKeyCheckForTestReleases];
 }
 
 // Smart cursor color used to be a global value. This provides the default when
@@ -3882,7 +3861,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [hotkeyAutoHides setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
     [hotkeyBookmark setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
 
-    [checkTestRelease setState:defaultCheckTestRelease?NSOnState:NSOffState];
     [dimInactiveSplitPanes setState:defaultDimInactiveSplitPanes?NSOnState:NSOffState];
     [animateDimming setState:defaultAnimateDimming?NSOnState:NSOffState];
     [dimBackgroundWindows setState:defaultDimBackgroundWindows?NSOnState:NSOffState];

@@ -33,6 +33,7 @@
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "iTermFontPanel.h"
+#import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermSettingsModel.h"
 #import "iTermWarning.h"
@@ -108,6 +109,13 @@ static BOOL hasBecomeActive = NO;
 
     [ToolbeltView populateMenu:toolbeltMenu];
     [self _updateToolbeltMenuItem];
+
+    // Set the Appcast URL and when it changes update it.
+    [[iTermController sharedInstance] refreshSoftwareUpdateUserDefaults];
+    [iTermPreferences addObserverForKey:kPreferenceKeyCheckForTestReleases
+                                  block:^(id before, id after) {
+                                      [[iTermController sharedInstance] refreshSoftwareUpdateUserDefaults];
+                                  }];
 }
 
 - (void)_performIdempotentStartupActivities

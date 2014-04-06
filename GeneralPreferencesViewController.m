@@ -10,6 +10,7 @@
 
 #import "CommandHistory.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermController.h"
 #import "iTermPreferences.h"
 #import "PasteboardHistory.h"
 #import "WindowArrangements.h"
@@ -87,6 +88,9 @@ typedef enum {
     // Check for updates automatically
     IBOutlet NSButton *_checkUpdate;
 
+    // Prompt for test-release updates
+    IBOutlet NSButton *_checkTestRelease;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -155,6 +159,10 @@ typedef enum {
     
     [self defineControl:_checkUpdate
                     key:kPreferenceKeyCheckForUpdatesAutomatically
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_checkTestRelease
+                    key:kPreferenceKeyCheckForTestReleases
                    type:kPreferenceInfoTypeCheckbox];
 }
 

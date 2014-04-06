@@ -131,10 +131,11 @@
 // If other iTerm windows cover more than ~40% of |terminal| then it's obscured.
 - (BOOL)terminalIsObscured:(id<iTermWindowController>)terminal;
 
-@end
+// Set Software Update (Sparkle) user defaults keys to reflect settings in
+// iTerm2's user defaults.
+- (void)refreshSoftwareUpdateUserDefaults;
 
-// Scripting support
-@interface iTermController (KeyValueCoding)
+#pragma mark - Key-Value Coding
 
 - (BOOL)application:(NSApplication *)sender delegateHandlesKey:(NSString *)key;
 
