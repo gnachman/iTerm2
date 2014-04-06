@@ -26,9 +26,10 @@ typedef enum {
 } iTermTextExtractorClass;
 
 typedef enum {
-    kiTermTextExtractorNullPolicyFromStartToFirst,
-    kiTermTextExtractorNullPolicyFromLastToEnd,
-    kiTermTextExtractorNullPolicyTreatAsSpace
+    kiTermTextExtractorNullPolicyFromStartToFirst,  // Ignore content prior to last null
+    kiTermTextExtractorNullPolicyFromLastToEnd,  // Ignore content after last null
+    kiTermTextExtractorNullPolicyTreatAsSpace,  // Treat midline nulls as spaces and a range of terminal nulls as a single space
+    kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,  // Treat midline nulls as space and strip terminal nulls
 } iTermTextExtractorNullPolicy;
 
 @interface iTermTextExtractor : NSObject

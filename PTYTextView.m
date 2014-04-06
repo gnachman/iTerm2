@@ -3695,7 +3695,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             iTermTextExtractor *extractor =
                 [iTermTextExtractor textExtractorWithDataSource:_dataSource];
             NSString *content = [extractor contentInRange:range
-                                               nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
+                                               nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
                                                       pad:NO
                                        includeLastNewline:copyLastNewline
                                    trimTrailingWhitespace:trimWhitespace

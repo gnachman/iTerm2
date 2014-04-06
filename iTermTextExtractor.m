@@ -550,6 +550,7 @@ static const int kNumCharsToSearchForDivider = 8;
                                   case kiTermTextExtractorNullPolicyFromStartToFirst:
                                       return YES;
                                   case kiTermTextExtractorNullPolicyTreatAsSpace:
+                                  case kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal:
                                       [result appendString:@" "];
                                       break;
                               }
@@ -576,6 +577,8 @@ static const int kNumCharsToSearchForDivider = 8;
                                        case kiTermTextExtractorNullPolicyTreatAsSpace:
                                            [result appendString:@" "];
                                            break;
+                                       case kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal:
+                                           break;
                                    }
                                }
                                if (code == EOL_HARD &&
@@ -589,9 +592,10 @@ static const int kNumCharsToSearchForDivider = 8;
                            }];
     
     if (trimSelectionTrailingSpaces) {
-        [result stringByTrimmingTrailingWhitespace];
+        return [result stringByTrimmingTrailingWhitespace];
+    } else {
+        return result;
     }
-    return result;
 }
 
 
@@ -785,7 +789,11 @@ static const int kNumCharsToSearchForDivider = 8;
             }
         }
 
-        if (eolBlock && y != range.coordRange.end.y) {
+        BOOL haveReachedEol = YES;
+        if (y == range.coordRange.end.y) {
+            haveReachedEol = numNulls > 0;
+        }
+        if (eolBlock && haveReachedEol) {
             BOOL stop;
             if (fullWidth) {
                 stop = eolBlock(theLine[width].code, numNulls, y);
