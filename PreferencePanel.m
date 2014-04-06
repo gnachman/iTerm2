@@ -184,10 +184,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     // Minimum contrast
     IBOutlet NSSlider* minimumContrast;
     
-    // quit when all windows are closed
-    IBOutlet NSButton *quitWhenAllWindowsClosed;
-    BOOL defaultQuitWhenAllWindowsClosed;
-    
     // check for updates automatically
     IBOutlet NSButton *checkUpdate;
     BOOL defaultCheckUpdate;
@@ -1079,7 +1075,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [defaultWordChars release];
         defaultWordChars = [[wordChars stringValue] retain];
         defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];
-        defaultQuitWhenAllWindowsClosed = ([quitWhenAllWindowsClosed state] == NSOnState);
         defaultCheckUpdate = ([checkUpdate state] == NSOnState);
         defaultSmartPlacement = ([smartPlacement state] == NSOnState);
         defaultAdjustWindowForFontSizeChange = ([adjustWindowForFontSizeChange state] == NSOnState);
@@ -2769,7 +2764,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [defaultWordChars release];
     defaultWordChars = [prefs objectForKey: @"WordCharacters"]?[[prefs objectForKey: @"WordCharacters"] retain]:@"/-+\\~_.";
     defaultTmuxDashboardLimit = [prefs objectForKey: @"TmuxDashboardLimit"]?[[prefs objectForKey:@"TmuxDashboardLimit"] intValue]:10;
-    defaultQuitWhenAllWindowsClosed = [prefs objectForKey:@"QuitWhenAllWindowsClosed"]?[[prefs objectForKey:@"QuitWhenAllWindowsClosed"] boolValue]: NO;
     defaultCheckUpdate = [prefs objectForKey:@"SUEnableAutomaticChecks"]?[[prefs objectForKey:@"SUEnableAutomaticChecks"] boolValue]: YES;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
     defaultShowPaneTitles = [prefs objectForKey:@"ShowPaneTitles"]?[[prefs objectForKey:@"ShowPaneTitles"] boolValue]: YES;
@@ -2893,7 +2887,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setObject:[NSNumber numberWithInt:defaultTmuxDashboardLimit]
                           forKey:@"TmuxDashboardLimit"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
-    [prefs setBool:defaultQuitWhenAllWindowsClosed forKey:@"QuitWhenAllWindowsClosed"];
     [prefs setBool:defaultCheckUpdate forKey:@"SUEnableAutomaticChecks"];
     [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
     [prefs setBool:defaultShowPaneTitles forKey:@"ShowPaneTitles"];
@@ -3686,7 +3679,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (BOOL)quitWhenAllWindowsClosed
 {
-    return defaultQuitWhenAllWindowsClosed;
+    return [iTermPreferences boolForKey:kPreferenceKeyQuitWhenAllWindowsClosed];
 }
 
 // The following are preferences with no UI, but accessible via "defaults read/write"
@@ -3941,7 +3934,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
     [wordChars setStringValue: ([defaultWordChars length] > 0)?defaultWordChars:@""];
     [tmuxDashboardLimit setIntValue:defaultTmuxDashboardLimit];
-    [quitWhenAllWindowsClosed setState: defaultQuitWhenAllWindowsClosed?NSOnState:NSOffState];
     [checkUpdate setState: defaultCheckUpdate?NSOnState:NSOffState];
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
     [showPaneTitles setState:defaultShowPaneTitles?NSOnState:NSOffState];

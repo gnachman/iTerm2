@@ -13,6 +13,7 @@
 
 NSString *const kPreferenceKeyOpenBookmark = @"OpenBookmark";
 NSString *const kPreferenceKeyOpenArrangementAtStartup = @"OpenArrangementAtStartup";
+NSString *const kPreferenceKeyQuitWhenAllWindowsClosed = @"QuitWhenAllWindowsClosed";
 
 @implementation iTermPreferences
 
@@ -22,7 +23,8 @@ NSString *const kPreferenceKeyOpenArrangementAtStartup = @"OpenArrangementAtStar
     static NSDictionary *dict;
     if (!dict) {
         dict = @{ kPreferenceKeyOpenBookmark: @NO,
-                  kPreferenceKeyOpenArrangementAtStartup: @NO };
+                  kPreferenceKeyOpenArrangementAtStartup: @NO,
+                  kPreferenceKeyQuitWhenAllWindowsClosed: @NO };
         [dict retain];
     }
     return dict;

@@ -197,7 +197,6 @@
                 <outlet property="promptBeforeClosing_" destination="5728" id="5733"/>
                 <outlet property="promptOnQuit" destination="4757" id="4760"/>
                 <outlet property="pushToCustomFolder" destination="5620" id="5625"/>
-                <outlet property="quitWhenAllWindowsClosed" destination="1950" id="2816"/>
                 <outlet property="removeBookmarkButton" destination="2113" id="3275"/>
                 <outlet property="removeJobButton_" destination="5669" id="5723"/>
                 <outlet property="removeMappingButton" destination="2444" id="3209"/>
@@ -604,7 +603,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="2823"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="yg4-6a-znj"/>
                                             </connections>
                                         </button>
                                         <button id="1959">
@@ -699,7 +698,7 @@ Gw
                                             </connections>
                                         </button>
                                         <button id="4757">
-                                            <rect key="frame" x="94" y="270" width="269" height="18"/>
+                                            <rect key="frame" x="94" y="272" width="269" height="18"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="check" title="Confirm &quot;Quit iTerm2 (⌘Q)&quot; command" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4758">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5957,6 +5956,7 @@ DQ
             <connections>
                 <outlet property="_openArrangementAtStartup" destination="3590" id="hIR-Ca-buG"/>
                 <outlet property="_openBookmark" destination="1959" id="PNp-By-R5Y"/>
+                <outlet property="_quitWhenAllWindowsClosed" destination="1950" id="g5I-3X-QQe"/>
             </connections>
         </customObject>
     </objects>

@@ -62,6 +62,9 @@ typedef enum {
     // Open saved window arrangement at startup
     IBOutlet NSButton *_openArrangementAtStartup;
 
+    // Quit when all windows are closed
+    IBOutlet NSButton *_quitWhenAllWindowsClosed;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -96,6 +99,11 @@ typedef enum {
     info = [self defineControl:_openArrangementAtStartup
                            key:kPreferenceKeyOpenArrangementAtStartup
                           type:kPreferenceInfoTypeCheckbox];
+    
+    info = [self defineControl:_quitWhenAllWindowsClosed
+                           key:kPreferenceKeyQuitWhenAllWindowsClosed
+                          type:kPreferenceInfoTypeCheckbox];
+
     info.shouldBeEnabled = ^BOOL() { return [WindowArrangements count] > 0; };
     
 }

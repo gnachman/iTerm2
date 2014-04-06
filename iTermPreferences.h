@@ -10,6 +10,7 @@
 
 extern NSString *const kPreferenceKeyOpenBookmark;
 extern NSString *const kPreferenceKeyOpenArrangementAtStartup;
+extern NSString *const kPreferenceKeyQuitWhenAllWindowsClosed;
 
 @interface iTermPreferences : NSObject
 
