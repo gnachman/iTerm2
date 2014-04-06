@@ -276,10 +276,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     IBOutlet NSButton *instantReplay;
     BOOL defaultInstantReplay;
     
-    // instant replay memory usage.
-    IBOutlet NSTextField* irMemory;
-    int defaultIrMemory;
-    
     // hotkey
     IBOutlet NSButton *hotkey;
     IBOutlet NSTextField* hotkeyLabel;
@@ -1073,7 +1069,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
             [[PasteboardHistory sharedInstance] eraseHistory];
         }
 
-        defaultIrMemory = [irMemory intValue];
         BOOL oldDefaultHotkey = defaultHotkey;
         defaultHotkey = ([hotkey state] == NSOnState);
         if (defaultHotkey != oldDefaultHotkey) {
@@ -2766,7 +2761,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
     defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
     defaultSavePasteHistory = [prefs objectForKey:@"SavePasteHistory"]?[[prefs objectForKey:@"SavePasteHistory"] boolValue]: NO;
-    defaultIrMemory = [prefs objectForKey:@"IRMemory"]?[[prefs objectForKey:@"IRMemory"] intValue] : 4;
     defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
     defaultDimInactiveSplitPanes = [prefs objectForKey:@"DimInactiveSplitPanes"]?[[prefs objectForKey:@"DimInactiveSplitPanes"] boolValue]: YES;
     defaultDimBackgroundWindows = [prefs objectForKey:@"DimBackgroundWindows"]?[[prefs objectForKey:@"DimBackgroundWindows"] boolValue]: NO;
@@ -2887,7 +2881,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
     [prefs setInteger:defaultHotkeyModifiers forKey:@"HotkeyModifiers"];
     [prefs setBool:defaultSavePasteHistory forKey:@"SavePasteHistory"];
-    [prefs setInteger:defaultIrMemory forKey:@"IRMemory"];
     [prefs setBool:defaultCheckTestRelease forKey:@"CheckTestRelease"];
     [prefs setBool:defaultDimInactiveSplitPanes forKey:@"DimInactiveSplitPanes"];
     [prefs setBool:defaultDimBackgroundWindows forKey:@"DimBackgroundWindows"];
@@ -3588,7 +3581,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (int)irMemory
 {
-    return defaultIrMemory;
+    return [iTermPreferences intForKey:kPreferenceKeyInstantReplayMemoryMegabytes];
 }
 
 - (BOOL)hotkey
@@ -3940,7 +3933,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [hotkeyAutoHides setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
     [hotkeyBookmark setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
 
-    [irMemory setIntValue:defaultIrMemory];
     [checkTestRelease setState:defaultCheckTestRelease?NSOnState:NSOffState];
     [dimInactiveSplitPanes setState:defaultDimInactiveSplitPanes?NSOnState:NSOffState];
     [animateDimming setState:defaultAnimateDimming?NSOnState:NSOffState];

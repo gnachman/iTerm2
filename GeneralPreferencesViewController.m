@@ -12,7 +12,8 @@
 #import "WindowArrangements.h"
 
 typedef enum {
-    kPreferenceInfoTypeCheckbox
+    kPreferenceInfoTypeCheckbox,
+    kPreferenceInfoTypeIntegerTextField
 } PreferenceInfoType;
 
 @interface PreferenceInfo : NSObject
@@ -71,6 +72,9 @@ typedef enum {
     // Warn when quitting
     IBOutlet id _promptOnQuit;
 
+    // Instant replay memory usage.
+    IBOutlet NSTextField *_irMemory;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -118,6 +122,10 @@ typedef enum {
                            key:kPreferenceKeyPromptOnQuit
                           type:kPreferenceInfoTypeCheckbox];
 
+    info = [self defineControl:_irMemory
+                           key:kPreferenceKeyInstantReplayMemoryMegabytes
+                          type:kPreferenceInfoTypeIntegerTextField];
+
     info.shouldBeEnabled = ^BOOL() { return [WindowArrangements count] > 0; };
     
 }
@@ -128,6 +136,13 @@ typedef enum {
             assert([info.control isKindOfClass:[NSButton class]]);
             NSButton *button = (NSButton *)info.control;
             button.state = [iTermPreferences boolForKey:info.key] ? NSOnState : NSOffState;
+            break;
+        }
+            
+        case kPreferenceInfoTypeIntegerTextField: {
+            assert([info.control isKindOfClass:[NSTextField class]]);
+            NSTextField *field = (NSTextField *)info.control;
+            field.intValue = [iTermPreferences intForKey:info.key];
             break;
         }
             
@@ -168,6 +183,10 @@ typedef enum {
             [iTermPreferences setBool:([sender state] == NSOnState) forKey:info.key];
             break;
             
+        case kPreferenceInfoTypeIntegerTextField:
+            [iTermPreferences setInt:[sender intValue] forKey:info.key];
+            break;
+
         default:
             assert(false);
     }

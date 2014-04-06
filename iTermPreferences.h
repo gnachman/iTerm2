@@ -13,11 +13,15 @@ extern NSString *const kPreferenceKeyOpenArrangementAtStartup;
 extern NSString *const kPreferenceKeyQuitWhenAllWindowsClosed;
 extern NSString *const kPreferenceKeyConfirmClosingMultipleTabs;
 extern NSString *const kPreferenceKeyPromptOnQuit;
+extern NSString *const kPreferenceKeyInstantReplayMemoryMegabytes;
 
 @interface iTermPreferences : NSObject
 
 + (BOOL)boolForKey:(NSString *)key;
 + (void)setBool:(BOOL)value forKey:(NSString *)key;
+
++ (int)intForKey:(NSString *)key;
++ (void)setInt:(int)value forKey:(NSString *)key;
 
 // This is used for ensuring that all controls have default values.
 + (BOOL)keyHasDefaultValue:(NSString *)key;

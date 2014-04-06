@@ -161,7 +161,6 @@
                 <outlet property="idleCode" destination="5698" id="5718"/>
                 <outlet property="initialText" destination="5410" id="5414"/>
                 <outlet property="initialTextLabel" destination="5408" id="5415"/>
-                <outlet property="irMemory" destination="5055" id="5086"/>
                 <outlet property="jobName" destination="4530" id="4616"/>
                 <outlet property="jobsTable_" destination="5661" id="5719"/>
                 <outlet property="keyCombinationColumn" destination="2464" id="3190"/>
@@ -903,7 +902,7 @@ Gw
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="5069"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="CpN-rd-m6D"/>
                                                 <outlet property="nextKeyView" destination="5056" id="5188"/>
                                             </connections>
                                         </textField>
@@ -5953,6 +5952,7 @@ DQ
         <customObject id="9Se-ld-UJa" customClass="GeneralPreferencesViewController">
             <connections>
                 <outlet property="_confirmClosingMultipleSessions" destination="1996" id="1wi-R8-LGb"/>
+                <outlet property="_irMemory" destination="5055" id="dYT-8S-UeF"/>
                 <outlet property="_openArrangementAtStartup" destination="3590" id="hIR-Ca-buG"/>
                 <outlet property="_openBookmark" destination="1959" id="PNp-By-R5Y"/>
                 <outlet property="_promptOnQuit" destination="4757" id="apf-8s-46r"/>

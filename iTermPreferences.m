@@ -22,6 +22,7 @@ NSString *const kPreferenceKeyOpenArrangementAtStartup = @"OpenArrangementAtStar
 NSString *const kPreferenceKeyQuitWhenAllWindowsClosed = @"QuitWhenAllWindowsClosed";
 NSString *const kPreferenceKeyConfirmClosingMultipleTabs = @"OnlyWhenMoreTabs";  // The key predates split panes
 NSString *const kPreferenceKeyPromptOnQuit = @"PromptOnQuit";
+NSString *const kPreferenceKeyInstantReplayMemoryMegabytes = @"IRMemory";
 
 @implementation iTermPreferences
 
@@ -34,7 +35,8 @@ NSString *const kPreferenceKeyPromptOnQuit = @"PromptOnQuit";
                   kPreferenceKeyOpenArrangementAtStartup: @NO,
                   kPreferenceKeyQuitWhenAllWindowsClosed: @NO,
                   kPreferenceKeyConfirmClosingMultipleTabs: @YES,
-                  kPreferenceKeyPromptOnQuit: @YES };
+                  kPreferenceKeyPromptOnQuit: @YES,
+                  kPreferenceKeyInstantReplayMemoryMegabytes: @4 };
         [dict retain];
     }
     return dict;
@@ -67,6 +69,17 @@ NSString *const kPreferenceKeyPromptOnQuit = @"PromptOnQuit";
     }
 }
 
++ (id)objectForKey:(NSString *)key {
+    id object = [self computedObjectForKey:key];
+    if (!object) {
+        object = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+    }
+    if (!object) {
+        object = [self defaultObjectForKey:key];
+    }
+    return object;
+}
+
 #pragma mark - APIs
 
 + (BOOL)keyHasDefaultValue:(NSString *)key {
@@ -74,19 +87,19 @@ NSString *const kPreferenceKeyPromptOnQuit = @"PromptOnQuit";
 }
 
 + (BOOL)boolForKey:(NSString *)key {
-    NSNumber *object;
-    object = [self computedObjectForKey:key];
-    if (!object) {
-        object = [[NSUserDefaults standardUserDefaults] objectForKey:key];
-    }
-    if (!object) {
-        object = [self defaultObjectForKey:key];
-    }
-    return [object boolValue];
+    return [[self objectForKey:key] boolValue];
 }
 
 + (void)setBool:(BOOL)value forKey:(NSString *)key {
     [[NSUserDefaults standardUserDefaults] setBool:value forKey:key];
+}
+
++ (int)intForKey:(NSString *)key {
+    return [[self objectForKey:key] intValue];
+}
+
++ (void)setInt:(int)value forKey:(NSString *)key {
+    [[NSUserDefaults standardUserDefaults] setInteger:value forKey:key];
 }
 
 #pragma mark - Value Computation Methods
