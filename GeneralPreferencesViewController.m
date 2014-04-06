@@ -103,6 +103,9 @@ typedef enum {
     IBOutlet NSButton *_browseCustomFolder;  // Push button to open file browser
     IBOutlet NSButton *_pushToCustomFolder;  // Push button to copy local to remote
 
+    // Copy to clipboard on selection
+    IBOutlet NSButton *_selectionCopiesText;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -177,6 +180,7 @@ typedef enum {
                     key:kPreferenceKeyCheckForTestReleases
                    type:kPreferenceInfoTypeCheckbox];
     
+    // ---------------------------------------------------------------------------------------------
     info = [self defineControl:_loadPrefsFromCustomFolder
                            key:kPreferenceKeyLoadPrefsFromCustomFolder
                           type:kPreferenceInfoTypeCheckbox];
@@ -186,6 +190,7 @@ typedef enum {
     [self updateEnabledStateForCustomFolderButtons];
 
     
+    // ---------------------------------------------------------------------------------------------
     info = [self defineControl:_prefsCustomFolder
                            key:kPreferenceKeyCustomFolder
                           type:kPreferenceInfoTypeStringTextField];
@@ -197,6 +202,11 @@ typedef enum {
         [self updatePrefsDirWarning];
     };
     [self updatePrefsDirWarning];
+    
+    // ---------------------------------------------------------------------------------------------
+    [self defineControl:_selectionCopiesText
+                    key:kPreferenceKeySelectionCopiesText
+                   type:kPreferenceInfoTypeCheckbox];
 }
 
 - (void)updateValueForInfo:(PreferenceInfo *)info {

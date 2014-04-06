@@ -21,6 +21,7 @@ extern NSString *const kPreferenceKeyCheckForUpdatesAutomatically;
 extern NSString *const kPreferenceKeyCheckForTestReleases;
 extern NSString *const kPreferenceKeyLoadPrefsFromCustomFolder;
 extern NSString *const kPreferenceKeyCustomFolder;  // Path/URL to location with prefs. Path may have ~ in it.
+extern NSString *const kPreferenceKeySelectionCopiesText;
 
 @interface iTermPreferences : NSObject
 

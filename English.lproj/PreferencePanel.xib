@@ -201,7 +201,6 @@
                 <outlet property="scrollbackWithStatusBar" destination="5154" id="5157"/>
                 <outlet property="selectedTextColor" destination="2277" id="3121"/>
                 <outlet property="selectionColor" destination="2282" id="3122"/>
-                <outlet property="selectionCopiesText" destination="1988" id="2802"/>
                 <outlet property="sendCodeWhenIdle" destination="5697" id="5717"/>
                 <outlet property="setLocaleVars" destination="6045" id="6047"/>
                 <outlet property="setProfileBookmarkListView" destination="5766" id="5767"/>
@@ -659,7 +658,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="2831"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="t0W-Hn-05Q"/>
                                                 <outlet property="nextKeyView" destination="5747" id="5752"/>
                                             </connections>
                                         </button>
@@ -5956,6 +5955,7 @@ DQ
                 <outlet property="_pushToCustomFolder" destination="5620" id="o2m-78-Wc6"/>
                 <outlet property="_quitWhenAllWindowsClosed" destination="1950" id="g5I-3X-QQe"/>
                 <outlet property="_savePasteHistory" destination="5056" id="BPO-mF-vKm"/>
+                <outlet property="_selectionCopiesText" destination="1988" id="V7j-Ak-mbO"/>
             </connections>
         </customObject>
     </objects>

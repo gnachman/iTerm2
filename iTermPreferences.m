@@ -29,6 +29,7 @@ NSString *const kPreferenceKeyCheckForUpdatesAutomatically = @"SUEnableAutomatic
 NSString *const kPreferenceKeyCheckForTestReleases = @"CheckTestRelease";
 NSString *const kPreferenceKeyLoadPrefsFromCustomFolder = @"LoadPrefsFromCustomFolder";
 NSString *const kPreferenceKeyCustomFolder = @"PrefsCustomFolder";
+NSString *const kPreferenceKeySelectionCopiesText = @"CopySelection";
 
 static NSMutableDictionary *gObservers;
 
@@ -50,7 +51,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyCheckForUpdatesAutomatically: @YES,
                   kPreferenceKeyCheckForTestReleases: @YES,
                   kPreferenceKeyLoadPrefsFromCustomFolder: @NO,
-                  kPreferenceKeyCustomFolder: [NSNull null] };
+                  kPreferenceKeyCustomFolder: [NSNull null],
+                  kPreferenceKeySelectionCopiesText: @YES };
         [dict retain];
     }
     return dict;

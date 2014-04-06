@@ -95,10 +95,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     IBOutlet NSButton *allowClipboardAccessFromTerminal;
     BOOL defaultAllowClipboardAccess;
     
-    // Copy to clipboard on selection
-    IBOutlet NSButton *selectionCopiesText;
-    BOOL defaultCopySelection;
-    
     // Copy includes trailing newline
     IBOutlet NSButton *copyLastNewline;
     BOOL defaultCopyLastNewline;
@@ -960,7 +956,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         }
         defaultFsTabDelay = [fsTabDelay floatValue];
         defaultAllowClipboardAccess = ([allowClipboardAccessFromTerminal state]==NSOnState);
-        defaultCopySelection = ([selectionCopiesText state]==NSOnState);
         defaultCopyLastNewline = ([copyLastNewline state] == NSOnState);
         defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
         defaultFocusFollowsMouse = ([focusFollowsMouse state] == NSOnState);
@@ -2585,7 +2580,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         defaultTabViewType = 0;
     }
     defaultAllowClipboardAccess=[prefs objectForKey:@"AllowClipboardAccess"]?[[prefs objectForKey:@"AllowClipboardAccess"] boolValue]:NO;
-    defaultCopySelection=[prefs objectForKey:@"CopySelection"]?[[prefs objectForKey:@"CopySelection"] boolValue]:YES;
     defaultCopyLastNewline = [prefs objectForKey:@"CopyLastNewline"] ? [[prefs objectForKey:@"CopyLastNewline"] boolValue] : NO;
     defaultPasteFromClipboard=[prefs objectForKey:@"PasteFromClipboard"]?[[prefs objectForKey:@"PasteFromClipboard"] boolValue]:YES;
     defaultThreeFingerEmulatesMiddle=[prefs objectForKey:@"ThreeFingerEmulates"]?[[prefs objectForKey:@"ThreeFingerEmulates"] boolValue]:NO;
@@ -2692,7 +2686,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     }
 
     [prefs setBool:defaultAllowClipboardAccess forKey:@"AllowClipboardAccess"];
-    [prefs setBool:defaultCopySelection forKey:@"CopySelection"];
     [prefs setBool:defaultCopyLastNewline forKey:@"CopyLastNewline"];
     [prefs setBool:defaultPasteFromClipboard forKey:@"PasteFromClipboard"];
     [prefs setBool:defaultThreeFingerEmulatesMiddle forKey:@"ThreeFingerEmulates"];
@@ -3156,17 +3149,12 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (BOOL)copySelection
 {
-    return defaultCopySelection;
+    return [iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText];
 }
 
 - (BOOL)copyLastNewline
 {
     return defaultCopyLastNewline;
-}
-
-- (void) setCopySelection:(BOOL)flag
-{
-    defaultCopySelection = flag;
 }
 
 - (BOOL)legacyPasteFromClipboard
@@ -3737,7 +3725,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [autoHideTmuxClientSession setState:defaultAutoHideTmuxClientSession?NSOnState:NSOffState];
     [tabPosition selectItemAtIndex: defaultTabViewType];
     [allowClipboardAccessFromTerminal setState:defaultAllowClipboardAccess?NSOnState:NSOffState];
-    [selectionCopiesText setState:defaultCopySelection?NSOnState:NSOffState];
     [copyLastNewline setState:defaultCopyLastNewline ? NSOnState : NSOffState];
     [middleButtonPastesFromClipboard setState:defaultPasteFromClipboard?NSOnState:NSOffState];
     [threeFingerEmulatesMiddle setState:defaultThreeFingerEmulatesMiddle ? NSOnState : NSOffState];
