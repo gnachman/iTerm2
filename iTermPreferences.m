@@ -31,6 +31,7 @@ NSString *const kPreferenceKeyLoadPrefsFromCustomFolder = @"LoadPrefsFromCustomF
 NSString *const kPreferenceKeyCustomFolder = @"PrefsCustomFolder";
 NSString *const kPreferenceKeySelectionCopiesText = @"CopySelection";
 NSString *const kPreferenceKeyCopyLastNewline = @"CopyLastNewline";
+NSString *const kPreferenceKeyAllowClipboardAccessFromTerminal = @"AllowClipboardAccess";
 
 static NSMutableDictionary *gObservers;
 
@@ -54,7 +55,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyLoadPrefsFromCustomFolder: @NO,
                   kPreferenceKeyCustomFolder: [NSNull null],
                   kPreferenceKeySelectionCopiesText: @YES,
-                  kPreferenceKeyCopyLastNewline: @NO };
+                  kPreferenceKeyCopyLastNewline: @NO,
+                  kPreferenceKeyAllowClipboardAccessFromTerminal: @NO };
         [dict retain];
     }
     return dict;

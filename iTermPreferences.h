@@ -23,6 +23,7 @@ extern NSString *const kPreferenceKeyLoadPrefsFromCustomFolder;
 extern NSString *const kPreferenceKeyCustomFolder;  // Path/URL to location with prefs. Path may have ~ in it.
 extern NSString *const kPreferenceKeySelectionCopiesText;
 extern NSString *const kPreferenceKeyCopyLastNewline;
+extern NSString *const kPreferenceKeyAllowClipboardAccessFromTerminal;
 
 @interface iTermPreferences : NSObject
 

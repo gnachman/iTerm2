@@ -109,6 +109,9 @@ typedef enum {
     // Copy includes trailing newline
     IBOutlet NSButton *_copyLastNewline;
 
+    // Allow clipboard access by terminal applications
+    IBOutlet NSButton *_allowClipboardAccessFromTerminal;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -213,6 +216,10 @@ typedef enum {
     
     [self defineControl:_copyLastNewline
                     key:kPreferenceKeyCopyLastNewline
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_allowClipboardAccessFromTerminal
+                    key:kPreferenceKeyAllowClipboardAccessFromTerminal
                    type:kPreferenceInfoTypeCheckbox];
 }
 

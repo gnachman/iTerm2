@@ -91,10 +91,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     
     IBOutlet NSTextField* tagFilter;
     
-    // Allow clipboard access by terminal applications
-    IBOutlet NSButton *allowClipboardAccessFromTerminal;
-    BOOL defaultAllowClipboardAccess;
-    
     // Middle button paste from clipboard
     IBOutlet NSButton *middleButtonPastesFromClipboard;
     BOOL defaultPasteFromClipboard;
@@ -951,7 +947,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                             kHotkeyWindowGeneratedProfileNameKey);
         }
         defaultFsTabDelay = [fsTabDelay floatValue];
-        defaultAllowClipboardAccess = ([allowClipboardAccessFromTerminal state]==NSOnState);
         defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
         defaultFocusFollowsMouse = ([focusFollowsMouse state] == NSOnState);
         defaultTripleClickSelectsFullLines = ([tripleClickSelectsFullLines state] == NSOnState);
@@ -2574,7 +2569,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     if (defaultTabViewType > 1) {
         defaultTabViewType = 0;
     }
-    defaultAllowClipboardAccess=[prefs objectForKey:@"AllowClipboardAccess"]?[[prefs objectForKey:@"AllowClipboardAccess"] boolValue]:NO;
     defaultPasteFromClipboard=[prefs objectForKey:@"PasteFromClipboard"]?[[prefs objectForKey:@"PasteFromClipboard"] boolValue]:YES;
     defaultThreeFingerEmulatesMiddle=[prefs objectForKey:@"ThreeFingerEmulates"]?[[prefs objectForKey:@"ThreeFingerEmulates"] boolValue]:NO;
     defaultHideTab=[prefs objectForKey:@"HideTab"]?[[prefs objectForKey:@"HideTab"] boolValue]: YES;
@@ -2679,7 +2673,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         return;
     }
 
-    [prefs setBool:defaultAllowClipboardAccess forKey:@"AllowClipboardAccess"];
     [prefs setBool:defaultPasteFromClipboard forKey:@"PasteFromClipboard"];
     [prefs setBool:defaultThreeFingerEmulatesMiddle forKey:@"ThreeFingerEmulates"];
     [prefs setBool:defaultHideTab forKey:@"HideTab"];
@@ -3132,12 +3125,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (BOOL)allowClipboardAccess
 {
-    return defaultAllowClipboardAccess;
-}
-
-- (void) setAllowClipboardAccess:(BOOL)flag
-{
-    defaultAllowClipboardAccess = flag;
+    return [iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal];
 }
 
 - (BOOL)copySelection
@@ -3716,7 +3704,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [openTmuxWindows selectItemAtIndex: defaultOpenTmuxWindowsIn];
     [autoHideTmuxClientSession setState:defaultAutoHideTmuxClientSession?NSOnState:NSOffState];
     [tabPosition selectItemAtIndex: defaultTabViewType];
-    [allowClipboardAccessFromTerminal setState:defaultAllowClipboardAccess?NSOnState:NSOffState];
     [middleButtonPastesFromClipboard setState:defaultPasteFromClipboard?NSOnState:NSOffState];
     [threeFingerEmulatesMiddle setState:defaultThreeFingerEmulatesMiddle ? NSOnState : NSOffState];
     [hideTab setState:defaultHideTab?NSOnState:NSOffState];
