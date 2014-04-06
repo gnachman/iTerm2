@@ -12,6 +12,7 @@
 
 - (IBAction)settingChanged:(id)sender;
 
+// Enable or disable controls as needed.
 - (void)updateEnabledState;
 
 @end
