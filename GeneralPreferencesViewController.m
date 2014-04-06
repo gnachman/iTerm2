@@ -68,6 +68,9 @@ typedef enum {
     // Confirm closing multiple sessions
     IBOutlet id _confirmClosingMultipleSessions;
 
+    // Warn when quitting
+    IBOutlet id _promptOnQuit;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -111,6 +114,10 @@ typedef enum {
                            key:kPreferenceKeyConfirmClosingMultipleTabs
                           type:kPreferenceInfoTypeCheckbox];
     
+    info = [self defineControl:_promptOnQuit
+                           key:kPreferenceKeyPromptOnQuit
+                          type:kPreferenceInfoTypeCheckbox];
+
     info.shouldBeEnabled = ^BOOL() { return [WindowArrangements count] > 0; };
     
 }

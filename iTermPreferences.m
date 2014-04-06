@@ -21,6 +21,7 @@ NSString *const kPreferenceKeyOpenBookmark = @"OpenBookmark";
 NSString *const kPreferenceKeyOpenArrangementAtStartup = @"OpenArrangementAtStartup";
 NSString *const kPreferenceKeyQuitWhenAllWindowsClosed = @"QuitWhenAllWindowsClosed";
 NSString *const kPreferenceKeyConfirmClosingMultipleTabs = @"OnlyWhenMoreTabs";  // The key predates split panes
+NSString *const kPreferenceKeyPromptOnQuit = @"PromptOnQuit";
 
 @implementation iTermPreferences
 
@@ -32,7 +33,8 @@ NSString *const kPreferenceKeyConfirmClosingMultipleTabs = @"OnlyWhenMoreTabs"; 
         dict = @{ kPreferenceKeyOpenBookmark: @NO,
                   kPreferenceKeyOpenArrangementAtStartup: @NO,
                   kPreferenceKeyQuitWhenAllWindowsClosed: @NO,
-                  kPreferenceKeyConfirmClosingMultipleTabs: @YES };
+                  kPreferenceKeyConfirmClosingMultipleTabs: @YES,
+                  kPreferenceKeyPromptOnQuit: @YES };
         [dict retain];
     }
     return dict;

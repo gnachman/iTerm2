@@ -115,10 +115,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     IBOutlet id hideTab;
     BOOL defaultHideTab;
     
-    // Warn when quitting
-    IBOutlet id promptOnQuit;
-    BOOL defaultPromptOnQuit;
-    
     // Focus follows mouse
     IBOutlet NSButton *focusFollowsMouse;
     BOOL defaultFocusFollowsMouse;
@@ -1034,7 +1030,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         defaultCopySelection = ([selectionCopiesText state]==NSOnState);
         defaultCopyLastNewline = ([copyLastNewline state] == NSOnState);
         defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
-        defaultPromptOnQuit = ([promptOnQuit state] == NSOnState);
         defaultFocusFollowsMouse = ([focusFollowsMouse state] == NSOnState);
         defaultTripleClickSelectsFullLines = ([tripleClickSelectsFullLines state] == NSOnState);
         defaultHotkeyTogglesWindow = ([hotkeyTogglesWindow state] == NSOnState);
@@ -2737,7 +2732,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultPasteFromClipboard=[prefs objectForKey:@"PasteFromClipboard"]?[[prefs objectForKey:@"PasteFromClipboard"] boolValue]:YES;
     defaultThreeFingerEmulatesMiddle=[prefs objectForKey:@"ThreeFingerEmulates"]?[[prefs objectForKey:@"ThreeFingerEmulates"] boolValue]:NO;
     defaultHideTab=[prefs objectForKey:@"HideTab"]?[[prefs objectForKey:@"HideTab"] boolValue]: YES;
-    defaultPromptOnQuit = [prefs objectForKey:@"PromptOnQuit"]?[[prefs objectForKey:@"PromptOnQuit"] boolValue]: YES;
     defaultFocusFollowsMouse = [prefs objectForKey:@"FocusFollowsMouse"]?[[prefs objectForKey:@"FocusFollowsMouse"] boolValue]: NO;
     defaultTripleClickSelectsFullLines = [prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] ? [[prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] boolValue] : NO;
     defaultHotkeyTogglesWindow = [prefs objectForKey:@"HotKeyTogglesWindow"]?[[prefs objectForKey:@"HotKeyTogglesWindow"] boolValue]: NO;
@@ -2859,7 +2853,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         [prefs setInteger:defaultOpenTmuxWindowsIn forKey:@"OpenTmuxWindowsIn"];
     [prefs setBool:defaultAutoHideTmuxClientSession forKey:@"AutoHideTmuxClientSession"];
     [prefs setInteger:defaultTabViewType forKey:@"TabViewType"];
-    [prefs setBool:defaultPromptOnQuit forKey:@"PromptOnQuit"];
     [prefs setBool:defaultFocusFollowsMouse forKey:@"FocusFollowsMouse"];
     [prefs setBool:defaultTripleClickSelectsFullLines forKey:@"TripleClickSelectsFullWrappedLines"];
     [prefs setBool:defaultHotkeyTogglesWindow forKey:@"HotKeyTogglesWindow"];
@@ -3395,7 +3388,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (BOOL)promptOnQuit
 {
-    return defaultPromptOnQuit;
+    return [iTermPreferences boolForKey:kPreferenceKeyPromptOnQuit];
 }
 
 - (BOOL)onlyWhenMoreTabs
@@ -3906,7 +3899,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [middleButtonPastesFromClipboard setState:defaultPasteFromClipboard?NSOnState:NSOffState];
     [threeFingerEmulatesMiddle setState:defaultThreeFingerEmulatesMiddle ? NSOnState : NSOffState];
     [hideTab setState:defaultHideTab?NSOnState:NSOffState];
-    [promptOnQuit setState:defaultPromptOnQuit?NSOnState:NSOffState];
     [focusFollowsMouse setState: defaultFocusFollowsMouse?NSOnState:NSOffState];
     [tripleClickSelectsFullLines setState:defaultTripleClickSelectsFullLines?NSOnState:NSOffState];
     [hotkeyTogglesWindow setState: defaultHotkeyTogglesWindow?NSOnState:NSOffState];
