@@ -12,4 +12,6 @@
 
 - (IBAction)settingChanged:(id)sender;
 
+- (void)updateEnabledState;
+
 @end

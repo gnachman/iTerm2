@@ -7,6 +7,7 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="PreferencePanel">
             <connections>
+                <outlet property="_generalPreferencesViewController" destination="9Se-ld-UJa" id="ebT-z7-cAn"/>
                 <outlet property="action" destination="2661" id="3200"/>
                 <outlet property="actionColumn" destination="2465" id="3191"/>
                 <outlet property="addBookmarkButton" destination="2111" id="3320"/>
@@ -184,7 +185,6 @@
                 <outlet property="nonasciiAntiAliased" destination="4783" id="4878"/>
                 <outlet property="normalFontField" destination="4775" id="4870"/>
                 <outlet property="onlyWhenMoreTabs" destination="1996" id="2806"/>
-                <outlet property="openArrangementAtStartup" destination="3590" id="3593"/>
                 <outlet property="openTmuxWindows" destination="6337" id="6349"/>
                 <outlet property="optionClickMovesCursor" destination="6407" id="6415"/>
                 <outlet property="optionKeySends" destination="4291" id="4307"/>
@@ -752,7 +752,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="3592"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="CBc-HZ-qZi"/>
                                                 <outlet property="nextKeyView" destination="1950" id="5180"/>
                                             </connections>
                                         </button>
@@ -5955,6 +5955,7 @@ DQ
         </customObject>
         <customObject id="9Se-ld-UJa" customClass="GeneralPreferencesViewController">
             <connections>
+                <outlet property="_openArrangementAtStartup" destination="3590" id="hIR-Ca-buG"/>
                 <outlet property="_openBookmark" destination="1959" id="PNp-By-R5Y"/>
             </connections>
         </customObject>

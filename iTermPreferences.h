@@ -8,11 +8,15 @@
 
 #import <Foundation/Foundation.h>
 
-NSString *const kPreferenceKeyOpenBookmark;
+extern NSString *const kPreferenceKeyOpenBookmark;
+extern NSString *const kPreferenceKeyOpenArrangementAtStartup;
 
 @interface iTermPreferences : NSObject
 
 + (BOOL)boolForKey:(NSString *)key;
 + (void)setBool:(BOOL)value forKey:(NSString *)key;
+
+// This is used for ensuring that all controls have default values.
++ (BOOL)keyHasDefaultValue:(NSString *)key;
 
 @end

@@ -59,6 +59,7 @@ static NSString *ITERM2_FLAG = @"~/Library/Application Support/iTerm/version.txt
 static NSString *ITERM2_QUIET = @"~/Library/Application Support/iTerm/quiet";
 static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern indicator";
 NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPatternIndicatorChangedNotification";
+NSString *const kSavedArrangementDidChangeNotification = @"kSavedArrangementDidChangeNotification";
 
 // There was an older userdefaults key "Multi-Line Paste Warning" that had the opposite semantics.
 // This was changed for compatibility with the iTermWarning mechanism.
@@ -544,7 +545,7 @@ static BOOL hasBecomeActive = NO;
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowArrangementsDidChange:)
-                                                     name:@"iTermSavedArrangementChanged"
+                                                     name:kSavedArrangementDidChangeNotification
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(toolDidToggle:)

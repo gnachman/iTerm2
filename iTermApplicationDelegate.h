@@ -34,6 +34,7 @@
 @class PseudoTerminal;
 extern NSString *kUseBackgroundPatternIndicatorChangedNotification;
 extern NSString *const kMultiLinePasteWarningUserDefaultsKey;
+extern NSString *const kSavedArrangementDidChangeNotification;
 
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 

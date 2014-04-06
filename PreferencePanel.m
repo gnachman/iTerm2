@@ -26,6 +26,7 @@
 
 #import "PreferencePanel.h"
 
+#import "GeneralPreferencesViewController.h"
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermController.h"
@@ -65,6 +66,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     IBOutlet TriggerController *triggerWindowController_;
     IBOutlet SmartSelectionController *smartSelectionWindowController_;
     IBOutlet TrouterPrefsController *trouterPrefController_;
+    IBOutlet GeneralPreferencesViewController *_generalPreferencesViewController;
     
     // This is actually the tab style. It takes one of these values:
     // 0: Metal
@@ -304,10 +306,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     // Save copy paste history
     IBOutlet NSButton *savePasteHistory;
     BOOL defaultSavePasteHistory;
-    
-    // Open saved window arrangement at startup
-    IBOutlet NSButton *openArrangementAtStartup;
-    BOOL defaultOpenArrangementAtStartup;
     
     // prompt for test-release updates
     IBOutlet NSButton *checkTestRelease;
@@ -658,11 +656,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
                                                    object:nil];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(_savedArrangementChanged:)
-                                                     name:@"iTermSavedArrangementChanged"
-                                                   object:nil];
-
-        [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(keyBindingsChanged)
                                                      name:@"iTermKeyBindingsChanged"
                                                    object:nil];
@@ -853,15 +846,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 {
     // TODO: maybe something here for the current bookmark?
     [self _populateHotKeyBookmarksMenu];
-}
-
-- (void)_savedArrangementChanged:(id)sender
-{
-    [openArrangementAtStartup setState:defaultOpenArrangementAtStartup ? NSOnState : NSOffState];
-    [openArrangementAtStartup setEnabled:[WindowArrangements count] > 0];
-    if ([WindowArrangements count] == 0) {
-        [openArrangementAtStartup setState:NO];
-    }
 }
 
 - (void)keyBindingsChanged
@@ -1103,7 +1087,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         if (!defaultSavePasteHistory) {
             [[PasteboardHistory sharedInstance] eraseHistory];
         }
-        defaultOpenArrangementAtStartup = ([openArrangementAtStartup state] == NSOnState);
 
         defaultIrMemory = [irMemory intValue];
         BOOL oldDefaultHotkey = defaultHotkey;
@@ -2801,11 +2784,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
     defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
     defaultSavePasteHistory = [prefs objectForKey:@"SavePasteHistory"]?[[prefs objectForKey:@"SavePasteHistory"] boolValue]: NO;
-    if ([WindowArrangements count] > 0) {
-        defaultOpenArrangementAtStartup = [prefs objectForKey:@"OpenArrangementAtStartup"]?[[prefs objectForKey:@"OpenArrangementAtStartup"] boolValue]: NO;
-    } else {
-        defaultOpenArrangementAtStartup = NO;
-    }
     defaultIrMemory = [prefs objectForKey:@"IRMemory"]?[[prefs objectForKey:@"IRMemory"] intValue] : 4;
     defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
     defaultDimInactiveSplitPanes = [prefs objectForKey:@"DimInactiveSplitPanes"]?[[prefs objectForKey:@"DimInactiveSplitPanes"] boolValue]: YES;
@@ -2930,7 +2908,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
     [prefs setInteger:defaultHotkeyModifiers forKey:@"HotkeyModifiers"];
     [prefs setBool:defaultSavePasteHistory forKey:@"SavePasteHistory"];
-    [prefs setBool:defaultOpenArrangementAtStartup forKey:@"OpenArrangementAtStartup"];
     [prefs setInteger:defaultIrMemory forKey:@"IRMemory"];
     [prefs setBool:defaultCheckTestRelease forKey:@"CheckTestRelease"];
     [prefs setBool:defaultDimInactiveSplitPanes forKey:@"DimInactiveSplitPanes"];
@@ -3627,7 +3604,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (BOOL)openArrangementAtStartup
 {
-    return defaultOpenArrangementAtStartup;
+    return [iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup];
 }
 
 - (int)irMemory
@@ -3931,7 +3908,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [[self window] setDelegate: self]; // also forces window to load
 
     [wordChars setDelegate: self];
-
+    [_generalPreferencesViewController updateEnabledState];
+    
     [windowStyle selectItemAtIndex: defaultWindowStyle];
     [openTmuxWindows selectItemAtIndex: defaultOpenTmuxWindowsIn];
     [autoHideTmuxClientSession setState:defaultAutoHideTmuxClientSession?NSOnState:NSOffState];
@@ -3974,11 +3952,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [jobName setState: defaultJobName?NSOnState:NSOffState];
     [showBookmarkName setState: defaultShowBookmarkName?NSOnState:NSOffState];
     [savePasteHistory setState: defaultSavePasteHistory?NSOnState:NSOffState];
-    [openArrangementAtStartup setState:defaultOpenArrangementAtStartup ? NSOnState : NSOffState];
-    [openArrangementAtStartup setEnabled:[WindowArrangements count] > 0];
-    if ([WindowArrangements count] == 0) {
-        [openArrangementAtStartup setState:NO];
-    }
     [hotkey setState: defaultHotkey?NSOnState:NSOffState];
     if (defaultHotkeyCode || defaultHotkeyChar) {
         [hotkeyField setStringValue:[iTermKeyBindingMgr formatKeyCombination:[NSString stringWithFormat:@"0x%x-0x%x", defaultHotkeyChar, defaultHotkeyModifiers]]];
