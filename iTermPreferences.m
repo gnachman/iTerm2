@@ -4,7 +4,13 @@
 //
 //  Created by George Nachman on 4/6/14.
 //
+// At a minimum, each preference must have:
+// - A key declared in the header and defined here
+// - A default value in +defaultValueMap
+// - A control defined in its view controller
 //
+// Optionally, it may have a function that computes its value (set in +computedObjectDictionary)
+// and the view controller may customize how its control's appearance changes dynamically.
 
 #import "iTermPreferences.h"
 #import "WindowArrangements.h"
@@ -14,6 +20,7 @@
 NSString *const kPreferenceKeyOpenBookmark = @"OpenBookmark";
 NSString *const kPreferenceKeyOpenArrangementAtStartup = @"OpenArrangementAtStartup";
 NSString *const kPreferenceKeyQuitWhenAllWindowsClosed = @"QuitWhenAllWindowsClosed";
+NSString *const kPreferenceKeyConfirmClosingMultipleTabs = @"OnlyWhenMoreTabs";  // The key predates split panes
 
 @implementation iTermPreferences
 
@@ -24,7 +31,8 @@ NSString *const kPreferenceKeyQuitWhenAllWindowsClosed = @"QuitWhenAllWindowsClo
     if (!dict) {
         dict = @{ kPreferenceKeyOpenBookmark: @NO,
                   kPreferenceKeyOpenArrangementAtStartup: @NO,
-                  kPreferenceKeyQuitWhenAllWindowsClosed: @NO };
+                  kPreferenceKeyQuitWhenAllWindowsClosed: @NO,
+                  kPreferenceKeyConfirmClosingMultipleTabs: @YES };
         [dict retain];
     }
     return dict;

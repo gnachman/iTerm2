@@ -184,7 +184,6 @@
                 <outlet property="nonAsciiFontView" destination="15P-ty-S1w" id="dru-RS-lgT"/>
                 <outlet property="nonasciiAntiAliased" destination="4783" id="4878"/>
                 <outlet property="normalFontField" destination="4775" id="4870"/>
-                <outlet property="onlyWhenMoreTabs" destination="1996" id="2806"/>
                 <outlet property="openTmuxWindows" destination="6337" id="6349"/>
                 <outlet property="optionClickMovesCursor" destination="6407" id="6415"/>
                 <outlet property="optionKeySends" destination="4291" id="4307"/>
@@ -717,7 +716,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="2826"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="rss-OX-QhV"/>
                                                 <outlet property="nextKeyView" destination="4757" id="5183"/>
                                             </connections>
                                         </button>
@@ -5954,6 +5953,7 @@ DQ
         </customObject>
         <customObject id="9Se-ld-UJa" customClass="GeneralPreferencesViewController">
             <connections>
+                <outlet property="_confirmClosingMultipleSessions" destination="1996" id="1wi-R8-LGb"/>
                 <outlet property="_openArrangementAtStartup" destination="3590" id="hIR-Ca-buG"/>
                 <outlet property="_openBookmark" destination="1959" id="PNp-By-R5Y"/>
                 <outlet property="_quitWhenAllWindowsClosed" destination="1950" id="g5I-3X-QQe"/>

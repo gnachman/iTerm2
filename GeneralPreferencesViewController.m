@@ -65,6 +65,9 @@ typedef enum {
     // Quit when all windows are closed
     IBOutlet NSButton *_quitWhenAllWindowsClosed;
 
+    // Confirm closing multiple sessions
+    IBOutlet id _confirmClosingMultipleSessions;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -104,6 +107,10 @@ typedef enum {
                            key:kPreferenceKeyQuitWhenAllWindowsClosed
                           type:kPreferenceInfoTypeCheckbox];
 
+    info = [self defineControl:_confirmClosingMultipleSessions
+                           key:kPreferenceKeyConfirmClosingMultipleTabs
+                          type:kPreferenceInfoTypeCheckbox];
+    
     info.shouldBeEnabled = ^BOOL() { return [WindowArrangements count] > 0; };
     
 }
