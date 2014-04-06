@@ -1137,6 +1137,10 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         }
     }
 
+    if (sender == hotkey || sender == hotkeyBookmark) {
+        [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
+    }
+
     // Keyboard tab
     BOOL wasAnyModifierRemapped = [self isAnyModifierRemapped];
     defaultControl = [controlButton selectedTag];

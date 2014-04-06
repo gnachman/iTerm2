@@ -78,10 +78,6 @@
 }
 
 - (void)encodeRestorableStateWithCoder:(NSCoder *)coder {
-    // This gives a warning, but this method won't be called except in 10.7 where this
-    // method does exist in our superclass. The only way to avoid the warning
-    // is to do some really gnarly stuff. See here for more:
-    // http://www.cocoabuilder.com/archive/cocoa/214903-using-performselector-on-super.html
     [super encodeRestorableStateWithCoder:coder];
     [coder encodeObject:restoreState_ forKey:@"ptyarrangement"];
 }

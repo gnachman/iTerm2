@@ -57,6 +57,10 @@ typedef void (^VoidBlock)(void);
     if (arrangement) {
         VoidBlock theBlock = ^{
             PseudoTerminal *term = [PseudoTerminal bareTerminalWithArrangement:arrangement];
+            if (!term) {
+                completionHandler(nil, nil);
+                return;
+            }
             // We have to set the frame for fullscreen windows because the OS tries
             // to move it up 22 pixels for no good reason. Fullscreen, top, and
             // bottom windows will also end up broken if the screen resolution

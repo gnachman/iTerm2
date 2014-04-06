@@ -33,6 +33,11 @@
   PTYWindowDelegateProtocol,
   WindowControllerInterface>
 
+// Up to one window may be the hotkey window, which is toggled with the system-wide
+// hotkey.
+@property(nonatomic, assign) BOOL isHotKeyWindow;
+
+
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
 // giving the screens' coordinates in the model.
@@ -40,11 +45,11 @@
                   screenFrames:(NSArray *)frames;
 
 // Returns a new terminal window restored from an arrangement, but with no
-// tabs/sessions.
+// tabs/sessions. May return nil.
 + (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary*)arrangement;
 
 // Returns a new terminal window restored from an arrangement, with
-// tabs/sessions also restored..
+// tabs/sessions also restored. May return nil.
 + (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement;
 
 // Initialize a new PseudoTerminal.
@@ -312,15 +317,14 @@
 // Returns the arrangement for this window.
 - (NSDictionary*)arrangement;
 
+// Returns the arrangement for this window, optionally excluding tmux tabs.
+- (NSDictionary *)arrangementExcludingTmuxTabs:(BOOL)excludeTmux;
+
 // Update a window's tmux layout, such as when fonts or scrollbar sizes change.
 - (void)refreshTmuxLayoutsAndWindow;
 
 // All tabs in this window.
 - (NSArray*)tabs;
-
-// Up to one window may be the hotkey window, which is toggled with the system-wide
-// hotkey.
-- (void)setIsHotKeyWindow:(BOOL)value;
 
 // Updates the window when screen parameters (number of screens, resolutions,
 // etc.) change.

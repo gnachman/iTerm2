@@ -15,6 +15,10 @@
 
 #define HKWLog DLog
 
+// Restorable arrangement for hotkey window, which doesn't go through the OS's normal window
+// restoration flow since it may be ordered out.
+NSString *const kUserDefaultsHotkeyWindowArrangement = @"NoSyncHotkeyWindowArrangement";
+
 @implementation HotkeyWindowController
 
 + (HotkeyWindowController *)sharedInstance {
@@ -64,12 +68,24 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     [[term window] makeFirstResponder:[[term currentSession] textview]];
 }
 
-static BOOL OpenHotkeyWindow()
-{
+- (Profile *)profile {
+    return [[PreferencePanel sharedInstance] hotkeyBookmark];
+}
+
+- (BOOL)openHotkeyWindow {
     HKWLog(@"Open hotkey window");
+    NSDictionary *arrangement = [self savedArrangement];
+    PseudoTerminal *term = nil;
+    if (arrangement) {
+        term = [PseudoTerminal terminalWithArrangement:arrangement];
+        if (term) {
+            [[iTermController sharedInstance] addInTerminals:term];
+        }
+    }
+    
     iTermController* cont = [iTermController sharedInstance];
-    Profile* bookmark = [[PreferencePanel sharedInstance] hotkeyBookmark];
-    if (bookmark) {
+    Profile* bookmark = [self profile];
+    if (!term && bookmark) {
         if ([[bookmark objectForKey:KEY_WINDOW_TYPE] intValue] == WINDOW_TYPE_LION_FULL_SCREEN) {
             // Lion fullscreen doesn't make sense with hotkey windows. Change
             // window type to traditional fullscreen.
@@ -83,7 +99,9 @@ static BOOL OpenHotkeyWindow()
                                            withURL:nil
                                           isHotkey:YES
                                            makeKey:YES];
-        PseudoTerminal* term = [[iTermController sharedInstance] terminalWithSession:session];
+        term = [[iTermController sharedInstance] terminalWithSession:session];
+    }
+    if (term) {
         [term setIsHotKeyWindow:YES];
 
         [[term window] setAlphaValue:0];
@@ -196,7 +214,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         RollInHotkeyTerm(hotkeyTerm);
     } else {
         HKWLog(@"Open new hotkey window window");
-        if (OpenHotkeyWindow()) {
+        if ([self openHotkeyWindow]) {
             rollingIn_ = YES;
         }
     }
@@ -636,5 +654,19 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     }
 }
 
+- (void)saveHotkeyWindowState {
+    PseudoTerminal *term = [self hotKeyWindow];
+    if (!term) {
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:kUserDefaultsHotkeyWindowArrangement];
+        return;
+    }
+    NSDictionary *arrangement = [term arrangementExcludingTmuxTabs:YES];
+    [[NSUserDefaults standardUserDefaults] setObject:arrangement
+                                              forKey:kUserDefaultsHotkeyWindowArrangement];
+}
+
+- (NSDictionary *)savedArrangement {
+    return [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsHotkeyWindowArrangement];
+}
 
 @end

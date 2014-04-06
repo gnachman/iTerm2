@@ -1,8 +1,9 @@
+#import "ProfileModel.h"
 #import <Cocoa/Cocoa.h>
 #import <Carbon/Carbon.h>
 
-@class PseudoTerminal;
 @class GTMCarbonHotKey;
+@class PseudoTerminal;
 
 @interface HotkeyWindowController : NSObject {
     // Set while window is appearing.
@@ -40,5 +41,11 @@
 - (BOOL)registerHotkey:(int)keyCode modifiers:(int)modifiers;
 - (void)beginRemappingModifiers;
 - (void)stopEventTap;
+
+// Returns the profile to be used for new hotkey windows, or nil if none defined.
+- (Profile *)profile;
+
+// Saves or deletes the hotkey window's state from user defaults.
+- (void)saveHotkeyWindowState;
 
 @end

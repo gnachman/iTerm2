@@ -888,7 +888,13 @@ typedef enum {
 {
     if ([[NSDate date] timeIntervalSinceDate:_creationDate] < 3) {
         NSString* theName = [_profile objectForKey:KEY_NAME];
-        NSString* theKey = [NSString stringWithFormat:@"NeverWarnAboutShortLivedSessions_%@", [_profile objectForKey:KEY_GUID]];
+        NSString *guid = _profile[KEY_GUID];
+        if (_originalProfile && [_originalProfile[KEY_GUID] length]) {
+            // Divorced sessions should use the original session's GUID to determine
+            // if a warning is appropriate.
+            guid = _originalProfile[KEY_GUID];
+        }
+        NSString* theKey = [NSString stringWithFormat:@"NeverWarnAboutShortLivedSessions_%@", guid];
         NSString *theTitle = [NSString stringWithFormat:
                               @"A session ended very soon after starting. Check that the command "
                               @"in profile \"%@\" is correct.",
@@ -2739,13 +2745,18 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues
 {
-    if (!_isDivorced) {
-        [self divorceAddressBookEntryFromPreferences];
-    }
     NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:_profile];
     for (NSString *key in newValues) {
         NSObject *value = newValues[key];
         temp[key] = value;
+    }
+    if ([temp isEqualToDictionary:_profile]) {
+        // This was a no-op, so there's no need to get a divorce. Happens most
+        // commonly when setting tab color after a split.
+        return;
+    }
+    if (!_isDivorced) {
+        [self divorceAddressBookEntryFromPreferences];
     }
     [[ProfileModel sessionsInstance] setBookmark:temp withGuid:temp[KEY_GUID]];
 

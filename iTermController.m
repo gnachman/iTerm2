@@ -175,7 +175,10 @@ static BOOL initDone = NO;
 
 - (void)dealloc
 {
-    // Close all terminal windows
+    // Save hotkey window arrangement to user defaults before closing it.
+    [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
+
+    // Close all terminal windows]
     while ([terminalWindows count] > 0) {
         [[terminalWindows objectAtIndex:0] close];
     }
@@ -394,7 +397,9 @@ static BOOL initDone = NO;
     if (terminalArrangements) {
         for (NSDictionary* terminalArrangement in terminalArrangements) {
             PseudoTerminal* term = [PseudoTerminal terminalWithArrangement:terminalArrangement];
-            [self addInTerminals:term];
+            if (term) {
+                [self addInTerminals:term];
+            }
         }
     }
 }
@@ -1285,7 +1290,6 @@ NSString *terminalsKey = @"terminals";
 - (BOOL)application:(NSApplication *)sender delegateHandlesKey:(NSString *)key
 {
     BOOL ret;
-    // NSLog(@"key = %@", key);
     ret = [key isEqualToString:@"terminals"] || [key isEqualToString:@"currentTerminal"];
     return (ret);
 }
@@ -1293,7 +1297,6 @@ NSString *terminalsKey = @"terminals";
 // accessors for to-many relationships:
 - (NSArray*)terminals
 {
-    // NSLog(@"iTerm: -terminals");
     return (terminalWindows);
 }
 
@@ -1306,7 +1309,6 @@ NSString *terminalsKey = @"terminals";
 // (See NSScriptKeyValueCoding.h)
 -(id)valueInTerminalsAtIndex:(unsigned)theIndex
 {
-    //NSLog(@"iTerm: valueInTerminalsAtIndex %d: %@", theIndex, [terminalWindows objectAtIndex: theIndex]);
     return ([terminalWindows objectAtIndex:theIndex]);
 }
 
@@ -1331,21 +1333,18 @@ NSString *terminalsKey = @"terminals";
 
 -(void)replaceInTerminals:(PseudoTerminal *)object atIndex:(unsigned)theIndex
 {
-    // NSLog(@"iTerm: replaceInTerminals 0x%x atIndex %d", object, theIndex);
     [terminalWindows replaceObjectAtIndex:theIndex withObject:object];
     [self updateWindowTitles];
 }
 
 - (void)addInTerminals:(PseudoTerminal*)object
 {
-    // NSLog(@"iTerm: addInTerminals 0x%x", object);
     [self insertInTerminals:object atIndex:[terminalWindows count]];
     [self updateWindowTitles];
 }
 
 - (void)insertInTerminals:(PseudoTerminal*)object
 {
-    // NSLog(@"iTerm: insertInTerminals 0x%x", object);
     [self insertInTerminals:object atIndex:[terminalWindows count]];
     [self updateWindowTitles];
 }
@@ -1358,12 +1357,10 @@ NSString *terminalsKey = @"terminals";
 
     [terminalWindows insertObject:object atIndex:theIndex];
     [self updateWindowTitles];
-//    assert([object isInitialized]);
 }
 
 - (void)removeFromTerminalsAtIndex:(unsigned)theIndex
 {
-    // NSLog(@"iTerm: removeFromTerminalsAtInde %d", theIndex);
     [terminalWindows removeObjectAtIndex:theIndex];
     [self updateWindowTitles];
 }

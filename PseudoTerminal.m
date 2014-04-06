@@ -76,6 +76,7 @@ static NSString* TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
 static NSString* TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING = @"Hide After Opening";
 static NSString* TERMINAL_ARRANGEMENT_DESIRED_COLUMNS = @"Desired Columns";
 static NSString* TERMINAL_ARRANGEMENT_DESIRED_ROWS = @"Desired Rows";
+static NSString* TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW = @"Is Hotkey Window";
 static NSString* TERMINAL_GUID = @"TerminalGuid";
 
 // In full screen, leave a bit of space at the top of the toolbar for aesthetics.
@@ -204,7 +205,6 @@ NSString *kSessionsKVCKey = @"sessions";
     int windowType_;
     // Window type before entering fullscreen. Only relevant if in/entering fullscreen.
     int savedWindowType_;
-    BOOL isHotKeyWindow_;
     BOOL haveScreenPreference_;
     int screenNumber_;
 
@@ -1543,6 +1543,19 @@ NSString *kSessionsKVCKey = @"sessions";
 
 + (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary*)arrangement
 {
+    BOOL isHotkeyWindow = [arrangement[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] boolValue];
+    if (isHotkeyWindow) {
+        if ([[HotkeyWindowController sharedInstance] hotKeyWindow]) {
+            // Already have a hotkey window.
+            return nil;
+        }
+        
+        if (![[PreferencePanel sharedInstance] hotkey]) {
+            // Hotkey window disabled
+            return nil;
+        }
+    }
+    
     PseudoTerminal* term;
     int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     int screenIndex = [PseudoTerminal _screenIndexForArrangement:arrangement];
@@ -1601,6 +1614,11 @@ NSString *kSessionsKVCKey = @"sessions";
 
     if ([[arrangement objectForKey:TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING] boolValue]) {
         [term hideAfterOpening];
+    }
+    term.isHotKeyWindow = isHotkeyWindow;
+    if ([term isHotKeyWindow]) {
+        term.window.alphaValue = 0;
+        [[term window] orderOut:nil];
     }
     return term;
 }
@@ -1817,6 +1835,8 @@ NSString *kSessionsKVCKey = @"sessions";
     [result setObject:[NSNumber numberWithBool:hideAfterOpening_]
                forKey:TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING];
 
+    result[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] = @(_isHotKeyWindow);
+    
     return result;
 }
 
@@ -1914,6 +1934,10 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)windowWillClose:(NSNotification *)aNotification
 {
+    if (_isHotKeyWindow && [[self sessions] count] == 0) {
+        // Remove hotkey window restorable state when the last session closes.
+        [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
+    }
     // Close popups.
     [pbHistoryView close];
     [autocompleteView close];
@@ -1955,7 +1979,8 @@ NSString *kSessionsKVCKey = @"sessions";
         [session terminate];
     }
 
-    // This releases the last reference to self.
+    [[self retain] autorelease];
+    // This releases the last reference to self except for autorelease pools.
     [[iTermController sharedInstance] terminalWillClose:self];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowDidClose"
@@ -2039,7 +2064,7 @@ NSString *kSessionsKVCKey = @"sessions";
 // Forbid FFM from changing key window if is hotkey window.
 - (BOOL)disableFocusFollowsMouse
 {
-    return isHotKeyWindow_;
+    return _isHotKeyWindow;
 }
 
 - (NSRect)fullscreenToolbeltFrame
@@ -2722,7 +2747,7 @@ NSString *kSessionsKVCKey = @"sessions";
     DLog(@"toggleFullScreenMode:. window type is %d", windowType_);
     if ([self lionFullScreen] ||
         (windowType_ != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
-         !isHotKeyWindow_ &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
+         !_isHotKeyWindow &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
          [[PreferencePanel sharedInstance] lionStyleFullscreen])) {
         // Is 10.7 Lion or later.
         [[self ptyWindow] performSelector:@selector(toggleFullScreen:) withObject:self];
@@ -4375,7 +4400,9 @@ NSString *kSessionsKVCKey = @"sessions";
     [sessionView updateDim];
     newSession.tabColor = tabColor;
     [self updateTabColors];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange"
+                                                        object:self
+                                                      userInfo:nil];
 }
 
 - (void)splitVertically:(BOOL)isVertical
@@ -4840,16 +4867,6 @@ NSString *kSessionsKVCKey = @"sessions";
         [tabs addObject:[theItem identifier]];
     }
     return tabs;
-}
-
-- (BOOL)isHotKeyWindow
-{
-    return isHotKeyWindow_;
-}
-
-- (void)setIsHotKeyWindow:(BOOL)value
-{
-    isHotKeyWindow_ = value;
 }
 
 - (BOOL)fullScreenTabControl
@@ -6553,7 +6570,12 @@ NSString *kSessionsKVCKey = @"sessions";
         return;
     }
     if ([self isHotKeyWindow] || [self allTabsAreTmuxTabs]) {
-        // Don't save and restore hotkey windows or tmux windows.
+        // Don't save and restore hotkey windows or tmux windows. The
+        // OS only restores windows that are in the window order, and
+        // hotkey windows may be ordered in or out, depending on
+        // whether they were in use. So they get a special path for
+        // restoration where the arrangement is saved in user
+        // defaults.
         [[self ptyWindow] setRestoreState:nil];
         return;
     }
