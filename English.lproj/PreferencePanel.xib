@@ -185,7 +185,6 @@
                 <outlet property="normalFontField" destination="4775" id="4870"/>
                 <outlet property="onlyWhenMoreTabs" destination="1996" id="2806"/>
                 <outlet property="openArrangementAtStartup" destination="3590" id="3593"/>
-                <outlet property="openBookmark" destination="1959" id="2814"/>
                 <outlet property="openTmuxWindows" destination="6337" id="6349"/>
                 <outlet property="optionClickMovesCursor" destination="6407" id="6415"/>
                 <outlet property="optionKeySends" destination="4291" id="4307"/>
@@ -592,7 +591,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <font key="font" metaFont="system"/>
                         <tabViewItems>
-                            <tabViewItem label="Global Settings" identifier="1" id="1944">
+                            <tabViewItem label="Global Settings" identifier="1" id="1944" userLabel="Tab View Item - General">
                                 <view key="view" id="1947">
                                     <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -616,7 +615,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="2824"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="1gO-ml-ecT"/>
                                                 <outlet property="nextKeyView" destination="3590" id="5179"/>
                                             </connections>
                                         </button>
@@ -1042,7 +1041,7 @@ Gw
                                     </subviews>
                                 </view>
                             </tabViewItem>
-                            <tabViewItem label="Item 4" identifier="Item 4" id="4439" userLabel="Selected Tab View Item (Appearance)">
+                            <tabViewItem label="Item 4" identifier="Item 4" id="4439" userLabel="Tab View Item - Appearance">
                                 <view key="view" id="4440">
                                     <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -1443,7 +1442,7 @@ Gw
                                     </subviews>
                                 </view>
                             </tabViewItem>
-                            <tabViewItem label="Bookmarks" identifier="2" id="1945" userLabel="Selected Tab View Item (Profiles)">
+                            <tabViewItem label="Bookmarks" identifier="2" id="1945" userLabel="Tab View Item - Profiles">
                                 <view key="view" id="1946">
                                     <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -3814,7 +3813,7 @@ Gw
                                     </subviews>
                                 </view>
                             </tabViewItem>
-                            <tabViewItem label="Keys" identifier="Keys" id="3656" userLabel="Selected Tab View Item (Keyboard)">
+                            <tabViewItem label="Keys" identifier="Keys" id="3656">
                                 <view key="view" id="3657">
                                     <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -4324,7 +4323,7 @@ Gw
                                     </subviews>
                                 </view>
                             </tabViewItem>
-                            <tabViewItem label="Mouse" identifier="Mouse" id="6059">
+                            <tabViewItem label="Mouse" identifier="Mouse" id="6059" userLabel="Tab View Item - Pointer">
                                 <view key="view" id="6060">
                                     <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -4375,7 +4374,7 @@ Gw
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
-                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="229"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -4528,7 +4527,7 @@ Gw
                                     </subviews>
                                 </view>
                             </tabViewItem>
-                            <tabViewItem label="Keys" identifier="Keys" id="5417" userLabel="Selected Tab View Item (Arrangements)">
+                            <tabViewItem label="Keys" identifier="Keys" id="5417" userLabel="Tab View Item - Arrangements">
                                 <view key="view" id="5418">
                                     <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -4636,7 +4635,7 @@ Gw
                                     </subviews>
                                 </view>
                             </tabViewItem>
-                            <tabViewItem label="Advanced" identifier="Advanced" id="KyW-GB-ElH" userLabel="Selected Tab View Item (Arrangements)">
+                            <tabViewItem label="Advanced" identifier="Advanced" id="KyW-GB-ElH">
                                 <view key="view" id="DKc-WZ-9FS">
                                     <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -5952,6 +5951,11 @@ DQ
                 <outlet property="_settingColumn" destination="wQ6-7Q-vbc" id="ydA-mC-Eaq"/>
                 <outlet property="_tableView" destination="5ik-Xh-beg" id="Lsn-BG-yYF"/>
                 <outlet property="_valueColumn" destination="FSW-rl-pkB" id="Adt-2r-o3U"/>
+            </connections>
+        </customObject>
+        <customObject id="9Se-ld-UJa" customClass="GeneralPreferencesViewController">
+            <connections>
+                <outlet property="_openBookmark" destination="1959" id="PNp-By-R5Y"/>
             </connections>
         </customObject>
     </objects>

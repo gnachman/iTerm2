@@ -763,6 +763,12 @@
 		A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
 		A6DF401D1897607E00F05947 /* NSTextField+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */; };
 		A6DF401E1897607E00F05947 /* NSTextField+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */; };
+		A6E7137A18F1D70E008D94DD /* GeneralPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7137818F1D70D008D94DD /* GeneralPreferencesViewController.h */; };
+		A6E7137B18F1D70E008D94DD /* GeneralPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7137918F1D70D008D94DD /* GeneralPreferencesViewController.m */; };
+		A6E7137C18F1D70E008D94DD /* GeneralPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7137918F1D70D008D94DD /* GeneralPreferencesViewController.m */; };
+		A6E7137F18F1DB1E008D94DD /* iTermPreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7137D18F1DB1E008D94DD /* iTermPreferences.h */; };
+		A6E7138018F1DB1E008D94DD /* iTermPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7137E18F1DB1E008D94DD /* iTermPreferences.m */; };
+		A6E7138118F1DB1E008D94DD /* iTermPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7137E18F1DB1E008D94DD /* iTermPreferences.m */; };
 		A6E74748188C6344005355CF /* CommandHistoryEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E74746188C6344005355CF /* CommandHistoryEntry.h */; };
 		A6E74749188C6344005355CF /* CommandHistoryEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74747188C6344005355CF /* CommandHistoryEntry.m */; };
 		A6E7474A188C6344005355CF /* CommandHistoryEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74747188C6344005355CF /* CommandHistoryEntry.m */; };
@@ -1309,6 +1315,10 @@
 		A6CFDAD6185D53C2005DC94B /* AsyncHostLookupController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AsyncHostLookupController.m; sourceTree = "<group>"; };
 		A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSTextField+iTerm.h"; sourceTree = "<group>"; };
 		A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTextField+iTerm.m"; sourceTree = "<group>"; };
+		A6E7137818F1D70D008D94DD /* GeneralPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GeneralPreferencesViewController.h; sourceTree = "<group>"; };
+		A6E7137918F1D70D008D94DD /* GeneralPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneralPreferencesViewController.m; sourceTree = "<group>"; };
+		A6E7137D18F1DB1E008D94DD /* iTermPreferences.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPreferences.h; sourceTree = "<group>"; };
+		A6E7137E18F1DB1E008D94DD /* iTermPreferences.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPreferences.m; sourceTree = "<group>"; };
 		A6E74746188C6344005355CF /* CommandHistoryEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandHistoryEntry.h; sourceTree = "<group>"; };
 		A6E74747188C6344005355CF /* CommandHistoryEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CommandHistoryEntry.m; sourceTree = "<group>"; };
 		A6E7474B188C6394005355CF /* CommandUse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandUse.h; sourceTree = "<group>"; };
@@ -1537,6 +1547,8 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				A6E7137818F1D70D008D94DD /* GeneralPreferencesViewController.h */,
+				A6E7137D18F1DB1E008D94DD /* iTermPreferences.h */,
 				1D9DCC14142D7FC10016228A /* AlertTrigger.h */,
 				1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */,
 				A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */,
@@ -1892,6 +1904,9 @@
 				1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */,
 				1D21EE3A147711300066E04A /* ContextMenuActionPrefsController.m */,
 				1D825603146B258A007CAE78 /* EventMonitorView.m */,
+				A6E7137918F1D70D008D94DD /* GeneralPreferencesViewController.m */,
+				A6E7137E18F1DB1E008D94DD /* iTermPreferences.m */,
+				FB4CEAC661436E55F3B3A668 /* iTermRemotePreferences.m */,
 				A697100A18D94CDA007E901D /* iTermSettingsModel.m */,
 				1D8255FB14687EE8007CAE78 /* PointerPrefsController.m */,
 				FB019DE103670C6501F955DB /* PreferencePanel.m */,
@@ -1899,7 +1914,6 @@
 				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
 				1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */,
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
-				FB4CEAC661436E55F3B3A668 /* iTermRemotePreferences.m */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -2388,6 +2402,7 @@
 				1D5FDD6E1208E8F000C46BA3 /* CGSDisplays.h in Headers */,
 				A68A30FA186D150B007F550F /* TransferrableFileMenuItemView.h in Headers */,
 				A63F409F183F3AF5003A6A6D /* VT100LineInfo.h in Headers */,
+				A6E7137A18F1D70E008D94DD /* GeneralPreferencesViewController.h in Headers */,
 				1D5FDD6F1208E8F000C46BA3 /* CGSHotKeys.h in Headers */,
 				1D5FDD701208E8F000C46BA3 /* CGSInternal.h in Headers */,
 				1D5FDD711208E8F000C46BA3 /* CGSMisc.h in Headers */,
@@ -2396,6 +2411,7 @@
 				1D5FDD721208E8F000C46BA3 /* CGSNotifications.h in Headers */,
 				A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */,
 				1D5FDD731208E8F000C46BA3 /* CGSRegion.h in Headers */,
+				A6E7137F18F1DB1E008D94DD /* iTermPreferences.h in Headers */,
 				1D5FDD741208E8F000C46BA3 /* CGSSession.h in Headers */,
 				1D5FDD751208E8F000C46BA3 /* CGSTransitions.h in Headers */,
 				1D5FDD761208E8F000C46BA3 /* CGSWindow.h in Headers */,
@@ -3003,6 +3019,7 @@
 				1D9A5562180FA83900B42CE9 /* WindowArrangements.m in Sources */,
 				1D9A55A0180FA87000B42CE9 /* SplitSelectionView.m in Sources */,
 				1D9A5537180FA79400B42CE9 /* DVREncoder.m in Sources */,
+				A6E7138118F1DB1E008D94DD /* iTermPreferences.m in Sources */,
 				1D9A556B180FA85500B42CE9 /* FakeWindow.m in Sources */,
 				A68A30E7186D1429007F550F /* VT100RemoteHost.m in Sources */,
 				1D9A557D180FA87000B42CE9 /* Coprocess.m in Sources */,
@@ -3017,6 +3034,7 @@
 				1D9A5536180FA79100B42CE9 /* DVRDecoder.m in Sources */,
 				A68A30D2186D1414007F550F /* NSArray+iTerm.m in Sources */,
 				A68A30E5186D1429007F550F /* TransferrableFileMenuItemViewController.m in Sources */,
+				A6E7137C18F1D70E008D94DD /* GeneralPreferencesViewController.m in Sources */,
 				1D9A5574180FA85D00B42CE9 /* AlertTrigger.m in Sources */,
 				1D9A55A9180FA8B700B42CE9 /* PSMMetalTabStyle.m in Sources */,
 				1D9A5523180FA46100B42CE9 /* iTermTests.m in Sources */,
@@ -3045,6 +3063,7 @@
 				A60014F718550F3900CE38D8 /* NSMutableAttributedString+iTerm.m in Sources */,
 				A63F4096183B398C003A6A6D /* PTYNoteViewController.m in Sources */,
 				1D5FDDA91208E93600C46BA3 /* VT100Screen.m in Sources */,
+				A6E7137B18F1D70E008D94DD /* GeneralPreferencesViewController.m in Sources */,
 				1D5FDDAA1208E93600C46BA3 /* VT100Terminal.m in Sources */,
 				1D5FDDAB1208E93600C46BA3 /* iTermController.m in Sources */,
 				A68A310B186D2BCF007F550F /* BottomBarView.m in Sources */,
@@ -3204,6 +3223,7 @@
 				A68A30C2186D0DC1007F550F /* FindCursorView.m in Sources */,
 				1DA9AEEB14A51CA000BEB37B /* TmuxSessionsTable.m in Sources */,
 				1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */,
+				A6E7138018F1DB1E008D94DD /* iTermPreferences.m in Sources */,
 				A697100C18D94CDA007E901D /* iTermSettingsModel.m in Sources */,
 				1D0B613D14A7C76500C57C33 /* TmuxWindowsTable.m in Sources */,
 				1DAE714E14AAF24200DA144B /* EquivalenceClassSet.m in Sources */,

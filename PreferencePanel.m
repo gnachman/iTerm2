@@ -31,6 +31,7 @@
 #import "iTermController.h"
 #import "iTermFontPanel.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermSettingsModel.h"
 #import "iTermWarning.h"
@@ -180,10 +181,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     
     // Minimum contrast
     IBOutlet NSSlider* minimumContrast;
-    
-    // open bookmarks when iterm starts
-    IBOutlet NSButton *openBookmark;
-    BOOL defaultOpenBookmark;
     
     // quit when all windows are closed
     IBOutlet NSButton *quitWhenAllWindowsClosed;
@@ -1095,7 +1092,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         defaultOptionClickMovesCursor = ([optionClickMovesCursor state] == NSOnState);
         defaultPassOnControlLeftClick = ([controlLeftClickActsLikeRightClick state] == NSOffState);
         defaultMaxVertically = ([maxVertically state] == NSOnState);
-        defaultOpenBookmark = ([openBookmark state] == NSOnState);
         [defaultWordChars release];
         defaultWordChars = [[wordChars stringValue] retain];
         defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];
@@ -2790,7 +2786,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [defaultWordChars release];
     defaultWordChars = [prefs objectForKey: @"WordCharacters"]?[[prefs objectForKey: @"WordCharacters"] retain]:@"/-+\\~_.";
     defaultTmuxDashboardLimit = [prefs objectForKey: @"TmuxDashboardLimit"]?[[prefs objectForKey:@"TmuxDashboardLimit"] intValue]:10;
-    defaultOpenBookmark = [prefs objectForKey:@"OpenBookmark"]?[[prefs objectForKey:@"OpenBookmark"] boolValue]: NO;
     defaultQuitWhenAllWindowsClosed = [prefs objectForKey:@"QuitWhenAllWindowsClosed"]?[[prefs objectForKey:@"QuitWhenAllWindowsClosed"] boolValue]: NO;
     defaultCheckUpdate = [prefs objectForKey:@"SUEnableAutomaticChecks"]?[[prefs objectForKey:@"SUEnableAutomaticChecks"] boolValue]: YES;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
@@ -2919,7 +2914,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setObject:defaultWordChars forKey: @"WordCharacters"];
     [prefs setObject:[NSNumber numberWithInt:defaultTmuxDashboardLimit]
                           forKey:@"TmuxDashboardLimit"];
-    [prefs setBool:defaultOpenBookmark forKey:@"OpenBookmark"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
     [prefs setBool:defaultQuitWhenAllWindowsClosed forKey:@"QuitWhenAllWindowsClosed"];
     [prefs setBool:defaultCheckUpdate forKey:@"SUEnableAutomaticChecks"];
@@ -3521,7 +3515,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (BOOL)openBookmark
 {
-    return defaultOpenBookmark;
+    return [iTermPreferences boolForKey:kPreferenceKeyOpenBookmark];
 }
 
 - (NSString *)wordChars
@@ -3967,7 +3961,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [hideMenuBarInFullscreen setState:defaultHideMenuBarInFullscreen ? NSOnState:NSOffState];
     [fsTabDelay setFloatValue:defaultFsTabDelay];
 
-    [openBookmark setState: defaultOpenBookmark?NSOnState:NSOffState];
     [wordChars setStringValue: ([defaultWordChars length] > 0)?defaultWordChars:@""];
     [tmuxDashboardLimit setIntValue:defaultTmuxDashboardLimit];
     [quitWhenAllWindowsClosed setState: defaultQuitWhenAllWindowsClosed?NSOnState:NSOffState];
@@ -4008,7 +4001,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];
     [lionStyleFullscreen setState:defaultLionStyleFullscreen?NSOnState:NSOffState];
     [loadPrefsFromCustomFolder setState:[[iTermRemotePreferences sharedInstance] shouldLoadRemotePrefs] ? NSOnState : NSOffState];
-    [prefsCustomFolder setStringValue:[[iTermRemotePreferences sharedInstance] customFolderOrURL]];
+    [prefsCustomFolder setStringValue:[[iTermRemotePreferences sharedInstance] customFolderOrURL] ?: @""];
 
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];
