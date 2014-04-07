@@ -207,7 +207,6 @@
                 <outlet property="showPaneTitles" destination="6051" id="6053"/>
                 <outlet property="showWindowBorder" destination="5144" id="5147"/>
                 <outlet property="silenceBell" destination="2397" id="3144"/>
-                <outlet property="smartPlacement" destination="4570" id="4607"/>
                 <outlet property="smartSelectionWindowController_" destination="5863" id="5921"/>
                 <outlet property="spaceButton" destination="4921" id="4967"/>
                 <outlet property="spaceLabel" destination="4920" id="4968"/>
@@ -781,7 +780,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="4572"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="txH-W2-KYg"/>
                                                 <outlet property="nextKeyView" destination="6377" id="6382"/>
                                             </connections>
                                         </button>
@@ -5956,6 +5955,7 @@ DQ
                 <outlet property="_quitWhenAllWindowsClosed" destination="1950" id="g5I-3X-QQe"/>
                 <outlet property="_savePasteHistory" destination="5056" id="BPO-mF-vKm"/>
                 <outlet property="_selectionCopiesText" destination="1988" id="V7j-Ak-mbO"/>
+                <outlet property="_smartPlacement" destination="4570" id="jBA-SY-4Wo"/>
                 <outlet property="_wordChars" destination="2096" id="hwf-SH-vM1"/>
             </connections>
         </customObject>

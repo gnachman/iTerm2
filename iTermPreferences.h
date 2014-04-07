@@ -25,6 +25,7 @@ extern NSString *const kPreferenceKeySelectionCopiesText;
 extern NSString *const kPreferenceKeyCopyLastNewline;
 extern NSString *const kPreferenceKeyAllowClipboardAccessFromTerminal;
 extern NSString *const kPreferenceKeyCharactersConsideredPartOfAWordForSelection;
+extern NSString *const kPreferenceKeySmartWindowPlacement;
 
 @interface iTermPreferences : NSObject
 

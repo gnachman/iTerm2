@@ -216,10 +216,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     IBOutlet NSButton *disableFullscreenTransparency;
     BOOL defaultDisableFullscreenTransparency;
     
-    // smart window placement
-    IBOutlet NSButton *smartPlacement;
-    BOOL defaultSmartPlacement;
-    
     // Adjust window size when changing font size
     IBOutlet NSButton *adjustWindowForFontSizeChange;
     BOOL defaultAdjustWindowForFontSizeChange;
@@ -955,7 +951,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         defaultPassOnControlLeftClick = ([controlLeftClickActsLikeRightClick state] == NSOffState);
         defaultMaxVertically = ([maxVertically state] == NSOnState);
         defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];
-        defaultSmartPlacement = ([smartPlacement state] == NSOnState);
         defaultAdjustWindowForFontSizeChange = ([adjustWindowForFontSizeChange state] == NSOnState);
 
         BOOL oldDefaultHotkey = defaultHotkey;
@@ -2586,7 +2581,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
     defaultShowPaneTitles = [prefs objectForKey:@"ShowPaneTitles"]?[[prefs objectForKey:@"ShowPaneTitles"] boolValue]: YES;
     defaultDisableFullscreenTransparency = [prefs objectForKey:@"DisableFullscreenTransparency"] ? [[prefs objectForKey:@"DisableFullscreenTransparency"] boolValue] : NO;
-    defaultSmartPlacement = [prefs objectForKey:@"SmartPlacement"]?[[prefs objectForKey:@"SmartPlacement"] boolValue]: NO;
     defaultAdjustWindowForFontSizeChange = [prefs objectForKey:@"AdjustWindowForFontSizeChange"]?[[prefs objectForKey:@"AdjustWindowForFontSizeChange"] boolValue]: YES;
     defaultWindowNumber = [prefs objectForKey:@"WindowNumber"]?[[prefs objectForKey:@"WindowNumber"] boolValue]: YES;
     defaultJobName = [prefs objectForKey:@"JobName"]?[[prefs objectForKey:@"JobName"] boolValue]: YES;
@@ -2693,7 +2687,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
     [prefs setBool:defaultShowPaneTitles forKey:@"ShowPaneTitles"];
     [prefs setBool:defaultDisableFullscreenTransparency forKey:@"DisableFullscreenTransparency"];
-    [prefs setBool:defaultSmartPlacement forKey:@"SmartPlacement"];
     [prefs setBool:defaultAdjustWindowForFontSizeChange forKey:@"AdjustWindowForFontSizeChange"];
     [prefs setBool:defaultWindowNumber forKey:@"WindowNumber"];
     [prefs setBool:defaultJobName forKey:@"JobName"];
@@ -3300,9 +3293,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return defaultDisableFullscreenTransparency;
 }
 
-- (BOOL)smartPlacement
-{
-    return defaultSmartPlacement;
+- (BOOL)smartPlacement {
+    return [iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement];
 }
 
 - (BOOL)adjustWindowForFontSizeChange
@@ -3713,7 +3705,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
     [showPaneTitles setState:defaultShowPaneTitles?NSOnState:NSOffState];
     [disableFullscreenTransparency setState:defaultDisableFullscreenTransparency ? NSOnState : NSOffState];
-    [smartPlacement setState: defaultSmartPlacement?NSOnState:NSOffState];
     [adjustWindowForFontSizeChange setState: defaultAdjustWindowForFontSizeChange?NSOnState:NSOffState];
     [windowNumber setState: defaultWindowNumber?NSOnState:NSOffState];
     [jobName setState: defaultJobName?NSOnState:NSOffState];

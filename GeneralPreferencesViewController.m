@@ -115,6 +115,9 @@ typedef enum {
     // Characters considered part of word
     IBOutlet NSTextField *_wordChars;
 
+    // Smart window placement
+    IBOutlet NSButton *_smartPlacement;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -228,6 +231,10 @@ typedef enum {
     [self defineControl:_wordChars
                     key:kPreferenceKeyCharactersConsideredPartOfAWordForSelection
                    type:kPreferenceInfoTypeStringTextField];
+    
+    [self defineControl:_smartPlacement
+                    key:kPreferenceKeySmartWindowPlacement
+                   type:kPreferenceInfoTypeCheckbox];
 }
 
 - (void)updateValueForInfo:(PreferenceInfo *)info {
