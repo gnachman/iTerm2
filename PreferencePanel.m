@@ -102,18 +102,14 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     // pass on ctrl-click
     IBOutlet NSButton* controlLeftClickActsLikeRightClick;
     BOOL defaultPassOnControlLeftClick;
-    
+
     // Opt-click moves cursor
     IBOutlet NSButton *optionClickMovesCursor;
     BOOL defaultOptionClickMovesCursor;
-    
-    // Hide menu bar in non-lion fullscreen
-    IBOutlet NSButton *hideMenuBarInFullscreen;
-    BOOL defaultHideMenuBarInFullscreen;
-    
+
     // Minimum contrast
     IBOutlet NSSlider* minimumContrast;
-    
+
     // cursor type: underline/vertical bar/box
     // See ITermCursorType. One of: CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX
     IBOutlet NSMatrix *cursorType;
@@ -781,8 +777,7 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 
 - (IBAction)settingChanged:(id)sender
 {
-    if (sender == hideMenuBarInFullscreen ||
-        sender == hideScrollbar ||
+    if (sender == hideScrollbar ||
         sender == disableFullscreenTransparency ||
         sender == dimInactiveSplitPanes ||
         sender == dimBackgroundWindows ||
@@ -792,7 +787,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
         sender == threeFingerEmulatesMiddle ||
         sender == showWindowBorder ||
         sender == hotkeyAutoHides) {
-        defaultHideMenuBarInFullscreen = ([hideMenuBarInFullscreen state] == NSOnState);
         defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
         defaultDimBackgroundWindows = ([dimBackgroundWindows state] == NSOnState);
         defaultAnimateDimming= ([animateDimming state] == NSOnState);
@@ -2465,7 +2459,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     defaultOptionClickMovesCursor = [prefs objectForKey:@"OptionClickMovesCursor"]?[[prefs objectForKey:@"OptionClickMovesCursor"] boolValue]: YES;
     defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
 
-    defaultHideMenuBarInFullscreen = [prefs objectForKey:@"HideMenuBarInFullscreen"]?[[prefs objectForKey:@"HideMenuBarInFullscreen"] boolValue] : YES;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
     defaultDisableFullscreenTransparency = [prefs objectForKey:@"DisableFullscreenTransparency"] ? [[prefs objectForKey:@"DisableFullscreenTransparency"] boolValue] : NO;
     defaultWindowNumber = [prefs objectForKey:@"WindowNumber"]?[[prefs objectForKey:@"WindowNumber"] boolValue]: YES;
@@ -2554,7 +2547,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [prefs setBool:defaultCmdSelection forKey:@"CommandSelection"];
     [prefs setBool:defaultOptionClickMovesCursor forKey:@"OptionClickMovesCursor"];
     [prefs setBool:defaultPassOnControlLeftClick forKey:@"PassOnControlClick"];
-    [prefs setBool:defaultHideMenuBarInFullscreen forKey:@"HideMenuBarInFullscreen"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
     [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
     [prefs setBool:defaultDisableFullscreenTransparency forKey:@"DisableFullscreenTransparency"];
@@ -3113,9 +3105,8 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     return [iTermPreferences boolForKey:kPreferenceKeyHighlightTabLabels];
 }
 
-- (BOOL)hideMenuBarInFullscreen
-{
-    return defaultHideMenuBarInFullscreen;
+- (BOOL)hideMenuBarInFullscreen {
+    return [iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen];
 }
 
 - (BOOL)openBookmark
@@ -3539,7 +3530,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [cmdSelection setState: defaultCmdSelection?NSOnState:NSOffState];
     [optionClickMovesCursor setState: defaultOptionClickMovesCursor?NSOnState:NSOffState];
     [controlLeftClickActsLikeRightClick setState: defaultPassOnControlLeftClick?NSOffState:NSOnState];
-    [hideMenuBarInFullscreen setState:defaultHideMenuBarInFullscreen ? NSOnState:NSOffState];
 
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
     [disableFullscreenTransparency setState:defaultDisableFullscreenTransparency ? NSOnState : NSOffState];

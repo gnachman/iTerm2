@@ -36,6 +36,8 @@
     // Show per-pane title bar with split panes.
     IBOutlet NSButton *_showPaneTitles;
 
+    // Hide menu bar in non-lion fullscreen
+    IBOutlet NSButton *_hideMenuBarInFullscreen;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -91,6 +93,11 @@
 
     info = [self defineControl:_showPaneTitles
                            key:kPreferenceKeyShowPaneTitles
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [self postRefreshNotification]; };
+
+    info = [self defineControl:_hideMenuBarInFullscreen
+                           key:kPreferenceKeyHideMenuBarInFullscreen
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 
