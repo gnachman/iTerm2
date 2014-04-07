@@ -119,10 +119,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSButton *checkColorInvertedCursor;
     BOOL defaultColorInvertedCursor;
 
-    // Dim background windows
-    IBOutlet NSButton* dimBackgroundWindows;
-    BOOL defaultDimBackgroundWindows;
-
     // instant replay
     IBOutlet NSButton *instantReplay;
     BOOL defaultInstantReplay;
@@ -737,10 +733,8 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 
 - (IBAction)settingChanged:(id)sender
 {
-    if (sender == dimBackgroundWindows ||
-        sender == threeFingerEmulatesMiddle ||
+    if (sender == threeFingerEmulatesMiddle ||
         sender == hotkeyAutoHides) {
-        defaultDimBackgroundWindows = ([dimBackgroundWindows state] == NSOnState);
         defaultThreeFingerEmulatesMiddle=([threeFingerEmulatesMiddle state] == NSOnState);
         defaultHotkeyAutoHides = ([hotkeyAutoHides state] == NSOnState);
         [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
@@ -2400,7 +2394,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     defaultHotkeyCode = [prefs objectForKey:@"HotkeyCode"]?[[prefs objectForKey:@"HotkeyCode"] intValue]: 0;
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
     defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
-    defaultDimBackgroundWindows = [prefs objectForKey:@"DimBackgroundWindows"]?[[prefs objectForKey:@"DimBackgroundWindows"] boolValue]: NO;
 
     defaultControl = [prefs objectForKey:@"Control"] ? [[prefs objectForKey:@"Control"] intValue] : MOD_TAG_CONTROL;
     defaultLeftOption = [prefs objectForKey:@"LeftOption"] ? [[prefs objectForKey:@"LeftOption"] intValue] : MOD_TAG_LEFT_OPTION;
@@ -2479,7 +2472,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [prefs setInteger:defaultHotkeyCode forKey:@"HotkeyCode"];
     [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
     [prefs setInteger:defaultHotkeyModifiers forKey:@"HotkeyModifiers"];
-    [prefs setBool:defaultDimBackgroundWindows forKey:@"DimBackgroundWindows"];
 
     [prefs setInteger:defaultControl forKey:@"Control"];
     [prefs setInteger:defaultLeftOption forKey:@"LeftOption"];
@@ -3165,9 +3157,8 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     return [iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes];
 }
 
-- (BOOL)dimBackgroundWindows
-{
-    return defaultDimBackgroundWindows;
+- (BOOL)dimBackgroundWindows {
+    return [iTermPreferences boolForKey:kPreferenceKeyDimBackgroundWindows];
 }
 
 - (BOOL)animateDimming {
@@ -3449,8 +3440,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [hotkeyTogglesWindow setEnabled:defaultHotkey];
     [hotkeyAutoHides setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
     [hotkeyBookmark setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
-
-    [dimBackgroundWindows setState:defaultDimBackgroundWindows?NSOnState:NSOffState];
 
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];

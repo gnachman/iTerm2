@@ -69,6 +69,7 @@ extern NSString *const kPreferenceKeyAnimateDimming;
 extern NSString *const kPreferenceKeyShowWindowBorder;
 extern NSString *const kPreferenceKeyHideScrollbar;
 extern NSString *const kPreferenceKeyDisableFullscreenTransparencyByDefault;
+extern NSString *const kPreferenceKeyDimBackgroundWindows;
 
 @interface iTermPreferences : NSObject
 

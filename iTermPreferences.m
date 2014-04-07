@@ -61,6 +61,7 @@ NSString *const kPreferenceKeyAnimateDimming = @"AnimateDimming";
 NSString *const kPreferenceKeyShowWindowBorder = @"UseBorder";
 NSString *const kPreferenceKeyHideScrollbar = @"HideScrollbar";
 NSString *const kPreferenceKeyDisableFullscreenTransparencyByDefault = @"DisableFullscreenTransparency";
+NSString *const kPreferenceKeyDimBackgroundWindows = @"DimBackgroundWindows";
 
 static NSMutableDictionary *gObservers;
 
@@ -115,6 +116,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyShowWindowBorder: @NO,
                   kPreferenceKeyHideScrollbar: @NO,
                   kPreferenceKeyDisableFullscreenTransparencyByDefault: @NO,
+                  kPreferenceKeyDimBackgroundWindows: @NO,
                   };
         [dict retain];
     }
