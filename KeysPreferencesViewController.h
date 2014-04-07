@@ -7,14 +7,15 @@
 //
 
 #import "iTermPreferencesBaseViewController.h"
+#import "iTermShortcutInputView.h"
 #import "ProfileModel.h"
 
-@interface KeysPreferencesViewController : iTermPreferencesBaseViewController
+@interface KeysPreferencesViewController : iTermPreferencesBaseViewController <
+    iTermShortcutInputViewDelegate>
 
 @property(nonatomic, readonly) NSTextField *hotkeyField;
 @property(nonatomic, readonly) Profile *hotkeyProfile;
 
-- (void)hotkeyKeyDown:(NSEvent*)event;
 - (void)populateHotKeyProfilesMenu;
 
 @end

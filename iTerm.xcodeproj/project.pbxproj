@@ -72,6 +72,9 @@
 		1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = F6E2DED70AE2F67200D20B3B /* Sparkle.framework */; };
 		1D36155512CBF33E00803EA9 /* ScreenChar.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D36155312CBF33E00803EA9 /* ScreenChar.h */; };
 		1D36155612CBF33E00803EA9 /* ScreenChar.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D36155412CBF33E00803EA9 /* ScreenChar.m */; };
+		1D373E4918F3613600773D3E /* iTermShortcutInputView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D373E4718F3613600773D3E /* iTermShortcutInputView.h */; };
+		1D373E4A18F3613600773D3E /* iTermShortcutInputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D373E4818F3613600773D3E /* iTermShortcutInputView.m */; };
+		1D373E4B18F3613600773D3E /* iTermShortcutInputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D373E4818F3613600773D3E /* iTermShortcutInputView.m */; };
 		1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D395912134E75B5005A8021 /* SmartSelectionRules.plist */; };
 		1D3BBD6B14759D6C00FAB389 /* HighlightTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3BBD6914759D6C00FAB389 /* HighlightTrigger.h */; };
 		1D3BBD6C14759D6C00FAB389 /* HighlightTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3BBD6A14759D6C00FAB389 /* HighlightTrigger.m */; };
@@ -913,6 +916,8 @@
 		1D31BC64142D33CA001F7ECB /* TriggerController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TriggerController.m; sourceTree = "<group>"; };
 		1D36155312CBF33E00803EA9 /* ScreenChar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ScreenChar.h; sourceTree = "<group>"; };
 		1D36155412CBF33E00803EA9 /* ScreenChar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ScreenChar.m; sourceTree = "<group>"; };
+		1D373E4718F3613600773D3E /* iTermShortcutInputView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermShortcutInputView.h; sourceTree = "<group>"; };
+		1D373E4818F3613600773D3E /* iTermShortcutInputView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShortcutInputView.m; sourceTree = "<group>"; };
 		1D395912134E75B5005A8021 /* SmartSelectionRules.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = SmartSelectionRules.plist; sourceTree = "<group>"; };
 		1D3BBD6914759D6C00FAB389 /* HighlightTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HighlightTrigger.h; sourceTree = "<group>"; };
 		1D3BBD6A14759D6C00FAB389 /* HighlightTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HighlightTrigger.m; sourceTree = "<group>"; };
@@ -1523,21 +1528,22 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				A647E3B118C35DD900450FA1 /* VT100 */,
-				A68A30CA186D118E007F550F /* Data Structures */,
-				A6E74764188C6A2A005355CF /* Expose */,
-				A63F40AC1842988A003A6A6D /* Core */,
 				1D9DDE31142E73E300275650 /* Categories */,
+				A63F40AC1842988A003A6A6D /* Core */,
+				A68A30CA186D118E007F550F /* Data Structures */,
 				1D9DDE2F142E735900275650 /* DVR */,
+				A6E74764188C6A2A005355CF /* Expose */,
 				A68A30CB186D13CB007F550F /* File Transfer */,
 				1D06E7CF14BC03BE0097C0ED /* GTM */,
 				A68A30C9186D101C007F550F /* Helpers */,
+				1D373E4618F360C600773D3E /* Misc. Views */,
 				1D9DDE30142E738800275650 /* Popups */,
 				1D24C37714303E00006B246F /* Preferences */,
 				1D06E7D014BC04110097C0ED /* Profiles */,
 				1D3D21921483142800FAC8E7 /* tmux */,
 				1D9DDE2E142E733100275650 /* Toolbelt */,
 				1D9DDE2D142E730700275650 /* Triggers */,
+				A647E3B118C35DD900450FA1 /* VT100 */,
 				1D48B378167E809D000046EE /* CharacterRun.m */,
 				A6057C0D187BC4C3004A60AF /* CommandHistory.m */,
 				1D9DDD9B142E5FBB00275650 /* Coprocess.m */,
@@ -1553,12 +1559,9 @@
 				1D085F8B16F0328B00B7FCE9 /* PasteViewController.m */,
 				1D8255FF146881EC007CAE78 /* PointerController.m */,
 				1D988596135D23BD0072023F /* ProcessCache.m */,
-				A63F4099183B3AA7003A6A6D /* PTYNoteView.m */,
 				A63F4094183B398C003A6A6D /* PTYNoteViewController.m */,
-				1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */,
 				1D8FC67B17E67FA700A82402 /* shell_launcher.c */,
 				1DF8AF5713FD781700C8A435 /* SplitPanel.m */,
-				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
 				1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */,
 				1D085FA116F138A000B7FCE9 /* ToastWindowController.m */,
 				1D06A04F134CDBED00C414EF /* Trouter.m */,
@@ -1949,6 +1952,18 @@
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
 			);
 			name = Preferences;
+			sourceTree = "<group>";
+		};
+		1D373E4618F360C600773D3E /* Misc. Views */ = {
+			isa = PBXGroup;
+			children = (
+				A63F4099183B3AA7003A6A6D /* PTYNoteView.m */,
+				1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */,
+				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
+				1D373E4718F3613600773D3E /* iTermShortcutInputView.h */,
+				1D373E4818F3613600773D3E /* iTermShortcutInputView.m */,
+			);
+			name = "Misc. Views";
 			sourceTree = "<group>";
 		};
 		1D3D21921483142800FAC8E7 /* tmux */ = {
@@ -2460,6 +2475,7 @@
 				1DE5EBE8122B892900C736B0 /* ProfilesWindow.h in Headers */,
 				1D93D33512695442007F741B /* DVR.h in Headers */,
 				1D93D3471269741B007F741B /* DVRBuffer.h in Headers */,
+				1D373E4918F3613600773D3E /* iTermShortcutInputView.h in Headers */,
 				1D93D34B1269746F007F741B /* DVRIndexEntry.h in Headers */,
 				A680AA1318CEA1040034D4F8 /* VT100TmuxParser.h in Headers */,
 				1D93D34F126974BC007F741B /* DVRDecoder.h in Headers */,
@@ -2989,6 +3005,7 @@
 				A628C7AA18764AA4009B0818 /* NSDictionary+iTerm.m in Sources */,
 				1D9A5541180FA81400B42CE9 /* ProfileListView.m in Sources */,
 				1D9A5542180FA81400B42CE9 /* ProfilesWindow.m in Sources */,
+				1D373E4B18F3613600773D3E /* iTermShortcutInputView.m in Sources */,
 				1DD39B22180B8467004E56D5 /* BackgroundThread.m in Sources */,
 				1D9A5576180FA85D00B42CE9 /* CoprocessTrigger.m in Sources */,
 				A68A3107186D2973007F550F /* TemporaryNumberAllocator.m in Sources */,
@@ -3183,6 +3200,7 @@
 				A697100718D82E79007E901D /* iTermAdvancedSettingsController.m in Sources */,
 				1D7C18821275D22900461E55 /* PasteboardHistory.m in Sources */,
 				A635864A184BEA57009ED690 /* AATreeNode.m in Sources */,
+				1D373E4A18F3613600773D3E /* iTermShortcutInputView.m in Sources */,
 				A647E3A018C351F400450FA1 /* VT100DCSParser.m in Sources */,
 				A61B66CB18D4D855009AC9D5 /* NSView+iTerm.m in Sources */,
 				1D7C1D1312772ECC00461E55 /* NSDateFormatterExtras.m in Sources */,

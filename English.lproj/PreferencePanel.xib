@@ -4199,7 +4199,7 @@ Gw
                                                 <outlet property="nextKeyView" destination="5105" id="5296"/>
                                             </connections>
                                         </button>
-                                        <textField verticalHuggingPriority="750" id="5105">
+                                        <textField verticalHuggingPriority="750" id="5105" customClass="iTermShortcutInputView">
                                             <rect key="frame" x="82" y="114" width="235" height="22"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" refusesFirstResponder="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="5114">
@@ -4208,6 +4208,7 @@ Gw
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                             <connections>
+                                                <outlet property="_shortcutDelegate" destination="8TE-cq-5cL" id="IeM-Pt-eZb"/>
                                                 <outlet property="nextKeyView" destination="5107" id="5297"/>
                                             </connections>
                                         </textField>

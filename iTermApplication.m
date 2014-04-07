@@ -30,14 +30,15 @@
 
 #import "iTermApplication.h"
 #import "HotkeyWindowController.h"
+#import "iTermController.h"
+#import "iTermKeyBindingMgr.h"
+#import "iTermShortcutInputView.h"
 #import "NSTextField+iTerm.h"
+#import "PreferencePanel.h"
+#import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTextView.h"
 #import "PTYWindow.h"
-#import "PreferencePanel.h"
-#import "PseudoTerminal.h"
-#import "iTermController.h"
-#import "iTermKeyBindingMgr.h"
 
 @implementation iTermApplication
 
@@ -114,6 +115,15 @@
                 return;
             }
         }
+        if ([[[self keyWindow] firstResponder] isKindOfClass:[NSTextView class]]) {
+            NSTextView *fieldEditor = (NSTextView *)[[self keyWindow] firstResponder];
+            id<NSTextViewDelegate> fieldEditorDelegate = fieldEditor.delegate;
+            if ([fieldEditorDelegate isKindOfClass:[iTermShortcutInputView class]]) {
+                iTermShortcutInputView *shortcutView = (iTermShortcutInputView *)fieldEditorDelegate;
+                [shortcutView handleShortcutEvent:event];
+                return;
+            }
+        }
         if ([prefPanel keySheet] == [self keyWindow] &&
             [prefPanel keySheetIsOpen] &&
             [[prefPanel shortcutKeyTextField] textFieldIsFirstResponder]) {
@@ -125,11 +135,6 @@
                    [[privatePrefPanel shortcutKeyTextField] textFieldIsFirstResponder]) {
             // Focus is in the shortcut field in sessions prefspanel. Pass events directly to it.
             [privatePrefPanel shortcutKeyDown:event];
-            return;
-        } else if ([prefPanel window] == [self keyWindow] &&
-                   [[prefPanel hotkeyField] textFieldIsFirstResponder]) {
-            // Focus is in the hotkey field in prefspanel. Pass events directly to it.
-            [prefPanel hotkeyKeyDown:event];
             return;
         } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
             // Focus is in a terminal window.

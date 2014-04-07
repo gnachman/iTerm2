@@ -2619,10 +2619,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     return _keysViewController.hotkeyField;
 }
 
-- (void)hotkeyKeyDown:(NSEvent*)event {
-    [_keysViewController hotkeyKeyDown:event];
-}
-
 #pragma mark - Accessors
 
 - (float)fsTabDelay {

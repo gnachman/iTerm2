@@ -225,18 +225,6 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                                                       userInfo:userInfo];
 }
 
-- (void)hotkeyKeyDown:(NSEvent*)event {
-    unsigned int keyMods;
-    NSString *unmodkeystr;
-
-    keyMods = [event modifierFlags];
-    unmodkeystr = [event charactersIgnoringModifiers];
-    unsigned short keyChar = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
-    unsigned int keyCode = [event keyCode];
-
-    [self setHotKeyChar:keyChar code:keyCode mods:keyMods];
-}
-
 - (Profile*)hotkeyProfile {
     NSString *guid = [iTermPreferences stringForKey:kPreferenceKeyHotkeyProfileGuid];
     if (guid) {
@@ -252,6 +240,20 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     }
     NSString *guid = [iTermPreferences stringForKey:kPreferenceKeyHotkeyProfileGuid];
     [_hotkeyBookmark populateWithProfilesSelectingGuid:guid];
+}
+
+#pragma mark - iTermShortcutInputViewDelegate
+
+- (void)shortcutInputView:(iTermShortcutInputView *)view didReceiveKeyPressEvent:(NSEvent *)event {
+    unsigned int keyMods;
+    NSString *unmodkeystr;
+
+    keyMods = [event modifierFlags];
+    unmodkeystr = [event charactersIgnoringModifiers];
+    unsigned short keyChar = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
+    unsigned int keyCode = [event keyCode];
+
+    [self setHotKeyChar:keyChar code:keyCode mods:keyMods];
 }
 
 @end
