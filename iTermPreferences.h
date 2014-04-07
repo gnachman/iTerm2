@@ -87,6 +87,7 @@ extern NSString *const kPreferenceKeyControlRemapping;
 extern NSString *const kPreferenceKeyLeftOptionRemapping;
 extern NSString *const kPreferenceKeyRightOptionRemapping;
 extern NSString *const kPreferenceKeyLeftCommandRemapping;
+extern NSString *const kPreferenceKeyRightCommandRemapping;
 
 @interface iTermPreferences : NSObject
 

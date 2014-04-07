@@ -15,6 +15,7 @@
     IBOutlet NSPopUpButton *_leftOptionButton;
     IBOutlet NSPopUpButton *_rightOptionButton;
     IBOutlet NSPopUpButton *_leftCommandButton;
+    IBOutlet NSPopUpButton *_rightCommandButton;
 }
 
 - (void)awakeFromNib {
@@ -37,6 +38,11 @@
 
     info = [self defineControl:_leftCommandButton
                            key:kPreferenceKeyLeftCommandRemapping
+                          type:kPreferenceInfoTypePopup];
+    info.onChange = ^() { [self startEventTapIfNecessary]; };
+
+    info = [self defineControl:_rightCommandButton
+                           key:kPreferenceKeyRightCommandRemapping
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() { [self startEventTapIfNecessary]; };
 }

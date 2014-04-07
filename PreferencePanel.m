@@ -357,14 +357,11 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSButton* copyButton;
 
     // Keyboard ------------------------------
-    int defaultRightCommand;
-    IBOutlet NSPopUpButton* rightCommandButton;
-
     int defaultSwitchTabModifier;
     IBOutlet NSPopUpButton* switchTabModifierButton;
     int defaultSwitchWindowModifier;
     IBOutlet NSPopUpButton* switchWindowModifierButton;
-    
+
     IBOutlet NSButton* deleteSendsCtrlHButton;
     IBOutlet NSButton* applicationKeypadAllowed;
     IBOutlet NSTableView* globalKeyMappings;
@@ -795,13 +792,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     }
 
     // Keyboard tab
-    BOOL wasAnyModifierRemapped = [self isAnyModifierRemapped];
-    defaultRightCommand = [rightCommandButton selectedTag];
-    if ((!wasAnyModifierRemapped && [self isAnyModifierRemapped]) ||
-        ([self isAnyModifierRemapped] && ![[HotkeyWindowController sharedInstance] haveEventTap])) {
-        [[HotkeyWindowController sharedInstance] beginRemappingModifiers];
-    }
-
     int rowIndex = [globalKeyMappings selectedRow];
     if (rowIndex >= 0) {
         [globalRemoveMappingButton setEnabled:YES];
@@ -2383,7 +2373,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
     defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
 
-    defaultRightCommand = [prefs objectForKey:@"RightCommand"] ? [[prefs objectForKey:@"RightCommand"] intValue] : MOD_TAG_RIGHT_COMMAND;
     if ([self isAnyModifierRemapped]) {
         // Use a brief delay so windows have a chance to open before the dialog is shown.
         [[HotkeyWindowController sharedInstance] performSelector:@selector(beginRemappingModifiers)
@@ -2457,7 +2446,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
     [prefs setInteger:defaultHotkeyModifiers forKey:@"HotkeyModifiers"];
 
-    [prefs setInteger:defaultRightCommand forKey:@"RightCommand"];
     [prefs setInteger:defaultSwitchTabModifier forKey:@"SwitchTabModifier"];
     [prefs setInteger:defaultSwitchWindowModifier forKey:@"SwitchWindowModifier"];
 
@@ -3070,9 +3058,8 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     return [iTermPreferences intForKey:kPreferenceKeyLeftCommandRemapping];
 }
 
-- (int)rightCommand
-{
-    return defaultRightCommand;
+- (int)rightCommand {
+    return [iTermPreferences intForKey:kPreferenceKeyRightCommandRemapping];
 }
 
 - (BOOL)isAnyModifierRemapped
@@ -3440,8 +3427,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     if (![bookmarksTableView selectedGuid] && [bookmarksTableView numberOfRows]) {
         [bookmarksTableView selectRowIndex:0];
     }
-
-    [rightCommandButton selectItemWithTag:defaultRightCommand];
 
     [switchTabModifierButton selectItemWithTag:defaultSwitchTabModifier];
     [switchWindowModifierButton selectItemWithTag:defaultSwitchWindowModifier];

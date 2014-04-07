@@ -67,6 +67,7 @@ NSString *const kPreferenceKeyControlRemapping = @"Control";
 NSString *const kPreferenceKeyLeftOptionRemapping = @"LeftOption";
 NSString *const kPreferenceKeyRightOptionRemapping = @"RightOption";
 NSString *const kPreferenceKeyLeftCommandRemapping = @"LeftCommand";
+NSString *const kPreferenceKeyRightCommandRemapping = @"RightCommand";
 
 static NSMutableDictionary *gObservers;
 
@@ -126,6 +127,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyLeftOptionRemapping: @(MOD_TAG_LEFT_OPTION),
                   kPreferenceKeyRightOptionRemapping: @(MOD_TAG_RIGHT_OPTION),
                   kPreferenceKeyLeftCommandRemapping: @(MOD_TAG_LEFT_COMMAND),
+                  kPreferenceKeyRightCommandRemapping: @(MOD_TAG_RIGHT_COMMAND),
                   };
         [dict retain];
     }
