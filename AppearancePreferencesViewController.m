@@ -45,6 +45,9 @@
 
     // Show job name in title
     IBOutlet NSButton *_jobName;
+
+    // Show bookmark name in title
+    IBOutlet NSButton *_showBookmarkName;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -115,6 +118,11 @@
 
     info = [self defineControl:_jobName
                            key:kPreferenceKeyShowJobName
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [self postUpdateLabelsNotification]; };
+
+    info = [self defineControl:_showBookmarkName
+                           key:kPreferenceKeyShowProfileName
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postUpdateLabelsNotification]; };
 }

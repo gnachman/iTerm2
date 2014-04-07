@@ -61,6 +61,7 @@ extern NSString *const kPreferenceKeyShowPaneTitles;
 extern NSString *const kPreferenceKeyHideMenuBarInFullscreen;
 extern NSString *const kPreferenceKeyShowWindowNumber;
 extern NSString *const kPreferenceKeyShowJobName;
+extern NSString *const kPreferenceKeyShowProfileName;
 
 @interface iTermPreferences : NSObject
 
