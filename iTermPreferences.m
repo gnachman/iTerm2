@@ -54,6 +54,7 @@ NSString *const kPreferenceKeyHideMenuBarInFullscreen = @"HideMenuBarInFullscree
 NSString *const kPreferenceKeyShowWindowNumber = @"WindowNumber";
 NSString *const kPreferenceKeyShowJobName = @"JobName";
 NSString *const kPreferenceKeyShowProfileName = @"ShowBookmarkName";  // The key predates bookmarks being renamed to profiles
+NSString *const kPreferenceKeyDimOnlyText = @"DimOnlyText";
 
 static NSMutableDictionary *gObservers;
 
@@ -101,6 +102,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyShowWindowNumber: @YES,
                   kPreferenceKeyShowJobName: @YES,
                   kPreferenceKeyShowProfileName: @NO,
+                  kPreferenceKeyDimOnlyText: @NO,
                   };
         [dict retain];
     }

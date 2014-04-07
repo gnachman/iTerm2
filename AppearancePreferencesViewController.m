@@ -46,8 +46,11 @@
     // Show job name in title
     IBOutlet NSButton *_jobName;
 
-    // Show bookmark name in title
+    // Show bookmark name in title.
     IBOutlet NSButton *_showBookmarkName;
+
+    // Dim text (and non-default background colors).
+    IBOutlet NSButton *_dimOnlyText;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -125,6 +128,12 @@
                            key:kPreferenceKeyShowProfileName
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postUpdateLabelsNotification]; };
+
+    info = [self defineControl:_dimOnlyText
+                           key:kPreferenceKeyDimOnlyText
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [self postRefreshNotification]; };
+
 }
 
 - (void)postUpdateLabelsNotification {

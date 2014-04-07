@@ -126,19 +126,15 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     // Animate dimming
     IBOutlet NSButton* animateDimming;
     BOOL defaultAnimateDimming;
-    
+
     // Dim background windows
     IBOutlet NSButton* dimBackgroundWindows;
     BOOL defaultDimBackgroundWindows;
-    
-    // Dim text (and non-default background colors)
-    IBOutlet NSButton* dimOnlyText;
-    BOOL defaultDimOnlyText;
-    
+
     // Dimming amount
     IBOutlet NSSlider* dimmingAmount;
     float defaultDimmingAmount;
-    
+
     // Window border
     IBOutlet NSButton* showWindowBorder;
     BOOL defaultShowWindowBorder;
@@ -771,7 +767,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
         sender == dimInactiveSplitPanes ||
         sender == dimBackgroundWindows ||
         sender == animateDimming ||
-        sender == dimOnlyText ||
         sender == dimmingAmount ||
         sender == threeFingerEmulatesMiddle ||
         sender == showWindowBorder ||
@@ -779,7 +774,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
         defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
         defaultDimBackgroundWindows = ([dimBackgroundWindows state] == NSOnState);
         defaultAnimateDimming= ([animateDimming state] == NSOnState);
-        defaultDimOnlyText = ([dimOnlyText state] == NSOnState);
         defaultDimmingAmount = [dimmingAmount floatValue];
         defaultShowWindowBorder = ([showWindowBorder state] == NSOnState);
         defaultThreeFingerEmulatesMiddle=([threeFingerEmulatesMiddle state] == NSOnState);
@@ -2448,7 +2442,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     defaultDimInactiveSplitPanes = [prefs objectForKey:@"DimInactiveSplitPanes"]?[[prefs objectForKey:@"DimInactiveSplitPanes"] boolValue]: YES;
     defaultDimBackgroundWindows = [prefs objectForKey:@"DimBackgroundWindows"]?[[prefs objectForKey:@"DimBackgroundWindows"] boolValue]: NO;
     defaultAnimateDimming = [prefs objectForKey:@"AnimateDimming"]?[[prefs objectForKey:@"AnimateDimming"] boolValue]: NO;
-    defaultDimOnlyText = [prefs objectForKey:@"DimOnlyText"]?[[prefs objectForKey:@"DimOnlyText"] boolValue]: NO;
     defaultDimmingAmount = [prefs objectForKey:@"SplitPaneDimmingAmount"] ? [[prefs objectForKey:@"SplitPaneDimmingAmount"] floatValue] : 0.4;
     defaultShowWindowBorder = [[prefs objectForKey:@"UseBorder"] boolValue];
 
@@ -2534,7 +2527,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [prefs setBool:defaultDimInactiveSplitPanes forKey:@"DimInactiveSplitPanes"];
     [prefs setBool:defaultDimBackgroundWindows forKey:@"DimBackgroundWindows"];
     [prefs setBool:defaultAnimateDimming forKey:@"AnimateDimming"];
-    [prefs setBool:defaultDimOnlyText forKey:@"DimOnlyText"];
     [prefs setFloat:defaultDimmingAmount forKey:@"SplitPaneDimmingAmount"];
     [prefs setBool:defaultShowWindowBorder forKey:@"UseBorder"];
 
@@ -3235,9 +3227,8 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     return defaultAnimateDimming;
 }
 
-- (BOOL)dimOnlyText
-{
-    return defaultDimOnlyText;
+- (BOOL)dimOnlyText {
+    return [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
 }
 
 - (float)dimmingAmount
@@ -3519,7 +3510,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [dimInactiveSplitPanes setState:defaultDimInactiveSplitPanes?NSOnState:NSOffState];
     [animateDimming setState:defaultAnimateDimming?NSOnState:NSOffState];
     [dimBackgroundWindows setState:defaultDimBackgroundWindows?NSOnState:NSOffState];
-    [dimOnlyText setState:defaultDimOnlyText?NSOnState:NSOffState];
     [dimmingAmount setFloatValue:defaultDimmingAmount];
     [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];
 
