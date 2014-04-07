@@ -538,6 +538,9 @@
 		1DEF5E6F185F889600300319 /* Alert@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEF5E6C185F889600300319 /* Alert@2x.png */; };
 		1DEF5E70185F889600300319 /* Alert@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEF5E6C185F889600300319 /* Alert@2x.png */; };
 		1DF0897113DBAF4C00A52AD8 /* Quartz.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF0897013DBAF4C00A52AD8 /* Quartz.framework */; };
+		1DF8006F18F34CAB00722B35 /* NSPopUpButton+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8006D18F34CAB00722B35 /* NSPopUpButton+iTerm.h */; };
+		1DF8007018F34CAB00722B35 /* NSPopUpButton+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF8006E18F34CAB00722B35 /* NSPopUpButton+iTerm.m */; };
+		1DF8007118F34CAB00722B35 /* NSPopUpButton+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF8006E18F34CAB00722B35 /* NSPopUpButton+iTerm.m */; };
 		1DF8AF5813FD781700C8A435 /* SplitPanel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8AF5613FD781700C8A435 /* SplitPanel.h */; };
 		1DF8AF5913FD781700C8A435 /* SplitPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF8AF5713FD781700C8A435 /* SplitPanel.m */; };
 		1DF8FEF318F3217100722B35 /* KeysPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8FEF118F3217100722B35 /* KeysPreferencesViewController.h */; };
@@ -1161,6 +1164,8 @@
 		1DEF5E6B185F889600300319 /* Alert.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Alert.png; path = images/Alert.png; sourceTree = "<group>"; };
 		1DEF5E6C185F889600300319 /* Alert@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Alert@2x.png"; path = "images/Alert@2x.png"; sourceTree = "<group>"; };
 		1DF0897013DBAF4C00A52AD8 /* Quartz.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Quartz.framework; path = System/Library/Frameworks/Quartz.framework; sourceTree = SDKROOT; };
+		1DF8006D18F34CAB00722B35 /* NSPopUpButton+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSPopUpButton+iTerm.h"; sourceTree = "<group>"; };
+		1DF8006E18F34CAB00722B35 /* NSPopUpButton+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSPopUpButton+iTerm.m"; sourceTree = "<group>"; };
 		1DF8AF5613FD781700C8A435 /* SplitPanel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SplitPanel.h; sourceTree = "<group>"; };
 		1DF8AF5713FD781700C8A435 /* SplitPanel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SplitPanel.m; sourceTree = "<group>"; };
 		1DF8FEF118F3217100722B35 /* KeysPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KeysPreferencesViewController.h; sourceTree = "<group>"; };
@@ -2082,11 +2087,13 @@
 				A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */,
 				A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */,
 				A68A30CE186D1414007F550F /* NSObject+iTerm.m */,
+				1DF8006D18F34CAB00722B35 /* NSPopUpButton+iTerm.h */,
+				1DF8006E18F34CAB00722B35 /* NSPopUpButton+iTerm.m */,
 				E8E901A202743CA303A80106 /* NSStringITerm.m */,
 				A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */,
-				1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */,
 				A61B66C818D4D855009AC9D5 /* NSView+iTerm.h */,
 				A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */,
+				1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -2459,6 +2466,7 @@
 				1D93D35312697529007F741B /* DVREncoder.h in Headers */,
 				1D173859126C820A004622DC /* FakeWindow.h in Headers */,
 				1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */,
+				1DF8006F18F34CAB00722B35 /* NSPopUpButton+iTerm.h in Headers */,
 				A6E7138E18F26A91008D94DD /* AppearancePreferencesViewController.h in Headers */,
 				A6E74761188C679C005355CF /* iTermExposeView.h in Headers */,
 				1D7C18811275D22900461E55 /* PasteboardHistory.h in Headers */,
@@ -3042,6 +3050,7 @@
 				1D9A5550180FA82E00B42CE9 /* TmuxWindowsTable.m in Sources */,
 				1DD39B1E180B8415004E56D5 /* LineBuffer.m in Sources */,
 				1D9A55AF180FA8B700B42CE9 /* PSMTabDragAssistant.m in Sources */,
+				1DF8007118F34CAB00722B35 /* NSPopUpButton+iTerm.m in Sources */,
 				1D9A559F180FA87000B42CE9 /* SplitPanel.m in Sources */,
 				1D9A5572180FA85D00B42CE9 /* HighlightTrigger.m in Sources */,
 				1D9A554B180FA82E00B42CE9 /* TmuxHistoryParser.m in Sources */,
@@ -3166,6 +3175,7 @@
 				A68A311A186E2F54007F550F /* PopupModel.m in Sources */,
 				1D93D350126974BC007F741B /* DVRDecoder.m in Sources */,
 				1D93D35412697529007F741B /* DVREncoder.m in Sources */,
+				1DF8007018F34CAB00722B35 /* NSPopUpButton+iTerm.m in Sources */,
 				1D93D35A1269778C007F741B /* DVRBuffer.m in Sources */,
 				A6E74762188C679C005355CF /* iTermExposeView.m in Sources */,
 				A63BA39618A9CB43002BE075 /* iTermSelection.m in Sources */,

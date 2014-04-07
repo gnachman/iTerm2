@@ -79,7 +79,6 @@ typedef enum {
 + (PreferencePanel*)sharedInstance;
 + (PreferencePanel*)sessionsInstance;
 + (BOOL)migratePreferences;
-+ (void)populatePopUpButtonWithBookmarks:(NSPopUpButton*)button selectedGuid:(NSString*)selectedGuid;
 
 - (void)openToBookmark:(NSString*)guid;
 

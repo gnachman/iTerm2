@@ -41,12 +41,17 @@
 - (IBAction)settingChanged:(id)sender {
     PreferenceInfo *info = [self infoForControl:sender];
     assert(info);
-    
+
+    if (info.customSettingChangedHandler) {
+        info.customSettingChangedHandler(sender);
+        return;
+    }
+
     switch (info.type) {
         case kPreferenceInfoTypeCheckbox:
             [iTermPreferences setBool:([sender state] == NSOnState) forKey:info.key];
             break;
-            
+
         case kPreferenceInfoTypeIntegerTextField:
             [self applyIntegerConstraints:info];
             [iTermPreferences setInt:[sender intValue] forKey:info.key];

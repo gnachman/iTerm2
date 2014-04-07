@@ -9,6 +9,7 @@
 #import "PointerPrefsController.h"
 #import "PointerController.h"
 #import "PreferencePanel.h"
+#import "NSPopUpButton+iTerm.h"
 #import "iTermApplicationDelegate.h"
 #import "ITAddressBookMgr.h"
 #import "FutureMethods.h"
@@ -836,8 +837,7 @@ typedef enum {
             [editArgumentField_ setHidden:YES];
             [editArgumentButton_ setHidden:NO];
             [editArgumentLabel_ setStringValue:@"Profile:"];
-            [PreferencePanel populatePopUpButtonWithBookmarks:editArgumentButton_
-                                                 selectedGuid:currentArg];
+            [editArgumentButton_ populateWithProfilesSelectingGuid:currentArg];
 
             break;
 

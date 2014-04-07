@@ -130,9 +130,6 @@
                 <outlet property="globalTabViewItem" destination="1944" id="2864"/>
                 <outlet property="globalToolbarItem" destination="5887" id="6037"/>
                 <outlet property="hideAfterOpening" destination="6354" id="6356"/>
-                <outlet property="hotkeyAutoHides" destination="rG7-dO-Nxw" id="JTl-kM-C6D"/>
-                <outlet property="hotkeyBookmark" destination="5108" id="5124"/>
-                <outlet property="hotkeyTogglesWindow" destination="5107" id="5123"/>
                 <outlet property="idleCode" destination="5698" id="5718"/>
                 <outlet property="initialText" destination="5410" id="5414"/>
                 <outlet property="initialTextLabel" destination="5408" id="5415"/>
@@ -4231,7 +4228,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="5119"/>
+                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="nuy-pI-ztg"/>
                                                 <outlet property="nextKeyView" destination="5108" id="5298"/>
                                             </connections>
                                         </button>
@@ -4248,7 +4245,7 @@ Gw
                                                 </menu>
                                             </popUpButtonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="5120"/>
+                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="Its-xd-Y8n"/>
                                                 <outlet property="nextKeyView" destination="3852" id="5299"/>
                                             </connections>
                                         </popUpButton>
@@ -4260,7 +4257,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="h2I-HY-jiR"/>
+                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="2Ih-It-cUu"/>
                                             </connections>
                                         </button>
                                     </subviews>
@@ -5955,9 +5952,12 @@ DQ
         <customObject id="8TE-cq-5cL" customClass="KeysPreferencesViewController">
             <connections>
                 <outlet property="_controlButton" destination="4237" id="rOx-d6-9bm"/>
+                <outlet property="_hotkeyAutoHides" destination="rG7-dO-Nxw" id="vKl-ss-Y3k"/>
+                <outlet property="_hotkeyBookmark" destination="5108" id="Zkv-ne-3zF"/>
                 <outlet property="_hotkeyEnabled" destination="5104" id="QVB-Xu-fmz"/>
                 <outlet property="_hotkeyField" destination="5105" id="7JV-k6-QEN"/>
                 <outlet property="_hotkeyLabel" destination="5106" id="nqf-CS-llf"/>
+                <outlet property="_hotkeyTogglesWindow" destination="5107" id="Dw3-dZ-bfg"/>
                 <outlet property="_leftCommandButton" destination="4393" id="Acz-Ri-0zT"/>
                 <outlet property="_leftOptionButton" destination="4383" id="kbJ-KW-Hkc"/>
                 <outlet property="_rightCommandButton" destination="4410" id="xeL-Ll-jEw"/>

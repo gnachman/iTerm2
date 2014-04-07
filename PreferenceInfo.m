@@ -32,6 +32,8 @@
     [_key release];
     [_control release];
     [_shouldBeEnabled release];
+    [_onChange release];
+    [_customSettingChangedHandler release];
     [super dealloc];
 }
 

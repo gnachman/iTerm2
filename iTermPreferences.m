@@ -74,6 +74,9 @@ NSString *const kPreferenceKeyHotkeyEnabled = @"Hotkey";
 NSString *const kPreferenceKeyHotKeyCode = @"HotkeyCode";
 NSString *const kPreferenceKeyHotkeyCharacter = @"HotkeyChar";
 NSString *const kPreferenceKeyHotkeyModifiers = @"HotkeyModifiers";
+NSString *const kPreferenceKeyHotKeyTogglesWindow = @"HotKeyTogglesWindow";
+NSString *const kPreferenceKeyHotkeyProfileGuid = @"HotKeyBookmark";
+NSString *const kPreferenceKeyHotkeyAutoHides = @"HotkeyAutoHides";
 
 static NSMutableDictionary *gObservers;
 
@@ -141,6 +144,9 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyHotKeyCode: @0,
                   kPreferenceKeyHotkeyCharacter: @0,
                   kPreferenceKeyHotkeyModifiers: @0,
+                  kPreferenceKeyHotKeyTogglesWindow: @NO,
+                  kPreferenceKeyHotkeyProfileGuid: [NSNull null],
+                  kPreferenceKeyHotkeyAutoHides: @YES,
                   };
         [dict retain];
     }
