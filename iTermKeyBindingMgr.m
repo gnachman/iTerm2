@@ -73,8 +73,9 @@
 
 #import "ITAddressBookMgr.h"
 #import "iTermKeyBindingMgr.h"
-#import <Carbon/Carbon.h>
+#import "iTermPreferences.h"
 #import "PreferencePanel.h"
+#import <Carbon/Carbon.h>
 
 static NSDictionary* globalKeyMap;
 

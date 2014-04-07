@@ -40,16 +40,6 @@ extern NSString *const kUpdateLabelsNotification;
 #define OPT_META   1
 #define OPT_ESC    2
 
-// Modifier tags
-#define MOD_TAG_CONTROL 1
-#define MOD_TAG_LEFT_OPTION 2
-#define MOD_TAG_RIGHT_OPTION 3
-#define MOD_TAG_ANY_COMMAND 4
-#define MOD_TAG_OPTION 5  // refers to any option key
-#define MOD_TAG_CMD_OPT 6  // both cmd and opt at the same time
-#define MOD_TAG_LEFT_COMMAND 7
-#define MOD_TAG_RIGHT_COMMAND 8
-
 // Constants for KEY_PROMPT_CLOSE
 // Never prompt on close
 #define PROMPT_NEVER 0

@@ -63,6 +63,8 @@ NSString *const kPreferenceKeyHideScrollbar = @"HideScrollbar";
 NSString *const kPreferenceKeyDisableFullscreenTransparencyByDefault = @"DisableFullscreenTransparency";
 NSString *const kPreferenceKeyDimBackgroundWindows = @"DimBackgroundWindows";
 
+NSString *const kPreferenceKeyControlRemapping = @"Control";
+
 static NSMutableDictionary *gObservers;
 
 @implementation iTermPreferences
@@ -117,6 +119,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyHideScrollbar: @NO,
                   kPreferenceKeyDisableFullscreenTransparencyByDefault: @NO,
                   kPreferenceKeyDimBackgroundWindows: @NO,
+                  kPreferenceKeyControlRemapping: @(MOD_TAG_CONTROL)
                   };
         [dict retain];
     }

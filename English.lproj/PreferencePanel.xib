@@ -88,7 +88,6 @@
                 <outlet property="cmdSelection" destination="6107" id="6211"/>
                 <outlet property="columnsField" destination="4911" id="4959"/>
                 <outlet property="columnsLabel" destination="4912" id="4961"/>
-                <outlet property="controlButton" destination="4237" id="4284"/>
                 <outlet property="controlLeftClickActsLikeRightClick" destination="6111" id="6414"/>
                 <outlet property="copyAdvanced" destination="5833" id="5836"/>
                 <outlet property="copyButton" destination="3537" id="3541"/>
@@ -3852,7 +3851,7 @@ Gw
                                                 </menu>
                                             </popUpButtonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="4276"/>
+                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="QbI-Zr-Gk1"/>
                                                 <outlet property="nextKeyView" destination="4383" id="5289"/>
                                             </connections>
                                         </popUpButton>
@@ -4035,11 +4034,11 @@ Gw
                                             <rect key="frame" x="363" y="30" width="508" height="379"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <clipView key="contentView" id="Dzn-LP-RyA">
-                                                <rect key="frame" x="1" y="17" width="490" height="361"/>
+                                                <rect key="frame" x="1" y="17" width="506" height="361"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveName="KeyBingingTable" headerView="3855" id="3852">
-                                                        <rect key="frame" x="0.0" y="0.0" width="490" height="361"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="506" height="361"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -4059,7 +4058,7 @@ Gw
                                                                 </textFieldCell>
                                                                 <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                                             </tableColumn>
-                                                            <tableColumn identifier="1" editable="NO" width="286.101" minWidth="42.10107" maxWidth="1000" id="3856">
+                                                            <tableColumn identifier="1" editable="NO" width="302.101" minWidth="42.10107" maxWidth="1000" id="3856">
                                                                 <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
                                                                     <font key="font" metaFont="smallSystem"/>
                                                                     <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -4090,7 +4089,7 @@ Gw
                                                 <autoresizingMask key="autoresizingMask"/>
                                             </scroller>
                                             <tableHeaderView key="headerView" id="3855">
-                                                <rect key="frame" x="0.0" y="0.0" width="490" height="17"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="506" height="17"/>
                                                 <autoresizingMask key="autoresizingMask"/>
                                             </tableHeaderView>
                                             <connections>
@@ -5961,6 +5960,11 @@ DQ
                 <outlet property="_tabPosition" destination="4463" id="Rxp-XS-Fkx"/>
                 <outlet property="_windowNumber" destination="4529" id="QlD-L4-Oy3"/>
                 <outlet property="_windowStyle" destination="4464" id="fUn-dc-sAa"/>
+            </connections>
+        </customObject>
+        <customObject id="8TE-cq-5cL" customClass="KeysPreferencesViewController">
+            <connections>
+                <outlet property="_controlButton" destination="4237" id="rOx-d6-9bm"/>
             </connections>
         </customObject>
     </objects>

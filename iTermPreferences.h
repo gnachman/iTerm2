@@ -19,9 +19,20 @@
 #define TAB_STYLE_UNIFIED 2
 #define TAB_STYLE_ADIUM 3
 
-// Values for kPreferenceKeyTabPosition (correspond to tags in control).
+// Values for kPreferenceKeyTabPosition (corresponds to tags in control).
 #define TAB_POSITION_TOP PSMTab_TopTab
 #define TAB_POSITION_BOTTOM PSMTab_BottomTab
+
+// Values for kPreferenceKeyXxxRemapping (corresponds to tags in controls).
+#define MOD_TAG_CONTROL 1
+#define MOD_TAG_LEFT_OPTION 2
+#define MOD_TAG_RIGHT_OPTION 3
+#define MOD_TAG_ANY_COMMAND 4
+#define MOD_TAG_OPTION 5  // refers to any option key
+#define MOD_TAG_CMD_OPT 6  // both cmd and opt at the same time
+#define MOD_TAG_LEFT_COMMAND 7
+#define MOD_TAG_RIGHT_COMMAND 8
+
 
 // General
 extern NSString *const kPreferenceKeyOpenBookmark;
@@ -70,6 +81,9 @@ extern NSString *const kPreferenceKeyShowWindowBorder;
 extern NSString *const kPreferenceKeyHideScrollbar;
 extern NSString *const kPreferenceKeyDisableFullscreenTransparencyByDefault;
 extern NSString *const kPreferenceKeyDimBackgroundWindows;
+
+// Keys
+extern NSString *const kPreferenceKeyControlRemapping;
 
 @interface iTermPreferences : NSObject
 

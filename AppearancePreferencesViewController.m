@@ -74,18 +74,9 @@
     IBOutlet NSButton *_disableFullscreenTransparency;
 }
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
-{
-    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-    if (self) {
-        // Initialization code here.
-    }
-    return self;
-}
-
 - (void)awakeFromNib {
     PreferenceInfo *info;
-    
+
     info = [self defineControl:_windowStyle
                            key:kPreferenceKeyWindowStyle
                           type:kPreferenceInfoTypePopup];
