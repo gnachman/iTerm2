@@ -146,7 +146,6 @@
                 <outlet property="idleCode" destination="5698" id="5718"/>
                 <outlet property="initialText" destination="5410" id="5414"/>
                 <outlet property="initialTextLabel" destination="5408" id="5415"/>
-                <outlet property="jobName" destination="4530" id="4616"/>
                 <outlet property="jobsTable_" destination="5661" id="5719"/>
                 <outlet property="keyCombinationColumn" destination="2464" id="3190"/>
                 <outlet property="keyMappings" destination="2463" id="3194"/>
@@ -1156,7 +1155,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="4537"/>
+                                                <action selector="settingChanged:" target="wvi-ET-SJJ" id="RFf-El-N8B"/>
                                                 <outlet property="nextKeyView" destination="4531" id="5205"/>
                                             </connections>
                                         </button>
@@ -5957,6 +5956,7 @@ DQ
                 <outlet property="_hideTabCloseButton" destination="1dE-aB-uR8" id="SWy-mD-56q"/>
                 <outlet property="_hideTabNumber" destination="4446" id="PJ6-1K-B6s"/>
                 <outlet property="_highlightTabLabels" destination="4467" id="rqg-9y-jlv"/>
+                <outlet property="_jobName" destination="4530" id="e5c-sx-3cZ"/>
                 <outlet property="_showPaneTitles" destination="6051" id="n0P-0K-pxx"/>
                 <outlet property="_tabPosition" destination="4463" id="Rxp-XS-Fkx"/>
                 <outlet property="_windowNumber" destination="4529" id="QlD-L4-Oy3"/>

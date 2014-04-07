@@ -151,14 +151,10 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSButton *disableFullscreenTransparency;
     BOOL defaultDisableFullscreenTransparency;
 
-    // Show job name in title
-    IBOutlet NSButton* jobName;
-    BOOL defaultJobName;
-
     // Show bookmark name in title
     IBOutlet NSButton* showBookmarkName;
     BOOL defaultShowBookmarkName;
-    
+
     // instant replay
     IBOutlet NSButton *instantReplay;
     BOOL defaultInstantReplay;
@@ -802,9 +798,7 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
                                                                 object:nil
                                                               userInfo:nil];
         }
-    } else if (sender == jobName ||
-               sender == showBookmarkName) {
-        defaultJobName = ([jobName state] == NSOnState);
+    } else if (sender == showBookmarkName) {
         defaultShowBookmarkName = ([showBookmarkName state] == NSOnState);
         [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateLabelsNotification
                                                             object:nil
@@ -2456,7 +2450,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
     defaultDisableFullscreenTransparency = [prefs objectForKey:@"DisableFullscreenTransparency"] ? [[prefs objectForKey:@"DisableFullscreenTransparency"] boolValue] : NO;
-    defaultJobName = [prefs objectForKey:@"JobName"]?[[prefs objectForKey:@"JobName"] boolValue]: YES;
     defaultShowBookmarkName = [prefs objectForKey:@"ShowBookmarkName"]?[[prefs objectForKey:@"ShowBookmarkName"] boolValue] : NO;
     defaultHotkey = [prefs objectForKey:@"Hotkey"]?[[prefs objectForKey:@"Hotkey"] boolValue]: NO;
     defaultHotkeyCode = [prefs objectForKey:@"HotkeyCode"]?[[prefs objectForKey:@"HotkeyCode"] intValue]: 0;
@@ -2544,7 +2537,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
     [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
     [prefs setBool:defaultDisableFullscreenTransparency forKey:@"DisableFullscreenTransparency"];
-    [prefs setBool:defaultJobName forKey:@"JobName"];
     [prefs setBool:defaultShowBookmarkName forKey:@"ShowBookmarkName"];
     [prefs setBool:defaultHotkey forKey:@"Hotkey"];
     [prefs setInteger:defaultHotkeyCode forKey:@"HotkeyCode"];
@@ -3142,9 +3134,8 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     return [iTermPreferences boolForKey:kPreferenceKeyShowWindowNumber];
 }
 
-- (BOOL)jobName
-{
-    return defaultJobName;
+- (BOOL)jobName {
+    return [iTermPreferences boolForKey:kPreferenceKeyShowJobName];
 }
 
 - (BOOL)showBookmarkName
@@ -3525,7 +3516,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
     [disableFullscreenTransparency setState:defaultDisableFullscreenTransparency ? NSOnState : NSOffState];
-    [jobName setState: defaultJobName?NSOnState:NSOffState];
     [showBookmarkName setState: defaultShowBookmarkName?NSOnState:NSOffState];
     [hotkey setState: defaultHotkey?NSOnState:NSOffState];
     if (defaultHotkeyCode || defaultHotkeyChar) {

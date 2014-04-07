@@ -52,6 +52,8 @@ NSString *const kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen = @"FsTabDelay
 NSString *const kPreferenceKeyShowPaneTitles = @"ShowPaneTitles";
 NSString *const kPreferenceKeyHideMenuBarInFullscreen = @"HideMenuBarInFullscreen";
 NSString *const kPreferenceKeyShowWindowNumber = @"WindowNumber";
+NSString *const kPreferenceKeyShowJobName = @"JobName";
+
 static NSMutableDictionary *gObservers;
 
 @implementation iTermPreferences
@@ -96,6 +98,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyShowPaneTitles: @YES,
                   kPreferenceKeyHideMenuBarInFullscreen:@YES,
                   kPreferenceKeyShowWindowNumber: @YES,
+                  kPreferenceKeyShowJobName: @YES,
                   };
         [dict retain];
     }

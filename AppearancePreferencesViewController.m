@@ -42,6 +42,9 @@
 
     // Show window number in title bar.
     IBOutlet NSButton *_windowNumber;
+
+    // Show job name in title
+    IBOutlet NSButton *_jobName;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -107,6 +110,11 @@
 
     info = [self defineControl:_windowNumber
                            key:kPreferenceKeyShowWindowNumber
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [self postUpdateLabelsNotification]; };
+
+    info = [self defineControl:_jobName
+                           key:kPreferenceKeyShowJobName
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postUpdateLabelsNotification]; };
 }
