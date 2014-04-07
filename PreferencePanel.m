@@ -56,6 +56,7 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 static NSString * const kDeleteKeyString = @"0x7f-0x0";
 static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
 NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
+NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 
 @interface PreferencePanel ()
 @property(nonatomic, copy) NSString *currentProfileGuid;
@@ -150,14 +151,10 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     IBOutlet NSButton *disableFullscreenTransparency;
     BOOL defaultDisableFullscreenTransparency;
 
-    // Window/tab title customization
-    IBOutlet NSButton* windowNumber;
-    BOOL defaultWindowNumber;
-    
     // Show job name in title
     IBOutlet NSButton* jobName;
     BOOL defaultJobName;
-    
+
     // Show bookmark name in title
     IBOutlet NSButton* showBookmarkName;
     BOOL defaultShowBookmarkName;
@@ -805,13 +802,11 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
                                                                 object:nil
                                                               userInfo:nil];
         }
-    } else if (sender == windowNumber ||
-               sender == jobName ||
+    } else if (sender == jobName ||
                sender == showBookmarkName) {
-        defaultWindowNumber = ([windowNumber state] == NSOnState);
         defaultJobName = ([jobName state] == NSOnState);
         defaultShowBookmarkName = ([showBookmarkName state] == NSOnState);
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermUpdateLabels"
+        [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateLabelsNotification
                                                             object:nil
                                                           userInfo:nil];
     } else if (sender == switchTabModifierButton ||
@@ -2461,7 +2456,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
     defaultDisableFullscreenTransparency = [prefs objectForKey:@"DisableFullscreenTransparency"] ? [[prefs objectForKey:@"DisableFullscreenTransparency"] boolValue] : NO;
-    defaultWindowNumber = [prefs objectForKey:@"WindowNumber"]?[[prefs objectForKey:@"WindowNumber"] boolValue]: YES;
     defaultJobName = [prefs objectForKey:@"JobName"]?[[prefs objectForKey:@"JobName"] boolValue]: YES;
     defaultShowBookmarkName = [prefs objectForKey:@"ShowBookmarkName"]?[[prefs objectForKey:@"ShowBookmarkName"] boolValue] : NO;
     defaultHotkey = [prefs objectForKey:@"Hotkey"]?[[prefs objectForKey:@"Hotkey"] boolValue]: NO;
@@ -2550,7 +2544,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
     [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
     [prefs setBool:defaultDisableFullscreenTransparency forKey:@"DisableFullscreenTransparency"];
-    [prefs setBool:defaultWindowNumber forKey:@"WindowNumber"];
     [prefs setBool:defaultJobName forKey:@"JobName"];
     [prefs setBool:defaultShowBookmarkName forKey:@"ShowBookmarkName"];
     [prefs setBool:defaultHotkey forKey:@"Hotkey"];
@@ -3145,9 +3138,8 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     return [iTermPreferences boolForKey:kPreferenceKeyAdjustWindowForFontSizeChange];
 }
 
-- (BOOL)windowNumber
-{
-    return defaultWindowNumber;
+- (BOOL)windowNumber {
+    return [iTermPreferences boolForKey:kPreferenceKeyShowWindowNumber];
 }
 
 - (BOOL)jobName
@@ -3533,7 +3525,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
     [disableFullscreenTransparency setState:defaultDisableFullscreenTransparency ? NSOnState : NSOffState];
-    [windowNumber setState: defaultWindowNumber?NSOnState:NSOffState];
     [jobName setState: defaultJobName?NSOnState:NSOffState];
     [showBookmarkName setState: defaultShowBookmarkName?NSOnState:NSOffState];
     [hotkey setState: defaultHotkey?NSOnState:NSOffState];

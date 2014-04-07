@@ -7,11 +7,12 @@
 //
 
 #import "AppearancePreferencesViewController.h"
+#import "PreferencePanel.h"
 
 @implementation AppearancePreferencesViewController {
     // This is actually the tab style. See TAB_STYLE_XXX defines.
     IBOutlet NSPopUpButton *_windowStyle;
-    
+
     // Tab position within window. See TAB_POSITION_XXX defines.
     IBOutlet NSPopUpButton *_tabPosition;
     
@@ -36,8 +37,11 @@
     // Show per-pane title bar with split panes.
     IBOutlet NSButton *_showPaneTitles;
 
-    // Hide menu bar in non-lion fullscreen
+    // Hide menu bar in non-lion fullscreen.
     IBOutlet NSButton *_hideMenuBarInFullscreen;
+
+    // Show window number in title bar.
+    IBOutlet NSButton *_windowNumber;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -101,7 +105,16 @@
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 
+    info = [self defineControl:_windowNumber
+                           key:kPreferenceKeyShowWindowNumber
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [self postUpdateLabelsNotification]; };
 }
 
+- (void)postUpdateLabelsNotification {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateLabelsNotification
+                                                        object:nil
+                                                      userInfo:nil];
+}
 
 @end

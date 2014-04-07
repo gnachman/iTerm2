@@ -575,14 +575,14 @@ NSString *kSessionsKVCKey = @"sessions";
     [[[self window] contentView] setAutoresizesSubviews: YES];
     [[self window] setDelegate: self];
 
-    [[NSNotificationCenter defaultCenter] addObserver: self
-                                             selector: @selector(_refreshTitle:)
-                                                 name: @"iTermUpdateLabels"
-                                               object: nil];
-    [[NSNotificationCenter defaultCenter] addObserver: self
-                                             selector: @selector(_refreshTerminal:)
-                                                 name: kRefreshTerminalNotification
-                                               object: nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_refreshTitle:)
+                                                 name:kUpdateLabelsNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_refreshTerminal:)
+                                                 name:kRefreshTerminalNotification
+                                               object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_scrollerStyleChanged:)
                                                  name:@"NSPreferredScrollerStyleDidChangeNotification"

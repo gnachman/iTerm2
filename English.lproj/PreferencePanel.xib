@@ -220,7 +220,6 @@
                 <outlet property="valueToSend" destination="2662" id="3205"/>
                 <outlet property="visualBell" destination="2403" id="3145"/>
                 <outlet property="window" destination="1923" id="2981"/>
-                <outlet property="windowNumber" destination="4529" id="4625"/>
                 <outlet property="windowTypeButton" destination="4916" id="4963"/>
                 <outlet property="windowTypeLabel" destination="4918" id="4964"/>
                 <outlet property="xtermMouseReporting" destination="2402" id="3146"/>
@@ -1145,7 +1144,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="4539"/>
+                                                <action selector="settingChanged:" target="wvi-ET-SJJ" id="aEE-AS-bub"/>
                                                 <outlet property="nextKeyView" destination="4530" id="5204"/>
                                             </connections>
                                         </button>
@@ -5960,6 +5959,7 @@ DQ
                 <outlet property="_highlightTabLabels" destination="4467" id="rqg-9y-jlv"/>
                 <outlet property="_showPaneTitles" destination="6051" id="n0P-0K-pxx"/>
                 <outlet property="_tabPosition" destination="4463" id="Rxp-XS-Fkx"/>
+                <outlet property="_windowNumber" destination="4529" id="QlD-L4-Oy3"/>
                 <outlet property="_windowStyle" destination="4464" id="fUn-dc-sAa"/>
             </connections>
         </customObject>

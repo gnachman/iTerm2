@@ -34,6 +34,7 @@
 #import "PTYTextViewDataSource.h"
 
 extern NSString *const kRefreshTerminalNotification;
+extern NSString *const kUpdateLabelsNotification;
 
 #define OPT_NORMAL 0
 #define OPT_META   1

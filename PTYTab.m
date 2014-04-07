@@ -155,7 +155,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_refreshLabels:)
-                                                 name:@"iTermUpdateLabels"
+                                                 name:kUpdateLabelsNotification
                                                object:nil];
     return self;
 }
@@ -194,7 +194,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_refreshLabels:)
-                                                 name:@"iTermUpdateLabels"
+                                                 name:kUpdateLabelsNotification
                                                object:nil];
     return self;
 }
