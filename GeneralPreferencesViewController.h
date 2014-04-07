@@ -7,13 +7,9 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermPreferencesBaseViewController.h"
 
-@interface GeneralPreferencesViewController : NSViewController
-
-- (IBAction)settingChanged:(id)sender;
-
-// Enable or disable controls as needed.
-- (void)updateEnabledState;
+@interface GeneralPreferencesViewController : iTermPreferencesBaseViewController
 
 // Custom folder stuff
 - (IBAction)browseCustomFolder:(id)sender;
