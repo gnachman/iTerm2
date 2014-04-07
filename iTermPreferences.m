@@ -59,6 +59,8 @@ NSString *const kPreferenceKeyDimmingAmount = @"SplitPaneDimmingAmount";
 NSString *const kPreferenceKeyDimInactiveSplitPanes = @"DimInactiveSplitPanes";
 NSString *const kPreferenceKeyAnimateDimming = @"AnimateDimming";
 NSString *const kPreferenceKeyShowWindowBorder = @"UseBorder";
+NSString *const kPreferenceKeyHideScrollbar = @"HideScrollbar";
+
 static NSMutableDictionary *gObservers;
 
 @implementation iTermPreferences
@@ -110,6 +112,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyDimInactiveSplitPanes: @YES,
                   kPreferenceKeyAnimateDimming: @NO,
                   kPreferenceKeyShowWindowBorder: @NO,
+                  kPreferenceKeyHideScrollbar: @NO,
                   };
         [dict retain];
     }

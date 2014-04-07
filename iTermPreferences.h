@@ -67,6 +67,7 @@ extern NSString *const kPreferenceKeyDimmingAmount;
 extern NSString *const kPreferenceKeyDimInactiveSplitPanes;
 extern NSString *const kPreferenceKeyAnimateDimming;
 extern NSString *const kPreferenceKeyShowWindowBorder;
+extern NSString *const kPreferenceKeyHideScrollbar;
 
 @interface iTermPreferences : NSObject
 

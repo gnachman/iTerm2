@@ -123,10 +123,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSButton* dimBackgroundWindows;
     BOOL defaultDimBackgroundWindows;
 
-    // hide scrollbar and resize
-    IBOutlet NSButton *hideScrollbar;
-    BOOL defaultHideScrollbar;
-
     // Disable transparency in fullscreen by default
     IBOutlet NSButton *disableFullscreenTransparency;
     BOOL defaultDisableFullscreenTransparency;
@@ -745,14 +741,12 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 
 - (IBAction)settingChanged:(id)sender
 {
-    if (sender == hideScrollbar ||
-        sender == disableFullscreenTransparency ||
+    if (sender == disableFullscreenTransparency ||
         sender == dimBackgroundWindows ||
         sender == threeFingerEmulatesMiddle ||
         sender == hotkeyAutoHides) {
         defaultDimBackgroundWindows = ([dimBackgroundWindows state] == NSOnState);
         defaultThreeFingerEmulatesMiddle=([threeFingerEmulatesMiddle state] == NSOnState);
-        defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
         defaultDisableFullscreenTransparency = ([disableFullscreenTransparency state] == NSOnState);
         defaultHotkeyAutoHides = ([hotkeyAutoHides state] == NSOnState);
         [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
@@ -2408,7 +2402,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     defaultOptionClickMovesCursor = [prefs objectForKey:@"OptionClickMovesCursor"]?[[prefs objectForKey:@"OptionClickMovesCursor"] boolValue]: YES;
     defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
 
-    defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
     defaultDisableFullscreenTransparency = [prefs objectForKey:@"DisableFullscreenTransparency"] ? [[prefs objectForKey:@"DisableFullscreenTransparency"] boolValue] : NO;
     defaultHotkey = [prefs objectForKey:@"Hotkey"]?[[prefs objectForKey:@"Hotkey"] boolValue]: NO;
     defaultHotkeyCode = [prefs objectForKey:@"HotkeyCode"]?[[prefs objectForKey:@"HotkeyCode"] intValue]: 0;
@@ -2489,7 +2482,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [prefs setBool:defaultOptionClickMovesCursor forKey:@"OptionClickMovesCursor"];
     [prefs setBool:defaultPassOnControlLeftClick forKey:@"PassOnControlClick"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
-    [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
     [prefs setBool:defaultDisableFullscreenTransparency forKey:@"DisableFullscreenTransparency"];
     [prefs setBool:defaultHotkey forKey:@"Hotkey"];
     [prefs setInteger:defaultHotkeyCode forKey:@"HotkeyCode"];
@@ -3056,9 +3048,8 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     return [prefs objectForKey:@"CursorType"] ? [prefs integerForKey:@"CursorType"] : CURSOR_BOX;
 }
 
-- (BOOL)hideScrollbar
-{
-    return defaultHideScrollbar;
+- (BOOL)hideScrollbar {
+    return [iTermPreferences boolForKey:kPreferenceKeyHideScrollbar];
 }
 
 - (BOOL)showPaneTitles {
@@ -3456,7 +3447,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [optionClickMovesCursor setState: defaultOptionClickMovesCursor?NSOnState:NSOffState];
     [controlLeftClickActsLikeRightClick setState: defaultPassOnControlLeftClick?NSOffState:NSOnState];
 
-    [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
     [disableFullscreenTransparency setState:defaultDisableFullscreenTransparency ? NSOnState : NSOffState];
     [hotkey setState: defaultHotkey?NSOnState:NSOffState];
     if (defaultHotkeyCode || defaultHotkeyChar) {

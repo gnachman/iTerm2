@@ -63,6 +63,9 @@
 
     // Window border.
     IBOutlet NSButton *_showWindowBorder;
+
+    // Hide scrollbar.
+    IBOutlet NSButton *_hideScrollbar;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -166,6 +169,10 @@
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 
+    info = [self defineControl:_hideScrollbar
+                           key:kPreferenceKeyHideScrollbar
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [self postRefreshNotification]; };
 }
 
 - (void)postUpdateLabelsNotification {
