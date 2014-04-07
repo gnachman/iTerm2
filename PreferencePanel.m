@@ -185,10 +185,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     IBOutlet NSButton* showWindowBorder;
     BOOL defaultShowWindowBorder;
     
-    // Open tmux dashboard if there are more than N windows
-    IBOutlet NSTextField *tmuxDashboardLimit;
-    int defaultTmuxDashboardLimit;
-    
     // Hide the tmux client session
     IBOutlet NSButton *autoHideTmuxClientSession;
     BOOL defaultAutoHideTmuxClientSession;
@@ -929,7 +925,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
         defaultCmdSelection = ([cmdSelection state] == NSOnState);
         defaultOptionClickMovesCursor = ([optionClickMovesCursor state] == NSOnState);
         defaultPassOnControlLeftClick = ([controlLeftClickActsLikeRightClick state] == NSOffState);
-        defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];
 
         BOOL oldDefaultHotkey = defaultHotkey;
         defaultHotkey = ([hotkey state] == NSOnState);
@@ -2553,7 +2548,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     defaultHideActivityIndicator = [prefs objectForKey:@"HideActivityIndicator"]?[[prefs objectForKey:@"HideActivityIndicator"] boolValue]: NO;
     defaultHighlightTabLabels = [prefs objectForKey:@"HighlightTabLabels"]?[[prefs objectForKey:@"HighlightTabLabels"] boolValue]: YES;
     defaultHideMenuBarInFullscreen = [prefs objectForKey:@"HideMenuBarInFullscreen"]?[[prefs objectForKey:@"HideMenuBarInFullscreen"] boolValue] : YES;
-    defaultTmuxDashboardLimit = [prefs objectForKey: @"TmuxDashboardLimit"]?[[prefs objectForKey:@"TmuxDashboardLimit"] intValue]:10;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
     defaultShowPaneTitles = [prefs objectForKey:@"ShowPaneTitles"]?[[prefs objectForKey:@"ShowPaneTitles"] boolValue]: YES;
     defaultDisableFullscreenTransparency = [prefs objectForKey:@"DisableFullscreenTransparency"] ? [[prefs objectForKey:@"DisableFullscreenTransparency"] boolValue] : NO;
@@ -2653,8 +2647,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [prefs setBool:defaultHideActivityIndicator forKey:@"HideActivityIndicator"];
     [prefs setBool:defaultHighlightTabLabels forKey:@"HighlightTabLabels"];
     [prefs setBool:defaultHideMenuBarInFullscreen forKey:@"HideMenuBarInFullscreen"];
-    [prefs setObject:[NSNumber numberWithInt:defaultTmuxDashboardLimit]
-                          forKey:@"TmuxDashboardLimit"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
     [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
     [prefs setBool:defaultShowPaneTitles forKey:@"ShowPaneTitles"];
@@ -3145,9 +3137,8 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     return defaultAutoHideTmuxClientSession;
 }
 
-- (int)tmuxDashboardLimit
-{
-    return defaultTmuxDashboardLimit;
+- (int)tmuxDashboardLimit {
+    return [iTermPreferences intForKey:kPreferenceKeyTmuxDashboardLimit];
 }
 
 - (BOOL)promptOnQuit
@@ -3665,7 +3656,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [hideMenuBarInFullscreen setState:defaultHideMenuBarInFullscreen ? NSOnState:NSOffState];
     [fsTabDelay setFloatValue:defaultFsTabDelay];
 
-    [tmuxDashboardLimit setIntValue:defaultTmuxDashboardLimit];
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
     [showPaneTitles setState:defaultShowPaneTitles?NSOnState:NSOffState];
     [disableFullscreenTransparency setState:defaultDisableFullscreenTransparency ? NSOnState : NSOffState];
@@ -4360,11 +4350,7 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 - (void)controlTextDidChange:(NSNotification *)aNotification
 {
     id obj = [aNotification object];
-    if (obj == tmuxDashboardLimit) {
-                [self forceTextFieldToBeNumber:tmuxDashboardLimit
-                                           acceptableRange:NSMakeRange(0, 1000)];
-                defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];
-    } else if (obj == scrollbackLines) {
+    if (obj == scrollbackLines) {
                 [self forceTextFieldToBeNumber:scrollbackLines
                                            acceptableRange:NSMakeRange(0, 10 * 1000 * 1000)];
         [self bookmarkSettingChanged:nil];

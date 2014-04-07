@@ -28,6 +28,7 @@ typedef enum {
 @property(nonatomic, retain) NSString *key;
 @property(nonatomic, assign) PreferenceInfoType type;
 @property(nonatomic, retain) NSControl *control;
+@property(nonatomic, assign) NSRange range;  // For integer fields, the range of legal values.
 
 // A function that indicates if the control should be enabled. If nil, then the control is always
 // enabled.
@@ -52,6 +53,14 @@ typedef enum {
     info.type = type;
     info.control = control;
     return info;
+}
+
+- (id)init {
+    self = [super init];
+    if (self) {
+        _range = NSMakeRange(0, INT_MAX);
+    }
+    return self;
 }
 
 - (void)dealloc {
@@ -131,6 +140,9 @@ typedef enum {
     // Open tmux windows in [windows, tabs]
     IBOutlet NSPopUpButton *_openTmuxWindows;
 
+    // Open tmux dashboard if there are more than N windows
+    IBOutlet NSTextField *_tmuxDashboardLimit;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -179,9 +191,10 @@ typedef enum {
                     key:kPreferenceKeyPromptOnQuit
                    type:kPreferenceInfoTypeCheckbox];
 
-    [self defineControl:_irMemory
-                    key:kPreferenceKeyInstantReplayMemoryMegabytes
-                   type:kPreferenceInfoTypeIntegerTextField];
+    info = [self defineControl:_irMemory
+                           key:kPreferenceKeyInstantReplayMemoryMegabytes
+                          type:kPreferenceInfoTypeIntegerTextField];
+    info.range = NSMakeRange(0, 1000);
 
     info = [self defineControl:_savePasteHistory
                            key:kPreferenceKeySavePasteAndCommandHistory
@@ -266,12 +279,49 @@ typedef enum {
                           type:kPreferenceInfoTypePopup];
     // This is how it was done before the great refactoring, but I don't see why it's needed.
     info.onChange = ^() { [self postRefreshNotification]; };
+    
+    info = [self defineControl:_tmuxDashboardLimit
+                           key:kPreferenceKeyTmuxDashboardLimit
+                          type:kPreferenceInfoTypeIntegerTextField];
+    info.range = NSMakeRange(0, 1000);
 }
 
 - (void)postRefreshNotification {
     [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
                                                         object:nil
                                                       userInfo:nil];
+}
+
+// Pick out the digits from s and clamp it to a range.
+- (int)intForString:(NSString *)s inRange:(NSRange)range
+{
+    NSString *i = [s stringWithOnlyDigits];
+    
+    int val = 0;
+    if ([i length]) {
+        val = [i intValue];
+    }
+    val = MAX(val, range.location);
+    val = MIN(val, range.location + range.length - 1);
+    return val;
+}
+
+- (void)applyIntegerConstraints:(PreferenceInfo *)info {
+    // NSNumberFormatter seems to have lost its mind on Lion. See a description of the problem here:
+    // http://stackoverflow.com/questions/7976951/nsnumberformatter-erasing-value-when-it-violates-constraints
+    assert([info.control isKindOfClass:[NSTextField class]]);
+    NSTextField *textField = (NSTextField *)info.control;
+    int iv = [self intForString:[textField stringValue] inRange:info.range];
+    unichar lastChar = '0';
+    int numChars = [[textField stringValue] length];
+    if (numChars) {
+        lastChar = [[textField stringValue] characterAtIndex:numChars - 1];
+    }
+    if (iv != [textField intValue] || (lastChar < '0' || lastChar > '9')) {
+        // If the int values don't match up or there are terminal non-number
+        // chars, then update the value.
+        [textField setIntValue:iv];
+    }
 }
 
 - (void)updateValueForInfo:(PreferenceInfo *)info {
@@ -342,6 +392,7 @@ typedef enum {
             break;
             
         case kPreferenceInfoTypeIntegerTextField:
+            [self applyIntegerConstraints:info];
             [iTermPreferences setInt:[sender intValue] forKey:info.key];
             break;
 
@@ -394,7 +445,9 @@ typedef enum {
 - (void)controlTextDidChange:(NSNotification *)aNotification {
     id control = [aNotification object];
     if (control == _prefsCustomFolder ||
-        control == _wordChars) {
+        control == _irMemory ||
+        control == _wordChars ||
+        control == _tmuxDashboardLimit) {
         [self settingChanged:control];
     }
 }

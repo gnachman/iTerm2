@@ -34,6 +34,7 @@ extern NSString *const kPreferenceKeyAdjustWindowForFontSizeChange;
 extern NSString *const kPreferenceKeyMaximizeVerticallyOnly;
 extern NSString *const kPreferenceKeyLionStyleFullscren;
 extern NSString *const kPreferenceKeyOpenTmuxWindowsIn;
+extern NSString *const kPreferenceKeyTmuxDashboardLimit;
 
 @interface iTermPreferences : NSObject
 
