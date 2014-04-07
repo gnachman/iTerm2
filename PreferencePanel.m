@@ -184,10 +184,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     IBOutlet NSButton* showWindowBorder;
     BOOL defaultShowWindowBorder;
     
-    // Lion-style fullscreen
-    IBOutlet NSButton* lionStyleFullscreen;
-    BOOL defaultLionStyleFullscreen;
-    
     // Open tmux dashboard if there are more than N windows
     IBOutlet NSTextField *tmuxDashboardLimit;
     int defaultTmuxDashboardLimit;
@@ -656,7 +652,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [[tags cell] setDelegate:self];
     [tags setDelegate:self];
 
-    [lionStyleFullscreen setHidden:NO];
     [initialText setContinuous:YES];
     [blurRadius setContinuous:YES];
     [transparency setContinuous:YES];
@@ -844,29 +839,27 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
 - (IBAction)settingChanged:(id)sender
 {
-    if (sender == lionStyleFullscreen) {
-        defaultLionStyleFullscreen = ([lionStyleFullscreen state] == NSOnState);
-    } else if (sender == windowStyle ||
-               sender == tabPosition ||
-               sender == hideTab ||
-               sender == hideTabCloseButton ||
-               sender == hideTabNumber ||
-               sender == hideActivityIndicator ||
-               sender == highlightTabLabels ||
-               sender == hideMenuBarInFullscreen ||
-               sender == hideScrollbar ||
-               sender == showPaneTitles ||
-               sender == disableFullscreenTransparency ||
-               sender == dimInactiveSplitPanes ||
-               sender == dimBackgroundWindows ||
-               sender == animateDimming ||
-               sender == dimOnlyText ||
-               sender == dimmingAmount ||
-               sender == openTmuxWindows ||
-               sender == threeFingerEmulatesMiddle ||
-               sender == autoHideTmuxClientSession ||
-               sender == showWindowBorder ||
-               sender == hotkeyAutoHides) {
+    if (sender == windowStyle ||
+        sender == tabPosition ||
+        sender == hideTab ||
+        sender == hideTabCloseButton ||
+        sender == hideTabNumber ||
+        sender == hideActivityIndicator ||
+        sender == highlightTabLabels ||
+        sender == hideMenuBarInFullscreen ||
+        sender == hideScrollbar ||
+        sender == showPaneTitles ||
+        sender == disableFullscreenTransparency ||
+        sender == dimInactiveSplitPanes ||
+        sender == dimBackgroundWindows ||
+        sender == animateDimming ||
+        sender == dimOnlyText ||
+        sender == dimmingAmount ||
+        sender == openTmuxWindows ||
+        sender == threeFingerEmulatesMiddle ||
+        sender == autoHideTmuxClientSession ||
+        sender == showWindowBorder ||
+        sender == hotkeyAutoHides) {
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
         defaultOpenTmuxWindowsIn = [[openTmuxWindows selectedItem] tag];
         defaultAutoHideTmuxClientSession = ([autoHideTmuxClientSession state] == NSOnState);
@@ -2583,7 +2576,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultDimOnlyText = [prefs objectForKey:@"DimOnlyText"]?[[prefs objectForKey:@"DimOnlyText"] boolValue]: NO;
     defaultDimmingAmount = [prefs objectForKey:@"SplitPaneDimmingAmount"] ? [[prefs objectForKey:@"SplitPaneDimmingAmount"] floatValue] : 0.4;
     defaultShowWindowBorder = [[prefs objectForKey:@"UseBorder"] boolValue];
-    defaultLionStyleFullscreen = [prefs objectForKey:@"UseLionStyleFullscreen"] ? [[prefs objectForKey:@"UseLionStyleFullscreen"] boolValue] : YES;
 
     defaultControl = [prefs objectForKey:@"Control"] ? [[prefs objectForKey:@"Control"] intValue] : MOD_TAG_CONTROL;
     defaultLeftOption = [prefs objectForKey:@"LeftOption"] ? [[prefs objectForKey:@"LeftOption"] intValue] : MOD_TAG_LEFT_OPTION;
@@ -2687,7 +2679,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setBool:defaultDimOnlyText forKey:@"DimOnlyText"];
     [prefs setFloat:defaultDimmingAmount forKey:@"SplitPaneDimmingAmount"];
     [prefs setBool:defaultShowWindowBorder forKey:@"UseBorder"];
-    [prefs setBool:defaultLionStyleFullscreen forKey:@"UseLionStyleFullscreen"];
 
     [prefs setInteger:defaultControl forKey:@"Control"];
     [prefs setInteger:defaultLeftOption forKey:@"LeftOption"];
@@ -3420,9 +3411,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return defaultShowWindowBorder;
 }
 
-- (BOOL)lionStyleFullscreen
-{
-    return defaultLionStyleFullscreen;
+- (BOOL)lionStyleFullscreen {
+    return [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren];
 }
 
 - (BOOL)checkTestRelease
@@ -3709,7 +3699,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [dimOnlyText setState:defaultDimOnlyText?NSOnState:NSOffState];
     [dimmingAmount setFloatValue:defaultDimmingAmount];
     [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];
-    [lionStyleFullscreen setState:defaultLionStyleFullscreen?NSOnState:NSOffState];
 
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];

@@ -163,7 +163,6 @@
                 <outlet property="keyboardToolbarItem" destination="5888" id="6040"/>
                 <outlet property="leftCommandButton" destination="4393" id="4421"/>
                 <outlet property="leftOptionButton" destination="4383" id="4419"/>
-                <outlet property="lionStyleFullscreen" destination="5319" id="5323"/>
                 <outlet property="logDir" destination="5686" id="5715"/>
                 <outlet property="menuToSelect" destination="6358" id="6364"/>
                 <outlet property="minimumContrast" destination="4896" id="4906"/>
@@ -749,14 +748,15 @@ Gw
                                             </connections>
                                         </button>
                                         <button id="5319">
-                                            <rect key="frame" x="432" y="188" width="268" height="18"/>
+                                            <rect key="frame" x="432" y="188" width="271" height="18"/>
                                             <autoresizingMask key="autoresizingMask"/>
-                                            <buttonCell key="cell" type="check" title="Use Lion-style Fullscreen windows" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5320">
+                                            <buttonCell key="cell" type="check" title="Standard Mac-style full screen windows" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5320">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="5322"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="fot-6n-Z9m"/>
+                                                <outlet property="nextKeyView" destination="6337" id="age-Bh-isX"/>
                                             </connections>
                                         </button>
                                         <button id="6366">
@@ -5944,6 +5944,7 @@ DQ
                 <outlet property="_copyLastNewline" destination="5747" id="y4f-IT-rUT"/>
                 <outlet property="_enableBonjour" destination="5051" id="lpI-Ub-bAd"/>
                 <outlet property="_irMemory" destination="5055" id="dYT-8S-UeF"/>
+                <outlet property="_lionStyleFullscreen" destination="5319" id="1Ja-r1-AWt"/>
                 <outlet property="_loadPrefsFromCustomFolder" destination="5614" id="9l7-ub-H9J"/>
                 <outlet property="_maxVertically" destination="4540" id="Voi-dz-2WX"/>
                 <outlet property="_openArrangementAtStartup" destination="3590" id="hIR-Ca-buG"/>

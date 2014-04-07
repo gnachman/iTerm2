@@ -124,6 +124,9 @@ typedef enum {
     // Zoom vertically only
     IBOutlet NSButton *_maxVertically;
 
+    // Lion-style fullscreen
+    IBOutlet NSButton *_lionStyleFullscreen;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -248,6 +251,10 @@ typedef enum {
     
     [self defineControl:_maxVertically
                     key:kPreferenceKeyMaximizeVerticallyOnly
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_lionStyleFullscreen
+                    key:kPreferenceKeyLionStyleFullscren
                    type:kPreferenceInfoTypeCheckbox];
 }
 

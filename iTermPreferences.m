@@ -36,6 +36,7 @@ NSString *const kPreferenceKeyCharactersConsideredPartOfAWordForSelection = @"Wo
 NSString *const kPreferenceKeySmartWindowPlacement = @"SmartPlacement";
 NSString *const kPreferenceKeyAdjustWindowForFontSizeChange = @"AdjustWindowForFontSizeChange";
 NSString *const kPreferenceKeyMaximizeVerticallyOnly = @"MaxVertically";
+NSString *const kPreferenceKeyLionStyleFullscren = @"UseLionStyleFullscreen";
 
 static NSMutableDictionary *gObservers;
 
@@ -64,7 +65,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyCharactersConsideredPartOfAWordForSelection: @"/-+\\~_.",
                   kPreferenceKeySmartWindowPlacement: @NO,
                   kPreferenceKeyAdjustWindowForFontSizeChange: @YES,
-                  kPreferenceKeyMaximizeVerticallyOnly: @NO, };
+                  kPreferenceKeyMaximizeVerticallyOnly: @NO,
+                  kPreferenceKeyLionStyleFullscren: @YES, };
         [dict retain];
     }
     return dict;
