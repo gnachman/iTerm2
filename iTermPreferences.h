@@ -84,6 +84,7 @@ extern NSString *const kPreferenceKeyDimBackgroundWindows;
 
 // Keys
 extern NSString *const kPreferenceKeyControlRemapping;
+extern NSString *const kPreferenceKeyLeftOptionRemapping;
 
 @interface iTermPreferences : NSObject
 

@@ -64,6 +64,7 @@ NSString *const kPreferenceKeyDisableFullscreenTransparencyByDefault = @"Disable
 NSString *const kPreferenceKeyDimBackgroundWindows = @"DimBackgroundWindows";
 
 NSString *const kPreferenceKeyControlRemapping = @"Control";
+NSString *const kPreferenceKeyLeftOptionRemapping = @"LeftOption";
 
 static NSMutableDictionary *gObservers;
 
@@ -119,7 +120,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyHideScrollbar: @NO,
                   kPreferenceKeyDisableFullscreenTransparencyByDefault: @NO,
                   kPreferenceKeyDimBackgroundWindows: @NO,
-                  kPreferenceKeyControlRemapping: @(MOD_TAG_CONTROL)
+                  kPreferenceKeyControlRemapping: @(MOD_TAG_CONTROL),
+                  kPreferenceKeyLeftOptionRemapping: @(MOD_TAG_LEFT_OPTION),
                   };
         [dict retain];
     }
