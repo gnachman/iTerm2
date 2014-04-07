@@ -143,6 +143,9 @@ typedef enum {
     // Open tmux dashboard if there are more than N windows
     IBOutlet NSTextField *_tmuxDashboardLimit;
 
+    // Hide the tmux client session
+    IBOutlet NSButton *_autoHideTmuxClientSession;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -284,6 +287,10 @@ typedef enum {
                            key:kPreferenceKeyTmuxDashboardLimit
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(0, 1000);
+    
+    [self defineControl:_autoHideTmuxClientSession
+                    key:kPreferenceKeyAutoHideTmuxClientSession
+                   type:kPreferenceInfoTypeCheckbox];
 }
 
 - (void)postRefreshNotification {

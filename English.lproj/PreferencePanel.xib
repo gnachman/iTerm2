@@ -41,7 +41,6 @@
                 <outlet property="arrangementsToolbarItem" destination="5890" id="6041"/>
                 <outlet property="arrangements_" destination="5572" id="5584"/>
                 <outlet property="asciiAntiAliased" destination="4782" id="4877"/>
-                <outlet property="autoHideTmuxClientSession" destination="6366" id="6370"/>
                 <outlet property="autoLog" destination="5685" id="5716"/>
                 <outlet property="awdsPaneDirectory" destination="6012" id="6030"/>
                 <outlet property="awdsPaneDirectoryType" destination="6011" id="6031"/>
@@ -765,7 +764,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="6368"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="E7x-cI-dhk"/>
                                             </connections>
                                         </button>
                                         <button id="4570">
@@ -5933,6 +5932,7 @@ DQ
             <connections>
                 <outlet property="_adjustWindowForFontSizeChange" destination="6377" id="8Ci-Ia-xoQ"/>
                 <outlet property="_allowClipboardAccessFromTerminal" destination="6383" id="u1Z-Xo-qFM"/>
+                <outlet property="_autoHideTmuxClientSession" destination="6366" id="V9B-um-JRL"/>
                 <outlet property="_browseCustomFolder" destination="5618" id="0Ty-gp-K5Q"/>
                 <outlet property="_checkTestRelease" destination="5049" id="mCk-NA-PO2"/>
                 <outlet property="_checkUpdate" destination="5048" id="Oi0-3Y-fu1"/>

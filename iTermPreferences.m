@@ -39,6 +39,7 @@ NSString *const kPreferenceKeyMaximizeVerticallyOnly = @"MaxVertically";
 NSString *const kPreferenceKeyLionStyleFullscren = @"UseLionStyleFullscreen";
 NSString *const kPreferenceKeyOpenTmuxWindowsIn = @"OpenTmuxWindowsIn";
 NSString *const kPreferenceKeyTmuxDashboardLimit = @"TmuxDashboardLimit";
+NSString *const kPreferenceKeyAutoHideTmuxClientSession = @"AutoHideTmuxClientSession";
 
 static NSMutableDictionary *gObservers;
 
@@ -70,7 +71,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyMaximizeVerticallyOnly: @NO,
                   kPreferenceKeyLionStyleFullscren: @YES,
                   kPreferenceKeyOpenTmuxWindowsIn: @(OPEN_TMUX_WINDOWS_IN_WINDOWS),
-                  kPreferenceKeyTmuxDashboardLimit: @10, };
+                  kPreferenceKeyTmuxDashboardLimit: @10,
+                  kPreferenceKeyAutoHideTmuxClientSession: @NO, };
         [dict retain];
     }
     return dict;
