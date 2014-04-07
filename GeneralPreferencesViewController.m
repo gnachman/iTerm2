@@ -121,6 +121,9 @@ typedef enum {
     // Adjust window size when changing font size
     IBOutlet NSButton *_adjustWindowForFontSizeChange;
 
+    // Zoom vertically only
+    IBOutlet NSButton *_maxVertically;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -241,6 +244,10 @@ typedef enum {
     
     [self defineControl:_adjustWindowForFontSizeChange
                     key:kPreferenceKeyAdjustWindowForFontSizeChange
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_maxVertically
+                    key:kPreferenceKeyMaximizeVerticallyOnly
                    type:kPreferenceInfoTypeCheckbox];
 }
 

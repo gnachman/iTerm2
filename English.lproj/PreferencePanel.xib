@@ -165,7 +165,6 @@
                 <outlet property="leftOptionButton" destination="4383" id="4419"/>
                 <outlet property="lionStyleFullscreen" destination="5319" id="5323"/>
                 <outlet property="logDir" destination="5686" id="5715"/>
-                <outlet property="maxVertically" destination="4540" id="4608"/>
                 <outlet property="menuToSelect" destination="6358" id="6364"/>
                 <outlet property="minimumContrast" destination="4896" id="4906"/>
                 <outlet property="mouseTabViewItem" destination="6059" id="6061"/>
@@ -746,7 +745,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="4542"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="oP4-Nh-ypZ"/>
                                             </connections>
                                         </button>
                                         <button id="5319">
@@ -5946,6 +5945,7 @@ DQ
                 <outlet property="_enableBonjour" destination="5051" id="lpI-Ub-bAd"/>
                 <outlet property="_irMemory" destination="5055" id="dYT-8S-UeF"/>
                 <outlet property="_loadPrefsFromCustomFolder" destination="5614" id="9l7-ub-H9J"/>
+                <outlet property="_maxVertically" destination="4540" id="Voi-dz-2WX"/>
                 <outlet property="_openArrangementAtStartup" destination="3590" id="hIR-Ca-buG"/>
                 <outlet property="_openBookmark" destination="1959" id="PNp-By-R5Y"/>
                 <outlet property="_prefsCustomFolder" destination="5616" id="GlX-Oe-rRX"/>

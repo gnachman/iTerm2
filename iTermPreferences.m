@@ -35,6 +35,7 @@ NSString *const kPreferenceKeyAllowClipboardAccessFromTerminal = @"AllowClipboar
 NSString *const kPreferenceKeyCharactersConsideredPartOfAWordForSelection = @"WordCharacters";
 NSString *const kPreferenceKeySmartWindowPlacement = @"SmartPlacement";
 NSString *const kPreferenceKeyAdjustWindowForFontSizeChange = @"AdjustWindowForFontSizeChange";
+NSString *const kPreferenceKeyMaximizeVerticallyOnly = @"MaxVertically";
 
 static NSMutableDictionary *gObservers;
 
@@ -62,7 +63,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyAllowClipboardAccessFromTerminal: @NO,
                   kPreferenceKeyCharactersConsideredPartOfAWordForSelection: @"/-+\\~_.",
                   kPreferenceKeySmartWindowPlacement: @NO,
-                  kPreferenceKeyAdjustWindowForFontSizeChange: @YES, };
+                  kPreferenceKeyAdjustWindowForFontSizeChange: @YES,
+                  kPreferenceKeyMaximizeVerticallyOnly: @NO, };
         [dict retain];
     }
     return dict;

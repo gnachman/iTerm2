@@ -131,10 +131,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     IBOutlet NSButton *optionClickMovesCursor;
     BOOL defaultOptionClickMovesCursor;
     
-    // Zoom vertically only
-    IBOutlet NSButton *maxVertically;
-    BOOL defaultMaxVertically;
-    
     // use compact tab labels
     IBOutlet NSButton *hideTabNumber;
     IBOutlet NSButton *hideTabCloseButton;
@@ -945,7 +941,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         defaultCmdSelection = ([cmdSelection state] == NSOnState);
         defaultOptionClickMovesCursor = ([optionClickMovesCursor state] == NSOnState);
         defaultPassOnControlLeftClick = ([controlLeftClickActsLikeRightClick state] == NSOffState);
-        defaultMaxVertically = ([maxVertically state] == NSOnState);
         defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];
 
         BOOL oldDefaultHotkey = defaultHotkey;
@@ -2564,7 +2559,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultCmdSelection = [prefs objectForKey:@"CommandSelection"]?[[prefs objectForKey:@"CommandSelection"] boolValue]: YES;
     defaultOptionClickMovesCursor = [prefs objectForKey:@"OptionClickMovesCursor"]?[[prefs objectForKey:@"OptionClickMovesCursor"] boolValue]: YES;
     defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
-    defaultMaxVertically = [prefs objectForKey:@"MaxVertically"] ? [[prefs objectForKey:@"MaxVertically"] boolValue] : NO;
     defaultFsTabDelay = [prefs objectForKey:@"FsTabDelay"] ? [[prefs objectForKey:@"FsTabDelay"] floatValue] : 1.0;
 
     defaultHideTabCloseButton = [prefs boolForKey:@"HideTabCloseButton"];
@@ -2669,7 +2663,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setBool:defaultOptionClickMovesCursor forKey:@"OptionClickMovesCursor"];
     [prefs setFloat:defaultFsTabDelay forKey:@"FsTabDelay"];
     [prefs setBool:defaultPassOnControlLeftClick forKey:@"PassOnControlClick"];
-    [prefs setBool:defaultMaxVertically forKey:@"MaxVertically"];
     [prefs setBool:defaultHideTabNumber forKey:@"HideTabNumber"];
     [prefs setBool:defaultHideTabCloseButton forKey:@"HideTabCloseButton"];
     [prefs setBool:defaultHideActivityIndicator forKey:@"HideActivityIndicator"];
@@ -3229,9 +3222,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return defaultPassOnControlLeftClick;
 }
 
-- (BOOL)maxVertically
-{
-    return defaultMaxVertically;
+- (BOOL)maxVertically {
+    return [iTermPreferences boolForKey:kPreferenceKeyMaximizeVerticallyOnly];
 }
 
 - (BOOL)hideTabNumber {
@@ -3685,7 +3677,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [cmdSelection setState: defaultCmdSelection?NSOnState:NSOffState];
     [optionClickMovesCursor setState: defaultOptionClickMovesCursor?NSOnState:NSOffState];
     [controlLeftClickActsLikeRightClick setState: defaultPassOnControlLeftClick?NSOffState:NSOnState];
-    [maxVertically setState: defaultMaxVertically?NSOnState:NSOffState];
     [hideTabCloseButton setState: defaultHideTabCloseButton?NSOnState:NSOffState];
     [hideTabNumber setState: defaultHideTabNumber?NSOnState:NSOffState];
     [hideActivityIndicator setState:defaultHideActivityIndicator?NSOnState:NSOffState];
