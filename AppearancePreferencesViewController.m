@@ -51,6 +51,9 @@
 
     // Dim text (and non-default background colors).
     IBOutlet NSButton *_dimOnlyText;
+
+    // Dimming amount.
+    IBOutlet NSSlider *_dimmingAmount;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -134,6 +137,10 @@
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 
+    info = [self defineControl:_dimmingAmount
+                           key:kPreferenceKeyDimmingAmount
+                          type:kPreferenceInfoTypeSlider];
+    info.onChange = ^() { [self postRefreshNotification]; };
 }
 
 - (void)postUpdateLabelsNotification {

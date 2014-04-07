@@ -110,7 +110,6 @@
                 <outlet property="deleteSendsCtrlHButton" destination="5074" id="5078"/>
                 <outlet property="dimBackgroundWindows" destination="5325" id="5329"/>
                 <outlet property="dimInactiveSplitPanes" destination="4560" id="4612"/>
-                <outlet property="dimmingAmount" destination="5337" id="5345"/>
                 <outlet property="disableFullscreenTransparency" destination="5753" id="5757"/>
                 <outlet property="disablePrinting" destination="5633" id="5637"/>
                 <outlet property="disableSmcupRmcup" destination="5081" id="5085"/>
@@ -1294,7 +1293,7 @@ Gw
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="0.10000000000000001" maxValue="0.59999999999999998" doubleValue="0.40000000000000002" tickMarkPosition="above" sliderType="linear" id="5338"/>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="5346"/>
+                                                <action selector="settingChanged:" target="wvi-ET-SJJ" id="esD-pm-ElK"/>
                                                 <outlet property="nextKeyView" destination="4560" id="5349"/>
                                             </connections>
                                         </slider>
@@ -5948,6 +5947,7 @@ DQ
         <customObject id="wvi-ET-SJJ" customClass="AppearancePreferencesViewController">
             <connections>
                 <outlet property="_dimOnlyText" destination="5330" id="2OE-k6-8S9"/>
+                <outlet property="_dimmingAmount" destination="5337" id="Pwn-Ta-ZhW"/>
                 <outlet property="_fsTabDelay" destination="5393" id="Elg-3K-LmG"/>
                 <outlet property="_hideActivityIndicator" destination="5374" id="Q4E-FF-5Zc"/>
                 <outlet property="_hideMenuBarInFullscreen" destination="awA-hH-ziY" id="CDd-B7-fbl"/>

@@ -131,10 +131,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSButton* dimBackgroundWindows;
     BOOL defaultDimBackgroundWindows;
 
-    // Dimming amount
-    IBOutlet NSSlider* dimmingAmount;
-    float defaultDimmingAmount;
-
     // Window border
     IBOutlet NSButton* showWindowBorder;
     BOOL defaultShowWindowBorder;
@@ -579,7 +575,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [blurRadius setContinuous:YES];
     [transparency setContinuous:YES];
     [blend setContinuous:YES];
-    [dimmingAmount setContinuous:YES];
     [minimumContrast setContinuous:YES];
 }
 
@@ -767,14 +762,12 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
         sender == dimInactiveSplitPanes ||
         sender == dimBackgroundWindows ||
         sender == animateDimming ||
-        sender == dimmingAmount ||
         sender == threeFingerEmulatesMiddle ||
         sender == showWindowBorder ||
         sender == hotkeyAutoHides) {
         defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
         defaultDimBackgroundWindows = ([dimBackgroundWindows state] == NSOnState);
         defaultAnimateDimming= ([animateDimming state] == NSOnState);
-        defaultDimmingAmount = [dimmingAmount floatValue];
         defaultShowWindowBorder = ([showWindowBorder state] == NSOnState);
         defaultThreeFingerEmulatesMiddle=([threeFingerEmulatesMiddle state] == NSOnState);
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
@@ -2442,7 +2435,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     defaultDimInactiveSplitPanes = [prefs objectForKey:@"DimInactiveSplitPanes"]?[[prefs objectForKey:@"DimInactiveSplitPanes"] boolValue]: YES;
     defaultDimBackgroundWindows = [prefs objectForKey:@"DimBackgroundWindows"]?[[prefs objectForKey:@"DimBackgroundWindows"] boolValue]: NO;
     defaultAnimateDimming = [prefs objectForKey:@"AnimateDimming"]?[[prefs objectForKey:@"AnimateDimming"] boolValue]: NO;
-    defaultDimmingAmount = [prefs objectForKey:@"SplitPaneDimmingAmount"] ? [[prefs objectForKey:@"SplitPaneDimmingAmount"] floatValue] : 0.4;
     defaultShowWindowBorder = [[prefs objectForKey:@"UseBorder"] boolValue];
 
     defaultControl = [prefs objectForKey:@"Control"] ? [[prefs objectForKey:@"Control"] intValue] : MOD_TAG_CONTROL;
@@ -2527,7 +2519,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [prefs setBool:defaultDimInactiveSplitPanes forKey:@"DimInactiveSplitPanes"];
     [prefs setBool:defaultDimBackgroundWindows forKey:@"DimBackgroundWindows"];
     [prefs setBool:defaultAnimateDimming forKey:@"AnimateDimming"];
-    [prefs setFloat:defaultDimmingAmount forKey:@"SplitPaneDimmingAmount"];
     [prefs setBool:defaultShowWindowBorder forKey:@"UseBorder"];
 
     [prefs setInteger:defaultControl forKey:@"Control"];
@@ -3231,9 +3222,8 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     return [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
 }
 
-- (float)dimmingAmount
-{
-    return defaultDimmingAmount;
+- (float)dimmingAmount {
+    return [iTermPreferences floatForKey:kPreferenceKeyDimmingAmount];
 }
 
 - (BOOL)showWindowBorder
@@ -3510,7 +3500,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [dimInactiveSplitPanes setState:defaultDimInactiveSplitPanes?NSOnState:NSOffState];
     [animateDimming setState:defaultAnimateDimming?NSOnState:NSOffState];
     [dimBackgroundWindows setState:defaultDimBackgroundWindows?NSOnState:NSOffState];
-    [dimmingAmount setFloatValue:defaultDimmingAmount];
     [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];
 
     [self showWindow: self];
