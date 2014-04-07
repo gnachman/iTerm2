@@ -140,7 +140,6 @@
                 <outlet property="hideAfterOpening" destination="6354" id="6356"/>
                 <outlet property="hideMenuBarInFullscreen" destination="awA-hH-ziY" id="zyE-TX-Uzo"/>
                 <outlet property="hideScrollbar" destination="4561" id="4613"/>
-                <outlet property="hideTabCloseButton" destination="1dE-aB-uR8" id="q8D-cw-nSw"/>
                 <outlet property="hotkey" destination="5104" id="5121"/>
                 <outlet property="hotkeyAutoHides" destination="rG7-dO-Nxw" id="JTl-kM-C6D"/>
                 <outlet property="hotkeyBookmark" destination="5108" id="5124"/>
@@ -1037,7 +1036,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="PTe-7A-MYL"/>
+                                                <action selector="settingChanged:" target="wvi-ET-SJJ" id="vDu-dP-gTT"/>
                                                 <outlet property="nextKeyView" destination="5330" id="7Ai-fQ-sXx"/>
                                             </connections>
                                         </button>
@@ -5957,6 +5956,7 @@ DQ
         <customObject id="wvi-ET-SJJ" customClass="AppearancePreferencesViewController">
             <connections>
                 <outlet property="_hideTab" destination="4462" id="GTv-bn-7th"/>
+                <outlet property="_hideTabCloseButton" destination="1dE-aB-uR8" id="SWy-mD-56q"/>
                 <outlet property="_hideTabNumber" destination="4446" id="PJ6-1K-B6s"/>
                 <outlet property="_highlightTabLabels" destination="4467" id="rqg-9y-jlv"/>
                 <outlet property="_tabPosition" destination="4463" id="Rxp-XS-Fkx"/>
