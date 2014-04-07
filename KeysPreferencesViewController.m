@@ -13,6 +13,7 @@
 @implementation KeysPreferencesViewController {
     IBOutlet NSPopUpButton *_controlButton;
     IBOutlet NSPopUpButton *_leftOptionButton;
+    IBOutlet NSPopUpButton *_rightOptionButton;
 }
 
 - (void)awakeFromNib {
@@ -25,6 +26,11 @@
 
     info = [self defineControl:_leftOptionButton
                            key:kPreferenceKeyLeftOptionRemapping
+                          type:kPreferenceInfoTypePopup];
+    info.onChange = ^() { [self startEventTapIfNecessary]; };
+
+    info = [self defineControl:_rightOptionButton
+                           key:kPreferenceKeyRightOptionRemapping
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() { [self startEventTapIfNecessary]; };
 }

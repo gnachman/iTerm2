@@ -65,6 +65,7 @@ NSString *const kPreferenceKeyDimBackgroundWindows = @"DimBackgroundWindows";
 
 NSString *const kPreferenceKeyControlRemapping = @"Control";
 NSString *const kPreferenceKeyLeftOptionRemapping = @"LeftOption";
+NSString *const kPreferenceKeyRightOptionRemapping = @"RightOption";
 
 static NSMutableDictionary *gObservers;
 
@@ -122,6 +123,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyDimBackgroundWindows: @NO,
                   kPreferenceKeyControlRemapping: @(MOD_TAG_CONTROL),
                   kPreferenceKeyLeftOptionRemapping: @(MOD_TAG_LEFT_OPTION),
+                  kPreferenceKeyRightOptionRemapping: @(MOD_TAG_RIGHT_OPTION),
                   };
         [dict retain];
     }

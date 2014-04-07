@@ -357,8 +357,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSButton* copyButton;
 
     // Keyboard ------------------------------
-    int defaultRightOption;
-    IBOutlet NSPopUpButton* rightOptionButton;
     int defaultLeftCommand;
     IBOutlet NSPopUpButton* leftCommandButton;
     int defaultRightCommand;
@@ -800,7 +798,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 
     // Keyboard tab
     BOOL wasAnyModifierRemapped = [self isAnyModifierRemapped];
-    defaultRightOption = [rightOptionButton selectedTag];
     defaultLeftCommand = [leftCommandButton selectedTag];
     defaultRightCommand = [rightCommandButton selectedTag];
     if ((!wasAnyModifierRemapped && [self isAnyModifierRemapped]) ||
@@ -2389,7 +2386,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
     defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
 
-    defaultRightOption = [prefs objectForKey:@"RightOption"] ? [[prefs objectForKey:@"RightOption"] intValue] : MOD_TAG_RIGHT_OPTION;
     defaultLeftCommand = [prefs objectForKey:@"LeftCommand"] ? [[prefs objectForKey:@"LeftCommand"] intValue] : MOD_TAG_LEFT_COMMAND;
     defaultRightCommand = [prefs objectForKey:@"RightCommand"] ? [[prefs objectForKey:@"RightCommand"] intValue] : MOD_TAG_RIGHT_COMMAND;
     if ([self isAnyModifierRemapped]) {
@@ -2465,7 +2461,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
     [prefs setInteger:defaultHotkeyModifiers forKey:@"HotkeyModifiers"];
 
-    [prefs setInteger:defaultRightOption forKey:@"RightOption"];
     [prefs setInteger:defaultLeftCommand forKey:@"LeftCommand"];
     [prefs setInteger:defaultRightCommand forKey:@"RightCommand"];
     [prefs setInteger:defaultSwitchTabModifier forKey:@"SwitchTabModifier"];
@@ -3072,9 +3067,8 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     return [iTermPreferences intForKey:kPreferenceKeyLeftOptionRemapping];
 }
 
-- (int)rightOption
-{
-    return defaultRightOption;
+- (int)rightOption {
+    return [iTermPreferences intForKey:kPreferenceKeyRightOptionRemapping];
 }
 
 - (int)leftCommand
@@ -3453,7 +3447,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
         [bookmarksTableView selectRowIndex:0];
     }
 
-    [rightOptionButton selectItemWithTag:defaultRightOption];
     [leftCommandButton selectItemWithTag:defaultLeftCommand];
     [rightCommandButton selectItemWithTag:defaultRightCommand];
 
