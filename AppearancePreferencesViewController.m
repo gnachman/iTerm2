@@ -57,6 +57,9 @@
 
     // Dim inactive split panes.
     IBOutlet NSButton *_dimInactiveSplitPanes;
+
+    // Animate dimming.
+    IBOutlet NSButton *_animateDimming;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -147,6 +150,11 @@
 
     info = [self defineControl:_dimInactiveSplitPanes
                            key:kPreferenceKeyDimInactiveSplitPanes
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [self postRefreshNotification]; };
+
+    info = [self defineControl:_animateDimming
+                           key:kPreferenceKeyAnimateDimming
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 }

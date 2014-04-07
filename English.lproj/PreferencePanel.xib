@@ -17,7 +17,6 @@
                 <outlet property="advancedWorkingDirSheet_" destination="5979" id="6029"/>
                 <outlet property="allowTitleReporting" destination="6387" id="6390"/>
                 <outlet property="allowTitleSetting" destination="xih-tE-Xk7" id="cn0-W7-MGI"/>
-                <outlet property="animateDimming" destination="5403" id="5407"/>
                 <outlet property="ansi0Color" destination="2297" id="3067"/>
                 <outlet property="ansi10Color" destination="2300" id="3053"/>
                 <outlet property="ansi11Color" destination="2294" id="3055"/>
@@ -1208,7 +1207,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="5405"/>
+                                                <action selector="settingChanged:" target="wvi-ET-SJJ" id="BPG-yl-evT"/>
                                                 <outlet property="nextKeyView" destination="4529" id="5406"/>
                                             </connections>
                                         </button>
@@ -5945,6 +5944,7 @@ DQ
         </customObject>
         <customObject id="wvi-ET-SJJ" customClass="AppearancePreferencesViewController">
             <connections>
+                <outlet property="_animateDimming" destination="5403" id="KtZ-IQ-3yh"/>
                 <outlet property="_dimInactiveSplitPanes" destination="4560" id="rO0-eh-PYK"/>
                 <outlet property="_dimOnlyText" destination="5330" id="2OE-k6-8S9"/>
                 <outlet property="_dimmingAmount" destination="5337" id="Pwn-Ta-ZhW"/>

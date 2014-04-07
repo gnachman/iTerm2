@@ -57,6 +57,7 @@ NSString *const kPreferenceKeyShowProfileName = @"ShowBookmarkName";  // The key
 NSString *const kPreferenceKeyDimOnlyText = @"DimOnlyText";
 NSString *const kPreferenceKeyDimmingAmount = @"SplitPaneDimmingAmount";
 NSString *const kPreferenceKeyDimInactiveSplitPanes = @"DimInactiveSplitPanes";
+NSString *const kPreferenceKeyAnimateDimming = @"AnimateDimming";
 
 static NSMutableDictionary *gObservers;
 
@@ -107,6 +108,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyDimOnlyText: @NO,
                   kPreferenceKeyDimmingAmount: @0.4,
                   kPreferenceKeyDimInactiveSplitPanes: @YES,
+                  kPreferenceKeyAnimateDimming: @NO,
                   };
         [dict retain];
     }

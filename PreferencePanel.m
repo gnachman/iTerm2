@@ -119,10 +119,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSButton *checkColorInvertedCursor;
     BOOL defaultColorInvertedCursor;
 
-    // Animate dimming
-    IBOutlet NSButton* animateDimming;
-    BOOL defaultAnimateDimming;
-
     // Dim background windows
     IBOutlet NSButton* dimBackgroundWindows;
     BOOL defaultDimBackgroundWindows;
@@ -756,12 +752,10 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     if (sender == hideScrollbar ||
         sender == disableFullscreenTransparency ||
         sender == dimBackgroundWindows ||
-        sender == animateDimming ||
         sender == threeFingerEmulatesMiddle ||
         sender == showWindowBorder ||
         sender == hotkeyAutoHides) {
         defaultDimBackgroundWindows = ([dimBackgroundWindows state] == NSOnState);
-        defaultAnimateDimming= ([animateDimming state] == NSOnState);
         defaultShowWindowBorder = ([showWindowBorder state] == NSOnState);
         defaultThreeFingerEmulatesMiddle=([threeFingerEmulatesMiddle state] == NSOnState);
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
@@ -2427,7 +2421,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
     defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
     defaultDimBackgroundWindows = [prefs objectForKey:@"DimBackgroundWindows"]?[[prefs objectForKey:@"DimBackgroundWindows"] boolValue]: NO;
-    defaultAnimateDimming = [prefs objectForKey:@"AnimateDimming"]?[[prefs objectForKey:@"AnimateDimming"] boolValue]: NO;
     defaultShowWindowBorder = [[prefs objectForKey:@"UseBorder"] boolValue];
 
     defaultControl = [prefs objectForKey:@"Control"] ? [[prefs objectForKey:@"Control"] intValue] : MOD_TAG_CONTROL;
@@ -2510,7 +2503,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
     [prefs setInteger:defaultHotkeyModifiers forKey:@"HotkeyModifiers"];
     [prefs setBool:defaultDimBackgroundWindows forKey:@"DimBackgroundWindows"];
-    [prefs setBool:defaultAnimateDimming forKey:@"AnimateDimming"];
     [prefs setBool:defaultShowWindowBorder forKey:@"UseBorder"];
 
     [prefs setInteger:defaultControl forKey:@"Control"];
@@ -3204,9 +3196,8 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     return defaultDimBackgroundWindows;
 }
 
-- (BOOL)animateDimming
-{
-    return defaultAnimateDimming;
+- (BOOL)animateDimming {
+    return [iTermPreferences boolForKey:kPreferenceKeyAnimateDimming];
 }
 
 - (BOOL)dimOnlyText {
@@ -3488,7 +3479,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [hotkeyAutoHides setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
     [hotkeyBookmark setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
 
-    [animateDimming setState:defaultAnimateDimming?NSOnState:NSOffState];
     [dimBackgroundWindows setState:defaultDimBackgroundWindows?NSOnState:NSOffState];
     [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];
 
