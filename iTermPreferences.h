@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "PSMTabBarControl.h"
 
 // Values for kPreferenceKeyOpenTmuxWindowsIn (corresponds to tags in control).
 #define OPEN_TMUX_WINDOWS_IN_WINDOWS 0
@@ -17,6 +18,10 @@
 #define TAB_STYLE_AQUA 1
 #define TAB_STYLE_UNIFIED 2
 #define TAB_STYLE_ADIUM 3
+
+// Values for kPreferenceKeyTabPosition (correspond to tags in control).
+#define TAB_POSITION_TOP PSMTab_TopTab
+#define TAB_POSITION_BOTTOM PSMTab_BottomTab
 
 // General
 extern NSString *const kPreferenceKeyOpenBookmark;
@@ -45,6 +50,7 @@ extern NSString *const kPreferenceKeyAutoHideTmuxClientSession;
 
 // Appearance
 extern NSString *const kPreferenceKeyWindowStyle;
+extern NSString *const kPreferenceKeyTabPosition;
 
 @interface iTermPreferences : NSObject
 

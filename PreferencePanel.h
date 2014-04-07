@@ -150,8 +150,7 @@ typedef enum {
 - (BOOL)legacyThreeFingerEmulatesMiddle;
 - (BOOL)threeFingerEmulatesMiddle;
 - (BOOL)hideTab;
-- (void)setTabViewType:(NSTabViewType)type;
-- (NSTabViewType)tabViewType;
+- (int)tabViewType;
 - (int)windowStyle;
 - (BOOL)promptOnQuit;
 - (BOOL)onlyWhenMoreTabs;

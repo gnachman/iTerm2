@@ -69,18 +69,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     IBOutlet TrouterPrefsController *trouterPrefController_;
     IBOutlet GeneralPreferencesViewController *_generalPreferencesViewController;
     
-    // This gives a value from NSTabViewType, which as of OS 10.6 is:
-    // Bound to Top/Bottom button
-    // NSTopTabsBezelBorder     = 0,
-    // NSLeftTabsBezelBorder    = 1,
-    // NSBottomTabsBezelBorder  = 2,
-    // NSRightTabsBezelBorder   = 3,
-    // NSNoTabsBezelBorder      = 4,
-    // NSNoTabsLineBorder       = 5,
-    // NSNoTabsNoBorder         = 6
-    IBOutlet NSPopUpButton *tabPosition;
-    int defaultTabViewType;
-    
     IBOutlet NSTextField* tagFilter;
     
     // Middle button paste from clipboard
@@ -819,8 +807,7 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 
 - (IBAction)settingChanged:(id)sender
 {
-    if (sender == tabPosition ||
-        sender == hideTab ||
+    if (sender == hideTab ||
         sender == hideTabCloseButton ||
         sender == hideTabNumber ||
         sender == hideActivityIndicator ||
@@ -837,7 +824,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
         sender == threeFingerEmulatesMiddle ||
         sender == showWindowBorder ||
         sender == hotkeyAutoHides) {
-        defaultTabViewType=[tabPosition indexOfSelectedItem];
         defaultHideTabCloseButton = ([hideTabCloseButton state] == NSOnState);
         defaultHideTabNumber = ([hideTabNumber state] == NSOnState);
         defaultHideActivityIndicator = ([hideActivityIndicator state] == NSOnState);
@@ -2507,10 +2493,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [prefs setInteger:1 forKey:@"AppleSmoothFixedFontsSizeThreshold"];
     [prefs setInteger:0 forKey:@"AppleScrollAnimationEnabled"];
 
-    defaultTabViewType=[prefs objectForKey:@"TabViewType"]?[prefs integerForKey:@"TabViewType"]:0;
-    if (defaultTabViewType > 1) {
-        defaultTabViewType = 0;
-    }
     defaultPasteFromClipboard=[prefs objectForKey:@"PasteFromClipboard"]?[[prefs objectForKey:@"PasteFromClipboard"] boolValue]:YES;
     defaultThreeFingerEmulatesMiddle=[prefs objectForKey:@"ThreeFingerEmulates"]?[[prefs objectForKey:@"ThreeFingerEmulates"] boolValue]:NO;
     defaultHideTab=[prefs objectForKey:@"HideTab"]?[[prefs objectForKey:@"HideTab"] boolValue]: YES;
@@ -2611,7 +2593,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [prefs setBool:defaultPasteFromClipboard forKey:@"PasteFromClipboard"];
     [prefs setBool:defaultThreeFingerEmulatesMiddle forKey:@"ThreeFingerEmulates"];
     [prefs setBool:defaultHideTab forKey:@"HideTab"];
-    [prefs setInteger:defaultTabViewType forKey:@"TabViewType"];
     [prefs setBool:defaultFocusFollowsMouse forKey:@"FocusFollowsMouse"];
     [prefs setBool:defaultTripleClickSelectsFullLines forKey:@"TripleClickSelectsFullWrappedLines"];
     [prefs setBool:defaultHotkeyTogglesWindow forKey:@"HotKeyTogglesWindow"];
@@ -3092,14 +3073,8 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     return defaultHideTab;
 }
 
-- (void)setTabViewType:(NSTabViewType)type
-{
-    defaultTabViewType = type;
-}
-
-- (NSTabViewType)tabViewType
-{
-    return defaultTabViewType;
+- (int)tabViewType {
+    return [iTermPreferences intForKey:kPreferenceKeyTabPosition];
 }
 
 - (int)windowStyle {
@@ -3612,7 +3587,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 
     [_generalPreferencesViewController updateEnabledState];
     
-    [tabPosition selectItemAtIndex: defaultTabViewType];
     [middleButtonPastesFromClipboard setState:defaultPasteFromClipboard?NSOnState:NSOffState];
     [threeFingerEmulatesMiddle setState:defaultThreeFingerEmulatesMiddle ? NSOnState : NSOffState];
     [hideTab setState:defaultHideTab?NSOnState:NSOffState];

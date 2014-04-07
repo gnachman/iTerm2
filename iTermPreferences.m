@@ -42,6 +42,7 @@ NSString *const kPreferenceKeyTmuxDashboardLimit = @"TmuxDashboardLimit";
 NSString *const kPreferenceKeyAutoHideTmuxClientSession = @"AutoHideTmuxClientSession";
 
 NSString *const kPreferenceKeyWindowStyle = @"kPreferenceKeyWindowStyle";
+NSString *const kPreferenceKeyTabPosition = @"TabViewType";
 
 static NSMutableDictionary *gObservers;
 
@@ -75,7 +76,9 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyOpenTmuxWindowsIn: @(OPEN_TMUX_WINDOWS_IN_WINDOWS),
                   kPreferenceKeyTmuxDashboardLimit: @10,
                   kPreferenceKeyAutoHideTmuxClientSession: @NO,
-                  kPreferenceKeyWindowStyle: @(TAB_STYLE_METAL), };
+                  
+                  kPreferenceKeyWindowStyle: @(TAB_STYLE_METAL),
+                  kPreferenceKeyTabPosition: @(TAB_POSITION_TOP) };
         [dict retain];
     }
     return dict;
