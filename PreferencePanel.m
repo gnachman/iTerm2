@@ -79,10 +79,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     IBOutlet NSButton *threeFingerEmulatesMiddle;
     BOOL defaultThreeFingerEmulatesMiddle;
     
-    // Hide tab bar when there is only one session
-    IBOutlet id hideTab;
-    BOOL defaultHideTab;
-    
     // Focus follows mouse
     IBOutlet NSButton *focusFollowsMouse;
     BOOL defaultFocusFollowsMouse;
@@ -807,8 +803,7 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 
 - (IBAction)settingChanged:(id)sender
 {
-    if (sender == hideTab ||
-        sender == hideTabCloseButton ||
+    if (sender == hideTabCloseButton ||
         sender == hideTabNumber ||
         sender == hideActivityIndicator ||
         sender == highlightTabLabels ||
@@ -830,7 +825,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
         defaultHighlightTabLabels = ([highlightTabLabels state] == NSOnState);
         defaultHideMenuBarInFullscreen = ([hideMenuBarInFullscreen state] == NSOnState);
         defaultShowPaneTitles = ([showPaneTitles state] == NSOnState);
-        defaultHideTab = ([hideTab state] == NSOnState);
         defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
         defaultDimBackgroundWindows = ([dimBackgroundWindows state] == NSOnState);
         defaultAnimateDimming= ([animateDimming state] == NSOnState);
@@ -2495,7 +2489,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 
     defaultPasteFromClipboard=[prefs objectForKey:@"PasteFromClipboard"]?[[prefs objectForKey:@"PasteFromClipboard"] boolValue]:YES;
     defaultThreeFingerEmulatesMiddle=[prefs objectForKey:@"ThreeFingerEmulates"]?[[prefs objectForKey:@"ThreeFingerEmulates"] boolValue]:NO;
-    defaultHideTab=[prefs objectForKey:@"HideTab"]?[[prefs objectForKey:@"HideTab"] boolValue]: YES;
     defaultFocusFollowsMouse = [prefs objectForKey:@"FocusFollowsMouse"]?[[prefs objectForKey:@"FocusFollowsMouse"] boolValue]: NO;
     defaultTripleClickSelectsFullLines = [prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] ? [[prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] boolValue] : NO;
     defaultHotkeyTogglesWindow = [prefs objectForKey:@"HotKeyTogglesWindow"]?[[prefs objectForKey:@"HotKeyTogglesWindow"] boolValue]: NO;
@@ -2592,7 +2585,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 
     [prefs setBool:defaultPasteFromClipboard forKey:@"PasteFromClipboard"];
     [prefs setBool:defaultThreeFingerEmulatesMiddle forKey:@"ThreeFingerEmulates"];
-    [prefs setBool:defaultHideTab forKey:@"HideTab"];
     [prefs setBool:defaultFocusFollowsMouse forKey:@"FocusFollowsMouse"];
     [prefs setBool:defaultTripleClickSelectsFullLines forKey:@"TripleClickSelectsFullWrappedLines"];
     [prefs setBool:defaultHotkeyTogglesWindow forKey:@"HotKeyTogglesWindow"];
@@ -3068,9 +3060,8 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     defaultPasteFromClipboard = flag;
 }
 
-- (BOOL)hideTab
-{
-    return defaultHideTab;
+- (BOOL)hideTab {
+    return [iTermPreferences boolForKey:kPreferenceKeyHideTabBar];
 }
 
 - (int)tabViewType {
@@ -3589,7 +3580,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     
     [middleButtonPastesFromClipboard setState:defaultPasteFromClipboard?NSOnState:NSOffState];
     [threeFingerEmulatesMiddle setState:defaultThreeFingerEmulatesMiddle ? NSOnState : NSOffState];
-    [hideTab setState:defaultHideTab?NSOnState:NSOffState];
     [focusFollowsMouse setState: defaultFocusFollowsMouse?NSOnState:NSOffState];
     [tripleClickSelectsFullLines setState:defaultTripleClickSelectsFullLines?NSOnState:NSOffState];
     [hotkeyTogglesWindow setState: defaultHotkeyTogglesWindow?NSOnState:NSOffState];
