@@ -60,6 +60,10 @@
             [iTermPreferences setInt:[sender selectedTag] forKey:info.key];
             break;
             
+        case kPreferenceInfoTypeSlider:
+            [iTermPreferences setFloat:[sender doubleValue] forKey:info.key];
+            break;
+
         default:
             assert(false);
     }
@@ -115,6 +119,13 @@
             break;
         }
             
+        case kPreferenceInfoTypeSlider: {
+            assert([info.control isKindOfClass:[NSSlider class]]);
+            NSSlider *slider = (NSSlider *)info.control;
+            slider.doubleValue = [iTermPreferences floatForKey:info.key];
+            break;
+        }
+
         default:
             assert(false);
     }

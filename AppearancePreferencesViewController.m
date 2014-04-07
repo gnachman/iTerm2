@@ -29,6 +29,9 @@
 
     // Hide activity indicator.
     IBOutlet NSButton *_hideActivityIndicator;
+
+    // Delay before showing tabs in fullscreen mode
+    IBOutlet NSSlider *_fsTabDelay;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -77,6 +80,10 @@
                            key:kPreferenceKeyHideTabActivityIndicator
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
+    
+    info = [self defineControl:_fsTabDelay
+                           key:kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen
+                          type:kPreferenceInfoTypeSlider];
     
 }
 

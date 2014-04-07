@@ -48,6 +48,7 @@ NSString *const kPreferenceKeyHighlightTabLabels = @"HighlightTabLabels";
 NSString *const kPreferenceKeyHideTabNumber = @"HideTabNumber";
 NSString *const kPreferenceKeyHideTabCloseButton = @"HideTabCloseButton";
 NSString *const kPreferenceKeyHideTabActivityIndicator = @"HideActivityIndicator";
+NSString *const kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen = @"FsTabDelay";
 
 static NSMutableDictionary *gObservers;
 
@@ -89,6 +90,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyHideTabNumber: @NO,
                   kPreferenceKeyHideTabCloseButton: @NO,
                   kPreferenceKeyHideTabActivityIndicator: @NO,
+                  kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen: @1.0,
                   };
         [dict retain];
     }
@@ -188,6 +190,14 @@ static NSMutableDictionary *gObservers;
 }
 
 + (void)setInt:(int)value forKey:(NSString *)key {
+    [self setObject:@(value) forKey:key];
+}
+
++ (double)floatForKey:(NSString *)key {
+    return [[self objectForKey:key] doubleValue];
+}
+
++ (void)setFloat:(double)value forKey:(NSString *)key {
     [self setObject:@(value) forKey:key];
 }
 

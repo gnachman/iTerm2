@@ -128,7 +128,6 @@
                 <outlet property="flashingBell" destination="3553" id="3557"/>
                 <outlet property="focusFollowsMouse" destination="6062" id="6209"/>
                 <outlet property="foregroundColor" destination="2273" id="3004"/>
-                <outlet property="fsTabDelay" destination="5393" id="5401"/>
                 <outlet property="globalActionColumn" destination="3856" id="4319"/>
                 <outlet property="globalAddNewMapping" destination="3842" id="4324"/>
                 <outlet property="globalKeyCombinationColumn" destination="3857" id="4318"/>
@@ -1346,7 +1345,7 @@ Gw
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="0.10000000000000001" maxValue="10" doubleValue="2" tickMarkPosition="below" numberOfTickMarks="11" sliderType="linear" id="5398"/>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="5402"/>
+                                                <action selector="settingChanged:" target="wvi-ET-SJJ" id="gCY-uo-wC8"/>
                                                 <outlet property="nextKeyView" destination="4560" id="5400"/>
                                             </connections>
                                         </slider>
@@ -5954,6 +5953,7 @@ DQ
         </customObject>
         <customObject id="wvi-ET-SJJ" customClass="AppearancePreferencesViewController">
             <connections>
+                <outlet property="_fsTabDelay" destination="5393" id="Elg-3K-LmG"/>
                 <outlet property="_hideActivityIndicator" destination="5374" id="Q4E-FF-5Zc"/>
                 <outlet property="_hideTab" destination="4462" id="GTv-bn-7th"/>
                 <outlet property="_hideTabCloseButton" destination="1dE-aB-uR8" id="SWy-mD-56q"/>

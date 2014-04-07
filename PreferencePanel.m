@@ -158,10 +158,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     IBOutlet NSButton *disableFullscreenTransparency;
     BOOL defaultDisableFullscreenTransparency;
     
-    // Delay before showing tabs in fullscreen mode
-    IBOutlet NSSlider* fsTabDelay;
-    float defaultFsTabDelay;
-    
     // Window/tab title customization
     IBOutlet NSButton* windowNumber;
     BOOL defaultWindowNumber;
@@ -855,7 +851,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
                             nil,
                             kHotkeyWindowGeneratedProfileNameKey);
         }
-        defaultFsTabDelay = [fsTabDelay floatValue];
         defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
         defaultFocusFollowsMouse = ([focusFollowsMouse state] == NSOnState);
         defaultTripleClickSelectsFullLines = ([tripleClickSelectsFullLines state] == NSOnState);
@@ -2475,7 +2470,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     defaultCmdSelection = [prefs objectForKey:@"CommandSelection"]?[[prefs objectForKey:@"CommandSelection"] boolValue]: YES;
     defaultOptionClickMovesCursor = [prefs objectForKey:@"OptionClickMovesCursor"]?[[prefs objectForKey:@"OptionClickMovesCursor"] boolValue]: YES;
     defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
-    defaultFsTabDelay = [prefs objectForKey:@"FsTabDelay"] ? [[prefs objectForKey:@"FsTabDelay"] floatValue] : 1.0;
 
     defaultHideMenuBarInFullscreen = [prefs objectForKey:@"HideMenuBarInFullscreen"]?[[prefs objectForKey:@"HideMenuBarInFullscreen"] boolValue] : YES;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
@@ -2566,7 +2560,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [prefs setValue:defaultHotKeyBookmarkGuid forKey:@"HotKeyBookmark"];
     [prefs setBool:defaultCmdSelection forKey:@"CommandSelection"];
     [prefs setBool:defaultOptionClickMovesCursor forKey:@"OptionClickMovesCursor"];
-    [prefs setFloat:defaultFsTabDelay forKey:@"FsTabDelay"];
     [prefs setBool:defaultPassOnControlLeftClick forKey:@"PassOnControlClick"];
     [prefs setBool:defaultHideMenuBarInFullscreen forKey:@"HideMenuBarInFullscreen"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
@@ -2976,9 +2969,8 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 
 #pragma mark - Accessors
 
-- (float)fsTabDelay
-{
-    return defaultFsTabDelay;
+- (float)fsTabDelay {
+    return [iTermPreferences floatForKey:kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen];
 }
 
 - (BOOL)trimTrailingWhitespace
@@ -3557,7 +3549,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [optionClickMovesCursor setState: defaultOptionClickMovesCursor?NSOnState:NSOffState];
     [controlLeftClickActsLikeRightClick setState: defaultPassOnControlLeftClick?NSOffState:NSOnState];
     [hideMenuBarInFullscreen setState:defaultHideMenuBarInFullscreen ? NSOnState:NSOffState];
-    [fsTabDelay setFloatValue:defaultFsTabDelay];
 
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
     [showPaneTitles setState:defaultShowPaneTitles?NSOnState:NSOffState];
