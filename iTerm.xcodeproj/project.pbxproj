@@ -775,6 +775,9 @@
 		A6E7138918F26445008D94DD /* iTermPreferencesBaseViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7138718F26445008D94DD /* iTermPreferencesBaseViewController.h */; };
 		A6E7138A18F26445008D94DD /* iTermPreferencesBaseViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7138818F26445008D94DD /* iTermPreferencesBaseViewController.m */; };
 		A6E7138B18F26445008D94DD /* iTermPreferencesBaseViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7138818F26445008D94DD /* iTermPreferencesBaseViewController.m */; };
+		A6E7138E18F26A91008D94DD /* AppearancePreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7138C18F26A91008D94DD /* AppearancePreferencesViewController.h */; };
+		A6E7138F18F26A91008D94DD /* AppearancePreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7138D18F26A91008D94DD /* AppearancePreferencesViewController.m */; };
+		A6E7139018F26A91008D94DD /* AppearancePreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7138D18F26A91008D94DD /* AppearancePreferencesViewController.m */; };
 		A6E74748188C6344005355CF /* CommandHistoryEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E74746188C6344005355CF /* CommandHistoryEntry.h */; };
 		A6E74749188C6344005355CF /* CommandHistoryEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74747188C6344005355CF /* CommandHistoryEntry.m */; };
 		A6E7474A188C6344005355CF /* CommandHistoryEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74747188C6344005355CF /* CommandHistoryEntry.m */; };
@@ -1329,6 +1332,8 @@
 		A6E7138318F263BC008D94DD /* PreferenceInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PreferenceInfo.m; sourceTree = "<group>"; };
 		A6E7138718F26445008D94DD /* iTermPreferencesBaseViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPreferencesBaseViewController.h; sourceTree = "<group>"; };
 		A6E7138818F26445008D94DD /* iTermPreferencesBaseViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPreferencesBaseViewController.m; sourceTree = "<group>"; };
+		A6E7138C18F26A91008D94DD /* AppearancePreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppearancePreferencesViewController.h; sourceTree = "<group>"; };
+		A6E7138D18F26A91008D94DD /* AppearancePreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppearancePreferencesViewController.m; sourceTree = "<group>"; };
 		A6E74746188C6344005355CF /* CommandHistoryEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandHistoryEntry.h; sourceTree = "<group>"; };
 		A6E74747188C6344005355CF /* CommandHistoryEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CommandHistoryEntry.m; sourceTree = "<group>"; };
 		A6E7474B188C6394005355CF /* CommandUse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandUse.h; sourceTree = "<group>"; };
@@ -1917,17 +1922,19 @@
 				1D825603146B258A007CAE78 /* EventMonitorView.m */,
 				A6E7137918F1D70D008D94DD /* GeneralPreferencesViewController.m */,
 				A6E7137E18F1DB1E008D94DD /* iTermPreferences.m */,
+				A6E7138718F26445008D94DD /* iTermPreferencesBaseViewController.h */,
+				A6E7138818F26445008D94DD /* iTermPreferencesBaseViewController.m */,
 				FB4CEAC661436E55F3B3A668 /* iTermRemotePreferences.m */,
 				A697100A18D94CDA007E901D /* iTermSettingsModel.m */,
 				1D8255FB14687EE8007CAE78 /* PointerPrefsController.m */,
+				A6E7138318F263BC008D94DD /* PreferenceInfo.m */,
 				FB019DE103670C6501F955DB /* PreferencePanel.m */,
 				1D24C2C4142FEACF006B246F /* SmartSelectionController.m */,
 				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
 				1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */,
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
-				A6E7138318F263BC008D94DD /* PreferenceInfo.m */,
-				A6E7138718F26445008D94DD /* iTermPreferencesBaseViewController.h */,
-				A6E7138818F26445008D94DD /* iTermPreferencesBaseViewController.m */,
+				A6E7138C18F26A91008D94DD /* AppearancePreferencesViewController.h */,
+				A6E7138D18F26A91008D94DD /* AppearancePreferencesViewController.m */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -2445,6 +2452,7 @@
 				1D93D35312697529007F741B /* DVREncoder.h in Headers */,
 				1D173859126C820A004622DC /* FakeWindow.h in Headers */,
 				1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */,
+				A6E7138E18F26A91008D94DD /* AppearancePreferencesViewController.h in Headers */,
 				A6E74761188C679C005355CF /* iTermExposeView.h in Headers */,
 				1D7C18811275D22900461E55 /* PasteboardHistory.h in Headers */,
 				1D7C1D1212772ECC00461E55 /* NSDateFormatterExtras.h in Headers */,
@@ -3036,6 +3044,7 @@
 				1D9A5562180FA83900B42CE9 /* WindowArrangements.m in Sources */,
 				1D9A55A0180FA87000B42CE9 /* SplitSelectionView.m in Sources */,
 				1D9A5537180FA79400B42CE9 /* DVREncoder.m in Sources */,
+				A6E7139018F26A91008D94DD /* AppearancePreferencesViewController.m in Sources */,
 				A6E7138118F1DB1E008D94DD /* iTermPreferences.m in Sources */,
 				1D9A556B180FA85500B42CE9 /* FakeWindow.m in Sources */,
 				A68A30E7186D1429007F550F /* VT100RemoteHost.m in Sources */,
@@ -3070,6 +3079,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8742064F0564169600CFC3F1 /* main.m in Sources */,
+				A6E7138F18F26A91008D94DD /* AppearancePreferencesViewController.m in Sources */,
 				A6E7474E188C6394005355CF /* CommandUse.m in Sources */,
 				1D5FDDA51208E93600C46BA3 /* PseudoTerminal.m in Sources */,
 				1D5FDDA61208E93600C46BA3 /* PTYScrollView.m in Sources */,

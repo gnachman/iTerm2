@@ -14,9 +14,6 @@
 #import "PasteboardHistory.h"
 #import "WindowArrangements.h"
 
-@interface GeneralPreferencesViewController ()
-@end
-
 @implementation GeneralPreferencesViewController {
     // open bookmarks when iterm starts
     IBOutlet NSButton *_openBookmark;
@@ -222,12 +219,6 @@
     [self defineControl:_autoHideTmuxClientSession
                     key:kPreferenceKeyAutoHideTmuxClientSession
                    type:kPreferenceInfoTypeCheckbox];
-}
-
-- (void)postRefreshNotification {
-    [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
-                                                        object:nil
-                                                      userInfo:nil];
 }
 
 - (IBAction)browseCustomFolder:(id)sender {

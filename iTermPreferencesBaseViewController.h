@@ -42,4 +42,6 @@
 // Returns PreferenceInfo for a control bound with defineControl:key:type:.
 - (PreferenceInfo *)infoForControl:(NSControl *)control;
 
+- (void)postRefreshNotification;
+
 @end

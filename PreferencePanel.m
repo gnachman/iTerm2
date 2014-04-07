@@ -69,15 +69,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     IBOutlet TrouterPrefsController *trouterPrefController_;
     IBOutlet GeneralPreferencesViewController *_generalPreferencesViewController;
     
-    // This is actually the tab style. It takes one of these values:
-    // 0: Metal
-    // 1: Aqua
-    // 2: Unified
-    // other: Adium
-    // Bound to Metal/Aqua/Unified/Adium button
-    IBOutlet NSPopUpButton *windowStyle;
-    int defaultWindowStyle;
-
     // This gives a value from NSTabViewType, which as of OS 10.6 is:
     // Bound to Top/Bottom button
     // NSTopTabsBezelBorder     = 0,
@@ -828,8 +819,7 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 
 - (IBAction)settingChanged:(id)sender
 {
-    if (sender == windowStyle ||
-        sender == tabPosition ||
+    if (sender == tabPosition ||
         sender == hideTab ||
         sender == hideTabCloseButton ||
         sender == hideTabNumber ||
@@ -847,7 +837,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
         sender == threeFingerEmulatesMiddle ||
         sender == showWindowBorder ||
         sender == hotkeyAutoHides) {
-        defaultWindowStyle = [windowStyle indexOfSelectedItem];
         defaultTabViewType=[tabPosition indexOfSelectedItem];
         defaultHideTabCloseButton = ([hideTabCloseButton state] == NSOnState);
         defaultHideTabNumber = ([hideTabNumber state] == NSOnState);
@@ -2518,7 +2507,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [prefs setInteger:1 forKey:@"AppleSmoothFixedFontsSizeThreshold"];
     [prefs setInteger:0 forKey:@"AppleScrollAnimationEnabled"];
 
-    defaultWindowStyle=[prefs objectForKey:@"WindowStyle"]?[prefs integerForKey:@"WindowStyle"]:0;
     defaultTabViewType=[prefs objectForKey:@"TabViewType"]?[prefs integerForKey:@"TabViewType"]:0;
     if (defaultTabViewType > 1) {
         defaultTabViewType = 0;
@@ -2623,7 +2611,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [prefs setBool:defaultPasteFromClipboard forKey:@"PasteFromClipboard"];
     [prefs setBool:defaultThreeFingerEmulatesMiddle forKey:@"ThreeFingerEmulates"];
     [prefs setBool:defaultHideTab forKey:@"HideTab"];
-    [prefs setInteger:defaultWindowStyle forKey:@"WindowStyle"];
     [prefs setInteger:defaultTabViewType forKey:@"TabViewType"];
     [prefs setBool:defaultFocusFollowsMouse forKey:@"FocusFollowsMouse"];
     [prefs setBool:defaultTripleClickSelectsFullLines forKey:@"TripleClickSelectsFullWrappedLines"];
@@ -3115,9 +3102,8 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     return defaultTabViewType;
 }
 
-- (int)windowStyle
-{
-    return defaultWindowStyle;
+- (int)windowStyle {
+    return [iTermPreferences intForKey:kPreferenceKeyWindowStyle];
 }
 
 - (int)openTmuxWindowsIn {
@@ -3626,7 +3612,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 
     [_generalPreferencesViewController updateEnabledState];
     
-    [windowStyle selectItemAtIndex: defaultWindowStyle];
     [tabPosition selectItemAtIndex: defaultTabViewType];
     [middleButtonPastesFromClipboard setState:defaultPasteFromClipboard?NSOnState:NSOffState];
     [threeFingerEmulatesMiddle setState:defaultThreeFingerEmulatesMiddle ? NSOnState : NSOffState];

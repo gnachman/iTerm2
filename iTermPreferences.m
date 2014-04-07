@@ -41,6 +41,8 @@ NSString *const kPreferenceKeyOpenTmuxWindowsIn = @"OpenTmuxWindowsIn";
 NSString *const kPreferenceKeyTmuxDashboardLimit = @"TmuxDashboardLimit";
 NSString *const kPreferenceKeyAutoHideTmuxClientSession = @"AutoHideTmuxClientSession";
 
+NSString *const kPreferenceKeyWindowStyle = @"kPreferenceKeyWindowStyle";
+
 static NSMutableDictionary *gObservers;
 
 @implementation iTermPreferences
@@ -72,7 +74,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyLionStyleFullscren: @YES,
                   kPreferenceKeyOpenTmuxWindowsIn: @(OPEN_TMUX_WINDOWS_IN_WINDOWS),
                   kPreferenceKeyTmuxDashboardLimit: @10,
-                  kPreferenceKeyAutoHideTmuxClientSession: @NO, };
+                  kPreferenceKeyAutoHideTmuxClientSession: @NO,
+                  kPreferenceKeyWindowStyle: @(TAB_STYLE_METAL), };
         [dict retain];
     }
     return dict;

@@ -9,6 +9,7 @@
 #import "iTermPreferencesBaseViewController.h"
 #import "iTermPreferences.h"
 #import "NSStringITerm.h"
+#import "PreferencePanel.h"
 
 @interface iTermPreferencesBaseViewController ()
 
@@ -137,6 +138,13 @@
     assert(info);
     return info;
 }
+
+- (void)postRefreshNotification {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
+                                                        object:nil
+                                                      userInfo:nil];
+}
+
 
 #pragma mark - Constraints
 

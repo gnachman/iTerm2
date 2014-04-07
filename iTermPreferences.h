@@ -12,6 +12,12 @@
 #define OPEN_TMUX_WINDOWS_IN_WINDOWS 0
 #define OPEN_TMUX_WINDOWS_IN_TABS 1
 
+// Values for kPreferenceKeyWindowStyle (corresponds to tags in control).
+#define TAB_STYLE_METAL 0
+#define TAB_STYLE_AQUA 1
+#define TAB_STYLE_UNIFIED 2
+#define TAB_STYLE_ADIUM 3
+
 // General
 extern NSString *const kPreferenceKeyOpenBookmark;
 extern NSString *const kPreferenceKeyOpenArrangementAtStartup;
@@ -36,6 +42,9 @@ extern NSString *const kPreferenceKeyLionStyleFullscren;
 extern NSString *const kPreferenceKeyOpenTmuxWindowsIn;
 extern NSString *const kPreferenceKeyTmuxDashboardLimit;
 extern NSString *const kPreferenceKeyAutoHideTmuxClientSession;
+
+// Appearance
+extern NSString *const kPreferenceKeyWindowStyle;
 
 @interface iTermPreferences : NSObject
 
