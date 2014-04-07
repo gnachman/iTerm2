@@ -118,6 +118,9 @@ typedef enum {
     // Smart window placement
     IBOutlet NSButton *_smartPlacement;
 
+    // Adjust window size when changing font size
+    IBOutlet NSButton *_adjustWindowForFontSizeChange;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -234,6 +237,10 @@ typedef enum {
     
     [self defineControl:_smartPlacement
                     key:kPreferenceKeySmartWindowPlacement
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_adjustWindowForFontSizeChange
+                    key:kPreferenceKeyAdjustWindowForFontSizeChange
                    type:kPreferenceInfoTypeCheckbox];
 }
 

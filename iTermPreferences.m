@@ -34,6 +34,7 @@ NSString *const kPreferenceKeyCopyLastNewline = @"CopyLastNewline";
 NSString *const kPreferenceKeyAllowClipboardAccessFromTerminal = @"AllowClipboardAccess";
 NSString *const kPreferenceKeyCharactersConsideredPartOfAWordForSelection = @"WordCharacters";
 NSString *const kPreferenceKeySmartWindowPlacement = @"SmartPlacement";
+NSString *const kPreferenceKeyAdjustWindowForFontSizeChange = @"AdjustWindowForFontSizeChange";
 
 static NSMutableDictionary *gObservers;
 
@@ -60,7 +61,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyCopyLastNewline: @NO,
                   kPreferenceKeyAllowClipboardAccessFromTerminal: @NO,
                   kPreferenceKeyCharactersConsideredPartOfAWordForSelection: @"/-+\\~_.",
-                  kPreferenceKeySmartWindowPlacement: @NO };
+                  kPreferenceKeySmartWindowPlacement: @NO,
+                  kPreferenceKeyAdjustWindowForFontSizeChange: @YES, };
         [dict retain];
     }
     return dict;

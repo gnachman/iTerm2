@@ -12,7 +12,6 @@
                 <outlet property="actionColumn" destination="2465" id="3191"/>
                 <outlet property="addBookmarkButton" destination="2111" id="3320"/>
                 <outlet property="addNewMapping" destination="2443" id="4325"/>
-                <outlet property="adjustWindowForFontSizeChange" destination="6377" id="6381"/>
                 <outlet property="advancedTabViewItem" destination="KyW-GB-ElH" id="8r8-7W-7k9"/>
                 <outlet property="advancedToolbarItem" destination="gtg-rw-6h8" id="Enb-fp-ef2"/>
                 <outlet property="advancedWorkingDirSheet_" destination="5979" id="6029"/>
@@ -792,7 +791,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="6379"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="DaP-8V-RHc"/>
                                                 <outlet property="nextKeyView" destination="4540" id="6380"/>
                                             </connections>
                                         </button>
@@ -5937,6 +5936,7 @@ DQ
         </customObject>
         <customObject id="9Se-ld-UJa" customClass="GeneralPreferencesViewController">
             <connections>
+                <outlet property="_adjustWindowForFontSizeChange" destination="6377" id="8Ci-Ia-xoQ"/>
                 <outlet property="_allowClipboardAccessFromTerminal" destination="6383" id="u1Z-Xo-qFM"/>
                 <outlet property="_browseCustomFolder" destination="5618" id="0Ty-gp-K5Q"/>
                 <outlet property="_checkTestRelease" destination="5049" id="mCk-NA-PO2"/>
