@@ -13,6 +13,9 @@
 #import <Cocoa/Cocoa.h>
 #import "PTYTabView.h"
 
+extern NSString *const kPSMModifierChangedNotification;
+extern NSString *const kPSMTabModifierKey;  // Key for user info dict in modifier changed notification
+
 #define PSMTabDragDidEndNotification @"PSMTabDragDidEndNotification"
 #define PSMTabDragDidBeginNotification @"PSMTabDragDidBeginNotification"
 

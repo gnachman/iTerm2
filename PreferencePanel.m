@@ -357,11 +357,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSButton* copyButton;
 
     // Keyboard ------------------------------
-    int defaultSwitchTabModifier;
-    IBOutlet NSPopUpButton* switchTabModifierButton;
-    int defaultSwitchWindowModifier;
-    IBOutlet NSPopUpButton* switchWindowModifierButton;
-
     IBOutlet NSButton* deleteSendsCtrlHButton;
     IBOutlet NSButton* applicationKeypadAllowed;
     IBOutlet NSTableView* globalKeyMappings;
@@ -734,16 +729,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
                                                                 object:nil
                                                               userInfo:nil];
         }
-    } else if (sender == switchTabModifierButton ||
-               sender == switchWindowModifierButton) {
-        defaultSwitchTabModifier = [switchTabModifierButton selectedTag];
-        defaultSwitchWindowModifier = [switchWindowModifierButton selectedTag];
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermModifierChanged"
-                                                            object:nil
-                                                          userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-                                                                    [NSNumber numberWithInt:[self modifierTagToMask:defaultSwitchTabModifier]], @"TabModifier",
-                                                                    [NSNumber numberWithInt:[self modifierTagToMask:defaultSwitchWindowModifier]], @"WindowModifier",
-                                                                    nil, nil]];
     } else {
         if (sender == hotkeyTogglesWindow &&
             [hotkeyTogglesWindow state] == NSOnState &&
@@ -2379,8 +2364,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
                                                       withObject:nil
                                                       afterDelay:0.5];
     }
-    defaultSwitchTabModifier = [prefs objectForKey:@"SwitchTabModifier"] ? [[prefs objectForKey:@"SwitchTabModifier"] intValue] : MOD_TAG_ANY_COMMAND;
-    defaultSwitchWindowModifier = [prefs objectForKey:@"SwitchWindowModifier"] ? [[prefs objectForKey:@"SwitchWindowModifier"] intValue] : MOD_TAG_CMD_OPT;
 
     // Migrate old-style (iTerm 0.x) URL handlers.
     // make sure bookmarks are loaded
@@ -2445,9 +2428,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [prefs setInteger:defaultHotkeyCode forKey:@"HotkeyCode"];
     [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
     [prefs setInteger:defaultHotkeyModifiers forKey:@"HotkeyModifiers"];
-
-    [prefs setInteger:defaultSwitchTabModifier forKey:@"SwitchTabModifier"];
-    [prefs setInteger:defaultSwitchWindowModifier forKey:@"SwitchWindowModifier"];
 
     // save the handlers by converting the bookmark into an index
     [prefs setObject:urlHandlersByGuid forKey:@"URLHandlersByGuid"];
@@ -3071,14 +3051,12 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
             [self rightCommand] != MOD_TAG_RIGHT_COMMAND);
 }
 
-- (int)switchTabModifier
-{
-    return defaultSwitchTabModifier;
+- (int)switchTabModifier {
+    return [iTermPreferences intForKey:kPreferenceKeySwitchTabModifier];
 }
 
-- (int)switchWindowModifier
-{
-    return defaultSwitchWindowModifier;
+- (int)switchWindowModifier {
+    return [iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier];
 }
 
 - (BOOL)openArrangementAtStartup
@@ -3427,9 +3405,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     if (![bookmarksTableView selectedGuid] && [bookmarksTableView numberOfRows]) {
         [bookmarksTableView selectRowIndex:0];
     }
-
-    [switchTabModifierButton selectItemWithTag:defaultSwitchTabModifier];
-    [switchWindowModifierButton selectItemWithTag:defaultSwitchWindowModifier];
 
     int rowIndex = [globalKeyMappings selectedRow];
     if (rowIndex >= 0) {

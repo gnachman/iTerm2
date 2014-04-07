@@ -68,6 +68,8 @@ NSString *const kPreferenceKeyLeftOptionRemapping = @"LeftOption";
 NSString *const kPreferenceKeyRightOptionRemapping = @"RightOption";
 NSString *const kPreferenceKeyLeftCommandRemapping = @"LeftCommand";
 NSString *const kPreferenceKeyRightCommandRemapping = @"RightCommand";
+NSString *const kPreferenceKeySwitchTabModifier = @"SwitchTabModifier";
+NSString *const kPreferenceKeySwitchWindowModifier = @"SwitchWindowModifier";
 
 static NSMutableDictionary *gObservers;
 
@@ -123,11 +125,14 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyHideScrollbar: @NO,
                   kPreferenceKeyDisableFullscreenTransparencyByDefault: @NO,
                   kPreferenceKeyDimBackgroundWindows: @NO,
+
                   kPreferenceKeyControlRemapping: @(MOD_TAG_CONTROL),
                   kPreferenceKeyLeftOptionRemapping: @(MOD_TAG_LEFT_OPTION),
                   kPreferenceKeyRightOptionRemapping: @(MOD_TAG_RIGHT_OPTION),
                   kPreferenceKeyLeftCommandRemapping: @(MOD_TAG_LEFT_COMMAND),
                   kPreferenceKeyRightCommandRemapping: @(MOD_TAG_RIGHT_COMMAND),
+                  kPreferenceKeySwitchTabModifier: @(MOD_TAG_ANY_COMMAND),
+                  kPreferenceKeySwitchWindowModifier: @(MOD_TAG_CMD_OPT),
                   };
         [dict retain];
     }

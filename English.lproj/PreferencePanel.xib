@@ -182,8 +182,6 @@
                 <outlet property="smartSelectionWindowController_" destination="5863" id="5921"/>
                 <outlet property="spaceButton" destination="4921" id="4967"/>
                 <outlet property="spaceLabel" destination="4920" id="4968"/>
-                <outlet property="switchTabModifierButton" destination="4118" id="4288"/>
-                <outlet property="switchWindowModifierButton" destination="4269" id="4289"/>
                 <outlet property="syncTitle" destination="5008" id="5011"/>
                 <outlet property="tabColor" destination="Wzz-9B-zqB" id="MVB-cP-tr8"/>
                 <outlet property="tabView" destination="1943" id="2853"/>
@@ -3978,7 +3976,7 @@ Gw
                                         <popUpButton verticalHuggingPriority="750" id="4118">
                                             <rect key="frame" x="163" y="225" width="72" height="26"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <popUpButtonCell key="cell" type="push" title="⌘" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="4" imageScaling="proportionallyDown" inset="2" selectedItem="4133" id="4129">
+                                            <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="4129">
                                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                 <font key="font" metaFont="menu"/>
                                                 <menu key="menu" title="OtherViews" id="4130">
@@ -3986,7 +3984,7 @@ Gw
                                                         <menuItem title="⌥" tag="5" id="4132">
                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                         </menuItem>
-                                                        <menuItem title="⌘" state="on" tag="4" id="4133">
+                                                        <menuItem title="⌘" tag="4" id="4133">
                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                         </menuItem>
                                                         <menuItem title="⌘⌥" tag="6" id="4137">
@@ -3996,7 +3994,7 @@ Gw
                                                 </menu>
                                             </popUpButtonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="4280"/>
+                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="BY0-Ur-tJk"/>
                                                 <outlet property="nextKeyView" destination="4269" id="5294"/>
                                             </connections>
                                         </popUpButton>
@@ -4021,7 +4019,7 @@ Gw
                                                 </menu>
                                             </popUpButtonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="4281"/>
+                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="Wk7-Hi-uEC"/>
                                                 <outlet property="nextKeyView" destination="5104" id="5295"/>
                                             </connections>
                                         </popUpButton>
@@ -5964,6 +5962,8 @@ DQ
                 <outlet property="_leftOptionButton" destination="4383" id="kbJ-KW-Hkc"/>
                 <outlet property="_rightCommandButton" destination="4410" id="xeL-Ll-jEw"/>
                 <outlet property="_rightOptionButton" destination="4392" id="zkG-aT-oOV"/>
+                <outlet property="_switchTabModifierButton" destination="4118" id="m16-Tk-0hv"/>
+                <outlet property="_switchWindowModifierButton" destination="4269" id="LkQ-lj-KIU"/>
             </connections>
         </customObject>
     </objects>
