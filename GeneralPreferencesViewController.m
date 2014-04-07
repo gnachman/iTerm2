@@ -14,63 +14,8 @@
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "PasteboardHistory.h"
+#import "PreferenceInfo.h"
 #import "WindowArrangements.h"
-
-typedef enum {
-    kPreferenceInfoTypeCheckbox,
-    kPreferenceInfoTypeIntegerTextField,
-    kPreferenceInfoTypeStringTextField,
-    kPreferenceInfoTypePopup
-} PreferenceInfoType;
-
-@interface PreferenceInfo : NSObject
-
-@property(nonatomic, retain) NSString *key;
-@property(nonatomic, assign) PreferenceInfoType type;
-@property(nonatomic, retain) NSControl *control;
-@property(nonatomic, assign) NSRange range;  // For integer fields, the range of legal values.
-
-// A function that indicates if the control should be enabled. If nil, then the control is always
-// enabled.
-@property(nonatomic, copy) BOOL (^shouldBeEnabled)();
-
-// Called when value changes with PreferenceInfo as object.
-@property(nonatomic, copy) void (^onChange)();
-
-+ (instancetype)infoForPreferenceWithKey:(NSString *)key
-                                    type:(PreferenceInfoType)type
-                                 control:(NSControl *)control;
-
-@end
-
-@implementation PreferenceInfo
-
-+ (instancetype)infoForPreferenceWithKey:(NSString *)key
-                                    type:(PreferenceInfoType)type
-                                 control:(NSControl *)control {
-    PreferenceInfo *info = [[self alloc] init];
-    info.key = key;
-    info.type = type;
-    info.control = control;
-    return info;
-}
-
-- (id)init {
-    self = [super init];
-    if (self) {
-        _range = NSMakeRange(0, INT_MAX);
-    }
-    return self;
-}
-
-- (void)dealloc {
-    [_key release];
-    [_control release];
-    [_shouldBeEnabled release];
-    [super dealloc];
-}
-
-@end
 
 @interface GeneralPreferencesViewController ()
 @end

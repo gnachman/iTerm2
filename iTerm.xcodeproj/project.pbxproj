@@ -769,6 +769,9 @@
 		A6E7137F18F1DB1E008D94DD /* iTermPreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7137D18F1DB1E008D94DD /* iTermPreferences.h */; };
 		A6E7138018F1DB1E008D94DD /* iTermPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7137E18F1DB1E008D94DD /* iTermPreferences.m */; };
 		A6E7138118F1DB1E008D94DD /* iTermPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7137E18F1DB1E008D94DD /* iTermPreferences.m */; };
+		A6E7138418F263BC008D94DD /* PreferenceInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7138218F263BC008D94DD /* PreferenceInfo.h */; };
+		A6E7138518F263BC008D94DD /* PreferenceInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7138318F263BC008D94DD /* PreferenceInfo.m */; };
+		A6E7138618F263BC008D94DD /* PreferenceInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7138318F263BC008D94DD /* PreferenceInfo.m */; };
 		A6E74748188C6344005355CF /* CommandHistoryEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E74746188C6344005355CF /* CommandHistoryEntry.h */; };
 		A6E74749188C6344005355CF /* CommandHistoryEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74747188C6344005355CF /* CommandHistoryEntry.m */; };
 		A6E7474A188C6344005355CF /* CommandHistoryEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74747188C6344005355CF /* CommandHistoryEntry.m */; };
@@ -1319,6 +1322,8 @@
 		A6E7137918F1D70D008D94DD /* GeneralPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneralPreferencesViewController.m; sourceTree = "<group>"; };
 		A6E7137D18F1DB1E008D94DD /* iTermPreferences.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPreferences.h; sourceTree = "<group>"; };
 		A6E7137E18F1DB1E008D94DD /* iTermPreferences.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPreferences.m; sourceTree = "<group>"; };
+		A6E7138218F263BC008D94DD /* PreferenceInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PreferenceInfo.h; sourceTree = "<group>"; };
+		A6E7138318F263BC008D94DD /* PreferenceInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PreferenceInfo.m; sourceTree = "<group>"; };
 		A6E74746188C6344005355CF /* CommandHistoryEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandHistoryEntry.h; sourceTree = "<group>"; };
 		A6E74747188C6344005355CF /* CommandHistoryEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CommandHistoryEntry.m; sourceTree = "<group>"; };
 		A6E7474B188C6394005355CF /* CommandUse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandUse.h; sourceTree = "<group>"; };
@@ -1547,6 +1552,7 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				A6E7138218F263BC008D94DD /* PreferenceInfo.h */,
 				A6E7137818F1D70D008D94DD /* GeneralPreferencesViewController.h */,
 				A6E7137D18F1DB1E008D94DD /* iTermPreferences.h */,
 				1D9DCC14142D7FC10016228A /* AlertTrigger.h */,
@@ -1914,6 +1920,7 @@
 				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
 				1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */,
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
+				A6E7138318F263BC008D94DD /* PreferenceInfo.m */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -2508,6 +2515,7 @@
 				1DEDC8FD1451F67D004F1615 /* SessionTitleView.h in Headers */,
 				5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */,
 				1D8255FC14687EE8007CAE78 /* PointerPrefsController.h in Headers */,
+				A6E7138418F263BC008D94DD /* PreferenceInfo.h in Headers */,
 				A68A30F6186D150B007F550F /* NSObject+iTerm.h in Headers */,
 				1D825600146881EC007CAE78 /* PointerController.h in Headers */,
 				1D825604146B258A007CAE78 /* EventMonitorView.h in Headers */,
@@ -3035,6 +3043,7 @@
 				A68A30D2186D1414007F550F /* NSArray+iTerm.m in Sources */,
 				A68A30E5186D1429007F550F /* TransferrableFileMenuItemViewController.m in Sources */,
 				A6E7137C18F1D70E008D94DD /* GeneralPreferencesViewController.m in Sources */,
+				A6E7138618F263BC008D94DD /* PreferenceInfo.m in Sources */,
 				1D9A5574180FA85D00B42CE9 /* AlertTrigger.m in Sources */,
 				1D9A55A9180FA8B700B42CE9 /* PSMMetalTabStyle.m in Sources */,
 				1D9A5523180FA46100B42CE9 /* iTermTests.m in Sources */,
@@ -3233,6 +3242,7 @@
 				1D06E7D414BC04510097C0ED /* ProfileTableRow.m in Sources */,
 				1D06E7D814BC04E20097C0ED /* ProfileModelWrapper.m in Sources */,
 				1D06E7DC14BC05DB0097C0ED /* ProfileTableView.m in Sources */,
+				A6E7138518F263BC008D94DD /* PreferenceInfo.m in Sources */,
 				A073974014C7694600786414 /* ColorsMenuItemView.m in Sources */,
 				1DA26AC115007507004B5792 /* BackgroundThread.m in Sources */,
 				1D2F3B3E1516BA470044C337 /* iTermFontPanel.m in Sources */,
