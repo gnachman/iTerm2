@@ -5956,6 +5956,7 @@ DQ
                 <outlet property="_smartPlacement" destination="4570" id="jBA-SY-4Wo"/>
                 <outlet property="_tmuxDashboardLimit" destination="6345" id="MSF-0U-l1k"/>
                 <outlet property="_wordChars" destination="2096" id="hwf-SH-vM1"/>
+                <outlet property="view" destination="1947" id="PpO-BC-RRG"/>
             </connections>
         </customObject>
     </objects>
