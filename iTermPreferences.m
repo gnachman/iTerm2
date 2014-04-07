@@ -47,6 +47,7 @@ NSString *const kPreferenceKeyHideTabBar = @"HideTab";
 NSString *const kPreferenceKeyHighlightTabLabels = @"HighlightTabLabels";
 NSString *const kPreferenceKeyHideTabNumber = @"HideTabNumber";
 NSString *const kPreferenceKeyHideTabCloseButton = @"HideTabCloseButton";
+NSString *const kPreferenceKeyHideTabActivityIndicator = @"HideActivityIndicator";
 
 static NSMutableDictionary *gObservers;
 
@@ -87,6 +88,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyHighlightTabLabels: @YES,
                   kPreferenceKeyHideTabNumber: @NO,
                   kPreferenceKeyHideTabCloseButton: @NO,
+                  kPreferenceKeyHideTabActivityIndicator: @NO,
                   };
         [dict retain];
     }

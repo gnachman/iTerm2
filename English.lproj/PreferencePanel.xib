@@ -136,7 +136,6 @@
                 <outlet property="globalRemoveMappingButton" destination="3843" id="4320"/>
                 <outlet property="globalTabViewItem" destination="1944" id="2864"/>
                 <outlet property="globalToolbarItem" destination="5887" id="6037"/>
-                <outlet property="hideActivityIndicator" destination="5374" id="5382"/>
                 <outlet property="hideAfterOpening" destination="6354" id="6356"/>
                 <outlet property="hideMenuBarInFullscreen" destination="awA-hH-ziY" id="zyE-TX-Uzo"/>
                 <outlet property="hideScrollbar" destination="4561" id="4613"/>
@@ -1048,7 +1047,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="5376"/>
+                                                <action selector="settingChanged:" target="wvi-ET-SJJ" id="GiW-l7-del"/>
                                                 <outlet property="nextKeyView" destination="5330" id="5377"/>
                                             </connections>
                                         </button>
@@ -5955,6 +5954,7 @@ DQ
         </customObject>
         <customObject id="wvi-ET-SJJ" customClass="AppearancePreferencesViewController">
             <connections>
+                <outlet property="_hideActivityIndicator" destination="5374" id="Q4E-FF-5Zc"/>
                 <outlet property="_hideTab" destination="4462" id="GTv-bn-7th"/>
                 <outlet property="_hideTabCloseButton" destination="1dE-aB-uR8" id="SWy-mD-56q"/>
                 <outlet property="_hideTabNumber" destination="4446" id="PJ6-1K-B6s"/>

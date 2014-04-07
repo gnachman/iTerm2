@@ -26,6 +26,9 @@
     
     // Remove close button from tabs.
     IBOutlet NSButton *_hideTabCloseButton;
+
+    // Hide activity indicator.
+    IBOutlet NSButton *_hideActivityIndicator;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -67,6 +70,11 @@
     
     info = [self defineControl:_hideTabCloseButton
                            key:kPreferenceKeyHideTabCloseButton
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [self postRefreshNotification]; };
+
+    info = [self defineControl:_hideActivityIndicator
+                           key:kPreferenceKeyHideTabActivityIndicator
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
     

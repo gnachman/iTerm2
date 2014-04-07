@@ -107,10 +107,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     IBOutlet NSButton *optionClickMovesCursor;
     BOOL defaultOptionClickMovesCursor;
     
-    // hide activity indicator
-    IBOutlet NSButton *hideActivityIndicator;
-    BOOL defaultHideActivityIndicator;
-    
     // Hide menu bar in non-lion fullscreen
     IBOutlet NSButton *hideMenuBarInFullscreen;
     BOOL defaultHideMenuBarInFullscreen;
@@ -793,8 +789,7 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 
 - (IBAction)settingChanged:(id)sender
 {
-    if (sender == hideActivityIndicator ||
-        sender == hideMenuBarInFullscreen ||
+    if (sender == hideMenuBarInFullscreen ||
         sender == hideScrollbar ||
         sender == showPaneTitles ||
         sender == disableFullscreenTransparency ||
@@ -806,7 +801,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
         sender == threeFingerEmulatesMiddle ||
         sender == showWindowBorder ||
         sender == hotkeyAutoHides) {
-        defaultHideActivityIndicator = ([hideActivityIndicator state] == NSOnState);
         defaultHideMenuBarInFullscreen = ([hideMenuBarInFullscreen state] == NSOnState);
         defaultShowPaneTitles = ([showPaneTitles state] == NSOnState);
         defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
@@ -2483,7 +2477,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
     defaultFsTabDelay = [prefs objectForKey:@"FsTabDelay"] ? [[prefs objectForKey:@"FsTabDelay"] floatValue] : 1.0;
 
-    defaultHideActivityIndicator = [prefs objectForKey:@"HideActivityIndicator"]?[[prefs objectForKey:@"HideActivityIndicator"] boolValue]: NO;
     defaultHideMenuBarInFullscreen = [prefs objectForKey:@"HideMenuBarInFullscreen"]?[[prefs objectForKey:@"HideMenuBarInFullscreen"] boolValue] : YES;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
     defaultShowPaneTitles = [prefs objectForKey:@"ShowPaneTitles"]?[[prefs objectForKey:@"ShowPaneTitles"] boolValue]: YES;
@@ -2575,7 +2568,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [prefs setBool:defaultOptionClickMovesCursor forKey:@"OptionClickMovesCursor"];
     [prefs setFloat:defaultFsTabDelay forKey:@"FsTabDelay"];
     [prefs setBool:defaultPassOnControlLeftClick forKey:@"PassOnControlClick"];
-    [prefs setBool:defaultHideActivityIndicator forKey:@"HideActivityIndicator"];
     [prefs setBool:defaultHideMenuBarInFullscreen forKey:@"HideMenuBarInFullscreen"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
     [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
@@ -3129,9 +3121,8 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     return [iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton];
 }
 
-- (BOOL)hideActivityIndicator
-{
-    return defaultHideActivityIndicator;
+- (BOOL)hideActivityIndicator {
+    return [iTermPreferences boolForKey:kPreferenceKeyHideTabActivityIndicator];
 }
 
 - (BOOL)highlightTabLabels {
@@ -3565,7 +3556,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [cmdSelection setState: defaultCmdSelection?NSOnState:NSOffState];
     [optionClickMovesCursor setState: defaultOptionClickMovesCursor?NSOnState:NSOffState];
     [controlLeftClickActsLikeRightClick setState: defaultPassOnControlLeftClick?NSOffState:NSOnState];
-    [hideActivityIndicator setState:defaultHideActivityIndicator?NSOnState:NSOffState];
     [hideMenuBarInFullscreen setState:defaultHideMenuBarInFullscreen ? NSOnState:NSOffState];
     [fsTabDelay setFloatValue:defaultFsTabDelay];
 

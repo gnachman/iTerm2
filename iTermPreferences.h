@@ -55,6 +55,7 @@ extern NSString *const kPreferenceKeyHideTabBar;
 extern NSString *const kPreferenceKeyHighlightTabLabels;
 extern NSString *const kPreferenceKeyHideTabNumber;
 extern NSString *const kPreferenceKeyHideTabCloseButton;
+extern NSString *const kPreferenceKeyHideTabActivityIndicator;
 
 @interface iTermPreferences : NSObject
 
