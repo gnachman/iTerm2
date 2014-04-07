@@ -123,10 +123,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSButton* dimBackgroundWindows;
     BOOL defaultDimBackgroundWindows;
 
-    // Disable transparency in fullscreen by default
-    IBOutlet NSButton *disableFullscreenTransparency;
-    BOOL defaultDisableFullscreenTransparency;
-
     // instant replay
     IBOutlet NSButton *instantReplay;
     BOOL defaultInstantReplay;
@@ -741,13 +737,11 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 
 - (IBAction)settingChanged:(id)sender
 {
-    if (sender == disableFullscreenTransparency ||
-        sender == dimBackgroundWindows ||
+    if (sender == dimBackgroundWindows ||
         sender == threeFingerEmulatesMiddle ||
         sender == hotkeyAutoHides) {
         defaultDimBackgroundWindows = ([dimBackgroundWindows state] == NSOnState);
         defaultThreeFingerEmulatesMiddle=([threeFingerEmulatesMiddle state] == NSOnState);
-        defaultDisableFullscreenTransparency = ([disableFullscreenTransparency state] == NSOnState);
         defaultHotkeyAutoHides = ([hotkeyAutoHides state] == NSOnState);
         [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
                                                             object:nil
@@ -2402,7 +2396,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     defaultOptionClickMovesCursor = [prefs objectForKey:@"OptionClickMovesCursor"]?[[prefs objectForKey:@"OptionClickMovesCursor"] boolValue]: YES;
     defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
 
-    defaultDisableFullscreenTransparency = [prefs objectForKey:@"DisableFullscreenTransparency"] ? [[prefs objectForKey:@"DisableFullscreenTransparency"] boolValue] : NO;
     defaultHotkey = [prefs objectForKey:@"Hotkey"]?[[prefs objectForKey:@"Hotkey"] boolValue]: NO;
     defaultHotkeyCode = [prefs objectForKey:@"HotkeyCode"]?[[prefs objectForKey:@"HotkeyCode"] intValue]: 0;
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
@@ -2482,7 +2475,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [prefs setBool:defaultOptionClickMovesCursor forKey:@"OptionClickMovesCursor"];
     [prefs setBool:defaultPassOnControlLeftClick forKey:@"PassOnControlClick"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
-    [prefs setBool:defaultDisableFullscreenTransparency forKey:@"DisableFullscreenTransparency"];
     [prefs setBool:defaultHotkey forKey:@"Hotkey"];
     [prefs setInteger:defaultHotkeyCode forKey:@"HotkeyCode"];
     [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
@@ -3056,9 +3048,8 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     return [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
 }
 
-- (BOOL)disableFullscreenTransparency
-{
-    return defaultDisableFullscreenTransparency;
+- (BOOL)disableFullscreenTransparency {
+    return [iTermPreferences boolForKey:kPreferenceKeyDisableFullscreenTransparencyByDefault];
 }
 
 - (BOOL)smartPlacement {
@@ -3447,7 +3438,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [optionClickMovesCursor setState: defaultOptionClickMovesCursor?NSOnState:NSOffState];
     [controlLeftClickActsLikeRightClick setState: defaultPassOnControlLeftClick?NSOffState:NSOnState];
 
-    [disableFullscreenTransparency setState:defaultDisableFullscreenTransparency ? NSOnState : NSOffState];
     [hotkey setState: defaultHotkey?NSOnState:NSOffState];
     if (defaultHotkeyCode || defaultHotkeyChar) {
         [hotkeyField setStringValue:[iTermKeyBindingMgr formatKeyCombination:[NSString stringWithFormat:@"0x%x-0x%x", defaultHotkeyChar, defaultHotkeyModifiers]]];

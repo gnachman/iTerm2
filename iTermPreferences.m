@@ -60,6 +60,7 @@ NSString *const kPreferenceKeyDimInactiveSplitPanes = @"DimInactiveSplitPanes";
 NSString *const kPreferenceKeyAnimateDimming = @"AnimateDimming";
 NSString *const kPreferenceKeyShowWindowBorder = @"UseBorder";
 NSString *const kPreferenceKeyHideScrollbar = @"HideScrollbar";
+NSString *const kPreferenceKeyDisableFullscreenTransparencyByDefault = @"DisableFullscreenTransparency";
 
 static NSMutableDictionary *gObservers;
 
@@ -113,6 +114,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyAnimateDimming: @NO,
                   kPreferenceKeyShowWindowBorder: @NO,
                   kPreferenceKeyHideScrollbar: @NO,
+                  kPreferenceKeyDisableFullscreenTransparencyByDefault: @NO,
                   };
         [dict retain];
     }

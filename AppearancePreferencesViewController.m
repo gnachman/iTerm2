@@ -66,6 +66,9 @@
 
     // Hide scrollbar.
     IBOutlet NSButton *_hideScrollbar;
+
+    // Disable transparency in fullscreen by default.
+    IBOutlet NSButton *_disableFullscreenTransparency;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -171,6 +174,11 @@
 
     info = [self defineControl:_hideScrollbar
                            key:kPreferenceKeyHideScrollbar
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [self postRefreshNotification]; };
+
+    info = [self defineControl:_disableFullscreenTransparency
+                           key:kPreferenceKeyDisableFullscreenTransparencyByDefault
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 }
