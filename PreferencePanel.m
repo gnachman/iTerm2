@@ -117,10 +117,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     IBOutlet NSButton *hideActivityIndicator;
     BOOL defaultHideActivityIndicator;
     
-    // Highlight tab labels on activity
-    IBOutlet NSButton *highlightTabLabels;
-    BOOL defaultHighlightTabLabels;
-    
     // Hide menu bar in non-lion fullscreen
     IBOutlet NSButton *hideMenuBarInFullscreen;
     BOOL defaultHideMenuBarInFullscreen;
@@ -806,7 +802,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     if (sender == hideTabCloseButton ||
         sender == hideTabNumber ||
         sender == hideActivityIndicator ||
-        sender == highlightTabLabels ||
         sender == hideMenuBarInFullscreen ||
         sender == hideScrollbar ||
         sender == showPaneTitles ||
@@ -822,7 +817,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
         defaultHideTabCloseButton = ([hideTabCloseButton state] == NSOnState);
         defaultHideTabNumber = ([hideTabNumber state] == NSOnState);
         defaultHideActivityIndicator = ([hideActivityIndicator state] == NSOnState);
-        defaultHighlightTabLabels = ([highlightTabLabels state] == NSOnState);
         defaultHideMenuBarInFullscreen = ([hideMenuBarInFullscreen state] == NSOnState);
         defaultShowPaneTitles = ([showPaneTitles state] == NSOnState);
         defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
@@ -2502,7 +2496,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     defaultHideTabCloseButton = [prefs boolForKey:@"HideTabCloseButton"];
     defaultHideTabNumber = [prefs boolForKey:@"HideTabNumber"];
     defaultHideActivityIndicator = [prefs objectForKey:@"HideActivityIndicator"]?[[prefs objectForKey:@"HideActivityIndicator"] boolValue]: NO;
-    defaultHighlightTabLabels = [prefs objectForKey:@"HighlightTabLabels"]?[[prefs objectForKey:@"HighlightTabLabels"] boolValue]: YES;
     defaultHideMenuBarInFullscreen = [prefs objectForKey:@"HideMenuBarInFullscreen"]?[[prefs objectForKey:@"HideMenuBarInFullscreen"] boolValue] : YES;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
     defaultShowPaneTitles = [prefs objectForKey:@"ShowPaneTitles"]?[[prefs objectForKey:@"ShowPaneTitles"] boolValue]: YES;
@@ -2597,7 +2590,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [prefs setBool:defaultHideTabNumber forKey:@"HideTabNumber"];
     [prefs setBool:defaultHideTabCloseButton forKey:@"HideTabCloseButton"];
     [prefs setBool:defaultHideActivityIndicator forKey:@"HideActivityIndicator"];
-    [prefs setBool:defaultHighlightTabLabels forKey:@"HighlightTabLabels"];
     [prefs setBool:defaultHideMenuBarInFullscreen forKey:@"HideMenuBarInFullscreen"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
     [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
@@ -3156,9 +3148,8 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     return defaultHideActivityIndicator;
 }
 
-- (BOOL)highlightTabLabels
-{
-    return defaultHighlightTabLabels;
+- (BOOL)highlightTabLabels {
+    return [iTermPreferences boolForKey:kPreferenceKeyHighlightTabLabels];
 }
 
 - (BOOL)hideMenuBarInFullscreen
@@ -3591,7 +3582,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [hideTabCloseButton setState: defaultHideTabCloseButton?NSOnState:NSOffState];
     [hideTabNumber setState: defaultHideTabNumber?NSOnState:NSOffState];
     [hideActivityIndicator setState:defaultHideActivityIndicator?NSOnState:NSOffState];
-    [highlightTabLabels setState: defaultHighlightTabLabels?NSOnState:NSOffState];
     [hideMenuBarInFullscreen setState:defaultHideMenuBarInFullscreen ? NSOnState:NSOffState];
     [fsTabDelay setFloatValue:defaultFsTabDelay];
 

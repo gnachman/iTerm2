@@ -52,6 +52,7 @@ extern NSString *const kPreferenceKeyAutoHideTmuxClientSession;
 extern NSString *const kPreferenceKeyWindowStyle;
 extern NSString *const kPreferenceKeyTabPosition;
 extern NSString *const kPreferenceKeyHideTabBar;
+extern NSString *const kPreferenceKeyHighlightTabLabels;
 
 @interface iTermPreferences : NSObject
 

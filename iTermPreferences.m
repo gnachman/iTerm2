@@ -44,6 +44,7 @@ NSString *const kPreferenceKeyAutoHideTmuxClientSession = @"AutoHideTmuxClientSe
 NSString *const kPreferenceKeyWindowStyle = @"kPreferenceKeyWindowStyle";
 NSString *const kPreferenceKeyTabPosition = @"TabViewType";
 NSString *const kPreferenceKeyHideTabBar = @"HideTab";
+NSString *const kPreferenceKeyHighlightTabLabels = @"HighlightTabLabels";
 
 static NSMutableDictionary *gObservers;
 
@@ -80,7 +81,8 @@ static NSMutableDictionary *gObservers;
                   
                   kPreferenceKeyWindowStyle: @(TAB_STYLE_METAL),
                   kPreferenceKeyTabPosition: @(TAB_POSITION_TOP),
-                  kPreferenceKeyHideTabBar: @YES, };
+                  kPreferenceKeyHideTabBar: @YES,
+                  kPreferenceKeyHighlightTabLabels: @YES, };
         [dict retain];
     }
     return dict;
