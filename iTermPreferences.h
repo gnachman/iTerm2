@@ -57,6 +57,7 @@ extern NSString *const kPreferenceKeyHideTabNumber;
 extern NSString *const kPreferenceKeyHideTabCloseButton;
 extern NSString *const kPreferenceKeyHideTabActivityIndicator;
 extern NSString *const kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen;
+extern NSString *const kPreferenceKeyShowPaneTitles;
 
 @interface iTermPreferences : NSObject
 

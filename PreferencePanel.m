@@ -145,19 +145,15 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     // Window border
     IBOutlet NSButton* showWindowBorder;
     BOOL defaultShowWindowBorder;
-    
+
     // hide scrollbar and resize
     IBOutlet NSButton *hideScrollbar;
     BOOL defaultHideScrollbar;
-    
-    // show pane titles
-    IBOutlet NSButton *showPaneTitles;
-    BOOL defaultShowPaneTitles;
-    
+
     // Disable transparency in fullscreen by default
     IBOutlet NSButton *disableFullscreenTransparency;
     BOOL defaultDisableFullscreenTransparency;
-    
+
     // Window/tab title customization
     IBOutlet NSButton* windowNumber;
     BOOL defaultWindowNumber;
@@ -787,7 +783,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 {
     if (sender == hideMenuBarInFullscreen ||
         sender == hideScrollbar ||
-        sender == showPaneTitles ||
         sender == disableFullscreenTransparency ||
         sender == dimInactiveSplitPanes ||
         sender == dimBackgroundWindows ||
@@ -798,7 +793,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
         sender == showWindowBorder ||
         sender == hotkeyAutoHides) {
         defaultHideMenuBarInFullscreen = ([hideMenuBarInFullscreen state] == NSOnState);
-        defaultShowPaneTitles = ([showPaneTitles state] == NSOnState);
         defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
         defaultDimBackgroundWindows = ([dimBackgroundWindows state] == NSOnState);
         defaultAnimateDimming= ([animateDimming state] == NSOnState);
@@ -2473,7 +2467,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 
     defaultHideMenuBarInFullscreen = [prefs objectForKey:@"HideMenuBarInFullscreen"]?[[prefs objectForKey:@"HideMenuBarInFullscreen"] boolValue] : YES;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
-    defaultShowPaneTitles = [prefs objectForKey:@"ShowPaneTitles"]?[[prefs objectForKey:@"ShowPaneTitles"] boolValue]: YES;
     defaultDisableFullscreenTransparency = [prefs objectForKey:@"DisableFullscreenTransparency"] ? [[prefs objectForKey:@"DisableFullscreenTransparency"] boolValue] : NO;
     defaultWindowNumber = [prefs objectForKey:@"WindowNumber"]?[[prefs objectForKey:@"WindowNumber"] boolValue]: YES;
     defaultJobName = [prefs objectForKey:@"JobName"]?[[prefs objectForKey:@"JobName"] boolValue]: YES;
@@ -2564,7 +2557,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [prefs setBool:defaultHideMenuBarInFullscreen forKey:@"HideMenuBarInFullscreen"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
     [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
-    [prefs setBool:defaultShowPaneTitles forKey:@"ShowPaneTitles"];
     [prefs setBool:defaultDisableFullscreenTransparency forKey:@"DisableFullscreenTransparency"];
     [prefs setBool:defaultWindowNumber forKey:@"WindowNumber"];
     [prefs setBool:defaultJobName forKey:@"JobName"];
@@ -3145,9 +3137,8 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     return defaultHideScrollbar;
 }
 
-- (BOOL)showPaneTitles
-{
-    return defaultShowPaneTitles;
+- (BOOL)showPaneTitles {
+    return [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
 }
 
 - (BOOL)disableFullscreenTransparency
@@ -3551,7 +3542,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [hideMenuBarInFullscreen setState:defaultHideMenuBarInFullscreen ? NSOnState:NSOffState];
 
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
-    [showPaneTitles setState:defaultShowPaneTitles?NSOnState:NSOffState];
     [disableFullscreenTransparency setState:defaultDisableFullscreenTransparency ? NSOnState : NSOffState];
     [windowNumber setState: defaultWindowNumber?NSOnState:NSOffState];
     [jobName setState: defaultJobName?NSOnState:NSOffState];
