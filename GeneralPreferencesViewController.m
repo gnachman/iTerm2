@@ -19,7 +19,8 @@
 typedef enum {
     kPreferenceInfoTypeCheckbox,
     kPreferenceInfoTypeIntegerTextField,
-    kPreferenceInfoTypeStringTextField
+    kPreferenceInfoTypeStringTextField,
+    kPreferenceInfoTypePopup
 } PreferenceInfoType;
 
 @interface PreferenceInfo : NSObject
@@ -126,6 +127,9 @@ typedef enum {
 
     // Lion-style fullscreen
     IBOutlet NSButton *_lionStyleFullscreen;
+
+    // Open tmux windows in [windows, tabs]
+    IBOutlet NSPopUpButton *_openTmuxWindows;
 
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
@@ -256,6 +260,18 @@ typedef enum {
     [self defineControl:_lionStyleFullscreen
                     key:kPreferenceKeyLionStyleFullscren
                    type:kPreferenceInfoTypeCheckbox];
+    
+    info = [self defineControl:_openTmuxWindows
+                           key:kPreferenceKeyOpenTmuxWindowsIn
+                          type:kPreferenceInfoTypePopup];
+    // This is how it was done before the great refactoring, but I don't see why it's needed.
+    info.onChange = ^() { [self postRefreshNotification]; };
+}
+
+- (void)postRefreshNotification {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
+                                                        object:nil
+                                                      userInfo:nil];
 }
 
 - (void)updateValueForInfo:(PreferenceInfo *)info {
@@ -278,6 +294,13 @@ typedef enum {
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
             field.stringValue = [iTermPreferences stringForKey:info.key];
+            break;
+        }
+            
+        case kPreferenceInfoTypePopup: {
+            assert([info.control isKindOfClass:[NSPopUpButton class]]);
+            NSPopUpButton *popup = (NSPopUpButton *)info.control;
+            [popup selectItemWithTag:[iTermPreferences intForKey:info.key]];
             break;
         }
             
@@ -324,6 +347,10 @@ typedef enum {
 
         case kPreferenceInfoTypeStringTextField:
             [iTermPreferences setString:[sender stringValue] forKey:info.key];
+            break;
+
+        case kPreferenceInfoTypePopup:
+            [iTermPreferences setInt:[sender selectedTag] forKey:info.key];
             break;
 
         default:

@@ -581,7 +581,7 @@ NSString *kSessionsKVCKey = @"sessions";
                                                object: nil];
     [[NSNotificationCenter defaultCenter] addObserver: self
                                              selector: @selector(_refreshTerminal:)
-                                                 name: @"iTermRefreshTerminal"
+                                                 name: kRefreshTerminalNotification
                                                object: nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_scrollerStyleChanged:)

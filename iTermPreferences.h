@@ -8,6 +8,10 @@
 
 #import <Foundation/Foundation.h>
 
+// Values for kPreferenceKeyOpenTmuxWindowsIn (corresponds to tags in control).
+#define OPEN_TMUX_WINDOWS_IN_WINDOWS 0
+#define OPEN_TMUX_WINDOWS_IN_TABS 1
+
 // General
 extern NSString *const kPreferenceKeyOpenBookmark;
 extern NSString *const kPreferenceKeyOpenArrangementAtStartup;
@@ -29,6 +33,7 @@ extern NSString *const kPreferenceKeySmartWindowPlacement;
 extern NSString *const kPreferenceKeyAdjustWindowForFontSizeChange;
 extern NSString *const kPreferenceKeyMaximizeVerticallyOnly;
 extern NSString *const kPreferenceKeyLionStyleFullscren;
+extern NSString *const kPreferenceKeyOpenTmuxWindowsIn;
 
 @interface iTermPreferences : NSObject
 

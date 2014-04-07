@@ -173,7 +173,6 @@
                 <outlet property="nonAsciiFontView" destination="15P-ty-S1w" id="dru-RS-lgT"/>
                 <outlet property="nonasciiAntiAliased" destination="4783" id="4878"/>
                 <outlet property="normalFontField" destination="4775" id="4870"/>
-                <outlet property="openTmuxWindows" destination="6337" id="6349"/>
                 <outlet property="optionClickMovesCursor" destination="6407" id="6415"/>
                 <outlet property="optionKeySends" destination="4291" id="4307"/>
                 <outlet property="presetsMenu" destination="3215" id="3561"/>
@@ -974,18 +973,18 @@ Gw
                                         <popUpButton verticalHuggingPriority="750" id="6337">
                                             <rect key="frame" x="740" y="134" width="89" height="26"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <popUpButtonCell key="cell" type="push" title="Windows" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="6340" id="6338">
+                                            <popUpButtonCell key="cell" type="push" title="Tabs" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="6341" id="6338">
                                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                 <font key="font" metaFont="menu"/>
                                                 <menu key="menu" title="OtherViews" id="6339">
                                                     <items>
-                                                        <menuItem title="Windows" state="on" id="6340"/>
-                                                        <menuItem title="Tabs" tag="1" id="6341"/>
+                                                        <menuItem title="Windows" id="6340"/>
+                                                        <menuItem title="Tabs" state="on" tag="1" id="6341"/>
                                                     </items>
                                                 </menu>
                                             </popUpButtonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="6351"/>
+                                                <action selector="settingChanged:" target="9Se-ld-UJa" id="sAr-Yo-Bzs"/>
                                             </connections>
                                         </popUpButton>
                                         <textField verticalHuggingPriority="750" id="6343">
@@ -5949,6 +5948,7 @@ DQ
                 <outlet property="_maxVertically" destination="4540" id="Voi-dz-2WX"/>
                 <outlet property="_openArrangementAtStartup" destination="3590" id="hIR-Ca-buG"/>
                 <outlet property="_openBookmark" destination="1959" id="PNp-By-R5Y"/>
+                <outlet property="_openTmuxWindows" destination="6337" id="tZ3-C1-Lj2"/>
                 <outlet property="_prefsCustomFolder" destination="5616" id="GlX-Oe-rRX"/>
                 <outlet property="_prefsDirWarning" destination="5628" id="HjH-wN-ecG"/>
                 <outlet property="_promptOnQuit" destination="4757" id="apf-8s-46r"/>

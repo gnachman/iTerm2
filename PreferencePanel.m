@@ -55,6 +55,7 @@ static NSString * const kCustomColorPresetsKey = @"Custom Color Presets";
 static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 static NSString * const kDeleteKeyString = @"0x7f-0x0";
 static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
+NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 
 @interface PreferencePanel ()
 @property(nonatomic, copy) NSString *currentProfileGuid;
@@ -187,10 +188,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     // Open tmux dashboard if there are more than N windows
     IBOutlet NSTextField *tmuxDashboardLimit;
     int defaultTmuxDashboardLimit;
-    
-    // Open tmux windows in
-    IBOutlet NSPopUpButton *openTmuxWindows;
-    int defaultOpenTmuxWindowsIn;
     
     // Hide the tmux client session
     IBOutlet NSButton *autoHideTmuxClientSession;
@@ -855,13 +852,11 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         sender == animateDimming ||
         sender == dimOnlyText ||
         sender == dimmingAmount ||
-        sender == openTmuxWindows ||
         sender == threeFingerEmulatesMiddle ||
         sender == autoHideTmuxClientSession ||
         sender == showWindowBorder ||
         sender == hotkeyAutoHides) {
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
-        defaultOpenTmuxWindowsIn = [[openTmuxWindows selectedItem] tag];
         defaultAutoHideTmuxClientSession = ([autoHideTmuxClientSession state] == NSOnState);
         defaultTabViewType=[tabPosition indexOfSelectedItem];
         defaultHideTabCloseButton = ([hideTabCloseButton state] == NSOnState);
@@ -881,7 +876,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
         defaultDisableFullscreenTransparency = ([disableFullscreenTransparency state] == NSOnState);
         defaultHotkeyAutoHides = ([hotkeyAutoHides state] == NSOnState);
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermRefreshTerminal"
+        [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
                                                             object:nil
                                                           userInfo:nil];
         if (sender == threeFingerEmulatesMiddle) {
@@ -2535,7 +2530,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setInteger:0 forKey:@"AppleScrollAnimationEnabled"];
 
     defaultWindowStyle=[prefs objectForKey:@"WindowStyle"]?[prefs integerForKey:@"WindowStyle"]:0;
-    defaultOpenTmuxWindowsIn = [prefs objectForKey:@"OpenTmuxWindowsIn"]?[prefs integerForKey:@"OpenTmuxWindowsIn"]:OPEN_TMUX_WINDOWS_IN_WINDOWS;
     defaultAutoHideTmuxClientSession = [prefs objectForKey:@"AutoHideTmuxClientSession"] ? [[prefs objectForKey:@"AutoHideTmuxClientSession"] boolValue] : NO;
     defaultTabViewType=[prefs objectForKey:@"TabViewType"]?[prefs integerForKey:@"TabViewType"]:0;
     if (defaultTabViewType > 1) {
@@ -2643,7 +2637,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setBool:defaultThreeFingerEmulatesMiddle forKey:@"ThreeFingerEmulates"];
     [prefs setBool:defaultHideTab forKey:@"HideTab"];
     [prefs setInteger:defaultWindowStyle forKey:@"WindowStyle"];
-        [prefs setInteger:defaultOpenTmuxWindowsIn forKey:@"OpenTmuxWindowsIn"];
     [prefs setBool:defaultAutoHideTmuxClientSession forKey:@"AutoHideTmuxClientSession"];
     [prefs setInteger:defaultTabViewType forKey:@"TabViewType"];
     [prefs setBool:defaultFocusFollowsMouse forKey:@"FocusFollowsMouse"];
@@ -3143,9 +3136,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return defaultWindowStyle;
 }
 
-- (int)openTmuxWindowsIn
-{
-    return defaultOpenTmuxWindowsIn;
+- (int)openTmuxWindowsIn {
+    return [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn];
 }
 
 - (BOOL)autoHideTmuxClientSession
@@ -3653,7 +3645,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [_generalPreferencesViewController updateEnabledState];
     
     [windowStyle selectItemAtIndex: defaultWindowStyle];
-    [openTmuxWindows selectItemAtIndex: defaultOpenTmuxWindowsIn];
     [autoHideTmuxClientSession setState:defaultAutoHideTmuxClientSession?NSOnState:NSOffState];
     [tabPosition selectItemAtIndex: defaultTabViewType];
     [middleButtonPastesFromClipboard setState:defaultPasteFromClipboard?NSOnState:NSOffState];

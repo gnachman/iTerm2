@@ -6,21 +6,22 @@
 //
 
 #import "TmuxController.h"
-#import "TmuxGateway.h"
-#import "TSVParser.h"
-#import "PseudoTerminal.h"
+#import "EquivalenceClassSet.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermController.h"
-#import "TmuxWindowOpener.h"
-#import "PTYTab.h"
+#import "iTermPreferences.h"
+#import "NSStringITerm.h"
+#import "PreferencePanel.h"
 #import "PseudoTerminal.h"
+#import "PseudoTerminal.h"
+#import "PTYTab.h"
 #import "PTYTab.h"
 #import "RegexKitLite.h"
-#import "NSStringITerm.h"
 #import "TmuxControllerRegistry.h"
-#import "EquivalenceClassSet.h"
 #import "TmuxDashboardController.h"
-#import "PreferencePanel.h"
-#import "iTermApplicationDelegate.h"
+#import "TmuxGateway.h"
+#import "TmuxWindowOpener.h"
+#import "TSVParser.h"
 
 NSString *kTmuxControllerSessionsDidChange = @"kTmuxControllerSessionsDidChange";
 NSString *kTmuxControllerDetachedNotification = @"kTmuxControllerDetachedNotification";

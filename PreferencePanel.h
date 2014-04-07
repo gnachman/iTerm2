@@ -33,6 +33,8 @@
 #import "FutureMethods.h"
 #import "PTYTextViewDataSource.h"
 
+extern NSString *const kRefreshTerminalNotification;
+
 #define OPT_NORMAL 0
 #define OPT_META   1
 #define OPT_ESC    2
@@ -54,9 +56,6 @@
 #define PROMPT_ALWAYS 1
 // Prompt on close if jobs (excluding some in a list) are running.
 #define PROMPT_EX_JOBS 2
-
-#define OPEN_TMUX_WINDOWS_IN_WINDOWS 0
-#define OPEN_TMUX_WINDOWS_IN_TABS 1
 
 @class iTermController;
 @class TriggerController;

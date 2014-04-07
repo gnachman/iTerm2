@@ -421,7 +421,7 @@ static NSImage* alertImage;
         [self _useBackgroundIndicatorChanged:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(_settingsChanged:)
-                                                     name:@"iTermRefreshTerminal"
+                                                     name:kRefreshTerminalNotification
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(_pointerSettingsChanged:)
