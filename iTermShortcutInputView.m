@@ -14,6 +14,13 @@
 
 - (void)handleShortcutEvent:(NSEvent *)event {
     [_shortcutDelegate shortcutInputView:self didReceiveKeyPressEvent:event];
+    [[self window] makeFirstResponder:[self window]];
+}
+
+- (void)setEnabled:(BOOL)flag {
+    [super setEnabled:flag];
+    [self setEditable:flag];
+    [self setSelectable:flag];
 }
 
 @end

@@ -2579,40 +2579,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [dataSource setBookmark:newDict withGuid:[dest objectForKey:KEY_GUID]];
 }
 
-- (NSTextField*)shortcutKeyTextField {
-    // This is for editing key mappings.
-    return keyPress;
-}
-
-- (void)shortcutKeyDown:(NSEvent*)event
-{
-    unsigned int keyMods;
-    unsigned short keyCode;
-    NSString *unmodkeystr;
-
-    keyMods = [event modifierFlags];
-    unmodkeystr = [event charactersIgnoringModifiers];
-    keyCode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
-
-    // turn off all the other modifier bits we don't care about
-    unsigned int theModifiers = keyMods &
-    (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask |
-     NSCommandKeyMask | NSNumericPadKeyMask);
-
-    // on some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
-    if (keyCode >= NSUpArrowFunctionKey &&
-        keyCode <= NSRightArrowFunctionKey) {
-        theModifiers |= NSNumericPadKeyMask;
-    }
-    if (keyString) {
-        [keyString release];
-    }
-    keyString = [[NSString stringWithFormat:@"0x%x-0x%x", keyCode,
-                  theModifiers] retain];
-
-    [keyPress setStringValue:[iTermKeyBindingMgr formatKeyCombination:keyString]];
-}
-
 #pragma mark - Hotkey Window
 
 - (NSTextField*)hotkeyField {
@@ -3903,6 +3869,34 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 - (void)setHaveJobsForCurrentBookmark:(BOOL)value
 {
     // observed but has no effect because the getter does all the computation.
+}
+
+#pragma mark - iTermShortcutInputViewDelegate
+
+// Note: This is called directly by HotkeyWindowController when the action requires key remapping
+// to be disabled so the shortcut can be input properly. In this case, |view| will be nil.
+- (void)shortcutInputView:(iTermShortcutInputView *)view didReceiveKeyPressEvent:(NSEvent *)event {
+    unsigned int keyMods;
+    unsigned short keyCode;
+    NSString *unmodkeystr;
+
+    keyMods = [event modifierFlags];
+    unmodkeystr = [event charactersIgnoringModifiers];
+    keyCode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
+
+    // turn off all the other modifier bits we don't care about
+    unsigned int theModifiers = (keyMods &
+                                 (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask |
+                                  NSCommandKeyMask | NSNumericPadKeyMask));
+
+    // On some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
+    if (keyCode >= NSUpArrowFunctionKey && keyCode <= NSRightArrowFunctionKey) {
+        theModifiers |= NSNumericPadKeyMask;
+    }
+    [keyString release];
+    keyString = [[NSString stringWithFormat:@"0x%x-0x%x", keyCode, theModifiers] retain];
+
+    [keyPress setStringValue:[iTermKeyBindingMgr formatKeyCombination:keyString]];
 }
 
 @end

@@ -91,7 +91,6 @@
             OnHotKeyEvent();
             return;
         }
-        PreferencePanel* privatePrefPanel = [PreferencePanel sessionsInstance];
         PseudoTerminal* currentTerminal = [cont currentTerminal];
         PTYTabView* tabView = [currentTerminal tabView];
         PTYSession* currentSession = [currentTerminal currentSession];
@@ -123,19 +122,6 @@
                 [shortcutView handleShortcutEvent:event];
                 return;
             }
-        }
-        if ([prefPanel keySheet] == [self keyWindow] &&
-            [prefPanel keySheetIsOpen] &&
-            [[prefPanel shortcutKeyTextField] textFieldIsFirstResponder]) {
-            // Focus is in the shortcut field in prefspanel. Pass events directly to it.
-            [prefPanel shortcutKeyDown:event];
-            return;
-        } else if ([privatePrefPanel keySheet] == [self keyWindow] &&
-                   [privatePrefPanel keySheetIsOpen] &&
-                   [[privatePrefPanel shortcutKeyTextField] textFieldIsFirstResponder]) {
-            // Focus is in the shortcut field in sessions prefspanel. Pass events directly to it.
-            [privatePrefPanel shortcutKeyDown:event];
-            return;
         } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
             // Focus is in a terminal window.
             responder = [[self keyWindow] firstResponder];

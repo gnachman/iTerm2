@@ -4892,7 +4892,7 @@ Gw
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
-                    <textField verticalHuggingPriority="750" id="3201">
+                    <textField verticalHuggingPriority="750" id="3201" customClass="iTermShortcutInputView">
                         <rect key="frame" x="149" y="119" width="237" height="22"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="3202">
@@ -4901,6 +4901,7 @@ Gw
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                         <connections>
+                            <outlet property="_shortcutDelegate" destination="-2" id="NX7-Gp-7LB"/>
                             <outlet property="nextKeyView" destination="2661" id="5175"/>
                         </connections>
                     </textField>

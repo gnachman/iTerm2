@@ -414,7 +414,8 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     if (callDirectly) {
         // Send keystroke directly to preference panel when setting do-not-remap for a key; for
         // system keys, NSApp sendEvent: is never called so this is the last chance.
-        [[PreferencePanel sharedInstance] shortcutKeyDown:cocoaEvent];
+        [[PreferencePanel sharedInstance] shortcutInputView:nil
+                                    didReceiveKeyPressEvent:cocoaEvent];
         return nil;
     }
     if (local) {

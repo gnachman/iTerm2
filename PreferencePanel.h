@@ -25,13 +25,14 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "FutureMethods.h"
+#import "iTermShortcutInputView.h"
 #import "ProfileModel.h"
 #import "ProfileListView.h"
-#import "WindowArrangements.h"
-#import "TriggerController.h"
-#import "SmartSelectionController.h"
-#import "FutureMethods.h"
 #import "PTYTextViewDataSource.h"
+#import "SmartSelectionController.h"
+#import "TriggerController.h"
+#import "WindowArrangements.h"
 
 extern NSString *const kRefreshTerminalNotification;
 extern NSString *const kUpdateLabelsNotification;
@@ -66,6 +67,7 @@ typedef enum {
 } BulkCopySettings;
 
 @interface PreferencePanel : NSWindowController <
+    iTermShortcutInputViewDelegate,
     ProfileListViewDelegate,
     TriggerDelegate,
     SmartSelectionDelegate,
@@ -203,8 +205,6 @@ typedef enum {
 - (Profile *)handlerBookmarkForURL:(NSString *)url;
 - (void)changeFont:(id)fontManager;
 - (BOOL)onScreen;
-- (NSTextField*)shortcutKeyTextField;
-- (void)shortcutKeyDown:(NSEvent*)event;
 - (NSWindow*)keySheet;
 - (void)showBookmarks;
 - (void)underlyingBookmarkDidChange;
