@@ -64,6 +64,7 @@ extern NSString *const kPreferenceKeyShowJobName;
 extern NSString *const kPreferenceKeyShowProfileName;
 extern NSString *const kPreferenceKeyDimOnlyText;
 extern NSString *const kPreferenceKeyDimmingAmount;
+extern NSString *const kPreferenceKeyDimInactiveSplitPanes;
 
 @interface iTermPreferences : NSObject
 

@@ -54,6 +54,9 @@
 
     // Dimming amount.
     IBOutlet NSSlider *_dimmingAmount;
+
+    // Dim inactive split panes.
+    IBOutlet NSButton *_dimInactiveSplitPanes;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -140,6 +143,11 @@
     info = [self defineControl:_dimmingAmount
                            key:kPreferenceKeyDimmingAmount
                           type:kPreferenceInfoTypeSlider];
+    info.onChange = ^() { [self postRefreshNotification]; };
+
+    info = [self defineControl:_dimInactiveSplitPanes
+                           key:kPreferenceKeyDimInactiveSplitPanes
+                          type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 }
 

@@ -114,15 +114,11 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     // cursor type: underline/vertical bar/box
     // See ITermCursorType. One of: CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX
     IBOutlet NSMatrix *cursorType;
-    
+
     IBOutlet NSButton *useTabColor;
     IBOutlet NSButton *checkColorInvertedCursor;
     BOOL defaultColorInvertedCursor;
-    
-    // Dim inactive split panes
-    IBOutlet NSButton* dimInactiveSplitPanes;
-    BOOL defaultDimInactiveSplitPanes;
-    
+
     // Animate dimming
     IBOutlet NSButton* animateDimming;
     BOOL defaultAnimateDimming;
@@ -759,13 +755,11 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 {
     if (sender == hideScrollbar ||
         sender == disableFullscreenTransparency ||
-        sender == dimInactiveSplitPanes ||
         sender == dimBackgroundWindows ||
         sender == animateDimming ||
         sender == threeFingerEmulatesMiddle ||
         sender == showWindowBorder ||
         sender == hotkeyAutoHides) {
-        defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
         defaultDimBackgroundWindows = ([dimBackgroundWindows state] == NSOnState);
         defaultAnimateDimming= ([animateDimming state] == NSOnState);
         defaultShowWindowBorder = ([showWindowBorder state] == NSOnState);
@@ -2432,7 +2426,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     defaultHotkeyCode = [prefs objectForKey:@"HotkeyCode"]?[[prefs objectForKey:@"HotkeyCode"] intValue]: 0;
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
     defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
-    defaultDimInactiveSplitPanes = [prefs objectForKey:@"DimInactiveSplitPanes"]?[[prefs objectForKey:@"DimInactiveSplitPanes"] boolValue]: YES;
     defaultDimBackgroundWindows = [prefs objectForKey:@"DimBackgroundWindows"]?[[prefs objectForKey:@"DimBackgroundWindows"] boolValue]: NO;
     defaultAnimateDimming = [prefs objectForKey:@"AnimateDimming"]?[[prefs objectForKey:@"AnimateDimming"] boolValue]: NO;
     defaultShowWindowBorder = [[prefs objectForKey:@"UseBorder"] boolValue];
@@ -2516,7 +2509,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [prefs setInteger:defaultHotkeyCode forKey:@"HotkeyCode"];
     [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
     [prefs setInteger:defaultHotkeyModifiers forKey:@"HotkeyModifiers"];
-    [prefs setBool:defaultDimInactiveSplitPanes forKey:@"DimInactiveSplitPanes"];
     [prefs setBool:defaultDimBackgroundWindows forKey:@"DimBackgroundWindows"];
     [prefs setBool:defaultAnimateDimming forKey:@"AnimateDimming"];
     [prefs setBool:defaultShowWindowBorder forKey:@"UseBorder"];
@@ -3203,9 +3195,8 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     return hotkeyField;
 }
 
-- (BOOL)dimInactiveSplitPanes
-{
-    return defaultDimInactiveSplitPanes;
+- (BOOL)dimInactiveSplitPanes {
+    return [iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes];
 }
 
 - (BOOL)dimBackgroundWindows
@@ -3497,7 +3488,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [hotkeyAutoHides setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
     [hotkeyBookmark setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
 
-    [dimInactiveSplitPanes setState:defaultDimInactiveSplitPanes?NSOnState:NSOffState];
     [animateDimming setState:defaultAnimateDimming?NSOnState:NSOffState];
     [dimBackgroundWindows setState:defaultDimBackgroundWindows?NSOnState:NSOffState];
     [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];

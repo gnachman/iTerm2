@@ -109,7 +109,6 @@
                 <outlet property="cursorType" destination="5017" id="5032"/>
                 <outlet property="deleteSendsCtrlHButton" destination="5074" id="5078"/>
                 <outlet property="dimBackgroundWindows" destination="5325" id="5329"/>
-                <outlet property="dimInactiveSplitPanes" destination="4560" id="4612"/>
                 <outlet property="disableFullscreenTransparency" destination="5753" id="5757"/>
                 <outlet property="disablePrinting" destination="5633" id="5637"/>
                 <outlet property="disableSmcupRmcup" destination="5081" id="5085"/>
@@ -1185,7 +1184,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="4566"/>
+                                                <action selector="settingChanged:" target="wvi-ET-SJJ" id="xiV-XV-Cof"/>
                                                 <outlet property="nextKeyView" destination="5325" id="5350"/>
                                             </connections>
                                         </button>
@@ -5946,6 +5945,7 @@ DQ
         </customObject>
         <customObject id="wvi-ET-SJJ" customClass="AppearancePreferencesViewController">
             <connections>
+                <outlet property="_dimInactiveSplitPanes" destination="4560" id="rO0-eh-PYK"/>
                 <outlet property="_dimOnlyText" destination="5330" id="2OE-k6-8S9"/>
                 <outlet property="_dimmingAmount" destination="5337" id="Pwn-Ta-ZhW"/>
                 <outlet property="_fsTabDelay" destination="5393" id="Elg-3K-LmG"/>

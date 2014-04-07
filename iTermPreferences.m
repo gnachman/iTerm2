@@ -56,6 +56,7 @@ NSString *const kPreferenceKeyShowJobName = @"JobName";
 NSString *const kPreferenceKeyShowProfileName = @"ShowBookmarkName";  // The key predates bookmarks being renamed to profiles
 NSString *const kPreferenceKeyDimOnlyText = @"DimOnlyText";
 NSString *const kPreferenceKeyDimmingAmount = @"SplitPaneDimmingAmount";
+NSString *const kPreferenceKeyDimInactiveSplitPanes = @"DimInactiveSplitPanes";
 
 static NSMutableDictionary *gObservers;
 
@@ -104,7 +105,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyShowJobName: @YES,
                   kPreferenceKeyShowProfileName: @NO,
                   kPreferenceKeyDimOnlyText: @NO,
-                  kPreferenceKeyDimmingAmount: @0.4
+                  kPreferenceKeyDimmingAmount: @0.4,
+                  kPreferenceKeyDimInactiveSplitPanes: @YES,
                   };
         [dict retain];
     }
