@@ -123,10 +123,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSButton* dimBackgroundWindows;
     BOOL defaultDimBackgroundWindows;
 
-    // Window border
-    IBOutlet NSButton* showWindowBorder;
-    BOOL defaultShowWindowBorder;
-
     // hide scrollbar and resize
     IBOutlet NSButton *hideScrollbar;
     BOOL defaultHideScrollbar;
@@ -753,10 +749,8 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
         sender == disableFullscreenTransparency ||
         sender == dimBackgroundWindows ||
         sender == threeFingerEmulatesMiddle ||
-        sender == showWindowBorder ||
         sender == hotkeyAutoHides) {
         defaultDimBackgroundWindows = ([dimBackgroundWindows state] == NSOnState);
-        defaultShowWindowBorder = ([showWindowBorder state] == NSOnState);
         defaultThreeFingerEmulatesMiddle=([threeFingerEmulatesMiddle state] == NSOnState);
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
         defaultDisableFullscreenTransparency = ([disableFullscreenTransparency state] == NSOnState);
@@ -2421,7 +2415,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
     defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
     defaultDimBackgroundWindows = [prefs objectForKey:@"DimBackgroundWindows"]?[[prefs objectForKey:@"DimBackgroundWindows"] boolValue]: NO;
-    defaultShowWindowBorder = [[prefs objectForKey:@"UseBorder"] boolValue];
 
     defaultControl = [prefs objectForKey:@"Control"] ? [[prefs objectForKey:@"Control"] intValue] : MOD_TAG_CONTROL;
     defaultLeftOption = [prefs objectForKey:@"LeftOption"] ? [[prefs objectForKey:@"LeftOption"] intValue] : MOD_TAG_LEFT_OPTION;
@@ -2503,7 +2496,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
     [prefs setInteger:defaultHotkeyModifiers forKey:@"HotkeyModifiers"];
     [prefs setBool:defaultDimBackgroundWindows forKey:@"DimBackgroundWindows"];
-    [prefs setBool:defaultShowWindowBorder forKey:@"UseBorder"];
 
     [prefs setInteger:defaultControl forKey:@"Control"];
     [prefs setInteger:defaultLeftOption forKey:@"LeftOption"];
@@ -3208,9 +3200,8 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     return [iTermPreferences floatForKey:kPreferenceKeyDimmingAmount];
 }
 
-- (BOOL)showWindowBorder
-{
-    return defaultShowWindowBorder;
+- (BOOL)showWindowBorder {
+    return [iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder];
 }
 
 - (BOOL)lionStyleFullscreen {
@@ -3480,7 +3471,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [hotkeyBookmark setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
 
     [dimBackgroundWindows setState:defaultDimBackgroundWindows?NSOnState:NSOffState];
-    [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];
 
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];

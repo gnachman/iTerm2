@@ -186,7 +186,6 @@
                 <outlet property="setLocaleVars" destination="6045" id="6047"/>
                 <outlet property="setProfileBookmarkListView" destination="5766" id="5767"/>
                 <outlet property="setProfileLabel" destination="5763" id="5765"/>
-                <outlet property="showWindowBorder" destination="5144" id="5147"/>
                 <outlet property="silenceBell" destination="2397" id="3144"/>
                 <outlet property="smartSelectionWindowController_" destination="5863" id="5921"/>
                 <outlet property="spaceButton" destination="4921" id="4967"/>
@@ -1255,7 +1254,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="5146"/>
+                                                <action selector="settingChanged:" target="wvi-ET-SJJ" id="zbB-NI-Hrw"/>
                                                 <outlet property="nextKeyView" destination="4464" id="5352"/>
                                             </connections>
                                         </button>
@@ -5958,6 +5957,7 @@ DQ
                 <outlet property="_jobName" destination="4530" id="e5c-sx-3cZ"/>
                 <outlet property="_showBookmarkName" destination="4531" id="3I8-Xv-sbC"/>
                 <outlet property="_showPaneTitles" destination="6051" id="n0P-0K-pxx"/>
+                <outlet property="_showWindowBorder" destination="5144" id="wpg-cZ-0wM"/>
                 <outlet property="_tabPosition" destination="4463" id="Rxp-XS-Fkx"/>
                 <outlet property="_windowNumber" destination="4529" id="QlD-L4-Oy3"/>
                 <outlet property="_windowStyle" destination="4464" id="fUn-dc-sAa"/>

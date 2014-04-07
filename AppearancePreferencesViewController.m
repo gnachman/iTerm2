@@ -60,6 +60,9 @@
 
     // Animate dimming.
     IBOutlet NSButton *_animateDimming;
+
+    // Window border.
+    IBOutlet NSButton *_showWindowBorder;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -157,6 +160,12 @@
                            key:kPreferenceKeyAnimateDimming
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
+
+    info = [self defineControl:_showWindowBorder
+                           key:kPreferenceKeyShowWindowBorder
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [self postRefreshNotification]; };
+
 }
 
 - (void)postUpdateLabelsNotification {
