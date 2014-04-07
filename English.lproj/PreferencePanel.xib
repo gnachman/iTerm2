@@ -4208,8 +4208,8 @@ Gw
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                             <connections>
-                                                <outlet property="_shortcutDelegate" destination="8TE-cq-5cL" id="IeM-Pt-eZb"/>
                                                 <outlet property="nextKeyView" destination="5107" id="5297"/>
+                                                <outlet property="shortcutDelegate" destination="8TE-cq-5cL" id="IzR-eX-FuZ"/>
                                             </connections>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="5106">
@@ -4901,8 +4901,8 @@ Gw
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                         <connections>
-                            <outlet property="_shortcutDelegate" destination="-2" id="NX7-Gp-7LB"/>
                             <outlet property="nextKeyView" destination="2661" id="5175"/>
+                            <outlet property="shortcutDelegate" destination="-2" id="EVS-Rc-XnS"/>
                         </connections>
                     </textField>
                     <textField verticalHuggingPriority="750" id="2662">

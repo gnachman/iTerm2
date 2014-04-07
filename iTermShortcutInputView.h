@@ -22,7 +22,7 @@
 // You can assign the shortcutDelegate in IB as it is an IBOutlet.
 @interface iTermShortcutInputView : NSTextField
 
-@property(nonatomic, assign) id<iTermShortcutInputViewDelegate> shortcutDelegate;
+@property(nonatomic, assign) IBOutlet id<iTermShortcutInputViewDelegate> shortcutDelegate;
 
 - (void)handleShortcutEvent:(NSEvent *)event;
 

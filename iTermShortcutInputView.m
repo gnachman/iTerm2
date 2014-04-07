@@ -8,9 +8,7 @@
 
 #import "iTermShortcutInputView.h"
 
-@implementation iTermShortcutInputView {
-    IBOutlet id<iTermShortcutInputViewDelegate> _shortcutDelegate;
-}
+@implementation iTermShortcutInputView
 
 - (void)handleShortcutEvent:(NSEvent *)event {
     [_shortcutDelegate shortcutInputView:self didReceiveKeyPressEvent:event];
