@@ -107,10 +107,7 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     IBOutlet NSButton *optionClickMovesCursor;
     BOOL defaultOptionClickMovesCursor;
     
-    // use compact tab labels
-    IBOutlet NSButton *hideTabNumber;
     IBOutlet NSButton *hideTabCloseButton;
-    BOOL defaultHideTabNumber;
     BOOL defaultHideTabCloseButton;
     
     // hide activity indicator
@@ -800,7 +797,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 - (IBAction)settingChanged:(id)sender
 {
     if (sender == hideTabCloseButton ||
-        sender == hideTabNumber ||
         sender == hideActivityIndicator ||
         sender == hideMenuBarInFullscreen ||
         sender == hideScrollbar ||
@@ -815,7 +811,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
         sender == showWindowBorder ||
         sender == hotkeyAutoHides) {
         defaultHideTabCloseButton = ([hideTabCloseButton state] == NSOnState);
-        defaultHideTabNumber = ([hideTabNumber state] == NSOnState);
         defaultHideActivityIndicator = ([hideActivityIndicator state] == NSOnState);
         defaultHideMenuBarInFullscreen = ([hideMenuBarInFullscreen state] == NSOnState);
         defaultShowPaneTitles = ([showPaneTitles state] == NSOnState);
@@ -2494,7 +2489,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     defaultFsTabDelay = [prefs objectForKey:@"FsTabDelay"] ? [[prefs objectForKey:@"FsTabDelay"] floatValue] : 1.0;
 
     defaultHideTabCloseButton = [prefs boolForKey:@"HideTabCloseButton"];
-    defaultHideTabNumber = [prefs boolForKey:@"HideTabNumber"];
     defaultHideActivityIndicator = [prefs objectForKey:@"HideActivityIndicator"]?[[prefs objectForKey:@"HideActivityIndicator"] boolValue]: NO;
     defaultHideMenuBarInFullscreen = [prefs objectForKey:@"HideMenuBarInFullscreen"]?[[prefs objectForKey:@"HideMenuBarInFullscreen"] boolValue] : YES;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
@@ -2587,7 +2581,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [prefs setBool:defaultOptionClickMovesCursor forKey:@"OptionClickMovesCursor"];
     [prefs setFloat:defaultFsTabDelay forKey:@"FsTabDelay"];
     [prefs setBool:defaultPassOnControlLeftClick forKey:@"PassOnControlClick"];
-    [prefs setBool:defaultHideTabNumber forKey:@"HideTabNumber"];
     [prefs setBool:defaultHideTabCloseButton forKey:@"HideTabCloseButton"];
     [prefs setBool:defaultHideActivityIndicator forKey:@"HideActivityIndicator"];
     [prefs setBool:defaultHideMenuBarInFullscreen forKey:@"HideMenuBarInFullscreen"];
@@ -3136,7 +3129,7 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 }
 
 - (BOOL)hideTabNumber {
-    return defaultHideTabNumber;
+    return [iTermPreferences boolForKey:kPreferenceKeyHideTabNumber];
 }
 
 - (BOOL)hideTabCloseButton {
@@ -3580,7 +3573,6 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
     [optionClickMovesCursor setState: defaultOptionClickMovesCursor?NSOnState:NSOffState];
     [controlLeftClickActsLikeRightClick setState: defaultPassOnControlLeftClick?NSOffState:NSOnState];
     [hideTabCloseButton setState: defaultHideTabCloseButton?NSOnState:NSOffState];
-    [hideTabNumber setState: defaultHideTabNumber?NSOnState:NSOffState];
     [hideActivityIndicator setState:defaultHideActivityIndicator?NSOnState:NSOffState];
     [hideMenuBarInFullscreen setState:defaultHideMenuBarInFullscreen ? NSOnState:NSOffState];
     [fsTabDelay setFloatValue:defaultFsTabDelay];

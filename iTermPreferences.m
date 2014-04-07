@@ -45,6 +45,7 @@ NSString *const kPreferenceKeyWindowStyle = @"kPreferenceKeyWindowStyle";
 NSString *const kPreferenceKeyTabPosition = @"TabViewType";
 NSString *const kPreferenceKeyHideTabBar = @"HideTab";
 NSString *const kPreferenceKeyHighlightTabLabels = @"HighlightTabLabels";
+NSString *const kPreferenceKeyHideTabNumber = @"HideTabNumber";
 
 static NSMutableDictionary *gObservers;
 
@@ -82,7 +83,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyWindowStyle: @(TAB_STYLE_METAL),
                   kPreferenceKeyTabPosition: @(TAB_POSITION_TOP),
                   kPreferenceKeyHideTabBar: @YES,
-                  kPreferenceKeyHighlightTabLabels: @YES, };
+                  kPreferenceKeyHighlightTabLabels: @YES,
+                  kPreferenceKeyHideTabNumber: @NO, };
         [dict retain];
     }
     return dict;

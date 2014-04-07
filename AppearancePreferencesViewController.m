@@ -20,6 +20,9 @@
 
     // Highlight tab labels on activity
     IBOutlet NSButton *_highlightTabLabels;
+
+    // Remove tab number from tabs.
+    IBOutlet NSButton *_hideTabNumber;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -51,6 +54,11 @@
     
     info = [self defineControl:_highlightTabLabels
                            key:kPreferenceKeyHighlightTabLabels
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [self postRefreshNotification]; };
+    
+    info = [self defineControl:_hideTabNumber
+                           key:kPreferenceKeyHideTabNumber
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 }
