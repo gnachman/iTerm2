@@ -112,6 +112,9 @@ typedef enum {
     // Allow clipboard access by terminal applications
     IBOutlet NSButton *_allowClipboardAccessFromTerminal;
 
+    // Characters considered part of word
+    IBOutlet NSTextField *_wordChars;
+
     NSMapTable *_keyMap;  // Maps views to PreferenceInfo.
 }
 
@@ -221,6 +224,10 @@ typedef enum {
     [self defineControl:_allowClipboardAccessFromTerminal
                     key:kPreferenceKeyAllowClipboardAccessFromTerminal
                    type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_wordChars
+                    key:kPreferenceKeyCharactersConsideredPartOfAWordForSelection
+                   type:kPreferenceInfoTypeStringTextField];
 }
 
 - (void)updateValueForInfo:(PreferenceInfo *)info {
@@ -331,7 +338,8 @@ typedef enum {
 // This is a notification signature but it gets called because we're the delegate of text fields.
 - (void)controlTextDidChange:(NSNotification *)aNotification {
     id control = [aNotification object];
-    if (control == _prefsCustomFolder) {
+    if (control == _prefsCustomFolder ||
+        control == _wordChars) {
         [self settingChanged:control];
     }
 }

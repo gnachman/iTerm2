@@ -111,10 +111,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     IBOutlet NSButton *tripleClickSelectsFullLines;
     BOOL defaultTripleClickSelectsFullLines;
     
-    // Characters considered part of word
-    IBOutlet NSTextField *wordChars;
-    NSString *defaultWordChars;
-    
     // Hotkey opens dedicated window
     IBOutlet NSButton* hotkeyTogglesWindow;
     IBOutlet NSButton* hotkeyAutoHides;
@@ -958,8 +954,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         defaultOptionClickMovesCursor = ([optionClickMovesCursor state] == NSOnState);
         defaultPassOnControlLeftClick = ([controlLeftClickActsLikeRightClick state] == NSOffState);
         defaultMaxVertically = ([maxVertically state] == NSOnState);
-        [defaultWordChars release];
-        defaultWordChars = [[wordChars stringValue] retain];
         defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];
         defaultSmartPlacement = ([smartPlacement state] == NSOnState);
         defaultAdjustWindowForFontSizeChange = ([adjustWindowForFontSizeChange state] == NSOnState);
@@ -2588,8 +2582,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultHideActivityIndicator = [prefs objectForKey:@"HideActivityIndicator"]?[[prefs objectForKey:@"HideActivityIndicator"] boolValue]: NO;
     defaultHighlightTabLabels = [prefs objectForKey:@"HighlightTabLabels"]?[[prefs objectForKey:@"HighlightTabLabels"] boolValue]: YES;
     defaultHideMenuBarInFullscreen = [prefs objectForKey:@"HideMenuBarInFullscreen"]?[[prefs objectForKey:@"HideMenuBarInFullscreen"] boolValue] : YES;
-    [defaultWordChars release];
-    defaultWordChars = [prefs objectForKey: @"WordCharacters"]?[[prefs objectForKey: @"WordCharacters"] retain]:@"/-+\\~_.";
     defaultTmuxDashboardLimit = [prefs objectForKey: @"TmuxDashboardLimit"]?[[prefs objectForKey:@"TmuxDashboardLimit"] intValue]:10;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
     defaultShowPaneTitles = [prefs objectForKey:@"ShowPaneTitles"]?[[prefs objectForKey:@"ShowPaneTitles"] boolValue]: YES;
@@ -2695,7 +2687,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [prefs setBool:defaultHideActivityIndicator forKey:@"HideActivityIndicator"];
     [prefs setBool:defaultHighlightTabLabels forKey:@"HighlightTabLabels"];
     [prefs setBool:defaultHideMenuBarInFullscreen forKey:@"HideMenuBarInFullscreen"];
-    [prefs setObject:defaultWordChars forKey: @"WordCharacters"];
     [prefs setObject:[NSNumber numberWithInt:defaultTmuxDashboardLimit]
                           forKey:@"TmuxDashboardLimit"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
@@ -3285,12 +3276,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     return [iTermPreferences boolForKey:kPreferenceKeyOpenBookmark];
 }
 
-- (NSString *)wordChars
-{
-    if ([defaultWordChars length] <= 0) {
-        return @"";
-    }
-    return defaultWordChars;
+- (NSString *)wordChars {
+    return [iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
 }
 
 - (ITermCursorType)legacyCursorType
@@ -3697,7 +3684,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 
     [[self window] setDelegate: self]; // also forces window to load
 
-    [wordChars setDelegate: self];
     [_generalPreferencesViewController updateEnabledState];
     
     [windowStyle selectItemAtIndex: defaultWindowStyle];
@@ -3723,7 +3709,6 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     [hideMenuBarInFullscreen setState:defaultHideMenuBarInFullscreen ? NSOnState:NSOffState];
     [fsTabDelay setFloatValue:defaultFsTabDelay];
 
-    [wordChars setStringValue: ([defaultWordChars length] > 0)?defaultWordChars:@""];
     [tmuxDashboardLimit setIntValue:defaultTmuxDashboardLimit];
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
     [showPaneTitles setState:defaultShowPaneTitles?NSOnState:NSOffState];
@@ -4422,9 +4407,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
 - (void)controlTextDidChange:(NSNotification *)aNotification
 {
     id obj = [aNotification object];
-    if (obj == wordChars) {
-        defaultWordChars = [[wordChars stringValue] retain];
-        } else if (obj == tmuxDashboardLimit) {
+    if (obj == tmuxDashboardLimit) {
                 [self forceTextFieldToBeNumber:tmuxDashboardLimit
                                            acceptableRange:NSMakeRange(0, 1000)];
                 defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];

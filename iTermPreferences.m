@@ -32,6 +32,7 @@ NSString *const kPreferenceKeyCustomFolder = @"PrefsCustomFolder";
 NSString *const kPreferenceKeySelectionCopiesText = @"CopySelection";
 NSString *const kPreferenceKeyCopyLastNewline = @"CopyLastNewline";
 NSString *const kPreferenceKeyAllowClipboardAccessFromTerminal = @"AllowClipboardAccess";
+NSString *const kPreferenceKeyCharactersConsideredPartOfAWordForSelection = @"WordCharacters";
 
 static NSMutableDictionary *gObservers;
 
@@ -56,7 +57,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyCustomFolder: [NSNull null],
                   kPreferenceKeySelectionCopiesText: @YES,
                   kPreferenceKeyCopyLastNewline: @NO,
-                  kPreferenceKeyAllowClipboardAccessFromTerminal: @NO };
+                  kPreferenceKeyAllowClipboardAccessFromTerminal: @NO,
+                  kPreferenceKeyCharactersConsideredPartOfAWordForSelection: @"/-+\\~_." };
         [dict retain];
     }
     return dict;
@@ -80,7 +82,8 @@ static NSMutableDictionary *gObservers;
     static NSDictionary *dict;
     if (!dict) {
         dict = @{ kPreferenceKeyOpenArrangementAtStartup: BLOCK(computedOpenArrangementAtStartup),
-                  kPreferenceKeyCustomFolder: BLOCK(computedCustomFolder) };
+                  kPreferenceKeyCustomFolder: BLOCK(computedCustomFolder),
+                  kPreferenceKeyCharactersConsideredPartOfAWordForSelection: BLOCK(computedWordChars) };
         [dict retain];
     }
     return dict;
@@ -95,13 +98,18 @@ static NSMutableDictionary *gObservers;
     }
 }
 
++ (NSString *)uncomputedObjectForKey:(NSString *)key {
+    id object = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+    if (!object) {
+        object = [self defaultObjectForKey:key];
+    }
+    return object;
+}
+
 + (id)objectForKey:(NSString *)key {
     id object = [self computedObjectForKey:key];
     if (!object) {
-        object = [[NSUserDefaults standardUserDefaults] objectForKey:key];
-    }
-    if (!object) {
-        object = [self defaultObjectForKey:key];
+        object = [self uncomputedObjectForKey:key];
     }
     return object;
 }
@@ -184,9 +192,15 @@ static NSMutableDictionary *gObservers;
 
 // Text fields don't like nil strings.
 + (NSString *)computedCustomFolder {
-    NSString *prefsCustomFolder =
-        [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyCustomFolder];
+    NSString *prefsCustomFolder = [self uncomputedObjectForKey:kPreferenceKeyCustomFolder];
     return prefsCustomFolder ?: @"";
+}
+
+// Text fields don't like nil strings.
++ (NSString *)computedWordChars {
+    NSString *wordChars =
+        [self uncomputedObjectForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
+    return wordChars ?: @"";
 }
 
 @end

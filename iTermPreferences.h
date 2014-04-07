@@ -24,6 +24,7 @@ extern NSString *const kPreferenceKeyCustomFolder;  // Path/URL to location with
 extern NSString *const kPreferenceKeySelectionCopiesText;
 extern NSString *const kPreferenceKeyCopyLastNewline;
 extern NSString *const kPreferenceKeyAllowClipboardAccessFromTerminal;
+extern NSString *const kPreferenceKeyCharactersConsideredPartOfAWordForSelection;
 
 @interface iTermPreferences : NSObject
 
