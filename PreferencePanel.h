@@ -207,7 +207,6 @@ typedef enum {
 - (NSTextField*)shortcutKeyTextField;
 - (void)shortcutKeyDown:(NSEvent*)event;
 - (void)hotkeyKeyDown:(NSEvent*)event;
-- (void)disableHotkey;
 - (NSWindow*)keySheet;
 - (void)showBookmarks;
 - (void)underlyingBookmarkDidChange;

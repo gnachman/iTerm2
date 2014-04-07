@@ -19,8 +19,12 @@
     inFocus = ([[[self window] firstResponder] isKindOfClass:[NSTextView class]] &&
                [[self window] fieldEditor:NO forObject:nil] !=nil &&
                [self isEqualTo:(id)[(NSTextView *)[[self window] firstResponder] delegate]]);
-    
+
     return inFocus;
+}
+
+- (void)setEnabled:(BOOL)enabled {
+    self.textColor = enabled ? [NSColor blackColor] : [NSColor disabledControlTextColor];
 }
 
 @end

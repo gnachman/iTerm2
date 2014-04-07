@@ -10,4 +10,8 @@
 
 @interface KeysPreferencesViewController : iTermPreferencesBaseViewController
 
+@property(nonatomic, readonly) NSTextField *hotkeyField;
+
+- (void)hotkeyKeyDown:(NSEvent*)event;
+
 @end

@@ -90,6 +90,10 @@ extern NSString *const kPreferenceKeyLeftCommandRemapping;
 extern NSString *const kPreferenceKeyRightCommandRemapping;
 extern NSString *const kPreferenceKeySwitchTabModifier;
 extern NSString *const kPreferenceKeySwitchWindowModifier;
+extern NSString *const kPreferenceKeyHotkeyEnabled;
+extern NSString *const kPreferenceKeyHotKeyCode;
+extern NSString *const kPreferenceKeyHotkeyCharacter;
+extern NSString *const kPreferenceKeyHotkeyModifiers;
 
 @interface iTermPreferences : NSObject
 

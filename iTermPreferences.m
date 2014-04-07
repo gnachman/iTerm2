@@ -70,6 +70,10 @@ NSString *const kPreferenceKeyLeftCommandRemapping = @"LeftCommand";
 NSString *const kPreferenceKeyRightCommandRemapping = @"RightCommand";
 NSString *const kPreferenceKeySwitchTabModifier = @"SwitchTabModifier";
 NSString *const kPreferenceKeySwitchWindowModifier = @"SwitchWindowModifier";
+NSString *const kPreferenceKeyHotkeyEnabled = @"Hotkey";
+NSString *const kPreferenceKeyHotKeyCode = @"HotkeyCode";
+NSString *const kPreferenceKeyHotkeyCharacter = @"HotkeyChar";
+NSString *const kPreferenceKeyHotkeyModifiers = @"HotkeyModifiers";
 
 static NSMutableDictionary *gObservers;
 
@@ -133,6 +137,10 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyRightCommandRemapping: @(MOD_TAG_RIGHT_COMMAND),
                   kPreferenceKeySwitchTabModifier: @(MOD_TAG_ANY_COMMAND),
                   kPreferenceKeySwitchWindowModifier: @(MOD_TAG_CMD_OPT),
+                  kPreferenceKeyHotkeyEnabled: @NO,
+                  kPreferenceKeyHotKeyCode: @0,
+                  kPreferenceKeyHotkeyCharacter: @0,
+                  kPreferenceKeyHotkeyModifiers: @0,
                   };
         [dict retain];
     }

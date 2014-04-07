@@ -36,6 +36,7 @@
 #import "iTermRemotePreferences.h"
 #import "iTermSettingsModel.h"
 #import "iTermWarning.h"
+#import "KeysPreferencesViewController.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
@@ -69,13 +70,14 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet SmartSelectionController *smartSelectionWindowController_;
     IBOutlet TrouterPrefsController *trouterPrefController_;
     IBOutlet GeneralPreferencesViewController *_generalPreferencesViewController;
-    
+    IBOutlet KeysPreferencesViewController *_keysViewController;
+
     IBOutlet NSTextField* tagFilter;
-    
+
     // Middle button paste from clipboard
     IBOutlet NSButton *middleButtonPastesFromClipboard;
     BOOL defaultPasteFromClipboard;
-    
+
     // Three finger click emulates middle button
     IBOutlet NSButton *threeFingerEmulatesMiddle;
     BOOL defaultThreeFingerEmulatesMiddle;
@@ -123,22 +125,11 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSButton *instantReplay;
     BOOL defaultInstantReplay;
 
-    // hotkey
-    IBOutlet NSButton *hotkey;
-    IBOutlet NSTextField* hotkeyLabel;
-    BOOL defaultHotkey;
-    
-    // hotkey code
-    IBOutlet NSTextField* hotkeyField;
-    int defaultHotkeyChar;
-    int defaultHotkeyCode;
-    int defaultHotkeyModifiers;
-    
     IBOutlet NSTabView* bookmarksSettingsTabViewParent;
     IBOutlet NSTabViewItem* bookmarkSettingsGeneralTab;
-    
+
     NSUserDefaults *prefs;
-    
+
     IBOutlet NSToolbar* toolbar;
     IBOutlet NSTabView* tabView;
     IBOutlet NSToolbarItem* globalToolbarItem;
@@ -755,24 +746,12 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
         defaultOptionClickMovesCursor = ([optionClickMovesCursor state] == NSOnState);
         defaultPassOnControlLeftClick = ([controlLeftClickActsLikeRightClick state] == NSOffState);
 
-        BOOL oldDefaultHotkey = defaultHotkey;
-        defaultHotkey = ([hotkey state] == NSOnState);
-        if (defaultHotkey != oldDefaultHotkey) {
-            if (defaultHotkey) {
-                // Hotkey was enabled but might be unassigned; give it a default value if needed.
-                [self sanityCheckHotKey];
-            } else {
-                [[HotkeyWindowController sharedInstance] unregisterHotkey];
-            }
-        }
-        [hotkeyField setEnabled:defaultHotkey];
-        [hotkeyLabel setTextColor:defaultHotkey ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
-        [hotkeyTogglesWindow setEnabled:defaultHotkey];
-        [hotkeyAutoHides setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
-        [hotkeyBookmark setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
+        [hotkeyTogglesWindow setEnabled:[self hotkey]];
+        [hotkeyAutoHides setEnabled:([self hotkey] && defaultHotkeyTogglesWindow)];
+        [hotkeyBookmark setEnabled:([self hotkey] && defaultHotkeyTogglesWindow)];
     }
 
-    if (sender == hotkey || sender == hotkeyBookmark) {
+    if (sender == hotkeyBookmark) {
         [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
     }
 
@@ -2353,11 +2332,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     defaultOptionClickMovesCursor = [prefs objectForKey:@"OptionClickMovesCursor"]?[[prefs objectForKey:@"OptionClickMovesCursor"] boolValue]: YES;
     defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
 
-    defaultHotkey = [prefs objectForKey:@"Hotkey"]?[[prefs objectForKey:@"Hotkey"] boolValue]: NO;
-    defaultHotkeyCode = [prefs objectForKey:@"HotkeyCode"]?[[prefs objectForKey:@"HotkeyCode"] intValue]: 0;
-    defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
-    defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
-
     if ([self isAnyModifierRemapped]) {
         // Use a brief delay so windows have a chance to open before the dialog is shown.
         [[HotkeyWindowController sharedInstance] performSelector:@selector(beginRemappingModifiers)
@@ -2424,10 +2398,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [prefs setBool:defaultOptionClickMovesCursor forKey:@"OptionClickMovesCursor"];
     [prefs setBool:defaultPassOnControlLeftClick forKey:@"PassOnControlClick"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
-    [prefs setBool:defaultHotkey forKey:@"Hotkey"];
-    [prefs setInteger:defaultHotkeyCode forKey:@"HotkeyCode"];
-    [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
-    [prefs setInteger:defaultHotkeyModifiers forKey:@"HotkeyModifiers"];
 
     // save the handlers by converting the bookmark into an index
     [prefs setObject:urlHandlersByGuid forKey:@"URLHandlersByGuid"];
@@ -2695,11 +2665,15 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [dataSource setBookmark:newDict withGuid:[dest objectForKey:KEY_GUID]];
 }
 
+- (NSTextField*)shortcutKeyTextField {
+    // This is for editing key mappings.
+    return keyPress;
+}
+
 #pragma mark - Hotkey Window
 
-- (NSTextField*)shortcutKeyTextField
-{
-    return keyPress;
+- (NSTextField*)hotkeyField {
+    return _keysViewController.hotkeyField;
 }
 
 - (void)shortcutKeyDown:(NSEvent*)event
@@ -2750,17 +2724,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [[ProfileModel sharedInstance] addBookmark:dict];
 }
 
-- (void)disableHotkey
-{
-    [hotkey setState:NSOffState];
-    BOOL oldDefaultHotkey = defaultHotkey;
-    defaultHotkey = NO;
-    if (defaultHotkey != oldDefaultHotkey) {
-        [[HotkeyWindowController sharedInstance] unregisterHotkey];
-    }
-    [self savePreferences];
-}
-
 - (void)_populateHotKeyBookmarksMenu
 {
     if (!hotkeyBookmark) {
@@ -2770,42 +2733,8 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
                                          selectedGuid:defaultHotKeyBookmarkGuid];
 }
 
-// Set the local copy of the hotkey, update the pref panel, and register it after a delay.
-- (void)setHotKeyChar:(unsigned short)keyChar code:(unsigned int)keyCode mods:(unsigned int)keyMods
-{
-    defaultHotkeyChar = keyChar;
-    defaultHotkeyCode = keyCode;
-    defaultHotkeyModifiers = keyMods;
-    [[[PreferencePanel sharedInstance] window] makeFirstResponder:[[PreferencePanel sharedInstance] window]];
-    [hotkeyField setStringValue:[iTermKeyBindingMgr formatKeyCombination:[NSString stringWithFormat:@"0x%x-0x%x", keyChar, keyMods]]];
-    [self performSelector:@selector(setHotKey) withObject:self afterDelay:0.01];
-}
-
-- (void)sanityCheckHotKey
-{
-    if (!defaultHotkeyChar) {
-        [self setHotKeyChar:' ' code:kVK_Space mods:NSAlternateKeyMask];
-    } else {
-        [self setHotKeyChar:defaultHotkeyChar code:defaultHotkeyCode mods:defaultHotkeyModifiers];
-    }
-}
-
-- (void)hotkeyKeyDown:(NSEvent*)event
-{
-    unsigned int keyMods;
-    NSString *unmodkeystr;
-
-    keyMods = [event modifierFlags];
-    unmodkeystr = [event charactersIgnoringModifiers];
-    unsigned short keyChar = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
-    unsigned int keyCode = [event keyCode];
-
-    [self setHotKeyChar:keyChar code:keyCode mods:keyMods];
-}
-
-- (void)setHotKey
-{
-    [[HotkeyWindowController sharedInstance] registerHotkey:defaultHotkeyCode modifiers:defaultHotkeyModifiers];
+- (void)hotkeyKeyDown:(NSEvent*)event {
+    [_keysViewController hotkeyKeyDown:event];
 }
 
 #pragma mark - Accessors
@@ -3069,29 +2998,23 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     return [iTermPreferences intForKey:kPreferenceKeyInstantReplayMemoryMegabytes];
 }
 
-- (BOOL)hotkey
-{
-    return defaultHotkey;
+- (BOOL)hotkey {
+    return [iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled];
 }
 
 - (short)hotkeyChar
 {
-    return defaultHotkeyChar;
+    return [iTermPreferences intForKey:kPreferenceKeyHotkeyCharacter];
 }
 
 - (int)hotkeyCode
 {
-    return defaultHotkeyCode;
+    return [iTermPreferences intForKey:kPreferenceKeyHotKeyCode];
 }
 
 - (int)hotkeyModifiers
 {
-    return defaultHotkeyModifiers;
-}
-
-- (NSTextField*)hotkeyField
-{
-    return hotkeyField;
+    return [iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers];
 }
 
 - (BOOL)dimInactiveSplitPanes {
@@ -3172,8 +3095,7 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     return [iTermSettingsModel alternateMouseScroll];
 }
 
-- (float) hotkeyTermAnimationDuration
-{
+- (float)hotkeyTermAnimationDuration {
     return [iTermSettingsModel hotkeyTermAnimationDuration];
 }
 
@@ -3370,19 +3292,11 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [optionClickMovesCursor setState: defaultOptionClickMovesCursor?NSOnState:NSOffState];
     [controlLeftClickActsLikeRightClick setState: defaultPassOnControlLeftClick?NSOffState:NSOnState];
 
-    [hotkey setState: defaultHotkey?NSOnState:NSOffState];
-    if (defaultHotkeyCode || defaultHotkeyChar) {
-        [hotkeyField setStringValue:[iTermKeyBindingMgr formatKeyCombination:[NSString stringWithFormat:@"0x%x-0x%x", defaultHotkeyChar, defaultHotkeyModifiers]]];
-    } else {
-        [hotkeyField setStringValue:@""];
-    }
-    [hotkeyField setEnabled:defaultHotkey];
-    [hotkeyLabel setTextColor:defaultHotkey ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
-    [hotkeyTogglesWindow setEnabled:defaultHotkey];
-    [hotkeyAutoHides setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
-    [hotkeyBookmark setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
+    [hotkeyTogglesWindow setEnabled:[self hotkey]];
+    [hotkeyAutoHides setEnabled:([self hotkey] && defaultHotkeyTogglesWindow)];
+    [hotkeyBookmark setEnabled:([self hotkey] && defaultHotkeyTogglesWindow)];
 
-    [self showWindow: self];
+    [self showWindow:self];
     [[self window] setLevel:NSNormalWindowLevel];
     NSString* guid = [bookmarksTableView selectedGuid];
     [bookmarksTableView reloadData];

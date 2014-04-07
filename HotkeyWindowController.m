@@ -410,12 +410,6 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         cocoaEvent = [NSEvent eventWithCGEvent:eventCopy];
         CFRelease(eventCopy);
     }
-#ifdef USE_EVENT_TAP_FOR_HOTKEY
-    if ([cont eventIsHotkey:cocoaEvent]) {
-        OnHotKeyEvent();
-        return NULL;
-    }
-#endif
 
     if (callDirectly) {
         // Send keystroke directly to preference panel when setting do-not-remap for a key; for
@@ -448,11 +442,9 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 {
     hotkeyCode_ = 0;
     hotkeyModifiers_ = 0;
-#ifndef USE_EVENT_TAP_FOR_HOTKEY
     [[GTMCarbonEventDispatcherHandler sharedEventDispatcherHandler] unregisterHotKey:carbonHotKey_];
     [carbonHotKey_ release];
     carbonHotKey_ = nil;
-#endif
 }
 
 - (BOOL)haveEventTap
@@ -574,30 +566,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     }
     hotkeyCode_ = keyCode;
     hotkeyModifiers_ = modifiers & (NSCommandKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSShiftKeyMask);
-#ifdef USE_EVENT_TAP_FOR_HOTKEY
-    if (![self startEventTap]) {
-        if (IsMavericksOrLater()) {
-            [self requestAccessibilityPermissionMavericks];
-            return;
-        }
-        switch (NSRunAlertPanel(@"Could not enable hotkey",
-                                @"%@",
-                                @"OK",
-                                [self accessibilityActionMessage],
-                                @"Disable Hotkey",
-                                nil,
-                                [self accessibilityMessageForHotkey])) {
-            case NSAlertOtherReturn:
-                [[PreferencePanel sharedInstance] disableHotkey];
-                break;
 
-            case NSAlertAlternateReturn:
-                [self navigatePrefPane]
-                return NO;
-        }
-    }
-    return YES;
-#else
     carbonHotKey_ = [[[GTMCarbonEventDispatcherHandler sharedEventDispatcherHandler]
                       registerHotKey:keyCode
                       modifiers:hotkeyModifiers_
@@ -606,7 +575,6 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
                       userInfo:nil
                       whenPressed:YES] retain];
     return YES;
-#endif
 }
 
 - (void)carbonHotkeyPressed
