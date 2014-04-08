@@ -164,7 +164,6 @@
                 <outlet property="toolbar" destination="5885" id="6042"/>
                 <outlet property="transparency" destination="4978" id="4994"/>
                 <outlet property="triggerWindowController_" destination="5797" id="5920"/>
-                <outlet property="tripleClickSelectsFullLines" destination="6260" id="6263"/>
                 <outlet property="trouterPrefController_" destination="5949" id="5954"/>
                 <outlet property="unlimitedScrollback" destination="3647" id="3650"/>
                 <outlet property="useBoldFont" destination="4765" id="4861"/>
@@ -4219,7 +4218,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="6262"/>
+                                                <action selector="settingChanged:" target="pwh-OY-l3e" id="GLn-uu-nCe"/>
                                             </connections>
                                         </button>
                                         <button id="6227">
@@ -5537,6 +5536,7 @@ DQ
                 <outlet property="_focusFollowsMouse" destination="6062" id="wHi-NP-8ue"/>
                 <outlet property="_optionClickMovesCursor" destination="6407" id="hKN-R0-UCE"/>
                 <outlet property="_threeFingerEmulatesMiddle" destination="6227" id="eEX-cI-LAf"/>
+                <outlet property="_tripleClickSelectsFullLines" destination="6260" id="nhb-Ac-ST0"/>
             </connections>
         </customObject>
     </objects>

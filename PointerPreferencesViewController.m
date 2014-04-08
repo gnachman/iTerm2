@@ -26,6 +26,9 @@ NSString *kPointerPrefsChangedNotification = @"kPointerPrefsChangedNotification"
 
     // Focus follows mouse.
     IBOutlet NSButton *_focusFollowsMouse;
+
+    // Triple click selects full, wrapped lines.
+    IBOutlet NSButton *_tripleClickSelectsFullLines;
 }
 
 - (void)awakeFromNib {
@@ -55,6 +58,10 @@ NSString *kPointerPrefsChangedNotification = @"kPointerPrefsChangedNotification"
 
     [self defineControl:_focusFollowsMouse
                     key:kPreferenceKeyFocusFollowsMouse
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_tripleClickSelectsFullLines
+                    key:kPreferenceKeyTripleClickSelectsFullWrappedLines
                    type:kPreferenceInfoTypeCheckbox];
 }
 

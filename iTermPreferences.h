@@ -104,6 +104,7 @@ extern NSString *const kPreferenceKeyControlLeftClickBypassesContextMenu;
 extern NSString *const kPreferenceKeyOptionClickMovesCursor;
 extern NSString *const kPreferenceKeyThreeFingerEmulatesMiddle;
 extern NSString *const kPreferenceKeyFocusFollowsMouse;
+extern NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines;
 
 @interface iTermPreferences : NSObject
 

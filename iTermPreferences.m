@@ -83,7 +83,7 @@ NSString *const kPreferenceKeyControlLeftClickBypassesContextMenu = @"PassOnCont
 NSString *const kPreferenceKeyOptionClickMovesCursor = @"OptionClickMovesCursor";
 NSString *const kPreferenceKeyThreeFingerEmulatesMiddle = @"ThreeFingerEmulates";
 NSString *const kPreferenceKeyFocusFollowsMouse = @"FocusFollowsMouse";
-
+NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines = @"TripleClickSelectsFullWrappedLines";
 static NSMutableDictionary *gObservers;
 
 @implementation iTermPreferences
@@ -159,6 +159,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyOptionClickMovesCursor: @YES,
                   kPreferenceKeyThreeFingerEmulatesMiddle: @NO,
                   kPreferenceKeyFocusFollowsMouse: @NO,
+                  kPreferenceKeyTripleClickSelectsFullWrappedLines: @NO,
                   };
         [dict retain];
     }
