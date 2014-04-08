@@ -14,6 +14,9 @@
 
     // Control-click doesn't open the context menu, is mouse-reported as right click.
     IBOutlet NSButton *_controlLeftClickActsLikeRightClick;
+
+    // Opt-click moves cursor
+    IBOutlet NSButton *_optionClickMovesCursor;
 }
 
 - (void)awakeFromNib {
@@ -25,6 +28,10 @@
 
     [self defineControl:_controlLeftClickActsLikeRightClick
                     key:kPreferenceKeyControlLeftClickBypassesContextMenu
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_optionClickMovesCursor
+                    key:kPreferenceKeyOptionClickMovesCursor
                    type:kPreferenceInfoTypeCheckbox];
 }
 

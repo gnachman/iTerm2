@@ -92,10 +92,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     IBOutlet NSButton *tripleClickSelectsFullLines;
     BOOL defaultTripleClickSelectsFullLines;
 
-    // Opt-click moves cursor
-    IBOutlet NSButton *optionClickMovesCursor;
-    BOOL defaultOptionClickMovesCursor;
-
     // Minimum contrast
     IBOutlet NSSlider* minimumContrast;
 
@@ -656,8 +652,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
         defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
         defaultFocusFollowsMouse = ([focusFollowsMouse state] == NSOnState);
         defaultTripleClickSelectsFullLines = ([tripleClickSelectsFullLines state] == NSOnState);
-
-        defaultOptionClickMovesCursor = ([optionClickMovesCursor state] == NSOnState);
     }
 }
 
@@ -1882,7 +1876,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     defaultThreeFingerEmulatesMiddle=[prefs objectForKey:@"ThreeFingerEmulates"]?[[prefs objectForKey:@"ThreeFingerEmulates"] boolValue]:NO;
     defaultFocusFollowsMouse = [prefs objectForKey:@"FocusFollowsMouse"]?[[prefs objectForKey:@"FocusFollowsMouse"] boolValue]: NO;
     defaultTripleClickSelectsFullLines = [prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] ? [[prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] boolValue] : NO;
-    defaultOptionClickMovesCursor = [prefs objectForKey:@"OptionClickMovesCursor"]?[[prefs objectForKey:@"OptionClickMovesCursor"] boolValue]: YES;
 
     // Migrate old-style (iTerm 0.x) URL handlers.
     // make sure bookmarks are loaded
@@ -1936,7 +1929,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [prefs setBool:defaultThreeFingerEmulatesMiddle forKey:@"ThreeFingerEmulates"];
     [prefs setBool:defaultFocusFollowsMouse forKey:@"FocusFollowsMouse"];
     [prefs setBool:defaultTripleClickSelectsFullLines forKey:@"TripleClickSelectsFullWrappedLines"];
-    [prefs setBool:defaultOptionClickMovesCursor forKey:@"OptionClickMovesCursor"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
 
     // save the handlers by converting the bookmark into an index
@@ -2260,9 +2252,8 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     return [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs];
 }
 
-- (BOOL)optionClickMovesCursor
-{
-    return defaultOptionClickMovesCursor;
+- (BOOL)optionClickMovesCursor {
+    return [iTermPreferences boolForKey:kPreferenceKeyOptionClickMovesCursor];
 }
 
 - (BOOL)passOnControlLeftClick {
@@ -2646,7 +2637,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [threeFingerEmulatesMiddle setState:defaultThreeFingerEmulatesMiddle ? NSOnState : NSOffState];
     [focusFollowsMouse setState: defaultFocusFollowsMouse?NSOnState:NSOffState];
     [tripleClickSelectsFullLines setState:defaultTripleClickSelectsFullLines?NSOnState:NSOffState];
-    [optionClickMovesCursor setState: defaultOptionClickMovesCursor?NSOnState:NSOffState];
 
     [self showWindow:self];
     [[self window] setLevel:NSNormalWindowLevel];

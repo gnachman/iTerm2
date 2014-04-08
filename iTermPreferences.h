@@ -101,6 +101,7 @@ extern NSString *const kPreferenceKeyHotkeyAutoHides;
 // Pointer
 extern NSString *const kPreferenceKeyCmdClickOpensURLs;
 extern NSString *const kPreferenceKeyControlLeftClickBypassesContextMenu;
+extern NSString *const kPreferenceKeyOptionClickMovesCursor;
 
 @interface iTermPreferences : NSObject
 

@@ -80,6 +80,7 @@ NSString *const kPreferenceKeyHotkeyAutoHides = @"HotkeyAutoHides";
 
 NSString *const kPreferenceKeyCmdClickOpensURLs = @"CommandSelection";
 NSString *const kPreferenceKeyControlLeftClickBypassesContextMenu = @"PassOnControlClick";
+NSString *const kPreferenceKeyOptionClickMovesCursor = @"OptionClickMovesCursor";
 
 static NSMutableDictionary *gObservers;
 
@@ -153,6 +154,7 @@ static NSMutableDictionary *gObservers;
 
                   kPreferenceKeyCmdClickOpensURLs: @YES,
                   kPreferenceKeyControlLeftClickBypassesContextMenu: @NO,
+                  kPreferenceKeyOptionClickMovesCursor: @YES,
                   };
         [dict retain];
     }

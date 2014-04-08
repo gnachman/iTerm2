@@ -132,7 +132,6 @@
                 <outlet property="nonAsciiFontView" destination="15P-ty-S1w" id="dru-RS-lgT"/>
                 <outlet property="nonasciiAntiAliased" destination="4783" id="4878"/>
                 <outlet property="normalFontField" destination="4775" id="4870"/>
-                <outlet property="optionClickMovesCursor" destination="6407" id="6415"/>
                 <outlet property="optionKeySends" destination="4291" id="4307"/>
                 <outlet property="presetsMenu" destination="3215" id="3561"/>
                 <outlet property="preventTab" destination="6416" id="6420"/>
@@ -4211,7 +4210,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="6409"/>
+                                                <action selector="settingChanged:" target="pwh-OY-l3e" id="gqB-43-NCa"/>
                                             </connections>
                                         </button>
                                         <button id="6260">
@@ -5537,6 +5536,7 @@ DQ
             <connections>
                 <outlet property="_cmdSelection" destination="6107" id="aP0-Ty-y8T"/>
                 <outlet property="_controlLeftClickActsLikeRightClick" destination="6111" id="tra-Ty-UvV"/>
+                <outlet property="_optionClickMovesCursor" destination="6407" id="hKN-R0-UCE"/>
             </connections>
         </customObject>
     </objects>
