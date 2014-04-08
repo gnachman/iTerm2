@@ -102,6 +102,7 @@ extern NSString *const kPreferenceKeyHotkeyAutoHides;
 extern NSString *const kPreferenceKeyCmdClickOpensURLs;
 extern NSString *const kPreferenceKeyControlLeftClickBypassesContextMenu;
 extern NSString *const kPreferenceKeyOptionClickMovesCursor;
+extern NSString *const kPreferenceKeyThreeFingerEmulatesMiddle;
 
 @interface iTermPreferences : NSObject
 

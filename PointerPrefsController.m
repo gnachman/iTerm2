@@ -70,8 +70,6 @@ NSString *kSelectNextPanePointerAction = @"kSelectNextPanePointerAction";
 NSString *kSelectPreviousPanePointerAction = @"kSelectPreviousPanePointerAction";
 NSString *kExtendSelectionPointerAction = @"kExtendSelectionPointerAction";
 
-NSString *kPointerPrefsChangedNotification = @"kPointerPrefsChangedNotification";
-
 typedef enum {
     kNoArg,
     kEscPlusArg,
@@ -529,7 +527,7 @@ typedef enum {
                                                           clicks:1
                                                        modifiers:0]];
         }
-        if ([[PreferencePanel sharedInstance] legacyThreeFingerEmulatesMiddle]) {
+        if ([[PreferencePanel sharedInstance] threeFingerEmulatesMiddle]) {
             // Find all actions that use middle button and add corresponding three-finger gesture.
             NSMutableDictionary *tempCopy = [[temp mutableCopy] autorelease];
             for (NSString *key in temp) {

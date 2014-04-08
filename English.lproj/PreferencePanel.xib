@@ -161,7 +161,6 @@
                 <outlet property="tabView" destination="1943" id="2853"/>
                 <outlet property="tags" destination="3245" id="3249"/>
                 <outlet property="terminalType" destination="2405" id="3155"/>
-                <outlet property="threeFingerEmulatesMiddle" destination="6227" id="6230"/>
                 <outlet property="toggleTagsButton" destination="nFj-0n-SWO" id="8Tx-UD-Ftx"/>
                 <outlet property="toolbar" destination="5885" id="6042"/>
                 <outlet property="transparency" destination="4978" id="4994"/>
@@ -4232,7 +4231,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="6231"/>
+                                                <action selector="settingChanged:" target="pwh-OY-l3e" id="Foc-6S-ajT"/>
                                             </connections>
                                         </button>
                                         <box autoresizesSubviews="NO" verticalHuggingPriority="750" title="Box" boxType="separator" titlePosition="noTitle" id="6413">
@@ -5537,6 +5536,7 @@ DQ
                 <outlet property="_cmdSelection" destination="6107" id="aP0-Ty-y8T"/>
                 <outlet property="_controlLeftClickActsLikeRightClick" destination="6111" id="tra-Ty-UvV"/>
                 <outlet property="_optionClickMovesCursor" destination="6407" id="hKN-R0-UCE"/>
+                <outlet property="_threeFingerEmulatesMiddle" destination="6227" id="eEX-cI-LAf"/>
             </connections>
         </customObject>
     </objects>

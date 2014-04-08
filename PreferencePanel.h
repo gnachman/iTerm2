@@ -129,7 +129,6 @@ typedef enum {
 - (BOOL)copyLastNewline;
 - (BOOL)legacyPasteFromClipboard;
 - (BOOL)pasteFromClipboard;
-- (BOOL)legacyThreeFingerEmulatesMiddle;
 - (BOOL)threeFingerEmulatesMiddle;
 - (BOOL)hideTab;
 - (int)tabViewType;

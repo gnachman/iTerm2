@@ -7,6 +7,9 @@
 //
 
 #import "PointerPreferencesViewController.h"
+#import "PreferencePanel.h"
+
+NSString *kPointerPrefsChangedNotification = @"kPointerPrefsChangedNotification";
 
 @implementation PointerPreferencesViewController {
     // Cmd-click to launch url.
@@ -15,8 +18,11 @@
     // Control-click doesn't open the context menu, is mouse-reported as right click.
     IBOutlet NSButton *_controlLeftClickActsLikeRightClick;
 
-    // Opt-click moves cursor
+    // Opt-click moves cursor.
     IBOutlet NSButton *_optionClickMovesCursor;
+
+    // Three finger click emulates middle button.
+    IBOutlet NSButton *_threeFingerEmulatesMiddle;
 }
 
 - (void)awakeFromNib {
@@ -33,6 +39,16 @@
     [self defineControl:_optionClickMovesCursor
                     key:kPreferenceKeyOptionClickMovesCursor
                    type:kPreferenceInfoTypeCheckbox];
+
+    info = [self defineControl:_threeFingerEmulatesMiddle
+                           key:kPreferenceKeyThreeFingerEmulatesMiddle
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() {
+        [self postRefreshNotification];
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPointerPrefsChangedNotification
+                                                            object:nil
+                                                          userInfo:nil];
+    };
 }
 
 @end

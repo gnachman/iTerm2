@@ -80,10 +80,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     IBOutlet NSButton *middleButtonPastesFromClipboard;
     BOOL defaultPasteFromClipboard;
 
-    // Three finger click emulates middle button
-    IBOutlet NSButton *threeFingerEmulatesMiddle;
-    BOOL defaultThreeFingerEmulatesMiddle;
-
     // Focus follows mouse
     IBOutlet NSButton *focusFollowsMouse;
     BOOL defaultFocusFollowsMouse;
@@ -640,19 +636,9 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 
 - (IBAction)settingChanged:(id)sender
 {
-    if (sender == threeFingerEmulatesMiddle) {
-        defaultThreeFingerEmulatesMiddle=([threeFingerEmulatesMiddle state] == NSOnState);
-        [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
-                                                            object:nil
-                                                          userInfo:nil];
-        [[NSNotificationCenter defaultCenter] postNotificationName:kPointerPrefsChangedNotification
-                                                            object:nil
-                                                          userInfo:nil];
-    } else {
-        defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
-        defaultFocusFollowsMouse = ([focusFollowsMouse state] == NSOnState);
-        defaultTripleClickSelectsFullLines = ([tripleClickSelectsFullLines state] == NSOnState);
-    }
+    defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
+    defaultFocusFollowsMouse = ([focusFollowsMouse state] == NSOnState);
+    defaultTripleClickSelectsFullLines = ([tripleClickSelectsFullLines state] == NSOnState);
 }
 
 - (IBAction)closeCurrentSession:(id)sender
@@ -1873,7 +1859,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [prefs setInteger:0 forKey:@"AppleScrollAnimationEnabled"];
 
     defaultPasteFromClipboard=[prefs objectForKey:@"PasteFromClipboard"]?[[prefs objectForKey:@"PasteFromClipboard"] boolValue]:YES;
-    defaultThreeFingerEmulatesMiddle=[prefs objectForKey:@"ThreeFingerEmulates"]?[[prefs objectForKey:@"ThreeFingerEmulates"] boolValue]:NO;
     defaultFocusFollowsMouse = [prefs objectForKey:@"FocusFollowsMouse"]?[[prefs objectForKey:@"FocusFollowsMouse"] boolValue]: NO;
     defaultTripleClickSelectsFullLines = [prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] ? [[prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] boolValue] : NO;
 
@@ -1926,7 +1911,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     }
 
     [prefs setBool:defaultPasteFromClipboard forKey:@"PasteFromClipboard"];
-    [prefs setBool:defaultThreeFingerEmulatesMiddle forKey:@"ThreeFingerEmulates"];
     [prefs setBool:defaultFocusFollowsMouse forKey:@"FocusFollowsMouse"];
     [prefs setBool:defaultTripleClickSelectsFullLines forKey:@"TripleClickSelectsFullWrappedLines"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
@@ -2169,14 +2153,8 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     return defaultPasteFromClipboard;
 }
 
-- (BOOL)legacyThreeFingerEmulatesMiddle
-{
-    return defaultThreeFingerEmulatesMiddle;
-}
-
-- (BOOL)threeFingerEmulatesMiddle
-{
-    return defaultThreeFingerEmulatesMiddle;
+- (BOOL)threeFingerEmulatesMiddle {
+    return [iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle];
 }
 
 - (void)setPasteFromClipboard:(BOOL)flag
@@ -2634,7 +2612,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [_generalPreferencesViewController updateEnabledState];
 
     [middleButtonPastesFromClipboard setState:defaultPasteFromClipboard?NSOnState:NSOffState];
-    [threeFingerEmulatesMiddle setState:defaultThreeFingerEmulatesMiddle ? NSOnState : NSOffState];
     [focusFollowsMouse setState: defaultFocusFollowsMouse?NSOnState:NSOffState];
     [tripleClickSelectsFullLines setState:defaultTripleClickSelectsFullLines?NSOnState:NSOffState];
 
