@@ -80,10 +80,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     IBOutlet NSButton *middleButtonPastesFromClipboard;
     BOOL defaultPasteFromClipboard;
 
-    // Focus follows mouse
-    IBOutlet NSButton *focusFollowsMouse;
-    BOOL defaultFocusFollowsMouse;
-
     // Triple click selects full, wrapped lines
     IBOutlet NSButton *tripleClickSelectsFullLines;
     BOOL defaultTripleClickSelectsFullLines;
@@ -637,7 +633,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 - (IBAction)settingChanged:(id)sender
 {
     defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
-    defaultFocusFollowsMouse = ([focusFollowsMouse state] == NSOnState);
     defaultTripleClickSelectsFullLines = ([tripleClickSelectsFullLines state] == NSOnState);
 }
 
@@ -1859,7 +1854,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [prefs setInteger:0 forKey:@"AppleScrollAnimationEnabled"];
 
     defaultPasteFromClipboard=[prefs objectForKey:@"PasteFromClipboard"]?[[prefs objectForKey:@"PasteFromClipboard"] boolValue]:YES;
-    defaultFocusFollowsMouse = [prefs objectForKey:@"FocusFollowsMouse"]?[[prefs objectForKey:@"FocusFollowsMouse"] boolValue]: NO;
     defaultTripleClickSelectsFullLines = [prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] ? [[prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] boolValue] : NO;
 
     // Migrate old-style (iTerm 0.x) URL handlers.
@@ -1911,7 +1905,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     }
 
     [prefs setBool:defaultPasteFromClipboard forKey:@"PasteFromClipboard"];
-    [prefs setBool:defaultFocusFollowsMouse forKey:@"FocusFollowsMouse"];
     [prefs setBool:defaultTripleClickSelectsFullLines forKey:@"TripleClickSelectsFullWrappedLines"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
 
@@ -2196,9 +2189,8 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     return [iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs];
 }
 
-- (BOOL)focusFollowsMouse
-{
-    return defaultFocusFollowsMouse;
+- (BOOL)focusFollowsMouse {
+    return [iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse];
 }
 
 - (BOOL)tripleClickSelectsFullLines
@@ -2612,7 +2604,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [_generalPreferencesViewController updateEnabledState];
 
     [middleButtonPastesFromClipboard setState:defaultPasteFromClipboard?NSOnState:NSOffState];
-    [focusFollowsMouse setState: defaultFocusFollowsMouse?NSOnState:NSOffState];
     [tripleClickSelectsFullLines setState:defaultTripleClickSelectsFullLines?NSOnState:NSOffState];
 
     [self showWindow:self];

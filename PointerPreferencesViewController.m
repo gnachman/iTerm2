@@ -23,6 +23,9 @@ NSString *kPointerPrefsChangedNotification = @"kPointerPrefsChangedNotification"
 
     // Three finger click emulates middle button.
     IBOutlet NSButton *_threeFingerEmulatesMiddle;
+
+    // Focus follows mouse.
+    IBOutlet NSButton *_focusFollowsMouse;
 }
 
 - (void)awakeFromNib {
@@ -49,6 +52,10 @@ NSString *kPointerPrefsChangedNotification = @"kPointerPrefsChangedNotification"
                                                             object:nil
                                                           userInfo:nil];
     };
+
+    [self defineControl:_focusFollowsMouse
+                    key:kPreferenceKeyFocusFollowsMouse
+                   type:kPreferenceInfoTypeCheckbox];
 }
 
 @end

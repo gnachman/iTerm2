@@ -112,7 +112,6 @@
                 <outlet property="displayRegularFontButton" destination="4774" id="4869"/>
                 <outlet property="editAdvancedConfigButton" destination="5975" id="6028"/>
                 <outlet property="flashingBell" destination="3553" id="3557"/>
-                <outlet property="focusFollowsMouse" destination="6062" id="6209"/>
                 <outlet property="foregroundColor" destination="2273" id="3004"/>
                 <outlet property="globalTabViewItem" destination="1944" id="2864"/>
                 <outlet property="globalToolbarItem" destination="5887" id="6037"/>
@@ -4053,7 +4052,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="6076"/>
+                                                <action selector="settingChanged:" target="pwh-OY-l3e" id="vIN-1n-iUm"/>
                                             </connections>
                                         </button>
                                         <textField verticalHuggingPriority="750" id="6082">
@@ -5535,6 +5534,7 @@ DQ
             <connections>
                 <outlet property="_cmdSelection" destination="6107" id="aP0-Ty-y8T"/>
                 <outlet property="_controlLeftClickActsLikeRightClick" destination="6111" id="tra-Ty-UvV"/>
+                <outlet property="_focusFollowsMouse" destination="6062" id="wHi-NP-8ue"/>
                 <outlet property="_optionClickMovesCursor" destination="6407" id="hKN-R0-UCE"/>
                 <outlet property="_threeFingerEmulatesMiddle" destination="6227" id="eEX-cI-LAf"/>
             </connections>

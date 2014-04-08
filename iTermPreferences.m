@@ -82,6 +82,7 @@ NSString *const kPreferenceKeyCmdClickOpensURLs = @"CommandSelection";
 NSString *const kPreferenceKeyControlLeftClickBypassesContextMenu = @"PassOnControlClick";
 NSString *const kPreferenceKeyOptionClickMovesCursor = @"OptionClickMovesCursor";
 NSString *const kPreferenceKeyThreeFingerEmulatesMiddle = @"ThreeFingerEmulates";
+NSString *const kPreferenceKeyFocusFollowsMouse = @"FocusFollowsMouse";
 
 static NSMutableDictionary *gObservers;
 
@@ -157,6 +158,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyControlLeftClickBypassesContextMenu: @NO,
                   kPreferenceKeyOptionClickMovesCursor: @YES,
                   kPreferenceKeyThreeFingerEmulatesMiddle: @NO,
+                  kPreferenceKeyFocusFollowsMouse: @NO,
                   };
         [dict retain];
     }
