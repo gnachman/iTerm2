@@ -23,6 +23,11 @@
 @interface iTermShortcutInputView : NSTextField
 
 @property(nonatomic, assign) IBOutlet id<iTermShortcutInputViewDelegate> shortcutDelegate;
+@property(nonatomic, assign) BOOL disableKeyRemapping;
+
+// If an instance of this class is currently the first responder, return it,
+// else return nil.
++ (instancetype)firstResponder;
 
 - (void)handleShortcutEvent:(NSEvent *)event;
 

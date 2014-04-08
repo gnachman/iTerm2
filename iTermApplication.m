@@ -114,14 +114,10 @@
                 return;
             }
         }
-        if ([[[self keyWindow] firstResponder] isKindOfClass:[NSTextView class]]) {
-            NSTextView *fieldEditor = (NSTextView *)[[self keyWindow] firstResponder];
-            id<NSTextViewDelegate> fieldEditorDelegate = fieldEditor.delegate;
-            if ([fieldEditorDelegate isKindOfClass:[iTermShortcutInputView class]]) {
-                iTermShortcutInputView *shortcutView = (iTermShortcutInputView *)fieldEditorDelegate;
-                [shortcutView handleShortcutEvent:event];
-                return;
-            }
+        iTermShortcutInputView *shortcutView = [iTermShortcutInputView firstResponder];
+        if (shortcutView) {
+            [shortcutView handleShortcutEvent:event];
+            return;
         } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
             // Focus is in a terminal window.
             responder = [[self keyWindow] firstResponder];

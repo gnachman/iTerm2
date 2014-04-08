@@ -6,6 +6,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermShortcutInputView.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
@@ -348,7 +349,10 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     NSEvent* cocoaEvent = [NSEvent eventWithCGEvent:event];
     BOOL callDirectly = NO;
     BOOL local = NO;
+    iTermShortcutInputView *shortcutView = nil;
     if ([NSApp isActive]) {
+        shortcutView = [iTermShortcutInputView firstResponder];
+
         // Remap modifier keys only while iTerm2 is active; otherwise you could just use the
         // OS's remap feature.
         NSString* unmodkeystr = [cocoaEvent charactersIgnoringModifiers];
@@ -356,7 +360,8 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         unsigned int modflag = [cocoaEvent modifierFlags];
         NSString *keyBindingText;
         PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
-        BOOL tempDisabled = [prefPanel remappingDisabledTemporarily];
+        BOOL tempDisabled = [shortcutView disableKeyRemapping];
+
         int action = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
                                                 modifiers:modflag
                                                      text:&keyBindingText
@@ -414,8 +419,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     if (callDirectly) {
         // Send keystroke directly to preference panel when setting do-not-remap for a key; for
         // system keys, NSApp sendEvent: is never called so this is the last chance.
-        [[PreferencePanel sharedInstance] shortcutInputView:nil
-                                    didReceiveKeyPressEvent:cocoaEvent];
+        [shortcutView handleShortcutEvent:cocoaEvent];
         return nil;
     }
     if (local) {

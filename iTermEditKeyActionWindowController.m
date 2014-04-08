@@ -107,6 +107,7 @@
             [_profilePopup setHidden:YES];
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
+            _shortcutField.disableKeyRemapping = NO;
             break;
 
         case KEY_ACTION_TEXT:
@@ -116,6 +117,7 @@
             [_profilePopup setHidden:YES];
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
+            _shortcutField.disableKeyRemapping = NO;
             break;
 
         case KEY_ACTION_RUN_COPROCESS:
@@ -125,6 +127,7 @@
             [_profilePopup setHidden:YES];
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
+            _shortcutField.disableKeyRemapping = NO;
             break;
 
         case KEY_ACTION_SELECT_MENU_ITEM:
@@ -134,6 +137,7 @@
             [_profilePopup setHidden:YES];
             [_menuToSelectPopup setHidden:NO];
             [_profileLabel setHidden:YES];
+            _shortcutField.disableKeyRemapping = NO;
             break;
 
         case KEY_ACTION_ESCAPE_SEQUENCE:
@@ -144,6 +148,7 @@
             [_profilePopup setHidden:YES];
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
+            _shortcutField.disableKeyRemapping = NO;
             break;
 
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
@@ -155,10 +160,12 @@
             [_profilePopup setHidden:NO];
             [_parameterLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
+            _shortcutField.disableKeyRemapping = NO;
             break;
 
         case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
         case KEY_ACTION_REMAP_LOCALLY:
+            _shortcutField.disableKeyRemapping = YES;
             [_parameter setHidden:YES];
             [_parameter setStringValue:@""];
             [_parameterLabel setHidden:NO];
@@ -175,6 +182,7 @@
             [_profilePopup setHidden:YES];
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
+            _shortcutField.disableKeyRemapping = NO;
             break;
 
         default:
@@ -184,6 +192,7 @@
             [_profilePopup setHidden:YES];
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
+            _shortcutField.disableKeyRemapping = NO;
             break;
     }
 }

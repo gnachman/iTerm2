@@ -10,6 +10,16 @@
 
 @implementation iTermShortcutInputView
 
++ (instancetype)firstResponder {
+    NSTextView *fieldEditor = (NSTextView *)[[NSApp keyWindow] firstResponder];
+    id<NSTextViewDelegate> fieldEditorDelegate = fieldEditor.delegate;
+    if ([fieldEditorDelegate isKindOfClass:[iTermShortcutInputView class]]) {
+        return (iTermShortcutInputView *)fieldEditorDelegate;
+    } else {
+        return nil;
+    }
+}
+
 - (void)handleShortcutEvent:(NSEvent *)event {
     [_shortcutDelegate shortcutInputView:self didReceiveKeyPressEvent:event];
     [[self window] makeFirstResponder:[self window]];
