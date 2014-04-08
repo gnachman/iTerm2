@@ -10,12 +10,17 @@
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermKeyMappingViewController.h"
+#import "iTermWarning.h"
 #import "NSPopUpButton+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 #import "PSMTabBarControl.h"
 
 static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
+
+@interface KeysPreferencesViewController () <iTermKeyMappingViewControllerDelegate>
+@end
 
 @implementation KeysPreferencesViewController {
     IBOutlet NSPopUpButton *_controlButton;
@@ -254,6 +259,79 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     unsigned int keyCode = [event keyCode];
 
     [self setHotKeyChar:keyChar code:keyCode mods:keyMods];
+}
+
+- (BOOL)anyBookmarkHasKeyMapping:(NSString*)theString {
+    for (Profile* bookmark in [[ProfileModel sharedInstance] bookmarks]) {
+        if ([iTermKeyBindingMgr haveKeyMappingForKeyString:theString inBookmark:bookmark]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (BOOL)warnAboutPossibleOverride {
+    switch ([iTermWarning showWarningWithTitle:@"The global keyboard shortcut you have set is overridden by at least one profile. "
+                                               @"Check your profiles’ keyboard settings if it doesn't work as expected."
+                                       actions:@[ @"OK", @"Cancel" ]
+                                    identifier:@"NeverWarnAboutPossibleOverrides"
+                                   silenceable:kiTermWarningTypePermanentlySilenceable]) {
+        case kiTermWarningSelection1:
+            return NO;
+        default:
+            return YES;
+    }
+}
+
+
+#pragma mark - iTermKeyMappingViewControllerDelegate
+
+- (NSDictionary *)keyMappingDictionary:(iTermKeyMappingViewController *)viewController {
+    return [iTermKeyBindingMgr globalKeyMap];
+}
+
+- (NSArray *)keyMappingSortedKeys:(iTermKeyMappingViewController *)viewController {
+    return [iTermKeyBindingMgr sortedGlobalKeyCombinations];
+}
+
+- (void)keyMapping:(iTermKeyMappingViewController *)viewController
+ didChangeKeyCombo:(NSString *)keyCombo
+            atIndex:(NSInteger)index
+          toAction:(int)action
+         parameter:(NSString *)parameter
+        isAddition:(BOOL)addition {
+    NSMutableDictionary *dict =
+            [NSMutableDictionary dictionaryWithDictionary:[iTermKeyBindingMgr globalKeyMap]];
+    if ([self anyBookmarkHasKeyMapping:keyCombo]) {
+        if (![self warnAboutPossibleOverride]) {
+            return;
+        }
+    }
+    [iTermKeyBindingMgr setMappingAtIndex:index
+                                   forKey:keyCombo
+                                   action:action
+                                    value:parameter
+                                createNew:addition
+                             inDictionary:dict];
+    [iTermKeyBindingMgr setGlobalKeyMap:dict];
+}
+
+
+- (void)keyMapping:(iTermKeyMappingViewController *)viewController
+    removeKeyCombo:(NSString *)keyCombo {
+    NSUInteger index = [[iTermKeyBindingMgr sortedGlobalKeyCombinations] indexOfObject:keyCombo];
+    assert(index != NSNotFound);
+    [iTermKeyBindingMgr setGlobalKeyMap:[iTermKeyBindingMgr removeMappingAtIndex:index
+                                                                    inDictionary:[iTermKeyBindingMgr globalKeyMap]]];
+}
+
+- (NSArray *)keyMappingPresetNames:(iTermKeyMappingViewController *)viewController {
+    return [iTermKeyBindingMgr globalPresetNames];
+}
+
+- (void)keyMapping:(iTermKeyMappingViewController *)viewController
+  loadPresetsNamed:(NSString *)presetName {
+    [iTermKeyBindingMgr setGlobalKeyMappingsToPreset:presetName];
 }
 
 @end

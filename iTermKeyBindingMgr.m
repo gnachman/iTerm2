@@ -78,6 +78,7 @@
 #import <Carbon/Carbon.h>
 
 static NSDictionary* globalKeyMap;
+static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
 
 @implementation iTermKeyBindingMgr
 
@@ -521,9 +522,13 @@ static NSDictionary* globalKeyMap;
                  forKey:KEY_KEYBOARD_MAP];
 }
 
++ (NSArray *)globalPresetNames {
+    return @[ kFactoryDefaultsGlobalPreset ];
+}
+
 + (void)setGlobalKeyMappingsToPreset:(NSString*)presetName
 {
-    assert([presetName isEqualToString:@"Factory Defaults"]);
+    assert([presetName isEqualToString:kFactoryDefaultsGlobalPreset]);
     if (globalKeyMap) {
         [globalKeyMap release];
         [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"GlobalKeyMap"];
@@ -608,6 +613,11 @@ static NSDictionary* globalKeyMap;
         [NSMutableDictionary dictionaryWithDictionary:[bookmark objectForKey:KEY_KEYBOARD_MAP]];
     [iTermKeyBindingMgr setMappingAtIndex:rowIndex forKey:keyString action:actionIndex value:valueToSend createNew:newMapping inDictionary:km];
     [bookmark setObject:km forKey:KEY_KEYBOARD_MAP];
+}
+
++ (NSArray *)sortedGlobalKeyCombinations {
+    NSDictionary* km = [self globalKeyMap];
+    return [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
 }
 
 + (NSString*)shortcutAtIndex:(int)rowIndex forBookmark:(Profile*)bookmark

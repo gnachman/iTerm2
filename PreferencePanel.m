@@ -31,6 +31,7 @@
 #import "iTermController.h"
 #import "iTermFontPanel.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermKeyMappingViewController.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermSettingsModel.h"
@@ -52,13 +53,13 @@
 #import "WindowArrangements.h"
 #include <stdlib.h>
 
-static NSString * const kCustomColorPresetsKey = @"Custom Color Presets";
-static NSString * const kDeleteKeyString = @"0x7f-0x0";
-static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
+static NSString *const kCustomColorPresetsKey = @"Custom Color Presets";
+static NSString *const kDeleteKeyString = @"0x7f-0x0";
+static NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
 NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 
-@interface PreferencePanel ()
+@interface PreferencePanel () <iTermKeyMappingViewControllerDelegate>
 @property(nonatomic, copy) NSString *currentProfileGuid;
 @end
 
@@ -710,15 +711,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
         defaultOptionClickMovesCursor = ([optionClickMovesCursor state] == NSOnState);
         defaultPassOnControlLeftClick = ([controlLeftClickActsLikeRightClick state] == NSOffState);
     }
-
-    // Keyboard tab
-    int rowIndex = [globalKeyMappings selectedRow];
-    if (rowIndex >= 0) {
-        [globalRemoveMappingButton setEnabled:YES];
-    } else {
-        [globalRemoveMappingButton setEnabled:NO];
-    }
-    [globalKeyMappings reloadData];
 }
 
 - (IBAction)closeCurrentSession:(id)sender
@@ -1842,49 +1834,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [NSApp endSheet:[triggerWindowController_ window]];
 }
 
-+ (void)recursiveAddMenu:(NSMenu *)menu
-            toButtonMenu:(NSMenu *)buttonMenu
-                   depth:(int)depth{
-    for (NSMenuItem* item in [menu itemArray]) {
-        if ([item isSeparatorItem]) {
-            continue;
-        }
-        if ([[item title] isEqualToString:@"Services"] ||  // exclude services menu
-            isnumber([[item title] characterAtIndex:0])) {  // exclude windows in window menu
-            continue;
-        }
-        NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
-        [theItem setTitle:[item title]];
-        [theItem setIndentationLevel:depth];
-        if ([item hasSubmenu]) {
-            if (depth == 0 && [[buttonMenu itemArray] count]) {
-                [buttonMenu addItem:[NSMenuItem separatorItem]];
-            }
-            [theItem setEnabled:NO];
-            [buttonMenu addItem:theItem];
-            [PreferencePanel recursiveAddMenu:[item submenu]
-                                 toButtonMenu:buttonMenu
-                                        depth:depth + 1];
-        } else {
-            [buttonMenu addItem:theItem];
-        }
-    }
-}
-
-+ (void)populatePopUpButtonWithMenuItems:(NSPopUpButton *)button
-                           selectedValue:(NSString *)selectedValue {
-    [PreferencePanel recursiveAddMenu:[NSApp mainMenu]
-                         toButtonMenu:[button menu]
-                                depth:0];
-    if (selectedValue) {
-        NSMenuItem *theItem = [[button menu] itemWithTitle:selectedValue];
-        if (theItem) {
-            [button setTitle:selectedValue];
-            [theItem setState:NSOnState];
-        }
-    }
-}
-
 #pragma mark - Key mappings
 
 - (BOOL)_originatorIsBookmark:(id)originator
@@ -1981,16 +1930,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 }
 
 
-- (BOOL)_anyBookmarkHasKeyMapping:(NSString*)theString
-{
-    for (Profile* bookmark in [[ProfileModel sharedInstance] bookmarks]) {
-        if ([iTermKeyBindingMgr haveKeyMappingForKeyString:theString inBookmark:bookmark]) {
-            return YES;
-        }
-    }
-    return NO;
-}
-
 - (IBAction)saveKeyMapping:(id)sender
 {
     if ([[keyPress stringValue] length] == 0) {
@@ -2029,19 +1968,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
         [keyMappings reloadData];
         [self bookmarkSettingChanged:sender];
     } else {
-        dict = [NSMutableDictionary dictionaryWithDictionary:[iTermKeyBindingMgr globalKeyMap]];
-        if ([self _anyBookmarkHasKeyMapping:keyString]) {
-            if (![self _warnAboutPossibleOverride]) {
-                return;
-            }
-        }
-        [iTermKeyBindingMgr setMappingAtIndex:[globalKeyMappings selectedRow]
-                                       forKey:keyString
-                                       action:theAction
-                                        value:theParam
-                                    createNew:newMapping
-                                 inDictionary:dict];
-        [iTermKeyBindingMgr setGlobalKeyMap:dict];
         [globalKeyMappings reloadData];
         [self settingChanged:nil];
     }
@@ -2139,11 +2065,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 - (IBAction)presetKeyMappingsItemSelected:(id)sender
 {
     [self setKeyMappingsToPreset:[[sender selectedItem] title]];
-}
-
-- (IBAction)useFactoryGlobalKeyMappings:(id)sender
-{
-    [self setGlobalKeyMappingsToPreset:@"Factory Defaults"];
 }
 
 - (void)_removeKeyMappingsReferringToBookmarkGuid:(NSString*)badRef
@@ -2351,80 +2272,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     val = MAX(val, range.location);
     val = MIN(val, range.location + range.length);
     return val;
-}
-
-- (void)updateValueToSend
-{
-    int tag = [[action selectedItem] tag];
-    if (tag == KEY_ACTION_HEX_CODE) {
-        [valueToSend setHidden:NO];
-        [[valueToSend cell] setPlaceholderString:@"ex: 0x7f 0x20"];
-        [escPlus setHidden:YES];
-        [bookmarkPopupButton setHidden:YES];
-        [profileLabel setHidden:YES];
-        [menuToSelect setHidden:YES];
-    } else if (tag == KEY_ACTION_TEXT) {
-        [valueToSend setHidden:NO];
-        [[valueToSend cell] setPlaceholderString:@"Enter value to send"];
-        [escPlus setHidden:YES];
-        [bookmarkPopupButton setHidden:YES];
-        [profileLabel setHidden:YES];
-        [menuToSelect setHidden:YES];
-    } else if (tag == KEY_ACTION_RUN_COPROCESS) {
-        [valueToSend setHidden:NO];
-        [[valueToSend cell] setPlaceholderString:@"Enter command to run"];
-        [escPlus setHidden:YES];
-        [bookmarkPopupButton setHidden:YES];
-        [profileLabel setHidden:YES];
-        [menuToSelect setHidden:YES];
-    } else if (tag == KEY_ACTION_SELECT_MENU_ITEM) {
-        [valueToSend setHidden:YES];
-        [[valueToSend cell] setPlaceholderString:@"Enter name of menu item"];
-        [escPlus setHidden:YES];
-        [bookmarkPopupButton setHidden:YES];
-        [menuToSelect setHidden:NO];
-        [profileLabel setHidden:YES];
-    } else if (tag == KEY_ACTION_ESCAPE_SEQUENCE) {
-        [valueToSend setHidden:NO];
-        [[valueToSend cell] setPlaceholderString:@"characters to send"];
-        [escPlus setHidden:NO];
-        [escPlus setStringValue:@"Esc+"];
-        [bookmarkPopupButton setHidden:YES];
-        [profileLabel setHidden:YES];
-        [menuToSelect setHidden:YES];
-    } else if (tag == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE ||
-               tag == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
-               tag == KEY_ACTION_NEW_TAB_WITH_PROFILE ||
-               tag == KEY_ACTION_NEW_WINDOW_WITH_PROFILE) {
-        [valueToSend setHidden:YES];
-        [profileLabel setHidden:NO];
-        [bookmarkPopupButton setHidden:NO];
-        [escPlus setHidden:YES];
-        [menuToSelect setHidden:YES];
-    } else if (tag == KEY_ACTION_DO_NOT_REMAP_MODIFIERS ||
-               tag == KEY_ACTION_REMAP_LOCALLY) {
-        [valueToSend setHidden:YES];
-        [valueToSend setStringValue:@""];
-        [escPlus setHidden:NO];
-        [escPlus setStringValue:@"Modifier remapping disabled: type the actual key combo you want to affect."];
-        [bookmarkPopupButton setHidden:YES];
-        [profileLabel setHidden:YES];
-        [menuToSelect setHidden:YES];
-    } else if (tag == KEY_ACTION_FIND_REGEX) {
-        [valueToSend setHidden:NO];
-        [[valueToSend cell] setPlaceholderString:@"Regular Expression"];
-        [escPlus setHidden:YES];
-        [bookmarkPopupButton setHidden:YES];
-        [profileLabel setHidden:YES];
-        [menuToSelect setHidden:YES];
-    } else {
-        [valueToSend setHidden:YES];
-        [valueToSend setStringValue:@""];
-        [escPlus setHidden:YES];
-        [bookmarkPopupButton setHidden:YES];
-        [profileLabel setHidden:YES];
-        [menuToSelect setHidden:YES];
-    }
 }
 
 - (void)copyAttributes:(BulkCopySettings)attributes fromBookmark:(NSString*)guid toBookmark:(NSString*)destGuid
@@ -3639,20 +3486,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     }
 }
 
-- (BOOL)_warnAboutPossibleOverride
-{
-    switch ([iTermWarning showWarningWithTitle:@"The global keyboard shortcut you have set is overridden by at least one profile. "
-                                               @"Check your profiles’ keyboard settings if it doesn't work as expected."
-                                       actions:@[ @"OK", @"Cancel" ]
-                                    identifier:@"NeverWarnAboutPossibleOverrides"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable]) {
-        case kiTermWarningSelection1:
-            return NO;
-        default:
-            return YES;
-    }
-}
-
 - (BOOL)confirmProfileDeletion:(NSArray *)guids {
     NSMutableString *question = [NSMutableString stringWithString:@"Delete profile"];
     if (guids.count > 1) {
@@ -3876,27 +3709,49 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 // Note: This is called directly by HotkeyWindowController when the action requires key remapping
 // to be disabled so the shortcut can be input properly. In this case, |view| will be nil.
 - (void)shortcutInputView:(iTermShortcutInputView *)view didReceiveKeyPressEvent:(NSEvent *)event {
-    unsigned int keyMods;
-    unsigned short keyCode;
-    NSString *unmodkeystr;
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO  See comment above, I broke that.
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+}
 
-    keyMods = [event modifierFlags];
-    unmodkeystr = [event charactersIgnoringModifiers];
-    keyCode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
+#pragma mark - iTermKeyMappingViewControllerDelegate
 
-    // turn off all the other modifier bits we don't care about
-    unsigned int theModifiers = (keyMods &
-                                 (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask |
-                                  NSCommandKeyMask | NSNumericPadKeyMask));
+- (NSDictionary *)keyMappingDictionary:(iTermKeyMappingViewController *)viewController {
+    return @{};
+}
 
-    // On some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
-    if (keyCode >= NSUpArrowFunctionKey && keyCode <= NSRightArrowFunctionKey) {
-        theModifiers |= NSNumericPadKeyMask;
-    }
-    [keyString release];
-    keyString = [[NSString stringWithFormat:@"0x%x-0x%x", keyCode, theModifiers] retain];
+- (NSArray *)keyMappingSortedKeys:(iTermKeyMappingViewController *)viewController {
+    return @[];
+}
 
-    [keyPress setStringValue:[iTermKeyBindingMgr formatKeyCombination:keyString]];
+- (void)keyMapping:(iTermKeyMappingViewController *)viewController
+ didChangeKeyCombo:(NSString *)keyCombo
+           atIndex:(NSInteger)index
+          toAction:(int)action
+         parameter:(NSString *)parameter
+        isAddition:(BOOL)addition {
+}
+
+
+- (void)keyMapping:(iTermKeyMappingViewController *)viewController
+    removeKeyCombo:(NSString *)keyCombo {
+}
+
+- (NSArray *)keyMappingPresetNames:(iTermKeyMappingViewController *)viewController {
+    return @[];
+}
+
+- (void)keyMapping:(iTermKeyMappingViewController *)viewController
+  loadPresetsNamed:(NSString *)presetName {
 }
 
 @end

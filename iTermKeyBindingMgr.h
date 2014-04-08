@@ -25,6 +25,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "ProfileModel.h"
 
 // Key Definitions
 #define KEY_CURSOR_DOWN                 0
@@ -151,6 +152,8 @@
 // format.
 + (NSDictionary*)readPresetKeyMappingsFromPlist:(NSString *)thePlist;
 
++ (NSArray *)globalPresetNames;
+
 // Return an array containing the names of all the presets available in
 // the PresetKeyMapping.plist file
 + (NSArray*)presetKeyMappingsNames;
@@ -162,6 +165,8 @@
 // Load a set of preset keymappings from GlobalKeyMap.plist into the global
 // keymappings, removing all previous mappings.
 + (void)setGlobalKeyMappingsToPreset:(NSString*)presetName;
+
++ (NSArray *)sortedGlobalKeyCombinations;
 
 // This function has two modes:
 // If newMapping is false, replace a mapping at the specified index. The index

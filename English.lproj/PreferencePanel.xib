@@ -10,9 +10,7 @@
                 <outlet property="_generalPreferencesViewController" destination="9Se-ld-UJa" id="ebT-z7-cAn"/>
                 <outlet property="_keysViewController" destination="8TE-cq-5cL" id="4iT-4B-Ju4"/>
                 <outlet property="action" destination="2661" id="3200"/>
-                <outlet property="actionColumn" destination="2465" id="3191"/>
                 <outlet property="addBookmarkButton" destination="2111" id="3320"/>
-                <outlet property="addNewMapping" destination="2443" id="4325"/>
                 <outlet property="advancedTabViewItem" destination="KyW-GB-ElH" id="8r8-7W-7k9"/>
                 <outlet property="advancedToolbarItem" destination="gtg-rw-6h8" id="Enb-fp-ef2"/>
                 <outlet property="advancedWorkingDirSheet_" destination="5979" id="6029"/>
@@ -122,11 +120,6 @@
                 <outlet property="flashingBell" destination="3553" id="3557"/>
                 <outlet property="focusFollowsMouse" destination="6062" id="6209"/>
                 <outlet property="foregroundColor" destination="2273" id="3004"/>
-                <outlet property="globalActionColumn" destination="3856" id="4319"/>
-                <outlet property="globalAddNewMapping" destination="3842" id="4324"/>
-                <outlet property="globalKeyCombinationColumn" destination="3857" id="4318"/>
-                <outlet property="globalKeyMappings" destination="3852" id="4317"/>
-                <outlet property="globalRemoveMappingButton" destination="3843" id="4320"/>
                 <outlet property="globalTabViewItem" destination="1944" id="2864"/>
                 <outlet property="globalToolbarItem" destination="5887" id="6037"/>
                 <outlet property="hideAfterOpening" destination="6354" id="6356"/>
@@ -134,8 +127,6 @@
                 <outlet property="initialText" destination="5410" id="5414"/>
                 <outlet property="initialTextLabel" destination="5408" id="5415"/>
                 <outlet property="jobsTable_" destination="5661" id="5719"/>
-                <outlet property="keyCombinationColumn" destination="2464" id="3190"/>
-                <outlet property="keyMappings" destination="2463" id="3194"/>
                 <outlet property="keyPress" destination="3201" id="3203"/>
                 <outlet property="keyboardTabViewItem" destination="3656" id="4216"/>
                 <outlet property="keyboardToolbarItem" destination="5888" id="6040"/>
@@ -152,13 +143,11 @@
                 <outlet property="optionClickMovesCursor" destination="6407" id="6415"/>
                 <outlet property="optionKeySends" destination="4291" id="4307"/>
                 <outlet property="presetsMenu" destination="3215" id="3561"/>
-                <outlet property="presetsPopupButton" destination="3182" id="5306"/>
                 <outlet property="preventTab" destination="6416" id="6420"/>
                 <outlet property="profileLabel" destination="5100" id="5102"/>
                 <outlet property="promptBeforeClosing_" destination="5728" id="5733"/>
                 <outlet property="removeBookmarkButton" destination="2113" id="3275"/>
                 <outlet property="removeJobButton_" destination="5669" id="5723"/>
-                <outlet property="removeMappingButton" destination="2444" id="3209"/>
                 <outlet property="rightOptionKeySends" destination="4293" id="4308"/>
                 <outlet property="rowsField" destination="4914" id="4960"/>
                 <outlet property="rowsLabel" destination="4913" id="4962"/>
@@ -212,6 +201,18 @@
                 <outlet property="delegate_" destination="-2" id="3281"/>
             </connections>
         </customView>
+        <customObject id="ANy-SZ-4JP" userLabel="Profile iTermKeyMappingViewController" customClass="iTermKeyMappingViewController">
+            <connections>
+                <outlet property="delegate" destination="-2" id="yTX-DC-nXJ"/>
+                <outlet property="placeholderView" destination="6sa-Ma-Wvi" id="d35-GN-ycl"/>
+            </connections>
+        </customObject>
+        <customObject id="Go1-4j-VZ4" userLabel="Global iTermKeyMappingViewController" customClass="iTermKeyMappingViewController">
+            <connections>
+                <outlet property="delegate" destination="8TE-cq-5cL" id="w6N-gg-Ofw"/>
+                <outlet property="placeholderView" destination="zLA-QA-WQd" id="sBB-40-LAa"/>
+            </connections>
+        </customObject>
         <customObject id="5797" customClass="TriggerController">
             <connections>
                 <outlet property="actionColumn_" destination="5786" id="5800"/>
@@ -3295,115 +3296,6 @@ Gw
                                                         <rect key="frame" x="10" y="33" width="559" height="404"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                         <subviews>
-                                                            <scrollView horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" id="2442">
-                                                                <rect key="frame" x="17" y="130" width="525" height="246"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <clipView key="contentView" id="Flq-2t-wqn">
-                                                                    <rect key="frame" x="1" y="17" width="507" height="228"/>
-                                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                                    <subviews>
-                                                                        <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveName="KeyBingingTable" headerView="2460" id="2463">
-                                                                            <rect key="frame" x="0.0" y="0.0" width="507" height="228"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <size key="intercellSpacing" width="3" height="2"/>
-                                                                            <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                                                            <tableViewGridLines key="gridStyleMask" vertical="YES" horizontal="YES"/>
-                                                                            <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
-                                                                            <tableColumns>
-                                                                                <tableColumn identifier="0" editable="NO" width="198" minWidth="40" maxWidth="1000" id="2464">
-                                                                                    <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Key Combination">
-                                                                                        <font key="font" metaFont="smallSystem"/>
-                                                                                        <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                        <color key="backgroundColor" white="0.33333299" alpha="1" colorSpace="calibratedWhite"/>
-                                                                                    </tableHeaderCell>
-                                                                                    <textFieldCell key="dataCell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" alignment="left" title="Text Cell" id="2467">
-                                                                                        <font key="font" metaFont="system"/>
-                                                                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                                                                    </textFieldCell>
-                                                                                    <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
-                                                                                </tableColumn>
-                                                                                <tableColumn identifier="1" editable="NO" width="303.101" minWidth="42.10107" maxWidth="1000" id="2465">
-                                                                                    <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
-                                                                                        <font key="font" metaFont="smallSystem"/>
-                                                                                        <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                        <color key="backgroundColor" white="0.33333299" alpha="1" colorSpace="calibratedWhite"/>
-                                                                                    </tableHeaderCell>
-                                                                                    <textFieldCell key="dataCell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" alignment="left" title="Text Cell" id="2466">
-                                                                                        <font key="font" metaFont="system"/>
-                                                                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                                                                    </textFieldCell>
-                                                                                    <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
-                                                                                </tableColumn>
-                                                                            </tableColumns>
-                                                                            <connections>
-                                                                                <outlet property="dataSource" destination="-2" id="3192"/>
-                                                                                <outlet property="delegate" destination="-2" id="3193"/>
-                                                                            </connections>
-                                                                        </tableView>
-                                                                    </subviews>
-                                                                    <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                                                </clipView>
-                                                                <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="2461">
-                                                                    <rect key="frame" x="-100" y="-100" width="266" height="15"/>
-                                                                    <autoresizingMask key="autoresizingMask"/>
-                                                                </scroller>
-                                                                <scroller key="verticalScroller" verticalHuggingPriority="750" horizontal="NO" id="2462">
-                                                                    <rect key="frame" x="508" y="17" width="16" height="228"/>
-                                                                    <autoresizingMask key="autoresizingMask"/>
-                                                                </scroller>
-                                                                <tableHeaderView key="headerView" id="2460">
-                                                                    <rect key="frame" x="0.0" y="0.0" width="507" height="17"/>
-                                                                    <autoresizingMask key="autoresizingMask"/>
-                                                                </tableHeaderView>
-                                                                <connections>
-                                                                    <outlet property="nextKeyView" destination="2443" id="5282"/>
-                                                                </connections>
-                                                            </scrollView>
-                                                            <button id="2443">
-                                                                <rect key="frame" x="17" y="100" width="21" height="22"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSAddTemplate" imagePosition="only" alignment="center" borderStyle="border" inset="2" id="2459">
-                                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                                    <font key="font" metaFont="smallSystem"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="addNewMapping:" target="-2" id="3208"/>
-                                                                    <outlet property="nextKeyView" destination="2444" id="5283"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="2444">
-                                                                <rect key="frame" x="37" y="100" width="20" height="22"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="only" alignment="center" borderStyle="border" inset="2" id="2458">
-                                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                                    <font key="font" metaFont="smallSystem"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="removeMapping:" target="-2" id="3210"/>
-                                                                    <outlet property="nextKeyView" destination="3182" id="5284"/>
-                                                                </connections>
-                                                            </button>
-                                                            <popUpButton id="3182">
-                                                                <rect key="frame" x="56" y="100" width="144" height="22"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <popUpButtonCell key="cell" type="square" title="Load Preset..." bezelStyle="shadowlessSquare" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="3185" id="3183">
-                                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                                    <font key="font" metaFont="menu"/>
-                                                                    <menu key="menu" title="OtherViews" id="3184">
-                                                                        <items>
-                                                                            <menuItem title="Load Preset..." state="on" image="NSActionTemplate" hidden="YES" id="3185">
-                                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                                            </menuItem>
-                                                                        </items>
-                                                                    </menu>
-                                                                </popUpButtonCell>
-                                                                <connections>
-                                                                    <action selector="presetKeyMappingsItemSelected:" target="-2" id="5307"/>
-                                                                    <outlet property="nextKeyView" destination="4291" id="5285"/>
-                                                                </connections>
-                                                            </popUpButton>
                                                             <textField verticalHuggingPriority="750" id="4184">
                                                                 <rect key="frame" x="14" y="384" width="147" height="17"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -3523,6 +3415,10 @@ Gw
                                                                     <action selector="bookmarkSettingChanged:" target="-2" id="Tfo-EZ-wH2"/>
                                                                 </connections>
                                                             </button>
+                                                            <customView id="6sa-Ma-Wvi">
+                                                                <rect key="frame" x="16" y="90" width="526" height="286"/>
+                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                            </customView>
                                                         </subviews>
                                                     </view>
                                                 </tabViewItem>
@@ -4018,114 +3914,6 @@ Gw
                                                 <outlet property="nextKeyView" destination="5104" id="5295"/>
                                             </connections>
                                         </popUpButton>
-                                        <scrollView horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" id="3841">
-                                            <rect key="frame" x="363" y="30" width="508" height="379"/>
-                                            <autoresizingMask key="autoresizingMask"/>
-                                            <clipView key="contentView" id="Dzn-LP-RyA">
-                                                <rect key="frame" x="1" y="17" width="506" height="361"/>
-                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                <subviews>
-                                                    <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveName="KeyBingingTable" headerView="3855" id="3852">
-                                                        <rect key="frame" x="0.0" y="0.0" width="506" height="361"/>
-                                                        <autoresizingMask key="autoresizingMask"/>
-                                                        <size key="intercellSpacing" width="3" height="2"/>
-                                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                                        <tableViewGridLines key="gridStyleMask" vertical="YES" horizontal="YES"/>
-                                                        <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
-                                                        <tableColumns>
-                                                            <tableColumn identifier="0" editable="NO" width="198" minWidth="40" maxWidth="1000" id="3857">
-                                                                <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Key Combination">
-                                                                    <font key="font" metaFont="smallSystem"/>
-                                                                    <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" white="0.33333299" alpha="1" colorSpace="calibratedWhite"/>
-                                                                </tableHeaderCell>
-                                                                <textFieldCell key="dataCell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" alignment="left" title="Text Cell" id="3858">
-                                                                    <font key="font" metaFont="system"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                                                </textFieldCell>
-                                                                <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
-                                                            </tableColumn>
-                                                            <tableColumn identifier="1" editable="NO" width="302.101" minWidth="42.10107" maxWidth="1000" id="3856">
-                                                                <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
-                                                                    <font key="font" metaFont="smallSystem"/>
-                                                                    <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" white="0.33333299" alpha="1" colorSpace="calibratedWhite"/>
-                                                                </tableHeaderCell>
-                                                                <textFieldCell key="dataCell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" alignment="left" title="Text Cell" id="3859">
-                                                                    <font key="font" metaFont="system"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                                                </textFieldCell>
-                                                                <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
-                                                            </tableColumn>
-                                                        </tableColumns>
-                                                        <connections>
-                                                            <outlet property="dataSource" destination="-2" id="3864"/>
-                                                            <outlet property="delegate" destination="-2" id="3865"/>
-                                                        </connections>
-                                                    </tableView>
-                                                </subviews>
-                                                <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                            </clipView>
-                                            <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="3854">
-                                                <rect key="frame" x="-100" y="-100" width="266" height="15"/>
-                                                <autoresizingMask key="autoresizingMask"/>
-                                            </scroller>
-                                            <scroller key="verticalScroller" verticalHuggingPriority="750" horizontal="NO" id="3853">
-                                                <rect key="frame" x="491" y="17" width="16" height="361"/>
-                                                <autoresizingMask key="autoresizingMask"/>
-                                            </scroller>
-                                            <tableHeaderView key="headerView" id="3855">
-                                                <rect key="frame" x="0.0" y="0.0" width="506" height="17"/>
-                                                <autoresizingMask key="autoresizingMask"/>
-                                            </tableHeaderView>
-                                            <connections>
-                                                <outlet property="nextKeyView" destination="3842" id="5300"/>
-                                            </connections>
-                                        </scrollView>
-                                        <button id="3842">
-                                            <rect key="frame" x="363" y="0.0" width="21" height="22"/>
-                                            <autoresizingMask key="autoresizingMask"/>
-                                            <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSAddTemplate" imagePosition="only" alignment="center" borderStyle="border" inset="2" id="3851">
-                                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="smallSystem"/>
-                                            </buttonCell>
-                                            <connections>
-                                                <action selector="addNewMapping:" target="-2" id="4323"/>
-                                                <outlet property="nextKeyView" destination="3843" id="5301"/>
-                                            </connections>
-                                        </button>
-                                        <button id="3843">
-                                            <rect key="frame" x="383" y="0.0" width="20" height="22"/>
-                                            <autoresizingMask key="autoresizingMask"/>
-                                            <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="only" alignment="center" borderStyle="border" inset="2" id="3850">
-                                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="smallSystem"/>
-                                            </buttonCell>
-                                            <connections>
-                                                <action selector="globalRemoveMapping:" target="-2" id="4321"/>
-                                                <outlet property="nextKeyView" destination="3844" id="5302"/>
-                                            </connections>
-                                        </button>
-                                        <popUpButton id="3844">
-                                            <rect key="frame" x="402" y="0.0" width="144" height="22"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <popUpButtonCell key="cell" type="square" title="Load Preset..." bezelStyle="shadowlessSquare" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="3849" id="3845">
-                                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu"/>
-                                                <menu key="menu" title="OtherViews" id="3846">
-                                                    <items>
-                                                        <menuItem title="Load Preset..." state="on" image="NSActionTemplate" hidden="YES" id="3849"/>
-                                                        <menuItem title="Factory Defaults" id="3847">
-                                                            <connections>
-                                                                <action selector="useFactoryGlobalKeyMappings:" target="-2" id="4326"/>
-                                                            </connections>
-                                                        </menuItem>
-                                                    </items>
-                                                </menu>
-                                            </popUpButtonCell>
-                                        </popUpButton>
                                         <textField verticalHuggingPriority="750" id="3892">
                                             <rect key="frame" x="-3" y="256" width="144" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -4247,7 +4035,6 @@ Gw
                                             </popUpButtonCell>
                                             <connections>
                                                 <action selector="settingChanged:" target="8TE-cq-5cL" id="Its-xd-Y8n"/>
-                                                <outlet property="nextKeyView" destination="3852" id="5299"/>
                                             </connections>
                                         </popUpButton>
                                         <button id="rG7-dO-Nxw">
@@ -4261,6 +4048,10 @@ Gw
                                                 <action selector="settingChanged:" target="8TE-cq-5cL" id="2Ih-It-cUu"/>
                                             </connections>
                                         </button>
+                                        <customView id="zLA-QA-WQd">
+                                            <rect key="frame" x="363" y="20" width="508" height="393"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        </customView>
                                     </subviews>
                                 </view>
                             </tabViewItem>
