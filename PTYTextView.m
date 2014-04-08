@@ -41,6 +41,7 @@
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "iTermNSKeyBindingEmulator.h"
+#import "iTermPreferences.h"
 #import "iTermSelection.h"
 #import "iTermSettingsModel.h"
 #import "iTermTextExtractor.h"
@@ -2659,7 +2660,7 @@ NSMutableArray* screens=0;
         NSPoint viewPoint = [self windowLocationToRowCol:windowRect.origin];
         int x = viewPoint.x;
         int y = viewPoint.y;
-        if (y < 0) {
+        if (![iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs] || y < 0) {
             [self removeUnderline];
             return;
         } else {

@@ -92,10 +92,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     IBOutlet NSButton *tripleClickSelectsFullLines;
     BOOL defaultTripleClickSelectsFullLines;
 
-    // cmd-click to launch url
-    IBOutlet NSButton *cmdSelection;
-    BOOL defaultCmdSelection;
-
     // pass on ctrl-click
     IBOutlet NSButton* controlLeftClickActsLikeRightClick;
     BOOL defaultPassOnControlLeftClick;
@@ -665,7 +661,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
         defaultFocusFollowsMouse = ([focusFollowsMouse state] == NSOnState);
         defaultTripleClickSelectsFullLines = ([tripleClickSelectsFullLines state] == NSOnState);
 
-        defaultCmdSelection = ([cmdSelection state] == NSOnState);
         defaultOptionClickMovesCursor = ([optionClickMovesCursor state] == NSOnState);
         defaultPassOnControlLeftClick = ([controlLeftClickActsLikeRightClick state] == NSOffState);
     }
@@ -1892,7 +1887,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     defaultThreeFingerEmulatesMiddle=[prefs objectForKey:@"ThreeFingerEmulates"]?[[prefs objectForKey:@"ThreeFingerEmulates"] boolValue]:NO;
     defaultFocusFollowsMouse = [prefs objectForKey:@"FocusFollowsMouse"]?[[prefs objectForKey:@"FocusFollowsMouse"] boolValue]: NO;
     defaultTripleClickSelectsFullLines = [prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] ? [[prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] boolValue] : NO;
-    defaultCmdSelection = [prefs objectForKey:@"CommandSelection"]?[[prefs objectForKey:@"CommandSelection"] boolValue]: YES;
     defaultOptionClickMovesCursor = [prefs objectForKey:@"OptionClickMovesCursor"]?[[prefs objectForKey:@"OptionClickMovesCursor"] boolValue]: YES;
     defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
 
@@ -1948,7 +1942,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [prefs setBool:defaultThreeFingerEmulatesMiddle forKey:@"ThreeFingerEmulates"];
     [prefs setBool:defaultFocusFollowsMouse forKey:@"FocusFollowsMouse"];
     [prefs setBool:defaultTripleClickSelectsFullLines forKey:@"TripleClickSelectsFullWrappedLines"];
-    [prefs setBool:defaultCmdSelection forKey:@"CommandSelection"];
     [prefs setBool:defaultOptionClickMovesCursor forKey:@"OptionClickMovesCursor"];
     [prefs setBool:defaultPassOnControlLeftClick forKey:@"PassOnControlClick"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
@@ -2270,9 +2263,8 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     return NO;
 }
 
-- (BOOL)cmdSelection
-{
-    return defaultCmdSelection;
+- (BOOL)cmdSelection {
+    return [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs];
 }
 
 - (BOOL)optionClickMovesCursor
@@ -2662,7 +2654,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [threeFingerEmulatesMiddle setState:defaultThreeFingerEmulatesMiddle ? NSOnState : NSOffState];
     [focusFollowsMouse setState: defaultFocusFollowsMouse?NSOnState:NSOffState];
     [tripleClickSelectsFullLines setState:defaultTripleClickSelectsFullLines?NSOnState:NSOffState];
-    [cmdSelection setState: defaultCmdSelection?NSOnState:NSOffState];
     [optionClickMovesCursor setState: defaultOptionClickMovesCursor?NSOnState:NSOffState];
     [controlLeftClickActsLikeRightClick setState: defaultPassOnControlLeftClick?NSOffState:NSOnState];
 

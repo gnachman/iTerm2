@@ -98,6 +98,9 @@ extern NSString *const kPreferenceKeyHotKeyTogglesWindow;
 extern NSString *const kPreferenceKeyHotkeyProfileGuid;
 extern NSString *const kPreferenceKeyHotkeyAutoHides;
 
+// Pointer
+extern NSString *const kPreferenceKeyCmdClickOpensURLs;
+
 @interface iTermPreferences : NSObject
 
 + (BOOL)boolForKey:(NSString *)key;

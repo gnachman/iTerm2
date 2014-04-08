@@ -78,6 +78,8 @@ NSString *const kPreferenceKeyHotKeyTogglesWindow = @"HotKeyTogglesWindow";
 NSString *const kPreferenceKeyHotkeyProfileGuid = @"HotKeyBookmark";
 NSString *const kPreferenceKeyHotkeyAutoHides = @"HotkeyAutoHides";
 
+NSString *const kPreferenceKeyCmdClickOpensURLs = @"CommandSelection";
+
 static NSMutableDictionary *gObservers;
 
 @implementation iTermPreferences
@@ -147,6 +149,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyHotKeyTogglesWindow: @NO,
                   kPreferenceKeyHotkeyProfileGuid: [NSNull null],
                   kPreferenceKeyHotkeyAutoHides: @YES,
+
+                  kPreferenceKeyCmdClickOpensURLs: @YES,
                   };
         [dict retain];
     }

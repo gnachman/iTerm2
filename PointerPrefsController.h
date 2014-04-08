@@ -43,6 +43,7 @@ extern NSString *kThreeFingerSwipeDown;
 
 extern NSString *kPointerPrefsChangedNotification;
 
+// This manages the tableview and associated buttons and controls for managing pointer actions.
 @interface PointerPrefsController : NSObject {
     IBOutlet NSTableView *tableView_;
     IBOutlet NSTableColumn *buttonColumn_;

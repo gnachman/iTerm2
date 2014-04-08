@@ -82,7 +82,6 @@
                 <outlet property="characterEncoding" destination="2390" id="3148"/>
                 <outlet property="checkColorInvertedCursor" destination="4889" id="4893"/>
                 <outlet property="closeSessionsOnEnd" destination="5681" id="5737"/>
-                <outlet property="cmdSelection" destination="6107" id="6211"/>
                 <outlet property="columnsField" destination="4911" id="4959"/>
                 <outlet property="columnsLabel" destination="4912" id="4961"/>
                 <outlet property="controlLeftClickActsLikeRightClick" destination="6111" id="6414"/>
@@ -4095,7 +4094,7 @@ Gw
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
-                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="229"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -4191,7 +4190,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="6212"/>
+                                                <action selector="settingChanged:" target="pwh-OY-l3e" id="vPI-m1-3f4"/>
                                             </connections>
                                         </button>
                                         <button id="6111">
@@ -5533,6 +5532,11 @@ DQ
                 <outlet property="_rightOptionButton" destination="4392" id="zkG-aT-oOV"/>
                 <outlet property="_switchTabModifierButton" destination="4118" id="m16-Tk-0hv"/>
                 <outlet property="_switchWindowModifierButton" destination="4269" id="LkQ-lj-KIU"/>
+            </connections>
+        </customObject>
+        <customObject id="pwh-OY-l3e" customClass="PointerPreferencesViewController">
+            <connections>
+                <outlet property="_cmdSelection" destination="6107" id="aP0-Ty-y8T"/>
             </connections>
         </customObject>
     </objects>
