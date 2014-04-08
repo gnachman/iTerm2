@@ -9,6 +9,7 @@
 #import "iTermKeyMappingViewController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermEditKeyActionWindowController.h"
+#import "PreferencePanel.h"
 
 @interface iTermKeyMappingViewController ()
 
@@ -27,7 +28,7 @@
     if (self) {
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(keyBindingsChanged)
-                                                     name:@"iTermKeyBindingsChanged"
+                                                     name:kKeyBindingsChangedNotification
                                                    object:nil];
     }
     return self;

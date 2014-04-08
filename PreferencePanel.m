@@ -56,8 +56,10 @@
 static NSString *const kCustomColorPresetsKey = @"Custom Color Presets";
 static NSString *const kDeleteKeyString = @"0x7f-0x0";
 static NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
+
 NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
+NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotification";
 
 @interface PreferencePanel () <iTermKeyMappingViewControllerDelegate>
 @property(nonatomic, copy) NSString *currentProfileGuid;
@@ -1019,7 +1021,7 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
         [prefs setObject:[dataSource rawData] forKey:@"New Bookmarks"];
     }
     if (reloadKeyMappings) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermKeyBindingsChanged"
+        [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                             object:nil
                                                           userInfo:nil];
     }
@@ -1806,7 +1808,7 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
         }
     }
     [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:nil];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermKeyBindingsChanged"
+    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil
                                                       userInfo:nil];
 }

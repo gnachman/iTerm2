@@ -1325,7 +1325,7 @@ typedef enum {
         model = [ProfileModel sharedInstance];
     }
     [model setBookmark:temp withGuid:[temp objectForKey:KEY_GUID]];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermKeyBindingsChanged"
+    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil
                                                       userInfo:nil];
     [[iTermController sharedInstance] reloadAllBookmarks];
