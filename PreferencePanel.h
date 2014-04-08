@@ -98,7 +98,6 @@ typedef enum {
 - (IBAction)changeProfile:(id)sender;
 - (IBAction)addJob:(id)sender;
 - (IBAction)removeJob:(id)sender;
-- (IBAction)settingChanged:(id)sender;
 - (IBAction)bookmarkSettingChanged:(id)sender;
 - (IBAction)copyToProfile:(id)sender;
 - (IBAction)bookmarkUrlSchemeHandlerChanged:(id)sender;
@@ -128,7 +127,6 @@ typedef enum {
 - (BOOL)copySelection;
 - (BOOL)copyLastNewline;
 - (BOOL)legacyPasteFromClipboard;
-- (BOOL)pasteFromClipboard;
 - (BOOL)threeFingerEmulatesMiddle;
 - (BOOL)hideTab;
 - (int)tabViewType;

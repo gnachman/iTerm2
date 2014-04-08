@@ -74,12 +74,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     IBOutlet GeneralPreferencesViewController *_generalPreferencesViewController;
     IBOutlet KeysPreferencesViewController *_keysViewController;
 
-    IBOutlet NSTextField* tagFilter;
-
-    // Middle button paste from clipboard
-    IBOutlet NSButton *middleButtonPastesFromClipboard;
-    BOOL defaultPasteFromClipboard;
-
     // Minimum contrast
     IBOutlet NSSlider* minimumContrast;
 
@@ -610,7 +604,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 
 - (void)windowWillClose:(NSNotification *)aNotification
 {
-    [self settingChanged:nil];
     [self savePreferences];
     self.currentProfileGuid = nil;
 
@@ -625,11 +618,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 }
 
 #pragma mark - IBActions
-
-- (IBAction)settingChanged:(id)sender
-{
-    defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
-}
 
 - (IBAction)closeCurrentSession:(id)sender
 {
@@ -1848,8 +1836,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [prefs setInteger:1 forKey:@"AppleSmoothFixedFontsSizeThreshold"];
     [prefs setInteger:0 forKey:@"AppleScrollAnimationEnabled"];
 
-    defaultPasteFromClipboard=[prefs objectForKey:@"PasteFromClipboard"]?[[prefs objectForKey:@"PasteFromClipboard"] boolValue]:YES;
-
     // Migrate old-style (iTerm 0.x) URL handlers.
     // make sure bookmarks are loaded
     [ITAddressBookMgr sharedInstance];
@@ -1898,7 +1884,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
         return;
     }
 
-    [prefs setBool:defaultPasteFromClipboard forKey:@"PasteFromClipboard"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
 
     // save the handlers by converting the bookmark into an index
@@ -2129,23 +2114,13 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     return [iTermPreferences boolForKey:kPreferenceKeyCopyLastNewline];
 }
 
-- (BOOL)legacyPasteFromClipboard
-{
-    return defaultPasteFromClipboard;
-}
-
-- (BOOL)pasteFromClipboard
-{
-    return defaultPasteFromClipboard;
+- (BOOL)legacyPasteFromClipboard {
+    // This is used for migrating old prefs to the new configurable pointer action system.
+    return [prefs boolForKey:@"PasteFromClipboard"];
 }
 
 - (BOOL)threeFingerEmulatesMiddle {
     return [iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle];
-}
-
-- (void)setPasteFromClipboard:(BOOL)flag
-{
-    defaultPasteFromClipboard = flag;
 }
 
 - (BOOL)hideTab {
@@ -2594,8 +2569,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [[self window] setDelegate: self]; // also forces window to load
 
     [_generalPreferencesViewController updateEnabledState];
-
-    [middleButtonPastesFromClipboard setState:defaultPasteFromClipboard?NSOnState:NSOffState];
 
     [self showWindow:self];
     [[self window] setLevel:NSNormalWindowLevel];
@@ -3224,8 +3197,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
         [self bookmarkSettingChanged:nil];
     } else if (obj == logDir) {
         [self _updateLogDirWarning];
-    } else if (obj == tagFilter) {
-        NSLog(@"Tag filter changed");
     }
 }
 
