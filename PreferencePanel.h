@@ -26,7 +26,6 @@
 
 #import <Cocoa/Cocoa.h>
 #import "FutureMethods.h"
-#import "iTermShortcutInputView.h"
 #import "ProfileModel.h"
 #import "ProfileListView.h"
 #import "PTYTextViewDataSource.h"
@@ -67,7 +66,6 @@ typedef enum {
 } BulkCopySettings;
 
 @interface PreferencePanel : NSWindowController <
-    iTermShortcutInputViewDelegate,
     ProfileListViewDelegate,
     TriggerDelegate,
     SmartSelectionDelegate,
@@ -99,8 +97,6 @@ typedef enum {
 - (IBAction)changeProfile:(id)sender;
 - (IBAction)addJob:(id)sender;
 - (IBAction)removeJob:(id)sender;
-- (IBAction)saveKeyMapping:(id)sender;
-- (IBAction)closeKeyMapping:(id)sender;
 - (IBAction)settingChanged:(id)sender;
 - (IBAction)bookmarkSettingChanged:(id)sender;
 - (IBAction)copyToProfile:(id)sender;
@@ -111,13 +107,7 @@ typedef enum {
 - (IBAction)showKeyboardTabView:(id)sender;
 - (IBAction)showArrangementsTabView:(id)sender;
 - (IBAction)showMouseTabView:(id)sender;
-- (IBAction)closeWindow:(id)sender;
 - (IBAction)selectLogDir:(id)sender;
-- (IBAction)actionChanged:(id)sender;
-- (IBAction)addNewMapping:(id)sender;
-- (IBAction)removeMapping:(id)sender;
-- (IBAction)globalRemoveMapping:(id)sender;
-- (IBAction)presetKeyMappingsItemSelected:(id)sender;
 - (IBAction)toggleTags:(id)sender;
 - (IBAction)addBookmark:(id)sender;
 - (IBAction)removeBookmark:(id)sender;
@@ -127,7 +117,6 @@ typedef enum {
 - (IBAction)copyBookmarks:(id)sender;
 - (IBAction)cancelCopyBookmarks:(id)sender;
 
-- (BOOL)keySheetIsOpen;
 - (WindowArrangements *)arrangements;
 - (void)savePreferences;
 - (void)run;
@@ -205,7 +194,6 @@ typedef enum {
 - (Profile *)handlerBookmarkForURL:(NSString *)url;
 - (void)changeFont:(id)fontManager;
 - (BOOL)onScreen;
-- (NSWindow*)keySheet;
 - (void)showBookmarks;
 - (void)underlyingBookmarkDidChange;
 - (int)openTmuxWindowsIn;
@@ -221,7 +209,6 @@ typedef enum {
 - (int)switchTabModifier;
 - (int)switchWindowModifier;
 
-- (BOOL)remappingDisabledTemporarily;
 - (BOOL)hotkeyTogglesWindow;
 - (BOOL)hotkeyAutoHides;
 - (BOOL)dockIconTogglesWindow;

@@ -55,6 +55,9 @@
     }
 
     [self updateViews];
+    if (!_profilePopup.isHidden) {
+        [_profilePopup populateWithProfilesSelectingGuid:self.parameterValue];
+    }
 }
 
 - (NSString *)titleOfActionWithTag:(int)theTag {

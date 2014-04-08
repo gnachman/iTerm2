@@ -167,6 +167,7 @@
 + (void)setGlobalKeyMappingsToPreset:(NSString*)presetName;
 
 + (NSArray *)sortedGlobalKeyCombinations;
++ (NSArray *)sortedKeyCombinationsForProfile:(Profile *)profile;
 
 // This function has two modes:
 // If newMapping is false, replace a mapping at the specified index. The index
@@ -208,6 +209,8 @@
 // Return a keymapping dict (having keys Action, Text) at a given index from the
 // global key mappings.
 + (NSDictionary*)globalMappingAtIndex:(int)rowIndex;
+
++ (NSDictionary *)keyMappingsForProfile:(Profile *)profile;
 
 // Return the number of key mappings in a bookmark.
 + (int)numberOfMappingsForBookmark:(Profile*)bmDict;

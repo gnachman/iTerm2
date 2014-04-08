@@ -377,9 +377,8 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
             event = eventCopy;
             eventCopy = temp;
         }
-        BOOL keySheetOpen = [[prefPanel keySheet] isKeyWindow] && [prefPanel keySheetIsOpen];
         if ((!tempDisabled && !isDoNotRemap) ||  // normal case, whether keysheet is open or not
-            (!tempDisabled && isDoNotRemap && keySheetOpen)) {  // about to change dnr to non-dnr
+            (!tempDisabled && isDoNotRemap)) {  // about to change dnr to non-dnr
             [iTermKeyBindingMgr remapModifiersInCGEvent:event
                                               prefPanel:prefPanel];
             cocoaEvent = [NSEvent eventWithCGEvent:event];

@@ -9,7 +9,6 @@
             <connections>
                 <outlet property="_generalPreferencesViewController" destination="9Se-ld-UJa" id="ebT-z7-cAn"/>
                 <outlet property="_keysViewController" destination="8TE-cq-5cL" id="4iT-4B-Ju4"/>
-                <outlet property="action" destination="2661" id="3200"/>
                 <outlet property="addBookmarkButton" destination="2111" id="3320"/>
                 <outlet property="advancedTabViewItem" destination="KyW-GB-ElH" id="8r8-7W-7k9"/>
                 <outlet property="advancedToolbarItem" destination="gtg-rw-6h8" id="Enb-fp-ef2"/>
@@ -65,7 +64,6 @@
                 <outlet property="bookmarkDirectoryType" destination="2190" id="2987"/>
                 <outlet property="bookmarkGrowlNotifications" destination="2404" id="3147"/>
                 <outlet property="bookmarkName" destination="2133" id="2983"/>
-                <outlet property="bookmarkPopupButton" destination="5093" id="5099"/>
                 <outlet property="bookmarkSettingsGeneralTab" destination="2101" id="3474"/>
                 <outlet property="bookmarkShortcutKey" destination="2142" id="2984"/>
                 <outlet property="bookmarkShortcutKeyLabel" destination="2141" id="3466"/>
@@ -115,8 +113,6 @@
                 <outlet property="displayNAFontButton" destination="4776" id="4871"/>
                 <outlet property="displayRegularFontButton" destination="4774" id="4869"/>
                 <outlet property="editAdvancedConfigButton" destination="5975" id="6028"/>
-                <outlet property="editKeyMappingWindow" destination="2567" id="3197"/>
-                <outlet property="escPlus" destination="3221" id="3223"/>
                 <outlet property="flashingBell" destination="3553" id="3557"/>
                 <outlet property="focusFollowsMouse" destination="6062" id="6209"/>
                 <outlet property="foregroundColor" destination="2273" id="3004"/>
@@ -127,11 +123,9 @@
                 <outlet property="initialText" destination="5410" id="5414"/>
                 <outlet property="initialTextLabel" destination="5408" id="5415"/>
                 <outlet property="jobsTable_" destination="5661" id="5719"/>
-                <outlet property="keyPress" destination="3201" id="3203"/>
                 <outlet property="keyboardTabViewItem" destination="3656" id="4216"/>
                 <outlet property="keyboardToolbarItem" destination="5888" id="6040"/>
                 <outlet property="logDir" destination="5686" id="5715"/>
-                <outlet property="menuToSelect" destination="6358" id="6364"/>
                 <outlet property="minimumContrast" destination="4896" id="4906"/>
                 <outlet property="mouseTabViewItem" destination="6059" id="6061"/>
                 <outlet property="mouseToolbarItem" destination="6056" id="6057"/>
@@ -144,7 +138,6 @@
                 <outlet property="optionKeySends" destination="4291" id="4307"/>
                 <outlet property="presetsMenu" destination="3215" id="3561"/>
                 <outlet property="preventTab" destination="6416" id="6420"/>
-                <outlet property="profileLabel" destination="5100" id="5102"/>
                 <outlet property="promptBeforeClosing_" destination="5728" id="5733"/>
                 <outlet property="removeBookmarkButton" destination="2113" id="3275"/>
                 <outlet property="removeJobButton_" destination="5669" id="5723"/>
@@ -184,7 +177,6 @@
                 <outlet property="useItalicFont" destination="6400" id="6404"/>
                 <outlet property="useNonAsciiFont" destination="vNf-D5-cU4" id="dv1-fh-orK"/>
                 <outlet property="useTabColor" destination="j7F-r8-oes" id="9Sc-No-oC4"/>
-                <outlet property="valueToSend" destination="2662" id="3205"/>
                 <outlet property="visualBell" destination="2403" id="3145"/>
                 <outlet property="window" destination="1923" id="2981"/>
                 <outlet property="windowTypeButton" destination="4916" id="4963"/>
@@ -505,9 +497,6 @@ Gw
                             <font key="font" metaFont="menu"/>
                             <menu key="menu" title="OtherViews" id="6243"/>
                         </popUpButtonCell>
-                        <connections>
-                            <outlet property="nextKeyView" destination="2664" id="6246"/>
-                        </connections>
                     </popUpButton>
                     <textField verticalHuggingPriority="750" id="6250">
                         <rect key="frame" x="128" y="60" width="302" height="22"/>
@@ -4525,219 +4514,6 @@ Gw
             </connections>
         </window>
         <userDefaultsController representsSharedInstance="YES" id="1971"/>
-        <window title="Set Keyboard Shortcut" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hidesOnDeactivate="YES" oneShot="NO" showsToolbarButton="NO" visibleAtLaunch="NO" animationBehavior="default" id="2567" customClass="NSPanel">
-            <windowStyleMask key="styleMask" titled="YES" utility="YES" documentModal="YES"/>
-            <windowPositionMask key="initialPositionMask" leftStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="196" y="353" width="406" height="157"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
-            <view key="contentView" id="2568">
-                <rect key="frame" x="0.0" y="0.0" width="406" height="157"/>
-                <autoresizingMask key="autoresizingMask"/>
-                <subviews>
-                    <textField verticalHuggingPriority="750" id="2657">
-                        <rect key="frame" x="17" y="119" width="127" height="18"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Keyboard Shortcut:" id="2753">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <textField verticalHuggingPriority="750" id="2660">
-                        <rect key="frame" x="17" y="94" width="127" height="17"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Action:" id="2698">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <popUpButton verticalHuggingPriority="750" id="2661">
-                        <rect key="frame" x="146" y="88" width="243" height="26"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                        <popUpButtonCell key="cell" type="push" title="Find Regular Expression…" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" tag="36" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="HLy-fr-uJd" id="2682">
-                            <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="menu"/>
-                            <menu key="menu" title="OtherViews" id="2683">
-                                <items>
-                                    <menuItem title="Ignore" tag="13" id="5152"/>
-                                    <menuItem isSeparatorItem="YES" id="4723"/>
-                                    <menuItem title="Do Not Remap Modifiers" tag="22" id="4427"/>
-                                    <menuItem title="Remap Modifiers in iTerm2 Only" tag="24" id="4722"/>
-                                    <menuItem isSeparatorItem="YES" id="4328"/>
-                                    <menuItem title="New Window with Profile" tag="26" id="5089">
-                                        <modifierMask key="keyEquivalentModifierMask"/>
-                                    </menuItem>
-                                    <menuItem title="New Tab with Profile" tag="27" id="5090">
-                                        <modifierMask key="keyEquivalentModifierMask"/>
-                                    </menuItem>
-                                    <menuItem title="Split Horizontally with Profile" tag="28" id="5091">
-                                        <modifierMask key="keyEquivalentModifierMask"/>
-                                    </menuItem>
-                                    <menuItem title="Split Vertically with Profile" tag="29" id="5092">
-                                        <modifierMask key="keyEquivalentModifierMask"/>
-                                    </menuItem>
-                                    <menuItem isSeparatorItem="YES" id="5088"/>
-                                    <menuItem title="Backward in Time" tag="15" id="3493">
-                                        <modifierMask key="keyEquivalentModifierMask"/>
-                                    </menuItem>
-                                    <menuItem title="Forward in Time" tag="14" id="3492">
-                                        <modifierMask key="keyEquivalentModifierMask"/>
-                                    </menuItem>
-                                    <menuItem isSeparatorItem="YES" id="4327"/>
-                                    <menuItem title="Cycle Tabs Forward" tag="32" id="2693"/>
-                                    <menuItem title="Next Tab" id="5775"/>
-                                    <menuItem title="Previous Tab" tag="2" id="2695"/>
-                                    <menuItem isSeparatorItem="YES" id="5774"/>
-                                    <menuItem title="Move Tab Left" tag="33" id="5967"/>
-                                    <menuItem title="Move Tab Right" tag="34" id="5968"/>
-                                    <menuItem isSeparatorItem="YES" id="5966"/>
-                                    <menuItem title="Next Window" tag="1" id="2694"/>
-                                    <menuItem title="Previous Window" tag="3" id="2696"/>
-                                    <menuItem isSeparatorItem="YES" id="5773"/>
-                                    <menuItem title="Next Pane" tag="30" id="5650"/>
-                                    <menuItem title="Previous Pane" tag="31" id="5651"/>
-                                    <menuItem isSeparatorItem="YES" id="4329"/>
-                                    <menuItem title="Scroll to End" tag="4" id="2684"/>
-                                    <menuItem title="Scroll to Top" tag="5" id="2686"/>
-                                    <menuItem title="Scroll One Line Down" tag="6" id="2688"/>
-                                    <menuItem title="Scroll One Line Up" tag="7" id="2685"/>
-                                    <menuItem title="Scroll One Page Down" tag="8" id="2687"/>
-                                    <menuItem title="Scroll One Page Up" tag="9" id="2689"/>
-                                    <menuItem isSeparatorItem="YES" id="4330"/>
-                                    <menuItem title="Select Split Pane Above" tag="20" id="4334">
-                                        <modifierMask key="keyEquivalentModifierMask"/>
-                                    </menuItem>
-                                    <menuItem title="Select Split Pane Below" tag="21" id="4333">
-                                        <modifierMask key="keyEquivalentModifierMask"/>
-                                    </menuItem>
-                                    <menuItem title="Select Split Pane On Left" tag="18" id="3587">
-                                        <modifierMask key="keyEquivalentModifierMask"/>
-                                    </menuItem>
-                                    <menuItem title="Select Split Pane On Right" tag="19" id="3588">
-                                        <modifierMask key="keyEquivalentModifierMask"/>
-                                    </menuItem>
-                                    <menuItem isSeparatorItem="YES" id="4331"/>
-                                    <menuItem title="Send ^H Backspace" tag="16" id="3579">
-                                        <modifierMask key="keyEquivalentModifierMask"/>
-                                    </menuItem>
-                                    <menuItem title="Send ^? Backspace" tag="17" id="3580">
-                                        <modifierMask key="keyEquivalentModifierMask"/>
-                                    </menuItem>
-                                    <menuItem title="Send Escape Sequence" tag="10" id="2690"/>
-                                    <menuItem title="Send Hex Code" tag="11" id="2691"/>
-                                    <menuItem title="Send Text" tag="12" id="2697"/>
-                                    <menuItem isSeparatorItem="YES" id="4428"/>
-                                    <menuItem title="Find Regular Expression…" state="on" tag="36" id="HLy-fr-uJd">
-                                        <modifierMask key="keyEquivalentModifierMask"/>
-                                    </menuItem>
-                                    <menuItem isSeparatorItem="YES" id="YBB-ZY-fWM"/>
-                                    <menuItem title="Toggle Fullscreen" tag="23" id="4429"/>
-                                    <menuItem isSeparatorItem="YES" id="4749"/>
-                                    <menuItem title="Run Coprocess" tag="35" id="6330"/>
-                                    <menuItem isSeparatorItem="YES" id="6329"/>
-                                    <menuItem title="Select Menu Item..." tag="25" id="4748"/>
-                                </items>
-                            </menu>
-                        </popUpButtonCell>
-                        <connections>
-                            <action selector="actionChanged:" target="-2" id="3204"/>
-                            <outlet property="nextKeyView" destination="5093" id="5176"/>
-                        </connections>
-                    </popUpButton>
-                    <button verticalHuggingPriority="750" id="2663">
-                        <rect key="frame" x="314" y="12" width="78" height="32"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                        <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="2680">
-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
-                            <string key="keyEquivalent" base64-UTF8="YES">
-DQ
-</string>
-                        </buttonCell>
-                        <connections>
-                            <action selector="saveKeyMapping:" target="-2" id="3206"/>
-                        </connections>
-                    </button>
-                    <button verticalHuggingPriority="750" id="2664">
-                        <rect key="frame" x="232" y="12" width="82" height="32"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                        <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="2679">
-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
-                            <string key="keyEquivalent" base64-UTF8="YES">
-Gw
-</string>
-                        </buttonCell>
-                        <connections>
-                            <action selector="closeKeyMapping:" target="-2" id="3207"/>
-                            <outlet property="nextKeyView" destination="2663" id="5178"/>
-                        </connections>
-                    </button>
-                    <textField verticalHuggingPriority="750" id="3221">
-                        <rect key="frame" x="106" y="48" width="283" height="33"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Esc+" id="3222">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <textField verticalHuggingPriority="750" id="3201" customClass="iTermShortcutInputView">
-                        <rect key="frame" x="149" y="119" width="237" height="22"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="3202">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                        <connections>
-                            <outlet property="nextKeyView" destination="2661" id="5175"/>
-                            <outlet property="shortcutDelegate" destination="-2" id="EVS-Rc-XnS"/>
-                        </connections>
-                    </textField>
-                    <textField verticalHuggingPriority="750" id="2662">
-                        <rect key="frame" x="149" y="62" width="237" height="22"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="ex: 0x7f" drawsBackground="YES" id="2681">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <popUpButton hidden="YES" verticalHuggingPriority="750" id="5093">
-                        <rect key="frame" x="146" y="58" width="243" height="26"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="5094">
-                            <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="menu"/>
-                            <menu key="menu" title="OtherViews" id="5095"/>
-                        </popUpButtonCell>
-                        <connections>
-                            <outlet property="nextKeyView" destination="2664" id="5177"/>
-                        </connections>
-                    </popUpButton>
-                    <textField hidden="YES" verticalHuggingPriority="750" id="5100">
-                        <rect key="frame" x="96" y="64" width="48" height="17"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Profile:" id="5101">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <popUpButton hidden="YES" verticalHuggingPriority="750" id="6358">
-                        <rect key="frame" x="146" y="59" width="243" height="26"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" id="6359">
-                            <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="menu"/>
-                            <menu key="menu" title="OtherViews" autoenablesItems="NO" id="6360"/>
-                        </popUpButtonCell>
-                    </popUpButton>
-                </subviews>
-            </view>
-        </window>
         <customView id="3079" userLabel="FontAccessory">
             <rect key="frame" x="0.0" y="0.0" width="459" height="134"/>
             <autoresizingMask key="autoresizingMask"/>

@@ -81,7 +81,7 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     // Three finger click emulates middle button
     IBOutlet NSButton *threeFingerEmulatesMiddle;
     BOOL defaultThreeFingerEmulatesMiddle;
-    
+
     // Focus follows mouse
     IBOutlet NSButton *focusFollowsMouse;
     BOOL defaultFocusFollowsMouse;
@@ -145,10 +145,10 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     NSString *bookmarksToolbarId;
     NSString *mouseToolbarId;
     NSString *advancedToolbarId;
-    
+
     // url handler stuff
     NSMutableDictionary *urlHandlersByGuid;
-    
+
     // Bookmarks -----------------------------
     IBOutlet ProfileListView *bookmarksTableView;
     IBOutlet NSTableColumn *shellImageColumn;
@@ -156,7 +156,7 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSButton *removeBookmarkButton;
     IBOutlet NSButton *addBookmarkButton;
     IBOutlet NSButton *toggleTagsButton;
-    
+
     // General tab
     IBOutlet NSTextField *basicsLabel;
     IBOutlet NSTextField *bookmarkName;
@@ -176,7 +176,8 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSTextField *bookmarkUrlSchemesLabel;
     IBOutlet NSPopUpButton* bookmarkUrlSchemes;
     IBOutlet NSButton* editAdvancedConfigButton;
-    
+    IBOutlet NSTokenField* tags;
+
     // Advanced working dir sheet
     IBOutlet NSPanel* advancedWorkingDirSheet_;
     IBOutlet NSMatrix* awdsWindowDirectoryType;
@@ -185,13 +186,13 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSTextField* awdsTabDirectory;
     IBOutlet NSMatrix* awdsPaneDirectoryType;
     IBOutlet NSTextField* awdsPaneDirectory;
-    
+
     // Only visible in Get Info mode
     IBOutlet NSButton* copyToProfileButton;
     IBOutlet NSTextField* setProfileLabel;
     IBOutlet ProfileListView* setProfileBookmarkListView;
     IBOutlet NSButton* changeProfileButton;
-    
+
     // Colors tab
     IBOutlet NSColorWell *ansi0Color;
     IBOutlet NSColorWell *ansi1Color;
@@ -220,7 +221,7 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSTextField *cursorColorLabel;
     IBOutlet NSTextField *cursorTextColorLabel;
     IBOutlet NSMenu *presetsMenu;
-    
+
     // Display tab
     IBOutlet NSView *displayFontAccessoryView;
     IBOutlet NSSlider *displayFontSpacingWidth;
@@ -233,13 +234,13 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSPopUpButton* screenButton;
     IBOutlet NSTextField* spaceLabel;
     IBOutlet NSPopUpButton* spaceButton;
-    
+
     IBOutlet NSPopUpButton* windowTypeButton;
     IBOutlet NSTextField *normalFontField;
     IBOutlet NSTextField *nonAsciiFontField;
     IBOutlet NSTextField *newWindowttributesHeader;
     IBOutlet NSTextField *screenLabel;
-    
+
     IBOutlet NSButton* blinkingCursor;
     IBOutlet NSButton* blinkAllowed;
     IBOutlet NSButton* useBoldFont;
@@ -260,11 +261,11 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSTextField* displayFontsLabel;
     IBOutlet NSButton* displayRegularFontButton;
     IBOutlet NSButton* displayNAFontButton;
-    
+
     NSFont* normalFont;
     NSFont *nonAsciiFont;
     BOOL changingNonAsciiFont; // true if font dialog is currently modifying the non-ascii font
-    
+
     // Terminal tab
     IBOutlet NSButton* disableWindowResizing;
     IBOutlet NSButton* preventTab;
@@ -288,33 +289,14 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSComboBox* terminalType;
     IBOutlet NSPopUpButton* characterEncoding;
     IBOutlet NSButton* setLocaleVars;
-    
+
     // Keyboard tab
-    IBOutlet NSTableView* keyMappings;
-    IBOutlet NSTableColumn* keyCombinationColumn;
-    IBOutlet NSTableColumn* actionColumn;
-    IBOutlet NSWindow* editKeyMappingWindow;
-    IBOutlet NSTextField* keyPress;
-    IBOutlet NSPopUpButton* action;
-    IBOutlet NSTextField* valueToSend;
-    IBOutlet NSTextField* profileLabel;
-    IBOutlet NSPopUpButton* bookmarkPopupButton;  // keyboard shotcut parameter for selecting bookmark
-    IBOutlet NSPopUpButton* menuToSelect;
-    IBOutlet NSButton* removeMappingButton;
-    IBOutlet NSTextField* escPlus;
     IBOutlet NSMatrix *optionKeySends;
     IBOutlet NSMatrix *rightOptionKeySends;
-    IBOutlet NSTokenField* tags;
-    
-    IBOutlet NSPopUpButton* presetsPopupButton;
-    IBOutlet NSTextField*   presetsErrorLabel;
-    
-    NSString* keyString;  // hexcode-hexcode rep of keystring in current sheet
-    BOOL newMapping;  // true if the keymap sheet is open for adding a new entry
-    id modifyMappingOriginator;  // widget that caused add new mapping window to open
+
+    // Other actions… under list of profiles in prefs>profiles.
     IBOutlet NSPopUpButton* bookmarksPopup;
-    IBOutlet NSButton* addNewMapping;
-    
+
     // Session --------------------------------
     IBOutlet NSTableView *jobsTable_;
     IBOutlet NSButton *autoLog;
@@ -325,7 +307,7 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     IBOutlet NSTextField* idleCode;
     IBOutlet NSButton* removeJobButton_;
     IBOutlet NSMatrix* promptBeforeClosing_;
-    
+
     // Copy Bookmark Settings...
     IBOutlet NSTextField* bulkCopyLabel;
     IBOutlet NSPanel* copyPanel;
@@ -342,12 +324,7 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     // Keyboard ------------------------------
     IBOutlet NSButton* deleteSendsCtrlHButton;
     IBOutlet NSButton* applicationKeypadAllowed;
-    IBOutlet NSTableView* globalKeyMappings;
-    IBOutlet NSTableColumn* globalKeyCombinationColumn;
-    IBOutlet NSTableColumn* globalActionColumn;
-    IBOutlet NSButton* globalRemoveMappingButton;
-    IBOutlet NSButton* globalAddNewMapping;
-    
+
     IBOutlet WindowArrangements *arrangements_;
 }
 
@@ -443,10 +420,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
                                                    object:nil];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(keyBindingsChanged)
-                                                     name:@"iTermKeyBindingsChanged"
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(rebuildColorPresetsMenu)
                                                      name:kRebuildColorPresetsMenuNotification
                                                    object:nil];
@@ -486,28 +459,16 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     }
     [self setScreens];
 
-    [keyMappings setDoubleAction:@selector(editKeyMapping:)];
-    [globalKeyMappings setDoubleAction:@selector(editKeyMapping:)];
-    keyString = nil;
 
     [copyTo allowMultipleSelections];
 
     // Add presets to preset color selection.
     [self rebuildColorPresetsMenu];
 
-    // Add preset keybindings to button-popup-list.
-    NSArray* presetArray = [iTermKeyBindingMgr presetKeyMappingsNames];
-    if (presetArray != nil) {
-        [presetsPopupButton addItemsWithTitles:presetArray];
-    } else {
-        [presetsPopupButton setEnabled:NO];
-        [presetsErrorLabel setFont:[NSFont boldSystemFontOfSize:12]];
-        [presetsErrorLabel setStringValue:@"PresetKeyMappings.plist failed to load"];
-    }
-
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(handleWindowWillCloseNotification:)
-                                                 name:NSWindowWillCloseNotification object: [self window]];
+                                                 name:NSWindowWillCloseNotification
+                                               object:[self window]];
     if (oneBookmarkMode) {
         [self layoutSubviewsForSingleBookmarkMode];
     }
@@ -552,7 +513,7 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [setProfileBookmarkListView setHidden:NO];
     [changeProfileButton setHidden:NO];
     [toggleTagsButton setHidden:YES];
-    
+
     [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
     [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
     [columnsField setEnabled:NO];
@@ -619,11 +580,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 - (void)_reloadURLHandlers:(NSNotification *)aNotification {
     // TODO: maybe something here for the current bookmark?
     [_keysViewController populateHotKeyProfilesMenu];
-}
-
-- (void)keyBindingsChanged
-{
-    [keyMappings reloadData];
 }
 
 - (void)rebuildColorPresetsMenu
@@ -1049,9 +1005,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     // Epilogue
     [dataSource setBookmark:newDict withGuid:guid];
     [bookmarksTableView reloadData];
-    if (reloadKeyMappings) {
-        [keyMappings reloadData];
-    }
 
     // Selectively update form fields.
     [self updateShortcutTitles];
@@ -1064,6 +1017,11 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     }
     if (prefs) {
         [prefs setObject:[dataSource rawData] forKey:@"New Bookmarks"];
+    }
+    if (reloadKeyMappings) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermKeyBindingsChanged"
+                                                            object:nil
+                                                          userInfo:nil];
     }
 }
 
@@ -1230,16 +1188,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     return [[NSFileManager defaultManager] directoryIsWritable:[logDir stringValue]];
 }
 
-- (IBAction)actionChanged:(id)sender
-{
-    [action setTitle:[[sender selectedItem] title]];
-    NSString *guid = [[bookmarkPopupButton selectedItem] representedObject];
-    [bookmarkPopupButton populateWithProfilesSelectingGuid:guid];
-    [PreferencePanel populatePopUpButtonWithMenuItems:menuToSelect
-                                        selectedValue:[[menuToSelect selectedItem] title]];
-    [self updateValueToSend];
-}
-
 // Replace a Profile in the sessions profile with a new dictionary that preserves the original
 // name and guid, takes all other fields from |bookmark|, and has KEY_ORIGINAL_GUID point at the
 // guid of the profile from which all that data came.n
@@ -1263,33 +1211,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
         [self updateBookmarkFields:dict];
         [self bookmarkSettingChanged:nil];
     }
-}
-
-- (IBAction)addNewMapping:(id)sender
-{
-    [self _addMappingWithContextInfo:sender];
-}
-
-- (IBAction)removeMapping:(id)sender
-{
-    NSString* guid = [bookmarksTableView selectedGuid];
-    if (!guid) {
-        NSBeep();
-        return;
-    }
-    NSMutableDictionary* tempDict = [NSMutableDictionary dictionaryWithDictionary:[dataSource bookmarkWithGuid:guid]];
-    NSAssert(tempDict, @"Can't find node");
-    [iTermKeyBindingMgr removeMappingAtIndex:[keyMappings selectedRow] inBookmark:tempDict];
-    [dataSource setBookmark:tempDict withGuid:guid];
-    [keyMappings reloadData];
-}
-
-- (IBAction)globalRemoveMapping:(id)sender
-{
-    [iTermKeyBindingMgr setGlobalKeyMap:[iTermKeyBindingMgr removeMappingAtIndex:[globalKeyMappings selectedRow]
-                                                                    inDictionary:[iTermKeyBindingMgr globalKeyMap]]];
-    [self settingChanged:nil];
-    [keyMappings reloadData];
 }
 
 - (IBAction)toggleTags:(id)sender {
@@ -1695,9 +1616,10 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 }
 
 #pragma mark - Sheet handling
-- (void)genericCloseSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo
-{
-    [action setTitle:@"Ignore"];
+
+- (void)genericCloseSheet:(NSWindow *)sheet
+               returnCode:(int)returnCode
+              contextInfo:(void *)contextInfo {
     [sheet close];
 }
 
@@ -1834,160 +1756,9 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [NSApp endSheet:[triggerWindowController_ window]];
 }
 
-#pragma mark - Key mappings
-
-- (BOOL)_originatorIsBookmark:(id)originator
-{
-    return originator == addNewMapping || originator == keyMappings;
-}
-
-- (NSString*)keyComboAtIndex:(int)rowIndex originator:(id)originator
-{
-    if ([self _originatorIsBookmark:originator]) {
-        NSString* guid = [bookmarksTableView selectedGuid];
-        NSAssert(guid, @"Null guid unexpected here");
-        Profile* bookmark = [dataSource bookmarkWithGuid:guid];
-        NSAssert(bookmark, @"Can't find node");
-        return [iTermKeyBindingMgr shortcutAtIndex:rowIndex forBookmark:bookmark];
-    } else {
-        return [iTermKeyBindingMgr globalShortcutAtIndex:rowIndex];
-    }
-}
-
-- (NSDictionary*)keyInfoAtIndex:(int)rowIndex originator:(id)originator
-{
-    if ([self _originatorIsBookmark:originator]) {
-        NSString* guid = [bookmarksTableView selectedGuid];
-        NSAssert(guid, @"Null guid unexpected here");
-        Profile* bookmark = [dataSource bookmarkWithGuid:guid];
-        NSAssert(bookmark, @"Can't find node");
-        return [iTermKeyBindingMgr mappingAtIndex:rowIndex forBookmark:bookmark];
-    } else {
-        return [iTermKeyBindingMgr globalMappingAtIndex:rowIndex];
-    }
-}
-
-- (NSString*)formattedKeyCombinationForRow:(int)rowIndex originator:(id)originator
-{
-    return [iTermKeyBindingMgr formatKeyCombination:[self keyComboAtIndex:rowIndex
-                                                               originator:originator]];
-}
-
-- (NSString*)formattedActionForRow:(int)rowIndex originator:(id)originator
-{
-    return [iTermKeyBindingMgr formatAction:[self keyInfoAtIndex:rowIndex originator:originator]];
-}
-
-- (void)editKeyMapping:(id)sender
-{
-    int rowIndex;
-    modifyMappingOriginator = sender;
-    if ([self _originatorIsBookmark:sender]) {
-        rowIndex = [keyMappings selectedRow];
-    } else {
-        rowIndex = [globalKeyMappings selectedRow];
-    }
-    if (rowIndex < 0) {
-        [self addNewMapping:sender];
-        return;
-    }
-    [keyPress setStringValue:[self formattedKeyCombinationForRow:rowIndex originator:sender]];
-    if (keyString) {
-        [keyString release];
-    }
-    // For some reason, the first item is checked by default. Make sure every
-    // item is unchecked before making a selection.
-    for (NSMenuItem* item in [action itemArray]) {
-        [item setState:NSOffState];
-    }
-    keyString = [[self keyComboAtIndex:rowIndex originator:sender] copy];
-    int theTag = [[[self keyInfoAtIndex:rowIndex originator:sender] objectForKey:@"Action"] intValue];
-    [action selectItemWithTag:theTag];
-    // Can't search for an item with tag 0 using the API, so search manually.
-    for (NSMenuItem* anItem in [[action menu] itemArray]) {
-        if (![anItem isSeparatorItem] && [anItem tag] == theTag) {
-            [action setTitle:[anItem title]];
-            break;
-        }
-    }
-    NSString* text = [[self keyInfoAtIndex:rowIndex originator:sender] objectForKey:@"Text"];
-    [valueToSend setStringValue:text ? text : @""];
-    [bookmarkPopupButton populateWithProfilesSelectingGuid:text];
-    [PreferencePanel populatePopUpButtonWithMenuItems:menuToSelect
-                                         selectedValue:text];
-    [self updateValueToSend];
-    newMapping = NO;
-    [NSApp beginSheet:editKeyMappingWindow
-       modalForWindow:[self window]
-        modalDelegate:self
-       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
-          contextInfo:nil];
-}
-
-- (NSWindow*)keySheet
-{
-    return editKeyMappingWindow;
-}
-
-
-- (IBAction)saveKeyMapping:(id)sender
-{
-    if ([[keyPress stringValue] length] == 0) {
-        NSBeep();
-        return;
-    }
-    NSMutableDictionary* dict;
-    NSString* theParam = [valueToSend stringValue];
-    int theAction = [[action selectedItem] tag];
-    if (theAction == KEY_ACTION_SELECT_MENU_ITEM) {
-        theParam = [[menuToSelect selectedItem] title];
-    } else if (theAction == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
-        theAction == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE ||
-        theAction == KEY_ACTION_NEW_TAB_WITH_PROFILE ||
-        theAction == KEY_ACTION_NEW_WINDOW_WITH_PROFILE) {
-        theParam = [[bookmarkPopupButton selectedItem] representedObject];
-    }
-    if ([self _originatorIsBookmark:modifyMappingOriginator]) {
-        NSString* guid = [bookmarksTableView selectedGuid];
-        NSAssert(guid, @"Null guid unexpected here");
-        dict = [NSMutableDictionary dictionaryWithDictionary:[dataSource bookmarkWithGuid:guid]];
-        NSAssert(dict, @"Can't find node");
-        if ([iTermKeyBindingMgr haveGlobalKeyMappingForKeyString:keyString]) {
-            if (![self _warnAboutOverride]) {
-                return;
-            }
-        }
-
-        [iTermKeyBindingMgr setMappingAtIndex:[keyMappings selectedRow]
-                                       forKey:keyString
-                                       action:theAction
-                                        value:theParam
-                                    createNew:newMapping
-                                   inBookmark:dict];
-        [dataSource setBookmark:dict withGuid:guid];
-        [keyMappings reloadData];
-        [self bookmarkSettingChanged:sender];
-    } else {
-        [globalKeyMappings reloadData];
-        [self settingChanged:nil];
-    }
-
-    [self closeKeyMapping:sender];
-}
-
-- (BOOL)keySheetIsOpen
-{
-    return [editKeyMappingWindow isVisible];
-}
-
 - (WindowArrangements *)arrangements
 {
     return arrangements_;
-}
-
-- (IBAction)closeKeyMapping:(id)sender
-{
-    [NSApp endSheet:editKeyMappingWindow];
 }
 
 // Force the key binding for delete to be either ^H or absent.
@@ -2018,55 +1789,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
                                           keyMappings:[bookmark objectForKey:KEY_KEYBOARD_MAP]] == KEY_ACTION_SEND_C_H_BACKSPACE);
 }
 
-- (void)_addMappingWithContextInfo:(id)info
-{
-    if (keyString) {
-        [keyString release];
-    }
-    [keyPress setStringValue:@""];
-    keyString = [[NSString alloc] init];
-    // For some reason, the first item is checked by default. Make sure every
-    // item is unchecked before making a selection.
-    for (NSMenuItem* item in [action itemArray]) {
-        [item setState:NSOffState];
-    }
-    [action selectItemWithTag:KEY_ACTION_IGNORE];
-    [valueToSend setStringValue:@""];
-    [self updateValueToSend];
-    newMapping = YES;
-
-    modifyMappingOriginator = info;
-    [NSApp beginSheet:editKeyMappingWindow
-       modalForWindow:[self window]
-        modalDelegate:self
-       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
-          contextInfo:info];
-}
-
-- (void)setKeyMappingsToPreset:(NSString*)presetName
-{
-    NSString* guid = [bookmarksTableView selectedGuid];
-    NSAssert(guid, @"Null guid unexpected here");
-    NSMutableDictionary* tempDict = [NSMutableDictionary dictionaryWithDictionary:[dataSource bookmarkWithGuid:guid]];
-    NSAssert(tempDict, @"Can't find node");
-    [iTermKeyBindingMgr setKeyMappingsToPreset:presetName inBookmark:tempDict];
-    [dataSource setBookmark:tempDict withGuid:guid];
-    [keyMappings reloadData];
-    [self bookmarkSettingChanged:nil];
-}
-
-- (void)setGlobalKeyMappingsToPreset:(NSString*)presetName
-{
-    [iTermKeyBindingMgr setGlobalKeyMappingsToPreset:presetName];
-    [globalKeyMappings reloadData];
-    [self settingChanged:nil];
-}
-
-- (IBAction)presetKeyMappingsItemSelected:(id)sender
-{
-    [self setKeyMappingsToPreset:[[sender selectedItem] title]];
-}
-
 - (void)_removeKeyMappingsReferringToBookmarkGuid:(NSString*)badRef
 {
     for (NSString* guid in [[ProfileModel sharedInstance] guids]) {
@@ -2084,14 +1806,9 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
         }
     }
     [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:nil];
-    [[PreferencePanel sharedInstance]->keyMappings reloadData];
-    [[PreferencePanel sessionsInstance]->keyMappings reloadData];
-}
-
-- (BOOL)remappingDisabledTemporarily
-{
-    return [[self keySheet] isKeyWindow] && [self keySheetIsOpen] && ([action selectedTag] == KEY_ACTION_DO_NOT_REMAP_MODIFIERS ||
-                                                                      [action selectedTag] == KEY_ACTION_REMAP_LOCALLY);
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermKeyBindingsChanged"
+                                                        object:nil
+                                                      userInfo:nil];
 }
 
 #pragma mark - NSToolbarDelegate and ToolbarItemValidation
@@ -2757,15 +2474,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     return [iTermPreferences boolForKey:kPreferenceKeyQuitWhenAllWindowsClosed];
 }
 
-// The following are preferences with no UI, but accessible via "defaults read/write"
-// examples:
-//  defaults write com.googlecode.iterm2 UseUnevenTabs -bool true
-//  defaults write com.googlecode.iterm2 MinTabWidth -int 100
-//  defaults write com.googlecode.iterm2 MinCompactTabWidth -int 120
-//  defaults write com.googlecode.iterm2 OptimumTabWidth -int 100
-//  defaults write com.googlecode.iterm2 TraditionalVisualBell -bool true
-//  defaults write com.googlecode.iterm2 AlternateMouseScroll -bool true
-
 - (BOOL)useUnevenTabs {
     return [iTermSettingsModel useUnevenTabs];
 }
@@ -2893,17 +2601,7 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 
 - (int)numberOfRowsInTableView: (NSTableView *)aTableView
 {
-    if (aTableView == keyMappings) {
-        NSString* guid = [bookmarksTableView selectedGuid];
-        if (!guid) {
-            return 0;
-        }
-        Profile* bookmark = [dataSource bookmarkWithGuid:guid];
-        NSAssert(bookmark, @"Null node");
-        return [iTermKeyBindingMgr numberOfMappingsForBookmark:bookmark];
-    } else if (aTableView == globalKeyMappings) {
-        return [[iTermKeyBindingMgr globalKeyMap] count];
-    } else if (aTableView == jobsTable_) {
+    if (aTableView == jobsTable_) {
         NSString* guid = [bookmarksTableView selectedGuid];
         if (!guid) {
             return 0;
@@ -2933,26 +2631,10 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [self bookmarkSettingChanged:nil];
 }
 
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(int)rowIndex
-{
-    if (aTableView == keyMappings) {
-        NSString* guid = [bookmarksTableView selectedGuid];
-        NSAssert(guid, @"Null guid unexpected here");
-        Profile* bookmark = [dataSource bookmarkWithGuid:guid];
-        NSAssert(bookmark, @"Can't find node");
-
-        if (aTableColumn == keyCombinationColumn) {
-            return [iTermKeyBindingMgr formatKeyCombination:[iTermKeyBindingMgr shortcutAtIndex:rowIndex forBookmark:bookmark]];
-        } else if (aTableColumn == actionColumn) {
-            return [iTermKeyBindingMgr formatAction:[iTermKeyBindingMgr mappingAtIndex:rowIndex forBookmark:bookmark]];
-        }
-    } else if (aTableView == globalKeyMappings) {
-        if (aTableColumn == globalKeyCombinationColumn) {
-            return [iTermKeyBindingMgr formatKeyCombination:[iTermKeyBindingMgr globalShortcutAtIndex:rowIndex]];
-        } else if (aTableColumn == globalActionColumn) {
-            return [iTermKeyBindingMgr formatAction:[iTermKeyBindingMgr globalMappingAtIndex:rowIndex]];
-        }
-    } else if (aTableView == jobsTable_) {
+- (id)tableView:(NSTableView *)aTableView
+    objectValueForTableColumn:(NSTableColumn *)aTableColumn
+                          row:(int)rowIndex {
+    if (aTableView == jobsTable_) {
         NSString* guid = [bookmarksTableView selectedGuid];
         Profile* bookmark = [dataSource bookmarkWithGuid:guid];
         return [[bookmark objectForKey:KEY_JOBS] objectAtIndex:rowIndex];
@@ -3005,14 +2687,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     if (![bookmarksTableView selectedGuid] && [bookmarksTableView numberOfRows]) {
         [bookmarksTableView selectRowIndex:0];
     }
-
-    int rowIndex = [globalKeyMappings selectedRow];
-    if (rowIndex >= 0) {
-        [globalRemoveMappingButton setEnabled:YES];
-    } else {
-        [globalRemoveMappingButton setEnabled:NO];
-    }
-    [globalKeyMappings reloadData];
 
     // Show the window.
     [[self window] makeKeyAndOrderFront:self];
@@ -3375,13 +3049,6 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     [terminalType setStringValue:[dict objectForKey:KEY_TERMINAL_TYPE]];
 
     // Keyboard tab
-    int rowIndex = [keyMappings selectedRow];
-    if (rowIndex >= 0) {
-        [removeMappingButton setEnabled:YES];
-    } else {
-        [removeMappingButton setEnabled:NO];
-    }
-    [keyMappings reloadData];
     [optionKeySends selectCellWithTag:[[dict objectForKey:KEY_OPTION_KEY_SENDS] intValue]];
     id rightOptPref = [dict objectForKey:KEY_RIGHT_OPTION_KEY_SENDS];
     if (!rightOptPref) {
@@ -3448,7 +3115,7 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
             [oldFont release];
         }
     }
-    
+
     [self bookmarkSettingChanged:fontManager];
 }
 
@@ -3577,24 +3244,8 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 
 #pragma mark - NSTableViewDelegate
 
-- (void)tableViewSelectionDidChange:(NSNotification *)aNotification
-{
-    //NSLog(@"%s", __PRETTY_FUNCTION__);
-    if ([aNotification object] == keyMappings) {
-        int rowIndex = [keyMappings selectedRow];
-        if (rowIndex >= 0) {
-            [removeMappingButton setEnabled:YES];
-        } else {
-            [removeMappingButton setEnabled:NO];
-        }
-    } else if ([aNotification object] == globalKeyMappings) {
-        int rowIndex = [globalKeyMappings selectedRow];
-        if (rowIndex >= 0) {
-            [globalRemoveMappingButton setEnabled:YES];
-        } else {
-            [globalRemoveMappingButton setEnabled:NO];
-        }
-    } else if ([aNotification object] == jobsTable_) {
+- (void)tableViewSelectionDidChange:(NSNotification *)aNotification {
+    if ([aNotification object] == jobsTable_) {
         [self setHaveJobsForCurrentBookmark:[self haveJobsForCurrentBookmark]];
     }
 }
@@ -3704,33 +3355,24 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
     // observed but has no effect because the getter does all the computation.
 }
 
-#pragma mark - iTermShortcutInputViewDelegate
-
-// Note: This is called directly by HotkeyWindowController when the action requires key remapping
-// to be disabled so the shortcut can be input properly. In this case, |view| will be nil.
-- (void)shortcutInputView:(iTermShortcutInputView *)view didReceiveKeyPressEvent:(NSEvent *)event {
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO  See comment above, I broke that.
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-}
-
 #pragma mark - iTermKeyMappingViewControllerDelegate
 
 - (NSDictionary *)keyMappingDictionary:(iTermKeyMappingViewController *)viewController {
-    return @{};
+    NSString* guid = [bookmarksTableView selectedGuid];
+    if (!guid) {
+        return nil;
+    }
+    Profile* profile = [dataSource bookmarkWithGuid:guid];
+    return [iTermKeyBindingMgr keyMappingsForProfile:profile];
 }
 
 - (NSArray *)keyMappingSortedKeys:(iTermKeyMappingViewController *)viewController {
-    return @[];
+    NSString* guid = [bookmarksTableView selectedGuid];
+    if (!guid) {
+        return nil;
+    }
+    Profile* profile = [dataSource bookmarkWithGuid:guid];
+    return [iTermKeyBindingMgr sortedKeyCombinationsForProfile:profile];
 }
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
@@ -3739,19 +3381,66 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
           toAction:(int)action
          parameter:(NSString *)parameter
         isAddition:(BOOL)addition {
+    NSString* guid = [bookmarksTableView selectedGuid];
+    assert(guid);
+    Profile* profile = [dataSource bookmarkWithGuid:guid];
+    assert(profile);
+    NSMutableDictionary *dict = [[profile mutableCopy] autorelease];
+
+    if ([iTermKeyBindingMgr haveGlobalKeyMappingForKeyString:keyCombo]) {
+        if (![self _warnAboutOverride]) {
+            return;
+        }
+    }
+
+    [iTermKeyBindingMgr setMappingAtIndex:index
+                                   forKey:keyCombo
+                                   action:action
+                                    value:parameter
+                                createNew:addition
+                               inBookmark:dict];
+    [dataSource setBookmark:dict withGuid:guid];
+    [self bookmarkSettingChanged:nil];
 }
 
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
     removeKeyCombo:(NSString *)keyCombo {
+
+    NSString* guid = [bookmarksTableView selectedGuid];
+    assert(guid);
+
+    Profile* profile = [dataSource bookmarkWithGuid:guid];
+    assert(profile);
+
+    NSMutableDictionary *dict = [[profile mutableCopy] autorelease];
+    NSUInteger index =
+        [[iTermKeyBindingMgr sortedKeyCombinationsForProfile:profile] indexOfObject:keyCombo];
+    assert(index != NSNotFound);
+
+    [iTermKeyBindingMgr removeMappingAtIndex:index inBookmark:dict];
+    [dataSource setBookmark:dict withGuid:guid];
+    [self bookmarkSettingChanged:nil];
 }
 
 - (NSArray *)keyMappingPresetNames:(iTermKeyMappingViewController *)viewController {
-    return @[];
+    return [iTermKeyBindingMgr presetKeyMappingsNames];
 }
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
   loadPresetsNamed:(NSString *)presetName {
+    NSString* guid = [bookmarksTableView selectedGuid];
+    assert(guid);
+
+    Profile* profile = [dataSource bookmarkWithGuid:guid];
+    assert(profile);
+
+    NSMutableDictionary *dict = [[profile mutableCopy] autorelease];
+
+    [iTermKeyBindingMgr setKeyMappingsToPreset:presetName inBookmark:dict];
+    [dataSource setBookmark:dict withGuid:guid];
+
+    [self bookmarkSettingChanged:nil];
 }
 
 @end

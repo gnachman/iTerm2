@@ -557,12 +557,9 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
     [bookmark setObject:km forKey:KEY_KEYBOARD_MAP];
 }
 
-+ (NSArray *)presetKeyMappingsNames
-{
-    NSDictionary* presetsDict 
-        = [self readPresetKeyMappingsFromPlist:@"PresetKeyMappings"];
-    NSArray* names = [presetsDict allKeys];
-    return names;
++ (NSArray *)presetKeyMappingsNames {
+    NSDictionary* presetsDict = [self readPresetKeyMappingsFromPlist:@"PresetKeyMappings"];
+    return [presetsDict allKeys];
 }
 
 + (void)setMappingAtIndex:(int)rowIndex
@@ -620,6 +617,11 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
     return [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
 }
 
++ (NSArray *)sortedKeyCombinationsForProfile:(Profile *)profile {
+    NSDictionary* km = profile[KEY_KEYBOARD_MAP];
+    return [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+}
+
 + (NSString*)shortcutAtIndex:(int)rowIndex forBookmark:(Profile*)bookmark
 {
     NSDictionary* km = [bookmark objectForKey:KEY_KEYBOARD_MAP];
@@ -640,6 +642,10 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
     } else {
         return nil;
     }
+}
+
++ (NSDictionary *)keyMappingsForProfile:(Profile *)profile {
+    return profile[KEY_KEYBOARD_MAP];
 }
 
 + (NSDictionary*)mappingAtIndex:(int)rowIndex forBookmark:(Profile*)bookmark

@@ -23,12 +23,24 @@
 }
 
 - (id)init {
-    return [super initWithNibName:@"iTermKeyMapping" bundle:nil];
+    self = [super initWithNibName:@"iTermKeyMapping" bundle:nil];
+    if (self) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(keyBindingsChanged)
+                                                     name:@"iTermKeyBindingsChanged"
+                                                   object:nil];
+    }
+    return self;
 }
 
 - (void)dealloc {
     [_placeholderView release];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
+}
+
+- (void)keyBindingsChanged {
+    [_tableView reloadData];
 }
 
 - (void)setPlaceholderView:(NSView *)placeholderView {
