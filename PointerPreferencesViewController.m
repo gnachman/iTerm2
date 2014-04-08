@@ -9,8 +9,11 @@
 #import "PointerPreferencesViewController.h"
 
 @implementation PointerPreferencesViewController {
-    // cmd-click to launch url
+    // Cmd-click to launch url.
     IBOutlet NSButton *_cmdSelection;
+
+    // Control-click doesn't open the context menu, is mouse-reported as right click.
+    IBOutlet NSButton *_controlLeftClickActsLikeRightClick;
 }
 
 - (void)awakeFromNib {
@@ -18,6 +21,10 @@
 
     [self defineControl:_cmdSelection
                     key:kPreferenceKeyCmdClickOpensURLs
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_controlLeftClickActsLikeRightClick
+                    key:kPreferenceKeyControlLeftClickBypassesContextMenu
                    type:kPreferenceInfoTypeCheckbox];
 }
 

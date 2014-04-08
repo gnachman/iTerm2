@@ -4200,6 +4200,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     if (theEvent) {
         // Control-click
+        if ([iTermPreferences boolForKey:kPreferenceKeyControlLeftClickBypassesContextMenu]) {
+            return nil;
+        }
         return [self contextMenuWithEvent:theEvent];
     } else {
         // Gear icon in session title view.

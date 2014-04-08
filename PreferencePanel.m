@@ -92,10 +92,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     IBOutlet NSButton *tripleClickSelectsFullLines;
     BOOL defaultTripleClickSelectsFullLines;
 
-    // pass on ctrl-click
-    IBOutlet NSButton* controlLeftClickActsLikeRightClick;
-    BOOL defaultPassOnControlLeftClick;
-
     // Opt-click moves cursor
     IBOutlet NSButton *optionClickMovesCursor;
     BOOL defaultOptionClickMovesCursor;
@@ -662,7 +658,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
         defaultTripleClickSelectsFullLines = ([tripleClickSelectsFullLines state] == NSOnState);
 
         defaultOptionClickMovesCursor = ([optionClickMovesCursor state] == NSOnState);
-        defaultPassOnControlLeftClick = ([controlLeftClickActsLikeRightClick state] == NSOffState);
     }
 }
 
@@ -1888,7 +1883,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     defaultFocusFollowsMouse = [prefs objectForKey:@"FocusFollowsMouse"]?[[prefs objectForKey:@"FocusFollowsMouse"] boolValue]: NO;
     defaultTripleClickSelectsFullLines = [prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] ? [[prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] boolValue] : NO;
     defaultOptionClickMovesCursor = [prefs objectForKey:@"OptionClickMovesCursor"]?[[prefs objectForKey:@"OptionClickMovesCursor"] boolValue]: YES;
-    defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
 
     // Migrate old-style (iTerm 0.x) URL handlers.
     // make sure bookmarks are loaded
@@ -1943,7 +1937,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [prefs setBool:defaultFocusFollowsMouse forKey:@"FocusFollowsMouse"];
     [prefs setBool:defaultTripleClickSelectsFullLines forKey:@"TripleClickSelectsFullWrappedLines"];
     [prefs setBool:defaultOptionClickMovesCursor forKey:@"OptionClickMovesCursor"];
-    [prefs setBool:defaultPassOnControlLeftClick forKey:@"PassOnControlClick"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
 
     // save the handlers by converting the bookmark into an index
@@ -2272,9 +2265,8 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     return defaultOptionClickMovesCursor;
 }
 
-- (BOOL)passOnControlLeftClick
-{
-    return defaultPassOnControlLeftClick;
+- (BOOL)passOnControlLeftClick {
+    return [iTermPreferences boolForKey:kPreferenceKeyControlLeftClickBypassesContextMenu];
 }
 
 - (BOOL)maxVertically {
@@ -2655,7 +2647,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [focusFollowsMouse setState: defaultFocusFollowsMouse?NSOnState:NSOffState];
     [tripleClickSelectsFullLines setState:defaultTripleClickSelectsFullLines?NSOnState:NSOffState];
     [optionClickMovesCursor setState: defaultOptionClickMovesCursor?NSOnState:NSOffState];
-    [controlLeftClickActsLikeRightClick setState: defaultPassOnControlLeftClick?NSOffState:NSOnState];
 
     [self showWindow:self];
     [[self window] setLevel:NSNormalWindowLevel];

@@ -84,7 +84,6 @@
                 <outlet property="closeSessionsOnEnd" destination="5681" id="5737"/>
                 <outlet property="columnsField" destination="4911" id="4959"/>
                 <outlet property="columnsLabel" destination="4912" id="4961"/>
-                <outlet property="controlLeftClickActsLikeRightClick" destination="6111" id="6414"/>
                 <outlet property="copyAdvanced" destination="5833" id="5836"/>
                 <outlet property="copyButton" destination="3537" id="3541"/>
                 <outlet property="copyColors" destination="3525" id="3542"/>
@@ -4049,7 +4048,7 @@ Gw
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <button id="6062">
-                                            <rect key="frame" x="271" y="58" width="154" height="18"/>
+                                            <rect key="frame" x="343" y="58" width="154" height="18"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="check" title="Focus follows mouse" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6071">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4078,7 +4077,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="6410">
-                                            <rect key="frame" x="270" y="80" width="99" height="17"/>
+                                            <rect key="frame" x="342" y="80" width="99" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Miscellaneous" id="6411">
                                                 <font key="font" metaFont="systemBold"/>
@@ -4194,14 +4193,14 @@ Gw
                                             </connections>
                                         </button>
                                         <button id="6111">
-                                            <rect key="frame" x="18" y="36" width="192" height="18"/>
+                                            <rect key="frame" x="18" y="36" width="320" height="18"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <buttonCell key="cell" type="check" title="^-Click acts like right click" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6112">
+                                            <buttonCell key="cell" type="check" title="^-Click reported to apps, does not open menu." bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6112">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="settingChanged:" target="-2" id="6213"/>
+                                                <action selector="settingChanged:" target="pwh-OY-l3e" id="Bgs-Qw-L7Z"/>
                                             </connections>
                                         </button>
                                         <button id="6407">
@@ -4216,7 +4215,7 @@ Gw
                                             </connections>
                                         </button>
                                         <button id="6260">
-                                            <rect key="frame" x="271" y="18" width="258" height="18"/>
+                                            <rect key="frame" x="343" y="18" width="258" height="18"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="check" title="Triple-click selects full wrapped lines" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6261">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4227,7 +4226,7 @@ Gw
                                             </connections>
                                         </button>
                                         <button id="6227">
-                                            <rect key="frame" x="271" y="38" width="308" height="18"/>
+                                            <rect key="frame" x="343" y="38" width="308" height="18"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="check" title="Three-finger tap reports middle click to apps" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6228">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5537,6 +5536,7 @@ DQ
         <customObject id="pwh-OY-l3e" customClass="PointerPreferencesViewController">
             <connections>
                 <outlet property="_cmdSelection" destination="6107" id="aP0-Ty-y8T"/>
+                <outlet property="_controlLeftClickActsLikeRightClick" destination="6111" id="tra-Ty-UvV"/>
             </connections>
         </customObject>
     </objects>
