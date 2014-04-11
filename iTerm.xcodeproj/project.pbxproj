@@ -800,6 +800,9 @@
 		A6E7138E18F26A91008D94DD /* AppearancePreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7138C18F26A91008D94DD /* AppearancePreferencesViewController.h */; };
 		A6E7138F18F26A91008D94DD /* AppearancePreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7138D18F26A91008D94DD /* AppearancePreferencesViewController.m */; };
 		A6E7139018F26A91008D94DD /* AppearancePreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7138D18F26A91008D94DD /* AppearancePreferencesViewController.m */; };
+		A6E7139418F50762008D94DD /* ProfilePreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7139118F50762008D94DD /* ProfilePreferencesViewController.h */; };
+		A6E7139518F50762008D94DD /* ProfilePreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7139218F50762008D94DD /* ProfilePreferencesViewController.m */; };
+		A6E7139618F50762008D94DD /* ProfilePreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7139218F50762008D94DD /* ProfilePreferencesViewController.m */; };
 		A6E74748188C6344005355CF /* CommandHistoryEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E74746188C6344005355CF /* CommandHistoryEntry.h */; };
 		A6E74749188C6344005355CF /* CommandHistoryEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74747188C6344005355CF /* CommandHistoryEntry.m */; };
 		A6E7474A188C6344005355CF /* CommandHistoryEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74747188C6344005355CF /* CommandHistoryEntry.m */; };
@@ -1370,6 +1373,8 @@
 		A6E7138818F26445008D94DD /* iTermPreferencesBaseViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPreferencesBaseViewController.m; sourceTree = "<group>"; };
 		A6E7138C18F26A91008D94DD /* AppearancePreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppearancePreferencesViewController.h; sourceTree = "<group>"; };
 		A6E7138D18F26A91008D94DD /* AppearancePreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppearancePreferencesViewController.m; sourceTree = "<group>"; };
+		A6E7139118F50762008D94DD /* ProfilePreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilePreferencesViewController.h; sourceTree = "<group>"; };
+		A6E7139218F50762008D94DD /* ProfilePreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilePreferencesViewController.m; sourceTree = "<group>"; };
 		A6E74746188C6344005355CF /* CommandHistoryEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandHistoryEntry.h; sourceTree = "<group>"; };
 		A6E74747188C6344005355CF /* CommandHistoryEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CommandHistoryEntry.m; sourceTree = "<group>"; };
 		A6E7474B188C6394005355CF /* CommandUse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandUse.h; sourceTree = "<group>"; };
@@ -1979,6 +1984,8 @@
 				1DFA9D6118F37160008ADC98 /* iTermEditKeyActionWindowController.h */,
 				1DFA9D6218F37160008ADC98 /* iTermEditKeyActionWindowController.m */,
 				1DFA9D6318F37160008ADC98 /* iTermEditKeyActionWindowController.xib */,
+				A6E7139118F50762008D94DD /* ProfilePreferencesViewController.h */,
+				A6E7139218F50762008D94DD /* ProfilePreferencesViewController.m */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -2653,6 +2660,7 @@
 				A63F40A9183F3CED003A6A6D /* LineBufferHelpers.h in Headers */,
 				A67E0AD0186E4B71009B2B68 /* TaskNotifier.h in Headers */,
 				A647E39A18C3515900450FA1 /* VT100AnsiParser.h in Headers */,
+				A6E7139418F50762008D94DD /* ProfilePreferencesViewController.h in Headers */,
 				1DA26AC015007507004B5792 /* BackgroundThread.h in Headers */,
 				1D2F3B3D1516BA470044C337 /* iTermFontPanel.h in Headers */,
 				1D48B379167E809D000046EE /* CharacterRun.h in Headers */,
@@ -2982,6 +2990,7 @@
 				1D9A5579180FA85D00B42CE9 /* ScriptTrigger.m in Sources */,
 				A6A13AAE18C3347200B241ED /* VT100Output.m in Sources */,
 				1D9A5551180FA82E00B42CE9 /* TSVParser.m in Sources */,
+				A6E7139618F50762008D94DD /* ProfilePreferencesViewController.m in Sources */,
 				1D9A559B180FA87000B42CE9 /* RoundedRectView.m in Sources */,
 				1D9A5573180FA85D00B42CE9 /* Trigger.m in Sources */,
 				A68A310C186D2BCF007F550F /* BottomBarView.m in Sources */,
@@ -3226,6 +3235,7 @@
 				1D6C50A81226EEFB00E0AA3E /* ProfileListView.m in Sources */,
 				A6DF401D1897607E00F05947 /* NSTextField+iTerm.m in Sources */,
 				A6E74749188C6344005355CF /* CommandHistoryEntry.m in Sources */,
+				A6E7139518F50762008D94DD /* ProfilePreferencesViewController.m in Sources */,
 				A68A30C7186D0F37007F550F /* SmartMatch.m in Sources */,
 				1DE5EBE9122B892900C736B0 /* ProfilesWindow.m in Sources */,
 				A63BA3A018B27B92002BE075 /* iTermTextExtractor.m in Sources */,

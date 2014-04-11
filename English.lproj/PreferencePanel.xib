@@ -9,7 +9,7 @@
             <connections>
                 <outlet property="_generalPreferencesViewController" destination="9Se-ld-UJa" id="ebT-z7-cAn"/>
                 <outlet property="_keysViewController" destination="8TE-cq-5cL" id="4iT-4B-Ju4"/>
-                <outlet property="addBookmarkButton" destination="2111" id="3320"/>
+                <outlet property="_profilesViewController" destination="HVI-63-mNz" id="jfc-z4-6um"/>
                 <outlet property="advancedTabViewItem" destination="KyW-GB-ElH" id="8r8-7W-7k9"/>
                 <outlet property="advancedToolbarItem" destination="gtg-rw-6h8" id="Enb-fp-ef2"/>
                 <outlet property="advancedWorkingDirSheet_" destination="5979" id="6029"/>
@@ -72,10 +72,7 @@
                 <outlet property="bookmarkUrlSchemes" destination="5037" id="5043"/>
                 <outlet property="bookmarkUrlSchemesHeaderLabel" destination="5033" id="5045"/>
                 <outlet property="bookmarkUrlSchemesLabel" destination="5035" id="5046"/>
-                <outlet property="bookmarksPopup" destination="3230" id="3306"/>
-                <outlet property="bookmarksSettingsTabViewParent" destination="2100" id="3296"/>
                 <outlet property="bookmarksTabViewItem" destination="1945" id="2863"/>
-                <outlet property="bookmarksTableView" destination="3260" id="3274"/>
                 <outlet property="bookmarksToolbarItem" destination="5886" id="6039"/>
                 <outlet property="bulkCopyLabel" destination="3519" id="3552"/>
                 <outlet property="changeProfileButton" destination="5768" id="5770"/>
@@ -93,7 +90,6 @@
                 <outlet property="copySession" destination="5711" id="5714"/>
                 <outlet property="copyTerminal" destination="3529" id="3546"/>
                 <outlet property="copyTo" destination="3535" id="3545"/>
-                <outlet property="copyToProfileButton" destination="5140" id="5142"/>
                 <outlet property="copyWindow" destination="5014" id="5016"/>
                 <outlet property="cursorColor" destination="2280" id="3101"/>
                 <outlet property="cursorColorLabel" destination="2283" id="4907"/>
@@ -135,7 +131,6 @@
                 <outlet property="presetsMenu" destination="3215" id="3561"/>
                 <outlet property="preventTab" destination="6416" id="6420"/>
                 <outlet property="promptBeforeClosing_" destination="5728" id="5733"/>
-                <outlet property="removeBookmarkButton" destination="2113" id="3275"/>
                 <outlet property="removeJobButton_" destination="5669" id="5723"/>
                 <outlet property="rightOptionKeySends" destination="4293" id="4308"/>
                 <outlet property="rowsField" destination="4914" id="4960"/>
@@ -160,7 +155,6 @@
                 <outlet property="tabView" destination="1943" id="2853"/>
                 <outlet property="tags" destination="3245" id="3249"/>
                 <outlet property="terminalType" destination="2405" id="3155"/>
-                <outlet property="toggleTagsButton" destination="nFj-0n-SWO" id="8Tx-UD-Ftx"/>
                 <outlet property="toolbar" destination="5885" id="6042"/>
                 <outlet property="transparency" destination="4978" id="4994"/>
                 <outlet property="triggerWindowController_" destination="5797" id="5920"/>
@@ -1668,7 +1662,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="copyToProfile:" target="-2" id="5143"/>
+                                                                    <action selector="copyToProfile:" target="HVI-63-mNz" id="oc6-Ka-hec"/>
                                                                 </connections>
                                                             </button>
                                                             <textField verticalHuggingPriority="750" id="5408">
@@ -3570,7 +3564,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="addBookmark:" target="-2" id="3228"/>
+                                                <action selector="addBookmark:" target="HVI-63-mNz" id="Kdx-iD-v1t"/>
                                             </connections>
                                         </button>
                                         <button id="nFj-0n-SWO">
@@ -3581,7 +3575,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="toggleTags:" target="-2" id="aZM-ok-dLj"/>
+                                                <action selector="toggleTags:" target="HVI-63-mNz" id="4wi-JZ-4IE"/>
                                             </connections>
                                         </button>
                                         <button id="2113">
@@ -3592,7 +3586,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="removeBookmark:" target="-2" id="3229"/>
+                                                <action selector="removeBookmark:" target="HVI-63-mNz" id="9XT-gb-KNY"/>
                                             </connections>
                                         </button>
                                         <popUpButton id="3230">
@@ -3629,7 +3623,7 @@ Gw
                                             <rect key="frame" x="0.0" y="32" width="319" height="392"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <connections>
-                                                <outlet property="delegate_" destination="-2" id="3276"/>
+                                                <outlet property="delegate" destination="HVI-63-mNz" id="lQ2-vb-0eJ"/>
                                             </connections>
                                         </customView>
                                     </subviews>
@@ -3898,7 +3892,7 @@ Gw
                                             </connections>
                                         </popUpButton>
                                         <textField verticalHuggingPriority="750" id="3892">
-                                            <rect key="frame" x="-3" y="256" width="144" height="17"/>
+                                            <rect key="frame" x="-3" y="256" width="153" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Navigation Shortcuts" id="3893">
                                                 <font key="font" metaFont="systemBold"/>
@@ -4089,7 +4083,7 @@ Gw
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
-                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="229"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -5537,6 +5531,19 @@ DQ
                 <outlet property="_optionClickMovesCursor" destination="6407" id="hKN-R0-UCE"/>
                 <outlet property="_threeFingerEmulatesMiddle" destination="6227" id="eEX-cI-LAf"/>
                 <outlet property="_tripleClickSelectsFullLines" destination="6260" id="nhb-Ac-ST0"/>
+            </connections>
+        </customObject>
+        <customObject id="HVI-63-mNz" customClass="ProfilePreferencesViewController">
+            <connections>
+                <outlet property="_addBookmarkButton" destination="2111" id="bS6-3C-NJY"/>
+                <outlet property="_copyToProfileButton" destination="5140" id="OLo-Jv-hFL"/>
+                <outlet property="_otherActionsPopup" destination="3230" id="Qhw-QD-BOd"/>
+                <outlet property="_profilesListView" destination="3260" id="22S-wx-dOs"/>
+                <outlet property="_removeBookmarkButton" destination="2113" id="qi7-Uw-cX1"/>
+                <outlet property="_tabView" destination="2100" id="sRa-Z0-Ngh"/>
+                <outlet property="_toggleTagsButton" destination="nFj-0n-SWO" id="nd4-hz-FRN"/>
+                <outlet property="delegate" destination="-2" id="AYk-4p-lit"/>
+                <outlet property="view" destination="1946" id="QfY-2A-k9W"/>
             </connections>
         </customObject>
     </objects>

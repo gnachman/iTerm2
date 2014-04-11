@@ -73,7 +73,7 @@ const CGFloat kDefaultTagsWidth = 80;
         [self _addTags:[[dataSource_ underlyingModel] allTags] toSearchField:searchField_];
         [searchField_ setDelegate:self];
         [self addSubview:searchField_];
-        delegate_ = nil;
+        self.delegate = nil;
         
         // Split view ------------------------------------------------------------------------------
         NSRect splitViewFrame = NSMakeRect(0,
@@ -328,17 +328,12 @@ const CGFloat kDefaultTagsWidth = 80;
     return dataSource_;
 }
 
-- (void)setDelegate:(NSObject<ProfileListViewDelegate> *)delegate
-{
-    delegate_ = delegate;
-}
-
 #pragma mark BookmarkTableView menu handler
 
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
 {
-    if ([delegate_ respondsToSelector:@selector(profileTable:menuForEvent:)]) {
-        return [delegate_ profileTable:self menuForEvent:theEvent];
+    if ([self.delegate respondsToSelector:@selector(profileTable:menuForEvent:)]) {
+        return [self.delegate profileTable:self menuForEvent:theEvent];
     }
     return nil;
 }
@@ -522,8 +517,8 @@ const CGFloat kDefaultTagsWidth = 80;
 
 - (BOOL)selectionShouldChangeInTableView:(NSTableView *)aTableView
 {
-    if (delegate_ && [delegate_ respondsToSelector:@selector(profileTableSelectionWillChange:)]) {
-        [delegate_ profileTableSelectionWillChange:self];
+    if (self.delegate && [self.delegate respondsToSelector:@selector(profileTableSelectionWillChange:)]) {
+        [self.delegate profileTableSelectionWillChange:self];
     }
     return YES;
 }
@@ -531,8 +526,8 @@ const CGFloat kDefaultTagsWidth = 80;
 - (void)tableViewSelectionIsChanging:(NSNotification *)aNotification
 {
     // Mouse is being dragged across rows
-    if (delegate_ && [delegate_ respondsToSelector:@selector(profileTableSelectionDidChange:)]) {
-        [delegate_ profileTableSelectionDidChange:self];
+    if (self.delegate && [self.delegate respondsToSelector:@selector(profileTableSelectionDidChange:)]) {
+        [self.delegate profileTableSelectionDidChange:self];
     }
     [selectedGuids_ release];
     selectedGuids_ = [self selectedGuids];
@@ -552,8 +547,8 @@ const CGFloat kDefaultTagsWidth = 80;
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification
 {
     // There was a click on a row
-    if (delegate_ && [delegate_ respondsToSelector:@selector(profileTableSelectionDidChange:)]) {
-        [delegate_ profileTableSelectionDidChange:self];
+    if (self.delegate && [self.delegate respondsToSelector:@selector(profileTableSelectionDidChange:)]) {
+        [self.delegate profileTableSelectionDidChange:self];
     }
     [selectedGuids_ release];
     selectedGuids_ = [self selectedGuids];
@@ -572,12 +567,12 @@ const CGFloat kDefaultTagsWidth = 80;
     [self _addTags:[[dataSource_ underlyingModel] allTags] toSearchField:searchField_];
     [dataSource_ sync];
     [tableView_ reloadData];
-    if (delegate_ && ![selectedGuids_ isEqualToSet:[self selectedGuids]]) {
+    if (self.delegate && ![selectedGuids_ isEqualToSet:[self selectedGuids]]) {
         [selectedGuids_ release];
         selectedGuids_ = [self selectedGuids];
         [selectedGuids_ retain];
-        if ([delegate_ respondsToSelector:@selector(profileTableSelectionDidChange:)]) {
-            [delegate_ profileTableSelectionDidChange:self];
+        if ([self.delegate respondsToSelector:@selector(profileTableSelectionDidChange:)]) {
+            [self.delegate profileTableSelectionDidChange:self];
         }
     }
 }
@@ -691,8 +686,8 @@ const CGFloat kDefaultTagsWidth = 80;
         [self selectRowIndex:0];
         [tableView_ scrollRowToVisible:0];
     }
-    if ([delegate_ respondsToSelector:@selector(profileTableFilterDidChange:)]) {
-        [delegate_ profileTableFilterDidChange:self];
+    if ([self.delegate respondsToSelector:@selector(profileTableFilterDidChange:)]) {
+        [self.delegate profileTableFilterDidChange:self];
     }
 }
 
@@ -724,8 +719,8 @@ const CGFloat kDefaultTagsWidth = 80;
 
 - (void)onDoubleClick:(id)sender
 {
-    if (delegate_ && [delegate_ respondsToSelector:@selector(profileTableRowSelected:)]) {
-        [delegate_ profileTableRowSelected:self];
+    if (self.delegate && [self.delegate respondsToSelector:@selector(profileTableRowSelected:)]) {
+        [self.delegate profileTableRowSelected:self];
     }
 }
 
@@ -762,11 +757,6 @@ const CGFloat kDefaultTagsWidth = 80;
 - (NSTableView*)tableView
 {
     return tableView_;
-}
-
-- (id)delegate
-{
-    return delegate_;
 }
 
 - (void)setFont:(NSFont *)theFont
@@ -828,8 +818,8 @@ const CGFloat kDefaultTagsWidth = 80;
 
 - (void)splitViewDidResizeSubviews:(NSNotification *)notification {
     if ((tagsView_.frame.size.width == 0) != tagsViewIsCollapsed_ &&
-        [delegate_ respondsToSelector:@selector(profileTableTagsVisibilityDidChange:)]) {
-        [delegate_ profileTableTagsVisibilityDidChange:self];
+        [self.delegate respondsToSelector:@selector(profileTableTagsVisibilityDidChange:)]) {
+        [self.delegate profileTableTagsVisibilityDidChange:self];
     }
     tagsViewIsCollapsed_ = (tagsView_.frame.size.width == 0);
 }

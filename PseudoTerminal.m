@@ -595,6 +595,10 @@ NSString *kSessionsKVCKey = @"sessions";
                                              selector:@selector(tmuxFontDidChange:)
                                                  name:@"kPTYSessionTmuxFontDidChange"
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(reloadBookmarks)
+                                                 name:kReloadAllProfiles
+                                               object:nil];
     PtyLog(@"set window inited");
     [self setWindowInited: YES];
     useTransparency_ = YES;

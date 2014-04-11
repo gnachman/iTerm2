@@ -34,7 +34,7 @@
 @class ProfileTagsView;
 @class iTermSearchField;
 
-@protocol ProfileListViewDelegate
+@protocol ProfileListViewDelegate <NSObject>
 @optional
 - (void)profileTableSelectionDidChange:(id)profileTable;
 
@@ -76,10 +76,10 @@
 }
 
 @property(nonatomic, readonly) BOOL tagsVisible;
+@property(nonatomic, assign) IBOutlet id<ProfileListViewDelegate> delegate;
 
 - (id)initWithFrame:(NSRect)frameRect;
 - (id)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource;
-- (void)setDelegate:(NSObject<ProfileListViewDelegate> *)delegate;
 - (void)dealloc;
 - (ProfileModelWrapper*)dataSource;
 - (void)setUnderlyingDatasource:(ProfileModel*)dataSource;
@@ -125,7 +125,6 @@
 - (void)resizeSubviewsWithOldSize:(NSSize)oldBoundsSize;
 - (void)turnOnDebug;
 - (NSTableView*)tableView;
-- (id)delegate;
 
 - (void)setFont:(NSFont *)theFont;
 - (void)disableArrowHandler;

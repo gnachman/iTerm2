@@ -44,6 +44,7 @@
 #import "PasteboardHistory.h"
 #import "PointerPrefsController.h"
 #import "ProfileModel.h"
+#import "ProfilePreferencesViewController.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "SessionView.h"
@@ -60,6 +61,7 @@ static NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPre
 NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotification";
+NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
 
 @interface PreferencePanel () <iTermKeyMappingViewControllerDelegate>
 @property(nonatomic, copy) NSString *currentProfileGuid;
@@ -73,7 +75,8 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     IBOutlet TrouterPrefsController *trouterPrefController_;
     IBOutlet GeneralPreferencesViewController *_generalPreferencesViewController;
     IBOutlet KeysPreferencesViewController *_keysViewController;
-
+    IBOutlet ProfilePreferencesViewController *_profilesViewController;
+    
     // Minimum contrast
     IBOutlet NSSlider* minimumContrast;
 
@@ -89,7 +92,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     IBOutlet NSButton *instantReplay;
     BOOL defaultInstantReplay;
 
-    IBOutlet NSTabView* bookmarksSettingsTabViewParent;
     IBOutlet NSTabViewItem* bookmarkSettingsGeneralTab;
 
     NSUserDefaults *prefs;
@@ -122,11 +124,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     NSMutableDictionary *urlHandlersByGuid;
 
     // Bookmarks -----------------------------
-    IBOutlet ProfileListView *bookmarksTableView;
-    IBOutlet NSTableColumn *shellImageColumn;
-    IBOutlet NSTableColumn *nameShortcutColumn;
-    IBOutlet NSButton *removeBookmarkButton;
-    IBOutlet NSButton *addBookmarkButton;
     IBOutlet NSButton *toggleTagsButton;
 
     // General tab
@@ -160,7 +157,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     IBOutlet NSTextField* awdsPaneDirectory;
 
     // Only visible in Get Info mode
-    IBOutlet NSButton* copyToProfileButton;
     IBOutlet NSTextField* setProfileLabel;
     IBOutlet ProfileListView* setProfileBookmarkListView;
     IBOutlet NSButton* changeProfileButton;
@@ -265,9 +261,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     // Keyboard tab
     IBOutlet NSMatrix *optionKeySends;
     IBOutlet NSMatrix *rightOptionKeySends;
-
-    // Other actions… under list of profiles in prefs>profiles.
-    IBOutlet NSPopUpButton* bookmarksPopup;
 
     // Session --------------------------------
     IBOutlet NSTableView *jobsTable_;
@@ -406,8 +399,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 {
     [self window];
     [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
-    NSAssert(bookmarksTableView, @"Null table view");
-    [bookmarksTableView setUnderlyingDatasource:dataSource];
     bookmarksToolbarId = [bookmarksToolbarItem itemIdentifier];
     globalToolbarId = [globalToolbarItem itemIdentifier];
     appearanceToolbarId = [appearanceToolbarItem itemIdentifier];
@@ -457,12 +448,9 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 - (void)layoutSubviewsForSingleBookmarkMode
 {
     [self showBookmarks];
+    [_profilesViewController layoutSubviewsForSingleBookmarkMode];
     [toolbar setVisible:NO];
     [editAdvancedConfigButton setHidden:YES];
-    [bookmarksTableView setHidden:YES];
-    [addBookmarkButton setHidden:YES];
-    [removeBookmarkButton setHidden:YES];
-    [bookmarksPopup setHidden:YES];
     [bookmarkDirectory setHidden:YES];
     [bookmarkShortcutKeyLabel setHidden:YES];
     [bookmarkShortcutKeyModifiersLabel setHidden:YES];
@@ -480,7 +468,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [bookmarkUrlSchemes setHidden:YES];
     [bookmarkUrlSchemesHeaderLabel setHidden:YES];
     [bookmarkUrlSchemesLabel setHidden:YES];
-    [copyToProfileButton setHidden:NO];
     [setProfileLabel setHidden:NO];
     [setProfileBookmarkListView setHidden:NO];
     [changeProfileButton setHidden:NO];
@@ -498,12 +485,8 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [windowTypeLabel setTextColor:[NSColor disabledControlTextColor]];
     [newWindowttributesHeader setTextColor:[NSColor disabledControlTextColor]];
 
-    NSRect newFrame = [bookmarksSettingsTabViewParent frame];
-    newFrame.origin.x = 0;
-    [bookmarksSettingsTabViewParent setFrame:newFrame];
-
-    newFrame = [[self window] frame];
-    newFrame.size.width = [bookmarksSettingsTabViewParent frame].size.width + 26;
+    NSRect newFrame = [[self window] frame];
+    newFrame.size.width = [_profilesViewController size].width + 26;
     [[self window] setFrame:newFrame display:YES];
 }
 
@@ -525,9 +508,9 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [self run];
     [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
     [self showBookmarks];
-    [bookmarksTableView selectRowByGuid:guid];
+    [_profilesViewController selectGuid:guid];
     [setProfileBookmarkListView selectRowByGuid:nil];
-    [bookmarksSettingsTabViewParent selectTabViewItem:bookmarkSettingsGeneralTab];
+    [_profilesViewController.tabView selectTabViewItem:bookmarkSettingsGeneralTab];
     [[self window] makeFirstResponder:bookmarkName];
     self.currentProfileGuid = guid;
 }
@@ -632,38 +615,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [self _showFontPanel];
 }
 
-- (IBAction)copyToProfile:(id)sender
-{
-    NSString* sourceGuid = [bookmarksTableView selectedGuid];
-    if (!sourceGuid) {
-        return;
-    }
-    Profile* sourceBookmark = [dataSource bookmarkWithGuid:sourceGuid];
-    NSString* profileGuid = [sourceBookmark objectForKey:KEY_ORIGINAL_GUID];
-    Profile* destination = [[ProfileModel sharedInstance] bookmarkWithGuid:profileGuid];
-    // TODO: changing color presets in cmd-i causes profileGuid=null.
-    if (sourceBookmark && destination) {
-        NSMutableDictionary* copyOfSource = [[sourceBookmark mutableCopy] autorelease];
-        [copyOfSource setObject:profileGuid forKey:KEY_GUID];
-        [copyOfSource removeObjectForKey:KEY_ORIGINAL_GUID];
-        [copyOfSource setObject:[destination objectForKey:KEY_NAME] forKey:KEY_NAME];
-        [[ProfileModel sharedInstance] setBookmark:copyOfSource withGuid:profileGuid];
-
-        [[PreferencePanel sharedInstance] profileTableSelectionDidChange:[PreferencePanel sharedInstance]->bookmarksTableView];
-
-        // Update existing sessions
-        int n = [[iTermController sharedInstance] numberOfTerminals];
-        for (int i = 0; i < n; ++i) {
-            PseudoTerminal* pty = [[iTermController sharedInstance] terminalAtIndex:i];
-            [pty reloadBookmarks];
-        }
-
-        // Update user defaults
-        [[NSUserDefaults standardUserDefaults] setObject:[[ProfileModel sharedInstance] rawData]
-                                                  forKey: @"New Bookmarks"];
-    }
-}
-
 - (NSString*)_chooseBackgroundImage
 {
     NSOpenPanel *panel;
@@ -738,16 +689,12 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     if (sender == spaceButton && [spaceButton selectedTag] > 0) {
         [self _maybeWarnAboutSpaces];
     }
-    NSString* guid = [bookmarksTableView selectedGuid];
-    if (!guid) {
+    Profile *origBookmark = [_profilesViewController selectedProfile];
+    NSString *guid = origBookmark[KEY_GUID];
+    if (!guid || !origBookmark) {
         return;
     }
-    Profile* origBookmark = [dataSource bookmarkWithGuid:guid];
-    if (!origBookmark) {
-        return;
-    }
-    NSMutableDictionary* newDict = [[NSMutableDictionary alloc] init];
-    [newDict autorelease];
+    NSMutableDictionary* newDict = [NSMutableDictionary dictionary];
     NSString* isDefault = [origBookmark objectForKey:KEY_DEFAULT_BOOKMARK];
     if (!isDefault) {
         isDefault = @"No";
@@ -953,8 +900,7 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [newDict setObject:[trouterPrefController_ prefs] forKey:KEY_TROUTER];
 
     // Epilogue
-    [dataSource setBookmark:newDict withGuid:guid];
-    [bookmarksTableView reloadData];
+    [_profilesViewController updateProfileInModel:newDict];
 
     // Selectively update form fields.
     [self updateShortcutTitles];
@@ -1012,7 +958,8 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 
 - (IBAction)bookmarkUrlSchemeHandlerChanged:(id)sender
 {
-    NSString* guid = [bookmarksTableView selectedGuid];
+    Profile *profile = [_profilesViewController selectedProfile];
+    NSString* guid = profile[KEY_GUID];
     NSString* scheme = [[bookmarkUrlSchemes selectedItem] title];
     if ([urlHandlersByGuid objectForKey:scheme]) {
         [self disconnectHandlerForScheme:scheme];
@@ -1024,12 +971,12 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 
 - (IBAction)addJob:(id)sender
 {
-    NSString* guid = [bookmarksTableView selectedGuid];
+    Profile *profile = [_profilesViewController selectedProfile];
+    NSString* guid = profile[KEY_GUID];
     if (!guid) {
         return;
     }
-    Profile* bookmark = [dataSource bookmarkWithGuid:guid];
-    NSArray *jobNames = [bookmark objectForKey:KEY_JOBS];
+    NSArray *jobNames = [profile objectForKey:KEY_JOBS];
     NSMutableArray *augmented;
     if (jobNames) {
         augmented = [NSMutableArray arrayWithArray:jobNames];
@@ -1037,7 +984,7 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     } else {
         augmented = [NSMutableArray arrayWithObject:@"Job Name"];
     }
-    [dataSource setObject:augmented forKey:KEY_JOBS inBookmark:bookmark];
+    [dataSource setObject:augmented forKey:KEY_JOBS inBookmark:profile];
     [jobsTable_ reloadData];
     [jobsTable_ selectRowIndexes:[NSIndexSet indexSetWithIndex:[augmented count] - 1]
             byExtendingSelection:NO];
@@ -1060,16 +1007,16 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     if (selectedIndex < 0) {
         return;
     }
-    NSString* guid = [bookmarksTableView selectedGuid];
+    Profile *profile = [_profilesViewController selectedProfile];
+    NSString *guid = profile[KEY_GUID];
     if (!guid) {
         return;
     }
-    Profile* bookmark = [dataSource bookmarkWithGuid:guid];
-    NSArray *jobNames = [bookmark objectForKey:KEY_JOBS];
+    NSArray *jobNames = profile[KEY_JOBS];
     NSMutableArray *mod = [NSMutableArray arrayWithArray:jobNames];
     [mod removeObjectAtIndex:selectedIndex];
 
-    [dataSource setObject:mod forKey:KEY_JOBS inBookmark:bookmark];
+    [dataSource setObject:mod forKey:KEY_JOBS inBookmark:profile];
     [jobsTable_ reloadData];
     [self setHaveJobsForCurrentBookmark:[self haveJobsForCurrentBookmark]];
     [self bookmarkSettingChanged:nil];
@@ -1145,9 +1092,10 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 {
     NSString *guid = [setProfileBookmarkListView selectedGuid];
     if (guid) {
-        NSString* origGuid = [bookmarksTableView selectedGuid];
-        Profile* origBookmark = [dataSource bookmarkWithGuid:origGuid];
-        NSString *theName = [[[origBookmark objectForKey:KEY_NAME] copy] autorelease];
+        Profile *origProfile = [_profilesViewController selectedProfile];
+        NSString* origGuid = origProfile[KEY_GUID];
+
+        NSString *theName = [[[origProfile objectForKey:KEY_NAME] copy] autorelease];
         Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
         [dict setObject:theName forKey:KEY_NAME];
@@ -1163,84 +1111,10 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     }
 }
 
-- (IBAction)toggleTags:(id)sender {
-    [bookmarksTableView toggleTags];
-}
-
-- (void)profileTableTagsVisibilityDidChange:(ProfileListView *)profileListView {
-    [toggleTagsButton setTitle:profileListView.tagsVisible ? @"< Tags" : @"Tags >"];
-}
-
-- (IBAction)addBookmark:(id)sender
-{
-    NSMutableDictionary* newDict = [[[NSMutableDictionary alloc] init] autorelease];
-    // Copy the default bookmark's settings in
-    Profile* prototype = [dataSource defaultBookmark];
-    if (!prototype) {
-        [ITAddressBookMgr setDefaultsInBookmark:newDict];
-    } else {
-        [newDict setValuesForKeysWithDictionary:[dataSource defaultBookmark]];
-    }
-    [newDict setObject:@"New Profile" forKey:KEY_NAME];
-    [newDict setObject:@"" forKey:KEY_SHORTCUT];
-    NSString* guid = [ProfileModel freshGuid];
-    [newDict setObject:guid forKey:KEY_GUID];
-    [newDict removeObjectForKey:KEY_DEFAULT_BOOKMARK];  // remove depreated attribute with side effects
-    [newDict setObject:[NSArray arrayWithObjects:nil] forKey:KEY_TAGS];
-    if ([[ProfileModel sharedInstance] bookmark:newDict hasTag:@"bonjour"]) {
-        [newDict removeObjectForKey:KEY_BONJOUR_GROUP];
-        [newDict removeObjectForKey:KEY_BONJOUR_SERVICE];
-        [newDict removeObjectForKey:KEY_BONJOUR_SERVICE_ADDRESS];
-        [newDict setObject:@"" forKey:KEY_COMMAND];
-        [newDict setObject:@"" forKey:KEY_INITIAL_TEXT];
-        [newDict setObject:@"No" forKey:KEY_CUSTOM_COMMAND];
-        [newDict setObject:@"" forKey:KEY_WORKING_DIRECTORY];
-        [newDict setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
-    }
-    [dataSource addBookmark:newDict];
-    [bookmarksTableView reloadData];
-    [bookmarksTableView eraseQuery];
-    [bookmarksTableView selectRowByGuid:guid];
-    [bookmarksSettingsTabViewParent selectTabViewItem:bookmarkSettingsGeneralTab];
-    [[self window] makeFirstResponder:bookmarkName];
-    [bookmarkName selectText:self];
-}
-
-- (IBAction)removeBookmark:(id)sender
-{
-    if ([dataSource numberOfBookmarks] == 1) {
-        NSBeep();
-    } else {
-        if ([self confirmProfileDeletion:[[bookmarksTableView selectedGuids] allObjects]]) {
-            BOOL found = NO;
-            int lastIndex = 0;
-            int numRemoved = 0;
-            for (NSString* guid in [bookmarksTableView selectedGuids]) {
-                found = YES;
-                int i = [bookmarksTableView selectedRow];
-                if (i > lastIndex) {
-                    lastIndex = i;
-                }
-                ++numRemoved;
-                [self _removeKeyMappingsReferringToBookmarkGuid:guid];
-                [dataSource removeBookmarkWithGuid:guid];
-            }
-            [bookmarksTableView reloadData];
-            int toSelect = lastIndex - numRemoved;
-            if (toSelect < 0) {
-                toSelect = 0;
-            }
-            [bookmarksTableView selectRowIndex:toSelect];
-            if (!found) {
-                NSBeep();
-            }
-        }
-    }
-}
-
 - (IBAction)setAsDefault:(id)sender
 {
-    NSString* guid = [bookmarksTableView selectedGuid];
+    Profile *origProfile = [_profilesViewController selectedProfile];
+    NSString* guid = origProfile[KEY_GUID];
     if (!guid) {
         NSBeep();
         return;
@@ -1250,29 +1124,27 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 
 - (IBAction)duplicateBookmark:(id)sender
 {
-    NSString* guid = [bookmarksTableView selectedGuid];
-    if (!guid) {
+    Profile* profile = [_profilesViewController selectedProfile];
+    if (!profile) {
         NSBeep();
         return;
     }
-    Profile* bookmark = [dataSource bookmarkWithGuid:guid];
-    NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
+    NSMutableDictionary *newDict = [NSMutableDictionary dictionaryWithDictionary:profile];
     NSString* newName = [NSString stringWithFormat:@"Copy of %@", [newDict objectForKey:KEY_NAME]];
 
     [newDict setObject:newName forKey:KEY_NAME];
     [newDict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
     [newDict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
     [newDict setObject:@"" forKey:KEY_SHORTCUT];
-    [dataSource addBookmark:newDict];
-    [bookmarksTableView reloadData];
-    [bookmarksTableView selectRowByGuid:[newDict objectForKey:KEY_GUID]];
+    [_profilesViewController addProfile:newDict];
 }
 
 - (IBAction)openCopyBookmarks:(id)sender
 {
+    Profile *profile = [_profilesViewController selectedProfile];
     [bulkCopyLabel setStringValue:[NSString stringWithFormat:
                                    @"Copy these settings from profile \"%@\":",
-                                   [[dataSource bookmarkWithGuid:[bookmarksTableView selectedGuid]] objectForKey:KEY_NAME]]];
+                                   profile[KEY_NAME]]];
     [NSApp beginSheet:copyPanel
        modalForWindow:[self window]
         modalDelegate:self
@@ -1282,7 +1154,8 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 
 - (IBAction)copyBookmarks:(id)sender
 {
-    NSString* srcGuid = [bookmarksTableView selectedGuid];
+    Profile *profile = [_profilesViewController selectedProfile];
+    NSString* srcGuid = profile[KEY_GUID];
     if (!srcGuid) {
         NSBeep();
         return;
@@ -1526,9 +1399,10 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 
 - (void)_loadPresetColors:(NSString*)presetName
 {
-    NSString* guid = [bookmarksTableView selectedGuid];
-    NSAssert(guid, @"Null guid unexpected here");
-
+    Profile *profile = [_profilesViewController selectedProfile];
+    NSString* guid = profile[KEY_GUID];
+    assert(guid);
+    
     NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"ColorPresets"
                                                                             ofType:@"plist"];
     NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
@@ -1537,7 +1411,7 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
         presetsDict = [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
         settings = [presetsDict objectForKey:presetName];
     }
-    NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:[dataSource bookmarkWithGuid:guid]];
+    NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:profile];
 
     for (id colorName in settings) {
         NSDictionary* preset = [settings objectForKey:colorName];
@@ -1598,21 +1472,21 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 - (IBAction)showAdvancedWorkingDirConfigPanel:(id)sender
 {
     // Populate initial values
-    Profile* bookmark = [dataSource bookmarkWithGuid:[bookmarksTableView selectedGuid]];
+    Profile *profile = [_profilesViewController selectedProfile];
 
     [self setAdvancedBookmarkMatrix:awdsWindowDirectoryType
-                          withValue:[bookmark objectForKey:KEY_AWDS_WIN_OPTION]];
-    [self safelySetStringValue:[bookmark objectForKey:KEY_AWDS_WIN_DIRECTORY]
+                          withValue:[profile objectForKey:KEY_AWDS_WIN_OPTION]];
+    [self safelySetStringValue:[profile objectForKey:KEY_AWDS_WIN_DIRECTORY]
                             in:awdsWindowDirectory];
 
     [self setAdvancedBookmarkMatrix:awdsTabDirectoryType
-                          withValue:[bookmark objectForKey:KEY_AWDS_TAB_OPTION]];
-    [self safelySetStringValue:[bookmark objectForKey:KEY_AWDS_TAB_DIRECTORY]
+                          withValue:[profile objectForKey:KEY_AWDS_TAB_OPTION]];
+    [self safelySetStringValue:[profile objectForKey:KEY_AWDS_TAB_DIRECTORY]
                             in:awdsTabDirectory];
 
     [self setAdvancedBookmarkMatrix:awdsPaneDirectoryType
-                          withValue:[bookmark objectForKey:KEY_AWDS_PANE_OPTION]];
-    [self safelySetStringValue:[bookmark objectForKey:KEY_AWDS_PANE_DIRECTORY]
+                          withValue:[profile objectForKey:KEY_AWDS_PANE_OPTION]];
+    [self safelySetStringValue:[profile objectForKey:KEY_AWDS_PANE_DIRECTORY]
                             in:awdsPaneDirectory];
 
 
@@ -1635,8 +1509,8 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 
 - (IBAction)closeAdvancedWorkingDirSheet:(id)sender
 {
-    Profile* bookmark = [dataSource bookmarkWithGuid:[bookmarksTableView selectedGuid]];
-    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
+    Profile* profile = [_profilesViewController selectedProfile];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:profile];
     [self setValueInBookmark:dict
           forAdvancedWorkingDirMatrix:awdsWindowDirectoryType
           key:KEY_AWDS_WIN_OPTION];
@@ -1652,7 +1526,7 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
           key:KEY_AWDS_PANE_OPTION];
     [dict setObject:[awdsPaneDirectory stringValue] forKey:KEY_AWDS_PANE_DIRECTORY];
 
-    [dataSource setBookmark:dict withGuid:[bookmark objectForKey:KEY_GUID]];
+    [dataSource setBookmark:dict withGuid:[profile objectForKey:KEY_GUID]];
     [self bookmarkSettingChanged:nil];
 
     [NSApp endSheet:advancedWorkingDirSheet_];
@@ -1739,7 +1613,7 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
                                           keyMappings:[bookmark objectForKey:KEY_KEYBOARD_MAP]] == KEY_ACTION_SEND_C_H_BACKSPACE);
 }
 
-- (void)_removeKeyMappingsReferringToBookmarkGuid:(NSString*)badRef
+- (void)removeKeyMappingsReferringToBookmarkGuid:(NSString*)badRef
 {
     for (NSString* guid in [[ProfileModel sharedInstance] guids]) {
         Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
@@ -2516,12 +2390,11 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 - (int)numberOfRowsInTableView: (NSTableView *)aTableView
 {
     if (aTableView == jobsTable_) {
-        NSString* guid = [bookmarksTableView selectedGuid];
-        if (!guid) {
+        Profile *profile = [_profilesViewController selectedProfile];
+        if (!profile) {
             return 0;
         }
-        Profile* bookmark = [dataSource bookmarkWithGuid:guid];
-        NSArray *jobNames = [bookmark objectForKey:KEY_JOBS];
+        NSArray *jobNames = profile[KEY_JOBS];
         return [jobNames count];
     }
     // We can only get here while loading the nib (on some machines, this function is called
@@ -2536,11 +2409,10 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
               row:(NSInteger)rowIndex
 {
     if (aTableView == jobsTable_) {
-        NSString* guid = [bookmarksTableView selectedGuid];
-        Profile* bookmark = [dataSource bookmarkWithGuid:guid];
-        NSMutableArray *jobs = [NSMutableArray arrayWithArray:[bookmark objectForKey:KEY_JOBS]];
+        Profile *profile = [_profilesViewController selectedProfile];
+        NSMutableArray *jobs = [NSMutableArray arrayWithArray:[profile objectForKey:KEY_JOBS]];
         [jobs replaceObjectAtIndex:rowIndex withObject:anObject];
-        [dataSource setObject:jobs forKey:KEY_JOBS inBookmark:bookmark];
+        [dataSource setObject:jobs forKey:KEY_JOBS inBookmark:profile];
     }
     [self bookmarkSettingChanged:nil];
 }
@@ -2549,9 +2421,8 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     objectValueForTableColumn:(NSTableColumn *)aTableColumn
                           row:(int)rowIndex {
     if (aTableView == jobsTable_) {
-        NSString* guid = [bookmarksTableView selectedGuid];
-        Profile* bookmark = [dataSource bookmarkWithGuid:guid];
-        return [[bookmark objectForKey:KEY_JOBS] objectAtIndex:rowIndex];
+        Profile *profile = [_profilesViewController selectedProfile];
+        return [profile[KEY_JOBS] objectAtIndex:rowIndex];
     }
     // Shouldn't get here but must return something to avoid a warning.
     return nil;
@@ -2572,27 +2443,8 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 
     [self showWindow:self];
     [[self window] setLevel:NSNormalWindowLevel];
-    NSString* guid = [bookmarksTableView selectedGuid];
-    [bookmarksTableView reloadData];
-    if ([[bookmarksTableView selectedGuids] count] == 1) {
-        Profile* dict = [dataSource bookmarkWithGuid:guid];
-        [bookmarksSettingsTabViewParent setHidden:NO];
-        [bookmarksPopup setEnabled:NO];
-        [self updateBookmarkFields:dict];
-    } else {
-        [bookmarksPopup setEnabled:YES];
-        [bookmarksSettingsTabViewParent setHidden:YES];
-        if ([[bookmarksTableView selectedGuids] count] == 0) {
-            [removeBookmarkButton setEnabled:NO];
-        } else {
-            [removeBookmarkButton setEnabled:[[bookmarksTableView selectedGuids] count] < [[bookmarksTableView dataSource] numberOfBookmarks]];
-        }
-        [self updateBookmarkFields:nil];
-    }
-
-    if (![bookmarksTableView selectedGuid] && [bookmarksTableView numberOfRows]) {
-        [bookmarksTableView selectRowIndex:0];
-    }
+    
+    [_profilesViewController selectFirstProfileIfNecessary];
 
     // Show the window.
     [[self window] makeKeyAndOrderFront:self];
@@ -2650,12 +2502,9 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 
 - (void)underlyingBookmarkDidChange
 {
-    NSString* guid = [bookmarksTableView selectedGuid];
-    if (guid) {
-        Profile* bookmark = [dataSource bookmarkWithGuid:guid];
-        if (bookmark) {
-            [self updateBookmarkFields:bookmark];
-        }
+    Profile *profile = [_profilesViewController selectedProfile];
+    if (profile) {
+        [self updateBookmarkFields:profile];
     }
 }
 
@@ -2716,18 +2565,9 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 // Update the values in form fields to reflect the bookmark's state
 - (void)updateBookmarkFields:(NSDictionary *)dict
 {
-    if ([dataSource numberOfBookmarks] < 2 || !dict) {
-        [removeBookmarkButton setEnabled:NO];
-    } else {
-        [removeBookmarkButton setEnabled:[[bookmarksTableView selectedGuids] count] < [dataSource numberOfBookmarks]];
-    }
-    if (!dict) {
-        [bookmarksSettingsTabViewParent setHidden:YES];
-        [bookmarksPopup setEnabled:NO];
+    [_profilesViewController updateSubviewsForProfile:dict];
+    if (_profilesViewController.tabView.isHidden) {
         return;
-    } else {
-        [bookmarksSettingsTabViewParent setHidden:NO];
-        [bookmarksPopup setEnabled:YES];
     }
 
     NSString* name;
@@ -2981,7 +2821,7 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     [idleCode setIntValue:[[dict objectForKey:KEY_IDLE_CODE] intValue]];
 
     // Epilogue
-    [bookmarksTableView reloadData];
+    [_profilesViewController reloadData];
     [copyTo reloadData];
 }
 
@@ -3057,95 +2897,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
         default:
             return YES;
     }
-}
-
-- (BOOL)confirmProfileDeletion:(NSArray *)guids {
-    NSMutableString *question = [NSMutableString stringWithString:@"Delete profile"];
-    if (guids.count > 1) {
-        [question appendString:@"s "];
-    } else {
-        [question appendString:@" "];
-    }
-    NSMutableArray *names = [NSMutableArray array];
-    for (NSString *guid in guids) {
-        Profile *profile = [dataSource bookmarkWithGuid:guid];
-        NSString *name = [profile objectForKey:KEY_NAME];
-        [names addObject:[NSString stringWithFormat:@"\"%@\"", name]];
-    }
-    [question appendString:[names componentsJoinedByString:@", "]];
-    [question appendString:@"?"];
-    static NSTimeInterval lastQuell;
-    NSTimeInterval now = [[NSDate date] timeIntervalSinceReferenceDate];
-    if (lastQuell && (now - lastQuell) < 600) {
-        return YES;
-    }
-
-    NSAlert *alert;
-    alert = [NSAlert alertWithMessageText:@"Confirm Deletion"
-                            defaultButton:@"Delete"
-                          alternateButton:@"Cancel"
-                              otherButton:nil
-                informativeTextWithFormat:@"%@", question];
-    [alert setShowsSuppressionButton:YES];
-    [[alert suppressionButton] setTitle:@"Suppress deletion confirmations temporarily."];
-    BOOL result = NO;
-    if ([alert runModal] == NSAlertDefaultReturn) {
-        result = YES;
-    }
-    if ([[alert suppressionButton] state] == NSOnState) {
-        lastQuell = now;
-    }
-    return result;
-}
-
-#pragma mark - ProfileListViewDelegate
-
-- (NSMenu*)profileTable:(id)profileTable menuForEvent:(NSEvent*)theEvent
-{
-    return nil;
-}
-
-- (void)profileTableFilterDidChange:(ProfileListView*)profileListView
-{
-    [addBookmarkButton setEnabled:![profileListView searchFieldHasText]];
-}
-
-- (void)profileTableSelectionWillChange:(id)profileTable
-{
-    if ([[bookmarksTableView selectedGuids] count] == 1) {
-        [self bookmarkSettingChanged:nil];
-    }
-}
-
-- (void)profileTableSelectionDidChange:(id)profileTable
-{
-    if ([[bookmarksTableView selectedGuids] count] != 1) {
-        [bookmarksSettingsTabViewParent setHidden:YES];
-        [bookmarksPopup setEnabled:NO];
-
-        if ([[bookmarksTableView selectedGuids] count] == 0) {
-            [removeBookmarkButton setEnabled:NO];
-        } else {
-            [removeBookmarkButton setEnabled:[[bookmarksTableView selectedGuids] count] < [[bookmarksTableView dataSource] numberOfBookmarks]];
-        }
-    } else {
-        [bookmarksSettingsTabViewParent setHidden:NO];
-        [bookmarksPopup setEnabled:YES];
-        [removeBookmarkButton setEnabled:NO];
-        if (profileTable == bookmarksTableView) {
-            NSString* guid = [bookmarksTableView selectedGuid];
-            triggerWindowController_.guid = guid;
-            smartSelectionWindowController_.guid = guid;
-            trouterPrefController_.guid = guid;
-            [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
-        }
-    }
-    [self setHaveJobsForCurrentBookmark:[self haveJobsForCurrentBookmark]];
-}
-
-- (void)profileTableRowSelected:(id)profileTable
-{
-    // Do nothing for double click
 }
 
 #pragma mark - NSTableViewDelegate
@@ -3245,12 +2996,11 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     if ([jobsTable_ selectedRow] < 0) {
         return NO;
     }
-    NSString* guid = [bookmarksTableView selectedGuid];
-    if (!guid) {
+    Profile *profile = [_profilesViewController selectedProfile];
+    if (!profile) {
         return NO;
     }
-    Profile* bookmark = [dataSource bookmarkWithGuid:guid];
-    NSArray *jobNames = [bookmark objectForKey:KEY_JOBS];
+    NSArray *jobNames = profile[KEY_JOBS];
     return [jobNames count] > 0;
 }
 
@@ -3262,20 +3012,18 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 #pragma mark - iTermKeyMappingViewControllerDelegate
 
 - (NSDictionary *)keyMappingDictionary:(iTermKeyMappingViewController *)viewController {
-    NSString* guid = [bookmarksTableView selectedGuid];
-    if (!guid) {
+    Profile *profile = [_profilesViewController selectedProfile];
+    if (!profile) {
         return nil;
     }
-    Profile* profile = [dataSource bookmarkWithGuid:guid];
     return [iTermKeyBindingMgr keyMappingsForProfile:profile];
 }
 
 - (NSArray *)keyMappingSortedKeys:(iTermKeyMappingViewController *)viewController {
-    NSString* guid = [bookmarksTableView selectedGuid];
-    if (!guid) {
+    Profile *profile = [_profilesViewController selectedProfile];
+    if (!profile) {
         return nil;
     }
-    Profile* profile = [dataSource bookmarkWithGuid:guid];
     return [iTermKeyBindingMgr sortedKeyCombinationsForProfile:profile];
 }
 
@@ -3285,9 +3033,7 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
           toAction:(int)action
          parameter:(NSString *)parameter
         isAddition:(BOOL)addition {
-    NSString* guid = [bookmarksTableView selectedGuid];
-    assert(guid);
-    Profile* profile = [dataSource bookmarkWithGuid:guid];
+    Profile *profile = [_profilesViewController selectedProfile];
     assert(profile);
     NSMutableDictionary *dict = [[profile mutableCopy] autorelease];
 
@@ -3303,7 +3049,7 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
                                     value:parameter
                                 createNew:addition
                                inBookmark:dict];
-    [dataSource setBookmark:dict withGuid:guid];
+    [dataSource setBookmark:dict withGuid:profile[KEY_GUID]];
     [self bookmarkSettingChanged:nil];
 }
 
@@ -3311,10 +3057,7 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
     removeKeyCombo:(NSString *)keyCombo {
 
-    NSString* guid = [bookmarksTableView selectedGuid];
-    assert(guid);
-
-    Profile* profile = [dataSource bookmarkWithGuid:guid];
+    Profile *profile = [_profilesViewController selectedProfile];
     assert(profile);
 
     NSMutableDictionary *dict = [[profile mutableCopy] autorelease];
@@ -3323,7 +3066,7 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
     assert(index != NSNotFound);
 
     [iTermKeyBindingMgr removeMappingAtIndex:index inBookmark:dict];
-    [dataSource setBookmark:dict withGuid:guid];
+    [dataSource setBookmark:dict withGuid:profile[KEY_GUID]];
     [self bookmarkSettingChanged:nil];
 }
 
@@ -3333,18 +3076,37 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
   loadPresetsNamed:(NSString *)presetName {
-    NSString* guid = [bookmarksTableView selectedGuid];
-    assert(guid);
-
-    Profile* profile = [dataSource bookmarkWithGuid:guid];
+    Profile *profile = [_profilesViewController selectedProfile];
     assert(profile);
 
     NSMutableDictionary *dict = [[profile mutableCopy] autorelease];
 
     [iTermKeyBindingMgr setKeyMappingsToPreset:presetName inBookmark:dict];
-    [dataSource setBookmark:dict withGuid:guid];
+    [dataSource setBookmark:dict withGuid:profile[KEY_GUID]];
 
     [self bookmarkSettingChanged:nil];
 }
 
+- (void)profileWithGuidWasSelected:(NSString *)guid {
+    if (guid) {
+        triggerWindowController_.guid = guid;
+        smartSelectionWindowController_.guid = guid;
+        trouterPrefController_.guid = guid;
+        [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
+        
+        [self setHaveJobsForCurrentBookmark:[self haveJobsForCurrentBookmark]];
+    }
+}
+
+- (ProfileModel *)profilePreferencesModel {
+    return dataSource;
+}
+
+- (void)makeProfileNameFirstResponder {
+    [_profilesViewController.tabView selectTabViewItem:bookmarkSettingsGeneralTab];
+    [[self window] makeFirstResponder:bookmarkName];
+    [bookmarkName selectText:self];
+}
+
 @end
+

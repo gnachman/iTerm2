@@ -26,7 +26,8 @@
 
 #define BMKEY_BOOKMARKS_ARRAY @"Bookmarks Array"
 
-typedef NSDictionary Profile;
+#define Profile NSDictionary
+
 typedef struct {
     SEL selector;                  // normal action
     SEL alternateSelector;         // opt+click

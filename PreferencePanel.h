@@ -37,6 +37,9 @@ extern NSString *const kRefreshTerminalNotification;
 extern NSString *const kUpdateLabelsNotification;
 extern NSString *const kKeyBindingsChangedNotification;
 
+// All profiles should be reloaded.
+extern NSString *const kReloadAllProfiles;
+
 #define OPT_NORMAL 0
 #define OPT_META   1
 #define OPT_ESC    2
@@ -99,7 +102,6 @@ typedef enum {
 - (IBAction)addJob:(id)sender;
 - (IBAction)removeJob:(id)sender;
 - (IBAction)bookmarkSettingChanged:(id)sender;
-- (IBAction)copyToProfile:(id)sender;
 - (IBAction)bookmarkUrlSchemeHandlerChanged:(id)sender;
 - (IBAction)showGlobalTabView:(id)sender;
 - (IBAction)showAppearanceTabView:(id)sender;
@@ -108,9 +110,6 @@ typedef enum {
 - (IBAction)showArrangementsTabView:(id)sender;
 - (IBAction)showMouseTabView:(id)sender;
 - (IBAction)selectLogDir:(id)sender;
-- (IBAction)toggleTags:(id)sender;
-- (IBAction)addBookmark:(id)sender;
-- (IBAction)removeBookmark:(id)sender;
 - (IBAction)duplicateBookmark:(id)sender;
 - (IBAction)setAsDefault:(id)sender;
 - (IBAction)openCopyBookmarks:(id)sender;
