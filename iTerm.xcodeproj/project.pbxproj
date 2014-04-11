@@ -803,6 +803,11 @@
 		A6E7139418F50762008D94DD /* ProfilePreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7139118F50762008D94DD /* ProfilePreferencesViewController.h */; };
 		A6E7139518F50762008D94DD /* ProfilePreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7139218F50762008D94DD /* ProfilePreferencesViewController.m */; };
 		A6E7139618F50762008D94DD /* ProfilePreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7139218F50762008D94DD /* ProfilePreferencesViewController.m */; };
+		A6E7139C18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7139918F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.h */; };
+		A6E7139D18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7139A18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.m */; };
+		A6E7139E18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7139A18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.m */; };
+		A6E7139F18F7B199008D94DD /* BulkCopyProfilePreferences.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6E7139B18F7B199008D94DD /* BulkCopyProfilePreferences.xib */; };
+		A6E713A018F7B199008D94DD /* BulkCopyProfilePreferences.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6E7139B18F7B199008D94DD /* BulkCopyProfilePreferences.xib */; };
 		A6E74748188C6344005355CF /* CommandHistoryEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E74746188C6344005355CF /* CommandHistoryEntry.h */; };
 		A6E74749188C6344005355CF /* CommandHistoryEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74747188C6344005355CF /* CommandHistoryEntry.m */; };
 		A6E7474A188C6344005355CF /* CommandHistoryEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74747188C6344005355CF /* CommandHistoryEntry.m */; };
@@ -1375,6 +1380,9 @@
 		A6E7138D18F26A91008D94DD /* AppearancePreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppearancePreferencesViewController.m; sourceTree = "<group>"; };
 		A6E7139118F50762008D94DD /* ProfilePreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilePreferencesViewController.h; sourceTree = "<group>"; };
 		A6E7139218F50762008D94DD /* ProfilePreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilePreferencesViewController.m; sourceTree = "<group>"; };
+		A6E7139918F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BulkCopyProfilePreferencesWindowController.h; sourceTree = "<group>"; };
+		A6E7139A18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BulkCopyProfilePreferencesWindowController.m; sourceTree = "<group>"; };
+		A6E7139B18F7B199008D94DD /* BulkCopyProfilePreferences.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = BulkCopyProfilePreferences.xib; sourceTree = "<group>"; };
 		A6E74746188C6344005355CF /* CommandHistoryEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandHistoryEntry.h; sourceTree = "<group>"; };
 		A6E74747188C6344005355CF /* CommandHistoryEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CommandHistoryEntry.m; sourceTree = "<group>"; };
 		A6E7474B188C6394005355CF /* CommandUse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandUse.h; sourceTree = "<group>"; };
@@ -1814,6 +1822,7 @@
 		0464AB22006CD2EC7F000001 /* Interfaces */ = {
 			isa = PBXGroup;
 			children = (
+				A6E7139B18F7B199008D94DD /* BulkCopyProfilePreferences.xib */,
 				FB094A14033D58AE01F955DB /* addressbook.png */,
 				1DE2154112821F1C004E3ADF /* Autocomplete.xib */,
 				FB094A16033D58B601F955DB /* close.png */,
@@ -1986,6 +1995,8 @@
 				1DFA9D6318F37160008ADC98 /* iTermEditKeyActionWindowController.xib */,
 				A6E7139118F50762008D94DD /* ProfilePreferencesViewController.h */,
 				A6E7139218F50762008D94DD /* ProfilePreferencesViewController.m */,
+				A6E7139918F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.h */,
+				A6E7139A18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.m */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -2643,6 +2654,7 @@
 				1D407A3E14BABE8700BD5035 /* PTYScrollView.h in Headers */,
 				1D407A3F14BABE8700BD5035 /* PTYSession.h in Headers */,
 				1D407A4014BABE8700BD5035 /* PTYTabView.h in Headers */,
+				A6E7139C18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.h in Headers */,
 				1D407A4114BABE8700BD5035 /* PTYTask.h in Headers */,
 				1D407A4214BABE8700BD5035 /* PTYTextView.h in Headers */,
 				A6E74748188C6344005355CF /* CommandHistoryEntry.h in Headers */,
@@ -2781,6 +2793,7 @@
 				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
 				1DC13ABE1886146B00034DAE /* mark_err.png in Resources */,
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
+				A6E713A018F7B199008D94DD /* BulkCopyProfilePreferences.xib in Resources */,
 				1DFA9D6D18F37AA5008ADC98 /* iTermKeyMapping.xib in Resources */,
 				1D81F0CC183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */,
 				1DC13AC01886146B00034DAE /* mark_err@2x.png in Resources */,
@@ -2854,6 +2867,7 @@
 				1D237D90131D8BEE004DD60C /* FindView.xib in Resources */,
 				1DC13ABF1886146B00034DAE /* mark_err@2x.png in Resources */,
 				1DA02CFB1327612600D7E7DB /* bell.png in Resources */,
+				A6E7139F18F7B199008D94DD /* BulkCopyProfilePreferences.xib in Resources */,
 				1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */,
 				1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */,
 				1D1158CE13444D29009B366F /* iTerm2 Help in Resources */,
@@ -3106,6 +3120,7 @@
 				A6B5134C18E779BB00D249A5 /* iTermPasteHelper.m in Sources */,
 				1D9A5594180FA87000B42CE9 /* PTYScrollView.m in Sources */,
 				1D9A5540180FA7F600B42CE9 /* ProfileModel.m in Sources */,
+				A6E7139E18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.m in Sources */,
 				1D9A5592180FA87000B42CE9 /* PTToolbarController.m in Sources */,
 				1D9A553E180FA7ED00B42CE9 /* PTYWindow.m in Sources */,
 				A68A30DF186D1429007F550F /* SCPPath.m in Sources */,
@@ -3208,6 +3223,7 @@
 				1D5FDDBD1208E93600C46BA3 /* PSMOverflowPopUpButton.m in Sources */,
 				A6CFDAD8185D53C2005DC94B /* AsyncHostLookupController.m in Sources */,
 				1D5FDDBE1208E93600C46BA3 /* PSMProgressIndicator.m in Sources */,
+				A6E7139D18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.m in Sources */,
 				1D5FDDBF1208E93600C46BA3 /* PSMRolloverButton.m in Sources */,
 				A68A30DE186D1429007F550F /* SCPPath.m in Sources */,
 				1D5FDDC01208E93600C46BA3 /* PSMTabBarCell.m in Sources */,

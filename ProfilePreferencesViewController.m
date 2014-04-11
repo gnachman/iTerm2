@@ -7,6 +7,7 @@
 //
 
 #import "ProfilePreferencesViewController.h"
+#import "BulkCopyProfilePreferencesWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermController.h"
 #import "iTermWarning.h"
@@ -281,6 +282,19 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     }
 }
 
+- (IBAction)openCopyBookmarks:(id)sender
+{
+    Profile *profile = [self selectedProfile];
+    BulkCopyProfilePreferencesWindowController *bulkCopyController =
+        [[BulkCopyProfilePreferencesWindowController alloc] init];
+    bulkCopyController.sourceGuid = profile[KEY_GUID];
+    [NSApp beginSheet:bulkCopyController.window
+       modalForWindow:self.view.window
+        modalDelegate:self
+       didEndSelector:@selector(bulkCopyControllerCloseSheet:returnCode:contextInfo:)
+          contextInfo:bulkCopyController];
+}
+
 #pragma mark - Notifications
 
 - (void)refreshProfileTable {
@@ -291,6 +305,15 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     Profile *profile = [self selectedProfile];
     [_delegate updateBookmarkFields:profile];
 
+}
+
+#pragma mark - Sheet
+
+- (void)bulkCopyControllerCloseSheet:(NSWindow *)sheet
+                          returnCode:(int)returnCode
+                         contextInfo:(BulkCopyProfilePreferencesWindowController *)bulkCopyController {
+    [sheet close];
+    [bulkCopyController autorelease];
 }
 
 @end

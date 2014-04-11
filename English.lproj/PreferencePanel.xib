@@ -74,23 +74,12 @@
                 <outlet property="bookmarkUrlSchemesLabel" destination="5035" id="5046"/>
                 <outlet property="bookmarksTabViewItem" destination="1945" id="2863"/>
                 <outlet property="bookmarksToolbarItem" destination="5886" id="6039"/>
-                <outlet property="bulkCopyLabel" destination="3519" id="3552"/>
                 <outlet property="changeProfileButton" destination="5768" id="5770"/>
                 <outlet property="characterEncoding" destination="2390" id="3148"/>
                 <outlet property="checkColorInvertedCursor" destination="4889" id="4893"/>
                 <outlet property="closeSessionsOnEnd" destination="5681" id="5737"/>
                 <outlet property="columnsField" destination="4911" id="4959"/>
                 <outlet property="columnsLabel" destination="4912" id="4961"/>
-                <outlet property="copyAdvanced" destination="5833" id="5836"/>
-                <outlet property="copyButton" destination="3537" id="3541"/>
-                <outlet property="copyColors" destination="3525" id="3542"/>
-                <outlet property="copyDisplay" destination="3527" id="3543"/>
-                <outlet property="copyKeyboard" destination="3531" id="3547"/>
-                <outlet property="copyPanel" destination="3517" id="3548"/>
-                <outlet property="copySession" destination="5711" id="5714"/>
-                <outlet property="copyTerminal" destination="3529" id="3546"/>
-                <outlet property="copyTo" destination="3535" id="3545"/>
-                <outlet property="copyWindow" destination="5014" id="5016"/>
                 <outlet property="cursorColor" destination="2280" id="3101"/>
                 <outlet property="cursorColorLabel" destination="2283" id="4907"/>
                 <outlet property="cursorTextColor" destination="2278" id="3102"/>
@@ -3592,7 +3581,7 @@ Gw
                                         <popUpButton id="3230">
                                             <rect key="frame" x="98" y="0.0" width="157" height="24"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <popUpButtonCell key="cell" type="square" title="Other Actions..." bezelStyle="shadowlessSquare" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="3235" id="3231">
+                                            <popUpButtonCell key="cell" type="square" title="Other Actions..." bezelStyle="shadowlessSquare" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="3516" id="3231">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                 <font key="font" metaFont="menu"/>
                                                 <menu key="menu" title="OtherViews" id="3232">
@@ -3612,7 +3601,7 @@ Gw
                                                         <menuItem title="Bulk Copy from Selected Profile..." id="3516">
                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                             <connections>
-                                                                <action selector="openCopyBookmarks:" target="-2" id="3551"/>
+                                                                <action selector="openCopyBookmarks:" target="HVI-63-mNz" id="y0M-e8-fea"/>
                                                             </connections>
                                                         </menuItem>
                                                     </items>
@@ -4592,150 +4581,6 @@ Gw
                 </textField>
             </subviews>
         </customView>
-        <window title="Copy Bookmark Settings" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hidesOnDeactivate="YES" oneShot="NO" showsToolbarButton="NO" visibleAtLaunch="NO" animationBehavior="default" id="3517" customClass="NSPanel">
-            <windowStyleMask key="styleMask" titled="YES" utility="YES" documentModal="YES"/>
-            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="162" y="79" width="560" height="400"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
-            <view key="contentView" id="3518">
-                <rect key="frame" x="0.0" y="0.0" width="560" height="400"/>
-                <autoresizingMask key="autoresizingMask"/>
-                <subviews>
-                    <textField verticalHuggingPriority="750" id="3519">
-                        <rect key="frame" x="17" y="364" width="438" height="17"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="xxx" id="3520">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <textField verticalHuggingPriority="750" id="3523">
-                        <rect key="frame" x="17" y="305" width="200" height="17"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="To these profiles:" id="3524">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <button id="3525">
-                        <rect key="frame" x="30" y="340" width="63" height="18"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="check" title="Colors" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3526">
-                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <connections>
-                            <outlet property="nextKeyView" destination="3527" id="5168"/>
-                        </connections>
-                    </button>
-                    <button id="3527">
-                        <rect key="frame" x="97" y="340" width="51" height="18"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="check" title="Text" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3528">
-                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <connections>
-                            <outlet property="nextKeyView" destination="5014" id="5169"/>
-                        </connections>
-                    </button>
-                    <button id="5014">
-                        <rect key="frame" x="154" y="340" width="72" height="18"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="check" title="Window" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5015">
-                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <connections>
-                            <outlet property="nextKeyView" destination="3529" id="5170"/>
-                        </connections>
-                    </button>
-                    <button id="3529">
-                        <rect key="frame" x="234" y="340" width="78" height="18"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="check" title="Terminal" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3530">
-                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <connections>
-                            <outlet property="nextKeyView" destination="3531" id="5171"/>
-                        </connections>
-                    </button>
-                    <button id="3531">
-                        <rect key="frame" x="321" y="340" width="57" height="18"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="check" title="Keys" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3532">
-                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <connections>
-                            <outlet property="nextKeyView" destination="3535" id="5172"/>
-                        </connections>
-                    </button>
-                    <button id="5711">
-                        <rect key="frame" x="382" y="340" width="72" height="18"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="check" title="Session" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5712">
-                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <connections>
-                            <outlet property="nextKeyView" destination="3535" id="5713"/>
-                        </connections>
-                    </button>
-                    <button id="5833">
-                        <rect key="frame" x="458" y="340" width="84" height="18"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="check" title="Advanced" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5834">
-                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <connections>
-                            <outlet property="nextKeyView" destination="3535" id="5835"/>
-                        </connections>
-                    </button>
-                    <customView autoresizesSubviews="NO" id="3535" customClass="ProfileListView">
-                        <rect key="frame" x="32" y="62" width="508" height="235"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <connections>
-                            <outlet property="delegate_" destination="-2" id="3536"/>
-                            <outlet property="nextKeyView" destination="3539" id="5173"/>
-                        </connections>
-                    </customView>
-                    <button verticalHuggingPriority="750" id="3537">
-                        <rect key="frame" x="450" y="14" width="96" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="push" title="Copy" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3538">
-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
-                            <string key="keyEquivalent" base64-UTF8="YES">
-DQ
-</string>
-                        </buttonCell>
-                        <connections>
-                            <action selector="copyBookmarks:" target="-2" id="3549"/>
-                        </connections>
-                    </button>
-                    <button verticalHuggingPriority="750" id="3539">
-                        <rect key="frame" x="354" y="14" width="96" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3540">
-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
-                            <string key="keyEquivalent" base64-UTF8="YES">
-Gw
-</string>
-                        </buttonCell>
-                        <connections>
-                            <action selector="cancelCopyBookmarks:" target="-2" id="3550"/>
-                            <outlet property="nextKeyView" destination="3537" id="5174"/>
-                        </connections>
-                    </button>
-                </subviews>
-            </view>
-        </window>
         <customObject id="5572" customClass="WindowArrangements">
             <connections>
                 <outlet property="defaultButton_" destination="5585" id="5590"/>

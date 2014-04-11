@@ -36,6 +36,7 @@
 extern NSString *const kRefreshTerminalNotification;
 extern NSString *const kUpdateLabelsNotification;
 extern NSString *const kKeyBindingsChangedNotification;
+extern NSString *const kPreferencePanelDidUpdateProfileFields;
 
 // All profiles should be reloaded.
 extern NSString *const kReloadAllProfiles;
@@ -58,16 +59,6 @@ extern NSString *const kReloadAllProfiles;
 @class TrouterPrefsController;
 
 void LoadPrefsFromCustomFolder(void);
-
-typedef enum {
-    BulkCopyColors,
-    BulkCopyDisplay,
-    BulkCopyWindow,
-    BulkCopyTerminal,
-    BulkCopyKeyboard,
-    BulkCopySession,
-    BulkCopyAdvanced,
-} BulkCopySettings;
 
 @interface PreferencePanel : NSWindowController <
     ProfileListViewDelegate,
@@ -111,9 +102,6 @@ typedef enum {
 - (IBAction)selectLogDir:(id)sender;
 - (IBAction)duplicateBookmark:(id)sender;
 - (IBAction)setAsDefault:(id)sender;
-- (IBAction)openCopyBookmarks:(id)sender;
-- (IBAction)copyBookmarks:(id)sender;
-- (IBAction)cancelCopyBookmarks:(id)sender;
 
 - (void)loadUrlSchemeHandlers;
 - (WindowArrangements *)arrangements;

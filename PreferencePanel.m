@@ -62,6 +62,7 @@ NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotification";
 NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
+NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUpdateProfileFields";
 
 @interface PreferencePanel () <iTermKeyMappingViewControllerDelegate>
 @property(nonatomic, copy) NSString *currentProfileGuid;
@@ -273,19 +274,6 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
     IBOutlet NSButton* removeJobButton_;
     IBOutlet NSMatrix* promptBeforeClosing_;
 
-    // Copy Bookmark Settings...
-    IBOutlet NSTextField* bulkCopyLabel;
-    IBOutlet NSPanel* copyPanel;
-    IBOutlet NSButton* copyColors;
-    IBOutlet NSButton* copyDisplay;
-    IBOutlet NSButton* copyTerminal;
-    IBOutlet NSButton* copyWindow;
-    IBOutlet NSButton* copyKeyboard;
-    IBOutlet NSButton* copySession;
-    IBOutlet NSButton* copyAdvanced;
-    IBOutlet ProfileListView* copyTo;
-    IBOutlet NSButton* copyButton;
-
     // Keyboard ------------------------------
     IBOutlet NSButton* deleteSendsCtrlHButton;
     IBOutlet NSButton* applicationKeypadAllowed;
@@ -382,8 +370,6 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
         [[characterEncoding lastItem] setTag:[anEncoding unsignedIntValue]];
     }
     [self setScreens];
-
-    [copyTo allowMultipleSelections];
 
     // Add presets to preset color selection.
     [self rebuildColorPresetsMenu];
@@ -1099,69 +1085,6 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
     [_profilesViewController addProfile:newDict];
 }
 
-- (IBAction)openCopyBookmarks:(id)sender
-{
-    Profile *profile = [_profilesViewController selectedProfile];
-    [bulkCopyLabel setStringValue:[NSString stringWithFormat:
-                                   @"Copy these settings from profile \"%@\":",
-                                   profile[KEY_NAME]]];
-    [NSApp beginSheet:copyPanel
-       modalForWindow:[self window]
-        modalDelegate:self
-       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
-          contextInfo:nil];
-}
-
-- (IBAction)copyBookmarks:(id)sender
-{
-    Profile *profile = [_profilesViewController selectedProfile];
-    NSString* srcGuid = profile[KEY_GUID];
-    if (!srcGuid) {
-        NSBeep();
-        return;
-    }
-
-    NSSet* destGuids = [copyTo selectedGuids];
-    for (NSString* destGuid in destGuids) {
-        if ([destGuid isEqualToString:srcGuid]) {
-            continue;
-        }
-
-        if (![dataSource bookmarkWithGuid:destGuid]) {
-            NSLog(@"Selected bookmark %@ doesn't exist", destGuid);
-            continue;
-        }
-
-        if ([copyColors state] == NSOnState) {
-            [self copyAttributes:BulkCopyColors fromBookmark:srcGuid toBookmark:destGuid];
-        }
-        if ([copyDisplay state] == NSOnState) {
-            [self copyAttributes:BulkCopyDisplay fromBookmark:srcGuid toBookmark:destGuid];
-        }
-        if ([copyWindow state] == NSOnState) {
-            [self copyAttributes:BulkCopyWindow fromBookmark:srcGuid toBookmark:destGuid];
-        }
-        if ([copyTerminal state] == NSOnState) {
-            [self copyAttributes:BulkCopyTerminal fromBookmark:srcGuid toBookmark:destGuid];
-        }
-        if ([copyKeyboard state] == NSOnState) {
-            [self copyAttributes:BulkCopyKeyboard fromBookmark:srcGuid toBookmark:destGuid];
-        }
-        if ([copySession state] == NSOnState) {
-            [self copyAttributes:BulkCopySession fromBookmark:srcGuid toBookmark:destGuid];
-        }
-        if ([copyAdvanced state] == NSOnState) {
-            [self copyAttributes:BulkCopyAdvanced fromBookmark:srcGuid toBookmark:destGuid];
-        }
-    }
-    [NSApp endSheet:copyPanel];
-}
-
-- (IBAction)cancelCopyBookmarks:(id)sender
-{
-    [NSApp endSheet:copyPanel];
-}
-
 #pragma mark - Color Presets
 
 - (void)_addColorPresetsInDict:(NSDictionary*)presetsDict toMenu:(NSMenu*)theMenu
@@ -1735,158 +1658,6 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
     val = MAX(val, range.location);
     val = MIN(val, range.location + range.length);
     return val;
-}
-
-- (void)copyAttributes:(BulkCopySettings)attributes fromBookmark:(NSString*)guid toBookmark:(NSString*)destGuid
-{
-    Profile* dest = [dataSource bookmarkWithGuid:destGuid];
-    Profile* src = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-    NSMutableDictionary* newDict = [[[NSMutableDictionary alloc] initWithDictionary:dest] autorelease];
-    NSString** keys = NULL;
-    NSString* colorsKeys[] = {
-        KEY_FOREGROUND_COLOR,
-        KEY_BACKGROUND_COLOR,
-        KEY_BOLD_COLOR,
-        KEY_SELECTION_COLOR,
-        KEY_SELECTED_TEXT_COLOR,
-        KEY_CURSOR_COLOR,
-        KEY_CURSOR_TEXT_COLOR,
-        KEY_ANSI_0_COLOR,
-        KEY_ANSI_1_COLOR,
-        KEY_ANSI_2_COLOR,
-        KEY_ANSI_3_COLOR,
-        KEY_ANSI_4_COLOR,
-        KEY_ANSI_5_COLOR,
-        KEY_ANSI_6_COLOR,
-        KEY_ANSI_7_COLOR,
-        KEY_ANSI_8_COLOR,
-        KEY_ANSI_9_COLOR,
-        KEY_ANSI_10_COLOR,
-        KEY_ANSI_11_COLOR,
-        KEY_ANSI_12_COLOR,
-        KEY_ANSI_13_COLOR,
-        KEY_ANSI_14_COLOR,
-        KEY_ANSI_15_COLOR,
-        KEY_SMART_CURSOR_COLOR,
-        KEY_MINIMUM_CONTRAST,
-        nil
-    };
-    NSString* displayKeys[] = {
-        KEY_NORMAL_FONT,
-        KEY_NON_ASCII_FONT,
-        KEY_HORIZONTAL_SPACING,
-        KEY_VERTICAL_SPACING,
-        KEY_BLINKING_CURSOR,
-        KEY_BLINK_ALLOWED,
-        KEY_CURSOR_TYPE,
-        KEY_USE_BOLD_FONT,
-        KEY_USE_BRIGHT_BOLD,
-        KEY_USE_ITALIC_FONT,
-        KEY_ASCII_ANTI_ALIASED,
-        KEY_NONASCII_ANTI_ALIASED,
-        KEY_USE_NONASCII_FONT,
-        KEY_ANTI_ALIASING,
-        KEY_AMBIGUOUS_DOUBLE_WIDTH,
-        nil
-    };
-    NSString* windowKeys[] = {
-        KEY_ROWS,
-        KEY_COLUMNS,
-        KEY_WINDOW_TYPE,
-        KEY_SCREEN,
-        KEY_SPACE,
-        KEY_TRANSPARENCY,
-        KEY_BLEND,
-        KEY_BLUR_RADIUS,
-        KEY_BLUR,
-        KEY_BACKGROUND_IMAGE_LOCATION,
-        KEY_BACKGROUND_IMAGE_TILED,
-        KEY_SYNC_TITLE,
-        KEY_DISABLE_WINDOW_RESIZING,
-        KEY_PREVENT_TAB,
-        KEY_HIDE_AFTER_OPENING,
-        nil
-    };
-    NSString* terminalKeys[] = {
-        KEY_XTERM_MOUSE_REPORTING,
-        KEY_DISABLE_SMCUP_RMCUP,
-        KEY_ALLOW_TITLE_REPORTING,
-        KEY_ALLOW_TITLE_SETTING,
-        KEY_DISABLE_PRINTING,
-        KEY_CHARACTER_ENCODING,
-        KEY_SCROLLBACK_LINES,
-        KEY_SCROLLBACK_WITH_STATUS_BAR,
-        KEY_SCROLLBACK_IN_ALTERNATE_SCREEN,
-        KEY_UNLIMITED_SCROLLBACK,
-        KEY_TERMINAL_TYPE,
-        KEY_USE_CANONICAL_PARSER,
-        KEY_SILENCE_BELL,
-        KEY_VISUAL_BELL,
-        KEY_FLASHING_BELL,
-        KEY_BOOKMARK_GROWL_NOTIFICATIONS,
-        KEY_SET_LOCALE_VARS,
-        nil
-    };
-    NSString *sessionKeys[] = {
-        KEY_CLOSE_SESSIONS_ON_END,
-        KEY_PROMPT_CLOSE,
-        KEY_JOBS,
-        KEY_AUTOLOG,
-        KEY_LOGDIR,
-        KEY_SEND_CODE_WHEN_IDLE,
-        KEY_IDLE_CODE,
-        nil
-    };
-
-    NSString* keyboardKeys[] = {
-        KEY_KEYBOARD_MAP,
-        KEY_OPTION_KEY_SENDS,
-        KEY_RIGHT_OPTION_KEY_SENDS,
-        KEY_APPLICATION_KEYPAD_ALLOWED,
-        nil
-    };
-    NSString *advancedKeys[] = {
-        KEY_TRIGGERS,
-        KEY_SMART_SELECTION_RULES,
-        nil
-    };
-    switch (attributes) {
-        case BulkCopyColors:
-            keys = colorsKeys;
-            break;
-        case BulkCopyDisplay:
-            keys = displayKeys;
-            break;
-        case BulkCopyWindow:
-            keys = windowKeys;
-            break;
-        case BulkCopyTerminal:
-            keys = terminalKeys;
-            break;
-        case BulkCopyKeyboard:
-            keys = keyboardKeys;
-            break;
-        case BulkCopySession:
-            keys = sessionKeys;
-            break;
-        case BulkCopyAdvanced:
-            keys = advancedKeys;
-            break;
-        default:
-            NSLog(@"Unexpected copy attribute %d", (int)attributes);
-            return;
-    }
-
-    for (int i = 0; keys[i]; ++i) {
-        id srcValue = [src objectForKey:keys[i]];
-        if (srcValue) {
-            [newDict setObject:srcValue forKey:keys[i]];
-        } else {
-            [newDict removeObjectForKey:keys[i]];
-        }
-    }
-
-    [dataSource setBookmark:newDict withGuid:[dest objectForKey:KEY_GUID]];
 }
 
 #pragma mark - Hotkey Window
@@ -2759,7 +2530,10 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
 
     // Epilogue
     [_profilesViewController reloadData];
-    [copyTo reloadData];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelDidUpdateProfileFields
+                                                        object:nil
+                                                      userInfo:nil];
 }
 
 #pragma mark - NSFontPanel and NSFontManager
