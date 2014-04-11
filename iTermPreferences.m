@@ -313,4 +313,35 @@ static NSMutableDictionary *gObservers;
     return wordChars ?: @"";
 }
 
+#pragma mark - Migration
+
++ (BOOL)migratePreferences
+{
+    NSString *prefDir = [[NSHomeDirectory() stringByAppendingPathComponent:@"Library"]
+                             stringByAppendingPathComponent:@"Preferences"];
+    
+    NSString *reallyOldPrefs = [prefDir stringByAppendingPathComponent:@"iTerm.plist"];
+    NSString *somewhatOldPrefs = [prefDir stringByAppendingPathComponent:@"net.sourceforge.iTerm.plist"];
+    NSString *newPrefs = [prefDir stringByAppendingPathComponent:@"com.googlecode.iterm2.plist"];
+    
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    
+    if ([fileManager fileExistsAtPath:newPrefs]) {
+        return NO;
+    }
+    NSString* source;
+    if ([fileManager fileExistsAtPath:somewhatOldPrefs]) {
+        source = somewhatOldPrefs;
+    } else if ([fileManager fileExistsAtPath:reallyOldPrefs]) {
+        source = reallyOldPrefs;
+    } else {
+        return NO;
+    }
+    
+    NSLog(@"Preference file migrated");
+    [fileManager copyItemAtPath:source toPath:newPrefs error:nil];
+    [NSUserDefaults resetStandardUserDefaults];
+    return (YES);
+}
+
 @end

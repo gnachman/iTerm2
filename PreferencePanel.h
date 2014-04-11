@@ -82,7 +82,6 @@ typedef enum {
 
 + (PreferencePanel*)sharedInstance;
 + (PreferencePanel*)sessionsInstance;
-+ (BOOL)migratePreferences;
 
 - (void)openToBookmark:(NSString*)guid;
 

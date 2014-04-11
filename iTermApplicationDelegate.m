@@ -101,7 +101,7 @@ static BOOL hasBecomeActive = NO;
     [self buildScriptMenu:nil];
 
     // read preferences
-    [PreferencePanel migratePreferences];
+    [iTermPreferences migratePreferences];
     [PreferencePanel sharedInstance];
     
     // This sets up bonjour and migrates bookmarks if needed.
