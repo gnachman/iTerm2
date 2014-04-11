@@ -42,7 +42,6 @@
 
 // TODO: Nuke these methods
 - (void)updateProfileInModel:(Profile *)modifiedProfile;
-- (void)addProfile:(Profile *)newProfile;
 - (void)updateSubviewsForProfile:(Profile *)profile;
 - (void)reloadData;
 

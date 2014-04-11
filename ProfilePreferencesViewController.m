@@ -142,12 +142,6 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [_profilesListView reloadData];
 }
 
-- (void)addProfile:(Profile *)newProfile {
-    [[_delegate profilePreferencesModel] addBookmark:newProfile];
-    [_profilesListView reloadData];
-    [_profilesListView selectRowByGuid:newProfile[KEY_GUID]];
-}
-
 #pragma mark - ProfileListViewDelegate
 
 - (void)profileTableSelectionDidChange:(id)profileTable {
@@ -220,10 +214,9 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     }
 }
 
-// This has a silly name because there's a temporary hack called addProfile:
-- (IBAction)addProfileAction:(id)sender {
+- (IBAction)addProfile:(id)sender {
     NSMutableDictionary* newDict = [[[NSMutableDictionary alloc] init] autorelease];
-    // Copy the default bookmark's settings in
+    // Copy the default profile's settings in
     Profile* prototype = [[_delegate profilePreferencesModel] defaultBookmark];
     if (!prototype) {
         [ITAddressBookMgr setDefaultsInBookmark:newDict];
@@ -295,6 +288,27 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
        didEndSelector:@selector(bulkCopyControllerCloseSheet:returnCode:contextInfo:)
           contextInfo:bulkCopyController];
 }
+
+- (IBAction)duplicateProfile:(id)sender
+{
+    Profile* profile = [self selectedProfile];
+    if (!profile) {
+        NSBeep();
+        return;
+    }
+    NSMutableDictionary *newProfile = [NSMutableDictionary dictionaryWithDictionary:profile];
+    NSString* newName = [NSString stringWithFormat:@"Copy of %@", newProfile[KEY_NAME]];
+    
+    [newProfile setObject:newName forKey:KEY_NAME];
+    [newProfile setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
+    [newProfile setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
+    [newProfile setObject:@"" forKey:KEY_SHORTCUT];
+
+    [[_delegate profilePreferencesModel] addBookmark:newProfile];
+    [_profilesListView reloadData];
+    [_profilesListView selectRowByGuid:newProfile[KEY_GUID]];
+}
+
 
 #pragma mark - Notifications
 

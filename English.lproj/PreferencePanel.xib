@@ -3553,7 +3553,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="addProfileAction:" target="HVI-63-mNz" id="gdb-LL-PbF"/>
+                                                <action selector="addProfile:" target="HVI-63-mNz" id="kis-wb-Z29"/>
                                             </connections>
                                         </button>
                                         <button id="nFj-0n-SWO">
@@ -3581,7 +3581,7 @@ Gw
                                         <popUpButton id="3230">
                                             <rect key="frame" x="98" y="0.0" width="157" height="24"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <popUpButtonCell key="cell" type="square" title="Other Actions..." bezelStyle="shadowlessSquare" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="3516" id="3231">
+                                            <popUpButtonCell key="cell" type="square" title="Other Actions..." bezelStyle="shadowlessSquare" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="3231">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                 <font key="font" metaFont="menu"/>
                                                 <menu key="menu" title="OtherViews" id="3232">
@@ -3589,7 +3589,7 @@ Gw
                                                         <menuItem title="Other Actions..." state="on" image="NSActionTemplate" hidden="YES" id="3235"/>
                                                         <menuItem title="Duplicate Profile" keyEquivalent="=" id="3233">
                                                             <connections>
-                                                                <action selector="duplicateBookmark:" target="-2" id="3238"/>
+                                                                <action selector="duplicateProfile:" target="HVI-63-mNz" id="lcS-Op-ONj"/>
                                                             </connections>
                                                         </menuItem>
                                                         <menuItem title="Set as Default" id="3318">

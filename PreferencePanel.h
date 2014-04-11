@@ -100,7 +100,6 @@ void LoadPrefsFromCustomFolder(void);
 - (IBAction)showArrangementsTabView:(id)sender;
 - (IBAction)showMouseTabView:(id)sender;
 - (IBAction)selectLogDir:(id)sender;
-- (IBAction)duplicateBookmark:(id)sender;
 - (IBAction)setAsDefault:(id)sender;
 
 - (void)loadUrlSchemeHandlers;

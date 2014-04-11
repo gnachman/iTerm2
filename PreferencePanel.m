@@ -1068,23 +1068,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [dataSource setDefaultByGuid:guid];
 }
 
-- (IBAction)duplicateBookmark:(id)sender
-{
-    Profile* profile = [_profilesViewController selectedProfile];
-    if (!profile) {
-        NSBeep();
-        return;
-    }
-    NSMutableDictionary *newDict = [NSMutableDictionary dictionaryWithDictionary:profile];
-    NSString* newName = [NSString stringWithFormat:@"Copy of %@", [newDict objectForKey:KEY_NAME]];
-
-    [newDict setObject:newName forKey:KEY_NAME];
-    [newDict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-    [newDict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
-    [newDict setObject:@"" forKey:KEY_SHORTCUT];
-    [_profilesViewController addProfile:newDict];
-}
-
 #pragma mark - Color Presets
 
 - (void)_addColorPresetsInDict:(NSDictionary*)presetsDict toMenu:(NSMenu*)theMenu
