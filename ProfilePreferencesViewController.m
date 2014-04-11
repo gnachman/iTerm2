@@ -61,6 +61,29 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [super dealloc];
 }
 
+#pragma mark - NSViewController
+
+- (void)awakeFromNib {
+    [_profilesListView setUnderlyingDatasource:[_delegate profilePreferencesModel]];
+    
+    Profile *profile = [self selectedProfile];
+    if (profile) {
+        _tabView.hidden = NO;
+        [_otherActionsPopup setEnabled:NO];
+    } else {
+        [_otherActionsPopup setEnabled:YES];
+        _tabView.hidden = YES;
+        [_removeBookmarkButton setEnabled:NO];
+    }
+    [_delegate updateBookmarkFields:profile];
+    
+    if (!profile && [_profilesListView numberOfRows]) {
+        [_profilesListView selectRowIndex:0];
+    }
+}
+
+#pragma mark - APIs
+
 - (void)layoutSubviewsForSingleBookmarkMode {
     _profilesListView.hidden = YES;
     _otherActionsPopup.hidden = YES;
@@ -94,6 +117,8 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     return _tabView.frame.size;
 }
 
+#pragma mark - Shims that will go away when migration is complete
+
 - (void)updateProfileInModel:(Profile *)modifiedProfile {
     [[_delegate profilePreferencesModel] setBookmark:modifiedProfile
                                             withGuid:modifiedProfile[KEY_GUID]];
@@ -119,25 +144,6 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [[_delegate profilePreferencesModel] addBookmark:newProfile];
     [_profilesListView reloadData];
     [_profilesListView selectRowByGuid:newProfile[KEY_GUID]];
-}
-
-- (void)awakeFromNib {
-    [_profilesListView setUnderlyingDatasource:[_delegate profilePreferencesModel]];
-
-    Profile *profile = [self selectedProfile];
-    if (profile) {
-        _tabView.hidden = NO;
-        [_otherActionsPopup setEnabled:NO];
-    } else {
-        [_otherActionsPopup setEnabled:YES];
-        _tabView.hidden = YES;
-        [_removeBookmarkButton setEnabled:NO];
-    }
-    [_delegate updateBookmarkFields:profile];
-    
-    if (!profile && [_profilesListView numberOfRows]) {
-        [_profilesListView selectRowIndex:0];
-    }
 }
 
 #pragma mark - ProfileListViewDelegate
