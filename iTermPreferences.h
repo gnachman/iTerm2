@@ -106,6 +106,10 @@ extern NSString *const kPreferenceKeyThreeFingerEmulatesMiddle;
 extern NSString *const kPreferenceKeyFocusFollowsMouse;
 extern NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines;
 
+// Not in prefs
+// Stores the last CFBundleVersion run.
+extern NSString *const kPreferenceKeyAppVersion;
+
 @interface iTermPreferences : NSObject
 
 + (BOOL)boolForKey:(NSString *)key;

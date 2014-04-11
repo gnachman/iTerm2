@@ -102,7 +102,11 @@ static BOOL hasBecomeActive = NO;
 
     // read preferences
     [iTermPreferences migratePreferences];
-    [PreferencePanel sharedInstance];
+
+    // Make sure profiles are loaded.
+    [ITAddressBookMgr sharedInstance];
+    
+    [[PreferencePanel sharedInstance] loadUrlSchemeHandlers];
     
     // This sets up bonjour and migrates bookmarks if needed.
     [ITAddressBookMgr sharedInstance];

@@ -84,9 +84,27 @@ NSString *const kPreferenceKeyOptionClickMovesCursor = @"OptionClickMovesCursor"
 NSString *const kPreferenceKeyThreeFingerEmulatesMiddle = @"ThreeFingerEmulates";
 NSString *const kPreferenceKeyFocusFollowsMouse = @"FocusFollowsMouse";
 NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines = @"TripleClickSelectsFullWrappedLines";
+
+NSString *const kPreferenceKeyAppVersion = @"iTerm Version";
+
 static NSMutableDictionary *gObservers;
 
 @implementation iTermPreferences
+
++ (void)load {
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+
+    // Force antialiasing to be allowed on small font sizes
+    [userDefaults setInteger:1 forKey:@"AppleAntiAliasingThreshold"];
+    [userDefaults setInteger:1 forKey:@"AppleSmoothFixedFontsSizeThreshold"];
+    
+    // Turn off scroll animations because they screw up the terminal scrolling.
+    [userDefaults setInteger:0 forKey:@"AppleScrollAnimationEnabled"];
+
+    // Store the current app version in prefs
+    NSDictionary *infoDictionary = [[NSBundle bundleForClass:[self class]] infoDictionary];
+    [userDefaults setObject:infoDictionary[@"CFBundleVersion"] forKey:kPreferenceKeyAppVersion];
+}
 
 #pragma mark - Default values
 

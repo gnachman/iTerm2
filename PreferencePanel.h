@@ -115,6 +115,7 @@ typedef enum {
 - (IBAction)copyBookmarks:(id)sender;
 - (IBAction)cancelCopyBookmarks:(id)sender;
 
+- (void)loadUrlSchemeHandlers;
 - (WindowArrangements *)arrangements;
 - (void)savePreferences;
 - (void)run;

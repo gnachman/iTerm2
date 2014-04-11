@@ -294,8 +294,7 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
     BOOL _haveAwoken;  // Can kill this when profiles stuff is migrated
 }
 
-+ (PreferencePanel*)sharedInstance
-{
++ (PreferencePanel*)sharedInstance {
     static PreferencePanel* shared = nil;
 
     if (!shared) {
@@ -307,8 +306,7 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
     return shared;
 }
 
-+ (PreferencePanel*)sessionsInstance
-{
++ (PreferencePanel*)sessionsInstance {
     static PreferencePanel* shared = nil;
 
     if (!shared) {
@@ -336,15 +334,6 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
         // immediately), and generally sucks with a terminal.
         [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"NSScrollAnimationEnabled"];
 
-        [self readPreferences];
-
-        // get the version
-        NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
-
-        // sync the version number
-        if (prefs) {
-            [prefs setObject:[myDict objectForKey:@"CFBundleVersion"] forKey:@"iTerm Version"];
-        }
         [toolbar setSelectedItemIdentifier:globalToolbarId];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -1669,60 +1658,37 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
 
 #pragma mark - NSUserDefaults wrangling
 
-- (void)readPreferences
-{
-    if (!prefs) {
-        // In one-bookmark mode there are no prefs, but this function only reads
-        // non-bookmark related stuff.
-        return;
-    }
-    // Force antialiasing to be allowed on small font sizes
-    [prefs setInteger:1 forKey:@"AppleAntiAliasingThreshold"];
-    [prefs setInteger:1 forKey:@"AppleSmoothFixedFontsSizeThreshold"];
-    [prefs setInteger:0 forKey:@"AppleScrollAnimationEnabled"];
-
-    // Migrate old-style (iTerm 0.x) URL handlers.
-    // make sure bookmarks are loaded
-    [ITAddressBookMgr sharedInstance];
+- (void)loadUrlSchemeHandlers {
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    ProfileModel *profileModel = [ProfileModel sharedInstance];
 
     // read in the handlers by converting the index back to bookmarks
     urlHandlersByGuid = [[NSMutableDictionary alloc] init];
-    NSDictionary *tempDict = [prefs objectForKey:@"URLHandlersByGuid"];
+    NSDictionary *tempDict = [userDefaults objectForKey:@"URLHandlersByGuid"];
     if (!tempDict) {
         // Iterate over old style url handlers (which stored bookmark by index)
         // and add guid->urlkey to urlHandlersByGuid.
-        tempDict = [prefs objectForKey:@"URLHandlers"];
+        tempDict = [userDefaults objectForKey:@"URLHandlers"];
 
-        if (tempDict) {
-            NSEnumerator *enumerator = [tempDict keyEnumerator];
-            id key;
-
-            while ((key = [enumerator nextObject])) {
-                //NSLog(@"%@\n%@",[tempDict objectForKey:key], [[ITAddressBookMgr sharedInstance] bookmarkForIndex:[[tempDict objectForKey:key] intValue]]);
-                int theIndex = [[tempDict objectForKey:key] intValue];
-                if (theIndex >= 0 &&
-                    theIndex  < [dataSource numberOfBookmarks]) {
-                    NSString* guid = [[dataSource profileAtIndex:theIndex] objectForKey:KEY_GUID];
-                    [urlHandlersByGuid setObject:guid forKey:key];
-                }
+        for (id key in tempDict) {
+            int theIndex = [[tempDict objectForKey:key] intValue];
+            if (theIndex >= 0 &&
+                theIndex  < [profileModel numberOfBookmarks]) {
+                NSString* guid = [[profileModel profileAtIndex:theIndex] objectForKey:KEY_GUID];
+                [urlHandlersByGuid setObject:guid forKey:key];
             }
         }
     } else {
-        NSEnumerator *enumerator = [tempDict keyEnumerator];
-        id key;
-
-        while ((key = [enumerator nextObject])) {
-            //NSLog(@"%@\n%@",[tempDict objectForKey:key], [[ITAddressBookMgr sharedInstance] bookmarkForIndex:[[tempDict objectForKey:key] intValue]]);
+        for (id key in tempDict) {
             NSString* guid = [tempDict objectForKey:key];
-            if ([dataSource indexOfProfileWithGuid:guid] >= 0) {
+            if ([profileModel indexOfProfileWithGuid:guid] >= 0) {
                 [urlHandlersByGuid setObject:guid forKey:key];
             }
         }
     }
 }
 
-- (void)savePreferences
-{
+- (void)savePreferences {
     if (!prefs) {
         // In one-bookmark mode there are no prefs but this function doesn't
         // affect bookmarks.
