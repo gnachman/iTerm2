@@ -64,6 +64,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 #pragma mark - NSViewController
 
 - (void)awakeFromNib {
+    [_delegate profilePreferencesModelDidAwakeFromNib];
     [_profilesListView setUnderlyingDatasource:[_delegate profilePreferencesModel]];
     
     Profile *profile = [self selectedProfile];

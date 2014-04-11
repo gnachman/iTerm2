@@ -364,6 +364,16 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
 
 - (void)awakeFromNib
 {
+    // Because the ProfilePreferencesViewController awakes before PreferencePanel, it calls
+    // profilePreferencesModelDidAwakeFromNib which in turn calls this to ensure everything is
+    // initialized so that the rest of [-ProfilePreferencesViewController awakeFromNib] can run
+    // successfully. This is an awful hack and will go away.
+    static BOOL haveAwoken;
+    if (haveAwoken) {
+        return;
+    }
+    haveAwoken = YES;
+    
     [self window];
     [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     bookmarksToolbarId = [bookmarksToolbarItem itemIdentifier];
@@ -378,12 +388,8 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
     [toolbar setSelectedItemIdentifier:globalToolbarId];
 
     // add list of encodings
-    NSEnumerator *anEnumerator;
-    NSNumber *anEncoding;
-
     [characterEncoding removeAllItems];
-    anEnumerator = [[[iTermController sharedInstance] sortedEncodingList] objectEnumerator];
-    while ((anEncoding = [anEnumerator nextObject]) != NULL) {
+    for (NSNumber *anEncoding in [[iTermController sharedInstance] sortedEncodingList]) {
         [characterEncoding addItemWithTitle:[NSString localizedNameOfStringEncoding:[anEncoding unsignedIntValue]]];
         [[characterEncoding lastItem] setTag:[anEncoding unsignedIntValue]];
     }
@@ -3073,6 +3079,10 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
     [_profilesViewController.tabView selectTabViewItem:bookmarkSettingsGeneralTab];
     [[self window] makeFirstResponder:bookmarkName];
     [bookmarkName selectText:self];
+}
+
+- (void)profilePreferencesModelDidAwakeFromNib {
+    [self awakeFromNib];
 }
 
 @end

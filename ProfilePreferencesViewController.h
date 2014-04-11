@@ -20,6 +20,7 @@
 - (void)bookmarkSettingChanged:(id)sender;
 - (void)removeKeyMappingsReferringToBookmarkGuid:(NSString*)badRef;
 - (void)makeProfileNameFirstResponder;
+- (void)profilePreferencesModelDidAwakeFromNib;
 
 @end
 
