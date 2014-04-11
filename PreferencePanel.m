@@ -291,6 +291,7 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
     IBOutlet NSButton* applicationKeypadAllowed;
 
     IBOutlet WindowArrangements *arrangements_;
+    BOOL _haveAwoken;  // Can kill this when profiles stuff is migrated
 }
 
 + (PreferencePanel*)sharedInstance
@@ -368,11 +369,9 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
     // profilePreferencesModelDidAwakeFromNib which in turn calls this to ensure everything is
     // initialized so that the rest of [-ProfilePreferencesViewController awakeFromNib] can run
     // successfully. This is an awful hack and will go away.
-    static BOOL haveAwoken;
-    if (haveAwoken) {
+    if (_haveAwoken) {
         return;
     }
-    haveAwoken = YES;
     
     [self window];
     [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
@@ -394,7 +393,6 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
         [[characterEncoding lastItem] setTag:[anEncoding unsignedIntValue]];
     }
     [self setScreens];
-
 
     [copyTo allowMultipleSelections];
 

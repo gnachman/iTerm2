@@ -189,7 +189,6 @@ typedef enum {
 - (NSTimeInterval)antiIdleTimerPeriod;
 - (Profile *)handlerBookmarkForURL:(NSString *)url;
 - (void)changeFont:(id)fontManager;
-- (BOOL)onScreen;
 - (void)showBookmarks;
 - (void)underlyingBookmarkDidChange;
 - (int)openTmuxWindowsIn;

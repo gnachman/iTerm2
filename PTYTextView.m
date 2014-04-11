@@ -931,9 +931,9 @@ static NSImage* alertImage;
 
 - (void)changeFont:(id)fontManager
 {
-    if ([[PreferencePanel sharedInstance] onScreen]) {
+    if ([[[PreferencePanel sharedInstance] window] isVisible]) {
         [[PreferencePanel sharedInstance] changeFont:fontManager];
-    } else if ([[PreferencePanel sessionsInstance] onScreen]) {
+    } else if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
         [[PreferencePanel sessionsInstance] changeFont:fontManager];
     }
 }
