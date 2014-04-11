@@ -24,7 +24,7 @@ typedef enum {
 
 
 @implementation BulkCopyProfilePreferencesWindowController {
-    // Copy Bookmark Settings...
+    // Copy Profile Settings...
     IBOutlet NSTextField *_bulkCopyLabel;
     IBOutlet NSButton *_copyColors;
     IBOutlet NSButton *_copyText;
@@ -64,7 +64,7 @@ typedef enum {
 
 #pragma mark - Actions
 
-- (IBAction)copyBookmarks:(id)sender {
+- (IBAction)performBulkCopy:(id)sender {
     ProfileModel *profileModel = [ProfileModel sharedInstance];
     if (!_sourceGuid || ![profileModel bookmarkWithGuid:_sourceGuid]) {
         NSBeep();
@@ -78,7 +78,7 @@ typedef enum {
         }
         
         if (![profileModel bookmarkWithGuid:destGuid]) {
-            NSLog(@"Selected bookmark %@ doesn't exist", destGuid);
+            NSLog(@"Selected profile %@ doesn't exist", destGuid);
             continue;
         }
         
@@ -111,7 +111,7 @@ typedef enum {
                                                       userInfo:nil];
 }
 
-- (IBAction)cancelCopyBookmarks:(id)sender {
+- (IBAction)cancelBulkCopy:(id)sender {
     [NSApp endSheet:self.window];
 }
 

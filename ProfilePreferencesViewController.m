@@ -31,7 +31,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     // Minus under table view to delete the selected profile.
     IBOutlet NSButton *_removeProfileButton;
 
-    // Plus under table view to add a new bookmark.
+    // Plus under table view to add a new profile.
     IBOutlet NSButton *_addProfileButton;
 
     // < Tags button

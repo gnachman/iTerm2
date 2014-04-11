@@ -144,7 +144,7 @@ DQ
 </string>
                         </buttonCell>
                         <connections>
-                            <action selector="copyBookmarks:" target="-2" id="Cs2-H4-Gyh"/>
+                            <action selector="performBulkCopy:" target="-2" id="enq-sd-6Bw"/>
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="puk-vn-6CO">
@@ -158,7 +158,7 @@ Gw
 </string>
                         </buttonCell>
                         <connections>
-                            <action selector="cancelCopyBookmarks:" target="-2" id="6yR-lN-x9S"/>
+                            <action selector="cancelBulkCopy:" target="-2" id="csy-qa-skM"/>
                             <outlet property="nextKeyView" destination="VVP-os-AzU" id="Xdb-o8-E99"/>
                         </connections>
                     </button>

@@ -3263,7 +3263,7 @@ Gw
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                         <subviews>
                                                             <textField verticalHuggingPriority="750" id="4184">
-                                                                <rect key="frame" x="14" y="384" width="147" height="17"/>
+                                                                <rect key="frame" x="14" y="384" width="159" height="17"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Profile Shortcut Keys:" id="4185">
                                                                     <font key="font" metaFont="systemBold"/>
