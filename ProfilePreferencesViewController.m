@@ -32,7 +32,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     IBOutlet NSButton *_removeProfileButton;
 
     // Plus under table view to add a new bookmark.
-    IBOutlet NSButton *_addBookmarkButton;
+    IBOutlet NSButton *_addProfileButton;
 
     // < Tags button
     IBOutlet NSButton *_toggleTagsButton;
@@ -89,7 +89,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 - (void)layoutSubviewsForSingleBookmarkMode {
     _profilesListView.hidden = YES;
     _otherActionsPopup.hidden = YES;
-    _addBookmarkButton.hidden = YES;
+    _addProfileButton.hidden = YES;
     _removeProfileButton.hidden = YES;
     _copyToProfileButton.hidden = NO;
     _toggleTagsButton.hidden = YES;
@@ -176,7 +176,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 }
 
 - (void)profileTableFilterDidChange:(ProfileListView*)profileListView {
-    _addBookmarkButton.enabled = ![_profilesListView searchFieldHasText];
+    _addProfileButton.enabled = ![_profilesListView searchFieldHasText];
 }
 
 - (void)profileTableTagsVisibilityDidChange:(ProfileListView *)profileListView {
@@ -220,7 +220,8 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     }
 }
 
-- (IBAction)addBookmark:(id)sender {
+// This has a silly name because there's a temporary hack called addProfile:
+- (IBAction)addProfileAction:(id)sender {
     NSMutableDictionary* newDict = [[[NSMutableDictionary alloc] init] autorelease];
     // Copy the default bookmark's settings in
     Profile* prototype = [[_delegate profilePreferencesModel] defaultBookmark];

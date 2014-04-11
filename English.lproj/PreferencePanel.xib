@@ -3553,7 +3553,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="addBookmark:" target="HVI-63-mNz" id="Kdx-iD-v1t"/>
+                                                <action selector="addProfileAction:" target="HVI-63-mNz" id="gdb-LL-PbF"/>
                                             </connections>
                                         </button>
                                         <button id="nFj-0n-SWO">
@@ -5380,7 +5380,7 @@ DQ
         </customObject>
         <customObject id="HVI-63-mNz" customClass="ProfilePreferencesViewController">
             <connections>
-                <outlet property="_addBookmarkButton" destination="2111" id="bS6-3C-NJY"/>
+                <outlet property="_addProfileButton" destination="2111" id="bA3-2H-K5q"/>
                 <outlet property="_copyToProfileButton" destination="5140" id="OLo-Jv-hFL"/>
                 <outlet property="_otherActionsPopup" destination="3230" id="Qhw-QD-BOd"/>
                 <outlet property="_profilesListView" destination="3260" id="22S-wx-dOs"/>
