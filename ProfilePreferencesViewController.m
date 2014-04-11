@@ -28,8 +28,8 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     // Tab view for profiles (general/colors/text/window/terminal/session/keys/advanced)
     IBOutlet NSTabView *_tabView;
     
-    // Minus under table view to delete the selected bookmark.
-    IBOutlet NSButton *_removeBookmarkButton;
+    // Minus under table view to delete the selected profile.
+    IBOutlet NSButton *_removeProfileButton;
 
     // Plus under table view to add a new bookmark.
     IBOutlet NSButton *_addBookmarkButton;
@@ -75,7 +75,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     } else {
         [_otherActionsPopup setEnabled:YES];
         _tabView.hidden = YES;
-        [_removeBookmarkButton setEnabled:NO];
+        [_removeProfileButton setEnabled:NO];
     }
     [_delegate updateBookmarkFields:profile];
     
@@ -90,7 +90,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     _profilesListView.hidden = YES;
     _otherActionsPopup.hidden = YES;
     _addBookmarkButton.hidden = YES;
-    _removeBookmarkButton.hidden = YES;
+    _removeProfileButton.hidden = YES;
     _copyToProfileButton.hidden = NO;
     _toggleTagsButton.hidden = YES;
     
@@ -130,9 +130,9 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 - (void)updateSubviewsForProfile:(Profile *)profile {
     ProfileModel *model = [_delegate profilePreferencesModel];
     if ([model numberOfBookmarks] < 2 || !profile) {
-        _removeBookmarkButton.enabled = NO;
+        _removeProfileButton.enabled = NO;
     } else {
-        _removeBookmarkButton.enabled = [[_profilesListView selectedGuids] count] < [model numberOfBookmarks];
+        _removeProfileButton.enabled = [[_profilesListView selectedGuids] count] < [model numberOfBookmarks];
     }
     _tabView.hidden = !profile;
     _otherActionsPopup.enabled = (profile != nil);
@@ -156,7 +156,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     
     _tabView.hidden = !hasSelection;
     _otherActionsPopup.enabled = hasSelection;
-    _removeBookmarkButton.enabled = hasSelection && [_profilesListView numberOfRows] > 1;
+    _removeProfileButton.enabled = hasSelection && [_profilesListView numberOfRows] > 1;
 
     [_delegate profileWithGuidWasSelected:profile[KEY_GUID]];
 }
@@ -200,7 +200,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
 #pragma mark - Actions
 
-- (IBAction)removeBookmark:(id)sender {
+- (IBAction)removeProfile:(id)sender {
     Profile *profile = [self selectedProfile];
     if ([[_delegate profilePreferencesModel] numberOfBookmarks] == 1 || !profile) {
         NSBeep();

@@ -3575,7 +3575,7 @@ Gw
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="removeBookmark:" target="HVI-63-mNz" id="9XT-gb-KNY"/>
+                                                <action selector="removeProfile:" target="HVI-63-mNz" id="z4H-Hn-H33"/>
                                             </connections>
                                         </button>
                                         <popUpButton id="3230">
@@ -5384,7 +5384,7 @@ DQ
                 <outlet property="_copyToProfileButton" destination="5140" id="OLo-Jv-hFL"/>
                 <outlet property="_otherActionsPopup" destination="3230" id="Qhw-QD-BOd"/>
                 <outlet property="_profilesListView" destination="3260" id="22S-wx-dOs"/>
-                <outlet property="_removeBookmarkButton" destination="2113" id="qi7-Uw-cX1"/>
+                <outlet property="_removeProfileButton" destination="2113" id="bCy-bg-Kla"/>
                 <outlet property="_tabView" destination="2100" id="sRa-Z0-Ngh"/>
                 <outlet property="_toggleTagsButton" destination="nFj-0n-SWO" id="nd4-hz-FRN"/>
                 <outlet property="delegate" destination="-2" id="AYk-4p-lit"/>
