@@ -11,7 +11,11 @@
 @implementation iTermShortcutInputView
 
 + (instancetype)firstResponder {
-    NSTextView *fieldEditor = (NSTextView *)[[NSApp keyWindow] firstResponder];
+    NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
+    if (![firstResponder isKindOfClass:[NSTextView class]]) {
+        return nil;
+    }
+    NSTextView *fieldEditor = (NSTextView *)firstResponder;
     id<NSTextViewDelegate> fieldEditorDelegate = fieldEditor.delegate;
     if ([fieldEditorDelegate isKindOfClass:[iTermShortcutInputView class]]) {
         return (iTermShortcutInputView *)fieldEditorDelegate;
