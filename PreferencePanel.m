@@ -438,11 +438,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 #pragma mark - API
 
-- (BOOL)onScreen
-{
-    return [self window] && [[self window] isVisible];
-}
-
 - (void)showBookmarks
 {
     [tabView selectTabViewItem:bookmarksTabViewItem];
