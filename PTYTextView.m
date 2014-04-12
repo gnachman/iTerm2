@@ -1320,7 +1320,7 @@ NSMutableArray* screens=0;
     } else if ([attribute isEqualToString:NSAccessibilityAttributedStringForRangeParameterizedAttribute]) {
         //(NSAttributedString *) - substring; param:(NSValue * - rangeValue)
         NSRange range = [(NSValue*)parameter rangeValue];
-        if (range.location == NSNotFound) {
+        if (range.location == NSNotFound || range.length == 0) {
             return nil;
         } else {
             NSString *theString = [allText_ substringWithRange:range];

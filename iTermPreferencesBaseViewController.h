@@ -15,6 +15,7 @@
 // In IB, assign all controls the -settingChanged: selector, and for text fields, make your view
 // controller the delegate.
 @interface iTermPreferencesBaseViewController : NSViewController
+@property(nonatomic, readonly) NSMapTable *keyMap;
 
 #pragma mark - Core Methods
 
@@ -43,5 +44,23 @@
 - (PreferenceInfo *)infoForControl:(NSControl *)control;
 
 - (void)postRefreshNotification;
+
+#pragma mark - Methods to override
+
+// By default, this class uses iTermPreferences class methods to change settings. Override these
+// methods to use a different model.
+- (BOOL)boolForKey:(NSString *)key;
+- (void)setBool:(BOOL)value forKey:(NSString *)key;
+
+- (int)intForKey:(NSString *)key;
+- (void)setInt:(int)value forKey:(NSString *)key;
+
+- (double)floatForKey:(NSString *)key;
+- (void)setFloat:(double)value forKey:(NSString *)key;
+
+- (NSString *)stringForKey:(NSString *)key;
+- (void)setString:(NSString *)value forKey:(NSString *)key;
+
+- (BOOL)keyHasDefaultValue:(NSString *)key;
 
 @end

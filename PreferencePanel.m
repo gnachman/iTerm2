@@ -64,10 +64,6 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
 NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUpdateProfileFields";
 
-@interface PreferencePanel () <iTermKeyMappingViewControllerDelegate>
-@property(nonatomic, copy) NSString *currentProfileGuid;
-@end
-
 @implementation PreferencePanel {
     ProfileModel* dataSource;
     BOOL oneBookmarkMode;
@@ -92,8 +88,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     // instant replay
     IBOutlet NSButton *instantReplay;
     BOOL defaultInstantReplay;
-
-    IBOutlet NSTabViewItem* bookmarkSettingsGeneralTab;
 
     NSUserDefaults *prefs;
 
@@ -129,7 +123,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // General tab
     IBOutlet NSTextField *basicsLabel;
-    IBOutlet NSTextField *bookmarkName;
     IBOutlet NSPopUpButton *bookmarkShortcutKey;
     IBOutlet NSMatrix *bookmarkCommandType;
     IBOutlet NSTextField *bookmarkCommand;
@@ -378,9 +371,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
                                              selector:@selector(handleWindowWillCloseNotification:)
                                                  name:NSWindowWillCloseNotification
                                                object:[self window]];
-    if (oneBookmarkMode) {
-        [self layoutSubviewsForSingleBookmarkMode];
-    }
     [[tags cell] setDelegate:self];
     [tags setDelegate:self];
 
@@ -389,6 +379,10 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [transparency setContinuous:YES];
     [blend setContinuous:YES];
     [minimumContrast setContinuous:YES];
+
+    if (oneBookmarkMode) {
+        [self layoutSubviewsForSingleBookmarkMode];
+    }
 }
 
 - (void)layoutSubviewsForSingleBookmarkMode
@@ -444,16 +438,11 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [toolbar setSelectedItemIdentifier:bookmarksToolbarId];
 }
 
-- (void)openToBookmark:(NSString*)guid
-{
+- (void)openToBookmark:(NSString*)guid {
     [self run];
-    [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
     [self showBookmarks];
-    [_profilesViewController selectGuid:guid];
+    [_profilesViewController openToProfileWithGuid:guid];
     [setProfileBookmarkListView selectRowByGuid:nil];
-    [_profilesViewController.tabView selectTabViewItem:bookmarkSettingsGeneralTab];
-    [[self window] makeFirstResponder:bookmarkName];
-    self.currentProfileGuid = guid;
 }
 
 - (Profile*)hotkeyBookmark {
@@ -529,7 +518,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 - (void)windowWillClose:(NSNotification *)aNotification
 {
     [self savePreferences];
-    self.currentProfileGuid = nil;
 
 }
 
@@ -591,7 +579,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (IBAction)bookmarkSettingChanged:(id)sender
 {
-    NSString* name = [bookmarkName stringValue];
     NSString* shortcut = [self shortcutKeyForTag:[[bookmarkShortcutKey selectedItem] tag]];
     NSString* command = [bookmarkCommand stringValue];
     NSString *text = [initialText stringValue];
@@ -641,7 +628,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         isDefault = @"No";
     }
     [newDict setObject:isDefault forKey:KEY_DEFAULT_BOOKMARK];
-    [newDict setObject:name forKey:KEY_NAME];
+    newDict[KEY_NAME] = origBookmark[KEY_NAME];
     [newDict setObject:guid forKey:KEY_GUID];
     NSString* origGuid = [origBookmark objectForKey:KEY_ORIGINAL_GUID];
     if (origGuid) {
@@ -846,14 +833,16 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     // Selectively update form fields.
     [self updateShortcutTitles];
 
+    // Save changes
+    if (prefs) {
+        [prefs setObject:[dataSource rawData] forKey:@"New Bookmarks"];
+    }
+
     // Update existing sessions
     int n = [[iTermController sharedInstance] numberOfTerminals];
     for (int i = 0; i < n; ++i) {
         PseudoTerminal* pty = [[iTermController sharedInstance] terminalAtIndex:i];
         [pty reloadBookmarks];
-    }
-    if (prefs) {
-        [prefs setObject:[dataSource rawData] forKey:@"New Bookmarks"];
     }
     if (reloadKeyMappings) {
         [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
@@ -1646,6 +1635,10 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 #pragma mark - Accessors
 
+- (NSString *)currentProfileGuid {
+    return [_profilesViewController selectedProfile][KEY_GUID];
+}
+
 - (float)fsTabDelay {
     return [iTermPreferences floatForKey:kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen];
 }
@@ -2275,7 +2268,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     customDir = [dict objectForKey:KEY_CUSTOM_DIRECTORY];
 
     // General tab
-    [bookmarkName setStringValue:name];
     [bookmarkShortcutKey selectItemWithTag:[self shortcutTagForKey:shortcut]];
 
     [self updateShortcutTitles];
@@ -2789,12 +2781,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (ProfileModel *)profilePreferencesModel {
     return dataSource;
-}
-
-- (void)makeProfileNameFirstResponder {
-    [_profilesViewController.tabView selectTabViewItem:bookmarkSettingsGeneralTab];
-    [[self window] makeFirstResponder:bookmarkName];
-    [bookmarkName selectText:self];
 }
 
 - (void)profilePreferencesModelDidAwakeFromNib {

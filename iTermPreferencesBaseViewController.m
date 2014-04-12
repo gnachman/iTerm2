@@ -11,10 +11,6 @@
 #import "NSStringITerm.h"
 #import "PreferencePanel.h"
 
-@interface iTermPreferencesBaseViewController ()
-
-@end
-
 @implementation iTermPreferencesBaseViewController {
     // Maps NSControl* -> PreferenceInfo*.
     NSMapTable *_keyMap;
@@ -36,12 +32,54 @@
     [super dealloc];
 }
 
+#pragma mark - Methods to override
+
+- (BOOL)boolForKey:(NSString *)key {
+    return [iTermPreferences boolForKey:key];
+}
+
+- (void)setBool:(BOOL)value forKey:(NSString *)key {
+    [iTermPreferences setBool:value forKey:key];
+}
+
+- (int)intForKey:(NSString *)key {
+    return [iTermPreferences intForKey:key];
+}
+
+- (void)setInt:(int)value forKey:(NSString *)key {
+    [iTermPreferences setInt:value forKey:key];
+}
+
+- (double)floatForKey:(NSString *)key {
+    return [iTermPreferences floatForKey:key];
+}
+
+- (void)setFloat:(double)value forKey:(NSString *)key {
+    [iTermPreferences setFloat:value forKey:key];
+}
+
+- (NSString *)stringForKey:(NSString *)key {
+    return [iTermPreferences stringForKey:key];
+}
+
+- (void)setString:(NSString *)value forKey:(NSString *)key {
+    [iTermPreferences setString:value forKey:key];
+}
+
+- (BOOL)keyHasDefaultValue:(NSString *)key {
+    return [iTermPreferences keyHasDefaultValue:key];
+}
+
 #pragma mark - APIs
 
 - (IBAction)settingChanged:(id)sender {
     PreferenceInfo *info = [self infoForControl:sender];
     assert(info);
 
+    if (info.willChange) {
+        info.willChange();
+    }
+    
     if (info.customSettingChangedHandler) {
         info.customSettingChangedHandler(sender);
         return;
@@ -49,24 +87,24 @@
 
     switch (info.type) {
         case kPreferenceInfoTypeCheckbox:
-            [iTermPreferences setBool:([sender state] == NSOnState) forKey:info.key];
+            [self setBool:([sender state] == NSOnState) forKey:info.key];
             break;
 
         case kPreferenceInfoTypeIntegerTextField:
             [self applyIntegerConstraints:info];
-            [iTermPreferences setInt:[sender intValue] forKey:info.key];
+            [self setInt:[sender intValue] forKey:info.key];
             break;
             
         case kPreferenceInfoTypeStringTextField:
-            [iTermPreferences setString:[sender stringValue] forKey:info.key];
+            [self setString:[sender stringValue] forKey:info.key];
             break;
             
         case kPreferenceInfoTypePopup:
-            [iTermPreferences setInt:[sender selectedTag] forKey:info.key];
+            [self setInt:[sender selectedTag] forKey:info.key];
             break;
             
         case kPreferenceInfoTypeSlider:
-            [iTermPreferences setFloat:[sender doubleValue] forKey:info.key];
+            [self setFloat:[sender doubleValue] forKey:info.key];
             break;
 
         default:
@@ -83,7 +121,7 @@
     assert(![_keyMap objectForKey:key]);
     assert(key);
     assert(control);
-    assert([iTermPreferences keyHasDefaultValue:key]);
+    assert([self keyHasDefaultValue:key]);
     
     PreferenceInfo *info = [PreferenceInfo infoForPreferenceWithKey:key
                                                                type:type
@@ -99,35 +137,35 @@
         case kPreferenceInfoTypeCheckbox: {
             assert([info.control isKindOfClass:[NSButton class]]);
             NSButton *button = (NSButton *)info.control;
-            button.state = [iTermPreferences boolForKey:info.key] ? NSOnState : NSOffState;
+            button.state = [self boolForKey:info.key] ? NSOnState : NSOffState;
             break;
         }
             
         case kPreferenceInfoTypeIntegerTextField: {
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
-            field.intValue = [iTermPreferences intForKey:info.key];
+            field.intValue = [self intForKey:info.key];
             break;
         }
             
         case kPreferenceInfoTypeStringTextField: {
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
-            field.stringValue = [iTermPreferences stringForKey:info.key];
+            field.stringValue = [self stringForKey:info.key] ?: @"";
             break;
         }
             
         case kPreferenceInfoTypePopup: {
             assert([info.control isKindOfClass:[NSPopUpButton class]]);
             NSPopUpButton *popup = (NSPopUpButton *)info.control;
-            [popup selectItemWithTag:[iTermPreferences intForKey:info.key]];
+            [popup selectItemWithTag:[self intForKey:info.key]];
             break;
         }
             
         case kPreferenceInfoTypeSlider: {
             assert([info.control isKindOfClass:[NSSlider class]]);
             NSSlider *slider = (NSSlider *)info.control;
-            slider.doubleValue = [iTermPreferences floatForKey:info.key];
+            slider.doubleValue = [self floatForKey:info.key];
             break;
         }
 

@@ -31,6 +31,9 @@ typedef enum {
 // Called when value changes with PreferenceInfo as object.
 @property(nonatomic, copy) void (^onChange)();
 
+// Called before a change occurs.
+@property(nonatomic, copy) void (^willChange)();
+
 // Replaces the default settingChanged: handler which updates user defaults and calls onChange.
 @property(nonatomic, copy) void (^customSettingChangedHandler)(id sender);
 

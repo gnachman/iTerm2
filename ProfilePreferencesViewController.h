@@ -19,7 +19,6 @@
 - (void)profileWithGuidWasSelected:(NSString *)guid;
 - (void)bookmarkSettingChanged:(id)sender;
 - (void)removeKeyMappingsReferringToBookmarkGuid:(NSString*)badRef;
-- (void)makeProfileNameFirstResponder;
 - (void)profilePreferencesModelDidAwakeFromNib;
 
 @end
@@ -39,6 +38,8 @@
 
 // Size of tab view.
 - (NSSize)size;
+
+- (void)openToProfileWithGuid:(NSString *)guid;
 
 // TODO: Nuke these methods
 - (void)updateProfileInModel:(Profile *)modifiedProfile;

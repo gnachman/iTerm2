@@ -235,7 +235,7 @@ typedef enum {
     [[PreferencePanel sharedInstance] showBookmarks];
 }
 
-- (IBAction)editSelectedBookmark:(id)sender
+- (void)editSelectedBookmark:(id)sender
 {
     NSString* guid = [tableView_ selectedGuid];
     if (guid) {

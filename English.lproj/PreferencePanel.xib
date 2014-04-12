@@ -63,8 +63,6 @@
                 <outlet property="bookmarkDirectoryLabel" destination="2129" id="3465"/>
                 <outlet property="bookmarkDirectoryType" destination="2190" id="2987"/>
                 <outlet property="bookmarkGrowlNotifications" destination="2404" id="3147"/>
-                <outlet property="bookmarkName" destination="2133" id="2983"/>
-                <outlet property="bookmarkSettingsGeneralTab" destination="2101" id="3474"/>
                 <outlet property="bookmarkShortcutKey" destination="2142" id="2984"/>
                 <outlet property="bookmarkShortcutKeyLabel" destination="2141" id="3466"/>
                 <outlet property="bookmarkShortcutKeyModifiersLabel" destination="3241" id="3467"/>
@@ -1465,7 +1463,7 @@ Gw
                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                                 </textFieldCell>
                                                                 <connections>
-                                                                    <outlet property="delegate" destination="-2" id="3003"/>
+                                                                    <outlet property="delegate" destination="dVg-Ac-SiZ" id="PG1-4Y-rFP"/>
                                                                     <outlet property="nextKeyView" destination="2142" id="5211"/>
                                                                 </connections>
                                                             </textField>
@@ -5382,6 +5380,8 @@ DQ
             <connections>
                 <outlet property="_addProfileButton" destination="2111" id="bA3-2H-K5q"/>
                 <outlet property="_copyToProfileButton" destination="5140" id="OLo-Jv-hFL"/>
+                <outlet property="_generalTab" destination="2101" id="L0w-Vv-KhM"/>
+                <outlet property="_generalViewController" destination="dVg-Ac-SiZ" id="ppv-wN-HJr"/>
                 <outlet property="_otherActionsPopup" destination="3230" id="Qhw-QD-BOd"/>
                 <outlet property="_profilesListView" destination="3260" id="22S-wx-dOs"/>
                 <outlet property="_removeProfileButton" destination="2113" id="bCy-bg-Kla"/>
@@ -5389,6 +5389,14 @@ DQ
                 <outlet property="_toggleTagsButton" destination="nFj-0n-SWO" id="nd4-hz-FRN"/>
                 <outlet property="delegate" destination="-2" id="AYk-4p-lit"/>
                 <outlet property="view" destination="1946" id="QfY-2A-k9W"/>
+            </connections>
+        </customObject>
+        <customObject id="dVg-Ac-SiZ" customClass="ProfilesGeneralPreferencesViewController">
+            <connections>
+                <outlet property="_profileNameField" destination="2133" id="6VF-gN-bGW"/>
+                <outlet property="delegate" destination="HVI-63-mNz" id="KYZ-OC-7cf"/>
+                <outlet property="profileDelegate" destination="HVI-63-mNz" id="0qp-TV-M54"/>
+                <outlet property="view" destination="2104" id="oJB-AQ-x9t"/>
             </connections>
         </customObject>
     </objects>

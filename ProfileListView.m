@@ -623,6 +623,11 @@ const CGFloat kDefaultTagsWidth = 80;
     [tableView_ sizeLastColumnToFit];
 }
 
+- (void)clearSearchField {
+    [searchField_ setStringValue:@""];
+    [self updateResultsForSearch];
+}
+
 - (void)allowEmptySelection
 {
     [tableView_ setAllowsEmptySelection:YES];

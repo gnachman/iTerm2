@@ -13,10 +13,14 @@
 #import "iTermWarning.h"
 #import "PreferencePanel.h"
 #import "ProfileListView.h"
+#import "ProfilesGeneralPreferencesViewController.h"
 
 static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
-@interface ProfilePreferencesViewController () <ProfileListViewDelegate>
+@interface ProfilePreferencesViewController () <
+    iTermProfilePreferencesBaseViewControllerDelegate,
+    ProfileListViewDelegate,
+    ProfilesGeneralPreferencesViewControllerDelegate>
 @end
 
 @implementation ProfilePreferencesViewController {
@@ -40,6 +44,10 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     // Copy current (divorced) settings to profile.
     IBOutlet NSButton *_copyToProfileButton;
 
+    // General tab view controller
+    IBOutlet ProfilesGeneralPreferencesViewController *_generalViewController;
+
+    IBOutlet NSTabViewItem *_generalTab;
 }
 
 - (id)init {
@@ -119,6 +127,15 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     return _tabView.frame.size;
 }
 
+- (void)openToProfileWithGuid:(NSString *)guid {
+    [_profilesListView reloadData];
+    [self selectGuid:guid];
+    [_tabView selectTabViewItem:_generalTab];
+    [self.view.window performSelector:@selector(makeFirstResponder:)
+                           withObject:_generalViewController.profileNameField
+                           afterDelay:0];
+}
+
 #pragma mark - Shims that will go away when migration is complete
 
 - (void)updateProfileInModel:(Profile *)modifiedProfile {
@@ -153,6 +170,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     _removeProfileButton.enabled = hasSelection && [_profilesListView numberOfRows] > 1;
 
     [_delegate profileWithGuidWasSelected:profile[KEY_GUID]];
+    [_generalViewController reloadProfile];
 }
 
 - (void)profileTableSelectionWillChange:(id)profileTable {
@@ -243,7 +261,8 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [_profilesListView reloadData];
     [_profilesListView eraseQuery];
     [_profilesListView selectRowByGuid:guid];
-    [_delegate makeProfileNameFirstResponder];
+    [_tabView selectTabViewItem:_generalTab];
+    [self.view.window makeFirstResponder:_generalViewController.profileNameField];
 }
 
 - (IBAction)toggleTags:(id)sender {
@@ -329,6 +348,23 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
                          contextInfo:(BulkCopyProfilePreferencesWindowController *)bulkCopyController {
     [sheet close];
     [bulkCopyController autorelease];
+}
+
+#pragma mark - iTermProfilesPreferencesBaseViewControllerDelegate
+
+- (Profile *)profilePreferencesCurrentProfile {
+    return [self selectedProfile];
+}
+
+- (ProfileModel *)profilePreferencesCurrentModel {
+    return [_delegate profilePreferencesModel];
+}
+
+
+#pragma mark - ProfilesGeneralPreferencesViewControllerDelegate
+
+- (void)profilesGeneralPreferencesNameWillChange {
+    [_profilesListView clearSearchField];
 }
 
 @end
