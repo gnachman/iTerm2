@@ -184,7 +184,7 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     // Update the enabled status of all other views.
     BOOL isEnabled = [iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled];
     _hotkeyField.enabled = isEnabled;
-    _hotkeyLabel.enabled = isEnabled;
+    _hotkeyLabel.labelEnabled = isEnabled;
     _hotkeyTogglesWindow.enabled = isEnabled;
 
     BOOL hasDedicatedWindow = [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow];

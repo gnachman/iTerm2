@@ -11,6 +11,6 @@
 @interface NSTextField (iTerm)
 
 - (BOOL)textFieldIsFirstResponder;
-- (void)setEnabled:(BOOL)enabled;
+- (void)setLabelEnabled:(BOOL)enabled;
 
 @end

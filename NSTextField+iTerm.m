@@ -23,7 +23,7 @@
     return inFocus;
 }
 
-- (void)setEnabled:(BOOL)enabled {
+- (void)setLabelEnabled:(BOOL)enabled {
     self.textColor = enabled ? [NSColor blackColor] : [NSColor disabledControlTextColor];
 }
 
