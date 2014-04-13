@@ -155,7 +155,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     NSMutableDictionary *urlHandlersByGuid;
 
     // Bookmarks -----------------------------
-    IBOutlet NSButton *toggleTagsButton;
 
     // General tab
     IBOutlet NSTextField *basicsLabel;
@@ -445,7 +444,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [setProfileLabel setHidden:NO];
     [setProfileBookmarkListView setHidden:NO];
     [changeProfileButton setHidden:NO];
-    [toggleTagsButton setHidden:YES];
 
     [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
     [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
