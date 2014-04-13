@@ -59,7 +59,6 @@
                 <outlet property="bookmarkCommandLabel" destination="2132" id="3464"/>
                 <outlet property="bookmarkDirectory" destination="2189" id="3002"/>
                 <outlet property="bookmarkDirectoryLabel" destination="2129" id="3465"/>
-                <outlet property="bookmarkDirectoryType" destination="2190" id="2987"/>
                 <outlet property="bookmarkGrowlNotifications" destination="2404" id="3147"/>
                 <outlet property="bookmarkShortcutKeyLabel" destination="2141" id="3466"/>
                 <outlet property="bookmarkShortcutKeyModifiersLabel" destination="3241" id="3467"/>
@@ -1391,7 +1390,7 @@ Gw
                                                                     </column>
                                                                 </cells>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="2997"/>
+                                                                    <action selector="settingChanged:" target="dVg-Ac-SiZ" id="EvS-uC-TVU"/>
                                                                     <outlet property="nextKeyView" destination="2189" id="5216"/>
                                                                 </connections>
                                                             </matrix>
@@ -5394,6 +5393,7 @@ DQ
             <connections>
                 <outlet property="_commandType" destination="2185" id="k7n-vi-7cM"/>
                 <outlet property="_customCommand" destination="2131" id="uHM-Rp-s80"/>
+                <outlet property="_initialDirectoryType" destination="2190" id="LYF-0C-gAo"/>
                 <outlet property="_profileNameField" destination="2133" id="6VF-gN-bGW"/>
                 <outlet property="_profileShortcut" destination="2142" id="vtI-vU-bua"/>
                 <outlet property="_sendTextAtStart" destination="5410" id="eUe-AY-v5Q"/>

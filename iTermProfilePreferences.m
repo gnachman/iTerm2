@@ -13,6 +13,11 @@
 NSString *const kProfilePreferenceCommandTypeCustomValue = @"Yes";
 NSString *const kProfilePreferenceCommandTypeLoginShellValue = @"No";
 
+NSString *const kProfilePreferenceInitialDirectoryCustomValue = @"Yes";
+NSString *const kProfilePreferenceInitialDirectoryHomeValue = @"No";
+NSString *const kProfilePreferenceInitialDirectoryRecycleValue = @"Recycle";
+NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
+
 #define BLOCK(x) [^id(Profile *profile) { return [self x:profile]; } copy]
 
 @implementation iTermProfilePreferences
@@ -104,6 +109,7 @@ NSString *const kProfilePreferenceCommandTypeLoginShellValue = @"No";
                   KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeLoginShellValue,
                   KEY_COMMAND: @"",
                   KEY_INITIAL_TEXT: @"",
+                  KEY_CUSTOM_DIRECTORY: kProfilePreferenceInitialDirectoryHomeValue,
                 };
         [dict retain];
     }

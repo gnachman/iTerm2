@@ -14,6 +14,12 @@
 extern NSString *const kProfilePreferenceCommandTypeCustomValue;
 extern NSString *const kProfilePreferenceCommandTypeLoginShellValue;
 
+// Values for KEY_CUSTOM_DIRECTORY
+extern NSString *const kProfilePreferenceInitialDirectoryCustomValue;
+extern NSString *const kProfilePreferenceInitialDirectoryHomeValue;
+extern NSString *const kProfilePreferenceInitialDirectoryRecycleValue;
+extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
+
 @interface iTermProfilePreferences : NSObject
 
 + (BOOL)boolForKey:(NSString *)key inProfile:(Profile *)profile;

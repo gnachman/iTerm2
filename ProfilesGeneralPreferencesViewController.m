@@ -16,6 +16,12 @@
 static const NSInteger kCommandTypeCustomTag = 0;
 static const NSInteger kCommandTypeLoginShellTag = 1;
 
+// Tags for _initialDirectoryType
+static const NSInteger kInitialDirectoryTypeCustomTag = 0;
+static const NSInteger kInitialDirectoryTypeHomeTag = 1;
+static const NSInteger kInitialDirectoryTypeRecycleTag = 2;
+static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
+
 @implementation ProfilesGeneralPreferencesViewController {
     IBOutlet NSTextField *_profileNameField;
     IBOutlet NSPopUpButton *_profileShortcut;
@@ -23,6 +29,7 @@ static const NSInteger kCommandTypeLoginShellTag = 1;
     IBOutlet NSMatrix *_commandType;  // Login shell vs custom command radio buttons
     IBOutlet NSTextField *_customCommand;  // Command to use instead of login shell
     IBOutlet NSTextField *_sendTextAtStart;
+    IBOutlet NSMatrix *_initialDirectoryType;  // Home/Reuse/Custom/Advanced
 }
 
 - (void)awakeFromNib {
@@ -64,6 +71,13 @@ static const NSInteger kCommandTypeLoginShellTag = 1;
     [self defineControl:_sendTextAtStart
                     key:KEY_INITIAL_TEXT
                    type:kPreferenceInfoTypeStringTextField];
+    
+    [self defineControl:_initialDirectoryType
+                    key:KEY_CUSTOM_DIRECTORY
+                   type:kPreferenceInfoTypeMatrix
+         settingChanged:^(id sender) { [self directoryTypeDidChange]; }
+                 update:^BOOL { [self updateDirectoryType]; return YES; }];
+
 }
 
 - (void)layoutSubviewsForSingleBookmarkMode {
@@ -72,10 +86,53 @@ static const NSInteger kCommandTypeLoginShellTag = 1;
                               _commandType,
                               _customCommand,
                               _sendTextAtStart,
+                              _initialDirectoryType,
                              ];
     for (NSView *view in viewsToHide) {
         view.hidden = YES;
     }
+}
+
+#pragma mark - Directory type
+
+- (void)directoryTypeDidChange {
+    NSInteger tag = [[_initialDirectoryType selectedCell] tag];
+    NSString *value;
+
+    switch (tag) {
+        case kInitialDirectoryTypeCustomTag:
+            value = kProfilePreferenceInitialDirectoryCustomValue;
+            break;
+            
+        case kInitialDirectoryTypeRecycleTag:
+            value = kProfilePreferenceInitialDirectoryRecycleValue;
+            break;
+            
+        case kInitialDirectoryTypeAdvancedTag:
+            value = kProfilePreferenceInitialDirectoryAdvancedValue;
+            break;
+            
+        case kInitialDirectoryTypeHomeTag:
+        default:
+            value = kProfilePreferenceInitialDirectoryHomeValue;
+            break;
+    }
+    
+    [self setString:value forKey:KEY_CUSTOM_DIRECTORY];
+}
+
+- (void)updateDirectoryType {
+    NSDictionary *map =
+        @{ kProfilePreferenceInitialDirectoryCustomValue: @(kInitialDirectoryTypeCustomTag),
+           kProfilePreferenceInitialDirectoryRecycleValue: @(kInitialDirectoryTypeRecycleTag),
+           kProfilePreferenceInitialDirectoryAdvancedValue: @(kInitialDirectoryTypeAdvancedTag),
+           kProfilePreferenceInitialDirectoryHomeValue: @(kInitialDirectoryTypeHomeTag) };
+    NSString *value = [self stringForKey:KEY_CUSTOM_DIRECTORY];
+    NSNumber *tagNumber = map[value];
+    if (!tagNumber) {
+        tagNumber = @(kInitialDirectoryTypeHomeTag);
+    }
+    [_initialDirectoryType selectCellWithTag:[tagNumber integerValue]];
 }
 
 #pragma mark - Command Type

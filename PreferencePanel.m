@@ -158,7 +158,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // General tab
     IBOutlet NSTextField *basicsLabel;
-    IBOutlet NSMatrix *bookmarkDirectoryType;
     IBOutlet NSTextField *bookmarkDirectory;
     IBOutlet NSTextField *bookmarkShortcutKeyLabel;
     IBOutlet NSTextField *bookmarkShortcutKeyModifiersLabel;
@@ -420,7 +419,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [bookmarkCommandLabel setHidden:YES];
     [initialTextLabel setHidden:YES];
     [bookmarkDirectoryLabel setHidden:YES];
-    [bookmarkDirectoryType setHidden:YES];
     [bookmarkDirectory setHidden:YES];
     [bookmarkUrlSchemes setHidden:YES];
     [bookmarkUrlSchemesHeaderLabel setHidden:YES];
@@ -590,26 +588,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 {
     NSString* dir = [bookmarkDirectory stringValue];
 
-    NSString* customDir;
-    switch ([[bookmarkDirectoryType selectedCell] tag]) {
-        case 0:
-            customDir = @"Yes";
-            break;
-
-        case 2:
-            customDir = @"Recycle";
-            break;
-
-        case 3:
-            customDir = @"Advanced";
-            break;
-
-        case 1:
-        default:
-            customDir = @"No";
-            break;
-    }
-    [editAdvancedConfigButton setEnabled:[customDir isEqualToString:@"Advanced"]];
+// BRING THIS BACK:    [editAdvancedConfigButton setEnabled:[customDir isEqualToString:@"Advanced"]];
 
     if (sender == optionKeySends && [[optionKeySends selectedCell] tag] == OPT_META) {
         [self _maybeWarnAboutMeta];
@@ -638,7 +617,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         [newDict setObject:origGuid forKey:KEY_ORIGINAL_GUID];
     }
     [newDict setObject:dir forKey:KEY_WORKING_DIRECTORY];
-    [newDict setObject:customDir forKey:KEY_CUSTOM_DIRECTORY];
 
     // Just copy over advanced working dir settings
     NSArray *valuesToCopy = [NSArray arrayWithObjects:
@@ -2179,22 +2157,10 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     NSString* name;
     NSString* dir;
-    NSString* customDir;
     name = [dict objectForKey:KEY_NAME];
     dir = [dict objectForKey:KEY_WORKING_DIRECTORY];
-    customDir = [dict objectForKey:KEY_CUSTOM_DIRECTORY];
 
     BOOL enabledAdvancedEdit = NO;
-    if ([customDir isEqualToString:@"Yes"]) {
-        [bookmarkDirectoryType selectCellWithTag:0];
-    } else if ([customDir isEqualToString:@"Recycle"]) {
-        [bookmarkDirectoryType selectCellWithTag:2];
-    } else if ([customDir isEqualToString:@"Advanced"]) {
-        [bookmarkDirectoryType selectCellWithTag:3];
-        enabledAdvancedEdit = YES;
-    } else {
-        [bookmarkDirectoryType selectCellWithTag:1];
-    }
     [editAdvancedConfigButton setEnabled:enabledAdvancedEdit];
 
     [bookmarkDirectory setStringValue:dir];
