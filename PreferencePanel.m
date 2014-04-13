@@ -24,6 +24,42 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+/*
+ * Preferences in iTerm2 are complicated, to say the least. Here is how the classes are organized.
+ *
+ * - PreferencePanel: There are two instances of this class: -sharedInstance and -sessionsInstance.
+ *       The sharedInstance is the app settings panel, while sessionsInstance is for editing a
+ *       single session (View>Edit Current Session).
+ *     - GeneralPreferencesViewController:    View controller for Prefs>General
+ *     - AppearancePreferencesViewController: View controller for Prefs>Appearance
+ *     - KeysPreferencesViewController:       View controller for Prefs>Keys
+ *     - PointerPreferencesViewController:    View controller for Prefs>Pointer
+ *     - ProfilePreferencesViewController:    View controller for Prefs>Profiles
+ *     - WindowArrangements:                  Owns Prefs>Arrangements
+ *     - iTermAdvancedSettingsController:     Owns Prefs>Advanced
+ *
+ *  View controllers of tabs in PreferencePanel derive from iTermPreferencesBaseViewController.
+ *  iTermPreferencesBaseViewController provides a map from NSControl* to PreferenceInfo.
+ *  PreferenceInfo stores a pref's type, user defaults key, can constrain its value, and
+ *  stores pointers to blocks that are run when a value is changed or a field needs to be updated
+ *  for customizing how controls are bound to storage. Each view controller defines these bindings
+ *  in its -awakeFromNib method.
+ *
+ *  User defaults are accessed through iTermPreferences, which assigns string constants to user
+ *  defaults keys, defines default values for each key, and provides accessors. It also allows the
+ *  exposed values to be computed from underlying values. (Currently, iTermPreferences is not used
+ *  by advanced settings, but that should change).
+ *
+ *  Because per-profile preferences are similar, a parallel class structure exists for them.
+ *  The following classes are view controllers for tabs in Prefs>Profiles:
+ *
+ *  - ProfilesGeneralPreferencesViewControllerDelegate
+ *  - More coming
+ *
+ *  These derive from iTermProfilePreferencesBaseViewController, which is just like
+ *  iTermPreferencesBaseViewController, but its methods for accessing preference values take an
+ *  additional profile: parameter. The analog of iTermPreferences is iTermProfilePreferences.
+ *  */
 #import "PreferencePanel.h"
 
 #import "GeneralPreferencesViewController.h"
@@ -73,7 +109,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet GeneralPreferencesViewController *_generalPreferencesViewController;
     IBOutlet KeysPreferencesViewController *_keysViewController;
     IBOutlet ProfilePreferencesViewController *_profilesViewController;
-    
+
     // Minimum contrast
     IBOutlet NSSlider* minimumContrast;
 
@@ -341,7 +377,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if (_haveAwoken) {
         return;
     }
-    
+
     [self window];
     [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     bookmarksToolbarId = [bookmarksToolbarItem itemIdentifier];
@@ -1233,7 +1269,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     Profile *profile = [_profilesViewController selectedProfile];
     NSString* guid = profile[KEY_GUID];
     assert(guid);
-    
+
     NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"ColorPresets"
                                                                             ofType:@"plist"];
     NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
@@ -2103,7 +2139,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     [self showWindow:self];
     [[self window] setLevel:NSNormalWindowLevel];
-    
+
     [_profilesViewController selectFirstProfileIfNecessary];
 
     // Show the window.
@@ -2420,7 +2456,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // Epilogue
     [_profilesViewController reloadData];
-    
+
     [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelDidUpdateProfileFields
                                                         object:nil
                                                       userInfo:nil];
@@ -2694,7 +2730,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         smartSelectionWindowController_.guid = guid;
         trouterPrefController_.guid = guid;
         [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
-        
+
         [self setHaveJobsForCurrentBookmark:[self haveJobsForCurrentBookmark]];
     }
 }
