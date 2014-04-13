@@ -102,6 +102,7 @@ NSString *const kProfilePreferenceCommandTypeLoginShellValue = @"No";
                   KEY_SHORTCUT: [NSNull null],
                   KEY_TAGS: [NSNull null],
                   KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeLoginShellValue,
+                  KEY_COMMAND: @"",
                 };
         [dict retain];
     }

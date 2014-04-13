@@ -21,6 +21,7 @@ static const NSInteger kCommandTypeLoginShellTag = 1;
     IBOutlet NSPopUpButton *_profileShortcut;
     IBOutlet NSTokenField *_tagsTokenField;
     IBOutlet NSMatrix *_commandType;  // Login shell vs custom command radio buttons
+    IBOutlet NSTextField *_customCommand;  // Command to use instead of login shell
 }
 
 - (void)awakeFromNib {
@@ -51,12 +52,24 @@ static const NSInteger kCommandTypeLoginShellTag = 1;
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [self commandTypeDidChange]; }
                  update:^BOOL { [self updateCommandType]; return YES; }];
+    
+    info = [self defineControl:_customCommand
+                           key:KEY_COMMAND
+                          type:kPreferenceInfoTypeStringTextField];
+    info.shouldBeEnabled = ^BOOL {
+        return [_commandType.selectedCell tag] == kCommandTypeCustomTag;
+    };
 }
 
 - (void)layoutSubviewsForSingleBookmarkMode {
-    _profileShortcut.hidden = YES;
-    _tagsTokenField.hidden = YES;
-    _commandType.hidden = YES;
+    NSArray *viewsToHide = @[ _profileShortcut,
+                              _tagsTokenField,
+                              _commandType,
+                              _customCommand,
+                             ];
+    for (NSView *view in viewsToHide) {
+        view.hidden = YES;
+    }
 }
 
 #pragma mark - Command Type
@@ -70,6 +83,7 @@ static const NSInteger kCommandTypeLoginShellTag = 1;
         value = kProfilePreferenceCommandTypeLoginShellValue;
     }
     [self setString:value forKey:KEY_CUSTOM_COMMAND];
+    [self updateEnabledState];
 }
 
 - (void)updateCommandType {
@@ -79,6 +93,7 @@ static const NSInteger kCommandTypeLoginShellTag = 1;
     } else {
         [_commandType selectCellWithTag:kCommandTypeLoginShellTag];
     }
+    [self updateEnabledState];
 }
 
 #pragma mark - Shortcuts

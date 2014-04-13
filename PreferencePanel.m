@@ -158,7 +158,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // General tab
     IBOutlet NSTextField *basicsLabel;
-    IBOutlet NSTextField *bookmarkCommand;
     IBOutlet NSTextField *initialText;
     IBOutlet NSMatrix *bookmarkDirectoryType;
     IBOutlet NSTextField *bookmarkDirectory;
@@ -423,7 +422,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [bookmarkCommandLabel setHidden:YES];
     [initialTextLabel setHidden:YES];
     [bookmarkDirectoryLabel setHidden:YES];
-    [bookmarkCommand setHidden:YES];
     [initialText setHidden:YES];
     [bookmarkDirectoryType setHidden:YES];
     [bookmarkDirectory setHidden:YES];
@@ -593,7 +591,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (IBAction)bookmarkSettingChanged:(id)sender
 {
-    NSString* command = [bookmarkCommand stringValue];
     NSString *text = [initialText stringValue];
     if (!text) {
         text = @"";
@@ -647,7 +644,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if (origGuid) {
         [newDict setObject:origGuid forKey:KEY_ORIGINAL_GUID];
     }
-    [newDict setObject:command forKey:KEY_COMMAND];
     [newDict setObject:text forKey:KEY_INITIAL_TEXT];
     [newDict setObject:dir forKey:KEY_WORKING_DIRECTORY];
     [newDict setObject:customDir forKey:KEY_CUSTOM_DIRECTORY];
@@ -2190,12 +2186,10 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     NSString* name;
-    NSString* command;
     NSString* text;
     NSString* dir;
     NSString* customDir;
     name = [dict objectForKey:KEY_NAME];
-    command = [dict objectForKey:KEY_COMMAND];
     text = [dict objectForKey:KEY_INITIAL_TEXT];
     if (!text) {
         text = @"";
@@ -2203,7 +2197,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     dir = [dict objectForKey:KEY_WORKING_DIRECTORY];
     customDir = [dict objectForKey:KEY_CUSTOM_DIRECTORY];
 
-    [bookmarkCommand setStringValue:command];
     [initialText setStringValue:text];
 
     BOOL enabledAdvancedEdit = NO;

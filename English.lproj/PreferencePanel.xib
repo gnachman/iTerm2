@@ -56,7 +56,6 @@
                 <outlet property="blur" destination="4976" id="4995"/>
                 <outlet property="blurRadius" destination="5363" id="5371"/>
                 <outlet property="boldColor" destination="2272" id="3006"/>
-                <outlet property="bookmarkCommand" destination="2131" id="2986"/>
                 <outlet property="bookmarkCommandLabel" destination="2132" id="3464"/>
                 <outlet property="bookmarkDirectory" destination="2189" id="3002"/>
                 <outlet property="bookmarkDirectoryLabel" destination="2129" id="3465"/>
@@ -1415,7 +1414,8 @@ Gw
                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                                 </textFieldCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="2998"/>
+                                                                    <action selector="settingChanged:" target="dVg-Ac-SiZ" id="XfN-eY-WXr"/>
+                                                                    <outlet property="delegate" destination="dVg-Ac-SiZ" id="Sqw-g4-7yA"/>
                                                                     <outlet property="nextKeyView" destination="5410" id="5738"/>
                                                                 </connections>
                                                             </textField>
@@ -5394,6 +5394,7 @@ DQ
         <customObject id="dVg-Ac-SiZ" customClass="ProfilesGeneralPreferencesViewController">
             <connections>
                 <outlet property="_commandType" destination="2185" id="k7n-vi-7cM"/>
+                <outlet property="_customCommand" destination="2131" id="uHM-Rp-s80"/>
                 <outlet property="_profileNameField" destination="2133" id="6VF-gN-bGW"/>
                 <outlet property="_profileShortcut" destination="2142" id="vtI-vU-bua"/>
                 <outlet property="_tagsTokenField" destination="3245" id="dUf-HQ-eA6"/>
