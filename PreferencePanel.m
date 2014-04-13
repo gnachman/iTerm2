@@ -158,7 +158,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // General tab
     IBOutlet NSTextField *basicsLabel;
-    IBOutlet NSTextField *initialText;
     IBOutlet NSMatrix *bookmarkDirectoryType;
     IBOutlet NSTextField *bookmarkDirectory;
     IBOutlet NSTextField *bookmarkShortcutKeyLabel;
@@ -398,7 +397,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     // Add presets to preset color selection.
     [self rebuildColorPresetsMenu];
 
-    [initialText setContinuous:YES];
     [blurRadius setContinuous:YES];
     [transparency setContinuous:YES];
     [blend setContinuous:YES];
@@ -422,7 +420,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [bookmarkCommandLabel setHidden:YES];
     [initialTextLabel setHidden:YES];
     [bookmarkDirectoryLabel setHidden:YES];
-    [initialText setHidden:YES];
     [bookmarkDirectoryType setHidden:YES];
     [bookmarkDirectory setHidden:YES];
     [bookmarkUrlSchemes setHidden:YES];
@@ -591,10 +588,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (IBAction)bookmarkSettingChanged:(id)sender
 {
-    NSString *text = [initialText stringValue];
-    if (!text) {
-        text = @"";
-    }
     NSString* dir = [bookmarkDirectory stringValue];
 
     NSString* customDir;
@@ -644,7 +637,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if (origGuid) {
         [newDict setObject:origGuid forKey:KEY_ORIGINAL_GUID];
     }
-    [newDict setObject:text forKey:KEY_INITIAL_TEXT];
     [newDict setObject:dir forKey:KEY_WORKING_DIRECTORY];
     [newDict setObject:customDir forKey:KEY_CUSTOM_DIRECTORY];
 
@@ -2186,18 +2178,11 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     NSString* name;
-    NSString* text;
     NSString* dir;
     NSString* customDir;
     name = [dict objectForKey:KEY_NAME];
-    text = [dict objectForKey:KEY_INITIAL_TEXT];
-    if (!text) {
-        text = @"";
-    }
     dir = [dict objectForKey:KEY_WORKING_DIRECTORY];
     customDir = [dict objectForKey:KEY_CUSTOM_DIRECTORY];
-
-    [initialText setStringValue:text];
 
     BOOL enabledAdvancedEdit = NO;
     if ([customDir isEqualToString:@"Yes"]) {
@@ -2542,7 +2527,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     } else if (obj == columnsField ||
                obj == rowsField ||
                obj == terminalType ||
-               obj == initialText ||
                obj == idleCode) {
         [self bookmarkSettingChanged:nil];
     } else if (obj == logDir) {

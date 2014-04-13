@@ -22,6 +22,7 @@ static const NSInteger kCommandTypeLoginShellTag = 1;
     IBOutlet NSTokenField *_tagsTokenField;
     IBOutlet NSMatrix *_commandType;  // Login shell vs custom command radio buttons
     IBOutlet NSTextField *_customCommand;  // Command to use instead of login shell
+    IBOutlet NSTextField *_sendTextAtStart;
 }
 
 - (void)awakeFromNib {
@@ -59,6 +60,10 @@ static const NSInteger kCommandTypeLoginShellTag = 1;
     info.shouldBeEnabled = ^BOOL {
         return [_commandType.selectedCell tag] == kCommandTypeCustomTag;
     };
+    
+    [self defineControl:_sendTextAtStart
+                    key:KEY_INITIAL_TEXT
+                   type:kPreferenceInfoTypeStringTextField];
 }
 
 - (void)layoutSubviewsForSingleBookmarkMode {
@@ -66,6 +71,7 @@ static const NSInteger kCommandTypeLoginShellTag = 1;
                               _tagsTokenField,
                               _commandType,
                               _customCommand,
+                              _sendTextAtStart,
                              ];
     for (NSView *view in viewsToHide) {
         view.hidden = YES;

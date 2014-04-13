@@ -97,7 +97,6 @@
                 <outlet property="globalToolbarItem" destination="5887" id="6037"/>
                 <outlet property="hideAfterOpening" destination="6354" id="6356"/>
                 <outlet property="idleCode" destination="5698" id="5718"/>
-                <outlet property="initialText" destination="5410" id="5414"/>
                 <outlet property="initialTextLabel" destination="5408" id="5415"/>
                 <outlet property="jobsTable_" destination="5661" id="5719"/>
                 <outlet property="keyboardTabViewItem" destination="3656" id="4216"/>
@@ -1428,8 +1427,8 @@ Gw
                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                                 </textFieldCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="5412"/>
-                                                                    <outlet property="delegate" destination="-2" id="5416"/>
+                                                                    <action selector="settingChanged:" target="dVg-Ac-SiZ" id="erY-Gq-EOG"/>
+                                                                    <outlet property="delegate" destination="dVg-Ac-SiZ" id="4bw-lH-KA5"/>
                                                                     <outlet property="nextKeyView" destination="2190" id="5413"/>
                                                                 </connections>
                                                             </textField>
@@ -5397,6 +5396,7 @@ DQ
                 <outlet property="_customCommand" destination="2131" id="uHM-Rp-s80"/>
                 <outlet property="_profileNameField" destination="2133" id="6VF-gN-bGW"/>
                 <outlet property="_profileShortcut" destination="2142" id="vtI-vU-bua"/>
+                <outlet property="_sendTextAtStart" destination="5410" id="eUe-AY-v5Q"/>
                 <outlet property="_tagsTokenField" destination="3245" id="dUf-HQ-eA6"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="KYZ-OC-7cf"/>
                 <outlet property="profileDelegate" destination="HVI-63-mNz" id="0qp-TV-M54"/>
