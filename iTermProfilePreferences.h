@@ -37,6 +37,10 @@
             model:(ProfileModel *)model;
 
 + (id)objectForKey:(NSString *)key inProfile:(Profile *)profile;
++ (void)setObject:(id)object
+           forKey:(NSString *)key
+        inProfile:(Profile *)profile
+            model:(ProfileModel *)model;
 
 // This is used for ensuring that all controls have default values.
 + (BOOL)keyHasDefaultValue:(NSString *)key;

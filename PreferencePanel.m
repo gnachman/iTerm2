@@ -173,7 +173,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSTextField *bookmarkUrlSchemesLabel;
     IBOutlet NSPopUpButton* bookmarkUrlSchemes;
     IBOutlet NSButton* editAdvancedConfigButton;
-    IBOutlet NSTokenField* tags;
 
     // Advanced working dir sheet
     IBOutlet NSPanel* advancedWorkingDirSheet_;
@@ -401,13 +400,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     // Add presets to preset color selection.
     [self rebuildColorPresetsMenu];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(handleWindowWillCloseNotification:)
-                                                 name:NSWindowWillCloseNotification
-                                               object:[self window]];
-    [[tags cell] setDelegate:self];
-    [tags setDelegate:self];
-
     [initialText setContinuous:YES];
     [blurRadius setContinuous:YES];
     [transparency setContinuous:YES];
@@ -432,7 +424,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [bookmarkCommandLabel setHidden:YES];
     [initialTextLabel setHidden:YES];
     [bookmarkDirectoryLabel setHidden:YES];
-    [tags setHidden:YES];
     [bookmarkCommandType setHidden:YES];
     [bookmarkCommand setHidden:YES];
     [initialText setHidden:YES];
@@ -529,13 +520,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [presetsMenu addItem:[[[NSMenuItem alloc] initWithTitle:@"Visit Online Gallery"
                                                      action:@selector(visitGallery:)
                                               keyEquivalent:@""] autorelease]];
-}
-
-- (void)handleWindowWillCloseNotification:(NSNotification *)notification
-{
-    // This is so tags get saved because Cocoa doesn't notify you that the
-    // field changed unless the user presses enter twice in it (!).
-    [self bookmarkSettingChanged:nil];
 }
 
 #pragma mark - NSWindowController
@@ -810,7 +794,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [newDict setObject:[NSNumber numberWithInt:[[optionKeySends selectedCell] tag]] forKey:KEY_OPTION_KEY_SENDS];
     [newDict setObject:[NSNumber numberWithInt:[[rightOptionKeySends selectedCell] tag]] forKey:KEY_RIGHT_OPTION_KEY_SENDS];
     [newDict setObject:[NSNumber numberWithInt:([applicationKeypadAllowed state]==NSOnState)] forKey:KEY_APPLICATION_KEYPAD_ALLOWED];
-    [newDict setObject:[tags objectValue] forKey:KEY_TAGS];
 
     BOOL reloadKeyMappings = NO;
     if (sender == deleteSendsCtrlHButton) {
@@ -2433,7 +2416,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         rightOptPref = [dict objectForKey:KEY_OPTION_KEY_SENDS];
     }
     [rightOptionKeySends selectCellWithTag:[rightOptPref intValue]];
-    [tags setObjectValue:[dict objectForKey:KEY_TAGS]];
     // If a keymapping for the delete key was added, make sure the
     // "delete sends ^h" checkbox is correct
     BOOL sendCH = [self _deleteSendsCtrlHInBookmark:dict];
@@ -2584,42 +2566,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     } else if (obj == logDir) {
         [self _updateLogDirWarning];
     }
-}
-
-#pragma mark - NSTokenField delegate
-
-- (NSArray *)tokenField:(NSTokenField *)tokenField completionsForSubstring:(NSString *)substring indexOfToken:(NSInteger)tokenIndex indexOfSelectedItem:(NSInteger *)selectedIndex
-{
-    if (tokenField != tags) {
-        return nil;
-    }
-
-    NSArray *allTags = [[dataSource allTags] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
-    NSMutableArray *result = [[[NSMutableArray alloc] init] autorelease];
-    for (NSString *aTag in allTags) {
-        if ([aTag hasPrefix:substring]) {
-            [result addObject:[aTag retain]];
-        }
-    }
-    return result;
-}
-
-- (id)tokenField:(NSTokenField *)tokenField representedObjectForEditingString:(NSString *)editingString
-{
-    return [editingString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-}
-
-#pragma mark - NSTokenFieldCell delegate
-
-- (id)tokenFieldCell:(NSTokenFieldCell *)tokenFieldCell representedObjectForEditingString:(NSString *)editingString
-{
-    static BOOL running;
-    if (!running) {
-        running = YES;
-        [self bookmarkSettingChanged:tags];
-        running = NO;
-    }
-    return [editingString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 }
 
 #pragma mark - Cocoa Bindings

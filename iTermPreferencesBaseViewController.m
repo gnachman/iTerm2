@@ -66,6 +66,14 @@
     [iTermPreferences setString:value forKey:key];
 }
 
+- (NSObject *)objectForKey:(NSString *)key {
+    return [iTermPreferences objectForKey:key];
+}
+
+- (void)setObject:(NSObject *)object forKey:(NSString *)key {
+    [iTermPreferences setObject:object forKey:key];
+}
+
 - (BOOL)keyHasDefaultValue:(NSString *)key {
     return [iTermPreferences keyHasDefaultValue:key];
 }
@@ -103,6 +111,10 @@
             [self setString:[sender stringValue] forKey:info.key];
             break;
             
+        case kPreferenceInfoTypeTokenField:
+            [self setObject:[sender objectValue] forKey:info.key];
+            break;
+
         case kPreferenceInfoTypePopup:
             [self setInt:[sender selectedTag] forKey:info.key];
             break;
@@ -180,7 +192,16 @@
             field.stringValue = [self stringForKey:info.key] ?: @"";
             break;
         }
-            
+
+        case kPreferenceInfoTypeTokenField: {
+            assert([info.control isKindOfClass:[NSTokenField class]]);
+            NSTokenField *field = (NSTokenField *)info.control;
+            NSObject *object = [self objectForKey:info.key];;
+            assert(!object || [object conformsToProtocol:@protocol(NSCopying)]);
+            field.objectValue = (id<NSCopying>)object;
+            break;
+        }
+
         case kPreferenceInfoTypePopup: {
             assert([info.control isKindOfClass:[NSPopUpButton class]]);
             NSPopUpButton *popup = (NSPopUpButton *)info.control;

@@ -8,14 +8,21 @@
 
 #import "ProfilesGeneralPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "NSTextField+iTerm.h"
 #import "ProfileModel.h"
 
 @implementation ProfilesGeneralPreferencesViewController {
     IBOutlet NSTextField *_profileNameField;
     IBOutlet NSPopUpButton *_profileShortcut;
+    IBOutlet NSTokenField *_tagsTokenField;
 }
 
 - (void)awakeFromNib {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(windowWillClose:)
+                                                 name:NSWindowWillCloseNotification
+                                               object:self.view.window];
+
     PreferenceInfo *info;
     
     info = [self defineControl:_profileNameField
@@ -23,15 +30,20 @@
                           type:kPreferenceInfoTypeStringTextField];
     info.willChange = ^() { [_profileDelegate profilesGeneralPreferencesNameWillChange]; };
     
-    info = [self defineControl:_profileShortcut
-                           key:KEY_SHORTCUT
-                          type:kPreferenceInfoTypePopup
-                settingChanged:^(id sender) { [self setShortcutValueToSelectedItem]; }
-                        update:^BOOL { [self updateShortcutTitles]; return YES; }];
+    [self defineControl:_profileShortcut
+                    key:KEY_SHORTCUT
+                   type:kPreferenceInfoTypePopup
+         settingChanged:^(id sender) { [self setShortcutValueToSelectedItem]; }
+                 update:^BOOL { [self updateShortcutTitles]; return YES; }];
+    
+    [self defineControl:_tagsTokenField
+                    key:KEY_TAGS
+                   type:kPreferenceInfoTypeTokenField];
 }
 
 - (void)layoutSubviewsForSingleBookmarkMode {
     _profileShortcut.hidden = YES;
+    _tagsTokenField.hidden = YES;
 }
 
 #pragma mark - Shortcuts
@@ -117,5 +129,47 @@
     [_profileShortcut selectItemWithTag:[self shortcutTagForKey:theString]];
 }
 
+#pragma mark - Notifications
+
+- (void)windowWillClose:(NSNotification *)notification {
+    NSResponder *firstResponder = [[[self view] window] firstResponder];
+    if (firstResponder && [firstResponder respondsToSelector:@selector(delegate)]) {
+        id delegate = [firstResponder performSelector:@selector(delegate)];
+        if (delegate == _tagsTokenField) {
+            // The token field's editor is the first responder. Force the token field to end editing
+            // so the last token entered will be tokenized.
+            [self.view.window makeFirstResponder:self.view];
+        }
+    }
+}
+
+#pragma mark - NSTokenField delegate
+
+- (NSArray *)tokenField:(NSTokenField *)tokenField
+    completionsForSubstring:(NSString *)substring
+               indexOfToken:(NSInteger)tokenIndex
+        indexOfSelectedItem:(NSInteger *)selectedIndex {
+    ProfileModel *model = [ProfileModel sharedInstance];
+    NSArray *allTags = [[model allTags] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+    NSMutableArray *result = [NSMutableArray array];
+    for (NSString *aTag in allTags) {
+        if ([aTag hasPrefix:substring]) {
+            [result addObject:[aTag retain]];
+        }
+    }
+    return result;
+}
+
+- (id)tokenField:(NSTokenField *)tokenField
+    representedObjectForEditingString:(NSString *)editingString {
+    return [editingString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+}
+
+#pragma mark - NSTokenFieldCell delegate
+
+- (id)tokenFieldCell:(NSTokenFieldCell *)tokenFieldCell
+    representedObjectForEditingString:(NSString *)editingString {
+    return [editingString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+}
 
 @end

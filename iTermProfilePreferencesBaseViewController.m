@@ -11,6 +11,17 @@
 
 @implementation iTermProfilePreferencesBaseViewController
 
+- (NSObject *)objectForKey:(NSString *)key {
+    Profile *profile = [_delegate profilePreferencesCurrentProfile];
+    return [iTermProfilePreferences objectForKey:key inProfile:profile];
+}
+
+- (void)setObject:(NSObject *)value forKey:(NSString *)key {
+    Profile *profile = [_delegate profilePreferencesCurrentProfile];
+    ProfileModel *model = [_delegate profilePreferencesCurrentModel];
+    [iTermProfilePreferences setObject:value forKey:key inProfile:profile model:model];
+}
+
 - (BOOL)boolForKey:(NSString *)key {
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     return [iTermProfilePreferences boolForKey:key inProfile:profile];

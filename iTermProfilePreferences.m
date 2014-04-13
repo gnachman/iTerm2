@@ -80,6 +80,9 @@
             return [defaultValue isKindOfClass:[NSNumber class]];
         case kPreferenceInfoTypeStringTextField:
             return [defaultValue isKindOfClass:[NSString class]];
+        case kPreferenceInfoTypeTokenField:
+            return ([defaultValue isKindOfClass:[NSNull class]] ||
+                    [defaultValue isKindOfClass:[NSArray class]]);
     }
 
     return NO;
@@ -92,6 +95,7 @@
     if (!dict) {
         dict = @{ KEY_NAME: @"Default",
                   KEY_SHORTCUT: [NSNull null],
+                  KEY_TAGS: [NSNull null],
                 };
         [dict retain];
     }

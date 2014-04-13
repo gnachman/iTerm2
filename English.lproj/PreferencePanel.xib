@@ -139,7 +139,6 @@
                 <outlet property="syncTitle" destination="5008" id="5011"/>
                 <outlet property="tabColor" destination="Wzz-9B-zqB" id="MVB-cP-tr8"/>
                 <outlet property="tabView" destination="1943" id="2853"/>
-                <outlet property="tags" destination="3245" id="3249"/>
                 <outlet property="terminalType" destination="2405" id="3155"/>
                 <outlet property="toolbar" destination="5885" id="6042"/>
                 <outlet property="transparency" destination="4978" id="4994"/>
@@ -1589,10 +1588,13 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                                    <connections>
+                                                                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="xwe-c8-jx0"/>
+                                                                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="1Po-MW-s3m"/>
+                                                                    </connections>
                                                                 </tokenFieldCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3254"/>
-                                                                    <outlet property="delegate" destination="-2" id="3250"/>
+                                                                    <outlet property="delegate" destination="dVg-Ac-SiZ" id="aoc-g6-369"/>
                                                                     <outlet property="nextKeyView" destination="2185" id="5213"/>
                                                                 </connections>
                                                             </tokenField>
@@ -5394,6 +5396,7 @@ DQ
             <connections>
                 <outlet property="_profileNameField" destination="2133" id="6VF-gN-bGW"/>
                 <outlet property="_profileShortcut" destination="2142" id="vtI-vU-bua"/>
+                <outlet property="_tagsTokenField" destination="3245" id="dUf-HQ-eA6"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="KYZ-OC-7cf"/>
                 <outlet property="profileDelegate" destination="HVI-63-mNz" id="0qp-TV-M54"/>
                 <outlet property="view" destination="2104" id="oJB-AQ-x9t"/>

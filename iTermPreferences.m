@@ -206,6 +206,9 @@ static NSMutableDictionary *gObservers;
                      [defaultValue intValue] == NO));
         case kPreferenceInfoTypeSlider:
             return [defaultValue isKindOfClass:[NSNumber class]];
+        case kPreferenceInfoTypeTokenField:
+            return ([defaultValue isKindOfClass:[NSArray class]] ||
+                    [defaultValue isKindOfClass:[NSNull class]]);
         case kPreferenceInfoTypeStringTextField:
             return ([defaultValue isKindOfClass:[NSString class]] ||
                     [defaultValue isKindOfClass:[NSNull class]]);
@@ -286,7 +289,7 @@ static NSMutableDictionary *gObservers;
 }
 
 + (BOOL)boolForKey:(NSString *)key {
-    return [[self objectForKey:key] boolValue];
+    return [(NSNumber *)[self objectForKey:key] boolValue];
 }
 
 + (void)setBool:(BOOL)value forKey:(NSString *)key {
@@ -294,7 +297,7 @@ static NSMutableDictionary *gObservers;
 }
 
 + (int)intForKey:(NSString *)key {
-    return [[self objectForKey:key] intValue];
+    return [(NSNumber *)[self objectForKey:key] intValue];
 }
 
 + (void)setInt:(int)value forKey:(NSString *)key {
@@ -302,7 +305,7 @@ static NSMutableDictionary *gObservers;
 }
 
 + (double)floatForKey:(NSString *)key {
-    return [[self objectForKey:key] doubleValue];
+    return [(NSNumber *)[self objectForKey:key] doubleValue];
 }
 
 + (void)setFloat:(double)value forKey:(NSString *)key {
@@ -310,7 +313,9 @@ static NSMutableDictionary *gObservers;
 }
 
 + (NSString *)stringForKey:(NSString *)key {
-    return [self objectForKey:key];
+    id object = [self objectForKey:key];
+    assert(!object || [object isKindOfClass:[NSString class]]);
+    return object;
 }
 
 + (void)setString:(NSString *)value forKey:(NSString *)key {
