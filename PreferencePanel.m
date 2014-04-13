@@ -123,7 +123,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // General tab
     IBOutlet NSTextField *basicsLabel;
-    IBOutlet NSPopUpButton *bookmarkShortcutKey;
     IBOutlet NSMatrix *bookmarkCommandType;
     IBOutlet NSTextField *bookmarkCommand;
     IBOutlet NSTextField *initialText;
@@ -398,7 +397,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [bookmarkCommandLabel setHidden:YES];
     [initialTextLabel setHidden:YES];
     [bookmarkDirectoryLabel setHidden:YES];
-    [bookmarkShortcutKey setHidden:YES];
     [tags setHidden:YES];
     [bookmarkCommandType setHidden:YES];
     [bookmarkCommand setHidden:YES];
@@ -579,7 +577,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (IBAction)bookmarkSettingChanged:(id)sender
 {
-    NSString* shortcut = [self shortcutKeyForTag:[[bookmarkShortcutKey selectedItem] tag]];
     NSString* command = [bookmarkCommand stringValue];
     NSString *text = [initialText stringValue];
     if (!text) {
@@ -623,6 +620,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         return;
     }
     NSMutableDictionary* newDict = [NSMutableDictionary dictionary];
+    [_profilesViewController copyOwnedValueToDict:newDict];
     NSString* isDefault = [origBookmark objectForKey:KEY_DEFAULT_BOOKMARK];
     if (!isDefault) {
         isDefault = @"No";
@@ -633,20 +631,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     NSString* origGuid = [origBookmark objectForKey:KEY_ORIGINAL_GUID];
     if (origGuid) {
         [newDict setObject:origGuid forKey:KEY_ORIGINAL_GUID];
-    }
-    if (shortcut) {
-        // If any bookmark has this shortcut, clear its shortcut.
-        for (int i = 0; i < [dataSource numberOfBookmarks]; ++i) {
-            Profile* temp = [dataSource profileAtIndex:i];
-            NSString* existingShortcut = [temp objectForKey:KEY_SHORTCUT];
-            if ([shortcut length] > 0 &&
-                [existingShortcut isEqualToString:shortcut] &&
-                temp != origBookmark) {
-                [dataSource setObject:nil forKey:KEY_SHORTCUT inBookmark:temp];
-            }
-        }
-
-        [newDict setObject:shortcut forKey:KEY_SHORTCUT];
     }
     [newDict setObject:command forKey:KEY_COMMAND];
     [newDict setObject:text forKey:KEY_INITIAL_TEXT];
@@ -829,9 +813,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // Epilogue
     [_profilesViewController updateProfileInModel:newDict];
-
-    // Selectively update form fields.
-    [self updateShortcutTitles];
 
     // Save changes
     if (prefs) {
@@ -2187,60 +2168,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 }
 
-- (int)shortcutTagForKey:(NSString*)key
-{
-    const char* chars = [key UTF8String];
-    if (!chars || !*chars) {
-        return -1;
-    }
-    char c = *chars;
-    if (c >= 'A' && c <= 'Z') {
-        return c - 'A';
-    }
-    if (c >= '0' && c <= '9') {
-        return 100 + c - '0';
-    }
-    // NSLog(@"Unexpected shortcut key: '%@'", key);
-    return -1;
-}
-
-- (NSString*)shortcutKeyForTag:(int)tag
-{
-    if (tag == -1) {
-        return @"";
-    }
-    if (tag >= 0 && tag <= 25) {
-        return [NSString stringWithFormat:@"%c", 'A' + tag];
-    }
-    if (tag >= 100 && tag <= 109) {
-        return [NSString stringWithFormat:@"%c", '0' + tag - 100];
-    }
-    return @"";
-}
-
-- (void)updateShortcutTitles
-{
-    // Reset titles of all shortcuts.
-    for (int i = 0; i < [bookmarkShortcutKey numberOfItems]; ++i) {
-        NSMenuItem* item = [bookmarkShortcutKey itemAtIndex:i];
-        [item setTitle:[self shortcutKeyForTag:[item tag]]];
-    }
-
-    // Add bookmark names to shortcuts that are bound.
-    for (int i = 0; i < [dataSource numberOfBookmarks]; ++i) {
-        Profile* temp = [dataSource profileAtIndex:i];
-        NSString* existingShortcut = [temp objectForKey:KEY_SHORTCUT];
-        const int tag = [self shortcutTagForKey:existingShortcut];
-        if (tag != -1) {
-            //NSLog(@"Bookmark %@ has shortcut %@", [temp objectForKey:KEY_NAME], existingShortcut);
-            const int theIndex = [bookmarkShortcutKey indexOfItemWithTag:tag];
-            NSMenuItem* item = [bookmarkShortcutKey itemAtIndex:theIndex];
-            NSString* newTitle = [NSString stringWithFormat:@"%@ (%@)", existingShortcut, [temp objectForKey:KEY_NAME]];
-            [item setTitle:newTitle];
-        }
-    }
-}
-
 // Update the values in form fields to reflect the bookmark's state
 - (void)updateBookmarkFields:(NSDictionary *)dict
 {
@@ -2250,14 +2177,12 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     NSString* name;
-    NSString* shortcut;
     NSString* command;
     NSString* text;
     NSString* dir;
     NSString* customCommand;
     NSString* customDir;
     name = [dict objectForKey:KEY_NAME];
-    shortcut = [dict objectForKey:KEY_SHORTCUT];
     command = [dict objectForKey:KEY_COMMAND];
     text = [dict objectForKey:KEY_INITIAL_TEXT];
     if (!text) {
@@ -2266,11 +2191,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     dir = [dict objectForKey:KEY_WORKING_DIRECTORY];
     customCommand = [dict objectForKey:KEY_CUSTOM_COMMAND];
     customDir = [dict objectForKey:KEY_CUSTOM_DIRECTORY];
-
-    // General tab
-    [bookmarkShortcutKey selectItemWithTag:[self shortcutTagForKey:shortcut]];
-
-    [self updateShortcutTitles];
 
     if ([customCommand isEqualToString:@"Yes"]) {
         [bookmarkCommandType selectCellWithTag:0];

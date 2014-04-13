@@ -19,4 +19,7 @@
 @property(nonatomic, assign) IBOutlet id<ProfilesGeneralPreferencesViewControllerDelegate> profileDelegate;
 @property(nonatomic, readonly) NSTextField *profileNameField;
 
+- (void)layoutSubviewsForSingleBookmarkMode;
+- (void)updateShortcutTitles;
+
 @end

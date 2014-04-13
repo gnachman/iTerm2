@@ -65,12 +65,33 @@
     return ([self defaultValueMap][key] != nil);
 }
 
++ (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type {
+    id defaultValue = [self defaultValueMap][key];
+    switch (type) {
+        case kPreferenceInfoTypeIntegerTextField:
+        case kPreferenceInfoTypePopup:
+            return ([defaultValue isKindOfClass:[NSNumber class]] &&
+                    [defaultValue doubleValue] == ceil([defaultValue doubleValue]));
+        case kPreferenceInfoTypeCheckbox:
+            return ([defaultValue isKindOfClass:[NSNumber class]] &&
+                    ([defaultValue intValue] == YES ||
+                     [defaultValue intValue] == NO));
+        case kPreferenceInfoTypeSlider:
+            return [defaultValue isKindOfClass:[NSNumber class]];
+        case kPreferenceInfoTypeStringTextField:
+            return [defaultValue isKindOfClass:[NSString class]];
+    }
+
+    return NO;
+}
+
 #pragma mark - Private
 
 + (NSDictionary *)defaultValueMap {
     static NSDictionary *dict;
     if (!dict) {
         dict = @{ KEY_NAME: @"Default",
+                  KEY_SHORTCUT: [NSNull null],
                 };
         [dict retain];
     }

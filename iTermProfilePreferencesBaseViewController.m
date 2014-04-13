@@ -59,10 +59,27 @@
     return [iTermProfilePreferences keyHasDefaultValue:key];
 }
 
+- (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type {
+    return [iTermProfilePreferences defaultValueForKey:key isCompatibleWithType:type];
+}
+
 - (void)reloadProfile {
     for (NSControl *control in self.keyMap) {
         PreferenceInfo *info = [self infoForControl:control];
         [self updateValueForInfo:info];
+    }
+}
+
+- (void)copyOwnedValueToDict:(NSMutableDictionary *)dict {
+    Profile *profile = [_delegate profilePreferencesCurrentProfile];
+    for (NSControl *control in self.keyMap) {
+        PreferenceInfo *info = [self infoForControl:control];
+        id value = [iTermProfilePreferences objectForKey:info.key inProfile:profile];
+        if (value) {
+            dict[info.key] = value;
+        } else {
+            [dict removeObjectForKey:info.key];
+        }
     }
 }
 

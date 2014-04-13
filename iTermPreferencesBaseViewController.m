@@ -70,6 +70,10 @@
     return [iTermPreferences keyHasDefaultValue:key];
 }
 
+- (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type {
+    return [iTermPreferences defaultValueForKey:key isCompatibleWithType:type];
+}
+
 #pragma mark - APIs
 
 - (IBAction)settingChanged:(id)sender {
@@ -118,14 +122,31 @@
 - (PreferenceInfo *)defineControl:(NSControl *)control
                               key:(NSString *)key
                              type:(PreferenceInfoType)type {
+    return [self defineControl:control
+                           key:key
+                          type:type
+                settingChanged:NULL
+                        update:NULL];
+}
+
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                             type:(PreferenceInfoType)type
+                   settingChanged:(void (^)(id))settingChanged
+                           update:(BOOL (^)())update {
     assert(![_keyMap objectForKey:key]);
     assert(key);
     assert(control);
     assert([self keyHasDefaultValue:key]);
+    if (!settingChanged || !update) {
+        assert([self defaultValueForKey:key isCompatibleWithType:type]);
+    }
     
     PreferenceInfo *info = [PreferenceInfo infoForPreferenceWithKey:key
                                                                type:type
                                                             control:control];
+    info.customSettingChangedHandler = settingChanged;
+    info.onUpdate = update;
     [_keyMap setObject:info forKey:control];
     [self updateValueForInfo:info];
     
@@ -133,6 +154,11 @@
 }
 
 - (void)updateValueForInfo:(PreferenceInfo *)info {
+    if (info.onUpdate) {
+        if (info.onUpdate()) {
+            return;
+        }
+    }
     switch (info.type) {
         case kPreferenceInfoTypeCheckbox: {
             assert([info.control isKindOfClass:[NSButton class]]);

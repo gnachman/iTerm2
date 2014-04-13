@@ -101,6 +101,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     _removeProfileButton.hidden = YES;
     _copyToProfileButton.hidden = NO;
     _toggleTagsButton.hidden = YES;
+    [_generalViewController layoutSubviewsForSingleBookmarkMode];
     
     NSRect newFrame = _tabView.frame;
     newFrame.origin.x = 0;
@@ -159,6 +160,12 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [_profilesListView reloadData];
 }
 
+- (void)copyOwnedValueToDict:(NSMutableDictionary *)dict {
+    for (iTermProfilePreferencesBaseViewController *viewController in [self tabViewControllers]) {
+        [viewController copyOwnedValueToDict:dict];
+    }
+}
+
 #pragma mark - ProfileListViewDelegate
 
 - (void)profileTableSelectionDidChange:(id)profileTable {
@@ -171,12 +178,6 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
     [_delegate profileWithGuidWasSelected:profile[KEY_GUID]];
     [_generalViewController reloadProfile];
-}
-
-- (void)profileTableSelectionWillChange:(id)profileTable {
-    if ([[_profilesListView selectedGuids] count] == 1) {
-        [_delegate bookmarkSettingChanged:nil];
-    }
 }
 
 - (void)profileTableRowSelected:(id)profileTable {
@@ -210,6 +211,10 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     }
 }
 
+- (NSArray *)tabViewControllers {
+    return @[ _generalViewController ];
+}
+
 #pragma mark - Actions
 
 - (IBAction)removeProfile:(id)sender {
@@ -229,6 +234,9 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
             toSelect = 0;
         }
         [_profilesListView selectRowIndex:toSelect];
+        
+        // If a profile was deleted, update the shortcut titles that might refer to it.
+        [_generalViewController updateShortcutTitles];
     }
 }
 

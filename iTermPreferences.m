@@ -193,6 +193,27 @@ static NSMutableDictionary *gObservers;
     }
 }
 
++ (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type {
+    id defaultValue = [self defaultValueMap][key];
+    switch (type) {
+        case kPreferenceInfoTypeIntegerTextField:
+        case kPreferenceInfoTypePopup:
+            return ([defaultValue isKindOfClass:[NSNumber class]] &&
+                    [defaultValue doubleValue] == ceil([defaultValue doubleValue]));
+        case kPreferenceInfoTypeCheckbox:
+            return ([defaultValue isKindOfClass:[NSNumber class]] &&
+                    ([defaultValue intValue] == YES ||
+                     [defaultValue intValue] == NO));
+        case kPreferenceInfoTypeSlider:
+            return [defaultValue isKindOfClass:[NSNumber class]];
+        case kPreferenceInfoTypeStringTextField:
+            return ([defaultValue isKindOfClass:[NSString class]] ||
+                    [defaultValue isKindOfClass:[NSNull class]]);
+    }
+    
+    return NO;
+}
+
 #pragma mark - Computed values
 
 // Returns a dictionary from key to a ^id() block. The block will return an object value for the

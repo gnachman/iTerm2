@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "PreferenceInfo.h"
 #import "ProfileModel.h"
 
 @interface iTermProfilePreferences : NSObject
@@ -35,7 +36,10 @@
         inProfile:(Profile *)profile
             model:(ProfileModel *)model;
 
++ (id)objectForKey:(NSString *)key inProfile:(Profile *)profile;
+
 // This is used for ensuring that all controls have default values.
 + (BOOL)keyHasDefaultValue:(NSString *)key;
++ (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type;
 
 @end

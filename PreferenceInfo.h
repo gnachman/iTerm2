@@ -34,6 +34,9 @@ typedef enum {
 // Called before a change occurs.
 @property(nonatomic, copy) void (^willChange)();
 
+// Called before a control's value is updated. If it returns YES, the normal path is not taken.
+@property(nonatomic, copy) BOOL (^onUpdate)();
+
 // Replaces the default settingChanged: handler which updates user defaults and calls onChange.
 @property(nonatomic, copy) void (^customSettingChangedHandler)(id sender);
 

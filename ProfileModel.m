@@ -638,6 +638,10 @@ int gMigrated;
     return guids;
 }
 
+- (void)flush {
+    [prefs_ setObject:[self rawData] forKey:KEY_NEW_BOOKMARKS];
+}
+
 + (BOOL)menuHasMultipleItemsExcludingAlternates:(NSMenu *)menu fromIndex:(int)first
 {
     int n = 0;

@@ -24,6 +24,14 @@
                               key:(NSString *)key
                              type:(PreferenceInfoType)type;
 
+// Define a control with a custom settingChanged and update handler. If they're both not null then
+// the default value is not type checked.
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                             type:(PreferenceInfoType)type
+                   settingChanged:(void (^)(id))settingChanged
+                           update:(BOOL (^)())update;
+
 #pragma mark - IBActions
 
 // Standard selector invoked by controls when their values changed, bound in XIB file.
@@ -62,5 +70,6 @@
 - (void)setString:(NSString *)value forKey:(NSString *)key;
 
 - (BOOL)keyHasDefaultValue:(NSString *)key;
+- (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type;
 
 @end

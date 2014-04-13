@@ -103,9 +103,10 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 
     info = [self defineControl:_hotkeyBookmark
                            key:kPreferenceKeyHotkeyProfileGuid
-                          type:kPreferenceInfoTypePopup];
+                          type:kPreferenceInfoTypePopup
+                settingChanged:^(id sender) { [self hotkeyProfileDidChange]; }
+                        update:^BOOL { [self populateHotKeyProfilesMenu]; return YES; }];
     [self populateHotKeyProfilesMenu];
-    info.customSettingChangedHandler = ^(id sender) { [self hotkeyProfileDidChange]; };
 }
 
 - (void)hotkeyProfileDidChange {

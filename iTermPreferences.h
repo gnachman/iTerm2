@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "PreferenceInfo.h"
 #import "PSMTabBarControl.h"
 
 // Values for kPreferenceKeyOpenTmuxWindowsIn (corresponds to tags in control).
@@ -126,6 +127,7 @@ extern NSString *const kPreferenceKeyAppVersion;
 
 // This is used for ensuring that all controls have default values.
 + (BOOL)keyHasDefaultValue:(NSString *)key;
++ (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type;
 
 // When the value held by |key| changes, the block is invoked with the old an
 // new values. Either may be nil, but they are guaranteed to be different by
