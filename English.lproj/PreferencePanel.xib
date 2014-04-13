@@ -58,7 +58,6 @@
                 <outlet property="boldColor" destination="2272" id="3006"/>
                 <outlet property="bookmarkCommand" destination="2131" id="2986"/>
                 <outlet property="bookmarkCommandLabel" destination="2132" id="3464"/>
-                <outlet property="bookmarkCommandType" destination="2185" id="2985"/>
                 <outlet property="bookmarkDirectory" destination="2189" id="3002"/>
                 <outlet property="bookmarkDirectoryLabel" destination="2129" id="3465"/>
                 <outlet property="bookmarkDirectoryType" destination="2190" id="2987"/>
@@ -1568,7 +1567,7 @@ Gw
                                                                     </column>
                                                                 </cells>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="2999"/>
+                                                                    <action selector="settingChanged:" target="dVg-Ac-SiZ" id="SlN-9L-yok"/>
                                                                     <outlet property="nextKeyView" destination="2131" id="5214"/>
                                                                 </connections>
                                                             </matrix>
@@ -5394,6 +5393,7 @@ DQ
         </customObject>
         <customObject id="dVg-Ac-SiZ" customClass="ProfilesGeneralPreferencesViewController">
             <connections>
+                <outlet property="_commandType" destination="2185" id="k7n-vi-7cM"/>
                 <outlet property="_profileNameField" destination="2133" id="6VF-gN-bGW"/>
                 <outlet property="_profileShortcut" destination="2142" id="vtI-vU-bua"/>
                 <outlet property="_tagsTokenField" destination="3245" id="dUf-HQ-eA6"/>

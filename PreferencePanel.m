@@ -158,7 +158,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // General tab
     IBOutlet NSTextField *basicsLabel;
-    IBOutlet NSMatrix *bookmarkCommandType;
     IBOutlet NSTextField *bookmarkCommand;
     IBOutlet NSTextField *initialText;
     IBOutlet NSMatrix *bookmarkDirectoryType;
@@ -424,7 +423,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [bookmarkCommandLabel setHidden:YES];
     [initialTextLabel setHidden:YES];
     [bookmarkDirectoryLabel setHidden:YES];
-    [bookmarkCommandType setHidden:YES];
     [bookmarkCommand setHidden:YES];
     [initialText setHidden:YES];
     [bookmarkDirectoryType setHidden:YES];
@@ -602,7 +600,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
     NSString* dir = [bookmarkDirectory stringValue];
 
-    NSString* customCommand = [[bookmarkCommandType selectedCell] tag] == 0 ? @"Yes" : @"No";
     NSString* customDir;
     switch ([[bookmarkDirectoryType selectedCell] tag]) {
         case 0:
@@ -653,7 +650,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [newDict setObject:command forKey:KEY_COMMAND];
     [newDict setObject:text forKey:KEY_INITIAL_TEXT];
     [newDict setObject:dir forKey:KEY_WORKING_DIRECTORY];
-    [newDict setObject:customCommand forKey:KEY_CUSTOM_COMMAND];
     [newDict setObject:customDir forKey:KEY_CUSTOM_DIRECTORY];
 
     // Just copy over advanced working dir settings
@@ -2197,7 +2193,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     NSString* command;
     NSString* text;
     NSString* dir;
-    NSString* customCommand;
     NSString* customDir;
     name = [dict objectForKey:KEY_NAME];
     command = [dict objectForKey:KEY_COMMAND];
@@ -2206,14 +2201,8 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         text = @"";
     }
     dir = [dict objectForKey:KEY_WORKING_DIRECTORY];
-    customCommand = [dict objectForKey:KEY_CUSTOM_COMMAND];
     customDir = [dict objectForKey:KEY_CUSTOM_DIRECTORY];
 
-    if ([customCommand isEqualToString:@"Yes"]) {
-        [bookmarkCommandType selectCellWithTag:0];
-    } else {
-        [bookmarkCommandType selectCellWithTag:1];
-    }
     [bookmarkCommand setStringValue:command];
     [initialText setStringValue:text];
 

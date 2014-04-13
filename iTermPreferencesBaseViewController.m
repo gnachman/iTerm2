@@ -115,6 +115,9 @@
             [self setObject:[sender objectValue] forKey:info.key];
             break;
 
+        case kPreferenceInfoTypeMatrix:
+            assert(false);  // Must use a custom setting changed handler
+        
         case kPreferenceInfoTypePopup:
             [self setInt:[sender selectedTag] forKey:info.key];
             break;
@@ -152,6 +155,7 @@
     assert([self keyHasDefaultValue:key]);
     if (!settingChanged || !update) {
         assert([self defaultValueForKey:key isCompatibleWithType:type]);
+        assert(type != kPreferenceInfoTypeMatrix);  // Matrix type requires both.
     }
     
     PreferenceInfo *info = [PreferenceInfo infoForPreferenceWithKey:key
@@ -215,6 +219,9 @@
             slider.doubleValue = [self floatForKey:info.key];
             break;
         }
+
+        case kPreferenceInfoTypeMatrix:
+            assert(false);  // Must use onChange() only.
 
         default:
             assert(false);

@@ -15,6 +15,7 @@ typedef enum {
     kPreferenceInfoTypePopup,
     kPreferenceInfoTypeSlider,
     kPreferenceInfoTypeTokenField,
+    kPreferenceInfoTypeMatrix
 } PreferenceInfoType;
 
 

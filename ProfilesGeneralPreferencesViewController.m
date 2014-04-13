@@ -8,13 +8,19 @@
 
 #import "ProfilesGeneralPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermProfilePreferences.h"
 #import "NSTextField+iTerm.h"
 #import "ProfileModel.h"
+
+// Tags for _commandType matrix selectedCell.
+static const NSInteger kCommandTypeCustomTag = 0;
+static const NSInteger kCommandTypeLoginShellTag = 1;
 
 @implementation ProfilesGeneralPreferencesViewController {
     IBOutlet NSTextField *_profileNameField;
     IBOutlet NSPopUpButton *_profileShortcut;
     IBOutlet NSTokenField *_tagsTokenField;
+    IBOutlet NSMatrix *_commandType;  // Login shell vs custom command radio buttons
 }
 
 - (void)awakeFromNib {
@@ -39,11 +45,40 @@
     [self defineControl:_tagsTokenField
                     key:KEY_TAGS
                    type:kPreferenceInfoTypeTokenField];
+    
+    [self defineControl:_commandType
+                    key:KEY_CUSTOM_COMMAND
+                   type:kPreferenceInfoTypeMatrix
+         settingChanged:^(id sender) { [self commandTypeDidChange]; }
+                 update:^BOOL { [self updateCommandType]; return YES; }];
 }
 
 - (void)layoutSubviewsForSingleBookmarkMode {
     _profileShortcut.hidden = YES;
     _tagsTokenField.hidden = YES;
+    _commandType.hidden = YES;
+}
+
+#pragma mark - Command Type
+
+- (void)commandTypeDidChange {
+    NSInteger tag = [[_commandType selectedCell] tag];
+    NSString *value;
+    if (tag == kCommandTypeCustomTag) {
+        value = kProfilePreferenceCommandTypeCustomValue;
+    } else {
+        value = kProfilePreferenceCommandTypeLoginShellValue;
+    }
+    [self setString:value forKey:KEY_CUSTOM_COMMAND];
+}
+
+- (void)updateCommandType {
+    NSString *value = [self stringForKey:KEY_CUSTOM_COMMAND];
+    if ([value isEqualToString:kProfilePreferenceCommandTypeCustomValue]) {
+        [_commandType selectCellWithTag:kCommandTypeCustomTag];
+    } else {
+        [_commandType selectCellWithTag:kCommandTypeLoginShellTag];
+    }
 }
 
 #pragma mark - Shortcuts

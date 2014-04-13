@@ -10,6 +10,10 @@
 #import "PreferenceInfo.h"
 #import "ProfileModel.h"
 
+// Values for KEY_CUSTOM_COMMAND
+extern NSString *const kProfilePreferenceCommandTypeCustomValue;
+extern NSString *const kProfilePreferenceCommandTypeLoginShellValue;
+
 @interface iTermProfilePreferences : NSObject
 
 + (BOOL)boolForKey:(NSString *)key inProfile:(Profile *)profile;

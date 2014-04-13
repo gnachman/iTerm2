@@ -10,6 +10,9 @@
 #import "ITAddressBookMgr.h"
 #import "PreferencePanel.h"
 
+NSString *const kProfilePreferenceCommandTypeCustomValue = @"Yes";
+NSString *const kProfilePreferenceCommandTypeLoginShellValue = @"No";
+
 #define BLOCK(x) [^id(Profile *profile) { return [self x:profile]; } copy]
 
 @implementation iTermProfilePreferences
@@ -83,6 +86,8 @@
         case kPreferenceInfoTypeTokenField:
             return ([defaultValue isKindOfClass:[NSNull class]] ||
                     [defaultValue isKindOfClass:[NSArray class]]);
+        case kPreferenceInfoTypeMatrix:
+            return [defaultValue isKindOfClass:[NSString class]];
     }
 
     return NO;
@@ -96,6 +101,7 @@
         dict = @{ KEY_NAME: @"Default",
                   KEY_SHORTCUT: [NSNull null],
                   KEY_TAGS: [NSNull null],
+                  KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeLoginShellValue,
                 };
         [dict retain];
     }

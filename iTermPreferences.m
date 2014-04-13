@@ -212,6 +212,8 @@ static NSMutableDictionary *gObservers;
         case kPreferenceInfoTypeStringTextField:
             return ([defaultValue isKindOfClass:[NSString class]] ||
                     [defaultValue isKindOfClass:[NSNull class]]);
+        case kPreferenceInfoTypeMatrix:
+            return [defaultValue isKindOfClass:[NSString class]];
     }
     
     return NO;
