@@ -5185,14 +5185,23 @@ DQ
         <customObject id="dVg-Ac-SiZ" customClass="ProfilesGeneralPreferencesViewController">
             <connections>
                 <outlet property="_advancedWorkingDirWindowController" destination="Cct-nR-QI7" id="BT2-8e-6Md"/>
+                <outlet property="_basicsLabel" destination="3247" id="Uel-UZ-Vvt"/>
+                <outlet property="_commandLabel" destination="2132" id="mbo-85-faJ"/>
                 <outlet property="_commandType" destination="2185" id="k7n-vi-7cM"/>
                 <outlet property="_customCommand" destination="2131" id="uHM-Rp-s80"/>
                 <outlet property="_customDirectory" destination="2189" id="msb-Cg-HLN"/>
+                <outlet property="_directoryLabel" destination="2129" id="e8L-eh-dsw"/>
                 <outlet property="_editAdvancedConfigButton" destination="5975" id="Xww-uf-BMr"/>
                 <outlet property="_initialDirectoryType" destination="2190" id="LYF-0C-gAo"/>
+                <outlet property="_modifierLabel" destination="3241" id="50U-mh-Q2B"/>
                 <outlet property="_profileNameField" destination="2133" id="6VF-gN-bGW"/>
                 <outlet property="_profileShortcut" destination="2142" id="vtI-vU-bua"/>
+                <outlet property="_schemesHeaderLabel" destination="5033" id="zvx-Dj-J4p"/>
+                <outlet property="_schemesLabel" destination="5035" id="zeB-oy-niN"/>
                 <outlet property="_sendTextAtStart" destination="5410" id="eUe-AY-v5Q"/>
+                <outlet property="_sendTextAtStartLabel" destination="5408" id="ZWa-zB-PeZ"/>
+                <outlet property="_shortcutLabel" destination="2141" id="isf-Rh-0zr"/>
+                <outlet property="_tagsLabel" destination="3243" id="GLJ-cK-wWn"/>
                 <outlet property="_tagsTokenField" destination="3245" id="dUf-HQ-eA6"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="KYZ-OC-7cf"/>
                 <outlet property="profileDelegate" destination="HVI-63-mNz" id="0qp-TV-M54"/>

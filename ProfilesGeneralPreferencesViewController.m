@@ -24,6 +24,18 @@ static const NSInteger kInitialDirectoryTypeRecycleTag = 2;
 static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
 @implementation ProfilesGeneralPreferencesViewController {
+    // Labels
+    IBOutlet NSTextField *_basicsLabel;
+    IBOutlet NSTextField *_shortcutLabel;
+    IBOutlet NSTextField *_modifierLabel;
+    IBOutlet NSTextField *_tagsLabel;
+    IBOutlet NSTextField *_commandLabel;
+    IBOutlet NSTextField *_sendTextAtStartLabel;
+    IBOutlet NSTextField *_directoryLabel;
+    IBOutlet NSTextField *_schemesHeaderLabel;
+    IBOutlet NSTextField *_schemesLabel;
+
+    // Controls
     IBOutlet NSTextField *_profileNameField;
     IBOutlet NSPopUpButton *_profileShortcut;
     IBOutlet NSTokenField *_tagsTokenField;
@@ -103,6 +115,15 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
                               _initialDirectoryType,
                               _customDirectory,
                               _editAdvancedConfigButton,
+                              _basicsLabel,
+                              _shortcutLabel,
+                              _modifierLabel,
+                              _tagsLabel,
+                              _commandLabel,
+                              _sendTextAtStartLabel,
+                              _directoryLabel,
+                              _schemesHeaderLabel,
+                              _schemesLabel,
                              ];
     for (NSView *view in viewsToHide) {
         view.hidden = YES;

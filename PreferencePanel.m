@@ -157,15 +157,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     // Bookmarks -----------------------------
 
     // General tab
-    IBOutlet NSTextField *basicsLabel;
-    IBOutlet NSTextField *bookmarkShortcutKeyLabel;
-    IBOutlet NSTextField *bookmarkShortcutKeyModifiersLabel;
-    IBOutlet NSTextField *bookmarkTagsLabel;
-    IBOutlet NSTextField *bookmarkCommandLabel;
-    IBOutlet NSTextField *initialTextLabel;
-    IBOutlet NSTextField *bookmarkDirectoryLabel;
-    IBOutlet NSTextField *bookmarkUrlSchemesHeaderLabel;
-    IBOutlet NSTextField *bookmarkUrlSchemesLabel;
     IBOutlet NSPopUpButton* bookmarkUrlSchemes;
 
     // Only visible in Get Info mode
@@ -400,15 +391,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [self showBookmarks];
     [_profilesViewController layoutSubviewsForSingleBookmarkMode];
     [toolbar setVisible:NO];
-    [bookmarkShortcutKeyLabel setHidden:YES];
-    [bookmarkShortcutKeyModifiersLabel setHidden:YES];
-    [bookmarkTagsLabel setHidden:YES];
-    [bookmarkCommandLabel setHidden:YES];
-    [initialTextLabel setHidden:YES];
-    [bookmarkDirectoryLabel setHidden:YES];
     [bookmarkUrlSchemes setHidden:YES];
-    [bookmarkUrlSchemesHeaderLabel setHidden:YES];
-    [bookmarkUrlSchemesLabel setHidden:YES];
     [setProfileLabel setHidden:NO];
     [setProfileBookmarkListView setHidden:NO];
     [changeProfileButton setHidden:NO];
