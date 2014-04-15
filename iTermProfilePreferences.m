@@ -159,7 +159,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         inProfile:(Profile *)profile
             model:(ProfileModel *)model {
     [model setObject:object forKey:key inBookmark:profile];
-    [[NSUserDefaults standardUserDefaults] setObject:[model rawData] forKey:@"New Bookmarks"];
+    [model flush];
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
                                                         object:nil
                                                       userInfo:nil];
