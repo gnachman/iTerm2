@@ -155,8 +155,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     // Bookmarks -----------------------------
 
     // General tab
-    IBOutlet NSPopUpButton* bookmarkUrlSchemes;
-
     // Only visible in Get Info mode
     IBOutlet NSTextField* setProfileLabel;
     IBOutlet ProfileListView* setProfileBookmarkListView;
@@ -389,7 +387,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [self showBookmarks];
     [_profilesViewController layoutSubviewsForSingleBookmarkMode];
     [toolbar setVisible:NO];
-    [bookmarkUrlSchemes setHidden:YES];
     [setProfileLabel setHidden:NO];
     [setProfileBookmarkListView setHidden:NO];
     [changeProfileButton setHidden:NO];
@@ -757,20 +754,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 }
 
-
-- (IBAction)bookmarkUrlSchemeHandlerChanged:(id)sender
-{
-    Profile *profile = [_profilesViewController selectedProfile];
-    NSString* guid = profile[KEY_GUID];
-    NSString* scheme = [[bookmarkUrlSchemes selectedItem] title];
-    iTermURLSchemeController *schemeController = [iTermURLSchemeController sharedInstance];
-    if ([schemeController guidForScheme:scheme]) {
-        [schemeController disconnectHandlerForScheme:scheme];
-    } else {
-        [schemeController connectBookmarkWithGuid:guid toScheme:scheme];
-    }
-    [self _populateBookmarkUrlSchemesFromDict:[dataSource bookmarkWithGuid:guid]];
-}
 
 - (IBAction)addJob:(id)sender
 {
@@ -1759,31 +1742,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [[NSUserDefaults standardUserDefaults] setBool:value forKey:@"AutoCommandHistory"];
 }
 
-#pragma mark - URL Handler
-
-- (void)_populateBookmarkUrlSchemesFromDict:(Profile*)dict
-{
-    if ([[[bookmarkUrlSchemes menu] itemArray] count] == 0) {
-        NSArray* urlArray = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleURLTypes"];
-        for (int i=0; i<[urlArray count]; i++) {
-            [bookmarkUrlSchemes addItemWithTitle:[[[urlArray objectAtIndex:i] objectForKey: @"CFBundleURLSchemes"] objectAtIndex:0]];
-        }
-        [bookmarkUrlSchemes setTitle:@"Select URL Schemes…"];
-    }
-
-    NSString* guid = [dict objectForKey:KEY_GUID];
-    [[bookmarkUrlSchemes menu] setAutoenablesItems:YES];
-    [[bookmarkUrlSchemes menu] setDelegate:self];
-    for (NSMenuItem* item in [[bookmarkUrlSchemes menu] itemArray]) {
-        Profile* handler = [[iTermURLSchemeController sharedInstance] profileForScheme:[item title]];
-        if (handler && [[handler objectForKey:KEY_GUID] isEqualToString:guid]) {
-            [item setState:NSOnState];
-        } else {
-            [item setState:NSOffState];
-        }
-    }
-}
-
 #pragma mark - NSTableViewDataSource
 
 - (int)numberOfRowsInTableView: (NSTableView *)aTableView
@@ -1917,8 +1875,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     NSString* name;
     name = [dict objectForKey:KEY_NAME];
-
-    [self _populateBookmarkUrlSchemesFromDict:dict];
 
     // Colors tab
     [ansi0Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_0_COLOR]]];

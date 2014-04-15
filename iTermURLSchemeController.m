@@ -64,8 +64,7 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
     OSStatus err;
     BOOL set = YES;
     
-    err = LSGetApplicationForURL(
-                                 (CFURLRef)[NSURL URLWithString:[scheme stringByAppendingString:@":"]],
+    err = LSGetApplicationForURL((CFURLRef)[NSURL URLWithString:[scheme stringByAppendingString:@":"]],
                                  kLSRolesAll, NULL, (CFURLRef *)&appURL);
     if (err != noErr) {
         set = NSRunAlertPanel([NSString stringWithFormat:@"iTerm is not the default handler for %@. "

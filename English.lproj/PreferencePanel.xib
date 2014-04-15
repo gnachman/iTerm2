@@ -55,7 +55,6 @@
                 <outlet property="bookmarkShortcutKeyLabel" destination="2141" id="3466"/>
                 <outlet property="bookmarkShortcutKeyModifiersLabel" destination="3241" id="3467"/>
                 <outlet property="bookmarkTagsLabel" destination="3243" id="3468"/>
-                <outlet property="bookmarkUrlSchemes" destination="5037" id="5043"/>
                 <outlet property="bookmarkUrlSchemesHeaderLabel" destination="5033" id="5045"/>
                 <outlet property="bookmarkUrlSchemesLabel" destination="5035" id="5046"/>
                 <outlet property="bookmarksTabViewItem" destination="1945" id="2863"/>
@@ -1627,7 +1626,7 @@ Gw
                                                                     <menu key="menu" title="OtherViews" id="5039"/>
                                                                 </popUpButtonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkUrlSchemeHandlerChanged:" target="-2" id="5044"/>
+                                                                    <action selector="urlSchemeHandlerDidChange:" target="dVg-Ac-SiZ" id="Q9h-nh-qaE"/>
                                                                     <outlet property="nextKeyView" destination="2100" id="5218"/>
                                                                 </connections>
                                                             </popUpButton>
@@ -5203,6 +5202,7 @@ DQ
                 <outlet property="_shortcutLabel" destination="2141" id="isf-Rh-0zr"/>
                 <outlet property="_tagsLabel" destination="3243" id="GLJ-cK-wWn"/>
                 <outlet property="_tagsTokenField" destination="3245" id="dUf-HQ-eA6"/>
+                <outlet property="_urlSchemes" destination="5037" id="lLd-os-fwk"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="KYZ-OC-7cf"/>
                 <outlet property="profileDelegate" destination="HVI-63-mNz" id="0qp-TV-M54"/>
                 <outlet property="view" destination="2104" id="oJB-AQ-x9t"/>

@@ -10,6 +10,7 @@
 #import "AdvancedWorkingDirectoryWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermProfilePreferences.h"
+#import "iTermURLSchemeController.h"
 #import "NSTextField+iTerm.h"
 #import "ProfileModel.h"
 
@@ -22,6 +23,9 @@ static const NSInteger kInitialDirectoryTypeCustomTag = 0;
 static const NSInteger kInitialDirectoryTypeHomeTag = 1;
 static const NSInteger kInitialDirectoryTypeRecycleTag = 2;
 static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
+
+@interface ProfilesGeneralPreferencesViewController () <NSMenuDelegate>
+@end
 
 @implementation ProfilesGeneralPreferencesViewController {
     // Labels
@@ -46,6 +50,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     IBOutlet NSTextField *_customDirectory;  // Path to custom initial directory
     IBOutlet NSButton *_editAdvancedConfigButton;  // Advanced initial directory button
     IBOutlet AdvancedWorkingDirectoryWindowController *_advancedWorkingDirWindowController;
+    IBOutlet NSPopUpButton *_urlSchemes;
 }
 
 - (void)awakeFromNib {
@@ -124,9 +129,54 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
                               _directoryLabel,
                               _schemesHeaderLabel,
                               _schemesLabel,
+                              _urlSchemes,
                              ];
     for (NSView *view in viewsToHide) {
         view.hidden = YES;
+    }
+}
+
+- (void)reloadProfile {
+    [super reloadProfile];
+    [self populateBookmarkUrlSchemesFromProfile:[self.delegate profilePreferencesCurrentProfile]];
+}
+
+#pragma mark - URL Schemes
+
+- (IBAction)urlSchemeHandlerDidChange:(id)sender {
+    Profile *profile = [self.delegate profilePreferencesCurrentProfile];
+    NSString *guid = profile[KEY_GUID];
+    NSString *scheme = [[_urlSchemes selectedItem] title];
+    iTermURLSchemeController *schemeController = [iTermURLSchemeController sharedInstance];
+    NSString *boundGuid = [schemeController guidForScheme:scheme];
+    if ([boundGuid isEqualToString:guid]) {
+        [schemeController disconnectHandlerForScheme:scheme];
+    } else {
+        [schemeController connectBookmarkWithGuid:guid toScheme:scheme];
+    }
+    [self populateBookmarkUrlSchemesFromProfile:[[ProfileModel sharedInstance] bookmarkWithGuid:guid]];
+}
+
+- (void)populateBookmarkUrlSchemesFromProfile:(Profile*)profile {
+    if ([[[_urlSchemes menu] itemArray] count] == 0) {
+        NSArray* urlArray = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleURLTypes"];
+        for (NSDictionary *dict in urlArray) {
+            NSString *scheme = dict[@"CFBundleURLSchemes"][0];
+            [_urlSchemes addItemWithTitle:scheme];
+        }
+        [_urlSchemes setTitle:@"Select URL Schemes…"];
+    }
+    
+    NSString* guid = [profile objectForKey:KEY_GUID];
+    [[_urlSchemes menu] setAutoenablesItems:YES];
+    [[_urlSchemes menu] setDelegate:self];
+    for (NSMenuItem* item in [[_urlSchemes menu] itemArray]) {
+        Profile* handler = [[iTermURLSchemeController sharedInstance] profileForScheme:[item title]];
+        if (handler && [[handler objectForKey:KEY_GUID] isEqualToString:guid]) {
+            [item setState:NSOnState];
+        } else {
+            [item setState:NSOffState];
+        }
     }
 }
 
