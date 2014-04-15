@@ -1556,11 +1556,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				A6E713B018FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.h */,
-				A6E713B118FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.m */,
-				A6E713B218FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib */,
-				A6E713A618F7C9F4008D94DD /* iTermProfilePreferences.h */,
-				A6E713A718F7C9F4008D94DD /* iTermProfilePreferences.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -1637,6 +1632,7 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				A6E713B018FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.h */,
 				1D9DCC14142D7FC10016228A /* AlertTrigger.h */,
 				A6E7138C18F26A91008D94DD /* AppearancePreferencesViewController.h */,
 				1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */,
@@ -1704,6 +1700,7 @@
 				A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */,
 				A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */,
 				A6E7137D18F1DB1E008D94DD /* iTermPreferences.h */,
+				A6E713A618F7C9F4008D94DD /* iTermProfilePreferences.h */,
 				A6E713A118F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.h */,
 				FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */,
 				1DAED99012EDF923005E49ED /* iTermSearchField.h */,
@@ -1852,6 +1849,7 @@
 		0464AB22006CD2EC7F000001 /* Interfaces */ = {
 			isa = PBXGroup;
 			children = (
+				A6E713B218FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib */,
 				A6E7139B18F7B199008D94DD /* BulkCopyProfilePreferences.xib */,
 				FB094A14033D58AE01F955DB /* addressbook.png */,
 				1DE2154112821F1C004E3ADF /* Autocomplete.xib */,
@@ -1998,6 +1996,7 @@
 		1D24C37714303E00006B246F /* Preferences */ = {
 			isa = PBXGroup;
 			children = (
+				A6E713B118FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.m */,
 				A6E7138D18F26A91008D94DD /* AppearancePreferencesViewController.m */,
 				1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */,
 				A6E7139A18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.m */,
@@ -2012,6 +2011,7 @@
 				A6E7137E18F1DB1E008D94DD /* iTermPreferences.m */,
 				A6E7138718F26445008D94DD /* iTermPreferencesBaseViewController.h */,
 				A6E7138818F26445008D94DD /* iTermPreferencesBaseViewController.m */,
+				A6E713A718F7C9F4008D94DD /* iTermProfilePreferences.m */,
 				A6E713A218F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.m */,
 				FB4CEAC661436E55F3B3A668 /* iTermRemotePreferences.m */,
 				A697100A18D94CDA007E901D /* iTermSettingsModel.m */,
