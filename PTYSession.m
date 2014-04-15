@@ -1796,10 +1796,12 @@ typedef enum {
     DLog(@"Reload profile for %@", self);
     BOOL didChange = NO;
     NSDictionary *sharedProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:_originalProfile[KEY_GUID]];
-    if (sharedProfile) {
+    if (sharedProfile && ![sharedProfile isEqual:_originalProfile]) {
         DLog(@"Shared profile changed");
         [self sharedProfileDidChange];
         didChange = YES;
+        [_originalProfile autorelease];
+        _originalProfile = [sharedProfile copy];
     }
 
     if (_isDivorced) {
