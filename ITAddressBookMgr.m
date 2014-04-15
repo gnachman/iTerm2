@@ -27,6 +27,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermPreferences.h"
+#import "iTermProfilePreferences.h"
 #import "ProfileModel.h"
 #import "PreferencePanel.h"
 #import "iTermKeyBindingMgr.h"
@@ -252,11 +253,14 @@
         [temp setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
         NSString* dir = [data objectForKey:KEY_WORKING_DIRECTORY];
         if (dir && [dir length] > 0) {
-            [temp setObject:@"Yes" forKey:KEY_CUSTOM_DIRECTORY];
+            [temp setObject:kProfilePreferenceInitialDirectoryCustomValue
+                     forKey:KEY_CUSTOM_DIRECTORY];
         } else if (dir && [dir length] == 0) {
-            [temp setObject:@"Recycle" forKey:KEY_CUSTOM_DIRECTORY];
+            [temp setObject:kProfilePreferenceInitialDirectoryRecycleValue
+                     forKey:KEY_CUSTOM_DIRECTORY];
         } else {
-            [temp setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
+            [temp setObject:kProfilePreferenceInitialDirectoryHomeValue
+                     forKey:KEY_CUSTOM_DIRECTORY];
         }
         [[ProfileModel sharedInstance] addBookmark:temp];
     }
@@ -383,7 +387,8 @@
     [aDict setObject:@"No" forKey:KEY_CUSTOM_COMMAND];
     [aDict setObject:@"" forKey: KEY_COMMAND];
     [aDict setObject:aName forKey: KEY_DESCRIPTION];
-    [aDict setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
+    [aDict setObject:kProfilePreferenceInitialDirectoryHomeValue
+              forKey:KEY_CUSTOM_DIRECTORY];
     [aDict setObject:NSHomeDirectory() forKey: KEY_WORKING_DIRECTORY];
 }
 
@@ -411,7 +416,8 @@
     [newBookmark setObject:[NSString stringWithFormat:@"%@ %@%@", serviceType, optionalPortArg, ipAddressString] forKey:KEY_COMMAND];
     [newBookmark setObject:@"" forKey:KEY_WORKING_DIRECTORY];
     [newBookmark setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
-    [newBookmark setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
+    [newBookmark setObject:kProfilePreferenceInitialDirectoryHomeValue
+                    forKey:KEY_CUSTOM_DIRECTORY];
     [newBookmark setObject:ipAddressString forKey:KEY_BONJOUR_SERVICE_ADDRESS];
     [newBookmark setObject:[NSArray arrayWithObjects:@"bonjour",nil] forKey:KEY_TAGS];
     [newBookmark setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
@@ -551,7 +557,7 @@
 {
     NSString* thisUser = NSUserName();
     NSString *customDirectoryString;
-    if ([[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"Advanced"]) {
+    if ([[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:kProfilePreferenceInitialDirectoryAdvancedValue]) {
         switch (objectType) {
             case iTermWindowObject:
                 customDirectoryString = [bookmark objectForKey:KEY_AWDS_WIN_OPTION];
@@ -564,13 +570,13 @@
                 break;
             default:
                 NSLog(@"Bogus object type %d", (int)objectType);
-                customDirectoryString = @"No";
+                customDirectoryString = kProfilePreferenceInitialDirectoryHomeValue;
         }
     } else {
         customDirectoryString = [bookmark objectForKey:KEY_CUSTOM_DIRECTORY];
     }
 
-    if ([customDirectoryString isEqualToString:@"No"]) {
+    if ([customDirectoryString isEqualToString:kProfilePreferenceInitialDirectoryHomeValue]) {
         // Run login without -l argument: this is a login session and will use the home dir.
         return [NSString stringWithFormat:@"login -fp \"%@\"", thisUser];
     } else {
@@ -597,9 +603,9 @@
 + (NSString *)_advancedWorkingDirWithOption:(NSString *)option
                                   directory:(NSString *)pwd
 {
-    if ([option isEqualToString:@"Yes"]) {
+    if ([option isEqualToString:kProfilePreferenceInitialDirectoryCustomValue]) {
         return pwd;
-    } else if ([option isEqualToString:@"Recycle"]) {
+    } else if ([option isEqualToString:kProfilePreferenceInitialDirectoryRecycleValue]) {
         return @"";
     } else {
         // Home dir, option == "No"
@@ -610,11 +616,11 @@
 + (NSString*)bookmarkWorkingDirectory:(Profile*)bookmark forObjectType:(iTermObjectType)objectType
 {
     NSString* custom = [bookmark objectForKey:KEY_CUSTOM_DIRECTORY];
-    if ([custom isEqualToString:@"Yes"]) {
+    if ([custom isEqualToString:kProfilePreferenceInitialDirectoryCustomValue]) {
         return [bookmark objectForKey:KEY_WORKING_DIRECTORY];
-    } else if ([custom isEqualToString:@"Recycle"]) {
+    } else if ([custom isEqualToString:kProfilePreferenceInitialDirectoryRecycleValue]) {
         return @"";
-    } else if ([custom isEqualToString:@"Advanced"]) {
+    } else if ([custom isEqualToString:kProfilePreferenceInitialDirectoryAdvancedValue]) {
         switch (objectType) {
           case iTermWindowObject:
               return [ITAddressBookMgr _advancedWorkingDirWithOption:[bookmark objectForKey:KEY_AWDS_WIN_OPTION]
