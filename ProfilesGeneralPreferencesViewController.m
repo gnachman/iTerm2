@@ -57,6 +57,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     // Controls for Edit Info
     IBOutlet ProfileListView *_profiles;
     IBOutlet NSButton *_changeProfileButton;
+    IBOutlet NSTextField *_setProfileLabel;
 }
 
 - (void)awakeFromNib {
@@ -142,7 +143,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     
     NSArray *viewsToShow = @[ _profiles,
                               _changeProfileButton,
-                              ];
+                              _setProfileLabel ];
     for (NSView *view in viewsToShow) {
         view.hidden = NO;
     }

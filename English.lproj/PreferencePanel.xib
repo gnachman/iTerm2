@@ -115,7 +115,6 @@
                 <outlet property="selectionColor" destination="2282" id="3122"/>
                 <outlet property="sendCodeWhenIdle" destination="5697" id="5717"/>
                 <outlet property="setLocaleVars" destination="6045" id="6047"/>
-                <outlet property="setProfileLabel" destination="5763" id="5765"/>
                 <outlet property="silenceBell" destination="2397" id="3144"/>
                 <outlet property="smartSelectionWindowController_" destination="5863" id="5921"/>
                 <outlet property="spaceButton" destination="4921" id="4967"/>
@@ -5199,6 +5198,7 @@ DQ
                 <outlet property="_schemesLabel" destination="5035" id="zeB-oy-niN"/>
                 <outlet property="_sendTextAtStart" destination="5410" id="eUe-AY-v5Q"/>
                 <outlet property="_sendTextAtStartLabel" destination="5408" id="ZWa-zB-PeZ"/>
+                <outlet property="_setProfileLabel" destination="5763" id="49j-Xs-0Jr"/>
                 <outlet property="_shortcutLabel" destination="2141" id="isf-Rh-0zr"/>
                 <outlet property="_tagsLabel" destination="3243" id="GLJ-cK-wWn"/>
                 <outlet property="_tagsTokenField" destination="3245" id="dUf-HQ-eA6"/>

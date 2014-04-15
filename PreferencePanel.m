@@ -154,11 +154,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // Bookmarks -----------------------------
 
-    // General tab
-    // Only visible in Get Info mode
-    IBOutlet NSTextField* setProfileLabel;
-    IBOutlet ProfileListView* setProfileBookmarkListView;
-
     // Colors tab
     IBOutlet NSColorWell *ansi0Color;
     IBOutlet NSColorWell *ansi1Color;
@@ -386,7 +381,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [self showBookmarks];
     [_profilesViewController layoutSubviewsForSingleBookmarkMode];
     [toolbar setVisible:NO];
-    [setProfileLabel setHidden:NO];
 
     [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
     [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
