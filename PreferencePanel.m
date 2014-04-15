@@ -158,7 +158,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // General tab
     IBOutlet NSTextField *basicsLabel;
-    IBOutlet NSTextField *bookmarkDirectory;
     IBOutlet NSTextField *bookmarkShortcutKeyLabel;
     IBOutlet NSTextField *bookmarkShortcutKeyModifiersLabel;
     IBOutlet NSTextField *bookmarkTagsLabel;
@@ -412,14 +411,12 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [_profilesViewController layoutSubviewsForSingleBookmarkMode];
     [toolbar setVisible:NO];
     [editAdvancedConfigButton setHidden:YES];
-    [bookmarkDirectory setHidden:YES];
     [bookmarkShortcutKeyLabel setHidden:YES];
     [bookmarkShortcutKeyModifiersLabel setHidden:YES];
     [bookmarkTagsLabel setHidden:YES];
     [bookmarkCommandLabel setHidden:YES];
     [initialTextLabel setHidden:YES];
     [bookmarkDirectoryLabel setHidden:YES];
-    [bookmarkDirectory setHidden:YES];
     [bookmarkUrlSchemes setHidden:YES];
     [bookmarkUrlSchemesHeaderLabel setHidden:YES];
     [bookmarkUrlSchemesLabel setHidden:YES];
@@ -586,8 +583,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (IBAction)bookmarkSettingChanged:(id)sender
 {
-    NSString* dir = [bookmarkDirectory stringValue];
-
 // BRING THIS BACK:    [editAdvancedConfigButton setEnabled:[customDir isEqualToString:@"Advanced"]];
 
     if (sender == optionKeySends && [[optionKeySends selectedCell] tag] == OPT_META) {
@@ -616,7 +611,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if (origGuid) {
         [newDict setObject:origGuid forKey:KEY_ORIGINAL_GUID];
     }
-    [newDict setObject:dir forKey:KEY_WORKING_DIRECTORY];
 
     // Just copy over advanced working dir settings
     NSArray *valuesToCopy = [NSArray arrayWithObjects:
@@ -2158,12 +2152,10 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     NSString* name;
     NSString* dir;
     name = [dict objectForKey:KEY_NAME];
-    dir = [dict objectForKey:KEY_WORKING_DIRECTORY];
 
     BOOL enabledAdvancedEdit = NO;
     [editAdvancedConfigButton setEnabled:enabledAdvancedEdit];
 
-    [bookmarkDirectory setStringValue:dir];
     [self _populateBookmarkUrlSchemesFromDict:dict];
 
     // Colors tab

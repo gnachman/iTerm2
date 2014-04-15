@@ -57,7 +57,6 @@
                 <outlet property="blurRadius" destination="5363" id="5371"/>
                 <outlet property="boldColor" destination="2272" id="3006"/>
                 <outlet property="bookmarkCommandLabel" destination="2132" id="3464"/>
-                <outlet property="bookmarkDirectory" destination="2189" id="3002"/>
                 <outlet property="bookmarkDirectoryLabel" destination="2129" id="3465"/>
                 <outlet property="bookmarkGrowlNotifications" destination="2404" id="3147"/>
                 <outlet property="bookmarkShortcutKeyLabel" destination="2141" id="3466"/>
@@ -1598,13 +1597,14 @@ Gw
                                                             <textField verticalHuggingPriority="750" id="2189" userLabel="Directory text field">
                                                                 <rect key="frame" x="146" y="98" width="356" height="22"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
-                                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2194">
+                                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2194">
                                                                     <font key="font" metaFont="system"/>
                                                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                                 </textFieldCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="2996"/>
+                                                                    <action selector="settingChanged:" target="dVg-Ac-SiZ" id="RDm-Kk-mCP"/>
+                                                                    <outlet property="delegate" destination="dVg-Ac-SiZ" id="sRK-ps-yva"/>
                                                                     <outlet property="nextKeyView" destination="5037" id="5217"/>
                                                                 </connections>
                                                             </textField>
@@ -5393,6 +5393,7 @@ DQ
             <connections>
                 <outlet property="_commandType" destination="2185" id="k7n-vi-7cM"/>
                 <outlet property="_customCommand" destination="2131" id="uHM-Rp-s80"/>
+                <outlet property="_customDirectory" destination="2189" id="msb-Cg-HLN"/>
                 <outlet property="_initialDirectoryType" destination="2190" id="LYF-0C-gAo"/>
                 <outlet property="_profileNameField" destination="2133" id="6VF-gN-bGW"/>
                 <outlet property="_profileShortcut" destination="2142" id="vtI-vU-bua"/>

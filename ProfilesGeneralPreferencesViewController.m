@@ -30,6 +30,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     IBOutlet NSTextField *_customCommand;  // Command to use instead of login shell
     IBOutlet NSTextField *_sendTextAtStart;
     IBOutlet NSMatrix *_initialDirectoryType;  // Home/Reuse/Custom/Advanced
+    IBOutlet NSTextField *_customDirectory;  // Path to custom initial directory
 }
 
 - (void)awakeFromNib {
@@ -77,6 +78,10 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [self directoryTypeDidChange]; }
                  update:^BOOL { [self updateDirectoryType]; return YES; }];
+    
+    [self defineControl:_customDirectory
+                    key:KEY_WORKING_DIRECTORY
+                   type:kPreferenceInfoTypeStringTextField];
 
 }
 
@@ -87,6 +92,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
                               _customCommand,
                               _sendTextAtStart,
                               _initialDirectoryType,
+                              _customDirectory,
                              ];
     for (NSView *view in viewsToHide) {
         view.hidden = YES;

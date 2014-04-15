@@ -110,6 +110,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_COMMAND: @"",
                   KEY_INITIAL_TEXT: @"",
                   KEY_CUSTOM_DIRECTORY: kProfilePreferenceInitialDirectoryHomeValue,
+                  KEY_WORKING_DIRECTORY: @"",
                 };
         [dict retain];
     }
