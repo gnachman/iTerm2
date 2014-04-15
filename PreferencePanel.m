@@ -599,22 +599,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         [newDict setObject:origGuid forKey:KEY_ORIGINAL_GUID];
     }
 
-    // Just copy over advanced working dir settings
-    NSArray *valuesToCopy = [NSArray arrayWithObjects:
-                             KEY_AWDS_WIN_OPTION,
-                             KEY_AWDS_WIN_DIRECTORY,
-                             KEY_AWDS_TAB_OPTION,
-                             KEY_AWDS_TAB_DIRECTORY,
-                             KEY_AWDS_PANE_OPTION,
-                             KEY_AWDS_PANE_DIRECTORY,
-                             nil];
-    for (NSString *key in valuesToCopy) {
-        id value = [origBookmark objectForKey:key];
-        if (value) {
-            [newDict setObject:value forKey:key];
-        }
-    }
-
     // Colors tab
     [newDict setObject:[ITAddressBookMgr encodeColor:[ansi0Color color]] forKey:KEY_ANSI_0_COLOR];
     [newDict setObject:[ITAddressBookMgr encodeColor:[ansi1Color color]] forKey:KEY_ANSI_1_COLOR];
