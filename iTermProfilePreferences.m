@@ -140,6 +140,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_TAB_COLOR: [NSNull null],
                   KEY_USE_TAB_COLOR: @NO,
                   KEY_SMART_CURSOR_COLOR: @NO,
+                  KEY_MINIMUM_CONTRAST: @0.0,
                 };
         [dict retain];
     }

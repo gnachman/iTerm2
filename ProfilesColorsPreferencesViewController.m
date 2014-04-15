@@ -44,6 +44,8 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
     IBOutlet NSButton *_useTabColor;
     IBOutlet NSButton *_useSmartCursorColor;
 
+    IBOutlet NSSlider *_minimumContrast;
+
     IBOutlet NSMenu *_presetsMenu;
 }
 
@@ -77,6 +79,10 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
                            key:KEY_SMART_CURSOR_COLOR
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self updateColorControlsEnabled]; };
+    
+    [self defineControl:_minimumContrast
+                    key:KEY_MINIMUM_CONTRAST
+                   type:kPreferenceInfoTypeSlider];
     
     [self updateColorControlsEnabled];
 }

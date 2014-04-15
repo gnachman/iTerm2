@@ -68,7 +68,6 @@
                 <outlet property="keyboardTabViewItem" destination="3656" id="4216"/>
                 <outlet property="keyboardToolbarItem" destination="5888" id="6040"/>
                 <outlet property="logDir" destination="5686" id="5715"/>
-                <outlet property="minimumContrast" destination="4896" id="4906"/>
                 <outlet property="mouseTabViewItem" destination="6059" id="6061"/>
                 <outlet property="mouseToolbarItem" destination="6056" id="6057"/>
                 <outlet property="nonAsciiDoubleWidth" destination="5126" id="5129"/>
@@ -2098,7 +2097,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <sliderCell key="cell" continuous="YES" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="4903"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="4905"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="FZP-HT-Cxc"/>
                                                                     <outlet property="nextKeyView" destination="3213" id="5228"/>
                                                                 </connections>
                                                             </slider>
@@ -5206,6 +5205,7 @@ DQ
                 <outlet property="_cursorColor" destination="2280" id="bFx-TT-7QV"/>
                 <outlet property="_cursorTextColor" destination="2278" id="aw0-Y7-lPM"/>
                 <outlet property="_foregroundColor" destination="2273" id="PXI-YU-2u7"/>
+                <outlet property="_minimumContrast" destination="4896" id="2e4-71-ARX"/>
                 <outlet property="_presetsMenu" destination="3215" id="8lA-lg-5tg"/>
                 <outlet property="_selectedTextColor" destination="2277" id="jqd-jg-i3Y"/>
                 <outlet property="_selectionColor" destination="2282" id="OO4-S4-aaD"/>

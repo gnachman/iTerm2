@@ -110,9 +110,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet KeysPreferencesViewController *_keysViewController;
     IBOutlet ProfilePreferencesViewController *_profilesViewController;
 
-    // Minimum contrast
-    IBOutlet NSSlider* minimumContrast;
-
     // cursor type: underline/vertical bar/box
     // See ITermCursorType. One of: CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX
     IBOutlet NSMatrix *cursorType;
@@ -331,7 +328,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [blurRadius setContinuous:YES];
     [transparency setContinuous:YES];
     [blend setContinuous:YES];
-    [minimumContrast setContinuous:YES];
 
     if (oneBookmarkMode) {
         [self layoutSubviewsForSingleBookmarkMode];
@@ -496,9 +492,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if (origGuid) {
         [newDict setObject:origGuid forKey:KEY_ORIGINAL_GUID];
     }
-
-    // Colors tab
-    [newDict setObject:[NSNumber numberWithFloat:[minimumContrast floatValue]] forKey:KEY_MINIMUM_CONTRAST];
 
 // MIGRATE THIS OVER    [cursorColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
 
@@ -1523,14 +1516,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 // MIGRATE THIS    [cursorColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
 
 // MIGRATE THIS    [cursorTextColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
-
-    float minContrast;
-    if ([dict objectForKey:KEY_MINIMUM_CONTRAST]) {
-        minContrast = [[dict objectForKey:KEY_MINIMUM_CONTRAST] floatValue];
-    } else {
-        minContrast = [self legacyMinimumContrast];
-    }
-    [minimumContrast setFloatValue:minContrast];
 
     // Display tab
     int cols = [[dict objectForKey:KEY_COLUMNS] intValue];
