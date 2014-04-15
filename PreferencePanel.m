@@ -167,16 +167,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSTextField *bookmarkUrlSchemesHeaderLabel;
     IBOutlet NSTextField *bookmarkUrlSchemesLabel;
     IBOutlet NSPopUpButton* bookmarkUrlSchemes;
-    IBOutlet NSButton* editAdvancedConfigButton;
-
-    // Advanced working dir sheet
-    IBOutlet NSPanel* advancedWorkingDirSheet_;
-    IBOutlet NSMatrix* awdsWindowDirectoryType;
-    IBOutlet NSTextField* awdsWindowDirectory;
-    IBOutlet NSMatrix* awdsTabDirectoryType;
-    IBOutlet NSTextField* awdsTabDirectory;
-    IBOutlet NSMatrix* awdsPaneDirectoryType;
-    IBOutlet NSTextField* awdsPaneDirectory;
 
     // Only visible in Get Info mode
     IBOutlet NSTextField* setProfileLabel;
@@ -410,7 +400,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [self showBookmarks];
     [_profilesViewController layoutSubviewsForSingleBookmarkMode];
     [toolbar setVisible:NO];
-    [editAdvancedConfigButton setHidden:YES];
     [bookmarkShortcutKeyLabel setHidden:YES];
     [bookmarkShortcutKeyModifiersLabel setHidden:YES];
     [bookmarkTagsLabel setHidden:YES];
@@ -583,8 +572,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (IBAction)bookmarkSettingChanged:(id)sender
 {
-// BRING THIS BACK:    [editAdvancedConfigButton setEnabled:[customDir isEqualToString:@"Advanced"]];
-
     if (sender == optionKeySends && [[optionKeySends selectedCell] tag] == OPT_META) {
         [self _maybeWarnAboutMeta];
     } else if (sender == rightOptionKeySends && [[rightOptionKeySends selectedCell] tag] == OPT_META) {
@@ -599,7 +586,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         return;
     }
     NSMutableDictionary* newDict = [NSMutableDictionary dictionary];
-    [_profilesViewController copyOwnedValueToDict:newDict];
+    [_profilesViewController copyOwnedValuesToDict:newDict];
     NSString* isDefault = [origBookmark objectForKey:KEY_DEFAULT_BOOKMARK];
     if (!isDefault) {
         isDefault = @"No";
@@ -1248,98 +1235,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 - (void)genericCloseSheet:(NSWindow *)sheet
                returnCode:(int)returnCode
               contextInfo:(void *)contextInfo {
-    [sheet close];
-}
-
-#pragma mark - Advanced working dir prefs
-
-- (void)safelySetStringValue:(NSString *)value in:(NSTextField *)field
-{
-    if (value) {
-        [field setStringValue:value];
-    } else {
-        [field setStringValue:@""];
-    }
-}
-
-- (void)setAdvancedBookmarkMatrix:(NSMatrix *)matrix withValue:(NSString *)value
-{
-    if ([value isEqualToString:@"Yes"]) {
-        [matrix selectCellWithTag:0];
-    } else if ([value isEqualToString:@"Recycle"]) {
-        [matrix selectCellWithTag:2];
-    } else {
-        [matrix selectCellWithTag:1];
-    }
-}
-
-- (IBAction)showAdvancedWorkingDirConfigPanel:(id)sender
-{
-    // Populate initial values
-    Profile *profile = [_profilesViewController selectedProfile];
-
-    [self setAdvancedBookmarkMatrix:awdsWindowDirectoryType
-                          withValue:[profile objectForKey:KEY_AWDS_WIN_OPTION]];
-    [self safelySetStringValue:[profile objectForKey:KEY_AWDS_WIN_DIRECTORY]
-                            in:awdsWindowDirectory];
-
-    [self setAdvancedBookmarkMatrix:awdsTabDirectoryType
-                          withValue:[profile objectForKey:KEY_AWDS_TAB_OPTION]];
-    [self safelySetStringValue:[profile objectForKey:KEY_AWDS_TAB_DIRECTORY]
-                            in:awdsTabDirectory];
-
-    [self setAdvancedBookmarkMatrix:awdsPaneDirectoryType
-                          withValue:[profile objectForKey:KEY_AWDS_PANE_OPTION]];
-    [self safelySetStringValue:[profile objectForKey:KEY_AWDS_PANE_DIRECTORY]
-                            in:awdsPaneDirectory];
-
-
-    [NSApp beginSheet:advancedWorkingDirSheet_
-       modalForWindow:[self window]
-        modalDelegate:self
-       didEndSelector:@selector(advancedWorkingDirSheetClosed:returnCode:contextInfo:)
-          contextInfo:nil];
-}
-
-- (void)setValueInBookmark:(NSMutableDictionary *)dict
-        forAdvancedWorkingDirMatrix:(NSMatrix *)matrix
-        key:(NSString *)key
-{
-    NSString *value;
-    NSString *values[] = { @"Yes", @"No", @"Recycle" };
-    value = values[matrix.selectedTag];
-    [dict setObject:value forKey:key];
-}
-
-- (IBAction)closeAdvancedWorkingDirSheet:(id)sender
-{
-    Profile* profile = [_profilesViewController selectedProfile];
-    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:profile];
-    [self setValueInBookmark:dict
-          forAdvancedWorkingDirMatrix:awdsWindowDirectoryType
-          key:KEY_AWDS_WIN_OPTION];
-    [dict setObject:[awdsWindowDirectory stringValue] forKey:KEY_AWDS_WIN_DIRECTORY];
-
-    [self setValueInBookmark:dict
-          forAdvancedWorkingDirMatrix:awdsTabDirectoryType
-          key:KEY_AWDS_TAB_OPTION];
-    [dict setObject:[awdsTabDirectory stringValue] forKey:KEY_AWDS_TAB_DIRECTORY];
-
-    [self setValueInBookmark:dict
-          forAdvancedWorkingDirMatrix:awdsPaneDirectoryType
-          key:KEY_AWDS_PANE_OPTION];
-    [dict setObject:[awdsPaneDirectory stringValue] forKey:KEY_AWDS_PANE_DIRECTORY];
-
-    [dataSource setBookmark:dict withGuid:[profile objectForKey:KEY_GUID]];
-    [self bookmarkSettingChanged:nil];
-
-    [NSApp endSheet:advancedWorkingDirSheet_];
-}
-
-- (void)advancedWorkingDirSheetClosed:(NSWindow *)sheet
-                           returnCode:(int)returnCode
-                          contextInfo:(void *)contextInfo
-{
     [sheet close];
 }
 
@@ -2150,11 +2045,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     NSString* name;
-    NSString* dir;
     name = [dict objectForKey:KEY_NAME];
-
-    BOOL enabledAdvancedEdit = NO;
-    [editAdvancedConfigButton setEnabled:enabledAdvancedEdit];
 
     [self _populateBookmarkUrlSchemesFromDict:dict];
 

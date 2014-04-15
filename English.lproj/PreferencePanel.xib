@@ -12,7 +12,6 @@
                 <outlet property="_profilesViewController" destination="HVI-63-mNz" id="jfc-z4-6um"/>
                 <outlet property="advancedTabViewItem" destination="KyW-GB-ElH" id="8r8-7W-7k9"/>
                 <outlet property="advancedToolbarItem" destination="gtg-rw-6h8" id="Enb-fp-ef2"/>
-                <outlet property="advancedWorkingDirSheet_" destination="5979" id="6029"/>
                 <outlet property="allowTitleReporting" destination="6387" id="6390"/>
                 <outlet property="allowTitleSetting" destination="xih-tE-Xk7" id="cn0-W7-MGI"/>
                 <outlet property="ansi0Color" destination="2297" id="3067"/>
@@ -39,12 +38,6 @@
                 <outlet property="arrangements_" destination="5572" id="5584"/>
                 <outlet property="asciiAntiAliased" destination="4782" id="4877"/>
                 <outlet property="autoLog" destination="5685" id="5716"/>
-                <outlet property="awdsPaneDirectory" destination="6012" id="6030"/>
-                <outlet property="awdsPaneDirectoryType" destination="6011" id="6031"/>
-                <outlet property="awdsTabDirectory" destination="5999" id="6032"/>
-                <outlet property="awdsTabDirectoryType" destination="5998" id="6033"/>
-                <outlet property="awdsWindowDirectory" destination="5985" id="6034"/>
-                <outlet property="awdsWindowDirectoryType" destination="5984" id="6035"/>
                 <outlet property="backgroundColor" destination="2285" id="3005"/>
                 <outlet property="backgroundImage" destination="4973" id="4996"/>
                 <outlet property="backgroundImagePreview" destination="4974" id="4997"/>
@@ -88,7 +81,6 @@
                 <outlet property="displayFontsLabel" destination="4778" id="4874"/>
                 <outlet property="displayNAFontButton" destination="4776" id="4871"/>
                 <outlet property="displayRegularFontButton" destination="4774" id="4869"/>
-                <outlet property="editAdvancedConfigButton" destination="5975" id="6028"/>
                 <outlet property="flashingBell" destination="3553" id="3557"/>
                 <outlet property="foregroundColor" destination="2273" id="3004"/>
                 <outlet property="globalTabViewItem" destination="1944" id="2864"/>
@@ -1691,7 +1683,7 @@ Gw
                                                                     <font key="font" metaFont="smallSystem"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="showAdvancedWorkingDirConfigPanel:" target="-2" id="6027"/>
+                                                                    <action selector="showAdvancedWorkingDirConfigPanel:" target="dVg-Ac-SiZ" id="hr1-VG-5jr"/>
                                                                 </connections>
                                                             </button>
                                                         </subviews>
@@ -4914,205 +4906,6 @@ DQ
                 </subviews>
             </view>
         </window>
-        <window title="Advanced Working Directory Settings" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hidesOnDeactivate="YES" oneShot="NO" showsToolbarButton="NO" visibleAtLaunch="NO" animationBehavior="default" id="5979" userLabel="Panel (Advanced Working Directory)" customClass="NSPanel">
-            <windowStyleMask key="styleMask" titled="YES" utility="YES" documentModal="YES"/>
-            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="230" y="120" width="485" height="421"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
-            <view key="contentView" id="5980">
-                <rect key="frame" x="0.0" y="0.0" width="485" height="421"/>
-                <autoresizingMask key="autoresizingMask"/>
-                <subviews>
-                    <textField verticalHuggingPriority="750" id="5981">
-                        <rect key="frame" x="17" y="384" width="248" height="17"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Working Directory for New Windows" id="5982">
-                            <font key="font" metaFont="systemBold"/>
-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" id="5984">
-                        <rect key="frame" x="20" y="318" width="240" height="58"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        <size key="cellSize" width="240" height="18"/>
-                        <size key="intercellSpacing" width="4" height="2"/>
-                        <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="5991">
-                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <cells>
-                            <column>
-                                <buttonCell type="radio" title="Home directory" imagePosition="left" alignment="left" state="on" tag="1" inset="2" id="5989">
-                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                    <font key="font" metaFont="system"/>
-                                </buttonCell>
-                                <buttonCell type="radio" title="Reuse previous session's directory" imagePosition="left" alignment="left" tag="2" inset="2" id="5990">
-                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                    <font key="font" metaFont="system"/>
-                                </buttonCell>
-                                <buttonCell type="radio" title="Directory:" imagePosition="left" alignment="left" inset="2" id="5988">
-                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                    <font key="font" metaFont="system"/>
-                                </buttonCell>
-                            </column>
-                        </cells>
-                        <connections>
-                            <action selector="bookmarkSettingChanged:" target="-2" id="5996"/>
-                            <outlet property="nextKeyView" destination="5985" id="5993"/>
-                        </connections>
-                    </matrix>
-                    <textField verticalHuggingPriority="750" id="5985">
-                        <rect key="frame" x="108" y="317" width="356" height="22"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="5986">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                        <connections>
-                            <action selector="bookmarkSettingChanged:" target="-2" id="5995"/>
-                            <outlet property="nextKeyView" destination="5037" id="5994"/>
-                        </connections>
-                    </textField>
-                    <textField verticalHuggingPriority="750" id="5997">
-                        <rect key="frame" x="17" y="263" width="220" height="17"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Working Directory for New Tabs" id="6005">
-                            <font key="font" metaFont="systemBold"/>
-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" id="5998">
-                        <rect key="frame" x="20" y="197" width="240" height="58"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        <size key="cellSize" width="240" height="18"/>
-                        <size key="intercellSpacing" width="4" height="2"/>
-                        <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="6001">
-                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <cells>
-                            <column>
-                                <buttonCell type="radio" title="Home directory" imagePosition="left" alignment="left" state="on" tag="1" inset="2" id="6003">
-                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                    <font key="font" metaFont="system"/>
-                                </buttonCell>
-                                <buttonCell type="radio" title="Reuse previous session's directory" imagePosition="left" alignment="left" tag="2" inset="2" id="6002">
-                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                    <font key="font" metaFont="system"/>
-                                </buttonCell>
-                                <buttonCell type="radio" title="Directory:" imagePosition="left" alignment="left" inset="2" id="6004">
-                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                    <font key="font" metaFont="system"/>
-                                </buttonCell>
-                            </column>
-                        </cells>
-                        <connections>
-                            <action selector="bookmarkSettingChanged:" target="-2" id="6008"/>
-                            <outlet property="nextKeyView" destination="5999" id="6006"/>
-                        </connections>
-                    </matrix>
-                    <textField verticalHuggingPriority="750" id="5999">
-                        <rect key="frame" x="108" y="196" width="356" height="22"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="6000">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                        <connections>
-                            <action selector="bookmarkSettingChanged:" target="-2" id="6007"/>
-                            <outlet property="nextKeyView" destination="5037" id="6009"/>
-                        </connections>
-                    </textField>
-                    <textField verticalHuggingPriority="750" id="6010">
-                        <rect key="frame" x="17" y="137" width="261" height="17"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Working Directory for New Split Panes" id="6018">
-                            <font key="font" metaFont="systemBold"/>
-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" id="6011">
-                        <rect key="frame" x="20" y="71" width="240" height="58"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        <size key="cellSize" width="240" height="18"/>
-                        <size key="intercellSpacing" width="4" height="2"/>
-                        <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="6017">
-                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <cells>
-                            <column>
-                                <buttonCell type="radio" title="Home directory" imagePosition="left" alignment="left" state="on" tag="1" inset="2" id="6015">
-                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                    <font key="font" metaFont="system"/>
-                                </buttonCell>
-                                <buttonCell type="radio" title="Reuse previous session's directory" imagePosition="left" alignment="left" tag="2" inset="2" id="6016">
-                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                    <font key="font" metaFont="system"/>
-                                </buttonCell>
-                                <buttonCell type="radio" title="Directory:" imagePosition="left" alignment="left" inset="2" id="6014">
-                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                    <font key="font" metaFont="system"/>
-                                </buttonCell>
-                            </column>
-                        </cells>
-                        <connections>
-                            <action selector="bookmarkSettingChanged:" target="-2" id="6021"/>
-                            <outlet property="nextKeyView" destination="6012" id="6019"/>
-                        </connections>
-                    </matrix>
-                    <textField verticalHuggingPriority="750" id="6012">
-                        <rect key="frame" x="108" y="70" width="356" height="22"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="6013">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                        <connections>
-                            <action selector="bookmarkSettingChanged:" target="-2" id="6022"/>
-                            <outlet property="nextKeyView" destination="5037" id="6020"/>
-                        </connections>
-                    </textField>
-                    <box autoresizesSubviews="NO" verticalHuggingPriority="750" title="Box" boxType="separator" titlePosition="noTitle" id="6023">
-                        <rect key="frame" x="12" y="296" width="461" height="5"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
-                        <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
-                        <font key="titleFont" metaFont="system"/>
-                    </box>
-                    <box autoresizesSubviews="NO" verticalHuggingPriority="750" title="Box" boxType="separator" titlePosition="noTitle" id="6024">
-                        <rect key="frame" x="12" y="170" width="461" height="5"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
-                        <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
-                        <font key="titleFont" metaFont="system"/>
-                    </box>
-                    <button verticalHuggingPriority="750" id="6025">
-                        <rect key="frame" x="383" y="12" width="96" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="6026">
-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
-                            <string key="keyEquivalent" base64-UTF8="YES">
-DQ
-</string>
-                        </buttonCell>
-                        <connections>
-                            <action selector="closeAdvancedWorkingDirSheet:" target="-2" id="6036"/>
-                        </connections>
-                    </button>
-                </subviews>
-            </view>
-        </window>
         <textField verticalHuggingPriority="750" id="6086">
             <rect key="frame" x="0.0" y="0.0" width="77" height="17"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -5391,9 +5184,11 @@ DQ
         </customObject>
         <customObject id="dVg-Ac-SiZ" customClass="ProfilesGeneralPreferencesViewController">
             <connections>
+                <outlet property="_advancedWorkingDirWindowController" destination="Cct-nR-QI7" id="BT2-8e-6Md"/>
                 <outlet property="_commandType" destination="2185" id="k7n-vi-7cM"/>
                 <outlet property="_customCommand" destination="2131" id="uHM-Rp-s80"/>
                 <outlet property="_customDirectory" destination="2189" id="msb-Cg-HLN"/>
+                <outlet property="_editAdvancedConfigButton" destination="5975" id="Xww-uf-BMr"/>
                 <outlet property="_initialDirectoryType" destination="2190" id="LYF-0C-gAo"/>
                 <outlet property="_profileNameField" destination="2133" id="6VF-gN-bGW"/>
                 <outlet property="_profileShortcut" destination="2142" id="vtI-vU-bua"/>
@@ -5404,6 +5199,7 @@ DQ
                 <outlet property="view" destination="2104" id="oJB-AQ-x9t"/>
             </connections>
         </customObject>
+        <customObject id="Cct-nR-QI7" customClass="AdvancedWorkingDirectoryWindowController"/>
     </objects>
     <resources>
         <image name="NSActionTemplate" width="14" height="14"/>

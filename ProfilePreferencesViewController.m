@@ -160,9 +160,9 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [_profilesListView reloadData];
 }
 
-- (void)copyOwnedValueToDict:(NSMutableDictionary *)dict {
+- (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict {
     for (iTermProfilePreferencesBaseViewController *viewController in [self tabViewControllers]) {
-        [viewController copyOwnedValueToDict:dict];
+        [viewController copyOwnedValuesToDict:dict];
     }
 }
 

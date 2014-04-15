@@ -21,6 +21,6 @@
 @property(nonatomic, assign) IBOutlet id<iTermProfilePreferencesBaseViewControllerDelegate> delegate;
 
 - (void)reloadProfile;
-- (void)copyOwnedValueToDict:(NSMutableDictionary *)dict;  // TODO: Nuke this when migration is done
+- (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict;  // TODO: Nuke this when migration is done
 
 @end

@@ -82,8 +82,6 @@ void LoadPrefsFromCustomFolder(void);
 - (void)smartSelectionChanged:(SmartSelectionController *)smartSelectionController;
 
 - (void)awakeFromNib;
-- (IBAction)showAdvancedWorkingDirConfigPanel:(id)sender;
-- (IBAction)closeAdvancedWorkingDirSheet:(id)sender;
 - (IBAction)editSmartSelection:(id)sender;
 - (IBAction)closeSmartSelectionSheet:(id)sender;
 - (IBAction)editTriggers:(id)sender;

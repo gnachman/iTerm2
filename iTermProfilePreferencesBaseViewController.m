@@ -81,7 +81,7 @@
     }
 }
 
-- (void)copyOwnedValueToDict:(NSMutableDictionary *)dict {
+- (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict {
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     for (NSControl *control in self.keyMap) {
         PreferenceInfo *info = [self infoForControl:control];

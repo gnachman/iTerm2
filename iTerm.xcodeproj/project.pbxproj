@@ -817,6 +817,11 @@
 		A6E713AD18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713AB18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.h */; };
 		A6E713AE18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E713AC18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.m */; };
 		A6E713AF18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E713AC18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.m */; };
+		A6E713B318FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713B018FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.h */; };
+		A6E713B418FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E713B118FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.m */; };
+		A6E713B518FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E713B118FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.m */; };
+		A6E713B618FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6E713B218FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib */; };
+		A6E713B718FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6E713B218FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib */; };
 		A6E74748188C6344005355CF /* CommandHistoryEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E74746188C6344005355CF /* CommandHistoryEntry.h */; };
 		A6E74749188C6344005355CF /* CommandHistoryEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74747188C6344005355CF /* CommandHistoryEntry.m */; };
 		A6E7474A188C6344005355CF /* CommandHistoryEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74747188C6344005355CF /* CommandHistoryEntry.m */; };
@@ -1398,6 +1403,9 @@
 		A6E713A718F7C9F4008D94DD /* iTermProfilePreferences.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermProfilePreferences.m; sourceTree = "<group>"; };
 		A6E713AB18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesGeneralPreferencesViewController.h; sourceTree = "<group>"; };
 		A6E713AC18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesGeneralPreferencesViewController.m; sourceTree = "<group>"; };
+		A6E713B018FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdvancedWorkingDirectoryWindowController.h; sourceTree = "<group>"; };
+		A6E713B118FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AdvancedWorkingDirectoryWindowController.m; sourceTree = "<group>"; };
+		A6E713B218FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = AdvancedWorkingDirectoryWindow.xib; sourceTree = "<group>"; };
 		A6E74746188C6344005355CF /* CommandHistoryEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandHistoryEntry.h; sourceTree = "<group>"; };
 		A6E74747188C6344005355CF /* CommandHistoryEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CommandHistoryEntry.m; sourceTree = "<group>"; };
 		A6E7474B188C6394005355CF /* CommandUse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandUse.h; sourceTree = "<group>"; };
@@ -1548,6 +1556,9 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A6E713B018FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.h */,
+				A6E713B118FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.m */,
+				A6E713B218FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib */,
 				A6E713A618F7C9F4008D94DD /* iTermProfilePreferences.h */,
 				A6E713A718F7C9F4008D94DD /* iTermProfilePreferences.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
@@ -1987,7 +1998,6 @@
 		1D24C37714303E00006B246F /* Preferences */ = {
 			isa = PBXGroup;
 			children = (
-				A6E713A218F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.m */,
 				A6E7138D18F26A91008D94DD /* AppearancePreferencesViewController.m */,
 				1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */,
 				A6E7139A18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.m */,
@@ -2002,6 +2012,7 @@
 				A6E7137E18F1DB1E008D94DD /* iTermPreferences.m */,
 				A6E7138718F26445008D94DD /* iTermPreferencesBaseViewController.h */,
 				A6E7138818F26445008D94DD /* iTermPreferencesBaseViewController.m */,
+				A6E713A218F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.m */,
 				FB4CEAC661436E55F3B3A668 /* iTermRemotePreferences.m */,
 				A697100A18D94CDA007E901D /* iTermSettingsModel.m */,
 				1DF8FEF218F3217100722B35 /* KeysPreferencesViewController.m */,
@@ -2012,12 +2023,12 @@
 				FB019DE103670C6501F955DB /* PreferencePanel.m */,
 				A6E7139118F50762008D94DD /* ProfilePreferencesViewController.h */,
 				A6E7139218F50762008D94DD /* ProfilePreferencesViewController.m */,
+				A6E713AB18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.h */,
+				A6E713AC18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.m */,
 				1D24C2C4142FEACF006B246F /* SmartSelectionController.m */,
 				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
 				1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */,
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
-				A6E713AB18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.h */,
-				A6E713AC18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.m */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -2501,6 +2512,7 @@
 				A68A30C1186D0DC1007F550F /* FindCursorView.h in Headers */,
 				1D81F0C3183C3CCD00910838 /* SBSystemPreferences.h in Headers */,
 				1D5FDD601208E8F000C46BA3 /* PSMTabStyle.h in Headers */,
+				A6E713B318FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.h in Headers */,
 				1D5FDD611208E8F000C46BA3 /* NSBezierPath_AMShading.h in Headers */,
 				1D5FDD621208E8F000C46BA3 /* PSMTabDragAssistant.h in Headers */,
 				1D5FDD631208E8F000C46BA3 /* PSMUnifiedTabStyle.h in Headers */,
@@ -2815,6 +2827,7 @@
 				1DEF5E6E185F889600300319 /* Alert.png in Resources */,
 				1D01609C1852AA6F0014D26A /* mark@2x.png in Resources */,
 				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
+				A6E713B718FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib in Resources */,
 				1DC13ABE1886146B00034DAE /* mark_err.png in Resources */,
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
 				A6E713A018F7B199008D94DD /* BulkCopyProfilePreferences.xib in Resources */,
@@ -2912,6 +2925,7 @@
 				1D48B282165F362B000046EE /* AquaTabClose_Front_Pressed@2x.png in Resources */,
 				1D48B283165F362B000046EE /* AquaTabClose_Front@2x.png in Resources */,
 				1D48B284165F362B000046EE /* TabClose_Front_Rollover@2x.png in Resources */,
+				A6E713B618FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib in Resources */,
 				1D48B285165F362B000046EE /* TabClose_Front_Pressed@2x.png in Resources */,
 				1D48B286165F362B000046EE /* TabClose_Front@2x.png in Resources */,
 				1D48B28C165F3669000046EE /* TabClose_Front_Pressed.png in Resources */,
@@ -3024,6 +3038,7 @@
 				1D9A5560180FA83900B42CE9 /* TriggerController.m in Sources */,
 				1D78B560183EE1C000014D49 /* LineBufferPosition.m in Sources */,
 				1D9A5549180FA82E00B42CE9 /* TmuxDashboardController.m in Sources */,
+				A6E713B518FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.m in Sources */,
 				A647E3A618C352B000450FA1 /* VT100OtherParser.m in Sources */,
 				1D9A5579180FA85D00B42CE9 /* ScriptTrigger.m in Sources */,
 				A6A13AAE18C3347200B241ED /* VT100Output.m in Sources */,
@@ -3268,6 +3283,7 @@
 				1D5FDDC61208E93600C46BA3 /* PSMTabDragWindow.m in Sources */,
 				1D5FDDC71208E93600C46BA3 /* iTermGrowlDelegate.m in Sources */,
 				A6A13AA318C2D23300B241ED /* iTermColorMap.m in Sources */,
+				A6E713B418FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.m in Sources */,
 				A67E0AD1186E4B71009B2B68 /* TaskNotifier.m in Sources */,
 				1DD39ACF180B7884004E56D5 /* VT100GridTypes.m in Sources */,
 				A6B5134B18E779BB00D249A5 /* iTermPasteHelper.m in Sources */,

@@ -7,6 +7,7 @@
 //
 
 #import "ProfilesGeneralPreferencesViewController.h"
+#import "AdvancedWorkingDirectoryWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermProfilePreferences.h"
 #import "NSTextField+iTerm.h"
@@ -31,6 +32,8 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     IBOutlet NSTextField *_sendTextAtStart;
     IBOutlet NSMatrix *_initialDirectoryType;  // Home/Reuse/Custom/Advanced
     IBOutlet NSTextField *_customDirectory;  // Path to custom initial directory
+    IBOutlet NSButton *_editAdvancedConfigButton;  // Advanced initial directory button
+    IBOutlet AdvancedWorkingDirectoryWindowController *_advancedWorkingDirWindowController;
 }
 
 - (void)awakeFromNib {
@@ -83,6 +86,12 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
                     key:KEY_WORKING_DIRECTORY
                    type:kPreferenceInfoTypeStringTextField];
 
+    [self updateEditAdvancedConfigButton];
+}
+
+- (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict {
+    [super copyOwnedValuesToDict:dict];
+    [_advancedWorkingDirWindowController copyOwnedValuesToDict:dict];
 }
 
 - (void)layoutSubviewsForSingleBookmarkMode {
@@ -93,10 +102,39 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
                               _sendTextAtStart,
                               _initialDirectoryType,
                               _customDirectory,
+                              _editAdvancedConfigButton,
                              ];
     for (NSView *view in viewsToHide) {
         view.hidden = YES;
     }
+}
+
+#pragma mark - Advanced initial directory settings
+
+- (void)updateEditAdvancedConfigButton {
+    NSString *directoryType = [self stringForKey:KEY_CUSTOM_DIRECTORY];
+    BOOL isAdvanced = [directoryType isEqualToString:kProfilePreferenceInitialDirectoryAdvancedValue];
+    [_editAdvancedConfigButton setEnabled:isAdvanced];
+}
+
+- (IBAction)showAdvancedWorkingDirConfigPanel:(id)sender
+{
+    [_advancedWorkingDirWindowController window];  // force the window to load
+    _advancedWorkingDirWindowController.profile = [self.delegate profilePreferencesCurrentProfile];
+    [NSApp beginSheet:_advancedWorkingDirWindowController.window
+       modalForWindow:self.view.window
+        modalDelegate:self
+       didEndSelector:@selector(advancedWorkingDirSheetClosed:returnCode:contextInfo:)
+          contextInfo:nil];
+}
+
+- (void)advancedWorkingDirSheetClosed:(NSWindow *)sheet
+                           returnCode:(int)returnCode
+                          contextInfo:(void *)contextInfo {
+    for (NSString *key in [_advancedWorkingDirWindowController allKeys]) {
+        [self setString:_advancedWorkingDirWindowController.profile[key] forKey:key];
+    }
+    [sheet close];
 }
 
 #pragma mark - Directory type
@@ -125,6 +163,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     }
     
     [self setString:value forKey:KEY_CUSTOM_DIRECTORY];
+    [self updateEditAdvancedConfigButton];
 }
 
 - (void)updateDirectoryType {
@@ -139,6 +178,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
         tagNumber = @(kInitialDirectoryTypeHomeTag);
     }
     [_initialDirectoryType selectCellWithTag:[tagNumber integerValue]];
+    [self updateEditAdvancedConfigButton];
 }
 
 #pragma mark - Command Type
