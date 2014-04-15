@@ -14,6 +14,7 @@
 #import "PreferencePanel.h"
 #import "ProfileListView.h"
 #import "ProfilesGeneralPreferencesViewController.h"
+#import "ProfilesColorsPreferencesViewController.h"
 
 static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
@@ -48,6 +49,9 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     IBOutlet ProfilesGeneralPreferencesViewController *_generalViewController;
 
     IBOutlet NSTabViewItem *_generalTab;
+    
+    // Colors tab view controller
+    IBOutlet ProfilesColorsPreferencesViewController *_colorsViewController;
 }
 
 - (id)init {
@@ -102,7 +106,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     _copyToProfileButton.hidden = NO;
     _toggleTagsButton.hidden = YES;
     [_generalViewController layoutSubviewsForSingleBookmarkMode];
-    
+
     NSRect newFrame = _tabView.frame;
     newFrame.origin.x = 0;
     _tabView.frame = newFrame;
@@ -138,6 +142,14 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 }
 
 #pragma mark - Shims that will go away when migration is complete
+
+- (void)exportColorPresetToFile:(NSString*)filename {
+    [_colorsViewController exportColorPresetToFile:filename];
+}
+
+- (void)loadColorPresetWithName:(NSString *)presetName {
+    [_colorsViewController loadColorPresetWithName:presetName];
+}
 
 - (void)updateProfileInModel:(Profile *)modifiedProfile {
     [[_delegate profilePreferencesModel] setBookmark:modifiedProfile
@@ -178,6 +190,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
     [_delegate profileWithGuidWasSelected:profile[KEY_GUID]];
     [_generalViewController reloadProfile];
+    [_colorsViewController reloadProfile];
 }
 
 - (void)profileTableRowSelected:(id)profileTable {
@@ -212,7 +225,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 }
 
 - (NSArray *)tabViewControllers {
-    return @[ _generalViewController ];
+    return @[ _generalViewController, _colorsViewController ];
 }
 
 #pragma mark - Actions

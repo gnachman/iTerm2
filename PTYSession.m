@@ -1796,7 +1796,7 @@ typedef enum {
     DLog(@"Reload profile for %@", self);
     BOOL didChange = NO;
     NSDictionary *sharedProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:_originalProfile[KEY_GUID]];
-    if (sharedProfile && ![sharedProfile isEqual:_originalProfile]) {
+    if (sharedProfile) {
         DLog(@"Shared profile changed");
         [self sharedProfileDidChange];
         didChange = YES;

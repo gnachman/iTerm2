@@ -82,6 +82,7 @@
 #import "PointerPrefsController.h"
 #import "ProfileModel.h"
 #import "ProfilePreferencesViewController.h"
+#import "ProfilesColorsPreferencesViewController.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "SessionView.h"
@@ -91,7 +92,6 @@
 #import "WindowArrangements.h"
 #include <stdlib.h>
 
-static NSString *const kCustomColorPresetsKey = @"Custom Color Presets";
 static NSString *const kDeleteKeyString = @"0x7f-0x0";
 static NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
 
@@ -118,12 +118,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     // See ITermCursorType. One of: CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX
     IBOutlet NSMatrix *cursorType;
 
-    IBOutlet NSButton *useTabColor;
-    IBOutlet NSButton *checkColorInvertedCursor;
-    BOOL defaultColorInvertedCursor;
-
     // instant replay
-    IBOutlet NSButton *instantReplay;
     BOOL defaultInstantReplay;
 
     NSUserDefaults *prefs;
@@ -155,30 +150,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     // Bookmarks -----------------------------
 
     // Colors tab
-    IBOutlet NSColorWell *ansi0Color;
-    IBOutlet NSColorWell *ansi1Color;
-    IBOutlet NSColorWell *ansi2Color;
-    IBOutlet NSColorWell *ansi3Color;
-    IBOutlet NSColorWell *ansi4Color;
-    IBOutlet NSColorWell *ansi5Color;
-    IBOutlet NSColorWell *ansi6Color;
-    IBOutlet NSColorWell *ansi7Color;
-    IBOutlet NSColorWell *ansi8Color;
-    IBOutlet NSColorWell *ansi9Color;
-    IBOutlet NSColorWell *ansi10Color;
-    IBOutlet NSColorWell *ansi11Color;
-    IBOutlet NSColorWell *ansi12Color;
-    IBOutlet NSColorWell *ansi13Color;
-    IBOutlet NSColorWell *ansi14Color;
-    IBOutlet NSColorWell *ansi15Color;
-    IBOutlet NSColorWell *foregroundColor;
-    IBOutlet NSColorWell *backgroundColor;
-    IBOutlet NSColorWell *boldColor;
-    IBOutlet NSColorWell *selectionColor;
-    IBOutlet NSColorWell *selectedTextColor;
-    IBOutlet NSColorWell *cursorColor;
-    IBOutlet NSColorWell *cursorTextColor;
-    IBOutlet NSColorWell *tabColor;
     IBOutlet NSTextField *cursorColorLabel;
     IBOutlet NSTextField *cursorTextColorLabel;
     IBOutlet NSMenu *presetsMenu;
@@ -568,40 +539,11 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     // Colors tab
-    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi0Color color]] forKey:KEY_ANSI_0_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi1Color color]] forKey:KEY_ANSI_1_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi2Color color]] forKey:KEY_ANSI_2_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi3Color color]] forKey:KEY_ANSI_3_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi4Color color]] forKey:KEY_ANSI_4_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi5Color color]] forKey:KEY_ANSI_5_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi6Color color]] forKey:KEY_ANSI_6_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi7Color color]] forKey:KEY_ANSI_7_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi8Color color]] forKey:KEY_ANSI_8_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi9Color color]] forKey:KEY_ANSI_9_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi10Color color]] forKey:KEY_ANSI_10_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi11Color color]] forKey:KEY_ANSI_11_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi12Color color]] forKey:KEY_ANSI_12_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi13Color color]] forKey:KEY_ANSI_13_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi14Color color]] forKey:KEY_ANSI_14_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi15Color color]] forKey:KEY_ANSI_15_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[foregroundColor color]] forKey:KEY_FOREGROUND_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[backgroundColor color]] forKey:KEY_BACKGROUND_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[boldColor color]] forKey:KEY_BOLD_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[selectionColor color]] forKey:KEY_SELECTION_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[selectedTextColor color]] forKey:KEY_SELECTED_TEXT_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[cursorColor color]] forKey:KEY_CURSOR_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[cursorTextColor color]] forKey:KEY_CURSOR_TEXT_COLOR];
-    [newDict setObject:[ITAddressBookMgr encodeColor:[tabColor color]] forKey:KEY_TAB_COLOR];
-    [newDict setObject:[NSNumber numberWithBool:[useTabColor state]] forKey:KEY_USE_TAB_COLOR];
-    [newDict setObject:[NSNumber numberWithBool:[checkColorInvertedCursor state]] forKey:KEY_SMART_CURSOR_COLOR];
     [newDict setObject:[NSNumber numberWithFloat:[minimumContrast floatValue]] forKey:KEY_MINIMUM_CONTRAST];
 
-    [tabColor setEnabled:[useTabColor state] == NSOnState];
-    [cursorColor setEnabled:[checkColorInvertedCursor state] == NSOffState];
-    [cursorColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
+// MIGRATE THIS OVER    [cursorColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
 
-    [cursorTextColor setEnabled:[checkColorInvertedCursor state] == NSOffState];
-    [cursorTextColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
+// MIGRATE THIS OVER   [cursorTextColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
 
     // Display tab
     int rows, cols;
@@ -946,73 +888,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 }
 
-- (void)_exportColorPresetToFile:(NSString*)filename
-{
-    NSArray* colorKeys = @[ KEY_ANSI_0_COLOR,
-                            KEY_ANSI_1_COLOR,
-                            KEY_ANSI_2_COLOR,
-                            KEY_ANSI_3_COLOR,
-                            KEY_ANSI_4_COLOR,
-                            KEY_ANSI_5_COLOR,
-                            KEY_ANSI_6_COLOR,
-                            KEY_ANSI_7_COLOR,
-                            KEY_ANSI_8_COLOR,
-                            KEY_ANSI_9_COLOR,
-                            KEY_ANSI_10_COLOR,
-                            KEY_ANSI_11_COLOR,
-                            KEY_ANSI_12_COLOR,
-                            KEY_ANSI_13_COLOR,
-                            KEY_ANSI_14_COLOR,
-                            KEY_ANSI_15_COLOR,
-                            KEY_FOREGROUND_COLOR,
-                            KEY_BACKGROUND_COLOR,
-                            KEY_BOLD_COLOR,
-                            KEY_SELECTION_COLOR,
-                            KEY_SELECTED_TEXT_COLOR,
-                            KEY_CURSOR_COLOR,
-                            KEY_CURSOR_TEXT_COLOR,
-                            KEY_TAB_COLOR ];
-    NSColorWell* wells[] = {
-        ansi0Color,
-        ansi1Color,
-        ansi2Color,
-        ansi3Color,
-        ansi4Color,
-        ansi5Color,
-        ansi6Color,
-        ansi7Color,
-        ansi8Color,
-        ansi9Color,
-        ansi10Color,
-        ansi11Color,
-        ansi12Color,
-        ansi13Color,
-        ansi14Color,
-        ansi15Color,
-        foregroundColor,
-        backgroundColor,
-        boldColor,
-        selectionColor,
-        selectedTextColor,
-        cursorColor,
-        cursorTextColor,
-        tabColor
-    };
-    NSMutableDictionary* theDict = [NSMutableDictionary dictionaryWithCapacity:24];
-    int i = 0;
-    for (NSString* colorKey in colorKeys) {
-        [theDict setObject:[ITAddressBookMgr encodeColor:[wells[i++] color]] forKey:colorKey];
-    }
-    if (![theDict writeToFile:filename atomically:NO]) {
-        NSRunAlertPanel(@"Save Failed.",
-                        @"Could not save to %@",
-                        @"OK",
-                        nil,
-                        nil,
-                        filename);
-    }
-}
-
 - (void)exportColorPreset:(id)sender
 {
     // Create the File Open Dialog class.
@@ -1022,7 +897,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [saveDlg setAllowedFileTypes:[NSArray arrayWithObject:@"itermcolors"]];
 
     if ([saveDlg legacyRunModalForDirectory:nil file:nil] == NSOKButton) {
-        [self _exportColorPresetToFile:[saveDlg legacyFilename]];
+        [_profilesViewController exportColorPresetToFile:[saveDlg legacyFilename]];
     }
 }
 
@@ -1069,30 +944,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (void)_loadPresetColors:(NSString*)presetName
 {
-    Profile *profile = [_profilesViewController selectedProfile];
-    NSString* guid = profile[KEY_GUID];
-    assert(guid);
-
-    NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"ColorPresets"
-                                                                            ofType:@"plist"];
-    NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
-    NSDictionary* settings = [presetsDict objectForKey:presetName];
-    if (!settings) {
-        presetsDict = [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
-        settings = [presetsDict objectForKey:presetName];
-    }
-    NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:profile];
-
-    for (id colorName in settings) {
-        NSDictionary* preset = [settings objectForKey:colorName];
-        NSColor* color = [ITAddressBookMgr decodeColor:preset];
-        NSAssert([newDict objectForKey:colorName], @"Missing color in existing dict");
-        [newDict setObject:[ITAddressBookMgr encodeColor:color] forKey:colorName];
-    }
-
-    [dataSource setBookmark:newDict withGuid:guid];
-    [self updateBookmarkFields:newDict];
-    [self bookmarkSettingChanged:self];  // this causes existing sessions to be updated
+    [_profilesViewController loadColorPresetWithName:presetName];
 }
 
 - (void)loadColorPreset:(id)sender
@@ -1841,46 +1693,9 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     name = [dict objectForKey:KEY_NAME];
 
     // Colors tab
-    [ansi0Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_0_COLOR]]];
-    [ansi1Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_1_COLOR]]];
-    [ansi2Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_2_COLOR]]];
-    [ansi3Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_3_COLOR]]];
-    [ansi4Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_4_COLOR]]];
-    [ansi5Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_5_COLOR]]];
-    [ansi6Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_6_COLOR]]];
-    [ansi7Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_7_COLOR]]];
-    [ansi8Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_8_COLOR]]];
-    [ansi9Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_9_COLOR]]];
-    [ansi10Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_10_COLOR]]];
-    [ansi11Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_11_COLOR]]];
-    [ansi12Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_12_COLOR]]];
-    [ansi13Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_13_COLOR]]];
-    [ansi14Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_14_COLOR]]];
-    [ansi15Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_15_COLOR]]];
-    [foregroundColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_FOREGROUND_COLOR]]];
-    [backgroundColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_BACKGROUND_COLOR]]];
-    [boldColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_BOLD_COLOR]]];
-    [selectionColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_SELECTION_COLOR]]];
-    [selectedTextColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_SELECTED_TEXT_COLOR]]];
-    [cursorColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_CURSOR_COLOR]]];
-    [cursorTextColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_CURSOR_TEXT_COLOR]]];
-    [tabColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_TAB_COLOR]]];
-    [useTabColor setState:[[dict objectForKey:KEY_USE_TAB_COLOR] boolValue]];
-    [tabColor setEnabled:[useTabColor state] == NSOnState];
+// MIGRATE THIS    [cursorColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
 
-    BOOL smartCursorColor;
-    if ([dict objectForKey:KEY_SMART_CURSOR_COLOR]) {
-        smartCursorColor = [[dict objectForKey:KEY_SMART_CURSOR_COLOR] boolValue];
-    } else {
-        smartCursorColor = [self legacySmartCursorColor];
-    }
-    [checkColorInvertedCursor setState:smartCursorColor ? NSOnState : NSOffState];
-
-    [cursorColor setEnabled:[checkColorInvertedCursor state] == NSOffState];
-    [cursorColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
-
-    [cursorTextColor setEnabled:[checkColorInvertedCursor state] == NSOffState];
-    [cursorTextColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
+// MIGRATE THIS    [cursorTextColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
 
     float minContrast;
     if ([dict objectForKey:KEY_MINIMUM_CONTRAST]) {

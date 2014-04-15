@@ -214,6 +214,8 @@ static NSMutableDictionary *gObservers;
                     [defaultValue isKindOfClass:[NSNull class]]);
         case kPreferenceInfoTypeMatrix:
             return [defaultValue isKindOfClass:[NSString class]];
+        case kPreferenceInfoTypeColorWell:
+            return [defaultValue isKindOfClass:[NSDictionary class]];
     }
     
     return NO;

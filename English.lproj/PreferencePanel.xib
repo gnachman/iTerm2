@@ -5166,6 +5166,7 @@ DQ
         <customObject id="HVI-63-mNz" customClass="ProfilePreferencesViewController">
             <connections>
                 <outlet property="_addProfileButton" destination="2111" id="bA3-2H-K5q"/>
+                <outlet property="_colorsViewController" destination="p8i-eM-oBc" id="jzE-Xk-0gO"/>
                 <outlet property="_copyToProfileButton" destination="5140" id="OLo-Jv-hFL"/>
                 <outlet property="_generalTab" destination="2101" id="L0w-Vv-KhM"/>
                 <outlet property="_generalViewController" destination="dVg-Ac-SiZ" id="ppv-wN-HJr"/>
@@ -5209,6 +5210,38 @@ DQ
             </connections>
         </customObject>
         <customObject id="Cct-nR-QI7" customClass="AdvancedWorkingDirectoryWindowController"/>
+        <customObject id="p8i-eM-oBc" customClass="ProfilesColorsPreferencesViewController">
+            <connections>
+                <outlet property="_ansi0Color" destination="2297" id="Naq-Zb-19H"/>
+                <outlet property="_ansi10Color" destination="2300" id="Wzc-Vc-Wl8"/>
+                <outlet property="_ansi11Color" destination="2294" id="4vr-YO-qwk"/>
+                <outlet property="_ansi12Color" destination="2299" id="aKB-CL-4EI"/>
+                <outlet property="_ansi13Color" destination="2298" id="j4D-pb-rhw"/>
+                <outlet property="_ansi14Color" destination="2296" id="CAN-fY-Qal"/>
+                <outlet property="_ansi15Color" destination="2301" id="SfZ-bU-PRb"/>
+                <outlet property="_ansi1Color" destination="2286" id="kGG-aK-VFh"/>
+                <outlet property="_ansi2Color" destination="2287" id="nev-j3-j5k"/>
+                <outlet property="_ansi3Color" destination="2289" id="JGy-Vg-kJV"/>
+                <outlet property="_ansi4Color" destination="2288" id="mvA-oP-bOX"/>
+                <outlet property="_ansi5Color" destination="2290" id="NdV-Ww-SUN"/>
+                <outlet property="_ansi6Color" destination="2291" id="ONW-Lb-nJm"/>
+                <outlet property="_ansi7Color" destination="2293" id="QhH-FG-A0Q"/>
+                <outlet property="_ansi8Color" destination="2292" id="CYe-ug-VHy"/>
+                <outlet property="_ansi9Color" destination="2295" id="3xD-IA-LRt"/>
+                <outlet property="_backgroundColor" destination="2285" id="11Q-XD-XYI"/>
+                <outlet property="_boldColor" destination="2272" id="zhk-0J-m9y"/>
+                <outlet property="_cursorColor" destination="2280" id="bFx-TT-7QV"/>
+                <outlet property="_cursorTextColor" destination="2278" id="aw0-Y7-lPM"/>
+                <outlet property="_foregroundColor" destination="2273" id="PXI-YU-2u7"/>
+                <outlet property="_selectedTextColor" destination="2277" id="jqd-jg-i3Y"/>
+                <outlet property="_selectionColor" destination="2282" id="OO4-S4-aaD"/>
+                <outlet property="_tabColor" destination="Wzz-9B-zqB" id="gfq-Eg-jc0"/>
+                <outlet property="_useSmartCursorColor" destination="4889" id="GhQ-EU-ndl"/>
+                <outlet property="_useTabColor" destination="j7F-r8-oes" id="HoY-6m-E99"/>
+                <outlet property="delegate" destination="HVI-63-mNz" id="NFg-pP-EcM"/>
+                <outlet property="view" destination="1946" id="b9f-lK-h1j"/>
+            </connections>
+        </customObject>
     </objects>
     <resources>
         <image name="NSActionTemplate" width="14" height="14"/>

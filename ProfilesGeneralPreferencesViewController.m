@@ -60,6 +60,11 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     IBOutlet NSTextField *_setProfileLabel;
 }
 
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [super dealloc];
+}
+
 - (void)awakeFromNib {
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(windowWillClose:)

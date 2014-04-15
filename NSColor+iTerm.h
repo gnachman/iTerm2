@@ -8,6 +8,13 @@
 
 #import <Cocoa/Cocoa.h>
 
+extern NSString *const kEncodedColorDictionaryRedComponent;
+extern NSString *const kEncodedColorDictionaryGreenComponent;
+extern NSString *const kEncodedColorDictionaryBlueComponent;
+extern NSString *const kEncodedColorDictionaryColorSpace;
+extern NSString *const kEncodedColorDictionarySRGBColorSpace;
+extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
+
 @interface NSColor (iTerm)
 
 + (NSColor *)colorWith8BitRed:(int)red
@@ -33,5 +40,7 @@
 - (NSColor *)colorDimmedBy:(double)dimmingAmount towardsGrayLevel:(double)grayLevel;
 - (CGFloat)perceivedBrightness;
 - (BOOL)isDark;
+
+- (NSDictionary *)dictionaryValue;
 
 @end

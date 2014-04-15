@@ -825,6 +825,9 @@
 		A6E713BA18FCCDD1008D94DD /* iTermURLSchemeController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713B818FCCDD1008D94DD /* iTermURLSchemeController.h */; };
 		A6E713BB18FCCDD1008D94DD /* iTermURLSchemeController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E713B918FCCDD1008D94DD /* iTermURLSchemeController.m */; };
 		A6E713BC18FCCDD1008D94DD /* iTermURLSchemeController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E713B918FCCDD1008D94DD /* iTermURLSchemeController.m */; };
+		A6E713BF18FCF036008D94DD /* ProfilesColorsPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713BD18FCF036008D94DD /* ProfilesColorsPreferencesViewController.h */; };
+		A6E713C018FCF036008D94DD /* ProfilesColorsPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E713BE18FCF036008D94DD /* ProfilesColorsPreferencesViewController.m */; };
+		A6E713C118FCF036008D94DD /* ProfilesColorsPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E713BE18FCF036008D94DD /* ProfilesColorsPreferencesViewController.m */; };
 		A6E74748188C6344005355CF /* CommandHistoryEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E74746188C6344005355CF /* CommandHistoryEntry.h */; };
 		A6E74749188C6344005355CF /* CommandHistoryEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74747188C6344005355CF /* CommandHistoryEntry.m */; };
 		A6E7474A188C6344005355CF /* CommandHistoryEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74747188C6344005355CF /* CommandHistoryEntry.m */; };
@@ -1411,6 +1414,8 @@
 		A6E713B218FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = AdvancedWorkingDirectoryWindow.xib; sourceTree = "<group>"; };
 		A6E713B818FCCDD1008D94DD /* iTermURLSchemeController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermURLSchemeController.h; sourceTree = "<group>"; };
 		A6E713B918FCCDD1008D94DD /* iTermURLSchemeController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermURLSchemeController.m; sourceTree = "<group>"; };
+		A6E713BD18FCF036008D94DD /* ProfilesColorsPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesColorsPreferencesViewController.h; sourceTree = "<group>"; };
+		A6E713BE18FCF036008D94DD /* ProfilesColorsPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesColorsPreferencesViewController.m; sourceTree = "<group>"; };
 		A6E74746188C6344005355CF /* CommandHistoryEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandHistoryEntry.h; sourceTree = "<group>"; };
 		A6E74747188C6344005355CF /* CommandHistoryEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CommandHistoryEntry.m; sourceTree = "<group>"; };
 		A6E7474B188C6394005355CF /* CommandUse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandUse.h; sourceTree = "<group>"; };
@@ -1561,6 +1566,8 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A6E713BD18FCF036008D94DD /* ProfilesColorsPreferencesViewController.h */,
+				A6E713BE18FCF036008D94DD /* ProfilesColorsPreferencesViewController.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -2591,6 +2598,7 @@
 				A6057C0E187BC4C3004A60AF /* CommandHistory.h in Headers */,
 				1D94EAB412D64022008225A9 /* UKSystemInfo.h in Headers */,
 				A6099B0518D6B0FD00081FA9 /* iTermWarning.h in Headers */,
+				A6E713BF18FCF036008D94DD /* ProfilesColorsPreferencesViewController.h in Headers */,
 				A6B5134A18E779BB00D249A5 /* iTermPasteHelper.h in Headers */,
 				1DDBC61E12E2BCDC00BC3868 /* iTermExpose.h in Headers */,
 				A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */,
@@ -3136,6 +3144,7 @@
 				1D9A559D180FA87000B42CE9 /* SessionView.m in Sources */,
 				1DD39B17180B82AC004E56D5 /* ScreenChar.m in Sources */,
 				1D9A5591180FA87000B42CE9 /* PseudoTerminalRestorer.m in Sources */,
+				A6E713C118FCF036008D94DD /* ProfilesColorsPreferencesViewController.m in Sources */,
 				1DD39B16180B81B3004E56D5 /* VT100GridTest.m in Sources */,
 				A6057C0B187A1809004A60AF /* TerminalFile.m in Sources */,
 				1D9A558C180FA87000B42CE9 /* PasteView.m in Sources */,
@@ -3396,6 +3405,7 @@
 				1D825605146B258A007CAE78 /* EventMonitorView.m in Sources */,
 				1D3BBD6C14759D6C00FAB389 /* HighlightTrigger.m in Sources */,
 				1D21EE3C147711300066E04A /* ContextMenuActionPrefsController.m in Sources */,
+				A6E713C018FCF036008D94DD /* ProfilesColorsPreferencesViewController.m in Sources */,
 				1D3D21881482E0E500FAC8E7 /* TmuxGateway.m in Sources */,
 				1D3D21911482F18A00FAC8E7 /* TmuxController.m in Sources */,
 				1D3D21961483144600FAC8E7 /* TSVParser.m in Sources */,

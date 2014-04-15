@@ -93,6 +93,9 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                     [defaultValue isKindOfClass:[NSArray class]]);
         case kPreferenceInfoTypeMatrix:
             return [defaultValue isKindOfClass:[NSString class]];
+        case kPreferenceInfoTypeColorWell:
+            return ([defaultValue isKindOfClass:[NSNull class]] ||
+                    [defaultValue isKindOfClass:[NSDictionary class]]);
     }
 
     return NO;
@@ -111,6 +114,32 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_INITIAL_TEXT: @"",
                   KEY_CUSTOM_DIRECTORY: kProfilePreferenceInitialDirectoryHomeValue,
                   KEY_WORKING_DIRECTORY: @"",
+                  KEY_FOREGROUND_COLOR: [NSNull null],
+                  KEY_BACKGROUND_COLOR: [NSNull null],
+                  KEY_BOLD_COLOR: [NSNull null],
+                  KEY_SELECTION_COLOR: [NSNull null],
+                  KEY_SELECTED_TEXT_COLOR: [NSNull null],
+                  KEY_CURSOR_COLOR: [NSNull null],
+                  KEY_CURSOR_TEXT_COLOR: [NSNull null],
+                  KEY_ANSI_0_COLOR: [NSNull null],
+                  KEY_ANSI_1_COLOR: [NSNull null],
+                  KEY_ANSI_2_COLOR: [NSNull null],
+                  KEY_ANSI_3_COLOR: [NSNull null],
+                  KEY_ANSI_4_COLOR: [NSNull null],
+                  KEY_ANSI_5_COLOR: [NSNull null],
+                  KEY_ANSI_6_COLOR: [NSNull null],
+                  KEY_ANSI_7_COLOR: [NSNull null],
+                  KEY_ANSI_8_COLOR: [NSNull null],
+                  KEY_ANSI_9_COLOR: [NSNull null],
+                  KEY_ANSI_10_COLOR: [NSNull null],
+                  KEY_ANSI_11_COLOR: [NSNull null],
+                  KEY_ANSI_12_COLOR: [NSNull null],
+                  KEY_ANSI_13_COLOR: [NSNull null],
+                  KEY_ANSI_14_COLOR: [NSNull null],
+                  KEY_ANSI_15_COLOR: [NSNull null],
+                  KEY_TAB_COLOR: [NSNull null],
+                  KEY_USE_TAB_COLOR: @NO,
+                  KEY_SMART_CURSOR_COLOR: @NO,
                 };
         [dict retain];
     }

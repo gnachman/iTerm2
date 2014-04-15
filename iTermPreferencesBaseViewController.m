@@ -8,6 +8,8 @@
 
 #import "iTermPreferencesBaseViewController.h"
 #import "iTermPreferences.h"
+#import "NSColor+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
 #import "PreferencePanel.h"
 
@@ -126,6 +128,10 @@
             [self setFloat:[sender doubleValue] forKey:info.key];
             break;
 
+        case kPreferenceInfoTypeColorWell:
+            [self setObject:[[sender color] dictionaryValue] forKey:info.key];
+            break;
+
         default:
             assert(false);
     }
@@ -223,6 +229,17 @@
         case kPreferenceInfoTypeMatrix:
             assert(false);  // Must use onChange() only.
 
+        case kPreferenceInfoTypeColorWell: {
+            assert([info.control isKindOfClass:[NSColorWell class]]);
+            NSColorWell *colorWell = (NSColorWell *)info.control;
+            NSDictionary *dict = (NSDictionary *)[self objectForKey:info.key];
+            if (dict) {
+                assert([dict isKindOfClass:[NSDictionary class]]);
+                [colorWell setColor:[dict colorValue]];
+            }
+            break;
+        }
+            
         default:
             assert(false);
     }
