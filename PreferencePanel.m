@@ -158,7 +158,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     // Only visible in Get Info mode
     IBOutlet NSTextField* setProfileLabel;
     IBOutlet ProfileListView* setProfileBookmarkListView;
-    IBOutlet NSButton* changeProfileButton;
 
     // Colors tab
     IBOutlet NSColorWell *ansi0Color;
@@ -388,8 +387,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [_profilesViewController layoutSubviewsForSingleBookmarkMode];
     [toolbar setVisible:NO];
     [setProfileLabel setHidden:NO];
-    [setProfileBookmarkListView setHidden:NO];
-    [changeProfileButton setHidden:NO];
 
     [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
     [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
@@ -420,7 +417,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [self run];
     [self showBookmarks];
     [_profilesViewController openToProfileWithGuid:guid];
-    [setProfileBookmarkListView selectRowByGuid:nil];
 }
 
 - (Profile*)hotkeyBookmark {
@@ -869,32 +865,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 - (BOOL)_logDirIsWritable
 {
     return [[NSFileManager defaultManager] directoryIsWritable:[logDir stringValue]];
-}
-
-// Replace a Profile in the sessions profile with a new dictionary that preserves the original
-// name and guid, takes all other fields from |bookmark|, and has KEY_ORIGINAL_GUID point at the
-// guid of the profile from which all that data came.n
-- (IBAction)changeProfile:(id)sender
-{
-    NSString *guid = [setProfileBookmarkListView selectedGuid];
-    if (guid) {
-        Profile *origProfile = [_profilesViewController selectedProfile];
-        NSString* origGuid = origProfile[KEY_GUID];
-
-        NSString *theName = [[[origProfile objectForKey:KEY_NAME] copy] autorelease];
-        Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-        NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
-        [dict setObject:theName forKey:KEY_NAME];
-        [dict setObject:origGuid forKey:KEY_GUID];
-
-        // Change the dict in the sessions bookmarks so that if you copy it back, it gets copied to
-        // the new profile.
-        [dict setObject:guid forKey:KEY_ORIGINAL_GUID];
-        [dataSource setBookmark:dict withGuid:origGuid];
-
-        [self updateBookmarkFields:dict];
-        [self bookmarkSettingChanged:nil];
-    }
 }
 
 - (IBAction)setAsDefault:(id)sender

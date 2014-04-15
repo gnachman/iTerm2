@@ -12,7 +12,9 @@
 #import "iTermProfilePreferences.h"
 #import "iTermURLSchemeController.h"
 #import "NSTextField+iTerm.h"
+#import "ProfileListView.h"
 #import "ProfileModel.h"
+#import "PreferencePanel.h"
 
 // Tags for _commandType matrix selectedCell.
 static const NSInteger kCommandTypeCustomTag = 0;
@@ -51,6 +53,10 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     IBOutlet NSButton *_editAdvancedConfigButton;  // Advanced initial directory button
     IBOutlet AdvancedWorkingDirectoryWindowController *_advancedWorkingDirWindowController;
     IBOutlet NSPopUpButton *_urlSchemes;
+
+    // Controls for Edit Info
+    IBOutlet ProfileListView *_profiles;
+    IBOutlet NSButton *_changeProfileButton;
 }
 
 - (void)awakeFromNib {
@@ -129,16 +135,49 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
                               _directoryLabel,
                               _schemesHeaderLabel,
                               _schemesLabel,
-                              _urlSchemes,
-                             ];
+                              _urlSchemes ];
     for (NSView *view in viewsToHide) {
         view.hidden = YES;
+    }
+    
+    NSArray *viewsToShow = @[ _profiles,
+                              _changeProfileButton,
+                              ];
+    for (NSView *view in viewsToShow) {
+        view.hidden = NO;
     }
 }
 
 - (void)reloadProfile {
     [super reloadProfile];
     [self populateBookmarkUrlSchemesFromProfile:[self.delegate profilePreferencesCurrentProfile]];
+    [_profiles selectRowByGuid:nil];
+}
+
+#pragma mark - Copy current session to Profile
+
+// Replace a Profile in the sessions profile with a new dictionary that preserves the original
+// name and guid, takes all other fields from |bookmark|, and has KEY_ORIGINAL_GUID point at the
+// guid of the profile from which all that data came.n
+- (IBAction)changeProfile:(id)sender {
+    NSString *guid = [_profiles selectedGuid];
+    if (guid) {
+        Profile *origProfile = [self.delegate profilePreferencesCurrentProfile];
+        NSString* origGuid = origProfile[KEY_GUID];
+        
+        NSString *theName = [[[origProfile objectForKey:KEY_NAME] copy] autorelease];
+        Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+        NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
+        dict[KEY_NAME] = theName;
+        dict[KEY_GUID] = origGuid;
+        
+        // Change the dict in the sessions bookmarks so that if you copy it back, it gets copied to
+        // the new profile.
+        dict[KEY_ORIGINAL_GUID] = guid;
+        [[ProfileModel sessionsInstance] setBookmark:dict withGuid:origGuid];
+        
+        [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
+    }
 }
 
 #pragma mark - URL Schemes
