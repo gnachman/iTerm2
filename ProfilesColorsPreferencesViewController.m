@@ -9,6 +9,7 @@
 #import "ProfilesColorsPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
 #import "NSColor+iTerm.h"
+#import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 
 NSString *const kCustomColorPresetsKey = @"Custom Color Presets";
@@ -40,6 +41,9 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
     IBOutlet NSColorWell *_cursorColor;
     IBOutlet NSColorWell *_cursorTextColor;
     IBOutlet NSColorWell *_tabColor;
+
+    IBOutlet NSTextField *_cursorColorLabel;
+    IBOutlet NSTextField *_cursorTextColorLabel;
 
     IBOutlet NSButton *_useTabColor;
     IBOutlet NSButton *_useSmartCursorColor;
@@ -73,12 +77,12 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
     info = [self defineControl:_useTabColor
                            key:KEY_USE_TAB_COLOR
                           type:kPreferenceInfoTypeCheckbox];
-    info.onChange = ^() { [self updateColorControlsEnabled]; };
+    info.onUpdate = ^BOOL() { [self updateColorControlsEnabled]; return NO; };
 
     info = [self defineControl:_useSmartCursorColor
                            key:KEY_SMART_CURSOR_COLOR
                           type:kPreferenceInfoTypeCheckbox];
-    info.onChange = ^() { [self updateColorControlsEnabled]; };
+    info.onUpdate = ^BOOL() { [self updateColorControlsEnabled]; return NO; };
     
     [self defineControl:_minimumContrast
                     key:KEY_MINIMUM_CONTRAST
@@ -91,6 +95,8 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
     _tabColor.enabled = [self boolForKey:KEY_USE_TAB_COLOR];
     _cursorColor.enabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
     _cursorTextColor.enabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
+    _cursorColorLabel.labelEnabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
+    _cursorTextColorLabel.labelEnabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
 }
 
 - (NSDictionary *)colorWellDictionary {

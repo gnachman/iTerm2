@@ -45,8 +45,6 @@
                 <outlet property="closeSessionsOnEnd" destination="5681" id="5737"/>
                 <outlet property="columnsField" destination="4911" id="4959"/>
                 <outlet property="columnsLabel" destination="4912" id="4961"/>
-                <outlet property="cursorColorLabel" destination="2283" id="4907"/>
-                <outlet property="cursorTextColorLabel" destination="2279" id="4908"/>
                 <outlet property="cursorType" destination="5017" id="5032"/>
                 <outlet property="deleteSendsCtrlHButton" destination="5074" id="5078"/>
                 <outlet property="disablePrinting" destination="5633" id="5637"/>
@@ -5203,7 +5201,9 @@ DQ
                 <outlet property="_backgroundColor" destination="2285" id="11Q-XD-XYI"/>
                 <outlet property="_boldColor" destination="2272" id="zhk-0J-m9y"/>
                 <outlet property="_cursorColor" destination="2280" id="bFx-TT-7QV"/>
+                <outlet property="_cursorColorLabel" destination="2283" id="wkr-Fv-k2e"/>
                 <outlet property="_cursorTextColor" destination="2278" id="aw0-Y7-lPM"/>
+                <outlet property="_cursorTextColorLabel" destination="2279" id="1Nj-oR-Nwa"/>
                 <outlet property="_foregroundColor" destination="2273" id="PXI-YU-2u7"/>
                 <outlet property="_minimumContrast" destination="4896" id="2e4-71-ARX"/>
                 <outlet property="_presetsMenu" destination="3215" id="8lA-lg-5tg"/>

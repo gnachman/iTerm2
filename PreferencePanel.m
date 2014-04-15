@@ -145,10 +145,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // Bookmarks -----------------------------
 
-    // Colors tab
-    IBOutlet NSTextField *cursorColorLabel;
-    IBOutlet NSTextField *cursorTextColorLabel;
-
     // Display tab
     IBOutlet NSView *displayFontAccessoryView;
     IBOutlet NSSlider *displayFontSpacingWidth;
@@ -492,10 +488,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if (origGuid) {
         [newDict setObject:origGuid forKey:KEY_ORIGINAL_GUID];
     }
-
-// MIGRATE THIS OVER    [cursorColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
-
-// MIGRATE THIS OVER   [cursorTextColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
 
     // Display tab
     int rows, cols;
@@ -1511,11 +1503,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     NSString* name;
     name = [dict objectForKey:KEY_NAME];
-
-    // Colors tab
-// MIGRATE THIS    [cursorColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
-
-// MIGRATE THIS    [cursorTextColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
 
     // Display tab
     int cols = [[dict objectForKey:KEY_COLUMNS] intValue];
