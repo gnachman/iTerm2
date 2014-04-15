@@ -14,22 +14,6 @@
                 <outlet property="advancedToolbarItem" destination="gtg-rw-6h8" id="Enb-fp-ef2"/>
                 <outlet property="allowTitleReporting" destination="6387" id="6390"/>
                 <outlet property="allowTitleSetting" destination="xih-tE-Xk7" id="cn0-W7-MGI"/>
-                <outlet property="ansi0Color" destination="2297" id="3067"/>
-                <outlet property="ansi10Color" destination="2300" id="3053"/>
-                <outlet property="ansi11Color" destination="2294" id="3055"/>
-                <outlet property="ansi12Color" destination="2299" id="3057"/>
-                <outlet property="ansi13Color" destination="2298" id="3068"/>
-                <outlet property="ansi14Color" destination="2296" id="3064"/>
-                <outlet property="ansi15Color" destination="2301" id="3066"/>
-                <outlet property="ansi1Color" destination="2286" id="3035"/>
-                <outlet property="ansi2Color" destination="2287" id="3037"/>
-                <outlet property="ansi3Color" destination="2289" id="3039"/>
-                <outlet property="ansi4Color" destination="2288" id="3041"/>
-                <outlet property="ansi5Color" destination="2290" id="3043"/>
-                <outlet property="ansi6Color" destination="2291" id="3045"/>
-                <outlet property="ansi7Color" destination="2293" id="3047"/>
-                <outlet property="ansi8Color" destination="2292" id="3048"/>
-                <outlet property="ansi9Color" destination="2295" id="3051"/>
                 <outlet property="appearanceTabViewItem" destination="4439" id="4601"/>
                 <outlet property="appearanceToolbarItem" destination="5889" id="6038"/>
                 <outlet property="applicationKeypadAllowed" destination="U4H-3c-nZg" id="qYN-Rv-WQC"/>
@@ -38,7 +22,6 @@
                 <outlet property="arrangements_" destination="5572" id="5584"/>
                 <outlet property="asciiAntiAliased" destination="4782" id="4877"/>
                 <outlet property="autoLog" destination="5685" id="5716"/>
-                <outlet property="backgroundColor" destination="2285" id="3005"/>
                 <outlet property="backgroundImage" destination="4973" id="4996"/>
                 <outlet property="backgroundImagePreview" destination="4974" id="4997"/>
                 <outlet property="backgroundImageTiled" destination="6395" id="6399"/>
@@ -48,7 +31,6 @@
                 <outlet property="blinkingCursor" destination="4773" id="4868"/>
                 <outlet property="blur" destination="4976" id="4995"/>
                 <outlet property="blurRadius" destination="5363" id="5371"/>
-                <outlet property="boldColor" destination="2272" id="3006"/>
                 <outlet property="bookmarkCommandLabel" destination="2132" id="3464"/>
                 <outlet property="bookmarkDirectoryLabel" destination="2129" id="3465"/>
                 <outlet property="bookmarkGrowlNotifications" destination="2404" id="3147"/>
@@ -60,13 +42,10 @@
                 <outlet property="bookmarksTabViewItem" destination="1945" id="2863"/>
                 <outlet property="bookmarksToolbarItem" destination="5886" id="6039"/>
                 <outlet property="characterEncoding" destination="2390" id="3148"/>
-                <outlet property="checkColorInvertedCursor" destination="4889" id="4893"/>
                 <outlet property="closeSessionsOnEnd" destination="5681" id="5737"/>
                 <outlet property="columnsField" destination="4911" id="4959"/>
                 <outlet property="columnsLabel" destination="4912" id="4961"/>
-                <outlet property="cursorColor" destination="2280" id="3101"/>
                 <outlet property="cursorColorLabel" destination="2283" id="4907"/>
-                <outlet property="cursorTextColor" destination="2278" id="3102"/>
                 <outlet property="cursorTextColorLabel" destination="2279" id="4908"/>
                 <outlet property="cursorType" destination="5017" id="5032"/>
                 <outlet property="deleteSendsCtrlHButton" destination="5074" id="5078"/>
@@ -80,7 +59,6 @@
                 <outlet property="displayNAFontButton" destination="4776" id="4871"/>
                 <outlet property="displayRegularFontButton" destination="4774" id="4869"/>
                 <outlet property="flashingBell" destination="3553" id="3557"/>
-                <outlet property="foregroundColor" destination="2273" id="3004"/>
                 <outlet property="globalTabViewItem" destination="1944" id="2864"/>
                 <outlet property="globalToolbarItem" destination="5887" id="6037"/>
                 <outlet property="hideAfterOpening" destination="6354" id="6356"/>
@@ -111,8 +89,6 @@
                 <outlet property="scrollbackInAlternateScreen" destination="5758" id="5762"/>
                 <outlet property="scrollbackLines" destination="2401" id="3150"/>
                 <outlet property="scrollbackWithStatusBar" destination="5154" id="5157"/>
-                <outlet property="selectedTextColor" destination="2277" id="3121"/>
-                <outlet property="selectionColor" destination="2282" id="3122"/>
                 <outlet property="sendCodeWhenIdle" destination="5697" id="5717"/>
                 <outlet property="setLocaleVars" destination="6045" id="6047"/>
                 <outlet property="silenceBell" destination="2397" id="3144"/>
@@ -120,7 +96,6 @@
                 <outlet property="spaceButton" destination="4921" id="4967"/>
                 <outlet property="spaceLabel" destination="4920" id="4968"/>
                 <outlet property="syncTitle" destination="5008" id="5011"/>
-                <outlet property="tabColor" destination="Wzz-9B-zqB" id="MVB-cP-tr8"/>
                 <outlet property="tabView" destination="1943" id="2853"/>
                 <outlet property="terminalType" destination="2405" id="3155"/>
                 <outlet property="toolbar" destination="5885" id="6042"/>
@@ -132,7 +107,6 @@
                 <outlet property="useBrightBold" destination="4766" id="4862"/>
                 <outlet property="useItalicFont" destination="6400" id="6404"/>
                 <outlet property="useNonAsciiFont" destination="vNf-D5-cU4" id="dv1-fh-orK"/>
-                <outlet property="useTabColor" destination="j7F-r8-oes" id="9Sc-No-oC4"/>
                 <outlet property="visualBell" destination="2403" id="3145"/>
                 <outlet property="window" destination="1923" id="2981"/>
                 <outlet property="windowTypeButton" destination="4916" id="4963"/>
@@ -1698,7 +1672,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3029"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="yls-5S-uHx"/>
                                                                     <outlet property="nextKeyView" destination="2282" id="5222"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1707,7 +1681,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3027"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="WNO-d4-D1A"/>
                                                                     <outlet property="nextKeyView" destination="2285" id="5220"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1743,7 +1717,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3031"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="L6O-KZ-SQs"/>
                                                                     <outlet property="nextKeyView" destination="2280" id="5224"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1752,7 +1726,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3033"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="ZGM-jy-ShL"/>
                                                                     <outlet property="nextKeyView" destination="4889" id="5226"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1761,7 +1735,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="mz8-Z4-CXb"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="pMs-Qp-NpT"/>
                                                                     <outlet property="nextKeyView" destination="4889" id="xUe-BA-6t3"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1779,7 +1753,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3032"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="F5B-Or-dI6"/>
                                                                     <outlet property="nextKeyView" destination="2278" id="5225"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1797,7 +1771,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3030"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="c2g-ED-Dyy"/>
                                                                     <outlet property="nextKeyView" destination="2277" id="5223"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1824,7 +1798,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3028"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="T8S-gg-Gfq"/>
                                                                     <outlet property="nextKeyView" destination="2272" id="5221"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1833,7 +1807,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3034"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="ApS-dl-hbo"/>
                                                                     <outlet property="nextKeyView" destination="2295" id="5232"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1842,7 +1816,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3036"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="QpA-yn-xh4"/>
                                                                     <outlet property="nextKeyView" destination="2300" id="5236"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1851,7 +1825,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3040"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="Mds-Pa-R7P"/>
                                                                     <outlet property="nextKeyView" destination="2299" id="5240"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1860,7 +1834,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3038"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="Bo9-KW-Vhp"/>
                                                                     <outlet property="nextKeyView" destination="2294" id="5238"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1869,7 +1843,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3042"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="Sg9-KW-bCK"/>
                                                                     <outlet property="nextKeyView" destination="2298" id="5242"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1878,7 +1852,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3044"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="Inx-PX-CQQ"/>
                                                                     <outlet property="nextKeyView" destination="2296" id="5244"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1887,7 +1861,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3049"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="ArE-jS-1Rr"/>
                                                                     <outlet property="nextKeyView" destination="2286" id="5231"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1896,7 +1870,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3046"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="9S3-gr-M8v"/>
                                                                     <outlet property="nextKeyView" destination="2301" id="5246"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1905,7 +1879,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3054"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="mWq-PP-fni"/>
                                                                     <outlet property="nextKeyView" destination="2288" id="5239"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1914,7 +1888,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3050"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="TGp-lK-BhK"/>
                                                                     <outlet property="nextKeyView" destination="2287" id="5233"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1923,7 +1897,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3062"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="CZb-oG-Z3y"/>
                                                                     <outlet property="nextKeyView" destination="2293" id="5245"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1932,7 +1906,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3060"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="0Yj-x9-oCB"/>
                                                                     <outlet property="nextKeyView" destination="2292" id="5230"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1941,7 +1915,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3058"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="F8a-bG-7t7"/>
                                                                     <outlet property="nextKeyView" destination="2291" id="5243"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1950,7 +1924,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3056"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="7de-PA-Dwh"/>
                                                                     <outlet property="nextKeyView" destination="2290" id="5241"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1959,7 +1933,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3052"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="LSy-D5-f6E"/>
                                                                     <outlet property="nextKeyView" destination="2289" id="5237"/>
                                                                 </connections>
                                                             </colorWell>
@@ -1968,7 +1942,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3065"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="zAw-KW-fK0"/>
                                                                     <outlet property="nextKeyView" destination="2100" id="5247"/>
                                                                 </connections>
                                                             </colorWell>
@@ -2104,7 +2078,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="4892"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="gnk-s5-4jO"/>
                                                                     <outlet property="nextKeyView" destination="4896" id="5227"/>
                                                                 </connections>
                                                             </button>
@@ -2116,7 +2090,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="K51-bC-Ipu"/>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="nS5-2q-gt3"/>
                                                                     <outlet property="nextKeyView" destination="4896" id="WKO-8m-Sev"/>
                                                                 </connections>
                                                             </button>
