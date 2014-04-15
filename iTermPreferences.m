@@ -91,7 +91,7 @@ static NSMutableDictionary *gObservers;
 
 @implementation iTermPreferences
 
-+ (void)load {
++ (void)initializeUserDefaults {
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
 
     // Force antialiasing to be allowed on small font sizes

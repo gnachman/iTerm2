@@ -100,6 +100,9 @@ static BOOL hasBecomeActive = NO;
 
     [self buildScriptMenu:nil];
 
+    // Fix up various user defaults settings.
+    [iTermPreferences initializeUserDefaults];
+    
     // read preferences
     [iTermPreferences migratePreferences];
 

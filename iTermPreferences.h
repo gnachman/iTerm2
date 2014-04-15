@@ -113,6 +113,10 @@ extern NSString *const kPreferenceKeyAppVersion;
 
 @interface iTermPreferences : NSObject
 
+// This should be called early during startup to set user defaults keys that fix problematic Apple
+// settings and update the last-used version number.
++ (void)initializeUserDefaults;
+
 + (void)setObject:(id)object forKey:(NSString *)key;
 + (NSObject *)objectForKey:(NSString *)key;
 
