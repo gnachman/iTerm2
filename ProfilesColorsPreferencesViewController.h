@@ -12,8 +12,6 @@ extern NSString *const kCustomColorPresetsKey;
 
 @interface ProfilesColorsPreferencesViewController : iTermProfilePreferencesBaseViewController
 
-// This shouldn't remain public for long
-- (void)exportColorPresetToFile:(NSString*)filename;
-- (void)loadColorPresetWithName:(NSString *)presetName;
+- (BOOL)importColorPresetFromFile:(NSString*)filename;
 
 @end

@@ -77,7 +77,6 @@
                 <outlet property="nonasciiAntiAliased" destination="4783" id="4878"/>
                 <outlet property="normalFontField" destination="4775" id="4870"/>
                 <outlet property="optionKeySends" destination="4291" id="4307"/>
-                <outlet property="presetsMenu" destination="3215" id="3561"/>
                 <outlet property="preventTab" destination="6416" id="6420"/>
                 <outlet property="promptBeforeClosing_" destination="5728" id="5733"/>
                 <outlet property="removeJobButton_" destination="5669" id="5723"/>
@@ -2057,7 +2056,7 @@ Gw
                                                             <popUpButton verticalHuggingPriority="750" id="3213">
                                                                 <rect key="frame" x="98" y="27" width="153" height="26"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <popUpButtonCell key="cell" type="push" title="Load Presets..." bezelStyle="rounded" alignment="center" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="3218" id="3214">
+                                                                <popUpButtonCell key="cell" type="push" title="Load Presets..." bezelStyle="rounded" alignment="center" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="3214">
                                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                                     <font key="font" metaFont="menu"/>
                                                                     <menu key="menu" title="OtherViews" id="3215">
@@ -5207,6 +5206,7 @@ DQ
                 <outlet property="_cursorColor" destination="2280" id="bFx-TT-7QV"/>
                 <outlet property="_cursorTextColor" destination="2278" id="aw0-Y7-lPM"/>
                 <outlet property="_foregroundColor" destination="2273" id="PXI-YU-2u7"/>
+                <outlet property="_presetsMenu" destination="3215" id="8lA-lg-5tg"/>
                 <outlet property="_selectedTextColor" destination="2277" id="jqd-jg-i3Y"/>
                 <outlet property="_selectionColor" destination="2282" id="OO4-S4-aaD"/>
                 <outlet property="_tabColor" destination="Wzz-9B-zqB" id="gfq-Eg-jc0"/>

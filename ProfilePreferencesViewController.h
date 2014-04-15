@@ -41,12 +41,12 @@
 
 - (void)openToProfileWithGuid:(NSString *)guid;
 
+- (BOOL)importColorPresetFromFile:(NSString*)filename;
+
 // TODO: Nuke these methods
 - (void)updateProfileInModel:(Profile *)modifiedProfile;
 - (void)updateSubviewsForProfile:(Profile *)profile;
 - (void)reloadData;
 - (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict;
-- (void)exportColorPresetToFile:(NSString*)filename;
-- (void)loadColorPresetWithName:(NSString *)presetName;
 
 @end

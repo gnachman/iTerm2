@@ -141,15 +141,11 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
                            afterDelay:0];
 }
 
+- (BOOL)importColorPresetFromFile:(NSString*)filename {
+   return [_colorsViewController importColorPresetFromFile:filename];
+}
+
 #pragma mark - Shims that will go away when migration is complete
-
-- (void)exportColorPresetToFile:(NSString*)filename {
-    [_colorsViewController exportColorPresetToFile:filename];
-}
-
-- (void)loadColorPresetWithName:(NSString *)presetName {
-    [_colorsViewController loadColorPresetWithName:presetName];
-}
 
 - (void)updateProfileInModel:(Profile *)modifiedProfile {
     [[_delegate profilePreferencesModel] setBookmark:modifiedProfile

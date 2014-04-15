@@ -93,7 +93,6 @@
 #include <stdlib.h>
 
 static NSString *const kDeleteKeyString = @"0x7f-0x0";
-static NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
 
 NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
@@ -152,7 +151,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     // Colors tab
     IBOutlet NSTextField *cursorColorLabel;
     IBOutlet NSTextField *cursorTextColorLabel;
-    IBOutlet NSMenu *presetsMenu;
 
     // Display tab
     IBOutlet NSView *displayFontAccessoryView;
@@ -292,10 +290,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
                                                      name:@"iTermReloadAddressBook"
                                                    object:nil];
 
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(rebuildColorPresetsMenu)
-                                                     name:kRebuildColorPresetsMenuNotification
-                                                   object:nil];
         oneBookmarkMode = obMode;
     }
     return self;
@@ -333,9 +327,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         [[characterEncoding lastItem] setTag:[anEncoding unsignedIntValue]];
     }
     [self setScreens];
-
-    // Add presets to preset color selection.
-    [self rebuildColorPresetsMenu];
 
     [blurRadius setContinuous:YES];
     [transparency setContinuous:YES];
@@ -404,38 +395,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 - (void)_reloadURLHandlers:(NSNotification *)aNotification {
     // TODO: maybe something here for the current bookmark?
     [_keysViewController populateHotKeyProfilesMenu];
-}
-
-- (void)rebuildColorPresetsMenu
-{
-    while ([presetsMenu numberOfItems] > 1) {
-        [presetsMenu removeItemAtIndex:1];
-    }
-
-    NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"ColorPresets"
-                                                                            ofType:@"plist"];
-    NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
-    [self _addColorPresetsInDict:presetsDict toMenu:presetsMenu];
-
-    NSDictionary* customPresets = [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
-    if (customPresets && [customPresets count] > 0) {
-        [presetsMenu addItem:[NSMenuItem separatorItem]];
-        [self _addColorPresetsInDict:customPresets toMenu:presetsMenu];
-    }
-
-    [presetsMenu addItem:[NSMenuItem separatorItem]];
-    [presetsMenu addItem:[[[NSMenuItem alloc] initWithTitle:@"Import..."
-                                                     action:@selector(importColorPreset:)
-                                              keyEquivalent:@""] autorelease]];
-    [presetsMenu addItem:[[[NSMenuItem alloc] initWithTitle:@"Export..."
-                                                     action:@selector(exportColorPreset:)
-                                              keyEquivalent:@""] autorelease]];
-    [presetsMenu addItem:[[[NSMenuItem alloc] initWithTitle:@"Delete Preset..."
-                                                     action:@selector(deleteColorPreset:)
-                                              keyEquivalent:@""] autorelease]];
-    [presetsMenu addItem:[[[NSMenuItem alloc] initWithTitle:@"Visit Online Gallery"
-                                                     action:@selector(visitGallery:)
-                                              keyEquivalent:@""] autorelease]];
 }
 
 #pragma mark - NSWindowController
@@ -816,140 +775,8 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 #pragma mark - Color Presets
 
-- (void)_addColorPresetsInDict:(NSDictionary*)presetsDict toMenu:(NSMenu*)theMenu
-{
-    for (NSString* key in  [[presetsDict allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
-        NSMenuItem* presetItem = [[NSMenuItem alloc] initWithTitle:key action:@selector(loadColorPreset:) keyEquivalent:@""];
-        [theMenu addItem:presetItem];
-        [presetItem release];
-    }
-}
-
-- (void)_addColorPreset:(NSString*)presetName withColors:(NSDictionary*)theDict
-{
-    NSMutableDictionary* customPresets = [NSMutableDictionary dictionaryWithDictionary:[[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey]];
-    if (!customPresets) {
-        customPresets = [NSMutableDictionary dictionaryWithCapacity:1];
-    }
-    int i = 1;
-    NSString* temp = presetName;
-    while ([customPresets objectForKey:temp]) {
-        ++i;
-        temp = [NSString stringWithFormat:@"%@ (%d)", presetName, i];
-    }
-    [customPresets setObject:theDict forKey:temp];
-    [[NSUserDefaults standardUserDefaults] setObject:customPresets forKey:kCustomColorPresetsKey];
-
-    [[NSNotificationCenter defaultCenter] postNotificationName:kRebuildColorPresetsMenuNotification
-                                                        object:nil];
-}
-
-- (NSString*)_presetNameFromFilename:(NSString*)filename
-{
-    return [[filename stringByDeletingPathExtension] lastPathComponent];
-}
-
-- (BOOL)importColorPresetFromFile:(NSString*)filename
-{
-    NSDictionary* aDict = [NSDictionary dictionaryWithContentsOfFile:filename];
-    if (!aDict) {
-        NSRunAlertPanel(@"Import Failed.",
-                        @"The selected file could not be read or did not contain a valid color scheme.",
-                        @"OK",
-                        nil,
-                        nil);
-        return NO;
-    } else {
-        [self _addColorPreset:[self _presetNameFromFilename:filename]
-                   withColors:aDict];
-        return YES;
-    }
-}
-
-- (void)importColorPreset:(id)sender
-{
-    // Create the File Open Dialog class.
-    NSOpenPanel* openDlg = [NSOpenPanel openPanel];
-
-    // Set options.
-    [openDlg setCanChooseFiles:YES];
-    [openDlg setCanChooseDirectories:NO];
-    [openDlg setAllowsMultipleSelection:YES];
-    [openDlg setAllowedFileTypes:[NSArray arrayWithObject:@"itermcolors"]];
-
-    // Display the dialog.  If the OK button was pressed,
-    // process the files.
-    if ([openDlg legacyRunModalForDirectory:nil file:nil] == NSOKButton) {
-        // Get an array containing the full filenames of all
-        // files and directories selected.
-        for (NSString* filename in [openDlg legacyFilenames]) {
-            [self importColorPresetFromFile:filename];
-        }
-    }
-}
-
-- (void)exportColorPreset:(id)sender
-{
-    // Create the File Open Dialog class.
-    NSSavePanel* saveDlg = [NSSavePanel savePanel];
-
-    // Set options.
-    [saveDlg setAllowedFileTypes:[NSArray arrayWithObject:@"itermcolors"]];
-
-    if ([saveDlg legacyRunModalForDirectory:nil file:nil] == NSOKButton) {
-        [_profilesViewController exportColorPresetToFile:[saveDlg legacyFilename]];
-    }
-}
-
-- (void)deleteColorPreset:(id)sender
-{
-    NSDictionary* customPresets = [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
-    if (!customPresets || [customPresets count] == 0) {
-        NSRunAlertPanel(@"No deletable color presets.",
-                        @"You cannot erase the built-in presets and no custom presets have been imported.",
-                        @"OK",
-                        nil,
-                        nil);
-        return;
-    }
-
-    NSAlert *alert = [NSAlert alertWithMessageText:@"Select a preset to delete:"
-                                     defaultButton:@"OK"
-                                   alternateButton:@"Cancel"
-                                       otherButton:nil
-                         informativeTextWithFormat:@""];
-
-    NSPopUpButton* pub = [[[NSPopUpButton alloc] init] autorelease];
-    for (NSString* key in [[customPresets allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
-        [pub addItemWithTitle:key];
-    }
-    [pub sizeToFit];
-    [alert setAccessoryView:pub];
-    NSInteger button = [alert runModal];
-    if (button == NSAlertDefaultReturn) {
-        NSMutableDictionary* newCustom = [NSMutableDictionary dictionaryWithDictionary:customPresets];
-        [newCustom removeObjectForKey:[[pub selectedItem] title]];
-        [[NSUserDefaults standardUserDefaults] setObject:newCustom
-                                                  forKey:kCustomColorPresetsKey];
-        [[NSNotificationCenter defaultCenter] postNotificationName:kRebuildColorPresetsMenuNotification
-                                                            object:nil];
-    }
-}
-
-- (void)visitGallery:(id)sender
-{
-    static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery";
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:kColorGalleryURL]];
-}
-
-- (void)_loadPresetColors:(NSString*)presetName
-{
-    [_profilesViewController loadColorPresetWithName:presetName];
-}
-
-- (void)loadColorPreset:(id)sender
-{
-    [self _loadPresetColors:[sender title]];
+- (BOOL)importColorPresetFromFile:(NSString*)filename {
+    return [_profilesViewController importColorPresetFromFile:filename];
 }
 
 #pragma mark - Preferences folder
