@@ -50,6 +50,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermInstantReplayWindowController.h"
 #import "iTermSettingsModel.h"
+#import "iTermURLSchemeController.h"
 #include <unistd.h>
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
@@ -6260,8 +6261,7 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 // Sends text to the current session. Also interprets URLs and opens them.
-- (IBAction)sendCommand:(id)sender
-{
+- (IBAction)sendCommand:(id)sender {
     NSString *command = [commandField stringValue];
 
     if (command == nil ||
@@ -6274,12 +6274,12 @@ NSString *kSessionsKVCKey = @"sessions";
         range = [[command substringToIndex:range.location] rangeOfString:@" "];
         if (range.location == NSNotFound) {
             NSURL *url = [NSURL URLWithString: command];
-            NSString *urlType = [url scheme];
-            id bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:urlType];
+            NSString *scheme = [url scheme];
+            Profile *profile = [[iTermURLSchemeController sharedInstance] profileForScheme:scheme];
 
-            if (bm) {
+            if (profile) {
                 PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
-                [[iTermController sharedInstance] launchBookmark:bm
+                [[iTermController sharedInstance] launchBookmark:profile
                                                       inTerminal:term
                                                          withURL:command
                                                         isHotkey:NO

@@ -45,6 +45,7 @@
 #import "iTermSelection.h"
 #import "iTermSettingsModel.h"
 #import "iTermTextExtractor.h"
+#import "iTermURLSchemeController.h"
 #include <math.h>
 #include <sys/time.h>
 
@@ -7921,10 +7922,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     NSURL *url = [NSURL URLWithString:escapedString];
 
-    Profile *bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:[url scheme]];
+    Profile *profile = [[iTermURLSchemeController sharedInstance] profileForScheme:[url scheme]];
 
-    if (bm != nil)  {
-        [_delegate launchProfileInCurrentTerminal:bm withURL:trimmedURLString];
+    if (profile)  {
+        [_delegate launchProfileInCurrentTerminal:profile withURL:trimmedURLString];
     } else {
         [self openURL:url inBackground:background];
     }

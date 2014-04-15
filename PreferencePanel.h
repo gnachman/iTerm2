@@ -100,7 +100,6 @@ void LoadPrefsFromCustomFolder(void);
 - (IBAction)selectLogDir:(id)sender;
 - (IBAction)setAsDefault:(id)sender;
 
-- (void)loadUrlSchemeHandlers;
 - (WindowArrangements *)arrangements;
 - (void)savePreferences;
 - (void)run;
@@ -173,7 +172,6 @@ void LoadPrefsFromCustomFolder(void);
 - (float)hotkeyTermAnimationDuration;
 - (NSString *)searchCommand;
 - (NSTimeInterval)antiIdleTimerPeriod;
-- (Profile *)handlerBookmarkForURL:(NSString *)url;
 - (void)changeFont:(id)fontManager;
 - (void)showBookmarks;
 - (void)underlyingBookmarkDidChange;

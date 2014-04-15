@@ -71,6 +71,7 @@
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermSettingsModel.h"
+#import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "KeysPreferencesViewController.h"
 #import "NSDictionary+iTerm.h"
@@ -150,9 +151,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     NSString *bookmarksToolbarId;
     NSString *mouseToolbarId;
     NSString *advancedToolbarId;
-
-    // url handler stuff
-    NSMutableDictionary *urlHandlersByGuid;
 
     // Bookmarks -----------------------------
 
@@ -759,50 +757,17 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 }
 
-- (void)connectBookmarkWithGuid:(NSString*)guid toScheme:(NSString*)scheme
-{
-    NSURL *appURL = nil;
-    OSStatus err;
-    BOOL set = YES;
-
-    err = LSGetApplicationForURL(
-                                 (CFURLRef)[NSURL URLWithString:[scheme stringByAppendingString:@":"]],
-                                 kLSRolesAll, NULL, (CFURLRef *)&appURL);
-    if (err != noErr) {
-        set = NSRunAlertPanel([NSString stringWithFormat:@"iTerm is not the default handler for %@. Would you like to set iTerm as the default handler?",
-                               scheme],
-                              @"There is currently no handler.",
-                              @"OK",
-                              @"Cancel",
-                              nil) == NSAlertDefaultReturn;
-    } else if (![[[NSFileManager defaultManager] displayNameAtPath:[appURL path]] isEqualToString:@"iTerm 2"]) {
-        NSString *theTitle = [NSString stringWithFormat:@"iTerm is not the default handler for %@. "
-                              @"Would you like to set iTerm as the default handler?", scheme];
-        set = NSRunAlertPanel(theTitle,
-                              @"The current handler is: %@",
-                              @"OK",
-                              @"Cancel",
-                              nil,
-                              [[NSFileManager defaultManager] displayNameAtPath:[appURL path]]) == NSAlertDefaultReturn;
-    }
-
-    if (set) {
-        [urlHandlersByGuid setObject:guid
-                              forKey:scheme];
-        LSSetDefaultHandlerForURLScheme((CFStringRef)scheme,
-                                        (CFStringRef)[[NSBundle mainBundle] bundleIdentifier]);
-    }
-}
 
 - (IBAction)bookmarkUrlSchemeHandlerChanged:(id)sender
 {
     Profile *profile = [_profilesViewController selectedProfile];
     NSString* guid = profile[KEY_GUID];
     NSString* scheme = [[bookmarkUrlSchemes selectedItem] title];
-    if ([urlHandlersByGuid objectForKey:scheme]) {
-        [self disconnectHandlerForScheme:scheme];
+    iTermURLSchemeController *schemeController = [iTermURLSchemeController sharedInstance];
+    if ([schemeController guidForScheme:scheme]) {
+        [schemeController disconnectHandlerForScheme:scheme];
     } else {
-        [self connectBookmarkWithGuid:guid toScheme:scheme];
+        [schemeController connectBookmarkWithGuid:guid toScheme:scheme];
     }
     [self _populateBookmarkUrlSchemesFromDict:[dataSource bookmarkWithGuid:guid]];
 }
@@ -1364,36 +1329,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 #pragma mark - NSUserDefaults wrangling
 
-- (void)loadUrlSchemeHandlers {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    ProfileModel *profileModel = [ProfileModel sharedInstance];
-
-    // read in the handlers by converting the index back to bookmarks
-    urlHandlersByGuid = [[NSMutableDictionary alloc] init];
-    NSDictionary *tempDict = [userDefaults objectForKey:@"URLHandlersByGuid"];
-    if (!tempDict) {
-        // Iterate over old style url handlers (which stored bookmark by index)
-        // and add guid->urlkey to urlHandlersByGuid.
-        tempDict = [userDefaults objectForKey:@"URLHandlers"];
-
-        for (id key in tempDict) {
-            int theIndex = [[tempDict objectForKey:key] intValue];
-            if (theIndex >= 0 &&
-                theIndex  < [profileModel numberOfBookmarks]) {
-                NSString* guid = [[profileModel profileAtIndex:theIndex] objectForKey:KEY_GUID];
-                [urlHandlersByGuid setObject:guid forKey:key];
-            }
-        }
-    } else {
-        for (id key in tempDict) {
-            NSString* guid = [tempDict objectForKey:key];
-            if ([profileModel indexOfProfileWithGuid:guid] >= 0) {
-                [urlHandlersByGuid setObject:guid forKey:key];
-            }
-        }
-    }
-}
-
 - (void)savePreferences {
     if (!prefs) {
         // In one-bookmark mode there are no prefs but this function doesn't
@@ -1402,9 +1337,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
-
-    // save the handlers by converting the bookmark into an index
-    [prefs setObject:urlHandlersByGuid forKey:@"URLHandlersByGuid"];
 
     [prefs synchronize];
 }
@@ -1829,29 +1761,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 #pragma mark - URL Handler
 
-- (Profile *)handlerBookmarkForURL:(NSString *)url
-{
-    NSString* handlerId = (NSString*) LSCopyDefaultHandlerForURLScheme((CFStringRef) url);
-    if ([handlerId isEqualToString:@"com.googlecode.iterm2"] ||
-        [handlerId isEqualToString:@"net.sourceforge.iterm"]) {
-        CFRelease(handlerId);
-        NSString* guid = [urlHandlersByGuid objectForKey:url];
-        if (!guid) {
-            return nil;
-        }
-        int theIndex = [dataSource indexOfProfileWithGuid:guid];
-        if (theIndex < 0) {
-            return nil;
-        }
-        return [dataSource profileAtIndex:theIndex];
-    } else {
-        if (handlerId) {
-            CFRelease(handlerId);
-        }
-        return nil;
-    }
-}
-
 - (void)_populateBookmarkUrlSchemesFromDict:(Profile*)dict
 {
     if ([[[bookmarkUrlSchemes menu] itemArray] count] == 0) {
@@ -1866,18 +1775,13 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [[bookmarkUrlSchemes menu] setAutoenablesItems:YES];
     [[bookmarkUrlSchemes menu] setDelegate:self];
     for (NSMenuItem* item in [[bookmarkUrlSchemes menu] itemArray]) {
-        Profile* handler = [self handlerBookmarkForURL:[item title]];
+        Profile* handler = [[iTermURLSchemeController sharedInstance] profileForScheme:[item title]];
         if (handler && [[handler objectForKey:KEY_GUID] isEqualToString:guid]) {
             [item setState:NSOnState];
         } else {
             [item setState:NSOffState];
         }
     }
-}
-
-- (void)disconnectHandlerForScheme:(NSString*)scheme
-{
-    [urlHandlersByGuid removeObjectForKey:scheme];
 }
 
 #pragma mark - NSTableViewDataSource

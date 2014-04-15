@@ -36,6 +36,7 @@
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermSettingsModel.h"
+#import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
@@ -108,8 +109,6 @@ static BOOL hasBecomeActive = NO;
 
     // Make sure profiles are loaded.
     [ITAddressBookMgr sharedInstance];
-    
-    [[PreferencePanel sharedInstance] loadUrlSchemeHandlers];
     
     // This sets up bonjour and migrates bookmarks if needed.
     [ITAddressBookMgr sharedInstance];
@@ -722,23 +721,22 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-- (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent
-{
+- (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
     NSString *urlStr = [[event paramDescriptorForKeyword:keyDirectObject] stringValue];
     NSURL *url = [NSURL URLWithString: urlStr];
-    NSString *urlType = [url scheme];
+    NSString *scheme = [url scheme];
 
-    if ([urlType isEqualToString:@"iterm2"]) {
+    if ([scheme isEqualToString:@"iterm2"]) {
         [self launchFromUrl:url];
         return;
     }
-    id bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:urlType];
-    if (!bm) {
-        bm = [[ProfileModel sharedInstance] defaultBookmark];
+    Profile *profile = [[iTermURLSchemeController sharedInstance] profileForScheme:scheme];
+    if (!profile) {
+        profile = [[ProfileModel sharedInstance] defaultBookmark];
     }
-    if (bm) {
+    if (profile) {
         PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
-        [[iTermController sharedInstance] launchBookmark:bm
+        [[iTermController sharedInstance] launchBookmark:profile
                                               inTerminal:term
                                                  withURL:urlStr
                                                 isHotkey:NO
