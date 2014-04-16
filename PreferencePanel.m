@@ -67,7 +67,6 @@
 #import "GeneralPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermController.h"
-#import "iTermFontPanel.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyMappingViewController.h"
 #import "iTermPreferences.h"
@@ -143,10 +142,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // Bookmarks -----------------------------
 
-    // Display tab
-    IBOutlet NSView *displayFontAccessoryView;
-    IBOutlet NSSlider *displayFontSpacingWidth;
-    IBOutlet NSSlider *displayFontSpacingHeight;
+    // Window tab
     IBOutlet NSTextField *columnsField;
     IBOutlet NSTextField *columnsLabel;
     IBOutlet NSTextField *rowsLabel;
@@ -157,9 +153,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSPopUpButton* spaceButton;
 
     IBOutlet NSPopUpButton* windowTypeButton;
-    IBOutlet NSTextField *normalFontField;
-    IBOutlet NSTextField *nonAsciiFontField;
-    IBOutlet NSTextField *newWindowttributesHeader;
     IBOutlet NSTextField *screenLabel;
 
     IBOutlet NSSlider *transparency;
@@ -167,20 +160,11 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSButton* blur;
     IBOutlet NSSlider *blurRadius;
     IBOutlet NSButton* asciiAntiAliased;
-    IBOutlet NSButton* useNonAsciiFont;
-    IBOutlet NSView* nonAsciiFontView;  // Hide this view to hide all non-ascii font settings
     IBOutlet NSButton* nonasciiAntiAliased;
     IBOutlet NSButton* backgroundImage;
     NSString* backgroundImageFilename;
     IBOutlet NSButton* backgroundImageTiled;
     IBOutlet NSImageView* backgroundImagePreview;
-    IBOutlet NSTextField* displayFontsLabel;
-    IBOutlet NSButton* displayRegularFontButton;
-    IBOutlet NSButton* displayNAFontButton;
-
-    NSFont* normalFont;
-    NSFont *nonAsciiFont;
-    BOOL changingNonAsciiFont; // true if font dialog is currently modifying the non-ascii font
 
     // Terminal tab
     IBOutlet NSButton* disableWindowResizing;
@@ -338,7 +322,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [spaceButton setEnabled:NO];
     [spaceLabel setTextColor:[NSColor disabledControlTextColor]];
     [windowTypeLabel setTextColor:[NSColor disabledControlTextColor]];
-    [newWindowttributesHeader setTextColor:[NSColor disabledControlTextColor]];
 
     NSRect newFrame = [[self window] frame];
     newFrame.size.width = [_profilesViewController size].width + 26;
@@ -411,12 +394,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if ([[self window] isKeyWindow]) {
         [self closeWindow:self];
     }
-}
-
-- (IBAction)displaySelectFont:(id)sender
-{
-    changingNonAsciiFont = [sender tag] == 1;
-    [self _showFontPanel];
 }
 
 - (NSString*)_chooseBackgroundImage
@@ -497,20 +474,12 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if ([spaceButton selectedTag]) {
         [newDict setObject:[NSNumber numberWithInt:[spaceButton selectedTag]] forKey:KEY_SPACE];
     }
-    [newDict setObject:[ITAddressBookMgr descFromFont:normalFont] forKey:KEY_NORMAL_FONT];
-    [newDict setObject:[ITAddressBookMgr descFromFont:nonAsciiFont] forKey:KEY_NON_ASCII_FONT];
-    [newDict setObject:[NSNumber numberWithFloat:[displayFontSpacingWidth floatValue]] forKey:KEY_HORIZONTAL_SPACING];
-    [newDict setObject:[NSNumber numberWithFloat:[displayFontSpacingHeight floatValue]] forKey:KEY_VERTICAL_SPACING];
     [newDict setObject:[NSNumber numberWithFloat:[transparency floatValue]] forKey:KEY_TRANSPARENCY];
     [newDict setObject:[NSNumber numberWithFloat:[blend floatValue]] forKey:KEY_BLEND];
     [newDict setObject:[NSNumber numberWithFloat:[blurRadius floatValue]] forKey:KEY_BLUR_RADIUS];
     [newDict setObject:[NSNumber numberWithBool:([blur state]==NSOnState)] forKey:KEY_BLUR];
-    [newDict setObject:[NSNumber numberWithBool:([useNonAsciiFont state]==NSOnState)] forKey:KEY_USE_NONASCII_FONT];
     [newDict setObject:[NSNumber numberWithBool:([asciiAntiAliased state]==NSOnState)] forKey:KEY_ASCII_ANTI_ALIASED];
     [newDict setObject:[NSNumber numberWithBool:([nonasciiAntiAliased state]==NSOnState)] forKey:KEY_NONASCII_ANTI_ALIASED];
-    [self _updateFontsDisplay];
-
-    [nonAsciiFontView setHidden:(useNonAsciiFont.state == NSOffState)];
 
     if (sender == backgroundImage) {
         NSString* filename = nil;
@@ -1446,25 +1415,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 }
 
-- (void)_updateFontsDisplay
-{
-    // load the fonts
-    NSString *fontName;
-    if (normalFont != nil) {
-        fontName = [NSString stringWithFormat: @"%gpt %@", [normalFont pointSize], [normalFont displayName]];
-    } else {
-        fontName = @"Unknown Font";
-    }
-    [normalFontField setStringValue: fontName];
-
-    if (nonAsciiFont != nil) {
-        fontName = [NSString stringWithFormat: @"%gpt %@", [nonAsciiFont pointSize], [nonAsciiFont displayName]];
-    } else {
-        fontName = @"Unknown Font";
-    }
-    [nonAsciiFontField setStringValue: fontName];
-}
-
 - (void)underlyingBookmarkDidChange
 {
     Profile *profile = [_profilesViewController selectedProfile];
@@ -1499,29 +1449,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     } else {
         [spaceButton selectItemWithTag:0];
     }
-    [normalFontField setStringValue:[[ITAddressBookMgr fontWithDesc:[dict objectForKey:KEY_NORMAL_FONT]] displayName]];
-    if (normalFont) {
-        [normalFont release];
-    }
-    normalFont = [ITAddressBookMgr fontWithDesc:[dict objectForKey:KEY_NORMAL_FONT]];
-    [normalFont retain];
 
-    [nonAsciiFontField setStringValue:[[ITAddressBookMgr fontWithDesc:[dict objectForKey:KEY_NON_ASCII_FONT]] displayName]];
-    if (nonAsciiFont) {
-        [nonAsciiFont release];
-    }
-    nonAsciiFont = [ITAddressBookMgr fontWithDesc:[dict objectForKey:KEY_NON_ASCII_FONT]];
-    [nonAsciiFont retain];
-
-    [self _updateFontsDisplay];
-
-    float horizontalSpacing = [[dict objectForKey:KEY_HORIZONTAL_SPACING] floatValue];
-    float verticalSpacing = [[dict objectForKey:KEY_VERTICAL_SPACING] floatValue];
-
-    [displayFontSpacingWidth setFloatValue:horizontalSpacing];
-    [displayFontSpacingHeight setFloatValue:verticalSpacing];
-
-    
     [transparency setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
         if ([dict objectForKey:KEY_BLEND]) {
           [blend setFloatValue:[[dict objectForKey:KEY_BLEND] floatValue]];
@@ -1531,18 +1459,12 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         }
     [blurRadius setFloatValue:[dict objectForKey:KEY_BLUR_RADIUS] ? [[dict objectForKey:KEY_BLUR_RADIUS] floatValue] : 2.0];
     [blur setState:[[dict objectForKey:KEY_BLUR] boolValue] ? NSOnState : NSOffState];
-    if ([dict objectForKey:KEY_USE_NONASCII_FONT]) {
-        [useNonAsciiFont setState:[[dict objectForKey:KEY_USE_NONASCII_FONT] boolValue] ? NSOnState : NSOffState];
-    } else {
-        // Default to ON for backward compatibility
-        [useNonAsciiFont setState:NSOnState];
-    }
+
     if ([dict objectForKey:KEY_ASCII_ANTI_ALIASED]) {
         [asciiAntiAliased setState:[[dict objectForKey:KEY_ASCII_ANTI_ALIASED] boolValue] ? NSOnState : NSOffState];
     } else {
         [asciiAntiAliased setState:[[dict objectForKey:KEY_ANTI_ALIASING] boolValue] ? NSOnState : NSOffState];
     }
-    [nonAsciiFontView setHidden:(useNonAsciiFont.state == NSOffState)];
     if ([dict objectForKey:KEY_NONASCII_ANTI_ALIASED]) {
         [nonasciiAntiAliased setState:[[dict objectForKey:KEY_NONASCII_ANTI_ALIASED] boolValue] ? NSOnState : NSOffState];
     } else {
@@ -1621,44 +1543,8 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
                                                       userInfo:nil];
 }
 
-#pragma mark - NSFontPanel and NSFontManager
-
-- (void)_showFontPanel
-{
-    // make sure we get the messages from the NSFontManager
-    [[self window] makeFirstResponder:self];
-
-    NSFontPanel* aFontPanel = [[NSFontManager sharedFontManager] fontPanel: YES];
-    [aFontPanel setAccessoryView: displayFontAccessoryView];
-    [[NSFontManager sharedFontManager] setSelectedFont:(changingNonAsciiFont ? nonAsciiFont : normalFont) isMultiple:NO];
-    [[NSFontManager sharedFontManager] orderFrontFontPanel:self];
-}
-
-- (NSUInteger)validModesForFontPanel:(NSFontPanel *)fontPanel
-{
-    return kValidModesForFontPanel;
-}
-
-// sent by NSFontManager up the responder chain
-- (void)changeFont:(id)fontManager
-{
-    if (changingNonAsciiFont) {
-        NSFont* oldFont = nonAsciiFont;
-        nonAsciiFont = [fontManager convertFont:oldFont];
-        [nonAsciiFont retain];
-        if (oldFont) {
-            [oldFont release];
-        }
-    } else {
-        NSFont* oldFont = normalFont;
-        normalFont = [fontManager convertFont:oldFont];
-        [normalFont retain];
-        if (oldFont) {
-            [oldFont release];
-        }
-    }
-
-    [self bookmarkSettingChanged:fontManager];
+- (void)changeFont:(id)fontManager {
+  [_profilesViewController changeFont:fontManager];
 }
 
 #pragma mark - Warning Dialogs

@@ -149,6 +149,10 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
    return [_colorsViewController importColorPresetFromFile:filename];
 }
 
+- (void)changeFont:(id)fontManager {
+    [_textViewController changeFont:fontManager];
+}
+
 #pragma mark - Shims that will go away when migration is complete
 
 - (void)updateProfileInModel:(Profile *)modifiedProfile {
@@ -189,8 +193,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     _removeProfileButton.enabled = hasSelection && [_profilesListView numberOfRows] > 1;
 
     [_delegate profileWithGuidWasSelected:profile[KEY_GUID]];
-    [_generalViewController reloadProfile];
-    [_colorsViewController reloadProfile];
+    [[self tabViewControllers] makeObjectsPerformSelector:@selector(reloadProfile)];
 }
 
 - (void)profileTableRowSelected:(id)profileTable {

@@ -36,6 +36,8 @@
 
 - (void)selectFirstProfileIfNecessary;
 
+- (void)changeFont:(id)fontManager;
+
 // Size of tab view.
 - (NSSize)size;
 

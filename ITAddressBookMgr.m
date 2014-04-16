@@ -33,6 +33,7 @@
 #import "iTermKeyBindingMgr.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSFont+iTerm.h"
 #import "NSStringIterm.h"
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -257,24 +258,8 @@
     }
 }
 
-+ (NSFont *)fontWithDesc:(NSString *)fontDesc
-{
-    float fontSize;
-    char utf8FontName[128];
-    NSFont *aFont;
-
-    if ([fontDesc length] == 0) {
-        return ([NSFont userFixedPitchFontOfSize: 0.0]);
-    }
-
-    sscanf([fontDesc UTF8String], "%s %g", utf8FontName, &fontSize);
-
-    aFont = [NSFont fontWithName:[NSString stringWithFormat: @"%s", utf8FontName] size:fontSize];
-    if (aFont == nil) {
-        return ([NSFont userFixedPitchFontOfSize: 0.0]);
-    }
-
-    return aFont;
++ (NSFont *)fontWithDesc:(NSString *)fontDesc {
+    return [fontDesc fontValue];
 }
 
 - (void)setBookmarks:(NSArray*)newBookmarksArray defaultGuid:(NSString*)guid
@@ -341,9 +326,8 @@
     [[ProfileModel sharedInstance] removeBookmarksAtIndices:toRemove];
 }
 
-+ (NSString*)descFromFont:(NSFont*)font
-{
-    return [NSString stringWithFormat:@"%s %g", [[font fontName] UTF8String], [font pointSize]];
++ (NSString*)descFromFont:(NSFont*)font {
+    return [font stringValue];
 }
 
 + (void)setDefaultsInBookmark:(NSMutableDictionary*)aDict

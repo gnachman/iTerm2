@@ -47,12 +47,6 @@
                 <outlet property="disablePrinting" destination="5633" id="5637"/>
                 <outlet property="disableSmcupRmcup" destination="5081" id="5085"/>
                 <outlet property="disableWindowResizing" destination="5004" id="5007"/>
-                <outlet property="displayFontAccessoryView" destination="3079" id="3098"/>
-                <outlet property="displayFontSpacingHeight" destination="3082" id="3100"/>
-                <outlet property="displayFontSpacingWidth" destination="3081" id="3099"/>
-                <outlet property="displayFontsLabel" destination="4778" id="4874"/>
-                <outlet property="displayNAFontButton" destination="4776" id="4871"/>
-                <outlet property="displayRegularFontButton" destination="4774" id="4869"/>
                 <outlet property="flashingBell" destination="3553" id="3557"/>
                 <outlet property="globalTabViewItem" destination="1944" id="2864"/>
                 <outlet property="globalToolbarItem" destination="5887" id="6037"/>
@@ -65,10 +59,7 @@
                 <outlet property="logDir" destination="5686" id="5715"/>
                 <outlet property="mouseTabViewItem" destination="6059" id="6061"/>
                 <outlet property="mouseToolbarItem" destination="6056" id="6057"/>
-                <outlet property="nonAsciiFontField" destination="4777" id="4873"/>
-                <outlet property="nonAsciiFontView" destination="15P-ty-S1w" id="dru-RS-lgT"/>
                 <outlet property="nonasciiAntiAliased" destination="4783" id="4878"/>
-                <outlet property="normalFontField" destination="4775" id="4870"/>
                 <outlet property="optionKeySends" destination="4291" id="4307"/>
                 <outlet property="preventTab" destination="6416" id="6420"/>
                 <outlet property="promptBeforeClosing_" destination="5728" id="5733"/>
@@ -95,7 +86,6 @@
                 <outlet property="triggerWindowController_" destination="5797" id="5920"/>
                 <outlet property="trouterPrefController_" destination="5949" id="5954"/>
                 <outlet property="unlimitedScrollback" destination="3647" id="3650"/>
-                <outlet property="useNonAsciiFont" destination="vNf-D5-cU4" id="dv1-fh-orK"/>
                 <outlet property="visualBell" destination="2403" id="3145"/>
                 <outlet property="window" destination="1923" id="2981"/>
                 <outlet property="windowTypeButton" destination="4916" id="4963"/>
@@ -2222,7 +2212,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="displaySelectFont:" target="-2" id="4858"/>
+                                                                    <action selector="openFontPicker:" target="lhd-u6-xr5" id="4eH-DO-YpM"/>
                                                                     <outlet property="nextKeyView" destination="4783" id="5251"/>
                                                                 </connections>
                                                             </button>
@@ -2264,7 +2254,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="XyL-2u-iKp"/>
+                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="zi2-om-mwc"/>
                                                                     <outlet property="nextKeyView" destination="4776" id="qqh-zL-dT6"/>
                                                                 </connections>
                                                             </button>
@@ -2346,14 +2336,14 @@ Gw
                                                                         </connections>
                                                                     </button>
                                                                     <button verticalHuggingPriority="750" tag="1" id="4776">
-                                                                        <rect key="frame" x="97" y="13" width="138" height="32"/>
+                                                                        <rect key="frame" x="97" y="10" width="138" height="32"/>
                                                                         <autoresizingMask key="autoresizingMask"/>
                                                                         <buttonCell key="cell" type="push" title="Change Font" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="4831">
                                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                                             <font key="font" metaFont="system"/>
                                                                         </buttonCell>
                                                                         <connections>
-                                                                            <action selector="displaySelectFont:" target="-2" id="4847"/>
+                                                                            <action selector="openFontPicker:" target="lhd-u6-xr5" id="Jrk-VM-wsD"/>
                                                                             <outlet property="nextKeyView" destination="5126" id="5253"/>
                                                                         </connections>
                                                                     </button>
@@ -4503,7 +4493,7 @@ Gw
                         <font key="font" size="12" name="Helvetica"/>
                     </sliderCell>
                     <connections>
-                        <action selector="bookmarkSettingChanged:" target="-2" id="3106"/>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="4qe-Wm-Twj"/>
                     </connections>
                 </slider>
                 <slider verticalHuggingPriority="750" id="3081">
@@ -4513,7 +4503,7 @@ Gw
                         <font key="font" size="12" name="Helvetica"/>
                     </sliderCell>
                     <connections>
-                        <action selector="bookmarkSettingChanged:" target="-2" id="3105"/>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="r1G-dO-O8K"/>
                         <outlet property="nextKeyView" destination="3082" id="5288"/>
                     </connections>
                 </slider>
@@ -5216,10 +5206,18 @@ DQ
                 <outlet property="_blinkAllowed" destination="5148" id="4S0-LC-xMv"/>
                 <outlet property="_blinkingCursor" destination="4773" id="yLP-hh-9Zx"/>
                 <outlet property="_cursorType" destination="5017" id="5F8-RD-GnE"/>
+                <outlet property="_displayFontAccessoryView" destination="3079" id="Ydh-LW-3Eh"/>
+                <outlet property="_horizontalSpacing" destination="3081" id="wMo-9b-PcC"/>
+                <outlet property="_nonAsciiFontDescription" destination="4777" id="uzs-2L-0L5"/>
+                <outlet property="_nonAsciiFontView" destination="15P-ty-S1w" id="zin-qX-W0C"/>
+                <outlet property="_normalFontDescription" destination="4775" id="Pwe-1n-DX6"/>
                 <outlet property="_useBoldFont" destination="4765" id="GP4-9X-n4Z"/>
                 <outlet property="_useBrightBold" destination="4766" id="d50-Oo-kAM"/>
                 <outlet property="_useItalicFont" destination="6400" id="OEO-Lb-9mF"/>
+                <outlet property="_useNonAsciiFont" destination="vNf-D5-cU4" id="75w-83-vyN"/>
+                <outlet property="_verticalSpacing" destination="3082" id="hsx-RO-0pB"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="W6f-xu-XYi"/>
+                <outlet property="view" destination="4764" id="gBd-ir-DS5"/>
             </connections>
         </customObject>
     </objects>
