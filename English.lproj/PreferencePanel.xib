@@ -27,7 +27,6 @@
                 <outlet property="backgroundImageTiled" destination="6395" id="6399"/>
                 <outlet property="basicsLabel" destination="3247" id="5772"/>
                 <outlet property="blend" destination="6320" id="6326"/>
-                <outlet property="blinkAllowed" destination="5148" id="5151"/>
                 <outlet property="blur" destination="4976" id="4995"/>
                 <outlet property="blurRadius" destination="5363" id="5371"/>
                 <outlet property="bookmarkCommandLabel" destination="2132" id="3464"/>
@@ -2162,7 +2161,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="5150"/>
+                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="B3K-Oz-q2K"/>
                                                                     <outlet property="nextKeyView" destination="2100" id="5257"/>
                                                                 </connections>
                                                             </button>
@@ -5215,6 +5214,7 @@ DQ
         </customObject>
         <customObject id="lhd-u6-xr5" customClass="ProfilesTextPreferencesViewController">
             <connections>
+                <outlet property="_blinkAllowed" destination="5148" id="4S0-LC-xMv"/>
                 <outlet property="_blinkingCursor" destination="4773" id="yLP-hh-9Zx"/>
                 <outlet property="_cursorType" destination="5017" id="5F8-RD-GnE"/>
                 <outlet property="_useBoldFont" destination="4765" id="GP4-9X-n4Z"/>
