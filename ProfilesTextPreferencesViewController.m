@@ -15,6 +15,7 @@
     IBOutlet NSMatrix *_cursorType;
     IBOutlet NSButton *_blinkingCursor;
     IBOutlet NSButton *_useBoldFont;
+    IBOutlet NSButton *_useBrightBold;  // Bold text in bright colors
 }
 
 - (void)awakeFromNib {
@@ -32,6 +33,9 @@
                     key:KEY_USE_BOLD_FONT
                    type:kPreferenceInfoTypeCheckbox];
     
+    [self defineControl:_useBrightBold
+                    key:KEY_USE_BRIGHT_BOLD
+                   type:kPreferenceInfoTypeCheckbox];
 }
 
 @end
