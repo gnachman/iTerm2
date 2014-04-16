@@ -162,7 +162,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSTextField *newWindowttributesHeader;
     IBOutlet NSTextField *screenLabel;
 
-    IBOutlet NSButton* useItalicFont;
     IBOutlet NSSlider *transparency;
     IBOutlet NSSlider *blend;
     IBOutlet NSButton* blur;
@@ -503,7 +502,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [newDict setObject:[ITAddressBookMgr descFromFont:nonAsciiFont] forKey:KEY_NON_ASCII_FONT];
     [newDict setObject:[NSNumber numberWithFloat:[displayFontSpacingWidth floatValue]] forKey:KEY_HORIZONTAL_SPACING];
     [newDict setObject:[NSNumber numberWithFloat:[displayFontSpacingHeight floatValue]] forKey:KEY_VERTICAL_SPACING];
-    [newDict setObject:[NSNumber numberWithBool:([useItalicFont state]==NSOnState)] forKey:KEY_USE_ITALIC_FONT];
     [newDict setObject:[NSNumber numberWithFloat:[transparency floatValue]] forKey:KEY_TRANSPARENCY];
     [newDict setObject:[NSNumber numberWithFloat:[blend floatValue]] forKey:KEY_BLEND];
     [newDict setObject:[NSNumber numberWithFloat:[blurRadius floatValue]] forKey:KEY_BLUR_RADIUS];
@@ -1526,8 +1524,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [displayFontSpacingHeight setFloatValue:verticalSpacing];
 
     
-    [useItalicFont setState:[[dict objectForKey:KEY_USE_ITALIC_FONT] boolValue] ? NSOnState : NSOffState];
-
     [transparency setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
         if ([dict objectForKey:KEY_BLEND]) {
           [blend setFloatValue:[[dict objectForKey:KEY_BLEND] floatValue]];

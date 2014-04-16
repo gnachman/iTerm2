@@ -147,6 +147,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_USE_BOLD_FONT: @YES,
                   KEY_USE_BRIGHT_BOLD: @YES,
                   KEY_BLINK_ALLOWED: @NO,
+                  KEY_USE_ITALIC_FONT: @YES
                 };
         [dict retain];
     }

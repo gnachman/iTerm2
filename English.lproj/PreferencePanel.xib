@@ -96,7 +96,6 @@
                 <outlet property="triggerWindowController_" destination="5797" id="5920"/>
                 <outlet property="trouterPrefController_" destination="5949" id="5954"/>
                 <outlet property="unlimitedScrollback" destination="3647" id="3650"/>
-                <outlet property="useItalicFont" destination="6400" id="6404"/>
                 <outlet property="useNonAsciiFont" destination="vNf-D5-cU4" id="dv1-fh-orK"/>
                 <outlet property="visualBell" destination="2403" id="3145"/>
                 <outlet property="window" destination="1923" id="2981"/>
@@ -2173,7 +2172,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="6402"/>
+                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="zu3-Kl-vVa"/>
                                                                     <outlet property="nextKeyView" destination="2100" id="6403"/>
                                                                 </connections>
                                                             </button>
@@ -5219,6 +5218,7 @@ DQ
                 <outlet property="_cursorType" destination="5017" id="5F8-RD-GnE"/>
                 <outlet property="_useBoldFont" destination="4765" id="GP4-9X-n4Z"/>
                 <outlet property="_useBrightBold" destination="4766" id="d50-Oo-kAM"/>
+                <outlet property="_useItalicFont" destination="6400" id="OEO-Lb-9mF"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="W6f-xu-XYi"/>
             </connections>
         </customObject>
