@@ -97,7 +97,6 @@
                 <outlet property="triggerWindowController_" destination="5797" id="5920"/>
                 <outlet property="trouterPrefController_" destination="5949" id="5954"/>
                 <outlet property="unlimitedScrollback" destination="3647" id="3650"/>
-                <outlet property="useBoldFont" destination="4765" id="4861"/>
                 <outlet property="useBrightBold" destination="4766" id="4862"/>
                 <outlet property="useItalicFont" destination="6400" id="6404"/>
                 <outlet property="useNonAsciiFont" destination="vNf-D5-cU4" id="dv1-fh-orK"/>
@@ -2140,7 +2139,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="4851"/>
+                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="PIM-8Z-pho"/>
                                                                     <outlet property="nextKeyView" destination="4766" id="5255"/>
                                                                 </connections>
                                                             </button>
@@ -5142,6 +5141,7 @@ DQ
                 <outlet property="_profilesListView" destination="3260" id="22S-wx-dOs"/>
                 <outlet property="_removeProfileButton" destination="2113" id="bCy-bg-Kla"/>
                 <outlet property="_tabView" destination="2100" id="sRa-Z0-Ngh"/>
+                <outlet property="_textViewController" destination="lhd-u6-xr5" id="XTC-Yc-Vqb"/>
                 <outlet property="_toggleTagsButton" destination="nFj-0n-SWO" id="nd4-hz-FRN"/>
                 <outlet property="delegate" destination="-2" id="AYk-4p-lit"/>
                 <outlet property="view" destination="1946" id="QfY-2A-k9W"/>
@@ -5218,6 +5218,7 @@ DQ
             <connections>
                 <outlet property="_blinkingCursor" destination="4773" id="yLP-hh-9Zx"/>
                 <outlet property="_cursorType" destination="5017" id="5F8-RD-GnE"/>
+                <outlet property="_useBoldFont" destination="4765" id="GP4-9X-n4Z"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="W6f-xu-XYi"/>
             </connections>
         </customObject>

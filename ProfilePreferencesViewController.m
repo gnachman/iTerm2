@@ -15,6 +15,7 @@
 #import "ProfileListView.h"
 #import "ProfilesGeneralPreferencesViewController.h"
 #import "ProfilesColorsPreferencesViewController.h"
+#import "ProfilesTextPreferencesViewController.h"
 
 static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
@@ -52,6 +53,9 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     
     // Colors tab view controller
     IBOutlet ProfilesColorsPreferencesViewController *_colorsViewController;
+    
+    // Text tab view controller
+    IBOutlet ProfilesTextPreferencesViewController *_textViewController;
 }
 
 - (id)init {
@@ -221,7 +225,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 }
 
 - (NSArray *)tabViewControllers {
-    return @[ _generalViewController, _colorsViewController ];
+    return @[ _generalViewController, _colorsViewController, _textViewController ];
 }
 
 #pragma mark - Actions

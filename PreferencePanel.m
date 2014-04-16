@@ -163,7 +163,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSTextField *screenLabel;
 
     IBOutlet NSButton* blinkAllowed;
-    IBOutlet NSButton* useBoldFont;
     IBOutlet NSButton* useBrightBold;
     IBOutlet NSButton* useItalicFont;
     IBOutlet NSSlider *transparency;
@@ -507,7 +506,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [newDict setObject:[NSNumber numberWithFloat:[displayFontSpacingWidth floatValue]] forKey:KEY_HORIZONTAL_SPACING];
     [newDict setObject:[NSNumber numberWithFloat:[displayFontSpacingHeight floatValue]] forKey:KEY_VERTICAL_SPACING];
     [newDict setObject:[NSNumber numberWithBool:([blinkAllowed state]==NSOnState)] forKey:KEY_BLINK_ALLOWED];
-    [newDict setObject:[NSNumber numberWithBool:([useBoldFont state]==NSOnState)] forKey:KEY_USE_BOLD_FONT];
     [newDict setObject:[NSNumber numberWithBool:([useBrightBold state]==NSOnState)] forKey:KEY_USE_BRIGHT_BOLD];
     [newDict setObject:[NSNumber numberWithBool:([useItalicFont state]==NSOnState)] forKey:KEY_USE_ITALIC_FONT];
     [newDict setObject:[NSNumber numberWithFloat:[transparency floatValue]] forKey:KEY_TRANSPARENCY];
@@ -1532,17 +1530,8 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [displayFontSpacingHeight setFloatValue:verticalSpacing];
     [blinkAllowed setState:[[dict objectForKey:KEY_BLINK_ALLOWED] boolValue] ? NSOnState : NSOffState];
 
-    NSNumber* useBoldFontEntry = [dict objectForKey:KEY_USE_BOLD_FONT];
-    NSNumber* disableBoldEntry = [dict objectForKey:KEY_DISABLE_BOLD];
-    if (useBoldFontEntry) {
-        [useBoldFont setState:[useBoldFontEntry boolValue] ? NSOnState : NSOffState];
-    } else if (disableBoldEntry) {
-        // Only deprecated option is set.
-        [useBoldFont setState:[disableBoldEntry boolValue] ? NSOffState : NSOnState];
-    } else {
-        [useBoldFont setState:NSOnState];
-    }
 
+    
     if ([dict objectForKey:KEY_USE_BRIGHT_BOLD] != nil) {
         [useBrightBold setState:[[dict objectForKey:KEY_USE_BRIGHT_BOLD] boolValue] ? NSOnState : NSOffState];
     } else {

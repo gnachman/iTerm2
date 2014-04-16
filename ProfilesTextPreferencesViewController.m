@@ -14,6 +14,7 @@
     // See ITermCursorType. One of: CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX
     IBOutlet NSMatrix *_cursorType;
     IBOutlet NSButton *_blinkingCursor;
+    IBOutlet NSButton *_useBoldFont;
 }
 
 - (void)awakeFromNib {
@@ -25,6 +26,10 @@
     
     [self defineControl:_blinkingCursor
                     key:KEY_BLINKING_CURSOR
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_useBoldFont
+                    key:KEY_USE_BOLD_FONT
                    type:kPreferenceInfoTypeCheckbox];
     
 }
