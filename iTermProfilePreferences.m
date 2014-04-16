@@ -143,6 +143,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_SMART_CURSOR_COLOR: @NO,
                   KEY_MINIMUM_CONTRAST: @0.0,
                   KEY_CURSOR_TYPE: @(CURSOR_BOX),
+                  KEY_BLINKING_CURSOR: @NO,
                 };
         [dict retain];
     }
