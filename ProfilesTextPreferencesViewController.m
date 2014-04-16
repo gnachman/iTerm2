@@ -18,6 +18,7 @@
     IBOutlet NSButton *_useBrightBold;  // Bold text in bright colors
     IBOutlet NSButton *_blinkAllowed;
     IBOutlet NSButton *_useItalicFont;
+    IBOutlet NSButton *_ambiguousIsDoubleWidth;
 }
 
 - (void)awakeFromNib {
@@ -45,6 +46,10 @@
     
     [self defineControl:_useItalicFont
                     key:KEY_USE_ITALIC_FONT
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_ambiguousIsDoubleWidth
+                    key:KEY_AMBIGUOUS_DOUBLE_WIDTH
                    type:kPreferenceInfoTypeCheckbox];
 }
 

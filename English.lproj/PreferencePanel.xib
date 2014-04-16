@@ -65,7 +65,6 @@
                 <outlet property="logDir" destination="5686" id="5715"/>
                 <outlet property="mouseTabViewItem" destination="6059" id="6061"/>
                 <outlet property="mouseToolbarItem" destination="6056" id="6057"/>
-                <outlet property="nonAsciiDoubleWidth" destination="5126" id="5129"/>
                 <outlet property="nonAsciiFontField" destination="4777" id="4873"/>
                 <outlet property="nonAsciiFontView" destination="15P-ty-S1w" id="dru-RS-lgT"/>
                 <outlet property="nonasciiAntiAliased" destination="4783" id="4878"/>
@@ -2301,14 +2300,14 @@ Gw
                                                                 </connections>
                                                             </matrix>
                                                             <button id="5126">
-                                                                <rect key="frame" x="67" y="234" width="393" height="18"/>
+                                                                <rect key="frame" x="67" y="234" width="471" height="18"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Treat ambiguous-width characters as double width" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5127">
+                                                                <buttonCell key="cell" type="check" title="Treat ambiguous-width characters as double width (not recommended)" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5127">
                                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="5128"/>
+                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="x1G-OP-lD8"/>
                                                                     <outlet property="nextKeyView" destination="4765" id="5254"/>
                                                                 </connections>
                                                             </button>
@@ -5213,6 +5212,7 @@ DQ
         </customObject>
         <customObject id="lhd-u6-xr5" customClass="ProfilesTextPreferencesViewController">
             <connections>
+                <outlet property="_ambiguousIsDoubleWidth" destination="5126" id="Eee-f8-fvr"/>
                 <outlet property="_blinkAllowed" destination="5148" id="4S0-LC-xMv"/>
                 <outlet property="_blinkingCursor" destination="4773" id="yLP-hh-9Zx"/>
                 <outlet property="_cursorType" destination="5017" id="5F8-RD-GnE"/>
