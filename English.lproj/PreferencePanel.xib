@@ -45,7 +45,6 @@
                 <outlet property="closeSessionsOnEnd" destination="5681" id="5737"/>
                 <outlet property="columnsField" destination="4911" id="4959"/>
                 <outlet property="columnsLabel" destination="4912" id="4961"/>
-                <outlet property="cursorType" destination="5017" id="5032"/>
                 <outlet property="deleteSendsCtrlHButton" destination="5074" id="5078"/>
                 <outlet property="disablePrinting" destination="5633" id="5637"/>
                 <outlet property="disableSmcupRmcup" destination="5081" id="5085"/>
@@ -2129,7 +2128,7 @@ Gw
                                                         </subviews>
                                                     </view>
                                                 </tabViewItem>
-                                                <tabViewItem label="Text" identifier="Item 5" id="4763" userLabel="Tab View Item (Display)">
+                                                <tabViewItem label="Text" identifier="Item 5" id="4763">
                                                     <view key="view" id="4764">
                                                         <rect key="frame" x="10" y="33" width="559" height="404"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -2302,7 +2301,7 @@ Gw
                                                                     </column>
                                                                 </cells>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="5031"/>
+                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="4mF-fm-eeN"/>
                                                                     <outlet property="nextKeyView" destination="4773" id="5248"/>
                                                                 </connections>
                                                             </matrix>
@@ -5214,6 +5213,12 @@ DQ
                 <outlet property="_useTabColor" destination="j7F-r8-oes" id="HoY-6m-E99"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="NFg-pP-EcM"/>
                 <outlet property="view" destination="1946" id="b9f-lK-h1j"/>
+            </connections>
+        </customObject>
+        <customObject id="lhd-u6-xr5" customClass="ProfilesTextPreferencesViewController">
+            <connections>
+                <outlet property="_cursorType" destination="5017" id="5F8-RD-GnE"/>
+                <outlet property="delegate" destination="HVI-63-mNz" id="W6f-xu-XYi"/>
             </connections>
         </customObject>
     </objects>

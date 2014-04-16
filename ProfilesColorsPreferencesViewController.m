@@ -305,7 +305,7 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
         settings = [presetsDict objectForKey:presetName];
     }
     NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:profile];
-    
+
     for (id colorName in settings) {
         NSDictionary* preset = [settings objectForKey:colorName];
         NSColor* color = [ITAddressBookMgr decodeColor:preset];

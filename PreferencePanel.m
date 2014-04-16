@@ -53,7 +53,9 @@
  *  Because per-profile preferences are similar, a parallel class structure exists for them.
  *  The following classes are view controllers for tabs in Prefs>Profiles:
  *
- *  - ProfilesGeneralPreferencesViewControllerDelegate
+ *  - ProfilesGeneralPreferencesViewController
+ *  - ProfilesColorPreferencesViewController
+ *  - ProfilesTextPreferencesViewController
  *  - More coming
  *
  *  These derive from iTermProfilePreferencesBaseViewController, which is just like
@@ -109,10 +111,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet GeneralPreferencesViewController *_generalPreferencesViewController;
     IBOutlet KeysPreferencesViewController *_keysViewController;
     IBOutlet ProfilePreferencesViewController *_profilesViewController;
-
-    // cursor type: underline/vertical bar/box
-    // See ITermCursorType. One of: CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX
-    IBOutlet NSMatrix *cursorType;
 
     // instant replay
     BOOL defaultInstantReplay;
@@ -511,7 +509,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [newDict setObject:[NSNumber numberWithFloat:[displayFontSpacingHeight floatValue]] forKey:KEY_VERTICAL_SPACING];
     [newDict setObject:[NSNumber numberWithBool:([blinkingCursor state]==NSOnState)] forKey:KEY_BLINKING_CURSOR];
     [newDict setObject:[NSNumber numberWithBool:([blinkAllowed state]==NSOnState)] forKey:KEY_BLINK_ALLOWED];
-    [newDict setObject:[NSNumber numberWithInt:[[cursorType selectedCell] tag]] forKey:KEY_CURSOR_TYPE];
     [newDict setObject:[NSNumber numberWithBool:([useBoldFont state]==NSOnState)] forKey:KEY_USE_BOLD_FONT];
     [newDict setObject:[NSNumber numberWithBool:([useBrightBold state]==NSOnState)] forKey:KEY_USE_BRIGHT_BOLD];
     [newDict setObject:[NSNumber numberWithBool:([useItalicFont state]==NSOnState)] forKey:KEY_USE_ITALIC_FONT];
@@ -1142,11 +1139,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
 }
 
-- (ITermCursorType)legacyCursorType
-{
-    return [prefs objectForKey:@"CursorType"] ? [prefs integerForKey:@"CursorType"] : CURSOR_BOX;
-}
-
 - (BOOL)hideScrollbar {
     return [iTermPreferences boolForKey:kPreferenceKeyHideScrollbar];
 }
@@ -1542,7 +1534,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [displayFontSpacingHeight setFloatValue:verticalSpacing];
     [blinkingCursor setState:[[dict objectForKey:KEY_BLINKING_CURSOR] boolValue] ? NSOnState : NSOffState];
     [blinkAllowed setState:[[dict objectForKey:KEY_BLINK_ALLOWED] boolValue] ? NSOnState : NSOffState];
-    [cursorType selectCellWithTag:[dict objectForKey:KEY_CURSOR_TYPE] ? [[dict objectForKey:KEY_CURSOR_TYPE] intValue] : [self legacyCursorType]];
 
     NSNumber* useBoldFontEntry = [dict objectForKey:KEY_USE_BOLD_FONT];
     NSNumber* disableBoldEntry = [dict objectForKey:KEY_DISABLE_BOLD];

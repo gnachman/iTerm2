@@ -130,7 +130,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)hideMenuBarInFullscreen;
 - (BOOL)openBookmark;
 - (NSString *)wordChars;
-- (ITermCursorType)legacyCursorType;
 - (BOOL)hideScrollbar;
 - (BOOL)showPaneTitles;
 - (BOOL)disableFullscreenTransparency;

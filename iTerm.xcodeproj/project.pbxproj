@@ -766,6 +766,9 @@
 		A6A13ABB18C34F6400B241ED /* VT100XtermParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AB918C34F6400B241ED /* VT100XtermParser.h */; };
 		A6A13ABC18C34F6400B241ED /* VT100XtermParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */; };
 		A6A13ABD18C34F6400B241ED /* VT100XtermParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */; };
+		A6A2697E18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2697C18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.h */; };
+		A6A2697F18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2697D18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m */; };
+		A6A2698018FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2697D18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
 		A6A5991E1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
 		A6A5991F1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
@@ -1374,6 +1377,8 @@
 		A6A13AB518C33FC500B241ED /* VT100Parser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Parser.m; sourceTree = "<group>"; };
 		A6A13AB918C34F6400B241ED /* VT100XtermParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100XtermParser.h; sourceTree = "<group>"; };
 		A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100XtermParser.m; sourceTree = "<group>"; };
+		A6A2697C18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesTextPreferencesViewController.h; sourceTree = "<group>"; };
+		A6A2697D18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesTextPreferencesViewController.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; };
 		A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasteHelper.h; sourceTree = "<group>"; };
@@ -1566,8 +1571,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				A6E713BD18FCF036008D94DD /* ProfilesColorsPreferencesViewController.h */,
-				A6E713BE18FCF036008D94DD /* ProfilesColorsPreferencesViewController.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -1758,6 +1761,8 @@
 				1D6C50A51226EEFB00E0AA3E /* ProfileListView.h */,
 				1D407A2214BABE8700BD5035 /* ProfileModel.h */,
 				1D06E7D514BC04E20097C0ED /* ProfileModelWrapper.h */,
+				A6E713BD18FCF036008D94DD /* ProfilesColorsPreferencesViewController.h */,
+				A6A2697C18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.h */,
 				1DE5EBE6122B892900C736B0 /* ProfilesWindow.h */,
 				1D06E7D114BC04510097C0ED /* ProfileTableRow.h */,
 				1D06E7D914BC05DB0097C0ED /* ProfileTableView.h */,
@@ -2037,8 +2042,10 @@
 				FB019DE103670C6501F955DB /* PreferencePanel.m */,
 				A6E7139118F50762008D94DD /* ProfilePreferencesViewController.h */,
 				A6E7139218F50762008D94DD /* ProfilePreferencesViewController.m */,
+				A6E713BE18FCF036008D94DD /* ProfilesColorsPreferencesViewController.m */,
 				A6E713AB18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.h */,
 				A6E713AC18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.m */,
+				A6A2697D18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m */,
 				1D24C2C4142FEACF006B246F /* SmartSelectionController.m */,
 				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
 				1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */,
@@ -2693,6 +2700,7 @@
 				1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */,
 				1DAE714D14AAF24200DA144B /* EquivalenceClassSet.h in Headers */,
 				A6E7474D188C6394005355CF /* CommandUse.h in Headers */,
+				A6A2697E18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.h in Headers */,
 				1D407A3414BABE8700BD5035 /* ProfileModel.h in Headers */,
 				1D407A3614BABE8700BD5035 /* charmaps.h in Headers */,
 				1D407A3814BABE8700BD5035 /* iTerm.h in Headers */,
@@ -3047,6 +3055,7 @@
 				1D9A55A7180FA8B700B42CE9 /* PSMAdiumTabStyle.m in Sources */,
 				1D9A559E180FA87000B42CE9 /* SolidColorView.m in Sources */,
 				1D9A55B1180FA8B700B42CE9 /* PSMUnifiedTabStyle.m in Sources */,
+				A6A2698018FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m in Sources */,
 				1D9A55B3180FA8D400B42CE9 /* UKNibOwner.m in Sources */,
 				1D9A555F180FA83900B42CE9 /* SmartSelectionController.m in Sources */,
 				A6A5991F1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */,
@@ -3438,6 +3447,7 @@
 				1D2F3B3E1516BA470044C337 /* iTermFontPanel.m in Sources */,
 				A63F409B183B3AA7003A6A6D /* PTYNoteView.m in Sources */,
 				1D48B37A167E809D000046EE /* CharacterRun.m in Sources */,
+				A6A2697F18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m in Sources */,
 				1D70BA361680158700824B72 /* PTYFontInfo.m in Sources */,
 				1D6944D8169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m in Sources */,
 				A68A30E6186D1429007F550F /* VT100RemoteHost.m in Sources */,
