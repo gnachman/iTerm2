@@ -723,8 +723,6 @@
 		A68A3106186D2973007F550F /* TemporaryNumberAllocator.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */; };
 		A68A3107186D2973007F550F /* TemporaryNumberAllocator.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */; };
 		A68A310A186D2BCF007F550F /* BottomBarView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3108186D2BCF007F550F /* BottomBarView.h */; };
-		A68A310B186D2BCF007F550F /* BottomBarView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3109186D2BCF007F550F /* BottomBarView.m */; };
-		A68A310C186D2BCF007F550F /* BottomBarView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3109186D2BCF007F550F /* BottomBarView.m */; };
 		A68A310F186E2EDA007F550F /* PopupEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A310D186E2EDA007F550F /* PopupEntry.h */; };
 		A68A3110186E2EDA007F550F /* PopupEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A310E186E2EDA007F550F /* PopupEntry.m */; };
 		A68A3111186E2EDA007F550F /* PopupEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A310E186E2EDA007F550F /* PopupEntry.m */; };
@@ -1355,7 +1353,6 @@
 		A68A3103186D2973007F550F /* TemporaryNumberAllocator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TemporaryNumberAllocator.h; sourceTree = "<group>"; };
 		A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TemporaryNumberAllocator.m; sourceTree = "<group>"; };
 		A68A3108186D2BCF007F550F /* BottomBarView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BottomBarView.h; sourceTree = "<group>"; };
-		A68A3109186D2BCF007F550F /* BottomBarView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BottomBarView.m; sourceTree = "<group>"; };
 		A68A310D186E2EDA007F550F /* PopupEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PopupEntry.h; sourceTree = "<group>"; };
 		A68A310E186E2EDA007F550F /* PopupEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PopupEntry.m; sourceTree = "<group>"; };
 		A68A3112186E2F14007F550F /* PopupWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PopupWindow.h; sourceTree = "<group>"; };
@@ -1618,39 +1615,16 @@
 				A68A30CB186D13CB007F550F /* File Transfer */,
 				1D06E7CF14BC03BE0097C0ED /* GTM */,
 				A68A30C9186D101C007F550F /* Helpers */,
+				A6A2698B18FF850E00437DA9 /* Misc View Controllers */,
 				1D373E4618F360C600773D3E /* Misc. Views */,
 				1D9DDE30142E738800275650 /* Popups */,
 				1D24C37714303E00006B246F /* Preferences */,
 				1D06E7D014BC04110097C0ED /* Profiles */,
+				A6A2698C18FF85E600437DA9 /* Shell Integration */,
 				1D3D21921483142800FAC8E7 /* tmux */,
 				1D9DDE2E142E733100275650 /* Toolbelt */,
 				1D9DDE2D142E730700275650 /* Triggers */,
 				A647E3B118C35DD900450FA1 /* VT100 */,
-				1D48B378167E809D000046EE /* CharacterRun.m */,
-				A6057C0D187BC4C3004A60AF /* CommandHistory.m */,
-				1D9DDD9B142E5FBB00275650 /* Coprocess.m */,
-				1DD39B19180B82F5004E56D5 /* DebugLogging.m */,
-				1D237D93131D8D66004DD60C /* FindViewController.m */,
-				1DB9D8F1183FE9EF0029F0B5 /* HotkeyWindowController.m */,
-				F69E788C0AB7AC6D001EC0FF /* iTermGrowlDelegate.m */,
-				DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */,
-				A60014FA18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m */,
-				A63BA39418A9CB43002BE075 /* iTermSelection.m */,
-				A63BA39E18B27B92002BE075 /* iTermTextExtractor.m */,
-				A6E713B918FCCDD1008D94DD /* iTermURLSchemeController.m */,
-				1D29732614082676004C5DBE /* MovePaneController.m */,
-				1D085F8B16F0328B00B7FCE9 /* PasteViewController.m */,
-				1D8255FF146881EC007CAE78 /* PointerController.m */,
-				1D988596135D23BD0072023F /* ProcessCache.m */,
-				A63F4094183B398C003A6A6D /* PTYNoteViewController.m */,
-				1D8FC67B17E67FA700A82402 /* shell_launcher.c */,
-				1DF8AF5713FD781700C8A435 /* SplitPanel.m */,
-				1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */,
-				1D085FA116F138A000B7FCE9 /* ToastWindowController.m */,
-				1D06A04F134CDBED00C414EF /* Trouter.m */,
-				A647E3B218C36D0300450FA1 /* VT100Token.m */,
-				A647E3B518C5884600450FA1 /* iTermObjectPool.h */,
-				A647E3B618C5884600450FA1 /* iTermObjectPool.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -1714,6 +1688,7 @@
 				A6A13AA018C2D23300B241ED /* iTermColorMap.h */,
 				1D407A2714BABE8700BD5035 /* iTermController.h */,
 				1D4F359F1813386600699FDF /* iTermCursor.h */,
+				1DFA9D6118F37160008ADC98 /* iTermEditKeyActionWindowController.h */,
 				1DDBC61C12E2BCDC00BC3868 /* iTermExpose.h */,
 				A6E7475A188C6731005355CF /* iTermExposeGridView.h */,
 				A6E74755188C66CF005355CF /* iTermExposeTabView.h */,
@@ -1723,9 +1698,12 @@
 				F69E78910AB7AC85001EC0FF /* iTermGrowlDelegate.h */,
 				A61B66CD18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h */,
 				1D407A2814BABE8700BD5035 /* iTermKeyBindingMgr.h */,
+				1DFA9D5C18F36DC3008ADC98 /* iTermKeyMappingViewController.h */,
 				A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */,
+				A647E3B518C5884600450FA1 /* iTermObjectPool.h */,
 				A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */,
 				A6E7137D18F1DB1E008D94DD /* iTermPreferences.h */,
+				A6E7138718F26445008D94DD /* iTermPreferencesBaseViewController.h */,
 				A6E713A618F7C9F4008D94DD /* iTermProfilePreferences.h */,
 				A6E713A118F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.h */,
 				FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */,
@@ -1761,6 +1739,7 @@
 				1D085F9016F03E5400B7FCE9 /* PasteView.h */,
 				1D085F8A16F0328B00B7FCE9 /* PasteViewController.h */,
 				1D8255FE146881EC007CAE78 /* PointerController.h */,
+				1DFA9D6E18F3A30F008ADC98 /* PointerPreferencesViewController.h */,
 				1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */,
 				1DD7363F1283C2FA009B7829 /* Popup.h */,
 				A68A310D186E2EDA007F550F /* PopupEntry.h */,
@@ -1772,9 +1751,12 @@
 				1D6C50A51226EEFB00E0AA3E /* ProfileListView.h */,
 				1D407A2214BABE8700BD5035 /* ProfileModel.h */,
 				1D06E7D514BC04E20097C0ED /* ProfileModelWrapper.h */,
+				A6E7139118F50762008D94DD /* ProfilePreferencesViewController.h */,
 				A6E713BD18FCF036008D94DD /* ProfilesColorsPreferencesViewController.h */,
+				A6E713AB18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.h */,
 				A6A2697C18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.h */,
 				1DE5EBE6122B892900C736B0 /* ProfilesWindow.h */,
+				A6A2698618FF70C600437DA9 /* ProfilesWindowPreferencesViewController.h */,
 				1D06E7D114BC04510097C0ED /* ProfileTableRow.h */,
 				1D06E7D914BC05DB0097C0ED /* ProfileTableView.h */,
 				A6057C021878CD30004A60AF /* ProfileTagsView.h */,
@@ -1879,10 +1861,10 @@
 		0464AB22006CD2EC7F000001 /* Interfaces */ = {
 			isa = PBXGroup;
 			children = (
-				A6E713B218FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib */,
-				A6E7139B18F7B199008D94DD /* BulkCopyProfilePreferences.xib */,
 				FB094A14033D58AE01F955DB /* addressbook.png */,
+				A6E713B218FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib */,
 				1DE2154112821F1C004E3ADF /* Autocomplete.xib */,
+				A6E7139B18F7B199008D94DD /* BulkCopyProfilePreferences.xib */,
 				FB094A16033D58B601F955DB /* close.png */,
 				1DC13AC61886507D00034DAE /* CommandHistoryPopup.xib */,
 				FB754C5F036EFC5301F955DB /* config.png */,
@@ -1900,6 +1882,8 @@
 				DD48F1CC03EBB20500A8A065 /* iTerm.scriptTerminology */,
 				FB151F2903648AC401F955DB /* iTerm.strings */,
 				DD57633005653C2E00F1905E /* iTerm_Framework.plist */,
+				1DFA9D6318F37160008ADC98 /* iTermEditKeyActionWindowController.xib */,
+				1DFA9D6A18F37AA5008ADC98 /* iTermKeyMapping.xib */,
 				9325FF4E0FB54E00004EC67C /* MainMenu.xib */,
 				FB094A18033D58BD01F955DB /* new.png */,
 				FB896717038D935801F955DB /* newwin.png */,
@@ -1912,7 +1896,6 @@
 				F6C9AFEF0EA70D0200D318A8 /* sort.png */,
 				1D844C8B13FD8B7700CD4F85 /* SplitPanel.xib */,
 				1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */,
-				1DFA9D6A18F37AA5008ADC98 /* iTermKeyMapping.xib */,
 			);
 			name = Interfaces;
 			sourceTree = "<group>";
@@ -2033,35 +2016,27 @@
 				1D21EE3A147711300066E04A /* ContextMenuActionPrefsController.m */,
 				1D825603146B258A007CAE78 /* EventMonitorView.m */,
 				A6E7137918F1D70D008D94DD /* GeneralPreferencesViewController.m */,
-				1DFA9D6118F37160008ADC98 /* iTermEditKeyActionWindowController.h */,
 				1DFA9D6218F37160008ADC98 /* iTermEditKeyActionWindowController.m */,
-				1DFA9D6318F37160008ADC98 /* iTermEditKeyActionWindowController.xib */,
-				1DFA9D5C18F36DC3008ADC98 /* iTermKeyMappingViewController.h */,
 				1DFA9D5D18F36DC3008ADC98 /* iTermKeyMappingViewController.m */,
 				A6E7137E18F1DB1E008D94DD /* iTermPreferences.m */,
-				A6E7138718F26445008D94DD /* iTermPreferencesBaseViewController.h */,
 				A6E7138818F26445008D94DD /* iTermPreferencesBaseViewController.m */,
 				A6E713A718F7C9F4008D94DD /* iTermProfilePreferences.m */,
 				A6E713A218F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.m */,
 				FB4CEAC661436E55F3B3A668 /* iTermRemotePreferences.m */,
 				A697100A18D94CDA007E901D /* iTermSettingsModel.m */,
 				1DF8FEF218F3217100722B35 /* KeysPreferencesViewController.m */,
-				1DFA9D6E18F3A30F008ADC98 /* PointerPreferencesViewController.h */,
 				1DFA9D6F18F3A30F008ADC98 /* PointerPreferencesViewController.m */,
 				1D8255FB14687EE8007CAE78 /* PointerPrefsController.m */,
 				A6E7138318F263BC008D94DD /* PreferenceInfo.m */,
 				FB019DE103670C6501F955DB /* PreferencePanel.m */,
-				A6E7139118F50762008D94DD /* ProfilePreferencesViewController.h */,
 				A6E7139218F50762008D94DD /* ProfilePreferencesViewController.m */,
 				A6E713BE18FCF036008D94DD /* ProfilesColorsPreferencesViewController.m */,
-				A6E713AB18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.h */,
 				A6E713AC18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.m */,
 				A6A2697D18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m */,
 				1D24C2C4142FEACF006B246F /* SmartSelectionController.m */,
 				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
 				1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */,
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
-				A6A2698618FF70C600437DA9 /* ProfilesWindowPreferencesViewController.h */,
 				A6A2698718FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m */,
 			);
 			name = Preferences;
@@ -2070,11 +2045,19 @@
 		1D373E4618F360C600773D3E /* Misc. Views */ = {
 			isa = PBXGroup;
 			children = (
-				A63F4099183B3AA7003A6A6D /* PTYNoteView.m */,
-				1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */,
-				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
+				A073973F14C7694600786414 /* ColorsMenuItemView.m */,
+				A68A30C0186D0DC1007F550F /* FindCursorView.m */,
+				1D237D27131D8741004DD60C /* FindView.m */,
+				1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */,
+				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
 				1D373E4718F3613600773D3E /* iTermShortcutInputView.h */,
 				1D373E4818F3613600773D3E /* iTermShortcutInputView.m */,
+				1D085F9116F03E5400B7FCE9 /* PasteView.m */,
+				A63F4099183B3AA7003A6A6D /* PTYNoteView.m */,
+				1D085F9D16F137D900B7FCE9 /* RoundedRectView.m */,
+				1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */,
+				1DC38817148E840700B89F7C /* SolidColorView.m */,
+				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -2286,10 +2269,18 @@
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				1D9DDD9B142E5FBB00275650 /* Coprocess.m */,
+				1DD39B19180B82F5004E56D5 /* DebugLogging.m */,
+				1DB9D8F1183FE9EF0029F0B5 /* HotkeyWindowController.m */,
 				20E74F4904E9089700000106 /* ITAddressBookMgr.m */,
 				DDF0FD64062916F70080EF74 /* iTermApplication.m */,
 				20D5CC6404E7AA0500000106 /* iTermApplicationDelegate.m */,
 				E8A66F030272453F03A80106 /* iTermController.m */,
+				F69E788C0AB7AC6D001EC0FF /* iTermGrowlDelegate.m */,
+				DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */,
+				A647E3B618C5884600450FA1 /* iTermObjectPool.m */,
+				A63BA39418A9CB43002BE075 /* iTermSelection.m */,
+				A63BA39E18B27B92002BE075 /* iTermTextExtractor.m */,
 				A63F40A3183F3B78003A6A6D /* LineBlock.m */,
 				1D72438C11F416E500BD4924 /* LineBuffer.m */,
 				A63F40A8183F3CED003A6A6D /* LineBufferHelpers.m */,
@@ -2297,19 +2288,20 @@
 				FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */,
 				5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */,
 				2076B15804E8817300000106 /* PTToolbarController.m */,
-				1D70BA341680158700824B72 /* PTYFontInfo.m */,
 				E8CF755F026DDA6303A80106 /* PTYScrollView.m */,
 				F52ED8DD037F0A7D01A8A066 /* PTYSession.m */,
 				1DD6707614934ADE008E4361 /* PTYSplitView.m */,
 				1D2E802D129DA45A00F3D71E /* PTYTab.m */,
 				F5E533B403B2959201A8A066 /* PTYTabView.m */,
 				E8CF7560026DDA6303A80106 /* PTYTask.m */,
-				A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */,
 				E8CF7561026DDA6303A80106 /* PTYTextView.m */,
 				F56B230B03A1B36701A8A066 /* PTYWindow.m */,
 				1D36155412CBF33E00803EA9 /* ScreenChar.m */,
 				1D2E813012A18F7500F3D71E /* SessionView.m */,
+				1D8FC67B17E67FA700A82402 /* shell_launcher.c */,
+				A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */,
 				1D44218B1290B34500891504 /* TextViewWrapper.m */,
+				1D06A04F134CDBED00C414EF /* Trouter.m */,
 				1D8B8A131806038F00C2DC25 /* VT100Grid.m */,
 				1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */,
 				A63F409E183F3AF5003A6A6D /* VT100LineInfo.m */,
@@ -2330,6 +2322,7 @@
 				A6A13AB518C33FC500B241ED /* VT100Parser.m */,
 				A647E3A818C353C500450FA1 /* VT100StringParser.m */,
 				E8CF7563026DDA6303A80106 /* VT100Terminal.m */,
+				A647E3B218C36D0300450FA1 /* VT100Token.m */,
 				A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */,
 				A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */,
 			);
@@ -2341,31 +2334,27 @@
 			children = (
 				A6CFDAD6185D53C2005DC94B /* AsyncHostLookupController.m */,
 				1DA26ABF15007507004B5792 /* BackgroundThread.m */,
-				A68A3109186D2BCF007F550F /* BottomBarView.m */,
-				A073973F14C7694600786414 /* ColorsMenuItemView.m */,
-				A6E74747188C6344005355CF /* CommandHistoryEntry.m */,
+				1D48B378167E809D000046EE /* CharacterRun.m */,
 				A6E7474C188C6394005355CF /* CommandUse.m */,
 				1D53FD14181C4B4B00524D4F /* FindContext.m */,
-				A68A30C0186D0DC1007F550F /* FindCursorView.m */,
-				1D237D27131D8741004DD60C /* FindView.m */,
 				1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */,
 				A6A13AA118C2D23300B241ED /* iTermColorMap.m */,
-				1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */,
-				A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */,
+				A60014FA18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m */,
 				A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */,
-				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
+				A6E713B918FCCDD1008D94DD /* iTermURLSchemeController.m */,
 				A6099B0418D6B0FD00081FA9 /* iTermWarning.m */,
+				1D29732614082676004C5DBE /* MovePaneController.m */,
 				1D9053C517A5CCF100A0B64E /* MovingAverage.m */,
 				1D085F8516F02E7400B7FCE9 /* PasteContext.m */,
 				1D085F9916F1135F00B7FCE9 /* PasteEvent.m */,
-				1D085F9116F03E5400B7FCE9 /* PasteView.m */,
-				1D085F9D16F137D900B7FCE9 /* RoundedRectView.m */,
+				1D8255FF146881EC007CAE78 /* PointerController.m */,
+				1D988596135D23BD0072023F /* ProcessCache.m */,
+				1D70BA341680158700824B72 /* PTYFontInfo.m */,
 				1DC393C417B59B08000EE0F2 /* SearchResult.m */,
 				A68A30C5186D0F36007F550F /* SmartMatch.m */,
-				1DC38817148E840700B89F7C /* SolidColorView.m */,
 				A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */,
+				1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */,
 				A6CFDAD1185D2587005DC94B /* URLAction.m */,
-				A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -2396,6 +2385,29 @@
 				A68A30DB186D1429007F550F /* VT100WorkingDirectory.m */,
 			);
 			name = "File Transfer";
+			sourceTree = "<group>";
+		};
+		A6A2698B18FF850E00437DA9 /* Misc View Controllers */ = {
+			isa = PBXGroup;
+			children = (
+				1D237D93131D8D66004DD60C /* FindViewController.m */,
+				1D085F8B16F0328B00B7FCE9 /* PasteViewController.m */,
+				A63F4094183B398C003A6A6D /* PTYNoteViewController.m */,
+				1DF8AF5713FD781700C8A435 /* SplitPanel.m */,
+				A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */,
+				1D085FA116F138A000B7FCE9 /* ToastWindowController.m */,
+			);
+			name = "Misc View Controllers";
+			sourceTree = "<group>";
+		};
+		A6A2698C18FF85E600437DA9 /* Shell Integration */ = {
+			isa = PBXGroup;
+			children = (
+				A6057C0D187BC4C3004A60AF /* CommandHistory.m */,
+				A6E74747188C6344005355CF /* CommandHistoryEntry.m */,
+				A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */,
+			);
+			name = "Shell Integration";
 			sourceTree = "<group>";
 		};
 		A6E74764188C6A2A005355CF /* Expose */ = {
@@ -3088,7 +3100,6 @@
 				A6E7139618F50762008D94DD /* ProfilePreferencesViewController.m in Sources */,
 				1D9A559B180FA87000B42CE9 /* RoundedRectView.m in Sources */,
 				1D9A5573180FA85D00B42CE9 /* Trigger.m in Sources */,
-				A68A310C186D2BCF007F550F /* BottomBarView.m in Sources */,
 				A68A30E1186D1429007F550F /* TransferrableFile.m in Sources */,
 				1D9A554F180FA82E00B42CE9 /* TmuxWindowOpener.m in Sources */,
 				1D9A5535180FA78B00B42CE9 /* DVRBuffer.m in Sources */,
@@ -3279,7 +3290,6 @@
 				A6E7137B18F1D70E008D94DD /* GeneralPreferencesViewController.m in Sources */,
 				1D5FDDAA1208E93600C46BA3 /* VT100Terminal.m in Sources */,
 				1D5FDDAB1208E93600C46BA3 /* iTermController.m in Sources */,
-				A68A310B186D2BCF007F550F /* BottomBarView.m in Sources */,
 				A63F40AA183F3CED003A6A6D /* LineBufferHelpers.m in Sources */,
 				1D5FDDAC1208E93600C46BA3 /* NSStringITerm.m in Sources */,
 				1D5FDDAD1208E93600C46BA3 /* PreferencePanel.m in Sources */,
