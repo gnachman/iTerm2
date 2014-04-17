@@ -64,7 +64,6 @@
                 <outlet property="setLocaleVars" destination="6045" id="6047"/>
                 <outlet property="silenceBell" destination="2397" id="3144"/>
                 <outlet property="smartSelectionWindowController_" destination="5863" id="5921"/>
-                <outlet property="syncTitle" destination="5008" id="5011"/>
                 <outlet property="tabView" destination="1943" id="2853"/>
                 <outlet property="terminalType" destination="2405" id="3155"/>
                 <outlet property="toolbar" destination="5885" id="6042"/>
@@ -2651,7 +2650,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="5010"/>
+                                                                    <action selector="settingChanged:" target="BMA-OA-Kzc" id="5jm-v3-jaw"/>
                                                                     <outlet property="nextKeyView" destination="5004" id="5263"/>
                                                                 </connections>
                                                             </button>
@@ -5212,6 +5211,7 @@ DQ
                 <outlet property="_screenLabel" destination="4919" id="tHd-7A-AVt"/>
                 <outlet property="_space" destination="4921" id="eYi-dz-bDx"/>
                 <outlet property="_spaceLabel" destination="4920" id="hZ0-FW-sxK"/>
+                <outlet property="_syncTitle" destination="5008" id="4VH-Th-Xwf"/>
                 <outlet property="_transparency" destination="4978" id="uze-TU-NdW"/>
                 <outlet property="_useBackgroundImage" destination="4973" id="vZ6-QD-p27"/>
                 <outlet property="_useBlur" destination="4976" id="ZfQ-et-Uge"/>

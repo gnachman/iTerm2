@@ -38,6 +38,7 @@
     IBOutlet NSTextField *_rowsLabel;
     IBOutlet NSTextField *_windowStyleLabel;
     IBOutlet NSTextField *_spaceLabel;
+    IBOutlet NSButton *_syncTitle;
 }
 
 - (void)dealloc {
@@ -106,6 +107,10 @@
             [self maybeWarnAboutSpaces];
         }
     };
+    
+    [self defineControl:_syncTitle
+                    key:KEY_SYNC_TITLE
+                   type:kPreferenceInfoTypeCheckbox];
 }
 
 - (void)layoutSubviewsForSingleBookmarkMode {
