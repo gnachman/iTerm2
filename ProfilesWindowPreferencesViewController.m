@@ -23,6 +23,7 @@
     IBOutlet NSSlider *_blurRadius;
     IBOutlet NSButton *_useBackgroundImage;
     IBOutlet NSImageView *_backgroundImagePreview;
+    IBOutlet NSButton *_backgroundImageTiled;
 }
 
 - (void)dealloc {
@@ -50,6 +51,19 @@
     [self defineControl:_blurRadius
                     key:KEY_BLUR_RADIUS
                    type:kPreferenceInfoTypeSlider];
+    
+    [self defineControl:_backgroundImageTiled
+                    key:KEY_BACKGROUND_IMAGE_TILED
+                   type:kPreferenceInfoTypeCheckbox];
+}
+
+- (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict {
+    NSString *value = [self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION];;
+    if (value) {
+        dict[KEY_BACKGROUND_IMAGE_LOCATION] = value;
+    } else {
+        [dict removeObjectForKey:KEY_BACKGROUND_IMAGE_LOCATION];
+    }
 }
 
 - (void)reloadProfile {
