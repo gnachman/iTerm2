@@ -22,8 +22,6 @@
                 <outlet property="arrangements_" destination="5572" id="5584"/>
                 <outlet property="asciiAntiAliased" destination="4782" id="4877"/>
                 <outlet property="autoLog" destination="5685" id="5716"/>
-                <outlet property="backgroundImage" destination="4973" id="4996"/>
-                <outlet property="backgroundImagePreview" destination="4974" id="4997"/>
                 <outlet property="backgroundImageTiled" destination="6395" id="6399"/>
                 <outlet property="basicsLabel" destination="3247" id="5772"/>
                 <outlet property="blend" destination="6320" id="6326"/>
@@ -2518,7 +2516,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="4989"/>
+                                                                    <action selector="useBackgroundImageDidChange:" target="BMA-OA-Kzc" id="NNU-Ka-yQY"/>
                                                                     <outlet property="nextKeyView" destination="2100" id="5267"/>
                                                                 </connections>
                                                             </button>
@@ -5220,8 +5218,10 @@ DQ
         </customObject>
         <customObject id="BMA-OA-Kzc" customClass="ProfilesWindowPreferencesViewController">
             <connections>
+                <outlet property="_backgroundImagePreview" destination="4974" id="zoR-T3-lJq"/>
                 <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
                 <outlet property="_transparency" destination="4978" id="uze-TU-NdW"/>
+                <outlet property="_useBackgroundImage" destination="4973" id="vZ6-QD-p27"/>
                 <outlet property="_useBlur" destination="4976" id="ZfQ-et-Uge"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="7Ch-0z-mdS"/>
                 <outlet property="view" destination="4910" id="W8Y-Gm-dzl"/>

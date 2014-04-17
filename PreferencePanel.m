@@ -158,10 +158,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSSlider *blend;
     IBOutlet NSButton* asciiAntiAliased;
     IBOutlet NSButton* nonasciiAntiAliased;
-    IBOutlet NSButton* backgroundImage;
-    NSString* backgroundImageFilename;
     IBOutlet NSButton* backgroundImageTiled;
-    IBOutlet NSImageView* backgroundImagePreview;
 
     // Terminal tab
     IBOutlet NSButton* disableWindowResizing;
@@ -389,39 +386,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 }
 
-- (NSString*)_chooseBackgroundImage
-{
-    NSOpenPanel *panel;
-    int sts;
-    NSString *filename = nil;
-
-    panel = [NSOpenPanel openPanel];
-    [panel setAllowsMultipleSelection: NO];
-
-    sts = [panel legacyRunModalForDirectory: NSHomeDirectory() file:@"" types: [NSImage imageFileTypes]];
-    if (sts == NSOKButton) {
-        if ([[panel legacyFilenames] count] > 0) {
-            filename = [[panel legacyFilenames] objectAtIndex: 0];
-        }
-
-        if ([filename length] > 0) {
-            NSImage *anImage = [[NSImage alloc] initWithContentsOfFile: filename];
-            if (anImage != nil) {
-                [backgroundImagePreview setImage:anImage];
-                [anImage release];
-                return filename;
-            } else {
-                [backgroundImage setState: NSOffState];
-            }
-        } else {
-            [backgroundImage setState: NSOffState];
-        }
-    } else {
-        [backgroundImage setState: NSOffState];
-    }
-    return nil;
-}
-
 - (IBAction)bookmarkSettingChanged:(id)sender
 {
     if (sender == optionKeySends && [[optionKeySends selectedCell] tag] == OPT_META) {
@@ -471,18 +435,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [newDict setObject:[NSNumber numberWithBool:([asciiAntiAliased state]==NSOnState)] forKey:KEY_ASCII_ANTI_ALIASED];
     [newDict setObject:[NSNumber numberWithBool:([nonasciiAntiAliased state]==NSOnState)] forKey:KEY_NONASCII_ANTI_ALIASED];
 
-    if (sender == backgroundImage) {
-        NSString* filename = nil;
-        if ([sender state] == NSOnState) {
-            filename = [self _chooseBackgroundImage];
-        }
-        if (!filename) {
-            [backgroundImagePreview setImage: nil];
-            filename = @"";
-        }
-        backgroundImageFilename = filename;
-    }
-    [newDict setObject:backgroundImageFilename forKey:KEY_BACKGROUND_IMAGE_LOCATION];
     [newDict setObject:[NSNumber numberWithBool:([backgroundImageTiled state]==NSOnState)] forKey:KEY_BACKGROUND_IMAGE_TILED];
 
     // Terminal tab
@@ -1461,9 +1413,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if (!imageFilename) {
         imageFilename = @"";
     }
-    [backgroundImage setState:[imageFilename length] > 0 ? NSOnState : NSOffState];
-    [backgroundImagePreview setImage:[[[NSImage alloc] initByReferencingFile:imageFilename] autorelease]];
-    backgroundImageFilename = imageFilename;
     [backgroundImageTiled setState:[[dict objectForKey:KEY_BACKGROUND_IMAGE_TILED] boolValue] ? NSOnState : NSOffState];
 
     // Terminal tab
