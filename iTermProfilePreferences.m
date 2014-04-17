@@ -157,7 +157,9 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_BLEND: @0.5,
                   KEY_COLUMNS: @80,
                   KEY_ROWS: @25,
-                  KEY_HIDE_AFTER_OPENING: @NO
+                  KEY_HIDE_AFTER_OPENING: @NO,
+                  KEY_WINDOW_TYPE: @(WINDOW_TYPE_NORMAL),
+                  KEY_SCREEN: @-1,
                 };
         [dict retain];
     }

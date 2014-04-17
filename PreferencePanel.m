@@ -146,12 +146,8 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSTextField *columnsLabel;
     IBOutlet NSTextField *rowsLabel;
     IBOutlet NSTextField* windowTypeLabel;
-    IBOutlet NSPopUpButton* screenButton;
     IBOutlet NSTextField* spaceLabel;
     IBOutlet NSPopUpButton* spaceButton;
-
-    IBOutlet NSPopUpButton* windowTypeButton;
-    IBOutlet NSTextField *screenLabel;
 
     IBOutlet NSButton* asciiAntiAliased;
     IBOutlet NSButton* nonasciiAntiAliased;
@@ -284,7 +280,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         [characterEncoding addItemWithTitle:[NSString localizedNameOfStringEncoding:[anEncoding unsignedIntValue]]];
         [[characterEncoding lastItem] setTag:[anEncoding unsignedIntValue]];
     }
-    [self setScreens];
 
     if (oneBookmarkMode) {
         [self layoutSubviewsForSingleBookmarkMode];
@@ -299,9 +294,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
     [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
-    [windowTypeButton setEnabled:NO];
-    [screenLabel setTextColor:[NSColor disabledControlTextColor]];
-    [screenButton setEnabled:NO];
     [spaceButton setEnabled:NO];
     [spaceLabel setTextColor:[NSColor disabledControlTextColor]];
     [windowTypeLabel setTextColor:[NSColor disabledControlTextColor]];
@@ -409,9 +401,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     // Display tab
-    [newDict setObject:[NSNumber numberWithInt:[windowTypeButton selectedTag]] forKey:KEY_WINDOW_TYPE];
-    [self setScreens];
-    [newDict setObject:[NSNumber numberWithInt:[screenButton selectedTag]] forKey:KEY_SCREEN];
     if ([spaceButton selectedTag]) {
         [newDict setObject:[NSNumber numberWithInt:[spaceButton selectedTag]] forKey:KEY_SPACE];
     }
@@ -1306,37 +1295,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [[self window] makeKeyAndOrderFront:self];
 }
 
-- (void)setScreens
-{
-    int selectedTag = [screenButton selectedTag];
-    [screenButton removeAllItems];
-    int i = 0;
-    [screenButton addItemWithTitle:@"No Preference"];
-    [[screenButton lastItem] setTag:-1];
-    const int numScreens = [[NSScreen screens] count];
-    for (i = 0; i < numScreens; i++) {
-        if (i == 0) {
-            [screenButton addItemWithTitle:[NSString stringWithFormat:@"Main Screen"]];
-        } else {
-            [screenButton addItemWithTitle:[NSString stringWithFormat:@"Screen %d", i+1]];
-        }
-        [[screenButton lastItem] setTag:i];
-    }
-    if (selectedTag >= 0 && selectedTag < i) {
-        [screenButton selectItemWithTag:selectedTag];
-    } else {
-        [screenButton selectItemWithTag:-1];
-    }
-    if ([windowTypeButton selectedTag] == WINDOW_TYPE_NORMAL) {
-        [screenButton setEnabled:NO];
-        [screenLabel setTextColor:[NSColor disabledControlTextColor]];
-        [screenButton selectItemWithTag:-1];
-    } else if (!oneBookmarkMode) {
-        [screenButton setEnabled:YES];
-        [screenLabel setTextColor:[NSColor blackColor]];
-    }
-}
-
 - (void)underlyingBookmarkDidChange
 {
     Profile *profile = [_profilesViewController selectedProfile];
@@ -1357,11 +1315,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     name = [dict objectForKey:KEY_NAME];
 
     // Display tab
-    [windowTypeButton selectItemWithTag:[dict objectForKey:KEY_WINDOW_TYPE] ? [[dict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL];
-    [self setScreens];
-    if (![screenButton selectItemWithTag:[dict objectForKey:KEY_SCREEN] ? [[dict objectForKey:KEY_SCREEN] intValue] : -1]) {
-        [screenButton selectItemWithTag:-1];
-    }
     if ([dict objectForKey:KEY_SPACE]) {
         [spaceButton selectItemWithTag:[[dict objectForKey:KEY_SPACE] intValue]];
     } else {

@@ -9,6 +9,7 @@
 #import "ProfilesWindowPreferencesViewController.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
+#import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 
 @interface ProfilesWindowPreferencesViewController ()
@@ -28,6 +29,9 @@
     IBOutlet NSTextField *_columnsField;
     IBOutlet NSTextField *_rowsField;
     IBOutlet NSButton *_hideAfterOpening;
+    IBOutlet NSPopUpButton *_windowStyle;
+    IBOutlet NSPopUpButton *_screen;
+    IBOutlet NSTextField *_screenLabel;
 }
 
 - (void)dealloc {
@@ -77,12 +81,31 @@
     [self defineControl:_hideAfterOpening
                     key:KEY_HIDE_AFTER_OPENING
                    type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_windowStyle
+                    key:KEY_WINDOW_TYPE
+                   type:kPreferenceInfoTypePopup];
+    
+    [self defineControl:_screen
+                    key:KEY_SCREEN
+                   type:kPreferenceInfoTypePopup
+         settingChanged:^(id sender) { [self screenDidChange]; }
+                 update:^BOOL{ [self updateScreen]; return YES; }];
 }
 
 - (void)layoutSubviewsForSingleBookmarkMode {
-    NSArray *viewsToDisable = @[ _columnsField, _rowsField, _hideAfterOpening ];
+    NSArray *viewsToDisable = @[ _columnsField,
+                                 _rowsField,
+                                 _hideAfterOpening,
+                                 _windowStyle,
+                                 _screen ];
     for (id view in viewsToDisable) {
         [view setEnabled:NO];
+    }
+    
+    NSArray *labelsToDisable = @[ _screenLabel ];
+    for (NSTextField *field in labelsToDisable) {
+        [field setLabelEnabled:NO];
     }
 }
 
@@ -138,5 +161,51 @@
         self.backgroundImageFilename = nil;
     }
 }
+
+#pragma mark - Screen
+
+- (void)screenDidChange {
+    [self repopulateScreen];
+    [self setInt:[_screen selectedTag] forKey:KEY_SCREEN];
+}
+
+// Refreshes the entries in the list of screens and tries to preserve the current selection.
+- (void)repopulateScreen {
+    int selectedTag = [_screen selectedTag];
+    [_screen removeAllItems];
+    int i = 0;
+    [_screen addItemWithTitle:@"No Preference"];
+    [[_screen lastItem] setTag:-1];
+    const int numScreens = [[NSScreen screens] count];
+    for (i = 0; i < numScreens; i++) {
+        if (i == 0) {
+            [_screen addItemWithTitle:[NSString stringWithFormat:@"Main Screen"]];
+        } else {
+            [_screen addItemWithTitle:[NSString stringWithFormat:@"Screen %d", i+1]];
+        }
+        [[_screen lastItem] setTag:i];
+    }
+    if (selectedTag >= 0 && selectedTag < i) {
+        [_screen selectItemWithTag:selectedTag];
+    } else {
+        [_screen selectItemWithTag:-1];
+    }
+    if ([_windowStyle selectedTag] == WINDOW_TYPE_NORMAL) {
+        [_screen setEnabled:NO];
+        [_screenLabel setEnabled:NO];
+        [_screen selectItemWithTag:-1];
+    } else if ([self.delegate profilePreferencesCurrentModel] == [ProfileModel sharedInstance]) {
+        [_screen setEnabled:YES];
+        [_screenLabel setEnabled:YES];
+    }
+}
+
+- (void)updateScreen {
+    [self repopulateScreen];
+    if (![_screen selectItemWithTag:[self intForKey:KEY_SCREEN]]) {
+        [_screen selectItemWithTag:-1];
+    }
+}
+
 
 @end

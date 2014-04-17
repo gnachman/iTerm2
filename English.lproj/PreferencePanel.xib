@@ -59,8 +59,6 @@
                 <outlet property="removeJobButton_" destination="5669" id="5723"/>
                 <outlet property="rightOptionKeySends" destination="4293" id="4308"/>
                 <outlet property="rowsLabel" destination="4913" id="4962"/>
-                <outlet property="screenButton" destination="4917" id="4965"/>
-                <outlet property="screenLabel" destination="4919" id="4966"/>
                 <outlet property="scrollbackInAlternateScreen" destination="5758" id="5762"/>
                 <outlet property="scrollbackLines" destination="2401" id="3150"/>
                 <outlet property="scrollbackWithStatusBar" destination="5154" id="5157"/>
@@ -79,7 +77,6 @@
                 <outlet property="unlimitedScrollback" destination="3647" id="3650"/>
                 <outlet property="visualBell" destination="2403" id="3145"/>
                 <outlet property="window" destination="1923" id="2981"/>
-                <outlet property="windowTypeButton" destination="4916" id="4963"/>
                 <outlet property="windowTypeLabel" destination="4918" id="4964"/>
                 <outlet property="xtermMouseReporting" destination="2402" id="3146"/>
             </connections>
@@ -2425,7 +2422,7 @@ Gw
                                                                     </menu>
                                                                 </popUpButtonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="4957"/>
+                                                                    <action selector="settingChanged:" target="BMA-OA-Kzc" id="Gak-WW-XCO"/>
                                                                     <outlet property="nextKeyView" destination="4917" id="5260"/>
                                                                 </connections>
                                                             </popUpButton>
@@ -2438,7 +2435,7 @@ Gw
                                                                     <menu key="menu" title="OtherViews" id="4940"/>
                                                                 </popUpButtonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="4958"/>
+                                                                    <action selector="settingChanged:" target="BMA-OA-Kzc" id="B6M-qq-Fej"/>
                                                                     <outlet property="nextKeyView" destination="4921" id="5261"/>
                                                                 </connections>
                                                             </popUpButton>
@@ -5214,9 +5211,12 @@ DQ
                 <outlet property="_columnsField" destination="4911" id="X3h-Pu-qzV"/>
                 <outlet property="_hideAfterOpening" destination="6354" id="ivO-Qa-O3r"/>
                 <outlet property="_rowsField" destination="4914" id="ByA-st-yaA"/>
+                <outlet property="_screen" destination="4917" id="h9y-lf-09F"/>
+                <outlet property="_screenLabel" destination="4919" id="tHd-7A-AVt"/>
                 <outlet property="_transparency" destination="4978" id="uze-TU-NdW"/>
                 <outlet property="_useBackgroundImage" destination="4973" id="vZ6-QD-p27"/>
                 <outlet property="_useBlur" destination="4976" id="ZfQ-et-Uge"/>
+                <outlet property="_windowStyle" destination="4916" id="HIG-WO-wce"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="7Ch-0z-mdS"/>
                 <outlet property="view" destination="4910" id="W8Y-Gm-dzl"/>
             </connections>
