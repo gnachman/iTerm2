@@ -577,8 +577,8 @@ typedef enum {
      horizontalSpacing:[[_profile objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
        verticalSpacing:[[_profile objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [self setTransparency:[[_profile objectForKey:KEY_TRANSPARENCY] floatValue]];
-        const float theBlend = [_profile objectForKey:KEY_BLEND] ?
-                                   [[_profile objectForKey:KEY_BLEND] floatValue] : 0.5;
+    const float theBlend =
+        [_profile objectForKey:KEY_BLEND] ? [[_profile objectForKey:KEY_BLEND] floatValue] : 0.5;
     [self setBlend:theBlend];
 
     [_wrapper addSubview:_textview];
@@ -1873,7 +1873,9 @@ typedef enum {
 
     // transparency
     [self setTransparency:[[aDict objectForKey:KEY_TRANSPARENCY] floatValue]];
-    [self setBlend:[[aDict objectForKey:KEY_BLEND] floatValue]];
+    const float theBlend =
+        [aDict objectForKey:KEY_BLEND] ? [[aDict objectForKey:KEY_BLEND] floatValue] : 0.5;
+    [self setBlend:theBlend];
 
     // bold
     NSNumber* useBoldFontEntry = [aDict objectForKey:KEY_USE_BOLD_FONT];

@@ -23,7 +23,6 @@
                 <outlet property="asciiAntiAliased" destination="4782" id="4877"/>
                 <outlet property="autoLog" destination="5685" id="5716"/>
                 <outlet property="basicsLabel" destination="3247" id="5772"/>
-                <outlet property="blend" destination="6320" id="6326"/>
                 <outlet property="blurRadius" destination="5363" id="5371"/>
                 <outlet property="bookmarkCommandLabel" destination="2132" id="3464"/>
                 <outlet property="bookmarkDirectoryLabel" destination="2129" id="3465"/>
@@ -2685,9 +2684,9 @@ Gw
                                                             <slider verticalHuggingPriority="750" id="6320">
                                                                 <rect key="frame" x="367" y="210" width="177" height="21"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <sliderCell key="cell" alignment="left" minValue="0.29999999999999999" maxValue="1" doubleValue="0.40000000000000002" tickMarkPosition="below" sliderType="linear" id="6321"/>
+                                                                <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.29999999999999999" maxValue="1" doubleValue="0.40000000000000002" tickMarkPosition="below" sliderType="linear" id="6321"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="6323"/>
+                                                                    <action selector="settingChanged:" target="BMA-OA-Kzc" id="O9z-H1-Kma"/>
                                                                     <outlet property="nextKeyView" destination="4976" id="6322"/>
                                                                 </connections>
                                                             </slider>
@@ -5219,6 +5218,7 @@ DQ
             <connections>
                 <outlet property="_backgroundImagePreview" destination="4974" id="zoR-T3-lJq"/>
                 <outlet property="_backgroundImageTiled" destination="6395" id="yEm-Wg-cU2"/>
+                <outlet property="_blendAmount" destination="6320" id="FUt-BP-aez"/>
                 <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
                 <outlet property="_transparency" destination="4978" id="uze-TU-NdW"/>
                 <outlet property="_useBackgroundImage" destination="4973" id="vZ6-QD-p27"/>

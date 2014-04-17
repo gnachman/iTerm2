@@ -155,7 +155,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSPopUpButton* windowTypeButton;
     IBOutlet NSTextField *screenLabel;
 
-    IBOutlet NSSlider *blend;
     IBOutlet NSButton* asciiAntiAliased;
     IBOutlet NSButton* nonasciiAntiAliased;
 
@@ -430,7 +429,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if ([spaceButton selectedTag]) {
         [newDict setObject:[NSNumber numberWithInt:[spaceButton selectedTag]] forKey:KEY_SPACE];
     }
-    [newDict setObject:[NSNumber numberWithFloat:[blend floatValue]] forKey:KEY_BLEND];
     [newDict setObject:[NSNumber numberWithBool:([asciiAntiAliased state]==NSOnState)] forKey:KEY_ASCII_ANTI_ALIASED];
     [newDict setObject:[NSNumber numberWithBool:([nonasciiAntiAliased state]==NSOnState)] forKey:KEY_NONASCII_ANTI_ALIASED];
 
@@ -1387,13 +1385,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         [spaceButton selectItemWithTag:[[dict objectForKey:KEY_SPACE] intValue]];
     } else {
         [spaceButton selectItemWithTag:0];
-    }
-
-    if ([dict objectForKey:KEY_BLEND]) {
-        [blend setFloatValue:[[dict objectForKey:KEY_BLEND] floatValue]];
-    } else {
-        // Old clients used transparency for blending
-        [blend setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
     }
 
     if ([dict objectForKey:KEY_ASCII_ANTI_ALIASED]) {

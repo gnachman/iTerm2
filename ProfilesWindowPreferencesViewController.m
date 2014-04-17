@@ -24,6 +24,7 @@
     IBOutlet NSButton *_useBackgroundImage;
     IBOutlet NSImageView *_backgroundImagePreview;
     IBOutlet NSButton *_backgroundImageTiled;
+    IBOutlet NSSlider *_blendAmount;
 }
 
 - (void)dealloc {
@@ -55,6 +56,10 @@
     [self defineControl:_backgroundImageTiled
                     key:KEY_BACKGROUND_IMAGE_TILED
                    type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_blendAmount
+                    key:KEY_BLEND
+                   type:kPreferenceInfoTypeSlider];
 }
 
 - (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict {

@@ -19,8 +19,6 @@ NSString *const kProfilePreferenceInitialDirectoryHomeValue = @"No";
 NSString *const kProfilePreferenceInitialDirectoryRecycleValue = @"Recycle";
 NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 
-#define BLOCK(x) [^id(Profile *profile) { return [self x:profile]; } copy]
-
 @implementation iTermProfilePreferences
 
 #pragma mark - APIs
@@ -155,7 +153,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_TRANSPARENCY: @0.0,
                   KEY_BLUR: @NO,
                   KEY_BLUR_RADIUS: @2.0,
-                  KEY_BACKGROUND_IMAGE_TILED: @NO
+                  KEY_BACKGROUND_IMAGE_TILED: @NO,
+                  KEY_BLEND: @0.5,
                 };
         [dict retain];
     }
