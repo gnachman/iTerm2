@@ -12,6 +12,8 @@
 
 @implementation ProfilesWindowPreferencesViewController {
     IBOutlet NSSlider *_transparency;
+    IBOutlet NSButton *_useBlur;
+    IBOutlet NSSlider *_blurRadius;
 }
 
 - (void)dealloc {
@@ -26,9 +28,18 @@
                                                object:nil];
 
     PreferenceInfo *info;
-    info = [self defineControl:_transparency
-                           key:KEY_TRANSPARENCY
-                          type:kPreferenceInfoTypeSlider];
+    [self defineControl:_transparency
+                    key:KEY_TRANSPARENCY
+                   type:kPreferenceInfoTypeSlider];
+    
+    info = [self defineControl:_useBlur
+                           key:KEY_BLUR
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() { _blurRadius.enabled = (_useBlur.state == NSOnState); };
+    
+    [self defineControl:_blurRadius
+                    key:KEY_BLUR_RADIUS
+                   type:kPreferenceInfoTypeSlider];
 }
 
 @end

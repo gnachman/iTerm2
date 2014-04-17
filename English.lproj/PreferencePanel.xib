@@ -27,7 +27,6 @@
                 <outlet property="backgroundImageTiled" destination="6395" id="6399"/>
                 <outlet property="basicsLabel" destination="3247" id="5772"/>
                 <outlet property="blend" destination="6320" id="6326"/>
-                <outlet property="blur" destination="4976" id="4995"/>
                 <outlet property="blurRadius" destination="5363" id="5371"/>
                 <outlet property="bookmarkCommandLabel" destination="2132" id="3464"/>
                 <outlet property="bookmarkDirectoryLabel" destination="2129" id="3465"/>
@@ -2561,13 +2560,12 @@ Gw
                                                             <button id="4976">
                                                                 <rect key="frame" x="29" y="296" width="63" height="18"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <buttonCell key="cell" type="check" title="Blur:" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4985">
+                                                                <buttonCell key="cell" type="check" title="Blur:" bezelStyle="regularSquare" imagePosition="left" alignment="left" continuous="YES" inset="2" id="4985">
                                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="4990"/>
-                                                                    <outlet property="nextKeyView" destination="5363" id="5372"/>
+                                                                    <action selector="settingChanged:" target="BMA-OA-Kzc" id="AhR-TB-yqJ"/>
                                                                 </connections>
                                                             </button>
                                                             <textField verticalHuggingPriority="750" id="4977">
@@ -2620,7 +2618,7 @@ Gw
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.10000000000000001" maxValue="15" doubleValue="0.10000000000000001" tickMarkPosition="below" sliderType="linear" id="5368"/>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="5370"/>
+                                                                    <action selector="settingChanged:" target="BMA-OA-Kzc" id="AJB-o1-kDf"/>
                                                                     <outlet property="nextKeyView" destination="4973" id="5373"/>
                                                                 </connections>
                                                             </slider>
@@ -5222,7 +5220,9 @@ DQ
         </customObject>
         <customObject id="BMA-OA-Kzc" customClass="ProfilesWindowPreferencesViewController">
             <connections>
+                <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
                 <outlet property="_transparency" destination="4978" id="uze-TU-NdW"/>
+                <outlet property="_useBlur" destination="4976" id="ZfQ-et-Uge"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="7Ch-0z-mdS"/>
                 <outlet property="view" destination="4910" id="W8Y-Gm-dzl"/>
             </connections>
