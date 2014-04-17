@@ -34,6 +34,10 @@
     IBOutlet NSPopUpButton *_screen;
     IBOutlet NSTextField *_screenLabel;
     IBOutlet NSPopUpButton *_space;
+    IBOutlet NSTextField *_columnsLabel;
+    IBOutlet NSTextField *_rowsLabel;
+    IBOutlet NSTextField *_windowStyleLabel;
+    IBOutlet NSTextField *_spaceLabel;
 }
 
 - (void)dealloc {
@@ -115,7 +119,11 @@
         [view setEnabled:NO];
     }
     
-    NSArray *labelsToDisable = @[ _screenLabel ];
+    NSArray *labelsToDisable = @[ _screenLabel,
+                                  _columnsLabel,
+                                  _rowsLabel,
+                                  _spaceLabel,
+                                  _windowStyleLabel ];
     for (NSTextField *field in labelsToDisable) {
         [field setLabelEnabled:NO];
     }

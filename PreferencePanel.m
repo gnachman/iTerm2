@@ -143,11 +143,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     // Bookmarks -----------------------------
 
     // Window tab
-    IBOutlet NSTextField *columnsLabel;
-    IBOutlet NSTextField *rowsLabel;
-    IBOutlet NSTextField* windowTypeLabel;
-    IBOutlet NSTextField* spaceLabel;
-
     IBOutlet NSButton* asciiAntiAliased;
     IBOutlet NSButton* nonasciiAntiAliased;
 
@@ -290,11 +285,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [self showBookmarks];
     [_profilesViewController layoutSubviewsForSingleBookmarkMode];
     [toolbar setVisible:NO];
-
-    [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
-    [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
-    [spaceLabel setTextColor:[NSColor disabledControlTextColor]];
-    [windowTypeLabel setTextColor:[NSColor disabledControlTextColor]];
 
     NSRect newFrame = [[self window] frame];
     newFrame.size.width = [_profilesViewController size].width + 26;

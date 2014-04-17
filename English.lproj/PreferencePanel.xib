@@ -36,7 +36,6 @@
                 <outlet property="bookmarksToolbarItem" destination="5886" id="6039"/>
                 <outlet property="characterEncoding" destination="2390" id="3148"/>
                 <outlet property="closeSessionsOnEnd" destination="5681" id="5737"/>
-                <outlet property="columnsLabel" destination="4912" id="4961"/>
                 <outlet property="deleteSendsCtrlHButton" destination="5074" id="5078"/>
                 <outlet property="disablePrinting" destination="5633" id="5637"/>
                 <outlet property="disableSmcupRmcup" destination="5081" id="5085"/>
@@ -58,7 +57,6 @@
                 <outlet property="promptBeforeClosing_" destination="5728" id="5733"/>
                 <outlet property="removeJobButton_" destination="5669" id="5723"/>
                 <outlet property="rightOptionKeySends" destination="4293" id="4308"/>
-                <outlet property="rowsLabel" destination="4913" id="4962"/>
                 <outlet property="scrollbackInAlternateScreen" destination="5758" id="5762"/>
                 <outlet property="scrollbackLines" destination="2401" id="3150"/>
                 <outlet property="scrollbackWithStatusBar" destination="5154" id="5157"/>
@@ -66,7 +64,6 @@
                 <outlet property="setLocaleVars" destination="6045" id="6047"/>
                 <outlet property="silenceBell" destination="2397" id="3144"/>
                 <outlet property="smartSelectionWindowController_" destination="5863" id="5921"/>
-                <outlet property="spaceLabel" destination="4920" id="4968"/>
                 <outlet property="syncTitle" destination="5008" id="5011"/>
                 <outlet property="tabView" destination="1943" id="2853"/>
                 <outlet property="terminalType" destination="2405" id="3155"/>
@@ -76,7 +73,6 @@
                 <outlet property="unlimitedScrollback" destination="3647" id="3650"/>
                 <outlet property="visualBell" destination="2403" id="3145"/>
                 <outlet property="window" destination="1923" id="2981"/>
-                <outlet property="windowTypeLabel" destination="4918" id="4964"/>
                 <outlet property="xtermMouseReporting" destination="2402" id="3146"/>
             </connections>
         </customObject>
@@ -5208,15 +5204,19 @@ DQ
                 <outlet property="_blendAmount" destination="6320" id="FUt-BP-aez"/>
                 <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
                 <outlet property="_columnsField" destination="4911" id="X3h-Pu-qzV"/>
+                <outlet property="_columnsLabel" destination="4912" id="veJ-9B-Jrh"/>
                 <outlet property="_hideAfterOpening" destination="6354" id="ivO-Qa-O3r"/>
                 <outlet property="_rowsField" destination="4914" id="ByA-st-yaA"/>
+                <outlet property="_rowsLabel" destination="4913" id="JG6-6Y-B6a"/>
                 <outlet property="_screen" destination="4917" id="h9y-lf-09F"/>
                 <outlet property="_screenLabel" destination="4919" id="tHd-7A-AVt"/>
                 <outlet property="_space" destination="4921" id="eYi-dz-bDx"/>
+                <outlet property="_spaceLabel" destination="4920" id="hZ0-FW-sxK"/>
                 <outlet property="_transparency" destination="4978" id="uze-TU-NdW"/>
                 <outlet property="_useBackgroundImage" destination="4973" id="vZ6-QD-p27"/>
                 <outlet property="_useBlur" destination="4976" id="ZfQ-et-Uge"/>
                 <outlet property="_windowStyle" destination="4916" id="HIG-WO-wce"/>
+                <outlet property="_windowStyleLabel" destination="4918" id="65O-r4-WZw"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="7Ch-0z-mdS"/>
                 <outlet property="view" destination="4910" id="W8Y-Gm-dzl"/>
             </connections>
