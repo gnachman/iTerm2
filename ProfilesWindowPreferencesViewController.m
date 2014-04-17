@@ -9,6 +9,7 @@
 #import "ProfilesWindowPreferencesViewController.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
+#import "iTermWarning.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 
@@ -32,6 +33,7 @@
     IBOutlet NSPopUpButton *_windowStyle;
     IBOutlet NSPopUpButton *_screen;
     IBOutlet NSTextField *_screenLabel;
+    IBOutlet NSPopUpButton *_space;
 }
 
 - (void)dealloc {
@@ -91,6 +93,15 @@
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [self screenDidChange]; }
                  update:^BOOL{ [self updateScreen]; return YES; }];
+    
+    info = [self defineControl:_space
+                           key:KEY_SPACE
+                          type:kPreferenceInfoTypePopup];
+    info.onChange = ^() {
+        if ([_space selectedTag] > 0) {
+            [self maybeWarnAboutSpaces];
+        }
+    };
 }
 
 - (void)layoutSubviewsForSingleBookmarkMode {
@@ -98,7 +109,8 @@
                                  _rowsField,
                                  _hideAfterOpening,
                                  _windowStyle,
-                                 _screen ];
+                                 _screen,
+                                 _space ];
     for (id view in viewsToDisable) {
         [view setEnabled:NO];
     }
@@ -205,6 +217,19 @@
     if (![_screen selectItemWithTag:[self intForKey:KEY_SCREEN]]) {
         [_screen selectItemWithTag:-1];
     }
+}
+
+#pragma mark - Spaces
+
+- (void)maybeWarnAboutSpaces
+{
+    [iTermWarning showWarningWithTitle:@"To have a new window open in a specific space, "
+                                       @"make sure that Spaces is enabled in System "
+                                       @"Preferences and that it is configured to switch directly "
+                                       @"to a space with ^ Number Keys."
+                               actions:@[ @"OK" ]
+                            identifier:@"NeverWarnAboutSpaces"
+                           silenceable:kiTermWarningTypePermanentlySilenceable];
 }
 
 

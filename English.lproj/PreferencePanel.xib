@@ -66,7 +66,6 @@
                 <outlet property="setLocaleVars" destination="6045" id="6047"/>
                 <outlet property="silenceBell" destination="2397" id="3144"/>
                 <outlet property="smartSelectionWindowController_" destination="5863" id="5921"/>
-                <outlet property="spaceButton" destination="4921" id="4967"/>
                 <outlet property="spaceLabel" destination="4920" id="4968"/>
                 <outlet property="syncTitle" destination="5008" id="5011"/>
                 <outlet property="tabView" destination="1943" id="2853"/>
@@ -2490,7 +2489,7 @@ Gw
                                                                     </menu>
                                                                 </popUpButtonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="4956"/>
+                                                                    <action selector="settingChanged:" target="BMA-OA-Kzc" id="cwq-Sh-GKV"/>
                                                                     <outlet property="nextKeyView" destination="5008" id="5262"/>
                                                                 </connections>
                                                             </popUpButton>
@@ -5213,6 +5212,7 @@ DQ
                 <outlet property="_rowsField" destination="4914" id="ByA-st-yaA"/>
                 <outlet property="_screen" destination="4917" id="h9y-lf-09F"/>
                 <outlet property="_screenLabel" destination="4919" id="tHd-7A-AVt"/>
+                <outlet property="_space" destination="4921" id="eYi-dz-bDx"/>
                 <outlet property="_transparency" destination="4978" id="uze-TU-NdW"/>
                 <outlet property="_useBackgroundImage" destination="4973" id="vZ6-QD-p27"/>
                 <outlet property="_useBlur" destination="4976" id="ZfQ-et-Uge"/>

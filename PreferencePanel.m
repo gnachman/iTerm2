@@ -147,7 +147,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSTextField *rowsLabel;
     IBOutlet NSTextField* windowTypeLabel;
     IBOutlet NSTextField* spaceLabel;
-    IBOutlet NSPopUpButton* spaceButton;
 
     IBOutlet NSButton* asciiAntiAliased;
     IBOutlet NSButton* nonasciiAntiAliased;
@@ -294,7 +293,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
     [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
-    [spaceButton setEnabled:NO];
     [spaceLabel setTextColor:[NSColor disabledControlTextColor]];
     [windowTypeLabel setTextColor:[NSColor disabledControlTextColor]];
 
@@ -378,9 +376,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     } else if (sender == rightOptionKeySends && [[rightOptionKeySends selectedCell] tag] == OPT_META) {
         [self _maybeWarnAboutMeta];
     }
-    if (sender == spaceButton && [spaceButton selectedTag] > 0) {
-        [self _maybeWarnAboutSpaces];
-    }
     Profile *origBookmark = [_profilesViewController selectedProfile];
     NSString *guid = origBookmark[KEY_GUID];
     if (!guid || !origBookmark) {
@@ -401,9 +396,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     // Display tab
-    if ([spaceButton selectedTag]) {
-        [newDict setObject:[NSNumber numberWithInt:[spaceButton selectedTag]] forKey:KEY_SPACE];
-    }
     [newDict setObject:[NSNumber numberWithBool:([asciiAntiAliased state]==NSOnState)] forKey:KEY_ASCII_ANTI_ALIASED];
     [newDict setObject:[NSNumber numberWithBool:([nonasciiAntiAliased state]==NSOnState)] forKey:KEY_NONASCII_ANTI_ALIASED];
 
@@ -1315,12 +1307,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     name = [dict objectForKey:KEY_NAME];
 
     // Display tab
-    if ([dict objectForKey:KEY_SPACE]) {
-        [spaceButton selectItemWithTag:[[dict objectForKey:KEY_SPACE] intValue]];
-    } else {
-        [spaceButton selectItemWithTag:0];
-    }
-
     if ([dict objectForKey:KEY_ASCII_ANTI_ALIASED]) {
         [asciiAntiAliased setState:[[dict objectForKey:KEY_ASCII_ANTI_ALIASED] boolValue] ? NSOnState : NSOffState];
     } else {
@@ -1411,15 +1397,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
                                        @"compatibility with older systems. The \"+Esc\" option is recommended for most users."
                                actions:@[ @"OK" ]
                             identifier:@"NeverWarnAboutMeta"
-                           silenceable:kiTermWarningTypePermanentlySilenceable];
-}
-
-- (void)_maybeWarnAboutSpaces
-{
-    [iTermWarning showWarningWithTitle:@"To have a new window open in a specific space, make sure that Spaces is enabled in System "
-                                       @"Preferences and that it is configured to switch directly to a space with ^ Number Keys."
-                               actions:@[ @"OK" ]
-                            identifier:@"NeverWarnAboutSpaces"
                            silenceable:kiTermWarningTypePermanentlySilenceable];
 }
 
