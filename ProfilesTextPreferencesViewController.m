@@ -103,7 +103,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     PreferenceInfo *info = [self defineControl:_useNonAsciiFont
                                            key:KEY_USE_NONASCII_FONT
                                           type:kPreferenceInfoTypeCheckbox];
-    info.onChange = ^{ [self updateNonAsciiFontViewVisibility]; };
+    info.observer = ^{ [self updateNonAsciiFontViewVisibility]; };
 
     [self updateFontsDescriptions];
     [self updateNonAsciiFontViewVisibility];

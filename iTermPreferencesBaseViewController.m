@@ -13,9 +13,17 @@
 #import "NSStringITerm.h"
 #import "PreferencePanel.h"
 
+static NSString *const kPreferenceDidChangeFromOtherPanel = @"kPreferenceDidChangeFromOtherPanel";
+
+// key for userInfo dictionary of kPreferenceDidChangeFromOtherPanel notification having
+// key of changed preference.
+static NSString *const kKey = @"key";
+
 @implementation iTermPreferencesBaseViewController {
     // Maps NSControl* -> PreferenceInfo*.
     NSMapTable *_keyMap;
+    // Set of all defined keys (KEY_XXX).
+    NSMutableSet *_keys;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -25,13 +33,30 @@
         _keyMap = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory
                                             valueOptions:NSPointerFunctionsStrongMemory
                                                 capacity:16];
+        _keys = [[NSMutableSet alloc] init];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(preferenceDidChangeFromOtherPanel:)
+                                                     name:kPreferenceDidChangeFromOtherPanel
+                                                   object:nil];
     }
     return self;
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_keyMap release];
+    [_keys release];
     [super dealloc];
+}
+
+- (PreferenceInfo *)infoForKey:(NSString *)key {
+    for (NSControl *control in _keyMap) {
+        PreferenceInfo *info = [self infoForControl:control];
+        if ([info.key isEqualToString:key]) {
+            return info;
+        }
+    }
+    return nil;
 }
 
 #pragma mark - Methods to override
@@ -84,6 +109,10 @@
     return [iTermPreferences defaultValueForKey:key isCompatibleWithType:type];
 }
 
+- (BOOL)shouldUpdateOtherPanels {
+    return YES;
+}
+
 #pragma mark - APIs
 
 - (IBAction)settingChanged:(id)sender {
@@ -96,48 +125,56 @@
     
     if (info.customSettingChangedHandler) {
         info.customSettingChangedHandler(sender);
-        return;
-    }
+    } else {
+        switch (info.type) {
+            case kPreferenceInfoTypeCheckbox:
+                [self setBool:([sender state] == NSOnState) forKey:info.key];
+                break;
 
-    switch (info.type) {
-        case kPreferenceInfoTypeCheckbox:
-            [self setBool:([sender state] == NSOnState) forKey:info.key];
-            break;
+            case kPreferenceInfoTypeIntegerTextField:
+                [self applyIntegerConstraints:info];
+                [self setInt:[sender intValue] forKey:info.key];
+                break;
+                
+            case kPreferenceInfoTypeStringTextField:
+                [self setString:[sender stringValue] forKey:info.key];
+                break;
+                
+            case kPreferenceInfoTypeTokenField:
+                [self setObject:[sender objectValue] forKey:info.key];
+                break;
 
-        case kPreferenceInfoTypeIntegerTextField:
-            [self applyIntegerConstraints:info];
-            [self setInt:[sender intValue] forKey:info.key];
-            break;
+            case kPreferenceInfoTypeMatrix:
+                assert(false);  // Must use a custom setting changed handler
             
-        case kPreferenceInfoTypeStringTextField:
-            [self setString:[sender stringValue] forKey:info.key];
-            break;
-            
-        case kPreferenceInfoTypeTokenField:
-            [self setObject:[sender objectValue] forKey:info.key];
-            break;
+            case kPreferenceInfoTypePopup:
+                [self setInt:[sender selectedTag] forKey:info.key];
+                break;
+                
+            case kPreferenceInfoTypeSlider:
+                [self setFloat:[sender doubleValue] forKey:info.key];
+                break;
 
-        case kPreferenceInfoTypeMatrix:
-            assert(false);  // Must use a custom setting changed handler
-        
-        case kPreferenceInfoTypePopup:
-            [self setInt:[sender selectedTag] forKey:info.key];
-            break;
-            
-        case kPreferenceInfoTypeSlider:
-            [self setFloat:[sender doubleValue] forKey:info.key];
-            break;
+            case kPreferenceInfoTypeColorWell:
+                [self setObject:[[sender color] dictionaryValue] forKey:info.key];
+                break;
 
-        case kPreferenceInfoTypeColorWell:
-            [self setObject:[[sender color] dictionaryValue] forKey:info.key];
-            break;
-
-        default:
-            assert(false);
+            default:
+                assert(false);
+        }
+        if (info.onChange) {
+            info.onChange();
+        }
     }
-    if (info.onChange) {
-        info.onChange();
+    if (info.observer) {
+        info.observer();
     }
+    if ([self shouldUpdateOtherPanels]) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPreferenceDidChangeFromOtherPanel
+                                                            object:self
+                                                          userInfo:@{ kKey: info.key }];
+    }
+    
 }
 
 - (PreferenceInfo *)defineControl:(NSControl *)control
@@ -170,6 +207,7 @@
     info.customSettingChangedHandler = settingChanged;
     info.onUpdate = update;
     [_keyMap setObject:info forKey:control];
+    [_keys addObject:key];
     [self updateValueForInfo:info];
     
     return info;
@@ -243,6 +281,9 @@
         default:
             assert(false);
     }
+    if (info.observer) {
+        info.observer();
+    }
 }
 
 - (void)updateEnabledState {
@@ -314,6 +355,18 @@
     if (info) {
         [self settingChanged:control];
     }
+}
+
+#pragma mark - Notifications
+
+- (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification {
+    NSString *key = notification.userInfo[kKey];
+    if (![_keys containsObject:key]) {
+        return;
+    }
+    PreferenceInfo *info = [self infoForKey:key];
+    assert(info);
+    [self updateValueForInfo:info];
 }
 
 @end

@@ -77,12 +77,12 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
     info = [self defineControl:_useTabColor
                            key:KEY_USE_TAB_COLOR
                           type:kPreferenceInfoTypeCheckbox];
-    info.onUpdate = ^BOOL() { [self updateColorControlsEnabled]; return NO; };
+    info.observer = ^() { [self updateColorControlsEnabled]; };
 
     info = [self defineControl:_useSmartCursorColor
                            key:KEY_SMART_CURSOR_COLOR
                           type:kPreferenceInfoTypeCheckbox];
-    info.onUpdate = ^BOOL() { [self updateColorControlsEnabled]; return NO; };
+    info.observer = ^() { [self updateColorControlsEnabled]; };
     
     [self defineControl:_minimumContrast
                     key:KEY_MINIMUM_CONTRAST

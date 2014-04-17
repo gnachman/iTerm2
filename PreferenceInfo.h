@@ -31,16 +31,38 @@ typedef enum {
 // enabled.
 @property(nonatomic, copy) BOOL (^shouldBeEnabled)();
 
-// Called when value changes with PreferenceInfo as object.
+// Called when the user changes a control's value by interacting with it, or after its value is
+// changed programmatically. It is also invoked by a delayed perform from setObserver:. It should
+// be idempotent.
+// This is typically used when changing one view's value affects another view's appearance. For
+// example, if turning on a checkbox causes a view to appear, the checkbox's observer would update
+// the view's hidden flag.
+@property(nonatomic, copy) void (^observer)();
+
+// Called when the user changes a control's value by interacting with it.
+// This is typically used when changing a control triggers an event beyond simply updating the
+// display style. For example, it might open a file picker dialog or register for a hotkey.
 @property(nonatomic, copy) void (^onChange)();
 
-// Called before a change occurs.
+// Called when a user interacts with a control, changing its value. This is called before anything
+// else happens (such as invoking customSettingChangedHandler()) or updating user defaults.
+// This isn't used much. It is meant to be used when a user changing a control's value would cause
+// irreparable harm (for example, renaming a profile while there is a search filter in place, such
+// that the renamed profile would no longer match the filter), and is the last chance to mitigate
+// the damage.
 @property(nonatomic, copy) void (^willChange)();
 
-// Called before a control's value is updated. If it returns YES, the normal path is not taken.
+// Called before a control's value is changed programatically (e.g., when a different profile is
+// selected). If it returns YES, the normal path is not taken, and the block is responsible for
+// updating the control to reflect the user preference.
+// This is normally used on popups and matrixes to update the control to reflect the
+// user preference.
 @property(nonatomic, copy) BOOL (^onUpdate)();
 
-// Replaces the default settingChanged: handler which updates user defaults and calls onChange.
+// Replaces the default settingChanged: handler, which updates user defaults and calls onChange.
+// It is called when the user interacts with a control, changing its value.
+// This is normally used on popups and matrixes to update user defaults to reflect the control's
+// state.
 @property(nonatomic, copy) void (^customSettingChangedHandler)(id sender);
 
 + (instancetype)infoForPreferenceWithKey:(NSString *)key

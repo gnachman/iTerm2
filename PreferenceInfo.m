@@ -37,4 +37,18 @@
     [super dealloc];
 }
 
+- (void)setObserver:(void (^)())observer {
+    [_observer autorelease];
+    _observer = [observer copy];
+    // Call the observer after a delayed perform so that the current profile can be set and then the
+    // control's value gets initialized.
+    [self performSelector:@selector(callObserver) withObject:nil afterDelay:0];
+}
+
+- (void)callObserver {
+    if (self.observer) {
+        self.observer();
+    }
+}
+
 @end

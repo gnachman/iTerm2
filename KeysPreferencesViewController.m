@@ -89,7 +89,7 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                            key:kPreferenceKeyHotkeyEnabled
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self hotkeyEnabledDidChange]; };
-    [self updateHotkeyViews];
+    info.observer = ^() { [self updateHotkeyViews]; };
 
     info = [self defineControl:_hotkeyTogglesWindow
                            key:kPreferenceKeyHotKeyTogglesWindow

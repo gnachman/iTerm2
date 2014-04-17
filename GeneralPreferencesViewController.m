@@ -153,10 +153,8 @@
     info = [self defineControl:_loadPrefsFromCustomFolder
                            key:kPreferenceKeyLoadPrefsFromCustomFolder
                           type:kPreferenceInfoTypeCheckbox];
-    info.onChange = ^() {
-        [self loadPrefsFromCustomFolderDidChange];
-    };
-    [self updateEnabledStateForCustomFolderButtons];
+    info.onChange = ^() { [self loadPrefsFromCustomFolderDidChange]; };
+    info.observer = ^() { [self updateEnabledStateForCustomFolderButtons]; };
 
     
     // ---------------------------------------------------------------------------------------------

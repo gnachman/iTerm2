@@ -66,6 +66,10 @@
     [iTermProfilePreferences setString:value forKey:key inProfile:profile model:model];
 }
 
+- (BOOL)shouldUpdateOtherPanels {
+    return [self.delegate profilePreferencesCurrentModel] == [ProfileModel sharedInstance];
+}
+
 - (BOOL)keyHasDefaultValue:(NSString *)key {
     return [iTermProfilePreferences keyHasDefaultValue:key];
 }
