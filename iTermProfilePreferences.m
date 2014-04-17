@@ -161,7 +161,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_WINDOW_TYPE: @(WINDOW_TYPE_NORMAL),
                   KEY_SCREEN: @-1,
                   KEY_SPACE: @0,
-                  KEY_SYNC_TITLE: @NO
+                  KEY_SYNC_TITLE: @NO,
+                  KEY_DISABLE_WINDOW_RESIZING: @NO
                 };
         [dict retain];
     }

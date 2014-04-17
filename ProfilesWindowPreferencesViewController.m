@@ -39,6 +39,7 @@
     IBOutlet NSTextField *_windowStyleLabel;
     IBOutlet NSTextField *_spaceLabel;
     IBOutlet NSButton *_syncTitle;
+    IBOutlet NSButton *_disableWindowResizing;
 }
 
 - (void)dealloc {
@@ -110,6 +111,10 @@
     
     [self defineControl:_syncTitle
                     key:KEY_SYNC_TITLE
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_disableWindowResizing
+                    key:KEY_DISABLE_WINDOW_RESIZING
                    type:kPreferenceInfoTypeCheckbox];
 }
 

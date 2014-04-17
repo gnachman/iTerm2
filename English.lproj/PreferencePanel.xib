@@ -39,7 +39,6 @@
                 <outlet property="deleteSendsCtrlHButton" destination="5074" id="5078"/>
                 <outlet property="disablePrinting" destination="5633" id="5637"/>
                 <outlet property="disableSmcupRmcup" destination="5081" id="5085"/>
-                <outlet property="disableWindowResizing" destination="5004" id="5007"/>
                 <outlet property="flashingBell" destination="3553" id="3557"/>
                 <outlet property="globalTabViewItem" destination="1944" id="2864"/>
                 <outlet property="globalToolbarItem" destination="5887" id="6037"/>
@@ -2626,7 +2625,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="5006"/>
+                                                                    <action selector="settingChanged:" target="BMA-OA-Kzc" id="ykh-bM-pd7"/>
                                                                     <outlet property="nextKeyView" destination="4978" id="5264"/>
                                                                 </connections>
                                                             </button>
@@ -5204,6 +5203,7 @@ DQ
                 <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
                 <outlet property="_columnsField" destination="4911" id="X3h-Pu-qzV"/>
                 <outlet property="_columnsLabel" destination="4912" id="veJ-9B-Jrh"/>
+                <outlet property="_disableWindowResizing" destination="5004" id="ELk-qv-bSY"/>
                 <outlet property="_hideAfterOpening" destination="6354" id="ivO-Qa-O3r"/>
                 <outlet property="_rowsField" destination="4914" id="ByA-st-yaA"/>
                 <outlet property="_rowsLabel" destination="4913" id="JG6-6Y-B6a"/>
