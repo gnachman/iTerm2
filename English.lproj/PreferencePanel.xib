@@ -44,7 +44,6 @@
                 <outlet property="flashingBell" destination="3553" id="3557"/>
                 <outlet property="globalTabViewItem" destination="1944" id="2864"/>
                 <outlet property="globalToolbarItem" destination="5887" id="6037"/>
-                <outlet property="hideAfterOpening" destination="6354" id="6356"/>
                 <outlet property="idleCode" destination="5698" id="5718"/>
                 <outlet property="initialTextLabel" destination="5408" id="5415"/>
                 <outlet property="jobsTable_" destination="5661" id="5719"/>
@@ -2690,7 +2689,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="6357"/>
+                                                                    <action selector="settingChanged:" target="BMA-OA-Kzc" id="SPU-HF-C0e"/>
                                                                 </connections>
                                                             </button>
                                                         </subviews>
@@ -5213,6 +5212,7 @@ DQ
                 <outlet property="_blendAmount" destination="6320" id="FUt-BP-aez"/>
                 <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
                 <outlet property="_columnsField" destination="4911" id="X3h-Pu-qzV"/>
+                <outlet property="_hideAfterOpening" destination="6354" id="ivO-Qa-O3r"/>
                 <outlet property="_rowsField" destination="4914" id="ByA-st-yaA"/>
                 <outlet property="_transparency" destination="4978" id="uze-TU-NdW"/>
                 <outlet property="_useBackgroundImage" destination="4973" id="vZ6-QD-p27"/>
