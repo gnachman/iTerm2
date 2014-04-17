@@ -52,7 +52,6 @@
                 <outlet property="mouseToolbarItem" destination="6056" id="6057"/>
                 <outlet property="nonasciiAntiAliased" destination="4783" id="4878"/>
                 <outlet property="optionKeySends" destination="4291" id="4307"/>
-                <outlet property="preventTab" destination="6416" id="6420"/>
                 <outlet property="promptBeforeClosing_" destination="5728" id="5733"/>
                 <outlet property="removeJobButton_" destination="5669" id="5723"/>
                 <outlet property="rightOptionKeySends" destination="4293" id="4308"/>
@@ -2637,7 +2636,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="6419"/>
+                                                                    <action selector="settingChanged:" target="BMA-OA-Kzc" id="VYD-F1-fDI"/>
                                                                     <outlet property="nextKeyView" destination="4978" id="6418"/>
                                                                 </connections>
                                                             </button>
@@ -5205,6 +5204,7 @@ DQ
                 <outlet property="_columnsLabel" destination="4912" id="veJ-9B-Jrh"/>
                 <outlet property="_disableWindowResizing" destination="5004" id="ELk-qv-bSY"/>
                 <outlet property="_hideAfterOpening" destination="6354" id="ivO-Qa-O3r"/>
+                <outlet property="_preventTab" destination="6416" id="eRg-47-Fqf"/>
                 <outlet property="_rowsField" destination="4914" id="ByA-st-yaA"/>
                 <outlet property="_rowsLabel" destination="4913" id="JG6-6Y-B6a"/>
                 <outlet property="_screen" destination="4917" id="h9y-lf-09F"/>

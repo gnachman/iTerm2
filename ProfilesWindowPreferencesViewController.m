@@ -40,6 +40,7 @@
     IBOutlet NSTextField *_spaceLabel;
     IBOutlet NSButton *_syncTitle;
     IBOutlet NSButton *_disableWindowResizing;
+    IBOutlet NSButton *_preventTab;
 }
 
 - (void)dealloc {
@@ -115,6 +116,10 @@
     
     [self defineControl:_disableWindowResizing
                     key:KEY_DISABLE_WINDOW_RESIZING
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_preventTab
+                    key:KEY_PREVENT_TAB
                    type:kPreferenceInfoTypeCheckbox];
 }
 
