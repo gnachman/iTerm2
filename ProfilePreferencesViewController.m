@@ -16,6 +16,7 @@
 #import "ProfilesGeneralPreferencesViewController.h"
 #import "ProfilesColorsPreferencesViewController.h"
 #import "ProfilesTextPreferencesViewController.h"
+#import "ProfilesWindowPreferencesViewController.h"
 
 static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
@@ -56,6 +57,9 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     
     // Text tab view controller
     IBOutlet ProfilesTextPreferencesViewController *_textViewController;
+    
+    // Window tab view controller
+    IBOutlet ProfilesWindowPreferencesViewController *_windowViewController;
 }
 
 - (id)init {
@@ -138,7 +142,11 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
 - (void)openToProfileWithGuid:(NSString *)guid {
     [_profilesListView reloadData];
-    [self selectGuid:guid];
+    if ([[self selectedProfile][KEY_GUID] isEqualToString:guid]) {
+        [[self tabViewControllers] makeObjectsPerformSelector:@selector(reloadProfile)];
+    } else {
+        [self selectGuid:guid];
+    }
     [_tabView selectTabViewItem:_generalTab];
     [self.view.window performSelector:@selector(makeFirstResponder:)
                            withObject:_generalViewController.profileNameField
@@ -228,7 +236,10 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 }
 
 - (NSArray *)tabViewControllers {
-    return @[ _generalViewController, _colorsViewController, _textViewController ];
+    return @[ _generalViewController,
+              _colorsViewController,
+              _textViewController,
+              _windowViewController ];
 }
 
 #pragma mark - Actions

@@ -155,7 +155,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSPopUpButton* windowTypeButton;
     IBOutlet NSTextField *screenLabel;
 
-    IBOutlet NSSlider *transparency;
     IBOutlet NSSlider *blend;
     IBOutlet NSButton* blur;
     IBOutlet NSSlider *blurRadius;
@@ -298,7 +297,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [self setScreens];
 
     [blurRadius setContinuous:YES];
-    [transparency setContinuous:YES];
     [blend setContinuous:YES];
 
     if (oneBookmarkMode) {
@@ -474,7 +472,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if ([spaceButton selectedTag]) {
         [newDict setObject:[NSNumber numberWithInt:[spaceButton selectedTag]] forKey:KEY_SPACE];
     }
-    [newDict setObject:[NSNumber numberWithFloat:[transparency floatValue]] forKey:KEY_TRANSPARENCY];
     [newDict setObject:[NSNumber numberWithFloat:[blend floatValue]] forKey:KEY_BLEND];
     [newDict setObject:[NSNumber numberWithFloat:[blurRadius floatValue]] forKey:KEY_BLUR_RADIUS];
     [newDict setObject:[NSNumber numberWithBool:([blur state]==NSOnState)] forKey:KEY_BLUR];
@@ -1450,13 +1447,12 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         [spaceButton selectItemWithTag:0];
     }
 
-    [transparency setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
-        if ([dict objectForKey:KEY_BLEND]) {
-          [blend setFloatValue:[[dict objectForKey:KEY_BLEND] floatValue]];
-        } else {
-                // Old clients used transparency for blending
-                [blend setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
-        }
+    if ([dict objectForKey:KEY_BLEND]) {
+        [blend setFloatValue:[[dict objectForKey:KEY_BLEND] floatValue]];
+    } else {
+        // Old clients used transparency for blending
+        [blend setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
+    }
     [blurRadius setFloatValue:[dict objectForKey:KEY_BLUR_RADIUS] ? [[dict objectForKey:KEY_BLUR_RADIUS] floatValue] : 2.0];
     [blur setState:[[dict objectForKey:KEY_BLUR] boolValue] ? NSOnState : NSOffState];
 

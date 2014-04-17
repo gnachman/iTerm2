@@ -772,6 +772,9 @@
 		A6A2698318FE48B200437DA9 /* NSFont+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2698118FE48B200437DA9 /* NSFont+iTerm.h */; };
 		A6A2698418FE48B200437DA9 /* NSFont+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2698218FE48B200437DA9 /* NSFont+iTerm.m */; };
 		A6A2698518FE48B200437DA9 /* NSFont+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2698218FE48B200437DA9 /* NSFont+iTerm.m */; };
+		A6A2698818FF70C600437DA9 /* ProfilesWindowPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2698618FF70C600437DA9 /* ProfilesWindowPreferencesViewController.h */; };
+		A6A2698918FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2698718FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m */; };
+		A6A2698A18FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2698718FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
 		A6A5991E1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
 		A6A5991F1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
@@ -1384,6 +1387,8 @@
 		A6A2697D18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesTextPreferencesViewController.m; sourceTree = "<group>"; };
 		A6A2698118FE48B200437DA9 /* NSFont+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSFont+iTerm.h"; sourceTree = "<group>"; };
 		A6A2698218FE48B200437DA9 /* NSFont+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSFont+iTerm.m"; sourceTree = "<group>"; };
+		A6A2698618FF70C600437DA9 /* ProfilesWindowPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesWindowPreferencesViewController.h; sourceTree = "<group>"; };
+		A6A2698718FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesWindowPreferencesViewController.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; };
 		A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasteHelper.h; sourceTree = "<group>"; };
@@ -2056,6 +2061,8 @@
 				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
 				1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */,
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
+				A6A2698618FF70C600437DA9 /* ProfilesWindowPreferencesViewController.h */,
+				A6A2698718FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -2534,6 +2541,7 @@
 				A693395C1851A61D00EBEA20 /* VT100ScreenMark.h in Headers */,
 				1D5FDD5D1208E8F000C46BA3 /* PSMRolloverButton.h in Headers */,
 				1D5FDD5E1208E8F000C46BA3 /* PSMTabBarCell.h in Headers */,
+				A6A2698818FF70C600437DA9 /* ProfilesWindowPreferencesViewController.h in Headers */,
 				A61B66CA18D4D855009AC9D5 /* NSView+iTerm.h in Headers */,
 				A68A3114186E2F14007F550F /* PopupWindow.h in Headers */,
 				1D5FDD5F1208E8F000C46BA3 /* PSMTabBarControl.h in Headers */,
@@ -3117,6 +3125,7 @@
 				1D53FD17181C4B4B00524D4F /* FindContext.m in Sources */,
 				1DD39B11180B817B004E56D5 /* VT100GridTypes.m in Sources */,
 				1D9A5564180FA84700B42CE9 /* NSDateFormatterExtras.m in Sources */,
+				A6A2698A18FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m in Sources */,
 				1D9A5529180FA61700B42CE9 /* VT100ScreenTest.m in Sources */,
 				A63F40A6183F3B78003A6A6D /* LineBlock.m in Sources */,
 				A60014F818550F3900CE38D8 /* NSMutableAttributedString+iTerm.m in Sources */,
@@ -3429,6 +3438,7 @@
 				1D3D21911482F18A00FAC8E7 /* TmuxController.m in Sources */,
 				1D3D21961483144600FAC8E7 /* TSVParser.m in Sources */,
 				1D3D21B014839AAB00FAC8E7 /* TmuxLayoutParser.m in Sources */,
+				A6A2698918FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m in Sources */,
 				1DB67CEE14850D53005849A1 /* TmuxWindowOpener.m in Sources */,
 				A693395D1851A61D00EBEA20 /* VT100ScreenMark.m in Sources */,
 				1DB67CF21485C578005849A1 /* TmuxHistoryParser.m in Sources */,

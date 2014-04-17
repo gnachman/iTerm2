@@ -151,7 +151,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_AMBIGUOUS_DOUBLE_WIDTH: @NO,
                   KEY_HORIZONTAL_SPACING: @1.0,
                   KEY_VERTICAL_SPACING: @1.0,
-                  KEY_USE_NONASCII_FONT: @YES
+                  KEY_USE_NONASCII_FONT: @YES,
+                  KEY_TRANSPARENCY: @0.0
                 };
         [dict retain];
     }

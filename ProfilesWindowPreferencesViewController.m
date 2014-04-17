@@ -7,20 +7,28 @@
 //
 
 #import "ProfilesWindowPreferencesViewController.h"
+#import "ITAddressBookMgr.h"
+#import "PreferencePanel.h"
 
-@interface ProfilesWindowPreferencesViewController ()
+@implementation ProfilesWindowPreferencesViewController {
+    IBOutlet NSSlider *_transparency;
+}
 
-@end
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [super dealloc];
+}
 
-@implementation ProfilesWindowPreferencesViewController
+- (void)awakeFromNib {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(reloadProfile)  // In superclass
+                                                 name:kReloadAllProfiles
+                                               object:nil];
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
-{
-    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-    if (self) {
-        // Initialization code here.
-    }
-    return self;
+    PreferenceInfo *info;
+    info = [self defineControl:_transparency
+                           key:KEY_TRANSPARENCY
+                          type:kPreferenceInfoTypeSlider];
 }
 
 @end
