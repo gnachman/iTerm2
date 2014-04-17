@@ -11,6 +11,7 @@
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 
 static NSString *const kPreferenceDidChangeFromOtherPanel = @"kPreferenceDidChangeFromOtherPanel";
@@ -133,7 +134,7 @@ static NSString *const kKey = @"key";
 
             case kPreferenceInfoTypeIntegerTextField:
                 [self applyIntegerConstraints:info];
-                [self setInt:[sender intValue] forKey:info.key];
+                [self setInt:[sender separatorTolerantIntValue] forKey:info.key];
                 break;
                 
             case kPreferenceInfoTypeStringTextField:
@@ -339,7 +340,7 @@ static NSString *const kKey = @"key";
     if (numChars) {
         lastChar = [[textField stringValue] characterAtIndex:numChars - 1];
     }
-    if (iv != [textField intValue] || (lastChar < '0' || lastChar > '9')) {
+    if (iv != [textField separatorTolerantIntValue] || (lastChar < '0' || lastChar > '9')) {
         // If the int values don't match up or there are terminal non-number
         // chars, then update the value.
         [textField setIntValue:iv];

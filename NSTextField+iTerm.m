@@ -7,6 +7,7 @@
 //
 
 #import "NSTextField+iTerm.h"
+#import "RegexKitLite.h"
 
 @implementation NSTextField (iTerm)
 
@@ -25,6 +26,16 @@
 
 - (void)setLabelEnabled:(BOOL)enabled {
     self.textColor = enabled ? [NSColor blackColor] : [NSColor disabledControlTextColor];
+}
+
+- (int)separatorTolerantIntValue {
+    NSString *digits = [[self stringValue] stringByReplacingOccurrencesOfRegex:@"[^0-9]"
+                                                                    withString:@""];
+    if ([[self stringValue] hasPrefix:@"-"]) {
+        return -[digits intValue];
+    } else {
+        return [digits intValue];
+    }
 }
 
 @end

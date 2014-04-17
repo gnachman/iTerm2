@@ -143,7 +143,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     // Bookmarks -----------------------------
 
     // Window tab
-    IBOutlet NSTextField *columnsField;
     IBOutlet NSTextField *columnsLabel;
     IBOutlet NSTextField *rowsLabel;
     IBOutlet NSTextField *rowsField;
@@ -302,7 +301,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
     [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
-    [columnsField setEnabled:NO];
     [rowsField setEnabled:NO];
     [windowTypeButton setEnabled:NO];
     [screenLabel setTextColor:[NSColor disabledControlTextColor]];
@@ -414,12 +412,8 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     // Display tab
-    int rows, cols;
+    int rows;
     rows = [rowsField intValue];
-    cols = [columnsField intValue];
-    if (cols > 0) {
-        [newDict setObject:[NSNumber numberWithInt:cols] forKey:KEY_COLUMNS];
-    }
     if (rows > 0) {
         [newDict setObject:[NSNumber numberWithInt:rows] forKey:KEY_ROWS];
     }
@@ -1372,8 +1366,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     name = [dict objectForKey:KEY_NAME];
 
     // Display tab
-    int cols = [[dict objectForKey:KEY_COLUMNS] intValue];
-    [columnsField setStringValue:[NSString stringWithFormat:@"%d", cols]];
     int rows = [[dict objectForKey:KEY_ROWS] intValue];
     [rowsField setStringValue:[NSString stringWithFormat:@"%d", rows]];
     [windowTypeButton selectItemWithTag:[dict objectForKey:KEY_WINDOW_TYPE] ? [[dict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL];
@@ -1545,8 +1537,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
                 [self forceTextFieldToBeNumber:scrollbackLines
                                            acceptableRange:NSMakeRange(0, 10 * 1000 * 1000)];
         [self bookmarkSettingChanged:nil];
-    } else if (obj == columnsField ||
-               obj == rowsField ||
+    } else if (obj == rowsField ||
                obj == terminalType ||
                obj == idleCode) {
         [self bookmarkSettingChanged:nil];

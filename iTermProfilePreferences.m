@@ -155,6 +155,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_BLUR_RADIUS: @2.0,
                   KEY_BACKGROUND_IMAGE_TILED: @NO,
                   KEY_BLEND: @0.5,
+                  KEY_COLUMNS: @80
                 };
         [dict retain];
     }

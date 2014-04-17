@@ -36,7 +36,6 @@
                 <outlet property="bookmarksToolbarItem" destination="5886" id="6039"/>
                 <outlet property="characterEncoding" destination="2390" id="3148"/>
                 <outlet property="closeSessionsOnEnd" destination="5681" id="5737"/>
-                <outlet property="columnsField" destination="4911" id="4959"/>
                 <outlet property="columnsLabel" destination="4912" id="4961"/>
                 <outlet property="deleteSendsCtrlHButton" destination="5074" id="5078"/>
                 <outlet property="disablePrinting" destination="5633" id="5637"/>
@@ -2354,16 +2353,13 @@ Gw
                                                             <textField verticalHuggingPriority="750" id="4911">
                                                                 <rect key="frame" x="94" y="166" width="140" height="22"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
-                                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="4951">
-                                                                    <numberFormatter key="formatter" formatterBehavior="default10_4" positiveFormat="#,##0.###" negativeFormat="#,##0.###" numberStyle="decimal" paddingCharacter="*" minimumIntegerDigits="1" maximumIntegerDigits="309" maximumFractionDigits="3" decimalSeparator="." groupingSeparator="," currencyDecimalSeparator="." plusSign="+" minusSign="-" notANumberSymbol="NaN" perMillSymbol="‰" percentSymbol="%" exponentSymbol="E" positivePrefix="" positiveSuffix="" negativePrefix="-" negativeSuffix="" id="4952">
-                                                                        <real key="minimum" value="1"/>
-                                                                    </numberFormatter>
+                                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" usesSingleLineMode="YES" id="4951">
                                                                     <font key="font" metaFont="system"/>
                                                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                                 </textFieldCell>
                                                                 <connections>
-                                                                    <outlet property="delegate" destination="-2" id="4954"/>
+                                                                    <outlet property="delegate" destination="BMA-OA-Kzc" id="Lri-mX-fdo"/>
                                                                     <outlet property="nextKeyView" destination="4914" id="5258"/>
                                                                 </connections>
                                                             </textField>
@@ -5220,6 +5216,7 @@ DQ
                 <outlet property="_backgroundImageTiled" destination="6395" id="yEm-Wg-cU2"/>
                 <outlet property="_blendAmount" destination="6320" id="FUt-BP-aez"/>
                 <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
+                <outlet property="_columnsField" destination="4911" id="X3h-Pu-qzV"/>
                 <outlet property="_transparency" destination="4978" id="uze-TU-NdW"/>
                 <outlet property="_useBackgroundImage" destination="4973" id="vZ6-QD-p27"/>
                 <outlet property="_useBlur" destination="4976" id="ZfQ-et-Uge"/>

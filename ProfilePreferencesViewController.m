@@ -114,7 +114,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     _copyToProfileButton.hidden = NO;
     _toggleTagsButton.hidden = YES;
     [_generalViewController layoutSubviewsForSingleBookmarkMode];
-
+    [_windowViewController layoutSubviewsForSingleBookmarkMode];
     NSRect newFrame = _tabView.frame;
     newFrame.origin.x = 0;
     _tabView.frame = newFrame;
