@@ -26,6 +26,7 @@
     IBOutlet NSButton *_backgroundImageTiled;
     IBOutlet NSSlider *_blendAmount;
     IBOutlet NSTextField *_columnsField;
+    IBOutlet NSTextField *_rowsField;
 }
 
 - (void)dealloc {
@@ -66,10 +67,15 @@
                            key:KEY_COLUMNS
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(1, 100000);  // An arbitrary but hopefully reasonable limit.
+
+    info = [self defineControl:_rowsField
+                           key:KEY_ROWS
+                          type:kPreferenceInfoTypeIntegerTextField];
+    info.range = NSMakeRange(1, 100000);  // An arbitrary but hopefully reasonable limit.
 }
 
 - (void)layoutSubviewsForSingleBookmarkMode {
-    NSArray *viewsToDisable = @[ _columnsField, ];
+    NSArray *viewsToDisable = @[ _columnsField, _rowsField ];
     for (id view in viewsToDisable) {
         [view setEnabled:NO];
     }

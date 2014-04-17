@@ -145,7 +145,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     // Window tab
     IBOutlet NSTextField *columnsLabel;
     IBOutlet NSTextField *rowsLabel;
-    IBOutlet NSTextField *rowsField;
     IBOutlet NSTextField* windowTypeLabel;
     IBOutlet NSPopUpButton* screenButton;
     IBOutlet NSTextField* spaceLabel;
@@ -301,7 +300,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
     [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
-    [rowsField setEnabled:NO];
     [windowTypeButton setEnabled:NO];
     [screenLabel setTextColor:[NSColor disabledControlTextColor]];
     [screenButton setEnabled:NO];
@@ -412,11 +410,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     // Display tab
-    int rows;
-    rows = [rowsField intValue];
-    if (rows > 0) {
-        [newDict setObject:[NSNumber numberWithInt:rows] forKey:KEY_ROWS];
-    }
     [newDict setObject:[NSNumber numberWithInt:[windowTypeButton selectedTag]] forKey:KEY_WINDOW_TYPE];
     [self setScreens];
     [newDict setObject:[NSNumber numberWithInt:[screenButton selectedTag]] forKey:KEY_SCREEN];
@@ -1366,8 +1359,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     name = [dict objectForKey:KEY_NAME];
 
     // Display tab
-    int rows = [[dict objectForKey:KEY_ROWS] intValue];
-    [rowsField setStringValue:[NSString stringWithFormat:@"%d", rows]];
     [windowTypeButton selectItemWithTag:[dict objectForKey:KEY_WINDOW_TYPE] ? [[dict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL];
     [self setScreens];
     if (![screenButton selectItemWithTag:[dict objectForKey:KEY_SCREEN] ? [[dict objectForKey:KEY_SCREEN] intValue] : -1]) {
@@ -1537,8 +1528,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
                 [self forceTextFieldToBeNumber:scrollbackLines
                                            acceptableRange:NSMakeRange(0, 10 * 1000 * 1000)];
         [self bookmarkSettingChanged:nil];
-    } else if (obj == rowsField ||
-               obj == terminalType ||
+    } else if (obj == terminalType ||
                obj == idleCode) {
         [self bookmarkSettingChanged:nil];
     } else if (obj == logDir) {

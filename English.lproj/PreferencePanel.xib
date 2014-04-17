@@ -59,7 +59,6 @@
                 <outlet property="promptBeforeClosing_" destination="5728" id="5733"/>
                 <outlet property="removeJobButton_" destination="5669" id="5723"/>
                 <outlet property="rightOptionKeySends" destination="4293" id="4308"/>
-                <outlet property="rowsField" destination="4914" id="4960"/>
                 <outlet property="rowsLabel" destination="4913" id="4962"/>
                 <outlet property="screenButton" destination="4917" id="4965"/>
                 <outlet property="screenLabel" destination="4919" id="4966"/>
@@ -2385,15 +2384,12 @@ Gw
                                                                 <rect key="frame" x="94" y="136" width="140" height="22"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="4947">
-                                                                    <numberFormatter key="formatter" formatterBehavior="default10_4" positiveFormat="#,##0.###" negativeFormat="#,##0.###" numberStyle="decimal" paddingCharacter="*" minimumIntegerDigits="1" maximumIntegerDigits="309" maximumFractionDigits="3" decimalSeparator="." groupingSeparator="," currencyDecimalSeparator="." plusSign="+" minusSign="-" notANumberSymbol="NaN" perMillSymbol="‰" percentSymbol="%" exponentSymbol="E" positivePrefix="" positiveSuffix="" negativePrefix="-" negativeSuffix="" id="4948">
-                                                                        <real key="minimum" value="1"/>
-                                                                    </numberFormatter>
                                                                     <font key="font" metaFont="system"/>
                                                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                                 </textFieldCell>
                                                                 <connections>
-                                                                    <outlet property="delegate" destination="-2" id="4955"/>
+                                                                    <outlet property="delegate" destination="BMA-OA-Kzc" id="OBD-nQ-8O8"/>
                                                                     <outlet property="nextKeyView" destination="4916" id="5259"/>
                                                                 </connections>
                                                             </textField>
@@ -5217,6 +5213,7 @@ DQ
                 <outlet property="_blendAmount" destination="6320" id="FUt-BP-aez"/>
                 <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
                 <outlet property="_columnsField" destination="4911" id="X3h-Pu-qzV"/>
+                <outlet property="_rowsField" destination="4914" id="ByA-st-yaA"/>
                 <outlet property="_transparency" destination="4978" id="uze-TU-NdW"/>
                 <outlet property="_useBackgroundImage" destination="4973" id="vZ6-QD-p27"/>
                 <outlet property="_useBlur" destination="4976" id="ZfQ-et-Uge"/>
