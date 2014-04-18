@@ -155,7 +155,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSButton* disablePrinting;
     IBOutlet NSButton* bookmarkGrowlNotifications;
     IBOutlet NSComboBox* terminalType;
-    IBOutlet NSPopUpButton* characterEncoding;
     IBOutlet NSButton* setLocaleVars;
 
     // Keyboard tab
@@ -257,13 +256,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     [globalToolbarItem setEnabled:YES];
     [toolbar setSelectedItemIdentifier:globalToolbarId];
-
-    // add list of encodings
-    [characterEncoding removeAllItems];
-    for (NSNumber *anEncoding in [[iTermController sharedInstance] sortedEncodingList]) {
-        [characterEncoding addItemWithTitle:[NSString localizedNameOfStringEncoding:[anEncoding unsignedIntValue]]];
-        [[characterEncoding lastItem] setTag:[anEncoding unsignedIntValue]];
-    }
 
     if (oneBookmarkMode) {
         [self layoutSubviewsForSingleBookmarkMode];
@@ -386,7 +378,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [newDict setObject:[NSNumber numberWithBool:([disablePrinting state]==NSOnState)] forKey:KEY_DISABLE_PRINTING];
     [newDict setObject:[NSNumber numberWithBool:([bookmarkGrowlNotifications state]==NSOnState)] forKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS];
     [newDict setObject:[NSNumber numberWithBool:([setLocaleVars state]==NSOnState)] forKey:KEY_SET_LOCALE_VARS];
-    [newDict setObject:[NSNumber numberWithUnsignedInt:[[characterEncoding selectedItem] tag]] forKey:KEY_CHARACTER_ENCODING];
     [newDict setObject:[terminalType stringValue] forKey:KEY_TERMINAL_TYPE];
 
     // Keyboard tab
@@ -1288,8 +1279,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [disablePrinting setState:[[dict objectForKey:KEY_DISABLE_PRINTING] boolValue] ? NSOnState : NSOffState];
     [bookmarkGrowlNotifications setState:[[dict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue] ? NSOnState : NSOffState];
     [setLocaleVars setState:[dict objectForKey:KEY_SET_LOCALE_VARS] ? ([[dict objectForKey:KEY_SET_LOCALE_VARS] boolValue] ? NSOnState : NSOffState) : NSOnState];
-    [characterEncoding setTitle:[NSString localizedNameOfStringEncoding:[[dict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]]];
-
     [terminalType setStringValue:[dict objectForKey:KEY_TERMINAL_TYPE]];
 
     // Keyboard tab

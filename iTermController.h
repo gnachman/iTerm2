@@ -95,7 +95,6 @@
 
 - (PseudoTerminal *)currentTerminal;
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;
-- (NSArray*)sortedEncodingList;
 - (void)addBookmarksToMenu:(NSMenu *)aMenu startingAt:(int)startingAt;
 - (void)addBookmarksToMenu:(NSMenu *)aMenu
               withSelector:(SEL)selector

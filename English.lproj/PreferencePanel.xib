@@ -33,7 +33,6 @@
                 <outlet property="bookmarkUrlSchemesLabel" destination="5035" id="5046"/>
                 <outlet property="bookmarksTabViewItem" destination="1945" id="2863"/>
                 <outlet property="bookmarksToolbarItem" destination="5886" id="6039"/>
-                <outlet property="characterEncoding" destination="2390" id="3148"/>
                 <outlet property="closeSessionsOnEnd" destination="5681" id="5737"/>
                 <outlet property="deleteSendsCtrlHButton" destination="5074" id="5078"/>
                 <outlet property="disablePrinting" destination="5633" id="5637"/>
@@ -2686,19 +2685,13 @@ Gw
                                                             <popUpButton verticalHuggingPriority="750" id="2390">
                                                                 <rect key="frame" x="172" y="245" width="332" height="26"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
-                                                                <popUpButtonCell key="cell" type="push" title="Item1" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="2431" id="2427">
+                                                                <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="2427">
                                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                                     <font key="font" metaFont="menu"/>
-                                                                    <menu key="menu" title="OtherViews" id="2428">
-                                                                        <items>
-                                                                            <menuItem title="Item1" state="on" id="2431"/>
-                                                                            <menuItem title="Item2" id="2430"/>
-                                                                            <menuItem title="Item3" id="2429"/>
-                                                                        </items>
-                                                                    </menu>
+                                                                    <menu key="menu" title="OtherViews" id="2428"/>
                                                                 </popUpButtonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3149"/>
+                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="j9P-bz-XgQ"/>
                                                                     <outlet property="nextKeyView" destination="2401" id="5272"/>
                                                                 </connections>
                                                             </popUpButton>
@@ -5220,6 +5213,7 @@ DQ
         </customObject>
         <customObject id="gMD-DK-gev" customClass="ProfilesTerminalPreferencesViewController">
             <connections>
+                <outlet property="_characterEncoding" destination="2390" id="SiG-ub-R7K"/>
                 <outlet property="_numScrollbackLines" destination="2401" id="zuf-vS-xWC"/>
                 <outlet property="_scrollbackInAlternateScreen" destination="5758" id="Wzb-92-pab"/>
                 <outlet property="_scrollbackWithStatusBar" destination="5154" id="GTO-ta-yjN"/>

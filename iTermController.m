@@ -66,14 +66,6 @@ static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Script
 // keys for to-many relationships:
 static NSString *const kTerminalsKey = @"terminals";
 
-// Comparator for sorting encodings
-static NSInteger _compareEncodingByLocalizedName(id a, id b, void *unused)
-{
-    NSString *sa = [NSString localizedNameOfStringEncoding:[a unsignedIntValue]];
-    NSString *sb = [NSString localizedNameOfStringEncoding:[b unsignedIntValue]];
-    return [sa caseInsensitiveCompare:sb];
-}
-
 static BOOL UncachedIsMountainLionOrLater(void) {
     unsigned major;
     unsigned minor;
@@ -653,19 +645,6 @@ static BOOL initDone = NO;
     }
     [previouslyActiveAppPID_ release];
     previouslyActiveAppPID_ = nil;
-}
-
-// Build sorted list of encodings
-- (NSArray *) sortedEncodingList
-{
-    NSStringEncoding const *p;
-    NSMutableArray *tmp = [NSMutableArray array];
-
-    for (p = [NSString availableStringEncodings]; *p; ++p)
-        [tmp addObject:[NSNumber numberWithUnsignedInt:*p]];
-    [tmp sortUsingFunction:_compareEncodingByLocalizedName context:NULL];
-
-    return (tmp);
 }
 
 - (void)_addBookmark:(Profile*)bookmark
