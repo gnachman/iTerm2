@@ -12,7 +12,6 @@
                 <outlet property="_profilesViewController" destination="HVI-63-mNz" id="jfc-z4-6um"/>
                 <outlet property="advancedTabViewItem" destination="KyW-GB-ElH" id="8r8-7W-7k9"/>
                 <outlet property="advancedToolbarItem" destination="gtg-rw-6h8" id="Enb-fp-ef2"/>
-                <outlet property="allowTitleSetting" destination="xih-tE-Xk7" id="cn0-W7-MGI"/>
                 <outlet property="appearanceTabViewItem" destination="4439" id="4601"/>
                 <outlet property="appearanceToolbarItem" destination="5889" id="6038"/>
                 <outlet property="applicationKeypadAllowed" destination="U4H-3c-nZg" id="qYN-Rv-WQC"/>
@@ -2904,7 +2903,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="gPE-4z-K8x"/>
+                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="CdP-oV-hKk"/>
                                                                 </connections>
                                                             </button>
                                                             <button id="5154">
@@ -5211,6 +5210,7 @@ DQ
         <customObject id="gMD-DK-gev" customClass="ProfilesTerminalPreferencesViewController">
             <connections>
                 <outlet property="_allowTitleReporting" destination="6387" id="ET9-YF-B1M"/>
+                <outlet property="_allowTitleSetting" destination="xih-tE-Xk7" id="mDx-e5-6YC"/>
                 <outlet property="_characterEncoding" destination="2390" id="SiG-ub-R7K"/>
                 <outlet property="_numScrollbackLines" destination="2401" id="zuf-vS-xWC"/>
                 <outlet property="_scrollbackInAlternateScreen" destination="5758" id="Wzb-92-pab"/>

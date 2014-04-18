@@ -173,7 +173,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_CHARACTER_ENCODING: @0,  // This default (like most) is never used, or it would be utf-8.
                   KEY_TERMINAL_TYPE: @"",
                   KEY_XTERM_MOUSE_REPORTING: @NO,
-                  KEY_ALLOW_TITLE_REPORTING: @NO
+                  KEY_ALLOW_TITLE_REPORTING: @NO,
+                  KEY_ALLOW_TITLE_SETTING: @YES
                 };
         [dict retain];
     }

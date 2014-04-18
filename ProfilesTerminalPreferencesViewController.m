@@ -19,6 +19,7 @@
     IBOutlet NSComboBox *_terminalType;
     IBOutlet NSButton *_xtermMouseReporting;
     IBOutlet NSButton *_allowTitleReporting;
+    IBOutlet NSButton *_allowTitleSetting;
 }
 
 - (void)awakeFromNib {
@@ -65,6 +66,10 @@
     
     [self defineControl:_allowTitleReporting
                     key:KEY_ALLOW_TITLE_REPORTING
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_allowTitleSetting
+                    key:KEY_ALLOW_TITLE_SETTING
                    type:kPreferenceInfoTypeCheckbox];
 }
 
