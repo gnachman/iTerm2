@@ -23,7 +23,6 @@
                 <outlet property="blurRadius" destination="5363" id="5371"/>
                 <outlet property="bookmarkCommandLabel" destination="2132" id="3464"/>
                 <outlet property="bookmarkDirectoryLabel" destination="2129" id="3465"/>
-                <outlet property="bookmarkGrowlNotifications" destination="2404" id="3147"/>
                 <outlet property="bookmarkShortcutKeyLabel" destination="2141" id="3466"/>
                 <outlet property="bookmarkShortcutKeyModifiersLabel" destination="3241" id="3467"/>
                 <outlet property="bookmarkTagsLabel" destination="3243" id="3468"/>
@@ -2784,7 +2783,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3139"/>
+                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="n1Y-rc-vcH"/>
                                                                     <outlet property="nextKeyView" destination="2100" id="5281"/>
                                                                 </connections>
                                                             </button>
@@ -5212,6 +5211,7 @@ DQ
                 <outlet property="_disableAltScreen" destination="5081" id="DvY-uh-omh"/>
                 <outlet property="_disablePrinting" destination="5633" id="ehN-F7-zlE"/>
                 <outlet property="_numScrollbackLines" destination="2401" id="zuf-vS-xWC"/>
+                <outlet property="_postNotifications" destination="2404" id="19Y-du-c7A"/>
                 <outlet property="_scrollbackInAlternateScreen" destination="5758" id="Wzb-92-pab"/>
                 <outlet property="_scrollbackWithStatusBar" destination="5154" id="GTO-ta-yjN"/>
                 <outlet property="_silenceBell" destination="2397" id="qqe-8n-AAy"/>

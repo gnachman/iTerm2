@@ -23,6 +23,7 @@
     IBOutlet NSButton *_disablePrinting;
     IBOutlet NSButton *_disableAltScreen;
     IBOutlet NSButton *_silenceBell;
+    IBOutlet NSButton *_postNotifications;
 }
 
 - (void)awakeFromNib {
@@ -85,6 +86,10 @@
     
     [self defineControl:_silenceBell
                     key:KEY_SILENCE_BELL
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_postNotifications
+                    key:KEY_BOOKMARK_GROWL_NOTIFICATIONS
                    type:kPreferenceInfoTypeCheckbox];
 }
 

@@ -1500,7 +1500,7 @@ static const int kMaxScreenRows = 4096;
             }
             break;
         }
-            // Our iTerm specific codes
+        // Our iTerm specific codes
         case ITERM_GROWL:
             [delegate_ terminalPostGrowlNotification:token.string];
             break;
