@@ -156,7 +156,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSButton* scrollbackWithStatusBar;
     IBOutlet NSButton* scrollbackInAlternateScreen;
     IBOutlet NSButton* bookmarkGrowlNotifications;
-    IBOutlet NSButton* unlimitedScrollback;
     IBOutlet NSComboBox* terminalType;
     IBOutlet NSPopUpButton* characterEncoding;
     IBOutlet NSButton* setLocaleVars;
@@ -392,14 +391,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [newDict setObject:[NSNumber numberWithBool:([bookmarkGrowlNotifications state]==NSOnState)] forKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS];
     [newDict setObject:[NSNumber numberWithBool:([setLocaleVars state]==NSOnState)] forKey:KEY_SET_LOCALE_VARS];
     [newDict setObject:[NSNumber numberWithUnsignedInt:[[characterEncoding selectedItem] tag]] forKey:KEY_CHARACTER_ENCODING];
-    [newDict setObject:[NSNumber numberWithBool:([unlimitedScrollback state]==NSOnState)] forKey:KEY_UNLIMITED_SCROLLBACK];
-/*    [scrollbackLines setEnabled:[unlimitedScrollback state]==NSOffState];
-    if ([unlimitedScrollback state] == NSOnState) {
-        [scrollbackLines setStringValue:@""];
-    } else if (sender == unlimitedScrollback) {
-        [scrollbackLines setStringValue:@"10000"];
-    }
-*/
     [newDict setObject:[terminalType stringValue] forKey:KEY_TERMINAL_TYPE];
 
     // Keyboard tab
@@ -1305,11 +1296,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [bookmarkGrowlNotifications setState:[[dict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue] ? NSOnState : NSOffState];
     [setLocaleVars setState:[dict objectForKey:KEY_SET_LOCALE_VARS] ? ([[dict objectForKey:KEY_SET_LOCALE_VARS] boolValue] ? NSOnState : NSOffState) : NSOnState];
     [characterEncoding setTitle:[NSString localizedNameOfStringEncoding:[[dict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]]];
-    [unlimitedScrollback setState:[[dict objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue] ? NSOnState : NSOffState];
-/*    if ([unlimitedScrollback state] == NSOnState) {
-        [scrollbackLines setStringValue:@""];
-    }
- */
+
     [terminalType setStringValue:[dict objectForKey:KEY_TERMINAL_TYPE]];
 
     // Keyboard tab

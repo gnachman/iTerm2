@@ -167,6 +167,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_ASCII_ANTI_ALIASED: @NO,
                   KEY_NONASCII_ANTI_ALIASED: @NO,
                   KEY_SCROLLBACK_LINES: @1000,
+                  KEY_UNLIMITED_SCROLLBACK: @NO
                 };
         [dict retain];
     }

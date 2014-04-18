@@ -64,7 +64,6 @@
                 <outlet property="toolbar" destination="5885" id="6042"/>
                 <outlet property="triggerWindowController_" destination="5797" id="5920"/>
                 <outlet property="trouterPrefController_" destination="5949" id="5954"/>
-                <outlet property="unlimitedScrollback" destination="3647" id="3650"/>
                 <outlet property="visualBell" destination="2403" id="3145"/>
                 <outlet property="window" destination="1923" id="2981"/>
                 <outlet property="xtermMouseReporting" destination="2402" id="3146"/>
@@ -2872,7 +2871,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3649"/>
+                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="GdK-um-hjE"/>
                                                                     <outlet property="nextKeyView" destination="5154" id="5274"/>
                                                                 </connections>
                                                             </button>
@@ -5224,6 +5223,7 @@ DQ
         <customObject id="gMD-DK-gev" customClass="ProfilesTerminalPreferencesViewController">
             <connections>
                 <outlet property="_numScrollbackLines" destination="2401" id="zuf-vS-xWC"/>
+                <outlet property="_unlimitedScrollback" destination="3647" id="3g4-2U-Gbv"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="phY-Ve-12F"/>
             </connections>
         </customObject>
