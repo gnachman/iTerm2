@@ -13,6 +13,7 @@
     IBOutlet NSTextField *_numScrollbackLines;
     IBOutlet NSButton *_unlimitedScrollback;
     IBOutlet NSButton *_scrollbackWithStatusBar;
+    IBOutlet NSButton *_scrollbackInAlternateScreen;
 }
 
 - (void)awakeFromNib {
@@ -37,6 +38,10 @@
 
     [self defineControl:_scrollbackWithStatusBar
                     key:KEY_SCROLLBACK_WITH_STATUS_BAR
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_scrollbackInAlternateScreen
+                    key:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN
                    type:kPreferenceInfoTypeCheckbox];
 }
 

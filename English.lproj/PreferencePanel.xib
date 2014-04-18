@@ -53,7 +53,6 @@
                 <outlet property="promptBeforeClosing_" destination="5728" id="5733"/>
                 <outlet property="removeJobButton_" destination="5669" id="5723"/>
                 <outlet property="rightOptionKeySends" destination="4293" id="4308"/>
-                <outlet property="scrollbackInAlternateScreen" destination="5758" id="5762"/>
                 <outlet property="sendCodeWhenIdle" destination="5697" id="5717"/>
                 <outlet property="setLocaleVars" destination="6045" id="6047"/>
                 <outlet property="silenceBell" destination="2397" id="3144"/>
@@ -2938,7 +2937,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="5760"/>
+                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="2Oz-MO-7Bw"/>
                                                                     <outlet property="nextKeyView" destination="2405" id="5761"/>
                                                                 </connections>
                                                             </button>
@@ -5222,6 +5221,7 @@ DQ
         <customObject id="gMD-DK-gev" customClass="ProfilesTerminalPreferencesViewController">
             <connections>
                 <outlet property="_numScrollbackLines" destination="2401" id="zuf-vS-xWC"/>
+                <outlet property="_scrollbackInAlternateScreen" destination="5758" id="Wzb-92-pab"/>
                 <outlet property="_scrollbackWithStatusBar" destination="5154" id="GTO-ta-yjN"/>
                 <outlet property="_unlimitedScrollback" destination="3647" id="3g4-2U-Gbv"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="phY-Ve-12F"/>
