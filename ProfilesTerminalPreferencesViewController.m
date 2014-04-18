@@ -25,6 +25,7 @@
     IBOutlet NSButton *_silenceBell;
     IBOutlet NSButton *_postNotifications;
     IBOutlet NSButton *_flashingBell;
+    IBOutlet NSButton *_bellIconInTabs;
 }
 
 - (void)awakeFromNib {
@@ -95,6 +96,10 @@
     
     [self defineControl:_flashingBell
                     key:KEY_FLASHING_BELL
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_bellIconInTabs
+                    key:KEY_VISUAL_BELL
                    type:kPreferenceInfoTypeCheckbox];
 }
 
