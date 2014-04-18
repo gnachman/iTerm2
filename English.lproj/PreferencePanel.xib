@@ -62,7 +62,6 @@
                 <outlet property="trouterPrefController_" destination="5949" id="5954"/>
                 <outlet property="visualBell" destination="2403" id="3145"/>
                 <outlet property="window" destination="1923" id="2981"/>
-                <outlet property="xtermMouseReporting" destination="2402" id="3146"/>
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
@@ -2754,7 +2753,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3137"/>
+                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="KKF-gH-Gft"/>
                                                                     <outlet property="nextKeyView" destination="5081" id="5277"/>
                                                                 </connections>
                                                             </button>
@@ -5218,6 +5217,7 @@ DQ
                 <outlet property="_scrollbackWithStatusBar" destination="5154" id="GTO-ta-yjN"/>
                 <outlet property="_terminalType" destination="2405" id="ReP-eL-1uJ"/>
                 <outlet property="_unlimitedScrollback" destination="3647" id="3g4-2U-Gbv"/>
+                <outlet property="_xtermMouseReporting" destination="2402" id="kB0-i0-VKF"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="phY-Ve-12F"/>
             </connections>
         </customObject>

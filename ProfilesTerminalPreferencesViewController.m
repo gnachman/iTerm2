@@ -17,6 +17,7 @@
     IBOutlet NSButton *_scrollbackInAlternateScreen;
     IBOutlet NSPopUpButton *_characterEncoding;
     IBOutlet NSComboBox *_terminalType;
+    IBOutlet NSButton *_xtermMouseReporting;
 }
 
 - (void)awakeFromNib {
@@ -56,6 +57,10 @@
     [self defineControl:_terminalType
                     key:KEY_TERMINAL_TYPE
                    type:kPreferenceInfoTypeStringTextField];
+    
+    [self defineControl:_xtermMouseReporting
+                    key:KEY_XTERM_MOUSE_REPORTING
+                   type:kPreferenceInfoTypeCheckbox];
 }
 
 #pragma mark - Character Encoding
