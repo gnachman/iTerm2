@@ -20,6 +20,7 @@
     IBOutlet NSButton *_xtermMouseReporting;
     IBOutlet NSButton *_allowTitleReporting;
     IBOutlet NSButton *_allowTitleSetting;
+    IBOutlet NSButton *_disablePrinting;
 }
 
 - (void)awakeFromNib {
@@ -70,6 +71,10 @@
     
     [self defineControl:_allowTitleSetting
                     key:KEY_ALLOW_TITLE_SETTING
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_disablePrinting
+                    key:KEY_DISABLE_PRINTING
                    type:kPreferenceInfoTypeCheckbox];
 }
 
