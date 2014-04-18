@@ -57,6 +57,7 @@
  *  - ProfilesColorPreferencesViewController
  *  - ProfilesTextPreferencesViewController
  *  - ProfilesWindowPreferencesViewController
+ *  - ProfilesTerminalPreferencesViewController
  *  - More coming
  *
  *  These derive from iTermProfilePreferencesBaseViewController, which is just like
@@ -143,14 +144,12 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // Bookmarks -----------------------------
 
-    // Terminal tab
-    IBOutlet NSButton* closeSessionsOnEnd;
-
     // Keyboard tab
     IBOutlet NSMatrix *optionKeySends;
     IBOutlet NSMatrix *rightOptionKeySends;
 
     // Session --------------------------------
+    IBOutlet NSButton* closeSessionsOnEnd;
     IBOutlet NSTableView *jobsTable_;
     IBOutlet NSButton *autoLog;
     IBOutlet NSTextField *logDir;
