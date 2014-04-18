@@ -12,6 +12,7 @@
 @implementation ProfilesTerminalPreferencesViewController {
     IBOutlet NSTextField *_numScrollbackLines;
     IBOutlet NSButton *_unlimitedScrollback;
+    IBOutlet NSButton *_scrollbackWithStatusBar;
 }
 
 - (void)awakeFromNib {
@@ -33,7 +34,10 @@
             _numScrollbackLines.intValue = [self intForKey:KEY_SCROLLBACK_LINES];
         }
     };
-    
+
+    [self defineControl:_scrollbackWithStatusBar
+                    key:KEY_SCROLLBACK_WITH_STATUS_BAR
+                   type:kPreferenceInfoTypeCheckbox];
 }
 
 @end
