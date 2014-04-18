@@ -26,6 +26,7 @@
     IBOutlet NSButton *_postNotifications;
     IBOutlet NSButton *_flashingBell;
     IBOutlet NSButton *_bellIconInTabs;
+    IBOutlet NSButton *_setLocaleVars;
 }
 
 - (void)awakeFromNib {
@@ -100,6 +101,10 @@
     
     [self defineControl:_bellIconInTabs
                     key:KEY_VISUAL_BELL
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_setLocaleVars
+                    key:KEY_SET_LOCALE_VARS
                    type:kPreferenceInfoTypeCheckbox];
 }
 

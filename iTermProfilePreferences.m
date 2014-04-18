@@ -180,7 +180,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_SILENCE_BELL: @NO,
                   KEY_BOOKMARK_GROWL_NOTIFICATIONS: @NO,
                   KEY_FLASHING_BELL: @NO,
-                  KEY_VISUAL_BELL: @NO
+                  KEY_VISUAL_BELL: @NO,
+                  KEY_SET_LOCALE_VARS: @YES
                 };
         [dict retain];
     }

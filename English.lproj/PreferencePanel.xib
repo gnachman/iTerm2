@@ -47,7 +47,6 @@
                 <outlet property="removeJobButton_" destination="5669" id="5723"/>
                 <outlet property="rightOptionKeySends" destination="4293" id="4308"/>
                 <outlet property="sendCodeWhenIdle" destination="5697" id="5717"/>
-                <outlet property="setLocaleVars" destination="6045" id="6047"/>
                 <outlet property="smartSelectionWindowController_" destination="5863" id="5921"/>
                 <outlet property="tabView" destination="1943" id="2853"/>
                 <outlet property="toolbar" destination="5885" id="6042"/>
@@ -2932,7 +2931,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="6048"/>
+                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="DDd-1W-Nfv"/>
                                                                 </connections>
                                                             </button>
                                                         </subviews>
@@ -5214,6 +5213,7 @@ DQ
                 <outlet property="_postNotifications" destination="2404" id="19Y-du-c7A"/>
                 <outlet property="_scrollbackInAlternateScreen" destination="5758" id="Wzb-92-pab"/>
                 <outlet property="_scrollbackWithStatusBar" destination="5154" id="GTO-ta-yjN"/>
+                <outlet property="_setLocaleVars" destination="6045" id="6Mq-4z-0y0"/>
                 <outlet property="_silenceBell" destination="2397" id="qqe-8n-AAy"/>
                 <outlet property="_terminalType" destination="2405" id="ReP-eL-1uJ"/>
                 <outlet property="_unlimitedScrollback" destination="3647" id="3g4-2U-Gbv"/>
