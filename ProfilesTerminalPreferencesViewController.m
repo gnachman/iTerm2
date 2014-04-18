@@ -21,6 +21,7 @@
     IBOutlet NSButton *_allowTitleReporting;
     IBOutlet NSButton *_allowTitleSetting;
     IBOutlet NSButton *_disablePrinting;
+    IBOutlet NSButton *_disableAltScreen;
 }
 
 - (void)awakeFromNib {
@@ -75,6 +76,10 @@
     
     [self defineControl:_disablePrinting
                     key:KEY_DISABLE_PRINTING
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_disableAltScreen
+                    key:KEY_DISABLE_SMCUP_RMCUP
                    type:kPreferenceInfoTypeCheckbox];
 }
 
