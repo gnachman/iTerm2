@@ -54,7 +54,6 @@
                 <outlet property="removeJobButton_" destination="5669" id="5723"/>
                 <outlet property="rightOptionKeySends" destination="4293" id="4308"/>
                 <outlet property="scrollbackInAlternateScreen" destination="5758" id="5762"/>
-                <outlet property="scrollbackLines" destination="2401" id="3150"/>
                 <outlet property="scrollbackWithStatusBar" destination="5154" id="5157"/>
                 <outlet property="sendCodeWhenIdle" destination="5697" id="5717"/>
                 <outlet property="setLocaleVars" destination="6045" id="6047"/>
@@ -2754,7 +2753,7 @@ Gw
                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                                 </textFieldCell>
                                                                 <connections>
-                                                                    <outlet property="delegate" destination="-2" id="3151"/>
+                                                                    <outlet property="delegate" destination="gMD-DK-gev" id="dhc-Gz-JT4"/>
                                                                     <outlet property="nextKeyView" destination="3647" id="5273"/>
                                                                 </connections>
                                                             </textField>
@@ -3299,7 +3298,7 @@ Gw
                                                 <tabViewItem label="Advanced" identifier="Item 7" id="5776">
                                                     <view key="view" id="5777">
                                                         <rect key="frame" x="10" y="33" width="559" height="404"/>
-                                                        <autoresizingMask key="autoresizingMask"/>
+                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                         <subviews>
                                                             <textField verticalHuggingPriority="750" id="5778">
                                                                 <rect key="frame" x="14" y="384" width="62" height="17"/>
@@ -5098,6 +5097,7 @@ DQ
                 <outlet property="_profilesListView" destination="3260" id="22S-wx-dOs"/>
                 <outlet property="_removeProfileButton" destination="2113" id="bCy-bg-Kla"/>
                 <outlet property="_tabView" destination="2100" id="sRa-Z0-Ngh"/>
+                <outlet property="_terminalViewController" destination="gMD-DK-gev" id="Gzm-8d-1w7"/>
                 <outlet property="_textViewController" destination="lhd-u6-xr5" id="XTC-Yc-Vqb"/>
                 <outlet property="_toggleTagsButton" destination="nFj-0n-SWO" id="nd4-hz-FRN"/>
                 <outlet property="_windowViewController" destination="BMA-OA-Kzc" id="6zk-Vv-rly"/>
@@ -5219,6 +5219,12 @@ DQ
                 <outlet property="_windowStyleLabel" destination="4918" id="65O-r4-WZw"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="7Ch-0z-mdS"/>
                 <outlet property="view" destination="4910" id="W8Y-Gm-dzl"/>
+            </connections>
+        </customObject>
+        <customObject id="gMD-DK-gev" customClass="ProfilesTerminalPreferencesViewController">
+            <connections>
+                <outlet property="_numScrollbackLines" destination="2401" id="zuf-vS-xWC"/>
+                <outlet property="delegate" destination="HVI-63-mNz" id="phY-Ve-12F"/>
             </connections>
         </customObject>
     </objects>

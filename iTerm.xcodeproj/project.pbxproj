@@ -773,6 +773,9 @@
 		A6A2698818FF70C600437DA9 /* ProfilesWindowPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2698618FF70C600437DA9 /* ProfilesWindowPreferencesViewController.h */; };
 		A6A2698918FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2698718FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m */; };
 		A6A2698A18FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2698718FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m */; };
+		A6A269901900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2698D1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h */; };
+		A6A269911900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2698E1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m */; };
+		A6A269921900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2698E1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
 		A6A5991E1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
 		A6A5991F1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
@@ -1386,6 +1389,8 @@
 		A6A2698218FE48B200437DA9 /* NSFont+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSFont+iTerm.m"; sourceTree = "<group>"; };
 		A6A2698618FF70C600437DA9 /* ProfilesWindowPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesWindowPreferencesViewController.h; sourceTree = "<group>"; };
 		A6A2698718FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesWindowPreferencesViewController.m; sourceTree = "<group>"; };
+		A6A2698D1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesTerminalPreferencesViewController.h; sourceTree = "<group>"; };
+		A6A2698E1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesTerminalPreferencesViewController.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; };
 		A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasteHelper.h; sourceTree = "<group>"; };
@@ -2038,6 +2043,8 @@
 				1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */,
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
 				A6A2698718FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m */,
+				A6A2698D1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h */,
+				A6A2698E1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -2535,6 +2542,7 @@
 				A6CFDAD7185D53C2005DC94B /* AsyncHostLookupController.h in Headers */,
 				1D78B55E183EE1C000014D49 /* LineBufferPosition.h in Headers */,
 				1D53FD15181C4B4B00524D4F /* FindContext.h in Headers */,
+				A6A269901900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h in Headers */,
 				1D5FDD501208E8F000C46BA3 /* PTToolbarController.h in Headers */,
 				A6E7138918F26445008D94DD /* iTermPreferencesBaseViewController.h in Headers */,
 				1D5FDD511208E8F000C46BA3 /* ITAddressBookMgr.h in Headers */,
@@ -3198,6 +3206,7 @@
 				1D9A553C180FA7E600B42CE9 /* DVRIndexEntry.m in Sources */,
 				A63F4097183B398C003A6A6D /* PTYNoteViewController.m in Sources */,
 				1D9A555A180FA83900B42CE9 /* ArrangementPreviewView.m in Sources */,
+				A6A269921900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m in Sources */,
 				A68A30DD186D1429007F550F /* SCPFile.m in Sources */,
 				1D9A55B2180FA8D400B42CE9 /* UKCrashReporter.m in Sources */,
 				1D9A55B4180FA8D400B42CE9 /* UKSystemInfo.m in Sources */,
@@ -3373,6 +3382,7 @@
 				A61B66CB18D4D855009AC9D5 /* NSView+iTerm.m in Sources */,
 				1D7C1D1312772ECC00461E55 /* NSDateFormatterExtras.m in Sources */,
 				1DE214E2128212EE004E3ADF /* Autocomplete.m in Sources */,
+				A6A269911900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m in Sources */,
 				1DD736421283C2FA009B7829 /* Popup.m in Sources */,
 				1D44218D1290B34500891504 /* TextViewWrapper.m in Sources */,
 				1D2E802F129DA45A00F3D71E /* PTYTab.m in Sources */,

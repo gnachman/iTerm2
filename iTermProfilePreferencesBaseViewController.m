@@ -66,6 +66,19 @@
     [iTermProfilePreferences setString:value forKey:key inProfile:profile model:model];
 }
 
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                             type:(PreferenceInfoType)type
+                   settingChanged:(void (^)(id))settingChanged
+                           update:(BOOL (^)())update {
+    assert(self.delegate);
+    return [super defineControl:control
+                            key:key
+                           type:type
+                 settingChanged:settingChanged
+                         update:update];
+}
+
 - (BOOL)shouldUpdateOtherPanels {
     return [self.delegate profilePreferencesCurrentModel] == [ProfileModel sharedInstance];
 }
