@@ -50,7 +50,6 @@
                 <outlet property="rightOptionKeySends" destination="4293" id="4308"/>
                 <outlet property="sendCodeWhenIdle" destination="5697" id="5717"/>
                 <outlet property="setLocaleVars" destination="6045" id="6047"/>
-                <outlet property="silenceBell" destination="2397" id="3144"/>
                 <outlet property="smartSelectionWindowController_" destination="5863" id="5921"/>
                 <outlet property="tabView" destination="1943" id="2853"/>
                 <outlet property="toolbar" destination="5885" id="6042"/>
@@ -2715,7 +2714,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3135"/>
+                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="imh-CJ-KN3"/>
                                                                     <outlet property="nextKeyView" destination="2403" id="5269"/>
                                                                 </connections>
                                                             </button>
@@ -5215,6 +5214,7 @@ DQ
                 <outlet property="_numScrollbackLines" destination="2401" id="zuf-vS-xWC"/>
                 <outlet property="_scrollbackInAlternateScreen" destination="5758" id="Wzb-92-pab"/>
                 <outlet property="_scrollbackWithStatusBar" destination="5154" id="GTO-ta-yjN"/>
+                <outlet property="_silenceBell" destination="2397" id="qqe-8n-AAy"/>
                 <outlet property="_terminalType" destination="2405" id="ReP-eL-1uJ"/>
                 <outlet property="_unlimitedScrollback" destination="3647" id="3g4-2U-Gbv"/>
                 <outlet property="_xtermMouseReporting" destination="2402" id="kB0-i0-VKF"/>

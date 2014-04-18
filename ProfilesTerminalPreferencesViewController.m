@@ -22,6 +22,7 @@
     IBOutlet NSButton *_allowTitleSetting;
     IBOutlet NSButton *_disablePrinting;
     IBOutlet NSButton *_disableAltScreen;
+    IBOutlet NSButton *_silenceBell;
 }
 
 - (void)awakeFromNib {
@@ -80,6 +81,10 @@
     
     [self defineControl:_disableAltScreen
                     key:KEY_DISABLE_SMCUP_RMCUP
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_silenceBell
+                    key:KEY_SILENCE_BELL
                    type:kPreferenceInfoTypeCheckbox];
 }
 

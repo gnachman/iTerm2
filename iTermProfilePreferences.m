@@ -177,6 +177,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_ALLOW_TITLE_SETTING: @YES,
                   KEY_DISABLE_PRINTING: @NO,
                   KEY_DISABLE_SMCUP_RMCUP: @NO,
+                  KEY_SILENCE_BELL: @NO,
                 };
         [dict retain];
     }
