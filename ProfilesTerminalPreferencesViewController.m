@@ -24,6 +24,7 @@
     IBOutlet NSButton *_disableAltScreen;
     IBOutlet NSButton *_silenceBell;
     IBOutlet NSButton *_postNotifications;
+    IBOutlet NSButton *_flashingBell;
 }
 
 - (void)awakeFromNib {
@@ -90,6 +91,10 @@
     
     [self defineControl:_postNotifications
                     key:KEY_BOOKMARK_GROWL_NOTIFICATIONS
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_flashingBell
+                    key:KEY_FLASHING_BELL
                    type:kPreferenceInfoTypeCheckbox];
 }
 

@@ -32,7 +32,6 @@
                 <outlet property="bookmarksToolbarItem" destination="5886" id="6039"/>
                 <outlet property="closeSessionsOnEnd" destination="5681" id="5737"/>
                 <outlet property="deleteSendsCtrlHButton" destination="5074" id="5078"/>
-                <outlet property="flashingBell" destination="3553" id="3557"/>
                 <outlet property="globalTabViewItem" destination="1944" id="2864"/>
                 <outlet property="globalToolbarItem" destination="5887" id="6037"/>
                 <outlet property="idleCode" destination="5698" id="5718"/>
@@ -2771,7 +2770,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3555"/>
+                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="YC0-VS-w11"/>
                                                                     <outlet property="nextKeyView" destination="2390" id="5271"/>
                                                                 </connections>
                                                             </button>
@@ -5210,6 +5209,7 @@ DQ
                 <outlet property="_characterEncoding" destination="2390" id="SiG-ub-R7K"/>
                 <outlet property="_disableAltScreen" destination="5081" id="DvY-uh-omh"/>
                 <outlet property="_disablePrinting" destination="5633" id="ehN-F7-zlE"/>
+                <outlet property="_flashingBell" destination="3553" id="BDq-z6-C2f"/>
                 <outlet property="_numScrollbackLines" destination="2401" id="zuf-vS-xWC"/>
                 <outlet property="_postNotifications" destination="2404" id="19Y-du-c7A"/>
                 <outlet property="_scrollbackInAlternateScreen" destination="5758" id="Wzb-92-pab"/>
