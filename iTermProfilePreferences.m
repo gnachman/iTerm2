@@ -171,6 +171,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_SCROLLBACK_WITH_STATUS_BAR: @NO,
                   KEY_SCROLLBACK_IN_ALTERNATE_SCREEN: @YES,
                   KEY_CHARACTER_ENCODING: @0,  // This default (like most) is never used, or it would be utf-8.
+                  KEY_TERMINAL_TYPE: @"",
                 };
         [dict retain];
     }

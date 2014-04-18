@@ -16,6 +16,7 @@
     IBOutlet NSButton *_scrollbackWithStatusBar;
     IBOutlet NSButton *_scrollbackInAlternateScreen;
     IBOutlet NSPopUpButton *_characterEncoding;
+    IBOutlet NSComboBox *_terminalType;
 }
 
 - (void)awakeFromNib {
@@ -50,6 +51,11 @@
     [self defineControl:_characterEncoding
                     key:KEY_CHARACTER_ENCODING
                    type:kPreferenceInfoTypePopup];
+    
+    // It's a combobox, but we can safely treat it as a string text field.
+    [self defineControl:_terminalType
+                    key:KEY_TERMINAL_TYPE
+                   type:kPreferenceInfoTypeStringTextField];
 }
 
 #pragma mark - Character Encoding

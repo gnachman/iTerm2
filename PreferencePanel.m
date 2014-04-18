@@ -154,7 +154,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSButton* allowTitleSetting;
     IBOutlet NSButton* disablePrinting;
     IBOutlet NSButton* bookmarkGrowlNotifications;
-    IBOutlet NSComboBox* terminalType;
     IBOutlet NSButton* setLocaleVars;
 
     // Keyboard tab
@@ -378,7 +377,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [newDict setObject:[NSNumber numberWithBool:([disablePrinting state]==NSOnState)] forKey:KEY_DISABLE_PRINTING];
     [newDict setObject:[NSNumber numberWithBool:([bookmarkGrowlNotifications state]==NSOnState)] forKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS];
     [newDict setObject:[NSNumber numberWithBool:([setLocaleVars state]==NSOnState)] forKey:KEY_SET_LOCALE_VARS];
-    [newDict setObject:[terminalType stringValue] forKey:KEY_TERMINAL_TYPE];
 
     // Keyboard tab
     [newDict setObject:[origBookmark objectForKey:KEY_KEYBOARD_MAP] forKey:KEY_KEYBOARD_MAP];
@@ -1279,7 +1277,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [disablePrinting setState:[[dict objectForKey:KEY_DISABLE_PRINTING] boolValue] ? NSOnState : NSOffState];
     [bookmarkGrowlNotifications setState:[[dict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue] ? NSOnState : NSOffState];
     [setLocaleVars setState:[dict objectForKey:KEY_SET_LOCALE_VARS] ? ([[dict objectForKey:KEY_SET_LOCALE_VARS] boolValue] ? NSOnState : NSOffState) : NSOnState];
-    [terminalType setStringValue:[dict objectForKey:KEY_TERMINAL_TYPE]];
 
     // Keyboard tab
     [optionKeySends selectCellWithTag:[[dict objectForKey:KEY_OPTION_KEY_SENDS] intValue]];
@@ -1380,8 +1377,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 - (void)controlTextDidChange:(NSNotification *)aNotification
 {
     id obj = [aNotification object];
-    if (obj == terminalType ||
-        obj == idleCode) {
+    if (obj == idleCode) {
         [self bookmarkSettingChanged:nil];
     } else if (obj == logDir) {
         [self _updateLogDirWarning];

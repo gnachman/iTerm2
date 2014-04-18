@@ -57,7 +57,6 @@
                 <outlet property="silenceBell" destination="2397" id="3144"/>
                 <outlet property="smartSelectionWindowController_" destination="5863" id="5921"/>
                 <outlet property="tabView" destination="1943" id="2853"/>
-                <outlet property="terminalType" destination="2405" id="3155"/>
                 <outlet property="toolbar" destination="5885" id="6042"/>
                 <outlet property="triggerWindowController_" destination="5797" id="5920"/>
                 <outlet property="trouterPrefController_" destination="5949" id="5954"/>
@@ -2813,8 +2812,8 @@ Gw
                                                                     </objectValues>
                                                                 </comboBoxCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="3154"/>
-                                                                    <outlet property="delegate" destination="-2" id="3153"/>
+                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="gE7-6t-Aa0"/>
+                                                                    <outlet property="delegate" destination="gMD-DK-gev" id="LlF-ld-PpM"/>
                                                                     <outlet property="nextKeyView" destination="2402" id="5276"/>
                                                                 </connections>
                                                             </comboBox>
@@ -5217,6 +5216,7 @@ DQ
                 <outlet property="_numScrollbackLines" destination="2401" id="zuf-vS-xWC"/>
                 <outlet property="_scrollbackInAlternateScreen" destination="5758" id="Wzb-92-pab"/>
                 <outlet property="_scrollbackWithStatusBar" destination="5154" id="GTO-ta-yjN"/>
+                <outlet property="_terminalType" destination="2405" id="ReP-eL-1uJ"/>
                 <outlet property="_unlimitedScrollback" destination="3647" id="3g4-2U-Gbv"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="phY-Ve-12F"/>
             </connections>
