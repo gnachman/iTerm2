@@ -34,7 +34,9 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     IBOutlet NSSlider *_horizontalSpacing;
     IBOutlet NSSlider *_verticalSpacing;
     IBOutlet NSButton *_useNonAsciiFont;
-    
+    IBOutlet NSButton *_asciiAntiAliased;
+    IBOutlet NSButton *_nonasciiAntiAliased;
+
     // Labels indicating current font. Not registered as controls.
     IBOutlet NSTextField *_normalFontDescription;
     IBOutlet NSTextField *_nonAsciiFontDescription;
@@ -104,6 +106,14 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                                            key:KEY_USE_NONASCII_FONT
                                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{ [self updateNonAsciiFontViewVisibility]; };
+
+    [self defineControl:_asciiAntiAliased
+                    key:KEY_ASCII_ANTI_ALIASED
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_nonasciiAntiAliased
+                    key:KEY_NONASCII_ANTI_ALIASED
+                   type:kPreferenceInfoTypeCheckbox];
 
     [self updateFontsDescriptions];
     [self updateNonAsciiFontViewVisibility];

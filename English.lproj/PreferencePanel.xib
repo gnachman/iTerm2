@@ -20,7 +20,6 @@
                 <outlet property="arrangementsTabViewItem" destination="5417" id="5578"/>
                 <outlet property="arrangementsToolbarItem" destination="5890" id="6041"/>
                 <outlet property="arrangements_" destination="5572" id="5584"/>
-                <outlet property="asciiAntiAliased" destination="4782" id="4877"/>
                 <outlet property="autoLog" destination="5685" id="5716"/>
                 <outlet property="basicsLabel" destination="3247" id="5772"/>
                 <outlet property="blurRadius" destination="5363" id="5371"/>
@@ -50,7 +49,6 @@
                 <outlet property="logDir" destination="5686" id="5715"/>
                 <outlet property="mouseTabViewItem" destination="6059" id="6061"/>
                 <outlet property="mouseToolbarItem" destination="6056" id="6057"/>
-                <outlet property="nonasciiAntiAliased" destination="4783" id="4878"/>
                 <outlet property="optionKeySends" destination="4291" id="4307"/>
                 <outlet property="promptBeforeClosing_" destination="5728" id="5733"/>
                 <outlet property="removeJobButton_" destination="5669" id="5723"/>
@@ -2222,7 +2220,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="4857"/>
+                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="wBv-7V-Dfa"/>
                                                                     <outlet property="nextKeyView" destination="4774" id="5250"/>
                                                                 </connections>
                                                             </button>
@@ -2311,7 +2309,7 @@ Gw
                                                                             <font key="font" metaFont="system"/>
                                                                         </buttonCell>
                                                                         <connections>
-                                                                            <action selector="bookmarkSettingChanged:" target="-2" id="4850"/>
+                                                                            <action selector="settingChanged:" target="lhd-u6-xr5" id="xkM-Iq-WH5"/>
                                                                             <outlet property="nextKeyView" destination="4776" id="5252"/>
                                                                         </connections>
                                                                     </button>
@@ -3982,7 +3980,7 @@ Gw
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
-                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="229"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -5177,6 +5175,7 @@ DQ
         <customObject id="lhd-u6-xr5" customClass="ProfilesTextPreferencesViewController">
             <connections>
                 <outlet property="_ambiguousIsDoubleWidth" destination="5126" id="Eee-f8-fvr"/>
+                <outlet property="_asciiAntiAliased" destination="4782" id="P5t-r0-fdU"/>
                 <outlet property="_blinkAllowed" destination="5148" id="4S0-LC-xMv"/>
                 <outlet property="_blinkingCursor" destination="4773" id="yLP-hh-9Zx"/>
                 <outlet property="_cursorType" destination="5017" id="5F8-RD-GnE"/>
@@ -5184,6 +5183,7 @@ DQ
                 <outlet property="_horizontalSpacing" destination="3081" id="wMo-9b-PcC"/>
                 <outlet property="_nonAsciiFontDescription" destination="4777" id="uzs-2L-0L5"/>
                 <outlet property="_nonAsciiFontView" destination="15P-ty-S1w" id="zin-qX-W0C"/>
+                <outlet property="_nonasciiAntiAliased" destination="4783" id="0xN-uO-bEh"/>
                 <outlet property="_normalFontDescription" destination="4775" id="Pwe-1n-DX6"/>
                 <outlet property="_useBoldFont" destination="4765" id="GP4-9X-n4Z"/>
                 <outlet property="_useBrightBold" destination="4766" id="d50-Oo-kAM"/>

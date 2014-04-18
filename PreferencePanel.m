@@ -143,10 +143,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // Bookmarks -----------------------------
 
-    // Window tab
-    IBOutlet NSButton* asciiAntiAliased;
-    IBOutlet NSButton* nonasciiAntiAliased;
-
     // Terminal tab
     IBOutlet NSButton* closeSessionsOnEnd;
     IBOutlet NSButton* silenceBell;
@@ -382,10 +378,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if (origGuid) {
         [newDict setObject:origGuid forKey:KEY_ORIGINAL_GUID];
     }
-
-    // Display tab
-    [newDict setObject:[NSNumber numberWithBool:([asciiAntiAliased state]==NSOnState)] forKey:KEY_ASCII_ANTI_ALIASED];
-    [newDict setObject:[NSNumber numberWithBool:([nonasciiAntiAliased state]==NSOnState)] forKey:KEY_NONASCII_ANTI_ALIASED];
 
     // Terminal tab
     [newDict setObject:[NSNumber numberWithBool:([silenceBell state]==NSOnState)] forKey:KEY_SILENCE_BELL];
@@ -1291,17 +1283,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     NSString* name;
     name = [dict objectForKey:KEY_NAME];
 
-    // Display tab
-    if ([dict objectForKey:KEY_ASCII_ANTI_ALIASED]) {
-        [asciiAntiAliased setState:[[dict objectForKey:KEY_ASCII_ANTI_ALIASED] boolValue] ? NSOnState : NSOffState];
-    } else {
-        [asciiAntiAliased setState:[[dict objectForKey:KEY_ANTI_ALIASING] boolValue] ? NSOnState : NSOffState];
-    }
-    if ([dict objectForKey:KEY_NONASCII_ANTI_ALIASED]) {
-        [nonasciiAntiAliased setState:[[dict objectForKey:KEY_NONASCII_ANTI_ALIASED] boolValue] ? NSOnState : NSOffState];
-    } else {
-        [nonasciiAntiAliased setState:[[dict objectForKey:KEY_ANTI_ALIASING] boolValue] ? NSOnState : NSOffState];
-    }
     NSString* imageFilename = [dict objectForKey:KEY_BACKGROUND_IMAGE_LOCATION];
     if (!imageFilename) {
         imageFilename = @"";
