@@ -18,6 +18,7 @@
     IBOutlet NSPopUpButton *_characterEncoding;
     IBOutlet NSComboBox *_terminalType;
     IBOutlet NSButton *_xtermMouseReporting;
+    IBOutlet NSButton *_allowTitleReporting;
 }
 
 - (void)awakeFromNib {
@@ -60,6 +61,10 @@
     
     [self defineControl:_xtermMouseReporting
                     key:KEY_XTERM_MOUSE_REPORTING
+                   type:kPreferenceInfoTypeCheckbox];
+    
+    [self defineControl:_allowTitleReporting
+                    key:KEY_ALLOW_TITLE_REPORTING
                    type:kPreferenceInfoTypeCheckbox];
 }
 
