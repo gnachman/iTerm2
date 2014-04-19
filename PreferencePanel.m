@@ -284,7 +284,8 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 #pragma mark - IBActions
 
-- (IBAction)closeCurrentSession:(id)sender
+// Shell>Close
+- (void)closeCurrentSession:(id)sender
 {
     if ([[self window] isKeyWindow]) {
         [self closeWindow:self];
@@ -326,7 +327,8 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [tabView selectTabViewItem:advancedTabViewItem];
 }
 
-- (IBAction)closeWindow:(id)sender
+// Shell>Close Terminal Window
+- (void)closeWindow:(id)sender
 {
     [[self window] close];
 }
