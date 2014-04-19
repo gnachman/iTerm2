@@ -59,7 +59,7 @@
  *  - ProfilesWindowPreferencesViewController
  *  - ProfilesTerminalPreferencesViewController
  *  - ProfilesKeysPreferencesViewController
- *  - More coming
+ *  - ProfilesAdvancedPreferencesViewController
  *
  *  These derive from iTermProfilePreferencesBaseViewController, which is just like
  *  iTermPreferencesBaseViewController, but its methods for accessing preference values take an
