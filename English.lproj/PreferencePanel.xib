@@ -37,8 +37,6 @@
                 <outlet property="keyboardToolbarItem" destination="5888" id="6040"/>
                 <outlet property="mouseTabViewItem" destination="6059" id="6061"/>
                 <outlet property="mouseToolbarItem" destination="6056" id="6057"/>
-                <outlet property="optionKeySends" destination="4291" id="4307"/>
-                <outlet property="rightOptionKeySends" destination="4293" id="4308"/>
                 <outlet property="smartSelectionWindowController_" destination="5863" id="5921"/>
                 <outlet property="tabView" destination="1943" id="2853"/>
                 <outlet property="toolbar" destination="5885" id="6042"/>
@@ -3174,7 +3172,7 @@ Gw
                                                                     </column>
                                                                 </cells>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="4309"/>
+                                                                    <action selector="settingChanged:" target="kOZ-HN-eXg" id="JkP-R8-l3i"/>
                                                                     <outlet property="nextKeyView" destination="4293" id="5286"/>
                                                                 </connections>
                                                             </matrix>
@@ -3218,7 +3216,7 @@ Gw
                                                                     </column>
                                                                 </cells>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="4310"/>
+                                                                    <action selector="settingChanged:" target="kOZ-HN-eXg" id="Hco-9M-B7p"/>
                                                                     <outlet property="nextKeyView" destination="5074" id="5287"/>
                                                                 </connections>
                                                             </matrix>
@@ -5227,6 +5225,8 @@ DQ
         </customObject>
         <customObject id="kOZ-HN-eXg" customClass="ProfilesKeysPreferencesViewController">
             <connections>
+                <outlet property="_optionKeySends" destination="4291" id="IFj-h4-wKL"/>
+                <outlet property="_rightOptionKeySends" destination="4293" id="qUt-MU-5Nv"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="xet-WM-Yj5"/>
                 <outlet property="view" destination="2110" id="LV0-bp-Kb3"/>
             </connections>

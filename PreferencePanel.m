@@ -144,10 +144,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // Bookmarks -----------------------------
 
-    // Keyboard tab
-    IBOutlet NSMatrix *optionKeySends;
-    IBOutlet NSMatrix *rightOptionKeySends;
-
     // Keyboard ------------------------------
     IBOutlet NSButton* deleteSendsCtrlHButton;
     IBOutlet NSButton* applicationKeypadAllowed;
@@ -319,11 +315,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (IBAction)bookmarkSettingChanged:(id)sender
 {
-    if (sender == optionKeySends && [[optionKeySends selectedCell] tag] == OPT_META) {
-        [self _maybeWarnAboutMeta];
-    } else if (sender == rightOptionKeySends && [[rightOptionKeySends selectedCell] tag] == OPT_META) {
-        [self _maybeWarnAboutMeta];
-    }
     Profile *origBookmark = [_profilesViewController selectedProfile];
     NSString *guid = origBookmark[KEY_GUID];
     if (!guid || !origBookmark) {
@@ -345,8 +336,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // Keyboard tab
     [newDict setObject:[origBookmark objectForKey:KEY_KEYBOARD_MAP] forKey:KEY_KEYBOARD_MAP];
-    [newDict setObject:[NSNumber numberWithInt:[[optionKeySends selectedCell] tag]] forKey:KEY_OPTION_KEY_SENDS];
-    [newDict setObject:[NSNumber numberWithInt:[[rightOptionKeySends selectedCell] tag]] forKey:KEY_RIGHT_OPTION_KEY_SENDS];
     [newDict setObject:[NSNumber numberWithInt:([applicationKeypadAllowed state]==NSOnState)] forKey:KEY_APPLICATION_KEYPAD_ALLOWED];
 
     BOOL reloadKeyMappings = NO;
@@ -1094,12 +1083,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     // Keyboard tab
-    [optionKeySends selectCellWithTag:[[dict objectForKey:KEY_OPTION_KEY_SENDS] intValue]];
-    id rightOptPref = [dict objectForKey:KEY_RIGHT_OPTION_KEY_SENDS];
-    if (!rightOptPref) {
-        rightOptPref = [dict objectForKey:KEY_OPTION_KEY_SENDS];
-    }
-    [rightOptionKeySends selectCellWithTag:[rightOptPref intValue]];
     // If a keymapping for the delete key was added, make sure the
     // "delete sends ^h" checkbox is correct
     BOOL sendCH = [self _deleteSendsCtrlHInBookmark:dict];
@@ -1116,17 +1099,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (void)changeFont:(id)fontManager {
   [_profilesViewController changeFont:fontManager];
-}
-
-#pragma mark - Warning Dialogs
-
-- (void)_maybeWarnAboutMeta
-{
-    [iTermWarning showWarningWithTitle:@"You have chosen to have an option key act as Meta. This option is useful for backward "
-                                       @"compatibility with older systems. The \"+Esc\" option is recommended for most users."
-                               actions:@[ @"OK" ]
-                            identifier:@"NeverWarnAboutMeta"
-                           silenceable:kiTermWarningTypePermanentlySilenceable];
 }
 
 #pragma mark - NSTextFieldDelegate

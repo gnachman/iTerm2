@@ -188,7 +188,9 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_AUTOLOG: @NO,
                   KEY_LOGDIR: @"",
                   KEY_SEND_CODE_WHEN_IDLE: @NO,
-                  KEY_IDLE_CODE: @0
+                  KEY_IDLE_CODE: @0,
+                  KEY_OPTION_KEY_SENDS: @(OPT_NORMAL),
+                  KEY_RIGHT_OPTION_KEY_SENDS: @(OPT_NORMAL),
                 };
         [dict retain];
     }

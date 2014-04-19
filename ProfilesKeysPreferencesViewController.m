@@ -17,15 +17,48 @@
 @interface ProfilesKeysPreferencesViewController () <iTermKeyMappingViewControllerDelegate>
 @end
 
-@implementation ProfilesKeysPreferencesViewController
+@implementation ProfilesKeysPreferencesViewController {
+    IBOutlet NSMatrix *_optionKeySends;
+    IBOutlet NSMatrix *_rightOptionKeySends;
+}
 
 - (void)awakeFromNib {
+    [self defineControl:_optionKeySends
+                    key:KEY_OPTION_KEY_SENDS
+                   type:kPreferenceInfoTypeMatrix
+         settingChanged:^(id sender) { [self optionKeySendsDidChangeForControl:sender]; }
+                 update:^BOOL{ [self updateOptionKeySendsForControl:_optionKeySends]; return YES; }];
+
+    [self defineControl:_rightOptionKeySends
+                    key:KEY_RIGHT_OPTION_KEY_SENDS
+                   type:kPreferenceInfoTypeMatrix
+         settingChanged:^(id sender) { [self optionKeySendsDidChangeForControl:sender]; }
+                 update:^BOOL{ [self updateOptionKeySendsForControl:_rightOptionKeySends]; return YES; }];
 }
 
 - (void)reloadProfile {
     [super reloadProfile];
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil];
+}
+
+#pragma mark - Option Key Sends
+
+- (void)optionKeySendsDidChangeForControl:(NSMatrix *)sender {
+    if (sender == _optionKeySends && [[_optionKeySends selectedCell] tag] == OPT_META) {
+        [self maybeWarnAboutMeta];
+    } else if (sender == _rightOptionKeySends && [[_rightOptionKeySends selectedCell] tag] == OPT_META) {
+        [self maybeWarnAboutMeta];
+    }
+    PreferenceInfo *info = [self infoForControl:sender];
+    assert(info);
+    [self setInt:[sender selectedTag] forKey:info.key];
+}
+
+- (void)updateOptionKeySendsForControl:(NSMatrix *)control {
+    PreferenceInfo *info = [self infoForControl:control];
+    assert(info);
+    [control selectCellWithTag:[self intForKey:info.key]];
 }
 
 #pragma mark - iTermKeyMappingViewControllerDelegate
@@ -123,6 +156,15 @@
         default:
             return YES;
     }
+}
+
+- (void)maybeWarnAboutMeta {
+    [iTermWarning showWarningWithTitle:@"You have chosen to have an option key act as Meta. "
+                                       @"This option is useful for backward compatibility with older "
+                                       @"systems. The \"+Esc\" option is recommended for most users."
+                               actions:@[ @"OK" ]
+                            identifier:@"NeverWarnAboutMeta"
+                           silenceable:kiTermWarningTypePermanentlySilenceable];
 }
 
 @end
