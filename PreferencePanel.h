@@ -86,8 +86,6 @@ void LoadPrefsFromCustomFolder(void);
 - (IBAction)closeSmartSelectionSheet:(id)sender;
 - (IBAction)editTriggers:(id)sender;
 - (IBAction)closeTriggersSheet:(id)sender;
-- (IBAction)addJob:(id)sender;
-- (IBAction)removeJob:(id)sender;
 - (IBAction)bookmarkSettingChanged:(id)sender;
 - (IBAction)showGlobalTabView:(id)sender;
 - (IBAction)showAppearanceTabView:(id)sender;

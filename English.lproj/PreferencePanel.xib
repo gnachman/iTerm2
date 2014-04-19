@@ -35,14 +35,12 @@
                 <outlet property="globalToolbarItem" destination="5887" id="6037"/>
                 <outlet property="idleCode" destination="5698" id="5718"/>
                 <outlet property="initialTextLabel" destination="5408" id="5415"/>
-                <outlet property="jobsTable_" destination="5661" id="5719"/>
                 <outlet property="keyboardTabViewItem" destination="3656" id="4216"/>
                 <outlet property="keyboardToolbarItem" destination="5888" id="6040"/>
                 <outlet property="logDir" destination="5686" id="5715"/>
                 <outlet property="mouseTabViewItem" destination="6059" id="6061"/>
                 <outlet property="mouseToolbarItem" destination="6056" id="6057"/>
                 <outlet property="optionKeySends" destination="4291" id="4307"/>
-                <outlet property="removeJobButton_" destination="5669" id="5723"/>
                 <outlet property="rightOptionKeySends" destination="4293" id="4308"/>
                 <outlet property="sendCodeWhenIdle" destination="5697" id="5717"/>
                 <outlet property="smartSelectionWindowController_" destination="5863" id="5921"/>
@@ -2969,8 +2967,8 @@ Gw
                                                                                 </tableColumn>
                                                                             </tableColumns>
                                                                             <connections>
-                                                                                <outlet property="dataSource" destination="-2" id="5720"/>
-                                                                                <outlet property="delegate" destination="-2" id="5721"/>
+                                                                                <outlet property="dataSource" destination="TG6-06-mq9" id="5yn-A1-Kll"/>
+                                                                                <outlet property="delegate" destination="TG6-06-mq9" id="rgM-UY-1jG"/>
                                                                             </connections>
                                                                         </tableView>
                                                                     </subviews>
@@ -2993,7 +2991,7 @@ Gw
                                                                     <font key="font" metaFont="systemBold"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="addJob:" target="-2" id="5722"/>
+                                                                    <action selector="addJob:" target="TG6-06-mq9" id="Scq-Jj-eJ7"/>
                                                                 </connections>
                                                             </button>
                                                             <button verticalHuggingPriority="750" id="5669">
@@ -3004,8 +3002,7 @@ Gw
                                                                     <font key="font" metaFont="systemBold"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="removeJob:" target="-2" id="5724"/>
-                                                                    <binding destination="-2" name="enabled" keyPath="haveJobsForCurrentBookmark" id="5727"/>
+                                                                    <action selector="removeJob:" target="TG6-06-mq9" id="eUA-iM-ZYA"/>
                                                                 </connections>
                                                             </button>
                                                             <button id="5681">
@@ -5223,7 +5220,9 @@ DQ
         <customObject id="TG6-06-mq9" customClass="ProfilesSessionPreferencesViewController">
             <connections>
                 <outlet property="_closeSessionsOnEnd" destination="5681" id="7OH-SS-Zp9"/>
+                <outlet property="_jobsTable" destination="5661" id="yIR-qA-xyG"/>
                 <outlet property="_promptBeforeClosing" destination="5728" id="Xu7-bR-LX8"/>
+                <outlet property="_removeJob" destination="5669" id="YFO-c0-Vq2"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="ctD-Hw-Es8"/>
                 <outlet property="view" destination="5653" id="F9f-6T-Z0H"/>
             </connections>

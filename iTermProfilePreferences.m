@@ -184,6 +184,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_SET_LOCALE_VARS: @YES,
                   KEY_CLOSE_SESSIONS_ON_END: @NO,
                   KEY_PROMPT_CLOSE: @(PROMPT_NEVER),
+                  KEY_JOBS: @[],
                 };
         [dict retain];
     }
