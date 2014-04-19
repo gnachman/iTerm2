@@ -476,6 +476,9 @@
 		1DB9D8F2183FE9EF0029F0B5 /* HotkeyWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB9D8F0183FE9EF0029F0B5 /* HotkeyWindowController.h */; };
 		1DB9D8F3183FE9EF0029F0B5 /* HotkeyWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB9D8F1183FE9EF0029F0B5 /* HotkeyWindowController.m */; };
 		1DB9D8F4183FE9EF0029F0B5 /* HotkeyWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB9D8F1183FE9EF0029F0B5 /* HotkeyWindowController.m */; };
+		1DBB4B371901F12400832B09 /* ProfilesSessionPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DBB4B351901F12400832B09 /* ProfilesSessionPreferencesViewController.h */; };
+		1DBB4B381901F12400832B09 /* ProfilesSessionPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DBB4B361901F12400832B09 /* ProfilesSessionPreferencesViewController.m */; };
+		1DBB4B391901F12400832B09 /* ProfilesSessionPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DBB4B361901F12400832B09 /* ProfilesSessionPreferencesViewController.m */; };
 		1DC13ABD1886146B00034DAE /* mark_err.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13ABB1886146B00034DAE /* mark_err.png */; };
 		1DC13ABE1886146B00034DAE /* mark_err.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13ABB1886146B00034DAE /* mark_err.png */; };
 		1DC13ABF1886146B00034DAE /* mark_err@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13ABC1886146B00034DAE /* mark_err@2x.png */; };
@@ -1153,6 +1156,8 @@
 		1DB72CF51396059200EB1005 /* xterm-terminfo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "xterm-terminfo.txt"; sourceTree = "<group>"; };
 		1DB9D8F0183FE9EF0029F0B5 /* HotkeyWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HotkeyWindowController.h; sourceTree = "<group>"; };
 		1DB9D8F1183FE9EF0029F0B5 /* HotkeyWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HotkeyWindowController.m; sourceTree = "<group>"; };
+		1DBB4B351901F12400832B09 /* ProfilesSessionPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesSessionPreferencesViewController.h; sourceTree = "<group>"; };
+		1DBB4B361901F12400832B09 /* ProfilesSessionPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesSessionPreferencesViewController.m; sourceTree = "<group>"; };
 		1DC13ABB1886146B00034DAE /* mark_err.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = mark_err.png; path = images/mark_err.png; sourceTree = "<group>"; };
 		1DC13ABC1886146B00034DAE /* mark_err@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "mark_err@2x.png"; path = "images/mark_err@2x.png"; sourceTree = "<group>"; };
 		1DC13AC118864E2200034DAE /* CommandHistoryPopup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommandHistoryPopup.h; sourceTree = "<group>"; };
@@ -2045,6 +2050,8 @@
 				A6A2698718FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m */,
 				A6A2698D1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h */,
 				A6A2698E1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m */,
+				1DBB4B351901F12400832B09 /* ProfilesSessionPreferencesViewController.h */,
+				1DBB4B361901F12400832B09 /* ProfilesSessionPreferencesViewController.m */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -2614,6 +2621,7 @@
 				1DE5EBE8122B892900C736B0 /* ProfilesWindow.h in Headers */,
 				1D93D33512695442007F741B /* DVR.h in Headers */,
 				1D93D3471269741B007F741B /* DVRBuffer.h in Headers */,
+				1DBB4B371901F12400832B09 /* ProfilesSessionPreferencesViewController.h in Headers */,
 				1D373E4918F3613600773D3E /* iTermShortcutInputView.h in Headers */,
 				1D93D34B1269746F007F741B /* DVRIndexEntry.h in Headers */,
 				A680AA1318CEA1040034D4F8 /* VT100TmuxParser.h in Headers */,
@@ -3206,6 +3214,7 @@
 				1D9A553C180FA7E600B42CE9 /* DVRIndexEntry.m in Sources */,
 				A63F4097183B398C003A6A6D /* PTYNoteViewController.m in Sources */,
 				1D9A555A180FA83900B42CE9 /* ArrangementPreviewView.m in Sources */,
+				1DBB4B391901F12400832B09 /* ProfilesSessionPreferencesViewController.m in Sources */,
 				A6A269921900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m in Sources */,
 				A68A30DD186D1429007F550F /* SCPFile.m in Sources */,
 				1D9A55B2180FA8D400B42CE9 /* UKCrashReporter.m in Sources */,
@@ -3460,6 +3469,7 @@
 				1D3D21B014839AAB00FAC8E7 /* TmuxLayoutParser.m in Sources */,
 				A6A2698918FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m in Sources */,
 				1DB67CEE14850D53005849A1 /* TmuxWindowOpener.m in Sources */,
+				1DBB4B381901F12400832B09 /* ProfilesSessionPreferencesViewController.m in Sources */,
 				A693395D1851A61D00EBEA20 /* VT100ScreenMark.m in Sources */,
 				1DB67CF21485C578005849A1 /* TmuxHistoryParser.m in Sources */,
 				1DB67CF61486BD3D005849A1 /* TmuxStateParser.m in Sources */,

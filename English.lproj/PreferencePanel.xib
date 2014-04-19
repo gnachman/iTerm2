@@ -30,21 +30,17 @@
                 <outlet property="bookmarkUrlSchemesLabel" destination="5035" id="5046"/>
                 <outlet property="bookmarksTabViewItem" destination="1945" id="2863"/>
                 <outlet property="bookmarksToolbarItem" destination="5886" id="6039"/>
-                <outlet property="closeSessionsOnEnd" destination="5681" id="5737"/>
                 <outlet property="deleteSendsCtrlHButton" destination="5074" id="5078"/>
                 <outlet property="globalTabViewItem" destination="1944" id="2864"/>
                 <outlet property="globalToolbarItem" destination="5887" id="6037"/>
                 <outlet property="idleCode" destination="5698" id="5718"/>
                 <outlet property="initialTextLabel" destination="5408" id="5415"/>
-                <outlet property="jobsTable_" destination="5661" id="5719"/>
                 <outlet property="keyboardTabViewItem" destination="3656" id="4216"/>
                 <outlet property="keyboardToolbarItem" destination="5888" id="6040"/>
                 <outlet property="logDir" destination="5686" id="5715"/>
                 <outlet property="mouseTabViewItem" destination="6059" id="6061"/>
                 <outlet property="mouseToolbarItem" destination="6056" id="6057"/>
                 <outlet property="optionKeySends" destination="4291" id="4307"/>
-                <outlet property="promptBeforeClosing_" destination="5728" id="5733"/>
-                <outlet property="removeJobButton_" destination="5669" id="5723"/>
                 <outlet property="rightOptionKeySends" destination="4293" id="4308"/>
                 <outlet property="sendCodeWhenIdle" destination="5697" id="5717"/>
                 <outlet property="smartSelectionWindowController_" destination="5863" id="5921"/>
@@ -2971,8 +2967,8 @@ Gw
                                                                                 </tableColumn>
                                                                             </tableColumns>
                                                                             <connections>
-                                                                                <outlet property="dataSource" destination="-2" id="5720"/>
-                                                                                <outlet property="delegate" destination="-2" id="5721"/>
+                                                                                <outlet property="dataSource" destination="TG6-06-mq9" id="5yn-A1-Kll"/>
+                                                                                <outlet property="delegate" destination="TG6-06-mq9" id="rgM-UY-1jG"/>
                                                                             </connections>
                                                                         </tableView>
                                                                     </subviews>
@@ -2995,7 +2991,7 @@ Gw
                                                                     <font key="font" metaFont="systemBold"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="addJob:" target="-2" id="5722"/>
+                                                                    <action selector="addJob:" target="TG6-06-mq9" id="Scq-Jj-eJ7"/>
                                                                 </connections>
                                                             </button>
                                                             <button verticalHuggingPriority="750" id="5669">
@@ -3006,8 +3002,7 @@ Gw
                                                                     <font key="font" metaFont="systemBold"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="removeJob:" target="-2" id="5724"/>
-                                                                    <binding destination="-2" name="enabled" keyPath="haveJobsForCurrentBookmark" id="5727"/>
+                                                                    <action selector="removeJob:" target="TG6-06-mq9" id="eUA-iM-ZYA"/>
                                                                 </connections>
                                                             </button>
                                                             <button id="5681">
@@ -3018,7 +3013,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="5683"/>
+                                                                    <action selector="settingChanged:" target="TG6-06-mq9" id="vHV-cN-4wT"/>
                                                                     <outlet property="nextKeyView" destination="2397" id="5684"/>
                                                                 </connections>
                                                             </button>
@@ -3137,7 +3132,7 @@ Gw
                                                                     </column>
                                                                 </cells>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="5734"/>
+                                                                    <action selector="settingChanged:" target="TG6-06-mq9" id="qik-fl-3x7"/>
                                                                 </connections>
                                                             </matrix>
                                                         </subviews>
@@ -5075,6 +5070,7 @@ DQ
                 <outlet property="_otherActionsPopup" destination="3230" id="Qhw-QD-BOd"/>
                 <outlet property="_profilesListView" destination="3260" id="22S-wx-dOs"/>
                 <outlet property="_removeProfileButton" destination="2113" id="bCy-bg-Kla"/>
+                <outlet property="_sessionViewController" destination="TG6-06-mq9" id="jYA-Wb-aH4"/>
                 <outlet property="_tabView" destination="2100" id="sRa-Z0-Ngh"/>
                 <outlet property="_terminalViewController" destination="gMD-DK-gev" id="Gzm-8d-1w7"/>
                 <outlet property="_textViewController" destination="lhd-u6-xr5" id="XTC-Yc-Vqb"/>
@@ -5219,6 +5215,16 @@ DQ
                 <outlet property="_unlimitedScrollback" destination="3647" id="3g4-2U-Gbv"/>
                 <outlet property="_xtermMouseReporting" destination="2402" id="kB0-i0-VKF"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="phY-Ve-12F"/>
+            </connections>
+        </customObject>
+        <customObject id="TG6-06-mq9" customClass="ProfilesSessionPreferencesViewController">
+            <connections>
+                <outlet property="_closeSessionsOnEnd" destination="5681" id="7OH-SS-Zp9"/>
+                <outlet property="_jobsTable" destination="5661" id="yIR-qA-xyG"/>
+                <outlet property="_promptBeforeClosing" destination="5728" id="Xu7-bR-LX8"/>
+                <outlet property="_removeJob" destination="5669" id="YFO-c0-Vq2"/>
+                <outlet property="delegate" destination="HVI-63-mNz" id="ctD-Hw-Es8"/>
+                <outlet property="view" destination="5653" id="F9f-6T-Z0H"/>
             </connections>
         </customObject>
     </objects>

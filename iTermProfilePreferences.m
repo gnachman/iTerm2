@@ -181,7 +181,10 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_BOOKMARK_GROWL_NOTIFICATIONS: @NO,
                   KEY_FLASHING_BELL: @NO,
                   KEY_VISUAL_BELL: @NO,
-                  KEY_SET_LOCALE_VARS: @YES
+                  KEY_SET_LOCALE_VARS: @YES,
+                  KEY_CLOSE_SESSIONS_ON_END: @NO,
+                  KEY_PROMPT_CLOSE: @(PROMPT_NEVER),
+                  KEY_JOBS: @[],
                 };
         [dict retain];
     }

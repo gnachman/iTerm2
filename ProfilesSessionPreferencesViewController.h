@@ -1,0 +1,13 @@
+//
+//  ProfilesSessionViewController.h
+//  iTerm
+//
+//  Created by George Nachman on 4/18/14.
+//
+//
+
+#import "iTermProfilePreferencesBaseViewController.h"
+
+@interface ProfilesSessionPreferencesViewController : iTermProfilePreferencesBaseViewController
+
+@end

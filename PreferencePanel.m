@@ -149,16 +149,12 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSMatrix *rightOptionKeySends;
 
     // Session --------------------------------
-    IBOutlet NSButton* closeSessionsOnEnd;
-    IBOutlet NSTableView *jobsTable_;
     IBOutlet NSButton *autoLog;
     IBOutlet NSTextField *logDir;
     IBOutlet NSButton *changeLogDir;
     IBOutlet NSImageView *logDirWarning;
     IBOutlet NSButton* sendCodeWhenIdle;
     IBOutlet NSTextField* idleCode;
-    IBOutlet NSButton* removeJobButton_;
-    IBOutlet NSMatrix* promptBeforeClosing_;
 
     // Keyboard ------------------------------
     IBOutlet NSButton* deleteSendsCtrlHButton;
@@ -376,11 +372,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     // Session tab
-    [newDict setObject:[NSNumber numberWithBool:([closeSessionsOnEnd state]==NSOnState)] forKey:KEY_CLOSE_SESSIONS_ON_END];
-    [newDict setObject:[NSNumber numberWithInt:[[promptBeforeClosing_ selectedCell] tag]]
-                forKey:KEY_PROMPT_CLOSE];
-    [newDict setObject:[origBookmark objectForKey:KEY_JOBS] ? [origBookmark objectForKey:KEY_JOBS] : [NSArray array]
-                forKey:KEY_JOBS];
     [newDict setObject:[NSNumber numberWithBool:([autoLog state]==NSOnState)] forKey:KEY_AUTOLOG];
     [newDict setObject:[logDir stringValue] forKey:KEY_LOGDIR];
     [logDir setEnabled:[autoLog state] == NSOnState];
@@ -413,60 +404,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
                                                             object:nil
                                                           userInfo:nil];
     }
-}
-
-
-- (IBAction)addJob:(id)sender
-{
-    Profile *profile = [_profilesViewController selectedProfile];
-    NSString* guid = profile[KEY_GUID];
-    if (!guid) {
-        return;
-    }
-    NSArray *jobNames = [profile objectForKey:KEY_JOBS];
-    NSMutableArray *augmented;
-    if (jobNames) {
-        augmented = [NSMutableArray arrayWithArray:jobNames];
-        [augmented addObject:@"Job Name"];
-    } else {
-        augmented = [NSMutableArray arrayWithObject:@"Job Name"];
-    }
-    [dataSource setObject:augmented forKey:KEY_JOBS inBookmark:profile];
-    [jobsTable_ reloadData];
-    [jobsTable_ selectRowIndexes:[NSIndexSet indexSetWithIndex:[augmented count] - 1]
-            byExtendingSelection:NO];
-    [jobsTable_ editColumn:0
-                       row:[self numberOfRowsInTableView:jobsTable_] - 1
-                 withEvent:nil
-                    select:YES];
-    [self setHaveJobsForCurrentBookmark:[self haveJobsForCurrentBookmark]];
-    [self bookmarkSettingChanged:nil];
-}
-
-- (IBAction)removeJob:(id)sender
-{
-    // Causes editing to end. If you try to remove a cell that is being edited,
-    // it tries to dereference the deleted cell. There doesn't seem to be an
-    // API that explicitly ends editing.
-    [jobsTable_ reloadData];
-
-    NSInteger selectedIndex = [jobsTable_ selectedRow];
-    if (selectedIndex < 0) {
-        return;
-    }
-    Profile *profile = [_profilesViewController selectedProfile];
-    NSString *guid = profile[KEY_GUID];
-    if (!guid) {
-        return;
-    }
-    NSArray *jobNames = profile[KEY_JOBS];
-    NSMutableArray *mod = [NSMutableArray arrayWithArray:jobNames];
-    [mod removeObjectAtIndex:selectedIndex];
-
-    [dataSource setObject:mod forKey:KEY_JOBS inBookmark:profile];
-    [jobsTable_ reloadData];
-    [self setHaveJobsForCurrentBookmark:[self haveJobsForCurrentBookmark]];
-    [self bookmarkSettingChanged:nil];
 }
 
 - (IBAction)showGlobalTabView:(id)sender
@@ -1150,49 +1087,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [[NSUserDefaults standardUserDefaults] setBool:value forKey:@"AutoCommandHistory"];
 }
 
-#pragma mark - NSTableViewDataSource
-
-- (int)numberOfRowsInTableView: (NSTableView *)aTableView
-{
-    if (aTableView == jobsTable_) {
-        Profile *profile = [_profilesViewController selectedProfile];
-        if (!profile) {
-            return 0;
-        }
-        NSArray *jobNames = profile[KEY_JOBS];
-        return [jobNames count];
-    }
-    // We can only get here while loading the nib (on some machines, this function is called
-    // before the IBOutlets are populated).
-    return 0;
-}
-
-
-- (void)tableView:(NSTableView *)aTableView
-   setObjectValue:(id)anObject
-   forTableColumn:(NSTableColumn *)aTableColumn
-              row:(NSInteger)rowIndex
-{
-    if (aTableView == jobsTable_) {
-        Profile *profile = [_profilesViewController selectedProfile];
-        NSMutableArray *jobs = [NSMutableArray arrayWithArray:[profile objectForKey:KEY_JOBS]];
-        [jobs replaceObjectAtIndex:rowIndex withObject:anObject];
-        [dataSource setObject:jobs forKey:KEY_JOBS inBookmark:profile];
-    }
-    [self bookmarkSettingChanged:nil];
-}
-
-- (id)tableView:(NSTableView *)aTableView
-    objectValueForTableColumn:(NSTableColumn *)aTableColumn
-                          row:(int)rowIndex {
-    if (aTableView == jobsTable_) {
-        Profile *profile = [_profilesViewController selectedProfile];
-        return [profile[KEY_JOBS] objectAtIndex:rowIndex];
-    }
-    // Shouldn't get here but must return something to avoid a warning.
-    return nil;
-}
-
 #pragma mark - Update view contents
 
 - (void)run
@@ -1253,9 +1147,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [applicationKeypadAllowed setState:[dict boolValueDefaultingToYesForKey:KEY_APPLICATION_KEYPAD_ALLOWED] ? NSOnState : NSOffState];
 
     // Session tab
-    [closeSessionsOnEnd setState:[[dict objectForKey:KEY_CLOSE_SESSIONS_ON_END] boolValue] ? NSOnState : NSOffState];
-    [promptBeforeClosing_ selectCellWithTag:[[dict objectForKey:KEY_PROMPT_CLOSE] intValue]];
-    [jobsTable_ reloadData];
     [autoLog setState:[[dict objectForKey:KEY_AUTOLOG] boolValue] ? NSOnState : NSOffState];
     [logDir setStringValue:[dict objectForKey:KEY_LOGDIR] ? [dict objectForKey:KEY_LOGDIR] : @""];
     [logDir setEnabled:[autoLog state] == NSOnState];
@@ -1301,14 +1192,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 }
 
-#pragma mark - NSTableViewDelegate
-
-- (void)tableViewSelectionDidChange:(NSNotification *)aNotification {
-    if ([aNotification object] == jobsTable_) {
-        [self setHaveJobsForCurrentBookmark:[self haveJobsForCurrentBookmark]];
-    }
-}
-
 #pragma mark - NSTextFieldDelegate
 
 - (void)forceTextFieldToBeNumber:(NSTextField *)textField
@@ -1343,28 +1226,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     } else if (obj == logDir) {
         [self _updateLogDirWarning];
     }
-}
-
-#pragma mark - Cocoa Bindings
-
-// An experiment with cocoa bindings. This is bound to the "enabled" status of
-// the "remove job" button.
-- (BOOL)haveJobsForCurrentBookmark
-{
-    if ([jobsTable_ selectedRow] < 0) {
-        return NO;
-    }
-    Profile *profile = [_profilesViewController selectedProfile];
-    if (!profile) {
-        return NO;
-    }
-    NSArray *jobNames = profile[KEY_JOBS];
-    return [jobNames count] > 0;
-}
-
-- (void)setHaveJobsForCurrentBookmark:(BOOL)value
-{
-    // observed but has no effect because the getter does all the computation.
 }
 
 #pragma mark - iTermKeyMappingViewControllerDelegate
@@ -1451,8 +1312,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         smartSelectionWindowController_.guid = guid;
         trouterPrefController_.guid = guid;
         [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
-
-        [self setHaveJobsForCurrentBookmark:[self haveJobsForCurrentBookmark]];
     }
 }
 
