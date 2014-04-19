@@ -302,14 +302,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [_profilesViewController importColorPresetFromFile:filename];
 }
 
-#pragma mark - Sheet handling
-
-- (void)genericCloseSheet:(NSWindow *)sheet
-               returnCode:(int)returnCode
-              contextInfo:(void *)contextInfo {
-    [sheet close];
-}
-
 - (WindowArrangements *)arrangements
 {
     return arrangements_;
