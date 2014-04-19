@@ -58,7 +58,7 @@
         </customView>
         <customObject id="ANy-SZ-4JP" userLabel="Profile iTermKeyMappingViewController" customClass="iTermKeyMappingViewController">
             <connections>
-                <outlet property="delegate" destination="-2" id="yTX-DC-nXJ"/>
+                <outlet property="delegate" destination="kOZ-HN-eXg" id="a0S-fa-eHq"/>
                 <outlet property="placeholderView" destination="6sa-Ma-Wvi" id="d35-GN-ycl"/>
             </connections>
         </customObject>
@@ -5058,6 +5058,7 @@ DQ
                 <outlet property="_copyToProfileButton" destination="5140" id="OLo-Jv-hFL"/>
                 <outlet property="_generalTab" destination="2101" id="L0w-Vv-KhM"/>
                 <outlet property="_generalViewController" destination="dVg-Ac-SiZ" id="ppv-wN-HJr"/>
+                <outlet property="_keysViewController" destination="kOZ-HN-eXg" id="4DV-Eg-7b1"/>
                 <outlet property="_otherActionsPopup" destination="3230" id="Qhw-QD-BOd"/>
                 <outlet property="_profilesListView" destination="3260" id="22S-wx-dOs"/>
                 <outlet property="_removeProfileButton" destination="2113" id="bCy-bg-Kla"/>
@@ -5222,6 +5223,12 @@ DQ
                 <outlet property="_sendCodeWhenIdle" destination="5697" id="dJR-J9-XOR"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="ctD-Hw-Es8"/>
                 <outlet property="view" destination="5653" id="F9f-6T-Z0H"/>
+            </connections>
+        </customObject>
+        <customObject id="kOZ-HN-eXg" customClass="ProfilesKeysPreferencesViewController">
+            <connections>
+                <outlet property="delegate" destination="HVI-63-mNz" id="xet-WM-Yj5"/>
+                <outlet property="view" destination="2110" id="LV0-bp-Kb3"/>
             </connections>
         </customObject>
     </objects>

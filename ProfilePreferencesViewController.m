@@ -15,6 +15,7 @@
 #import "ProfileListView.h"
 #import "ProfilesGeneralPreferencesViewController.h"
 #import "ProfilesColorsPreferencesViewController.h"
+#import "ProfilesKeysPreferencesViewController.h"
 #import "ProfilesTextPreferencesViewController.h"
 #import "ProfilesTerminalPreferencesViewController.h"
 #import "ProfilesWindowPreferencesViewController.h"
@@ -68,6 +69,9 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
     // Sessions tab view controller
     IBOutlet ProfilesSessionPreferencesViewController *_sessionViewController;
+    
+    // Keys tab view controller
+    IBOutlet ProfilesKeysPreferencesViewController *_keysViewController;
 }
 
 - (id)init {
@@ -250,7 +254,8 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
               _textViewController,
               _windowViewController,
               _terminalViewController,
-              _sessionViewController ];
+              _sessionViewController,
+              _keysViewController ];
 }
 
 #pragma mark - Actions

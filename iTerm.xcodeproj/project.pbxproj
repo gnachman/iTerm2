@@ -779,6 +779,9 @@
 		A6A269901900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2698D1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h */; };
 		A6A269911900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2698E1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m */; };
 		A6A269921900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2698E1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m */; };
+		A6A269971902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A269951902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h */; };
+		A6A269981902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A269961902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m */; };
+		A6A269991902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A269961902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
 		A6A5991E1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
 		A6A5991F1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
@@ -1396,6 +1399,8 @@
 		A6A2698718FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesWindowPreferencesViewController.m; sourceTree = "<group>"; };
 		A6A2698D1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesTerminalPreferencesViewController.h; sourceTree = "<group>"; };
 		A6A2698E1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesTerminalPreferencesViewController.m; sourceTree = "<group>"; };
+		A6A269951902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesKeysPreferencesViewController.h; sourceTree = "<group>"; };
+		A6A269961902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesKeysPreferencesViewController.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; };
 		A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasteHelper.h; sourceTree = "<group>"; };
@@ -2052,6 +2057,8 @@
 				A6A2698E1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m */,
 				1DBB4B351901F12400832B09 /* ProfilesSessionPreferencesViewController.h */,
 				1DBB4B361901F12400832B09 /* ProfilesSessionPreferencesViewController.m */,
+				A6A269951902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h */,
+				A6A269961902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -2659,6 +2666,7 @@
 				1D85D1ED1306687700A3E998 /* RegexKitLite.h in Headers */,
 				1D237D28131D8741004DD60C /* FindView.h in Headers */,
 				1D237D94131D8D66004DD60C /* FindViewController.h in Headers */,
+				A6A269971902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h in Headers */,
 				1D06A052134CDBF800C414EF /* Trouter.h in Headers */,
 				1D988597135D23BD0072023F /* ProcessCache.h in Headers */,
 				A6E713A818F7C9F4008D94DD /* iTermProfilePreferences.h in Headers */,
@@ -3252,6 +3260,7 @@
 				A6E74759188C66CF005355CF /* iTermExposeTabView.m in Sources */,
 				1D9A55AC180FA8B700B42CE9 /* PSMRolloverButton.m in Sources */,
 				A6057C061878CD30004A60AF /* ProfileTagsView.m in Sources */,
+				A6A269991902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m in Sources */,
 				1D9A5590180FA87000B42CE9 /* PseudoTerminal.m in Sources */,
 				1D9A557B180FA87000B42CE9 /* CharacterRun.m in Sources */,
 				1D9A5562180FA83900B42CE9 /* WindowArrangements.m in Sources */,
@@ -3308,6 +3317,7 @@
 				A6E7137B18F1D70E008D94DD /* GeneralPreferencesViewController.m in Sources */,
 				1D5FDDAA1208E93600C46BA3 /* VT100Terminal.m in Sources */,
 				1D5FDDAB1208E93600C46BA3 /* iTermController.m in Sources */,
+				A6A269981902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m in Sources */,
 				A63F40AA183F3CED003A6A6D /* LineBufferHelpers.m in Sources */,
 				1D5FDDAC1208E93600C46BA3 /* NSStringITerm.m in Sources */,
 				1D5FDDAD1208E93600C46BA3 /* PreferencePanel.m in Sources */,
