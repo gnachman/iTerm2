@@ -143,9 +143,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // Bookmarks -----------------------------
 
-    // Terminal tab
-    IBOutlet NSButton* closeSessionsOnEnd;
-
     // Keyboard tab
     IBOutlet NSMatrix *optionKeySends;
     IBOutlet NSMatrix *rightOptionKeySends;
@@ -159,7 +156,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSButton* sendCodeWhenIdle;
     IBOutlet NSTextField* idleCode;
     IBOutlet NSButton* removeJobButton_;
-    IBOutlet NSMatrix* promptBeforeClosing_;
 
     // Keyboard ------------------------------
     IBOutlet NSButton* deleteSendsCtrlHButton;
@@ -377,9 +373,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     // Session tab
-    [newDict setObject:[NSNumber numberWithBool:([closeSessionsOnEnd state]==NSOnState)] forKey:KEY_CLOSE_SESSIONS_ON_END];
-    [newDict setObject:[NSNumber numberWithInt:[[promptBeforeClosing_ selectedCell] tag]]
-                forKey:KEY_PROMPT_CLOSE];
     [newDict setObject:[origBookmark objectForKey:KEY_JOBS] ? [origBookmark objectForKey:KEY_JOBS] : [NSArray array]
                 forKey:KEY_JOBS];
     [newDict setObject:[NSNumber numberWithBool:([autoLog state]==NSOnState)] forKey:KEY_AUTOLOG];
@@ -1254,8 +1247,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [applicationKeypadAllowed setState:[dict boolValueDefaultingToYesForKey:KEY_APPLICATION_KEYPAD_ALLOWED] ? NSOnState : NSOffState];
 
     // Session tab
-    [closeSessionsOnEnd setState:[[dict objectForKey:KEY_CLOSE_SESSIONS_ON_END] boolValue] ? NSOnState : NSOffState];
-    [promptBeforeClosing_ selectCellWithTag:[[dict objectForKey:KEY_PROMPT_CLOSE] intValue]];
     [jobsTable_ reloadData];
     [autoLog setState:[[dict objectForKey:KEY_AUTOLOG] boolValue] ? NSOnState : NSOffState];
     [logDir setStringValue:[dict objectForKey:KEY_LOGDIR] ? [dict objectForKey:KEY_LOGDIR] : @""];
