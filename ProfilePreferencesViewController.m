@@ -157,6 +157,10 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     return _tabView.frame.size;
 }
 
+- (void)selectGeneralTab {
+    [_tabView selectTabViewItem:_generalTab];
+}
+
 - (void)openToProfileWithGuid:(NSString *)guid {
     [_profilesListView reloadData];
     if ([[self selectedProfile][KEY_GUID] isEqualToString:guid]) {

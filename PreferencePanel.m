@@ -224,8 +224,10 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 }
 
 - (void)openToBookmark:(NSString*)guid {
-    [self run];
+    [self window];
     [self selectProfilesTab];
+    [_profilesViewController selectGeneralTab];
+    [self run];
     [_profilesViewController openToProfileWithGuid:guid];
 }
 
