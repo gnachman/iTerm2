@@ -24,6 +24,9 @@
 
 #import <Cocoa/Cocoa.h>
 
+// Notification posted when a stored profile changes.
+extern NSString *const kReloadAddressBookNotification;
+
 #define BMKEY_BOOKMARKS_ARRAY @"Bookmarks Array"
 
 #define Profile NSDictionary

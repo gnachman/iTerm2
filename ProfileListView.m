@@ -142,10 +142,10 @@ const CGFloat kDefaultTagsWidth = 80;
         
         [searchField_ setArrowHandler:tableView_];
         
-        [[NSNotificationCenter defaultCenter] addObserver: self
-                                                 selector: @selector(dataChangeNotification:)
-                                                     name: @"iTermReloadAddressBook"
-                                                   object: nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(dataChangeNotification:)
+                                                     name:kReloadAddressBookNotification
+                                                   object:nil];
         
         // Tags view -------------------------------------------------------------------------------
         NSRect tagsViewFrame = NSMakeRect(0, 0, kTagsViewWidth, splitViewFrame.size.height);

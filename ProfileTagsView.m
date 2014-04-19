@@ -65,10 +65,10 @@ static const CGFloat kRowHeight = 21;
         [_tableView sizeLastColumnToFit];
         _scrollView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
 
-        [[NSNotificationCenter defaultCenter] addObserver: self
-                                                 selector: @selector(reloadAddressBook:)
-                                                     name: @"iTermReloadAddressBook"
-                                                   object: nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(reloadAddressBook:)
+                                                     name:kReloadAddressBookNotification
+                                                   object:nil];
     }
     return self;
 }

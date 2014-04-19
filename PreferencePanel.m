@@ -173,11 +173,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
         [toolbar setSelectedItemIdentifier:globalToolbarId];
 
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(_reloadURLHandlers:)
-                                                     name:@"iTermReloadAddressBook"
-                                                   object:nil];
-
         oneBookmarkMode = obMode;
     }
     return self;
@@ -240,13 +235,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (Profile*)hotkeyBookmark {
     return [_keysViewController hotkeyProfile];
-}
-
-#pragma mark - Notification handlers
-
-- (void)_reloadURLHandlers:(NSNotification *)aNotification {
-    // TODO: maybe something here for the current bookmark?
-    [_keysViewController populateHotKeyProfilesMenu];
 }
 
 #pragma mark - NSWindowController

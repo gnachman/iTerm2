@@ -534,25 +534,25 @@ static BOOL hasBecomeActive = NO;
                                                      name:@"iTermWindowBecameKey"
                                                    object:nil];
 
-        [[NSNotificationCenter defaultCenter] addObserver: self
-                                                 selector: @selector(updateAddressBookMenu:)
-                                                     name: @"iTermReloadAddressBook"
-                                                   object: nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(updateAddressBookMenu:)
+                                                     name:kReloadAddressBookNotification
+                                                   object:nil];
 
-        [[NSNotificationCenter defaultCenter] addObserver: self
-                                                 selector: @selector(buildSessionSubmenu:)
-                                                     name: @"iTermNumberOfSessionsDidChange"
-                                                   object: nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(buildSessionSubmenu:)
+                                                     name:@"iTermNumberOfSessionsDidChange"
+                                                   object:nil];
 
-        [[NSNotificationCenter defaultCenter] addObserver: self
-                                                 selector: @selector(buildSessionSubmenu:)
-                                                     name: @"iTermNameOfSessionDidChange"
-                                                   object: nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(buildSessionSubmenu:)
+                                                     name:@"iTermNameOfSessionDidChange"
+                                                   object:nil];
 
-        [[NSNotificationCenter defaultCenter] addObserver: self
-                                                 selector: @selector(reloadSessionMenus:)
-                                                     name: @"iTermSessionBecameKey"
-                                                   object: nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(reloadSessionMenus:)
+                                                     name:@"iTermSessionBecameKey"
+                                                   object:nil];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(nonTerminalWindowBecameKey:)

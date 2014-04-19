@@ -26,6 +26,8 @@
 #import "ProfileModel.h"
 #import "PreferencePanel.h"
 
+NSString *const kReloadAddressBookNotification = @"iTermReloadAddressBook";
+
 id gAltOpenAllRepresentedObject;
 // Set to true if a bookmark was changed automatically due to migration to a new
 // standard.
@@ -608,7 +610,7 @@ int gMigrated;
 - (void)postChangeNotification
 {
     if (postChanges_) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermReloadAddressBook"
+        [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAddressBookNotification
                                                             object:nil
                                                           userInfo:[NSDictionary dictionaryWithObject:journal_ forKey:@"array"]];
     }

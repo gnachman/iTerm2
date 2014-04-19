@@ -44,6 +44,11 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 }
 
 - (void)awakeFromNib {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(reloadAddressBookNotification:)
+                                                 name:kReloadAddressBookNotification
+                                               object:nil];
+    
     PreferenceInfo *info;
 
     // Modifier remapping
@@ -342,6 +347,12 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil
                                                       userInfo:nil];
+}
+
+#pragma mark - Notification handlers
+
+- (void)reloadAddressBookNotification:(NSNotification *)aNotification {
+    [self populateHotKeyProfilesMenu];
 }
 
 @end
