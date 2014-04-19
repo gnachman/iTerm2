@@ -231,10 +231,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [_profilesViewController openToProfileWithGuid:guid];
 }
 
-- (Profile*)hotkeyBookmark {
-    return [_keysViewController hotkeyProfile];
-}
-
 #pragma mark - NSWindowController
 
 // NSWindow delegate

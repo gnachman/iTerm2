@@ -236,15 +236,6 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                                                       userInfo:userInfo];
 }
 
-- (Profile*)hotkeyProfile {
-    NSString *guid = [iTermPreferences stringForKey:kPreferenceKeyHotkeyProfileGuid];
-    if (guid) {
-        return [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-    } else {
-        return nil;
-    }
-}
-
 - (void)populateHotKeyProfilesMenu {
     if (!_hotkeyBookmark) {
         return;

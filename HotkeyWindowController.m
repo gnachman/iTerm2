@@ -6,6 +6,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermPreferences.h"
 #import "iTermShortcutInputView.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
@@ -70,7 +71,12 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 }
 
 - (Profile *)profile {
-    return [[PreferencePanel sharedInstance] hotkeyBookmark];
+    NSString *guid = [iTermPreferences stringForKey:kPreferenceKeyHotkeyProfileGuid];
+    if (guid) {
+        return [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    } else {
+        return nil;
+    }
 }
 
 - (BOOL)openHotkeyWindow {

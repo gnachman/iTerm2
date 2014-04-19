@@ -177,8 +177,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)autoCommandHistory;
 - (void)setAutoCommandHistory:(BOOL)value;
 
-- (Profile*)hotkeyBookmark;
-
 - (BOOL)importColorPresetFromFile:(NSString*)filename;
 
 @end

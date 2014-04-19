@@ -14,7 +14,6 @@
     iTermShortcutInputViewDelegate>
 
 @property(nonatomic, readonly) NSTextField *hotkeyField;
-@property(nonatomic, readonly) Profile *hotkeyProfile;
 
 - (void)populateHotKeyProfilesMenu;
 
