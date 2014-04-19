@@ -123,7 +123,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     [_advancedWorkingDirWindowController copyOwnedValuesToDict:dict];
 }
 
-- (void)layoutSubviewsForSingleBookmarkMode {
+- (void)layoutSubviewsForEditCurrentSessionMode {
     NSArray *viewsToHide = @[ _profileShortcut,
                               _tagsTokenField,
                               _commandType,

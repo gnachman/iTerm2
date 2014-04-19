@@ -77,7 +77,7 @@
     [self updateRemoveJobButtonEnabled];
 }
 
-- (void)layoutSubviewsForSingleBookmarkMode {
+- (void)layoutSubviewsForEditCurrentSessionMode {
     NSArray *viewsToDisable = @[ _autoLog,
                                  _logDir,
                                  _changeLogDir ];

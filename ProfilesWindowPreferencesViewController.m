@@ -123,7 +123,7 @@
                    type:kPreferenceInfoTypeCheckbox];
 }
 
-- (void)layoutSubviewsForSingleBookmarkMode {
+- (void)layoutSubviewsForEditCurrentSessionMode {
     NSArray *viewsToDisable = @[ _columnsField,
                                  _rowsField,
                                  _hideAfterOpening,

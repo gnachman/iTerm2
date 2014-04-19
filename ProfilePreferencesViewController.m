@@ -122,16 +122,16 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
 #pragma mark - APIs
 
-- (void)layoutSubviewsForSingleBookmarkMode {
+- (void)layoutSubviewsForEditCurrentSessionMode {
     _profilesListView.hidden = YES;
     _otherActionsPopup.hidden = YES;
     _addProfileButton.hidden = YES;
     _removeProfileButton.hidden = YES;
     _copyToProfileButton.hidden = NO;
     _toggleTagsButton.hidden = YES;
-    [_generalViewController layoutSubviewsForSingleBookmarkMode];
-    [_windowViewController layoutSubviewsForSingleBookmarkMode];
-    [_sessionViewController layoutSubviewsForSingleBookmarkMode];
+    [_generalViewController layoutSubviewsForEditCurrentSessionMode];
+    [_windowViewController layoutSubviewsForEditCurrentSessionMode];
+    [_sessionViewController layoutSubviewsForEditCurrentSessionMode];
     NSRect newFrame = _tabView.frame;
     newFrame.origin.x = 0;
     _tabView.frame = newFrame;

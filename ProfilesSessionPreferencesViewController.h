@@ -10,6 +10,6 @@
 
 @interface ProfilesSessionPreferencesViewController : iTermProfilePreferencesBaseViewController
 
-- (void)layoutSubviewsForSingleBookmarkMode;
+- (void)layoutSubviewsForEditCurrentSessionMode;
 
 @end

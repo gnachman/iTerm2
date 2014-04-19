@@ -202,14 +202,13 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [toolbar setSelectedItemIdentifier:globalToolbarId];
 
     if (oneBookmarkMode) {
-        [self layoutSubviewsForSingleBookmarkMode];
+        [self layoutSubviewsForEditCurrentSessionMode];
     }
 }
 
-- (void)layoutSubviewsForSingleBookmarkMode
-{
+- (void)layoutSubviewsForEditCurrentSessionMode {
     [self showBookmarks];
-    [_profilesViewController layoutSubviewsForSingleBookmarkMode];
+    [_profilesViewController layoutSubviewsForEditCurrentSessionMode];
     [toolbar setVisible:NO];
 
     NSRect newFrame = [[self window] frame];

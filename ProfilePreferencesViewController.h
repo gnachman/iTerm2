@@ -26,7 +26,7 @@
 @property(nonatomic, assign) IBOutlet id<ProfilePreferencesViewControllerDelegate> delegate;
 @property(nonatomic, readonly) NSTabView *tabView;  // TODO: nuke this
 
-- (void)layoutSubviewsForSingleBookmarkMode;
+- (void)layoutSubviewsForEditCurrentSessionMode;
 
 - (Profile *)selectedProfile;
 
