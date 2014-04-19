@@ -71,7 +71,7 @@ void LoadPrefsFromCustomFolder(void);
 + (instancetype)sharedInstance;
 + (instancetype)sessionsInstance;
 
-- (void)openToBookmark:(NSString*)guid;
+- (void)openToProfileWithGuid:(NSString*)guid;
 
 - (void)updateBookmarkFields:(NSDictionary *)dict;
 

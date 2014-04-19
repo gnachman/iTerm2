@@ -238,7 +238,7 @@ typedef enum {
 {
     NSString* guid = [tableView_ selectedGuid];
     if (guid) {
-        [[PreferencePanel sharedInstance] openToBookmark:guid];
+        [[PreferencePanel sharedInstance] openToProfileWithGuid:guid];
     }
 }
 

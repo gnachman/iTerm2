@@ -3284,7 +3284,7 @@ NSString *kSessionsKVCKey = @"sessions";
         return;
     }
     NSString* newGuid = [session divorceAddressBookEntryFromPreferences];
-    [[PreferencePanel sessionsInstance] openToBookmark:newGuid];
+    [[PreferencePanel sessionsInstance] openToProfileWithGuid:newGuid];
 }
 
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu
