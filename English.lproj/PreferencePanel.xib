@@ -17,28 +17,16 @@
                 <outlet property="arrangementsTabViewItem" destination="5417" id="5578"/>
                 <outlet property="arrangementsToolbarItem" destination="5890" id="6041"/>
                 <outlet property="arrangements_" destination="5572" id="5584"/>
-                <outlet property="basicsLabel" destination="3247" id="5772"/>
-                <outlet property="blurRadius" destination="5363" id="5371"/>
-                <outlet property="bookmarkCommandLabel" destination="2132" id="3464"/>
-                <outlet property="bookmarkDirectoryLabel" destination="2129" id="3465"/>
-                <outlet property="bookmarkShortcutKeyLabel" destination="2141" id="3466"/>
-                <outlet property="bookmarkShortcutKeyModifiersLabel" destination="3241" id="3467"/>
-                <outlet property="bookmarkTagsLabel" destination="3243" id="3468"/>
-                <outlet property="bookmarkUrlSchemesHeaderLabel" destination="5033" id="5045"/>
-                <outlet property="bookmarkUrlSchemesLabel" destination="5035" id="5046"/>
                 <outlet property="bookmarksTabViewItem" destination="1945" id="2863"/>
                 <outlet property="bookmarksToolbarItem" destination="5886" id="6039"/>
                 <outlet property="globalTabViewItem" destination="1944" id="2864"/>
                 <outlet property="globalToolbarItem" destination="5887" id="6037"/>
-                <outlet property="initialTextLabel" destination="5408" id="5415"/>
                 <outlet property="keyboardTabViewItem" destination="3656" id="4216"/>
                 <outlet property="keyboardToolbarItem" destination="5888" id="6040"/>
                 <outlet property="mouseTabViewItem" destination="6059" id="6061"/>
                 <outlet property="mouseToolbarItem" destination="6056" id="6057"/>
-                <outlet property="smartSelectionWindowController_" destination="5863" id="5921"/>
                 <outlet property="tabView" destination="1943" id="2853"/>
                 <outlet property="toolbar" destination="5885" id="6042"/>
-                <outlet property="trouterPrefController_" destination="5949" id="5954"/>
                 <outlet property="window" destination="1923" id="2981"/>
             </connections>
         </customObject>

@@ -1002,12 +1002,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 }
 
 
-- (void)profileWithGuidWasSelected:(NSString *)guid {
-    if (guid) {
-        [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
-    }
-}
-
 - (ProfileModel *)profilePreferencesModel {
     return dataSource;
 }

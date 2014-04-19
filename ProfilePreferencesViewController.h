@@ -16,7 +16,6 @@
 // TODO: Nuke all of these.
 - (ProfileModel *)profilePreferencesModel;
 - (void)updateBookmarkFields:(Profile *)profile;
-- (void)profileWithGuidWasSelected:(NSString *)guid;
 - (void)bookmarkSettingChanged:(id)sender;
 - (void)removeKeyMappingsReferringToBookmarkGuid:(NSString*)badRef;
 - (void)profilePreferencesModelDidAwakeFromNib;

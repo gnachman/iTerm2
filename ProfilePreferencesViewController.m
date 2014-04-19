@@ -217,7 +217,16 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     _otherActionsPopup.enabled = hasSelection;
     _removeProfileButton.enabled = hasSelection && [_profilesListView numberOfRows] > 1;
 
-    [_delegate profileWithGuidWasSelected:profile[KEY_GUID]];
+    [self updateSubviewsForProfile:profile];
+    if (!self.tabView.isHidden) {
+        // Epilogue
+        [self reloadData];
+        
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelDidUpdateProfileFields
+                                                            object:nil
+                                                          userInfo:nil];
+    }
+
     [[self tabViewControllers] makeObjectsPerformSelector:@selector(reloadProfile)];
 }
 
