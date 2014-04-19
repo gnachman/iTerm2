@@ -32,7 +32,6 @@
                 <outlet property="deleteSendsCtrlHButton" destination="5074" id="5078"/>
                 <outlet property="globalTabViewItem" destination="1944" id="2864"/>
                 <outlet property="globalToolbarItem" destination="5887" id="6037"/>
-                <outlet property="idleCode" destination="5698" id="5718"/>
                 <outlet property="initialTextLabel" destination="5408" id="5415"/>
                 <outlet property="keyboardTabViewItem" destination="3656" id="4216"/>
                 <outlet property="keyboardToolbarItem" destination="5888" id="6040"/>
@@ -40,7 +39,6 @@
                 <outlet property="mouseToolbarItem" destination="6056" id="6057"/>
                 <outlet property="optionKeySends" destination="4291" id="4307"/>
                 <outlet property="rightOptionKeySends" destination="4293" id="4308"/>
-                <outlet property="sendCodeWhenIdle" destination="5697" id="5717"/>
                 <outlet property="smartSelectionWindowController_" destination="5863" id="5921"/>
                 <outlet property="tabView" destination="1943" id="2853"/>
                 <outlet property="toolbar" destination="5885" id="6042"/>
@@ -3063,7 +3061,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="5706"/>
+                                                                    <action selector="settingChanged:" target="TG6-06-mq9" id="Oi1-J9-bAq"/>
                                                                     <outlet property="nextKeyView" destination="5698" id="5702"/>
                                                                 </connections>
                                                             </button>
@@ -3071,17 +3069,12 @@ Gw
                                                                 <rect key="frame" x="214" y="29" width="45" height="22"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="5699">
-                                                                    <numberFormatter key="formatter" formatterBehavior="default10_4" positiveFormat="#" negativeFormat="#" usesGroupingSeparator="NO" paddingCharacter="*" groupingSize="0" minimumIntegerDigits="0" maximumIntegerDigits="42" decimalSeparator="." groupingSeparator="," currencyDecimalSeparator="." plusSign="+" minusSign="-" notANumberSymbol="NaN" perMillSymbol="‰" percentSymbol="%" exponentSymbol="E" positivePrefix="" positiveSuffix="" negativePrefix="-" negativeSuffix="" id="5700">
-                                                                        <real key="minimum" value="0.0"/>
-                                                                        <real key="maximum" value="255"/>
-                                                                    </numberFormatter>
                                                                     <font key="font" metaFont="system"/>
                                                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                                 </textFieldCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="5705"/>
-                                                                    <outlet property="delegate" destination="-2" id="5704"/>
+                                                                    <outlet property="delegate" destination="TG6-06-mq9" id="Vnh-fj-vwl"/>
                                                                     <outlet property="nextKeyView" destination="2404" id="5703"/>
                                                                 </connections>
                                                             </textField>
@@ -5220,11 +5213,13 @@ DQ
                 <outlet property="_autoLog" destination="5685" id="27x-QK-Uur"/>
                 <outlet property="_changeLogDir" destination="5687" id="mMH-ci-Pff"/>
                 <outlet property="_closeSessionsOnEnd" destination="5681" id="7OH-SS-Zp9"/>
+                <outlet property="_idleCode" destination="5698" id="wWW-3F-nXP"/>
                 <outlet property="_jobsTable" destination="5661" id="yIR-qA-xyG"/>
                 <outlet property="_logDir" destination="5686" id="9gN-0Q-j71"/>
                 <outlet property="_logDirWarning" destination="5688" id="LwF-JR-iDw"/>
                 <outlet property="_promptBeforeClosing" destination="5728" id="Xu7-bR-LX8"/>
                 <outlet property="_removeJob" destination="5669" id="YFO-c0-Vq2"/>
+                <outlet property="_sendCodeWhenIdle" destination="5697" id="dJR-J9-XOR"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="ctD-Hw-Es8"/>
                 <outlet property="view" destination="5653" id="F9f-6T-Z0H"/>
             </connections>

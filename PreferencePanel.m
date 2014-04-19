@@ -148,10 +148,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSMatrix *optionKeySends;
     IBOutlet NSMatrix *rightOptionKeySends;
 
-    // Session --------------------------------
-    IBOutlet NSButton* sendCodeWhenIdle;
-    IBOutlet NSTextField* idleCode;
-
     // Keyboard ------------------------------
     IBOutlet NSButton* deleteSendsCtrlHButton;
     IBOutlet NSButton* applicationKeypadAllowed;
@@ -366,10 +362,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         BOOL sendCH = [self _deleteSendsCtrlHInBookmark:newDict];
         [deleteSendsCtrlHButton setState:sendCH ? NSOnState : NSOffState];
     }
-
-    // Session tab
-    [newDict setObject:[NSNumber numberWithBool:([sendCodeWhenIdle state]==NSOnState)] forKey:KEY_SEND_CODE_WHEN_IDLE];
-    [newDict setObject:[NSNumber numberWithInt:[idleCode intValue]] forKey:KEY_IDLE_CODE];
 
     // Advanced tab
     [newDict setObject:[triggerWindowController_ triggers] forKey:KEY_TRIGGERS];
@@ -1114,10 +1106,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [deleteSendsCtrlHButton setState:sendCH ? NSOnState : NSOffState];
     [applicationKeypadAllowed setState:[dict boolValueDefaultingToYesForKey:KEY_APPLICATION_KEYPAD_ALLOWED] ? NSOnState : NSOffState];
 
-    // Session tab
-    [sendCodeWhenIdle setState:[[dict objectForKey:KEY_SEND_CODE_WHEN_IDLE] boolValue] ? NSOnState : NSOffState];
-    [idleCode setIntValue:[[dict objectForKey:KEY_IDLE_CODE] intValue]];
-
     // Epilogue
     [_profilesViewController reloadData];
 
@@ -1179,14 +1167,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 - (void)textDidChange:(NSNotification *)aNotification
 {
     [self bookmarkSettingChanged:nil];
-}
-
-- (void)controlTextDidChange:(NSNotification *)aNotification
-{
-    id obj = [aNotification object];
-    if (obj == idleCode) {
-        [self bookmarkSettingChanged:nil];
-    }
 }
 
 #pragma mark - iTermKeyMappingViewControllerDelegate

@@ -21,6 +21,8 @@
     IBOutlet NSButton *_removeJob;
     IBOutlet NSButton *_autoLog;
     IBOutlet NSTextField *_logDir;
+    IBOutlet NSButton *_sendCodeWhenIdle;
+    IBOutlet NSTextField *_idleCode;
 
     IBOutlet NSImageView *_logDirWarning;
     IBOutlet NSButton *_changeLogDir;
@@ -62,6 +64,16 @@
                           type:kPreferenceInfoTypeStringTextField];
     info.observer = ^() { [self updateLogDirWarning]; };
 
+    info = [self defineControl:_sendCodeWhenIdle
+                           key:KEY_SEND_CODE_WHEN_IDLE
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() { _idleCode.enabled = [self boolForKey:KEY_SEND_CODE_WHEN_IDLE]; };
+
+    info = [self defineControl:_idleCode
+                           key:KEY_IDLE_CODE
+                          type:kPreferenceInfoTypeIntegerTextField];
+    info.range = NSMakeRange(0, 256);
+    
     [self updateRemoveJobButtonEnabled];
 }
 
@@ -210,6 +222,5 @@
 - (BOOL)logDirIsWritable {
     return [[NSFileManager defaultManager] directoryIsWritable:[_logDir stringValue]];
 }
-
 
 @end
