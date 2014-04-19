@@ -315,6 +315,9 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                                 createNew:addition
                              inDictionary:dict];
     [iTermKeyBindingMgr setGlobalKeyMap:dict];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
+                                                        object:nil
+                                                      userInfo:nil];
 }
 
 
@@ -324,6 +327,9 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     assert(index != NSNotFound);
     [iTermKeyBindingMgr setGlobalKeyMap:[iTermKeyBindingMgr removeMappingAtIndex:index
                                                                     inDictionary:[iTermKeyBindingMgr globalKeyMap]]];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
+                                                        object:nil
+                                                      userInfo:nil];
 }
 
 - (NSArray *)keyMappingPresetNames:(iTermKeyMappingViewController *)viewController {
@@ -333,6 +339,9 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
   loadPresetsNamed:(NSString *)presetName {
     [iTermKeyBindingMgr setGlobalKeyMappingsToPreset:presetName];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
+                                                        object:nil
+                                                      userInfo:nil];
 }
 
 @end

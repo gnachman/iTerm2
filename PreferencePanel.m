@@ -95,8 +95,6 @@
 #import "WindowArrangements.h"
 #include <stdlib.h>
 
-static NSString *const kDeleteKeyString = @"0x7f-0x0";
-
 NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotification";
@@ -145,7 +143,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     // Bookmarks -----------------------------
 
     // Keyboard ------------------------------
-    IBOutlet NSButton* deleteSendsCtrlHButton;
     IBOutlet NSButton* applicationKeypadAllowed;
 
     IBOutlet WindowArrangements *arrangements_;
@@ -338,20 +335,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [newDict setObject:[origBookmark objectForKey:KEY_KEYBOARD_MAP] forKey:KEY_KEYBOARD_MAP];
     [newDict setObject:[NSNumber numberWithInt:([applicationKeypadAllowed state]==NSOnState)] forKey:KEY_APPLICATION_KEYPAD_ALLOWED];
 
-    BOOL reloadKeyMappings = NO;
-    if (sender == deleteSendsCtrlHButton) {
-        // Resolve any conflict between key mappings and delete sends ^h by
-        // modifying key mappings.
-        [self _setDeleteKeyMapToCtrlH:[deleteSendsCtrlHButton state] == NSOnState
-                           inBookmark:newDict];
-        reloadKeyMappings = YES;
-    } else {
-        // If a keymapping for the delete key was added, make sure the
-        // delete sends ^h checkbox is correct
-        BOOL sendCH = [self _deleteSendsCtrlHInBookmark:newDict];
-        [deleteSendsCtrlHButton setState:sendCH ? NSOnState : NSOffState];
-    }
-
     // Advanced tab
     [newDict setObject:[triggerWindowController_ triggers] forKey:KEY_TRIGGERS];
     [newDict setObject:[smartSelectionWindowController_ rules] forKey:KEY_SMART_SELECTION_RULES];
@@ -370,11 +353,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     for (int i = 0; i < n; ++i) {
         PseudoTerminal* pty = [[iTermController sharedInstance] terminalAtIndex:i];
         [pty reloadBookmarks];
-    }
-    if (reloadKeyMappings) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
-                                                            object:nil
-                                                          userInfo:nil];
     }
 }
 
@@ -496,34 +474,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 - (WindowArrangements *)arrangements
 {
     return arrangements_;
-}
-
-// Force the key binding for delete to be either ^H or absent.
-- (void)_setDeleteKeyMapToCtrlH:(BOOL)sendCtrlH inBookmark:(NSMutableDictionary*)bookmark
-{
-    if (sendCtrlH) {
-        [iTermKeyBindingMgr setMappingAtIndex:0
-                                       forKey:kDeleteKeyString
-                                       action:KEY_ACTION_SEND_C_H_BACKSPACE
-                                        value:@""
-                                    createNew:YES
-                                   inBookmark:bookmark];
-    } else {
-        [iTermKeyBindingMgr removeMappingWithCode:0x7f
-                                        modifiers:0
-                                       inBookmark:bookmark];
-    }
-}
-
-// Returns true if and only if there is a key mapping in the bookmark for delete
-// to send exactly ^H.
-- (BOOL)_deleteSendsCtrlHInBookmark:(Profile*)bookmark
-{
-    NSString* text;
-    return ([iTermKeyBindingMgr localActionForKeyCode:0x7f
-                                            modifiers:0
-                                                 text:&text
-                                          keyMappings:[bookmark objectForKey:KEY_KEYBOARD_MAP]] == KEY_ACTION_SEND_C_H_BACKSPACE);
 }
 
 - (void)removeKeyMappingsReferringToBookmarkGuid:(NSString*)badRef
@@ -1083,10 +1033,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     // Keyboard tab
-    // If a keymapping for the delete key was added, make sure the
-    // "delete sends ^h" checkbox is correct
-    BOOL sendCH = [self _deleteSendsCtrlHInBookmark:dict];
-    [deleteSendsCtrlHButton setState:sendCH ? NSOnState : NSOffState];
     [applicationKeypadAllowed setState:[dict boolValueDefaultingToYesForKey:KEY_APPLICATION_KEYPAD_ALLOWED] ? NSOnState : NSOffState];
 
     // Epilogue

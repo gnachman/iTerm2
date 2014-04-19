@@ -29,7 +29,6 @@
                 <outlet property="bookmarkUrlSchemesLabel" destination="5035" id="5046"/>
                 <outlet property="bookmarksTabViewItem" destination="1945" id="2863"/>
                 <outlet property="bookmarksToolbarItem" destination="5886" id="6039"/>
-                <outlet property="deleteSendsCtrlHButton" destination="5074" id="5078"/>
                 <outlet property="globalTabViewItem" destination="1944" id="2864"/>
                 <outlet property="globalToolbarItem" destination="5887" id="6037"/>
                 <outlet property="initialTextLabel" destination="5408" id="5415"/>
@@ -3237,7 +3236,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="5079"/>
+                                                                    <action selector="deleteSendsCtrlHDidChange:" target="kOZ-HN-eXg" id="YRG-hR-d7y"/>
                                                                 </connections>
                                                             </button>
                                                             <button id="U4H-3c-nZg">
@@ -5225,6 +5224,7 @@ DQ
         </customObject>
         <customObject id="kOZ-HN-eXg" customClass="ProfilesKeysPreferencesViewController">
             <connections>
+                <outlet property="_deleteSendsCtrlHButton" destination="5074" id="g14-kJ-aEi"/>
                 <outlet property="_optionKeySends" destination="4291" id="IFj-h4-wKL"/>
                 <outlet property="_rightOptionKeySends" destination="4293" id="qUt-MU-5Nv"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="xet-WM-Yj5"/>

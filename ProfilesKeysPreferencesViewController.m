@@ -14,15 +14,27 @@
 #import "iTermWarning.h"
 #import "PreferencePanel.h"
 
+static NSString *const kDeleteKeyString = @"0x7f-0x0";
+
 @interface ProfilesKeysPreferencesViewController () <iTermKeyMappingViewControllerDelegate>
 @end
 
 @implementation ProfilesKeysPreferencesViewController {
     IBOutlet NSMatrix *_optionKeySends;
     IBOutlet NSMatrix *_rightOptionKeySends;
+    IBOutlet NSButton *_deleteSendsCtrlHButton;
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [super dealloc];
 }
 
 - (void)awakeFromNib {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyBindingDidChange)
+                                                 name:kKeyBindingsChangedNotification
+                                               object:nil];
     [self defineControl:_optionKeySends
                     key:KEY_OPTION_KEY_SENDS
                    type:kPreferenceInfoTypeMatrix
@@ -34,6 +46,8 @@
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [self optionKeySendsDidChangeForControl:sender]; }
                  update:^BOOL{ [self updateOptionKeySendsForControl:_rightOptionKeySends]; return YES; }];
+    
+    [self updateDeleteSendsCtrlH];
 }
 
 - (void)reloadProfile {
@@ -41,6 +55,54 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil];
 }
+
+#pragma mark - Notifications
+
+- (void)keyBindingDidChange {
+    [self updateDeleteSendsCtrlH];
+}
+
+#pragma mark - Delete sends Ctrl H
+
+- (IBAction)deleteSendsCtrlHDidChange:(id)sender {
+    // Resolve any conflict between key mappings and delete sends ^h by
+    // modifying key mappings.
+    BOOL sendCtrlH = ([sender state] == NSOnState);
+    NSMutableDictionary *mutableProfile =
+        [[[self.delegate profilePreferencesCurrentProfile] mutableCopy] autorelease];
+    if (sendCtrlH) {
+        [iTermKeyBindingMgr setMappingAtIndex:0
+                                       forKey:kDeleteKeyString
+                                       action:KEY_ACTION_SEND_C_H_BACKSPACE
+                                        value:@""
+                                    createNew:YES
+                                   inBookmark:mutableProfile];
+    } else {
+        [iTermKeyBindingMgr removeMappingWithCode:0x7f
+                                        modifiers:0
+                                       inBookmark:mutableProfile];
+    }
+    [[self.delegate profilePreferencesCurrentModel] setBookmark:mutableProfile
+                                                       withGuid:mutableProfile[KEY_GUID]];
+    [[self.delegate profilePreferencesCurrentModel] flush];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
+                                                        object:nil];
+}
+
+- (void)updateDeleteSendsCtrlH {
+    // If a keymapping for the delete key was added, make sure the
+    // delete sends ^h checkbox is correct
+    Profile *profile = [self.delegate profilePreferencesCurrentProfile];
+    NSString* text;
+    BOOL sendCH =
+        ([iTermKeyBindingMgr localActionForKeyCode:0x7f
+                                         modifiers:0
+                                              text:&text
+                                       keyMappings:profile[KEY_KEYBOARD_MAP]] == KEY_ACTION_SEND_C_H_BACKSPACE);
+    _deleteSendsCtrlHButton.state = (sendCH ? NSOnState : NSOffState);
+}
+
 
 #pragma mark - Option Key Sends
 
@@ -104,6 +166,8 @@
     [[self.delegate profilePreferencesCurrentModel] setBookmark:dict withGuid:profile[KEY_GUID]];
     [[self.delegate profilePreferencesCurrentModel] flush];
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
+                                                        object:nil];
 }
 
 
@@ -122,6 +186,8 @@
     [[self.delegate profilePreferencesCurrentModel] setBookmark:dict withGuid:profile[KEY_GUID]];
     [[self.delegate profilePreferencesCurrentModel] flush];
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
+                                                        object:nil];
 }
 
 - (NSArray *)keyMappingPresetNames:(iTermKeyMappingViewController *)viewController {
@@ -140,6 +206,8 @@
     [[self.delegate profilePreferencesCurrentModel] flush];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
+                                                        object:nil];
 }
 
 #pragma mark - Warnings
