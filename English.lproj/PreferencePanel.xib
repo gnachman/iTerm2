@@ -18,7 +18,6 @@
                 <outlet property="arrangementsTabViewItem" destination="5417" id="5578"/>
                 <outlet property="arrangementsToolbarItem" destination="5890" id="6041"/>
                 <outlet property="arrangements_" destination="5572" id="5584"/>
-                <outlet property="autoLog" destination="5685" id="5716"/>
                 <outlet property="basicsLabel" destination="3247" id="5772"/>
                 <outlet property="blurRadius" destination="5363" id="5371"/>
                 <outlet property="bookmarkCommandLabel" destination="2132" id="3464"/>
@@ -37,7 +36,6 @@
                 <outlet property="initialTextLabel" destination="5408" id="5415"/>
                 <outlet property="keyboardTabViewItem" destination="3656" id="4216"/>
                 <outlet property="keyboardToolbarItem" destination="5888" id="6040"/>
-                <outlet property="logDir" destination="5686" id="5715"/>
                 <outlet property="mouseTabViewItem" destination="6059" id="6061"/>
                 <outlet property="mouseToolbarItem" destination="6056" id="6057"/>
                 <outlet property="optionKeySends" destination="4291" id="4307"/>
@@ -3025,7 +3023,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="5694"/>
+                                                                    <action selector="settingChanged:" target="TG6-06-mq9" id="w8i-nb-1lx"/>
                                                                     <outlet property="nextKeyView" destination="2100" id="5696"/>
                                                                 </connections>
                                                             </button>
@@ -3038,7 +3036,7 @@ Gw
                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                                 </textFieldCell>
                                                                 <connections>
-                                                                    <outlet property="delegate" destination="-2" id="5695"/>
+                                                                    <outlet property="delegate" destination="TG6-06-mq9" id="f3u-Rp-cc7"/>
                                                                 </connections>
                                                             </textField>
                                                             <button verticalHuggingPriority="750" id="5687">
@@ -3049,7 +3047,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="selectLogDir:" target="-2" id="5693"/>
+                                                                    <action selector="selectLogDir:" target="TG6-06-mq9" id="IDC-MW-iML"/>
                                                                 </connections>
                                                             </button>
                                                             <imageView hidden="YES" id="5688">
@@ -3953,7 +3951,7 @@ Gw
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
-                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="229"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -5219,8 +5217,12 @@ DQ
         </customObject>
         <customObject id="TG6-06-mq9" customClass="ProfilesSessionPreferencesViewController">
             <connections>
+                <outlet property="_autoLog" destination="5685" id="27x-QK-Uur"/>
+                <outlet property="_changeLogDir" destination="5687" id="mMH-ci-Pff"/>
                 <outlet property="_closeSessionsOnEnd" destination="5681" id="7OH-SS-Zp9"/>
                 <outlet property="_jobsTable" destination="5661" id="yIR-qA-xyG"/>
+                <outlet property="_logDir" destination="5686" id="9gN-0Q-j71"/>
+                <outlet property="_logDirWarning" destination="5688" id="LwF-JR-iDw"/>
                 <outlet property="_promptBeforeClosing" destination="5728" id="Xu7-bR-LX8"/>
                 <outlet property="_removeJob" destination="5669" id="YFO-c0-Vq2"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="ctD-Hw-Es8"/>

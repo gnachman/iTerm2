@@ -149,10 +149,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSMatrix *rightOptionKeySends;
 
     // Session --------------------------------
-    IBOutlet NSButton *autoLog;
-    IBOutlet NSTextField *logDir;
-    IBOutlet NSButton *changeLogDir;
-    IBOutlet NSImageView *logDirWarning;
     IBOutlet NSButton* sendCodeWhenIdle;
     IBOutlet NSTextField* idleCode;
 
@@ -372,11 +368,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     // Session tab
-    [newDict setObject:[NSNumber numberWithBool:([autoLog state]==NSOnState)] forKey:KEY_AUTOLOG];
-    [newDict setObject:[logDir stringValue] forKey:KEY_LOGDIR];
-    [logDir setEnabled:[autoLog state] == NSOnState];
-    [changeLogDir setEnabled:[autoLog state] == NSOnState];
-    [self _updateLogDirWarning];
     [newDict setObject:[NSNumber numberWithBool:([sendCodeWhenIdle state]==NSOnState)] forKey:KEY_SEND_CODE_WHEN_IDLE];
     [newDict setObject:[NSNumber numberWithInt:[idleCode intValue]] forKey:KEY_IDLE_CODE];
 
@@ -444,29 +435,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 - (IBAction)closeWindow:(id)sender
 {
     [[self window] close];
-}
-
-- (IBAction)selectLogDir:(id)sender
-{
-    NSOpenPanel* panel = [NSOpenPanel openPanel];
-    [panel setCanChooseFiles:NO];
-    [panel setCanChooseDirectories:YES];
-    [panel setAllowsMultipleSelection:NO];
-
-    if ([panel runModal] == NSOKButton) {
-        [logDir setStringValue:[panel legacyDirectory]];
-    }
-    [self _updateLogDirWarning];
-}
-
-- (void)_updateLogDirWarning
-{
-    [logDirWarning setHidden:[autoLog state] == NSOffState || [self _logDirIsWritable]];
-}
-
-- (BOOL)_logDirIsWritable
-{
-    return [[NSFileManager defaultManager] directoryIsWritable:[logDir stringValue]];
 }
 
 - (IBAction)setAsDefault:(id)sender
@@ -1147,11 +1115,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [applicationKeypadAllowed setState:[dict boolValueDefaultingToYesForKey:KEY_APPLICATION_KEYPAD_ALLOWED] ? NSOnState : NSOffState];
 
     // Session tab
-    [autoLog setState:[[dict objectForKey:KEY_AUTOLOG] boolValue] ? NSOnState : NSOffState];
-    [logDir setStringValue:[dict objectForKey:KEY_LOGDIR] ? [dict objectForKey:KEY_LOGDIR] : @""];
-    [logDir setEnabled:[autoLog state] == NSOnState];
-    [changeLogDir setEnabled:[autoLog state] == NSOnState];
-    [self _updateLogDirWarning];
     [sendCodeWhenIdle setState:[[dict objectForKey:KEY_SEND_CODE_WHEN_IDLE] boolValue] ? NSOnState : NSOffState];
     [idleCode setIntValue:[[dict objectForKey:KEY_IDLE_CODE] intValue]];
 
@@ -1223,8 +1186,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     id obj = [aNotification object];
     if (obj == idleCode) {
         [self bookmarkSettingChanged:nil];
-    } else if (obj == logDir) {
-        [self _updateLogDirWarning];
     }
 }
 

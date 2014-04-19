@@ -8,6 +8,7 @@
 
 #import "ProfilesSessionPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "NSFileManager+iTerm.h"
 #import "PreferencePanel.h"
 
 @interface ProfilesSessionPreferencesViewController () <NSTableViewDelegate, NSTableViewDataSource>
@@ -18,9 +19,20 @@
     IBOutlet NSMatrix *_promptBeforeClosing;
     IBOutlet NSTableView *_jobsTable;
     IBOutlet NSButton *_removeJob;
+    IBOutlet NSButton *_autoLog;
+    IBOutlet NSTextField *_logDir;
+
+    IBOutlet NSImageView *_logDirWarning;
+    IBOutlet NSButton *_changeLogDir;
+    
+    BOOL _awoken;
 }
 
 - (void)awakeFromNib {
+    if (_awoken) {
+        return;
+    }
+    _awoken = YES;
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reloadProfiles)
                                                  name:kReloadAllProfiles
@@ -34,7 +46,35 @@
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
                  update:^BOOL { [self updatePromptBeforeClosing]; return YES; }];
+
+    PreferenceInfo *info;
+    info = [self defineControl:_autoLog
+                           key:KEY_AUTOLOG
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() {
+        _logDir.enabled = [self boolForKey:KEY_AUTOLOG];
+        _changeLogDir.enabled = [self boolForKey:KEY_AUTOLOG];
+        [self updateLogDirWarning];
+    };
+    
+    info = [self defineControl:_logDir
+                           key:KEY_LOGDIR
+                          type:kPreferenceInfoTypeStringTextField];
+    info.observer = ^() { [self updateLogDirWarning]; };
+
     [self updateRemoveJobButtonEnabled];
+}
+
+- (void)layoutSubviewsForSingleBookmarkMode {
+    NSArray *viewsToDisable = @[ _autoLog,
+                                 _logDir,
+                                 _changeLogDir ];
+    for (id view in viewsToDisable) {
+        [view setEnabled:NO];
+    }
+    [self awakeFromNib];  // We can get called before awakeFromNib
+    [self infoForControl:_autoLog].observer = NULL;
+    [self infoForControl:_logDir].observer = NULL;
 }
 
 - (void)reloadProfile {
@@ -148,5 +188,28 @@
 - (void)reloadProfiles {
     [_jobsTable reloadData];
 }
+
+#pragma mark - Log directory
+
+- (IBAction)selectLogDir:(id)sender {
+    NSOpenPanel* panel = [NSOpenPanel openPanel];
+    [panel setCanChooseFiles:NO];
+    [panel setCanChooseDirectories:YES];
+    [panel setAllowsMultipleSelection:NO];
+    
+    if ([panel runModal] == NSOKButton) {
+        [_logDir setStringValue:[panel legacyDirectory]];
+    }
+    [self updateLogDirWarning];
+}
+
+- (void)updateLogDirWarning {
+    [_logDirWarning setHidden:[_autoLog state] == NSOffState || [self logDirIsWritable]];
+}
+
+- (BOOL)logDirIsWritable {
+    return [[NSFileManager defaultManager] directoryIsWritable:[_logDir stringValue]];
+}
+
 
 @end
