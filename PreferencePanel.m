@@ -109,7 +109,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     // instant replay
     BOOL defaultInstantReplay;
 
-    NSUserDefaults *prefs;
+    NSUserDefaults *_userDefaults;
 
     IBOutlet NSToolbar* toolbar;
     IBOutlet NSTabView* tabView;
@@ -169,7 +169,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     self = [super init];
     if (self) {
         _profileModel = model;
-        prefs = userDefaults;
+        _userDefaults = userDefaults;
         if (userDefaults) {
             [[iTermRemotePreferences sharedInstance] copyRemotePrefsToLocalUserDefaults];
         }
@@ -457,15 +457,15 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 #pragma mark - NSUserDefaults wrangling
 
 - (void)savePreferences {
-    if (!prefs) {
-        // In one-bookmark mode there are no prefs but this function doesn't
+    if (!_userDefaults) {
+        // In one-bookmark mode _userDefaults is nil but this function doesn't
         // affect bookmarks.
         return;
     }
 
-    [prefs setObject:[_profileModel rawData] forKey: @"New Bookmarks"];
+    [_userDefaults setObject:[_profileModel rawData] forKey: @"New Bookmarks"];
 
-    [prefs synchronize];
+    [_userDefaults synchronize];
 }
 
 #pragma mark - Utilities
@@ -525,7 +525,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (float)legacyMinimumContrast
 {
-    return [prefs objectForKey:@"MinimumContrast"] ? [[prefs objectForKey:@"MinimumContrast"] floatValue] : 0;;
+    return [_userDefaults objectForKey:@"MinimumContrast"] ? [[_userDefaults objectForKey:@"MinimumContrast"] floatValue] : 0;;
 }
 
 - (BOOL)allowClipboardAccess
@@ -544,7 +544,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (BOOL)legacyPasteFromClipboard {
     // This is used for migrating old prefs to the new configurable pointer action system.
-    return [prefs boolForKey:@"PasteFromClipboard"];
+    return [_userDefaults boolForKey:@"PasteFromClipboard"];
 }
 
 - (BOOL)threeFingerEmulatesMiddle {
@@ -803,7 +803,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 // migrating.
 - (BOOL)legacySmartCursorColor
 {
-    return [prefs objectForKey:@"ColorInvertedCursor"]?[[prefs objectForKey:@"ColorInvertedCursor"] boolValue]: YES;
+    return [_userDefaults objectForKey:@"ColorInvertedCursor"]?[[_userDefaults objectForKey:@"ColorInvertedCursor"] boolValue]: YES;
 }
 
 - (BOOL)quitWhenAllWindowsClosed
