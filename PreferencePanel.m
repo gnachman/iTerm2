@@ -302,15 +302,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [_profilesViewController importColorPresetFromFile:filename];
 }
 
-#pragma mark - Preferences folder
-
-- (BOOL)remoteLocationIsValid {
-    if (![[iTermRemotePreferences sharedInstance] shouldLoadRemotePrefs]) {
-        return YES;
-    }
-    return [[iTermRemotePreferences sharedInstance] remoteLocationIsValid];
-}
-
 #pragma mark - Sheet handling
 
 - (void)genericCloseSheet:(NSWindow *)sheet

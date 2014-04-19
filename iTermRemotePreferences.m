@@ -154,8 +154,7 @@
     return [[NSFileManager defaultManager] directoryIsWritable:fullPath];
 }
 
-- (BOOL)remoteLocationIsValid
-{
+- (BOOL)remoteLocationIsValid {
     NSString *remoteLocation = [self customFolderOrURL];
     if ([remoteLocation stringIsUrlLike]) {
         // URLs are too expensive to check, so just make sure it's reasonably
