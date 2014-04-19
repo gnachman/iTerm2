@@ -229,10 +229,9 @@ typedef enum {
     }
 }
 
-- (IBAction)editBookmarks:(id)sender
-{
+- (IBAction)editBookmarks:(id)sender {
     [[PreferencePanel sharedInstance] run];
-    [[PreferencePanel sharedInstance] showBookmarks];
+    [[PreferencePanel sharedInstance] selectProfilesTab];
 }
 
 - (void)editSelectedBookmark:(id)sender

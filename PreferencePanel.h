@@ -155,7 +155,7 @@ void LoadPrefsFromCustomFolder(void);
 - (NSString *)searchCommand;
 - (NSTimeInterval)antiIdleTimerPeriod;
 - (void)changeFont:(id)fontManager;
-- (void)showBookmarks;
+- (void)selectProfilesTab;
 - (void)underlyingBookmarkDidChange;
 - (int)openTmuxWindowsIn;
 - (BOOL)autoHideTmuxClientSession;

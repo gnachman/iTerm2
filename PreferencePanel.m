@@ -207,7 +207,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
-    [self showBookmarks];
+    [self selectProfilesTab];
     [_profilesViewController layoutSubviewsForEditCurrentSessionMode];
     [toolbar setVisible:NO];
 
@@ -218,15 +218,14 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 #pragma mark - API
 
-- (void)showBookmarks
-{
+- (void)selectProfilesTab {
     [tabView selectTabViewItem:bookmarksTabViewItem];
     [toolbar setSelectedItemIdentifier:bookmarksToolbarId];
 }
 
 - (void)openToBookmark:(NSString*)guid {
     [self run];
-    [self showBookmarks];
+    [self selectProfilesTab];
     [_profilesViewController openToProfileWithGuid:guid];
 }
 
