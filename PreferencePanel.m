@@ -166,7 +166,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 - (id)initWithProfileModel:(ProfileModel*)model
               userDefaults:(NSUserDefaults*)userDefaults
            oneBookmarkMode:(BOOL)obMode {
-    self = [super init];
+    self = [super initWithWindowNibName:@"PreferencePanel"];
     if (self) {
         _profileModel = model;
         _userDefaults = userDefaults;
@@ -860,15 +860,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 #pragma mark - Update view contents
 
-- (void)run
-{
-    // load nib if we haven't already
-    if ([self window] == nil) {
-        [self initWithWindowNibName:@"PreferencePanel"];
-    }
-
-    [[self window] setDelegate: self]; // also forces window to load
-
+- (void)run {
     [_generalPreferencesViewController updateEnabledState];
 
     [self showWindow:self];
