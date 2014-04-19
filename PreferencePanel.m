@@ -862,13 +862,8 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (void)run {
     [_generalPreferencesViewController updateEnabledState];
-
-    [self showWindow:self];
-    [[self window] setLevel:NSNormalWindowLevel];
-
     [_profilesViewController selectFirstProfileIfNecessary];
-
-    // Show the window.
+    [self showWindow:self];
     [[self window] makeKeyAndOrderFront:self];
 }
 
