@@ -268,50 +268,32 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 #pragma mark - IBActions
 
-- (IBAction)showGlobalTabView:(id)sender
-{
+- (IBAction)showGlobalTabView:(id)sender {
     [tabView selectTabViewItem:globalTabViewItem];
 }
 
-- (IBAction)showAppearanceTabView:(id)sender
-{
+- (IBAction)showAppearanceTabView:(id)sender {
     [tabView selectTabViewItem:appearanceTabViewItem];
 }
 
-- (IBAction)showBookmarksTabView:(id)sender
-{
+- (IBAction)showBookmarksTabView:(id)sender {
     [tabView selectTabViewItem:bookmarksTabViewItem];
 }
 
-- (IBAction)showKeyboardTabView:(id)sender
-{
+- (IBAction)showKeyboardTabView:(id)sender {
     [tabView selectTabViewItem:keyboardTabViewItem];
 }
 
-- (IBAction)showArrangementsTabView:(id)sender
-{
+- (IBAction)showArrangementsTabView:(id)sender {
     [tabView selectTabViewItem:arrangementsTabViewItem];
 }
 
-- (IBAction)showMouseTabView:(id)sender
-{
+- (IBAction)showMouseTabView:(id)sender {
     [tabView selectTabViewItem:mouseTabViewItem];
 }
 
-- (IBAction)showAdvancedTabView:(id)sender
-{
+- (IBAction)showAdvancedTabView:(id)sender {
     [tabView selectTabViewItem:advancedTabViewItem];
-}
-
-- (IBAction)setAsDefault:(id)sender
-{
-    Profile *origProfile = [_profilesViewController selectedProfile];
-    NSString* guid = origProfile[KEY_GUID];
-    if (!guid) {
-        NSBeep();
-        return;
-    }
-    [_profileModel setDefaultByGuid:guid];
 }
 
 #pragma mark - Color Presets

@@ -397,6 +397,15 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [_profilesListView selectRowByGuid:newProfile[KEY_GUID]];
 }
 
+- (IBAction)setAsDefault:(id)sender {
+    Profile *origProfile = [self selectedProfile];
+    NSString* guid = origProfile[KEY_GUID];
+    if (!guid) {
+        NSBeep();
+        return;
+    }
+    [[ProfileModel sharedInstance] setDefaultByGuid:guid];
+}
 
 #pragma mark - Notifications
 

@@ -3451,7 +3451,7 @@ Gw
                                                         <menuItem title="Set as Default" id="3318">
                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                             <connections>
-                                                                <action selector="setAsDefault:" target="-2" id="3319"/>
+                                                                <action selector="setAsDefault:" target="HVI-63-mNz" id="32D-mS-4Sc"/>
                                                             </connections>
                                                         </menuItem>
                                                         <menuItem title="Bulk Copy from Selected Profile..." id="3516">
