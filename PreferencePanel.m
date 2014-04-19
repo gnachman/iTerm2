@@ -975,33 +975,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
   [_profilesViewController changeFont:fontManager];
 }
 
-#pragma mark - NSTextFieldDelegate
-
-- (void)forceTextFieldToBeNumber:(NSTextField *)textField
-                 acceptableRange:(NSRange)range
-{
-    // NSNumberFormatter seems to have lost its mind on Lion. See a description of the problem here:
-    // http://stackoverflow.com/questions/7976951/nsnumberformatter-erasing-value-when-it-violates-constraints
-    int iv = [self intForString:[textField stringValue] inRange:range];
-    unichar lastChar = '0';
-    int numChars = [[textField stringValue] length];
-    if (numChars) {
-        lastChar = [[textField stringValue] characterAtIndex:numChars - 1];
-    }
-    if (iv != [textField intValue] || (lastChar < '0' || lastChar > '9')) {
-        // If the int values don't match up or there are terminal non-number
-        // chars, then update the value.
-        [textField setIntValue:iv];
-    }
-}
-
-// Technically, this is part of NSTextDelegate
-- (void)textDidChange:(NSNotification *)aNotification
-{
-    [self bookmarkSettingChanged:nil];
-}
-
-
 - (ProfileModel *)profilePreferencesModel {
     return dataSource;
 }

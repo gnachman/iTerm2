@@ -64,7 +64,6 @@ void LoadPrefsFromCustomFolder(void);
     ProfileListViewDelegate,
     NSTokenFieldDelegate,
     NSWindowDelegate,
-    NSTextFieldDelegate,
     NSMenuDelegate>
 
 @property(nonatomic, readonly) NSString *currentProfileGuid;
