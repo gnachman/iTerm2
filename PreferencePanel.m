@@ -291,43 +291,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 }
 
-- (IBAction)bookmarkSettingChanged:(id)sender
-{
-    Profile *origBookmark = [_profilesViewController selectedProfile];
-    NSString *guid = origBookmark[KEY_GUID];
-    if (!guid || !origBookmark) {
-        return;
-    }
-    NSMutableDictionary* newDict = [NSMutableDictionary dictionary];
-    [_profilesViewController copyOwnedValuesToDict:newDict];
-    NSString* isDefault = [origBookmark objectForKey:KEY_DEFAULT_BOOKMARK];
-    if (!isDefault) {
-        isDefault = @"No";
-    }
-    [newDict setObject:isDefault forKey:KEY_DEFAULT_BOOKMARK];
-    newDict[KEY_NAME] = origBookmark[KEY_NAME];
-    [newDict setObject:guid forKey:KEY_GUID];
-    NSString* origGuid = [origBookmark objectForKey:KEY_ORIGINAL_GUID];
-    if (origGuid) {
-        [newDict setObject:origGuid forKey:KEY_ORIGINAL_GUID];
-    }
-
-    // Epilogue
-    [_profilesViewController updateProfileInModel:newDict];
-
-    // Save changes
-    if (prefs) {
-        [prefs setObject:[dataSource rawData] forKey:@"New Bookmarks"];
-    }
-
-    // Update existing sessions
-    int n = [[iTermController sharedInstance] numberOfTerminals];
-    for (int i = 0; i < n; ++i) {
-        PseudoTerminal* pty = [[iTermController sharedInstance] terminalAtIndex:i];
-        [pty reloadBookmarks];
-    }
-}
-
 - (IBAction)showGlobalTabView:(id)sender
 {
     [tabView selectTabViewItem:globalTabViewItem];

@@ -75,7 +75,6 @@ void LoadPrefsFromCustomFolder(void);
 
 - (void)updateBookmarkFields:(NSDictionary *)dict;
 
-- (IBAction)bookmarkSettingChanged:(id)sender;
 - (IBAction)showGlobalTabView:(id)sender;
 - (IBAction)showAppearanceTabView:(id)sender;
 - (IBAction)showBookmarksTabView:(id)sender;
