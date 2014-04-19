@@ -102,6 +102,11 @@ static NSMutableDictionary *gObservers;
     // Turn off scroll animations because they screw up the terminal scrolling.
     [userDefaults setInteger:0 forKey:@"AppleScrollAnimationEnabled"];
 
+    // Override smooth scrolling, which breaks various things (such as the
+    // assumption, when detectUserScroll is called, that scrolls happen
+    // immediately), and generally sucks with a terminal.
+    [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"NSScrollAnimationEnabled"];
+
     // Store the current app version in prefs
     NSDictionary *infoDictionary = [[NSBundle bundleForClass:[self class]] infoDictionary];
     [userDefaults setObject:infoDictionary[@"CFBundleVersion"] forKey:kPreferenceKeyAppVersion];

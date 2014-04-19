@@ -170,10 +170,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if (self) {
         _profileModel = model;
         _userDefaults = userDefaults;
-        // Override smooth scrolling, which breaks various things (such as the
-        // assumption, when detectUserScroll is called, that scrolls happen
-        // immediately), and generally sucks with a terminal.
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"NSScrollAnimationEnabled"];
 
         [toolbar setSelectedItemIdentifier:globalToolbarId];
 
