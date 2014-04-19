@@ -282,7 +282,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
                                                       userInfo:nil];
 }
 
-#pragma mark - IBActions
+#pragma mark - Handle calls to current first responder
 
 // Shell>Close
 - (void)closeCurrentSession:(id)sender
@@ -291,6 +291,14 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         [self closeWindow:self];
     }
 }
+
+// Shell>Close Terminal Window
+- (void)closeWindow:(id)sender
+{
+    [[self window] close];
+}
+
+#pragma mark - IBActions
 
 - (IBAction)showGlobalTabView:(id)sender
 {
@@ -325,12 +333,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 - (IBAction)showAdvancedTabView:(id)sender
 {
     [tabView selectTabViewItem:advancedTabViewItem];
-}
-
-// Shell>Close Terminal Window
-- (void)closeWindow:(id)sender
-{
-    [[self window] close];
 }
 
 - (IBAction)setAsDefault:(id)sender
