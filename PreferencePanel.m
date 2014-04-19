@@ -170,9 +170,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if (self) {
         _profileModel = model;
         _userDefaults = userDefaults;
-        if (userDefaults) {
-            [[iTermRemotePreferences sharedInstance] copyRemotePrefsToLocalUserDefaults];
-        }
         // Override smooth scrolling, which breaks various things (such as the
         // assumption, when detectUserScroll is called, that scrolls happen
         // immediately), and generally sucks with a terminal.

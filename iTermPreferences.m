@@ -13,6 +13,7 @@
 // and the view controller may customize how its control's appearance changes dynamically.
 
 #import "iTermPreferences.h"
+#import "iTermRemotePreferences.h"
 #import "WindowArrangements.h"
 
 #define BLOCK(x) [^id() { return [self x]; } copy]
@@ -104,6 +105,9 @@ static NSMutableDictionary *gObservers;
     // Store the current app version in prefs
     NSDictionary *infoDictionary = [[NSBundle bundleForClass:[self class]] infoDictionary];
     [userDefaults setObject:infoDictionary[@"CFBundleVersion"] forKey:kPreferenceKeyAppVersion];
+
+    // Load prefs from remote.
+    [[iTermRemotePreferences sharedInstance] copyRemotePrefsToLocalUserDefaults];
 }
 
 #pragma mark - Default values
