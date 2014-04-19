@@ -23,6 +23,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     IBOutlet NSMatrix *_optionKeySends;
     IBOutlet NSMatrix *_rightOptionKeySends;
     IBOutlet NSButton *_deleteSendsCtrlHButton;
+    IBOutlet NSButton *_applicationKeypadAllowed;
 }
 
 - (void)dealloc {
@@ -47,7 +48,21 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
          settingChanged:^(id sender) { [self optionKeySendsDidChangeForControl:sender]; }
                  update:^BOOL{ [self updateOptionKeySendsForControl:_rightOptionKeySends]; return YES; }];
     
+    [self defineControl:_applicationKeypadAllowed
+                    key:KEY_APPLICATION_KEYPAD_ALLOWED
+                   type:kPreferenceInfoTypeCheckbox];
+
     [self updateDeleteSendsCtrlH];
+}
+
+- (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict {
+    [super copyOwnedValuesToDict:dict];
+    NSArray *value = (NSArray *)[self objectForKey:KEY_KEYBOARD_MAP];
+    if (value) {
+        dict[KEY_KEYBOARD_MAP] = value;
+    } else {
+        [dict removeObjectForKey:KEY_KEYBOARD_MAP];
+    }
 }
 
 - (void)reloadProfile {

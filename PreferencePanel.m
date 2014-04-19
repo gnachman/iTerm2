@@ -142,9 +142,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     // Bookmarks -----------------------------
 
-    // Keyboard ------------------------------
-    IBOutlet NSButton* applicationKeypadAllowed;
-
     IBOutlet WindowArrangements *arrangements_;
     BOOL _haveAwoken;  // Can kill this when profiles stuff is migrated
 }
@@ -330,10 +327,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if (origGuid) {
         [newDict setObject:origGuid forKey:KEY_ORIGINAL_GUID];
     }
-
-    // Keyboard tab
-    [newDict setObject:[origBookmark objectForKey:KEY_KEYBOARD_MAP] forKey:KEY_KEYBOARD_MAP];
-    [newDict setObject:[NSNumber numberWithInt:([applicationKeypadAllowed state]==NSOnState)] forKey:KEY_APPLICATION_KEYPAD_ALLOWED];
 
     // Advanced tab
     [newDict setObject:[triggerWindowController_ triggers] forKey:KEY_TRIGGERS];
@@ -1031,9 +1024,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if (!imageFilename) {
         imageFilename = @"";
     }
-
-    // Keyboard tab
-    [applicationKeypadAllowed setState:[dict boolValueDefaultingToYesForKey:KEY_APPLICATION_KEYPAD_ALLOWED] ? NSOnState : NSOffState];
 
     // Epilogue
     [_profilesViewController reloadData];

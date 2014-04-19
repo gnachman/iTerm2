@@ -14,7 +14,6 @@
                 <outlet property="advancedToolbarItem" destination="gtg-rw-6h8" id="Enb-fp-ef2"/>
                 <outlet property="appearanceTabViewItem" destination="4439" id="4601"/>
                 <outlet property="appearanceToolbarItem" destination="5889" id="6038"/>
-                <outlet property="applicationKeypadAllowed" destination="U4H-3c-nZg" id="qYN-Rv-WQC"/>
                 <outlet property="arrangementsTabViewItem" destination="5417" id="5578"/>
                 <outlet property="arrangementsToolbarItem" destination="5890" id="6041"/>
                 <outlet property="arrangements_" destination="5572" id="5584"/>
@@ -3247,7 +3246,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="Tfo-EZ-wH2"/>
+                                                                    <action selector="settingChanged:" target="kOZ-HN-eXg" id="QKb-eC-9mV"/>
                                                                 </connections>
                                                             </button>
                                                             <customView id="6sa-Ma-Wvi">
@@ -5224,6 +5223,7 @@ DQ
         </customObject>
         <customObject id="kOZ-HN-eXg" customClass="ProfilesKeysPreferencesViewController">
             <connections>
+                <outlet property="_applicationKeypadAllowed" destination="U4H-3c-nZg" id="eUF-jC-ElI"/>
                 <outlet property="_deleteSendsCtrlHButton" destination="5074" id="g14-kJ-aEi"/>
                 <outlet property="_optionKeySends" destination="4291" id="IFj-h4-wKL"/>
                 <outlet property="_rightOptionKeySends" destination="4293" id="qUt-MU-5Nv"/>
