@@ -76,14 +76,6 @@ void LoadPrefsFromCustomFolder(void);
 
 - (void)updateBookmarkFields:(NSDictionary *)dict;
 
-- (void)triggerChanged:(TriggerController *)triggerController;
-- (void)smartSelectionChanged:(SmartSelectionController *)smartSelectionController;
-
-- (void)awakeFromNib;
-- (IBAction)editSmartSelection:(id)sender;
-- (IBAction)closeSmartSelectionSheet:(id)sender;
-- (IBAction)editTriggers:(id)sender;
-- (IBAction)closeTriggersSheet:(id)sender;
 - (IBAction)bookmarkSettingChanged:(id)sender;
 - (IBAction)showGlobalTabView:(id)sender;
 - (IBAction)showAppearanceTabView:(id)sender;
