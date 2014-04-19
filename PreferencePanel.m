@@ -136,9 +136,10 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     NSString *mouseToolbarId;
     NSString *advancedToolbarId;
 
-    // Bookmarks -----------------------------
-
+    // This class is not well named. It is a lot like a view controller for the window
+    // arrangements tab.
     IBOutlet WindowArrangements *arrangements_;
+
     BOOL _haveAwoken;  // Can kill this when profiles stuff is migrated
 }
 
