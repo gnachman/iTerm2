@@ -200,7 +200,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     mouseToolbarId = [mouseToolbarItem itemIdentifier];
     advancedToolbarId = [advancedToolbarItem itemIdentifier];
 
-    [globalToolbarItem setEnabled:YES];
     [toolbar setSelectedItemIdentifier:globalToolbarId];
 
     if (oneBookmarkMode) {
