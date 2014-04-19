@@ -100,7 +100,7 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
 NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUpdateProfileFields";
 
 @implementation PreferencePanel {
-    ProfileModel* dataSource;
+    ProfileModel *_profileModel;
     BOOL oneBookmarkMode;
     IBOutlet GeneralPreferencesViewController *_generalPreferencesViewController;
     IBOutlet KeysPreferencesViewController *_keysViewController;
@@ -145,9 +145,9 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     static id instance;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
-        instance = [[self alloc] initWithDataSource:[ProfileModel sharedInstance]
-                                       userDefaults:[NSUserDefaults standardUserDefaults]
-                                    oneBookmarkMode:NO];
+        instance = [[self alloc] initWithProfileModel:[ProfileModel sharedInstance]
+                                         userDefaults:[NSUserDefaults standardUserDefaults]
+                                      oneBookmarkMode:NO];
     });
     return instance;
 }
@@ -156,20 +156,19 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     static id instance;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
-        instance = [[self alloc] initWithDataSource:[ProfileModel sessionsInstance]
-                                       userDefaults:nil
-                                    oneBookmarkMode:YES];
+        instance = [[self alloc] initWithProfileModel:[ProfileModel sessionsInstance]
+                                         userDefaults:nil
+                                      oneBookmarkMode:YES];
     });
     return instance;
 }
 
-- (id)initWithDataSource:(ProfileModel*)model
-            userDefaults:(NSUserDefaults*)userDefaults
-         oneBookmarkMode:(BOOL)obMode
-{
+- (id)initWithProfileModel:(ProfileModel*)model
+              userDefaults:(NSUserDefaults*)userDefaults
+           oneBookmarkMode:(BOOL)obMode {
     self = [super init];
     if (self) {
-        dataSource = model;
+        _profileModel = model;
         prefs = userDefaults;
         if (userDefaults) {
             [[iTermRemotePreferences sharedInstance] copyRemotePrefsToLocalUserDefaults];
@@ -341,7 +340,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         NSBeep();
         return;
     }
-    [dataSource setDefaultByGuid:guid];
+    [_profileModel setDefaultByGuid:guid];
 }
 
 #pragma mark - Color Presets
@@ -464,7 +463,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         return;
     }
 
-    [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
+    [prefs setObject:[_profileModel rawData] forKey: @"New Bookmarks"];
 
     [prefs synchronize];
 }
@@ -941,7 +940,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 }
 
 - (ProfileModel *)profilePreferencesModel {
-    return dataSource;
+    return _profileModel;
 }
 
 - (void)profilePreferencesModelDidAwakeFromNib {
