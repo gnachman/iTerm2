@@ -141,28 +141,26 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     BOOL _haveAwoken;  // Can kill this when profiles stuff is migrated
 }
 
-+ (PreferencePanel*)sharedInstance {
-    static PreferencePanel* shared = nil;
-
-    if (!shared) {
-        shared = [[self alloc] initWithDataSource:[ProfileModel sharedInstance]
-                                     userDefaults:[NSUserDefaults standardUserDefaults]
-                                  oneBookmarkMode:NO];
-    }
-
-    return shared;
++ (instancetype)sharedInstance {
+    static id instance;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        instance = [[self alloc] initWithDataSource:[ProfileModel sharedInstance]
+                                       userDefaults:[NSUserDefaults standardUserDefaults]
+                                    oneBookmarkMode:NO];
+    });
+    return instance;
 }
 
-+ (PreferencePanel*)sessionsInstance {
-    static PreferencePanel* shared = nil;
-
-    if (!shared) {
-        shared = [[self alloc] initWithDataSource:[ProfileModel sessionsInstance]
-                                     userDefaults:nil
-                                  oneBookmarkMode:YES];
-    }
-
-    return shared;
++ (instancetype)sessionsInstance {
+    static id instance;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        instance = [[self alloc] initWithDataSource:[ProfileModel sessionsInstance]
+                                       userDefaults:nil
+                                    oneBookmarkMode:YES];
+    });
+    return instance;
 }
 
 - (id)initWithDataSource:(ProfileModel*)model

@@ -68,8 +68,8 @@ void LoadPrefsFromCustomFolder(void);
 
 @property(nonatomic, readonly) NSString *currentProfileGuid;
 
-+ (PreferencePanel*)sharedInstance;
-+ (PreferencePanel*)sessionsInstance;
++ (instancetype)sharedInstance;
++ (instancetype)sessionsInstance;
 
 - (void)openToBookmark:(NSString*)guid;
 
