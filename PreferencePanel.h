@@ -62,8 +62,6 @@ void LoadPrefsFromCustomFolder(void);
 
 @interface PreferencePanel : NSWindowController <
     ProfileListViewDelegate,
-    TriggerDelegate,
-    SmartSelectionDelegate,
     NSTokenFieldDelegate,
     NSWindowDelegate,
     NSTextFieldDelegate,

@@ -38,7 +38,6 @@
                 <outlet property="smartSelectionWindowController_" destination="5863" id="5921"/>
                 <outlet property="tabView" destination="1943" id="2853"/>
                 <outlet property="toolbar" destination="5885" id="6042"/>
-                <outlet property="triggerWindowController_" destination="5797" id="5920"/>
                 <outlet property="trouterPrefController_" destination="5949" id="5954"/>
                 <outlet property="window" destination="1923" id="2981"/>
             </connections>
@@ -67,7 +66,7 @@
         <customObject id="5797" customClass="TriggerController">
             <connections>
                 <outlet property="actionColumn_" destination="5786" id="5800"/>
-                <outlet property="delegate_" destination="-2" id="5830"/>
+                <outlet property="delegate_" destination="Qvt-kg-svI" id="oQh-RD-Hm3"/>
                 <outlet property="parametersColumn_" destination="5816" id="5818"/>
                 <outlet property="regexColumn_" destination="5785" id="5819"/>
                 <outlet property="tableView_" destination="5783" id="5828"/>
@@ -77,7 +76,7 @@
         <customObject id="5863" customClass="SmartSelectionController">
             <connections>
                 <outlet property="contextMenuPrefsController_" destination="6306" id="6317"/>
-                <outlet property="delegate_" destination="-2" id="5864"/>
+                <outlet property="delegate_" destination="Qvt-kg-svI" id="Lor-cT-60z"/>
                 <outlet property="logDebugInfo_" destination="5961" id="5963"/>
                 <outlet property="notesColumn_" destination="5901" id="5903"/>
                 <outlet property="precisionColumn_" destination="5848" id="5865"/>
@@ -90,6 +89,7 @@
             <connections>
                 <outlet property="action_" destination="5934" id="5950"/>
                 <outlet property="caveat_" destination="5957" id="5960"/>
+                <outlet property="delegate" destination="Qvt-kg-svI" id="qJy-pH-zgl"/>
                 <outlet property="editors_" destination="5943" id="5951"/>
                 <outlet property="text_" destination="5941" id="5952"/>
             </connections>
@@ -3323,7 +3323,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="editSmartSelection:" target="-2" id="5917"/>
+                                                                    <action selector="editSmartSelection:" target="Qvt-kg-svI" id="95P-a1-2IX"/>
                                                                 </connections>
                                                             </button>
                                                             <button verticalHuggingPriority="750" id="5914">
@@ -3334,7 +3334,7 @@ Gw
                                                                     <font key="font" metaFont="system"/>
                                                                 </buttonCell>
                                                                 <connections>
-                                                                    <action selector="editTriggers:" target="-2" id="5922"/>
+                                                                    <action selector="editTriggers:" target="Qvt-kg-svI" id="QBE-J7-Oir"/>
                                                                 </connections>
                                                             </button>
                                                             <box autoresizesSubviews="NO" verticalHuggingPriority="750" title="Box" boxType="separator" titlePosition="noTitle" id="5928">
@@ -3381,7 +3381,7 @@ Gw
                                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                                 </textFieldCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="5956"/>
+                                                                    <outlet property="delegate" destination="5949" id="fxC-np-Rm3"/>
                                                                 </connections>
                                                             </textField>
                                                             <popUpButton verticalHuggingPriority="750" id="5943">
@@ -3393,7 +3393,7 @@ Gw
                                                                     <menu key="menu" title="OtherViews" id="5945"/>
                                                                 </popUpButtonCell>
                                                                 <connections>
-                                                                    <action selector="bookmarkSettingChanged:" target="-2" id="5955"/>
+                                                                    <action selector="actionChanged:" target="5949" id="OCG-h7-odw"/>
                                                                 </connections>
                                                             </popUpButton>
                                                             <textField verticalHuggingPriority="750" id="5957">
@@ -4589,7 +4589,7 @@ DQ
 </string>
                         </buttonCell>
                         <connections>
-                            <action selector="closeTriggersSheet:" target="-2" id="5923"/>
+                            <action selector="closeTriggersSheet:" target="Qvt-kg-svI" id="Rgl-vD-NAa"/>
                         </connections>
                     </button>
                     <textField verticalHuggingPriority="750" id="5926">
@@ -4760,7 +4760,7 @@ DQ
 </string>
                         </buttonCell>
                         <connections>
-                            <action selector="closeSmartSelectionSheet:" target="-2" id="5918"/>
+                            <action selector="closeSmartSelectionSheet:" target="Qvt-kg-svI" id="JHG-qe-EXi"/>
                         </connections>
                     </button>
                     <textField verticalHuggingPriority="750" id="5924">
@@ -5050,6 +5050,7 @@ DQ
         <customObject id="HVI-63-mNz" customClass="ProfilePreferencesViewController">
             <connections>
                 <outlet property="_addProfileButton" destination="2111" id="bA3-2H-K5q"/>
+                <outlet property="_advancedViewController" destination="Qvt-kg-svI" id="K8f-bz-rrt"/>
                 <outlet property="_colorsViewController" destination="p8i-eM-oBc" id="jzE-Xk-0gO"/>
                 <outlet property="_copyToProfileButton" destination="5140" id="OLo-Jv-hFL"/>
                 <outlet property="_generalTab" destination="2101" id="L0w-Vv-KhM"/>
@@ -5229,6 +5230,15 @@ DQ
                 <outlet property="_rightOptionKeySends" destination="4293" id="qUt-MU-5Nv"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="xet-WM-Yj5"/>
                 <outlet property="view" destination="2110" id="LV0-bp-Kb3"/>
+            </connections>
+        </customObject>
+        <customObject id="Qvt-kg-svI" customClass="ProfilesAdvancedPreferencesViewController">
+            <connections>
+                <outlet property="_smartSelectionWindowController" destination="5863" id="gCD-sP-3vG"/>
+                <outlet property="_triggerWindowController" destination="5797" id="s19-Zp-Wt4"/>
+                <outlet property="_trouterPrefController" destination="5949" id="Nbl-jf-RaM"/>
+                <outlet property="delegate" destination="HVI-63-mNz" id="XlF-0B-sbO"/>
+                <outlet property="view" destination="5777" id="u95-tM-2f7"/>
             </connections>
         </customObject>
     </objects>

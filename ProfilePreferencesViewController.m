@@ -13,6 +13,7 @@
 #import "iTermWarning.h"
 #import "PreferencePanel.h"
 #import "ProfileListView.h"
+#import "ProfilesAdvancedPreferencesViewController.h"
 #import "ProfilesGeneralPreferencesViewController.h"
 #import "ProfilesColorsPreferencesViewController.h"
 #import "ProfilesKeysPreferencesViewController.h"
@@ -72,6 +73,9 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     
     // Keys tab view controller
     IBOutlet ProfilesKeysPreferencesViewController *_keysViewController;
+    
+    // Advanced tab view controller
+    IBOutlet ProfilesAdvancedPreferencesViewController *_advancedViewController;
 }
 
 - (id)init {
@@ -255,7 +259,8 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
               _windowViewController,
               _terminalViewController,
               _sessionViewController,
-              _keysViewController ];
+              _keysViewController,
+              _advancedViewController ];
 }
 
 #pragma mark - Actions

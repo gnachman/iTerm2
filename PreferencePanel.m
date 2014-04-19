@@ -58,6 +58,7 @@
  *  - ProfilesTextPreferencesViewController
  *  - ProfilesWindowPreferencesViewController
  *  - ProfilesTerminalPreferencesViewController
+ *  - ProfilesKeysPreferencesViewController
  *  - More coming
  *
  *  These derive from iTermProfilePreferencesBaseViewController, which is just like
@@ -89,9 +90,6 @@
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "SessionView.h"
-#import "SmartSelectionController.h"
-#import "TriggerController.h"
-#import "TrouterPrefsController.h"
 #import "WindowArrangements.h"
 #include <stdlib.h>
 
@@ -104,9 +102,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 @implementation PreferencePanel {
     ProfileModel* dataSource;
     BOOL oneBookmarkMode;
-    IBOutlet TriggerController *triggerWindowController_;
-    IBOutlet SmartSelectionController *smartSelectionWindowController_;
-    IBOutlet TrouterPrefsController *trouterPrefController_;
     IBOutlet GeneralPreferencesViewController *_generalPreferencesViewController;
     IBOutlet KeysPreferencesViewController *_keysViewController;
     IBOutlet ProfilePreferencesViewController *_profilesViewController;
@@ -257,17 +252,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [_keysViewController hotkeyProfile];
 }
 
-- (void)triggerChanged:(TriggerController *)triggerController
-{
-    [self bookmarkSettingChanged:nil];
-}
-
-- (void)smartSelectionChanged:(SmartSelectionController *)smartSelectionController
-{
-    [self bookmarkSettingChanged:nil];
-}
-
-
 #pragma mark - Notification handlers
 
 - (void)_reloadURLHandlers:(NSNotification *)aNotification {
@@ -327,11 +311,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     if (origGuid) {
         [newDict setObject:origGuid forKey:KEY_ORIGINAL_GUID];
     }
-
-    // Advanced tab
-    [newDict setObject:[triggerWindowController_ triggers] forKey:KEY_TRIGGERS];
-    [newDict setObject:[smartSelectionWindowController_ rules] forKey:KEY_SMART_SELECTION_RULES];
-    [newDict setObject:[trouterPrefController_ prefs] forKey:KEY_TROUTER];
 
     // Epilogue
     [_profilesViewController updateProfileInModel:newDict];
@@ -421,47 +400,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
                returnCode:(int)returnCode
               contextInfo:(void *)contextInfo {
     [sheet close];
-}
-
-#pragma mark - Advanced tab sheets
-
-- (void)advancedTabCloseSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo
-{
-    [sheet close];
-}
-
-#pragma mark - Smart selection
-
-- (IBAction)editSmartSelection:(id)sender
-{
-    [smartSelectionWindowController_ window];
-    [smartSelectionWindowController_ windowWillOpen];
-    [NSApp beginSheet:[smartSelectionWindowController_ window]
-       modalForWindow:[self window]
-        modalDelegate:self
-       didEndSelector:@selector(advancedTabCloseSheet:returnCode:contextInfo:)
-          contextInfo:nil];
-}
-
-- (IBAction)closeSmartSelectionSheet:(id)sender
-{
-    [NSApp endSheet:[smartSelectionWindowController_ window]];
-}
-
-#pragma mark - Triggers
-
-- (IBAction)editTriggers:(id)sender
-{
-    [NSApp beginSheet:[triggerWindowController_ window]
-       modalForWindow:[self window]
-        modalDelegate:self
-       didEndSelector:@selector(advancedTabCloseSheet:returnCode:contextInfo:)
-          contextInfo:nil];
-}
-
-- (IBAction)closeTriggersSheet:(id)sender
-{
-    [NSApp endSheet:[triggerWindowController_ window]];
 }
 
 - (WindowArrangements *)arrangements
@@ -1066,9 +1004,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (void)profileWithGuidWasSelected:(NSString *)guid {
     if (guid) {
-        triggerWindowController_.guid = guid;
-        smartSelectionWindowController_.guid = guid;
-        trouterPrefController_.guid = guid;
         [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
     }
 }

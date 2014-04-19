@@ -782,6 +782,9 @@
 		A6A269971902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A269951902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h */; };
 		A6A269981902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A269961902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m */; };
 		A6A269991902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A269961902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m */; };
+		A6A2699C190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2699A190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h */; };
+		A6A2699D190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2699B190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m */; };
+		A6A2699E190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2699B190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
 		A6A5991E1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
 		A6A5991F1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
@@ -1401,6 +1404,8 @@
 		A6A2698E1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesTerminalPreferencesViewController.m; sourceTree = "<group>"; };
 		A6A269951902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesKeysPreferencesViewController.h; sourceTree = "<group>"; };
 		A6A269961902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesKeysPreferencesViewController.m; sourceTree = "<group>"; };
+		A6A2699A190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesAdvancedPreferencesViewController.h; sourceTree = "<group>"; };
+		A6A2699B190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesAdvancedPreferencesViewController.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; };
 		A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasteHelper.h; sourceTree = "<group>"; };
@@ -2059,6 +2064,8 @@
 				1DBB4B361901F12400832B09 /* ProfilesSessionPreferencesViewController.m */,
 				A6A269951902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h */,
 				A6A269961902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m */,
+				A6A2699A190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h */,
+				A6A2699B190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -2779,6 +2786,7 @@
 				1D06E7DB14BC05DB0097C0ED /* ProfileTableView.h in Headers */,
 				A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */,
 				1DB9D8F2183FE9EF0029F0B5 /* HotkeyWindowController.h in Headers */,
+				A6A2699C190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h in Headers */,
 				A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */,
 				A647E3AE18C3588800450FA1 /* VT100ControlParser.h in Headers */,
 				A63F40A9183F3CED003A6A6D /* LineBufferHelpers.h in Headers */,
@@ -3072,6 +3080,7 @@
 				1DF8FEF518F3217100722B35 /* KeysPreferencesViewController.m in Sources */,
 				A63F409C183B3AA7003A6A6D /* PTYNoteView.m in Sources */,
 				1D9A55AB180FA8B700B42CE9 /* PSMProgressIndicator.m in Sources */,
+				A6A2699E190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m in Sources */,
 				1D9A5593180FA87000B42CE9 /* PTYFontInfo.m in Sources */,
 				A647E3B918C5884600450FA1 /* iTermObjectPool.m in Sources */,
 				1D9A5546180FA82E00B42CE9 /* EquivalenceClassSet.m in Sources */,
@@ -3346,6 +3355,7 @@
 				A628C7A918764AA4009B0818 /* NSDictionary+iTerm.m in Sources */,
 				1DFA9D6518F37160008ADC98 /* iTermEditKeyActionWindowController.m in Sources */,
 				1D5FDDBC1208E93600C46BA3 /* PSMMetalTabStyle.m in Sources */,
+				A6A2699D190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m in Sources */,
 				A6A2698418FE48B200437DA9 /* NSFont+iTerm.m in Sources */,
 				1D5FDDBD1208E93600C46BA3 /* PSMOverflowPopUpButton.m in Sources */,
 				A6CFDAD8185D53C2005DC94B /* AsyncHostLookupController.m in Sources */,

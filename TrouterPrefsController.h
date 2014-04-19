@@ -25,6 +25,12 @@ extern NSString *kTrouterCommandAction;
 extern NSString *kTrouterRawCommandAction;
 extern NSString *kTrouterCoprocessAction;
 
+@class TrouterPrefsController;
+
+@protocol TrouterPrefsControllerDelegate <NSObject>
+- (void)trouterPrefsControllerSettingChanged:(TrouterPrefsController *)controller;
+@end
+
 @interface TrouterPrefsController : NSObject {
     NSString *guid_;
     IBOutlet NSPopUpButton *action_;
@@ -34,6 +40,7 @@ extern NSString *kTrouterCoprocessAction;
 }
 
 @property (nonatomic, copy) NSString *guid;
+@property (nonatomic, assign) IBOutlet id<TrouterPrefsControllerDelegate> delegate;
 
 + (NSString *)bestEditor;
 + (NSString *)schemeForEditor:(NSString *)editor;
