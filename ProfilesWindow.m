@@ -24,6 +24,7 @@
 
 #import "ProfilesWindow.h"
 #import "ProfileModel.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
@@ -268,9 +269,8 @@ typedef enum {
     return menu;
 }
 
-- (void)windowDidBecomeKey:(NSNotification *)notification
-{
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"nonTerminalWindowBecameKey"
+- (void)windowDidBecomeKey:(NSNotification *)notification {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kNonTerminalWindowBecameKeyNotification
                                                         object:nil
                                                       userInfo:nil];
     [tableView_ focusSearchField];

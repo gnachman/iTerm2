@@ -62,6 +62,7 @@ static NSString *ITERM2_QUIET = @"~/Library/Application Support/iTerm/quiet";
 static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern indicator";
 NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPatternIndicatorChangedNotification";
 NSString *const kSavedArrangementDidChangeNotification = @"kSavedArrangementDidChangeNotification";
+NSString *const kNonTerminalWindowBecameKeyNotification = @"kNonTerminalWindowBecameKeyNotification";
 
 // There was an older userdefaults key "Multi-Line Paste Warning" that had the opposite semantics.
 // This was changed for compatibility with the iTermWarning mechanism.
@@ -556,7 +557,7 @@ static BOOL hasBecomeActive = NO;
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(nonTerminalWindowBecameKey:)
-                                                     name:@"nonTerminalWindowBecameKey"
+                                                     name:kNonTerminalWindowBecameKeyNotification
                                                    object:nil];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -1187,8 +1188,7 @@ static BOOL hasBecomeActive = NO;
     [sendInputNormally setState:noBroadcast];
 }
 
-- (void) nonTerminalWindowBecameKey: (NSNotification *) aNotification
-{
+- (void) nonTerminalWindowBecameKey: (NSNotification *) aNotification {
     [closeTab setAction:nil];
     [closeTab setKeyEquivalent:@""];
     [closeWindow setKeyEquivalent:@"w"];

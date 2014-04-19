@@ -69,6 +69,7 @@
 
 #import "GeneralPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyMappingViewController.h"
@@ -234,22 +235,17 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 #pragma mark - NSWindowController
 
 // NSWindow delegate
-- (void)windowWillLoad
-{
+- (void)windowWillLoad {
     // We finally set our autosave window frame name and restore the one from the user's defaults.
     [self setWindowFrameAutosaveName:@"Preferences"];
 }
 
-- (void)windowWillClose:(NSNotification *)aNotification
-{
+- (void)windowWillClose:(NSNotification *)aNotification {
     [self savePreferences];
-
 }
 
-- (void)windowDidBecomeKey:(NSNotification *)aNotification
-{
-    // Post a notification
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"nonTerminalWindowBecameKey"
+- (void)windowDidBecomeKey:(NSNotification *)aNotification {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kNonTerminalWindowBecameKeyNotification
                                                         object:nil
                                                       userInfo:nil];
 }

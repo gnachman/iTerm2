@@ -35,6 +35,7 @@
 extern NSString *kUseBackgroundPatternIndicatorChangedNotification;
 extern NSString *const kMultiLinePasteWarningUserDefaultsKey;
 extern NSString *const kSavedArrangementDidChangeNotification;
+extern NSString *const kNonTerminalWindowBecameKeyNotification;
 
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 
