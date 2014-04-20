@@ -5491,7 +5491,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [tabBarControl setDisableTabClose:[[PreferencePanel sharedInstance] hideTabCloseButton]];
     if ([[PreferencePanel sharedInstance] hideTabCloseButton] &&
         [[PreferencePanel sharedInstance] hideTabNumber]) {
-        [tabBarControl setCellMinWidth:[[PreferencePanel sharedInstance] minCompactTabWidth]];
+        [tabBarControl setCellMinWidth:[iTermSettingsModel minCompactTabWidth]];
     } else {
         [tabBarControl setCellMinWidth:[[PreferencePanel sharedInstance] minTabWidth]];
     }
