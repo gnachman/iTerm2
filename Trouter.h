@@ -39,6 +39,7 @@
 
 @property (nonatomic, copy) NSDictionary *prefs;
 @property (nonatomic, assign) id<TrouterDelegate> delegate;
+@property (nonatomic, readonly) BOOL activatesOnAnyString;  // Doesn't have to be a real file?
 
 - (Trouter*)init;
 - (void)dealloc;

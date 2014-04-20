@@ -7764,6 +7764,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return action;
     }
 
+    if (_trouter.activatesOnAnyString) {
+        // Just do smart selection and let Trouter take it.
+        [self smartSelectAtX:x
+                           y:y
+                          to:&smartRange
+            ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
+              actionRequired:NO
+             respectDividers:YES];
+        if (!VT100GridCoordEquals(smartRange.coordRange.start,
+                                  smartRange.coordRange.end)) {
+            NSString *name = [extractor contentInRange:smartRange
+                                            nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
+                                                   pad:NO
+                                    includeLastNewline:NO
+                                trimTrailingWhitespace:NO
+                                          cappedAtSize:-1];
+            URLAction *action = [URLAction urlActionToOpenExistingFile:name];
+            action.range = smartRange;
+            action.fullPath = name;
+            action.workingDirectory = workingDirectory;
+            return action;
+        }
+    }
+    
     // No luck. Look for something vaguely URL-like.
     int prefixChars;
     NSString *joined = [prefix stringByAppendingString:suffix];
