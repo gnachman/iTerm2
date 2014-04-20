@@ -633,10 +633,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder];
 }
 
-- (BOOL)lionStyleFullscreen {
-    return [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

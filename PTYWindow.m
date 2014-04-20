@@ -28,6 +28,7 @@
 #import "FutureMethods.h"
 #import "iTermController.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermPreferences.h"
 #import "iTermSettingsModel.h"
 
 #ifdef PSEUDOTERMINAL_VERBOSE_LOGGING
@@ -128,7 +129,7 @@
 
 - (void)toggleFullScreen:(id)sender {
     if (![[self ptyDelegate] lionFullScreen]  &&
-        ![[PreferencePanel sharedInstance] lionStyleFullscreen]) {
+        ![iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
         // The user must have clicked on the toolbar arrow, but the pref is set
         // to use traditional fullscreen.
         [[self delegate] performSelector:@selector(toggleTraditionalFullScreenMode)

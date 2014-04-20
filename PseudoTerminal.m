@@ -2756,7 +2756,7 @@ NSString *kSessionsKVCKey = @"sessions";
     if ([self lionFullScreen] ||
         (windowType_ != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
          !_isHotKeyWindow &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
-         [[PreferencePanel sharedInstance] lionStyleFullscreen])) {
+         [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren])) {
         // Is 10.7 Lion or later.
         [[self ptyWindow] performSelector:@selector(toggleFullScreen:) withObject:self];
         if (lionFullScreen_) {
@@ -2776,7 +2776,7 @@ NSString *kSessionsKVCKey = @"sessions";
 - (void)delayedEnterFullscreen
 {
     if (windowType_ == WINDOW_TYPE_LION_FULL_SCREEN &&
-        [[PreferencePanel sharedInstance] lionStyleFullscreen]) {
+        [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
         if (![[[iTermController sharedInstance] keyTerminalWindow] lionFullScreen]) {
             // call enter(Traditional)FullScreenMode instead of toggle... because
             // when doing a lion resume, the window may be toggled immediately
