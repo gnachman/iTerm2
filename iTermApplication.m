@@ -74,7 +74,6 @@
             return;
         }
 #endif
-        PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
         if ([[HotkeyWindowController sharedInstance] isAnyModifierRemapped] &&
             (IsSecureEventInputEnabled() || ![[HotkeyWindowController sharedInstance] haveEventTap])) {
             // The event tap is not working, but we can still remap modifiers for non-system
@@ -129,7 +128,7 @@
             }
 
             const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
-            if (([event modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[prefPanel switchTabModifier]]) {
+            if (([event modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]) {
                 int digit = [[event charactersIgnoringModifiers] intValue];
                 if (!digit) {
                     digit = [[event characters] intValue];

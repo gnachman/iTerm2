@@ -542,8 +542,7 @@ NSString *kSessionsKVCKey = @"sessions";
     tabBarControl = [[PSMTabBarControl alloc] initWithFrame:aRect];
 
     [tabBarControl retain];
-    PreferencePanel* pp = [PreferencePanel sharedInstance];
-    [tabBarControl setModifier:[iTermPreferences maskForModifierTag:[pp switchTabModifier]]];
+    [tabBarControl setModifier:[iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]];
     if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) {
         [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMinYMargin)];
     } else {
