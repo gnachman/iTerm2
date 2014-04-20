@@ -714,16 +714,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermSettingsModel timeBetweenBlinks];
 }
 
-- (BOOL)autoCommandHistory
-{
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"AutoCommandHistory"];
-}
-
-- (void)setAutoCommandHistory:(BOOL)value
-{
-    [[NSUserDefaults standardUserDefaults] setBool:value forKey:@"AutoCommandHistory"];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

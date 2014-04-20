@@ -171,8 +171,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)hotkeyAutoHides;
 - (BOOL)dockIconTogglesWindow;
 - (NSTimeInterval)timeBetweenBlinks;
-- (BOOL)autoCommandHistory;
-- (void)setAutoCommandHistory:(BOOL)value;
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename;
 

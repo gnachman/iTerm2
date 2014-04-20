@@ -87,6 +87,7 @@ NSString *const kPreferenceKeyFocusFollowsMouse = @"FocusFollowsMouse";
 NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines = @"TripleClickSelectsFullWrappedLines";
 
 NSString *const kPreferenceKeyAppVersion = @"iTerm Version";
+NSString *const kPreferenceAutoCommandHistory = @"AutoCommandHistory";
 
 static NSMutableDictionary *gObservers;
 
@@ -187,6 +188,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyThreeFingerEmulatesMiddle: @NO,
                   kPreferenceKeyFocusFollowsMouse: @NO,
                   kPreferenceKeyTripleClickSelectsFullWrappedLines: @NO,
+                  
+                  kPreferenceAutoCommandHistory: @NO,
                   };
         [dict retain];
     }

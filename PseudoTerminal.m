@@ -4276,7 +4276,7 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 - (void)showAutoCommandHistoryForSession:(PTYSession *)session {
-    if ([[PreferencePanel sharedInstance] autoCommandHistory]) {
+    if ([iTermPreferences boolForKey:kPreferenceAutoCommandHistory]) {
         // Use a delay so we don't get a flurry of windows appearing when restoring arrangements.
         [self performSelector:@selector(reallyShowAutoCommandHistoryForSession:)
                    withObject:session
@@ -6030,7 +6030,7 @@ NSString *kSessionsKVCKey = @"sessions";
         result = [[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed];
         if (result) {
             if ([item respondsToSelector:@selector(setState:)]) {
-                [item setState:[[PreferencePanel sharedInstance] autoCommandHistory] ? NSOnState : NSOffState];
+                [item setState:[iTermPreferences boolForKey:kPreferenceAutoCommandHistory] ? NSOnState : NSOffState];
             }
         } else {
             [item setState:NSOffState];
@@ -6101,7 +6101,8 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (IBAction)toggleAutoCommandHistory:(id)sender
 {
-    [[PreferencePanel sharedInstance] setAutoCommandHistory:![[PreferencePanel sharedInstance] autoCommandHistory]];
+    [iTermPreferences setBool:![iTermPreferences boolForKey:kPreferenceAutoCommandHistory]
+                       forKey:kPreferenceAutoCommandHistory];
 }
 
 // Turn on/off sending of input to all sessions. This causes a bunch of UI

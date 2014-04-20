@@ -112,6 +112,9 @@ extern NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines;
 // Stores the last CFBundleVersion run.
 extern NSString *const kPreferenceKeyAppVersion;
 
+// Auto-command history (set through menu)
+extern NSString *const kPreferenceAutoCommandHistory;
+
 @interface iTermPreferences : NSObject
 
 // This should be called early during startup to set user defaults keys that fix problematic Apple
