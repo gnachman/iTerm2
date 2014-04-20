@@ -561,7 +561,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 }
 
 - (int)objectCount {
-    return [[PreferencePanel sharedInstance] hideTabNumber] ? 0 : objectCount_;
+    return [iTermPreferences boolForKey:kPreferenceKeyHideTabNumber] ? 0 : objectCount_;
 }
 
 - (void)setObjectCount:(int)value
@@ -3941,7 +3941,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 - (void)setLabelAttributesForActiveTab:(BOOL)notify
 {
     BOOL isBackgroundTab = [[tabViewItem_ tabView] selectedTabViewItem] != [self tabViewItem];
-    const BOOL compactTab = ([[PreferencePanel sharedInstance] hideTabNumber] &&
+    const BOOL compactTab = ([iTermPreferences boolForKey:kPreferenceKeyHideTabNumber] &&
                              [iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton]);
     if ([self isProcessing] == NO && !compactTab && ![self isForegroundTab]) {
         [self setIsProcessing:YES];

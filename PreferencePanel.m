@@ -472,10 +472,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyMaximizeVerticallyOnly];
 }
 
-- (BOOL)hideTabNumber {
-    return [iTermPreferences boolForKey:kPreferenceKeyHideTabNumber];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
