@@ -215,6 +215,18 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return arrangements_;
 }
 
+- (void)run {
+    [_generalPreferencesViewController updateEnabledState];
+    [_profilesViewController selectFirstProfileIfNecessary];
+    [self showWindow:self];
+    [[self window] makeKeyAndOrderFront:self];
+}
+
+// Update the values in form fields to reflect the bookmark's state
+- (void)underlyingBookmarkDidChange {
+    [_profilesViewController refresh];
+}
+
 #pragma mark - NSWindowController
 
 - (void)windowWillLoad {
@@ -237,18 +249,21 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 #pragma mark - Handle calls to current first responder
 
 // Shell>Close
-- (void)closeCurrentSession:(id)sender
-{
+- (void)closeCurrentSession:(id)sender {
     if ([[self window] isKeyWindow]) {
         [self closeWindow:self];
     }
 }
 
 // Shell>Close Terminal Window
-- (void)closeWindow:(id)sender
-{
+- (void)closeWindow:(id)sender {
     [[self window] close];
 }
+
+- (void)changeFont:(id)fontManager {
+    [_profilesViewController changeFont:fontManager];
+}
+
 
 #pragma mark - IBActions
 
@@ -709,23 +724,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [[NSUserDefaults standardUserDefaults] setBool:value forKey:@"AutoCommandHistory"];
 }
 
-#pragma mark - Update view contents
-
-- (void)run {
-    [_generalPreferencesViewController updateEnabledState];
-    [_profilesViewController selectFirstProfileIfNecessary];
-    [self showWindow:self];
-    [[self window] makeKeyAndOrderFront:self];
-}
-
-// Update the values in form fields to reflect the bookmark's state
-- (void)underlyingBookmarkDidChange {
-    [_profilesViewController refresh];
-}
-
-- (void)changeFont:(id)fontManager {
-  [_profilesViewController changeFont:fontManager];
-}
+#pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
     return _profileModel;
