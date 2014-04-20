@@ -8140,7 +8140,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSMutableString* dirtyDebug = [NSMutableString stringWithString:@"updateDirtyRects found these dirty lines:\n"];
     int screenindex=0;
 #endif
-    BOOL irEnabled = [[PreferencePanel sharedInstance] instantReplay];
     long long totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
     int allDirty = [_dataSource isAllDirty] ? 1 : 0;
     [_dataSource resetAllDirty];
@@ -8202,7 +8201,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 #endif
     [_dataSource resetDirty];
 
-    if (irEnabled && foundDirty) {
+    if (foundDirty) {
         [_dataSource saveToDvr];
     }
 

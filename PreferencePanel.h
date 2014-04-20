@@ -120,7 +120,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)windowNumber;
 - (BOOL)jobName;
 - (BOOL)showBookmarkName;
-- (BOOL)instantReplay;
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;

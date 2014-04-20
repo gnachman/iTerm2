@@ -4144,14 +4144,6 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (IBAction)irPrev:(id)sender
 {
-    if (![[PreferencePanel sharedInstance] instantReplay]) {
-        NSRunAlertPanel(@"Feature Disabled",
-                        @"Instant Replay is disabled. Please turn it on in Preferences under the General tab.",
-                        @"OK",
-                        nil,
-                        nil);
-        return;
-    }
     [self irAdvance:-1];
     [[self window] makeFirstResponder:[[self currentSession] textview]];
     [_instantReplayWindowController updateInstantReplayView];

@@ -1510,7 +1510,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)saveToDvr
 {
-    if (!dvr_ || ![[PreferencePanel sharedInstance] instantReplay]) {
+    if (!dvr_) {
         return;
     }
 
