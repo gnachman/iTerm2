@@ -2981,7 +2981,8 @@ NSMutableArray* screens=0;
                               resume:YES
                               append:_selection.appending];
     } else if (clickCount == 3) {
-        BOOL wholeLines = [[PreferencePanel sharedInstance] tripleClickSelectsFullLines];
+        BOOL wholeLines =
+            [iTermPreferences boolForKey:kPreferenceKeyTripleClickSelectsFullWrappedLines];
         iTermSelectionMode mode =
             wholeLines ? kiTermSelectionModeWholeLine : kiTermSelectionModeLine;
 

@@ -432,10 +432,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse];
 }
 
-- (BOOL)tripleClickSelectsFullLines {
-    return [iTermPreferences boolForKey:kPreferenceKeyTripleClickSelectsFullWrappedLines];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

@@ -97,7 +97,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)promptOnQuit;
 - (BOOL)onlyWhenMoreTabs;
 - (BOOL)focusFollowsMouse;
-- (BOOL)tripleClickSelectsFullLines;
 // Returns true if ANY profile has growl enabled (preserves interface from back
 // when there was a global growl setting as well as a per-profile setting).
 - (NSTextField*)hotkeyField;
