@@ -114,7 +114,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
         _tabView.hidden = YES;
         [_removeProfileButton setEnabled:NO];
     }
-    [_delegate underlyingBookmarkDidChange];
+    [self refresh];
     
     if (!profile && [_profilesListView numberOfRows]) {
         [_profilesListView selectRowIndex:0];
@@ -122,6 +122,19 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 }
 
 #pragma mark - APIs
+
+- (void)refresh {
+    Profile *profile = [self selectedProfile];
+    if (!profile) {
+        return;
+    }
+    
+    [self updateSubviewsForProfile:profile];
+    [self reloadData];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelDidUpdateProfileFields
+                                                        object:nil
+                                                      userInfo:nil];
+}
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
     _profilesListView.hidden = YES;
@@ -436,7 +449,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 }
 
 - (void)reloadProfiles {
-    [_delegate underlyingBookmarkDidChange];
+    [self refresh];
 
 }
 

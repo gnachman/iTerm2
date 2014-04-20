@@ -80,6 +80,8 @@ void LoadPrefsFromCustomFolder(void);
 - (IBAction)showArrangementsTabView:(id)sender;
 - (IBAction)showMouseTabView:(id)sender;
 
+- (void)underlyingBookmarkDidChange;
+
 - (WindowArrangements *)arrangements;
 - (void)run;
 - (float)fsTabDelay;

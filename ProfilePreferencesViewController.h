@@ -15,7 +15,6 @@
 
 // TODO: Nuke all of these.
 - (ProfileModel *)profilePreferencesModel;
-- (void)underlyingBookmarkDidChange;
 - (void)profilePreferencesModelDidAwakeFromNib;
 
 @end
@@ -42,6 +41,9 @@
 - (void)openToProfileWithGuid:(NSString *)guid;
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename;
+
+// Update views for changed backing state.
+- (void)refresh;
 
 // TODO: Nuke these methods
 - (void)updateProfileInModel:(Profile *)modifiedProfile;
