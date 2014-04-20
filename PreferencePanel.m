@@ -182,8 +182,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 #pragma mark - View layout
 
-- (void)awakeFromNib
-{
+- (void)awakeFromNib {
     // Because the ProfilePreferencesViewController awakes before PreferencePanel, it calls
     // profilePreferencesModelDidAwakeFromNib which in turn calls this to ensure everything is
     // initialized so that the rest of [-ProfilePreferencesViewController awakeFromNib] can run
@@ -233,13 +232,22 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [_profilesViewController openToProfileWithGuid:guid];
 }
 
+- (BOOL)importColorPresetFromFile:(NSString*)filename {
+    return [_profilesViewController importColorPresetFromFile:filename];
+}
+
+- (WindowArrangements *)arrangements {
+    return arrangements_;
+}
+
 #pragma mark - NSWindowController
 
-// NSWindow delegate
 - (void)windowWillLoad {
     // We finally set our autosave window frame name and restore the one from the user's defaults.
     [self setWindowFrameAutosaveName:@"Preferences"];
 }
+
+#pragma mark - NSWindowDelegate
 
 - (void)windowWillClose:(NSNotification *)aNotification {
     [self savePreferences];
@@ -297,45 +305,27 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [tabView selectTabViewItem:advancedTabViewItem];
 }
 
-#pragma mark - Color Presets
-
-- (BOOL)importColorPresetFromFile:(NSString*)filename {
-    return [_profilesViewController importColorPresetFromFile:filename];
-}
-
-- (WindowArrangements *)arrangements {
-    return arrangements_;
-}
-
 #pragma mark - NSToolbarDelegate and ToolbarItemValidation
 
-- (BOOL)validateToolbarItem:(NSToolbarItem *)theItem
-{
+- (BOOL)validateToolbarItem:(NSToolbarItem *)theItem {
     return TRUE;
 }
 
-- (NSToolbarItem *)toolbar:(NSToolbar *)toolbar itemForItemIdentifier:(NSString *)itemIdentifier willBeInsertedIntoToolbar:(BOOL)flag
+- (NSToolbarItem *)toolbar:(NSToolbar *)toolbar
+     itemForItemIdentifier:(NSString *)itemIdentifier
+ willBeInsertedIntoToolbar:(BOOL)flag
 {
     if (!flag) {
         return nil;
     }
-    if ([itemIdentifier isEqual:globalToolbarId]) {
-        return globalToolbarItem;
-    } else if ([itemIdentifier isEqual:appearanceToolbarId]) {
-        return appearanceToolbarItem;
-    } else if ([itemIdentifier isEqual:bookmarksToolbarId]) {
-        return bookmarksToolbarItem;
-    } else if ([itemIdentifier isEqual:keyboardToolbarId]) {
-        return keyboardToolbarItem;
-    } else if ([itemIdentifier isEqual:arrangementsToolbarId]) {
-        return arrangementsToolbarItem;
-    } else if ([itemIdentifier isEqual:mouseToolbarId]) {
-        return mouseToolbarItem;
-    } else if ([itemIdentifier isEqual:advancedToolbarId]) {
-        return advancedToolbarItem;
-    } else {
-        return nil;
-    }
+    NSDictionary *theDict = @{ globalToolbarId: globalToolbarItem,
+                               appearanceToolbarId: appearanceToolbarItem,
+                               bookmarksToolbarId: bookmarksToolbarItem,
+                               keyboardToolbarId: keyboardToolbarItem,
+                               arrangementsToolbarId: arrangementsToolbarItem,
+                               mouseToolbarId: mouseToolbarItem,
+                               advancedToolbarId: advancedToolbarItem };
+    return theDict[itemIdentifier];
 }
 
 - (NSArray *)toolbarAllowedItemIdentifiers:(NSToolbar *)toolbar
