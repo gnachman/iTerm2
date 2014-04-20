@@ -303,31 +303,8 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [_profilesViewController importColorPresetFromFile:filename];
 }
 
-- (WindowArrangements *)arrangements
-{
+- (WindowArrangements *)arrangements {
     return arrangements_;
-}
-
-- (void)removeKeyMappingsReferringToBookmarkGuid:(NSString*)badRef
-{
-    for (NSString* guid in [[ProfileModel sharedInstance] guids]) {
-        Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-        bookmark = [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:bookmark];
-        if (bookmark) {
-            [[ProfileModel sharedInstance] setBookmark:bookmark withGuid:guid];
-        }
-    }
-    for (NSString* guid in [[ProfileModel sessionsInstance] guids]) {
-        Profile* bookmark = [[ProfileModel sessionsInstance] bookmarkWithGuid:guid];
-        bookmark = [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:bookmark];
-        if (bookmark) {
-            [[ProfileModel sessionsInstance] setBookmark:bookmark withGuid:guid];
-        }
-    }
-    [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:nil];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
-                                                        object:nil
-                                                      userInfo:nil];
 }
 
 #pragma mark - NSToolbarDelegate and ToolbarItemValidation

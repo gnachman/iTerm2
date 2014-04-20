@@ -81,7 +81,6 @@ void LoadPrefsFromCustomFolder(void);
 - (IBAction)showKeyboardTabView:(id)sender;
 - (IBAction)showArrangementsTabView:(id)sender;
 - (IBAction)showMouseTabView:(id)sender;
-- (IBAction)setAsDefault:(id)sender;
 
 - (WindowArrangements *)arrangements;
 - (void)savePreferences;

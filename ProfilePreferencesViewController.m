@@ -10,6 +10,7 @@
 #import "BulkCopyProfilePreferencesWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermController.h"
+#import "iTermKeyBindingMgr.h"
 #import "iTermWarning.h"
 #import "PreferencePanel.h"
 #import "ProfileListView.h"
@@ -276,6 +277,27 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
               _advancedViewController ];
 }
 
+- (void)removeKeyMappingsReferringToGuid:(NSString*)badRef {
+    for (NSString* guid in [[ProfileModel sharedInstance] guids]) {
+        Profile* profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+        profile = [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:profile];
+        if (profile) {
+            [[ProfileModel sharedInstance] setBookmark:profile withGuid:guid];
+        }
+    }
+    for (NSString* guid in [[ProfileModel sessionsInstance] guids]) {
+        Profile* profile = [[ProfileModel sessionsInstance] bookmarkWithGuid:guid];
+        profile = [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:profile];
+        if (profile) {
+            [[ProfileModel sessionsInstance] setBookmark:profile withGuid:guid];
+        }
+    }
+    [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
+                                                        object:nil
+                                                      userInfo:nil];
+}
+
 #pragma mark - Actions
 
 - (IBAction)removeProfile:(id)sender {
@@ -286,7 +308,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
         int lastIndex = [_profilesListView selectedRow];
         
         NSString *guid = profile[KEY_GUID];
-        [_delegate removeKeyMappingsReferringToBookmarkGuid:guid];
+        [self removeKeyMappingsReferringToGuid:guid];
         [[_delegate profilePreferencesModel] removeBookmarkWithGuid:guid];
         [_profilesListView reloadData];
 
