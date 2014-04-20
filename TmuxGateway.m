@@ -187,7 +187,7 @@ error:
 
 - (void)parseWindowCloseCommand:(NSString *)command
 {
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^%window-close @([0-9]+)$"];
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%(?:unlinked-)?window-close @([0-9]+)$"];
     if (components.count != 2) {
         [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%window-close id): \"%@\"", command]];
         return;
@@ -197,7 +197,7 @@ error:
 
 - (void)parseWindowRenamedCommand:(NSString *)command
 {
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^%window-renamed @([0-9]+) (.*)$"];
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%(?:unlinked-)?window-renamed @([0-9]+) (.*)$"];
     if (components.count != 3) {
         [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%window-renamed id new_name): \"%@\"", command]];
         return;
@@ -413,9 +413,11 @@ error:
         if (acceptNotifications_) [self parseLayoutChangeCommand:command];
     } else if ([command hasPrefix:@"%window-add"]) {
         if (acceptNotifications_) [self parseWindowAddCommand:command];
-    } else if ([command hasPrefix:@"%window-close"]) {
+    } else if ([command hasPrefix:@"%window-close"] ||
+               [command hasPrefix:@"%unlinked-window-close"]) {
         if (acceptNotifications_) [self parseWindowCloseCommand:command];
-    } else if ([command hasPrefix:@"%window-renamed"]) {
+    } else if ([command hasPrefix:@"%window-renamed"] ||
+               [command hasPrefix:@"%unlinked-window-renamed"]) {
         if (acceptNotifications_) [self parseWindowRenamedCommand:command];
     } else if ([command hasPrefix:@"%unlinked-window-add"]) {
         if (acceptNotifications_) [self broadcastWindowChange];
