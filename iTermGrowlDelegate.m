@@ -101,18 +101,14 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
                      @"view": @(viewIndex) };
     }
 
-    if ([[PreferencePanel sharedInstance] enableGrowl]) {
-        [GrowlApplicationBridge notifyWithTitle:title
-                                    description:description
-                               notificationName:notification
-                                       iconData:nil
-                                       priority:0
-                                       isSticky:NO
-                                   clickContext:context];
-        return YES;
-    }
-
-    return NO;
+    [GrowlApplicationBridge notifyWithTitle:title
+                                description:description
+                           notificationName:notification
+                                   iconData:nil
+                                   priority:0
+                                   isSticky:NO
+                               clickContext:context];
+    return YES;
 }
 
 - (void)growlNotificationWasClicked:(id)clickContext {

@@ -441,21 +441,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyAddBonjourHostsToProfiles];
 }
 
-- (BOOL)enableGrowl
-{
-    for (Profile* bookmark in [[ProfileModel sharedInstance] bookmarks]) {
-        if ([[bookmark objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue]) {
-            return YES;
-        }
-    }
-    for (Profile* bookmark in [[ProfileModel sessionsInstance] bookmarks]) {
-        if ([[bookmark objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue]) {
-            return YES;
-        }
-    }
-    return NO;
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
