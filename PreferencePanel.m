@@ -484,10 +484,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyHideTabActivityIndicator];
 }
 
-- (BOOL)highlightTabLabels {
-    return [iTermPreferences boolForKey:kPreferenceKeyHighlightTabLabels];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

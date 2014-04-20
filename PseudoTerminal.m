@@ -3857,7 +3857,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)setLabelColor:(NSColor *)color forTabViewItem:tabViewItem
 {
-    if ([[PreferencePanel sharedInstance] highlightTabLabels]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyHighlightTabLabels]) {
         [tabBarControl setLabelColor:color forTabViewItem:tabViewItem];
     } else {
         [tabBarControl setLabelColor:[NSColor blackColor] forTabViewItem:tabViewItem];
