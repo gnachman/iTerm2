@@ -7519,7 +7519,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                ch == TAB_FILLER) {
         return CHARTYPE_WHITESPACE;
     } else if ([[NSCharacterSet alphanumericCharacterSet] longCharacterIsMember:longChar] ||
-               [[[PreferencePanel sharedInstance] wordChars] rangeOfString:aString].length != 0) {
+               [[iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection] rangeOfString:aString].length != 0) {
         return CHARTYPE_WORDCHAR;
     } else {
         // Non-alphanumeric, non-whitespace, non-word, not double-width filler.

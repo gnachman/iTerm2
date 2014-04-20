@@ -8,6 +8,7 @@
 
 #import "iTermTextExtractor.h"
 #import "DebugLogging.h"
+#import "iTermPreferences.h"
 #import "NSStringITerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "RegexKitLite.h"
@@ -34,7 +35,7 @@ static const int kNumCharsToSearchForDivider = 8;
     
     NSMutableCharacterSet *complement = [[[NSMutableCharacterSet alloc] init] autorelease];
     [complement formUnionWithCharacterSet:[NSCharacterSet alphanumericCharacterSet]];
-    [complement addCharactersInString:[[PreferencePanel sharedInstance] wordChars]];
+    [complement addCharactersInString:[iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]];
     [complement addCharactersInRange:NSMakeRange(DWC_RIGHT, 1)];
     [complement addCharactersInRange:NSMakeRange(DWC_SKIP, 1)];
     [charset formUnionWithCharacterSet:[complement invertedSet]];
@@ -279,7 +280,8 @@ static const int kNumCharsToSearchForDivider = 8;
         return kTextExtractorClassWord;
     }
     
-    range = [[[PreferencePanel sharedInstance] wordChars] rangeOfString:asString];
+    range = [[iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]
+                rangeOfString:asString];
     if (range.length == asString.length) {
         return kTextExtractorClassWord;
     }
