@@ -1276,7 +1276,7 @@ NSString *kSessionsKVCKey = @"sessions";
         title = @"";
     }
 
-    if ([[PreferencePanel sharedInstance] windowNumber]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyShowWindowNumber]) {
         NSString *tmuxId = @"";
         if ([[self currentSession] isTmuxClient]) {
             tmuxId = [NSString stringWithFormat:@" [%@]",

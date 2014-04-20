@@ -521,10 +521,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyAdjustWindowForFontSizeChange];
 }
 
-- (BOOL)windowNumber {
-    return [iTermPreferences boolForKey:kPreferenceKeyShowWindowNumber];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
