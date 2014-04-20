@@ -428,10 +428,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs];
 }
 
-- (BOOL)focusFollowsMouse {
-    return [iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
