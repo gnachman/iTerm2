@@ -483,7 +483,7 @@ static BOOL hasBecomeActive = NO;
 {
     PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
     if ([prefPanel hotkey] &&
-        [prefPanel hotkeyTogglesWindow]) {
+        [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow]) {
         // The hotkey window is configured.
         PseudoTerminal* hotkeyTerm = [[HotkeyWindowController sharedInstance] hotKeyWindow];
         if (hotkeyTerm) {

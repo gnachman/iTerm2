@@ -167,7 +167,6 @@ void LoadPrefsFromCustomFolder(void);
 - (int)switchTabModifier;
 - (int)switchWindowModifier;
 
-- (BOOL)hotkeyTogglesWindow;
 - (BOOL)hotkeyAutoHides;
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename;

@@ -696,10 +696,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 }
 
-- (BOOL)hotkeyTogglesWindow {
-    return [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

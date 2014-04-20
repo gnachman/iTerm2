@@ -276,7 +276,7 @@ void OnHotKeyEvent(void)
 {
     HKWLog(@"hotkey pressed");
     PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
-    if ([prefPanel hotkeyTogglesWindow]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow]) {
         HKWLog(@"hotkey window enabled");
         PseudoTerminal* hotkeyTerm = GetHotkeyWindow();
         if (hotkeyTerm) {
