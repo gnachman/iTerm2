@@ -4549,7 +4549,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)searchInBrowser:(id)sender
 {
     NSString* url =
-        [NSString stringWithFormat:[[PreferencePanel sharedInstance] searchCommand],
+        [NSString stringWithFormat:[iTermSettingsModel searchCommand],
                                    [[self selectedText] stringWithPercentEscape]];
     [self _findUrlInString:url
           andOpenInBackground:NO];

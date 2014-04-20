@@ -682,11 +682,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermSettingsModel hotkeyTermAnimationDuration];
 }
 
-- (NSString *)searchCommand
-{
-    return [iTermSettingsModel searchCommand];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
