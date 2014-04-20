@@ -132,8 +132,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     // This class is not well named. It is a lot like a view controller for the window
     // arrangements tab.
     IBOutlet WindowArrangements *arrangements_;
-
-    BOOL _haveAwoken;  // Can kill this when profiles stuff is migrated
 }
 
 + (instancetype)sharedInstance {
@@ -176,14 +174,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 #pragma mark - View layout
 
 - (void)awakeFromNib {
-    // Because the ProfilePreferencesViewController awakes before PreferencePanel, it calls
-    // profilePreferencesModelDidAwakeFromNib which in turn calls this to ensure everything is
-    // initialized so that the rest of [-ProfilePreferencesViewController awakeFromNib] can run
-    // successfully. This is an awful hack and will go away.
-    if (_haveAwoken) {
-        return;
-    }
-
     [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
 
@@ -739,10 +729,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (ProfileModel *)profilePreferencesModel {
     return _profileModel;
-}
-
-- (void)profilePreferencesModelDidAwakeFromNib {
-    [self awakeFromNib];
 }
 
 @end

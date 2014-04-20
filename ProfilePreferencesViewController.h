@@ -13,9 +13,7 @@
 
 @protocol ProfilePreferencesViewControllerDelegate <NSObject>
 
-// TODO: Nuke all of these.
 - (ProfileModel *)profilePreferencesModel;
-- (void)profilePreferencesModelDidAwakeFromNib;
 
 @end
 
