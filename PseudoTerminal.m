@@ -5371,7 +5371,9 @@ NSString *kSessionsKVCKey = @"sessions";
     if ((modifierFlags & NSDeviceIndependentModifierFlagsMask) == NSCommandKeyMask &&  // you pressed exactly cmd
         ([tabBarBackground isHidden] || [tabBarBackground alphaValue] == 0) &&  // the tab bar is not visible
         fullScreenTabviewTimer_ == nil) {  // not in the middle of doing this already
-        fullScreenTabviewTimer_ = [[NSTimer scheduledTimerWithTimeInterval:[[PreferencePanel sharedInstance] fsTabDelay]
+        NSTimeInterval delay =
+            [iTermPreferences floatForKey:kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen];
+        fullScreenTabviewTimer_ = [[NSTimer scheduledTimerWithTimeInterval:delay
                                                                     target:self
                                                                   selector:@selector(cmdHeld:)
                                                                   userInfo:nil
