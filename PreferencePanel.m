@@ -390,10 +390,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [_userDefaults boolForKey:@"PasteFromClipboard"];
 }
 
-- (BOOL)threeFingerEmulatesMiddle {
-    return [iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

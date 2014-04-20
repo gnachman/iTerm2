@@ -527,7 +527,7 @@ typedef enum {
                                                           clicks:1
                                                        modifiers:0]];
         }
-        if ([[PreferencePanel sharedInstance] threeFingerEmulatesMiddle]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle]) {
             // Find all actions that use middle button and add corresponding three-finger gesture.
             NSMutableDictionary *tempCopy = [[temp mutableCopy] autorelease];
             for (NSString *key in temp) {

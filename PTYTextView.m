@@ -2872,7 +2872,7 @@ NSMutableArray* screens=0;
         return NO;
     }
     if (numTouches_ == 3) {
-        if ([[PreferencePanel sharedInstance] threeFingerEmulatesMiddle]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle]) {
             [self emulateThirdButtonPressDown:YES withEvent:event];
         } else {
             // Perform user-defined gesture action, if any

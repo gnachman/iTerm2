@@ -85,7 +85,7 @@
 
 - (BOOL)viewShouldTrackTouches
 {
-    return [[PreferencePanel sharedInstance] threeFingerEmulatesMiddle] ||
+    return [iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle] ||
            [PointerPrefsController haveThreeFingerTapEvents];
 }
 
