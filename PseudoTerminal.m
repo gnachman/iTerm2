@@ -5495,7 +5495,7 @@ NSString *kSessionsKVCKey = @"sessions";
     } else {
         [tabBarControl setCellMinWidth:[iTermSettingsModel minTabWidth]];
     }
-    [tabBarControl setSizeCellsToFit:[[PreferencePanel sharedInstance] useUnevenTabs]];
+    [tabBarControl setSizeCellsToFit:[iTermSettingsModel useUnevenTabs]];
     [tabBarControl setCellOptimumWidth:[iTermSettingsModel optimumTabWidth]];
 
     PtyLog(@"repositionWidgets - refresh textviews in this tab");

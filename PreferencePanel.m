@@ -654,10 +654,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyQuitWhenAllWindowsClosed];
 }
 
-- (BOOL)useUnevenTabs {
-    return [iTermSettingsModel useUnevenTabs];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

@@ -140,7 +140,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)legacySmartCursorColor;
 - (float)legacyMinimumContrast;
 - (BOOL)quitWhenAllWindowsClosed;
-- (BOOL)useUnevenTabs;
 
 - (void)changeFont:(id)fontManager;
 - (void)selectProfilesTab;
