@@ -5038,7 +5038,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)setDimmingForSession:(PTYSession *)aSession
 {
-    BOOL canDim = [[PreferencePanel sharedInstance] dimInactiveSplitPanes];
+    BOOL canDim = [iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes];
     if (!canDim) {
         [[aSession view] setDimmed:NO];
     } else if (aSession == [[aSession tab] activeSession]) {

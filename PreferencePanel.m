@@ -609,10 +609,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers];
 }
 
-- (BOOL)dimInactiveSplitPanes {
-    return [iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

@@ -130,7 +130,6 @@ void LoadPrefsFromCustomFolder(void);
 - (int)hotkeyModifiers;
 - (NSTextField*)hotkeyField;
 
-- (BOOL)dimInactiveSplitPanes;
 - (float)legacyMinimumContrast;
 
 - (void)changeFont:(id)fontManager;
