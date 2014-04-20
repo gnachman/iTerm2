@@ -88,7 +88,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)trimTrailingWhitespace;
 - (BOOL)allowClipboardAccess;
 - (BOOL)copySelection;
-- (BOOL)copyLastNewline;
 // Returns true if ANY profile has growl enabled (preserves interface from back
 // when there was a global growl setting as well as a per-profile setting).
 - (NSTextField*)hotkeyField;

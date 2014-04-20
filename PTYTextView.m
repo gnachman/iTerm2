@@ -3682,7 +3682,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"startx < 0 so there is no selected text");
         return nil;
     }
-    BOOL copyLastNewline = [[PreferencePanel sharedInstance] copyLastNewline];
+    BOOL copyLastNewline = [iTermPreferences boolForKey:kPreferenceKeyCopyLastNewline];
     BOOL trimWhitespace = [[PreferencePanel sharedInstance] trimTrailingWhitespace];
     NSMutableString *theSelectedText = [[NSMutableString alloc] init];
     [_selection enumerateSelectedRanges:^(VT100GridWindowedRange range, BOOL *stop, BOOL eol) {

@@ -381,10 +381,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText];
 }
 
-- (BOOL)copyLastNewline {
-    return [iTermPreferences boolForKey:kPreferenceKeyCopyLastNewline];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
