@@ -3942,7 +3942,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 {
     BOOL isBackgroundTab = [[tabViewItem_ tabView] selectedTabViewItem] != [self tabViewItem];
     const BOOL compactTab = ([[PreferencePanel sharedInstance] hideTabNumber] &&
-                             [[PreferencePanel sharedInstance] hideTabCloseButton]);
+                             [iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton]);
     if ([self isProcessing] == NO && !compactTab && ![self isForegroundTab]) {
         [self setIsProcessing:YES];
     }

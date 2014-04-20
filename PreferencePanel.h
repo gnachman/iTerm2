@@ -106,7 +106,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)passOnControlLeftClick;
 - (BOOL)maxVertically;
 - (BOOL)hideTabNumber;
-- (BOOL)hideTabCloseButton;
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;
