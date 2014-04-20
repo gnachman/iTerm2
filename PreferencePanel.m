@@ -649,11 +649,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [_userDefaults objectForKey:@"ColorInvertedCursor"]?[[_userDefaults objectForKey:@"ColorInvertedCursor"] boolValue]: YES;
 }
 
-- (BOOL)quitWhenAllWindowsClosed
-{
-    return [iTermPreferences boolForKey:kPreferenceKeyQuitWhenAllWindowsClosed];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

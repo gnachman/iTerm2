@@ -139,7 +139,6 @@ void LoadPrefsFromCustomFolder(void);
 - (float)dimmingAmount;
 - (BOOL)legacySmartCursorColor;
 - (float)legacyMinimumContrast;
-- (BOOL)quitWhenAllWindowsClosed;
 
 - (void)changeFont:(id)fontManager;
 - (void)selectProfilesTab;

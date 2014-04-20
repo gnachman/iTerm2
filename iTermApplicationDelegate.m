@@ -475,7 +475,8 @@ static BOOL hasBecomeActive = NO;
             return NO;
         }
     }
-    quittingBecauseLastWindowClosed_ = [[PreferencePanel sharedInstance] quitWhenAllWindowsClosed];
+    quittingBecauseLastWindowClosed_ =
+        [iTermPreferences boolForKey:kPreferenceKeyQuitWhenAllWindowsClosed];
     return quittingBecauseLastWindowClosed_;
 }
 
