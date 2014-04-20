@@ -1645,7 +1645,7 @@ static NSString* FormatRect(NSRect r) {
 
     float yOrigin = 0;
     if (withSpaceForFrame &&
-        [[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) {
+        [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
         yOrigin += tabFrame.size.height;
     }
 
@@ -1655,7 +1655,7 @@ static NSString* FormatRect(NSRect r) {
     [viewImage lockFocus];
     [[NSColor windowBackgroundColor] set];
     if (withSpaceForFrame &&
-        [[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+        [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
         tabFrame.origin.y += [viewImage size].height;
     }
     if (withSpaceForFrame) {

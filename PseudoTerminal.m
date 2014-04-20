@@ -543,7 +543,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
     [tabBarControl retain];
     [tabBarControl setModifier:[iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]];
-    if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) {
+    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
         [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMinYMargin)];
     } else {
         [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMaxYMargin)];
@@ -1525,7 +1525,7 @@ NSString *kSessionsKVCKey = @"sessions";
     int N = [(NSDictionary *)[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_TABS] count];
     [[NSColor windowFrameColor] set];
     double y;
-    if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) {
+    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
         y = rect.origin.y + rect.size.height - 10;
     } else {
         y = rect.origin.y;
@@ -1541,10 +1541,11 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 
     NSDictionary* tabArrangement = [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_TABS] objectAtIndex:0];
-    [PTYTab drawArrangementPreview:tabArrangement frame:NSMakeRect(rect.origin.x + 1,
-                                                                   ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) ? rect.origin.y : rect.origin.y + 10,
-                                                                   rect.size.width - 2,
-                                                                   rect.size.height - 11)];
+    [PTYTab drawArrangementPreview:tabArrangement
+                             frame:NSMakeRect(rect.origin.x + 1,
+                                              ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) ? rect.origin.y : rect.origin.y + 10,
+                                              rect.size.width - 2,
+                                              rect.size.height - 11)];
 }
 
 + (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary*)arrangement
@@ -3605,7 +3606,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [textview unlockFocus];
 
         [viewImage lockFocus];
-        if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) {
+        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
             viewRect.origin.y += tabHeight;
         }
         [tabViewImage compositeToPoint:viewRect.origin operation:NSCompositeSourceOver];
@@ -3614,7 +3615,7 @@ NSString *kSessionsKVCKey = @"sessions";
         // Draw over where the tab bar would usually be.
         [viewImage lockFocus];
         [[NSColor windowBackgroundColor] set];
-        if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
             tabFrame.origin.y += viewRect.size.height;
         }
         NSRectFill(tabFrame);
@@ -3631,7 +3632,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [viewImage unlockFocus];
 
         offset->width = [(id <PSMTabStyle>)[tabBarControl style] leftMarginForTabBarControl];
-        if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
             offset->height = 22;
         } else {
             offset->height = viewRect.size.height + 22;
@@ -3642,7 +3643,7 @@ NSString *kSessionsKVCKey = @"sessions";
         viewImage = [[tabViewItem identifier] image:YES];
 
         offset->width = [(id <PSMTabStyle>)[tabBarControl style] leftMarginForTabBarControl];
-        if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
             offset->height = 22;
         }
         else {
@@ -3782,7 +3783,7 @@ NSString *kSessionsKVCKey = @"sessions";
     NSWindowController<iTermWindowController> * term =
         [self terminalDraggedFromAnotherWindowAtPoint:point];
     if ([term windowType] == WINDOW_TYPE_NORMAL &&
-        [[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+        [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
             [[term window] setFrameTopLeftPoint:point];
     }
 
@@ -5239,7 +5240,7 @@ NSString *kSessionsKVCKey = @"sessions";
 - (BOOL)_haveBottomBorder
 {
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
-    BOOL topTabBar = ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab);
+    BOOL topTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
     if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
         return NO;
     } else if ([self anyFullScreen] ||
@@ -5260,7 +5261,7 @@ NSString *kSessionsKVCKey = @"sessions";
 - (BOOL)_haveTopBorder
 {
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
-    BOOL topTabBar = ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab);
+    BOOL topTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
     BOOL visibleTopTabBar = (tabBarVisible && topTabBar);
     return ([iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder] &&
             !visibleTopTabBar
@@ -5429,9 +5430,9 @@ NSString *kSessionsKVCKey = @"sessions";
         // The tabBar control is visible.
         PtyLog(@"repositionWidgets - tabs are visible. Adjusting window size...");
         [tabBarControl setHidden:NO];
-        [tabBarControl setTabLocation:[[PreferencePanel sharedInstance] tabViewType]];
+        [tabBarControl setTabLocation:[iTermPreferences intForKey:kPreferenceKeyTabPosition]];
         NSRect aRect;
-        if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
             // Place tabs at the top.
             // Add 1px border
             aRect.origin.x = [self _haveLeftBorder] ? 1 : 0;
