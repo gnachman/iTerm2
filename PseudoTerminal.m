@@ -5233,7 +5233,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (BOOL)_haveLeftBorder
 {
-    if (![[PreferencePanel sharedInstance] showWindowBorder]) {
+    if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
         return NO;
     } else if ([self anyFullScreen] ||
                windowType_ == WINDOW_TYPE_LEFT) {
@@ -5247,7 +5247,7 @@ NSString *kSessionsKVCKey = @"sessions";
 {
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
     BOOL topTabBar = ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab);
-    if (![[PreferencePanel sharedInstance] showWindowBorder]) {
+    if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
         return NO;
     } else if ([self anyFullScreen] ||
                windowType_ == WINDOW_TYPE_BOTTOM) {
@@ -5269,14 +5269,14 @@ NSString *kSessionsKVCKey = @"sessions";
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
     BOOL topTabBar = ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab);
     BOOL visibleTopTabBar = (tabBarVisible && topTabBar);
-    return ([[PreferencePanel sharedInstance] showWindowBorder] &&
+    return ([iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder] &&
             !visibleTopTabBar
             && windowType_ == WINDOW_TYPE_BOTTOM);
 }
 
 - (BOOL)_haveRightBorder
 {
-    if (![[PreferencePanel sharedInstance] showWindowBorder]) {
+    if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
         return NO;
     } else if ([self anyFullScreen] ||
                windowType_ == WINDOW_TYPE_RIGHT ) {

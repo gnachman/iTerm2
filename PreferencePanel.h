@@ -130,8 +130,6 @@ void LoadPrefsFromCustomFolder(void);
 - (int)hotkeyModifiers;
 - (NSTextField*)hotkeyField;
 
-- (BOOL)showWindowBorder;
-- (BOOL)lionStyleFullscreen;
 - (BOOL)dimInactiveSplitPanes;
 - (BOOL)dimBackgroundWindows;
 - (BOOL)animateDimming;
