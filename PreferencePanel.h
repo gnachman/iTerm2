@@ -137,7 +137,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)animateDimming;
 - (BOOL)dimOnlyText;
 - (float)dimmingAmount;
-- (BOOL)legacySmartCursorColor;
 - (float)legacyMinimumContrast;
 
 - (void)changeFont:(id)fontManager;

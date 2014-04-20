@@ -642,13 +642,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyCheckForTestReleases];
 }
 
-// Smart cursor color used to be a global value. This provides the default when
-// migrating.
-- (BOOL)legacySmartCursorColor
-{
-    return [_userDefaults objectForKey:@"ColorInvertedCursor"]?[[_userDefaults objectForKey:@"ColorInvertedCursor"] boolValue]: YES;
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

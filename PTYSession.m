@@ -1846,11 +1846,9 @@ typedef enum {
         [_colorMap setColor:theColor forKey:kColorMap8bitBase + i];
     }
 
-    BOOL useSmartCursorColor;
+    BOOL useSmartCursorColor = NO;
     if ([aDict objectForKey:KEY_SMART_CURSOR_COLOR]) {
         useSmartCursorColor = [[aDict objectForKey:KEY_SMART_CURSOR_COLOR] boolValue];
-    } else {
-        useSmartCursorColor = [[PreferencePanel sharedInstance] legacySmartCursorColor];
     }
     [self setSmartCursorColor:useSmartCursorColor];
 
