@@ -14,6 +14,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermPasteHelper.h"
+#import "iTermPreferences.h"
 #import "iTermSelection.h"
 #import "iTermSettingsModel.h"
 #import "iTermTextExtractor.h"
@@ -570,7 +571,7 @@ typedef enum {
 
     _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, VMARGIN, aSize.width, aSize.height)
                                           colorMap:_colorMap];
-    _colorMap.dimOnlyText = [[PreferencePanel sharedInstance] dimOnlyText];
+    _colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
     [_textview setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [_textview setFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NORMAL_FONT]]
           nonAsciiFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NON_ASCII_FONT]]

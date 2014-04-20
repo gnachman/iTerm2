@@ -8063,7 +8063,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
-    _colorMap.dimOnlyText = [[PreferencePanel sharedInstance] dimOnlyText];
+    _colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
 }
 
 - (NSRect)gridRect {

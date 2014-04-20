@@ -133,7 +133,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)dimInactiveSplitPanes;
 - (BOOL)dimBackgroundWindows;
 - (BOOL)animateDimming;
-- (BOOL)dimOnlyText;
 - (float)legacyMinimumContrast;
 
 - (void)changeFont:(id)fontManager;
