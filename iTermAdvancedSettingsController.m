@@ -7,7 +7,7 @@
 //
 
 #import "iTermAdvancedSettingsController.h"
-#import "iTermSettingsModel.h"
+#import "iTermAdvancedSettingsModel.h"
 #import <objc/runtime.h>
 
 typedef enum {
@@ -151,13 +151,13 @@ static NSDictionary *gIntrospection;
         settings = [NSMutableArray array];
         NSArray *internalMethods = @[ @"initialize", @"load" ];
         unsigned int methodCount = 0;
-        Method *methods = class_copyMethodList(object_getClass([iTermSettingsModel class]), &methodCount);
+        Method *methods = class_copyMethodList(object_getClass([iTermAdvancedSettingsModel class]), &methodCount);
         gIntrospecting = YES;
         for (int i = 0; i < methodCount; i++) {
             SEL name = method_getName(methods[i]);
             NSString *stringName = NSStringFromSelector(name);
             if (![internalMethods containsObject:stringName]) {
-                [iTermSettingsModel performSelector:name withObject:nil];
+                [iTermAdvancedSettingsModel performSelector:name withObject:nil];
                 assert(gIntrospection != nil);
                 [settings addObject:gIntrospection];
                 [gIntrospection release];

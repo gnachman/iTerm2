@@ -3,15 +3,10 @@
 //
 
 #import "iTermRemotePreferences.h"
+#import "iTermPreferences.h"
 #import "iTermWarning.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
-
-// Are we loading prefs from a custom location?
-static NSString *const kLoadPrefsFromCustomFolderKey = @"LoadPrefsFromCustomFolder";
-
-// Path/URL to location with prefs. Path may have ~ in it.
-static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
 
 @interface iTermRemotePreferences ()
 @property(nonatomic, copy) NSDictionary *savedRemotePrefs;
@@ -36,19 +31,16 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
 }
 
 - (BOOL)shouldLoadRemotePrefs {
-    return [[NSUserDefaults standardUserDefaults]
-               boolForKey:kLoadPrefsFromCustomFolderKey];
+    return [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
 }
 
 - (void)setShouldLoadRemotePrefs:(BOOL)value {
-    return [[NSUserDefaults standardUserDefaults] setBool:value
-                                                   forKey:kLoadPrefsFromCustomFolderKey];
+    [iTermPreferences setBool:value forKey:kPreferenceKeyLoadPrefsFromCustomFolder];
 }
 
 // Returns a URL or containing folder
 - (NSString *)customFolderOrURL {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    return [userDefaults objectForKey:kPrefsCustomFolderKey];
+    return [iTermPreferences stringForKey:kPreferenceKeyCustomFolder];
 }
 
 - (NSString *)expandedCustomFolderOrURL {
@@ -57,11 +49,6 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
         return theString;
     }
     return theString ? [theString stringByExpandingTildeInPath] : @"";
-}
-
-- (void)setCustomFolderOrURL:(NSString *)customLocation {
-    [[NSUserDefaults standardUserDefaults] setObject:customLocation
-                                              forKey:kPrefsCustomFolderKey];
 }
 
 // Returns a URL or expanded filename
@@ -85,8 +72,8 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
 
 - (BOOL)preferenceKeyIsSyncable:(NSString *)key
 {
-    NSArray *exemptKeys = @[ @"LoadPrefsFromCustomFolder",
-                             kPrefsCustomFolderKey,
+    NSArray *exemptKeys = @[ kPreferenceKeyLoadPrefsFromCustomFolder,
+                             kPreferenceKeyCustomFolder,
                              @"iTerm Version" ];
     return ![exemptKeys containsObject:key] &&
             ![key hasPrefix:@"NS"] &&
@@ -167,8 +154,7 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
     return [[NSFileManager defaultManager] directoryIsWritable:fullPath];
 }
 
-- (BOOL)remoteLocationIsValid
-{
+- (BOOL)remoteLocationIsValid {
     NSString *remoteLocation = [self customFolderOrURL];
     if ([remoteLocation stringIsUrlLike]) {
         // URLs are too expensive to check, so just make sure it's reasonably
@@ -227,6 +213,8 @@ static NSString *const kPrefsCustomFolderKey = @"PrefsCustomFolder";
                            otherButton:nil
              informativeTextWithFormat:@"Tried to copy %@ to %@",
           [self remotePrefsLocation], filename] runModal];
+    } else {
+        self.savedRemotePrefs = myDict;
     }
 }
 

@@ -85,14 +85,14 @@
 
 - (BOOL)viewShouldTrackTouches
 {
-    return [[PreferencePanel sharedInstance] threeFingerEmulatesMiddle] ||
+    return [iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle] ||
            [PointerPrefsController haveThreeFingerTapEvents];
 }
 
 // Caller is responsible to check that it's a single click
 - (BOOL)eventEmulatesRightClick:(NSEvent *)event
 {
-    return ![[PreferencePanel sharedInstance] passOnControlLeftClick] &&
+    return ![iTermPreferences boolForKey:kPreferenceKeyControlLeftClickBypassesContextMenu] &&
            [event buttonNumber] == 0 &&
            ([event modifierFlags] & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask | NSShiftKeyMask)) == NSControlKeyMask;
 }

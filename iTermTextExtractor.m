@@ -8,6 +8,7 @@
 
 #import "iTermTextExtractor.h"
 #import "DebugLogging.h"
+#import "iTermPreferences.h"
 #import "NSStringITerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "RegexKitLite.h"
@@ -34,7 +35,7 @@ static const int kNumCharsToSearchForDivider = 8;
     
     NSMutableCharacterSet *complement = [[[NSMutableCharacterSet alloc] init] autorelease];
     [complement formUnionWithCharacterSet:[NSCharacterSet alphanumericCharacterSet]];
-    [complement addCharactersInString:[[PreferencePanel sharedInstance] wordChars]];
+    [complement addCharactersInString:[iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]];
     [complement addCharactersInRange:NSMakeRange(DWC_RIGHT, 1)];
     [complement addCharactersInRange:NSMakeRange(DWC_SKIP, 1)];
     [charset formUnionWithCharacterSet:[complement invertedSet]];
@@ -279,7 +280,8 @@ static const int kNumCharsToSearchForDivider = 8;
         return kTextExtractorClassWord;
     }
     
-    range = [[[PreferencePanel sharedInstance] wordChars] rangeOfString:asString];
+    range = [[iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]
+                rangeOfString:asString];
     if (range.length == asString.length) {
         return kTextExtractorClassWord;
     }
@@ -452,6 +454,9 @@ static const int kNumCharsToSearchForDivider = 8;
                                                                       _logicalWindow.length);
     [self enumerateInReverseCharsInRange:windowedRange
                                charBlock:^BOOL(screen_char_t theChar, VT100GridCoord charCoord) {
+                                   if (!theChar.code) {
+                                       return YES;
+                                   }
                                    NSString* string = CharToStr(theChar.code, theChar.complexChar);
                                    [joinedLines insertString:string atIndex:0];
                                    for (int i = 0; i < [string length]; i++) {
@@ -477,6 +482,9 @@ static const int kNumCharsToSearchForDivider = 8;
 
     [self enumerateCharsInRange:windowedRange
                       charBlock:^BOOL(screen_char_t theChar, VT100GridCoord charCoord) {
+                          if (!theChar.code) {
+                              return YES;
+                          }
                           NSString* string = CharToStr(theChar.code, theChar.complexChar);
                           [joinedLines appendString:string];
                           for (int i = 0; i < [string length]; i++) {
@@ -484,14 +492,14 @@ static const int kNumCharsToSearchForDivider = 8;
                           }
                           return NO;
                       }
-                       eolBlock:^BOOL(unichar code, int numPreceedignNulls, int line) {
+                       eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
                            return [self shouldStopEnumeratingWithCode:code
-                                                             numNulls:numPreceedignNulls
+                                                             numNulls:numPreceedingNulls
                                               windowTouchesLeftMargin:(_logicalWindow.location == 0)
                                              windowTouchesRightMargin:xLimit == trueWidth
                                                      ignoringNewlines:ignoringNewlines];
                        }];
-    
+
     *targetOffset = -1;
     for (int i = 0; i < coords.count; i++) {
         NSComparisonResult order = VT100GridCoordOrder(coord, [coords[i] gridCoordValue]);
@@ -500,7 +508,7 @@ static const int kNumCharsToSearchForDivider = 8;
             break;
         }
     }
-    if (*targetOffset == 1) {
+    if (*targetOffset == -1) {
         NSLog(@"Didn't find coord!");
     }
     return joinedLines;

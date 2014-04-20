@@ -6,21 +6,22 @@
 //
 
 #import "TmuxController.h"
-#import "TmuxGateway.h"
-#import "TSVParser.h"
-#import "PseudoTerminal.h"
+#import "EquivalenceClassSet.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermController.h"
-#import "TmuxWindowOpener.h"
-#import "PTYTab.h"
+#import "iTermPreferences.h"
+#import "NSStringITerm.h"
+#import "PreferencePanel.h"
 #import "PseudoTerminal.h"
+#import "PseudoTerminal.h"
+#import "PTYTab.h"
 #import "PTYTab.h"
 #import "RegexKitLite.h"
-#import "NSStringITerm.h"
 #import "TmuxControllerRegistry.h"
-#import "EquivalenceClassSet.h"
 #import "TmuxDashboardController.h"
-#import "PreferencePanel.h"
-#import "iTermApplicationDelegate.h"
+#import "TmuxGateway.h"
+#import "TmuxWindowOpener.h"
+#import "TSVParser.h"
 
 NSString *kTmuxControllerSessionsDidChange = @"kTmuxControllerSessionsDidChange";
 NSString *kTmuxControllerDetachedNotification = @"kTmuxControllerDetachedNotification";
@@ -226,7 +227,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     BOOL haveHidden = NO;
     NSNumber *newWindowAffinity = nil;
     BOOL newWindowsInTabs =
-        [[PreferencePanel sharedInstance] openTmuxWindowsIn] == OPEN_TMUX_WINDOWS_IN_TABS;
+        [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn] == OPEN_TMUX_WINDOWS_IN_TABS;
     for (NSArray *record in doc.records) {
         int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
         if (hiddenWindows_ && [hiddenWindows_ containsObject:[NSNumber numberWithInt:wid]]) {
@@ -247,7 +248,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         }
         [windowsToOpen addObject:record];
     }
-    if (windowsToOpen.count > [[PreferencePanel sharedInstance] tmuxDashboardLimit]) {
+    if (windowsToOpen.count > [iTermPreferences intForKey:kPreferenceKeyTmuxDashboardLimit]) {
         haveHidden = YES;
         [windowsToOpen removeAllObjects];
     }

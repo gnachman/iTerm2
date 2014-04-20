@@ -1,0 +1,221 @@
+//
+//  ProfilesSessionViewController.m
+//  iTerm
+//
+//  Created by George Nachman on 4/18/14.
+//
+//
+
+#import "ProfilesSessionPreferencesViewController.h"
+#import "ITAddressBookMgr.h"
+#import "NSFileManager+iTerm.h"
+#import "PreferencePanel.h"
+
+@interface ProfilesSessionPreferencesViewController () <NSTableViewDelegate, NSTableViewDataSource>
+@end
+
+@implementation ProfilesSessionPreferencesViewController {
+    IBOutlet NSButton *_closeSessionsOnEnd;
+    IBOutlet NSMatrix *_promptBeforeClosing;
+    IBOutlet NSTableView *_jobsTable;
+    IBOutlet NSButton *_removeJob;
+    IBOutlet NSButton *_autoLog;
+    IBOutlet NSTextField *_logDir;
+    IBOutlet NSButton *_sendCodeWhenIdle;
+    IBOutlet NSTextField *_idleCode;
+
+    IBOutlet NSImageView *_logDirWarning;
+    IBOutlet NSButton *_changeLogDir;
+    
+    BOOL _awoken;
+}
+
+- (void)awakeFromNib {
+    if (_awoken) {
+        return;
+    }
+    _awoken = YES;
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(reloadProfiles)
+                                                 name:kReloadAllProfiles
+                                               object:nil];
+    [self defineControl:_closeSessionsOnEnd
+                    key:KEY_CLOSE_SESSIONS_ON_END
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_promptBeforeClosing
+                    key:KEY_PROMPT_CLOSE
+                   type:kPreferenceInfoTypeMatrix
+         settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
+                 update:^BOOL { [self updatePromptBeforeClosing]; return YES; }];
+
+    PreferenceInfo *info;
+    info = [self defineControl:_autoLog
+                           key:KEY_AUTOLOG
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() {
+        _logDir.enabled = [self boolForKey:KEY_AUTOLOG];
+        _changeLogDir.enabled = [self boolForKey:KEY_AUTOLOG];
+        [self updateLogDirWarning];
+    };
+    
+    info = [self defineControl:_logDir
+                           key:KEY_LOGDIR
+                          type:kPreferenceInfoTypeStringTextField];
+    info.observer = ^() { [self updateLogDirWarning]; };
+
+    info = [self defineControl:_sendCodeWhenIdle
+                           key:KEY_SEND_CODE_WHEN_IDLE
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() { _idleCode.enabled = [self boolForKey:KEY_SEND_CODE_WHEN_IDLE]; };
+
+    info = [self defineControl:_idleCode
+                           key:KEY_IDLE_CODE
+                          type:kPreferenceInfoTypeIntegerTextField];
+    info.range = NSMakeRange(0, 256);
+    
+    [self updateRemoveJobButtonEnabled];
+}
+
+- (void)layoutSubviewsForEditCurrentSessionMode {
+    NSArray *viewsToDisable = @[ _autoLog,
+                                 _logDir,
+                                 _changeLogDir ];
+    for (id view in viewsToDisable) {
+        [view setEnabled:NO];
+    }
+    [self awakeFromNib];  // We can get called before awakeFromNib
+    [self infoForControl:_autoLog].observer = NULL;
+    [self infoForControl:_logDir].observer = NULL;
+}
+
+- (void)reloadProfile {
+    [super reloadProfile];
+    [_jobsTable reloadData];
+    [self updateRemoveJobButtonEnabled];
+}
+
+- (NSArray *)allKeys {
+    NSArray *keys = @[ KEY_JOBS ];
+    return [[super allKeys] arrayByAddingObjectsFromArray:keys];
+}
+
+#pragma mark - Prompt before closing
+
+- (void)promptBeforeClosingDidChange {
+    [self setInt:[_promptBeforeClosing selectedTag] forKey:KEY_PROMPT_CLOSE];
+}
+
+- (void)updatePromptBeforeClosing {
+    [_promptBeforeClosing selectCellWithTag:[self intForKey:KEY_PROMPT_CLOSE]];
+}
+
+#pragma mark - Jobs
+
+- (NSArray *)jobs {
+    return (NSArray *)[self objectForKey:KEY_JOBS];
+}
+
+- (IBAction)addJob:(id)sender {
+    NSArray *jobNames = [self jobs];
+    NSMutableArray *augmented;
+    if (jobNames) {
+        augmented = [NSMutableArray arrayWithArray:jobNames];
+        [augmented addObject:@"Job Name"];
+    } else {
+        augmented = [NSMutableArray arrayWithObject:@"Job Name"];
+    }
+    [self setObject:augmented forKey:KEY_JOBS];
+    [_jobsTable reloadData];
+    [_jobsTable selectRowIndexes:[NSIndexSet indexSetWithIndex:[augmented count] - 1]
+            byExtendingSelection:NO];
+    [_jobsTable editColumn:0
+                       row:[self numberOfRowsInTableView:_jobsTable] - 1
+                 withEvent:nil
+                    select:YES];
+    [self updateRemoveJobButtonEnabled];
+    [self postRefreshNotification];
+}
+
+- (IBAction)removeJob:(id)sender {
+    // Causes editing to end. If you try to remove a cell that is being edited,
+    // it tries to dereference the deleted cell. There doesn't seem to be an
+    // API that explicitly ends editing.
+    [_jobsTable reloadData];
+
+    NSInteger selectedIndex = [_jobsTable selectedRow];
+    if (selectedIndex < 0) {
+        return;
+    }
+    NSArray *jobNames = [self jobs];
+    NSMutableArray *mod = [NSMutableArray arrayWithArray:jobNames];
+    [mod removeObjectAtIndex:selectedIndex];
+
+    [self setObject:mod forKey:KEY_JOBS];
+    [_jobsTable reloadData];
+    [self updateRemoveJobButtonEnabled];
+    [self postRefreshNotification];
+}
+
+- (void)updateRemoveJobButtonEnabled {
+    _removeJob.enabled = ([_jobsTable selectedRow] != -1);
+}
+
+#pragma mark - NSTableViewDataSource
+
+- (NSInteger)numberOfRowsInTableView: (NSTableView *)aTableView {
+    return [[self jobs] count];
+}
+
+
+- (void)tableView:(NSTableView *)aTableView
+   setObjectValue:(id)anObject
+   forTableColumn:(NSTableColumn *)aTableColumn
+              row:(NSInteger)rowIndex {
+    NSMutableArray *jobs = [NSMutableArray arrayWithArray:[self jobs]];
+    [jobs replaceObjectAtIndex:rowIndex withObject:anObject];
+    [self setObject:jobs forKey:KEY_JOBS];
+    [self postRefreshNotification];
+}
+
+- (id)tableView:(NSTableView *)aTableView
+    objectValueForTableColumn:(NSTableColumn *)aTableColumn
+                row:(NSInteger)rowIndex {
+    return [self jobs][rowIndex];
+}
+
+#pragma mark - NSTableViewDelegate
+
+- (void)tableViewSelectionDidChange:(NSNotification *)aNotification {
+    [self updateRemoveJobButtonEnabled];
+}
+
+#pragma mark - Notifications
+
+- (void)reloadProfiles {
+    [_jobsTable reloadData];
+}
+
+#pragma mark - Log directory
+
+- (IBAction)selectLogDir:(id)sender {
+    NSOpenPanel* panel = [NSOpenPanel openPanel];
+    [panel setCanChooseFiles:NO];
+    [panel setCanChooseDirectories:YES];
+    [panel setAllowsMultipleSelection:NO];
+    
+    if ([panel runModal] == NSOKButton) {
+        [_logDir setStringValue:[panel legacyDirectory]];
+    }
+    [self updateLogDirWarning];
+}
+
+- (void)updateLogDirWarning {
+    [_logDirWarning setHidden:[_autoLog state] == NSOffState || [self logDirIsWritable]];
+}
+
+- (BOOL)logDirIsWritable {
+    return [[NSFileManager defaultManager] directoryIsWritable:[_logDir stringValue]];
+}
+
+@end

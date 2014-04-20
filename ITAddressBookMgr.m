@@ -26,9 +26,14 @@
  */
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
+#import "iTermPreferences.h"
+#import "iTermProfilePreferences.h"
 #import "ProfileModel.h"
 #import "PreferencePanel.h"
 #import "iTermKeyBindingMgr.h"
+#import "NSColor+iTerm.h"
+#import "NSDictionary+iTerm.h"
+#import "NSFont+iTerm.h"
 #import "NSStringIterm.h"
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -51,34 +56,49 @@
 - (id)init
 {
     self = [super init];
+    if (self) {
+        NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
 
-    NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
+        if ([prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] &&
+            [[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] isKindOfClass:[NSDictionary class]] &&
+            ![prefs objectForKey:KEY_NEW_BOOKMARKS]) {
+            // Have only old-style bookmarks. Load them and convert them to new-style
+            // bookmarks.
+            [self recursiveMigrateBookmarks:[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] path:[NSArray arrayWithObjects:nil]];
+            [prefs removeObjectForKey:KEY_DEPRECATED_BOOKMARKS];
+            [prefs setObject:[[ProfileModel sharedInstance] rawData] forKey:KEY_NEW_BOOKMARKS];
+            [[ProfileModel sharedInstance] removeAllBookmarks];
+        }
 
-    if ([prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] &&
-        [[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] isKindOfClass:[NSDictionary class]] &&
-        ![prefs objectForKey:KEY_NEW_BOOKMARKS]) {
-        // Have only old-style bookmarks. Load them and convert them to new-style
-        // bookmarks.
-        [self recursiveMigrateBookmarks:[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] path:[NSArray arrayWithObjects:nil]];
-        [prefs removeObjectForKey:KEY_DEPRECATED_BOOKMARKS];
-        [prefs setObject:[[ProfileModel sharedInstance] rawData] forKey:KEY_NEW_BOOKMARKS];
-        [[ProfileModel sharedInstance] removeAllBookmarks];
+        // Load new-style bookmarks.
+        if ([prefs objectForKey:KEY_NEW_BOOKMARKS]) {
+            [self setBookmarks:[prefs objectForKey:KEY_NEW_BOOKMARKS]
+                   defaultGuid:[prefs objectForKey:KEY_DEFAULT_GUID]];
+        }
+
+        // Make sure there is at least one bookmark.
+        if ([[ProfileModel sharedInstance] numberOfBookmarks] == 0) {
+            NSMutableDictionary* aDict = [[NSMutableDictionary alloc] init];
+            [ITAddressBookMgr setDefaultsInBookmark:aDict];
+            [[ProfileModel sharedInstance] addBookmark:aDict];
+            [aDict release];
+        }
+
+        if ([iTermPreferences boolForKey:kPreferenceKeyAddBonjourHostsToProfiles]) {
+            [self locateBonjourServices];
+        }
+        
+        [iTermPreferences addObserverForKey:kPreferenceKeyAddBonjourHostsToProfiles
+                                      block:^(id previousValue, id newValue) {
+                                          if ([newValue boolValue]) {
+                                              [self locateBonjourServices];
+                                          } else {
+                                              [self stopLocatingBonjourServices];
+                                              [self removeBonjourProfiles];
+                                          }
+                                      }];
     }
-
-    // Load new-style bookmarks.
-    if ([prefs objectForKey:KEY_NEW_BOOKMARKS]) {
-        [self setBookmarks:[prefs objectForKey:KEY_NEW_BOOKMARKS]
-               defaultGuid:[prefs objectForKey:KEY_DEFAULT_GUID]];
-    }
-
-    // Make sure there is at least one bookmark.
-    if ([[ProfileModel sharedInstance] numberOfBookmarks] == 0) {
-        NSMutableDictionary* aDict = [[NSMutableDictionary alloc] init];
-        [ITAddressBookMgr setDefaultsInBookmark:aDict];
-        [[ProfileModel sharedInstance] addBookmark:aDict];
-        [aDict release];
-    }
-
+    
     return self;
 }
 
@@ -95,6 +115,21 @@
     [telnetBonjourBrowser release];
 
     [super dealloc];
+}
+
+- (void)removeBonjourProfiles {
+    // Remove existing bookmarks with the "bonjour" tag. Even if
+    // network browsing is re-enabled, these bookmarks would never
+    // be automatically removed.
+    ProfileModel* model = [ProfileModel sharedInstance];
+    NSString* kBonjourTag = @"bonjour";
+    int n = [model numberOfBookmarksWithFilter:kBonjourTag];
+    for (int i = n - 1; i >= 0; --i) {
+        Profile* bookmark = [model profileAtIndex:i withFilter:kBonjourTag];
+        if ([model bookmark:bookmark hasTag:kBonjourTag]) {
+            [model removeBookmarkAtIndex:i withFilter:kBonjourTag];
+        }
+    }
 }
 
 - (void)locateBonjourServices
@@ -133,39 +168,15 @@
     bonjourServices = nil;
 }
 
-+ (NSDictionary*)encodeColor:(NSColor*)origColor
-{
-    NSColor* color = [origColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-    CGFloat red, green, blue, alpha;
-    [color getRed:&red green:&green blue:&blue alpha:&alpha];
-    return @{ @"Color Space": @"Calibrated",
-              @"Red Component": @(red),
-              @"Green Component": @(green),
-              @"Blue Component": @(blue) };
++ (NSDictionary*)encodeColor:(NSColor*)origColor {
+    return [origColor dictionaryValue];
 }
 
 // This method always returns a color in the calibrated color space. If the
 // color space in the plist is not calibrated, it is converted (which preserves
 // the actual color values).
-+ (NSColor*)decodeColor:(NSDictionary*)plist
-{
-    if ([plist count] < 3) {
-        return [NSColor colorWithCalibratedRed:0.0 green:0.0 blue:0.0 alpha:1.0];
-    }
-
-    NSString *colorSpace = plist[@"Color Space"];
-    if ([colorSpace isEqualToString:@"sRGB"]) {
-        NSColor *srgb = [NSColor colorWithSRGBRed:[[plist objectForKey:@"Red Component"] floatValue]
-                                            green:[[plist objectForKey:@"Green Component"] floatValue]
-                                             blue:[[plist objectForKey:@"Blue Component"] floatValue]
-                                            alpha:1.0];
-        return [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-    } else {
-        return [NSColor colorWithCalibratedRed:[[plist objectForKey:@"Red Component"] floatValue]
-                                         green:[[plist objectForKey:@"Green Component"] floatValue]
-                                          blue:[[plist objectForKey:@"Blue Component"] floatValue]
-                                         alpha:1.0];
-    }
++ (NSColor *)decodeColor:(NSDictionary*)plist {
+    return [plist colorValue];
 }
 
 - (void)copyProfileToBookmark:(NSMutableDictionary *)dict
@@ -221,11 +232,14 @@
         [temp setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
         NSString* dir = [data objectForKey:KEY_WORKING_DIRECTORY];
         if (dir && [dir length] > 0) {
-            [temp setObject:@"Yes" forKey:KEY_CUSTOM_DIRECTORY];
+            [temp setObject:kProfilePreferenceInitialDirectoryCustomValue
+                     forKey:KEY_CUSTOM_DIRECTORY];
         } else if (dir && [dir length] == 0) {
-            [temp setObject:@"Recycle" forKey:KEY_CUSTOM_DIRECTORY];
+            [temp setObject:kProfilePreferenceInitialDirectoryRecycleValue
+                     forKey:KEY_CUSTOM_DIRECTORY];
         } else {
-            [temp setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
+            [temp setObject:kProfilePreferenceInitialDirectoryHomeValue
+                     forKey:KEY_CUSTOM_DIRECTORY];
         }
         [[ProfileModel sharedInstance] addBookmark:temp];
     }
@@ -244,24 +258,8 @@
     }
 }
 
-+ (NSFont *)fontWithDesc:(NSString *)fontDesc
-{
-    float fontSize;
-    char utf8FontName[128];
-    NSFont *aFont;
-
-    if ([fontDesc length] == 0) {
-        return ([NSFont userFixedPitchFontOfSize: 0.0]);
-    }
-
-    sscanf([fontDesc UTF8String], "%s %g", utf8FontName, &fontSize);
-
-    aFont = [NSFont fontWithName:[NSString stringWithFormat: @"%s", utf8FontName] size:fontSize];
-    if (aFont == nil) {
-        return ([NSFont userFixedPitchFontOfSize: 0.0]);
-    }
-
-    return aFont;
++ (NSFont *)fontWithDesc:(NSString *)fontDesc {
+    return [fontDesc fontValue];
 }
 
 - (void)setBookmarks:(NSArray*)newBookmarksArray defaultGuid:(NSString*)guid
@@ -328,9 +326,8 @@
     [[ProfileModel sharedInstance] removeBookmarksAtIndices:toRemove];
 }
 
-+ (NSString*)descFromFont:(NSFont*)font
-{
-    return [NSString stringWithFormat:@"%s %g", [[font fontName] UTF8String], [font pointSize]];
++ (NSString*)descFromFont:(NSFont*)font {
+    return [font stringValue];
 }
 
 + (void)setDefaultsInBookmark:(NSMutableDictionary*)aDict
@@ -352,7 +349,8 @@
     [aDict setObject:@"No" forKey:KEY_CUSTOM_COMMAND];
     [aDict setObject:@"" forKey: KEY_COMMAND];
     [aDict setObject:aName forKey: KEY_DESCRIPTION];
-    [aDict setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
+    [aDict setObject:kProfilePreferenceInitialDirectoryHomeValue
+              forKey:KEY_CUSTOM_DIRECTORY];
     [aDict setObject:NSHomeDirectory() forKey: KEY_WORKING_DIRECTORY];
 }
 
@@ -380,7 +378,8 @@
     [newBookmark setObject:[NSString stringWithFormat:@"%@ %@%@", serviceType, optionalPortArg, ipAddressString] forKey:KEY_COMMAND];
     [newBookmark setObject:@"" forKey:KEY_WORKING_DIRECTORY];
     [newBookmark setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
-    [newBookmark setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
+    [newBookmark setObject:kProfilePreferenceInitialDirectoryHomeValue
+                    forKey:KEY_CUSTOM_DIRECTORY];
     [newBookmark setObject:ipAddressString forKey:KEY_BONJOUR_SERVICE_ADDRESS];
     [newBookmark setObject:[NSArray arrayWithObjects:@"bonjour",nil] forKey:KEY_TAGS];
     [newBookmark setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
@@ -520,7 +519,7 @@
 {
     NSString* thisUser = NSUserName();
     NSString *customDirectoryString;
-    if ([[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"Advanced"]) {
+    if ([[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:kProfilePreferenceInitialDirectoryAdvancedValue]) {
         switch (objectType) {
             case iTermWindowObject:
                 customDirectoryString = [bookmark objectForKey:KEY_AWDS_WIN_OPTION];
@@ -533,13 +532,13 @@
                 break;
             default:
                 NSLog(@"Bogus object type %d", (int)objectType);
-                customDirectoryString = @"No";
+                customDirectoryString = kProfilePreferenceInitialDirectoryHomeValue;
         }
     } else {
         customDirectoryString = [bookmark objectForKey:KEY_CUSTOM_DIRECTORY];
     }
 
-    if ([customDirectoryString isEqualToString:@"No"]) {
+    if ([customDirectoryString isEqualToString:kProfilePreferenceInitialDirectoryHomeValue]) {
         // Run login without -l argument: this is a login session and will use the home dir.
         return [NSString stringWithFormat:@"login -fp \"%@\"", thisUser];
     } else {
@@ -566,9 +565,9 @@
 + (NSString *)_advancedWorkingDirWithOption:(NSString *)option
                                   directory:(NSString *)pwd
 {
-    if ([option isEqualToString:@"Yes"]) {
+    if ([option isEqualToString:kProfilePreferenceInitialDirectoryCustomValue]) {
         return pwd;
-    } else if ([option isEqualToString:@"Recycle"]) {
+    } else if ([option isEqualToString:kProfilePreferenceInitialDirectoryRecycleValue]) {
         return @"";
     } else {
         // Home dir, option == "No"
@@ -579,11 +578,11 @@
 + (NSString*)bookmarkWorkingDirectory:(Profile*)bookmark forObjectType:(iTermObjectType)objectType
 {
     NSString* custom = [bookmark objectForKey:KEY_CUSTOM_DIRECTORY];
-    if ([custom isEqualToString:@"Yes"]) {
+    if ([custom isEqualToString:kProfilePreferenceInitialDirectoryCustomValue]) {
         return [bookmark objectForKey:KEY_WORKING_DIRECTORY];
-    } else if ([custom isEqualToString:@"Recycle"]) {
+    } else if ([custom isEqualToString:kProfilePreferenceInitialDirectoryRecycleValue]) {
         return @"";
-    } else if ([custom isEqualToString:@"Advanced"]) {
+    } else if ([custom isEqualToString:kProfilePreferenceInitialDirectoryAdvancedValue]) {
         switch (objectType) {
           case iTermWindowObject:
               return [ITAddressBookMgr _advancedWorkingDirWithOption:[bookmark objectForKey:KEY_AWDS_WIN_OPTION]

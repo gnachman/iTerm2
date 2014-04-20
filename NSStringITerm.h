@@ -32,7 +32,7 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
 // This is the standard unicode replacement character for when input couldn't
 // be parsed properly but we need to render something there.
@@ -105,6 +105,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // String starts with http:// or https://. Used to tell if a custom prefs
 // location is a path or URL.
 - (BOOL)stringIsUrlLike;
+
+// Fonts are encoded as strings when stored in a profile. This returns the font for such a string.
+- (NSFont *)fontValue;
 
 @end
 

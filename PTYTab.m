@@ -11,6 +11,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
+#import "iTermPreferences.h"
 #import "TmuxLayoutParser.h"
 #import "ProfileModel.h"
 #import "IntervalMap.h"
@@ -72,15 +73,10 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     deadStateColor = [NSColor grayColor];
 }
 
-+ (BOOL)showTitlesPref
-{
-    return [[PreferencePanel sharedInstance] showPaneTitles];
-}
-
 - (BOOL)updatePaneTitles
 {
     BOOL anyChange = NO;
-    const BOOL showTitles = [PTYTab showTitlesPref];
+    const BOOL showTitles = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
     NSArray *sessions = [self sessions];
     for (PTYSession *aSession in sessions) {
         if ([[aSession view] setShowTitle:(showTitles && [sessions count] > 1)
@@ -155,7 +151,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_refreshLabels:)
-                                                 name:@"iTermUpdateLabels"
+                                                 name:kUpdateLabelsNotification
                                                object:nil];
     return self;
 }
@@ -194,7 +190,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_refreshLabels:)
-                                                 name:@"iTermUpdateLabels"
+                                                 name:kUpdateLabelsNotification
                                                object:nil];
     return self;
 }
@@ -565,7 +561,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 }
 
 - (int)objectCount {
-    return [[PreferencePanel sharedInstance] hideTabNumber] ? 0 : objectCount_;
+    return [iTermPreferences boolForKey:kPreferenceKeyHideTabNumber] ? 0 : objectCount_;
 }
 
 - (void)setObjectCount:(int)value
@@ -591,7 +587,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 - (BOOL)isProcessing
 {
-    return ![[PreferencePanel sharedInstance] hideActivityIndicator] &&
+    return ![iTermPreferences boolForKey:kPreferenceKeyHideTabActivityIndicator] &&
         isProcessing_ &&
         ![realParentWindow_ disableProgressIndicators];
 }
@@ -1649,7 +1645,7 @@ static NSString* FormatRect(NSRect r) {
 
     float yOrigin = 0;
     if (withSpaceForFrame &&
-        [[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) {
+        [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
         yOrigin += tabFrame.size.height;
     }
 
@@ -1659,7 +1655,7 @@ static NSString* FormatRect(NSRect r) {
     [viewImage lockFocus];
     [[NSColor windowBackgroundColor] set];
     if (withSpaceForFrame &&
-        [[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+        [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
         tabFrame.origin.y += [viewImage size].height;
     }
     if (withSpaceForFrame) {
@@ -2425,7 +2421,8 @@ static NSString* FormatRect(NSRect r) {
 
     NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
     BOOL haveMultipleSessions = ([theChildren count] > 1);
-    BOOL showTitles = [PTYTab showTitlesPref] && haveMultipleSessions;
+    BOOL showTitles =
+        [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles] && haveMultipleSessions;
     // Begin by decorating the tree with pixel sizes.
     [PTYTab _recursiveSetSizesInTmuxParseTree:parseTree
                                    showTitles:showTitles
@@ -3944,8 +3941,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 - (void)setLabelAttributesForActiveTab:(BOOL)notify
 {
     BOOL isBackgroundTab = [[tabViewItem_ tabView] selectedTabViewItem] != [self tabViewItem];
-    const BOOL compactTab = ([[PreferencePanel sharedInstance] hideTabNumber] &&
-                             [[PreferencePanel sharedInstance] hideTabCloseButton]);
+    const BOOL compactTab = ([iTermPreferences boolForKey:kPreferenceKeyHideTabNumber] &&
+                             [iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton]);
     if ([self isProcessing] == NO && !compactTab && ![self isForegroundTab]) {
         [self setIsProcessing:YES];
     }

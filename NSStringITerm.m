@@ -856,6 +856,28 @@ int decode_utf8_char(const unsigned char *datap,
     return [self hasPrefix:@"http://"] || [self hasPrefix:@"https://"];
 }
 
+- (NSFont *)fontValue {
+    float fontSize;
+    char utf8FontName[128];
+    NSFont *aFont;
+    
+    if ([self length] == 0) {
+        return ([NSFont userFixedPitchFontOfSize:0.0]);
+    }
+    
+    sscanf([self UTF8String], "%127s %g", utf8FontName, &fontSize);
+    // The sscanf man page is unclear whether it will always null terminate when the length hits the
+    // maximum field width, so ensure it is null terminated.
+    utf8FontName[127] = '\0';
+    
+    aFont = [NSFont fontWithName:[NSString stringWithFormat:@"%s", utf8FontName] size:fontSize];
+    if (aFont == nil) {
+        return ([NSFont userFixedPitchFontOfSize:0.0]);
+    }
+    
+    return aFont;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

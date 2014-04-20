@@ -9,6 +9,7 @@
 #import "PointerPrefsController.h"
 #import "PointerController.h"
 #import "PreferencePanel.h"
+#import "NSPopUpButton+iTerm.h"
 #import "iTermApplicationDelegate.h"
 #import "ITAddressBookMgr.h"
 #import "FutureMethods.h"
@@ -68,8 +69,6 @@ NSString *kNewHorizontalSplitWithProfilePointerAction = @"kNewHorizontalSplitWit
 NSString *kSelectNextPanePointerAction = @"kSelectNextPanePointerAction";
 NSString *kSelectPreviousPanePointerAction = @"kSelectPreviousPanePointerAction";
 NSString *kExtendSelectionPointerAction = @"kExtendSelectionPointerAction";
-
-NSString *kPointerPrefsChangedNotification = @"kPointerPrefsChangedNotification";
 
 typedef enum {
     kNoArg,
@@ -521,14 +520,15 @@ typedef enum {
     if (!defaultDict) {
         NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:[PointerPrefsController defaultSettings]];
         // Migrate old global prefs into the dict.
-        if (![[PreferencePanel sharedInstance] legacyPasteFromClipboard]) {
-            NSDictionary *middleButtonPastesFromSelection = [PointerPrefsController dictForAction:kPasteFromSelectionPointerAction];
+        if (![[NSUserDefaults standardUserDefaults] boolForKey:@"PasteFromClipboard"]) {
+            NSDictionary *middleButtonPastesFromSelection =
+                [PointerPrefsController dictForAction:kPasteFromSelectionPointerAction];
             [temp setObject:middleButtonPastesFromSelection
                      forKey:[PointerPrefsController keyForButton:kMiddleButton
                                                           clicks:1
                                                        modifiers:0]];
         }
-        if ([[PreferencePanel sharedInstance] legacyThreeFingerEmulatesMiddle]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle]) {
             // Find all actions that use middle button and add corresponding three-finger gesture.
             NSMutableDictionary *tempCopy = [[temp mutableCopy] autorelease];
             for (NSString *key in temp) {
@@ -836,8 +836,7 @@ typedef enum {
             [editArgumentField_ setHidden:YES];
             [editArgumentButton_ setHidden:NO];
             [editArgumentLabel_ setStringValue:@"Profile:"];
-            [PreferencePanel populatePopUpButtonWithBookmarks:editArgumentButton_
-                                                 selectedGuid:currentArg];
+            [editArgumentButton_ populateWithProfilesSelectingGuid:currentArg];
 
             break;
 

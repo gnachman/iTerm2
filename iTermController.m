@@ -50,6 +50,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermPreferences.h"
 #import "iTermWarning.h"
 #include <objc/runtime.h>
 
@@ -62,13 +63,8 @@ static NSString* APPLICATION_SUPPORT_DIRECTORY = @"~/Library/Application Support
 static NSString *SUPPORT_DIRECTORY = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 
-// Comparator for sorting encodings
-static NSInteger _compareEncodingByLocalizedName(id a, id b, void *unused)
-{
-    NSString *sa = [NSString localizedNameOfStringEncoding:[a unsignedIntValue]];
-    NSString *sb = [NSString localizedNameOfStringEncoding:[b unsignedIntValue]];
-    return [sa caseInsensitiveCompare:sb];
-}
+// keys for to-many relationships:
+static NSString *const kTerminalsKey = @"terminals";
 
 static BOOL UncachedIsMountainLionOrLater(void) {
     unsigned major;
@@ -651,19 +647,6 @@ static BOOL initDone = NO;
     previouslyActiveAppPID_ = nil;
 }
 
-// Build sorted list of encodings
-- (NSArray *) sortedEncodingList
-{
-    NSStringEncoding const *p;
-    NSMutableArray *tmp = [NSMutableArray array];
-
-    for (p = [NSString availableStringEncodings]; *p; ++p)
-        [tmp addObject:[NSNumber numberWithUnsignedInt:*p]];
-    [tmp sortUsingFunction:_compareEncodingByLocalizedName context:NULL];
-
-    return (tmp);
-}
-
 - (void)_addBookmark:(Profile*)bookmark
               toMenu:(NSMenu*)aMenu
               target:(id)aTarget
@@ -971,6 +954,11 @@ static BOOL initDone = NO;
             CGEventSetFlags(e, kCGEventFlagMaskControl);
             CGEventPost(kCGSessionEventTap, e);
             CFRelease(e);
+
+            // Give the space-switching animation time to get started; otherwise a window opened
+            // subsequent to this will appear in the previous space. This is short enough of a
+            // delay that it's not annoying when you're already there.
+            [NSThread sleepForTimeInterval:0.1];
         }
     }
 }
@@ -980,7 +968,7 @@ static BOOL initDone = NO;
     if ([aDict objectForKey:KEY_WINDOW_TYPE]) {
         int windowType = [[aDict objectForKey:KEY_WINDOW_TYPE] intValue];
         if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
-            [[PreferencePanel sharedInstance] lionStyleFullscreen]) {
+            [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
             return WINDOW_TYPE_LION_FULL_SCREEN;
         } else {
             return windowType;
@@ -1279,13 +1267,15 @@ static BOOL initDone = NO;
     }
 }
 
-@end
+- (void)refreshSoftwareUpdateUserDefaults {
+    BOOL checkForTestReleases = [iTermPreferences boolForKey:kPreferenceKeyCheckForTestReleases];
+    NSString *appCast = checkForTestReleases ?
+        [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
+        [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForFinal"];
+    [[NSUserDefaults standardUserDefaults] setObject:appCast forKey:@"SUFeedURL"];
+}
 
-// keys for to-many relationships:
-NSString *terminalsKey = @"terminals";
-
-// Scripting support
-@implementation iTermController (KeyValueCoding)
+#pragma mark - Scripting support
 
 - (BOOL)application:(NSApplication *)sender delegateHandlesKey:(NSString *)key
 {
@@ -1370,8 +1360,7 @@ NSString *terminalsKey = @"terminals";
 {
     static NSArray *_kvcKeys = nil;
     if( nil == _kvcKeys ){
-        _kvcKeys = [[NSArray alloc] initWithObjects:
-            terminalsKey,  nil ];
+        _kvcKeys = [[NSArray alloc] initWithObjects:kTerminalsKey,  nil ];
     }
     return _kvcKeys;
 }

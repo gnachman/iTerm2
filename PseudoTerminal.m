@@ -49,7 +49,9 @@
 #import "iTermFontPanel.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermInstantReplayWindowController.h"
-#import "iTermSettingsModel.h"
+#import "iTermPreferences.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermURLSchemeController.h"
 #include <unistd.h>
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
@@ -540,9 +542,8 @@ NSString *kSessionsKVCKey = @"sessions";
     tabBarControl = [[PSMTabBarControl alloc] initWithFrame:aRect];
 
     [tabBarControl retain];
-    PreferencePanel* pp = [PreferencePanel sharedInstance];
-    [tabBarControl setModifier:[pp modifierTagToMask:[pp switchTabModifier]]];
-    if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) {
+    [tabBarControl setModifier:[iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]];
+    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
         [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMinYMargin)];
     } else {
         [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMaxYMargin)];
@@ -575,14 +576,14 @@ NSString *kSessionsKVCKey = @"sessions";
     [[[self window] contentView] setAutoresizesSubviews: YES];
     [[self window] setDelegate: self];
 
-    [[NSNotificationCenter defaultCenter] addObserver: self
-                                             selector: @selector(_refreshTitle:)
-                                                 name: @"iTermUpdateLabels"
-                                               object: nil];
-    [[NSNotificationCenter defaultCenter] addObserver: self
-                                             selector: @selector(_refreshTerminal:)
-                                                 name: @"iTermRefreshTerminal"
-                                               object: nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_refreshTitle:)
+                                                 name:kUpdateLabelsNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_refreshTerminal:)
+                                                 name:kRefreshTerminalNotification
+                                               object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_scrollerStyleChanged:)
                                                  name:@"NSPreferredScrollerStyleDidChangeNotification"
@@ -594,6 +595,10 @@ NSString *kSessionsKVCKey = @"sessions";
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(tmuxFontDidChange:)
                                                  name:@"kPTYSessionTmuxFontDidChange"
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(reloadBookmarks)
+                                                 name:kReloadAllProfiles
                                                object:nil];
     PtyLog(@"set window inited");
     [self setWindowInited: YES];
@@ -862,7 +867,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)magnifyWithEvent:(NSEvent *)event
 {
-    if ([iTermSettingsModel pinchToChangeFontSizeDisabled]) {
+    if ([iTermAdvancedSettingsModel pinchToChangeFontSizeDisabled]) {
         return;
     }
     const double kMagTimeout = 0.2;
@@ -893,18 +898,19 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)setTabBarStyle
 {
-    switch ([[PreferencePanel sharedInstance] windowStyle]) {
-        case 0:
-            [tabBarControl setStyleNamed:@"Metal"];
+    switch ([iTermPreferences intForKey:kPreferenceKeyWindowStyle]) {
+        case TAB_STYLE_METAL:
+            [tabBarControl setStyleNamed:kTabStyleMetal];
             break;
-        case 1:
-            [tabBarControl setStyleNamed:@"Aqua"];
+        case TAB_STYLE_AQUA:
+            [tabBarControl setStyleNamed:kTabStyleAqua];
             break;
-        case 2:
-            [tabBarControl setStyleNamed:@"Unified"];
+        case TAB_STYLE_UNIFIED:
+            [tabBarControl setStyleNamed:kTabStyleUnified];
             break;
+        case TAB_STYLE_ADIUM:
         default:
-            [tabBarControl setStyleNamed:@"Adium"];
+            [tabBarControl setStyleNamed:kTabStyleAdium];
             break;
     }
 }
@@ -1080,7 +1086,7 @@ NSString *kSessionsKVCKey = @"sessions";
         mustAsk = YES;
     }
     if (numClosing > 1 &&
-        [[PreferencePanel sharedInstance] onlyWhenMoreTabs]) {
+        [iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs]) {
         mustAsk = YES;
     }
 
@@ -1271,7 +1277,7 @@ NSString *kSessionsKVCKey = @"sessions";
         title = @"";
     }
 
-    if ([[PreferencePanel sharedInstance] windowNumber]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyShowWindowNumber]) {
         NSString *tmuxId = @"";
         if ([[self currentSession] isTmuxClient]) {
             tmuxId = [NSString stringWithFormat:@" [%@]",
@@ -1519,7 +1525,7 @@ NSString *kSessionsKVCKey = @"sessions";
     int N = [(NSDictionary *)[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_TABS] count];
     [[NSColor windowFrameColor] set];
     double y;
-    if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) {
+    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
         y = rect.origin.y + rect.size.height - 10;
     } else {
         y = rect.origin.y;
@@ -1535,10 +1541,11 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 
     NSDictionary* tabArrangement = [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_TABS] objectAtIndex:0];
-    [PTYTab drawArrangementPreview:tabArrangement frame:NSMakeRect(rect.origin.x + 1,
-                                                                   ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) ? rect.origin.y : rect.origin.y + 10,
-                                                                   rect.size.width - 2,
-                                                                   rect.size.height - 11)];
+    [PTYTab drawArrangementPreview:tabArrangement
+                             frame:NSMakeRect(rect.origin.x + 1,
+                                              ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) ? rect.origin.y : rect.origin.y + 10,
+                                              rect.size.width - 2,
+                                              rect.size.height - 11)];
 }
 
 + (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary*)arrangement
@@ -1550,7 +1557,7 @@ NSString *kSessionsKVCKey = @"sessions";
             return nil;
         }
         
-        if (![[PreferencePanel sharedInstance] hotkey]) {
+        if (![iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled]) {
             // Hotkey window disabled
             return nil;
         }
@@ -1570,7 +1577,8 @@ NSString *kSessionsKVCKey = @"sessions";
         rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_WIDTH] doubleValue];
         rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_HEIGHT] doubleValue];
         term->oldFrame_ = rect;
-        term->useTransparency_ = ![[PreferencePanel sharedInstance] disableFullscreenTransparency];
+        term->useTransparency_ =
+            ![iTermPreferences boolForKey:kPreferenceKeyDisableFullscreenTransparencyByDefault];
         term->oldUseTransparency_ = YES;
         term->restoreUseTransparency_ = YES;
     } else if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
@@ -1632,7 +1640,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (IBAction)findUrls:(id)sender {
     FindViewController *findViewController = [[[self currentSession] view] findViewController];
-    NSString *regex = [iTermSettingsModel findUrlsRegex];
+    NSString *regex = [iTermAdvancedSettingsModel findUrlsRegex];
     [findViewController closeViewAndDoTemporarySearchForString:regex
                                                   ignoringCase:NO
                                                          regex:YES];
@@ -1900,7 +1908,7 @@ NSString *kSessionsKVCKey = @"sessions";
     if ([self promptOnClose]) {
         needPrompt = YES;
     }
-    if ([[PreferencePanel sharedInstance] onlyWhenMoreTabs] &&
+    if ([iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs] &&
          [self numRunningSessions] > 1) {
         needPrompt = YES;
     }
@@ -1959,7 +1967,7 @@ NSString *kSessionsKVCKey = @"sessions";
             // We don't want the IR window to survive us, nor be saved in the restorable state.
             [self closeInstantReplayWindow];
         }
-        if ([[PreferencePanel sharedInstance] smartPlacement]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement]) {
             [[self window] saveFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, 0]];
         } else {
             // Save frame position for window
@@ -1967,7 +1975,7 @@ NSString *kSessionsKVCKey = @"sessions";
             [[TemporaryNumberAllocator sharedInstance] deallocateNumber:uniqueNumber_];
         }
     } else {
-        if (![[PreferencePanel sharedInstance] smartPlacement]) {
+        if (![iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement]) {
             // Save frame position for window
             [[self window] saveFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, uniqueNumber_]];
             [[TemporaryNumberAllocator sharedInstance] deallocateNumber:uniqueNumber_];
@@ -1998,7 +2006,9 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification
 {
-    [self maybeHideHotkeyWindow];
+    if (!_isHotKeyWindow) {
+        [self maybeHideHotkeyWindow];
+    }
     [[[NSApplication sharedApplication] dockTile] setBadgeLabel:@""];
     [[[NSApplication sharedApplication] dockTile] setShowsApplicationBadge:NO];
     PtyLog(@"%s(%d):-[PseudoTerminal windowDidBecomeKey:%@]",
@@ -2029,7 +2039,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
     // update the cursor
     if ([[[self currentSession] textview] refresh]) {
-        [[self currentSession] scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
+        [[self currentSession] scheduleUpdateIn:[iTermAdvancedSettingsModel timeBetweenBlinks]];
     }
     [[[self currentSession] textview] setNeedsDisplay:YES];
     [self _loadFindStringFromSharedPasteboard];
@@ -2378,7 +2388,7 @@ NSString *kSessionsKVCKey = @"sessions";
     if (hotkeyTerminal) {
         DLog(@"Want to hide hotkey window");
         if ([[hotkeyTerminal window] alphaValue] > 0 &&
-            [[PreferencePanel sharedInstance] hotkeyAutoHides] &&
+            [iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides] &&
             ![[HotkeyWindowController sharedInstance] rollingInHotkeyTerm]) {
             DLog(@"windowDidResignKey: is hotkey and hotkey window auto-hides");
             // We want to dismiss the hotkey window when some other window
@@ -2717,7 +2727,7 @@ NSString *kSessionsKVCKey = @"sessions";
     frameMinusMenuBar.size.height -= [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
     BOOL menuBarIsVisible = NO;
 
-    if (![[PreferencePanel sharedInstance] hideMenuBarInFullscreen]) {
+    if (![iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
         // Menu bar can show in fullscreen...
         if (IsMavericksOrLater()) {
             // There is a menu bar on all screens.
@@ -2748,7 +2758,7 @@ NSString *kSessionsKVCKey = @"sessions";
     if ([self lionFullScreen] ||
         (windowType_ != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
          !_isHotKeyWindow &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
-         [[PreferencePanel sharedInstance] lionStyleFullscreen])) {
+         [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren])) {
         // Is 10.7 Lion or later.
         [[self ptyWindow] performSelector:@selector(toggleFullScreen:) withObject:self];
         if (lionFullScreen_) {
@@ -2768,7 +2778,7 @@ NSString *kSessionsKVCKey = @"sessions";
 - (void)delayedEnterFullscreen
 {
     if (windowType_ == WINDOW_TYPE_LION_FULL_SCREEN &&
-        [[PreferencePanel sharedInstance] lionStyleFullscreen]) {
+        [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
         if (![[[iTermController sharedInstance] keyTerminalWindow] lionFullScreen]) {
             // call enter(Traditional)FullScreenMode instead of toggle... because
             // when doing a lion resume, the window may be toggled immediately
@@ -2878,7 +2888,7 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 
     if (!_fullScreen &&
-        [[PreferencePanel sharedInstance] disableFullscreenTransparency]) {
+        [iTermPreferences boolForKey:kPreferenceKeyDisableFullscreenTransparencyByDefault]) {
         oldUseTransparency_ = useTransparency_;
         useTransparency_ = NO;
         restoreUseTransparency_ = YES;
@@ -2982,7 +2992,7 @@ NSString *kSessionsKVCKey = @"sessions";
         return NO;
     }
     return ([TABVIEW numberOfTabViewItems] + n > 1 ||
-            ![[PreferencePanel sharedInstance] hideTab]);
+            ![iTermPreferences boolForKey:kPreferenceKeyHideTabBar]);
 }
 
 - (NSScrollerStyle)scrollerStyle
@@ -2996,7 +3006,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (BOOL)scrollbarShouldBeVisible
 {
-    return ![[PreferencePanel sharedInstance] hideScrollbar];
+    return ![iTermPreferences boolForKey:kPreferenceKeyHideScrollbar];
 }
 
 - (void)windowWillStartLiveResize:(NSNotification *)notification
@@ -3175,7 +3185,7 @@ NSString *kSessionsKVCKey = @"sessions";
         // preference.
         verticalOnly = NO;
     } else {
-        maxVerticallyPref = [[PreferencePanel sharedInstance] maxVertically];
+        maxVerticallyPref = [iTermPreferences boolForKey:kPreferenceKeyMaximizeVerticallyOnly];
         if (maxVerticallyPref ^
             (([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask) != 0)) {
             verticalOnly = YES;
@@ -3225,8 +3235,8 @@ NSString *kSessionsKVCKey = @"sessions";
         return;
     }
     if (([[[iTermController sharedInstance] terminals] count] == 1) ||
-        (![[PreferencePanel sharedInstance] smartPlacement])) {
-        if ([iTermSettingsModel rememberWindowPositions]) {
+        (![iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement])) {
+        if ([iTermAdvancedSettingsModel rememberWindowPositions]) {
             PtyLog(@"No smart layout");
             NSRect frame = [window frame];
             [self assignUniqueNumberToWindow];
@@ -3279,7 +3289,7 @@ NSString *kSessionsKVCKey = @"sessions";
         return;
     }
     NSString* newGuid = [session divorceAddressBookEntryFromPreferences];
-    [[PreferencePanel sessionsInstance] openToBookmark:newGuid];
+    [[PreferencePanel sessionsInstance] openToProfileWithGuid:newGuid];
 }
 
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu
@@ -3596,7 +3606,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [textview unlockFocus];
 
         [viewImage lockFocus];
-        if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) {
+        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
             viewRect.origin.y += tabHeight;
         }
         [tabViewImage compositeToPoint:viewRect.origin operation:NSCompositeSourceOver];
@@ -3605,7 +3615,7 @@ NSString *kSessionsKVCKey = @"sessions";
         // Draw over where the tab bar would usually be.
         [viewImage lockFocus];
         [[NSColor windowBackgroundColor] set];
-        if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
             tabFrame.origin.y += viewRect.size.height;
         }
         NSRectFill(tabFrame);
@@ -3622,7 +3632,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [viewImage unlockFocus];
 
         offset->width = [(id <PSMTabStyle>)[tabBarControl style] leftMarginForTabBarControl];
-        if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
             offset->height = 22;
         } else {
             offset->height = viewRect.size.height + 22;
@@ -3633,7 +3643,7 @@ NSString *kSessionsKVCKey = @"sessions";
         viewImage = [[tabViewItem identifier] image:YES];
 
         offset->width = [(id <PSMTabStyle>)[tabBarControl style] leftMarginForTabBarControl];
-        if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
             offset->height = 22;
         }
         else {
@@ -3654,7 +3664,8 @@ NSString *kSessionsKVCKey = @"sessions";
 
     // check window size in case tabs have to be hidden or shown
     if (([TABVIEW numberOfTabViewItems] == 1) ||  // just decreased to 1 or increased above 1 and is hidden
-        ([[PreferencePanel sharedInstance] hideTab] && ([TABVIEW numberOfTabViewItems] > 1 && [tabBarControl isHidden]))) {
+        ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
+         ([TABVIEW numberOfTabViewItems] > 1 && [tabBarControl isHidden]))) {
         // Need to change the visibility status of the tab bar control.
         PtyLog(@"tabViewDidChangeNumberOfTabViewItems - calling fitWindowToTab");
 
@@ -3773,7 +3784,7 @@ NSString *kSessionsKVCKey = @"sessions";
     NSWindowController<iTermWindowController> * term =
         [self terminalDraggedFromAnotherWindowAtPoint:point];
     if ([term windowType] == WINDOW_TYPE_NORMAL &&
-        [[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+        [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
             [[term window] setFrameTopLeftPoint:point];
     }
 
@@ -3849,7 +3860,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)setLabelColor:(NSColor *)color forTabViewItem:tabViewItem
 {
-    if ([[PreferencePanel sharedInstance] highlightTabLabels]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyHighlightTabLabels]) {
         [tabBarControl setLabelColor:color forTabViewItem:tabViewItem];
     } else {
         [tabBarControl setLabelColor:[NSColor blackColor] forTabViewItem:tabViewItem];
@@ -3866,7 +3877,7 @@ NSString *kSessionsKVCKey = @"sessions";
         if ([TABVIEW selectedTabViewItem] == tabViewItem) {
             NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:tabViewItem];
             if ([TABVIEW numberOfTabViewItems] == 1 &&
-                [[PreferencePanel sharedInstance] hideTab] &&
+                [iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
                 newTabColor) {
                 [[self window] setBackgroundColor:newTabColor];
                 [background_ setColor:newTabColor];
@@ -4137,14 +4148,6 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (IBAction)irPrev:(id)sender
 {
-    if (![[PreferencePanel sharedInstance] instantReplay]) {
-        NSRunAlertPanel(@"Feature Disabled",
-                        @"Instant Replay is disabled. Please turn it on in Preferences under the General tab.",
-                        @"OK",
-                        nil,
-                        nil);
-        return;
-    }
     [self irAdvance:-1];
     [[self window] makeFirstResponder:[[self currentSession] textview]];
     [_instantReplayWindowController updateInstantReplayView];
@@ -4270,7 +4273,7 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 - (void)showAutoCommandHistoryForSession:(PTYSession *)session {
-    if ([[PreferencePanel sharedInstance] autoCommandHistory]) {
+    if ([iTermPreferences boolForKey:kPreferenceAutoCommandHistory]) {
         // Use a delay so we don't get a flurry of windows appearing when restoring arrangements.
         [self performSelector:@selector(reallyShowAutoCommandHistoryForSession:)
                    withObject:session
@@ -5030,7 +5033,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)setDimmingForSession:(PTYSession *)aSession
 {
-    BOOL canDim = [[PreferencePanel sharedInstance] dimInactiveSplitPanes];
+    BOOL canDim = [iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes];
     if (!canDim) {
         [[aSession view] setDimmed:NO];
     } else if (aSession == [[aSession tab] activeSession]) {
@@ -5099,7 +5102,7 @@ NSString *kSessionsKVCKey = @"sessions";
         if ([[self window] isKeyWindow]) {
             // In practice, this never happens because the prefs panel is
             // always key when this notification is posted.
-            if ([[PreferencePanel sharedInstance] hideMenuBarInFullscreen]) {
+            if ([iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
                 [self showMenuBarHideDock];
             } else {
                 [self hideMenuBar];
@@ -5175,7 +5178,7 @@ NSString *kSessionsKVCKey = @"sessions";
     // If screens have separate spaces (only applicable in Mavericks and later) then all screens have a menu bar.
     if (currentScreen == menubarScreen || (IsMavericksOrLater() && [NSScreen futureScreensHaveSeparateSpaces])) {
         int flags = NSApplicationPresentationAutoHideDock;
-        if ([[PreferencePanel sharedInstance] hideMenuBarInFullscreen]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
             flags |= NSApplicationPresentationAutoHideMenuBar;
         }
         NSApplicationPresentationOptions presentationOptions =
@@ -5225,7 +5228,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (BOOL)_haveLeftBorder
 {
-    if (![[PreferencePanel sharedInstance] showWindowBorder]) {
+    if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
         return NO;
     } else if ([self anyFullScreen] ||
                windowType_ == WINDOW_TYPE_LEFT) {
@@ -5238,8 +5241,8 @@ NSString *kSessionsKVCKey = @"sessions";
 - (BOOL)_haveBottomBorder
 {
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
-    BOOL topTabBar = ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab);
-    if (![[PreferencePanel sharedInstance] showWindowBorder]) {
+    BOOL topTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
+    if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
         return NO;
     } else if ([self anyFullScreen] ||
                windowType_ == WINDOW_TYPE_BOTTOM) {
@@ -5259,16 +5262,16 @@ NSString *kSessionsKVCKey = @"sessions";
 - (BOOL)_haveTopBorder
 {
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
-    BOOL topTabBar = ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab);
+    BOOL topTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
     BOOL visibleTopTabBar = (tabBarVisible && topTabBar);
-    return ([[PreferencePanel sharedInstance] showWindowBorder] &&
+    return ([iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder] &&
             !visibleTopTabBar
             && windowType_ == WINDOW_TYPE_BOTTOM);
 }
 
 - (BOOL)_haveRightBorder
 {
-    if (![[PreferencePanel sharedInstance] showWindowBorder]) {
+    if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
         return NO;
     } else if ([self anyFullScreen] ||
                windowType_ == WINDOW_TYPE_RIGHT ) {
@@ -5368,7 +5371,9 @@ NSString *kSessionsKVCKey = @"sessions";
     if ((modifierFlags & NSDeviceIndependentModifierFlagsMask) == NSCommandKeyMask &&  // you pressed exactly cmd
         ([tabBarBackground isHidden] || [tabBarBackground alphaValue] == 0) &&  // the tab bar is not visible
         fullScreenTabviewTimer_ == nil) {  // not in the middle of doing this already
-        fullScreenTabviewTimer_ = [[NSTimer scheduledTimerWithTimeInterval:[[PreferencePanel sharedInstance] fsTabDelay]
+        NSTimeInterval delay =
+            [iTermPreferences floatForKey:kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen];
+        fullScreenTabviewTimer_ = [[NSTimer scheduledTimerWithTimeInterval:delay
                                                                     target:self
                                                                   selector:@selector(cmdHeld:)
                                                                   userInfo:nil
@@ -5428,9 +5433,9 @@ NSString *kSessionsKVCKey = @"sessions";
         // The tabBar control is visible.
         PtyLog(@"repositionWidgets - tabs are visible. Adjusting window size...");
         [tabBarControl setHidden:NO];
-        [tabBarControl setTabLocation:[[PreferencePanel sharedInstance] tabViewType]];
+        [tabBarControl setTabLocation:[iTermPreferences intForKey:kPreferenceKeyTabPosition]];
         NSRect aRect;
-        if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
             // Place tabs at the top.
             // Add 1px border
             aRect.origin.x = [self _haveLeftBorder] ? 1 : 0;
@@ -5480,15 +5485,15 @@ NSString *kSessionsKVCKey = @"sessions";
     // Update the tab style.
     [self setTabBarStyle];
 
-    [tabBarControl setDisableTabClose:[[PreferencePanel sharedInstance] hideTabCloseButton]];
-    if ([[PreferencePanel sharedInstance] hideTabCloseButton] &&
-        [[PreferencePanel sharedInstance] hideTabNumber]) {
-        [tabBarControl setCellMinWidth:[[PreferencePanel sharedInstance] minCompactTabWidth]];
+    [tabBarControl setDisableTabClose:[iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton]];
+    if ([iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton] &&
+        [iTermPreferences boolForKey:kPreferenceKeyHideTabNumber]) {
+        [tabBarControl setCellMinWidth:[iTermAdvancedSettingsModel minCompactTabWidth]];
     } else {
-        [tabBarControl setCellMinWidth:[[PreferencePanel sharedInstance] minTabWidth]];
+        [tabBarControl setCellMinWidth:[iTermAdvancedSettingsModel minTabWidth]];
     }
-    [tabBarControl setSizeCellsToFit:[[PreferencePanel sharedInstance] useUnevenTabs]];
-    [tabBarControl setCellOptimumWidth:[[PreferencePanel sharedInstance] optimumTabWidth]];
+    [tabBarControl setSizeCellsToFit:[iTermAdvancedSettingsModel useUnevenTabs]];
+    [tabBarControl setCellOptimumWidth:[iTermAdvancedSettingsModel optimumTabWidth]];
 
     PtyLog(@"repositionWidgets - refresh textviews in this tab");
     for (PTYSession* session in [[self currentTab] sessions]) {
@@ -5992,7 +5997,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [item action] == @selector(openDashboard:)) {
         result = [[iTermController sharedInstance] haveTmuxConnection];
     } else if ([item action] == @selector(wrapToggleToolbarShown:)) {
-        result = ![iTermSettingsModel disableToolbar] && (self.window.styleMask & NSTitledWindowMask);
+        result = ![iTermAdvancedSettingsModel disableToolbar] && (self.window.styleMask & NSTitledWindowMask);
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         result = ([[self sessions] count] > 1);
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||
@@ -6024,7 +6029,7 @@ NSString *kSessionsKVCKey = @"sessions";
         result = [[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed];
         if (result) {
             if ([item respondsToSelector:@selector(setState:)]) {
-                [item setState:[[PreferencePanel sharedInstance] autoCommandHistory] ? NSOnState : NSOffState];
+                [item setState:[iTermPreferences boolForKey:kPreferenceAutoCommandHistory] ? NSOnState : NSOffState];
             }
         } else {
             [item setState:NSOffState];
@@ -6095,7 +6100,8 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (IBAction)toggleAutoCommandHistory:(id)sender
 {
-    [[PreferencePanel sharedInstance] setAutoCommandHistory:![[PreferencePanel sharedInstance] autoCommandHistory]];
+    [iTermPreferences setBool:![iTermPreferences boolForKey:kPreferenceAutoCommandHistory]
+                       forKey:kPreferenceAutoCommandHistory];
 }
 
 // Turn on/off sending of input to all sessions. This causes a bunch of UI
@@ -6256,8 +6262,7 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 // Sends text to the current session. Also interprets URLs and opens them.
-- (IBAction)sendCommand:(id)sender
-{
+- (IBAction)sendCommand:(id)sender {
     NSString *command = [commandField stringValue];
 
     if (command == nil ||
@@ -6270,12 +6275,12 @@ NSString *kSessionsKVCKey = @"sessions";
         range = [[command substringToIndex:range.location] rangeOfString:@" "];
         if (range.location == NSNotFound) {
             NSURL *url = [NSURL URLWithString: command];
-            NSString *urlType = [url scheme];
-            id bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:urlType];
+            NSString *scheme = [url scheme];
+            Profile *profile = [[iTermURLSchemeController sharedInstance] profileForScheme:scheme];
 
-            if (bm) {
+            if (profile) {
                 PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
-                [[iTermController sharedInstance] launchBookmark:bm
+                [[iTermController sharedInstance] launchBookmark:profile
                                                       inTerminal:term
                                                          withURL:command
                                                         isHotkey:NO
@@ -6309,7 +6314,7 @@ NSString *kSessionsKVCKey = @"sessions";
             if ([session isDivorced] &&
                 [[[PreferencePanel sessionsInstance] currentProfileGuid] isEqualToString:guid] &&
                 [[[PreferencePanel sessionsInstance] window] isVisible]) {
-                [[PreferencePanel sessionsInstance] updateBookmarkFields:profile];
+                [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
             }
         }
         [oldName release];
@@ -6789,7 +6794,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [self setupSession:object title:nil withSize:nil];
     tabViewItemsBeingAdded--;
     if ([object screen]) {  // screen initialized ok
-        if ([iTermSettingsModel addNewTabAtEndOfTabs] || ![self currentTab]) {
+        if ([iTermAdvancedSettingsModel addNewTabAtEndOfTabs] || ![self currentTab]) {
             [self insertSession:object atIndex:[TABVIEW numberOfTabViewItems]];
         } else {
             [self insertSession:object atIndex:[self indexOfTab:[self currentTab]] + 1];

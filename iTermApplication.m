@@ -1,6 +1,3 @@
-// -*- mode:objc -*-
-// $Id: iTermApplication.m,v 1.10 2006-11-07 08:03:08 yfabian Exp $
-//
 /*
  **  iTermApplication.m
  **
@@ -30,14 +27,16 @@
 
 #import "iTermApplication.h"
 #import "HotkeyWindowController.h"
+#import "iTermController.h"
+#import "iTermKeyBindingMgr.h"
+#import "iTermPreferences.h"
+#import "iTermShortcutInputView.h"
 #import "NSTextField+iTerm.h"
+#import "PreferencePanel.h"
+#import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTextView.h"
 #import "PTYWindow.h"
-#import "PreferencePanel.h"
-#import "PseudoTerminal.h"
-#import "iTermController.h"
-#import "iTermKeyBindingMgr.h"
 
 @implementation iTermApplication
 
@@ -75,13 +74,12 @@
             return;
         }
 #endif
-        PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
-        if ([prefPanel isAnyModifierRemapped] &&
+        if ([[HotkeyWindowController sharedInstance] isAnyModifierRemapped] &&
             (IsSecureEventInputEnabled() || ![[HotkeyWindowController sharedInstance] haveEventTap])) {
             // The event tap is not working, but we can still remap modifiers for non-system
             // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
             // the event tap performs the remapping.
-            event = [iTermKeyBindingMgr remapModifiers:event prefPanel:prefPanel];
+            event = [iTermKeyBindingMgr remapModifiers:event];
         }
         if (IsSecureEventInputEnabled() &&
             [[HotkeyWindowController sharedInstance] eventIsHotkey:event]) {
@@ -90,13 +88,12 @@
             OnHotKeyEvent();
             return;
         }
-        PreferencePanel* privatePrefPanel = [PreferencePanel sessionsInstance];
         PseudoTerminal* currentTerminal = [cont currentTerminal];
         PTYTabView* tabView = [currentTerminal tabView];
         PTYSession* currentSession = [currentTerminal currentSession];
         NSResponder *responder;
 
-        if (([event modifierFlags] & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == [prefPanel modifierTagToMask:[prefPanel switchWindowModifier]]) {
+        if (([event modifierFlags] & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier]]) {
             // Command-Alt (or selected modifier) + number: Switch to window by number.
             int digit = [[event charactersIgnoringModifiers] intValue];
             if (!digit) {
@@ -114,22 +111,9 @@
                 return;
             }
         }
-        if ([prefPanel keySheet] == [self keyWindow] &&
-            [prefPanel keySheetIsOpen] &&
-            [[prefPanel shortcutKeyTextField] textFieldIsFirstResponder]) {
-            // Focus is in the shortcut field in prefspanel. Pass events directly to it.
-            [prefPanel shortcutKeyDown:event];
-            return;
-        } else if ([privatePrefPanel keySheet] == [self keyWindow] &&
-                   [privatePrefPanel keySheetIsOpen] &&
-                   [[privatePrefPanel shortcutKeyTextField] textFieldIsFirstResponder]) {
-            // Focus is in the shortcut field in sessions prefspanel. Pass events directly to it.
-            [privatePrefPanel shortcutKeyDown:event];
-            return;
-        } else if ([prefPanel window] == [self keyWindow] &&
-                   [[prefPanel hotkeyField] textFieldIsFirstResponder]) {
-            // Focus is in the hotkey field in prefspanel. Pass events directly to it.
-            [prefPanel hotkeyKeyDown:event];
+        iTermShortcutInputView *shortcutView = [iTermShortcutInputView firstResponder];
+        if (shortcutView) {
+            [shortcutView handleShortcutEvent:event];
             return;
         } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
             // Focus is in a terminal window.
@@ -144,7 +128,7 @@
             }
 
             const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
-            if (([event modifierFlags] & mask) == [prefPanel modifierTagToMask:[prefPanel switchTabModifier]]) {
+            if (([event modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]) {
                 int digit = [[event charactersIgnoringModifiers] intValue];
                 if (!digit) {
                     digit = [[event characters] intValue];

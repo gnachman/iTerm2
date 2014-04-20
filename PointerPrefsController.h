@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "PointerPreferencesViewController.h"
 
 extern NSString *kPasteFromClipboardPointerAction;
 extern NSString *kPasteFromSelectionPointerAction;
@@ -41,8 +42,7 @@ extern NSString *kThreeFingerSwipeLeft;
 extern NSString *kThreeFingerSwipeUp;
 extern NSString *kThreeFingerSwipeDown;
 
-extern NSString *kPointerPrefsChangedNotification;
-
+// This manages the tableview and associated buttons and controls for managing pointer actions.
 @interface PointerPrefsController : NSObject {
     IBOutlet NSTableView *tableView_;
     IBOutlet NSTableColumn *buttonColumn_;

@@ -6,10 +6,11 @@
 //
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
 @interface NSDictionary (iTerm)
 
 - (BOOL)boolValueDefaultingToYesForKey:(id)key;
+- (NSColor *)colorValue;
 
 @end

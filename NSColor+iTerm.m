@@ -13,6 +13,13 @@ static const double kRedComponentBrightness = 0.30;
 static const double kGreenComponentBrightness = 0.59;
 static const double kBlueComponentBrightness = 0.11;
 
+NSString *const kEncodedColorDictionaryRedComponent = @"Red Component";
+NSString *const kEncodedColorDictionaryGreenComponent = @"Green Component";
+NSString *const kEncodedColorDictionaryBlueComponent = @"Blue Component";
+NSString *const kEncodedColorDictionaryColorSpace = @"Color Space";
+NSString *const kEncodedColorDictionarySRGBColorSpace = @"sRGB";
+NSString *const kEncodedColorDictionaryCalibratedColorSpace = @"Calibrated";
+
 static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return (kRedComponentBrightness * r +
             kGreenComponentBrightness * g +
@@ -203,6 +210,16 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (BOOL)isDark {
     return [self perceivedBrightness] < 0.5;
+}
+
+- (NSDictionary *)dictionaryValue {
+    NSColor* color = [self colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+    CGFloat red, green, blue, alpha;
+    [color getRed:&red green:&green blue:&blue alpha:&alpha];
+    return @{ kEncodedColorDictionaryColorSpace: kEncodedColorDictionaryCalibratedColorSpace,
+              kEncodedColorDictionaryRedComponent: @(red),
+              kEncodedColorDictionaryGreenComponent: @(green),
+              kEncodedColorDictionaryBlueComponent: @(blue) };
 }
 
 @end

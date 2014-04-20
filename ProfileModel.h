@@ -24,9 +24,13 @@
 
 #import <Cocoa/Cocoa.h>
 
+// Notification posted when a stored profile changes.
+extern NSString *const kReloadAddressBookNotification;
+
 #define BMKEY_BOOKMARKS_ARRAY @"Bookmarks Array"
 
-typedef NSDictionary Profile;
+#define Profile NSDictionary
+
 typedef struct {
     SEL selector;                  // normal action
     SEL alternateSelector;         // opt+click
@@ -86,6 +90,9 @@ typedef struct {
 - (NSArray*)guids;
 - (void)addBookmark:(Profile*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params atPos:(int)pos;
 - (NSArray *)names;
+
+// Write to user defaults
+- (void)flush;
 
 // Tell all listeners that the model has changed.
 - (void)postChangeNotification;

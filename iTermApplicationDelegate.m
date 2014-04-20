@@ -33,8 +33,10 @@
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "iTermFontPanel.h"
+#import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
-#import "iTermSettingsModel.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
@@ -59,6 +61,8 @@ static NSString *ITERM2_FLAG = @"~/Library/Application Support/iTerm/version.txt
 static NSString *ITERM2_QUIET = @"~/Library/Application Support/iTerm/quiet";
 static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern indicator";
 NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPatternIndicatorChangedNotification";
+NSString *const kSavedArrangementDidChangeNotification = @"kSavedArrangementDidChangeNotification";
+NSString *const kNonTerminalWindowBecameKeyNotification = @"kNonTerminalWindowBecameKeyNotification";
 
 // There was an older userdefaults key "Multi-Line Paste Warning" that had the opposite semantics.
 // This was changed for compatibility with the iTermWarning mechanism.
@@ -98,13 +102,27 @@ static BOOL hasBecomeActive = NO;
 
     [self buildScriptMenu:nil];
 
+    // Fix up various user defaults settings.
+    [iTermPreferences initializeUserDefaults];
+    
     // read preferences
-    [PreferencePanel migratePreferences];
-    [PreferencePanel sharedInstance];
+    [iTermPreferences migratePreferences];
+
+    // Make sure profiles are loaded.
+    [ITAddressBookMgr sharedInstance];
+    
+    // This sets up bonjour and migrates bookmarks if needed.
     [ITAddressBookMgr sharedInstance];
 
     [ToolbeltView populateMenu:toolbeltMenu];
     [self _updateToolbeltMenuItem];
+
+    // Set the Appcast URL and when it changes update it.
+    [[iTermController sharedInstance] refreshSoftwareUpdateUserDefaults];
+    [iTermPreferences addObserverForKey:kPreferenceKeyCheckForTestReleases
+                                  block:^(id before, id after) {
+                                      [[iTermController sharedInstance] refreshSoftwareUpdateUserDefaults];
+                                  }];
 }
 
 - (void)_performIdempotentStartupActivities
@@ -136,14 +154,14 @@ static BOOL hasBecomeActive = NO;
             [WindowArrangements makeDefaultArrangement:LEGACY_DEFAULT_ARRANGEMENT_NAME];
         }
 
-        if ([[PreferencePanel sharedInstance] openBookmark]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyOpenBookmark]) {
             // Open bookmarks window at startup.
             [self showBookmarkWindow:nil];
-            if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
+            if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
                 // Open both bookmark window and arrangement!
                 [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
             }
-        } else if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
+        } else if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
             // Open the saved arrangement at startup.
             [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
         } else {
@@ -272,12 +290,14 @@ static BOOL hasBecomeActive = NO;
                              CFSTR(""),
                              kCFPreferencesCurrentApplication);
 
-    PreferencePanel* ppanel = [PreferencePanel sharedInstance];
     // Code could be 0 (e.g., A on an American keyboard) and char is also sometimes 0 (seen in bug 2501).
-    if ([ppanel hotkey] && ([ppanel hotkeyCode] || [ppanel hotkeyChar])) {
-        [[HotkeyWindowController sharedInstance] registerHotkey:[ppanel hotkeyCode] modifiers:[ppanel hotkeyModifiers]];
+    if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled] &&
+        ([iTermPreferences intForKey:kPreferenceKeyHotKeyCode] ||
+         [iTermPreferences intForKey:kPreferenceKeyHotkeyCharacter])) {
+        [[HotkeyWindowController sharedInstance] registerHotkey:[iTermPreferences intForKey:kPreferenceKeyHotKeyCode]
+                                                      modifiers:[iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers]];
     }
-    if ([ppanel isAnyModifierRemapped]) {
+    if ([[HotkeyWindowController sharedInstance] isAnyModifierRemapped]) {
         // Use a brief delay so windows have a chance to open before the dialog is shown.
         [[HotkeyWindowController sharedInstance] performSelector:@selector(beginRemappingModifiers)
                                                       withObject:nil
@@ -334,11 +354,11 @@ static BOOL hasBecomeActive = NO;
     // Display prompt if we need to
     if (!quittingBecauseLastWindowClosed_ &&  // cmd-q
         [terminals count] > 0 &&  // there are terminal windows
-        [[PreferencePanel sharedInstance] promptOnQuit]) {  // preference is to prompt on quit cmd
+        [iTermPreferences boolForKey:kPreferenceKeyPromptOnQuit]) {  // preference is to prompt on quit cmd
         shouldShowAlert = YES;
     }
     quittingBecauseLastWindowClosed_ = NO;
-    if ([[PreferencePanel sharedInstance] onlyWhenMoreTabs] && numSessions > 1) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs] && numSessions > 1) {
         // closing multiple sessions
         shouldShowAlert = YES;
     }
@@ -359,10 +379,8 @@ static BOOL hasBecomeActive = NO;
     [iTermController sharedInstanceRelease];
 
     // save preferences
-    PreferencePanel *preferencePanel = [PreferencePanel sharedInstance];
-    [preferencePanel savePreferences];
-    if (![preferencePanel customFolderChanged]) {
-        [preferencePanel savePreferences];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    if (![[iTermRemotePreferences sharedInstance] customFolderChanged]) {
         [[iTermRemotePreferences sharedInstance] applicationWillTerminate];
     }
 
@@ -376,7 +394,7 @@ static BOOL hasBecomeActive = NO;
 
 - (PseudoTerminal *)terminalToOpenFileIn
 {
-    if ([iTermSettingsModel openFileInNewWindows]) {
+    if ([iTermAdvancedSettingsModel openFileInNewWindows]) {
         return nil;
     } else {
         return [self currentTerminal];
@@ -431,7 +449,7 @@ static BOOL hasBecomeActive = NO;
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication
 {
     if (!finishedLaunching_ &&
-        [[PreferencePanel sharedInstance] openArrangementAtStartup]) {
+        [iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
         // This happens if the OS is pre 10.7 or restore windows is off in
         // 10.7's prefs->general, and the window arrangement has no windows,
         // and it's set to load the arrangement on startup.
@@ -454,20 +472,20 @@ static BOOL hasBecomeActive = NO;
         return NO;
     }
     if (!userHasInteractedWithAnySession_) {
-        if ([[NSDate date] timeIntervalSinceDate:launchTime_] < [iTermSettingsModel minRunningTime]) {
+        if ([[NSDate date] timeIntervalSinceDate:launchTime_] < [iTermAdvancedSettingsModel minRunningTime]) {
             NSLog(@"Not quitting iTerm2 because it ran very briefly and had no user interaction. Set the MinRunningTime float preference to 0 to turn this feature off.");
             return NO;
         }
     }
-    quittingBecauseLastWindowClosed_ = [[PreferencePanel sharedInstance] quitWhenAllWindowsClosed];
+    quittingBecauseLastWindowClosed_ =
+        [iTermPreferences boolForKey:kPreferenceKeyQuitWhenAllWindowsClosed];
     return quittingBecauseLastWindowClosed_;
 }
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication hasVisibleWindows:(BOOL)flag
 {
-    PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
-    if ([prefPanel hotkey] &&
-        [prefPanel hotkeyTogglesWindow]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled] &&
+        [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow]) {
         // The hotkey window is configured.
         PseudoTerminal* hotkeyTerm = [[HotkeyWindowController sharedInstance] hotKeyWindow];
         if (hotkeyTerm) {
@@ -475,11 +493,11 @@ static BOOL hasBecomeActive = NO;
             if ([[hotkeyTerm window] alphaValue] == 1) {
                 [[HotkeyWindowController sharedInstance] hideHotKeyWindow:hotkeyTerm];
                 return NO;
-            } else if ([prefPanel dockIconTogglesWindow]) {
+            } else if ([iTermAdvancedSettingsModel dockIconTogglesWindow]) {
                 [[HotkeyWindowController sharedInstance] showHotKeyWindow];
                 return NO;
             }
-        } else if ([prefPanel dockIconTogglesWindow]) {
+        } else if ([iTermAdvancedSettingsModel dockIconTogglesWindow]) {
             // No existing hotkey window but preference is to toggle it by dock icon so open a new
             // one.
             [[HotkeyWindowController sharedInstance] showHotKeyWindow];
@@ -496,7 +514,7 @@ static BOOL hasBecomeActive = NO;
     // I suppose, but I don't want to die on this hill.
     [self performSelector:@selector(updateScreenParametersInAllTerminals)
                withObject:nil
-               afterDelay:[iTermSettingsModel updateScreenParamsDelay]];
+               afterDelay:[iTermAdvancedSettingsModel updateScreenParamsDelay]];
 }
 
 - (void)updateScreenParametersInAllTerminals {
@@ -517,34 +535,34 @@ static BOOL hasBecomeActive = NO;
                                                      name:@"iTermWindowBecameKey"
                                                    object:nil];
 
-        [[NSNotificationCenter defaultCenter] addObserver: self
-                                                 selector: @selector(updateAddressBookMenu:)
-                                                     name: @"iTermReloadAddressBook"
-                                                   object: nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(updateAddressBookMenu:)
+                                                     name:kReloadAddressBookNotification
+                                                   object:nil];
 
-        [[NSNotificationCenter defaultCenter] addObserver: self
-                                                 selector: @selector(buildSessionSubmenu:)
-                                                     name: @"iTermNumberOfSessionsDidChange"
-                                                   object: nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(buildSessionSubmenu:)
+                                                     name:@"iTermNumberOfSessionsDidChange"
+                                                   object:nil];
 
-        [[NSNotificationCenter defaultCenter] addObserver: self
-                                                 selector: @selector(buildSessionSubmenu:)
-                                                     name: @"iTermNameOfSessionDidChange"
-                                                   object: nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(buildSessionSubmenu:)
+                                                     name:@"iTermNameOfSessionDidChange"
+                                                   object:nil];
 
-        [[NSNotificationCenter defaultCenter] addObserver: self
-                                                 selector: @selector(reloadSessionMenus:)
-                                                     name: @"iTermSessionBecameKey"
-                                                   object: nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(reloadSessionMenus:)
+                                                     name:@"iTermSessionBecameKey"
+                                                   object:nil];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(nonTerminalWindowBecameKey:)
-                                                     name:@"nonTerminalWindowBecameKey"
+                                                     name:kNonTerminalWindowBecameKeyNotification
                                                    object:nil];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowArrangementsDidChange:)
-                                                     name:@"iTermSavedArrangementChanged"
+                                                     name:kSavedArrangementDidChangeNotification
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(toolDidToggle:)
@@ -704,23 +722,22 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-- (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent
-{
+- (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
     NSString *urlStr = [[event paramDescriptorForKeyword:keyDirectObject] stringValue];
     NSURL *url = [NSURL URLWithString: urlStr];
-    NSString *urlType = [url scheme];
+    NSString *scheme = [url scheme];
 
-    if ([urlType isEqualToString:@"iterm2"]) {
+    if ([scheme isEqualToString:@"iterm2"]) {
         [self launchFromUrl:url];
         return;
     }
-    id bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:urlType];
-    if (!bm) {
-        bm = [[ProfileModel sharedInstance] defaultBookmark];
+    Profile *profile = [[iTermURLSchemeController sharedInstance] profileForScheme:scheme];
+    if (!profile) {
+        profile = [[ProfileModel sharedInstance] defaultBookmark];
     }
-    if (bm) {
+    if (profile) {
         PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
-        [[iTermController sharedInstance] launchBookmark:bm
+        [[iTermController sharedInstance] launchBookmark:profile
                                               inTerminal:term
                                                  withURL:urlStr
                                                 isHotkey:NO
@@ -1171,8 +1188,7 @@ static BOOL hasBecomeActive = NO;
     [sendInputNormally setState:noBroadcast];
 }
 
-- (void) nonTerminalWindowBecameKey: (NSNotification *) aNotification
-{
+- (void) nonTerminalWindowBecameKey: (NSNotification *) aNotification {
     [closeTab setAction:nil];
     [closeTab setKeyEquivalent:@""];
     [closeWindow setKeyEquivalent:@"w"];

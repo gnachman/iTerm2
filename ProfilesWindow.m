@@ -24,6 +24,7 @@
 
 #import "ProfilesWindow.h"
 #import "ProfileModel.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
@@ -229,17 +230,16 @@ typedef enum {
     }
 }
 
-- (IBAction)editBookmarks:(id)sender
-{
+- (IBAction)editBookmarks:(id)sender {
     [[PreferencePanel sharedInstance] run];
-    [[PreferencePanel sharedInstance] showBookmarks];
+    [[PreferencePanel sharedInstance] selectProfilesTab];
 }
 
-- (IBAction)editSelectedBookmark:(id)sender
+- (void)editSelectedBookmark:(id)sender
 {
     NSString* guid = [tableView_ selectedGuid];
     if (guid) {
-        [[PreferencePanel sharedInstance] openToBookmark:guid];
+        [[PreferencePanel sharedInstance] openToProfileWithGuid:guid];
     }
 }
 
@@ -269,9 +269,8 @@ typedef enum {
     return menu;
 }
 
-- (void)windowDidBecomeKey:(NSNotification *)notification
-{
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"nonTerminalWindowBecameKey"
+- (void)windowDidBecomeKey:(NSNotification *)notification {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kNonTerminalWindowBecameKeyNotification
                                                         object:nil
                                                       userInfo:nil];
     [tableView_ focusSearchField];

@@ -6,6 +6,9 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermPreferences.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermShortcutInputView.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
@@ -53,7 +56,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 
     [NSApp activateIgnoringOtherApps:YES];
     [[term window] makeKeyAndOrderFront:nil];
-    [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
+    [[NSAnimationContext currentContext] setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
     [[[term window] animator] setAlphaValue:1];
     [[HotkeyWindowController sharedInstance] performSelector:@selector(rollInFinished)
                                                   withObject:nil
@@ -69,7 +72,12 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 }
 
 - (Profile *)profile {
-    return [[PreferencePanel sharedInstance] hotkeyBookmark];
+    NSString *guid = [iTermPreferences stringForKey:kPreferenceKeyHotkeyProfileGuid];
+    if (guid) {
+        return [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    } else {
+        return nil;
+    }
 }
 
 - (BOOL)openHotkeyWindow {
@@ -143,7 +151,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         return;
     }
     BOOL temp = [term isHotKeyWindow];
-    [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
+    [[NSAnimationContext currentContext] setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
     [[[term window] animator] setAlphaValue:0];
 
     [[HotkeyWindowController sharedInstance] performSelector:@selector(restoreNormalcy:)
@@ -269,7 +277,7 @@ void OnHotKeyEvent(void)
 {
     HKWLog(@"hotkey pressed");
     PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
-    if ([prefPanel hotkeyTogglesWindow]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow]) {
         HKWLog(@"hotkey window enabled");
         PseudoTerminal* hotkeyTerm = GetHotkeyWindow();
         if (hotkeyTerm) {
@@ -348,15 +356,18 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     NSEvent* cocoaEvent = [NSEvent eventWithCGEvent:event];
     BOOL callDirectly = NO;
     BOOL local = NO;
+    iTermShortcutInputView *shortcutView = nil;
     if ([NSApp isActive]) {
+        shortcutView = [iTermShortcutInputView firstResponder];
+
         // Remap modifier keys only while iTerm2 is active; otherwise you could just use the
         // OS's remap feature.
         NSString* unmodkeystr = [cocoaEvent charactersIgnoringModifiers];
         unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
         unsigned int modflag = [cocoaEvent modifierFlags];
         NSString *keyBindingText;
-        PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
-        BOOL tempDisabled = [prefPanel remappingDisabledTemporarily];
+        BOOL tempDisabled = [shortcutView disableKeyRemapping];
+
         int action = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
                                                 modifiers:modflag
                                                      text:&keyBindingText
@@ -372,11 +383,9 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
             event = eventCopy;
             eventCopy = temp;
         }
-        BOOL keySheetOpen = [[prefPanel keySheet] isKeyWindow] && [prefPanel keySheetIsOpen];
         if ((!tempDisabled && !isDoNotRemap) ||  // normal case, whether keysheet is open or not
-            (!tempDisabled && isDoNotRemap && keySheetOpen)) {  // about to change dnr to non-dnr
-            [iTermKeyBindingMgr remapModifiersInCGEvent:event
-                                              prefPanel:prefPanel];
+            (!tempDisabled && isDoNotRemap)) {  // about to change dnr to non-dnr
+            [iTermKeyBindingMgr remapModifiersInCGEvent:event];
             cocoaEvent = [NSEvent eventWithCGEvent:event];
         }
         if (local) {
@@ -404,23 +413,16 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
                                               keyMappings:nil];
         BOOL isDoNotRemap = (action == KEY_ACTION_DO_NOT_REMAP_MODIFIERS) || (action == KEY_ACTION_REMAP_LOCALLY);
         if (!isDoNotRemap) {
-            [iTermKeyBindingMgr remapModifiersInCGEvent:eventCopy
-                                              prefPanel:[PreferencePanel sharedInstance]];
+            [iTermKeyBindingMgr remapModifiersInCGEvent:eventCopy];
         }
         cocoaEvent = [NSEvent eventWithCGEvent:eventCopy];
         CFRelease(eventCopy);
     }
-#ifdef USE_EVENT_TAP_FOR_HOTKEY
-    if ([cont eventIsHotkey:cocoaEvent]) {
-        OnHotKeyEvent();
-        return NULL;
-    }
-#endif
 
     if (callDirectly) {
         // Send keystroke directly to preference panel when setting do-not-remap for a key; for
         // system keys, NSApp sendEvent: is never called so this is the last chance.
-        [[PreferencePanel sharedInstance] shortcutKeyDown:cocoaEvent];
+        [shortcutView handleShortcutEvent:cocoaEvent];
         return nil;
     }
     if (local) {
@@ -448,11 +450,9 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 {
     hotkeyCode_ = 0;
     hotkeyModifiers_ = 0;
-#ifndef USE_EVENT_TAP_FOR_HOTKEY
     [[GTMCarbonEventDispatcherHandler sharedEventDispatcherHandler] unregisterHotKey:carbonHotKey_];
     [carbonHotKey_ release];
     carbonHotKey_ = nil;
-#endif
 }
 
 - (BOOL)haveEventTap
@@ -574,30 +574,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     }
     hotkeyCode_ = keyCode;
     hotkeyModifiers_ = modifiers & (NSCommandKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSShiftKeyMask);
-#ifdef USE_EVENT_TAP_FOR_HOTKEY
-    if (![self startEventTap]) {
-        if (IsMavericksOrLater()) {
-            [self requestAccessibilityPermissionMavericks];
-            return;
-        }
-        switch (NSRunAlertPanel(@"Could not enable hotkey",
-                                @"%@",
-                                @"OK",
-                                [self accessibilityActionMessage],
-                                @"Disable Hotkey",
-                                nil,
-                                [self accessibilityMessageForHotkey])) {
-            case NSAlertOtherReturn:
-                [[PreferencePanel sharedInstance] disableHotkey];
-                break;
 
-            case NSAlertAlternateReturn:
-                [self navigatePrefPane]
-                return NO;
-        }
-    }
-    return YES;
-#else
     carbonHotKey_ = [[[GTMCarbonEventDispatcherHandler sharedEventDispatcherHandler]
                       registerHotKey:keyCode
                       modifiers:hotkeyModifiers_
@@ -606,7 +583,6 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
                       userInfo:nil
                       whenPressed:YES] retain];
     return YES;
-#endif
 }
 
 - (void)carbonHotkeyPressed
@@ -667,6 +643,35 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 
 - (NSDictionary *)savedArrangement {
     return [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsHotkeyWindowArrangement];
+}
+
+- (int)controlRemapping {
+    return [iTermPreferences intForKey:kPreferenceKeyControlRemapping];
+}
+
+- (int)leftOptionRemapping {
+    return [iTermPreferences intForKey:kPreferenceKeyLeftOptionRemapping];
+}
+
+- (int)rightOptionRemapping {
+    return [iTermPreferences intForKey:kPreferenceKeyRightOptionRemapping];
+}
+
+- (int)leftCommandRemapping {
+    return [iTermPreferences intForKey:kPreferenceKeyLeftCommandRemapping];
+}
+
+- (int)rightCommandRemapping {
+    return [iTermPreferences intForKey:kPreferenceKeyRightCommandRemapping];
+}
+
+- (BOOL)isAnyModifierRemapped
+{
+    return ([self controlRemapping] != kPreferencesModifierTagControl ||
+            [self leftOptionRemapping] != kPreferencesModifierTagLeftOption ||
+            [self rightOptionRemapping] != kPreferencesModifierTagRightOption ||
+            [self leftCommandRemapping] != kPreferencesModifierTagLeftCommand ||
+            [self rightCommandRemapping] != kPreferencesModifierTagRightCommand);
 }
 
 @end

@@ -209,6 +209,10 @@ enum {
     return nil;
 }
 
+- (void)controlTextDidChange:(NSNotification *)obj {
+    [_delegate trouterPrefsControllerSettingChanged:self];
+}
+
 - (IBAction)actionChanged:(id)sender
 {
     [text_ setHidden:YES];
@@ -258,7 +262,7 @@ enum {
             NSString *stringValue = [[self prefs] objectForKey:kTrouterTextKey];
             [text_ setStringValue:stringValue ? stringValue : @""];
         }
-        [[PreferencePanel sharedInstance] bookmarkSettingChanged:nil];
+        [_delegate trouterPrefsControllerSettingChanged:self];
     }
 }
 

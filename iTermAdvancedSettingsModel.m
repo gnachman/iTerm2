@@ -1,16 +1,16 @@
 //
-//  iTermSettingsModel.m
+//  iTermAdvancedSettingsModel.m
 //  iTerm
 //
 //  Created by George Nachman on 3/18/14.
 //
 //
 
-#import "iTermSettingsModel.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermAdvancedSettingsController.h"
 #import "NSStringITerm.h"
 
-@implementation iTermSettingsModel
+@implementation iTermAdvancedSettingsModel
 
 #define DEFINE_BOOL(name, theDefault, theDescription) \
 + (BOOL)name { \
@@ -73,7 +73,7 @@ DEFINE_FLOAT(hotkeyTermAnimationDuration, 0.25, @"Hotkey: Duration in seconds of
 DEFINE_BOOL(dockIconTogglesWindow, NO, @"Hotkey: If the only window is a hotkey window, then clicking the dock icon shows/hides it")
 
 #pragma mark General
-DEFINE_STRING(searchCommand, @"General: http://google.com/search?q=%@", @"Template for URL of search engine")
+DEFINE_STRING(searchCommand, @"http://google.com/search?q=%@", @"General: Template for URL of search engine")
 DEFINE_INT(autocompleteMaxOptions, 20, @"General: Number of autocomplete options to present (less than 100 recommended)")
 DEFINE_BOOL(openFileInNewWindows, NO, @"General: Open files (like shell scripts opened from Finder) in new windows, not new tabs")
 DEFINE_FLOAT(minRunningTime, 10, @"General: Automatic quit suspended for this manys seconds after startup (0 disables)")

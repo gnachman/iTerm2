@@ -16,3 +16,7 @@ testing.xml
 testing_changes.html
 .gitignore
 iTerm.plist
+DerivedData/
+Intermediates/
+NMSSH.framework.dSYM/
+NMSSH/

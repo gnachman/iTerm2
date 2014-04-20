@@ -25,6 +25,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "ProfileModel.h"
 
 // Key Definitions
 #define KEY_CURSOR_DOWN                 0
@@ -119,7 +120,6 @@
 #define KEY_ACTION_RUN_COPROCESS 35
 #define KEY_ACTION_FIND_REGEX 36
 
-@class PreferencePanel;
 @interface iTermKeyBindingMgr : NSObject {
 }
 
@@ -151,6 +151,8 @@
 // format.
 + (NSDictionary*)readPresetKeyMappingsFromPlist:(NSString *)thePlist;
 
++ (NSArray *)globalPresetNames;
+
 // Return an array containing the names of all the presets available in
 // the PresetKeyMapping.plist file
 + (NSArray*)presetKeyMappingsNames;
@@ -162,6 +164,9 @@
 // Load a set of preset keymappings from GlobalKeyMap.plist into the global
 // keymappings, removing all previous mappings.
 + (void)setGlobalKeyMappingsToPreset:(NSString*)presetName;
+
++ (NSArray *)sortedGlobalKeyCombinations;
++ (NSArray *)sortedKeyCombinationsForProfile:(Profile *)profile;
 
 // This function has two modes:
 // If newMapping is false, replace a mapping at the specified index. The index
@@ -204,6 +209,8 @@
 // global key mappings.
 + (NSDictionary*)globalMappingAtIndex:(int)rowIndex;
 
++ (NSDictionary *)keyMappingsForProfile:(Profile *)profile;
+
 // Return the number of key mappings in a bookmark.
 + (int)numberOfMappingsForBookmark:(Profile*)bmDict;
 
@@ -220,11 +227,10 @@
                  keyMappings:(NSDictionary *)keyMappings;
 
 // Modify a keypress event, swapping modifiers as defined in the global settings.
-+ (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent
-                            prefPanel:(PreferencePanel*)pp;
++ (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent;
 
 // Like remapModifiersInCGEvent:prefPanel: but for an NSEvent.
-+ (NSEvent*)remapModifiers:(NSEvent*)event prefPanel:(PreferencePanel*)pp;
++ (NSEvent*)remapModifiers:(NSEvent*)event;
 
 // Returns the global keymap ("0xKeycode-0xModifiers"->{Action=int, [Text=str])
 + (NSDictionary*)globalKeyMap;

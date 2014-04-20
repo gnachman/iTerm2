@@ -41,9 +41,11 @@
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "iTermNSKeyBindingEmulator.h"
+#import "iTermPreferences.h"
 #import "iTermSelection.h"
-#import "iTermSettingsModel.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermTextExtractor.h"
+#import "iTermURLSchemeController.h"
 #include <math.h>
 #include <sys/time.h>
 
@@ -421,7 +423,7 @@ static NSImage* alertImage;
         [self _useBackgroundIndicatorChanged:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(_settingsChanged:)
-                                                     name:@"iTermRefreshTerminal"
+                                                     name:kRefreshTerminalNotification
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(_pointerSettingsChanged:)
@@ -463,7 +465,7 @@ static NSImage* alertImage;
                                                                    selector:@selector(threeFingerTap:)];
             }
         }
-        if ([iTermSettingsModel logDrawingPerformance]) {
+        if ([iTermAdvancedSettingsModel logDrawingPerformance]) {
             NSLog(@"** Drawing performance timing enabled **");
             drawRectDuration_ = [[MovingAverage alloc] init];
             drawRectInterval_ = [[MovingAverage alloc] init];
@@ -930,9 +932,9 @@ static NSImage* alertImage;
 
 - (void)changeFont:(id)fontManager
 {
-    if ([[PreferencePanel sharedInstance] onScreen]) {
+    if ([[[PreferencePanel sharedInstance] window] isVisible]) {
         [[PreferencePanel sharedInstance] changeFont:fontManager];
-    } else if ([[PreferencePanel sessionsInstance] onScreen]) {
+    } else if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
         [[PreferencePanel sessionsInstance] changeFont:fontManager];
     }
 }
@@ -1319,7 +1321,7 @@ NSMutableArray* screens=0;
     } else if ([attribute isEqualToString:NSAccessibilityAttributedStringForRangeParameterizedAttribute]) {
         //(NSAttributedString *) - substring; param:(NSValue * - rangeValue)
         NSRange range = [(NSValue*)parameter rangeValue];
-        if (range.location == NSNotFound) {
+        if (range.location == NSNotFound || range.length == 0) {
             return nil;
         } else {
             NSString *theString = [allText_ substringWithRange:range];
@@ -1816,7 +1818,7 @@ NSMutableArray* screens=0;
         NSImage* image = nil;
         switch (flashImage_) {
             case FlashBell:
-                if ([[PreferencePanel sharedInstance] traditionalVisualBell]) {
+                if ([iTermAdvancedSettingsModel traditionalVisualBell]) {
                     image = [[[NSImage alloc] initWithSize: frame.size] autorelease];
                     [image lockFocus];
                     NSColor *foregroundColor = [_colorMap colorForKey:kColorMapForeground];
@@ -2317,7 +2319,7 @@ NSMutableArray* screens=0;
         isFirstInteraction = NO;
     }
 
-    BOOL debugKeyDown = [iTermSettingsModel debugKeyDown];
+    BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
 
     if (debugKeyDown) {
         NSLog(@"PTYTextView keyDown BEGIN %@", event);
@@ -2659,13 +2661,13 @@ NSMutableArray* screens=0;
         NSPoint viewPoint = [self windowLocationToRowCol:windowRect.origin];
         int x = viewPoint.x;
         int y = viewPoint.y;
-        if (y < 0) {
+        if (![iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs] || y < 0) {
             [self removeUnderline];
             return;
         } else {
             URLAction *action = [self urlActionForClickAtX:x
                                                          y:y
-                                    respectingHardNewlines:![iTermSettingsModel ignoreHardNewlinesInURLs]];
+                                    respectingHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]];
             if (action) {
                 _underlineRange = action.range;
 
@@ -2737,8 +2739,8 @@ NSMutableArray* screens=0;
     mouseInRect_ = YES;
     [self updateCursor:event];
     [self updateUnderlinedURLs:event];
-    if ([[PreferencePanel sharedInstance] focusFollowsMouse] &&
-            [[self window] alphaValue] > 0) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] &&
+        [[self window] alphaValue] > 0) {
         // Some windows automatically close when they lose key status and are
         // incompatible with FFM. Check if the key window or its controller implements
         // disableFocusFollowsMouse and if it returns YES do nothing.
@@ -2870,7 +2872,7 @@ NSMutableArray* screens=0;
         return NO;
     }
     if (numTouches_ == 3) {
-        if ([[PreferencePanel sharedInstance] threeFingerEmulatesMiddle]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle]) {
             [self emulateThirdButtonPressDown:YES withEvent:event];
         } else {
             // Perform user-defined gesture action, if any
@@ -2979,7 +2981,8 @@ NSMutableArray* screens=0;
                               resume:YES
                               append:_selection.appending];
     } else if (clickCount == 3) {
-        BOOL wholeLines = [[PreferencePanel sharedInstance] tripleClickSelectsFullLines];
+        BOOL wholeLines =
+            [iTermPreferences boolForKey:kPreferenceKeyTripleClickSelectsFullWrappedLines];
         iTermSelectionMode mode =
             wholeLines ? kiTermSelectionModeWholeLine : kiTermSelectionModeLine;
 
@@ -3048,7 +3051,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                    !([event modifierFlags] & NSShiftKeyMask));
     BOOL willFollowLink = (isUnshiftedSingleClick &&
                            cmdPressed &&
-                           [[PreferencePanel sharedInstance] cmdSelection]);
+                           [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs]);
 
     // Send mouse up event to host if xterm mouse reporting is on
     if ([self reportMouseEvent:event]) {
@@ -3088,7 +3091,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
         if (altPressed &&
-            [[PreferencePanel sharedInstance] optionClickMovesCursor] &&
+            [iTermPreferences boolForKey:kPreferenceKeyOptionClickMovesCursor] &&
             !_mouseDownWasFirstMouse) {
             // This moves the cursor, but not if mouse reporting is on for button clicks.
             // It's also off for first mouse because of issue 2943 (alt-click to activate an app
@@ -3133,7 +3136,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if ([_selection hasSelection] && _delegate) {
         // if we want to copy our selection, do so
-        if ([[PreferencePanel sharedInstance] copySelection]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
             [self copySelectionAccordingToUserPreferences];
         }
     }
@@ -3381,7 +3384,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self smartSelectAtX:x y:y ignoringNewlines:ignoringNewlines];
     if ([_selection hasSelection] && _delegate) {
         // if we want to copy our selection, do so
-        if ([[PreferencePanel sharedInstance] copySelection]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
             [self copySelectionAccordingToUserPreferences];
         }
     }
@@ -3539,7 +3542,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event
 {
-    BOOL debugKeyDown = [iTermSettingsModel debugKeyDown];
+    BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
 
     if (debugKeyDown) {
         NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
@@ -3679,8 +3682,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"startx < 0 so there is no selected text");
         return nil;
     }
-    BOOL copyLastNewline = [[PreferencePanel sharedInstance] copyLastNewline];
-    BOOL trimWhitespace = [[PreferencePanel sharedInstance] trimTrailingWhitespace];
+    BOOL copyLastNewline = [iTermPreferences boolForKey:kPreferenceKeyCopyLastNewline];
+    BOOL trimWhitespace = [iTermAdvancedSettingsModel trimWhitespaceOnCopy];
     NSMutableString *theSelectedText = [[NSMutableString alloc] init];
     [_selection enumerateSelectedRanges:^(VT100GridWindowedRange range, BOOL *stop, BOOL eol) {
         int cap = INT_MAX;
@@ -3883,7 +3886,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)copySelectionAccordingToUserPreferences
 {
-    if ([iTermSettingsModel copyWithStylesByDefault]) {
+    if ([iTermAdvancedSettingsModel copyWithStylesByDefault]) {
         [self copyWithStyles:self];
     } else {
         [self copy:self];
@@ -4199,6 +4202,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     if (theEvent) {
         // Control-click
+        if ([iTermPreferences boolForKey:kPreferenceKeyControlLeftClickBypassesContextMenu]) {
+            return nil;
+        }
         return [self contextMenuWithEvent:theEvent];
     } else {
         // Gear icon in session title view.
@@ -4544,7 +4550,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)searchInBrowser:(id)sender
 {
     NSString* url =
-        [NSString stringWithFormat:[[PreferencePanel sharedInstance] searchCommand],
+        [NSString stringWithFormat:[iTermAdvancedSettingsModel searchCommand],
                                    [[self selectedText] stringWithPercentEscape]];
     [self _findUrlInString:url
           andOpenInBackground:NO];
@@ -4862,7 +4868,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     DLog(@"PTYTextView insertText:%@", aString);
     if ([self hasMarkedText]) {
-        BOOL debugKeyDown = [iTermSettingsModel debugKeyDown];
+        BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
         if (debugKeyDown) {
             NSLog(@"insertText: clear marked text");
         }
@@ -4905,7 +4911,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // TODO: Respect replacementRange
 - (void)setMarkedText:(id)aString selectedRange:(NSRange)selRange replacementRange:(NSRange)replacementRange
 {
-    BOOL debugKeyDown = [iTermSettingsModel debugKeyDown];
+    BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
     if (debugKeyDown) {
         NSLog(@"set marked text to %@; range %@", aString, [NSValue valueWithRange:selRange]);
     }
@@ -4950,7 +4956,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)unmarkText
 {
-    BOOL debugKeyDown = [iTermSettingsModel debugKeyDown];
+    BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
     if (debugKeyDown) {
         NSLog(@"clear marked text");
     }
@@ -5474,7 +5480,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                         repeats:NO];
     }
     // Turn the image to opaque and ask to redraw the screen.
-    if ([[PreferencePanel sharedInstance] traditionalVisualBell]) {
+    if ([iTermAdvancedSettingsModel traditionalVisualBell]) {
         flashing_ = 0.33;
     } else {
         flashing_ = 1;
@@ -7245,7 +7251,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 if (lineBelow) {
                     [constraints addObject:@([self _brightnessOfCharBackground:lineBelow[x1]])];
                 }
-                if ([self _minimumDistanceOf:bgBrightness fromAnyValueIn:constraints] < [iTermSettingsModel smartCursorColorBgThreshold]) {
+                if ([self _minimumDistanceOf:bgBrightness fromAnyValueIn:constraints] < [iTermAdvancedSettingsModel smartCursorColorBgThreshold]) {
                     CGFloat b = [self _farthestValueFromAnyValueIn:constraints];
                     bgColor = [NSColor colorWithCalibratedRed:b green:b blue:b alpha:1];
                 }
@@ -7321,7 +7327,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                  isBackground:NO] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
                             CGFloat fgBrightness = [proposedForeground perceivedBrightness];
                             CGFloat bgBrightness = [bgColor perceivedBrightness];
-                            if (!frameOnly && fabs(fgBrightness - bgBrightness) < [iTermSettingsModel smartCursorColorFgThreshold]) {
+                            if (!frameOnly && fabs(fgBrightness - bgBrightness) < [iTermAdvancedSettingsModel smartCursorColorFgThreshold]) {
                                 // foreground and background are very similar. Just use black and
                                 // white.
                                 if (bgBrightness < 0.5) {
@@ -7514,7 +7520,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                ch == TAB_FILLER) {
         return CHARTYPE_WHITESPACE;
     } else if ([[NSCharacterSet alphanumericCharacterSet] longCharacterIsMember:longChar] ||
-               [[[PreferencePanel sharedInstance] wordChars] rangeOfString:aString].length != 0) {
+               [[iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection] rangeOfString:aString].length != 0) {
         return CHARTYPE_WORDCHAR;
     } else {
         // Non-alphanumeric, non-whitespace, non-word, not double-width filler.
@@ -7548,7 +7554,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     static NSMutableCharacterSet* urlChars;
     if (!urlChars) {
-        NSString *chars = [iTermSettingsModel URLCharacterSet];
+        NSString *chars = [iTermAdvancedSettingsModel URLCharacterSet];
         urlChars = [[NSMutableCharacterSet characterSetWithCharactersInString:chars] retain];
         [urlChars formUnionWithCharacterSet:[NSCharacterSet alphanumericCharacterSet]];
         [urlChars retain];
@@ -7727,7 +7733,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSDictionary *rule = [self smartSelectAtX:x
                                             y:y
                                            to:&smartRange
-                             ignoringNewlines:[iTermSettingsModel ignoreHardNewlinesInURLs]
+                             ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
                                actionRequired:YES
                               respectDividers:YES];
     NSArray *actions = [SmartSelectionController actionsInRule:rule];
@@ -7824,7 +7830,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // that it doesn't work well. Hard EOLs mid-url are very common. Let's try always ignoring them.
     return [self urlActionForClickAtX:x
                                     y:y
-               respectingHardNewlines:![iTermSettingsModel ignoreHardNewlinesInURLs]];
+               respectingHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]];
 }
 
 // Returns the drag operation to use. It is determined from the type of thing
@@ -7917,10 +7923,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     NSURL *url = [NSURL URLWithString:escapedString];
 
-    Profile *bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:[url scheme]];
+    Profile *profile = [[iTermURLSchemeController sharedInstance] profileForScheme:[url scheme]];
 
-    if (bm != nil)  {
-        [_delegate launchProfileInCurrentTerminal:bm withURL:trimmedURLString];
+    if (profile)  {
+        [_delegate launchProfileInCurrentTerminal:profile withURL:trimmedURLString];
     } else {
         [self openURL:url inBackground:background];
     }
@@ -8058,7 +8064,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
-    _colorMap.dimOnlyText = [[PreferencePanel sharedInstance] dimOnlyText];
+    _colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
 }
 
 - (NSRect)gridRect {
@@ -8135,7 +8141,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSMutableString* dirtyDebug = [NSMutableString stringWithString:@"updateDirtyRects found these dirty lines:\n"];
     int screenindex=0;
 #endif
-    BOOL irEnabled = [[PreferencePanel sharedInstance] instantReplay];
     long long totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
     int allDirty = [_dataSource isAllDirty] ? 1 : 0;
     [_dataSource resetAllDirty];
@@ -8197,7 +8202,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 #endif
     [_dataSource resetDirty];
 
-    if (irEnabled && foundDirty) {
+    if (foundDirty) {
         [_dataSource saveToDvr];
     }
 
@@ -8257,7 +8262,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     gettimeofday(&now, NULL);
     double timeDelta = now.tv_sec - lastBlink.tv_sec;
     timeDelta += (now.tv_usec - lastBlink.tv_usec) / 1000000.0;
-    if (timeDelta >= [[PreferencePanel sharedInstance] timeBetweenBlinks]) {
+    if (timeDelta >= [iTermAdvancedSettingsModel timeBetweenBlinks]) {
         blinkShow = !blinkShow;
         lastBlink = now;
         redrawBlink = YES;

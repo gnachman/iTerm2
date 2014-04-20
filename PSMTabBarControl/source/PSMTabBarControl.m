@@ -18,6 +18,9 @@
 #import "PSMTabDragAssistant.h"
 #import "PTYTask.h"
 
+NSString *const kPSMModifierChangedNotification = @"kPSMModifierChangedNotification";
+NSString *const kPSMTabModifierKey = @"TabModifier";
+
 @interface PSMTabBarControl (Private)
 // characteristics
 - (float)availableCellWidth;
@@ -181,7 +184,10 @@
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowDidMove:) name:NSWindowDidMoveNotification object:[self window]];
 
         // modifier for changing tabs changed (iTerm2 addon)
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(modifierChanged:) name:@"iTermModifierChanged" object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(modifierChanged:)
+                                                     name:kPSMModifierChangedNotification
+                                                   object:nil];
     }
     [self setTarget:self];
     return self;
@@ -2357,7 +2363,7 @@
 
 - (void)modifierChanged:(NSNotification *)aNotification
 {
-    int mask = ([[[aNotification userInfo] objectForKey:@"TabModifier"] intValue]);
+    int mask = ([[[aNotification userInfo] objectForKey:kPSMTabModifierKey] intValue]);
     [self setModifier:mask];
 }
 

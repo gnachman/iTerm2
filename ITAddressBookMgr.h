@@ -230,6 +230,8 @@ typedef enum {
 - (void)stopLocatingBonjourServices;
 - (void)copyProfileToBookmark:(NSMutableDictionary *)dict;
 - (void)recursiveMigrateBookmarks:(NSDictionary*)node path:(NSArray*)array;
+
+// These two are deprecated in favor of -[NSString fontValue] and -[NSFont stringValue].
 + (NSFont *)fontWithDesc:(NSString *)fontDesc;
 + (NSString*)descFromFont:(NSFont*)font;
 - (void)setBookmarks:(NSArray*)newBookmarksArray defaultGuid:(NSString*)guid;

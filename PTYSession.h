@@ -34,7 +34,7 @@ extern NSString *const kPTYSessionTmuxFontDidChange;
 @class iTermController;
 @class iTermGrowlDelegate;
 
-// The time period for just blinking is in -[PreferencePanel timeBetweenBlinks].
+// The time period for just blinking is in -[iTermAdvancedSettingsModel timeBetweenBlinks].
 // Timer period when receiving lots of data.
 static const float kSlowTimerIntervalSec = 1.0 / 15.0;
 // Timer period for interactive use.

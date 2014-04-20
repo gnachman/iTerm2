@@ -14,8 +14,9 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermPasteHelper.h"
+#import "iTermPreferences.h"
 #import "iTermSelection.h"
-#import "iTermSettingsModel.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermTextExtractor.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
@@ -570,15 +571,15 @@ typedef enum {
 
     _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, VMARGIN, aSize.width, aSize.height)
                                           colorMap:_colorMap];
-    _colorMap.dimOnlyText = [[PreferencePanel sharedInstance] dimOnlyText];
+    _colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
     [_textview setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [_textview setFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NORMAL_FONT]]
           nonAsciiFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NON_ASCII_FONT]]
      horizontalSpacing:[[_profile objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
        verticalSpacing:[[_profile objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [self setTransparency:[[_profile objectForKey:KEY_TRANSPARENCY] floatValue]];
-        const float theBlend = [_profile objectForKey:KEY_BLEND] ?
-                                   [[_profile objectForKey:KEY_BLEND] floatValue] : 0.5;
+    const float theBlend =
+        [_profile objectForKey:KEY_BLEND] ? [[_profile objectForKey:KEY_BLEND] floatValue] : 0.5;
     [self setBlend:theBlend];
 
     [_wrapper addSubview:_textview];
@@ -782,7 +783,7 @@ typedef enum {
 }
 
 - (BOOL)shouldSetCtype {
-    return ![iTermSettingsModel doNotSetCtype];
+    return ![iTermAdvancedSettingsModel doNotSetCtype];
 }
 
 - (void)startProgram:(NSString *)program
@@ -1005,7 +1006,7 @@ typedef enum {
     static BOOL checkedDebug;
     static BOOL debugKeyDown;
     if (!checkedDebug) {
-        debugKeyDown = [iTermSettingsModel debugKeyDown];
+        debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
         checkedDebug = YES;
     }
     if (debugKeyDown || gDebugLogging) {
@@ -1325,7 +1326,7 @@ typedef enum {
         model = [ProfileModel sharedInstance];
     }
     [model setBookmark:temp withGuid:[temp objectForKey:KEY_GUID]];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermKeyBindingsChanged"
+    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil
                                                       userInfo:nil];
     [[iTermController sharedInstance] reloadAllBookmarks];
@@ -1800,6 +1801,8 @@ typedef enum {
         DLog(@"Shared profile changed");
         [self sharedProfileDidChange];
         didChange = YES;
+        [_originalProfile autorelease];
+        _originalProfile = [sharedProfile copy];
     }
 
     if (_isDivorced) {
@@ -1844,19 +1847,15 @@ typedef enum {
         [_colorMap setColor:theColor forKey:kColorMap8bitBase + i];
     }
 
-    BOOL useSmartCursorColor;
+    BOOL useSmartCursorColor = NO;
     if ([aDict objectForKey:KEY_SMART_CURSOR_COLOR]) {
         useSmartCursorColor = [[aDict objectForKey:KEY_SMART_CURSOR_COLOR] boolValue];
-    } else {
-        useSmartCursorColor = [[PreferencePanel sharedInstance] legacySmartCursorColor];
     }
     [self setSmartCursorColor:useSmartCursorColor];
 
-    float minimumContrast;
+    float minimumContrast = 0;
     if ([aDict objectForKey:KEY_MINIMUM_CONTRAST]) {
         minimumContrast = [[aDict objectForKey:KEY_MINIMUM_CONTRAST] floatValue];
-    } else {
-        minimumContrast = [[PreferencePanel sharedInstance] legacyMinimumContrast];
     }
     [self setMinimumContrast:minimumContrast];
 
@@ -1871,7 +1870,9 @@ typedef enum {
 
     // transparency
     [self setTransparency:[[aDict objectForKey:KEY_TRANSPARENCY] floatValue]];
-    [self setBlend:[[aDict objectForKey:KEY_BLEND] floatValue]];
+    const float theBlend =
+        [aDict objectForKey:KEY_BLEND] ? [[aDict objectForKey:KEY_BLEND] floatValue] : 0.5;
+    [self setBlend:theBlend];
 
     // bold
     NSNumber* useBoldFontEntry = [aDict objectForKey:KEY_USE_BOLD_FONT];
@@ -1897,7 +1898,7 @@ typedef enum {
     [_screen setCursorBlinks:[[aDict objectForKey:KEY_BLINKING_CURSOR] boolValue]];
     [_textview setBlinkAllowed:[[aDict objectForKey:KEY_BLINK_ALLOWED] boolValue]];
     [_textview setBlinkingCursor:[[aDict objectForKey:KEY_BLINKING_CURSOR] boolValue]];
-    [_textview setCursorType:([aDict objectForKey:KEY_CURSOR_TYPE] ? [[aDict objectForKey:KEY_CURSOR_TYPE] intValue] : [[PreferencePanel sharedInstance] legacyCursorType])];
+    [_textview setCursorType:([aDict objectForKey:KEY_CURSOR_TYPE] ? [[aDict objectForKey:KEY_CURSOR_TYPE] intValue] : CURSOR_BOX)];
 
     PTYTab* currentTab = [[[self tab] parentWindow] currentTab];
     if (currentTab == nil || currentTab == [self tab]) {
@@ -1960,15 +1961,14 @@ typedef enum {
     NSString *prefix = _tmuxController ? [NSString stringWithFormat:@"↣ %@: ", [[self tab] tmuxWindowName]] : @"";
 
     BOOL baseIsBookmarkName = [base isEqualToString:_bookmarkName];
-    PreferencePanel* panel = [PreferencePanel sharedInstance];
-    if ([panel jobName] && _jobName) {
-        if (baseIsBookmarkName && ![panel showBookmarkName]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyShowJobName] && _jobName) {
+        if (baseIsBookmarkName && ![iTermPreferences boolForKey:kPreferenceKeyShowProfileName]) {
             return [NSString stringWithFormat:@"%@%@", prefix, [self jobName]];
         } else {
             return [NSString stringWithFormat:@"%@%@ (%@)", prefix, base, [self jobName]];
         }
     } else {
-        if (baseIsBookmarkName && ![panel showBookmarkName]) {
+        if (baseIsBookmarkName && ![iTermPreferences boolForKey:kPreferenceKeyShowProfileName]) {
             return [NSString stringWithFormat:@"%@Shell", prefix];
         } else {
             return [NSString stringWithFormat:@"%@%@", prefix, base];
@@ -2267,7 +2267,9 @@ typedef enum {
     }
 
     if (set) {
-        _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:[[PreferencePanel sharedInstance] antiIdleTimerPeriod]
+        NSTimeInterval period = MIN(60, [iTermAdvancedSettingsModel antiIdleTimerPeriod]);
+        
+        _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:period
                                                            target:self
                                                          selector:@selector(doAntiIdle)
                                                          userInfo:nil
@@ -2510,7 +2512,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
     if (anotherUpdateNeeded) {
         if ([[[self tab] parentWindow] currentTab] == [self tab]) {
-            [self scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
+            [self scheduleUpdateIn:[iTermAdvancedSettingsModel timeBetweenBlinks]];
         } else {
             [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
         }
@@ -2528,7 +2530,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)refreshAndStartTimerIfNeeded
 {
     if ([_textview refresh]) {
-        [self scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
+        [self scheduleUpdateIn:[iTermAdvancedSettingsModel timeBetweenBlinks]];
     }
 }
 
@@ -2641,7 +2643,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         verticalSpacing:verticalSpacing];
     DLog(@"Line height is now %f", (float)[_textview lineHeight]);
     if (![[[self tab] parentWindow] anyFullScreen]) {
-        if ([[PreferencePanel sharedInstance] adjustWindowForFontSizeChange]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyAdjustWindowForFontSizeChange]) {
             [[[self tab] parentWindow] fitWindowToTab:[self tab]];
         }
     }
@@ -2915,8 +2917,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [_textview selectedTextWithPad:NO];
 }
 
-- (void)copySelection
-{
+- (void)copySelection {
     return [_textview copySelectionAccordingToUserPreferences];
 }
 
@@ -3057,7 +3058,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self printTmuxMessage:@"  L    Toggle logging."];
     [self printTmuxMessage:@"  C    Run tmux command."];
 
-    if ([[PreferencePanel sharedInstance] autoHideTmuxClientSession]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession]) {
         [self hideSession];
     }
 }
@@ -3301,7 +3302,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     _terminal.parser.tmuxParser = nil;
     self.tmuxMode = TMUX_NONE;
 
-    if ([[PreferencePanel sharedInstance] autoHideTmuxClientSession] &&
+    if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession] &&
         [[[_tab realParentWindow] window] isMiniaturized]) {
         [[[_tab realParentWindow] window] deminiaturize:self];
     }
@@ -3446,7 +3447,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 // pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event
 {
-  BOOL debugKeyDown = [iTermSettingsModel debugKeyDown];
+  BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
   unsigned char *send_str = NULL;
   unsigned char *dataPtr = NULL;
   int dataLength = 0;
@@ -4150,7 +4151,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)textViewWillNeedUpdateForBlink
 {
-    [self scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
+    [self scheduleUpdateIn:[iTermAdvancedSettingsModel timeBetweenBlinks]];
 }
 
 - (void)textViewSplitVertically:(BOOL)vertically withProfileGuid:(NSString *)guid
@@ -4421,7 +4422,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                     break;
 
                 case MOUSE_REPORTING_NONE:
-                    if ([[PreferencePanel sharedInstance] alternateMouseScroll] &&
+                    if ([iTermAdvancedSettingsModel alternateMouseScroll] &&
                         [_screen showingAlternateScreen]) {
                         NSData *arrowKeyData = nil;
                         if (deltaY > 0) {
@@ -4725,7 +4726,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (BOOL)screenShouldSyncTitle {
-    if (![[PreferencePanel sharedInstance] showBookmarkName]) {
+    if (![iTermPreferences boolForKey:kPreferenceKeyShowProfileName]) {
         return NO;
     }
     return [[[self profile] objectForKey:KEY_SYNC_TITLE] boolValue];
@@ -5037,7 +5038,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenSetPasteboard:(NSString *)value {
-    if ([[PreferencePanel sharedInstance] allowClipboardAccess]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         if ([value isEqualToString:@"ruler"]) {
             [self setPasteboard:NSGeneralPboard];
         } else if ([value isEqualToString:@"find"]) {
@@ -5063,7 +5064,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 // Stop pasting (despited the name)
 - (void)screenCopyBufferToPasteboard {
-    if ([[PreferencePanel sharedInstance] allowClipboardAccess]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         [self setPasteboard:nil];
     } else {
         [_pasteboard release];
