@@ -436,11 +436,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyTripleClickSelectsFullWrappedLines];
 }
 
-- (BOOL)enableBonjour
-{
-    return [iTermPreferences boolForKey:kPreferenceKeyAddBonjourHostsToProfiles];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
