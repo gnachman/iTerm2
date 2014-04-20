@@ -154,7 +154,7 @@ static BOOL hasBecomeActive = NO;
             [WindowArrangements makeDefaultArrangement:LEGACY_DEFAULT_ARRANGEMENT_NAME];
         }
 
-        if ([[PreferencePanel sharedInstance] openBookmark]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyOpenBookmark]) {
             // Open bookmarks window at startup.
             [self showBookmarkWindow:nil];
             if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {

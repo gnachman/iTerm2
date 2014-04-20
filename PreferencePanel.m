@@ -492,11 +492,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen];
 }
 
-- (BOOL)openBookmark
-{
-    return [iTermPreferences boolForKey:kPreferenceKeyOpenBookmark];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

@@ -110,7 +110,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)hideActivityIndicator;
 - (BOOL)highlightTabLabels;
 - (BOOL)hideMenuBarInFullscreen;
-- (BOOL)openBookmark;
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;
