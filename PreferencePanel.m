@@ -501,10 +501,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
 }
 
-- (BOOL)hideScrollbar {
-    return [iTermPreferences boolForKey:kPreferenceKeyHideScrollbar];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

@@ -112,7 +112,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)hideMenuBarInFullscreen;
 - (BOOL)openBookmark;
 - (NSString *)wordChars;
-- (BOOL)hideScrollbar;
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;

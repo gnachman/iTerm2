@@ -3004,7 +3004,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (BOOL)scrollbarShouldBeVisible
 {
-    return ![[PreferencePanel sharedInstance] hideScrollbar];
+    return ![iTermPreferences boolForKey:kPreferenceKeyHideScrollbar];
 }
 
 - (void)windowWillStartLiveResize:(NSNotification *)notification
