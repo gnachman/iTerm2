@@ -293,7 +293,8 @@ static BOOL hasBecomeActive = NO;
     PreferencePanel* ppanel = [PreferencePanel sharedInstance];
     // Code could be 0 (e.g., A on an American keyboard) and char is also sometimes 0 (seen in bug 2501).
     if ([ppanel hotkey] && ([ppanel hotkeyCode] || [ppanel hotkeyChar])) {
-        [[HotkeyWindowController sharedInstance] registerHotkey:[ppanel hotkeyCode] modifiers:[ppanel hotkeyModifiers]];
+        [[HotkeyWindowController sharedInstance] registerHotkey:[ppanel hotkeyCode]
+                                                      modifiers:[iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers]];
     }
     if ([ppanel isAnyModifierRemapped]) {
         // Use a brief delay so windows have a chance to open before the dialog is shown.
