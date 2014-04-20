@@ -464,10 +464,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyOptionClickMovesCursor];
 }
 
-- (BOOL)passOnControlLeftClick {
-    return [iTermPreferences boolForKey:kPreferenceKeyControlLeftClickBypassesContextMenu];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

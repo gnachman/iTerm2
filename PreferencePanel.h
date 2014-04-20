@@ -103,7 +103,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)enableGrowl;
 - (BOOL)cmdSelection;
 - (BOOL)optionClickMovesCursor;
-- (BOOL)passOnControlLeftClick;
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;
