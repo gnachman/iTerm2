@@ -141,7 +141,6 @@ void LoadPrefsFromCustomFolder(void);
 - (float)legacyMinimumContrast;
 - (BOOL)quitWhenAllWindowsClosed;
 - (BOOL)useUnevenTabs;
-- (int)minTabWidth;
 
 - (void)changeFont:(id)fontManager;
 - (void)selectProfilesTab;

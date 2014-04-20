@@ -5493,7 +5493,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [[PreferencePanel sharedInstance] hideTabNumber]) {
         [tabBarControl setCellMinWidth:[iTermSettingsModel minCompactTabWidth]];
     } else {
-        [tabBarControl setCellMinWidth:[[PreferencePanel sharedInstance] minTabWidth]];
+        [tabBarControl setCellMinWidth:[iTermSettingsModel minTabWidth]];
     }
     [tabBarControl setSizeCellsToFit:[[PreferencePanel sharedInstance] useUnevenTabs]];
     [tabBarControl setCellOptimumWidth:[iTermSettingsModel optimumTabWidth]];
