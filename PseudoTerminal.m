@@ -2871,7 +2871,8 @@ NSString *kSessionsKVCKey = @"sessions";
         // The toolbar goes away for traditional fullscreen windows because a
         // borderless window doesn't support a toolbar.
         [self setWindowStyleMask:[self styleMask]];
-        [self.window setFrame:self.window.screen.frame display:YES];
+        [self.window setFrame:[self traditionalFullScreenFrameForScreen:self.window.screen]
+                      display:YES];
         self.window.alphaValue = 1;
     } else {
         [self showMenuBar];
