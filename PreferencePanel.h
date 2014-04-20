@@ -113,7 +113,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)openBookmark;
 - (NSString *)wordChars;
 - (BOOL)hideScrollbar;
-- (BOOL)showPaneTitles;
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;

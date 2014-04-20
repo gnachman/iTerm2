@@ -505,10 +505,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyHideScrollbar];
 }
 
-- (BOOL)showPaneTitles {
-    return [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

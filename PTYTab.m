@@ -11,6 +11,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
+#import "iTermPreferences.h"
 #import "TmuxLayoutParser.h"
 #import "ProfileModel.h"
 #import "IntervalMap.h"
@@ -72,15 +73,10 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     deadStateColor = [NSColor grayColor];
 }
 
-+ (BOOL)showTitlesPref
-{
-    return [[PreferencePanel sharedInstance] showPaneTitles];
-}
-
 - (BOOL)updatePaneTitles
 {
     BOOL anyChange = NO;
-    const BOOL showTitles = [PTYTab showTitlesPref];
+    const BOOL showTitles = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
     NSArray *sessions = [self sessions];
     for (PTYSession *aSession in sessions) {
         if ([[aSession view] setShowTitle:(showTitles && [sessions count] > 1)
@@ -2425,7 +2421,8 @@ static NSString* FormatRect(NSRect r) {
 
     NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
     BOOL haveMultipleSessions = ([theChildren count] > 1);
-    BOOL showTitles = [PTYTab showTitlesPref] && haveMultipleSessions;
+    BOOL showTitles =
+        [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles] && haveMultipleSessions;
     // Begin by decorating the tree with pixel sizes.
     [PTYTab _recursiveSetSizesInTmuxParseTree:parseTree
                                    showTitles:showTitles
