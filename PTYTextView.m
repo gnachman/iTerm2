@@ -8262,7 +8262,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     gettimeofday(&now, NULL);
     double timeDelta = now.tv_sec - lastBlink.tv_sec;
     timeDelta += (now.tv_usec - lastBlink.tv_usec) / 1000000.0;
-    if (timeDelta >= [[PreferencePanel sharedInstance] timeBetweenBlinks]) {
+    if (timeDelta >= [iTermSettingsModel timeBetweenBlinks]) {
         blinkShow = !blinkShow;
         lastBlink = now;
         redrawBlink = YES;

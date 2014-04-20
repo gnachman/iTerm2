@@ -709,11 +709,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermSettingsModel dockIconTogglesWindow];
 }
 
-- (NSTimeInterval)timeBetweenBlinks
-{
-    return [iTermSettingsModel timeBetweenBlinks];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

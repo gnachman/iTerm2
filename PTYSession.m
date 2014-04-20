@@ -2514,7 +2514,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
     if (anotherUpdateNeeded) {
         if ([[[self tab] parentWindow] currentTab] == [self tab]) {
-            [self scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
+            [self scheduleUpdateIn:[iTermSettingsModel timeBetweenBlinks]];
         } else {
             [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
         }
@@ -2532,7 +2532,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)refreshAndStartTimerIfNeeded
 {
     if ([_textview refresh]) {
-        [self scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
+        [self scheduleUpdateIn:[iTermSettingsModel timeBetweenBlinks]];
     }
 }
 
@@ -4154,7 +4154,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)textViewWillNeedUpdateForBlink
 {
-    [self scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
+    [self scheduleUpdateIn:[iTermSettingsModel timeBetweenBlinks]];
 }
 
 - (void)textViewSplitVertically:(BOOL)vertically withProfileGuid:(NSString *)guid

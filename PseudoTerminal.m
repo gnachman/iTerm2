@@ -2035,7 +2035,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
     // update the cursor
     if ([[[self currentSession] textview] refresh]) {
-        [[self currentSession] scheduleUpdateIn:[[PreferencePanel sharedInstance] timeBetweenBlinks]];
+        [[self currentSession] scheduleUpdateIn:[iTermSettingsModel timeBetweenBlinks]];
     }
     [[[self currentSession] textview] setNeedsDisplay:YES];
     [self _loadFindStringFromSharedPasteboard];
