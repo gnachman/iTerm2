@@ -7,6 +7,7 @@
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
+#import "iTermSettingsModel.h"
 #import "iTermShortcutInputView.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
@@ -55,7 +56,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 
     [NSApp activateIgnoringOtherApps:YES];
     [[term window] makeKeyAndOrderFront:nil];
-    [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
+    [[NSAnimationContext currentContext] setDuration:[iTermSettingsModel hotkeyTermAnimationDuration]];
     [[[term window] animator] setAlphaValue:1];
     [[HotkeyWindowController sharedInstance] performSelector:@selector(rollInFinished)
                                                   withObject:nil
@@ -150,7 +151,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         return;
     }
     BOOL temp = [term isHotKeyWindow];
-    [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
+    [[NSAnimationContext currentContext] setDuration:[iTermSettingsModel hotkeyTermAnimationDuration]];
     [[[term window] animator] setAlphaValue:0];
 
     [[HotkeyWindowController sharedInstance] performSelector:@selector(restoreNormalcy:)

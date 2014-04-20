@@ -678,10 +678,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermSettingsModel alternateMouseScroll];
 }
 
-- (float)hotkeyTermAnimationDuration {
-    return [iTermSettingsModel hotkeyTermAnimationDuration];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
