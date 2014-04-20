@@ -613,10 +613,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes];
 }
 
-- (BOOL)dimBackgroundWindows {
-    return [iTermPreferences boolForKey:kPreferenceKeyDimBackgroundWindows];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

@@ -211,7 +211,7 @@ static NSDate* lastResizeDate_;
 - (void)setBackgroundDimmed:(BOOL)backgroundDimmed
 {
     BOOL orig = backgroundDimmed_;
-    if ([[PreferencePanel sharedInstance] dimBackgroundWindows]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyDimBackgroundWindows]) {
         backgroundDimmed_ = backgroundDimmed;
     } else {
         backgroundDimmed_ = NO;
