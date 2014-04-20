@@ -340,6 +340,8 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 #pragma mark - Hotkey Window
 
+// This is used by HotkeyWindowController to not activate the hotkey while the field for typing
+// the hotkey into is the first responder.
 - (NSTextField*)hotkeyField {
     return _keysViewController.hotkeyField;
 }
@@ -361,7 +363,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (float)legacyMinimumContrast
 {
-    return [_userDefaults objectForKey:@"MinimumContrast"] ? [[_userDefaults objectForKey:@"MinimumContrast"] floatValue] : 0;;
+    return [_userDefaults objectForKey:@"MinimumContrast"] ? [[_userDefaults objectForKey:@"MinimumContrast"] floatValue] : 0;
 }
 
 - (BOOL)allowClipboardAccess
