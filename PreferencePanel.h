@@ -119,7 +119,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)adjustWindowForFontSizeChange;
 - (BOOL)windowNumber;
 - (BOOL)jobName;
-- (BOOL)showBookmarkName;
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;

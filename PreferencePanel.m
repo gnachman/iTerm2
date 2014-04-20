@@ -529,10 +529,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyShowJobName];
 }
 
-- (BOOL)showBookmarkName {
-    return [iTermPreferences boolForKey:kPreferenceKeyShowProfileName];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

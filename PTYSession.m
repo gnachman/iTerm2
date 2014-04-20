@@ -1965,13 +1965,13 @@ typedef enum {
     BOOL baseIsBookmarkName = [base isEqualToString:_bookmarkName];
     PreferencePanel* panel = [PreferencePanel sharedInstance];
     if ([panel jobName] && _jobName) {
-        if (baseIsBookmarkName && ![panel showBookmarkName]) {
+        if (baseIsBookmarkName && ![iTermPreferences boolForKey:kPreferenceKeyShowProfileName]) {
             return [NSString stringWithFormat:@"%@%@", prefix, [self jobName]];
         } else {
             return [NSString stringWithFormat:@"%@%@ (%@)", prefix, base, [self jobName]];
         }
     } else {
-        if (baseIsBookmarkName && ![panel showBookmarkName]) {
+        if (baseIsBookmarkName && ![iTermPreferences boolForKey:kPreferenceKeyShowProfileName]) {
             return [NSString stringWithFormat:@"%@Shell", prefix];
         } else {
             return [NSString stringWithFormat:@"%@%@", prefix, base];
@@ -4730,7 +4730,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (BOOL)screenShouldSyncTitle {
-    if (![[PreferencePanel sharedInstance] showBookmarkName]) {
+    if (![iTermPreferences boolForKey:kPreferenceKeyShowProfileName]) {
         return NO;
     }
     return [[[self profile] objectForKey:KEY_SYNC_TITLE] boolValue];
