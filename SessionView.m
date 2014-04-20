@@ -143,7 +143,7 @@ static NSDate* lastResizeDate_;
     targetDimmingAmount_ = newDimmingAmount;
     [self markUpdateTime];
     const double kAnimationDuration = 0.1;
-    if ([[PreferencePanel sharedInstance] animateDimming]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyAnimateDimming]) {
         changePerSecond_ = (targetDimmingAmount_ - currentDimmingAmount_) / kAnimationDuration;
         if (changePerSecond_ == 0) {
             // Nothing to do.

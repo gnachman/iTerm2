@@ -617,10 +617,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyDimBackgroundWindows];
 }
 
-- (BOOL)animateDimming {
-    return [iTermPreferences boolForKey:kPreferenceKeyAnimateDimming];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
