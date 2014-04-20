@@ -150,7 +150,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)alternateMouseScroll;
 - (float)hotkeyTermAnimationDuration;
 - (NSString *)searchCommand;
-- (NSTimeInterval)antiIdleTimerPeriod;
 - (void)changeFont:(id)fontManager;
 - (void)selectProfilesTab;
 - (void)underlyingBookmarkDidChange;
@@ -166,8 +165,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)isAnyModifierRemapped;
 - (int)switchTabModifier;
 - (int)switchWindowModifier;
-
-- (BOOL)hotkeyAutoHides;
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename;
 

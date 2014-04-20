@@ -687,15 +687,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermSettingsModel searchCommand];
 }
 
-- (NSTimeInterval)antiIdleTimerPeriod {
-    NSTimeInterval period = [iTermSettingsModel antiIdleTimerPeriod];
-    if (period > 0) {
-        return period;
-    } else {
-        return 30;
-    }
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

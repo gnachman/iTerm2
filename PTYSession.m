@@ -2271,7 +2271,9 @@ typedef enum {
     }
 
     if (set) {
-        _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:[[PreferencePanel sharedInstance] antiIdleTimerPeriod]
+        NSTimeInterval period = MIN(60, [iTermSettingsModel antiIdleTimerPeriod]);
+        
+        _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:period
                                                            target:self
                                                          selector:@selector(doAntiIdle)
                                                          userInfo:nil
