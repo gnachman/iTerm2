@@ -700,10 +700,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow];
 }
 
-- (BOOL)hotkeyAutoHides {
-    return [iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

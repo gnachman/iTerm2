@@ -2004,7 +2004,9 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification
 {
-    [self maybeHideHotkeyWindow];
+    if (!_isHotKeyWindow) {
+        [self maybeHideHotkeyWindow];
+    }
     [[[NSApplication sharedApplication] dockTile] setBadgeLabel:@""];
     [[[NSApplication sharedApplication] dockTile] setShowsApplicationBadge:NO];
     PtyLog(@"%s(%d):-[PseudoTerminal windowDidBecomeKey:%@]",
@@ -2384,7 +2386,7 @@ NSString *kSessionsKVCKey = @"sessions";
     if (hotkeyTerminal) {
         DLog(@"Want to hide hotkey window");
         if ([[hotkeyTerminal window] alphaValue] > 0 &&
-            [[PreferencePanel sharedInstance] hotkeyAutoHides] &&
+            [iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides] &&
             ![[HotkeyWindowController sharedInstance] rollingInHotkeyTerm]) {
             DLog(@"windowDidResignKey: is hotkey and hotkey window auto-hides");
             // We want to dismiss the hotkey window when some other window
