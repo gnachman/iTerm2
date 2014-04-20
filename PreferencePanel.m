@@ -580,11 +580,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier];
 }
 
-- (BOOL)openArrangementAtStartup
-{
-    return [iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

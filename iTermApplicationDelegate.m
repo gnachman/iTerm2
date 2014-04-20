@@ -157,11 +157,11 @@ static BOOL hasBecomeActive = NO;
         if ([[PreferencePanel sharedInstance] openBookmark]) {
             // Open bookmarks window at startup.
             [self showBookmarkWindow:nil];
-            if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
+            if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
                 // Open both bookmark window and arrangement!
                 [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
             }
-        } else if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
+        } else if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
             // Open the saved arrangement at startup.
             [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
         } else {
@@ -450,7 +450,7 @@ static BOOL hasBecomeActive = NO;
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication
 {
     if (!finishedLaunching_ &&
-        [[PreferencePanel sharedInstance] openArrangementAtStartup]) {
+        [iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
         // This happens if the OS is pre 10.7 or restore windows is off in
         // 10.7's prefs->general, and the window arrangement has no windows,
         // and it's set to load the arrangement on startup.

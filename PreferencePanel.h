@@ -122,7 +122,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)showBookmarkName;
 - (BOOL)instantReplay;
 - (BOOL)savePasteHistory;
-- (BOOL)openArrangementAtStartup;
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;
