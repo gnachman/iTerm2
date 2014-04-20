@@ -112,22 +112,22 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
     NSUserDefaults *_userDefaults;
 
-    IBOutlet NSToolbar* toolbar;
-    IBOutlet NSTabView* tabView;
-    IBOutlet NSToolbarItem* globalToolbarItem;
-    IBOutlet NSTabViewItem* globalTabViewItem;
-    IBOutlet NSToolbarItem* appearanceToolbarItem;
-    IBOutlet NSTabViewItem* appearanceTabViewItem;
-    IBOutlet NSToolbarItem* keyboardToolbarItem;
-    IBOutlet NSToolbarItem* arrangementsToolbarItem;
-    IBOutlet NSTabViewItem* keyboardTabViewItem;
-    IBOutlet NSTabViewItem* arrangementsTabViewItem;
-    IBOutlet NSToolbarItem* bookmarksToolbarItem;
-    IBOutlet NSTabViewItem* bookmarksTabViewItem;
-    IBOutlet NSToolbarItem* mouseToolbarItem;
-    IBOutlet NSTabViewItem* mouseTabViewItem;
-    IBOutlet NSToolbarItem* advancedToolbarItem;
-    IBOutlet NSTabViewItem* advancedTabViewItem;
+    IBOutlet NSToolbar *_toolbar;
+    IBOutlet NSTabView *_tabView;
+    IBOutlet NSToolbarItem *_globalToolbarItem;
+    IBOutlet NSTabViewItem *_globalTabViewItem;
+    IBOutlet NSToolbarItem *_appearanceToolbarItem;
+    IBOutlet NSTabViewItem *_appearanceTabViewItem;
+    IBOutlet NSToolbarItem *_keyboardToolbarItem;
+    IBOutlet NSToolbarItem *_arrangementsToolbarItem;
+    IBOutlet NSTabViewItem *_keyboardTabViewItem;
+    IBOutlet NSTabViewItem *_arrangementsTabViewItem;
+    IBOutlet NSToolbarItem *_bookmarksToolbarItem;
+    IBOutlet NSTabViewItem *_bookmarksTabViewItem;
+    IBOutlet NSToolbarItem *_mouseToolbarItem;
+    IBOutlet NSTabViewItem *_mouseTabViewItem;
+    IBOutlet NSToolbarItem *_advancedToolbarItem;
+    IBOutlet NSTabViewItem *_advancedTabViewItem;
 
     // This class is not well named. It is a lot like a view controller for the window
     // arrangements tab.
@@ -166,7 +166,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         _profileModel = model;
         _userDefaults = userDefaults;
 
-        [toolbar setSelectedItemIdentifier:[globalToolbarItem itemIdentifier]];
+        [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
 
         oneBookmarkMode = obMode;
     }
@@ -185,7 +185,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
-    [toolbar setSelectedItemIdentifier:[globalToolbarItem itemIdentifier]];
+    [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
 
     if (oneBookmarkMode) {
         [self layoutSubviewsForEditCurrentSessionMode];
@@ -195,7 +195,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 - (void)layoutSubviewsForEditCurrentSessionMode {
     [self selectProfilesTab];
     [_profilesViewController layoutSubviewsForEditCurrentSessionMode];
-    [toolbar setVisible:NO];
+    [_toolbar setVisible:NO];
 
     NSRect newFrame = [[self window] frame];
     newFrame.size.width = [_profilesViewController size].width + 26;
@@ -205,8 +205,8 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 #pragma mark - API
 
 - (void)selectProfilesTab {
-    [tabView selectTabViewItem:bookmarksTabViewItem];
-    [toolbar setSelectedItemIdentifier:[bookmarksToolbarItem itemIdentifier]];
+    [_tabView selectTabViewItem:_bookmarksTabViewItem];
+    [_toolbar setSelectedItemIdentifier:[_bookmarksToolbarItem itemIdentifier]];
 }
 
 - (void)openToProfileWithGuid:(NSString*)guid {
@@ -263,31 +263,31 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 #pragma mark - IBActions
 
 - (IBAction)showGlobalTabView:(id)sender {
-    [tabView selectTabViewItem:globalTabViewItem];
+    [_tabView selectTabViewItem:_globalTabViewItem];
 }
 
 - (IBAction)showAppearanceTabView:(id)sender {
-    [tabView selectTabViewItem:appearanceTabViewItem];
+    [_tabView selectTabViewItem:_appearanceTabViewItem];
 }
 
 - (IBAction)showBookmarksTabView:(id)sender {
-    [tabView selectTabViewItem:bookmarksTabViewItem];
+    [_tabView selectTabViewItem:_bookmarksTabViewItem];
 }
 
 - (IBAction)showKeyboardTabView:(id)sender {
-    [tabView selectTabViewItem:keyboardTabViewItem];
+    [_tabView selectTabViewItem:_keyboardTabViewItem];
 }
 
 - (IBAction)showArrangementsTabView:(id)sender {
-    [tabView selectTabViewItem:arrangementsTabViewItem];
+    [_tabView selectTabViewItem:_arrangementsTabViewItem];
 }
 
 - (IBAction)showMouseTabView:(id)sender {
-    [tabView selectTabViewItem:mouseTabViewItem];
+    [_tabView selectTabViewItem:_mouseTabViewItem];
 }
 
 - (IBAction)showAdvancedTabView:(id)sender {
-    [tabView selectTabViewItem:advancedTabViewItem];
+    [_tabView selectTabViewItem:_advancedTabViewItem];
 }
 
 #pragma mark - NSToolbarDelegate and ToolbarItemValidation
@@ -297,23 +297,23 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 }
 
 - (NSArray *)orderedToolbarIdentifiers {
-    return @[ [globalToolbarItem itemIdentifier],
-              [appearanceToolbarItem itemIdentifier],
-              [bookmarksToolbarItem itemIdentifier],
-              [keyboardToolbarItem itemIdentifier],
-              [arrangementsToolbarItem itemIdentifier],
-              [mouseToolbarItem itemIdentifier],
-              [advancedToolbarItem itemIdentifier] ];
+    return @[ [_globalToolbarItem itemIdentifier],
+              [_appearanceToolbarItem itemIdentifier],
+              [_bookmarksToolbarItem itemIdentifier],
+              [_keyboardToolbarItem itemIdentifier],
+              [_arrangementsToolbarItem itemIdentifier],
+              [_mouseToolbarItem itemIdentifier],
+              [_advancedToolbarItem itemIdentifier] ];
 }
 
 - (NSDictionary *)toolbarIdentifierToItemDictionary {
-    return @{ [globalToolbarItem itemIdentifier]: globalToolbarItem,
-              [appearanceToolbarItem itemIdentifier]: appearanceToolbarItem,
-              [bookmarksToolbarItem itemIdentifier]: bookmarksToolbarItem,
-              [keyboardToolbarItem itemIdentifier]: keyboardToolbarItem,
-              [arrangementsToolbarItem itemIdentifier]: arrangementsToolbarItem,
-              [mouseToolbarItem itemIdentifier]: mouseToolbarItem,
-              [advancedToolbarItem itemIdentifier]: advancedToolbarItem };
+    return @{ [_globalToolbarItem itemIdentifier]: _globalToolbarItem,
+              [_appearanceToolbarItem itemIdentifier]: _appearanceToolbarItem,
+              [_bookmarksToolbarItem itemIdentifier]: _bookmarksToolbarItem,
+              [_keyboardToolbarItem itemIdentifier]: _keyboardToolbarItem,
+              [_arrangementsToolbarItem itemIdentifier]: _arrangementsToolbarItem,
+              [_mouseToolbarItem itemIdentifier]: _mouseToolbarItem,
+              [_advancedToolbarItem itemIdentifier]: _advancedToolbarItem };
 }
 
 - (NSToolbarItem *)toolbar:(NSToolbar *)toolbar

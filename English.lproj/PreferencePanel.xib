@@ -7,26 +7,26 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="PreferencePanel">
             <connections>
+                <outlet property="_advancedTabViewItem" destination="KyW-GB-ElH" id="D3N-Z7-BU3"/>
+                <outlet property="_advancedToolbarItem" destination="gtg-rw-6h8" id="fhX-IE-hiG"/>
+                <outlet property="_appearanceTabViewItem" destination="4439" id="Hau-Oo-c18"/>
+                <outlet property="_appearanceToolbarItem" destination="5889" id="3e8-bj-Pgh"/>
+                <outlet property="_arrangementsTabViewItem" destination="5417" id="Zhy-fF-7su"/>
+                <outlet property="_arrangementsToolbarItem" destination="5890" id="2RT-x5-vvx"/>
+                <outlet property="_bookmarksTabViewItem" destination="1945" id="Byu-Qr-6Jc"/>
+                <outlet property="_bookmarksToolbarItem" destination="5886" id="2yS-fU-fSr"/>
                 <outlet property="_generalPreferencesViewController" destination="9Se-ld-UJa" id="ebT-z7-cAn"/>
+                <outlet property="_globalTabViewItem" destination="1944" id="EaV-nW-mSM"/>
+                <outlet property="_globalToolbarItem" destination="5887" id="1KD-pS-eBt"/>
+                <outlet property="_keyboardTabViewItem" destination="3656" id="M15-z7-J3I"/>
+                <outlet property="_keyboardToolbarItem" destination="5888" id="Voj-Gc-oKG"/>
                 <outlet property="_keysViewController" destination="8TE-cq-5cL" id="4iT-4B-Ju4"/>
+                <outlet property="_mouseTabViewItem" destination="6059" id="yUj-wc-ZtM"/>
+                <outlet property="_mouseToolbarItem" destination="6056" id="Wc9-tZ-Fn8"/>
                 <outlet property="_profilesViewController" destination="HVI-63-mNz" id="jfc-z4-6um"/>
-                <outlet property="advancedTabViewItem" destination="KyW-GB-ElH" id="8r8-7W-7k9"/>
-                <outlet property="advancedToolbarItem" destination="gtg-rw-6h8" id="Enb-fp-ef2"/>
-                <outlet property="appearanceTabViewItem" destination="4439" id="4601"/>
-                <outlet property="appearanceToolbarItem" destination="5889" id="6038"/>
-                <outlet property="arrangementsTabViewItem" destination="5417" id="5578"/>
-                <outlet property="arrangementsToolbarItem" destination="5890" id="6041"/>
+                <outlet property="_tabView" destination="1943" id="ygD-e3-PPB"/>
+                <outlet property="_toolbar" destination="5885" id="m2f-4x-oIV"/>
                 <outlet property="arrangements_" destination="5572" id="5584"/>
-                <outlet property="bookmarksTabViewItem" destination="1945" id="2863"/>
-                <outlet property="bookmarksToolbarItem" destination="5886" id="6039"/>
-                <outlet property="globalTabViewItem" destination="1944" id="2864"/>
-                <outlet property="globalToolbarItem" destination="5887" id="6037"/>
-                <outlet property="keyboardTabViewItem" destination="3656" id="4216"/>
-                <outlet property="keyboardToolbarItem" destination="5888" id="6040"/>
-                <outlet property="mouseTabViewItem" destination="6059" id="6061"/>
-                <outlet property="mouseToolbarItem" destination="6056" id="6057"/>
-                <outlet property="tabView" destination="1943" id="2853"/>
-                <outlet property="toolbar" destination="5885" id="6042"/>
                 <outlet property="window" destination="1923" id="2981"/>
             </connections>
         </customObject>
@@ -3928,7 +3928,7 @@ Gw
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
-                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="229"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
