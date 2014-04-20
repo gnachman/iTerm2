@@ -166,13 +166,13 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyDisableFullscreenTransparencyByDefault: @NO,
                   kPreferenceKeyDimBackgroundWindows: @NO,
 
-                  kPreferenceKeyControlRemapping: @(MOD_TAG_CONTROL),
-                  kPreferenceKeyLeftOptionRemapping: @(MOD_TAG_LEFT_OPTION),
-                  kPreferenceKeyRightOptionRemapping: @(MOD_TAG_RIGHT_OPTION),
-                  kPreferenceKeyLeftCommandRemapping: @(MOD_TAG_LEFT_COMMAND),
-                  kPreferenceKeyRightCommandRemapping: @(MOD_TAG_RIGHT_COMMAND),
-                  kPreferenceKeySwitchTabModifier: @(MOD_TAG_ANY_COMMAND),
-                  kPreferenceKeySwitchWindowModifier: @(MOD_TAG_CMD_OPT),
+                  kPreferenceKeyControlRemapping: @(kPreferencesModifierTagControl),
+                  kPreferenceKeyLeftOptionRemapping: @(kPreferencesModifierTagLeftOption),
+                  kPreferenceKeyRightOptionRemapping: @(kPreferencesModifierTagRightOption),
+                  kPreferenceKeyLeftCommandRemapping: @(kPreferencesModifierTagLeftCommand),
+                  kPreferenceKeyRightCommandRemapping: @(kPreferencesModifierTagRightCommand),
+                  kPreferenceKeySwitchTabModifier: @(kPreferencesModifierTagEitherCommand),
+                  kPreferenceKeySwitchWindowModifier: @(kPreferencesModifierTagCommandAndOption),
                   kPreferenceKeyHotkeyEnabled: @NO,
                   kPreferenceKeyHotKeyCode: @0,
                   kPreferenceKeyHotkeyCharacter: @0,
@@ -345,6 +345,23 @@ static NSMutableDictionary *gObservers;
         gObservers[key] = observersForKey;
     }
     [observersForKey addObject:[block copy]];
+}
+
++ (NSUInteger)maskForModifierTag:(iTermPreferencesModifierTag)tag {
+    switch (tag) {
+        case kPreferencesModifierTagEitherCommand:
+            return NSCommandKeyMask;
+            
+        case kPreferencesModifierTagCommandAndOption:
+            return NSCommandKeyMask | NSAlternateKeyMask;
+            
+        case kPreferencesModifierTagEitherOption:
+            return NSAlternateKeyMask;
+            
+        default:
+            NSLog(@"Unexpected value for maskForModifierTag: %d", tag);
+            return NSCommandKeyMask | NSAlternateKeyMask;
+    }
 }
 
 #pragma mark - Value Computation Methods

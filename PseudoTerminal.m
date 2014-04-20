@@ -49,6 +49,7 @@
 #import "iTermFontPanel.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermInstantReplayWindowController.h"
+#import "iTermPreferences.h"
 #import "iTermSettingsModel.h"
 #import "iTermURLSchemeController.h"
 #include <unistd.h>
@@ -542,7 +543,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
     [tabBarControl retain];
     PreferencePanel* pp = [PreferencePanel sharedInstance];
-    [tabBarControl setModifier:[pp modifierTagToMask:[pp switchTabModifier]]];
+    [tabBarControl setModifier:[iTermPreferences maskForModifierTag:[pp switchTabModifier]]];
     if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) {
         [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMinYMargin)];
     } else {

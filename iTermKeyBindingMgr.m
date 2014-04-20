@@ -689,20 +689,20 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
 + (NSInteger)_cgMaskForMod:(int)mod
 {
     switch (mod) {
-        case MOD_TAG_CONTROL:
+        case kPreferencesModifierTagControl:
             return kCGEventFlagMaskControl;
 
-        case MOD_TAG_LEFT_OPTION:
-        case MOD_TAG_RIGHT_OPTION:
-        case MOD_TAG_OPTION:
+        case kPreferencesModifierTagLeftOption:
+        case kPreferencesModifierTagRightOption:
+        case kPreferencesModifierTagEitherOption:
             return kCGEventFlagMaskAlternate;
 
-        case MOD_TAG_ANY_COMMAND:
-        case MOD_TAG_LEFT_COMMAND:
-        case MOD_TAG_RIGHT_COMMAND:
+        case kPreferencesModifierTagEitherCommand:
+        case kPreferencesModifierTagLeftCommand:
+        case kPreferencesModifierTagRightCommand:
             return kCGEventFlagMaskCommand;
 
-        case MOD_TAG_CMD_OPT:
+        case kPreferencesModifierTagCommandAndOption:
             return kCGEventFlagMaskCommand | kCGEventFlagMaskAlternate;
 
         default:
@@ -713,26 +713,26 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
 + (NSInteger)_nxMaskForLeftMod:(int)mod
 {
     switch (mod) {
-        case MOD_TAG_CONTROL:
+        case kPreferencesModifierTagControl:
             return NX_DEVICELCTLKEYMASK;
 
-        case MOD_TAG_LEFT_OPTION:
+        case kPreferencesModifierTagLeftOption:
             return NX_DEVICELALTKEYMASK;
 
-        case MOD_TAG_RIGHT_OPTION:
+        case kPreferencesModifierTagRightOption:
             return NX_DEVICERALTKEYMASK;
 
-        case MOD_TAG_OPTION:
+        case kPreferencesModifierTagEitherOption:
             return NX_DEVICELALTKEYMASK;
 
-        case MOD_TAG_RIGHT_COMMAND:
+        case kPreferencesModifierTagRightCommand:
             return NX_DEVICERCMDKEYMASK;
 
-        case MOD_TAG_LEFT_COMMAND:
-        case MOD_TAG_ANY_COMMAND:
+        case kPreferencesModifierTagLeftCommand:
+        case kPreferencesModifierTagEitherCommand:
             return NX_DEVICELCMDKEYMASK;
 
-        case MOD_TAG_CMD_OPT:
+        case kPreferencesModifierTagCommandAndOption:
             return NX_DEVICELCMDKEYMASK | NX_DEVICELALTKEYMASK;
 
         default:
@@ -743,26 +743,26 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
 + (NSInteger)_nxMaskForRightMod:(int)mod
 {
     switch (mod) {
-        case MOD_TAG_CONTROL:
+        case kPreferencesModifierTagControl:
             return NX_DEVICERCTLKEYMASK;
 
-        case MOD_TAG_LEFT_OPTION:
+        case kPreferencesModifierTagLeftOption:
             return NX_DEVICELALTKEYMASK;
 
-        case MOD_TAG_RIGHT_OPTION:
+        case kPreferencesModifierTagRightOption:
             return NX_DEVICERALTKEYMASK;
 
-        case MOD_TAG_OPTION:
+        case kPreferencesModifierTagEitherOption:
             return NX_DEVICERALTKEYMASK;
 
-        case MOD_TAG_LEFT_COMMAND:
+        case kPreferencesModifierTagLeftCommand:
             return NX_DEVICELCMDKEYMASK;
 
-        case MOD_TAG_RIGHT_COMMAND:
-        case MOD_TAG_ANY_COMMAND:
+        case kPreferencesModifierTagRightCommand:
+        case kPreferencesModifierTagEitherCommand:
             return NX_DEVICERCMDKEYMASK;
 
-        case MOD_TAG_CMD_OPT:
+        case kPreferencesModifierTagCommandAndOption:
             return NX_DEVICERCMDKEYMASK | NX_DEVICERALTKEYMASK;
 
         default:

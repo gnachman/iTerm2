@@ -340,24 +340,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 #pragma mark - Utilities
 
-- (int)modifierTagToMask:(int)tag
-{
-    switch (tag) {
-        case MOD_TAG_ANY_COMMAND:
-            return NSCommandKeyMask;
-
-        case MOD_TAG_CMD_OPT:
-            return NSCommandKeyMask | NSAlternateKeyMask;
-
-        case MOD_TAG_OPTION:
-            return NSAlternateKeyMask;
-
-        default:
-            NSLog(@"Unexpected value for modifierTagToMask: %d", tag);
-            return NSCommandKeyMask | NSAlternateKeyMask;
-    }
-}
-
 // Pick out the digits from s and clamp it to a range.
 - (int)intForString:(NSString *)s inRange:(NSRange)range
 {
@@ -592,11 +574,11 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (BOOL)isAnyModifierRemapped
 {
-    return ([self control] != MOD_TAG_CONTROL ||
-            [self leftOption] != MOD_TAG_LEFT_OPTION ||
-            [self rightOption] != MOD_TAG_RIGHT_OPTION ||
-            [self leftCommand] != MOD_TAG_LEFT_COMMAND ||
-            [self rightCommand] != MOD_TAG_RIGHT_COMMAND);
+    return ([self control] != kPreferencesModifierTagControl ||
+            [self leftOption] != kPreferencesModifierTagLeftOption ||
+            [self rightOption] != kPreferencesModifierTagRightOption ||
+            [self leftCommand] != kPreferencesModifierTagLeftCommand ||
+            [self rightCommand] != kPreferencesModifierTagRightCommand);
 }
 
 - (int)switchTabModifier {

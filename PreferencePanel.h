@@ -86,7 +86,6 @@ void LoadPrefsFromCustomFolder(void);
 - (void)run;
 - (float)fsTabDelay;
 - (BOOL)trimTrailingWhitespace;
-- (int)modifierTagToMask:(int)tag;
 - (BOOL)allowClipboardAccess;
 - (BOOL)copySelection;
 - (BOOL)copyLastNewline;

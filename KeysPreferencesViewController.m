@@ -230,7 +230,7 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 - (void)postModifierChangedNotification {
     PreferencePanel *prefs = [PreferencePanel sharedInstance];
     NSDictionary *userInfo =
-        @{ kPSMTabModifierKey: @([prefs modifierTagToMask:[prefs switchTabModifier]]) };
+        @{ kPSMTabModifierKey: @([iTermPreferences maskForModifierTag:[prefs switchTabModifier]]) };
     [[NSNotificationCenter defaultCenter] postNotificationName:kPSMModifierChangedNotification
                                                         object:nil
                                                       userInfo:userInfo];

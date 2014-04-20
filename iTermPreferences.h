@@ -25,15 +25,16 @@
 #define TAB_POSITION_BOTTOM PSMTab_BottomTab
 
 // Values for kPreferenceKeyXxxRemapping (corresponds to tags in controls).
-#define MOD_TAG_CONTROL 1
-#define MOD_TAG_LEFT_OPTION 2
-#define MOD_TAG_RIGHT_OPTION 3
-#define MOD_TAG_ANY_COMMAND 4
-#define MOD_TAG_OPTION 5  // refers to any option key
-#define MOD_TAG_CMD_OPT 6  // both cmd and opt at the same time
-#define MOD_TAG_LEFT_COMMAND 7
-#define MOD_TAG_RIGHT_COMMAND 8
-
+typedef NS_ENUM(int, iTermPreferencesModifierTag) {
+    kPreferencesModifierTagControl = 1,
+    kPreferencesModifierTagLeftOption = 2,
+    kPreferencesModifierTagRightOption = 3,
+    kPreferencesModifierTagEitherCommand = 4,
+    kPreferencesModifierTagEitherOption = 5,  // refers to any option key
+    kPreferencesModifierTagCommandAndOption = 6,  // both cmd and opt at the same time
+    kPreferencesModifierTagLeftCommand = 7,
+    kPreferencesModifierTagRightCommand = 8,
+};
 
 // General
 extern NSString *const kPreferenceKeyOpenBookmark;
@@ -144,5 +145,7 @@ extern NSString *const kPreferenceKeyAppVersion;
 // Class method to copy old preferences file, iTerm.plist or net.sourceforge.iTerm.plist, to new
 // preferences file, com.googlecode.iterm2.plist
 + (BOOL)migratePreferences;
+
++ (NSUInteger)maskForModifierTag:(iTermPreferencesModifierTag)tag;
 
 @end

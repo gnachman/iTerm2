@@ -1,6 +1,3 @@
-// -*- mode:objc -*-
-// $Id: iTermApplication.m,v 1.10 2006-11-07 08:03:08 yfabian Exp $
-//
 /*
  **  iTermApplication.m
  **
@@ -32,6 +29,7 @@
 #import "HotkeyWindowController.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermPreferences.h"
 #import "iTermShortcutInputView.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
@@ -96,7 +94,7 @@
         PTYSession* currentSession = [currentTerminal currentSession];
         NSResponder *responder;
 
-        if (([event modifierFlags] & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == [prefPanel modifierTagToMask:[prefPanel switchWindowModifier]]) {
+        if (([event modifierFlags] & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == [iTermPreferences maskForModifierTag:[prefPanel switchWindowModifier]]) {
             // Command-Alt (or selected modifier) + number: Switch to window by number.
             int digit = [[event charactersIgnoringModifiers] intValue];
             if (!digit) {
@@ -131,7 +129,7 @@
             }
 
             const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
-            if (([event modifierFlags] & mask) == [prefPanel modifierTagToMask:[prefPanel switchTabModifier]]) {
+            if (([event modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[prefPanel switchTabModifier]]) {
                 int digit = [[event charactersIgnoringModifiers] intValue];
                 if (!digit) {
                     digit = [[event characters] intValue];
