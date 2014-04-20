@@ -102,7 +102,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 @implementation PreferencePanel {
     ProfileModel *_profileModel;
-    BOOL oneBookmarkMode;
+    BOOL _editCurrentSessionMode;
     IBOutlet GeneralPreferencesViewController *_generalPreferencesViewController;
     IBOutlet KeysPreferencesViewController *_keysViewController;
     IBOutlet ProfilePreferencesViewController *_profilesViewController;
@@ -140,7 +140,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     dispatch_once(&once, ^{
         instance = [[self alloc] initWithProfileModel:[ProfileModel sharedInstance]
                                          userDefaults:[NSUserDefaults standardUserDefaults]
-                                      oneBookmarkMode:NO];
+                               editCurrentSessionMode:NO];
     });
     return instance;
 }
@@ -151,14 +151,14 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     dispatch_once(&once, ^{
         instance = [[self alloc] initWithProfileModel:[ProfileModel sessionsInstance]
                                          userDefaults:nil
-                                      oneBookmarkMode:YES];
+                               editCurrentSessionMode:YES];
     });
     return instance;
 }
 
 - (id)initWithProfileModel:(ProfileModel*)model
               userDefaults:(NSUserDefaults*)userDefaults
-           oneBookmarkMode:(BOOL)obMode {
+    editCurrentSessionMode:(BOOL)editCurrentSessionMode {
     self = [super initWithWindowNibName:@"PreferencePanel"];
     if (self) {
         _profileModel = model;
@@ -166,7 +166,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
         [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
 
-        oneBookmarkMode = obMode;
+        _editCurrentSessionMode = editCurrentSessionMode;
     }
     return self;
 }
@@ -177,7 +177,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
 
-    if (oneBookmarkMode) {
+    if (_editCurrentSessionMode) {
         [self layoutSubviewsForEditCurrentSessionMode];
     }
 }
