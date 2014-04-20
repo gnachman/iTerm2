@@ -47,6 +47,5 @@
 - (void)updateProfileInModel:(Profile *)modifiedProfile;
 - (void)updateSubviewsForProfile:(Profile *)profile;
 - (void)reloadData;
-- (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict;
 
 @end

@@ -144,13 +144,9 @@
     }
 }
 
-- (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict {
-    NSString *value = [self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION];;
-    if (value) {
-        dict[KEY_BACKGROUND_IMAGE_LOCATION] = value;
-    } else {
-        [dict removeObjectForKey:KEY_BACKGROUND_IMAGE_LOCATION];
-    }
+- (NSArray *)allKeys {
+    NSArray *keys = @[ KEY_BACKGROUND_IMAGE_LOCATION ];
+    return [[super allKeys] arrayByAddingObjectsFromArray:keys];
 }
 
 - (void)reloadProfile {

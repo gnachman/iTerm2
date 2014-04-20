@@ -95,14 +95,9 @@
     [self updateRemoveJobButtonEnabled];
 }
 
-- (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict {
-    [super copyOwnedValuesToDict:dict];
-    NSArray *value = (NSArray *)[self objectForKey:KEY_JOBS];
-    if (value) {
-        dict[KEY_JOBS] = value;
-    } else {
-        [dict removeObjectForKey:KEY_JOBS];
-    }
+- (NSArray *)allKeys {
+    NSArray *keys = @[ KEY_JOBS ];
+    return [[super allKeys] arrayByAddingObjectsFromArray:keys];
 }
 
 #pragma mark - Prompt before closing

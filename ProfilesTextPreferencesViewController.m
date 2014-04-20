@@ -125,18 +125,9 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     [self updateNonAsciiFontViewVisibility];
 }
 
-// Export values that aren't bound with defineControl:key:type:.
-- (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict {
-    [super copyOwnedValuesToDict:dict];
-
-    for (NSString *key in @[ KEY_NORMAL_FONT, KEY_NON_ASCII_FONT ]) {
-        NSString *value = [self stringForKey:key];
-        if (value) {
-            dict[key] = value;
-        } else {
-            [dict removeObjectForKey:key];
-        }
-    }
+- (NSArray *)allKeys {
+    NSArray *keys = @[ KEY_NORMAL_FONT, KEY_NON_ASCII_FONT ];
+    return [[super allKeys] arrayByAddingObjectsFromArray:keys];
 }
 
 - (void)updateNonAsciiFontViewVisibility {

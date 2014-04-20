@@ -98,17 +98,4 @@
     }
 }
 
-- (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict {
-    Profile *profile = [_delegate profilePreferencesCurrentProfile];
-    for (NSControl *control in self.keyMap) {
-        PreferenceInfo *info = [self infoForControl:control];
-        id value = [iTermProfilePreferences objectForKey:info.key inProfile:profile];
-        if (value) {
-            dict[info.key] = value;
-        } else {
-            [dict removeObjectForKey:info.key];
-        }
-    }
-}
-
 @end

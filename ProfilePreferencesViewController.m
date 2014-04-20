@@ -218,12 +218,6 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [_profilesListView reloadData];
 }
 
-- (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict {
-    for (iTermProfilePreferencesBaseViewController *viewController in [self tabViewControllers]) {
-        [viewController copyOwnedValuesToDict:dict];
-    }
-}
-
 #pragma mark - ProfileListViewDelegate
 
 - (void)profileTableSelectionDidChange:(id)profileTable {
@@ -404,6 +398,15 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     BulkCopyProfilePreferencesWindowController *bulkCopyController =
         [[BulkCopyProfilePreferencesWindowController alloc] init];
     bulkCopyController.sourceGuid = profile[KEY_GUID];
+    
+    bulkCopyController.keysForColors = [_colorsViewController allKeys];
+    bulkCopyController.keysForText = [_textViewController allKeys];
+    bulkCopyController.keysForWindow = [_windowViewController allKeys];
+    bulkCopyController.keysForTerminal = [_terminalViewController allKeys];
+    bulkCopyController.keysForSession = [_sessionViewController allKeys];
+    bulkCopyController.keysForKeyboard = [_keysViewController allKeys];
+    bulkCopyController.keysForAdvanced = [_advancedViewController allKeys];
+    
     [NSApp beginSheet:bulkCopyController.window
        modalForWindow:self.view.window
         modalDelegate:self

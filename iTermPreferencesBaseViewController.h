@@ -15,7 +15,9 @@
 // In IB, assign all controls the -settingChanged: selector, and for text fields, make your view
 // controller the delegate.
 @interface iTermPreferencesBaseViewController : NSViewController
+
 @property(nonatomic, readonly) NSMapTable *keyMap;
+@property(nonatomic, readonly) NSArray *allKeys;
 
 #pragma mark - Core Methods
 

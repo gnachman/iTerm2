@@ -312,6 +312,9 @@ static NSString *const kKey = @"key";
                                                       userInfo:nil];
 }
 
+- (NSArray *)allKeys {
+    return [_keys allObjects];
+}
 
 #pragma mark - Constraints
 

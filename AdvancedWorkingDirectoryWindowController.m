@@ -42,16 +42,6 @@ static const NSInteger kRecycleDirectoryTag = 2;
               KEY_AWDS_PANE_DIRECTORY ];
 }
 
-- (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict {
-    for (NSString *key in [self allKeys]) {
-        if (_profile[key]) {
-            dict[key] = _profile[key];
-        } else {
-            [dict removeObjectForKey:key];
-        }
-    }
-}
-
 #pragma mark - Actions
 
 - (IBAction)ok:(id)sender {

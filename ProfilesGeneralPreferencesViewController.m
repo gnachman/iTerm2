@@ -118,9 +118,8 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     [self updateEditAdvancedConfigButton];
 }
 
-- (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict {
-    [super copyOwnedValuesToDict:dict];
-    [_advancedWorkingDirWindowController copyOwnedValuesToDict:dict];
+- (NSArray *)allKeys {
+    return [[super allKeys] arrayByAddingObjectsFromArray:[_advancedWorkingDirWindowController allKeys]];
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {

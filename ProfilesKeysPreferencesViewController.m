@@ -55,14 +55,9 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     [self updateDeleteSendsCtrlH];
 }
 
-- (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict {
-    [super copyOwnedValuesToDict:dict];
-    NSArray *value = (NSArray *)[self objectForKey:KEY_KEYBOARD_MAP];
-    if (value) {
-        dict[KEY_KEYBOARD_MAP] = value;
-    } else {
-        [dict removeObjectForKey:KEY_KEYBOARD_MAP];
-    }
+- (NSArray *)allKeys {
+    NSArray *keys = @[ KEY_KEYBOARD_MAP ];
+    return [[super allKeys] arrayByAddingObjectsFromArray:keys];
 }
 
 - (void)reloadProfile {

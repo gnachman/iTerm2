@@ -23,20 +23,11 @@
     IBOutlet TrouterPrefsController *_trouterPrefController;
 }
 
-- (void)copyOwnedValuesToDict:(NSMutableDictionary *)dict {
-    [super copyOwnedValuesToDict:dict];
-
+- (NSArray *)allKeys {
     NSArray *keys = @[ KEY_TRIGGERS,
                        KEY_SMART_SELECTION_RULES,
                        KEY_TROUTER ];
-    for (NSString *key in keys) {
-        NSArray *value = (NSArray *)[self objectForKey:key];
-        if (value) {
-            dict[key] = value;
-        } else {
-            [dict removeObjectForKey:key];
-        }
-    }
+    return [[super allKeys] arrayByAddingObjectsFromArray:keys];
 }
 
 - (void)reloadProfile {
