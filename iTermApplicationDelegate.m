@@ -292,8 +292,9 @@ static BOOL hasBecomeActive = NO;
 
     PreferencePanel* ppanel = [PreferencePanel sharedInstance];
     // Code could be 0 (e.g., A on an American keyboard) and char is also sometimes 0 (seen in bug 2501).
-    if ([ppanel hotkey] && ([iTermPreferences intForKey:kPreferenceKeyHotKeyCode] ||
-                            [iTermPreferences intForKey:kPreferenceKeyHotkeyCharacter])) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled] &&
+        ([iTermPreferences intForKey:kPreferenceKeyHotKeyCode] ||
+         [iTermPreferences intForKey:kPreferenceKeyHotkeyCharacter])) {
         [[HotkeyWindowController sharedInstance] registerHotkey:[iTermPreferences intForKey:kPreferenceKeyHotKeyCode]
                                                       modifiers:[iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers]];
     }
@@ -484,8 +485,7 @@ static BOOL hasBecomeActive = NO;
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication hasVisibleWindows:(BOOL)flag
 {
-    PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
-    if ([prefPanel hotkey] &&
+    if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled] &&
         [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow]) {
         // The hotkey window is configured.
         PseudoTerminal* hotkeyTerm = [[HotkeyWindowController sharedInstance] hotKeyWindow];

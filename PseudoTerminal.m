@@ -1556,7 +1556,7 @@ NSString *kSessionsKVCKey = @"sessions";
             return nil;
         }
         
-        if (![[PreferencePanel sharedInstance] hotkey]) {
+        if (![iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled]) {
             // Hotkey window disabled
             return nil;
         }

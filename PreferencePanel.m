@@ -590,10 +590,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences intForKey:kPreferenceKeyInstantReplayMemoryMegabytes];
 }
 
-- (BOOL)hotkey {
-    return [iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
