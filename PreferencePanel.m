@@ -576,10 +576,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences intForKey:kPreferenceKeySwitchTabModifier];
 }
 
-- (int)switchWindowModifier {
-    return [iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

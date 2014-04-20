@@ -140,7 +140,6 @@ void LoadPrefsFromCustomFolder(void);
 - (int)rightCommand;
 - (BOOL)isAnyModifierRemapped;
 - (int)switchTabModifier;
-- (int)switchWindowModifier;
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename;
 
