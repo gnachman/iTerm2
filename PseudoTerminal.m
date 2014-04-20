@@ -1964,7 +1964,7 @@ NSString *kSessionsKVCKey = @"sessions";
             // We don't want the IR window to survive us, nor be saved in the restorable state.
             [self closeInstantReplayWindow];
         }
-        if ([[PreferencePanel sharedInstance] smartPlacement]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement]) {
             [[self window] saveFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, 0]];
         } else {
             // Save frame position for window
@@ -1972,7 +1972,7 @@ NSString *kSessionsKVCKey = @"sessions";
             [[TemporaryNumberAllocator sharedInstance] deallocateNumber:uniqueNumber_];
         }
     } else {
-        if (![[PreferencePanel sharedInstance] smartPlacement]) {
+        if (![iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement]) {
             // Save frame position for window
             [[self window] saveFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, uniqueNumber_]];
             [[TemporaryNumberAllocator sharedInstance] deallocateNumber:uniqueNumber_];
@@ -3232,7 +3232,7 @@ NSString *kSessionsKVCKey = @"sessions";
         return;
     }
     if (([[[iTermController sharedInstance] terminals] count] == 1) ||
-        (![[PreferencePanel sharedInstance] smartPlacement])) {
+        (![iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement])) {
         if ([iTermSettingsModel rememberWindowPositions]) {
             PtyLog(@"No smart layout");
             NSRect frame = [window frame];

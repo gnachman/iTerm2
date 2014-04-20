@@ -513,10 +513,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyDisableFullscreenTransparencyByDefault];
 }
 
-- (BOOL)smartPlacement {
-    return [iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
