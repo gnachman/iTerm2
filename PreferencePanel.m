@@ -599,11 +599,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences intForKey:kPreferenceKeyHotkeyCharacter];
 }
 
-- (int)hotkeyCode
-{
-    return [iTermPreferences intForKey:kPreferenceKeyHotKeyCode];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
