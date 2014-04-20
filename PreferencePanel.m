@@ -666,10 +666,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermSettingsModel minCompactTabWidth];
 }
 
-- (int)optimumTabWidth {
-    return [iTermSettingsModel optimumTabWidth];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

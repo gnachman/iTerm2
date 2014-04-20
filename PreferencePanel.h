@@ -143,7 +143,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)useUnevenTabs;
 - (int)minTabWidth;
 - (int)minCompactTabWidth;
-- (int)optimumTabWidth;
 
 - (void)changeFont:(id)fontManager;
 - (void)selectProfilesTab;
