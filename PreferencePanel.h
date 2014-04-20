@@ -125,7 +125,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)openArrangementAtStartup;
 - (int)irMemory;
 - (BOOL)hotkey;
-- (short)hotkeyChar;  // Nonzero if hotkey is set validly
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;

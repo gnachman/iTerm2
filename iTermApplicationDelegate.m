@@ -292,7 +292,8 @@ static BOOL hasBecomeActive = NO;
 
     PreferencePanel* ppanel = [PreferencePanel sharedInstance];
     // Code could be 0 (e.g., A on an American keyboard) and char is also sometimes 0 (seen in bug 2501).
-    if ([ppanel hotkey] && ([iTermPreferences intForKey:kPreferenceKeyHotKeyCode] || [ppanel hotkeyChar])) {
+    if ([ppanel hotkey] && ([iTermPreferences intForKey:kPreferenceKeyHotKeyCode] ||
+                            [iTermPreferences intForKey:kPreferenceKeyHotkeyCharacter])) {
         [[HotkeyWindowController sharedInstance] registerHotkey:[iTermPreferences intForKey:kPreferenceKeyHotKeyCode]
                                                       modifiers:[iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers]];
     }
