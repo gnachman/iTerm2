@@ -48,4 +48,11 @@
 // Saves or deletes the hotkey window's state from user defaults.
 - (void)saveHotkeyWindowState;
 
+- (int)controlRemapping;
+- (int)leftOptionRemapping;
+- (int)rightOptionRemapping;
+- (int)leftCommandRemapping;
+- (int)rightCommandRemapping;
+- (BOOL)isAnyModifierRemapped;
+
 @end

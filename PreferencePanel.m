@@ -543,35 +543,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeySavePasteAndCommandHistory];
 }
 
-- (int)control {
-    return [iTermPreferences intForKey:kPreferenceKeyControlRemapping];
-}
-
-- (int)leftOption {
-    return [iTermPreferences intForKey:kPreferenceKeyLeftOptionRemapping];
-}
-
-- (int)rightOption {
-    return [iTermPreferences intForKey:kPreferenceKeyRightOptionRemapping];
-}
-
-- (int)leftCommand {
-    return [iTermPreferences intForKey:kPreferenceKeyLeftCommandRemapping];
-}
-
-- (int)rightCommand {
-    return [iTermPreferences intForKey:kPreferenceKeyRightCommandRemapping];
-}
-
-- (BOOL)isAnyModifierRemapped
-{
-    return ([self control] != kPreferencesModifierTagControl ||
-            [self leftOption] != kPreferencesModifierTagLeftOption ||
-            [self rightOption] != kPreferencesModifierTagRightOption ||
-            [self leftCommand] != kPreferencesModifierTagLeftCommand ||
-            [self rightCommand] != kPreferencesModifierTagRightCommand);
-}
-
 - (int)switchTabModifier {
     return [iTermPreferences intForKey:kPreferenceKeySwitchTabModifier];
 }

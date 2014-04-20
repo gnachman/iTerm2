@@ -290,7 +290,6 @@ static BOOL hasBecomeActive = NO;
                              CFSTR(""),
                              kCFPreferencesCurrentApplication);
 
-    PreferencePanel* ppanel = [PreferencePanel sharedInstance];
     // Code could be 0 (e.g., A on an American keyboard) and char is also sometimes 0 (seen in bug 2501).
     if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled] &&
         ([iTermPreferences intForKey:kPreferenceKeyHotKeyCode] ||
@@ -298,7 +297,7 @@ static BOOL hasBecomeActive = NO;
         [[HotkeyWindowController sharedInstance] registerHotkey:[iTermPreferences intForKey:kPreferenceKeyHotKeyCode]
                                                       modifiers:[iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers]];
     }
-    if ([ppanel isAnyModifierRemapped]) {
+    if ([[HotkeyWindowController sharedInstance] isAnyModifierRemapped]) {
         // Use a brief delay so windows have a chance to open before the dialog is shown.
         [[HotkeyWindowController sharedInstance] performSelector:@selector(beginRemappingModifiers)
                                                       withObject:nil

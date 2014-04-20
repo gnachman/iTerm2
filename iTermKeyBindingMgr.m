@@ -74,6 +74,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
+#import "HotkeyWindowController.h"
 #import "PreferencePanel.h"
 #import <Carbon/Carbon.h>
 
@@ -772,62 +773,62 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
 
 + (NSInteger)_cgMaskForLeftCommandKey:(PreferencePanel*)pp
 {
-    return [self _cgMaskForMod:[pp leftCommand]];
+    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] leftCommandRemapping]];
 }
 
 + (NSInteger)_cgMaskForRightCommandKey:(PreferencePanel*)pp
 {
-    return [self _cgMaskForMod:[pp rightCommand]];
+    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] rightCommandRemapping]];
 }
 
 + (NSInteger)_nxMaskForLeftCommandKey:(PreferencePanel*)pp
 {
-    return [self _nxMaskForLeftMod:[pp leftCommand]];
+    return [self _nxMaskForLeftMod:[[HotkeyWindowController sharedInstance] leftCommandRemapping]];
 }
 
 + (NSInteger)_nxMaskForRightCommandKey:(PreferencePanel*)pp
 {
-    return [self _nxMaskForRightMod:[pp rightCommand]];
+    return [self _nxMaskForRightMod:[[HotkeyWindowController sharedInstance] rightCommandRemapping]];
 }
 
 + (NSInteger)_cgMaskForLeftAlternateKey:(PreferencePanel*)pp
 {
-    return [self _cgMaskForMod:[pp leftOption]];
+    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] leftOptionRemapping]];
 }
 
 + (NSInteger)_cgMaskForRightAlternateKey:(PreferencePanel*)pp
 {
-    return [self _cgMaskForMod:[pp rightOption]];
+    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] rightOptionRemapping]];
 }
 
 + (NSInteger)_nxMaskForLeftAlternateKey:(PreferencePanel*)pp
 {
-    return [self _nxMaskForLeftMod:[pp leftOption]];
+    return [self _nxMaskForLeftMod:[[HotkeyWindowController sharedInstance] leftOptionRemapping]];
 }
 
 + (NSInteger)_nxMaskForRightAlternateKey:(PreferencePanel*)pp
 {
-    return [self _nxMaskForRightMod:[pp rightOption]];
+    return [self _nxMaskForRightMod:[[HotkeyWindowController sharedInstance] rightOptionRemapping]];
 }
 
 + (NSInteger)_cgMaskForLeftControlKey:(PreferencePanel*)pp
 {
-    return [self _cgMaskForMod:[pp control]];
+    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
 }
 
 + (NSInteger)_cgMaskForRightControlKey:(PreferencePanel*)pp
 {
-    return [self _cgMaskForMod:[pp control]];
+    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
 }
 
 + (NSInteger)_nxMaskForLeftControlKey:(PreferencePanel*)pp
 {
-    return [self _nxMaskForLeftMod:[pp control]];
+    return [self _nxMaskForLeftMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
 }
 
 + (NSInteger)_nxMaskForRightControlKey:(PreferencePanel*)pp
 {
-    return [self _nxMaskForRightMod:[pp control]];
+    return [self _nxMaskForRightMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
 }
 
 + (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent prefPanel:(PreferencePanel*)pp

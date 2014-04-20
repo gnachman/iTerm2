@@ -648,4 +648,33 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     return [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsHotkeyWindowArrangement];
 }
 
+- (int)controlRemapping {
+    return [iTermPreferences intForKey:kPreferenceKeyControlRemapping];
+}
+
+- (int)leftOptionRemapping {
+    return [iTermPreferences intForKey:kPreferenceKeyLeftOptionRemapping];
+}
+
+- (int)rightOptionRemapping {
+    return [iTermPreferences intForKey:kPreferenceKeyRightOptionRemapping];
+}
+
+- (int)leftCommandRemapping {
+    return [iTermPreferences intForKey:kPreferenceKeyLeftCommandRemapping];
+}
+
+- (int)rightCommandRemapping {
+    return [iTermPreferences intForKey:kPreferenceKeyRightCommandRemapping];
+}
+
+- (BOOL)isAnyModifierRemapped
+{
+    return ([self controlRemapping] != kPreferencesModifierTagControl ||
+            [self leftOptionRemapping] != kPreferencesModifierTagLeftOption ||
+            [self rightOptionRemapping] != kPreferencesModifierTagRightOption ||
+            [self leftCommandRemapping] != kPreferencesModifierTagLeftCommand ||
+            [self rightCommandRemapping] != kPreferencesModifierTagRightCommand);
+}
+
 @end

@@ -221,8 +221,8 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 
 
 - (void)startEventTapIfNecessary {
-    PreferencePanel *prefs = [PreferencePanel sharedInstance];
-    if (([prefs isAnyModifierRemapped] && ![[HotkeyWindowController sharedInstance] haveEventTap])) {
+    if (([[HotkeyWindowController sharedInstance] isAnyModifierRemapped] &&
+         ![[HotkeyWindowController sharedInstance] haveEventTap])) {
         [[HotkeyWindowController sharedInstance] beginRemappingModifiers];
     }
 }

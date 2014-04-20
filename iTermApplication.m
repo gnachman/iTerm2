@@ -75,7 +75,7 @@
         }
 #endif
         PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
-        if ([prefPanel isAnyModifierRemapped] &&
+        if ([[HotkeyWindowController sharedInstance] isAnyModifierRemapped] &&
             (IsSecureEventInputEnabled() || ![[HotkeyWindowController sharedInstance] haveEventTap])) {
             // The event tap is not working, but we can still remap modifiers for non-system
             // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,

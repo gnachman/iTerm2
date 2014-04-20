@@ -133,12 +133,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)autoHideTmuxClientSession;
 - (int)tmuxDashboardLimit;
 
-- (int)control;
-- (int)leftOption;
-- (int)rightOption;
-- (int)leftCommand;
-- (int)rightCommand;
-- (BOOL)isAnyModifierRemapped;
 - (int)switchTabModifier;
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename;
