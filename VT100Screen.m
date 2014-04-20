@@ -16,6 +16,7 @@
 #import "iTermColorMap.h"
 #import "iTermExpose.h"
 #import "iTermGrowlDelegate.h"
+#import "iTermPreferences.h"
 #import "iTermSelection.h"
 #import "VT100Token.h"
 
@@ -83,7 +84,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         [iTermGrowlDelegate sharedInstance];
 
         dvr_ = [DVR alloc];
-        [dvr_ initWithBufferCapacity:[[PreferencePanel sharedInstance] irMemory] * 1024 * 1024];
+        [dvr_ initWithBufferCapacity:[iTermPreferences intForKey:kPreferenceKeyInstantReplayMemoryMegabytes] * 1024 * 1024];
 
         for (int i = 0; i < NUM_CHARSETS; i++) {
             charsetUsesLineDrawingMode_[i] = NO;

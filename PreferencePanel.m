@@ -585,11 +585,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup];
 }
 
-- (int)irMemory
-{
-    return [iTermPreferences intForKey:kPreferenceKeyInstantReplayMemoryMegabytes];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

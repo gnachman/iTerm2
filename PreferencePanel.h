@@ -123,7 +123,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)instantReplay;
 - (BOOL)savePasteHistory;
 - (BOOL)openArrangementAtStartup;
-- (int)irMemory;
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;
