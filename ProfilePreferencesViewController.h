@@ -20,7 +20,6 @@
 @interface ProfilePreferencesViewController : iTermPreferencesBaseViewController
 
 @property(nonatomic, assign) IBOutlet id<ProfilePreferencesViewControllerDelegate> delegate;
-@property(nonatomic, readonly) NSTabView *tabView;  // TODO: nuke this
 
 - (void)layoutSubviewsForEditCurrentSessionMode;
 
@@ -42,9 +41,5 @@
 
 // Update views for changed backing state.
 - (void)refresh;
-
-// TODO: Nuke these methods
-- (void)updateSubviewsForProfile:(Profile *)profile;
-- (void)reloadData;
 
 @end

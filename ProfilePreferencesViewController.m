@@ -195,23 +195,6 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [_textViewController changeFont:fontManager];
 }
 
-#pragma mark - Shims that will go away when migration is complete
-
-- (void)updateSubviewsForProfile:(Profile *)profile {
-    ProfileModel *model = [_delegate profilePreferencesModel];
-    if ([model numberOfBookmarks] < 2 || !profile) {
-        _removeProfileButton.enabled = NO;
-    } else {
-        _removeProfileButton.enabled = [[_profilesListView selectedGuids] count] < [model numberOfBookmarks];
-    }
-    _tabView.hidden = !profile;
-    _otherActionsPopup.enabled = (profile != nil);
-}
-
-- (void)reloadData {
-    [_profilesListView reloadData];
-}
-
 #pragma mark - ProfileListViewDelegate
 
 - (void)profileTableSelectionDidChange:(id)profileTable {
@@ -223,7 +206,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     _removeProfileButton.enabled = hasSelection && [_profilesListView numberOfRows] > 1;
 
     [self updateSubviewsForProfile:profile];
-    if (!self.tabView.isHidden) {
+    if (!_tabView.isHidden) {
         // Epilogue
         [self reloadData];
         
@@ -296,6 +279,21 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil
                                                       userInfo:nil];
+}
+
+- (void)updateSubviewsForProfile:(Profile *)profile {
+    ProfileModel *model = [_delegate profilePreferencesModel];
+    if ([model numberOfBookmarks] < 2 || !profile) {
+        _removeProfileButton.enabled = NO;
+    } else {
+        _removeProfileButton.enabled = [[_profilesListView selectedGuids] count] < [model numberOfBookmarks];
+    }
+    _tabView.hidden = !profile;
+    _otherActionsPopup.enabled = (profile != nil);
+}
+
+- (void)reloadData {
+    [_profilesListView reloadData];
 }
 
 #pragma mark - Actions
