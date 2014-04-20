@@ -456,10 +456,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return NO;
 }
 
-- (BOOL)cmdSelection {
-    return [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

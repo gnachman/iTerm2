@@ -3050,7 +3050,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                    !([event modifierFlags] & NSShiftKeyMask));
     BOOL willFollowLink = (isUnshiftedSingleClick &&
                            cmdPressed &&
-                           [[PreferencePanel sharedInstance] cmdSelection]);
+                           [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs]);
 
     // Send mouse up event to host if xterm mouse reporting is on
     if ([self reportMouseEvent:event]) {
