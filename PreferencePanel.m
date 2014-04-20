@@ -385,11 +385,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyCopyLastNewline];
 }
 
-- (BOOL)legacyPasteFromClipboard {
-    // This is used for migrating old prefs to the new configurable pointer action system.
-    return [_userDefaults boolForKey:@"PasteFromClipboard"];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

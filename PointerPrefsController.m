@@ -520,8 +520,9 @@ typedef enum {
     if (!defaultDict) {
         NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:[PointerPrefsController defaultSettings]];
         // Migrate old global prefs into the dict.
-        if (![[PreferencePanel sharedInstance] legacyPasteFromClipboard]) {
-            NSDictionary *middleButtonPastesFromSelection = [PointerPrefsController dictForAction:kPasteFromSelectionPointerAction];
+        if (![[NSUserDefaults standardUserDefaults] boolForKey:@"PasteFromClipboard"]) {
+            NSDictionary *middleButtonPastesFromSelection =
+                [PointerPrefsController dictForAction:kPasteFromSelectionPointerAction];
             [temp setObject:middleButtonPastesFromSelection
                      forKey:[PointerPrefsController keyForButton:kMiddleButton
                                                           clicks:1
