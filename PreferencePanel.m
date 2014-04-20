@@ -670,10 +670,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermSettingsModel optimumTabWidth];
 }
 
-- (BOOL)traditionalVisualBell {
-    return [iTermSettingsModel traditionalVisualBell];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

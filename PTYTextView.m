@@ -1818,7 +1818,7 @@ NSMutableArray* screens=0;
         NSImage* image = nil;
         switch (flashImage_) {
             case FlashBell:
-                if ([[PreferencePanel sharedInstance] traditionalVisualBell]) {
+                if ([iTermSettingsModel traditionalVisualBell]) {
                     image = [[[NSImage alloc] initWithSize: frame.size] autorelease];
                     [image lockFocus];
                     NSColor *foregroundColor = [_colorMap colorForKey:kColorMapForeground];
@@ -5479,7 +5479,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                         repeats:NO];
     }
     // Turn the image to opaque and ask to redraw the screen.
-    if ([[PreferencePanel sharedInstance] traditionalVisualBell]) {
+    if ([iTermSettingsModel traditionalVisualBell]) {
         flashing_ = 0.33;
     } else {
         flashing_ = 1;

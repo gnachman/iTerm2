@@ -144,7 +144,6 @@ void LoadPrefsFromCustomFolder(void);
 - (int)minTabWidth;
 - (int)minCompactTabWidth;
 - (int)optimumTabWidth;
-- (BOOL)traditionalVisualBell;
 
 - (void)changeFont:(id)fontManager;
 - (void)selectProfilesTab;
