@@ -15,7 +15,7 @@
 
 // TODO: Nuke all of these.
 - (ProfileModel *)profilePreferencesModel;
-- (void)updateBookmarkFields:(Profile *)profile;
+- (void)underlyingBookmarkDidChange;
 - (void)profilePreferencesModelDidAwakeFromNib;
 
 @end

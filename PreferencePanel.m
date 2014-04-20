@@ -728,18 +728,14 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     [[self window] makeKeyAndOrderFront:self];
 }
 
-- (void)underlyingBookmarkDidChange
-{
-    Profile *profile = [_profilesViewController selectedProfile];
-    if (profile) {
-        [self updateBookmarkFields:profile];
-    }
-}
-
 // Update the values in form fields to reflect the bookmark's state
-- (void)updateBookmarkFields:(NSDictionary *)dict
-{
-    [_profilesViewController updateSubviewsForProfile:dict];
+- (void)underlyingBookmarkDidChange {
+    Profile *profile = [_profilesViewController selectedProfile];
+    if (!profile) {
+        return;
+    }
+
+    [_profilesViewController updateSubviewsForProfile:profile];
     if (_profilesViewController.tabView.isHidden) {
         return;
     }

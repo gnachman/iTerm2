@@ -6314,7 +6314,7 @@ NSString *kSessionsKVCKey = @"sessions";
             if ([session isDivorced] &&
                 [[[PreferencePanel sessionsInstance] currentProfileGuid] isEqualToString:guid] &&
                 [[[PreferencePanel sessionsInstance] window] isVisible]) {
-                [[PreferencePanel sessionsInstance] updateBookmarkFields:profile];
+                [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
             }
         }
         [oldName release];

@@ -73,8 +73,6 @@ void LoadPrefsFromCustomFolder(void);
 
 - (void)openToProfileWithGuid:(NSString*)guid;
 
-- (void)updateBookmarkFields:(NSDictionary *)dict;
-
 - (IBAction)showGlobalTabView:(id)sender;
 - (IBAction)showAppearanceTabView:(id)sender;
 - (IBAction)showBookmarksTabView:(id)sender;

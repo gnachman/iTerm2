@@ -114,7 +114,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
         _tabView.hidden = YES;
         [_removeProfileButton setEnabled:NO];
     }
-    [_delegate updateBookmarkFields:profile];
+    [_delegate underlyingBookmarkDidChange];
     
     if (!profile && [_profilesListView numberOfRows]) {
         [_profilesListView selectRowIndex:0];
@@ -436,8 +436,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 }
 
 - (void)reloadProfiles {
-    Profile *profile = [self selectedProfile];
-    [_delegate updateBookmarkFields:profile];
+    [_delegate underlyingBookmarkDidChange];
 
 }
 
