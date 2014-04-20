@@ -104,7 +104,6 @@ void LoadPrefsFromCustomFolder(void);
 - (void)selectProfilesTab;
 - (void)underlyingBookmarkDidChange;
 - (int)openTmuxWindowsIn;
-- (BOOL)autoHideTmuxClientSession;
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename;
 

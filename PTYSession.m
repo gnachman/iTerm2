@@ -3061,7 +3061,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self printTmuxMessage:@"  L    Toggle logging."];
     [self printTmuxMessage:@"  C    Run tmux command."];
 
-    if ([[PreferencePanel sharedInstance] autoHideTmuxClientSession]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession]) {
         [self hideSession];
     }
 }
@@ -3305,7 +3305,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     _terminal.parser.tmuxParser = nil;
     self.tmuxMode = TMUX_NONE;
 
-    if ([[PreferencePanel sharedInstance] autoHideTmuxClientSession] &&
+    if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession] &&
         [[[_tab realParentWindow] window] isMiniaturized]) {
         [[[_tab realParentWindow] window] deminiaturize:self];
     }

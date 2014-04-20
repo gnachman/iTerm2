@@ -410,10 +410,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn];
 }
 
-- (BOOL)autoHideTmuxClientSession {
-    return [iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
