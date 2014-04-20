@@ -744,14 +744,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         return;
     }
 
-    NSString* name;
-    name = [dict objectForKey:KEY_NAME];
-
-    NSString* imageFilename = [dict objectForKey:KEY_BACKGROUND_IMAGE_LOCATION];
-    if (!imageFilename) {
-        imageFilename = @"";
-    }
-
     // Epilogue
     [_profilesViewController reloadData];
 
