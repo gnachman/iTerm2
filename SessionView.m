@@ -3,6 +3,7 @@
 #import "SessionView.h"
 #import "DebugLogging.h"
 #import "FutureMethods.h"
+#import "iTermPreferences.h"
 #import "MovePaneController.h"
 #import "PSMTabDragAssistant.h"
 #import "PTYScrollView.h"
@@ -160,7 +161,7 @@ static NSDate* lastResizeDate_;
 
 - (double)dimmedDimmingAmount
 {
-    return [[PreferencePanel sharedInstance] dimmingAmount];
+    return [iTermPreferences floatForKey:kPreferenceKeyDimmingAmount];
 }
 
 - (double)adjustedDimmingAmount

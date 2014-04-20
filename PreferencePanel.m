@@ -625,10 +625,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
 }
 
-- (float)dimmingAmount {
-    return [iTermPreferences floatForKey:kPreferenceKeyDimmingAmount];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
