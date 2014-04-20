@@ -75,7 +75,6 @@
 #import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
 #import "HotkeyWindowController.h"
-#import "PreferencePanel.h"
 #import <Carbon/Carbon.h>
 
 static NSDictionary* globalKeyMap;
@@ -771,67 +770,67 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
     }
 }
 
-+ (NSInteger)_cgMaskForLeftCommandKey:(PreferencePanel*)pp
++ (NSInteger)_cgMaskForLeftCommandKey
 {
     return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] leftCommandRemapping]];
 }
 
-+ (NSInteger)_cgMaskForRightCommandKey:(PreferencePanel*)pp
++ (NSInteger)_cgMaskForRightCommandKey
 {
     return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] rightCommandRemapping]];
 }
 
-+ (NSInteger)_nxMaskForLeftCommandKey:(PreferencePanel*)pp
++ (NSInteger)_nxMaskForLeftCommandKey
 {
     return [self _nxMaskForLeftMod:[[HotkeyWindowController sharedInstance] leftCommandRemapping]];
 }
 
-+ (NSInteger)_nxMaskForRightCommandKey:(PreferencePanel*)pp
++ (NSInteger)_nxMaskForRightCommandKey
 {
     return [self _nxMaskForRightMod:[[HotkeyWindowController sharedInstance] rightCommandRemapping]];
 }
 
-+ (NSInteger)_cgMaskForLeftAlternateKey:(PreferencePanel*)pp
++ (NSInteger)_cgMaskForLeftAlternateKey
 {
     return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] leftOptionRemapping]];
 }
 
-+ (NSInteger)_cgMaskForRightAlternateKey:(PreferencePanel*)pp
++ (NSInteger)_cgMaskForRightAlternateKey
 {
     return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] rightOptionRemapping]];
 }
 
-+ (NSInteger)_nxMaskForLeftAlternateKey:(PreferencePanel*)pp
++ (NSInteger)_nxMaskForLeftAlternateKey
 {
     return [self _nxMaskForLeftMod:[[HotkeyWindowController sharedInstance] leftOptionRemapping]];
 }
 
-+ (NSInteger)_nxMaskForRightAlternateKey:(PreferencePanel*)pp
++ (NSInteger)_nxMaskForRightAlternateKey
 {
     return [self _nxMaskForRightMod:[[HotkeyWindowController sharedInstance] rightOptionRemapping]];
 }
 
-+ (NSInteger)_cgMaskForLeftControlKey:(PreferencePanel*)pp
++ (NSInteger)_cgMaskForLeftControlKey
 {
     return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
 }
 
-+ (NSInteger)_cgMaskForRightControlKey:(PreferencePanel*)pp
++ (NSInteger)_cgMaskForRightControlKey
 {
     return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
 }
 
-+ (NSInteger)_nxMaskForLeftControlKey:(PreferencePanel*)pp
++ (NSInteger)_nxMaskForLeftControlKey
 {
     return [self _nxMaskForLeftMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
 }
 
-+ (NSInteger)_nxMaskForRightControlKey:(PreferencePanel*)pp
++ (NSInteger)_nxMaskForRightControlKey
 {
     return [self _nxMaskForRightMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
 }
 
-+ (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent prefPanel:(PreferencePanel*)pp
++ (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent
 {
     // This function copied from cmd-key happy. See copyright notice at top.
     CGEventFlags flags = CGEventGetFlags(cgEvent);
@@ -842,39 +841,39 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
         andMask &= ~kCGEventFlagMaskCommand;
         if (flags & NX_DEVICELCMDKEYMASK) {
             andMask &= ~NX_DEVICELCMDKEYMASK;
-            orMask |= [self _cgMaskForLeftCommandKey:pp];
-            orMask |= [self _nxMaskForLeftCommandKey:pp];
+            orMask |= [self _cgMaskForLeftCommandKey];
+            orMask |= [self _nxMaskForLeftCommandKey];
         }
         if (flags & NX_DEVICERCMDKEYMASK) {
             andMask &= ~NX_DEVICERCMDKEYMASK;
-            orMask |= [self _cgMaskForRightCommandKey:pp];
-            orMask |= [self _nxMaskForRightCommandKey:pp];
+            orMask |= [self _cgMaskForRightCommandKey];
+            orMask |= [self _nxMaskForRightCommandKey];
         }
     }
     if (origFlags & kCGEventFlagMaskAlternate) {
         andMask &= ~kCGEventFlagMaskAlternate;
         if (flags & NX_DEVICELALTKEYMASK) {
             andMask &= ~NX_DEVICELALTKEYMASK;
-            orMask |= [self _cgMaskForLeftAlternateKey:pp];
-            orMask |= [self _nxMaskForLeftAlternateKey:pp];
+            orMask |= [self _cgMaskForLeftAlternateKey];
+            orMask |= [self _nxMaskForLeftAlternateKey];
         }
         if (flags & NX_DEVICERALTKEYMASK) {
             andMask &= ~NX_DEVICERALTKEYMASK;
-            orMask |= [self _cgMaskForRightAlternateKey:pp];
-            orMask |= [self _nxMaskForRightAlternateKey:pp];
+            orMask |= [self _cgMaskForRightAlternateKey];
+            orMask |= [self _nxMaskForRightAlternateKey];
         }
     }
     if (origFlags & kCGEventFlagMaskControl) {
         andMask &= ~kCGEventFlagMaskControl;
         if (flags & NX_DEVICELCTLKEYMASK) {
             andMask &= ~NX_DEVICELCTLKEYMASK;
-            orMask |= [self _cgMaskForLeftControlKey:pp];
-            orMask |= [self _nxMaskForLeftControlKey:pp];
+            orMask |= [self _cgMaskForLeftControlKey];
+            orMask |= [self _nxMaskForLeftControlKey];
         }
         if (flags & NX_DEVICERCTLKEYMASK) {
             andMask &= ~NX_DEVICERCTLKEYMASK;
-            orMask |= [self _cgMaskForRightControlKey:pp];
-            orMask |= [self _nxMaskForRightControlKey:pp];
+            orMask |= [self _cgMaskForRightControlKey];
+            orMask |= [self _nxMaskForRightControlKey];
         }
     }
 
@@ -882,10 +881,9 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
     return cgEvent;
 }
 
-+ (NSEvent*)remapModifiers:(NSEvent*)event prefPanel:(PreferencePanel*)pp
++ (NSEvent*)remapModifiers:(NSEvent*)event
 {
-    return [NSEvent eventWithCGEvent:[iTermKeyBindingMgr remapModifiersInCGEvent:[event CGEvent]
-                                                                       prefPanel:pp]];
+    return [NSEvent eventWithCGEvent:[iTermKeyBindingMgr remapModifiersInCGEvent:[event CGEvent]]];
 }
 
 + (Profile*)removeMappingsReferencingGuid:(NSString*)guid fromBookmark:(Profile*)bookmark

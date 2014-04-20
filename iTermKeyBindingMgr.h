@@ -120,7 +120,6 @@
 #define KEY_ACTION_RUN_COPROCESS 35
 #define KEY_ACTION_FIND_REGEX 36
 
-@class PreferencePanel;
 @interface iTermKeyBindingMgr : NSObject {
 }
 
@@ -228,11 +227,10 @@
                  keyMappings:(NSDictionary *)keyMappings;
 
 // Modify a keypress event, swapping modifiers as defined in the global settings.
-+ (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent
-                            prefPanel:(PreferencePanel*)pp;
++ (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent;
 
 // Like remapModifiersInCGEvent:prefPanel: but for an NSEvent.
-+ (NSEvent*)remapModifiers:(NSEvent*)event prefPanel:(PreferencePanel*)pp;
++ (NSEvent*)remapModifiers:(NSEvent*)event;
 
 // Returns the global keymap ("0xKeycode-0xModifiers"->{Action=int, [Text=str])
 + (NSDictionary*)globalKeyMap;

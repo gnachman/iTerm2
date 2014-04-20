@@ -366,7 +366,6 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
         unsigned int modflag = [cocoaEvent modifierFlags];
         NSString *keyBindingText;
-        PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
         BOOL tempDisabled = [shortcutView disableKeyRemapping];
 
         int action = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
@@ -386,8 +385,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         }
         if ((!tempDisabled && !isDoNotRemap) ||  // normal case, whether keysheet is open or not
             (!tempDisabled && isDoNotRemap)) {  // about to change dnr to non-dnr
-            [iTermKeyBindingMgr remapModifiersInCGEvent:event
-                                              prefPanel:prefPanel];
+            [iTermKeyBindingMgr remapModifiersInCGEvent:event];
             cocoaEvent = [NSEvent eventWithCGEvent:event];
         }
         if (local) {
@@ -415,8 +413,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
                                               keyMappings:nil];
         BOOL isDoNotRemap = (action == KEY_ACTION_DO_NOT_REMAP_MODIFIERS) || (action == KEY_ACTION_REMAP_LOCALLY);
         if (!isDoNotRemap) {
-            [iTermKeyBindingMgr remapModifiersInCGEvent:eventCopy
-                                              prefPanel:[PreferencePanel sharedInstance]];
+            [iTermKeyBindingMgr remapModifiersInCGEvent:eventCopy];
         }
         cocoaEvent = [NSEvent eventWithCGEvent:eventCopy];
         CFRelease(eventCopy);
