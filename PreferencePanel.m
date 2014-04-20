@@ -637,11 +637,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren];
 }
 
-- (BOOL)checkTestRelease
-{
-    return [iTermPreferences boolForKey:kPreferenceKeyCheckForTestReleases];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
