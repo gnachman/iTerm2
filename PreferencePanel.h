@@ -85,7 +85,6 @@ void LoadPrefsFromCustomFolder(void);
 - (WindowArrangements *)arrangements;
 - (void)run;
 - (float)fsTabDelay;
-- (BOOL)trimTrailingWhitespace;
 // Returns true if ANY profile has growl enabled (preserves interface from back
 // when there was a global growl setting as well as a per-profile setting).
 - (NSTextField*)hotkeyField;

@@ -3683,7 +3683,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return nil;
     }
     BOOL copyLastNewline = [iTermPreferences boolForKey:kPreferenceKeyCopyLastNewline];
-    BOOL trimWhitespace = [[PreferencePanel sharedInstance] trimTrailingWhitespace];
+    BOOL trimWhitespace = [iTermSettingsModel trimWhitespaceOnCopy];
     NSMutableString *theSelectedText = [[NSMutableString alloc] init];
     [_selection enumerateSelectedRanges:^(VT100GridWindowedRange range, BOOL *stop, BOOL eol) {
         int cap = INT_MAX;

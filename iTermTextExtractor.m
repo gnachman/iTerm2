@@ -597,7 +597,7 @@ static const int kNumCharsToSearchForDivider = 8;
                            }];
     
     if (trimSelectionTrailingSpaces) {
-        [result stringByTrimmingTrailingWhitespace];
+        [result trimTrailingWhitespace];
     }
     return result;
 }
