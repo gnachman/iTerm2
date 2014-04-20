@@ -488,10 +488,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyHighlightTabLabels];
 }
 
-- (BOOL)hideMenuBarInFullscreen {
-    return [iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

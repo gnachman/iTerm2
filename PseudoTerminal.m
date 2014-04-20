@@ -2725,7 +2725,7 @@ NSString *kSessionsKVCKey = @"sessions";
     frameMinusMenuBar.size.height -= [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
     BOOL menuBarIsVisible = NO;
 
-    if (![[PreferencePanel sharedInstance] hideMenuBarInFullscreen]) {
+    if (![iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
         // Menu bar can show in fullscreen...
         if (IsMavericksOrLater()) {
             // There is a menu bar on all screens.
@@ -5099,7 +5099,7 @@ NSString *kSessionsKVCKey = @"sessions";
         if ([[self window] isKeyWindow]) {
             // In practice, this never happens because the prefs panel is
             // always key when this notification is posted.
-            if ([[PreferencePanel sharedInstance] hideMenuBarInFullscreen]) {
+            if ([iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
                 [self showMenuBarHideDock];
             } else {
                 [self hideMenuBar];
@@ -5175,7 +5175,7 @@ NSString *kSessionsKVCKey = @"sessions";
     // If screens have separate spaces (only applicable in Mavericks and later) then all screens have a menu bar.
     if (currentScreen == menubarScreen || (IsMavericksOrLater() && [NSScreen futureScreensHaveSeparateSpaces])) {
         int flags = NSApplicationPresentationAutoHideDock;
-        if ([[PreferencePanel sharedInstance] hideMenuBarInFullscreen]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
             flags |= NSApplicationPresentationAutoHideMenuBar;
         }
         NSApplicationPresentationOptions presentationOptions =
