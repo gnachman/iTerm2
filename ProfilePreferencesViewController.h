@@ -44,7 +44,6 @@
 - (void)refresh;
 
 // TODO: Nuke these methods
-- (void)updateProfileInModel:(Profile *)modifiedProfile;
 - (void)updateSubviewsForProfile:(Profile *)profile;
 - (void)reloadData;
 

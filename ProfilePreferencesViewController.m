@@ -197,12 +197,6 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
 #pragma mark - Shims that will go away when migration is complete
 
-- (void)updateProfileInModel:(Profile *)modifiedProfile {
-    [[_delegate profilePreferencesModel] setBookmark:modifiedProfile
-                                            withGuid:modifiedProfile[KEY_GUID]];
-    [_profilesListView reloadData];
-}
-
 - (void)updateSubviewsForProfile:(Profile *)profile {
     ProfileModel *model = [_delegate profilePreferencesModel];
     if ([model numberOfBookmarks] < 2 || !profile) {
