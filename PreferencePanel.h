@@ -146,8 +146,6 @@ void LoadPrefsFromCustomFolder(void);
 - (int)optimumTabWidth;
 - (BOOL)traditionalVisualBell;
 
-// A hidden preference. If set, the scroll wheel sends arrow keys in alt screen mode.
-- (BOOL)alternateMouseScroll;
 - (void)changeFont:(id)fontManager;
 - (void)selectProfilesTab;
 - (void)underlyingBookmarkDidChange;

@@ -4427,7 +4427,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                     break;
 
                 case MOUSE_REPORTING_NONE:
-                    if ([[PreferencePanel sharedInstance] alternateMouseScroll] &&
+                    if ([iTermSettingsModel alternateMouseScroll] &&
                         [_screen showingAlternateScreen]) {
                         NSData *arrowKeyData = nil;
                         if (deltaY > 0) {

@@ -674,10 +674,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermSettingsModel traditionalVisualBell];
 }
 
-- (BOOL) alternateMouseScroll {
-    return [iTermSettingsModel alternateMouseScroll];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
