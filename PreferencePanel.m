@@ -418,11 +418,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences intForKey:kPreferenceKeyTmuxDashboardLimit];
 }
 
-- (BOOL)promptOnQuit
-{
-    return [iTermPreferences boolForKey:kPreferenceKeyPromptOnQuit];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
