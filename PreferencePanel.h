@@ -103,7 +103,6 @@ void LoadPrefsFromCustomFolder(void);
 - (void)changeFont:(id)fontManager;
 - (void)selectProfilesTab;
 - (void)underlyingBookmarkDidChange;
-- (int)openTmuxWindowsIn;
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename;
 

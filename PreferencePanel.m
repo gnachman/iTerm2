@@ -406,10 +406,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences intForKey:kPreferenceKeyWindowStyle];
 }
 
-- (int)openTmuxWindowsIn {
-    return [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
