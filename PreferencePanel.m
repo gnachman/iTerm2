@@ -338,22 +338,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [self orderedToolbarIdentifiers];
 }
 
-#pragma mark - Utilities
-
-// Pick out the digits from s and clamp it to a range.
-- (int)intForString:(NSString *)s inRange:(NSRange)range
-{
-    NSString *i = [s stringWithOnlyDigits];
-
-    int val = 0;
-    if ([i length]) {
-        val = [i intValue];
-    }
-    val = MAX(val, range.location);
-    val = MIN(val, range.location + range.length);
-    return val;
-}
-
 #pragma mark - Hotkey Window
 
 - (NSTextField*)hotkeyField {
