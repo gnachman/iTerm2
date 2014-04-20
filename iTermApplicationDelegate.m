@@ -377,10 +377,8 @@ static BOOL hasBecomeActive = NO;
     [iTermController sharedInstanceRelease];
 
     // save preferences
-    PreferencePanel *preferencePanel = [PreferencePanel sharedInstance];
-    [preferencePanel savePreferences];
+    [[NSUserDefaults standardUserDefaults] synchronize];
     if (![[iTermRemotePreferences sharedInstance] customFolderChanged]) {
-        [preferencePanel savePreferences];
         [[iTermRemotePreferences sharedInstance] applicationWillTerminate];
     }
 

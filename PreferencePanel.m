@@ -235,7 +235,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 #pragma mark - NSWindowDelegate
 
 - (void)windowWillClose:(NSNotification *)aNotification {
-    [self savePreferences];
+    [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification {
@@ -334,22 +334,8 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [self orderedToolbarIdentifiers];
 }
 
-- (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar {
+- (NSArray *)toolbarSelectableItemIdentifiers:(NSToolbar *)toolbar {
     return [self orderedToolbarIdentifiers];
-}
-
-#pragma mark - NSUserDefaults wrangling
-
-- (void)savePreferences {
-    if (!_userDefaults) {
-        // In one-bookmark mode _userDefaults is nil but this function doesn't
-        // affect bookmarks.
-        return;
-    }
-
-    [_userDefaults setObject:[_profileModel rawData] forKey: @"New Bookmarks"];
-
-    [_userDefaults synchronize];
 }
 
 #pragma mark - Utilities

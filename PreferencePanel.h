@@ -83,7 +83,6 @@ void LoadPrefsFromCustomFolder(void);
 - (IBAction)showMouseTabView:(id)sender;
 
 - (WindowArrangements *)arrangements;
-- (void)savePreferences;
 - (void)run;
 - (float)fsTabDelay;
 - (BOOL)trimTrailingWhitespace;
