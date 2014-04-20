@@ -118,7 +118,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)smartPlacement;
 - (BOOL)adjustWindowForFontSizeChange;
 - (BOOL)windowNumber;
-- (BOOL)jobName;
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;

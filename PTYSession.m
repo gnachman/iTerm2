@@ -1963,8 +1963,7 @@ typedef enum {
     NSString *prefix = _tmuxController ? [NSString stringWithFormat:@"↣ %@: ", [[self tab] tmuxWindowName]] : @"";
 
     BOOL baseIsBookmarkName = [base isEqualToString:_bookmarkName];
-    PreferencePanel* panel = [PreferencePanel sharedInstance];
-    if ([panel jobName] && _jobName) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyShowJobName] && _jobName) {
         if (baseIsBookmarkName && ![iTermPreferences boolForKey:kPreferenceKeyShowProfileName]) {
             return [NSString stringWithFormat:@"%@%@", prefix, [self jobName]];
         } else {
