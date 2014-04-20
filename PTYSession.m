@@ -2645,7 +2645,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         verticalSpacing:verticalSpacing];
     DLog(@"Line height is now %f", (float)[_textview lineHeight]);
     if (![[[self tab] parentWindow] anyFullScreen]) {
-        if ([[PreferencePanel sharedInstance] adjustWindowForFontSizeChange]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyAdjustWindowForFontSizeChange]) {
             [[[self tab] parentWindow] fitWindowToTab:[self tab]];
         }
     }

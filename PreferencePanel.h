@@ -116,7 +116,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)showPaneTitles;
 - (BOOL)disableFullscreenTransparency;
 - (BOOL)smartPlacement;
-- (BOOL)adjustWindowForFontSizeChange;
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;
