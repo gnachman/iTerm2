@@ -128,13 +128,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet NSTabViewItem* mouseTabViewItem;
     IBOutlet NSToolbarItem* advancedToolbarItem;
     IBOutlet NSTabViewItem* advancedTabViewItem;
-    NSString *globalToolbarId;
-    NSString *appearanceToolbarId;
-    NSString *keyboardToolbarId;
-    NSString *arrangementsToolbarId;
-    NSString *bookmarksToolbarId;
-    NSString *mouseToolbarId;
-    NSString *advancedToolbarId;
 
     // This class is not well named. It is a lot like a view controller for the window
     // arrangements tab.
@@ -173,7 +166,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
         _profileModel = model;
         _userDefaults = userDefaults;
 
-        [toolbar setSelectedItemIdentifier:globalToolbarId];
+        [toolbar setSelectedItemIdentifier:[globalToolbarItem itemIdentifier]];
 
         oneBookmarkMode = obMode;
     }
@@ -192,15 +185,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     }
 
     [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
-    bookmarksToolbarId = [bookmarksToolbarItem itemIdentifier];
-    globalToolbarId = [globalToolbarItem itemIdentifier];
-    appearanceToolbarId = [appearanceToolbarItem itemIdentifier];
-    keyboardToolbarId = [keyboardToolbarItem itemIdentifier];
-    arrangementsToolbarId = [arrangementsToolbarItem itemIdentifier];
-    mouseToolbarId = [mouseToolbarItem itemIdentifier];
-    advancedToolbarId = [advancedToolbarItem itemIdentifier];
-
-    [toolbar setSelectedItemIdentifier:globalToolbarId];
+    [toolbar setSelectedItemIdentifier:[globalToolbarItem itemIdentifier]];
 
     if (oneBookmarkMode) {
         [self layoutSubviewsForEditCurrentSessionMode];
@@ -221,7 +206,7 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
 
 - (void)selectProfilesTab {
     [tabView selectTabViewItem:bookmarksTabViewItem];
-    [toolbar setSelectedItemIdentifier:bookmarksToolbarId];
+    [toolbar setSelectedItemIdentifier:[bookmarksToolbarItem itemIdentifier]];
 }
 
 - (void)openToProfileWithGuid:(NSString*)guid {
@@ -311,51 +296,46 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return TRUE;
 }
 
+- (NSArray *)orderedToolbarIdentifiers {
+    return @[ [globalToolbarItem itemIdentifier],
+              [appearanceToolbarItem itemIdentifier],
+              [bookmarksToolbarItem itemIdentifier],
+              [keyboardToolbarItem itemIdentifier],
+              [arrangementsToolbarItem itemIdentifier],
+              [mouseToolbarItem itemIdentifier],
+              [advancedToolbarItem itemIdentifier] ];
+}
+
+- (NSDictionary *)toolbarIdentifierToItemDictionary {
+    return @{ [globalToolbarItem itemIdentifier]: globalToolbarItem,
+              [appearanceToolbarItem itemIdentifier]: appearanceToolbarItem,
+              [bookmarksToolbarItem itemIdentifier]: bookmarksToolbarItem,
+              [keyboardToolbarItem itemIdentifier]: keyboardToolbarItem,
+              [arrangementsToolbarItem itemIdentifier]: arrangementsToolbarItem,
+              [mouseToolbarItem itemIdentifier]: mouseToolbarItem,
+              [advancedToolbarItem itemIdentifier]: advancedToolbarItem };
+}
+
 - (NSToolbarItem *)toolbar:(NSToolbar *)toolbar
      itemForItemIdentifier:(NSString *)itemIdentifier
- willBeInsertedIntoToolbar:(BOOL)flag
-{
+ willBeInsertedIntoToolbar:(BOOL)flag {
     if (!flag) {
         return nil;
     }
-    NSDictionary *theDict = @{ globalToolbarId: globalToolbarItem,
-                               appearanceToolbarId: appearanceToolbarItem,
-                               bookmarksToolbarId: bookmarksToolbarItem,
-                               keyboardToolbarId: keyboardToolbarItem,
-                               arrangementsToolbarId: arrangementsToolbarItem,
-                               mouseToolbarId: mouseToolbarItem,
-                               advancedToolbarId: advancedToolbarItem };
+    NSDictionary *theDict = [self toolbarIdentifierToItemDictionary];
     return theDict[itemIdentifier];
 }
 
-- (NSArray *)toolbarAllowedItemIdentifiers:(NSToolbar *)toolbar
-{
-    return @[ globalToolbarId,
-              appearanceToolbarId,
-              bookmarksToolbarId,
-              keyboardToolbarId,
-              arrangementsToolbarId,
-              mouseToolbarId,
-              advancedToolbarId ];
+- (NSArray *)toolbarAllowedItemIdentifiers:(NSToolbar *)toolbar {
+    return [self orderedToolbarIdentifiers];
 }
 
-- (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar
-{
-    return [NSArray arrayWithObjects:globalToolbarId, appearanceToolbarId, bookmarksToolbarId,
-            keyboardToolbarId, arrangementsToolbarId, mouseToolbarId, nil];
+- (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar {
+    return [self orderedToolbarIdentifiers];
 }
 
-- (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar
-{
-    // Optional delegate method: Returns the identifiers of the subset of
-    // toolbar items that are selectable.
-    return @[ globalToolbarId,
-              appearanceToolbarId,
-              bookmarksToolbarId,
-              keyboardToolbarId,
-              arrangementsToolbarId,
-              mouseToolbarId,
-              advancedToolbarId ];
+- (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar {
+    return [self orderedToolbarIdentifiers];
 }
 
 #pragma mark - NSUserDefaults wrangling
