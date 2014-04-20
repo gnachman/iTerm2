@@ -2919,8 +2919,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [_textview selectedTextWithPad:NO];
 }
 
-- (void)copySelection
-{
+- (void)copySelection {
     return [_textview copySelectionAccordingToUserPreferences];
 }
 

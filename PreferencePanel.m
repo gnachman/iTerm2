@@ -376,11 +376,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal];
 }
 
-- (BOOL)copySelection
-{
-    return [iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

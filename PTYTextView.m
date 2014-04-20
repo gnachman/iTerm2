@@ -3136,7 +3136,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if ([_selection hasSelection] && _delegate) {
         // if we want to copy our selection, do so
-        if ([[PreferencePanel sharedInstance] copySelection]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
             [self copySelectionAccordingToUserPreferences];
         }
     }
@@ -3384,7 +3384,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self smartSelectAtX:x y:y ignoringNewlines:ignoringNewlines];
     if ([_selection hasSelection] && _delegate) {
         // if we want to copy our selection, do so
-        if ([[PreferencePanel sharedInstance] copySelection]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
             [self copySelectionAccordingToUserPreferences];
         }
     }
