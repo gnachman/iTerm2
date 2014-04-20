@@ -1853,11 +1853,9 @@ typedef enum {
     }
     [self setSmartCursorColor:useSmartCursorColor];
 
-    float minimumContrast;
+    float minimumContrast = 0;
     if ([aDict objectForKey:KEY_MINIMUM_CONTRAST]) {
         minimumContrast = [[aDict objectForKey:KEY_MINIMUM_CONTRAST] floatValue];
-    } else {
-        minimumContrast = [[PreferencePanel sharedInstance] legacyMinimumContrast];
     }
     [self setMinimumContrast:minimumContrast];
 

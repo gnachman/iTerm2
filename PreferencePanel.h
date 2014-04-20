@@ -90,8 +90,6 @@ void LoadPrefsFromCustomFolder(void);
 // when there was a global growl setting as well as a per-profile setting).
 - (NSTextField*)hotkeyField;
 
-- (float)legacyMinimumContrast;
-
 - (void)changeFont:(id)fontManager;
 - (void)selectProfilesTab;
 - (void)underlyingBookmarkDidChange;

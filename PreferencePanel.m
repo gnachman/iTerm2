@@ -366,11 +366,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermSettingsModel trimWhitespaceOnCopy];
 }
 
-- (float)legacyMinimumContrast
-{
-    return [_userDefaults objectForKey:@"MinimumContrast"] ? [[_userDefaults objectForKey:@"MinimumContrast"] floatValue] : 0;
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
