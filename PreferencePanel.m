@@ -460,10 +460,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs];
 }
 
-- (BOOL)optionClickMovesCursor {
-    return [iTermPreferences boolForKey:kPreferenceKeyOptionClickMovesCursor];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

@@ -3090,7 +3090,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
         if (altPressed &&
-            [[PreferencePanel sharedInstance] optionClickMovesCursor] &&
+            [iTermPreferences boolForKey:kPreferenceKeyOptionClickMovesCursor] &&
             !_mouseDownWasFirstMouse) {
             // This moves the cursor, but not if mouse reporting is on for button clicks.
             // It's also off for first mouse because of issue 2943 (alt-click to activate an app

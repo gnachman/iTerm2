@@ -102,7 +102,6 @@ void LoadPrefsFromCustomFolder(void);
 // when there was a global growl setting as well as a per-profile setting).
 - (BOOL)enableGrowl;
 - (BOOL)cmdSelection;
-- (BOOL)optionClickMovesCursor;
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;
