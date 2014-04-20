@@ -587,7 +587,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 - (BOOL)isProcessing
 {
-    return ![[PreferencePanel sharedInstance] hideActivityIndicator] &&
+    return ![iTermPreferences boolForKey:kPreferenceKeyHideTabActivityIndicator] &&
         isProcessing_ &&
         ![realParentWindow_ disableProgressIndicators];
 }

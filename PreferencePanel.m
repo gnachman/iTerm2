@@ -480,10 +480,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton];
 }
 
-- (BOOL)hideActivityIndicator {
-    return [iTermPreferences boolForKey:kPreferenceKeyHideTabActivityIndicator];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

@@ -107,7 +107,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)maxVertically;
 - (BOOL)hideTabNumber;
 - (BOOL)hideTabCloseButton;
-- (BOOL)hideActivityIndicator;
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;
