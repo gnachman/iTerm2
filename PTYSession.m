@@ -5040,7 +5040,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenSetPasteboard:(NSString *)value {
-    if ([[PreferencePanel sharedInstance] allowClipboardAccess]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         if ([value isEqualToString:@"ruler"]) {
             [self setPasteboard:NSGeneralPboard];
         } else if ([value isEqualToString:@"find"]) {
@@ -5066,7 +5066,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 // Stop pasting (despited the name)
 - (void)screenCopyBufferToPasteboard {
-    if ([[PreferencePanel sharedInstance] allowClipboardAccess]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         [self setPasteboard:nil];
     } else {
         [_pasteboard release];

@@ -2393,7 +2393,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)terminalPasteString:(NSString *)string {
     // check the configuration
-    if (![[PreferencePanel sharedInstance] allowClipboardAccess]) {
+    if (![iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         return;
     }
 

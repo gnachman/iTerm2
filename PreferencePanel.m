@@ -371,11 +371,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [_userDefaults objectForKey:@"MinimumContrast"] ? [[_userDefaults objectForKey:@"MinimumContrast"] floatValue] : 0;
 }
 
-- (BOOL)allowClipboardAccess
-{
-    return [iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
