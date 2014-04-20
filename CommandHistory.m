@@ -9,6 +9,7 @@
 #import "CommandHistory.h"
 #import "CommandHistoryEntry.h"
 #import "CommandUse.h"
+#import "iTermPreferences.h"
 #import "PreferencePanel.h"
 #import "VT100RemoteHost.h"
 
@@ -107,7 +108,7 @@ static const int kMaxCommandsToSavePerHost = 200;
     commandUse.directory = directory;
     [theEntry.useTimes addObject:commandUse];
 
-    if ([[PreferencePanel sharedInstance] savePasteHistory]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeySavePasteAndCommandHistory]) {
         [NSKeyedArchiver archiveRootObject:[self dictionaryForEntries] toFile:_path];
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:kCommandHistoryDidChangeNotificationName

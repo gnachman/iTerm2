@@ -538,11 +538,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return YES;
 }
 
-- (BOOL)savePasteHistory
-{
-    return [iTermPreferences boolForKey:kPreferenceKeySavePasteAndCommandHistory];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

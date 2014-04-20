@@ -121,7 +121,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)jobName;
 - (BOOL)showBookmarkName;
 - (BOOL)instantReplay;
-- (BOOL)savePasteHistory;
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;
