@@ -95,7 +95,6 @@ void LoadPrefsFromCustomFolder(void);
 - (int)tabViewType;
 - (int)windowStyle;
 - (BOOL)promptOnQuit;
-- (BOOL)onlyWhenMoreTabs;
 // Returns true if ANY profile has growl enabled (preserves interface from back
 // when there was a global growl setting as well as a per-profile setting).
 - (NSTextField*)hotkeyField;

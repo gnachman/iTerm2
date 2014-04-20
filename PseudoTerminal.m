@@ -1085,7 +1085,7 @@ NSString *kSessionsKVCKey = @"sessions";
         mustAsk = YES;
     }
     if (numClosing > 1 &&
-        [[PreferencePanel sharedInstance] onlyWhenMoreTabs]) {
+        [iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs]) {
         mustAsk = YES;
     }
 
@@ -1906,7 +1906,7 @@ NSString *kSessionsKVCKey = @"sessions";
     if ([self promptOnClose]) {
         needPrompt = YES;
     }
-    if ([[PreferencePanel sharedInstance] onlyWhenMoreTabs] &&
+    if ([iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs] &&
          [self numRunningSessions] > 1) {
         needPrompt = YES;
     }

@@ -358,7 +358,7 @@ static BOOL hasBecomeActive = NO;
         shouldShowAlert = YES;
     }
     quittingBecauseLastWindowClosed_ = NO;
-    if ([[PreferencePanel sharedInstance] onlyWhenMoreTabs] && numSessions > 1) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs] && numSessions > 1) {
         // closing multiple sessions
         shouldShowAlert = YES;
     }

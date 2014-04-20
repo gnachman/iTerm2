@@ -423,11 +423,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyPromptOnQuit];
 }
 
-- (BOOL)onlyWhenMoreTabs
-{
-    return [iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
