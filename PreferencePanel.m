@@ -414,10 +414,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession];
 }
 
-- (int)tmuxDashboardLimit {
-    return [iTermPreferences intForKey:kPreferenceKeyTmuxDashboardLimit];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

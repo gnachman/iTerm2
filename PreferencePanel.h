@@ -105,7 +105,6 @@ void LoadPrefsFromCustomFolder(void);
 - (void)underlyingBookmarkDidChange;
 - (int)openTmuxWindowsIn;
 - (BOOL)autoHideTmuxClientSession;
-- (int)tmuxDashboardLimit;
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename;
 

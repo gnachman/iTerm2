@@ -248,7 +248,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         }
         [windowsToOpen addObject:record];
     }
-    if (windowsToOpen.count > [[PreferencePanel sharedInstance] tmuxDashboardLimit]) {
+    if (windowsToOpen.count > [iTermPreferences intForKey:kPreferenceKeyTmuxDashboardLimit]) {
         haveHidden = YES;
         [windowsToOpen removeAllObjects];
     }
