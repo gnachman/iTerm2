@@ -104,7 +104,6 @@ void LoadPrefsFromCustomFolder(void);
 - (BOOL)cmdSelection;
 - (BOOL)optionClickMovesCursor;
 - (BOOL)passOnControlLeftClick;
-- (BOOL)maxVertically;
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;

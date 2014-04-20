@@ -3183,7 +3183,7 @@ NSString *kSessionsKVCKey = @"sessions";
         // preference.
         verticalOnly = NO;
     } else {
-        maxVerticallyPref = [[PreferencePanel sharedInstance] maxVertically];
+        maxVerticallyPref = [iTermPreferences boolForKey:kPreferenceKeyMaximizeVerticallyOnly];
         if (maxVerticallyPref ^
             (([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask) != 0)) {
             verticalOnly = YES;

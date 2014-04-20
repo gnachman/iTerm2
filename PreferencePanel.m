@@ -468,10 +468,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyControlLeftClickBypassesContextMenu];
 }
 
-- (BOOL)maxVertically {
-    return [iTermPreferences boolForKey:kPreferenceKeyMaximizeVerticallyOnly];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
