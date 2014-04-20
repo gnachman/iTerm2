@@ -2992,7 +2992,7 @@ NSString *kSessionsKVCKey = @"sessions";
         return NO;
     }
     return ([TABVIEW numberOfTabViewItems] + n > 1 ||
-            ![[PreferencePanel sharedInstance] hideTab]);
+            ![iTermPreferences boolForKey:kPreferenceKeyHideTabBar]);
 }
 
 - (NSScrollerStyle)scrollerStyle
@@ -3664,7 +3664,8 @@ NSString *kSessionsKVCKey = @"sessions";
 
     // check window size in case tabs have to be hidden or shown
     if (([TABVIEW numberOfTabViewItems] == 1) ||  // just decreased to 1 or increased above 1 and is hidden
-        ([[PreferencePanel sharedInstance] hideTab] && ([TABVIEW numberOfTabViewItems] > 1 && [tabBarControl isHidden]))) {
+        ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
+         ([TABVIEW numberOfTabViewItems] > 1 && [tabBarControl isHidden]))) {
         // Need to change the visibility status of the tab bar control.
         PtyLog(@"tabViewDidChangeNumberOfTabViewItems - calling fitWindowToTab");
 
@@ -3876,7 +3877,7 @@ NSString *kSessionsKVCKey = @"sessions";
         if ([TABVIEW selectedTabViewItem] == tabViewItem) {
             NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:tabViewItem];
             if ([TABVIEW numberOfTabViewItems] == 1 &&
-                [[PreferencePanel sharedInstance] hideTab] &&
+                [iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
                 newTabColor) {
                 [[self window] setBackgroundColor:newTabColor];
                 [background_ setColor:newTabColor];

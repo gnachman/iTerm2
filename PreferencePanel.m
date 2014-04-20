@@ -394,10 +394,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle];
 }
 
-- (BOOL)hideTab {
-    return [iTermPreferences boolForKey:kPreferenceKeyHideTabBar];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {
