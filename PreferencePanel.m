@@ -75,7 +75,7 @@
 #import "iTermKeyMappingViewController.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
-#import "iTermSettingsModel.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "KeysPreferencesViewController.h"

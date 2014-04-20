@@ -29,7 +29,7 @@
 #import "iTermController.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermPreferences.h"
-#import "iTermSettingsModel.h"
+#import "iTermAdvancedSettingsModel.h"
 
 #ifdef PSEUDOTERMINAL_VERBOSE_LOGGING
 #define PtyLog NSLog
@@ -298,7 +298,7 @@ end:
 }
 
 - (void)setToolbar:(NSToolbar *)toolbar {
-    if ([iTermSettingsModel disableToolbar]) {
+    if ([iTermAdvancedSettingsModel disableToolbar]) {
         return;
     }
     [super setToolbar:toolbar];

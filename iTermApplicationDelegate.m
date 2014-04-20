@@ -35,7 +35,7 @@
 #import "iTermFontPanel.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
-#import "iTermSettingsModel.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "NSStringITerm.h"
@@ -394,7 +394,7 @@ static BOOL hasBecomeActive = NO;
 
 - (PseudoTerminal *)terminalToOpenFileIn
 {
-    if ([iTermSettingsModel openFileInNewWindows]) {
+    if ([iTermAdvancedSettingsModel openFileInNewWindows]) {
         return nil;
     } else {
         return [self currentTerminal];
@@ -472,7 +472,7 @@ static BOOL hasBecomeActive = NO;
         return NO;
     }
     if (!userHasInteractedWithAnySession_) {
-        if ([[NSDate date] timeIntervalSinceDate:launchTime_] < [iTermSettingsModel minRunningTime]) {
+        if ([[NSDate date] timeIntervalSinceDate:launchTime_] < [iTermAdvancedSettingsModel minRunningTime]) {
             NSLog(@"Not quitting iTerm2 because it ran very briefly and had no user interaction. Set the MinRunningTime float preference to 0 to turn this feature off.");
             return NO;
         }
@@ -493,11 +493,11 @@ static BOOL hasBecomeActive = NO;
             if ([[hotkeyTerm window] alphaValue] == 1) {
                 [[HotkeyWindowController sharedInstance] hideHotKeyWindow:hotkeyTerm];
                 return NO;
-            } else if ([iTermSettingsModel dockIconTogglesWindow]) {
+            } else if ([iTermAdvancedSettingsModel dockIconTogglesWindow]) {
                 [[HotkeyWindowController sharedInstance] showHotKeyWindow];
                 return NO;
             }
-        } else if ([iTermSettingsModel dockIconTogglesWindow]) {
+        } else if ([iTermAdvancedSettingsModel dockIconTogglesWindow]) {
             // No existing hotkey window but preference is to toggle it by dock icon so open a new
             // one.
             [[HotkeyWindowController sharedInstance] showHotKeyWindow];
@@ -514,7 +514,7 @@ static BOOL hasBecomeActive = NO;
     // I suppose, but I don't want to die on this hill.
     [self performSelector:@selector(updateScreenParametersInAllTerminals)
                withObject:nil
-               afterDelay:[iTermSettingsModel updateScreenParamsDelay]];
+               afterDelay:[iTermAdvancedSettingsModel updateScreenParamsDelay]];
 }
 
 - (void)updateScreenParametersInAllTerminals {

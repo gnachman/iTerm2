@@ -1,16 +1,16 @@
 //
-//  iTermSettingsModel.m
+//  iTermAdvancedSettingsModel.m
 //  iTerm
 //
 //  Created by George Nachman on 3/18/14.
 //
 //
 
-#import "iTermSettingsModel.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermAdvancedSettingsController.h"
 #import "NSStringITerm.h"
 
-@implementation iTermSettingsModel
+@implementation iTermAdvancedSettingsModel
 
 #define DEFINE_BOOL(name, theDefault, theDescription) \
 + (BOOL)name { \

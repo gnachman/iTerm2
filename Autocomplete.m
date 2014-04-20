@@ -11,7 +11,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermTextExtractor.h"
-#import "iTermSettingsModel.h"
+#import "iTermAdvancedSettingsModel.h"
 
 #define AcLog DLog
 
@@ -67,7 +67,7 @@ const int kMaxResultContextWords = 4;
 
 + (int)maxOptions
 {
-    return [iTermSettingsModel autocompleteMaxOptions];
+    return [iTermAdvancedSettingsModel autocompleteMaxOptions];
 }
 
 - (id)init

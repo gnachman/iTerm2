@@ -16,7 +16,7 @@
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
 #import "iTermSelection.h"
-#import "iTermSettingsModel.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermTextExtractor.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
@@ -783,7 +783,7 @@ typedef enum {
 }
 
 - (BOOL)shouldSetCtype {
-    return ![iTermSettingsModel doNotSetCtype];
+    return ![iTermAdvancedSettingsModel doNotSetCtype];
 }
 
 - (void)startProgram:(NSString *)program
@@ -1006,7 +1006,7 @@ typedef enum {
     static BOOL checkedDebug;
     static BOOL debugKeyDown;
     if (!checkedDebug) {
-        debugKeyDown = [iTermSettingsModel debugKeyDown];
+        debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
         checkedDebug = YES;
     }
     if (debugKeyDown || gDebugLogging) {
@@ -2267,7 +2267,7 @@ typedef enum {
     }
 
     if (set) {
-        NSTimeInterval period = MIN(60, [iTermSettingsModel antiIdleTimerPeriod]);
+        NSTimeInterval period = MIN(60, [iTermAdvancedSettingsModel antiIdleTimerPeriod]);
         
         _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:period
                                                            target:self
@@ -2512,7 +2512,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
     if (anotherUpdateNeeded) {
         if ([[[self tab] parentWindow] currentTab] == [self tab]) {
-            [self scheduleUpdateIn:[iTermSettingsModel timeBetweenBlinks]];
+            [self scheduleUpdateIn:[iTermAdvancedSettingsModel timeBetweenBlinks]];
         } else {
             [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
         }
@@ -2530,7 +2530,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)refreshAndStartTimerIfNeeded
 {
     if ([_textview refresh]) {
-        [self scheduleUpdateIn:[iTermSettingsModel timeBetweenBlinks]];
+        [self scheduleUpdateIn:[iTermAdvancedSettingsModel timeBetweenBlinks]];
     }
 }
 
@@ -3447,7 +3447,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 // pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event
 {
-  BOOL debugKeyDown = [iTermSettingsModel debugKeyDown];
+  BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
   unsigned char *send_str = NULL;
   unsigned char *dataPtr = NULL;
   int dataLength = 0;
@@ -4151,7 +4151,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)textViewWillNeedUpdateForBlink
 {
-    [self scheduleUpdateIn:[iTermSettingsModel timeBetweenBlinks]];
+    [self scheduleUpdateIn:[iTermAdvancedSettingsModel timeBetweenBlinks]];
 }
 
 - (void)textViewSplitVertically:(BOOL)vertically withProfileGuid:(NSString *)guid
@@ -4422,7 +4422,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                     break;
 
                 case MOUSE_REPORTING_NONE:
-                    if ([iTermSettingsModel alternateMouseScroll] &&
+                    if ([iTermAdvancedSettingsModel alternateMouseScroll] &&
                         [_screen showingAlternateScreen]) {
                         NSData *arrowKeyData = nil;
                         if (deltaY > 0) {

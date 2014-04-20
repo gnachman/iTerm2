@@ -32,7 +32,7 @@
 #import "PopupModel.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
-#import "iTermSettingsModel.h"
+#import "iTermAdvancedSettingsModel.h"
 
 #define PBHKEY_ENTRIES @"Entries"
 #define PBHKEY_VALUE @"Value"
@@ -60,7 +60,7 @@
 
 + (int)maxEntries
 {
-    return [iTermSettingsModel pasteHistoryMaxOptions];
+    return [iTermAdvancedSettingsModel pasteHistoryMaxOptions];
 }
 
 + (PasteboardHistory*)sharedInstance

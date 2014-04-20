@@ -50,7 +50,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermInstantReplayWindowController.h"
 #import "iTermPreferences.h"
-#import "iTermSettingsModel.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermURLSchemeController.h"
 #include <unistd.h>
 
@@ -867,7 +867,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)magnifyWithEvent:(NSEvent *)event
 {
-    if ([iTermSettingsModel pinchToChangeFontSizeDisabled]) {
+    if ([iTermAdvancedSettingsModel pinchToChangeFontSizeDisabled]) {
         return;
     }
     const double kMagTimeout = 0.2;
@@ -1640,7 +1640,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (IBAction)findUrls:(id)sender {
     FindViewController *findViewController = [[[self currentSession] view] findViewController];
-    NSString *regex = [iTermSettingsModel findUrlsRegex];
+    NSString *regex = [iTermAdvancedSettingsModel findUrlsRegex];
     [findViewController closeViewAndDoTemporarySearchForString:regex
                                                   ignoringCase:NO
                                                          regex:YES];
@@ -2039,7 +2039,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
     // update the cursor
     if ([[[self currentSession] textview] refresh]) {
-        [[self currentSession] scheduleUpdateIn:[iTermSettingsModel timeBetweenBlinks]];
+        [[self currentSession] scheduleUpdateIn:[iTermAdvancedSettingsModel timeBetweenBlinks]];
     }
     [[[self currentSession] textview] setNeedsDisplay:YES];
     [self _loadFindStringFromSharedPasteboard];
@@ -3236,7 +3236,7 @@ NSString *kSessionsKVCKey = @"sessions";
     }
     if (([[[iTermController sharedInstance] terminals] count] == 1) ||
         (![iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement])) {
-        if ([iTermSettingsModel rememberWindowPositions]) {
+        if ([iTermAdvancedSettingsModel rememberWindowPositions]) {
             PtyLog(@"No smart layout");
             NSRect frame = [window frame];
             [self assignUniqueNumberToWindow];
@@ -5488,12 +5488,12 @@ NSString *kSessionsKVCKey = @"sessions";
     [tabBarControl setDisableTabClose:[iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton]];
     if ([iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton] &&
         [iTermPreferences boolForKey:kPreferenceKeyHideTabNumber]) {
-        [tabBarControl setCellMinWidth:[iTermSettingsModel minCompactTabWidth]];
+        [tabBarControl setCellMinWidth:[iTermAdvancedSettingsModel minCompactTabWidth]];
     } else {
-        [tabBarControl setCellMinWidth:[iTermSettingsModel minTabWidth]];
+        [tabBarControl setCellMinWidth:[iTermAdvancedSettingsModel minTabWidth]];
     }
-    [tabBarControl setSizeCellsToFit:[iTermSettingsModel useUnevenTabs]];
-    [tabBarControl setCellOptimumWidth:[iTermSettingsModel optimumTabWidth]];
+    [tabBarControl setSizeCellsToFit:[iTermAdvancedSettingsModel useUnevenTabs]];
+    [tabBarControl setCellOptimumWidth:[iTermAdvancedSettingsModel optimumTabWidth]];
 
     PtyLog(@"repositionWidgets - refresh textviews in this tab");
     for (PTYSession* session in [[self currentTab] sessions]) {
@@ -5997,7 +5997,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [item action] == @selector(openDashboard:)) {
         result = [[iTermController sharedInstance] haveTmuxConnection];
     } else if ([item action] == @selector(wrapToggleToolbarShown:)) {
-        result = ![iTermSettingsModel disableToolbar] && (self.window.styleMask & NSTitledWindowMask);
+        result = ![iTermAdvancedSettingsModel disableToolbar] && (self.window.styleMask & NSTitledWindowMask);
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         result = ([[self sessions] count] > 1);
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||
@@ -6794,7 +6794,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [self setupSession:object title:nil withSize:nil];
     tabViewItemsBeingAdded--;
     if ([object screen]) {  // screen initialized ok
-        if ([iTermSettingsModel addNewTabAtEndOfTabs] || ![self currentTab]) {
+        if ([iTermAdvancedSettingsModel addNewTabAtEndOfTabs] || ![self currentTab]) {
             [self insertSession:object atIndex:[TABVIEW numberOfTabViewItems]];
         } else {
             [self insertSession:object atIndex:[self indexOfTab:[self currentTab]] + 1];
