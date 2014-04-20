@@ -402,10 +402,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences intForKey:kPreferenceKeyTabPosition];
 }
 
-- (int)windowStyle {
-    return [iTermPreferences intForKey:kPreferenceKeyWindowStyle];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

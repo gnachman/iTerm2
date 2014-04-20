@@ -18,6 +18,11 @@
 
 #define BLOCK(x) [^id() { return [self x]; } copy]
 
+NSString *const kTabStyleMetal = @"Metal";
+NSString *const kTabStyleAqua = @"Aqua";
+NSString *const kTabStyleUnified = @"Unified";
+NSString *const kTabStyleAdium = @"Adium";
+
 NSString *const kPreferenceKeyOpenBookmark = @"OpenBookmark";
 NSString *const kPreferenceKeyOpenArrangementAtStartup = @"OpenArrangementAtStartup";
 NSString *const kPreferenceKeyQuitWhenAllWindowsClosed = @"QuitWhenAllWindowsClosed";

@@ -898,18 +898,19 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)setTabBarStyle
 {
-    switch ([[PreferencePanel sharedInstance] windowStyle]) {
-        case 0:
-            [tabBarControl setStyleNamed:@"Metal"];
+    switch ([iTermPreferences intForKey:kPreferenceKeyWindowStyle]) {
+        case TAB_STYLE_METAL:
+            [tabBarControl setStyleNamed:kTabStyleMetal];
             break;
-        case 1:
-            [tabBarControl setStyleNamed:@"Aqua"];
+        case TAB_STYLE_AQUA:
+            [tabBarControl setStyleNamed:kTabStyleAqua];
             break;
-        case 2:
-            [tabBarControl setStyleNamed:@"Unified"];
+        case TAB_STYLE_UNIFIED:
+            [tabBarControl setStyleNamed:kTabStyleUnified];
             break;
+        case TAB_STYLE_ADIUM:
         default:
-            [tabBarControl setStyleNamed:@"Adium"];
+            [tabBarControl setStyleNamed:kTabStyleAdium];
             break;
     }
 }

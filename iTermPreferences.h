@@ -15,10 +15,17 @@
 #define OPEN_TMUX_WINDOWS_IN_TABS 1
 
 // Values for kPreferenceKeyWindowStyle (corresponds to tags in control).
-#define TAB_STYLE_METAL 0
-#define TAB_STYLE_AQUA 1
-#define TAB_STYLE_UNIFIED 2
-#define TAB_STYLE_ADIUM 3
+typedef NS_ENUM(int, iTermPreferencesTabStyle) {
+    TAB_STYLE_METAL = 0,
+    TAB_STYLE_AQUA = 1,
+    TAB_STYLE_UNIFIED = 2,
+    TAB_STYLE_ADIUM = 3
+};
+
+extern NSString *const kTabStyleMetal;
+extern NSString *const kTabStyleAqua;
+extern NSString *const kTabStyleUnified;
+extern NSString *const kTabStyleAdium;
 
 // Values for kPreferenceKeyTabPosition (corresponds to tags in control).
 #define TAB_POSITION_TOP PSMTab_TopTab
