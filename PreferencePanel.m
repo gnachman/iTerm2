@@ -107,11 +107,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     IBOutlet KeysPreferencesViewController *_keysViewController;
     IBOutlet ProfilePreferencesViewController *_profilesViewController;
 
-    // instant replay
-    BOOL defaultInstantReplay;
-
-    NSUserDefaults *_userDefaults;
-
     IBOutlet NSToolbar *_toolbar;
     IBOutlet NSTabView *_tabView;
     IBOutlet NSToolbarItem *_globalToolbarItem;
@@ -139,7 +134,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         instance = [[self alloc] initWithProfileModel:[ProfileModel sharedInstance]
-                                         userDefaults:[NSUserDefaults standardUserDefaults]
                                editCurrentSessionMode:NO];
     });
     return instance;
@@ -150,19 +144,16 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         instance = [[self alloc] initWithProfileModel:[ProfileModel sessionsInstance]
-                                         userDefaults:nil
                                editCurrentSessionMode:YES];
     });
     return instance;
 }
 
 - (id)initWithProfileModel:(ProfileModel*)model
-              userDefaults:(NSUserDefaults*)userDefaults
     editCurrentSessionMode:(BOOL)editCurrentSessionMode {
     self = [super initWithWindowNibName:@"PreferencePanel"];
     if (self) {
         _profileModel = model;
-        _userDefaults = userDefaults;
 
         [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
 
