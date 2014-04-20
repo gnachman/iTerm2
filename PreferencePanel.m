@@ -509,10 +509,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
 }
 
-- (BOOL)disableFullscreenTransparency {
-    return [iTermPreferences boolForKey:kPreferenceKeyDisableFullscreenTransparencyByDefault];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

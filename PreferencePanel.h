@@ -114,7 +114,6 @@ void LoadPrefsFromCustomFolder(void);
 - (NSString *)wordChars;
 - (BOOL)hideScrollbar;
 - (BOOL)showPaneTitles;
-- (BOOL)disableFullscreenTransparency;
 - (NSTextField*)hotkeyField;
 
 - (float)legacyMinimumContrast;
