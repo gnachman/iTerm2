@@ -704,11 +704,6 @@ NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUp
     return [iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides];
 }
 
-- (BOOL)dockIconTogglesWindow
-{
-    return [iTermSettingsModel dockIconTogglesWindow];
-}
-
 #pragma mark - ProfilePreferencesViewControllerDelegate
 
 - (ProfileModel *)profilePreferencesModel {

@@ -491,11 +491,11 @@ static BOOL hasBecomeActive = NO;
             if ([[hotkeyTerm window] alphaValue] == 1) {
                 [[HotkeyWindowController sharedInstance] hideHotKeyWindow:hotkeyTerm];
                 return NO;
-            } else if ([prefPanel dockIconTogglesWindow]) {
+            } else if ([iTermSettingsModel dockIconTogglesWindow]) {
                 [[HotkeyWindowController sharedInstance] showHotKeyWindow];
                 return NO;
             }
-        } else if ([prefPanel dockIconTogglesWindow]) {
+        } else if ([iTermSettingsModel dockIconTogglesWindow]) {
             // No existing hotkey window but preference is to toggle it by dock icon so open a new
             // one.
             [[HotkeyWindowController sharedInstance] showHotKeyWindow];

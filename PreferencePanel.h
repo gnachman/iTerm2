@@ -169,7 +169,6 @@ void LoadPrefsFromCustomFolder(void);
 
 - (BOOL)hotkeyTogglesWindow;
 - (BOOL)hotkeyAutoHides;
-- (BOOL)dockIconTogglesWindow;
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename;
 
