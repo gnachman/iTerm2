@@ -8,6 +8,7 @@
 
 #import "iTermPasteHelper.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermWarning.h"
 #import "NSStringITerm.h"
@@ -26,7 +27,7 @@
     // Paste from the head of this string from a timer until it's empty.
     NSMutableData *_buffer;
     NSTimer *_timer;
-    
+
 }
 
 - (id)init {
@@ -235,18 +236,22 @@
     if (sumOfDelays + timeSpentWriting > kMinEstimatedPasteTimeToShowIndicator) {
         [self showPasteIndicatorInView:[_delegate pasteHelperViewForIndicator]];
     }
-    
+
     [self pasteNextChunkAndScheduleTimer];
 }
 
 - (BOOL)maybeWarnAboutMultiLinePaste:(NSString *)string
 {
-    iTermApplicationDelegate *ad = [[NSApplication sharedApplication] delegate];
-    if (![ad warnBeforeMultiLinePaste]) {
+    iTermApplicationDelegate *applicationDelegate = [[NSApplication sharedApplication] delegate];
+    if (![applicationDelegate warnBeforeMultiLinePaste]) {
         return YES;
     }
-    
-    if ([string rangeOfString:@"\n"].length == 0) {
+    NSRange rangeOfFirstNewline = [string rangeOfString:@"\n"];
+    if (rangeOfFirstNewline.length == 0) {
+        return YES;
+    }
+    if ([iTermAdvancedSettingsModel suppressMultilineSyncWarningOnOneLineWithTerminalNewline] &&
+        rangeOfFirstNewline.location == string.length - 1) {
         return YES;
     }
 
