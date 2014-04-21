@@ -475,7 +475,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         int min_x = OffsetOfWrappedLine(lastRawLine,
                                         num_overflow_lines,
                                         last_line_length,
-                                        width);
+                                        width,
+                                        _mayHaveDoubleWidthCharacter);
         //int num_overflow_lines = (last_line_length-1) / width;
         //int min_x = num_overflow_lines * width;
         int max_x = min_x + width;  // inclusive because the cursor wraps to the next line on the last line in the buffer

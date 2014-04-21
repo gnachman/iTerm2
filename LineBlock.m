@@ -261,22 +261,26 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
     }
 }
 
-int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
-    int lines = 0;
-    int i = 0;
-    while (lines < n) {
-        // Advance i to the start of the next line
-        i += width;
-        ++lines;
-        assert(i < length);
-        if (p[i].code == DWC_RIGHT) {
-            // Oops, the line starts with the second half of a double-width
-            // character. Wrap the last character of the previous line on to
-            // this line.
-            --i;
+int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL mayHaveDwc) {
+    if (mayHaveDwc) {
+        int lines = 0;
+        int i = 0;
+        while (lines < n) {
+            // Advance i to the start of the next line
+            i += width;
+            ++lines;
+            assert(i < length);
+            if (p[i].code == DWC_RIGHT) {
+                // Oops, the line starts with the second half of a double-width
+                // character. Wrap the last character of the previous line on to
+                // this line.
+                --i;
+            }
         }
+        return i;
+    } else {
+        return n * width;
     }
-    return i;
 }
 
 - (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width
@@ -347,7 +351,8 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
             int offset = OffsetOfWrappedLine(buffer_start + prev,
                                              *lineNum,
                                              length,
-                                             width);
+                                             width,
+                                             _mayHaveDoubleWidthCharacter);
             *lineNum = 0;
             // offset: the relevant part of the raw line begins at this offset into it
             *lineLength = length - offset;  // the length of the suffix of the raw line, beginning at the wrapped line we want
@@ -442,15 +447,14 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
         // If the width is four and the last line is "0123456789" then return "89". It would
         // wrap as: 0123/4567/89. If there are double-width characters, this ensures they are
         // not split across lines when computing the wrapping.
-        // If there were only single width characters, the formula would be:
-        //     width * ((available_len - 1) / width);
         int offset_from_start = OffsetOfWrappedLine(buffer_start + start,
                                                     NumberOfFullLines(buffer_start + start,
                                                                       available_len,
                                                                       width,
                                                                       _mayHaveDoubleWidthCharacter),
                                                     available_len,
-                                                    width);
+                                                    width,
+                                                    _mayHaveDoubleWidthCharacter);
         *length = available_len - offset_from_start;
         *ptr = buffer_start + start + offset_from_start;
         cumulative_line_lengths[cll_entries - 1] -= *length;
@@ -568,10 +572,12 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
         } else {  // n <= spans
             // We found the raw line that inclues the wrapped line we're searching for.
             // Set offset to the offset into the raw line where the nth wrapped
-            // line begins. If there were only single-width characters the formula
-            // would be:
-            //   offset = n * width;
-            int offset = OffsetOfWrappedLine(buffer_start + prev, n, length, width);
+            // line begins.
+            int offset = OffsetOfWrappedLine(buffer_start + prev,
+                                             n,
+                                             length,
+                                             width,
+                                             _mayHaveDoubleWidthCharacter);
             if (width != cached_numlines_width) {
                 cached_numlines_width = -1;
             } else {
@@ -1059,7 +1065,8 @@ static int Search(NSString* needle,
                 int offset = OffsetOfWrappedLine(raw_buffer + prev,
                                                  consume,
                                                  line_length,
-                                                 width);
+                                                 width,
+                                                 _mayHaveDoubleWidthCharacter);
                 // We know that position falls in this line. Set x to the number
                 // of chars after the beginning on the line. If there were only
                 // single-width chars the formula would be:

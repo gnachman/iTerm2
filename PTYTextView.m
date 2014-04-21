@@ -50,6 +50,7 @@
 #include <sys/time.h>
 
 static const int kMaxSelectedTextLengthForCustomActions = 8192;
+static const int kMaxTrouterPrefixOrSuffix = 2000;
 
 // This defines the fraction of a character's width on its right side that is used to
 // select the NEXT character.
@@ -3319,8 +3320,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int y = clickPoint.y;
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     VT100GridCoord coord = VT100GridCoordMake(x, y);
-    NSString *prefix = [extractor wrappedStringAt:coord forward:NO respectHardNewlines:NO];
-    NSString *suffix = [extractor wrappedStringAt:coord forward:YES respectHardNewlines:NO];
+    NSString *prefix = [extractor wrappedStringAt:coord
+                                          forward:NO
+                              respectHardNewlines:NO
+                                         maxChars:kMaxTrouterPrefixOrSuffix];
+    NSString *suffix = [extractor wrappedStringAt:coord
+                                          forward:YES
+                              respectHardNewlines:NO
+                                         maxChars:kMaxTrouterPrefixOrSuffix];
 
     URLAction *action = [self urlActionForClickAtX:x y:y];
     if (action) {
@@ -7676,10 +7683,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [extractor restrictToLogicalWindowIncludingCoord:coord];
     NSString *prefix = [extractor wrappedStringAt:coord
                                           forward:NO
-                              respectHardNewlines:respectHardNewlines];
+                              respectHardNewlines:respectHardNewlines
+                                         maxChars:kMaxTrouterPrefixOrSuffix];
     NSString *suffix = [extractor wrappedStringAt:coord
                                           forward:YES
-                              respectHardNewlines:respectHardNewlines];
+                              respectHardNewlines:respectHardNewlines
+                                         maxChars:kMaxTrouterPrefixOrSuffix];
 
     NSString *possibleFilePart1 =
         [prefix substringIncludingOffset:[prefix length] - 1
