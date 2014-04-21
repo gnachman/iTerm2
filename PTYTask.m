@@ -226,6 +226,12 @@ static void HandleSigChld(int n)
         sigaddset(&signals, SIGPIPE);
         sigprocmask(SIG_UNBLOCK, &signals, NULL);
 
+        // Apple opens files without the close-on-exec flag (e.g., Extras2.rsrc).
+        // See issue 2662.
+        for (int j = 3; j < getdtablesize(); j++) {
+            close(j);
+        }
+
         chdir(initialPwd);
         for (i = 0; i < envsize; i++) {
             // The analyzer warning below is an obvious lie.
@@ -248,6 +254,9 @@ static void HandleSigChld(int n)
                                 nil);
         return;
     }
+
+    // Make sure the master side of the pty is closed on future exec() calls.
+    fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
 
     tty = [[NSString stringWithUTF8String:theTtyname] retain];
     NSParameterAssert(tty != nil);
