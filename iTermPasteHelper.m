@@ -254,7 +254,10 @@
         rangeOfFirstNewline.location == string.length - 1) {
         return YES;
     }
-
+    if ([iTermAdvancedSettingsModel suppressMultilinePasteWarningWhenNotAtShellPrompt] &&
+        ![_delegate pasteHelperIsAtShellPrompt]) {
+        return YES;
+    }
     NSString *theTitle = [NSString stringWithFormat:@"OK to paste %d lines?",
                              (int)[[string componentsSeparatedByString:@"\n"] count]];
     iTermWarningSelection selection =

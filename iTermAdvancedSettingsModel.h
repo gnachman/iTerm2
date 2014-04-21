@@ -64,5 +64,6 @@
 + (NSString *)findUrlsRegex;
 
 + (BOOL)suppressMultilinePasteWarningWhenPastingOneLineWithTerminalNewline;
++ (BOOL)suppressMultilinePasteWarningWhenNotAtShellPrompt;
 
 @end

@@ -219,6 +219,10 @@ typedef enum {
     // Mouse reporting state
     VT100GridCoord _lastReportedCoord;
     BOOL _reportingMouseDown;
+
+    // Has a shell integration code ever been seen? A rough guess as to whether we can assume
+    // shell integration is currently being used.
+    BOOL _shellIntegrationEverUsed;
 }
 
 - (id)init {
@@ -5237,6 +5241,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                                                                onHost:host];
 }
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
+    _shellIntegrationEverUsed = YES;
     BOOL hadCommand = _commandRange.start.x >= 0 && [[self commandInRange:_commandRange] length] > 0;
     _commandRange = range;
     BOOL haveCommand = _commandRange.start.x >= 0 && [[self commandInRange:_commandRange] length] > 0;
@@ -5256,6 +5261,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
+    _shellIntegrationEverUsed = YES;
     NSString *command = [self commandInRange:range];
     if (command) {
         NSString *trimmedCommand =
@@ -5510,6 +5516,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (NSView *)pasteHelperViewForIndicator {
     return _view;
+}
+
+- (BOOL)pasteHelperIsAtShellPrompt {
+    return !_shellIntegrationEverUsed || [self currentCommand] != nil;
 }
 
 @end
