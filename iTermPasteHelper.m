@@ -250,7 +250,7 @@
     if (rangeOfFirstNewline.length == 0) {
         return YES;
     }
-    if ([iTermAdvancedSettingsModel suppressMultilineSyncWarningOnOneLineWithTerminalNewline] &&
+    if ([iTermAdvancedSettingsModel suppressMultilinePasteWarningWhenPastingOneLineWithTerminalNewline] &&
         rangeOfFirstNewline.location == string.length - 1) {
         return YES;
     }
