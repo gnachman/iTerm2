@@ -71,15 +71,18 @@ static NSString *PWD_ENVNAME = @"PWD";
 static NSString *PWD_ENVVALUE = @"~";
 
 // Constants for saved window arrangement keys.
-static NSString* SESSION_ARRANGEMENT_COLUMNS = @"Columns";
-static NSString* SESSION_ARRANGEMENT_ROWS = @"Rows";
-static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
-static NSString* SESSION_ARRANGEMENT_BOOKMARK_NAME = @"Bookmark Name";
-static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
-static NSString* SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
-static NSString* SESSION_ARRANGEMENT_TMUX_HISTORY = @"Tmux History";
-static NSString* SESSION_ARRANGEMENT_TMUX_ALT_HISTORY = @"Tmux AltHistory";
-static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
+static NSString *const SESSION_ARRANGEMENT_COLUMNS = @"Columns";
+static NSString *const SESSION_ARRANGEMENT_ROWS = @"Rows";
+static NSString *const SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
+static NSString *const SESSION_ARRANGEMENT_BOOKMARK_NAME = @"Bookmark Name";
+static NSString *const SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
+static NSString *const SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
+static NSString *const SESSION_ARRANGEMENT_TMUX_HISTORY = @"Tmux History";
+static NSString *const SESSION_ARRANGEMENT_TMUX_ALT_HISTORY = @"Tmux AltHistory";
+static NSString *const SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
+static NSString *const SESSION_ARRANGEMENT_DEFAULT_NAME = @"Session Default Name";  // manually set name
+static NSString *const SESSION_ARRANGEMENT_WINDOW_TITLE = @"Session Window Title";  // server-set window name
+static NSString *const SESSION_ARRANGEMENT_NAME = @"Session Name";  // server-set "icon" (tab) name
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
@@ -508,6 +511,16 @@ typedef enum {
     if (history) {
         [[aSession screen] setAltScreen:history];
     }
+    if (arrangement[SESSION_ARRANGEMENT_NAME]) {
+        [aSession setName:arrangement[SESSION_ARRANGEMENT_NAME]];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_DEFAULT_NAME]) {
+        [aSession setDefaultName:arrangement[SESSION_ARRANGEMENT_DEFAULT_NAME]];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_WINDOW_TITLE]) {
+        [aSession setWindowTitle:arrangement[SESSION_ARRANGEMENT_WINDOW_TITLE]];
+    }
+
     if (state) {
         [[aSession screen] setTmuxState:state];
         NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
@@ -2425,6 +2438,15 @@ typedef enum {
     [result setObject:[NSNumber numberWithInt:[_screen height]] forKey:SESSION_ARRANGEMENT_ROWS];
     [result setObject:_profile forKey:SESSION_ARRANGEMENT_BOOKMARK];
     result[SESSION_ARRANGEMENT_BOOKMARK_NAME] = _bookmarkName;
+    if (_name) {
+        result[SESSION_ARRANGEMENT_NAME] = _name;
+    }
+    if (_defaultName) {
+        result[SESSION_ARRANGEMENT_DEFAULT_NAME] = _defaultName;
+    }
+    if (_windowTitle) {
+        result[SESSION_ARRANGEMENT_WINDOW_TITLE] = _windowTitle;
+    }
     NSString* pwd = [_shell getWorkingDirectory];
     [result setObject:pwd ? pwd : @"" forKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY];
     return result;
