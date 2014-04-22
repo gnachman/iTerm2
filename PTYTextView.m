@@ -8459,8 +8459,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (event.type == NSLeftMouseDown && _mouseDownWasFirstMouse) {
         return NO;
     }
-    PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
-    return (frontTextView == self && [self xtermMouseReporting]);
+    if (event.type == NSScrollWheel) {
+        return [self xtermMouseReporting];
+    } else {
+        PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
+        return (frontTextView == self && [self xtermMouseReporting]);
+    }
 }
 
 - (MouseButtonNumber)mouseReportingButtonNumberForEvent:(NSEvent *)event {
