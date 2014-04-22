@@ -1263,8 +1263,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         return [currentGrid_ screenCharsAtLineNumber:(theIndex - numLinesInLineBuffer)];
     } else {
         // Get a line from the scrollback buffer.
-        screen_char_t *defaultLine = [[currentGrid_ defaultLineOfWidth:currentGrid_.size.width] mutableBytes];
-        memcpy(buffer, defaultLine, sizeof(screen_char_t) * currentGrid_.size.width);
         int cont = [linebuffer_ copyLineToBuffer:buffer
                                            width:currentGrid_.size.width
                                          lineNum:theIndex];
