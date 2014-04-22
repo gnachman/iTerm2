@@ -14,6 +14,7 @@
 #import "ScriptTrigger.h"
 #import "AlertTrigger.h"
 #import "HighlightTrigger.h"
+#import "MarkTrigger.h"
 #import "Trigger.h"
 #import "CoprocessTrigger.h"
 #import "SendTextTrigger.h"
@@ -40,7 +41,7 @@ static NSMutableArray *gTriggerClasses;
     [gTriggerClasses addObject:[[[CoprocessTrigger alloc] init] autorelease]];
     [gTriggerClasses addObject:[[[MuteCoprocessTrigger alloc] init] autorelease]];
     [gTriggerClasses addObject:[[[HighlightTrigger alloc] init] autorelease]];
-
+    [gTriggerClasses addObject:[[[MarkTrigger alloc] init] autorelease]];
     [gTriggerClasses sortUsingSelector:@selector(compareTitle:)];
 }
 

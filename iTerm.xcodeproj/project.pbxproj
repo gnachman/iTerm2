@@ -267,6 +267,9 @@
 		1D844C8D13FD8B7700CD4F85 /* SplitPanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D844C8B13FD8B7700CD4F85 /* SplitPanel.xib */; };
 		1D85D1ED1306687700A3E998 /* RegexKitLite.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D85D1D81306687700A3E998 /* RegexKitLite.h */; };
 		1D85D1EF1306687700A3E998 /* RegexKitLite.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D85D1DA1306687700A3E998 /* RegexKitLite.m */; };
+		1D891E43190724DB0053C4BB /* MarkTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D891E41190724DB0053C4BB /* MarkTrigger.h */; };
+		1D891E44190724DB0053C4BB /* MarkTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D891E42190724DB0053C4BB /* MarkTrigger.m */; };
+		1D891E45190724DB0053C4BB /* MarkTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D891E42190724DB0053C4BB /* MarkTrigger.m */; };
 		1D8B8A141806038F00C2DC25 /* VT100Grid.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8B8A121806038F00C2DC25 /* VT100Grid.h */; };
 		1D8B8A151806038F00C2DC25 /* VT100Grid.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8B8A131806038F00C2DC25 /* VT100Grid.m */; };
 		1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */; };
@@ -1078,6 +1081,8 @@
 		1D844C8C13FD8B7700CD4F85 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/SplitPanel.xib; sourceTree = "<group>"; };
 		1D85D1D81306687700A3E998 /* RegexKitLite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegexKitLite.h; sourceTree = "<group>"; };
 		1D85D1DA1306687700A3E998 /* RegexKitLite.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RegexKitLite.m; sourceTree = "<group>"; };
+		1D891E41190724DB0053C4BB /* MarkTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MarkTrigger.h; sourceTree = "<group>"; };
+		1D891E42190724DB0053C4BB /* MarkTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MarkTrigger.m; sourceTree = "<group>"; };
 		1D8B8A121806038F00C2DC25 /* VT100Grid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100Grid.h; sourceTree = "<group>"; };
 		1D8B8A131806038F00C2DC25 /* VT100Grid.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Grid.m; sourceTree = "<group>"; };
 		1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = EncodingsWithLowerCase.plist; sourceTree = "<group>"; };
@@ -1703,6 +1708,7 @@
 				A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */,
 				20E74F4804E9089700000106 /* ITAddressBookMgr.h */,
 				1D407A2614BABE8700BD5035 /* iTerm.h */,
+				A697100918D94CDA007E901D /* iTermAdvancedSettingsModel.h */,
 				DDF0FD63062916F70080EF74 /* iTermApplication.h */,
 				20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */,
 				A6A13AA018C2D23300B241ED /* iTermColorMap.h */,
@@ -1729,7 +1735,6 @@
 				FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */,
 				1DAED99012EDF923005E49ED /* iTermSearchField.h */,
 				A63BA39318A9CB43002BE075 /* iTermSelection.h */,
-				A697100918D94CDA007E901D /* iTermAdvancedSettingsModel.h */,
 				A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */,
 				A6E713B818FCCDD1008D94DD /* iTermURLSchemeController.h */,
 				A6099B0318D6B0FD00081FA9 /* iTermWarning.h */,
@@ -1738,6 +1743,7 @@
 				1D72438F11F416F300BD4924 /* LineBuffer.h */,
 				A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */,
 				1D78B55C183EE1C000014D49 /* LineBufferPosition.h */,
+				1D891E41190724DB0053C4BB /* MarkTrigger.h */,
 				1D29732514082676004C5DBE /* MovePaneController.h */,
 				1D9053C417A5CCF100A0B64E /* MovingAverage.h */,
 				A68A30EB186D150A007F550F /* NSArray+iTerm.h */,
@@ -2166,6 +2172,7 @@
 				1D9DCC03142D7E570016228A /* GrowlTrigger.m */,
 				1D9DCC11142D7F970016228A /* ScriptTrigger.m */,
 				1D24C283142EF334006B246F /* SendTextTrigger.m */,
+				1D891E42190724DB0053C4BB /* MarkTrigger.m */,
 			);
 			name = Triggers;
 			sourceTree = "<group>";
@@ -2695,6 +2702,7 @@
 				1D2560AA13EE60E4006B35CD /* ArrangementPreviewView.h in Headers */,
 				1DF8AF5813FD781700C8A435 /* SplitPanel.h in Headers */,
 				1D29732714082676004C5DBE /* MovePaneController.h in Headers */,
+				1D891E43190724DB0053C4BB /* MarkTrigger.h in Headers */,
 				1D29732B14082A52004C5DBE /* SplitSelectionView.h in Headers */,
 				1D9F6AB8140C9DC4009B5CD4 /* FutureMethods.h in Headers */,
 				1DE8DC891415513A00F83147 /* ToolbeltView.h in Headers */,
@@ -3187,6 +3195,7 @@
 				1D9A5599180FA87000B42CE9 /* PTYTask.m in Sources */,
 				1D9A552F180FA6A100B42CE9 /* iTermGrowlDelegate.m in Sources */,
 				1D9A555D180FA83900B42CE9 /* PointerPrefsController.m in Sources */,
+				1D891E45190724DB0053C4BB /* MarkTrigger.m in Sources */,
 				A68A311B186E2F54007F550F /* PopupModel.m in Sources */,
 				1D9A5589180FA87000B42CE9 /* MovingAverage.m in Sources */,
 				1D9A5598180FA87000B42CE9 /* PTYTabView.m in Sources */,
@@ -3453,6 +3462,7 @@
 				1DE8DF371415799700F83147 /* ToolWrapper.m in Sources */,
 				A68A3106186D2973007F550F /* TemporaryNumberAllocator.m in Sources */,
 				1D19C71514171F1D00617E08 /* ToolJobs.m in Sources */,
+				1D891E44190724DB0053C4BB /* MarkTrigger.m in Sources */,
 				1D67AAAA14284BF300D5DA4E /* ToolNotes.m in Sources */,
 				A6057C051878CD30004A60AF /* ProfileTagsView.m in Sources */,
 				A6E713A418F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.m in Sources */,
