@@ -3105,12 +3105,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     // Reporting mouse clicks. The remote app gets preference.
                     break;
 
-                default:
-                    // Not reporting mouse clicks, so we'll move the cursor since the remote app can't.
-                    if (!cmdPressed && [_delegate textViewShouldPlaceCursor]) {
-                        [self placeCursorOnCurrentLineWithEvent:event];
+                default: {
+                    // Not reporting mouse clicks, so we'll move the cursor since the remote app
+                    // can't.
+                    VT100GridCoord coord = [self coordForPointInWindow:[event locationInWindow]];
+                    BOOL verticalOk;
+                    if (!cmdPressed &&
+                        [_delegate textViewShouldPlaceCursorAt:coord verticalOk:&verticalOk]) {
+                        [self placeCursorOnCurrentLineWithEvent:event verticalOk:verticalOk];
                     }
                     break;
+                }
             }
         }
 
@@ -3547,7 +3552,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate textViewSelectPreviousPane];
 }
 
-- (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event
+- (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event verticalOk:(BOOL)verticalOk
 {
     BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
 
@@ -3566,6 +3571,31 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     int i = abs(cursorX - x);
     int j = abs(cursorY - y);
+
+    if (!verticalOk) {
+      VT100GridCoord target = VT100GridCoordMake(x, y);
+      VT100GridCoord cursor = VT100GridCoordMake(cursorX, cursorY);
+      iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+      BOOL done = NO;
+      do {
+        switch (VT100GridCoordOrder(cursor, target)) {
+          case NSOrderedAscending:
+             [_delegate writeTask:[terminal.output keyArrowRight:0]];
+             cursor = [extractor successorOfCoord:cursor];
+             break;
+
+          case NSOrderedDescending:
+             [_delegate writeTask:[terminal.output keyArrowLeft:0]];
+             cursor = [extractor predecessorOfCoord:cursor];
+             break;
+
+          case NSOrderedSame:
+             done = YES;
+             break;
+        }
+      } while (!done);
+      return;
+    }
 
     if (cursorX > x) {
         // current position is right of going-to-be x,

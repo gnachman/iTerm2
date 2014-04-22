@@ -198,6 +198,16 @@ NS_INLINE VT100GridCoord VT100GridCoordRangeMax(VT100GridCoordRange range) {
     }
 }
 
+NS_INLINE BOOL VT100GridCoordRangeContainsCoord(VT100GridCoordRange range, VT100GridCoord coord) {
+  NSComparisonResult order = VT100GridCoordOrder(VT100GridCoordRangeMin(range), coord);
+  if (order == NSOrderedDescending) {
+    return NO;
+  }
+
+  order = VT100GridCoordOrder(VT100GridCoordRangeMax(range), coord);
+  return (order == NSOrderedDescending);
+}
+
 NS_INLINE long long VT100GridCoordDistance(VT100GridCoord a, VT100GridCoord b, int gridWidth) {
     long long aPos = a.y;
     aPos *= gridWidth;

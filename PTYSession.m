@@ -4164,9 +4164,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [_shell getWorkingDirectory];
 }
 
-- (BOOL)textViewShouldPlaceCursor {
-    // Only place cursor when not at the command line.
-    return _commandRange.start.x < 0;
+- (BOOL)textViewShouldPlaceCursorAt:(VT100GridCoord)coord verticalOk:(BOOL *)verticalOk {
+    if (_commandRange.start.x < 0) {
+      // Always ok to move cursor when not at the command line
+      *verticalOk = YES;
+      return YES;
+    } else {
+      // Ok to move to any char in current command, but no up or down arrows please.
+      NSComparisonResult order = VT100GridCoordOrder(VT100GridCoordRangeMin(_commandRange), coord);
+      *verticalOk = NO;
+      return (order != NSOrderedDescending);
+    }
 }
 
 - (BOOL)textViewShouldDrawFilledInCursor {
