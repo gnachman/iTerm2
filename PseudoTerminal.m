@@ -1133,7 +1133,7 @@ NSString *kSessionsKVCKey = @"sessions";
     for (PTYSession* session in [aTab sessions]) {
         [session terminate];
     }
-    if (numberOfTabs == 1 && [self windowInited]) {
+    if ([TABVIEW numberOfTabViewItems] <= 1 && [self windowInited]) {
         [[self window] close];
     } else {
         NSTabViewItem *aTabViewItem;

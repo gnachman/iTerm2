@@ -242,6 +242,10 @@
     return [fileManager fileExistsAtPath:fullPath];
 }
 
+- (BOOL)activatesOnAnyString {
+    return [[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterRawCommandAction];
+}
+
 - (BOOL)openPath:(NSString *)path
     workingDirectory:(NSString *)workingDirectory
     prefix:(NSString *)prefix
@@ -250,9 +254,12 @@
     BOOL isDirectory;
     NSString* lineNumber = @"";
 
-    path = [self getFullPath:path
-            workingDirectory:workingDirectory
-                  lineNumber:&lineNumber];
+    BOOL isRawAction = [[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterRawCommandAction];
+    if (!isRawAction) {
+        path = [self getFullPath:path
+                workingDirectory:workingDirectory
+                      lineNumber:&lineNumber];
+    }
 
     NSString *script = [prefs_ objectForKey:kTrouterTextKey];
     script = [script stringByReplacingBackreference:1 withString:path ? [path stringWithEscapedShellCharacters] : @""];
@@ -261,7 +268,7 @@
     script = [script stringByReplacingBackreference:4 withString:[suffix stringWithEscapedShellCharacters]];
     script = [script stringByReplacingBackreference:5 withString:[workingDirectory stringWithEscapedShellCharacters]];
 
-    if ([[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterRawCommandAction]) {
+    if (isRawAction) {
         [[NSTask launchedTaskWithLaunchPath:@"/bin/sh"
                                   arguments:[NSArray arrayWithObjects:@"-c", script, nil]] waitUntilExit];
         return YES;
