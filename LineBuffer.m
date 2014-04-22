@@ -315,7 +315,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 // Copy a line into the buffer. If the line is shorter than 'width' then only
 // the first 'width' characters will be modified.
 // 0 <= lineNum < numLinesWithWidth:width
-- (int) copyLineToBuffer: (screen_char_t*) buffer width: (int) width lineNum: (int) lineNum
+- (int)copyLineToBuffer:(screen_char_t *)buffer width:(int)width lineNum:(int)lineNum
 {
     int line = lineNum;
     int i;
@@ -341,12 +341,32 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         if (p) {
             NSAssert(length <= width, @"Length too long");
             memcpy((char*) buffer, (char*) p, length * sizeof(screen_char_t));
+            [self extendLastCharInBuffer:buffer ofLength:length toWidth:width];
             return eol;
         }
     }
     NSLog(@"Couldn't find line %d", lineNum);
     NSAssert(NO, @"Tried to get non-existant line");
     return NO;
+}
+
+- (void)extendLastCharInBuffer:(screen_char_t *)buffer
+                      ofLength:(int)length
+                       toWidth:(int)width {
+    if (length > 0) {
+        // Extend the attributes of the last cell across the rest of the line. This is
+        // kind of a hack but it will work 99% of the time. The background color for cells
+        // after the last populated one could be different than the last cell's.
+        // TODO: Store each line's suffix's background color similar to how timestamps
+        // are stored in LineBlock.
+        for (int i = length; i < width; i++) {
+            buffer[i] = buffer[length - 1];
+            buffer[i].code = 0;
+            buffer[i].complexChar = NO;
+        }
+    } else {
+        memset(buffer, 0, width * sizeof(screen_char_t));
+    }
 }
 
 - (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum width:(int)width
@@ -417,6 +437,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     // Copy into the provided buffer.
     memcpy(ptr, temp, sizeof(screen_char_t) * length);
+    [self extendLastCharInBuffer:ptr ofLength:length toWidth:width];
 
     // Clean up the block if the whole thing is empty, otherwise another call
     // to this function would not work correctly.
@@ -475,7 +496,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         int min_x = OffsetOfWrappedLine(lastRawLine,
                                         num_overflow_lines,
                                         last_line_length,
-                                        width);
+                                        width,
+                                        _mayHaveDoubleWidthCharacter);
         //int num_overflow_lines = (last_line_length-1) / width;
         //int min_x = num_overflow_lines * width;
         int max_x = min_x + width;  // inclusive because the cursor wraps to the next line on the last line in the buffer

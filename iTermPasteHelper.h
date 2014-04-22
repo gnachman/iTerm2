@@ -25,6 +25,8 @@
 // View in which to show the paste indicator.
 - (NSView *)pasteHelperViewForIndicator;
 
+- (BOOL)pasteHelperIsAtShellPrompt;
+
 @end
 
 @interface iTermPasteHelper : NSObject

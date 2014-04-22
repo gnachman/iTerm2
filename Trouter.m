@@ -346,19 +346,19 @@
     NSMutableString *left = [NSMutableString string];
     // Bail after 100 iterations if nothing is still found.
     int limit = 100;
-    
+
     NSMutableSet *paths = [NSMutableSet set];
     NSMutableSet *befores = [NSMutableSet set];
-    
+
     DLog(@"before chunks=%@", beforeChunks);
     DLog(@"after chunks=%@", afterChunks);
-    
+
     for (int i = [beforeChunks count]; i >= 0; i--) {
         NSString *beforeChunk = @"";
         if (i < [beforeChunks count]) {
             beforeChunk = [beforeChunks objectAtIndex:i];
         }
-        
+
         if ([befores containsObject:beforeChunk]) {
             continue;
         }

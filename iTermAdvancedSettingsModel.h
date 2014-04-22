@@ -63,4 +63,7 @@
 // Regular expression for finding URLs for Edit>Find>Find URLs
 + (NSString *)findUrlsRegex;
 
++ (BOOL)suppressMultilinePasteWarningWhenPastingOneLineWithTerminalNewline;
++ (BOOL)suppressMultilinePasteWarningWhenNotAtShellPrompt;
+
 @end

@@ -50,14 +50,19 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
         tasks = [[NSMutableArray alloc] init];
         tasksLock = [[NSRecursiveLock alloc] init];
         tasksChanged = NO;
-        
+
         int unblockPipe[2];
         if (pipe(unblockPipe) != 0) {
             [self release];
             return nil;
         }
-        fcntl(unblockPipe[0], F_SETFL, O_NONBLOCK);
-        fcntl(unblockPipe[1], F_SETFL, O_NONBLOCK);
+        // Set close-on-exec and non-blocking on both sides of the pipe.
+        for (int i = 0; i < 2; i++) {
+            int flags;
+            flags = fcntl(unblockPipe[0], F_GETFD);
+            fcntl(unblockPipe[i], F_SETFD, flags | FD_CLOEXEC);
+            fcntl(unblockPipe[i], F_SETFL, O_NONBLOCK);
+        }
         unblockPipeR = unblockPipe[0];
         unblockPipeW = unblockPipe[1];
     }

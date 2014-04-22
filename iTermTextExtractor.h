@@ -106,7 +106,8 @@ typedef enum {
 // returned up to/from |coord|. If not, then 10 lines are returned.
 - (NSString *)wrappedStringAt:(VT100GridCoord)coord
                       forward:(BOOL)forward
-          respectHardNewlines:(BOOL)respectHardNewlines;
+          respectHardNewlines:(BOOL)respectHardNewlines
+                     maxChars:(int)maxChars;
 
 - (NSAttributedString *)attributedContentInRange:(VT100GridWindowedRange)range
                                              pad:(BOOL)pad

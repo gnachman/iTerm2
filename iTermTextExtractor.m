@@ -713,7 +713,7 @@ static const int kNumCharsToSearchForDivider = 8;
 - (NSString *)wrappedStringAt:(VT100GridCoord)coord
                       forward:(BOOL)forward
           respectHardNewlines:(BOOL)respectHardNewlines
-{
+                     maxChars:(int)maxChars {
     if ([self hasLogicalWindow]) {
         respectHardNewlines = NO;
     }
@@ -752,7 +752,7 @@ static const int kNumCharsToSearchForDivider = 8;
                              pad:NO
               includeLastNewline:NO
           trimTrailingWhitespace:NO
-                    cappedAtSize:-1];
+                    cappedAtSize:maxChars];
     if (!respectHardNewlines) {
         content = [content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
     }

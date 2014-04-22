@@ -179,7 +179,8 @@ int NumberOfFullLines(screen_char_t* buffer,
                       BOOL mayHaveDoubleWidthCharacter);
 
 
-// Finds a where the nth line begins after wrapping and returns its offset from the start of the buffer.
+// Finds a where the nth line begins after wrapping and returns its offset from the start of the
+// buffer.
 //
 // In the following example, this would return:
 // pointer to a if n==0, pointer to g if n==1, asserts if n > 1
@@ -192,6 +193,7 @@ int NumberOfFullLines(screen_char_t* buffer,
 // Returns a pointer to a if n==0, pointer XX if n==1, asserts if n > 1:
 // |abcde|   <- line is short after wrapping
 // |XXzzzz|
-int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width);
+// The slow code for dealing with DWCs is run only if mayHaveDwc is YES.
+int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL mayHaveDwc);
 
 @end
