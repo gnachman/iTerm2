@@ -1013,7 +1013,7 @@ typedef enum {
 
     [_pasteHelper abort];
 
-    [[_tab realParentWindow]  sessionDidTerminate:self];
+    [[_tab realParentWindow] sessionDidTerminate:self];
 
     _tab = nil;
 }
