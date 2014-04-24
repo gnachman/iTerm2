@@ -93,11 +93,7 @@
 
 - (BOOL)isEnabled
 {
-    if ([GrowlApplicationBridge isGrowlRunning]) {
-        return enabled;
-    } else {
-        return NO;
-    }
+    return enabled;
 }
 
 - (void)setEnabled:(BOOL)newState

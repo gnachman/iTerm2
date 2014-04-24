@@ -75,13 +75,6 @@
 + (id) sharedInstance;
 
   /**
-   **  Used by the class to indicate the current status of the Growl preference
-   **  in iTerm.
-   **  This is generally only for use with the class.
-   **/
-- (BOOL) isEnabled;
-
-  /**
    **  Used by the prefs class to toggle the Growl state when the user makes
    **  changes to the iTerm prefs that impact Growl.
    **/
