@@ -1129,7 +1129,6 @@ NSString *kSessionsKVCKey = @"sessions";
 // tab, and closes the window if there are no tabs left.
 - (void)removeTab:(PTYTab *)aTab
 {
-    int numberOfTabs = [TABVIEW numberOfTabViewItems];
     for (PTYSession* session in [aTab sessions]) {
         [session terminate];
     }

@@ -2900,9 +2900,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [_textview findInProgress];
 }
 
-- (BOOL)continueFind
+- (BOOL)continueFind:(double *)progress
 {
-    return [_textview continueFind];
+    return [_textview continueFind:progress];
 }
 
 - (BOOL)growSelectionLeft

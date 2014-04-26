@@ -685,6 +685,9 @@
 		A680AA1818CEBF5C0034D4F8 /* NSMutableData+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A680AA1618CEBF5C0034D4F8 /* NSMutableData+iTerm.h */; };
 		A680AA1918CEBF5C0034D4F8 /* NSMutableData+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */; };
 		A680AA1A18CEBF5C0034D4F8 /* NSMutableData+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */; };
+		A682DE96190C5E7000BE8758 /* iTermProgressIndicator.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE94190C5E7000BE8758 /* iTermProgressIndicator.h */; };
+		A682DE97190C5E7000BE8758 /* iTermProgressIndicator.m in Sources */ = {isa = PBXBuildFile; fileRef = A682DE95190C5E7000BE8758 /* iTermProgressIndicator.m */; };
+		A682DE98190C5E7000BE8758 /* iTermProgressIndicator.m in Sources */ = {isa = PBXBuildFile; fileRef = A682DE95190C5E7000BE8758 /* iTermProgressIndicator.m */; };
 		A68A30C1186D0DC1007F550F /* FindCursorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30BF186D0DC1007F550F /* FindCursorView.h */; };
 		A68A30C2186D0DC1007F550F /* FindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* FindCursorView.m */; };
 		A68A30C3186D0DC1007F550F /* FindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* FindCursorView.m */; };
@@ -1344,6 +1347,8 @@
 		A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100TmuxParser.m; sourceTree = "<group>"; };
 		A680AA1618CEBF5C0034D4F8 /* NSMutableData+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableData+iTerm.h"; sourceTree = "<group>"; };
 		A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableData+iTerm.m"; sourceTree = "<group>"; };
+		A682DE94190C5E7000BE8758 /* iTermProgressIndicator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermProgressIndicator.h; sourceTree = "<group>"; };
+		A682DE95190C5E7000BE8758 /* iTermProgressIndicator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermProgressIndicator.m; sourceTree = "<group>"; };
 		A68A30BF186D0DC1007F550F /* FindCursorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindCursorView.h; sourceTree = "<group>"; };
 		A68A30C0186D0DC1007F550F /* FindCursorView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FindCursorView.m; sourceTree = "<group>"; };
 		A68A30C4186D0F36007F550F /* SmartMatch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SmartMatch.h; sourceTree = "<group>"; };
@@ -1508,7 +1513,7 @@
 		E8CF755F026DDA6303A80106 /* PTYScrollView.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PTYScrollView.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		E8CF7560026DDA6303A80106 /* PTYTask.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PTYTask.m; sourceTree = "<group>"; };
 		E8CF7561026DDA6303A80106 /* PTYTextView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PTYTextView.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		E8CF7562026DDA6303A80106 /* VT100Screen.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = VT100Screen.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		E8CF7562026DDA6303A80106 /* VT100Screen.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = VT100Screen.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		E8CF7563026DDA6303A80106 /* VT100Terminal.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = VT100Terminal.m; sourceTree = "<group>"; };
 		E8CF757F026DDAD703A80106 /* main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		E8E901A202743CA303A80106 /* NSStringITerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSStringITerm.m; sourceTree = "<group>"; };
@@ -2092,6 +2097,8 @@
 				1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */,
 				1DC38817148E840700B89F7C /* SolidColorView.m */,
 				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
+				A682DE94190C5E7000BE8758 /* iTermProgressIndicator.h */,
+				A682DE95190C5E7000BE8758 /* iTermProgressIndicator.m */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -2592,6 +2599,7 @@
 				A6A2698818FF70C600437DA9 /* ProfilesWindowPreferencesViewController.h in Headers */,
 				A61B66CA18D4D855009AC9D5 /* NSView+iTerm.h in Headers */,
 				A68A3114186E2F14007F550F /* PopupWindow.h in Headers */,
+				A682DE96190C5E7000BE8758 /* iTermProgressIndicator.h in Headers */,
 				1D5FDD5F1208E8F000C46BA3 /* PSMTabBarControl.h in Headers */,
 				A68A30F7186D150B007F550F /* SCPFile.h in Headers */,
 				A68A30C1186D0DC1007F550F /* FindCursorView.h in Headers */,
@@ -3143,6 +3151,7 @@
 				1D9A5573180FA85D00B42CE9 /* Trigger.m in Sources */,
 				A68A30E1186D1429007F550F /* TransferrableFile.m in Sources */,
 				1D9A554F180FA82E00B42CE9 /* TmuxWindowOpener.m in Sources */,
+				A682DE98190C5E7000BE8758 /* iTermProgressIndicator.m in Sources */,
 				1D9A5535180FA78B00B42CE9 /* DVRBuffer.m in Sources */,
 				A6E7475E188C6731005355CF /* iTermExposeGridView.m in Sources */,
 				A6E713AF18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.m in Sources */,
@@ -3535,6 +3544,7 @@
 				1D085F8E16F0328B00B7FCE9 /* PasteViewController.m in Sources */,
 				1D085F9316F03E5400B7FCE9 /* PasteView.m in Sources */,
 				1D085F9716F04D0900B7FCE9 /* NSBezierPath+iTerm.m in Sources */,
+				A682DE97190C5E7000BE8758 /* iTermProgressIndicator.m in Sources */,
 				A6E7138A18F26445008D94DD /* iTermPreferencesBaseViewController.m in Sources */,
 				A647E3B818C5884600450FA1 /* iTermObjectPool.m in Sources */,
 				1DF8FEF418F3217100722B35 /* KeysPreferencesViewController.m in Sources */,

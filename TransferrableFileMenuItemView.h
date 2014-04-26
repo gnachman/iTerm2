@@ -7,12 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
-
-// For some reason, NSProgressIndicator doesn't work well in a menu item view.
-// It either flashes or fails to redraw itself.
-@interface iTermProgressIndicator : NSView
-@property(nonatomic, assign) double fraction;
-@end
+#import "iTermProgressIndicator.h"
 
 @interface TransferrableFileMenuItemView : NSView
 

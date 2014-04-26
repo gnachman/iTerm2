@@ -41,7 +41,7 @@
 - (BOOL)findInProgress;
 
 // Call [[[self currentSession] textview] continueFind];
-- (BOOL)continueFind;
+- (BOOL)continueFind:(double *)progress;
 
 // Call [[self currentSession] textview] growSelectionLeft]
 - (BOOL)growSelectionLeft;

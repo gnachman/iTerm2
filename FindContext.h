@@ -68,6 +68,9 @@ typedef enum {
 
 @property(nonatomic, assign) NSTimeInterval maxTime;
 
+// Estimate of fraction of work done.
+@property(nonatomic, assign) double progress;
+
 - (void)copyFromFindContext:(FindContext *)other;
 
 - (void)reset;

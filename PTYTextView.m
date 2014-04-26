@@ -5283,7 +5283,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 //   call _addResultFromX:absY:toX:toAbsY: for each.
 // 2. If searchingForNextResult_ is true, highlight the next result before/after
 //   the current selection and flip searchingForNextResult_ to false.
-- (BOOL)continueFind
+- (BOOL)continueFind:(double *)progress
 {
     BOOL more = NO;
     BOOL redraw = NO;
@@ -5293,6 +5293,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Collect more results.
         more = [_dataSource continueFindAllResults:findResults_
                                          inContext:[_dataSource findContext]];
+        *progress = [[_dataSource findContext] progress];
+    } else {
+        *progress = 1;
     }
     if (!more) {
         _findInProgress = NO;

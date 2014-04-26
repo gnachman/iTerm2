@@ -189,4 +189,8 @@
 - (void)dumpWrappedToWidth:(int)width;
 - (NSString *)compactLineDumpWithWidth:(int)width;
 
+- (int)numberOfDroppedBlocks;
+// Absolute block number of last block.
+- (int)largestAbsoluteBlockNumber;
+
 @end

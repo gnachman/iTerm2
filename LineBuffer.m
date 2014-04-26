@@ -983,4 +983,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return theCopy;
 }
 
+- (int)numberOfDroppedBlocks {
+    return num_dropped_blocks;
+}
+
+- (int)largestAbsoluteBlockNumber {
+    return blocks.count + num_dropped_blocks;
+}
+
 @end

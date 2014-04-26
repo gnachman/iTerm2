@@ -1,4 +1,4 @@
-#import "VT100Screen.h"
+﻿#import "VT100Screen.h"
 
 #import "DebugLogging.h"
 #import "DVR.h"
@@ -3775,6 +3775,25 @@ static void SwapInt(int *a, int *b) {
         }
         ++iterations;
     } while (keepSearching && ms_diff < context.maxTime * 1000);
+    
+    switch (context.status) {
+        case Searching: {
+            int numDropped = [linebuffer_ numberOfDroppedBlocks];
+            double current = context.absBlockNum - numDropped;
+            double max = [linebuffer_ largestAbsoluteBlockNumber] - numDropped;
+            double p = MAX(0, current / max);
+            if (context.dir > 0) {
+                context.progress = p;
+            } else {
+                context.progress = 1.0 - p;
+            }
+            break;
+        }
+        case Matched:
+        case NotFound:
+            context.progress = 1;
+            break;
+    }
     // NSLog(@"Did %d iterations in %dms. Average time per block was %dms", iterations, ms_diff, ms_diff/iterations);
 
     [self popScrollbackLines:linesPushed];

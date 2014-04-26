@@ -360,7 +360,7 @@ typedef enum {
 - (void)clearHighlights;
 
 // Performs a find on the next chunk of text.
-- (BOOL)continueFind;
+- (BOOL)continueFind:(double *)progress;
 
 // This textview is about to become invisible because another tab is selected.
 - (void)aboutToHide;
