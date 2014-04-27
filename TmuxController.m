@@ -393,6 +393,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         // After the last session closes a size of 0 is reported.
         return;
     }
+    if (minSize.width < 0 || minSize.height < 0) {
+        // This shouldn't happen, but it does, and it'd be nice not to crash.
+        NSLog(@"Minimum size of tmux layout was less than 0!");
+        return;
+    }
     if (NSEqualSizes(minSize, lastSize_)) {
         return;
     }
