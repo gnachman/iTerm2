@@ -3773,9 +3773,8 @@ void DumpBuf(screen_char_t* p, int n) {
     NSLog(@"%s(%d):-[VT100Screen scrollUp]", __FILE__, __LINE__);
 #endif
 
-    assert(SCROLL_TOP >= 0 && SCROLL_TOP < HEIGHT);
-    assert(SCROLL_BOTTOM >= 0 && SCROLL_BOTTOM < HEIGHT);
-    assert(SCROLL_TOP <= SCROLL_BOTTOM );
+    SCROLL_BOTTOM = MIN(MAX(0, SCROLL_BOTTOM), HEIGHT - 1);
+    SCROLL_TOP = MIN(MAX(0, SCROLL_TOP), SCROLL_BOTTOM);
 
     if (SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT -1) {
         [self setNewLine];
@@ -3830,9 +3829,8 @@ void DumpBuf(screen_char_t* p, int n) {
     NSLog(@"%s(%d):-[VT100Screen scrollDown]", __FILE__, __LINE__);
 #endif
 
-    NSParameterAssert(SCROLL_TOP >= 0 && SCROLL_TOP < HEIGHT);
-    NSParameterAssert(SCROLL_BOTTOM >= 0 && SCROLL_BOTTOM < HEIGHT);
-    NSParameterAssert(SCROLL_TOP <= SCROLL_BOTTOM );
+    SCROLL_BOTTOM = MIN(MAX(0, SCROLL_BOTTOM), HEIGHT - 1);
+    SCROLL_TOP = MIN(MAX(0, SCROLL_TOP), SCROLL_BOTTOM);
 
     if (SCROLL_TOP<SCROLL_BOTTOM)
     {
