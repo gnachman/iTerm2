@@ -4897,12 +4897,14 @@ NSString *kSessionsKVCKey = @"sessions";
         mode = BROADCAST_OFF;
     }
     if (mode != BROADCAST_OFF && [self broadcastMode] == BROADCAST_OFF) {
-        if (NSRunAlertPanel(@"Warning!",
-                            @"Keyboard input will be sent to multiple sessions.",
-                            @"OK",
-                            @"Cancel",
-                            nil) != NSAlertDefaultReturn) {
-            return;
+        if (![iTermAdvancedSettingsModel suppressBroadcastInputWarning]) {
+            if (NSRunAlertPanel(@"Warning!",
+                                @"Keyboard input will be sent to multiple sessions.",
+                                @"OK",
+                                @"Cancel",
+                                nil) != NSAlertDefaultReturn) {
+                return;
+            }
         }
     }
         if (mode == BROADCAST_TO_ALL_PANES) {
