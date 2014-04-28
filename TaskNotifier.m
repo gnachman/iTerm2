@@ -226,12 +226,6 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                             highfd = rfd;
                         }
                         FD_SET(rfd, &efds);
-                        
-                        int wfd = [coprocess writeFileDescriptor];
-                        if (wfd > highfd) {
-                            highfd = wfd;
-                        }
-                        FD_SET(wfd, &efds);
                     }
                 }
             }
@@ -324,7 +318,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                         iter = [tasks objectEnumerator];
                     }
                 }
-                
+
                 // Move input around between coprocess and main process.
                 if ([task fd] >= 0 && ![task hasBrokenPipe]) {  // Make sure the pipe wasn't just broken.
                     @synchronized (task) {
@@ -344,22 +338,20 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                             if (FD_ISSET(fd, &efds)) {
                                 coprocess.eof = YES;
                             }
-                            
+
+                            // Handle writes
                             fd = [coprocess writeFileDescriptor];
                             if ([handledFds containsObject:[NSNumber numberWithInt:fd]]) {
                                 NSLog(@"Duplicate fd %d", fd);
                                 continue;
                             }
                             [handledFds addObject:[NSNumber numberWithInt:fd]];
-                            if (FD_ISSET(fd, &efds)) {
-                                coprocess.eof = YES;
-                            }
                             if (FD_ISSET(fd, &wfds)) {
                                 if (![coprocess eof]) {
                                     [coprocess write];
                                 }
                             }
-                            
+
                             if ([coprocess eof]) {
                                 [deadpool addObject:[NSNumber numberWithInt:[coprocess pid]]];
                                 [coprocess terminate];
