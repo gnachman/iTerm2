@@ -1,6 +1,7 @@
 #import "VT100Terminal.h"
 #import "DebugLogging.h"
 #import "NSColor+iTerm.h"
+#import "VT100DCSParser.h"
 #import "VT100Parser.h"
 #import <apr-1/apr_base64.h>  // for xterm's base64 decoding (paste64)
 #include <term.h>
@@ -1547,6 +1548,38 @@ static const int kMaxScreenRows = 4096;
             [self executeXtermSetRgb:token];
             break;
 
+        case DCS_REQUEST_TERMCAP_TERMINFO: {
+            static NSString *const kFormat = @"%@=%@";
+            BOOL ok = NO;
+            NSMutableArray *parts = [NSMutableArray array];
+            NSDictionary *inverseMap = [VT100DCSParser termcapTerminfoInverseNameDictionary];
+            for (int i = 0; i < token.csi->count; i++) {
+                NSString *stringKey = inverseMap[@(token.csi->p[i])];
+                NSString *hexEncodedKey = [stringKey hexEncodedString];
+                switch (token.csi->p[i]) {
+                    case kDcsTermcapTerminfoRequestTerminfoName:
+                        [parts addObject:[NSString stringWithFormat:kFormat,
+                                          hexEncodedKey,
+                                          [_termType hexEncodedString]]];
+                        ok = YES;
+                        break;
+                    case kDcsTermcapTerminfoRequestTerminalName:
+                        [parts addObject:[NSString stringWithFormat:kFormat,
+                                          hexEncodedKey,
+                                          [@"iTerm2" hexEncodedString]]];
+                        ok = YES;
+                        break;
+                    case kDcsTermcapTerminfoRequestUnrecognizedName:
+                        i = token.csi->count;
+                        break;
+                }
+            }
+            NSString *s = [NSString stringWithFormat:@"\033P%d+r%@\033\\",
+                           ok ? 1 : 0,
+                           [parts componentsJoinedByString:@";"]];
+            [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+            break;
+        }
         default:
             NSLog(@"Unexpected token type %d", (int)token->type);
             break;

@@ -9,6 +9,12 @@
 #import <Foundation/Foundation.h>
 #import "VT100Token.h"
 
+typedef enum {
+    kDcsTermcapTerminfoRequestUnrecognizedName,
+    kDcsTermcapTerminfoRequestTerminalName,
+    kDcsTermcapTerminfoRequestTerminfoName
+} DcsTermcapTerminfoRequestName;
+
 NS_INLINE BOOL isDCS(unsigned char *code, int len) {
     return (len >= 2 && code[0] == ESC && code[1] == 'P');
 }
@@ -21,6 +27,9 @@ NS_INLINE BOOL isDCS(unsigned char *code, int len) {
           bytesUsed:(int *)rmlen
               token:(VT100Token *)result
            encoding:(NSStringEncoding)encoding;
+
++ (NSDictionary *)termcapTerminfoNameDictionary;  // string name -> DcsTermcapTerminfoRequestName
++ (NSDictionary *)termcapTerminfoInverseNameDictionary;  // DcsTermcapTerminfoRequestName -> string name
 
 @end
 

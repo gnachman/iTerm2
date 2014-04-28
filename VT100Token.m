@@ -209,7 +209,8 @@ static iTermObjectPool *gPool;
                           @(DCS_TMUX):                        @"DCS_TMUX",
                           @(TMUX_LINE):                       @"TMUX_LINE",
                           @(TMUX_EXIT):                       @"TMUX_EXIT",
-                          @(VT100CSI_DECSLRM_OR_ANSICSI_SCP): @"VT100CSI_DECSLRM_OR_ANSICSI_SCP" };
+                          @(VT100CSI_DECSLRM_OR_ANSICSI_SCP): @"VT100CSI_DECSLRM_OR_ANSICSI_SCP",
+                          @(DCS_REQUEST_TERMCAP_TERMINFO):    @"DCS_REQUEST_TERMCAP_TERMINFO", };
     NSString *name = map[@(type)];
     if (name) {
         return name;

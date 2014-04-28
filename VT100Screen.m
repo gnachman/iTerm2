@@ -18,6 +18,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermPreferences.h"
 #import "iTermSelection.h"
+#import "VT100DCSParser.h"
 #import "VT100Token.h"
 
 #import <apr-1/apr_base64.h>

@@ -109,6 +109,10 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Fonts are encoded as strings when stored in a profile. This returns the font for such a string.
 - (NSFont *)fontValue;
 
+// Returns a 2-hex-chars-per-char encoding of this string.
+- (NSString *)hexEncodedString;
++ (NSString *)stringWithHexEncodedString:(NSString *)hexEncodedString;
+
 @end
 
 @interface NSMutableString (iTerm)

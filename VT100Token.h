@@ -151,8 +151,11 @@ typedef enum {
     ANSICSI_SCP,     // Save cursor position
     ANSICSI_RCP,     // Restore cursor position
     ANSICSI_CBT,     // Back tab
-    
+
     ANSI_RIS,        // Reset to initial state (there's also a CSI version)
+
+    // DCS
+    DCS_REQUEST_TERMCAP_TERMINFO,  // Request Termcap/Terminfo String
 
     // Toggle between ansi/vt52
     STRICT_ANSI_MODE,

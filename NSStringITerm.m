@@ -878,6 +878,27 @@ int decode_utf8_char(const unsigned char *datap,
     return aFont;
 }
 
+- (NSString *)hexEncodedString {
+    NSMutableString *result = [NSMutableString string];
+    for (int i = 0; i < self.length; i++) {
+        [result appendFormat:@"%02X", [self characterAtIndex:i]];
+    }
+    return [[result copy] autorelease];
+}
+
++ (NSString *)stringWithHexEncodedString:(NSString *)hexEncodedString {
+    NSMutableString *result = [NSMutableString string];
+    for (int i = 0; i + 1 < hexEncodedString.length; i += 2) {
+        char buffer[3] = { [hexEncodedString characterAtIndex:i],
+                           [hexEncodedString characterAtIndex:i + 1],
+                           0 };
+        int value;
+        sscanf(buffer, "%02x", &value);
+        [result appendFormat:@"%C", (unichar)value];
+    }
+    return [[result copy] autorelease];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)
