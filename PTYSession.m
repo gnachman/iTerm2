@@ -5023,6 +5023,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenAddMarkOnLine:(int)line {
     [_textview refresh];  // In case text was appended
+    if (_lastMark.command && !_lastMark.endDate) {
+        _lastMark.endDate = [NSDate date];
+    }
     [_lastMark release];
     _lastMark = [[_screen addMarkStartingAtAbsoluteLine:[_screen totalScrollbackOverflow] + line
                                                 oneLine:YES] retain];
