@@ -13,7 +13,12 @@ const int kMaxOutputBufferSize = 1024;
 
 static NSString *kCoprocessMruKey = @"Coprocess MRU";
 
-@implementation Coprocess
+@implementation Coprocess {
+  // When this is set, writing is no longer an option (probably because the
+  // coprocess terminated).  This is different than eof_, which indicates that
+  // reading is no longer an option and the coprocess is well and truly dead.
+  BOOL writePipeClosed_;
+}
 
 @synthesize pid = pid_;
 @synthesize outputFd = outputFd_;
@@ -25,30 +30,30 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
 
 + (void)addCommandToMostRecentlyUsed:(NSString *)command
 {
-	NSArray *oldMru = [[NSUserDefaults standardUserDefaults] stringArrayForKey:kCoprocessMruKey];
-	NSMutableArray *newMru;
-	if (oldMru) {
-		newMru = [[oldMru mutableCopy] autorelease];
-	} else {
-		newMru = [NSMutableArray array];
-	}
-	[newMru removeObject:command];
-	[newMru insertObject:command atIndex:0];
-	const int kMaxMru = 20;
-	while (newMru.count > kMaxMru) {
-		[newMru removeLastObject];
-	}
-	[[NSUserDefaults standardUserDefaults] setObject:newMru forKey:kCoprocessMruKey];
+        NSArray *oldMru = [[NSUserDefaults standardUserDefaults] stringArrayForKey:kCoprocessMruKey];
+        NSMutableArray *newMru;
+        if (oldMru) {
+                newMru = [[oldMru mutableCopy] autorelease];
+        } else {
+                newMru = [NSMutableArray array];
+        }
+        [newMru removeObject:command];
+        [newMru insertObject:command atIndex:0];
+        const int kMaxMru = 20;
+        while (newMru.count > kMaxMru) {
+                [newMru removeLastObject];
+        }
+        [[NSUserDefaults standardUserDefaults] setObject:newMru forKey:kCoprocessMruKey];
 }
 
 + (NSArray *)mostRecentlyUsedCommands
 {
-	return [[NSUserDefaults standardUserDefaults] stringArrayForKey:kCoprocessMruKey];
+        return [[NSUserDefaults standardUserDefaults] stringArrayForKey:kCoprocessMruKey];
 }
 
 + (Coprocess *)launchedCoprocessWithCommand:(NSString *)command
 {
-	[Coprocess addCommandToMostRecentlyUsed:command];
+        [Coprocess addCommandToMostRecentlyUsed:command];
     int inputPipe[2];
     int outputPipe[2];
     pipe(inputPipe);
@@ -132,16 +137,16 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
 
 - (int)write
 {
-    if (self.pid < 0) {
+    if (self.pid < 0 || writePipeClosed_) {
         return -1;
     }
     int fd = [self writeFileDescriptor];
     int n = write(fd, [outputBuffer_ bytes], [outputBuffer_ length]);
 
     if (n < 0 && (!(errno == EAGAIN || errno == EINTR))) {
-        eof_ = YES;
+        writePipeClosed_ = YES;
     } else if (n == 0) {
-        eof_ = YES;
+        writePipeClosed_ = YES;
     } else if (n > 0) {
         [outputBuffer_ replaceBytesInRange:NSMakeRange(0, n)
                                  withBytes:""
@@ -188,7 +193,7 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
 
 - (BOOL)wantToWrite
 {
-    return self.pid >= 0 && !eof_ && (outputBuffer_.length > 0);
+    return self.pid >= 0 && !eof_ && !writePipeClosed_ && (outputBuffer_.length > 0);
 }
 
 - (void)mainProcessDidTerminate

@@ -4386,6 +4386,27 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     theItem.title = [NSString stringWithFormat:@"Return code: %d", mark.code];
     [theMenu addItem:theItem];
 
+    if (mark.startDate) {
+        theItem = [[[NSMenuItem alloc] init] autorelease];
+        int runningTime;
+        if (mark.endDate) {
+            runningTime = [mark.endDate timeIntervalSinceDate:mark.startDate];
+        } else {
+            runningTime = -[mark.startDate timeIntervalSinceNow];
+        }
+        int hours = runningTime / 3600;
+        int minutes = (runningTime % 3600) / 60;
+        int seconds = runningTime % 60;
+        if (hours > 0) {
+            theItem.title = [NSString stringWithFormat:@"Running time: %d:%02d:%02d",
+                             hours, minutes, seconds];
+        } else {
+            theItem.title = [NSString stringWithFormat:@"Running time: %d:%02d",
+                             minutes, seconds];
+        }
+        [theMenu addItem:theItem];
+    }
+
     [theMenu addItem:[NSMenuItem separatorItem]];
 
     theItem = [[[NSMenuItem alloc] initWithTitle:@"Re-run Command"

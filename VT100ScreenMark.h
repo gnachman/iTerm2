@@ -20,4 +20,10 @@
 // The session this mark belongs to.
 @property(nonatomic, assign) int sessionID;
 
+// Time the command was set at (and presumably began running).
+@property(nonatomic, retain) NSDate *startDate;
+
+// Time the command finished running. nil if no command or if it hasn't finished.
+@property(nonatomic, retain) NSDate *endDate;
+
 @end
