@@ -182,11 +182,6 @@ static NSImage* alertImage;
     // Dimmed background color with alpha.
     double _cachedBackgroundColorAlpha;  // cached alpha value (comparable to another double)
 
-    // Previous contrasting color returned
-    NSColor *memoizedContrastingColor_;
-    double memoizedMainRGB_[4];  // rgba for "main" color memoized.
-    double memoizedOtherRGB_[3];  // rgb for "other" color memoized.
-
     // Indicates if a selection that scrolls the window is in progress.
     // Negative value: scroll up.
     // Positive value: scroll down.
@@ -503,7 +498,6 @@ static NSImage* alertImage;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     _colorMap.delegate = nil;
     [_colorMap release];
-    [memoizedContrastingColor_ release];
     [lastFlashUpdate_ release];
     [_cachedBackgroundColor release];
     [resultMap_ release];
@@ -557,8 +551,8 @@ static NSImage* alertImage;
     // During initialization, this may be called before the non-ascii font is set so we use a system
     // font as a placeholder.
     NSDictionary *theAttributes =
-        @{ NSBackgroundColorAttributeName: [_colorMap colorForKey:kColorMapBackground],
-           NSForegroundColorAttributeName: [_colorMap colorForKey:kColorMapForeground],
+        @{ NSBackgroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapBackground],
+           NSForegroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapForeground],
            NSFontAttributeName: [self nonAsciiFont] ?: [NSFont systemFontOfSize:12],
            NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle | NSUnderlineByWordMask) };
 
@@ -822,7 +816,7 @@ static NSImage* alertImage;
                                                bold:isBold
                                        isBackground:isBackground];
     if (isBackground && _colorMap.dimOnlyText) {
-        return [_colorMap colorForKey:key];
+        return [_colorMap mutedColorForKey:key];
     } else {
         return [_colorMap dimmedColorForKey:key];
     }
@@ -841,7 +835,7 @@ static NSImage* alertImage;
 {
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
     if (self == frontTextView) {
-        return [_colorMap colorForKey:kColorMapSelection];
+        return [_colorMap mutedColorForKey:kColorMapSelection];
     } else {
         return _unfocusedSelectionColor;
     }
@@ -1822,7 +1816,7 @@ NSMutableArray* screens=0;
                 if ([iTermAdvancedSettingsModel traditionalVisualBell]) {
                     image = [[[NSImage alloc] initWithSize: frame.size] autorelease];
                     [image lockFocus];
-                    NSColor *foregroundColor = [_colorMap colorForKey:kColorMapForeground];
+                    NSColor *foregroundColor = [_colorMap mutedColorForKey:kColorMapForeground];
                     [foregroundColor drawSwatchInRect:NSMakeRect(0,
                                                                  0,
                                                                  frame.size.width,
@@ -1907,7 +1901,7 @@ NSMutableArray* screens=0;
     int x = MAX(0, self.frame.size.width - w);
     CGFloat y = line * lineHeight;
     NSColor *bgColor = [_colorMap colorForKey:kColorMapBackground];
-    NSColor *fgColor = [_colorMap colorForKey:kColorMapForeground];
+    NSColor *fgColor = [_colorMap mutedColorForKey:kColorMapForeground];
     NSColor *shadowColor;
     if ([fgColor isDark]) {
         shadowColor = [NSColor whiteColor];
@@ -3856,8 +3850,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate startDownloadOverSCP:scpPath];
 
     NSDictionary *attributes =
-        @{ NSForegroundColorAttributeName: [_colorMap colorForKey:kColorMapSelectedText],
-           NSBackgroundColorAttributeName: [_colorMap colorForKey:kColorMapSelection],
+        @{ NSForegroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapSelectedText],
+           NSBackgroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapSelection],
            NSFontAttributeName: primaryFont.font };
     NSSize size = [selectedText sizeWithAttributes:attributes];
     size.height = lineHeight;
@@ -5448,9 +5442,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)setMinimumContrast:(double)value
 {
     _minimumContrast = value;
-    [memoizedContrastingColor_ release];
-    memoizedContrastingColor_ = nil;
-    [_colorMap invalidateCache];
+    [_colorMap setMinimumContrast:value];
 }
 
 - (BOOL)useTransparency
@@ -5823,55 +5815,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (NSColor *)colorWithRed:(double)r
-                    green:(double)g
-                     blue:(double)b
-                    alpha:(double)a
-     withPerceivedBrightness:(CGFloat)t
-{
-    NSColor *theColor = [NSColor calibratedColorWithRed:r
-                                                  green:g
-                                                   blue:b
-                                                  alpha:a
-                                    perceivedBrightness:t];
-    return [_colorMap dimmedColorForColor:theColor];
-}
-
-- (NSColor*)color:(NSColor*)mainColor withContrastAgainst:(NSColor*)otherColor
-{
-    double rgb[4];
-    rgb[0] = [mainColor redComponent];
-    rgb[1] = [mainColor greenComponent];
-    rgb[2] = [mainColor blueComponent];
-    rgb[3] = [mainColor alphaComponent];
-
-    double orgb[3];
-    orgb[0] = [otherColor redComponent];
-    orgb[1] = [otherColor greenComponent];
-    orgb[2] = [otherColor blueComponent];
-
-    if (!memoizedContrastingColor_ ||
-        memcmp(rgb, memoizedMainRGB_, sizeof(rgb)) ||
-        memcmp(orgb, memoizedOtherRGB_, sizeof(orgb))) {
-        // We memoize the last returned value not so much for performance as for
-        // consistency. It ensures that two consecutive calls for the same color
-        // will return the same pointer. See the note at the call site in
-        // _constructRuns:theLine:...matches:.
-        [memoizedContrastingColor_ autorelease];
-        NSColor *contrastingColor = [NSColor colorWithComponents:rgb
-                                        withContrastAgainstComponents:orgb
-                                                      minimumContrast:_minimumContrast];
-        NSColor *dimmedContrastingColor = [_colorMap dimmedColorForColor:contrastingColor];
-        memoizedContrastingColor_ = [dimmedContrastingColor retain];
-        if (!memoizedContrastingColor_) {
-            memoizedContrastingColor_ = [mainColor retain];
-        }
-        memmove(memoizedMainRGB_, rgb, sizeof(rgb));
-        memmove(memoizedOtherRGB_, orgb, sizeof(orgb));
-    }
-    return memoizedContrastingColor_;
-}
-
 - (NSRange)underlinedRangeOnLine:(int)row {
     if (_underlineRange.coordRange.start.x < 0) {
         return NSMakeRange(0, 0);
@@ -5971,7 +5914,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     CRunAttrsSetColor(&attrs, storage,
                                       [_colorMap dimmedColorForKey:kColorMapBackground]);
                 } else {
-                    CRunAttrsSetColor(&attrs, storage, [_colorMap colorForKey:kColorMapBackground]);
+                    CRunAttrsSetColor(&attrs,
+                                      storage,
+                                      [_colorMap mutedColorForKey:kColorMapBackground]);
                 }
             } else {
                 if (theLine[i].foregroundColor == lastForegroundColor &&
@@ -6018,7 +5963,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // TODO: Way too much time spent here. Use previous char's color if it is the same.
             CRunAttrsSetColor(&attrs,
                               storage,
-                              [self color:attrs.color withContrastAgainst:bgColor]);
+                              [_colorMap color:attrs.color withContrastAgainst:bgColor]);
         }
         BOOL drawable;
         if (blinkShow || ![self _charBlinks:theLine[i]]) {
@@ -6264,7 +6209,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [transform scaleXBy:1.0 yBy:-1.0];
         [transform concat];
 
-        NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
+        NSColor *backgroundColor = [_colorMap mutedColorForKey:kColorMapBackground];
         [backgroundColor set];
         NSRectFill(NSMakeRect(0, 0, charWidth * complexRun->numImageCells, lineHeight));
 
@@ -7002,7 +6947,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (!_colorMap.dimOnlyText) {
                 [[_colorMap dimmedColorForKey:kColorMapBackground] set];
             } else {
-                [[_colorMap colorForKey:kColorMapBackground] set];
+                [[_colorMap mutedColorForKey:kColorMapBackground] set];
             }
             NSRectFill(r);
 
@@ -7024,7 +6969,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
 
             // Draw an underline.
-            NSColor *foregroundColor = [_colorMap colorForKey:kColorMapForeground];
+            NSColor *foregroundColor = [_colorMap mutedColorForKey:kColorMapForeground];
             [foregroundColor set];
             NSRect s = NSMakeRect(x,
                                   y + lineHeight - 1,
@@ -8498,8 +8443,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
-- (void)colorMap:(iTermColorMap *)colorMap dimmingAmountDidChangeTo:(double)dimmingAmount {
+- (void)colorMap:(iTermColorMap *)colorMap
+    dimmingAmountDidChangeTo:(double)dimmingAmount {
     self.cachedBackgroundColor = nil;
+    [[self superview] setNeedsDisplay:YES];
+}
+
+- (void)colorMap:(iTermColorMap *)colorMap
+    mutingAmountDidChangeTo:(double)mutingAmount {
     [[self superview] setNeedsDisplay:YES];
 }
 

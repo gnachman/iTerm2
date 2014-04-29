@@ -99,6 +99,7 @@
 #define KEY_MINIMUM_CONTRAST       @"Minimum Contrast"
 #define KEY_TAB_COLOR              @"Tab Color"
 #define KEY_USE_TAB_COLOR          @"Use Tab Color"
+#define KEY_CURSOR_BOOST           @"Cursor Boost"
 
 // Display
 #define KEY_ROWS                   @"Rows"

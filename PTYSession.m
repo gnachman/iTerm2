@@ -1876,6 +1876,10 @@ typedef enum {
     }
     [self setMinimumContrast:minimumContrast];
 
+    if (aDict[KEY_CURSOR_BOOST]) {
+        _colorMap.mutingAmount = [aDict[KEY_CURSOR_BOOST] doubleValue];
+    }
+
     // background image
     [self setBackgroundImagePath:[aDict objectForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
     [self setBackgroundImageTiled:[[aDict objectForKey:KEY_BACKGROUND_IMAGE_TILED] boolValue]];
