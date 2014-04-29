@@ -3222,6 +3222,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     _insert = newValue;
 }
 
+- (NSString *)terminalProfileName {
+    return [delegate_ screenProfileName];
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {

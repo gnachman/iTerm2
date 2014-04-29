@@ -357,4 +357,6 @@ typedef enum {
 - (void)terminalTypeDidChange;
 - (void)terminalInsertModeDidChangeTo:(BOOL)newValue;
 
+- (NSString *)terminalProfileName;
+
 @end

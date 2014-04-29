@@ -67,7 +67,8 @@
 
 + (NSDictionary *)termcapTerminfoNameDictionary {
     return @{ @"TN": @(kDcsTermcapTerminfoRequestTerminalName),
-              @"name": @(kDcsTermcapTerminfoRequestTerminfoName) };
+              @"name": @(kDcsTermcapTerminfoRequestTerminfoName),
+              @"iTerm2Profile": @(kDcsTermcapTerminfoRequestiTerm2ProfileName) };
 }
 
 + (NSDictionary *)termcapTerminfoInverseNameDictionary {

@@ -1569,6 +1569,12 @@ static const int kMaxScreenRows = 4096;
                                           [@"iTerm2" hexEncodedString]]];
                         ok = YES;
                         break;
+                    case kDcsTermcapTerminfoRequestiTerm2ProfileName:
+                        [parts addObject:[NSString stringWithFormat:kFormat,
+                                          hexEncodedKey,
+                                          [[delegate_ terminalProfileName] hexEncodedString]]];
+                        ok = YES;
+                        break;
                     case kDcsTermcapTerminfoRequestUnrecognizedName:
                         i = token.csi->count;
                         break;

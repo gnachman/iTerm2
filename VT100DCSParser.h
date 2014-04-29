@@ -12,6 +12,7 @@
 typedef enum {
     kDcsTermcapTerminfoRequestUnrecognizedName,
     kDcsTermcapTerminfoRequestTerminalName,
+    kDcsTermcapTerminfoRequestiTerm2ProfileName,
     kDcsTermcapTerminfoRequestTerminfoName
 } DcsTermcapTerminfoRequestName;
 

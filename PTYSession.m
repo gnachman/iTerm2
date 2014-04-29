@@ -5310,6 +5310,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
 }
 
+- (NSString *)screenProfileName {
+    return _profile[KEY_NAME];
+}
+
 - (BOOL)screenAllowTitleSetting {
     NSNumber *n = _profile[KEY_ALLOW_TITLE_SETTING];
     if (!n) {
