@@ -249,6 +249,8 @@ typedef enum {
 
 @property(nonatomic, readonly) BOOL hasSelection;
 
+@property(nonatomic, assign) BOOL highlightCursorLine;
+
 #pragma mark - methods
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;

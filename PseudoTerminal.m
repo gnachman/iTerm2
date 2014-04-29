@@ -1158,6 +1158,11 @@ NSString *kSessionsKVCKey = @"sessions";
     findCursorStartTime_ = [[NSDate date] timeIntervalSince1970];
 }
 
+- (IBAction)toggleCursorGuide:(id)sender {
+  PTYSession *session = [self currentSession];
+  session.highlightCursorLine = !session.highlightCursorLine;
+}
+
 // Save the current scroll position
 - (IBAction)saveScrollPosition:(id)sender
 {
@@ -6025,6 +6030,10 @@ NSString *kSessionsKVCKey = @"sessions";
         result = [[self currentSession] canInstantReplayNext];
     } else if ([item action] == @selector(toggleShowTimestamps:)) {
         result = ([self currentSession] != nil);
+    } else if ([item action] == @selector(toggleCursorGuide:)) {
+      PTYSession *session = [self currentSession];
+      [item setState:session.highlightCursorLine ? NSOnState : NSOffState];
+      result = YES;
     } else if ([item action] == @selector(toggleAutoCommandHistory:)) {
         result = [[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed];
         if (result) {

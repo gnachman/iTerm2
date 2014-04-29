@@ -5001,9 +5001,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenSetHighlightCursorLine:(BOOL)highlight {
+  self.highlightCursorLine = highlight;
+}
+
+- (void)setHighlightCursorLine:(BOOL)highlight {
     _textview.highlightCursorLine = highlight;
     [_textview setNeedsDisplay:YES];
     _screen.trackCursorLineMovement = highlight;
+}
+
+- (BOOL)highlightCursorLine {
+  return _textview.highlightCursorLine;
 }
 
 - (BOOL)screenHasView {
