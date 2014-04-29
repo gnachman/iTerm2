@@ -4388,21 +4388,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if (mark.startDate) {
         theItem = [[[NSMenuItem alloc] init] autorelease];
-        int runningTime;
+        NSTimeInterval runningTime;
         if (mark.endDate) {
             runningTime = [mark.endDate timeIntervalSinceDate:mark.startDate];
         } else {
             runningTime = -[mark.startDate timeIntervalSinceNow];
         }
         int hours = runningTime / 3600;
-        int minutes = (runningTime % 3600) / 60;
-        int seconds = runningTime % 60;
+        int minutes = ((int)runningTime % 3600) / 60;
+        int seconds = (int)runningTime % 60;
+        int millis = (int) ((runningTime - floor(runningTime)) * 1000);
         if (hours > 0) {
             theItem.title = [NSString stringWithFormat:@"Running time: %d:%02d:%02d",
                              hours, minutes, seconds];
         } else {
-            theItem.title = [NSString stringWithFormat:@"Running time: %d:%02d",
-                             minutes, seconds];
+            theItem.title = [NSString stringWithFormat:@"Running time: %d:%02d.%03d",
+                             minutes, seconds, millis];
         }
         [theMenu addItem:theItem];
     }
