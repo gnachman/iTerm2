@@ -1,6 +1,17 @@
 #!/bin/bash
+if [ ! -t 0 ]; then
+  CONTENTS=$(cat | base64)
+  printf '\033]1337;File=;\n'
+  echo -n "$CONTENTS" | base64 -D | wc -c | awk '{printf "size=%d",$1}'
+  printf ";inline=1"
+  printf ":"
+  echo -n "$CONTENTS"
+  printf '\a\n'
+  exit 0
+fi
 if [ $# -eq 0 ]; then
   echo "Usage: imgcat file ..."
+  echo "   or: cat filen | imgcat"
   exit 1
 fi
 for fn in "$@"
