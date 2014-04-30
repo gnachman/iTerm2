@@ -10,8 +10,8 @@ if [ ! -t 0 ]; then
   exit 0
 fi
 if [ $# -eq 0 ]; then
-  echo "Usage: imgcat file ..."
-  echo "   or: cat filen | imgcat"
+  echo "Usage: imgcat filename ..."
+  echo "   or: cat filename | imgcat"
   exit 1
 fi
 for fn in "$@"
