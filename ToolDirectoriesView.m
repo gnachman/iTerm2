@@ -139,13 +139,45 @@ static const CGFloat kMargin = 5;
     return filteredEntries_.count;
 }
 
+- (NSString *)tableView:(NSTableView *)tableView
+         toolTipForCell:(NSCell *)cell
+                   rect:(NSRectPointer)rect
+            tableColumn:(NSTableColumn *)tableColumn
+                    row:(NSInteger)row
+          mouseLocation:(NSPoint)mouseLocation {
+    iTermDirectoryEntry *entry = filteredEntries_[row];
+    return entry.path;
+}
+
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex {
     iTermDirectoryEntry *entry = filteredEntries_[rowIndex];
-    if (entry.starred) {
-        return [NSString stringWithFormat:@"★ %@", entry.path];
-    } else {
-        return entry.path;
+    NSString *abbreviatedName = entry.path;
+    NSFont *font = [[aTableColumn dataCell] font];
+    NSMutableArray *components = [[[abbreviatedName componentsSeparatedByString:@"/"] mutableCopy] autorelease];
+    NSUInteger index;
+    index = [components indexOfObject:@""];
+    while (index != NSNotFound) {
+        [components removeObjectAtIndex:index];
+        index = [components indexOfObject:@""];
     }
+    NSDictionary *attributes = @{ NSFontAttributeName: font };
+    for (int i = 0;
+         i + 1 < components.count && [abbreviatedName sizeWithAttributes:attributes].width > aTableColumn.width;
+         i++) {
+        if (i < components.count && [components[i] length] > 0) {
+            components[i] = [components[i] substringWithRange:NSMakeRange(0, 1)];
+        }
+        abbreviatedName = [@"/" stringByAppendingString:[components componentsJoinedByString:@"/"]];
+    }
+    if (entry.starred) {
+        abbreviatedName = [NSString stringWithFormat:@"★ %@", abbreviatedName];
+    }
+
+    NSMutableParagraphStyle *style = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    style.lineBreakMode = NSLineBreakByTruncatingMiddle;
+    attributes = @{ NSParagraphStyleAttributeName: style };
+    return [[[NSAttributedString alloc] initWithString:abbreviatedName
+                                            attributes:attributes] autorelease];
 }
 
 - (void)directoriesDidChange:(id)sender {
