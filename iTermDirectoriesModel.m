@@ -138,11 +138,15 @@ static const int kMaxDirectoriesToSavePerHost = 200;
     entry.useCount = entry.useCount + 1;
     entry.lastUse = [NSDate date];
 
+    [self save];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kDirectoriesDidChangeNotificationName
+                                                        object:nil];
+}
+
+- (void)save {
     if ([iTermPreferences boolForKey:kPreferenceKeySavePasteAndCommandHistory]) {
         [NSKeyedArchiver archiveRootObject:[self dictionaryForEntries] toFile:_path];
     }
-    [[NSNotificationCenter defaultCenter] postNotificationName:kDirectoriesDidChangeNotificationName
-                                                        object:nil];
 }
 
 - (NSArray *)entriesSortedByScoreOnHost:(VT100RemoteHost *)host {

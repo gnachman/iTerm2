@@ -36,5 +36,6 @@ extern NSString *const kDirectoriesDidChangeNotificationName;
 
 - (NSArray *)entriesSortedByScoreOnHost:(VT100RemoteHost *)host;
 - (void)eraseHistory;
+- (void)save;
 
 @end

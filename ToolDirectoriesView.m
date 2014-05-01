@@ -25,6 +25,7 @@ static const CGFloat kMargin = 5;
     NSArray *filteredEntries_;
     iTermSearchField *searchField_;
     NSFont *boldFont_;
+    NSMenu *menu_;
 }
 
 - (id)initWithFrame:(NSRect)frame {
@@ -80,6 +81,14 @@ static const CGFloat kMargin = 5;
 
         [tableView_ sizeToFit];
         [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
+
+        tableView_.menu = [[[NSMenu alloc] init] autorelease];
+        tableView_.menu.delegate = self;
+        NSMenuItem *item;
+        item = [[NSMenuItem alloc] initWithTitle:@"Toggle Star"
+                                          action:@selector(toggleStar:)
+                                   keyEquivalent:@""];
+        [tableView_.menu addItem:item];
 
         // Save the bold version of the table's default font
         NSFontManager *fontManager = [NSFontManager sharedFontManager];
@@ -254,6 +263,20 @@ static const CGFloat kMargin = 5;
 
 - (CGFloat)minimumHeight {
     return 88;
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)item {
+  return [self respondsToSelector:[item action]] && [tableView_ clickedRow] >= 0;
+}
+
+- (void)toggleStar:(id)sender {
+    NSInteger index = [tableView_ clickedRow];
+    if (index >= 0) {
+        iTermDirectoryEntry *entry = filteredEntries_[index];
+        entry.starred = !entry.starred;
+        [[iTermDirectoriesModel sharedInstance] save];
+    }
+    [self updateDirectories];
 }
 
 @end

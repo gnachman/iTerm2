@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 @interface ToolDirectoriesView : NSView <
+  NSMenuDelegate,
   NSTableViewDataSource,
   NSTableViewDelegate,
   NSTextFieldDelegate>
