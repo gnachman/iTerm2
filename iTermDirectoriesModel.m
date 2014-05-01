@@ -184,7 +184,7 @@ static const int kMaxDirectoriesToSavePerHost = 200;
     NSMutableArray *array = [NSMutableArray array];
     NSDate *minLastUse = [[NSDate date] dateByAddingTimeInterval:-kMaxTimeToRememberDirectories];
     for (iTermDirectoryEntry *entry in entries) {
-        if ([entry.lastUse compare:minLastUse] == NSOrderedAscending) {
+        if ([entry.lastUse compare:minLastUse] == NSOrderedDescending) {
             [array addObject:[entry dictionary]];
         }
     }
