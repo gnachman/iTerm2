@@ -118,6 +118,12 @@
 		1D48B292165F405A000046EE /* important@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B291165F405A000046EE /* important@2x.png */; };
 		1D48B379167E809D000046EE /* CharacterRun.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D48B377167E809D000046EE /* CharacterRun.h */; };
 		1D48B37A167E809D000046EE /* CharacterRun.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D48B378167E809D000046EE /* CharacterRun.m */; };
+		1D49834B1912CD9E002E942D /* iTermDirectoriesModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4983491912CD9E002E942D /* iTermDirectoriesModel.h */; };
+		1D49834C1912CD9E002E942D /* iTermDirectoriesModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D49834A1912CD9E002E942D /* iTermDirectoriesModel.m */; };
+		1D49834D1912CD9E002E942D /* iTermDirectoriesModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D49834A1912CD9E002E942D /* iTermDirectoriesModel.m */; };
+		1D4983501912FC0B002E942D /* ToolDirectoriesView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D49834E1912FC0B002E942D /* ToolDirectoriesView.h */; };
+		1D4983511912FC0B002E942D /* ToolDirectoriesView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D49834F1912FC0B002E942D /* ToolDirectoriesView.m */; };
+		1D4983521912FC0B002E942D /* ToolDirectoriesView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D49834F1912FC0B002E942D /* ToolDirectoriesView.m */; };
 		1D4AE8FE14343A760092EB49 /* TrouterPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */; };
 		1D4AE8FF14343A760092EB49 /* TrouterPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */; };
 		1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */; };
@@ -1027,6 +1033,10 @@
 		1D48B291165F405A000046EE /* important@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "important@2x.png"; path = "images/important@2x.png"; sourceTree = "<group>"; };
 		1D48B377167E809D000046EE /* CharacterRun.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CharacterRun.h; sourceTree = "<group>"; };
 		1D48B378167E809D000046EE /* CharacterRun.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CharacterRun.m; sourceTree = "<group>"; };
+		1D4983491912CD9E002E942D /* iTermDirectoriesModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermDirectoriesModel.h; sourceTree = "<group>"; };
+		1D49834A1912CD9E002E942D /* iTermDirectoriesModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermDirectoriesModel.m; sourceTree = "<group>"; };
+		1D49834E1912FC0B002E942D /* ToolDirectoriesView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolDirectoriesView.h; sourceTree = "<group>"; };
+		1D49834F1912FC0B002E942D /* ToolDirectoriesView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolDirectoriesView.m; sourceTree = "<group>"; };
 		1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TrouterPrefsController.h; sourceTree = "<group>"; };
 		1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TrouterPrefsController.m; sourceTree = "<group>"; };
 		1D4F359F1813386600699FDF /* iTermCursor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCursor.h; sourceTree = "<group>"; };
@@ -1843,6 +1853,7 @@
 				1D0B613A14A7C76500C57C33 /* TmuxWindowsTable.h */,
 				1D085FA016F138A000B7FCE9 /* ToastWindowController.h */,
 				1DE8DC871415513A00F83147 /* ToolbeltView.h */,
+				A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */,
 				1D19C71214171F1D00617E08 /* ToolJobs.h */,
 				1D67AAA714284BF300D5DA4E /* ToolNotes.h */,
 				1DE8DDAB1415648600F83147 /* ToolPasteHistory.h */,
@@ -2193,8 +2204,9 @@
 				1D67AAA814284BF300D5DA4E /* ToolNotes.m */,
 				1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */,
 				1DE8DC8C1415546000F83147 /* ToolProfiles.m */,
-				A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */,
 				A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */,
+				1D49834E1912FC0B002E942D /* ToolDirectoriesView.h */,
+				1D49834F1912FC0B002E942D /* ToolDirectoriesView.m */,
 			);
 			name = Toolbelt;
 			sourceTree = "<group>";
@@ -2448,6 +2460,8 @@
 				A6057C0D187BC4C3004A60AF /* CommandHistory.m */,
 				A6E74747188C6344005355CF /* CommandHistoryEntry.m */,
 				A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */,
+				1D4983491912CD9E002E942D /* iTermDirectoriesModel.h */,
+				1D49834A1912CD9E002E942D /* iTermDirectoriesModel.m */,
 			);
 			name = "Shell Integration";
 			sourceTree = "<group>";
@@ -2598,9 +2612,11 @@
 				1D5FDD5E1208E8F000C46BA3 /* PSMTabBarCell.h in Headers */,
 				A6A2698818FF70C600437DA9 /* ProfilesWindowPreferencesViewController.h in Headers */,
 				A61B66CA18D4D855009AC9D5 /* NSView+iTerm.h in Headers */,
+				1D4983501912FC0B002E942D /* ToolDirectoriesView.h in Headers */,
 				A68A3114186E2F14007F550F /* PopupWindow.h in Headers */,
 				A682DE96190C5E7000BE8758 /* iTermProgressIndicator.h in Headers */,
 				1D5FDD5F1208E8F000C46BA3 /* PSMTabBarControl.h in Headers */,
+				1D49834B1912CD9E002E942D /* iTermDirectoriesModel.h in Headers */,
 				A68A30F7186D150B007F550F /* SCPFile.h in Headers */,
 				A68A30C1186D0DC1007F550F /* FindCursorView.h in Headers */,
 				1D81F0C3183C3CCD00910838 /* SBSystemPreferences.h in Headers */,
@@ -3089,6 +3105,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1D49834D1912CD9E002E942D /* iTermDirectoriesModel.m in Sources */,
 				1D9A557C180FA87000B42CE9 /* ColorsMenuItemView.m in Sources */,
 				A647E39C18C3515900450FA1 /* VT100AnsiParser.m in Sources */,
 				A68A3111186E2EDA007F550F /* PopupEntry.m in Sources */,
@@ -3116,6 +3133,7 @@
 				1D9A552E180FA69C00B42CE9 /* iTermExpose.m in Sources */,
 				1D9A554E180FA82E00B42CE9 /* TmuxStateParser.m in Sources */,
 				A6C4E8E11846E13800CFAA77 /* IntervalTree.m in Sources */,
+				1D4983521912FC0B002E942D /* ToolDirectoriesView.m in Sources */,
 				1D9A55AD180FA8B700B42CE9 /* PSMTabBarCell.m in Sources */,
 				A63BA3A118B27B92002BE075 /* iTermTextExtractor.m in Sources */,
 				A63F40A1183F3AF5003A6A6D /* VT100LineInfo.m in Sources */,
@@ -3502,6 +3520,7 @@
 				1D3BBD6C14759D6C00FAB389 /* HighlightTrigger.m in Sources */,
 				1D21EE3C147711300066E04A /* ContextMenuActionPrefsController.m in Sources */,
 				A6E713C018FCF036008D94DD /* ProfilesColorsPreferencesViewController.m in Sources */,
+				1D4983511912FC0B002E942D /* ToolDirectoriesView.m in Sources */,
 				1D3D21881482E0E500FAC8E7 /* TmuxGateway.m in Sources */,
 				1D3D21911482F18A00FAC8E7 /* TmuxController.m in Sources */,
 				1D3D21961483144600FAC8E7 /* TSVParser.m in Sources */,
@@ -3538,6 +3557,7 @@
 				1D48B37A167E809D000046EE /* CharacterRun.m in Sources */,
 				A6A2697F18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m in Sources */,
 				1D70BA361680158700824B72 /* PTYFontInfo.m in Sources */,
+				1D49834C1912CD9E002E942D /* iTermDirectoriesModel.m in Sources */,
 				1D6944D8169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m in Sources */,
 				A68A30E6186D1429007F550F /* VT100RemoteHost.m in Sources */,
 				1D085F8716F02E7400B7FCE9 /* PasteContext.m in Sources */,

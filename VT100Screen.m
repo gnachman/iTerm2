@@ -1613,10 +1613,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         [intervalTree_ addObject:workingDirectoryObj
                     withInterval:[self intervalForGridCoordRange:range]];
     }
-    // This delegate call is for testing.
-    if ([delegate_ respondsToSelector:@selector(screenLogWorkingDirectoryAtLine:withDirectory:)]) {
-        [delegate_ screenLogWorkingDirectoryAtLine:line withDirectory:workingDirectory];
-    }
+    [delegate_ screenLogWorkingDirectoryAtLine:line withDirectory:workingDirectory];
 }
 
 - (VT100RemoteHost *)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {

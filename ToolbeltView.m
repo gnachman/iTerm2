@@ -8,6 +8,7 @@
 
 #import "ToolbeltView.h"
 #import "ToolCommandHistoryView.h"
+#import "ToolDirectoriesView.h"
 #import "ToolProfiles.h"
 #import "ToolPasteHistory.h"
 #import "ToolWrapper.h"
@@ -63,6 +64,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     gRegisteredTools = [[NSMutableDictionary alloc] init];
     [ToolbeltView registerToolWithName:@"Command History"
                              withClass:[ToolCommandHistoryView class]];
+    [ToolbeltView registerToolWithName:@"Directories" withClass:[ToolDirectoriesView class]];
     [ToolbeltView registerToolWithName:@"Jobs" withClass:[ToolJobs class]];
     [ToolbeltView registerToolWithName:@"Notes" withClass:[ToolNotes class]];
     [ToolbeltView registerToolWithName:@"Paste History" withClass:[ToolPasteHistory class]];
