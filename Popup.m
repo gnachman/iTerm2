@@ -284,11 +284,24 @@
     [self onClose];
 }
 
-- (NSAttributedString*)attributedStringForEntry:(PopupEntry*)entry isSelected:(BOOL)isSelected
+- (NSString *)truncatedMainValueForEntry:(PopupEntry *)entry {
+    static const int kMaxLength = 200;
+    if ([[entry mainValue] length] > kMaxLength) {
+        return [[entry mainValue] substringToIndex:kMaxLength];
+    } else {
+        return [entry mainValue];
+    }
+}
+
+- (NSAttributedString *)attributedStringForEntry:(PopupEntry*)entry isSelected:(BOOL)isSelected
 {
     float size = [NSFont systemFontSize];
     NSFont* sysFont = [NSFont systemFontOfSize:size];
     NSMutableAttributedString* as = [[[NSMutableAttributedString alloc] init] autorelease];
+
+    NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    paragraphStyle.lineBreakMode = NSLineBreakByTruncatingMiddle;
+
     NSColor* textColor;
     if (isSelected) {
         textColor = [NSColor whiteColor];
@@ -296,35 +309,29 @@
         textColor = [NSColor blackColor];
     }
     NSColor* lightColor = [textColor colorWithAlphaComponent:0.4];
-    NSDictionary* lightAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
-                                     sysFont, NSFontAttributeName,
-                                     lightColor, NSForegroundColorAttributeName,
-                                     nil];
-    NSDictionary* plainAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
-                                     sysFont, NSFontAttributeName,
-                                     textColor, NSForegroundColorAttributeName,
-                                     nil];
-    NSDictionary* boldAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
-                                    [NSFont boldSystemFontOfSize:size], NSFontAttributeName,
-                                    textColor, NSForegroundColorAttributeName,
-                                    nil];
+    NSDictionary* lightAttributes = @{ NSFontAttributeName: sysFont,
+                                       NSForegroundColorAttributeName: lightColor,
+                                       NSParagraphStyleAttributeName: paragraphStyle };
+    NSDictionary* plainAttributes = @{ NSFontAttributeName: sysFont,
+                                       NSForegroundColorAttributeName: textColor,
+                                       NSParagraphStyleAttributeName: paragraphStyle };
+    NSDictionary* boldAttributes = @{ NSFontAttributeName: [NSFont boldSystemFontOfSize:size],
+                                      NSForegroundColorAttributeName: textColor,
+                                      NSParagraphStyleAttributeName: paragraphStyle };
 
-    [as appendAttributedString:[[[NSAttributedString alloc] initWithString:[entry prefix] attributes:lightAttributes] autorelease]];
-    NSString *truncatedMainValue;
-    static const int kMaxLength = 200;
-    if ([[entry mainValue] length] > kMaxLength) {
-        truncatedMainValue = [[entry mainValue] substringToIndex:kMaxLength];
-    } else {
-        truncatedMainValue = [entry mainValue];
-    }
+    [as appendAttributedString:[[[NSAttributedString alloc] initWithString:[entry prefix]
+                                                                attributes:lightAttributes] autorelease]];
+    NSString *truncatedMainValue = [self truncatedMainValueForEntry:entry];
     NSString* value = [truncatedMainValue stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
 
     NSString* temp = value;
     for (int i = 0; i < [substring_ length]; ++i) {
         unichar wantChar = [substring_ characterAtIndex:i];
-        NSRange r = [temp rangeOfString:[NSString stringWithCharacters:&wantChar length:1] options:NSCaseInsensitiveSearch];
+        NSRange r = [temp rangeOfString:[NSString stringWithCharacters:&wantChar
+                                                                length:1]
+                                options:NSCaseInsensitiveSearch];
         if (r.location == NSNotFound) {
-            return nil;
+            continue;
         }
         NSRange prefix;
         prefix.location = 0;
@@ -333,12 +340,17 @@
         NSAttributedString* attributedSubstr;
         if (prefix.length > 0) {
             NSString* substr = [temp substringWithRange:prefix];
-            attributedSubstr = [[[NSAttributedString alloc] initWithString:substr attributes:plainAttributes] autorelease];
+            attributedSubstr =
+                [[[NSAttributedString alloc] initWithString:substr
+                                                 attributes:plainAttributes] autorelease];
             [as appendAttributedString:attributedSubstr];
         }
 
         unichar matchChar = [temp characterAtIndex:r.location];
-        attributedSubstr = [[[NSAttributedString alloc] initWithString:[NSString stringWithCharacters:&matchChar length:1] attributes:boldAttributes] autorelease];
+        attributedSubstr =
+            [[[NSAttributedString alloc] initWithString:[NSString stringWithCharacters:&matchChar
+                                                                                length:1]
+                                             attributes:boldAttributes] autorelease];
         [as appendAttributedString:attributedSubstr];
 
         r.length = [temp length] - r.location - 1;
@@ -347,13 +359,19 @@
     }
 
     if ([temp length] > 0) {
-        NSAttributedString* attributedSubstr = [[[NSAttributedString alloc] initWithString:temp
-                                                                                attributes:plainAttributes] autorelease];
+        NSAttributedString* attributedSubstr =
+            [[[NSAttributedString alloc] initWithString:temp
+                                             attributes:plainAttributes] autorelease];
         [as appendAttributedString:attributedSubstr];
     }
 
-    //[as appendAttributedString:[[[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@" (%lf)", [entry score]] attributes:plainAttributes] autorelease]];
-    return as;
+    return [self shrunkToFitAttributedString:as inEntry:entry baseAttributes:plainAttributes];
+}
+
+- (NSAttributedString *)shrunkToFitAttributedString:(NSAttributedString *)attributedString
+                                            inEntry:(PopupEntry *)entry
+                                     baseAttributes:(NSDictionary *)baseAttributes {
+    return attributedString;
 }
 
 - (BOOL)_word:(NSString*)temp matchesFilter:(NSString*)filter

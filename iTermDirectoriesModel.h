@@ -6,7 +6,7 @@
 //
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
 @class VT100RemoteHost;
 
@@ -22,6 +22,12 @@ extern NSString *const kDirectoriesDidChangeNotificationName;
 @property(nonatomic, copy) NSString *shortcut;
 
 + (instancetype)entryWithDictionary:(NSDictionary *)dictionary;
+- (NSAttributedString *)attributedStringForTableColumn:(NSTableColumn *)aTableColumn;
+
+// Take an attributedString having |path| with extra styles and remove bits from it to fit.
+- (NSAttributedString *)attributedStringForTableColumn:(NSTableColumn *)aTableColumn
+                               basedOnAttributedString:(NSAttributedString *)attributedString
+                                        baseAttributes:(NSDictionary *)baseAttributes;
 
 @end
 
@@ -37,7 +43,6 @@ extern NSString *const kDirectoriesDidChangeNotificationName;
 - (NSArray *)entriesSortedByScoreOnHost:(VT100RemoteHost *)host;
 - (void)eraseHistory;
 - (void)save;
-- (NSIndexSet *)abbreviationSafeIndexesInEntry:(iTermDirectoryEntry *)entry;
-- (NSMutableArray *)componentsInPath:(NSString *)path;
+- (BOOL)haveEntriesForHost:(VT100RemoteHost *)host;
 
 @end

@@ -5,14 +5,34 @@
 #import "CommandHistoryEntry.h"
 #import "CommandHistoryPopup.h"
 #import "Coprocess.h"
+#import "DirectoriesPopup.h"
 #import "FakeWindow.h"
 #import "FindViewController.h"
 #import "FutureMethods.h"
 #import "FutureMethods.h"
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermApplication.h"
+#import "iTermApplicationDelegate.h"
+#import "iTermController.h"
+#import "iTermDirectoriesModel.h"
+#import "iTermFontPanel.h"
+#import "iTermGrowlDelegate.h"
+#import "iTermInstantReplayWindowController.h"
+#import "iTermPreferences.h"
+#import "iTermURLSchemeController.h"
 #import "MovePaneController.h"
 #import "NSStringITerm.h"
+#import "PasteboardHistory.h"
+#import "PopupModel.h"
+#import "PopupWindow.h"
+#import "PreferencePanel.h"
+#import "ProcessCache.h"
+#import "ProfilesWindow.h"
+#import "PseudoTerminal.h"
+#import "PseudoTerminalRestorer.h"
 #import "PSMTabBarControl.h"
 #import "PSMTabStyle.h"
 #import "PTToolbarController.h"
@@ -23,36 +43,18 @@
 #import "PTYTabView.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
-#import "PasteboardHistory.h"
-#import "PopupModel.h"
-#import "PopupWindow.h"
-#import "PreferencePanel.h"
-#import "ProcessCache.h"
-#import "ProfilesWindow.h"
-#import "PseudoTerminal.h"
-#import "PseudoTerminalRestorer.h"
 #import "SessionView.h"
 #import "SplitPanel.h"
 #import "TemporaryNumberAllocator.h"
 #import "TmuxControllerRegistry.h"
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
+#import "ToolbeltView.h"
 #import "ToolCommandHistoryView.h"
 #import "ToolDirectoriesView.h"
-#import "ToolbeltView.h"
 #import "VT100Screen.h"
 #import "VT100Screen.h"
 #import "VT100Terminal.h"
-#import "iTerm.h"
-#import "iTermApplication.h"
-#import "iTermApplicationDelegate.h"
-#import "iTermController.h"
-#import "iTermFontPanel.h"
-#import "iTermGrowlDelegate.h"
-#import "iTermInstantReplayWindowController.h"
-#import "iTermPreferences.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermURLSchemeController.h"
 #include <unistd.h>
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
@@ -193,6 +195,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
     PasteboardHistoryWindowController* pbHistoryView;
     CommandHistoryPopupWindowController *commandHistoryPopup;
+    DirectoriesPopupWindowController *_directoriesPopupWindowController;
     AutocompleteView* autocompleteView;
 
     NSTimer* fullScreenTabviewTimer_;
@@ -387,6 +390,7 @@ NSString *kSessionsKVCKey = @"sessions";
     pbHistoryView = [[PasteboardHistoryWindowController alloc] init];
     autocompleteView = [[AutocompleteView alloc] init];
     commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
+    _directoriesPopupWindowController = [[DirectoriesPopupWindowController alloc] init];
 
     NSScreen* screen;
     if (screenNumber < 0 || screenNumber >= [[NSScreen screens] count])  {
@@ -670,9 +674,11 @@ NSString *kSessionsKVCKey = @"sessions";
     [_toolbarController release];
     [autocompleteView shutdown];
     [commandHistoryPopup shutdown];
+    [_directoriesPopupWindowController shutdown];
     [pbHistoryView shutdown];
     [pbHistoryView release];
     [commandHistoryPopup release];
+    [_directoriesPopupWindowController release];
     [autocompleteView release];
     [tabBarControl release];
     [terminalGuid_ release];
@@ -1890,6 +1896,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)refreshTools {
     [[toolbelt_ commandHistoryView] updateCommands];
+    [[toolbelt_ directoriesView] updateDirectories];
 }
 
 - (int)numRunningSessions
@@ -1955,6 +1962,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [pbHistoryView close];
     [autocompleteView close];
     [commandHistoryPopup close];
+    [_directoriesPopupWindowController close];
 
     // tabBarControl is holding on to us, so we have to tell it to let go
     [tabBarControl setDelegate:nil];
@@ -2327,7 +2335,8 @@ NSString *kSessionsKVCKey = @"sessions";
 
     if ([[pbHistoryView window] isVisible] ||
         [[autocompleteView window] isVisible] ||
-        [[commandHistoryPopup window] isVisible]) {
+        [[commandHistoryPopup window] isVisible] ||
+        [[_directoriesPopupWindowController window] isVisible]) {
         return;
     }
 
@@ -3456,7 +3465,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [self showOrHideInstantReplayBar];
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     [itad updateBroadcastMenuState];
-    [[toolbelt_ commandHistoryView] updateCommands];
+    [self refreshTools];
     [self updateTabColors];
 }
 
@@ -4238,6 +4247,15 @@ NSString *kSessionsKVCKey = @"sessions";
                                                                 partialCommand:[[self currentSession] currentCommand]
                                                                         expand:YES]
                            partialCommand:[[self currentSession] currentCommand]];
+    } else {
+        [CommandHistory showInformationalMessage];
+    }
+}
+
+- (IBAction)openDirectories:(id)sender {
+    if ([[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+        [_directoriesPopupWindowController popWithDelegate:[self currentSession]];
+        [_directoriesPopupWindowController loadDirectoriesForHost:[[self currentSession] currentHost]];
     } else {
         [CommandHistory showInformationalMessage];
     }
@@ -6072,6 +6090,11 @@ NSString *kSessionsKVCKey = @"sessions";
             return YES;
         }
         return [[CommandHistory sharedInstance] haveCommandsForHost:[[self currentSession] currentHost]];
+    } else if ([item action] == @selector(openDirectories:)) {
+        if (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+            return YES;
+        }
+        return [[iTermDirectoriesModel sharedInstance] haveEntriesForHost:[[self currentSession] currentHost]];
     } else if ([item action] == @selector(movePaneDividerDown:)) {
         int height = [[[self currentSession] textview] lineHeight];
         return [[self currentTab] canMoveCurrentSessionDividerBy:height
@@ -6479,8 +6502,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)sessionHostDidChange:(PTYSession *)session to:(VT100RemoteHost *)host {
     if ([self currentSession] == session) {
-        [[toolbelt_ commandHistoryView] updateCommands];
-        [[toolbelt_ directoriesView] updateDirectories];
+        [self refreshTools];
     }
 }
 
@@ -6904,6 +6926,9 @@ NSString *kSessionsKVCKey = @"sessions";
     }
     if (commandHistoryPopup.delegate == session) {
         commandHistoryPopup.delegate = nil;
+    }
+    if (_directoriesPopupWindowController.delegate == session) {
+        _directoriesPopupWindowController.delegate = nil;
     }
 }
 

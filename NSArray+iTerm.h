@@ -11,5 +11,6 @@
 @interface NSArray (iTerm)
 
 - (NSArray *)objectsOfClasses:(NSArray *)classes;
+- (NSAttributedString *)attributedComponentsJoinedByAttributedString:(NSAttributedString *)joiner;
 
 @end

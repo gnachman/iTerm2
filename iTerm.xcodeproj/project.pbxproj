@@ -11,6 +11,11 @@
 		1D01609C1852AA6F0014D26A /* mark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D0160991852AA6F0014D26A /* mark@2x.png */; };
 		1D01609D1852AA6F0014D26A /* mark.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D01609A1852AA6F0014D26A /* mark.png */; };
 		1D01609E1852AA6F0014D26A /* mark.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D01609A1852AA6F0014D26A /* mark.png */; };
+		1D03D420191419080049EB8F /* DirectoriesPopup.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D03D41D191419080049EB8F /* DirectoriesPopup.h */; };
+		1D03D421191419080049EB8F /* DirectoriesPopup.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D03D41E191419080049EB8F /* DirectoriesPopup.m */; };
+		1D03D422191419080049EB8F /* DirectoriesPopup.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D03D41E191419080049EB8F /* DirectoriesPopup.m */; };
+		1D03D423191419080049EB8F /* DirectoriesPopup.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D03D41F191419080049EB8F /* DirectoriesPopup.xib */; };
+		1D03D424191419080049EB8F /* DirectoriesPopup.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D03D41F191419080049EB8F /* DirectoriesPopup.xib */; };
 		1D06A050134CDBED00C414EF /* Trouter.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06A04F134CDBED00C414EF /* Trouter.m */; };
 		1D06A052134CDBF800C414EF /* Trouter.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06A051134CDBF800C414EF /* Trouter.h */; };
 		1D06E7D314BC04510097C0ED /* ProfileTableRow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D114BC04510097C0ED /* ProfileTableRow.h */; };
@@ -928,6 +933,9 @@
 		0464AB2F006CD2EC7F000001 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		1D0160991852AA6F0014D26A /* mark@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "mark@2x.png"; path = "images/mark@2x.png"; sourceTree = "<group>"; };
 		1D01609A1852AA6F0014D26A /* mark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = mark.png; path = images/mark.png; sourceTree = "<group>"; };
+		1D03D41D191419080049EB8F /* DirectoriesPopup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DirectoriesPopup.h; sourceTree = "<group>"; };
+		1D03D41E191419080049EB8F /* DirectoriesPopup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DirectoriesPopup.m; sourceTree = "<group>"; };
+		1D03D41F191419080049EB8F /* DirectoriesPopup.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DirectoriesPopup.xib; sourceTree = "<group>"; };
 		1D06A04F134CDBED00C414EF /* Trouter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Trouter.m; sourceTree = "<group>"; };
 		1D06A051134CDBF800C414EF /* Trouter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Trouter.h; sourceTree = "<group>"; };
 		1D06E7D114BC04510097C0ED /* ProfileTableRow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileTableRow.h; sourceTree = "<group>"; };
@@ -1695,6 +1703,7 @@
 				1D9DDD9A142E5FBB00275650 /* Coprocess.h */,
 				1D9DDD90142E5AC600275650 /* CoprocessTrigger.h */,
 				1DD39B18180B82F5004E56D5 /* DebugLogging.h */,
+				1D03D41D191419080049EB8F /* DirectoriesPopup.h */,
 				1D93D33312695442007F741B /* DVR.h */,
 				1D93D3451269741B007F741B /* DVRBuffer.h */,
 				1D93D34D126974BC007F741B /* DVRDecoder.h */,
@@ -1915,6 +1924,7 @@
 				FB094A16033D58B601F955DB /* close.png */,
 				1DC13AC61886507D00034DAE /* CommandHistoryPopup.xib */,
 				FB754C5F036EFC5301F955DB /* config.png */,
+				1D03D41F191419080049EB8F /* DirectoriesPopup.xib */,
 				F6DA0AFC0AF066EE0098EFEB /* edit.png */,
 				FB47BCC403686CAC01F955DB /* exec.png */,
 				1D237D8E131D8BEE004DD60C /* FindView.xib */,
@@ -2235,6 +2245,7 @@
 				A68A3113186E2F14007F550F /* PopupWindow.m */,
 				A68A3118186E2F54007F550F /* PopupModel.m */,
 				1DC13AC218864E2200034DAE /* CommandHistoryPopup.m */,
+				1D03D41E191419080049EB8F /* DirectoriesPopup.m */,
 			);
 			name = Popups;
 			sourceTree = "<group>";
@@ -2812,6 +2823,7 @@
 				1D407A4314BABE8700BD5035 /* PTYWindow.h in Headers */,
 				A6A13AB118C33ED300B241ED /* VT100CSIParser.h in Headers */,
 				1D407A4414BABE8700BD5035 /* VT100Screen.h in Headers */,
+				1D03D420191419080049EB8F /* DirectoriesPopup.h in Headers */,
 				1D407A4514BABE8700BD5035 /* VT100Terminal.h in Headers */,
 				1D06E7D314BC04510097C0ED /* ProfileTableRow.h in Headers */,
 				1D06E7D714BC04E20097C0ED /* ProfileModelWrapper.h in Headers */,
@@ -2938,6 +2950,7 @@
 				1D01609E1852AA6F0014D26A /* mark.png in Resources */,
 				A61B66D418D63758009AC9D5 /* InstantReplay.xib in Resources */,
 				1DFA9D6818F37160008ADC98 /* iTermEditKeyActionWindowController.xib in Resources */,
+				1D03D424191419080049EB8F /* DirectoriesPopup.xib in Resources */,
 				1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */,
 				1DD39AEF180B8118004E56D5 /* Images.xcassets in Resources */,
 				1DEF5E6E185F889600300319 /* Alert.png in Resources */,
@@ -2979,6 +2992,7 @@
 				1D5FDD8C1208E91100C46BA3 /* AquaTabsBackground.png in Resources */,
 				1D5FDD8D1208E91100C46BA3 /* AquaTabsDown.png in Resources */,
 				1D5FDD8E1208E91100C46BA3 /* AquaTabsDownGraphite.png in Resources */,
+				1D03D423191419080049EB8F /* DirectoriesPopup.xib in Resources */,
 				1DC13AC71886507D00034DAE /* CommandHistoryPopup.xib in Resources */,
 				1D5FDD8F1208E91100C46BA3 /* AquaTabsDownNonKey.png in Resources */,
 				1D5FDD901208E91100C46BA3 /* AquaTabsSeparator.png in Resources */,
@@ -3196,6 +3210,7 @@
 				1D9A556E180FA85900B42CE9 /* ToolJobs.m in Sources */,
 				1D9A55A1180FA87000B42CE9 /* TextViewWrapper.m in Sources */,
 				90A1E13B186F9EA4003EC3E8 /* AppleScriptTest.m in Sources */,
+				1D03D422191419080049EB8F /* DirectoriesPopup.m in Sources */,
 				1D9A5597180FA87000B42CE9 /* PTYTab.m in Sources */,
 				1DFA9D7218F3A30F008ADC98 /* PointerPreferencesViewController.m in Sources */,
 				1D9A556A180FA85000B42CE9 /* Popup.m in Sources */,
@@ -3416,6 +3431,7 @@
 				A6A13AA318C2D23300B241ED /* iTermColorMap.m in Sources */,
 				A6E713B418FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.m in Sources */,
 				A67E0AD1186E4B71009B2B68 /* TaskNotifier.m in Sources */,
+				1D03D421191419080049EB8F /* DirectoriesPopup.m in Sources */,
 				1DD39ACF180B7884004E56D5 /* VT100GridTypes.m in Sources */,
 				A6B5134B18E779BB00D249A5 /* iTermPasteHelper.m in Sources */,
 				A6057C0A187A1809004A60AF /* TerminalFile.m in Sources */,

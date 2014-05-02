@@ -162,27 +162,7 @@ static const CGFloat kMargin = 5;
     objectValueForTableColumn:(NSTableColumn *)aTableColumn
             row:(NSInteger)rowIndex {
     iTermDirectoryEntry *entry = filteredEntries_[rowIndex];
-    NSFont *font = [[aTableColumn dataCell] font];
-    NSMutableArray *components = [[iTermDirectoriesModel sharedInstance] componentsInPath:entry.path];
-    NSIndexSet *abbreviationSafeIndexes =
-        [[iTermDirectoriesModel sharedInstance] abbreviationSafeIndexesInEntry:entry];
-    NSDictionary *attributes = @{ NSFontAttributeName: font };
-    NSString *prefix = entry.starred ? @"★ /" : @"/";
-    NSString *abbreviatedName = [prefix stringByAppendingString:[components componentsJoinedByString:@"/"]];
-    for (int i = 0;
-         i + 1 < components.count && [abbreviatedName sizeWithAttributes:attributes].width > 0 /*aTableColumn.width*/;
-         i++) {
-        if ([abbreviationSafeIndexes containsIndex:i]) {
-            components[i] = [components[i] substringWithRange:NSMakeRange(0, 1)];
-        }
-        abbreviatedName = [prefix stringByAppendingString:[components componentsJoinedByString:@"/"]];
-    }
-
-    NSMutableParagraphStyle *style = [[[NSMutableParagraphStyle alloc] init] autorelease];
-    style.lineBreakMode = NSLineBreakByTruncatingMiddle;
-    attributes = @{ NSParagraphStyleAttributeName: style };
-    return [[[NSAttributedString alloc] initWithString:abbreviatedName
-                                            attributes:attributes] autorelease];
+    return [entry attributedStringForTableColumn:aTableColumn];
 }
 
 - (void)directoriesDidChange:(id)sender {
@@ -223,7 +203,12 @@ static const CGFloat kMargin = 5;
     }
     iTermDirectoryEntry* entry = filteredEntries_[selectedIndex];
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-    NSString *text = [@"cd " stringByAppendingString:entry.path];
+    NSString *text;
+    if ([NSEvent modifierFlags] & NSAlternateKeyMask) {
+        text = [@"cd " stringByAppendingString:entry.path];
+    } else {
+        text = entry.path;
+    }
     [[wrapper.term currentSession] insertText:text];
 }
 
@@ -244,7 +229,8 @@ static const CGFloat kMargin = 5;
     } else {
         NSMutableArray *array = [NSMutableArray array];
         for (iTermDirectoryEntry *entry in entries_) {
-            if ([entry.path rangeOfString:searchField_.stringValue].location != NSNotFound) {
+            if ([entry.path rangeOfString:searchField_.stringValue
+                                  options:NSCaseInsensitiveSearch].location != NSNotFound) {
                 [array addObject:entry];
             }
         }

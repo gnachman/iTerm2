@@ -14,3 +14,9 @@
 - (void)iterm_appendString:(NSString *)string withAttributes:(NSDictionary *)attributes;
 
 @end
+
+@interface NSAttributedString (iTerm)
+
+- (NSArray *)attributedComponentsSeparatedByString:(NSString *)separator;
+
+@end

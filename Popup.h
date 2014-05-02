@@ -78,5 +78,9 @@
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;
 - (BOOL)_word:(NSString*)temp matchesFilter:(NSString*)filter;
 
+- (NSString *)truncatedMainValueForEntry:(PopupEntry *)entry;
+- (NSAttributedString *)shrunkToFitAttributedString:(NSAttributedString *)attributedString
+                                            inEntry:(PopupEntry *)entry
+                                     baseAttributes:(NSDictionary *)baseAttributes;
 
 @end

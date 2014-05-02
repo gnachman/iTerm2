@@ -8,6 +8,8 @@
 
 #import "iTermDirectoriesModel.h"
 #import "iTermPreferences.h"
+#import "NSArray+iTerm.h"
+#import "NSMutableAttributedString+iTerm.h"
 #import "VT100RemoteHost.h"
 
 static NSString *const kDirectoryEntryPath = @"path";
@@ -21,6 +23,10 @@ NSString *const kDirectoriesDidChangeNotificationName = @"kDirectoriesDidChangeN
 
 static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 static const int kMaxDirectoriesToSavePerHost = 200;
+
+@interface iTermDirectoriesModel ()
+- (NSIndexSet *)abbreviationSafeIndexesInEntry:(iTermDirectoryEntry *)entry;
+@end
 
 @interface iTermDirectoryTreeNode : NSObject
 
@@ -109,6 +115,16 @@ static const int kMaxDirectoriesToSavePerHost = 200;
     [super dealloc];
 }
 
++ (NSMutableArray *)attributedComponentsInPath:(NSAttributedString *)path {
+    NSMutableArray *components = [[[path attributedComponentsSeparatedByString:@"/"] mutableCopy] autorelease];
+    for (int i = components.count - 1; i >= 0; i--) {
+        if ([components[i] string].length == 0) {
+            [components removeObjectAtIndex:i];
+        }
+    }
+    return components;
+}
+
 + (NSMutableArray *)componentsInPath:(NSString *)path {
     NSMutableArray *components = [[[path componentsSeparatedByString:@"/"] mutableCopy] autorelease];
     NSUInteger index = [components indexOfObject:@""];
@@ -120,7 +136,7 @@ static const int kMaxDirectoriesToSavePerHost = 200;
 }
 
 - (void)addPath:(NSString *)path {
-    NSArray *parts = [[self class] componentsInPath:path];
+    NSArray *parts = [iTermDirectoryTree componentsInPath:path];
     if (!parts.count) {
         return;
     }
@@ -139,7 +155,7 @@ static const int kMaxDirectoriesToSavePerHost = 200;
 }
 
 - (void)removePath:(NSString *)path {
-    NSArray *parts = [[self class] componentsInPath:path];
+    NSArray *parts = [iTermDirectoryTree  componentsInPath:path];
     if (!parts.count) {
         return;
     }
@@ -147,7 +163,7 @@ static const int kMaxDirectoriesToSavePerHost = 200;
 }
 
 - (NSIndexSet *)abbreviationSafeIndexesInPath:(NSString *)path {
-    NSArray *parts = [[self class] componentsInPath:path];
+    NSArray *parts = [iTermDirectoryTree  componentsInPath:path];
     iTermDirectoryTreeNode *node = _root;
     NSMutableIndexSet *indexSet = [NSMutableIndexSet indexSet];
     for (int i = 0; i < parts.count; i++) {
@@ -217,6 +233,61 @@ static const int kMaxDirectoriesToSavePerHost = 200;
     [_path release];
     [_lastUse release];
     [super dealloc];
+}
+
+- (NSAttributedString *)attributedStringForTableColumn:(NSTableColumn *)aTableColumn
+                               basedOnAttributedString:(NSAttributedString *)attributedString
+                                        baseAttributes:(NSDictionary *)baseAttributes {
+    NSFont *font = [[aTableColumn dataCell] font];
+    // Split up the passed-in attributed string into components.
+    // There is a wee bug where attributes on slashes are lost.
+    NSMutableArray *components = [iTermDirectoryTree attributedComponentsInPath:attributedString];
+
+    // Figure out which components can safely be abbreviated.
+    NSIndexSet *abbreviationSafeIndexes =
+        [[iTermDirectoriesModel sharedInstance] abbreviationSafeIndexesInEntry:self];
+
+    // Initialize attributes.
+    NSMutableParagraphStyle *style = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    style.lineBreakMode = NSLineBreakByTruncatingMiddle;
+    NSMutableDictionary *attributes = [NSMutableDictionary dictionaryWithDictionary:baseAttributes];
+    attributes[NSFontAttributeName] = font;
+    attributes[NSParagraphStyleAttributeName] = style;
+
+    // Compute the prefix of the result.
+    NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
+    NSString *prefix = _starred ? @"★ /" : @"/";
+    [result iterm_appendString:prefix withAttributes:attributes];
+    NSAttributedString *attributedSlash =
+        [[[NSAttributedString alloc] initWithString:@"/" attributes:attributes] autorelease];
+
+    // Initialize the abbreviated name in case no further changes are made.
+    NSMutableAttributedString *abbreviatedName = [[[NSMutableAttributedString alloc] init] autorelease];
+    [abbreviatedName iterm_appendString:prefix withAttributes:attributes];
+    NSAttributedString *attributedPath =
+        [components attributedComponentsJoinedByAttributedString:attributedSlash];
+    [abbreviatedName appendAttributedString:attributedPath];
+
+    // Abbreviate each allowed component until it fits. The last component can't be abbreviated.
+    CGFloat maxWidth = aTableColumn.width;
+    for (int i = 0; i + 1 < components.count && [abbreviatedName size].width > maxWidth; i++) {
+        if ([abbreviationSafeIndexes containsIndex:i]) {
+            components[i] = [components[i] attributedSubstringFromRange:NSMakeRange(0, 1)];
+        }
+        [abbreviatedName deleteCharactersInRange:NSMakeRange(0, abbreviatedName.length)];
+        [abbreviatedName iterm_appendString:prefix withAttributes:attributes];
+        attributedPath = [components attributedComponentsJoinedByAttributedString:attributedSlash];
+        [abbreviatedName appendAttributedString:attributedPath];
+    }
+
+    return abbreviatedName;
+}
+
+- (NSAttributedString *)attributedStringForTableColumn:(NSTableColumn *)aTableColumn {
+    NSAttributedString *theString = [[[NSAttributedString alloc] initWithString:_path] autorelease];
+    return [self attributedStringForTableColumn:aTableColumn
+                        basedOnAttributedString:theString
+                                 baseAttributes:@{}];
 }
 
 @end
@@ -380,8 +451,9 @@ static const int kMaxDirectoriesToSavePerHost = 200;
     return [_tree abbreviationSafeIndexesInPath:entry.path];
 }
 
-- (NSMutableArray *)componentsInPath:(NSString *)path {
-    return [iTermDirectoryTree componentsInPath:path];
+- (BOOL)haveEntriesForHost:(VT100RemoteHost *)host {
+    NSString *key = [self keyForHost:host];
+    return _hostToPathArrayDictionary[key] != nil;
 }
 
 @end
