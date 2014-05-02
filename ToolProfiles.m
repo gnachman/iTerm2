@@ -25,6 +25,7 @@ static const int kPopupHeight = 26;
         [listView_ setDelegate:self];
         [listView_ setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
         [listView_ disableArrowHandler];
+        [listView_.tableView setHeaderView:nil];
 
         [self addSubview:listView_];
         [listView_ release];

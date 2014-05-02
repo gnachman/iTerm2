@@ -79,13 +79,13 @@ static const CGFloat kHelpMargin = 5;
         NSFont *theFont = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
         [[col dataCell] setFont:theFont];
         [tableView_ setRowHeight:[[[[NSLayoutManager alloc] init] autorelease] defaultLineHeightForFont:theFont]];
-        
+        [tableView_ setHeaderView:nil];
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];
-        
+
         [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
         [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        
+
         [searchField_ setArrowHandler:tableView_];
         
         [scrollView_ setDocumentView:tableView_];
@@ -139,7 +139,7 @@ static const CGFloat kHelpMargin = 5;
 {
     NSRect frame = self.frame;
     help_.frame = NSMakeRect(frame.size.width - help_.frame.size.width,
-                             frame.size.height - help_.frame.size.height,
+                             frame.size.height - help_.frame.size.height - ceil((clear_.frame.size.height - help_.frame.size.height) / 2),
                              help_.frame.size.width,
                              help_.frame.size.height);
     searchField_.frame = NSMakeRect(0, 0, frame.size.width, searchField_.frame.size.height);
@@ -228,7 +228,7 @@ static const CGFloat kHelpMargin = 5;
         return;
     }
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-	[[[wrapper.term currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
+        [[[wrapper.term currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
 }
 
 - (void)doubleClickOnTableView:(id)sender
