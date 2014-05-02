@@ -11,6 +11,7 @@
 #import "FutureMethods.h"
 
 @class ToolCommandHistoryView;
+@class ToolDirectoriesView;
 @class ToolbeltSplitView;
 @class PseudoTerminal;
 
@@ -44,6 +45,7 @@
 - (void)setUseDarkDividers:(BOOL)useDarkDividers;
 
 - (ToolCommandHistoryView *)commandHistoryView;
+- (ToolDirectoriesView *)directoriesView;
 - (void)relayoutAllTools;
 
 @end

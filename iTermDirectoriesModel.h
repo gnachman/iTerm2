@@ -37,5 +37,7 @@ extern NSString *const kDirectoriesDidChangeNotificationName;
 - (NSArray *)entriesSortedByScoreOnHost:(VT100RemoteHost *)host;
 - (void)eraseHistory;
 - (void)save;
+- (NSIndexSet *)abbreviationSafeIndexesInEntry:(iTermDirectoryEntry *)entry;
+- (NSMutableArray *)componentsInPath:(NSString *)path;
 
 @end

@@ -14,4 +14,6 @@
   NSTableViewDelegate,
   NSTextFieldDelegate>
 
+- (void)updateDirectories;
+
 @end

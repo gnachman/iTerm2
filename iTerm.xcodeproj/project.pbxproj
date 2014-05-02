@@ -1689,6 +1689,7 @@
 				A073973D14C768E400786414 /* ColorsMenuItemView.h */,
 				A6057C0C187BC4C3004A60AF /* CommandHistory.h */,
 				A6E74746188C6344005355CF /* CommandHistoryEntry.h */,
+				1DC13AC118864E2200034DAE /* CommandHistoryPopup.h */,
 				A6E7474B188C6394005355CF /* CommandUse.h */,
 				1D21EE39147711300066E04A /* ContextMenuActionPrefsController.h */,
 				1D9DDD9A142E5FBB00275650 /* Coprocess.h */,
@@ -2233,7 +2234,6 @@
 				A68A310E186E2EDA007F550F /* PopupEntry.m */,
 				A68A3113186E2F14007F550F /* PopupWindow.m */,
 				A68A3118186E2F54007F550F /* PopupModel.m */,
-				1DC13AC118864E2200034DAE /* CommandHistoryPopup.h */,
 				1DC13AC218864E2200034DAE /* CommandHistoryPopup.m */,
 			);
 			name = Popups;

@@ -409,4 +409,9 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     return (ToolCommandHistoryView *)wrapper.tool;
 }
 
+- (ToolDirectoriesView *)directoriesView {
+    ToolWrapper *wrapper = [tools_ objectForKey:@"Directories"];
+    return (ToolDirectoriesView *)wrapper.tool;
+}
+
 @end

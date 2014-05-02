@@ -158,28 +158,24 @@ static const CGFloat kMargin = 5;
     return entry.path;
 }
 
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex {
+- (id)tableView:(NSTableView *)aTableView
+    objectValueForTableColumn:(NSTableColumn *)aTableColumn
+            row:(NSInteger)rowIndex {
     iTermDirectoryEntry *entry = filteredEntries_[rowIndex];
-    NSString *abbreviatedName = entry.path;
     NSFont *font = [[aTableColumn dataCell] font];
-    NSMutableArray *components = [[[abbreviatedName componentsSeparatedByString:@"/"] mutableCopy] autorelease];
-    NSUInteger index;
-    index = [components indexOfObject:@""];
-    while (index != NSNotFound) {
-        [components removeObjectAtIndex:index];
-        index = [components indexOfObject:@""];
-    }
+    NSMutableArray *components = [[iTermDirectoriesModel sharedInstance] componentsInPath:entry.path];
+    NSIndexSet *abbreviationSafeIndexes =
+        [[iTermDirectoriesModel sharedInstance] abbreviationSafeIndexesInEntry:entry];
     NSDictionary *attributes = @{ NSFontAttributeName: font };
+    NSString *prefix = entry.starred ? @"★ /" : @"/";
+    NSString *abbreviatedName = [prefix stringByAppendingString:[components componentsJoinedByString:@"/"]];
     for (int i = 0;
-         i + 1 < components.count && [abbreviatedName sizeWithAttributes:attributes].width > aTableColumn.width;
+         i + 1 < components.count && [abbreviatedName sizeWithAttributes:attributes].width > 0 /*aTableColumn.width*/;
          i++) {
-        if (i < components.count && [components[i] length] > 0) {
+        if ([abbreviationSafeIndexes containsIndex:i]) {
             components[i] = [components[i] substringWithRange:NSMakeRange(0, 1)];
         }
-        abbreviatedName = [@"/" stringByAppendingString:[components componentsJoinedByString:@"/"]];
-    }
-    if (entry.starred) {
-        abbreviatedName = [NSString stringWithFormat:@"★ %@", abbreviatedName];
+        abbreviatedName = [prefix stringByAppendingString:[components componentsJoinedByString:@"/"]];
     }
 
     NSMutableParagraphStyle *style = [[[NSMutableParagraphStyle alloc] init] autorelease];

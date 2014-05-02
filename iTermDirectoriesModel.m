@@ -22,6 +22,147 @@ NSString *const kDirectoriesDidChangeNotificationName = @"kDirectoriesDidChangeN
 static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 static const int kMaxDirectoriesToSavePerHost = 200;
 
+@interface iTermDirectoryTreeNode : NSObject
+
+@property(nonatomic, copy) NSString *component;
+@property(nonatomic, readonly) NSMutableDictionary *children;  // NSString component -> iTermDirectoryTreeNode
+@property(nonatomic, assign) int count;
+
+- (int)numberOfChildrenStartingWithString:(NSString *)prefix;
+- (void)removePathWithParts:(NSArray *)parts;
+
+@end
+
+@implementation iTermDirectoryTreeNode
+
++ (instancetype)nodeWithComponent:(NSString *)component {
+    return [[[self alloc] initWithComponent:component] autorelease];
+}
+
+- (id)initWithComponent:(NSString *)component {
+    self = [super init];
+    if (self) {
+        _component = [component copy];
+        _children = [[NSMutableDictionary alloc] init];
+    }
+    return self;
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p component=%@ %lu children>",
+            [self class], self, _component, (unsigned long)_children.count];
+}
+
+- (int)numberOfChildrenStartingWithString:(NSString *)prefix {
+    int number = 0;
+    for (NSString *child in _children) {
+        if ([child hasPrefix:prefix]) {
+            number++;
+        }
+    }
+    return number;
+}
+
+- (void)dealloc {
+    [_component release];
+    [_children release];
+    [super dealloc];
+}
+
+- (void)removePathWithParts:(NSArray *)parts {
+    --_count;
+    if (parts.count > 1) {
+        NSString *firstPart = parts[0];
+        NSArray *tailParts = [parts subarrayWithRange:NSMakeRange(1, parts.count - 1)];
+        iTermDirectoryTreeNode *node = _children[firstPart];
+        [node removePathWithParts:tailParts];
+        if (!node.count) {
+            [_children removeObjectForKey:firstPart];
+        }
+    }
+}
+
+@end
+
+@interface iTermDirectoryTree : NSObject {
+    iTermDirectoryTreeNode *_root;
+}
+
+- (void)addPath:(NSString *)path;
+- (NSIndexSet *)abbreviationSafeIndexesInPath:(NSString *)path;
+- (void)removePath:(NSString *)path;
+
+@end
+
+@implementation iTermDirectoryTree
+
+- (id)init {
+    self = [super init];
+    if (self) {
+        _root = [[iTermDirectoryTreeNode alloc] initWithComponent:nil];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_root release];
+    [super dealloc];
+}
+
++ (NSMutableArray *)componentsInPath:(NSString *)path {
+    NSMutableArray *components = [[[path componentsSeparatedByString:@"/"] mutableCopy] autorelease];
+    NSUInteger index = [components indexOfObject:@""];
+    while (index != NSNotFound) {
+        [components removeObjectAtIndex:index];
+        index = [components indexOfObject:@""];
+    }
+    return components;
+}
+
+- (void)addPath:(NSString *)path {
+    NSArray *parts = [[self class] componentsInPath:path];
+    if (!parts.count) {
+        return;
+    }
+    iTermDirectoryTreeNode *parent = _root;
+    parent.count = parent.count + 1;
+    for (int i = 0; i < parts.count; i++) {
+        NSString *part = parts[i];
+        iTermDirectoryTreeNode *node = parent.children[part];
+        if (!node) {
+            node = [iTermDirectoryTreeNode nodeWithComponent:part];
+            parent.children[part] = node;
+        }
+        node.count = node.count + 1;
+        parent = node;
+    }
+}
+
+- (void)removePath:(NSString *)path {
+    NSArray *parts = [[self class] componentsInPath:path];
+    if (!parts.count) {
+        return;
+    }
+    [_root removePathWithParts:parts];
+}
+
+- (NSIndexSet *)abbreviationSafeIndexesInPath:(NSString *)path {
+    NSArray *parts = [[self class] componentsInPath:path];
+    iTermDirectoryTreeNode *node = _root;
+    NSMutableIndexSet *indexSet = [NSMutableIndexSet indexSet];
+    for (int i = 0; i < parts.count; i++) {
+        NSString *part = parts[i];
+        NSString *prefix = [part substringToIndex:1];
+        if ([node numberOfChildrenStartingWithString:prefix] <= 1) {
+            [indexSet addIndex:i];
+        }
+        node = node.children[part];
+    }
+    return indexSet;
+}
+
+@end
+
 @implementation iTermDirectoryEntry
 
 + (instancetype)entryWithDictionary:(NSDictionary *)dictionary {
@@ -43,6 +184,11 @@ static const int kMaxDirectoriesToSavePerHost = 200;
               kDirectoryEntryDescription: _description ?: @"",
               kDirectoryEntryIsStarred: @(_starred),
               kDirectoryEntryShortcut: _shortcut ?: @"" };
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p path=%@>",
+            [self class], self, _path];
 }
 
 - (NSComparisonResult)compare:(iTermDirectoryEntry *)other {
@@ -78,6 +224,7 @@ static const int kMaxDirectoriesToSavePerHost = 200;
 @implementation iTermDirectoriesModel {
     NSMutableDictionary *_hostToPathArrayDictionary;  // NSString hostname -> NSArray iTermDirectoryEntry
     NSString *_path;  // Path to backing store
+    iTermDirectoryTree *_tree;
 }
 
 + (instancetype)sharedInstance {
@@ -103,7 +250,7 @@ static const int kMaxDirectoriesToSavePerHost = 200;
                                                    attributes:nil
                                                         error:NULL];
         _path = [[_path stringByAppendingPathComponent:@"directories.plist"] copy];
-
+        _tree = [[iTermDirectoryTree alloc] init];
         [self loadDirectories];
     }
     return self;
@@ -112,6 +259,7 @@ static const int kMaxDirectoriesToSavePerHost = 200;
 - (void)dealloc {
     [_hostToPathArrayDictionary release];
     [_path release];
+    [_tree release];
     [super dealloc];
 }
 
@@ -134,6 +282,7 @@ static const int kMaxDirectoriesToSavePerHost = 200;
         entry = [[[iTermDirectoryEntry alloc] init] autorelease];
         entry.path = path;
         [array addObject:entry];
+        [_tree addPath:path];
     }
     entry.useCount = entry.useCount + 1;
     entry.lastUse = [NSDate date];
@@ -210,17 +359,29 @@ static const int kMaxDirectoriesToSavePerHost = 200;
         }
 
         for (NSDictionary *dict in archive[host]) {
-            [directories addObject:[iTermDirectoryEntry entryWithDictionary:dict]];
+            iTermDirectoryEntry *entry = [iTermDirectoryEntry entryWithDictionary:dict];
+            [directories addObject:entry];
+            [_tree addPath:entry.path];
         }
     }
 }
 
 - (void)eraseHistory {
+    [_tree release];
+    _tree = [[iTermDirectoryTree alloc] init];
     [_hostToPathArrayDictionary removeAllObjects];
     [[NSFileManager defaultManager] removeItemAtPath:_path error:NULL];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kDirectoriesDidChangeNotificationName
                                                         object:nil];
+}
+
+- (NSIndexSet *)abbreviationSafeIndexesInEntry:(iTermDirectoryEntry *)entry {
+    return [_tree abbreviationSafeIndexesInPath:entry.path];
+}
+
+- (NSMutableArray *)componentsInPath:(NSString *)path {
+    return [iTermDirectoryTree componentsInPath:path];
 }
 
 @end

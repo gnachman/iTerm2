@@ -1638,7 +1638,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         objects = [objects objectsOfClasses:@[ cls ]];
     } while (objects && !objects.count);
     if (objects.count) {
-        return objects[0];
+        // We want the last object because they are sorted chronologically.
+        return [objects lastObject];
     } else {
         return nil;
     }
