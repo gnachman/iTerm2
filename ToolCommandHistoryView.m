@@ -15,6 +15,7 @@
 
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 5;
+static const CGFloat kHelpMargin = 5;
 
 @implementation ToolCommandHistoryView {
     NSScrollView *scrollView_;
@@ -25,6 +26,7 @@ static const CGFloat kMargin = 5;
     NSArray *filteredEntries_;
     iTermSearchField *searchField_;
     NSFont *boldFont_;
+    NSButton *help_;
 }
 
 - (id)initWithFrame:(NSRect)frame {
@@ -36,6 +38,17 @@ static const CGFloat kMargin = 5;
         searchField_.frame = NSMakeRect(0, 0, frame.size.width, searchField_.frame.size.height);
         [searchField_ setDelegate:self];
         [self addSubview:searchField_];
+
+        help_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
+        [help_ setBezelStyle:NSHelpButtonBezelStyle];
+        [help_ setButtonType:NSMomentaryPushInButton];
+        [help_ setBordered:YES];
+        [help_ sizeToFit];
+        help_.target = self;
+        help_.action = @selector(help:);
+        help_.title = @"";
+        [help_ setAutoresizingMask:NSViewMinYMargin | NSViewMinXMargin];
+        [self addSubview:help_];
 
         clear_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
         [clear_ setButtonType:NSMomentaryPushInButton];
@@ -125,8 +138,15 @@ static const CGFloat kMargin = 5;
 - (void)relayout
 {
     NSRect frame = self.frame;
+    help_.frame = NSMakeRect(frame.size.width - help_.frame.size.width,
+                             frame.size.height - help_.frame.size.height,
+                             help_.frame.size.width,
+                             help_.frame.size.height);
     searchField_.frame = NSMakeRect(0, 0, frame.size.width, searchField_.frame.size.height);
-    [clear_ setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
+    [clear_ setFrame:NSMakeRect(0,
+                                frame.size.height - kButtonHeight,
+                                frame.size.width - help_.frame.size.width - kHelpMargin,
+                                kButtonHeight)];
     scrollView_.frame = NSMakeRect(0,
                                    searchField_.frame.size.height + kMargin,
                                    frame.size.width,
@@ -266,6 +286,10 @@ static const CGFloat kMargin = 5;
 - (CGFloat)minimumHeight
 {
     return 88;
+}
+
+- (void)help:(id)sender {
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://iterm2.com/shell_integration.html"]];
 }
 
 @end
