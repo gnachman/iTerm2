@@ -67,8 +67,9 @@ static const int kMaxCommandsToSavePerHost = 200;
 #pragma mark - APIs
 
 + (void)showInformationalMessage {
-    if (NSRunInformationalAlertPanel(@"About Command History",
-                                     @"To use command history your shell must be properly configured.",
+    if (NSRunInformationalAlertPanel(@"About Shell Integration",
+                                     @"To use shell integration features such as Command History or "
+                                     @"Directories, your shell must be properly configured.",
                                      @"Learn More…",
                                      @"OK",
                                      nil) == NSAlertDefaultReturn) {
