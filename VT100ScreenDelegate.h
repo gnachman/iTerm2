@@ -214,7 +214,6 @@
 
 - (NSString *)screenProfileName;
 
-@optional
-- (void)screenLogWorkingDirectoryAtLine:(long long)line withDirectory:(NSString *)directory;
+- (void)screenLogWorkingDirectoryAtLine:(int)line withDirectory:(NSString *)directory;
 
 @end

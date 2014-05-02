@@ -1972,7 +1972,7 @@ Gw
                                                                 </textFieldCell>
                                                             </textField>
                                                             <popUpButton verticalHuggingPriority="750" id="3213">
-                                                                <rect key="frame" x="98" y="27" width="153" height="26"/>
+                                                                <rect key="frame" x="310" y="101" width="153" height="26"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <popUpButtonCell key="cell" type="push" title="Load Presets..." bezelStyle="rounded" alignment="center" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="3214">
                                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -2012,7 +2012,7 @@ Gw
                                                                 </connections>
                                                             </button>
                                                             <slider verticalHuggingPriority="750" id="4896">
-                                                                <rect key="frame" x="235" y="77.5" width="227" height="20"/>
+                                                                <rect key="frame" x="235" y="70.5" width="227" height="20"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <sliderCell key="cell" continuous="YES" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="4903"/>
                                                                 <connections>
@@ -2021,7 +2021,7 @@ Gw
                                                                 </connections>
                                                             </slider>
                                                             <textField verticalHuggingPriority="750" id="4897">
-                                                                <rect key="frame" x="235" y="68" width="22" height="11"/>
+                                                                <rect key="frame" x="235" y="61" width="22" height="11"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Low" id="4902">
                                                                     <font key="font" metaFont="miniSystem"/>
@@ -2030,7 +2030,7 @@ Gw
                                                                 </textFieldCell>
                                                             </textField>
                                                             <textField verticalHuggingPriority="750" id="4898">
-                                                                <rect key="frame" x="437" y="68" width="25" height="11"/>
+                                                                <rect key="frame" x="437" y="61" width="25" height="11"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="High" id="4901">
                                                                     <font key="font" metaFont="miniSystem"/>
@@ -2039,9 +2039,45 @@ Gw
                                                                 </textFieldCell>
                                                             </textField>
                                                             <textField verticalHuggingPriority="750" id="4899">
-                                                                <rect key="frame" x="100" y="76" width="132" height="17"/>
+                                                                <rect key="frame" x="100" y="69" width="132" height="17"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="Minimum contrast:" id="4900">
+                                                                    <font key="font" metaFont="system"/>
+                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                                </textFieldCell>
+                                                            </textField>
+                                                            <slider verticalHuggingPriority="750" id="evF-qt-9wo">
+                                                                <rect key="frame" x="235" y="35" width="227" height="20"/>
+                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                <sliderCell key="cell" continuous="YES" alignment="left" maxValue="0.80000000000000004" tickMarkPosition="above" sliderType="linear" id="gKT-qi-eSF"/>
+                                                                <connections>
+                                                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="FHJ-0a-eQc"/>
+                                                                    <outlet property="nextKeyView" destination="3213" id="lIB-Zw-QBm"/>
+                                                                </connections>
+                                                            </slider>
+                                                            <textField verticalHuggingPriority="750" id="NBn-O5-DTw">
+                                                                <rect key="frame" x="235" y="26" width="22" height="11"/>
+                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Low" id="fXZ-c2-35T">
+                                                                    <font key="font" metaFont="miniSystem"/>
+                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                                </textFieldCell>
+                                                            </textField>
+                                                            <textField verticalHuggingPriority="750" id="XAK-ki-q70">
+                                                                <rect key="frame" x="437" y="26" width="25" height="11"/>
+                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="High" id="bOY-LJ-sY6">
+                                                                    <font key="font" metaFont="miniSystem"/>
+                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                                </textFieldCell>
+                                                            </textField>
+                                                            <textField verticalHuggingPriority="750" id="22f-BB-uj3">
+                                                                <rect key="frame" x="100" y="34" width="89" height="17"/>
+                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="Cursor boost:" id="Kt3-Fn-Fff">
                                                                     <font key="font" metaFont="system"/>
                                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -3928,7 +3964,7 @@ Gw
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
-                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="229"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -5108,6 +5144,7 @@ DQ
                 <outlet property="_ansi9Color" destination="2295" id="3xD-IA-LRt"/>
                 <outlet property="_backgroundColor" destination="2285" id="11Q-XD-XYI"/>
                 <outlet property="_boldColor" destination="2272" id="zhk-0J-m9y"/>
+                <outlet property="_cursorBoost" destination="evF-qt-9wo" id="zxW-aa-c8U"/>
                 <outlet property="_cursorColor" destination="2280" id="bFx-TT-7QV"/>
                 <outlet property="_cursorColorLabel" destination="2283" id="wkr-Fv-k2e"/>
                 <outlet property="_cursorTextColor" destination="2278" id="aw0-Y7-lPM"/>

@@ -37,12 +37,29 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                      alpha:1];
 }
 
++ (NSColor *)colorWith8BitRed:(int)red
+                        green:(int)green
+                         blue:(int)blue
+                       muting:(double)muting
+                backgroundRed:(CGFloat)bgRed
+              backgroundGreen:(CGFloat)bgGreen
+               backgroundBlue:(CGFloat)bgBlue {
+    CGFloat r = (red / 255.0) * (1 - muting) + bgRed * muting;
+    CGFloat g = (green / 255.0) * (1 - muting) + bgGreen * muting;
+    CGFloat b = (blue / 255.0) * (1 - muting) + bgBlue * muting;
+    return [NSColor colorWithCalibratedRed:r
+                                     green:g
+                                      blue:b
+                                     alpha:1];
+}
+
 + (NSColor *)calibratedColorWithRed:(double)r
                               green:(double)g
                                blue:(double)b
                               alpha:(double)a
                 perceivedBrightness:(CGFloat)t
-{
+                            mutedBy:(double)muting
+                   towardComponents:(CGFloat *)baseColorComponents {
     /*
      Given:
      a vector c [c1, c2, c3] (the starting color)
@@ -100,12 +117,16 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                  (PerceivedBrightness(e1 - c1, e2 - c2, e3 - c3)));
     // p can be out of range for e.g., division by 0.
     p = MIN(1, MAX(0, p));
-    
+
     const CGFloat x1 = p * e1 + (1 - p) * c1;
     const CGFloat x2 = p * e2 + (1 - p) * c2;
     const CGFloat x3 = p * e3 + (1 - p) * c3;
-    
-    return [NSColor colorWithCalibratedRed:x1 green:x2 blue:x3 alpha:a];
+
+    // Now apply muting
+    const CGFloat mutedRed = x1 * (1 - muting) + baseColorComponents[0] * muting;
+    const CGFloat mutedGreen = x2 * (1 - muting) + baseColorComponents[1] * muting;
+    const CGFloat mutedBlue = x3 * (1 - muting) + baseColorComponents[2] * muting;
+    return [NSColor colorWithCalibratedRed:mutedRed green:mutedGreen blue:mutedBlue alpha:a];
 }
 
 + (NSColor *)colorForAnsi256ColorIndex:(int)index {
@@ -126,16 +147,18 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 + (NSColor*)colorWithComponents:(double *)mainComponents
     withContrastAgainstComponents:(double *)otherComponents
-                  minimumContrast:(CGFloat)minimumContrast {
+                  minimumContrast:(CGFloat)minimumContrast
+                          mutedBy:(double)muting
+                 towardComponents:(CGFloat *)baseColorComponents {
     const double r = mainComponents[0];
     const double g = mainComponents[1];
     const double b = mainComponents[2];
     const double a = mainComponents[3];
-    
+
     const double or = otherComponents[0];
     const double og = otherComponents[1];
     const double ob = otherComponents[2];
-    
+
     double mainBrightness = PerceivedBrightness(r, g, b);
     double otherBrightness = PerceivedBrightness(or, og, ob);
     CGFloat brightnessDiff = fabs(mainBrightness - otherBrightness);
@@ -168,7 +191,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                          green:g
                                           blue:b
                                          alpha:a
-                           perceivedBrightness:targetBrightness];
+                           perceivedBrightness:targetBrightness
+                                       mutedBy:muting
+                              towardComponents:baseColorComponents];
     } else {
         return nil;
     }
@@ -220,6 +245,21 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
               kEncodedColorDictionaryRedComponent: @(red),
               kEncodedColorDictionaryGreenComponent: @(green),
               kEncodedColorDictionaryBlueComponent: @(blue) };
+}
+
+- (NSColor *)colorMutedBy:(double)muting towards:(NSColor *)baseColor {
+    CGFloat r = [self redComponent];
+    CGFloat g = [self greenComponent];
+    CGFloat b = [self blueComponent];
+
+    CGFloat baseR = [baseColor redComponent];
+    CGFloat baseG = [baseColor greenComponent];
+    CGFloat baseB = [baseColor blueComponent];
+
+    return [NSColor colorWithCalibratedRed:(1 - muting) * r + muting * baseR
+                                     green:(1 - muting) * g + muting * baseG
+                                      blue:(1 - muting) * b + muting * baseB
+                                     alpha:1.0];
 }
 
 @end

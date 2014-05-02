@@ -344,7 +344,7 @@
     return @"joblessName";
 }
 
-- (void)screenLogWorkingDirectoryAtLine:(long long)line withDirectory:(NSString *)directory {
+- (void)screenLogWorkingDirectoryAtLine:(int)line withDirectory:(NSString *)directory {
     [dirlog_ addObject:@[ @(line), directory ? directory : [NSNull null] ]];
 }
 

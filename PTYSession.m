@@ -11,6 +11,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
+#import "iTermDirectoriesModel.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermPasteHelper.h"
@@ -101,6 +102,8 @@ typedef enum {
 @property(nonatomic, readwrite) struct timeval lastOutput;
 @property(nonatomic, readwrite) BOOL isDivorced;
 @property(atomic, assign) PTYSessionTmuxMode tmuxMode;
+@property(nonatomic, copy) NSString *lastDirectory;
+@property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
 @end
 
 @implementation PTYSession {
@@ -1875,6 +1878,10 @@ typedef enum {
         minimumContrast = [[aDict objectForKey:KEY_MINIMUM_CONTRAST] floatValue];
     }
     [self setMinimumContrast:minimumContrast];
+
+    if (aDict[KEY_CURSOR_BOOST]) {
+        _colorMap.mutingAmount = [aDict[KEY_CURSOR_BOOST] doubleValue];
+    }
 
     // background image
     [self setBackgroundImagePath:[aDict objectForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
@@ -4997,9 +5004,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenSetHighlightCursorLine:(BOOL)highlight {
+  self.highlightCursorLine = highlight;
+}
+
+- (void)setHighlightCursorLine:(BOOL)highlight {
     _textview.highlightCursorLine = highlight;
     [_textview setNeedsDisplay:YES];
     _screen.trackCursorLineMovement = highlight;
+}
+
+- (BOOL)highlightCursorLine {
+  return _textview.highlightCursorLine;
 }
 
 - (BOOL)screenHasView {
@@ -5315,6 +5330,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (NSString *)screenProfileName {
     return _profile[KEY_NAME];
+}
+
+- (void)screenLogWorkingDirectoryAtLine:(int)line withDirectory:(NSString *)directory {
+    VT100RemoteHost *remoteHost = [_screen remoteHostOnLine:line];
+    BOOL isSame = ([directory isEqualToString:_lastDirectory] &&
+                   [remoteHost isEqualToRemoteHost:_lastRemoteHost]);
+    [[iTermDirectoriesModel sharedInstance] recordUseOfPath:directory
+                                                     onHost:[_screen remoteHostOnLine:line]
+                                                   isChange:!isSame];
+    self.lastDirectory = directory;
+    self.lastRemoteHost = remoteHost;
 }
 
 - (BOOL)screenAllowTitleSetting {

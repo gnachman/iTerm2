@@ -21,15 +21,27 @@ extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
                         green:(int)green
                          blue:(int)blue;
 
++ (NSColor *)colorWith8BitRed:(int)red
+                        green:(int)green
+                         blue:(int)blue
+                       muting:(double)muting
+                backgroundRed:(CGFloat)bgRed
+              backgroundGreen:(CGFloat)bgGreen
+               backgroundBlue:(CGFloat)bgBlue;
+
 + (NSColor *)calibratedColorWithRed:(double)r
                               green:(double)g
                                blue:(double)b
                               alpha:(double)a
-                perceivedBrightness:(CGFloat)t;
+                perceivedBrightness:(CGFloat)t
+                            mutedBy:(double)muting
+                   towardComponents:(CGFloat *)baseColorComponents;
 
 + (NSColor*)colorWithComponents:(double *)mainComponents
     withContrastAgainstComponents:(double *)otherComponents
-                  minimumContrast:(CGFloat)minimumContrast;
+                  minimumContrast:(CGFloat)minimumContrast
+                          mutedBy:(double)muting
+                 towardComponents:(CGFloat *)baseColorComponents;
 
 - (int)nearestIndexIntoAnsi256ColorTable;
 
@@ -42,5 +54,6 @@ extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
 - (BOOL)isDark;
 
 - (NSDictionary *)dictionaryValue;
+- (NSColor *)colorMutedBy:(double)muting towards:(NSColor *)baseColor;
 
 @end
