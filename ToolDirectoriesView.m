@@ -15,6 +15,7 @@
 
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 5;
+static const CGFloat kHelpMargin = 5;
 
 @implementation ToolDirectoriesView {
     NSScrollView *scrollView_;
@@ -26,6 +27,7 @@ static const CGFloat kMargin = 5;
     iTermSearchField *searchField_;
     NSFont *boldFont_;
     NSMenu *menu_;
+    NSButton *help_;
 }
 
 - (id)initWithFrame:(NSRect)frame {
@@ -38,27 +40,34 @@ static const CGFloat kMargin = 5;
         [searchField_ setDelegate:self];
         [self addSubview:searchField_];
 
-        clear_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
+        help_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
+        [help_ setBezelStyle:NSHelpButtonBezelStyle];
+        [help_ setButtonType:NSMomentaryPushInButton];
+        [help_ setBordered:YES];
+        [help_ sizeToFit];
+        help_.target = self;
+        help_.action = @selector(help:);
+        help_.title = @"";
+        [help_ setAutoresizingMask:NSViewMinYMargin | NSViewMinXMargin];
+        [self addSubview:help_];
+
+        clear_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
         [clear_ setButtonType:NSMomentaryPushInButton];
         [clear_ setTitle:@"Clear All"];
         [clear_ setTarget:self];
         [clear_ setAction:@selector(clear:)];
         [clear_ setBezelStyle:NSSmallSquareBezelStyle];
         [clear_ sizeToFit];
-        [clear_ setAutoresizingMask:NSViewMinYMargin];
+        [clear_ setAutoresizingMask:NSViewMinYMargin | NSViewMinXMargin];
         [self addSubview:clear_];
         [clear_ release];
 
-        scrollView_ = [[NSScrollView alloc] initWithFrame:NSMakeRect(0,
-                                                                     searchField_.frame.size.height + kMargin,
-                                                                     frame.size.width,
-                                                                     frame.size.height - kButtonHeight - 2 * kMargin - searchField_.frame.size.height)];
+        scrollView_ = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
         [scrollView_ setHasVerticalScroller:YES];
         [scrollView_ setHasHorizontalScroller:NO];
-        NSSize contentSize = [self contentSize];
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
-        tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+        tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
         NSTableColumn *col;
         col = [[[NSTableColumn alloc] initWithIdentifier:@"directories"] autorelease];
         [col setEditable:NO];
@@ -131,7 +140,11 @@ static const CGFloat kMargin = 5;
 - (void)relayout {
     NSRect frame = self.frame;
     searchField_.frame = NSMakeRect(0, 0, frame.size.width, searchField_.frame.size.height);
-    [clear_ setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
+    help_.frame = NSMakeRect(frame.size.width - help_.frame.size.width,
+                             frame.size.height - help_.frame.size.height,
+                             help_.frame.size.width,
+                             help_.frame.size.height);
+    [clear_ setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width - help_.frame.size.width - kHelpMargin, kButtonHeight)];
     scrollView_.frame = NSMakeRect(0,
                                    searchField_.frame.size.height + kMargin,
                                    frame.size.width,
@@ -259,6 +272,10 @@ static const CGFloat kMargin = 5;
         [[iTermDirectoriesModel sharedInstance] save];
     }
     [self updateDirectories];
+}
+
+- (void)help:(id)sender {
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://iterm2.com/shell_integration.html"]];
 }
 
 @end
