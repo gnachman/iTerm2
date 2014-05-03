@@ -3688,6 +3688,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_selection moveSelectionEndpointTo:VT100GridCoordMake([_dataSource width],
                                                            [_dataSource numberOfLines] - 1)];
     [_selection endLiveSelection];
+    if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
+        [self copySelectionAccordingToUserPreferences];
+    }
+}
+
+- (IBAction)selectOutputOfLastCommand:(id)sender {
+    VT100GridCoordRange range = [_delegate textViewRangeOfLastCommandOutput];
+    if (range.start.x < 0) {
+        return;
+    }
+    [_selection beginSelectionAt:range.start mode:kiTermSelectionModeCharacter resume:NO append:NO];
+    [_selection moveSelectionEndpointTo:range.end];
+    [_selection endLiveSelection];
+
+    if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
+        [self copySelectionAccordingToUserPreferences];
+    }
 }
 
 - (void)deselect
@@ -4067,6 +4084,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         ([item action]==@selector(print:) && [item tag] == 1)) { // print selection
         // These commands are allowed only if there is a selection.
         return [_selection hasSelection];
+    } else if ([item action]==@selector(selectOutputOfLastCommand:)) {
+        return [_delegate textViewCanSelectOutputOfLastCommand];
     }
     if ([item action] == @selector(downloadWithSCP:)) {
         return ([self _haveShortSelection] &&

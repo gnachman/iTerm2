@@ -42,6 +42,7 @@ static const double kInterBellQuietPeriod = 0.1;
 @implementation VT100Screen {
     NSDictionary *inlineFileInfo_;  // Keys are kInlineFileXXX
     NSMutableArray *inlineFileCodes_;
+    VT100GridCoord nextCommandOutputStart_;
 }
 
 static NSString *const kInlineFileName = @"name";  // NSString
@@ -98,6 +99,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         markCache_ = [[NSMutableDictionary alloc] init];
         commandStartX_ = commandStartY_ = -1;
 
+        nextCommandOutputStart_ = VT100GridCoordMake(-1, -1);
+        _lastCommandOutputRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
     }
     return self;
 }
@@ -3123,6 +3126,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalPromptDidStart {
+    _lastCommandOutputRange.end = currentGrid_.cursor;
+    _lastCommandOutputRange.end.y += [self numberOfScrollbackLines];
+    _lastCommandOutputRange.start = nextCommandOutputStart_;
+
     // FinalTerm uses this to define the start of a collapsable region. That would be a nightmare
     // to add to iTerm, and our answer to this is marks, which already existed anyway.
     [delegate_ screenAddMarkOnLine:[self numberOfScrollbackLines] + self.cursorY - 1];
@@ -3139,6 +3146,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         [delegate_ screenCommandDidEndWithRange:[self commandRange]];
         commandStartX_ = commandStartY_ = -1;
         [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+        nextCommandOutputStart_ = currentGrid_.cursor;
+        nextCommandOutputStart_.y += [self numberOfScrollbackLines];
     }
 }
 

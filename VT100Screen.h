@@ -119,6 +119,7 @@ extern int kVT100ScreenMinRows;
 @property(nonatomic, readonly) VT100GridCoord savedCursor;
 @property(nonatomic, assign) BOOL trackCursorLineMovement;
 @property(nonatomic, assign) BOOL appendToScrollbackWithStatusBar;
+@property(nonatomic, readonly) VT100GridCoordRange lastCommandOutputRange;
 
 // Designated initializer.
 - (id)initWithTerminal:(VT100Terminal *)terminal;

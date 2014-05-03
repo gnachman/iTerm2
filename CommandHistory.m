@@ -68,8 +68,9 @@ static const int kMaxCommandsToSavePerHost = 200;
 
 + (void)showInformationalMessage {
     if (NSRunInformationalAlertPanel(@"About Shell Integration",
-                                     @"To use shell integration features such as Command History or "
-                                     @"Directories, your shell must be properly configured.",
+                                     @"To use shell integration features such as Command History, "
+                                     @"Recent Directories, or Select Output of Last Command, "
+                                     @"your shell must be properly configured.",
                                      @"Learn More…",
                                      @"OK",
                                      nil) == NSAlertDefaultReturn) {

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="5056" systemVersion="13C1021" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="5053" systemVersion="13C64" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment defaultVersion="1070" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="5056"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="5053"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -443,6 +443,11 @@ DQ
                                     <action selector="selectAll:" target="-1" id="179"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Select Output of Last Command" keyEquivalent="A" id="JqU-xR-XbI">
+                                <connections>
+                                    <action selector="selectOutputOfLastCommand:" target="-1" id="3Sj-9D-V5q"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="1145"/>
                             <menuItem title="Open Autocomplete..." keyEquivalent=";" id="1144">
                                 <connections>
@@ -455,7 +460,7 @@ DQ
                                     <action selector="openCommandHistory:" target="-1" id="XHr-bn-Hbc"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Open Directories..." keyEquivalent=";" id="7X6-Am-EEB">
+                            <menuItem title="Open Recent Directories..." keyEquivalent=";" id="7X6-Am-EEB">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="openDirectories:" target="-1" id="U0c-KD-2xF"/>

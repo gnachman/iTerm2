@@ -4492,6 +4492,22 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return NO;
 }
 
+- (VT100GridCoordRange)textViewRangeOfLastCommandOutput {
+    if (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+        [CommandHistory showInformationalMessage];
+        return VT100GridCoordRangeMake(-1, -1, -1, -1);
+    } else {
+        return _screen.lastCommandOutputRange;
+    }
+}
+
+- (BOOL)textViewCanSelectOutputOfLastCommand {
+    // Return YES if command history has never been used so we can show the informational message.
+    return (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed] ||
+            _screen.lastCommandOutputRange.start.x >= 0);
+            
+}
+
 - (void)sendEscapeSequence:(NSString *)text
 {
     if (_exited) {

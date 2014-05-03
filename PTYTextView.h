@@ -131,6 +131,10 @@ typedef enum {
                           button:(MouseButtonNumber)button
                       coordinate:(VT100GridCoord)coord
                           deltaY:(CGFloat)deltaY;
+
+- (VT100GridCoordRange)textViewRangeOfLastCommandOutput;
+- (BOOL)textViewCanSelectOutputOfLastCommand;
+
 @end
 
 @interface PTYTextView : NSView <

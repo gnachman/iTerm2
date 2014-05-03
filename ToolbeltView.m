@@ -64,7 +64,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     gRegisteredTools = [[NSMutableDictionary alloc] init];
     [ToolbeltView registerToolWithName:@"Command History"
                              withClass:[ToolCommandHistoryView class]];
-    [ToolbeltView registerToolWithName:@"Directories" withClass:[ToolDirectoriesView class]];
+    [ToolbeltView registerToolWithName:@"Recent Directories" withClass:[ToolDirectoriesView class]];
     [ToolbeltView registerToolWithName:@"Jobs" withClass:[ToolJobs class]];
     [ToolbeltView registerToolWithName:@"Notes" withClass:[ToolNotes class]];
     [ToolbeltView registerToolWithName:@"Paste History" withClass:[ToolPasteHistory class]];
@@ -410,7 +410,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 }
 
 - (ToolDirectoriesView *)directoriesView {
-    ToolWrapper *wrapper = [tools_ objectForKey:@"Directories"];
+    ToolWrapper *wrapper = [tools_ objectForKey:@"Recent Directories"];
     return (ToolDirectoriesView *)wrapper.tool;
 }
 
