@@ -3678,6 +3678,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return result;
 }
 
+- (IBAction)installShellIntegration:(id)sender {
+    NSString *theCommand = @"curl -L iterm2.com/misc/install_shell_integration.sh | sh\n";
+    [_delegate writeTask:[theCommand dataUsingEncoding:NSUTF8StringEncoding]];
+}
+
 - (IBAction)selectAll:(id)sender
 {
     // Set the selection region to the whole text.
@@ -4070,6 +4075,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                [item action]==@selector(editTextViewSession:) ||
                [item action]==@selector(closeTextViewSession:) ||
                [item action]==@selector(movePane:) ||
+               [item action]==@selector(installShellIntegration:) ||
                ([item action] == @selector(print:) && [item tag] != 1)) {
         // We always validate the above commands
         return YES;
