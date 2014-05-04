@@ -9,5 +9,5 @@
 #import "iTermProfilePreferencesBaseViewController.h"
 
 @interface ProfilesAdvancedPreferencesViewController : iTermProfilePreferencesBaseViewController
-
+- (void)layoutSubviewsForEditCurrentSessionMode;
 @end

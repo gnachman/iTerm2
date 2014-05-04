@@ -95,9 +95,9 @@
     [self updateRemoveJobButtonEnabled];
 }
 
-- (NSArray *)allKeys {
+- (NSArray *)keysForBulkCopy {
     NSArray *keys = @[ KEY_JOBS ];
-    return [[super allKeys] arrayByAddingObjectsFromArray:keys];
+    return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
 
 #pragma mark - Prompt before closing

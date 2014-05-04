@@ -312,7 +312,7 @@ static NSString *const kKey = @"key";
                                                       userInfo:nil];
 }
 
-- (NSArray *)allKeys {
+- (NSArray *)keysForBulkCopy {
     return [_keys allObjects];
 }
 

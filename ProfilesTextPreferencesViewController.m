@@ -125,9 +125,9 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     [self updateNonAsciiFontViewVisibility];
 }
 
-- (NSArray *)allKeys {
+- (NSArray *)keysForBulkCopy {
     NSArray *keys = @[ KEY_NORMAL_FONT, KEY_NON_ASCII_FONT ];
-    return [[super allKeys] arrayByAddingObjectsFromArray:keys];
+    return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
 
 - (void)updateNonAsciiFontViewVisibility {

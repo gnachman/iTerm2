@@ -15,4 +15,7 @@
 
 - (BOOL)isEqualToRemoteHost:(VT100RemoteHost *)other;
 
+// Returns username@hostname.
+- (NSString *)usernameAndHostname;
+
 @end

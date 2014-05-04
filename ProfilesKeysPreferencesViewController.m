@@ -55,9 +55,9 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     [self updateDeleteSendsCtrlH];
 }
 
-- (NSArray *)allKeys {
+- (NSArray *)keysForBulkCopy {
     NSArray *keys = @[ KEY_KEYBOARD_MAP ];
-    return [[super allKeys] arrayByAddingObjectsFromArray:keys];
+    return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
 
 - (void)reloadProfile {

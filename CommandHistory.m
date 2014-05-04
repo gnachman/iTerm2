@@ -74,8 +74,11 @@ static const int kMaxCommandsToSavePerHost = 200;
     }
     NSString *otherText = firstResponder ? @"Install Now" : nil;
     switch (NSRunInformationalAlertPanel(@"About Shell Integration",
-                                         @"To use shell integration features such as Command History, "
-                                         @"Recent Directories, or Select Output of Last Command, "
+                                         @"To use shell integration features such as "
+                                         @"Command History, "
+                                         @"Recent Directories, "
+                                         @"Select Output of Last Command, "
+                                         @"and Automatic Profile Switching, "
                                          @"your shell must be properly configured.",
                                          @"Learn More…",
                                          @"OK",

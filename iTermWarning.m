@@ -28,6 +28,7 @@ static NSString *const kCancel = @"Cancel";
     // If this is silenceable and at least one button is not "Cancel" then offer to remember the
     // selection. But a "Cancel" action is not remembered.
     if (warningType == kiTermWarningTypeTemporarilySilenceable) {
+        assert(identifier);
         if (numNonCancelActions == 1) {
             alert.suppressionButton.title = @"Suppress this warning temporarily";
         } else if (numNonCancelActions > 1) {
@@ -35,6 +36,7 @@ static NSString *const kCancel = @"Cancel";
         }
         alert.showsSuppressionButton = YES;
     } else if (warningType == kiTermWarningTypePermanentlySilenceable) {
+        assert(identifier);
         if (numNonCancelActions == 1) {
             alert.suppressionButton.title = @"Do not warn again";
         } else if (numNonCancelActions > 1) {
@@ -107,6 +109,9 @@ static NSString *const kCancel = @"Cancel";
 }
 
 + (BOOL)identifierIsSilenced:(NSString *)identifier {
+    if (!identifier) {
+        return NO;
+    }
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
     if ([userDefaults boolForKey:theKey]) {

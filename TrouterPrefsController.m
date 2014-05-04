@@ -238,21 +238,21 @@ enum {
 
         case 4:
             [[text_ cell] setPlaceholderString:@"Enter command"];
-            [caveat_ setStringValue:@"Command runs when you activate Semantic History on any filename.\nUse \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
+            [caveat_ setStringValue:@"Command runs when you activate Semantic History on any filename. Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
             [caveat_ setHidden:NO];
             [text_ setHidden:NO];
             break;
 
         case 5:
             [[text_ cell] setPlaceholderString:@"Enter command"];
-            [caveat_ setStringValue:@"Command runs when you activate Semantic History on any text (even if it's not a valid filename).\nUse \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
+            [caveat_ setStringValue:@"Command runs when you activate Semantic History on any text (even if it's not a valid filename). Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
             [caveat_ setHidden:NO];
             [text_ setHidden:NO];
             break;
 
         case 6:
             [[text_ cell] setPlaceholderString:@"Enter command"];
-            [caveat_ setStringValue:@"Coprocess runs when you activate Semantic History on any filename.\nUse \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
+            [caveat_ setStringValue:@"Coprocess runs when you activate Semantic History on any filename. Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
             [caveat_ setHidden:NO];
             [text_ setHidden:NO];
             break;

@@ -5096,13 +5096,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         newProfile = [[ProfileModel sharedInstance] defaultBookmark];
     }
     if (newProfile) {
-        NSString *theName = [[self profile] objectForKey:KEY_NAME];
-        NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:newProfile];
-        [dict setObject:theName forKey:KEY_NAME];
-        [self setProfile:dict];
-        [self setPreferencesFromAddressBookEntry:dict];
-        [self remarry];
+        [self setProfilePreservingName:newProfile];
     }
+}
+
+- (void)setProfilePreservingName:(NSDictionary *)newProfile {
+    NSString *theName = [[self profile] objectForKey:KEY_NAME];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:newProfile];
+    [dict setObject:theName forKey:KEY_NAME];
+    [self setProfile:dict];
+    [self setPreferencesFromAddressBookEntry:dict];
+    [self remarry];
 }
 
 - (void)screenSetPasteboard:(NSString *)value {
@@ -5257,6 +5261,29 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
     [[[self tab] realParentWindow] sessionHostDidChange:self to:host];
+    
+    // Construct a map from host binding to profile. This could be expensive with a lot of profiles
+    // but it should be fairly rare for this code to run.
+    NSMutableDictionary *stringToProfile = [NSMutableDictionary dictionary];
+    for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
+        NSArray *boundHosts = profile[KEY_BOUND_HOSTS];
+        for (NSString *boundHost in boundHosts) {
+            stringToProfile[boundHost] = profile;
+        }
+    }
+    
+    Profile *profile = nil;
+    // First try user@host, then host, then user@.
+    NSArray *stringsToTry = @[ [host usernameAndHostname],
+                               host.hostname,
+                               [NSString stringWithFormat:@"%@@", host.username] ];
+    for (NSString *string in stringsToTry) {
+        profile = stringToProfile[string];
+        if (profile) {
+            [self setProfilePreservingName:profile];
+            return;
+        }
+    }
 }
 
 - (BOOL)screenShouldSendReport {

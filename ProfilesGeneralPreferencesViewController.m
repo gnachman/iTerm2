@@ -118,8 +118,8 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     [self updateEditAdvancedConfigButton];
 }
 
-- (NSArray *)allKeys {
-    return [[super allKeys] arrayByAddingObjectsFromArray:[_advancedWorkingDirWindowController allKeys]];
+- (NSArray *)keysForBulkCopy {
+    return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:[_advancedWorkingDirWindowController allKeys]];
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {

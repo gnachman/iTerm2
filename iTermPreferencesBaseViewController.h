@@ -17,7 +17,7 @@
 @interface iTermPreferencesBaseViewController : NSViewController
 
 @property(nonatomic, readonly) NSMapTable *keyMap;
-@property(nonatomic, readonly) NSArray *allKeys;
+@property(nonatomic, readonly) NSArray *keysForBulkCopy;
 
 #pragma mark - Core Methods
 

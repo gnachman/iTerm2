@@ -174,7 +174,8 @@ static NSMutableArray *gTriggerClasses;
     [tableView_ reloadData];
 }
 
-#pragma mark NSTableViewDataSource
+#pragma mark - NSTableViewDataSource
+
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView
 {
     return [[self triggers] count];

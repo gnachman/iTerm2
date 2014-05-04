@@ -144,9 +144,9 @@
     }
 }
 
-- (NSArray *)allKeys {
+- (NSArray *)keysForBulkCopy {
     NSArray *keys = @[ KEY_BACKGROUND_IMAGE_LOCATION ];
-    return [[super allKeys] arrayByAddingObjectsFromArray:keys];
+    return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
 
 - (void)reloadProfile {

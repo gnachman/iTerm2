@@ -23,4 +23,7 @@
 // Update controls' values after the selected profile changes.
 - (void)reloadProfile;
 
+// Called just before selected profile changes.
+- (void)willReloadProfile;
+
 @end

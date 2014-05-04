@@ -145,6 +145,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [_generalViewController layoutSubviewsForEditCurrentSessionMode];
     [_windowViewController layoutSubviewsForEditCurrentSessionMode];
     [_sessionViewController layoutSubviewsForEditCurrentSessionMode];
+    [_advancedViewController layoutSubviewsForEditCurrentSessionMode];
     NSRect newFrame = _tabView.frame;
     newFrame.origin.x = 0;
     _tabView.frame = newFrame;
@@ -198,6 +199,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 #pragma mark - ProfileListViewDelegate
 
 - (void)profileTableSelectionDidChange:(id)profileTable {
+    [[self tabViewControllers] makeObjectsPerformSelector:@selector(willReloadProfile)];
     Profile *profile = [self selectedProfile];
     BOOL hasSelection = (profile != nil);
     
@@ -330,21 +332,22 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     } else {
         [newDict setValuesForKeysWithDictionary:[[_delegate profilePreferencesModel] defaultBookmark]];
     }
-    [newDict setObject:@"New Profile" forKey:KEY_NAME];
-    [newDict setObject:@"" forKey:KEY_SHORTCUT];
+    newDict[KEY_NAME] = @"New Profile";
+    newDict[KEY_SHORTCUT] = @"";
     NSString* guid = [ProfileModel freshGuid];
-    [newDict setObject:guid forKey:KEY_GUID];
+    newDict[KEY_GUID] = guid;
     [newDict removeObjectForKey:KEY_DEFAULT_BOOKMARK];  // remove depreated attribute with side effects
-    [newDict setObject:[NSArray arrayWithObjects:nil] forKey:KEY_TAGS];
+    newDict[KEY_TAGS] = @[];
+    newDict[KEY_BOUND_HOSTS] = @[];
     if ([[ProfileModel sharedInstance] bookmark:newDict hasTag:@"bonjour"]) {
         [newDict removeObjectForKey:KEY_BONJOUR_GROUP];
         [newDict removeObjectForKey:KEY_BONJOUR_SERVICE];
         [newDict removeObjectForKey:KEY_BONJOUR_SERVICE_ADDRESS];
-        [newDict setObject:@"" forKey:KEY_COMMAND];
-        [newDict setObject:@"" forKey:KEY_INITIAL_TEXT];
-        [newDict setObject:@"No" forKey:KEY_CUSTOM_COMMAND];
-        [newDict setObject:@"" forKey:KEY_WORKING_DIRECTORY];
-        [newDict setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
+        newDict[KEY_COMMAND] = @"";
+        newDict[KEY_INITIAL_TEXT] = @"";
+        newDict[KEY_CUSTOM_COMMAND] = @"No";
+        newDict[KEY_WORKING_DIRECTORY] = @"";
+        newDict[KEY_CUSTOM_DIRECTORY] = @"No";
     }
     [[_delegate profilePreferencesModel] addBookmark:newDict];
     [_profilesListView reloadData];
@@ -391,13 +394,13 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
         [[BulkCopyProfilePreferencesWindowController alloc] init];
     bulkCopyController.sourceGuid = profile[KEY_GUID];
     
-    bulkCopyController.keysForColors = [_colorsViewController allKeys];
-    bulkCopyController.keysForText = [_textViewController allKeys];
-    bulkCopyController.keysForWindow = [_windowViewController allKeys];
-    bulkCopyController.keysForTerminal = [_terminalViewController allKeys];
-    bulkCopyController.keysForSession = [_sessionViewController allKeys];
-    bulkCopyController.keysForKeyboard = [_keysViewController allKeys];
-    bulkCopyController.keysForAdvanced = [_advancedViewController allKeys];
+    bulkCopyController.keysForColors = [_colorsViewController keysForBulkCopy];
+    bulkCopyController.keysForText = [_textViewController keysForBulkCopy];
+    bulkCopyController.keysForWindow = [_windowViewController keysForBulkCopy];
+    bulkCopyController.keysForTerminal = [_terminalViewController keysForBulkCopy];
+    bulkCopyController.keysForSession = [_sessionViewController keysForBulkCopy];
+    bulkCopyController.keysForKeyboard = [_keysViewController keysForBulkCopy];
+    bulkCopyController.keysForAdvanced = [_advancedViewController keysForBulkCopy];
     
     [NSApp beginSheet:bulkCopyController.window
        modalForWindow:self.view.window
@@ -416,11 +419,12 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     NSMutableDictionary *newProfile = [NSMutableDictionary dictionaryWithDictionary:profile];
     NSString* newName = [NSString stringWithFormat:@"Copy of %@", newProfile[KEY_NAME]];
     
-    [newProfile setObject:newName forKey:KEY_NAME];
-    [newProfile setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-    [newProfile setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
-    [newProfile setObject:@"" forKey:KEY_SHORTCUT];
-
+    newProfile[KEY_NAME] = newName;
+    newProfile[KEY_GUID] = [ProfileModel freshGuid];
+    newProfile[KEY_DEFAULT_BOOKMARK] = @"No";
+    newProfile[KEY_SHORTCUT] = @"";
+    newProfile[KEY_BOUND_HOSTS] = @[];
+    
     [[_delegate profilePreferencesModel] addBookmark:newProfile];
     [_profilesListView reloadData];
     [_profilesListView selectRowByGuid:newProfile[KEY_GUID]];

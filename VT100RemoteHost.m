@@ -27,4 +27,8 @@
             [_username isEqualToString:other.username]);
 }
 
+- (NSString *)usernameAndHostname {
+    return [NSString stringWithFormat:@"%@@%@", _username, _hostname];
+}
+
 @end
