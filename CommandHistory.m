@@ -67,14 +67,26 @@ static const int kMaxCommandsToSavePerHost = 200;
 #pragma mark - APIs
 
 + (void)showInformationalMessage {
-    if (NSRunInformationalAlertPanel(@"About Shell Integration",
-                                     @"To use shell integration features such as Command History, "
-                                     @"Recent Directories, or Select Output of Last Command, "
-                                     @"your shell must be properly configured.",
-                                     @"Learn More…",
-                                     @"OK",
-                                     nil) == NSAlertDefaultReturn) {
-        [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://iterm2.com/shell_integration.html"]];
+    NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
+    SEL selector = @selector(installShellIntegration:);
+    if (![firstResponder respondsToSelector:selector]) {
+        firstResponder = nil;
+    }
+    NSString *otherText = firstResponder ? @"Install Now" : nil;
+    switch (NSRunInformationalAlertPanel(@"About Shell Integration",
+                                         @"To use shell integration features such as Command History, "
+                                         @"Recent Directories, or Select Output of Last Command, "
+                                         @"your shell must be properly configured.",
+                                         @"Learn More…",
+                                         @"OK",
+                                         otherText)) {
+        case NSAlertDefaultReturn:
+            [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://iterm2.com/shell_integration.html"]];
+            break;
+            
+        case NSAlertOtherReturn:
+            [firstResponder performSelector:selector withObject:self];
+            break;
     }
 }
 

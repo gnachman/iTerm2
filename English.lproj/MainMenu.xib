@@ -88,6 +88,12 @@
                                     <action selector="unmakeDefaultTerminal:" target="201" id="1475"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Install Shell Integration" alternate="YES" id="rHN-nq-xah">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="installShellIntegration:" target="-1" id="QBH-7C-wWV"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="1469"/>
                             <menuItem title="Quit iTerm" keyEquivalent="q" id="136">
                                 <connections>
