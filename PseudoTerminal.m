@@ -23,6 +23,7 @@
 #import "iTermInstantReplayWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermURLSchemeController.h"
+#import "iTermWarning.h"
 #import "MovePaneController.h"
 #import "NSStringITerm.h"
 #import "PasteboardHistory.h"
@@ -4921,11 +4922,10 @@ NSString *kSessionsKVCKey = @"sessions";
         mode = BROADCAST_OFF;
     }
     if (mode != BROADCAST_OFF && [self broadcastMode] == BROADCAST_OFF) {
-        if (NSRunAlertPanel(@"Warning!",
-                            @"Keyboard input will be sent to multiple sessions.",
-                            @"OK",
-                            @"Cancel",
-                            nil) != NSAlertDefaultReturn) {
+        if ([iTermWarning showWarningWithTitle:@"Keyboard input will be sent to multiple sessions."
+                                       actions:@[ @"OK", @"Cancel" ]
+                                    identifier:@"NoSyncSuppressBroadcastInputWarning"
+                                   silenceable:kiTermWarningTypePermanentlySilenceable] == kiTermWarningSelection1) {
             return;
         }
     }
