@@ -6097,8 +6097,10 @@ NSString *kSessionsKVCKey = @"sessions";
         return [[iTermDirectoriesModel sharedInstance] haveEntriesForHost:[[self currentSession] currentHost]];
     } else if ([item action] == @selector(movePaneDividerDown:)) {
         int height = [[[self currentSession] textview] lineHeight];
-        return [[self currentTab] canMoveCurrentSessionDividerBy:height
+        BOOL result = [[self currentTab] canMoveCurrentSessionDividerBy:height
                                                     horizontally:NO];
+        NSLog(@"Return %d", (int)result);
+        return result;
     } else if ([item action] == @selector(movePaneDividerUp:)) {
         int height = [[[self currentSession] textview] lineHeight];
         return [[self currentTab] canMoveCurrentSessionDividerBy:-height

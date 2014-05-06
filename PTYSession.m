@@ -1138,6 +1138,7 @@ typedef enum {
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run
 // in the main thread to execute the parsed tokens.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
+    NSLog(@"Read: %.*s", length, buffer);
     // Pass the input stream to the parser.
     [_terminal.parser putStreamData:buffer length:length];
     
@@ -1171,13 +1172,14 @@ typedef enum {
 - (void)executeTokens:(const CVector *)vector bytesHandled:(int)length {
     STOPWATCH_START(executing);
     int n = CVectorCount(vector);
+    NSLog(@"Executing %d tokens...", n);
     for (int i = 0; i < n; i++) {
         if (_exited || !_terminal || (self.tmuxMode != TMUX_GATEWAY && [_shell hasMuteCoprocess])) {
             break;
         }
         
         VT100Token *token = CVectorGetObject(vector, i);
-        DLog(@"Execute token %@ cursor=(%d, %d)", token, _screen.cursorX - 1, _screen.cursorY - 1);
+        NSLog(@"Execute token %@ cursor=(%d, %d)", token, _screen.cursorX - 1, _screen.cursorY - 1);
         [_terminal executeToken:token];
     }
     

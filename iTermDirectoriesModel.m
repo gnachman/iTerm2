@@ -136,14 +136,18 @@ static const int kMaxDirectoriesToSavePerHost = 200;
 }
 
 - (void)addPath:(NSString *)path {
+    NSLog(@"addPath: %@", path);
     NSArray *parts = [iTermDirectoryTree componentsInPath:path];
     if (!parts.count) {
+        NSLog(@"Count is 0");
         return;
     }
+    NSLog(@"parts=%@", parts);
     iTermDirectoryTreeNode *parent = _root;
     parent.count = parent.count + 1;
     for (int i = 0; i < parts.count; i++) {
         NSString *part = parts[i];
+        NSLog(@"Handle part #%d: %@", i, part);
         iTermDirectoryTreeNode *node = parent.children[part];
         if (!node) {
             node = [iTermDirectoryTreeNode nodeWithComponent:part];
@@ -152,6 +156,7 @@ static const int kMaxDirectoriesToSavePerHost = 200;
         node.count = node.count + 1;
         parent = node;
     }
+    NSLog(@"addPath: returning");
 }
 
 - (void)removePath:(NSString *)path {
@@ -337,6 +342,7 @@ static const int kMaxDirectoriesToSavePerHost = 200;
 - (void)recordUseOfPath:(NSString *)path
                  onHost:(VT100RemoteHost *)host
                isChange:(BOOL)isChange {
+    NSLog(@"Record use of path: %@", path);
     if (!isChange) {
         return;
     }
@@ -353,6 +359,7 @@ static const int kMaxDirectoriesToSavePerHost = 200;
         entry = [[[iTermDirectoryEntry alloc] init] autorelease];
         entry.path = path;
         [array addObject:entry];
+        NSLog(@"Call addPath:");
         [_tree addPath:path];
     }
     entry.useCount = entry.useCount + 1;
