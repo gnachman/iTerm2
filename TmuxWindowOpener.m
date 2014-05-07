@@ -6,13 +6,14 @@
 //
 
 #import "TmuxWindowOpener.h"
-#import "PTYTab.h"
+#import "DebugLogging.h"
+#import "iTermController.h"
 #import "PseudoTerminal.h"
+#import "PTYTab.h"
 #import "ScreenChar.h"
 #import "TmuxHistoryParser.h"
 #import "TmuxLayoutParser.h"
 #import "TmuxStateParser.h"
-#import "iTermController.h"
 
 NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
 
@@ -80,8 +81,9 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
 
 - (void)openWindows:(BOOL)initial
 {
+    DLog(@"openWindows initial=%d", (int)initial);
     if (!self.layout) {
-        NSLog(@"Bad layout");
+        DLog(@"Bad layout");
         return;
     }
     self.parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
@@ -90,25 +92,27 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
         return;
     }
     NSMutableArray *cmdList = [NSMutableArray array];
+    DLog(@"Parse this tree: %@", self.parseTree);
     [[TmuxLayoutParser sharedInstance] depthFirstSearchParseTree:self.parseTree
                                                  callingSelector:@selector(appendRequestsForNode:toArray:)
                                                         onTarget:self
                                                       withObject:cmdList];
+    DLog(@"Depth-first search of parse tree gives command list %@", cmdList);
     [gateway_ sendCommandList:cmdList initial:initial];
 }
 
 - (void)updateLayoutInTab:(PTYTab *)tab
 {
     if (!self.layout) {
-        NSLog(@"Bad layout");
+        DLog(@"Bad layout");
         return;
     }
     if (!self.controller) {
-        NSLog(@"No controller");
+        DLog(@"No controller");
         return;
     }
     if (!self.gateway) {
-        NSLog(@"No gateway");
+        DLog(@"No gateway");
         return;
     }
 
@@ -157,6 +161,7 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
                     toArray:(NSMutableArray *)cmdList
 {
     NSNumber *wp = [node objectForKey:kLayoutDictWindowPaneKey];
+    DLog(@"Append requests for node: %@", node);
     [self appendRequestsForWindowPane:wp toArray:cmdList];
     return nil;  // returning nil means keep going with the DFS
 }
@@ -173,6 +178,7 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
 - (NSDictionary *)dictForGetPendingOutputForWindowPane:(NSNumber *)wp
 {
     ++pendingRequests_;
+    DLog(@"Increment pending requests to %d", pendingRequests_);
     NSString *command = [NSString stringWithFormat:@"capture-pane -p -P -C -t %%%d", [wp intValue]];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
@@ -184,6 +190,7 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
 - (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp
 {
     ++pendingRequests_;
+    DLog(@"Increment pending requests to %d", pendingRequests_);
     NSString *command = [NSString stringWithFormat:@"list-panes -t %%%d -F \"%@\"", [wp intValue],
                          [TmuxStateParser format]];
     return [gateway_ dictionaryForCommand:command
@@ -197,6 +204,7 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
                         alt:(BOOL)alternate
 {
     ++pendingRequests_;
+    DLog(@"Increment pending requests to %d", pendingRequests_);
     NSString *command = [NSString stringWithFormat:@"capture-pane -peqJ %@-t %%%d -S -%d",
                          (alternate ? @"-a " : @""), [wp intValue], self.maxHistory];
     return [gateway_ dictionaryForCommand:command
@@ -242,7 +250,7 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
         char c = bytes[i];
         if (c == '\\') {
             if (i + 3 >= response.length) {
-                NSLog(@"Bogus pending output (truncated): %@", response);
+                DLog(@"Bogus pending output (truncated): %@", response);
                 return;
             }
             i++;
@@ -250,7 +258,7 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
             for (int j = 0; j < 3; j++, i++) {
                 c = bytes[i];
                 if (c < '0' || c > '7') {
-                    NSLog(@"Bogus pending output (non-octal): %@", response);
+                    DLog(@"Bogus pending output (non-octal): %@", response);
                     return;
                 }
                 value *= 8;
@@ -279,25 +287,33 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
 - (void)requestDidComplete
 {
     --pendingRequests_;
+    DLog(@"requestDidComplete. Pending requests is now %d", pendingRequests_);
     if (pendingRequests_ == 0) {
-        NSWindowController<iTermWindowController> * term = nil;
+        NSWindowController<iTermWindowController> *term = nil;
         if (!tabToUpdate_) {
+            DLog(@"Have no tab to update.");
             if (![[[PTYTab tmuxBookmark] objectForKey:KEY_PREVENT_TAB] boolValue]) {
                 term = [self.controller windowWithAffinityForWindowId:self.windowIndex];
+                DLog(@"Term with affinity is %@", term);
             }
         } else {
             term = [tabToUpdate_ realParentWindow];
+            DLog(@"Using window of tabToUpdate: %@", term);
         }
         if (!term) {
             term = [[iTermController sharedInstance] openWindow];
+            DLog(@"Opened a new window %@", term);
         }
         NSMutableDictionary *parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
         if (!parseTree) {
             [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
             return;
         }
+        DLog(@"Parse tree: %@", parseTree);
         [self decorateParseTree:parseTree];
+        DLog(@"Decorated parse tree: %@", parseTree);
         if (tabToUpdate_) {
+            DLog(@"Updating existing tab");
             [tabToUpdate_ setTmuxLayout:parseTree
                          tmuxController:controller_];
             if ([tabToUpdate_ layoutIsTooLarge]) {
@@ -305,6 +321,7 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
             }
         } else {
             if (![self.controller window:windowIndex_]) {
+                DLog(@"Calling loadTmuxLayout");
                 // Safety valve: don't open an existing tmux window.
                 [term loadTmuxLayout:parseTree
                               window:windowIndex_
@@ -322,6 +339,8 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
                 // large as we were asked to (for instance, if the gateway is full-
                 // screen).
                 [controller_ windowDidResize:term];
+            } else {
+                DLog(@"Not calling loadTmuxLayout");
             }
         }
         if (self.target) {
