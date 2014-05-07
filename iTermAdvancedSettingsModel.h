@@ -65,5 +65,6 @@
 
 + (BOOL)suppressMultilinePasteWarningWhenPastingOneLineWithTerminalNewline;
 + (BOOL)suppressMultilinePasteWarningWhenNotAtShellPrompt;
++ (BOOL)noSyncSuppressBroadcastInputWarning;
 
 @end
