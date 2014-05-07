@@ -126,9 +126,12 @@ static const int kMaxDirectoriesToSavePerHost = 200;
 }
 
 + (NSMutableArray *)componentsInPath:(NSString *)path {
+    if (!path) {
+        return nil;
+    }
     NSMutableArray *components = [[[path componentsSeparatedByString:@"/"] mutableCopy] autorelease];
     NSUInteger index = [components indexOfObject:@""];
-    while (index != NSNotFound) {
+    while (index != NSNotFound && components.count > 0) {
         [components removeObjectAtIndex:index];
         index = [components indexOfObject:@""];
     }
@@ -337,7 +340,7 @@ static const int kMaxDirectoriesToSavePerHost = 200;
 - (void)recordUseOfPath:(NSString *)path
                  onHost:(VT100RemoteHost *)host
                isChange:(BOOL)isChange {
-    if (!isChange) {
+    if (!isChange || !path) {
         return;
     }
     NSMutableArray *array = [self arrayForHost:host createIfNeeded:YES];
