@@ -819,6 +819,12 @@ DQ
                                     <action selector="saveWindowArrangement:" target="201" id="1206"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Save Current Window as Arrangement" alternate="YES" keyEquivalent="S" id="D5Y-FD-IWK">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="saveCurrentWindowAsArrangement:" target="201" id="FAg-xE-xg0"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Restore Window Arrangement" id="1280">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Restore Window Arrangement" id="1281"/>

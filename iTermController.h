@@ -88,7 +88,7 @@
 - (PseudoTerminal*)terminalWithNumber:(int)n;
 - (int)allocateWindowNumber;
 
-- (void)saveWindowArrangement;
+- (void)saveWindowArrangement:(BOOL)allWindows;
 - (void)loadWindowArrangementWithName:(NSString *)theName;
 
 - (PTYSession *)sessionWithMostRecentSelection;

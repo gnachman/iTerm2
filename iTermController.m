@@ -361,8 +361,7 @@ static BOOL initDone = NO;
     }
 }
 
-- (void)saveWindowArrangement
-{
+- (void)saveWindowArrangement:(BOOL)allWindows {
     NSString *name = [self _showAlertWithText:@"Name for saved window arrangement:"
                                  defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1+[WindowArrangements count]]];
     if (!name) {
@@ -378,12 +377,19 @@ static BOOL initDone = NO;
         }
     }
     NSMutableArray* terminalArrangements = [NSMutableArray arrayWithCapacity:[terminalWindows count]];
-    for (PseudoTerminal* terminal in terminalWindows) {
-        if (![terminal isHotKeyWindow]) {
-            [terminalArrangements addObject:[terminal arrangement]];
+    if (allWindows) {
+        for (PseudoTerminal* terminal in terminalWindows) {
+            if (![terminal isHotKeyWindow]) {
+                [terminalArrangements addObject:[terminal arrangement]];
+            }
         }
+    } else {
+        PseudoTerminal *currentTerminal = [self currentTerminal];
+        if (!currentTerminal) {
+            return;
+        }
+        [terminalArrangements addObject:[currentTerminal arrangement]];
     }
-
     [WindowArrangements setArrangement:terminalArrangements withName:name];
 }
 

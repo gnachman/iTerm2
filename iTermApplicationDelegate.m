@@ -1349,7 +1349,8 @@ static BOOL hasBecomeActive = NO;
         } else {
             return NO;
         }
-    } else if ([menuItem action] == @selector(newSessionWithSameProfile:)) {
+    } else if ([menuItem action] == @selector(saveCurrentWindowAsArrangement:) ||
+               [menuItem action] == @selector(newSessionWithSameProfile:)) {
         return [[iTermController sharedInstance] currentTerminal] != nil;
     } else if ([menuItem action] == @selector(toggleFullScreenTabBar:)) {
         PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
@@ -1434,7 +1435,12 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)saveWindowArrangement:(id)sender
 {
-    [[iTermController sharedInstance] saveWindowArrangement];
+    [[iTermController sharedInstance] saveWindowArrangement:YES];
+}
+
+- (IBAction)saveCurrentWindowAsArrangement:(id)sender
+{
+    [[iTermController sharedInstance] saveWindowArrangement:NO];
 }
 
 - (IBAction)loadWindowArrangement:(id)sender
