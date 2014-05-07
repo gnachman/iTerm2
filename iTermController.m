@@ -1007,6 +1007,7 @@ static BOOL initDone = NO;
     PseudoTerminal *term;
     term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                              windowType:WINDOW_TYPE_NORMAL
+                                        savedWindowType:WINDOW_TYPE_NORMAL
                                                  screen:[bookmark objectForKey:KEY_SCREEN] ? [[bookmark objectForKey:KEY_SCREEN] intValue] : -1
                                                isHotkey:NO] autorelease];
     if ([[bookmark objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
@@ -1117,11 +1118,13 @@ static BOOL initDone = NO;
             term = theTerm;
             [term finishInitializationWithSmartLayout:YES
                                            windowType:windowType
+                                      savedWindowType:WINDOW_TYPE_NORMAL
                                                screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
                                              isHotkey:isHotkey];
         } else {
             term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                      windowType:windowType
+                                                savedWindowType:WINDOW_TYPE_NORMAL
                                                          screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
                                                        isHotkey:isHotkey] autorelease];
         }

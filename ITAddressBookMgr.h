@@ -183,7 +183,8 @@
 typedef enum {
     WINDOW_TYPE_NORMAL = 0,
     WINDOW_TYPE_TRADITIONAL_FULL_SCREEN = 1,  // Pre-Lion fullscreen
-
+    // note: 2 is out of order below
+    
     // Type 3 is deprecated and used to be used internally to create a
     // fullscreen window during toggling.
 
@@ -199,7 +200,9 @@ typedef enum {
     WINDOW_TYPE_BOTTOM_PARTIAL = 8,
     WINDOW_TYPE_TOP_PARTIAL = 9,
     WINDOW_TYPE_LEFT_PARTIAL = 10,
-    WINDOW_TYPE_RIGHT_PARTIAL = 11
+    WINDOW_TYPE_RIGHT_PARTIAL = 11,
+    
+    WINDOW_TYPE_NO_TITLE_BAR = 12,
 } iTermWindowType;
 
 typedef enum {

@@ -77,6 +77,7 @@ static NSString* TERMINAL_ARRANGEMENT_TABS = @"Tabs";
 static NSString* TERMINAL_ARRANGEMENT_FULLSCREEN = @"Fullscreen";
 static NSString* TERMINAL_ARRANGEMENT_LION_FULLSCREEN = @"LionFullscreen";
 static NSString* TERMINAL_ARRANGEMENT_WINDOW_TYPE = @"Window Type";
+static NSString* TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE = @"Saved Window Type";  // Only relevant for fullscreen
 static NSString* TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX = @"Selected Tab Index";
 static NSString* TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
 static NSString* TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING = @"Hide After Opening";
@@ -287,6 +288,31 @@ NSString *kSessionsKVCKey = @"sessions";
     int _autoCommandHistorySessionId;
 }
 
++ (NSInteger)styleMaskForWindowType:(iTermWindowType)windowType {
+    switch (windowType) {
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+            return NSBorderlessWindowMask | NSResizableWindowMask;
+
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            return NSBorderlessWindowMask;
+            
+        default:
+            return (NSTitledWindowMask |
+                    NSClosableWindowMask |
+                    NSMiniaturizableWindowMask |
+                    NSResizableWindowMask |
+                    NSTexturedBackgroundWindowMask);
+    }
+}
+
 - (id)initWithWindowNibName:(NSString *)windowNibName {
     self = [super initWithWindowNibName:windowNibName];
     if (self) {
@@ -315,14 +341,19 @@ NSString *kSessionsKVCKey = @"sessions";
 
 
 - (id)initWithSmartLayout:(BOOL)smartLayout
-               windowType:(int)windowType
-                   screen:(int)screenNumber
-{
-    return [self initWithSmartLayout:smartLayout windowType:windowType screen:screenNumber isHotkey:NO];
+               windowType:(iTermWindowType)windowType
+          savedWindowType:(iTermWindowType)savedWindowType
+                   screen:(int)screenNumber {
+    return [self initWithSmartLayout:smartLayout
+                          windowType:windowType
+                     savedWindowType:savedWindowType
+                              screen:screenNumber
+                            isHotkey:NO];
 }
 
 - (id)initWithSmartLayout:(BOOL)smartLayout
-               windowType:(int)windowType
+               windowType:(iTermWindowType)windowType
+          savedWindowType:(iTermWindowType)savedWindowType
                    screen:(int)screenNumber
                  isHotkey:(BOOL)isHotkey
 {
@@ -331,6 +362,7 @@ NSString *kSessionsKVCKey = @"sessions";
     if (self) {
         [self finishInitializationWithSmartLayout:smartLayout
                                        windowType:windowType
+                                  savedWindowType:savedWindowType
                                            screen:screenNumber
                                          isHotkey:isHotkey];
     }
@@ -338,10 +370,10 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 - (void)finishInitializationWithSmartLayout:(BOOL)smartLayout
-                                 windowType:(int)windowType
+                                 windowType:(iTermWindowType)windowType
+                            savedWindowType:(iTermWindowType)savedWindowType
                                      screen:(int)screenNumber
-                                   isHotkey:(BOOL)isHotkey
-{
+                                   isHotkey:(BOOL)isHotkey {
     DLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d isHotkey:%@ ",
          self,
          smartLayout ? @"YES" : @"NO",
@@ -426,6 +458,7 @@ NSString *kSessionsKVCKey = @"sessions";
             NSLog(@"Unknown window type: %d", (int)windowType);
             // fall through
         case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
             haveScreenPreference_ = NO;
             // fall through
         case WINDOW_TYPE_LION_FULL_SCREEN:
@@ -472,30 +505,16 @@ NSString *kSessionsKVCKey = @"sessions";
 
     PtyLog(@"finishInitializationWithSmartLayout - initWithContentRect");
     // create the window programmatically with appropriate style mask
-    NSUInteger styleMask = NSTitledWindowMask |
-                           NSClosableWindowMask |
-                           NSMiniaturizableWindowMask |
-                           NSResizableWindowMask |
-                           NSTexturedBackgroundWindowMask;
-    switch (windowType) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-            styleMask = NSBorderlessWindowMask | NSResizableWindowMask;
-            break;
-        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            styleMask = NSBorderlessWindowMask;
-            break;
-
-        default:
-            break;
+    NSUInteger styleMask;
+    if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+        // We want to set the style mask to the window's non-fullscreen appearance so we're prepared
+        // to exit fullscreen with the right style.
+        styleMask = [PseudoTerminal styleMaskForWindowType:savedWindowType];
+    } else {
+        styleMask = [PseudoTerminal styleMaskForWindowType:windowType];
     }
-
+    savedWindowType_ = savedWindowType;
+    
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
     PTYWindow *myWindow;
     myWindow = [[PTYWindow alloc] initWithContentRect:initialFrame
@@ -509,7 +528,8 @@ NSString *kSessionsKVCKey = @"sessions";
         windowType == WINDOW_TYPE_TOP_PARTIAL ||
         windowType == WINDOW_TYPE_BOTTOM_PARTIAL ||
         windowType == WINDOW_TYPE_LEFT_PARTIAL ||
-        windowType == WINDOW_TYPE_RIGHT_PARTIAL) {
+        windowType == WINDOW_TYPE_RIGHT_PARTIAL ||
+        windowType == WINDOW_TYPE_NO_TITLE_BAR) {
         [myWindow setHasShadow:YES];
     }
     [self updateContentShadow];
@@ -808,8 +828,9 @@ NSString *kSessionsKVCKey = @"sessions";
     // create a new terminal window
     int newWindowType;
     switch (windowType_) {
+        case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            newWindowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
+            newWindowType = windowType_;
             break;
 
         case WINDOW_TYPE_TOP:
@@ -829,6 +850,7 @@ NSString *kSessionsKVCKey = @"sessions";
     }
     term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                              windowType:newWindowType
+                                        savedWindowType:WINDOW_TYPE_NORMAL
                                                  screen:screen] autorelease];
     if (term == nil) {
         return nil;
@@ -838,7 +860,8 @@ NSString *kSessionsKVCKey = @"sessions";
 
     [[iTermController sharedInstance] addInTerminals:term];
 
-    if (newWindowType == WINDOW_TYPE_NORMAL) {
+    if (newWindowType == WINDOW_TYPE_NORMAL ||
+        newWindowType == WINDOW_TYPE_NO_TITLE_BAR) {
         [[term window] setFrameOrigin:point];
     } else if (newWindowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         [[term window] makeKeyAndOrderFront:nil];
@@ -1458,6 +1481,7 @@ NSString *kSessionsKVCKey = @"sessions";
             rect = virtualScreenFrame;
             break;
             
+        case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_NORMAL:
             rect.origin.x = xOrigin + xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
             double h = [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
@@ -1581,7 +1605,9 @@ NSString *kSessionsKVCKey = @"sessions";
     if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN
-                                                     screen:screenIndex] autorelease];
+                                            savedWindowType:[arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue]
+                                                     screen:screenIndex
+                                                   isHotkey:NO] autorelease];
 
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_X_ORIGIN] doubleValue];
@@ -1596,7 +1622,9 @@ NSString *kSessionsKVCKey = @"sessions";
     } else if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:WINDOW_TYPE_LION_FULL_SCREEN
-                                                     screen:screenIndex] autorelease];
+                                            savedWindowType:[arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue]
+                                                     screen:screenIndex
+                                                   isHotkey:NO] autorelease];
         [term delayedEnterFullscreen];
     } else {
         // Support legacy edge-spanning flag by adjusting the
@@ -1621,7 +1649,10 @@ NSString *kSessionsKVCKey = @"sessions";
             }
         }
         // TODO: this looks like a bug - are X-of-screen windows not restored to the right screen?
-        term = [[[PseudoTerminal alloc] initWithSmartLayout:NO windowType:windowType screen:-1] autorelease];
+        term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
+                                                 windowType:windowType
+                                            savedWindowType:WINDOW_TYPE_NORMAL
+                                                     screen:-1] autorelease];
 
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
@@ -1759,7 +1790,8 @@ NSString *kSessionsKVCKey = @"sessions";
         [PTYTab openTabWithArrangement:tabArrangement inTerminal:self hasFlexibleView:NO];
     }
     int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
-    if (windowType == WINDOW_TYPE_NORMAL) {
+    if (windowType == WINDOW_TYPE_NORMAL ||
+        windowType == WINDOW_TYPE_NO_TITLE_BAR) {
         // The window may have changed size while adding tab bars, etc.
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
@@ -1828,6 +1860,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
     [result setObject:[NSNumber numberWithInt:([self lionFullScreen] ? WINDOW_TYPE_LION_FULL_SCREEN : windowType_)]
                forKey:TERMINAL_ARRANGEMENT_WINDOW_TYPE];
+    result[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] = @(savedWindowType_);
     [result setObject:[NSNumber numberWithInt:[[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]]]
                                        forKey:TERMINAL_ARRANGEMENT_SCREEN_INDEX];
     [result setObject:[NSNumber numberWithInt:desiredRows_]
@@ -2268,6 +2301,7 @@ NSString *kSessionsKVCKey = @"sessions";
             break;
 
         case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
             PtyLog(@"Window type = NORMAL");
             if (![self lionFullScreen]) {
                 PtyLog(@"Window type = NORMAL BUT it's not lion fullscreen");
@@ -2777,10 +2811,13 @@ NSString *kSessionsKVCKey = @"sessions";
         // Is 10.7 Lion or later.
         [[self ptyWindow] performSelector:@selector(toggleFullScreen:) withObject:self];
         if (lionFullScreen_) {
+            // will exit fullscreen
             DLog(@"Set window type to lion fs");
             windowType_ = WINDOW_TYPE_LION_FULL_SCREEN;
         } else {
-            DLog(@"Set window type to normal");
+            // Will enter fullscreen
+            DLog(@"Set saved window type to %d before setting window type to normal in preparation for going fullscreen", savedWindowType_);
+            savedWindowType_ = windowType_;
             windowType_ = WINDOW_TYPE_NORMAL;
         }
         // TODO(georgen): toggle enabled status of use transparency menu item
@@ -2820,29 +2857,7 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 - (NSUInteger)styleMask {
-    switch (windowType_) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-            return NSBorderlessWindowMask | NSResizableWindowMask;
-
-        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            return NSBorderlessWindowMask;
-            
-        case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_NORMAL:
-        default:
-            return (NSTitledWindowMask |
-                    NSClosableWindowMask |
-                    NSMiniaturizableWindowMask |
-                    NSResizableWindowMask |
-                    NSTexturedBackgroundWindowMask);
-    }
+    return [PseudoTerminal styleMaskForWindowType:windowType_];
 }
 
 // This is a hack to fix the problem of exiting a fullscreen window that as never not-fullscreen.
@@ -3156,9 +3171,9 @@ NSString *kSessionsKVCKey = @"sessions";
     [self repositionWidgets];
     [self invalidateRestorableState];
     [self _updateToolbeltParentage];
-    // TODO this is only ok because top, bottom, and non-lion fullscreen windows
-    // can't become lion fullscreen windows:
-    windowType_ = WINDOW_TYPE_NORMAL;
+
+    DLog(@"Window did exit fullscreen. Set window type to %d", savedWindowType_);
+    windowType_ = savedWindowType_;
     for (PTYTab *aTab in [self tabs]) {
         [aTab notifyWindowChanged];
     }
@@ -3799,9 +3814,9 @@ NSString *kSessionsKVCKey = @"sessions";
 
     NSWindowController<iTermWindowController> * term =
         [self terminalDraggedFromAnotherWindowAtPoint:point];
-    if ([term windowType] == WINDOW_TYPE_NORMAL &&
+    if (([term windowType] == WINDOW_TYPE_NORMAL || [term windowType] == WINDOW_TYPE_NO_TITLE_BAR) &&
         [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
-            [[term window] setFrameTopLeftPoint:point];
+        [[term window] setFrameTopLeftPoint:point];
     }
 
     return [term tabBarControl];
@@ -5289,8 +5304,8 @@ NSString *kSessionsKVCKey = @"sessions";
     BOOL topTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
     BOOL visibleTopTabBar = (tabBarVisible && topTabBar);
     return ([iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder] &&
-            !visibleTopTabBar
-            && windowType_ == WINDOW_TYPE_BOTTOM);
+            !visibleTopTabBar &&
+            (windowType_ == WINDOW_TYPE_BOTTOM || windowType_ == WINDOW_TYPE_NO_TITLE_BAR));
 }
 
 - (BOOL)_haveRightBorder
@@ -5745,7 +5760,7 @@ NSString *kSessionsKVCKey = @"sessions";
     }
     PtyLog(@"safelySetSessionSize");
     BOOL hasScrollbar = [self scrollbarShouldBeVisible];
-    if (windowType_ == WINDOW_TYPE_NORMAL) {
+    if (windowType_ == WINDOW_TYPE_NORMAL || windowType_ == WINDOW_TYPE_NO_TITLE_BAR) {
         int width = columns;
         int height = rows;
         if (width < 20) {
@@ -6867,6 +6882,7 @@ NSString *kSessionsKVCKey = @"sessions";
         Profile *aDict = [object profile];
         [self finishInitializationWithSmartLayout:YES
                                        windowType:[[iTermController sharedInstance] windowTypeForBookmark:aDict]
+                                  savedWindowType:WINDOW_TYPE_NORMAL
                                            screen:aDict[KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
                                          isHotkey:NO];
         if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {

@@ -316,7 +316,7 @@
                 <autoresizingMask key="autoresizingMask"/>
             </scroller>
             <scroller key="verticalScroller" verticalHuggingPriority="750" doubleValue="0.5" horizontal="NO" id="BOf-5U-jnV">
-                <rect key="frame" x="544" y="0.0" width="15" height="587"/>
+                <rect key="frame" x="543" y="0.0" width="16" height="587"/>
                 <autoresizingMask key="autoresizingMask"/>
             </scroller>
         </scrollView>
@@ -2668,13 +2668,14 @@ Gw
                                                             <popUpButton verticalHuggingPriority="750" id="4916">
                                                                 <rect key="frame" x="324" y="164" width="221" height="26"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="4941">
+                                                                <popUpButtonCell key="cell" type="push" title="No Title Bar" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="12" imageScaling="proportionallyDown" inset="2" selectedItem="REd-Hh-bME" id="4941">
                                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                                     <font key="font" metaFont="menu"/>
                                                                     <menu key="menu" title="OtherViews" id="4942">
                                                                         <items>
                                                                             <menuItem title="Normal" id="4945"/>
                                                                             <menuItem title="Fullscreen" tag="1" id="4944"/>
+                                                                            <menuItem title="No Title Bar" state="on" tag="12" id="REd-Hh-bME"/>
                                                                             <menuItem isSeparatorItem="YES" id="ohs-lg-RYo"/>
                                                                             <menuItem title="Full-Width Bottom of Screen" tag="5" id="4943"/>
                                                                             <menuItem title="Full-Width Top of Screen" tag="2" id="5591"/>

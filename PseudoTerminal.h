@@ -55,27 +55,27 @@
 // Initialize a new PseudoTerminal.
 // smartLayout: If true then position windows using the "smart layout"
 //   algorithm.
-// windowType: WINDOW_TYPE_NORMAL, WINDOW_TYPE_FULL_SCREEN, WINDOW_TYPE_TOP,
-// WINDOW_TYPE_TOP_PARTIAL, WINDOW_TYPE_LION_FULL_SCREEN, WINDOW_TYPE_BOTTOM,
-// WINDOW_TYPE_BOTTOM_PARTIAL, WINDOW_TYPE_LEFT, WINDOW_TYPE_LEFT_PARTIAL, WINDOW_TYPE_RIGHT, or
-// WINDOW_TYPE_RIGHT_PARTIAL.
+// windowType: Describes constraints on the window's initial frame and border, and more.
 // screen: An index into [NSScreen screens], or -1 to let the system pick a
 //   screen.
 - (id)initWithSmartLayout:(BOOL)smartLayout
-               windowType:(int)windowType
+               windowType:(iTermWindowType)windowType
+          savedWindowType:(iTermWindowType)savedWindowType
                    screen:(int)screenIndex;
 
 // isHotkey indicates if this is a hotkey window, which recieves special
 // treatment and must be unique.
 - (id)initWithSmartLayout:(BOOL)smartLayout
-               windowType:(int)windowType
+               windowType:(iTermWindowType)windowType
+          savedWindowType:(iTermWindowType)savedWindowType
                    screen:(int)screenNumber
                  isHotkey:(BOOL)isHotkey;
 
 // If a PseudoTerminal is created with -init (such as happens with AppleScript)
 // this must be called before it is used.
 - (void)finishInitializationWithSmartLayout:(BOOL)smartLayout
-                                 windowType:(int)windowType
+                                 windowType:(iTermWindowType)windowType
+                            savedWindowType:(iTermWindowType)savedWindowType
                                      screen:(int)screenNumber
                                    isHotkey:(BOOL)isHotkey;
 
