@@ -1891,7 +1891,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="20" id="2277" userLabel="Color Well - Selected Text">
-                                                                            <rect key="frame" x="284" y="43" width="32" height="21"/>
+                                                                            <rect key="frame" x="284" y="42" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -1987,7 +1987,7 @@ Gw
                                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                     <subviews>
                                                                         <colorWell tag="22" id="2278" userLabel="Color Well - Cursor Text">
-                                                                            <rect key="frame" x="102" y="85" width="32" height="21"/>
+                                                                            <rect key="frame" x="102" y="86" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2149,7 +2149,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="5" id="2291" userLabel="Color Well - Normal Cyan">
-                                                                            <rect key="frame" x="78" y="46" width="32" height="21"/>
+                                                                            <rect key="frame" x="77" y="46" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2320,7 +2320,7 @@ Gw
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <textField verticalHuggingPriority="750" id="2360">
-                                                                            <rect key="frame" x="74" y="241" width="50" height="17"/>
+                                                                            <rect key="frame" x="75" y="241" width="50" height="17"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Normal" id="2361">
                                                                                 <font key="font" metaFont="system" size="10"/>
