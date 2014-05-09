@@ -2343,7 +2343,7 @@ Gw
                                                                 <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                                             </box>
                                                             <popUpButton verticalHuggingPriority="750" id="3213">
-                                                                <rect key="frame" x="356" y="21" width="187" height="26"/>
+                                                                <rect key="frame" x="356" y="27" width="187" height="26"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <popUpButtonCell key="cell" type="push" title="Load Presets..." bezelStyle="rounded" alignment="center" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="3214">
                                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -2359,7 +2359,7 @@ Gw
                                                                 </connections>
                                                             </popUpButton>
                                                             <box autoresizesSubviews="NO" borderType="line" id="eq5-zk-u7d">
-                                                                <rect key="frame" x="6" y="20" width="336" height="91"/>
+                                                                <rect key="frame" x="6" y="26" width="336" height="91"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <view key="contentView">
                                                                     <rect key="frame" x="1" y="1" width="334" height="75"/>
