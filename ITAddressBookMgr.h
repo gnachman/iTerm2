@@ -100,6 +100,8 @@
 #define KEY_TAB_COLOR              @"Tab Color"
 #define KEY_USE_TAB_COLOR          @"Use Tab Color"
 #define KEY_CURSOR_BOOST           @"Cursor Boost"
+#define KEY_USE_CURSOR_GUIDE       @"Use Cursor Guide"
+#define KEY_CURSOR_GUIDE_COLOR     @"Cursor Guide Color"
 
 // Display
 #define KEY_ROWS                   @"Rows"

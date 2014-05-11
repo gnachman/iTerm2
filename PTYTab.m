@@ -2870,12 +2870,15 @@ static NSString* FormatRect(NSRect r) {
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
        tmuxController:(TmuxController *)tmuxController
 {
+    DLog(@"setTmuxLayout:tmuxController:");
     [PTYTab setSizesInTmuxParseTree:parseTree
                          inTerminal:realParentWindow_];
     if ([self parseTree:parseTree matchesViewHierarchy:root_]) {
+        DLog(@"Parse tree matches the root's view hierarchy.");
         [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree];
         [self fitSubviewsToRoot];
     } else {
+        DLog(@"Parse tree does not match the root's view hierarchy.");
         if ([[self realParentWindow] inInstantReplay]) {
             [[self realParentWindow] showHideInstantReplay];
         }

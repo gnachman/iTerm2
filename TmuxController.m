@@ -6,6 +6,7 @@
 //
 
 #import "TmuxController.h"
+#import "DebugLogging.h"
 #import "EquivalenceClassSet.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
@@ -13,8 +14,6 @@
 #import "NSStringITerm.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
-#import "PseudoTerminal.h"
-#import "PTYTab.h"
 #import "PTYTab.h"
 #import "RegexKitLite.h"
 #import "TmuxControllerRegistry.h"
@@ -101,6 +100,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                      layout:(NSString *)layout
                  affinities:(NSArray *)affinities
 {
+    DLog(@"openWindowWithIndex:%d name:%@ affinities:%@", windowIndex, name, affinities);
     NSNumber *n = [NSNumber numberWithInt:windowIndex];
     if ([pendingWindowOpens_ containsObject:n]) {
         return;
@@ -1133,6 +1133,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)windowDidOpen:(NSNumber *)windowIndex
 {
+    DLog(@"TmuxController windowDidOpen for index %@", windowIndex);
     [pendingWindowOpens_ removeObject:windowIndex];
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerWindowDidOpen
                                                         object:nil];

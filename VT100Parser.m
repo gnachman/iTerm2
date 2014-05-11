@@ -140,7 +140,7 @@
                 unsigned char c = datap[i];
                 [loginfo appendFormat:@"%02x ", (int)c];
                 [ascii appendFormat:@"%c", (c >= 32 && c < 128) ? c : '.'];
-                if (i == length - 1 || loginfo.length > 60) {
+                if (i == length - 1) {
                     DLog(@"%@Bytes %d-%d of %d: %@ (%@)", prefix, start, i, (int)length, loginfo, ascii);
                 }
                 i++;

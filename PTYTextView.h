@@ -134,6 +134,7 @@ typedef enum {
 
 - (VT100GridCoordRange)textViewRangeOfLastCommandOutput;
 - (BOOL)textViewCanSelectOutputOfLastCommand;
+- (NSColor *)textViewCursorGuideColor;
 
 @end
 

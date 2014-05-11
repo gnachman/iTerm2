@@ -52,6 +52,9 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
     IBOutlet NSSlider *_cursorBoost;
 
     IBOutlet NSMenu *_presetsMenu;
+
+    IBOutlet NSButton *_useGuide;
+    IBOutlet NSColorWell *_guideColor;
 }
 
 - (void)awakeFromNib {
@@ -93,6 +96,10 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
                     key:KEY_CURSOR_BOOST
                    type:kPreferenceInfoTypeSlider];
 
+    [self defineControl:_useGuide
+                    key:KEY_USE_CURSOR_GUIDE
+                   type:kPreferenceInfoTypeCheckbox];
+
     [self updateColorControlsEnabled];
 }
 
@@ -128,7 +135,8 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
               KEY_SELECTED_TEXT_COLOR: _selectedTextColor,
               KEY_CURSOR_COLOR: _cursorColor,
               KEY_CURSOR_TEXT_COLOR: _cursorTextColor,
-              KEY_TAB_COLOR: _tabColor };
+              KEY_TAB_COLOR: _tabColor,
+              KEY_CURSOR_GUIDE_COLOR: _guideColor };
 }
 
 #pragma mark - Color Presets

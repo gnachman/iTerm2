@@ -9,6 +9,7 @@
 #import "iTermProfilePreferences.h"
 #import "ITAddressBookMgr.h"
 #import "iTermCursor.h"
+#import "NSColor+iTerm.h"
 #import "PreferencePanel.h"
 
 NSString *const kProfilePreferenceCommandTypeCustomValue = @"Yes";
@@ -136,6 +137,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_ANSI_13_COLOR: [NSNull null],
                   KEY_ANSI_14_COLOR: [NSNull null],
                   KEY_ANSI_15_COLOR: [NSNull null],
+                  KEY_CURSOR_GUIDE_COLOR: [[NSColor colorWithCalibratedRed:.65 green:.91 blue:1 alpha:.25] dictionaryValue],
+                  KEY_USE_CURSOR_GUIDE: @NO,
                   KEY_TAB_COLOR: [NSNull null],
                   KEY_USE_TAB_COLOR: @NO,
                   KEY_SMART_CURSOR_COLOR: @NO,

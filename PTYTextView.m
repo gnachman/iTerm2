@@ -6572,13 +6572,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Highlight cursor line
     int cursorLine = [_dataSource cursorY] - 1 + [_dataSource numberOfScrollbackLines];
     if (_highlightCursorLine && row == cursorLine) {
-        [[NSColor colorWithCalibratedRed:.65 green:.91 blue:1 alpha:.25] set];
+        [[_delegate textViewCursorGuideColor] set];
         NSRect rect = NSMakeRect(textOrigin.x,
                                  textOrigin.y,
                                  (lastIndex - firstIndex) * charWidth,
                                  lineHeight);
         NSRectFillUsingOperation(rect, NSCompositeSourceOver);
-        [[NSColor colorWithCalibratedRed:.65 green:.91 blue:1 alpha:.25] set];
 
         rect.size.height = 1;
         NSRectFillUsingOperation(rect, NSCompositeSourceOver);

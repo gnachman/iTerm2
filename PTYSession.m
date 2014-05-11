@@ -17,6 +17,7 @@
 #import "iTermMouseCursor.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
+#import "iTermProfilePreferences.h"
 #import "iTermSelection.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermTextExtractor.h"
@@ -105,6 +106,7 @@ typedef enum {
 @property(atomic, assign) PTYSessionTmuxMode tmuxMode;
 @property(nonatomic, copy) NSString *lastDirectory;
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
+@property(nonatomic, retain) NSColor *cursorGuideColor;
 @end
 
 @implementation PTYSession {
@@ -230,6 +232,10 @@ typedef enum {
     // Has a shell integration code ever been seen? A rough guess as to whether we can assume
     // shell integration is currently being used.
     BOOL _shellIntegrationEverUsed;
+
+    // Has the user or an escape code change the cursor guide setting?
+    // If so, then the profile setting will be disregarded.
+    BOOL _cursorGuideSettingHasChanged;
 }
 
 - (id)init {
@@ -1724,6 +1730,8 @@ typedef enum {
         NSColor *theColor = [NSColor colorForAnsi256ColorIndex:i];
         [_colorMap setColor:theColor forKey:kColorMap8bitBase + i];
     }
+    _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
+                                                              inProfile:_profile];
 }
 
 - (NSColor *)tabColorInProfile:(NSDictionary *)profile
@@ -1860,6 +1868,13 @@ typedef enum {
         NSString *profileKey = keyMap[colorKey];
         NSColor *theColor = [ITAddressBookMgr decodeColor:aDict[profileKey]];
         [_colorMap setColor:theColor forKey:[colorKey intValue]];
+    }
+
+    self.cursorGuideColor = [[[iTermProfilePreferences objectForKey:KEY_CURSOR_GUIDE_COLOR
+                                                          inProfile:aDict] colorValue] colorWithAlphaComponent:0.25];
+    if (!_cursorGuideSettingHasChanged) {
+        _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
+                                                                  inProfile:aDict];
     }
 
     for (i = 0; i < 16; i++) {
@@ -4506,7 +4521,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     // Return YES if command history has never been used so we can show the informational message.
     return (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed] ||
             _screen.lastCommandOutputRange.start.x >= 0);
-            
+
+}
+
+- (NSColor *)textViewCursorGuideColor {
+    return _cursorGuideColor;
 }
 
 - (void)sendEscapeSequence:(NSString *)text
@@ -4778,6 +4797,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenDidReset {
     [self loadInitialColorTable];
+    _cursorGuideSettingHasChanged = NO;
     _textview.highlightCursorLine = NO;
     [_textview setNeedsDisplay:YES];
     _screen.trackCursorLineMovement = NO;
@@ -5021,10 +5041,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenSetHighlightCursorLine:(BOOL)highlight {
-  self.highlightCursorLine = highlight;
+    _cursorGuideSettingHasChanged = YES;
+    self.highlightCursorLine = highlight;
 }
 
 - (void)setHighlightCursorLine:(BOOL)highlight {
+    _cursorGuideSettingHasChanged = YES;
     _textview.highlightCursorLine = highlight;
     [_textview setNeedsDisplay:YES];
     _screen.trackCursorLineMovement = highlight;
