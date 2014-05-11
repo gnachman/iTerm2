@@ -7,6 +7,7 @@
 //
 
 #import "PTYNoteView.h"
+#import "iTermMouseCursor.h"
 
 static const CGFloat kMinWidth = 50;
 static const CGFloat kMinHeight = 33;
@@ -400,14 +401,9 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
     NSRect bottomRightDragRegion = [self bottomRightDragRect];
     NSRect bottomDragRegion = [self bottomDragRect];
 
-    NSImage* image = [NSImage imageNamed:@"nw_se_resize_cursor"];
-    static NSCursor *topRightDragCursor;
-    if (!topRightDragCursor) {
-        topRightDragCursor = [[NSCursor alloc] initWithImage:image hotSpot:NSMakePoint(8, 8)];
-    }
-
     [self addCursorRect:bottomDragRegion cursor:[NSCursor resizeUpDownCursor]];
-    [self addCursorRect:bottomRightDragRegion cursor:topRightDragCursor];
+    [self addCursorRect:bottomRightDragRegion
+                 cursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeNorthwestSoutheastArrow]];
     [self addCursorRect:rightDragRegion cursor:[NSCursor resizeLeftRightCursor]];
     [self addCursorRect:killButton_.frame cursor:[NSCursor arrowCursor]];
 }

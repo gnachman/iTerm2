@@ -54,6 +54,7 @@ DEFINE_BOOL(addNewTabAtEndOfTabs, YES, @"Tabs: New tabs are added at the end, no
 #pragma mark Mouse
 DEFINE_BOOL(alternateMouseScroll, NO, @"Mouse: Scroll wheel sends arrow keys in alternate screen mode")
 DEFINE_BOOL(pinchToChangeFontSizeDisabled, NO, @"Mouse: Disable using a pinch gesture to change font size")
+DEFINE_BOOL(useSystemCursorWhenPossible, NO, @"Mouse: Use system cursor icons when possible");
 
 #pragma mark Terminal
 DEFINE_BOOL(traditionalVisualBell, NO, @"Terminal: Visual bell flashes the whole screen, not just a bell icon")

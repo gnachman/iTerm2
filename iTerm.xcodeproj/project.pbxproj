@@ -257,10 +257,6 @@
 		1D81F0C0183C3C2D00910838 /* NSView+RecursiveDescription.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D81F0BE183C3C2D00910838 /* NSView+RecursiveDescription.h */; };
 		1D81F0C1183C3C2D00910838 /* NSView+RecursiveDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */; };
 		1D81F0C3183C3CCD00910838 /* SBSystemPreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D81F0C2183C3CCD00910838 /* SBSystemPreferences.h */; };
-		1D81F0C9183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D81F0C7183D4DAB00910838 /* nw_se_resize_cursor.png */; };
-		1D81F0CA183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D81F0C7183D4DAB00910838 /* nw_se_resize_cursor.png */; };
-		1D81F0CB183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D81F0C8183D4DAB00910838 /* nw_se_resize_cursor@2x.png */; };
-		1D81F0CC183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D81F0C8183D4DAB00910838 /* nw_se_resize_cursor@2x.png */; };
 		1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8255F8146869D8007CAE78 /* DefaultPointerActions.plist */; };
 		1D8255FC14687EE8007CAE78 /* PointerPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */; };
 		1D8255FD14687EE8007CAE78 /* PointerPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8255FB14687EE8007CAE78 /* PointerPrefsController.m */; };
@@ -801,6 +797,9 @@
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
 		A6A5991E1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
 		A6A5991F1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
+		A6AE1ECD191FF9DB00780C19 /* iTermMouseCursor.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AE1ECC191FF9DB00780C19 /* iTermMouseCursor.m */; };
+		A6AE1ECF191FFA1C00780C19 /* iTermMouseCursor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ECE191FFA1C00780C19 /* iTermMouseCursor.h */; };
+		A6AE1ED0191FFA2100780C19 /* iTermMouseCursor.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AE1ECC191FF9DB00780C19 /* iTermMouseCursor.m */; };
 		A6B5134A18E779BB00D249A5 /* iTermPasteHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */; };
 		A6B5134B18E779BB00D249A5 /* iTermPasteHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */; };
 		A6B5134C18E779BB00D249A5 /* iTermPasteHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */; };
@@ -1083,8 +1082,6 @@
 		1D81F0BE183C3C2D00910838 /* NSView+RecursiveDescription.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSView+RecursiveDescription.h"; sourceTree = "<group>"; };
 		1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSView+RecursiveDescription.m"; sourceTree = "<group>"; };
 		1D81F0C2183C3CCD00910838 /* SBSystemPreferences.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SBSystemPreferences.h; sourceTree = "<group>"; };
-		1D81F0C7183D4DAB00910838 /* nw_se_resize_cursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = nw_se_resize_cursor.png; path = images/nw_se_resize_cursor.png; sourceTree = "<group>"; };
-		1D81F0C8183D4DAB00910838 /* nw_se_resize_cursor@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "nw_se_resize_cursor@2x.png"; path = "images/nw_se_resize_cursor@2x.png"; sourceTree = "<group>"; };
 		1D8255F8146869D8007CAE78 /* DefaultPointerActions.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultPointerActions.plist; sourceTree = "<group>"; };
 		1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PointerPrefsController.h; sourceTree = "<group>"; };
 		1D8255FB14687EE8007CAE78 /* PointerPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PointerPrefsController.m; sourceTree = "<group>"; };
@@ -1433,6 +1430,8 @@
 		A6A2699B190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesAdvancedPreferencesViewController.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; };
+		A6AE1ECC191FF9DB00780C19 /* iTermMouseCursor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMouseCursor.m; sourceTree = "<group>"; };
+		A6AE1ECE191FFA1C00780C19 /* iTermMouseCursor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermMouseCursor.h; sourceTree = "<group>"; };
 		A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasteHelper.h; sourceTree = "<group>"; };
 		A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasteHelper.m; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; };
@@ -1725,6 +1724,7 @@
 				A61B66CD18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h */,
 				1D407A2814BABE8700BD5035 /* iTermKeyBindingMgr.h */,
 				1DFA9D5C18F36DC3008ADC98 /* iTermKeyMappingViewController.h */,
+				A6AE1ECE191FFA1C00780C19 /* iTermMouseCursor.h */,
 				A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */,
 				A647E3B518C5884600450FA1 /* iTermObjectPool.h */,
 				A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */,
@@ -2029,8 +2029,6 @@
 				1DC13ABB1886146B00034DAE /* mark_err.png */,
 				1DC13ABC1886146B00034DAE /* mark_err@2x.png */,
 				FB896717038D935801F955DB /* newwin.png */,
-				1D81F0C7183D4DAB00910838 /* nw_se_resize_cursor.png */,
-				1D81F0C8183D4DAB00910838 /* nw_se_resize_cursor@2x.png */,
 				A67F117E18D82B9500B23C7B /* PrefsAdvanced.png */,
 				A67F117F18D82B9500B23C7B /* PrefsAdvanced@2x.png */,
 				9DB3D6DE176C8F0B0071CCF8 /* PrefsAppearance.png */,
@@ -2401,6 +2399,9 @@
 				1D53FD14181C4B4B00524D4F /* FindContext.m */,
 				1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */,
 				A6A13AA118C2D23300B241ED /* iTermColorMap.m */,
+				A682DE991915DB1F00BE8758 /* iTermFlippedView.h */,
+				A682DE9A1915DB1F00BE8758 /* iTermFlippedView.m */,
+				A6AE1ECC191FF9DB00780C19 /* iTermMouseCursor.m */,
 				A60014FA18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m */,
 				A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */,
 				A6E713B918FCCDD1008D94DD /* iTermURLSchemeController.m */,
@@ -2417,8 +2418,6 @@
 				A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */,
 				1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */,
 				A6CFDAD1185D2587005DC94B /* URLAction.m */,
-				A682DE991915DB1F00BE8758 /* iTermFlippedView.h */,
-				A682DE9A1915DB1F00BE8758 /* iTermFlippedView.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -2681,6 +2680,7 @@
 				1D93D34B1269746F007F741B /* DVRIndexEntry.h in Headers */,
 				A680AA1318CEA1040034D4F8 /* VT100TmuxParser.h in Headers */,
 				1D93D34F126974BC007F741B /* DVRDecoder.h in Headers */,
+				A6AE1ECF191FFA1C00780C19 /* iTermMouseCursor.h in Headers */,
 				1D93D35312697529007F741B /* DVREncoder.h in Headers */,
 				1D173859126C820A004622DC /* FakeWindow.h in Headers */,
 				1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */,
@@ -2942,7 +2942,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1D81F0CA183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */,
 				A697101418DFA7F9007E901D /* closebutton@2x.png in Resources */,
 				A67F118318D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
 				1DC13AC81886507D00034DAE /* CommandHistoryPopup.xib in Resources */,
@@ -2961,7 +2960,6 @@
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
 				A6E713A018F7B199008D94DD /* BulkCopyProfilePreferences.xib in Resources */,
 				1DFA9D6D18F37AA5008ADC98 /* iTermKeyMapping.xib in Resources */,
-				1D81F0CC183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */,
 				1DC13AC01886146B00034DAE /* mark_err@2x.png in Resources */,
 				1DEF5E70185F889600300319 /* Alert@2x.png in Resources */,
 			);
@@ -3005,7 +3003,6 @@
 				1D5FDD9E1208E91100C46BA3 /* PseudoTerminal.xib in Resources */,
 				1D5FDDA01208E91100C46BA3 /* PreferencePanel.xib in Resources */,
 				1D5FDDA21208E91100C46BA3 /* ProfilesWindow.xib in Resources */,
-				1D81F0CB183D4DAB00910838 /* nw_se_resize_cursor@2x.png in Resources */,
 				8742064D0564169600CFC3F1 /* iTerm.icns in Resources */,
 				9325FF500FB54E00004EC67C /* MainMenu.xib in Resources */,
 				93A6FEFA10685E9900A5F905 /* dsa_pub.pem in Resources */,
@@ -3056,7 +3053,6 @@
 				1D48B28F165F3669000046EE /* AquaTabClose_Front_Pressed.png in Resources */,
 				1D48B290165F3669000046EE /* AquaTabClose_Front.png in Resources */,
 				1D48B292165F405A000046EE /* important@2x.png in Resources */,
-				1D81F0C9183D4DAB00910838 /* nw_se_resize_cursor.png in Resources */,
 				1DEF5E6F185F889600300319 /* Alert@2x.png in Resources */,
 				1D085F8916F030FB00B7FCE9 /* PasteView.xib in Resources */,
 				9D737D5F17495B4100B3334D /* PrefsGeneral.png in Resources */,
@@ -3270,6 +3266,7 @@
 				1D9A558F180FA87000B42CE9 /* ProcessCache.m in Sources */,
 				1D9A5567180FA84700B42CE9 /* NSStringITerm.m in Sources */,
 				1D9A556D180FA85900B42CE9 /* ToolWrapper.m in Sources */,
+				A6AE1ED0191FFA2100780C19 /* iTermMouseCursor.m in Sources */,
 				A6E74754188C6693005355CF /* iTermExposeWindow.m in Sources */,
 				1D9A554A180FA82E00B42CE9 /* TmuxGateway.m in Sources */,
 				1D9A553C180FA7E600B42CE9 /* DVRIndexEntry.m in Sources */,
@@ -3478,6 +3475,7 @@
 				1DAED99312EDF923005E49ED /* iTermSearchField.m in Sources */,
 				1D85D1EF1306687700A3E998 /* RegexKitLite.m in Sources */,
 				A6E713AE18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.m in Sources */,
+				A6AE1ECD191FF9DB00780C19 /* iTermMouseCursor.m in Sources */,
 				1D237D29131D8741004DD60C /* FindView.m in Sources */,
 				1D237D95131D8D66004DD60C /* FindViewController.m in Sources */,
 				1D06A050134CDBED00C414EF /* Trouter.m in Sources */,

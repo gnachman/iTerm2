@@ -14,6 +14,7 @@
 #import "iTermDirectoriesModel.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermMouseCursor.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
 #import "iTermSelection.h"
@@ -623,7 +624,7 @@ typedef enum {
     [_textview setDelegate:self];
     [_scrollview setDocumentView:_wrapper];
     [_wrapper release];
-    [_scrollview setDocumentCursor:[PTYTextView textViewCursor]];
+    [_scrollview setDocumentCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
     [_scrollview setLineScroll:[_textview lineHeight]];
     [_scrollview setPageScroll:2 * [_textview lineHeight]];
     [_scrollview setHasVerticalScroller:[parent scrollbarShouldBeVisible]];
