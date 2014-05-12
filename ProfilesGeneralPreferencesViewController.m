@@ -167,19 +167,11 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 - (IBAction)changeProfile:(id)sender {
     NSString *guid = [_profiles selectedGuid];
     if (guid) {
+        Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         Profile *origProfile = [self.delegate profilePreferencesCurrentProfile];
         NSString* origGuid = origProfile[KEY_GUID];
-        
-        NSString *theName = [[[origProfile objectForKey:KEY_NAME] copy] autorelease];
-        Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-        NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
-        dict[KEY_NAME] = theName;
-        dict[KEY_GUID] = origGuid;
-        
-        // Change the dict in the sessions bookmarks so that if you copy it back, it gets copied to
-        // the new profile.
-        dict[KEY_ORIGINAL_GUID] = guid;
-        [[ProfileModel sessionsInstance] setBookmark:dict withGuid:origGuid];
+        [[ProfileModel sessionsInstance] setProfilePreservingNameAndGuidWithGuid:origGuid
+                                                                     fromProfile:bookmark];
         
         [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
     }

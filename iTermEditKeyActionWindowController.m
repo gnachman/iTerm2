@@ -158,6 +158,7 @@
         case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
         case KEY_ACTION_NEW_TAB_WITH_PROFILE:
         case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
+        case KEY_ACTION_SET_PROFILE:
             [_parameter setHidden:YES];
             [_profileLabel setHidden:NO];
             [_profilePopup setHidden:NO];
@@ -270,6 +271,7 @@
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
         case KEY_ACTION_NEW_TAB_WITH_PROFILE:
         case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
+        case KEY_ACTION_SET_PROFILE:
             self.parameterValue = [[_profilePopup selectedItem] representedObject];
             break;
 

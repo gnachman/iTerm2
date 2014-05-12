@@ -579,6 +579,19 @@ int gMigrated;
     return array;
 }
 
+- (void)setProfilePreservingNameAndGuidWithGuid:(NSString *)origGuid
+                                    fromProfile:(Profile *)bookmark {
+    Profile *origProfile = [self bookmarkWithGuid:origGuid];
+    NSMutableDictionary *dict = [[bookmark mutableCopy] autorelease];
+    dict[KEY_NAME] = [[origProfile[KEY_NAME] copy] autorelease];
+    dict[KEY_GUID] = [[origGuid copy] autorelease];;
+    
+    // Change the dict in the sessions bookmarks so that if you copy it back, it gets copied to
+    // the new profile.
+    dict[KEY_ORIGINAL_GUID] = [[bookmark[KEY_GUID] copy] autorelease];
+    [[ProfileModel sessionsInstance] setBookmark:dict withGuid:origGuid];
+}
+
 - (void)moveGuid:(NSString*)guid toRow:(int)destinationRow
 {
     int sourceRow = [self indexOfProfileWithGuid:guid];

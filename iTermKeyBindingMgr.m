@@ -365,7 +365,9 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
             actionString = [NSString stringWithFormat:@"Split Vertically with \"%@\" Profile", [self _bookmarkNameForGuid:auxText]];
             break;
-
+        case KEY_ACTION_SET_PROFILE:
+            actionString = [NSString stringWithFormat:@"Change Profile to \"%@\"", [self _bookmarkNameForGuid:auxText]];
+            break;
         case KEY_ACTION_SEND_C_H_BACKSPACE:
             actionString = @"Send ^H Backspace";
             break;
@@ -900,7 +902,8 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
                 if (action == KEY_ACTION_NEW_TAB_WITH_PROFILE ||
                     action == KEY_ACTION_NEW_WINDOW_WITH_PROFILE ||
                     action == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
-                    action == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE) {
+                    action == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE ||
+                    action == KEY_ACTION_SET_PROFILE) {
                     NSString* referencedGuid = [keyMap objectForKey:@"Text"];
                     if ([referencedGuid isEqualToString:guid]) {
                         [iTermKeyBindingMgr removeMappingAtIndex:i inBookmark:mutableBookmark];
@@ -927,7 +930,8 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
                 if (action == KEY_ACTION_NEW_TAB_WITH_PROFILE ||
                     action == KEY_ACTION_NEW_WINDOW_WITH_PROFILE ||
                     action == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
-                    action == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE) {
+                    action == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE ||
+                    action == KEY_ACTION_SET_PROFILE) {
                     NSString* referencedGuid = [keyMap objectForKey:@"Text"];
                     if ([referencedGuid isEqualToString:guid]) {
                         mutableGlobalKeyMap = [iTermKeyBindingMgr removeMappingAtIndex:i

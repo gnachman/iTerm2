@@ -3753,6 +3753,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
       case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
         [[[self tab] realParentWindow] splitVertically:YES withBookmarkGuid:keyBindingText];
         break;
+      case KEY_ACTION_SET_PROFILE: {
+          Profile *newProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
+          if (newProfile) {
+              [self setProfilePreservingName:newProfile];
+          }
+          break;
+      }
+
       case KEY_ACTION_FIND_REGEX:
         [[_view findViewController] closeViewAndDoTemporarySearchForString:keyBindingText
                                                               ignoringCase:NO
@@ -5129,6 +5137,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [dict setObject:theName forKey:KEY_NAME];
     [self setProfile:dict];
     [self setPreferencesFromAddressBookEntry:dict];
+    [_originalProfile autorelease];
+    _originalProfile = [newProfile copy];
     [self remarry];
 }
 

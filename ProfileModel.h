@@ -91,6 +91,11 @@ typedef struct {
 - (void)addBookmark:(Profile*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params atPos:(int)pos;
 - (NSArray *)names;
 
+// Updates the profile with guid 'origGuid' by replacing all elements except
+// guid and name with objects in 'bookmark'.
+- (void)setProfilePreservingNameAndGuidWithGuid:(NSString *)origGuid
+                                    fromProfile:(Profile *)bookmark;
+
 // Write to user defaults
 - (void)flush;
 
