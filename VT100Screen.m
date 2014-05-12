@@ -3109,6 +3109,13 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [delegate_ screenSetTabColorBlueComponentTo:color];
 }
 
+- (NSColor *)terminalColorForIndex:(int)index {
+    if (index < 0 || index > 255) {
+        return nil;
+    }
+    return [[delegate_ screenColorMap] colorForKey:kColorMap8bitBase + index];
+}
+
 - (int)terminalCursorX {
     return MIN([self cursorX], [self width]);
 }

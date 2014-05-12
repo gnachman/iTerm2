@@ -1,5 +1,4 @@
 #import "VT100Output.h"
-#import <Cocoa/Cocoa.h>
 #include <term.h>
 
 // Indexes into _keyStrings.
@@ -542,6 +541,16 @@ typedef enum {
 {
     return [NSData dataWithBytes:REPORT_SDA
                           length:STATIC_STRLEN(REPORT_SDA)];
+}
+
+- (NSData *)reportColor:(NSColor *)color atIndex:(int)index {
+    NSString *string = [NSString stringWithFormat:@"%c]4;%d;rgb:%02x/%02x/%02x%c",
+                           ESC, index,
+                           (int) ([color redComponent] * 255.0),
+                           (int) ([color greenComponent] * 255.0),
+                           (int) ([color blueComponent] * 255.0),
+                           7];
+    return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 
 #pragma mark - Private

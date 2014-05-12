@@ -1593,53 +1593,49 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)executeXtermSetRgb:(VT100Token *)token {
-    // The format of this command is "<index>;rgb:<redhex>/<greenhex>/<bluehex>", e.g. "105;rgb:00/cc/ff"
-    // TODO(georgen): xterm has extended this quite a bit and we're behind. Catch up.
-    const char *s = [token.string UTF8String];
-    int theIndex = 0;
-    while (isdigit(*s)) {
-        theIndex = 10*theIndex + *s++ - '0';
-    }
-    if (*s++ != ';') {
-        return;
-    }
-    if (*s++ != 'r') {
-        return;
-    }
-    if (*s++ != 'g') {
-        return;
-    }
-    if (*s++ != 'b') {
-        return;
-    }
-    if (*s++ != ':') {
-        return;
-    }
-    int r = 0, g = 0, b = 0;
-    
-    while (isxdigit(*s)) {
-        r = 16*r + (*s>='a' ? *s++ - 'a' + 10 : *s>='A' ? *s++ - 'A' + 10 : *s++ - '0');
-    }
-    if (*s++ != '/') {
-        return;
-    }
-    while (isxdigit(*s)) {
-        g = 16*g + (*s>='a' ? *s++ - 'a' + 10 : *s>='A' ? *s++ - 'A' + 10 : *s++ - '0');
-    }
-    if (*s++ != '/') {
-        return;
-    }
-    while (isxdigit(*s)) {
-        b = 16*b + (*s>='a' ? *s++ - 'a' + 10 : *s>='A' ? *s++ - 'A' + 10 : *s++ - '0');
-    }
-    if (theIndex >= 0 && theIndex <= 255 &&
-        r >= 0 && r <= 255 &&
-        g >= 0 && g <= 255 &&
-        b >= 0 && b <= 255) {
-        [delegate_ terminalSetColorTableEntryAtIndex:theIndex
-                                               color:[NSColor colorWith8BitRed:r
-                                                                         green:g
-                                                                          blue:b]];
+    NSArray *parts = [token.string componentsSeparatedByString:@";"];
+    int theIndex;
+    for (int i = 0; i < parts.count; i++) {
+        NSString *part = parts[i];
+        if ((i % 2) == 0 ) {
+            theIndex = [part intValue];
+        } else {
+            if ([part hasPrefix:@"rgb:"]) {
+                // The format of this command is "<index>;rgb:<redhex>/<greenhex>/<bluehex>", e.g. "105;rgb:00/cc/ff"
+                NSString *componentsString = [part substringFromIndex:4];
+                NSArray *components = [componentsString componentsSeparatedByString:@"/"];
+                if (components.count == 3) {
+                    CGFloat colors[3];
+                    BOOL ok = YES;
+                    for (int j = 0; j < 3; j++) {
+                        NSScanner *scanner = [NSScanner scannerWithString:components[j]];
+                        unsigned int intValue;
+                        if (![scanner scanHexInt:&intValue]) {
+                            ok = NO;
+                        } else {
+                            ok = (intValue <= 255);
+                        }
+                        if (ok) {
+                            int limit = 1 << ((4 * [components[j] length]) - 1);
+                            colors[j] = (CGFloat)intValue / (CGFloat)limit;
+                        } else {
+                            break;
+                        }
+                    }
+                    if (ok) {
+                        NSColor *theColor = [NSColor colorWithCalibratedRed:colors[0]
+                                                                      green:colors[1]
+                                                                       blue:colors[2]
+                                                                      alpha:1];
+                        [delegate_ terminalSetColorTableEntryAtIndex:theIndex
+                                                               color:theColor];
+                    }
+                }
+            } else if ([part isEqualToString:@"?"]) {
+                NSColor *theColor = [delegate_ terminalColorForIndex:theIndex];
+                [delegate_ terminalSendReport:[self.output reportColor:theColor atIndex:theIndex]];
+            }
+        }
     }
 }
 
