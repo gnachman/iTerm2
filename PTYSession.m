@@ -1973,6 +1973,8 @@ typedef enum {
     [self setAntiIdleCode:[[aDict objectForKey:KEY_IDLE_CODE] intValue]];
     [self setAntiIdle:[[aDict objectForKey:KEY_SEND_CODE_WHEN_IDLE] boolValue]];
     [self setAutoClose:[[aDict objectForKey:KEY_CLOSE_SESSIONS_ON_END] boolValue]];
+    _screen.useHFSPlusMapping = [iTermProfilePreferences boolForKey:KEY_USE_HFS_PLUS_MAPPING
+                                                          inProfile:aDict];
     [self setTreatAmbiguousWidthAsDoubleWidth:[[aDict objectForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH] boolValue]];
     [self setXtermMouseReporting:[[aDict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue]];
     [_terminal setDisableSmcupRmcup:[[aDict objectForKey:KEY_DISABLE_SMCUP_RMCUP] boolValue]];
@@ -4530,6 +4532,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed] ||
             _screen.lastCommandOutputRange.start.x >= 0);
 
+}
+
+- (BOOL)textViewUseHFSPlusMapping {
+    return _screen.useHFSPlusMapping;
 }
 
 - (NSColor *)textViewCursorGuideColor {

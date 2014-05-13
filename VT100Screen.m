@@ -823,7 +823,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     screen_char_t staticBuffer[kStaticBufferElements];
     screen_char_t *dynamicBuffer = 0;
     screen_char_t *buffer;
-    string = [string precomposedStringWithCanonicalMapping];
+    string = _useHFSPlusMapping ? [string precomposedStringWithHFSPlusMapping]
+                                : [string precomposedStringWithCanonicalMapping];
     len = [string length];
     if (2 * len > kStaticBufferElements) {
         buffer = dynamicBuffer = (screen_char_t *) calloc(2 * len,
@@ -881,7 +882,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                         &len,
                         [delegate_ screenShouldTreatAmbiguousCharsAsDoubleWidth],
                         NULL,
-                        &dwc);
+                        &dwc,
+                        _useHFSPlusMapping);
     if (dwc) {
         linebuffer_.mayHaveDoubleWidthCharacter = dwc;
     }
@@ -3867,6 +3869,10 @@ static void SwapInt(int *a, int *b) {
 
 - (void)gridCursorDidChangeLine {
     [delegate_ screenCursorDidMoveToLine:currentGrid_.cursorY + [self numberOfScrollbackLines]];
+}
+
+- (BOOL)gridUseHFSPlusMapping {
+    return _useHFSPlusMapping;
 }
 
 @end

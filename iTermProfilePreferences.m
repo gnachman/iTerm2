@@ -151,6 +151,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_BLINK_ALLOWED: @NO,
                   KEY_USE_ITALIC_FONT: @YES,
                   KEY_AMBIGUOUS_DOUBLE_WIDTH: @NO,
+                  KEY_USE_HFS_PLUS_MAPPING: @NO,
                   KEY_HORIZONTAL_SPACING: @1.0,
                   KEY_VERTICAL_SPACING: @1.0,
                   KEY_USE_NONASCII_FONT: @YES,

@@ -29,6 +29,7 @@
 #define NSSTRINGJTERMINAL_CLASS_COMPILE
 #import "NSStringITerm.h"
 #import <apr-1/apr_base64.h>
+#import <Carbon/Carbon.h>
 #import <wctype.h>
 
 #define AMB_CHAR_NUMBER (sizeof(ambiguous_chars) / sizeof(int))
@@ -897,6 +898,76 @@ int decode_utf8_char(const unsigned char *datap,
         [result appendFormat:@"%C", (unichar)value];
     }
     return [[result copy] autorelease];
+}
+
+// Return TEC converter between UTF8 variants, or NULL on failure.
+// You should call TECDisposeConverter on the returned obj.
+static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant variant) {
+    TextEncoding utf8Encoding = CreateTextEncoding(kTextEncodingUnicodeDefault,
+                                      kTextEncodingDefaultVariant,
+                                      kUnicodeUTF8Format);
+    TextEncoding hfsPlusEncoding = CreateTextEncoding(kTextEncodingUnicodeDefault,
+                                                      variant,
+                                                      kUnicodeUTF8Format);
+
+    TECObjectRef conv;
+    if (TECCreateConverter(&conv, utf8Encoding, hfsPlusEncoding) != noErr) {
+        NSLog(@"Failed to create HFS Plus converter.\n");
+        return NULL;
+    }
+
+    return conv;
+}
+
+- (NSString *)_convertBetweenUTF8AndHFSPlusAsPrecomposition:(BOOL)precompose {
+    static TECObjectRef gHFSPlusComposed;
+    static TECObjectRef gHFSPlusDecomposed;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gHFSPlusComposed = CreateTECConverterForUTF8Variants(kUnicodeHFSPlusCompVariant);
+        gHFSPlusDecomposed = CreateTECConverterForUTF8Variants(kUnicodeHFSPlusDecompVariant);
+    });
+    
+    size_t in_len;
+    size_t out_len;
+    const char *in;
+    char *out;
+    NSString *ret;
+
+    in = [self UTF8String];
+    in_len = out_len = strlen(in);
+    if (!precompose) {
+        out_len *= 2;
+    }
+    out = malloc(out_len + 1);
+    if (!out) {
+        return self;
+    }
+    
+    if (TECConvertText(precompose ? gHFSPlusComposed : gHFSPlusDecomposed,
+                       (TextPtr)in,
+                       in_len,
+                       &in_len,
+                       (TextPtr)out,
+                       out_len,
+                       &out_len) != noErr) {
+        free(out);
+        return self;
+    }
+    out[out_len] = '\0';
+
+    ret = [NSString stringWithUTF8String:out];
+    free(out);
+
+    return ret;
+}
+
+- (NSString *)precomposedStringWithHFSPlusMapping {
+    return [self _convertBetweenUTF8AndHFSPlusAsPrecomposition:YES];
+}
+
+- (NSString *)decomposedStringWithHFSPlusMapping {
+    return [self _convertBetweenUTF8AndHFSPlusAsPrecomposition:NO];
 }
 
 @end

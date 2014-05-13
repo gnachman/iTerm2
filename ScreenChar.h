@@ -302,7 +302,7 @@ int AppendToComplexChar(int key, unichar codePoint);
 // Takes a non-complex character and adds a combining mark to it. It may or may not
 // become complex as a result, depending on whether there is an NFC form for the
 // new composite.
-void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar);
+void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar, BOOL useHFSPlusMapping);
 
 // Create or lookup & return the code for a complex char.
 int GetOrSetComplexChar(NSString* str);
@@ -362,7 +362,8 @@ void StringToScreenChars(NSString *s,
                          int *len,
                          BOOL ambiguousIsDoubleWidth,
                          int *cursorIndex,
-                         BOOL *foundDwc);
+                         BOOL *foundDwc,
+                         BOOL useHFSPlusMapping);
 
 // Translates normal characters into graphics characters, as defined in charsets.h. Must not contain
 // complex characters.

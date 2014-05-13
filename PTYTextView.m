@@ -6330,7 +6330,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         //
         // This technique was picked because it can find glyphs that aren't in the
         // selected font (e.g., tests/radical.txt). It does a fairly nice job on
-        // laying out combining marks. For now, it fails in two known cases:
+        // laying out combining marks.  For now, it fails in two known cases:
         // 1. Enclosing marks (q in a circle shows as a q)
         // 2. U+239d, a part of a paren for graphics drawing, doesn't quite render
         //    right (though it appears to need to render in another char's cell).
@@ -6878,7 +6878,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         &len,
                         [_delegate textViewAmbiguousWidthCharsAreDoubleWidth],
                         NULL,
-                        NULL);
+                        NULL,
+                        [_delegate textViewUseHFSPlusMapping]);
 
     // Count how many additional cells are needed due to double-width chars
     // that span line breaks being wrapped to the next line.
@@ -6926,7 +6927,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             &len,
                             [_delegate textViewAmbiguousWidthCharsAreDoubleWidth],
                             &cursorIndex,
-                            NULL);
+                            NULL,
+                            [_delegate textViewUseHFSPlusMapping]);
         int cursorX = 0;
         int baseX = floor(xStart * charWidth + MARGIN);
         int i;

@@ -17,6 +17,7 @@
 @protocol VT100GridDelegate <NSObject>
 - (screen_char_t)gridForegroundColorCode;
 - (screen_char_t)gridBackgroundColorCode;
+- (BOOL)gridUseHFSPlusMapping;
 
 // Only called if trackCursorLineMovement is set.
 - (void)gridCursorDidChangeLine;

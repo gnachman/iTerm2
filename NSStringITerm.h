@@ -113,6 +113,11 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)hexEncodedString;
 + (NSString *)stringWithHexEncodedString:(NSString *)hexEncodedString;
 
+// Compose/Decompose UTF8 string without normalization
+// See issue 2872.
+- (NSString *)precomposedStringWithHFSPlusMapping;
+- (NSString *)decomposedStringWithHFSPlusMapping;
+
 @end
 
 @interface NSMutableString (iTerm)

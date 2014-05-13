@@ -286,8 +286,7 @@ int AppendToComplexChar(int key, unichar codePoint)
     return GetOrSetComplexChar(temp);
 }
 
-void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar)
-{
+void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar, BOOL useHFSPlusMapping) {
     unichar initialCodePoint = screenChar->code;
     if (initialCodePoint == UNICODE_REPLACEMENT_CHAR) {
         return;
@@ -298,7 +297,8 @@ void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar)
     temp[1] = combiningChar;
     
     // See if it makes a single code in NFC.
-    NSString *nfc = [[NSString stringWithCharacters:temp length:2] precomposedStringWithCanonicalMapping];
+    NSString *theString = [NSString stringWithCharacters:temp length:2];
+    NSString *nfc = useHFSPlusMapping ? [theString precomposedStringWithHFSPlusMapping] : [theString precomposedStringWithCanonicalMapping];
     if (nfc.length == 1) {
         screenChar->code = [nfc characterAtIndex:0];
     } else {
@@ -553,7 +553,8 @@ void StringToScreenChars(NSString *s,
                          int *len,
                          BOOL ambiguousIsDoubleWidth,
                          int* cursorIndex,
-                         BOOL *foundDwc) {
+                         BOOL *foundDwc,
+                         BOOL useHFSPlusMapping) {
     unichar *sc;
     int l = [s length];
     int i;
@@ -665,7 +666,7 @@ void StringToScreenChars(NSString *s,
                     // built by surrogates.
                     buf[j].code = AppendToComplexChar(buf[j].code, sc[i]);
                 } else {
-                    BeginComplexChar(buf + j, sc[i]);
+                    BeginComplexChar(buf + j, sc[i], useHFSPlusMapping);
                 }
                 if (movedBackOverDwcRight) {
                     j++;

@@ -1613,7 +1613,8 @@
                         &len,
                         NO,
                         NULL,
-                        NULL);
+                        NULL,
+                        NO);
     return data;
 }
 
