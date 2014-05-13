@@ -900,18 +900,18 @@ int decode_utf8_char(const unsigned char *datap,
     return [[result copy] autorelease];
 }
 
-// Return TEC converter between UTF8 variants, or NULL on failure.
+// Return TEC converter between UTF16 variants, or NULL on failure.
 // You should call TECDisposeConverter on the returned obj.
 static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant variant) {
-    TextEncoding utf8Encoding = CreateTextEncoding(kTextEncodingUnicodeDefault,
-                                      kTextEncodingDefaultVariant,
-                                      kUnicodeUTF8Format);
+    TextEncoding utf16Encoding = CreateTextEncoding(kTextEncodingUnicodeDefault,
+                                                    kTextEncodingDefaultVariant,
+                                                    kUnicodeUTF16Format);
     TextEncoding hfsPlusEncoding = CreateTextEncoding(kTextEncodingUnicodeDefault,
                                                       variant,
-                                                      kUnicodeUTF8Format);
+                                                      kUnicodeUTF16Format);
 
     TECObjectRef conv;
-    if (TECCreateConverter(&conv, utf8Encoding, hfsPlusEncoding) != noErr) {
+    if (TECCreateConverter(&conv, utf16Encoding, hfsPlusEncoding) != noErr) {
         NSLog(@"Failed to create HFS Plus converter.\n");
         return NULL;
     }
@@ -928,19 +928,23 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         gHFSPlusDecomposed = CreateTECConverterForUTF8Variants(kUnicodeHFSPlusDecompVariant);
     });
     
-    size_t in_len;
+    size_t in_len = sizeof(unichar) * [self length];
     size_t out_len;
-    const char *in;
-    char *out;
+    unichar *in = malloc(in_len);
+    if (!in) {
+        return self;
+    }
+    unichar *out;
     NSString *ret;
 
-    in = [self UTF8String];
-    in_len = out_len = strlen(in);
+    [self getCharacters:in range:NSMakeRange(0, [self length])];
+    out_len = in_len;
     if (!precompose) {
         out_len *= 2;
     }
-    out = malloc(out_len + 1);
+    out = malloc(sizeof(unichar) * out_len);
     if (!out) {
+        free(in);
         return self;
     }
     
@@ -951,12 +955,13 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
                        (TextPtr)out,
                        out_len,
                        &out_len) != noErr) {
-        free(out);
-        return self;
+        ret = self;
+    } else {
+        int numCharsOut = out_len / sizeof(unichar);
+        ret = [NSString stringWithCharacters:out length:numCharsOut];
     }
-    out[out_len] = '\0';
-
-    ret = [NSString stringWithUTF8String:out];
+    
+    free(in);
     free(out);
 
     return ret;

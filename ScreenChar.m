@@ -298,7 +298,8 @@ void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar, BOOL use
     
     // See if it makes a single code in NFC.
     NSString *theString = [NSString stringWithCharacters:temp length:2];
-    NSString *nfc = useHFSPlusMapping ? [theString precomposedStringWithHFSPlusMapping] : [theString precomposedStringWithCanonicalMapping];
+    NSString *nfc = useHFSPlusMapping ? [theString precomposedStringWithHFSPlusMapping] :
+                                        [theString precomposedStringWithCanonicalMapping];
     if (nfc.length == 1) {
         screenChar->code = [nfc characterAtIndex:0];
     } else {
