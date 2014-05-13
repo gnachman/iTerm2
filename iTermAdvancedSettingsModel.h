@@ -67,4 +67,6 @@
 + (BOOL)suppressMultilinePasteWarningWhenNotAtShellPrompt;
 + (BOOL)noSyncSuppressBroadcastInputWarning;
 
++ (BOOL)useSystemCursorWhenPossible;
+
 @end

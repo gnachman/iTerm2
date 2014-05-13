@@ -119,6 +119,7 @@
 #define KEY_ACTION_MOVE_TAB_RIGHT 34
 #define KEY_ACTION_RUN_COPROCESS 35
 #define KEY_ACTION_FIND_REGEX 36
+#define KEY_ACTION_SET_PROFILE 37
 
 @interface iTermKeyBindingMgr : NSObject {
 }

@@ -40,6 +40,7 @@
 #import "iTermColorMap.h"
 #import "iTermController.h"
 #import "iTermExpose.h"
+#import "iTermMouseCursor.h"
 #import "iTermNSKeyBindingEmulator.h"
 #import "iTermPreferences.h"
 #import "iTermSelection.h"
@@ -88,8 +89,6 @@ static const int kBroadcastMargin = 4;
 static const int kCoprocessMargin = 4;
 static const int kAlertMargin = 4;
 
-static NSCursor* textViewCursor;
-static NSCursor* xmrCursor;
 static NSImage* bellImage;
 static NSImage* wrapToTopImage;
 static NSImage* wrapToBottomImage;
@@ -335,14 +334,7 @@ static NSImage* alertImage;
 
 + (void)initialize
 {
-    NSPoint hotspot = NSMakePoint(4, 5);
     NSBundle* bundle = [NSBundle bundleForClass:[self class]];
-    NSImage* image = [[NSImage imageNamed:@"IBarCursor"] retain];
-
-    textViewCursor = [[NSCursor alloc] initWithImage:image hotSpot:hotspot];
-
-    NSImage* xmrImage = [[NSImage imageNamed:@"IBarCursorXMR"] retain];
-    xmrCursor = [[NSCursor alloc] initWithImage:xmrImage hotSpot:hotspot];
 
     NSString* bellFile = [bundle
                           pathForResource:@"bell"
@@ -376,11 +368,6 @@ static NSImage* alertImage;
     [alertImage setFlipped:YES];
 
     [iTermNSKeyBindingEmulator sharedInstance];  // Load and parse DefaultKeyBindings.dict if needed.
-}
-
-+ (NSCursor *)textViewCursor
-{
-    return textViewCursor;
 }
 
 - (id)initWithFrame:(NSRect)frameRect {
@@ -2570,8 +2557,7 @@ NSMutableArray* screens=0;
     return YES;
 }
 
-- (void)updateCursor:(NSEvent *)event
-{
+- (void)updateCursor:(NSEvent *)event {
     MouseMode mouseMode = [[_dataSource terminal] mouseMode];
 
     BOOL changed = NO;
@@ -2584,9 +2570,9 @@ NSMutableArray* screens=0;
     } else if ([self xtermMouseReporting] &&
                mouseMode != MOUSE_REPORTING_NONE &&
                mouseMode != MOUSE_REPORTING_HILITE) {
-        changed = [self setCursor:xmrCursor];
+        changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeamWithCircle]];
     } else {
-        changed = [self setCursor:textViewCursor];
+        changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
     }
     if (changed) {
         [[_delegate scrollview] setDocumentCursor:cursor_];
@@ -3679,7 +3665,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (IBAction)installShellIntegration:(id)sender {
-    NSString *theCommand = @"curl -L iterm2.com/misc/install_shell_integration.sh | sh\n";
+    NSString *theCommand = @"curl -L iterm2.com/misc/install_shell_integration.sh | bash\n";
     [_delegate writeTask:[theCommand dataUsingEncoding:NSUTF8StringEncoding]];
 }
 
@@ -6344,7 +6330,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         //
         // This technique was picked because it can find glyphs that aren't in the
         // selected font (e.g., tests/radical.txt). It does a fairly nice job on
-        // laying out combining marks. For now, it fails in two known cases:
+        // laying out combining marks.  For now, it fails in two known cases:
         // 1. Enclosing marks (q in a circle shows as a q)
         // 2. U+239d, a part of a paren for graphics drawing, doesn't quite render
         //    right (though it appears to need to render in another char's cell).
@@ -6892,7 +6878,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         &len,
                         [_delegate textViewAmbiguousWidthCharsAreDoubleWidth],
                         NULL,
-                        NULL);
+                        NULL,
+                        [_delegate textViewUseHFSPlusMapping]);
 
     // Count how many additional cells are needed due to double-width chars
     // that span line breaks being wrapped to the next line.
@@ -6940,7 +6927,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             &len,
                             [_delegate textViewAmbiguousWidthCharsAreDoubleWidth],
                             &cursorIndex,
-                            NULL);
+                            NULL,
+                            [_delegate textViewUseHFSPlusMapping]);
         int cursorX = 0;
         int baseX = floor(xStart * charWidth + MARGIN);
         int i;

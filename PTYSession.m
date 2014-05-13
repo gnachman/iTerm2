@@ -14,6 +14,7 @@
 #import "iTermDirectoriesModel.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermMouseCursor.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
@@ -629,7 +630,7 @@ typedef enum {
     [_textview setDelegate:self];
     [_scrollview setDocumentView:_wrapper];
     [_wrapper release];
-    [_scrollview setDocumentCursor:[PTYTextView textViewCursor]];
+    [_scrollview setDocumentCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
     [_scrollview setLineScroll:[_textview lineHeight]];
     [_scrollview setPageScroll:2 * [_textview lineHeight]];
     [_scrollview setHasVerticalScroller:[parent scrollbarShouldBeVisible]];
@@ -1972,6 +1973,8 @@ typedef enum {
     [self setAntiIdleCode:[[aDict objectForKey:KEY_IDLE_CODE] intValue]];
     [self setAntiIdle:[[aDict objectForKey:KEY_SEND_CODE_WHEN_IDLE] boolValue]];
     [self setAutoClose:[[aDict objectForKey:KEY_CLOSE_SESSIONS_ON_END] boolValue]];
+    _screen.useHFSPlusMapping = [iTermProfilePreferences boolForKey:KEY_USE_HFS_PLUS_MAPPING
+                                                          inProfile:aDict];
     [self setTreatAmbiguousWidthAsDoubleWidth:[[aDict objectForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH] boolValue]];
     [self setXtermMouseReporting:[[aDict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue]];
     [_terminal setDisableSmcupRmcup:[[aDict objectForKey:KEY_DISABLE_SMCUP_RMCUP] boolValue]];
@@ -3752,6 +3755,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
       case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
         [[[self tab] realParentWindow] splitVertically:YES withBookmarkGuid:keyBindingText];
         break;
+      case KEY_ACTION_SET_PROFILE: {
+          Profile *newProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
+          if (newProfile) {
+              [self setProfilePreservingName:newProfile];
+          }
+          break;
+      }
+
       case KEY_ACTION_FIND_REGEX:
         [[_view findViewController] closeViewAndDoTemporarySearchForString:keyBindingText
                                                               ignoringCase:NO
@@ -4523,6 +4534,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 }
 
+- (BOOL)textViewUseHFSPlusMapping {
+    return _screen.useHFSPlusMapping;
+}
+
 - (NSColor *)textViewCursorGuideColor {
     return _cursorGuideColor;
 }
@@ -5128,6 +5143,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [dict setObject:theName forKey:KEY_NAME];
     [self setProfile:dict];
     [self setPreferencesFromAddressBookEntry:dict];
+    [_originalProfile autorelease];
+    _originalProfile = [newProfile copy];
     [self remarry];
 }
 

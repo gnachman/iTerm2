@@ -332,6 +332,8 @@ typedef enum {
 - (void)terminalSetTabColorGreenComponentTo:(CGFloat)color;
 - (void)terminalSetTabColorBlueComponentTo:(CGFloat)color;
 
+- (NSColor *)terminalColorForIndex:(int)index;
+
 // Returns the current cursor position.
 - (int)terminalCursorX;
 - (int)terminalCursorY;

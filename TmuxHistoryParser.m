@@ -55,7 +55,8 @@
                                 &len,
                                 ambiguousIsDoubleWidth,
                                 NULL,
-                                NULL);
+                                NULL,
+                                NO);
             if ([token isAscii] && [terminal charset]) {
                 ConvertCharsToGraphicsCharset(screenChars, len);
             }

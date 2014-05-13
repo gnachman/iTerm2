@@ -1731,7 +1731,7 @@
         theLine[cx].code = AppendToComplexChar(theLine[cx].code,
                                                combiningChar);
     } else {
-        BeginComplexChar(theLine + cx, combiningChar);
+        BeginComplexChar(theLine + cx, combiningChar, [delegate_ gridUseHFSPlusMapping]);
     }
     return YES;
 }

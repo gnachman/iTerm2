@@ -1,4 +1,4 @@
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 #import "VT100GridTypes.h"
 
 typedef enum {
@@ -49,6 +49,7 @@ typedef enum {
 - (NSData *)reportStatus;
 - (NSData *)reportDeviceAttribute;
 - (NSData *)reportSecondaryDeviceAttribute;
+- (NSData *)reportColor:(NSColor *)color atIndex:(int)index;
 
 - (void)setTermTypeIsValid:(BOOL)termTypeIsValid;
 

@@ -31,6 +31,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     IBOutlet NSButton *_blinkAllowed;
     IBOutlet NSButton *_useItalicFont;
     IBOutlet NSButton *_ambiguousIsDoubleWidth;
+    IBOutlet NSButton *_useHFSPlusMapping;
     IBOutlet NSSlider *_horizontalSpacing;
     IBOutlet NSSlider *_verticalSpacing;
     IBOutlet NSButton *_useNonAsciiFont;
@@ -94,6 +95,10 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                     key:KEY_AMBIGUOUS_DOUBLE_WIDTH
                    type:kPreferenceInfoTypeCheckbox];
 
+    [self defineControl:_useHFSPlusMapping
+                    key:KEY_USE_HFS_PLUS_MAPPING
+                   type:kPreferenceInfoTypeCheckbox];
+    
     [self defineControl:_horizontalSpacing
                     key:KEY_HORIZONTAL_SPACING
                    type:kPreferenceInfoTypeSlider];

@@ -113,6 +113,15 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)hexEncodedString;
 + (NSString *)stringWithHexEncodedString:(NSString *)hexEncodedString;
 
+// Compose/Decompose UTF8 string without normalization
+
+// This is better than -precomposedStringWithCanonicalMapping because it preserves compatability
+// equivalence. It's most relevant when two canonically equivalent characters have different widths
+// (one is half-width while the other is ambiguous width). The difference is in the following
+// ranges: 2000-2FFF, F900-FAFF, 2F800-2FAFF. See issue 2872.
+- (NSString *)precomposedStringWithHFSPlusMapping;
+- (NSString *)decomposedStringWithHFSPlusMapping;
+
 @end
 
 @interface NSMutableString (iTerm)

@@ -135,6 +135,7 @@ typedef enum {
 - (VT100GridCoordRange)textViewRangeOfLastCommandOutput;
 - (BOOL)textViewCanSelectOutputOfLastCommand;
 - (NSColor *)textViewCursorGuideColor;
+- (BOOL)textViewUseHFSPlusMapping;
 
 @end
 
@@ -246,9 +247,6 @@ typedef enum {
 
 // Semantic history. TODO: Move this into PTYSession.
 @property(nonatomic, readonly) Trouter *trouter;
-
-// Returns the mouse cursor to use when the mouse is in this view.
-+ (NSCursor *)textViewCursor;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.

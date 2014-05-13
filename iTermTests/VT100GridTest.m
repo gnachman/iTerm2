@@ -1457,7 +1457,7 @@ do { \
 
     // Now test with combining marks.
     screen_char_t *line = [grid screenCharsAtLineNumber:0];
-    BeginComplexChar(line + 1, 0x20dd);  // e + combining enclosing circle
+    BeginComplexChar(line + 1, 0x20dd, NO);  // e + combining enclosing circle
     line[1].complexChar = YES;
     runs = [grid runsMatchingRegex:@"ge.?orge"];  // the regex lib doesn't handle combining marks well
     coverage = [self coverageForRuns:runs inGrid:grid];
