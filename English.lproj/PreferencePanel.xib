@@ -1865,15 +1865,15 @@ Gw
                                                         <rect key="frame" x="10" y="33" width="559" height="404"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                         <subviews>
-                                                            <box autoresizesSubviews="NO" title="Basic Colors" borderType="line" id="xAy-vZ-yHZ">
-                                                                <rect key="frame" x="6" y="282" width="336" height="117"/>
+                                                            <box autoresizesSubviews="NO" title="Basic Settings" borderType="line" id="xAy-vZ-yHZ">
+                                                                <rect key="frame" x="6" y="222" width="336" height="177"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <view key="contentView">
-                                                                    <rect key="frame" x="1" y="1" width="334" height="101"/>
+                                                                    <rect key="frame" x="1" y="1" width="334" height="161"/>
                                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                     <subviews>
                                                                         <textField verticalHuggingPriority="750" id="2284">
-                                                                            <rect key="frame" x="8" y="16" width="84" height="17"/>
+                                                                            <rect key="frame" x="8" y="76" width="84" height="17"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Bold" id="2316">
                                                                                 <font key="font" metaFont="system"/>
@@ -1882,7 +1882,7 @@ Gw
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <colorWell tag="17" id="2285" userLabel="Color Well - Background">
-                                                                            <rect key="frame" x="102" y="41" width="32" height="21"/>
+                                                                            <rect key="frame" x="102" y="101" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -1891,7 +1891,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="20" id="2277" userLabel="Color Well - Selected Text">
-                                                                            <rect key="frame" x="284" y="42" width="32" height="21"/>
+                                                                            <rect key="frame" x="284" y="102" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -1900,7 +1900,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <textField verticalHuggingPriority="750" id="2275">
-                                                                            <rect key="frame" x="159" y="72" width="84" height="17"/>
+                                                                            <rect key="frame" x="159" y="132" width="84" height="17"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Selection" id="2321">
                                                                                 <font key="font" metaFont="system"/>
@@ -1909,7 +1909,7 @@ Gw
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <colorWell tag="18" id="2272" userLabel="Color Well - Bold">
-                                                                            <rect key="frame" x="102" y="14" width="32" height="21"/>
+                                                                            <rect key="frame" x="102" y="74" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -1918,7 +1918,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="16" id="2273" userLabel="Color Well - Foreground">
-                                                                            <rect key="frame" x="102" y="70" width="32" height="21"/>
+                                                                            <rect key="frame" x="102" y="130" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -1927,7 +1927,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <textField verticalHuggingPriority="750" id="2274">
-                                                                            <rect key="frame" x="159" y="44" width="89" height="17"/>
+                                                                            <rect key="frame" x="159" y="104" width="89" height="17"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Selected Text" id="2322">
                                                                                 <font key="font" metaFont="system"/>
@@ -1936,7 +1936,7 @@ Gw
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <colorWell tag="22" id="Wzz-9B-zqB" userLabel="Color Well - Tab Color">
-                                                                            <rect key="frame" x="284" y="14" width="32" height="21"/>
+                                                                            <rect key="frame" x="284" y="74" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -1945,7 +1945,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <textField verticalHuggingPriority="750" id="2281">
-                                                                            <rect key="frame" x="8" y="44" width="84" height="17"/>
+                                                                            <rect key="frame" x="8" y="104" width="84" height="17"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Background" id="2318">
                                                                                 <font key="font" metaFont="system"/>
@@ -1954,7 +1954,7 @@ Gw
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <colorWell tag="19" id="2282" userLabel="Color Well - Selection">
-                                                                            <rect key="frame" x="284" y="70" width="32" height="21"/>
+                                                                            <rect key="frame" x="284" y="130" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -1963,7 +1963,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <button id="j7F-r8-oes">
-                                                                            <rect key="frame" x="159" y="15" width="90" height="18"/>
+                                                                            <rect key="frame" x="159" y="75" width="90" height="18"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <buttonCell key="cell" type="check" title="Tab Color" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="k6J-9z-fqf">
                                                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -1974,13 +1974,49 @@ Gw
                                                                                 <outlet property="nextKeyView" destination="4896" id="WKO-8m-Sev"/>
                                                                             </connections>
                                                                         </button>
+                                                                        <slider verticalHuggingPriority="750" id="4896">
+                                                                            <rect key="frame" x="8" y="23" width="311" height="20"/>
+                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                            <sliderCell key="cell" continuous="YES" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="4903"/>
+                                                                            <connections>
+                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="FZP-HT-Cxc"/>
+                                                                                <outlet property="nextKeyView" destination="3213" id="5228"/>
+                                                                            </connections>
+                                                                        </slider>
+                                                                        <textField verticalHuggingPriority="750" id="4897">
+                                                                            <rect key="frame" x="8" y="14" width="22" height="11"/>
+                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Low" id="4902">
+                                                                                <font key="font" metaFont="miniSystem"/>
+                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                                            </textFieldCell>
+                                                                        </textField>
+                                                                        <textField verticalHuggingPriority="750" id="4898">
+                                                                            <rect key="frame" x="294" y="14" width="25" height="11"/>
+                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="High" id="4901">
+                                                                                <font key="font" metaFont="miniSystem"/>
+                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                                            </textFieldCell>
+                                                                        </textField>
+                                                                        <textField verticalHuggingPriority="750" id="4899">
+                                                                            <rect key="frame" x="8" y="49" width="132" height="17"/>
+                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="Minimum contrast:" id="4900">
+                                                                                <font key="font" metaFont="system"/>
+                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                                            </textFieldCell>
+                                                                        </textField>
                                                                     </subviews>
                                                                 </view>
                                                                 <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
                                                                 <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                                             </box>
                                                             <box autoresizesSubviews="NO" title="Cursor" borderType="line" id="E5x-dY-j3k">
-                                                                <rect key="frame" x="6" y="115" width="336" height="163"/>
+                                                                <rect key="frame" x="6" y="55" width="336" height="163"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <view key="contentView">
                                                                     <rect key="frame" x="1" y="1" width="334" height="147"/>
@@ -2097,14 +2133,14 @@ Gw
                                                                 <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                                             </box>
                                                             <box autoresizesSubviews="NO" title="ANSI Colors" borderType="line" id="JDt-RG-YjG">
-                                                                <rect key="frame" x="344" y="115" width="199" height="284"/>
+                                                                <rect key="frame" x="344" y="84" width="199" height="315"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <view key="contentView">
-                                                                    <rect key="frame" x="1" y="1" width="197" height="268"/>
+                                                                    <rect key="frame" x="1" y="1" width="197" height="299"/>
                                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                     <subviews>
                                                                         <colorWell id="2286" userLabel="Color Well - Normal Red">
-                                                                            <rect key="frame" x="77" y="191" width="32" height="21"/>
+                                                                            <rect key="frame" x="77" y="219" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2113,7 +2149,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="1" id="2287" userLabel="Color Well - Normal Green">
-                                                                            <rect key="frame" x="77" y="162" width="32" height="21"/>
+                                                                            <rect key="frame" x="77" y="187" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2122,7 +2158,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="3" id="2288" userLabel="Color Well - Normal Blue">
-                                                                            <rect key="frame" x="77" y="104" width="32" height="21"/>
+                                                                            <rect key="frame" x="77" y="123" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2131,7 +2167,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="2" id="2289" userLabel="Color Well - Normal Yellow">
-                                                                            <rect key="frame" x="77" y="133" width="32" height="21"/>
+                                                                            <rect key="frame" x="77" y="155" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2140,7 +2176,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="4" id="2290" userLabel="Color Well - Normal Magenta">
-                                                                            <rect key="frame" x="77" y="75" width="32" height="21"/>
+                                                                            <rect key="frame" x="77" y="91" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2149,7 +2185,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="5" id="2291" userLabel="Color Well - Normal Cyan">
-                                                                            <rect key="frame" x="77" y="46" width="32" height="21"/>
+                                                                            <rect key="frame" x="77" y="59" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2158,7 +2194,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="7" id="2292" userLabel="Color Well - Bright Black">
-                                                                            <rect key="frame" x="132" y="220" width="32" height="21"/>
+                                                                            <rect key="frame" x="132" y="251" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2167,7 +2203,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="6" id="2293" userLabel="Color Well - Normal White">
-                                                                            <rect key="frame" x="77" y="17" width="32" height="21"/>
+                                                                            <rect key="frame" x="77" y="27" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2176,7 +2212,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="10" id="2294" userLabel="Color Well - Bright Yellow">
-                                                                            <rect key="frame" x="132" y="133" width="32" height="21"/>
+                                                                            <rect key="frame" x="132" y="155" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2185,7 +2221,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="8" id="2295" userLabel="Color Well - Bright Red">
-                                                                            <rect key="frame" x="132" y="191" width="32" height="21"/>
+                                                                            <rect key="frame" x="132" y="219" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2194,7 +2230,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="14" id="2296" userLabel="Color Well - Bright Cyan">
-                                                                            <rect key="frame" x="132" y="46" width="32" height="21"/>
+                                                                            <rect key="frame" x="132" y="59" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2203,7 +2239,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="13" id="2297" userLabel="Color Well - Normal Black">
-                                                                            <rect key="frame" x="77" y="220" width="32" height="21"/>
+                                                                            <rect key="frame" x="77" y="251" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2212,7 +2248,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="12" id="2298" userLabel="Color Well - Bright Magenta">
-                                                                            <rect key="frame" x="132" y="75" width="32" height="21"/>
+                                                                            <rect key="frame" x="132" y="91" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2221,7 +2257,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="11" id="2299" userLabel="Color Well - Bright Blue">
-                                                                            <rect key="frame" x="132" y="104" width="32" height="21"/>
+                                                                            <rect key="frame" x="132" y="123" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2230,7 +2266,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="9" id="2300" userLabel="Color Well - Bright Green">
-                                                                            <rect key="frame" x="132" y="162" width="32" height="21"/>
+                                                                            <rect key="frame" x="132" y="187" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2239,7 +2275,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <colorWell tag="15" id="2301" userLabel="Color Well - Bright White">
-                                                                            <rect key="frame" x="132" y="17" width="32" height="21"/>
+                                                                            <rect key="frame" x="132" y="27" width="32" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                                             <connections>
@@ -2248,7 +2284,7 @@ Gw
                                                                             </connections>
                                                                         </colorWell>
                                                                         <textField verticalHuggingPriority="750" id="2344">
-                                                                            <rect key="frame" x="16" y="220" width="38" height="17"/>
+                                                                            <rect key="frame" x="16" y="251" width="38" height="17"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Black" id="2345">
                                                                                 <font key="font" metaFont="system"/>
@@ -2257,7 +2293,7 @@ Gw
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <textField verticalHuggingPriority="750" id="2346">
-                                                                            <rect key="frame" x="16" y="191" width="38" height="17"/>
+                                                                            <rect key="frame" x="16" y="219" width="38" height="17"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Red" id="2347">
                                                                                 <font key="font" metaFont="system"/>
@@ -2266,7 +2302,7 @@ Gw
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <textField verticalHuggingPriority="750" id="2348">
-                                                                            <rect key="frame" x="16" y="162" width="42" height="17"/>
+                                                                            <rect key="frame" x="16" y="187" width="42" height="17"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Green" id="2349">
                                                                                 <font key="font" metaFont="system"/>
@@ -2275,7 +2311,7 @@ Gw
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <textField verticalHuggingPriority="750" id="2350">
-                                                                            <rect key="frame" x="16" y="133" width="45" height="17"/>
+                                                                            <rect key="frame" x="16" y="155" width="45" height="17"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Yellow" id="2351">
                                                                                 <font key="font" metaFont="system"/>
@@ -2284,7 +2320,7 @@ Gw
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <textField verticalHuggingPriority="750" id="2352">
-                                                                            <rect key="frame" x="16" y="104" width="38" height="17"/>
+                                                                            <rect key="frame" x="16" y="123" width="38" height="17"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Blue" id="2353">
                                                                                 <font key="font" metaFont="system"/>
@@ -2293,7 +2329,7 @@ Gw
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <textField verticalHuggingPriority="750" id="2354">
-                                                                            <rect key="frame" x="16" y="75" width="58" height="17"/>
+                                                                            <rect key="frame" x="16" y="91" width="58" height="17"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Magenta" id="2355">
                                                                                 <font key="font" metaFont="system"/>
@@ -2302,7 +2338,7 @@ Gw
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <textField verticalHuggingPriority="750" id="2356">
-                                                                            <rect key="frame" x="16" y="46" width="38" height="17"/>
+                                                                            <rect key="frame" x="16" y="59" width="38" height="17"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Cyan" id="2357">
                                                                                 <font key="font" metaFont="system"/>
@@ -2311,7 +2347,7 @@ Gw
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <textField verticalHuggingPriority="750" id="2358">
-                                                                            <rect key="frame" x="16" y="17" width="40" height="17"/>
+                                                                            <rect key="frame" x="16" y="27" width="40" height="17"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="White" id="2359">
                                                                                 <font key="font" metaFont="system"/>
@@ -2320,7 +2356,7 @@ Gw
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <textField verticalHuggingPriority="750" id="2360">
-                                                                            <rect key="frame" x="75" y="241" width="50" height="17"/>
+                                                                            <rect key="frame" x="75" y="272" width="50" height="17"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Normal" id="2361">
                                                                                 <font key="font" metaFont="system" size="10"/>
@@ -2329,7 +2365,7 @@ Gw
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <textField verticalHuggingPriority="750" id="2362">
-                                                                            <rect key="frame" x="130" y="241" width="42" height="17"/>
+                                                                            <rect key="frame" x="130" y="272" width="42" height="17"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Bright" id="2363">
                                                                                 <font key="font" metaFont="system" size="10"/>
@@ -2343,7 +2379,7 @@ Gw
                                                                 <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                                             </box>
                                                             <popUpButton verticalHuggingPriority="750" id="3213">
-                                                                <rect key="frame" x="356" y="27" width="187" height="26"/>
+                                                                <rect key="frame" x="344" y="56" width="199" height="26"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                 <popUpButtonCell key="cell" type="push" title="Load Presets..." bezelStyle="rounded" alignment="center" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="3214">
                                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -2358,54 +2394,6 @@ Gw
                                                                     <outlet property="nextKeyView" destination="2297" id="5229"/>
                                                                 </connections>
                                                             </popUpButton>
-                                                            <box autoresizesSubviews="NO" borderType="line" id="eq5-zk-u7d">
-                                                                <rect key="frame" x="6" y="26" width="336" height="91"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <view key="contentView">
-                                                                    <rect key="frame" x="1" y="1" width="334" height="75"/>
-                                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                                    <subviews>
-                                                                        <slider verticalHuggingPriority="750" id="4896">
-                                                                            <rect key="frame" x="7" y="22" width="311" height="20"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <sliderCell key="cell" continuous="YES" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="4903"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="FZP-HT-Cxc"/>
-                                                                                <outlet property="nextKeyView" destination="3213" id="5228"/>
-                                                                            </connections>
-                                                                        </slider>
-                                                                        <textField verticalHuggingPriority="750" id="4897">
-                                                                            <rect key="frame" x="7" y="13" width="22" height="11"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Low" id="4902">
-                                                                                <font key="font" metaFont="miniSystem"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <textField verticalHuggingPriority="750" id="4898">
-                                                                            <rect key="frame" x="293" y="13" width="25" height="11"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="High" id="4901">
-                                                                                <font key="font" metaFont="miniSystem"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <textField verticalHuggingPriority="750" id="4899">
-                                                                            <rect key="frame" x="7" y="48" width="132" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="Minimum contrast:" id="4900">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                    </subviews>
-                                                                </view>
-                                                                <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
-                                                                <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
-                                                            </box>
                                                             <textField verticalHuggingPriority="750" id="2276">
                                                                 <rect key="frame" x="15" y="355" width="84" height="17"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
