@@ -205,20 +205,20 @@ typedef enum {
     BOOL _tmuxSecureLogging;
 
     iTermPasteHelper *_pasteHelper;
-    
+
     NSInteger _requestAttentionId;  // Last request-attention identifier
     VT100ScreenMark *_lastMark;
 
     VT100GridCoordRange _commandRange;
-    
+
     NSTimeInterval _timeOfLastScheduling;
 
     dispatch_semaphore_t _executionSemaphore;
-    
+
     // Previous updateDisplay timer's timeout period (not the actual duration,
     // but the kXXXTimerIntervalSec value).
     NSTimeInterval _lastTimeout;
-    
+
     // In order to correctly draw a tiled background image, we must first draw
     // it into an image the size of the session view, and then blit from it
     // onto the background of whichever view needs a background. This ensures
@@ -236,6 +236,9 @@ typedef enum {
     // Has the user or an escape code change the cursor guide setting?
     // If so, then the profile setting will be disregarded.
     BOOL _cursorGuideSettingHasChanged;
+
+    // Number of bytes received since an echo probe was sent.
+    int _bytesReceivedSinceSendingEchoProbe;
 }
 
 - (id)init {
@@ -247,7 +250,7 @@ typedef enum {
         [[MovePaneController sharedInstance] exitMovePaneMode];
         _triggerLine = [[NSMutableString alloc] init];
         gettimeofday(&_lastInput, NULL);
-        
+
         // Experimentally, this is enough to keep the queue primed but not overwhelmed.
         // TODO: How do slower machines fare?
         static const int kMaxOutstandingExecuteCalls = 4;
@@ -966,7 +969,7 @@ typedef enum {
             // changed size
             [_tmuxController fitLayoutToWindows];
         }
-        
+
         // PTYTask will never call taskWasDeregistered since tmux clients are never registered in
         // the first place. There can be calls queued in this queue from previous tmuxReadTask:
         // calls, so queue up a fake call to taskWasDeregistered that will run after all of them,
@@ -1145,9 +1148,11 @@ typedef enum {
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run
 // in the main thread to execute the parsed tokens.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
+    OSAtomicAdd32(length, &_bytesReceivedSinceSendingEchoProbe);
+
     // Pass the input stream to the parser.
     [_terminal.parser putStreamData:buffer length:length];
-    
+
     // Parse the input stream into an array of tokens.
     CVector vector;
     CVectorCreate(&vector, 100);
@@ -1157,7 +1162,7 @@ typedef enum {
         CVectorDestroy(&vector);
         return;
     }
-    
+
     // This limits the number of outstanding execution blocks to prevent the main thread from
     // getting bogged down.
     dispatch_semaphore_wait(_executionSemaphore, DISPATCH_TIME_FOREVER);
@@ -1166,7 +1171,7 @@ typedef enum {
     dispatch_retain(_executionSemaphore);
     dispatch_async(dispatch_get_main_queue(), ^{
         [self executeTokens:&vector bytesHandled:length];
-        
+
         // Unblock the background thread; if it's ready, it can send the main thread more tokens
         // now.
         dispatch_semaphore_signal(_executionSemaphore);
@@ -1182,14 +1187,14 @@ typedef enum {
         if (_exited || !_terminal || (self.tmuxMode != TMUX_GATEWAY && [_shell hasMuteCoprocess])) {
             break;
         }
-        
+
         VT100Token *token = CVectorGetObject(vector, i);
         DLog(@"Execute token %@ cursor=(%d, %d)", token, _screen.cursorX - 1, _screen.cursorY - 1);
         [_terminal executeToken:token];
     }
-    
+
     [self finishedHandlingNewOutputOfLength:length];
-    
+
     // When busy, we spend a lot of time performing recycleObject, so farm it
     // off to a background thread.
     CVector temp = *vector;
@@ -1255,6 +1260,7 @@ typedef enum {
     }
 
     _exited = YES;
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     [[self tab] updateLabelAttributes];
 
     if ([self autoClose]) {
@@ -1643,7 +1649,7 @@ typedef enum {
     } else {
         lineNumber = _textview.selection.liveRange.coordRange.start.y;
     }
-    
+
     // TODO: Figure out if this is a remote host and download/open if that's the case.
     NSString *workingDirectory = [_screen workingDirectoryOnLine:lineNumber];
     NSString *selection = [_textview selectedText];
@@ -1651,7 +1657,7 @@ typedef enum {
         NSBeep();
         return;
     }
-    
+
     int charsTakenFromPrefix;
     NSString *filename = [trouter pathOfExistingFileFoundWithPrefix:selection
                                                              suffix:@""
@@ -1670,7 +1676,7 @@ typedef enum {
         [[NSWorkspace sharedWorkspace] openURL:url];
         return;
     }
-    
+
     NSBeep();
 }
 
@@ -1754,7 +1760,7 @@ typedef enum {
         [self setProfile:updatedProfile];
         return;
     }
-    
+
     // Copy non-overridden fields over.
     NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:_profile];
     NSMutableArray *noLongerOverriddenFields = [NSMutableArray array];
@@ -1984,7 +1990,7 @@ typedef enum {
     [_screen setMaxScrollbackLines:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
     _screen.appendToScrollbackWithStatusBar = [[aDict objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue];
-    
+
     [self setFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NORMAL_FONT]]
         nonAsciiFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NON_ASCII_FONT]]
         horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
@@ -2256,7 +2262,7 @@ typedef enum {
 
     [_patternedImage release];
     _patternedImage = nil;
-    
+
     [_textview setNeedsDisplay:YES];
 }
 
@@ -2310,7 +2316,7 @@ typedef enum {
 
     if (set) {
         NSTimeInterval period = MIN(60, [iTermAdvancedSettingsModel antiIdleTimerPeriod]);
-        
+
         _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:period
                                                            target:self
                                                          selector:@selector(doAntiIdle)
@@ -2613,7 +2619,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSTimeInterval timeSinceLastUpdate = now - _timeOfLastScheduling;
     _timeOfLastScheduling = now;
     _lastTimeout = timeout;
-    
+
     _updateTimer = [[NSTimer scheduledTimerWithTimeInterval:MAX(0, timeout - timeSinceLastUpdate)
                                                      target:self
                                                    selector:@selector(updateDisplay)
@@ -2988,7 +2994,41 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)enterPassword:(NSString *)password {
-  [self writeTask:[password dataUsingEncoding:self.encoding]];
+    NSData *backspace = [self backspaceData];
+    if (backspace) {
+        // Try to figure out if we're at a shell prompt. Send a space character and immediately
+        // backspace over it. If no output is received within a specified timeout, then go ahead and
+        // send the password. Otherwise, ask for confirmation.
+        [self writeTask:[@" " dataUsingEncoding:self.encoding]];
+        [self writeTask:backspace];
+        _bytesReceivedSinceSendingEchoProbe = 0;
+        [self performSelector:@selector(enterPasswordIfEchoProbeOk:)
+                   withObject:password
+                   afterDelay:[iTermAdvancedSettingsModel echoProbeDuration]];
+    } else {
+        // Rare case: we don't know how to send a backspace. Just enter the password.
+        [self enterPasswordNoProbe:password];
+    }
+}
+
+- (void)enterPasswordIfEchoProbeOk:(NSString *)password {
+    if (_bytesReceivedSinceSendingEchoProbe == 0) {
+        // It looks like we're at a password prompt. Send the password.
+        [self enterPasswordNoProbe:password];
+    } else {
+        if ([iTermWarning showWarningWithTitle:@"Are you really at a password prompt? It looks "
+                                               @"like what you're typing is echoed to the screen."
+                                       actions:@[ @"Cancel", @"Enter Password" ]
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent] == kiTermWarningSelection1) {
+            [self enterPasswordNoProbe:password];
+        }
+    }
+}
+
+- (void)enterPasswordNoProbe:(NSString *)password {
+    [self writeTask:[password dataUsingEncoding:self.encoding]];
+    [self writeTask:[@"\n" dataUsingEncoding:self.encoding]];
 }
 
 - (NSImage *)dragImage
@@ -4011,6 +4051,47 @@ static long long timeInTenthsOfSeconds(struct timeval t)
   }
 }
 
+- (NSData *)backspaceData {
+    NSString *keyBindingText;
+    int keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:0x7f
+                                                      modifiers:0
+                                                           text:&keyBindingText
+                                                    keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
+    char del = 0x7f;
+    NSData *data = nil;
+    switch (keyBindingAction) {
+        case KEY_ACTION_HEX_CODE:
+            data = [self dataForHexCodes:keyBindingText];
+            break;
+
+        case KEY_ACTION_TEXT:
+            data = [keyBindingText dataUsingEncoding:self.encoding];
+            break;
+
+        case KEY_ACTION_ESCAPE_SEQUENCE:
+            data = [[@"\e" stringByAppendingString:keyBindingText] dataUsingEncoding:self.encoding];
+            break;
+
+        case KEY_ACTION_SEND_C_H_BACKSPACE:
+            data = [@"\010" dataUsingEncoding:self.encoding];
+            break;
+
+        case KEY_ACTION_SEND_C_QM_BACKSPACE:
+            data = [@"\177" dataUsingEncoding:self.encoding];
+            break;
+
+        case -1:
+            data = [NSData dataWithBytes:&del length:1];
+            break;
+
+        default:
+            data = nil;
+            break;
+    }
+
+    return data;
+}
+
 - (BOOL)hasActionableKeyMappingForEvent:(NSEvent *)event
 {
     int keyBindingAction = [self _keyBindingActionForEvent:event];
@@ -4122,7 +4203,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         }
         double dx = image.size.width / _view.frame.size.width;
         double dy = image.size.height / _view.frame.size.height;
-        
+
         NSRect sourceRect = NSMakeRect(localRect.origin.x * dx,
                                        localRect.origin.y * dy,
                                        localRect.size.width * dx,
@@ -4133,7 +4214,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                  fraction:alpha
            respectFlipped:YES
                     hints:nil];
-        
+
         if (blendDefaultBackground) {
             // Blend default background color over background image.
             [[_textview.dimmedDefaultBackgroundColor colorWithAlphaComponent:1 - _textview.blend] set];
@@ -4144,7 +4225,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         [[_textview.dimmedDefaultBackgroundColor colorWithAlphaComponent:alpha] set];
         NSRectFill(rect);
     }
-    
+
     [self drawMaximizedPaneDottedOutlineIndicatorInView:view];
 }
 
@@ -4160,14 +4241,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         CGFloat right = frame.origin.x + frame.size.width - 0.5;
         CGFloat top = frame.origin.y + 0.5;
         CGFloat bottom = frame.origin.y + frame.size.height - 0.5;
-        
+
         [path moveToPoint:NSMakePoint(left, top + VMARGIN)];
         [path lineToPoint:NSMakePoint(left, top)];
         [path lineToPoint:NSMakePoint(right, top)];
         [path lineToPoint:NSMakePoint(right, bottom)];
         [path lineToPoint:NSMakePoint(left, bottom)];
         [path lineToPoint:NSMakePoint(left, top + VMARGIN)];
-        
+
         CGFloat dashPattern[2] = { 5, 5 };
         [path setLineDash:dashPattern count:2 phase:0];
         [color set];
@@ -4395,7 +4476,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     DLog(@"Report event type %lu, modifiers=%lu, button=%d, coord=%@",
          (unsigned long)eventType, (unsigned long)modifiers, button,
          VT100GridCoordDescription(coord));
-    
+
     switch (eventType) {
         case NSLeftMouseDown:
         case NSRightMouseDown:
@@ -4410,20 +4491,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                                    withModifiers:modifiers
                                                               at:coord]];
                     return YES;
-                    
+
                 case MOUSE_REPORTING_NONE:
                 case MOUSE_REPORTING_HILITE:
                     break;
             }
             break;
-            
+
         case NSLeftMouseUp:
         case NSRightMouseUp:
         case NSOtherMouseUp:
             if (_reportingMouseDown) {
                 _reportingMouseDown = NO;
                 _lastReportedCoord = VT100GridCoordMake(-1, -1);
-                
+
                 switch ([_terminal mouseMode]) {
                     case MOUSE_REPORTING_NORMAL:
                     case MOUSE_REPORTING_BUTTON_MOTION:
@@ -4433,15 +4514,15 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                                          withModifiers:modifiers
                                                                     at:coord]];
                         return YES;
-                        
+
                     case MOUSE_REPORTING_NONE:
                     case MOUSE_REPORTING_HILITE:
                         break;
                 }
             }
             break;
-            
-            
+
+
         case NSMouseMoved:
             if ([_terminal mouseMode] == MOUSE_REPORTING_ALL_MOTION &&
                 !VT100GridCoordEquals(coord, _lastReportedCoord)) {
@@ -4452,14 +4533,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                 return YES;
             }
             break;
-            
+
         case NSLeftMouseDragged:
         case NSRightMouseDragged:
         case NSOtherMouseDragged:
             if (_reportingMouseDown &&
                 !VT100GridCoordEquals(coord, _lastReportedCoord)) {
                 _lastReportedCoord = coord;
-                
+
                 switch ([_terminal mouseMode]) {
                     case MOUSE_REPORTING_BUTTON_MOTION:
                     case MOUSE_REPORTING_ALL_MOTION:
@@ -4471,14 +4552,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                         // Don't do selection when mouse reporting during a drag, even if the drag
                         // is not reported (the clicks are).
                         return YES;
-                        
+
                     case MOUSE_REPORTING_NONE:
                     case MOUSE_REPORTING_HILITE:
                         break;
                 }
             }
             break;
-            
+
         case NSScrollWheel:
             switch ([_terminal mouseMode]) {
                 case MOUSE_REPORTING_NORMAL:
@@ -4514,7 +4595,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                     break;
             }
             break;
-                
+
         default:
             assert(NO);
             break;
@@ -4557,21 +4638,27 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (NSData *)dataForHexCodes:(NSString *)codes {
+    NSMutableData *data = [NSMutableData data];
+    NSArray* components = [codes componentsSeparatedByString:@" "];
+    for (NSString* part in components) {
+        const char* utf8 = [part UTF8String];
+        char* endPtr;
+        unsigned char c = strtol(utf8, &endPtr, 16);
+        if (endPtr != utf8) {
+            [data appendData:[NSData dataWithBytes:&c length:sizeof(c)]];
+        }
+    }
+    return data;
+}
+
 - (void)sendHexCode:(NSString *)codes
 {
     if (_exited) {
         return;
     }
     if ([codes length]) {
-        NSArray* components = [codes componentsSeparatedByString:@" "];
-        for (NSString* part in components) {
-            const char* utf8 = [part UTF8String];
-            char* endPtr;
-            unsigned char c = strtol(utf8, &endPtr, 16);
-            if (endPtr != utf8) {
-                [self writeTask:[NSData dataWithBytes:&c length:sizeof(c)]];
-            }
-        }
+        [self writeTask:[self dataForHexCodes:codes]];
     }
 }
 
@@ -5304,7 +5391,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
     [[[self tab] realParentWindow] sessionHostDidChange:self to:host];
-    
+
     // Construct a map from host binding to profile. This could be expensive with a lot of profiles
     // but it should be fairly rare for this code to run.
     NSMutableDictionary *stringToProfile = [NSMutableDictionary dictionary];
@@ -5314,7 +5401,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             stringToProfile[boundHost] = profile;
         }
     }
-    
+
     Profile *profile = nil;
     // First try user@host, then host, then user@.
     NSArray *stringsToTry = @[ [host usernameAndHostname],

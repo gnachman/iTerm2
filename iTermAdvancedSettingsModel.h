@@ -69,4 +69,6 @@
 
 + (BOOL)useSystemCursorWhenPossible;
 
++ (double)echoProbeDuration;
+
 @end
