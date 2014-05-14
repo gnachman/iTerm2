@@ -555,6 +555,13 @@
 		1DF8FEF318F3217100722B35 /* KeysPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8FEF118F3217100722B35 /* KeysPreferencesViewController.h */; };
 		1DF8FEF418F3217100722B35 /* KeysPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF8FEF218F3217100722B35 /* KeysPreferencesViewController.m */; };
 		1DF8FEF518F3217100722B35 /* KeysPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF8FEF218F3217100722B35 /* KeysPreferencesViewController.m */; };
+		1DFA7C681923E83500DF1410 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39AD6180B8118004E56D5 /* Cocoa.framework */; };
+		1DFA7C8D1923E86400DF1410 /* SSKeychainQuery.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C8B1923E86400DF1410 /* SSKeychainQuery.h */; };
+		1DFA7C8E1923E86400DF1410 /* SSKeychainQuery.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DFA7C8C1923E86400DF1410 /* SSKeychainQuery.m */; };
+		1DFA7C911923E89100DF1410 /* SSKeychain.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C8F1923E89100DF1410 /* SSKeychain.h */; };
+		1DFA7C921923E89100DF1410 /* SSKeychain.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DFA7C901923E89100DF1410 /* SSKeychain.m */; };
+		1DFA7C931923E8AC00DF1410 /* libSSKeychain.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */; };
+		1DFA7C941923E8B300DF1410 /* libSSKeychain.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */; };
 		1DFA9D5E18F36DC3008ADC98 /* iTermKeyMappingViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA9D5C18F36DC3008ADC98 /* iTermKeyMappingViewController.h */; };
 		1DFA9D5F18F36DC3008ADC98 /* iTermKeyMappingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DFA9D5D18F36DC3008ADC98 /* iTermKeyMappingViewController.m */; };
 		1DFA9D6018F36DC3008ADC98 /* iTermKeyMappingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DFA9D5D18F36DC3008ADC98 /* iTermKeyMappingViewController.m */; };
@@ -1255,6 +1262,15 @@
 		1DF8AF5713FD781700C8A435 /* SplitPanel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SplitPanel.m; sourceTree = "<group>"; };
 		1DF8FEF118F3217100722B35 /* KeysPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KeysPreferencesViewController.h; sourceTree = "<group>"; };
 		1DF8FEF218F3217100722B35 /* KeysPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KeysPreferencesViewController.m; sourceTree = "<group>"; };
+		1DFA7C671923E83500DF1410 /* libSSKeychain.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSSKeychain.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		1DFA7C6B1923E83600DF1410 /* SSKeychain-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "SSKeychain-Prefix.pch"; path = "SSKeychain/SSKeychain-Prefix.pch"; sourceTree = "<group>"; };
+		1DFA7C7B1923E83600DF1410 /* SSKeychainTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "SSKeychainTests-Info.plist"; sourceTree = "<group>"; };
+		1DFA7C7D1923E83600DF1410 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1DFA7C7F1923E83600DF1410 /* SSKeychainTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SSKeychainTests.m; sourceTree = "<group>"; };
+		1DFA7C8B1923E86400DF1410 /* SSKeychainQuery.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SSKeychainQuery.h; path = SSKeychain/SSKeychainQuery.h; sourceTree = "<group>"; };
+		1DFA7C8C1923E86400DF1410 /* SSKeychainQuery.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SSKeychainQuery.m; path = SSKeychain/SSKeychainQuery.m; sourceTree = "<group>"; };
+		1DFA7C8F1923E89100DF1410 /* SSKeychain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SSKeychain.h; path = SSKeychain/SSKeychain.h; sourceTree = "<group>"; };
+		1DFA7C901923E89100DF1410 /* SSKeychain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SSKeychain.m; path = SSKeychain/SSKeychain.m; sourceTree = "<group>"; };
 		1DFA9D5C18F36DC3008ADC98 /* iTermKeyMappingViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermKeyMappingViewController.h; sourceTree = "<group>"; };
 		1DFA9D5D18F36DC3008ADC98 /* iTermKeyMappingViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyMappingViewController.m; sourceTree = "<group>"; };
 		1DFA9D6118F37160008ADC98 /* iTermEditKeyActionWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermEditKeyActionWindowController.h; sourceTree = "<group>"; };
@@ -1580,6 +1596,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1DFA7C941923E8B300DF1410 /* libSSKeychain.a in Frameworks */,
 				A68A3100186D151F007F550F /* NMSSH.framework in Frameworks */,
 				1D78B561183EEB9700014D49 /* ScriptingBridge.framework in Frameworks */,
 				1D9A55BA180FAA1100B42CE9 /* Growl in Frameworks */,
@@ -1593,10 +1610,19 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		1DFA7C641923E83500DF1410 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1DFA7C681923E83500DF1410 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		874206510564169600CFC3F1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1DFA7C931923E8AC00DF1410 /* libSSKeychain.a in Frameworks */,
 				A68A30FF186D151E007F550F /* NMSSH.framework in Frameworks */,
 				1D81F0BD183C3B0100910838 /* ScriptingBridge.framework in Frameworks */,
 				874206530564169600CFC3F1 /* AppKit.framework in Frameworks */,
@@ -1619,6 +1645,7 @@
 				1D03D42519144B8E0049EB8F /* ThirdParty */,
 				1D5FD9AD11F61CA900C46BA3 /* Tests */,
 				0464AB27006CD2EC7F000001 /* Supporting Files */,
+				1DFA7C791923E83600DF1410 /* SSKeychainTests */,
 				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
 			);
@@ -1934,6 +1961,7 @@
 			children = (
 				8742065A0564169600CFC3F1 /* iTerm.app */,
 				1DD39AD4180B8117004E56D5 /* iTermTests.app */,
+				1DFA7C671923E83500DF1410 /* libSSKeychain.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1941,6 +1969,7 @@
 		1D03D42519144B8E0049EB8F /* ThirdParty */ = {
 			isa = PBXGroup;
 			children = (
+				1DFA7C621923E77900DF1410 /* SSKeychain */,
 				1D13EADB12113A2D00909F9C /* libncurses.dylib */,
 				F6441F610E748404000EC682 /* CGSInternal */,
 				0464AB2E006CD2EC7F000001 /* External Frameworks and Libraries */,
@@ -2314,6 +2343,36 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		1DFA7C621923E77900DF1410 /* SSKeychain */ = {
+			isa = PBXGroup;
+			children = (
+				1DFA7C8F1923E89100DF1410 /* SSKeychain.h */,
+				1DFA7C901923E89100DF1410 /* SSKeychain.m */,
+				1DFA7C6B1923E83600DF1410 /* SSKeychain-Prefix.pch */,
+				1DFA7C8B1923E86400DF1410 /* SSKeychainQuery.h */,
+				1DFA7C8C1923E86400DF1410 /* SSKeychainQuery.m */,
+			);
+			name = SSKeychain;
+			sourceTree = "<group>";
+		};
+		1DFA7C791923E83600DF1410 /* SSKeychainTests */ = {
+			isa = PBXGroup;
+			children = (
+				1DFA7C7F1923E83600DF1410 /* SSKeychainTests.m */,
+				1DFA7C7A1923E83600DF1410 /* Supporting Files */,
+			);
+			path = SSKeychainTests;
+			sourceTree = "<group>";
+		};
+		1DFA7C7A1923E83600DF1410 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				1DFA7C7B1923E83600DF1410 /* SSKeychainTests-Info.plist */,
+				1DFA7C7C1923E83600DF1410 /* InfoPlist.strings */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
 		A6358641184BEA47009ED690 /* AATree */ = {
 			isa = PBXGroup;
 			children = (
@@ -2592,6 +2651,15 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
+		1DFA7C651923E83500DF1410 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1DFA7C911923E89100DF1410 /* SSKeychain.h in Headers */,
+				1DFA7C8D1923E86400DF1410 /* SSKeychainQuery.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		874206480564169600CFC3F1 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -2881,6 +2949,23 @@
 			productReference = 1DD39AD4180B8117004E56D5 /* iTermTests.app */;
 			productType = "com.apple.product-type.application";
 		};
+		1DFA7C661923E83500DF1410 /* SSKeychain */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1DFA7C811923E83700DF1410 /* Build configuration list for PBXNativeTarget "SSKeychain" */;
+			buildPhases = (
+				1DFA7C631923E83500DF1410 /* Sources */,
+				1DFA7C641923E83500DF1410 /* Frameworks */,
+				1DFA7C651923E83500DF1410 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SSKeychain;
+			productName = SSKeychain;
+			productReference = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */;
+			productType = "com.apple.product-type.library.static";
+		};
 		874206460564169600CFC3F1 /* iTerm */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BB024D35096EE4080021E793 /* Build configuration list for PBXNativeTarget "iTerm" */;
@@ -2933,6 +3018,7 @@
 			targets = (
 				874206460564169600CFC3F1 /* iTerm */,
 				1DD39AD3180B8117004E56D5 /* iTermTests */,
+				1DFA7C661923E83500DF1410 /* SSKeychain */,
 			);
 		};
 /* End PBXProject section */
@@ -3347,6 +3433,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		1DFA7C631923E83500DF1410 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1DFA7C8E1923E86400DF1410 /* SSKeychainQuery.m in Sources */,
+				1DFA7C921923E89100DF1410 /* SSKeychain.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8742064E0564169600CFC3F1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -3662,6 +3757,14 @@
 				1DE2154212821F1C004E3ADF /* English */,
 			);
 			name = Autocomplete.xib;
+			sourceTree = "<group>";
+		};
+		1DFA7C7C1923E83600DF1410 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1DFA7C7D1923E83600DF1410 /* en */,
+			);
+			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
 		1DFA9D6A18F37AA5008ADC98 /* iTermKeyMapping.xib */ = {
@@ -4018,6 +4121,152 @@
 			};
 			name = Default;
 		};
+		1DFA7C821923E83700DF1410 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "SSKeychain/SSKeychain-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Development;
+		};
+		1DFA7C831923E83700DF1410 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "SSKeychain/SSKeychain-Prefix.pch";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Deployment;
+		};
+		1DFA7C841923E83700DF1410 /* Nightly */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "SSKeychain/SSKeychain-Prefix.pch";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Nightly;
+		};
+		1DFA7C851923E83700DF1410 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "SSKeychain/SSKeychain-Prefix.pch";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Default;
+		};
 		BB024D36096EE4080021E793 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -4241,6 +4490,16 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Default;
+		};
+		1DFA7C811923E83700DF1410 /* Build configuration list for PBXNativeTarget "SSKeychain" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DFA7C821923E83700DF1410 /* Development */,
+				1DFA7C831923E83700DF1410 /* Deployment */,
+				1DFA7C841923E83700DF1410 /* Nightly */,
+				1DFA7C851923E83700DF1410 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
 		};
 		BB024D35096EE4080021E793 /* Build configuration list for PBXNativeTarget "iTerm" */ = {
 			isa = XCConfigurationList;
