@@ -434,6 +434,8 @@ typedef enum {
 // Refreshes the textview and takes a snapshot of the SessionView.
 - (NSImage *)snapshot;
 
+- (void)enterPassword:(NSString *)password;
+
 #pragma mark - Scripting Support
 
 // Object specifier

@@ -58,6 +58,8 @@
 #import "VT100Terminal.h"
 #include <unistd.h>
 
+NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
+
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
 static NSString *const kShowFullscreenTabBarKey = @"ShowFullScreenTabBar";
 
@@ -2102,6 +2104,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [self performSelector:@selector(makeCurrentSessionFirstResponder)
                withObject:nil
                afterDelay:0];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
 }
 
 - (void)makeCurrentSessionFirstResponder
@@ -3483,6 +3486,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [itad updateBroadcastMenuState];
     [self refreshTools];
     [self updateTabColors];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
 }
 
 - (void)showOrHideInstantReplayBar
@@ -4527,7 +4531,8 @@ NSString *kSessionsKVCKey = @"sessions";
         [self hideAutoCommandHistory];
     }
     [[toolbelt_ commandHistoryView] updateCommands];
-}
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];}
+
 
 - (void)fitWindowToTabs
 {
@@ -6946,6 +6951,7 @@ NSString *kSessionsKVCKey = @"sessions";
     if (_directoriesPopupWindowController.delegate == session) {
         _directoriesPopupWindowController.delegate = nil;
     }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
 }
 
 - (IBAction)openSelection:(id)sender {

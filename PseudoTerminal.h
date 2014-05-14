@@ -17,8 +17,9 @@
 @class PTToolbarController;
 @class ToolbeltView;
 @class iTermController;
-
 @class TmuxController;
+
+extern NSString *const kCurrentSessionDidChange;
 
 // This class is 1:1 with windows. It controls the tabs, toolbar,
 // fullscreen, and coordinates resizing of sessions (either session-initiated

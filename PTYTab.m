@@ -309,7 +309,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
             // a invisible textview the first responder.
             [[realParentWindow_ window] makeFirstResponder:[session textview]];
         }
-                [realParentWindow_ setDimmingForSessions];
+        [realParentWindow_ setDimmingForSessions];
     }
     for (PTYSession* aSession in [self sessions]) {
         [[aSession textview] refresh];

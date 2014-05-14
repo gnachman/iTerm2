@@ -562,6 +562,13 @@
 		1DFA7C921923E89100DF1410 /* SSKeychain.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DFA7C901923E89100DF1410 /* SSKeychain.m */; };
 		1DFA7C931923E8AC00DF1410 /* libSSKeychain.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */; };
 		1DFA7C941923E8B300DF1410 /* libSSKeychain.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */; };
+		1DFA7C961923EA8700DF1410 /* iTermPasswordManager.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DFA7C951923EA8700DF1410 /* iTermPasswordManager.xib */; };
+		1DFA7C971923EA8700DF1410 /* iTermPasswordManager.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DFA7C951923EA8700DF1410 /* iTermPasswordManager.xib */; };
+		1DFA7C9A1923EDD900DF1410 /* iTermPasswordManagerWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C981923EDD900DF1410 /* iTermPasswordManagerWindowController.h */; };
+		1DFA7C9B1923EDD900DF1410 /* iTermPasswordManagerWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DFA7C991923EDD900DF1410 /* iTermPasswordManagerWindowController.m */; };
+		1DFA7C9C1923EDD900DF1410 /* iTermPasswordManagerWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DFA7C991923EDD900DF1410 /* iTermPasswordManagerWindowController.m */; };
+		1DFA7C9E1923F77100DF1410 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C9D1923F77100DF1410 /* Security.framework */; };
+		1DFA7C9F1923F77C00DF1410 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C9D1923F77100DF1410 /* Security.framework */; };
 		1DFA9D5E18F36DC3008ADC98 /* iTermKeyMappingViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA9D5C18F36DC3008ADC98 /* iTermKeyMappingViewController.h */; };
 		1DFA9D5F18F36DC3008ADC98 /* iTermKeyMappingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DFA9D5D18F36DC3008ADC98 /* iTermKeyMappingViewController.m */; };
 		1DFA9D6018F36DC3008ADC98 /* iTermKeyMappingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DFA9D5D18F36DC3008ADC98 /* iTermKeyMappingViewController.m */; };
@@ -1271,6 +1278,10 @@
 		1DFA7C8C1923E86400DF1410 /* SSKeychainQuery.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SSKeychainQuery.m; path = SSKeychain/SSKeychainQuery.m; sourceTree = "<group>"; };
 		1DFA7C8F1923E89100DF1410 /* SSKeychain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SSKeychain.h; path = SSKeychain/SSKeychain.h; sourceTree = "<group>"; };
 		1DFA7C901923E89100DF1410 /* SSKeychain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SSKeychain.m; path = SSKeychain/SSKeychain.m; sourceTree = "<group>"; };
+		1DFA7C951923EA8700DF1410 /* iTermPasswordManager.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iTermPasswordManager.xib; sourceTree = "<group>"; };
+		1DFA7C981923EDD900DF1410 /* iTermPasswordManagerWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasswordManagerWindowController.h; sourceTree = "<group>"; };
+		1DFA7C991923EDD900DF1410 /* iTermPasswordManagerWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasswordManagerWindowController.m; sourceTree = "<group>"; };
+		1DFA7C9D1923F77100DF1410 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		1DFA9D5C18F36DC3008ADC98 /* iTermKeyMappingViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermKeyMappingViewController.h; sourceTree = "<group>"; };
 		1DFA9D5D18F36DC3008ADC98 /* iTermKeyMappingViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyMappingViewController.m; sourceTree = "<group>"; };
 		1DFA9D6118F37160008ADC98 /* iTermEditKeyActionWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermEditKeyActionWindowController.h; sourceTree = "<group>"; };
@@ -1596,6 +1607,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1DFA7C9F1923F77C00DF1410 /* Security.framework in Frameworks */,
 				1DFA7C941923E8B300DF1410 /* libSSKeychain.a in Frameworks */,
 				A68A3100186D151F007F550F /* NMSSH.framework in Frameworks */,
 				1D78B561183EEB9700014D49 /* ScriptingBridge.framework in Frameworks */,
@@ -1622,6 +1634,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1DFA7C9E1923F77100DF1410 /* Security.framework in Frameworks */,
 				1DFA7C931923E8AC00DF1410 /* libSSKeychain.a in Frameworks */,
 				A68A30FF186D151E007F550F /* NMSSH.framework in Frameworks */,
 				1D81F0BD183C3B0100910838 /* ScriptingBridge.framework in Frameworks */,
@@ -1640,6 +1653,9 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				1DFA7C951923EA8700DF1410 /* iTermPasswordManager.xib */,
+				1DFA7C981923EDD900DF1410 /* iTermPasswordManagerWindowController.h */,
+				1DFA7C991923EDD900DF1410 /* iTermPasswordManagerWindowController.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				1D03D42519144B8E0049EB8F /* ThirdParty */,
@@ -2296,6 +2312,7 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				1DFA7C9D1923F77100DF1410 /* Security.framework */,
 				1D94EAC712D641D3008225A9 /* AddressBook.framework */,
 				1DEB293D1288899A00B2CB9F /* Carbon.framework */,
 				1DD39AD6180B8118004E56D5 /* Cocoa.framework */,
@@ -2735,6 +2752,7 @@
 				1D5FDD751208E8F000C46BA3 /* CGSTransitions.h in Headers */,
 				1D5FDD761208E8F000C46BA3 /* CGSWindow.h in Headers */,
 				1D5FDD771208E8F000C46BA3 /* CGSWorkspace.h in Headers */,
+				1DFA7C9A1923EDD900DF1410 /* iTermPasswordManagerWindowController.h in Headers */,
 				1D72439011F416F300BD4924 /* LineBuffer.h in Headers */,
 				874206490564169600CFC3F1 /* iTermApplicationDelegate.h in Headers */,
 				DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */,
@@ -3033,6 +3051,7 @@
 				1DC13AC81886507D00034DAE /* CommandHistoryPopup.xib in Resources */,
 				A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
 				1D01609E1852AA6F0014D26A /* mark.png in Resources */,
+				1DFA7C971923EA8700DF1410 /* iTermPasswordManager.xib in Resources */,
 				A61B66D418D63758009AC9D5 /* InstantReplay.xib in Resources */,
 				1DFA9D6818F37160008ADC98 /* iTermEditKeyActionWindowController.xib in Resources */,
 				1D03D424191419080049EB8F /* DirectoriesPopup.xib in Resources */,
@@ -3153,6 +3172,7 @@
 				9DB3D6E8176CBC0C0071CCF8 /* PrefsKeyboard.png in Resources */,
 				9DB3D6E9176CBC0C0071CCF8 /* PrefsKeyboard@2x.png in Resources */,
 				9DB3D6EC176CC47E0071CCF8 /* PrefsMouse.png in Resources */,
+				1DFA7C961923EA8700DF1410 /* iTermPasswordManager.xib in Resources */,
 				9DB3D6ED176CC47E0071CCF8 /* PrefsMouse@2x.png in Resources */,
 				9DB3D6F0176CCABE0071CCF8 /* PrefsArrangements.png in Resources */,
 				9DB3D6F1176CCABE0071CCF8 /* PrefsArrangements@2x.png in Resources */,
@@ -3237,6 +3257,7 @@
 				1D9A5575180FA85D00B42CE9 /* BellTrigger.m in Sources */,
 				1D9A55A7180FA8B700B42CE9 /* PSMAdiumTabStyle.m in Sources */,
 				1D9A559E180FA87000B42CE9 /* SolidColorView.m in Sources */,
+				1DFA7C9C1923EDD900DF1410 /* iTermPasswordManagerWindowController.m in Sources */,
 				1D9A55B1180FA8B700B42CE9 /* PSMUnifiedTabStyle.m in Sources */,
 				A6A2698018FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m in Sources */,
 				1D9A55B3180FA8D400B42CE9 /* UKNibOwner.m in Sources */,
@@ -3522,6 +3543,7 @@
 				A6B5134B18E779BB00D249A5 /* iTermPasteHelper.m in Sources */,
 				A6057C0A187A1809004A60AF /* TerminalFile.m in Sources */,
 				1D5FDDC91208E93600C46BA3 /* LineBuffer.m in Sources */,
+				1DFA7C9B1923EDD900DF1410 /* iTermPasswordManagerWindowController.m in Sources */,
 				874206500564169600CFC3F1 /* iTermApplicationDelegate.m in Sources */,
 				DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */,
 				1DCF3E8F122419D200AD56F1 /* ProfileModel.m in Sources */,

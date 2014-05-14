@@ -36,6 +36,7 @@
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermPasswordManagerWindowController.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "NSStringITerm.h"
@@ -74,7 +75,7 @@ static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
 static BOOL ranAutoLaunchScript = NO;
 static BOOL hasBecomeActive = NO;
 
-@interface iTermApplicationDelegate ()
+@interface iTermApplicationDelegate () <iTermPasswordManagerDelegate>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
 
@@ -92,7 +93,9 @@ static BOOL hasBecomeActive = NO;
 @end
 
 
-@implementation iTermApplicationDelegate
+@implementation iTermApplicationDelegate {
+  iTermPasswordManagerWindowController *_passwordManagerWindowController;
+}
 
 // NSApplication delegate methods
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification
@@ -570,7 +573,10 @@ static BOOL hasBecomeActive = NO;
                                                  selector:@selector(toolDidToggle:)
                                                      name:@"iTermToolToggled"
                                                    object:nil];
-
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(currentSessionDidChange)
+                                                     name:kCurrentSessionDidChange
+                                                   object:nil];
         [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self
                                                            andSelector:@selector(getUrl:withReplyEvent:)
                                                          forEventClass:kInternetEventClass
@@ -620,6 +626,14 @@ static BOOL hasBecomeActive = NO;
         n = [NSNumber numberWithBool:NO];
     }
     return [n boolValue];
+}
+
+- (IBAction)openPasswordManager:(id)sender {
+    if (!_passwordManagerWindowController) {
+        _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
+        _passwordManagerWindowController.delegate = self;
+    }
+    [[_passwordManagerWindowController window] makeKeyAndOrderFront:nil];
 }
 
 - (IBAction)toggleToolbelt:(id)sender
@@ -1474,6 +1488,21 @@ static BOOL hasBecomeActive = NO;
                                                         object:nil];
 }
 
+#pragma mark - iTermPasswordManagerDelegate
+
+- (void)iTermPasswordManagerEnterPassword:(NSString *)password {
+  [[[[iTermController sharedInstance] currentTerminal] currentSession] enterPassword:password];
+}
+
+- (BOOL)iTermPasswordManagerCanEnterPassword {
+  PTYSession *session = [[[iTermController sharedInstance] currentTerminal] currentSession];
+  return session && ![session exited];
+}
+
+- (void)currentSessionDidChange {
+    [_passwordManagerWindowController update];
+}
+
 @end
 
 // Scripting support
@@ -1501,7 +1530,7 @@ static BOOL hasBecomeActive = NO;
 - (void)setCurrentTerminal:(PseudoTerminal *)aTerminal
 {
     [[iTermController sharedInstance] setCurrentTerminal: aTerminal];
-    iTermApplicationDelegate *itad = [[NSApplication sharedApplication] delegate];
+    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
     [itad updateBroadcastMenuState];
 }
 
@@ -1555,8 +1584,6 @@ static BOOL hasBecomeActive = NO;
 {
     return [[iTermController sharedInstance] kvcKeys];
 }
-
-
 
 @end
 

@@ -2987,6 +2987,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [_view snapshot];
 }
 
+- (void)enterPassword:(NSString *)password {
+  [self writeTask:[password dataUsingEncoding:self.encoding]];
+}
+
 - (NSImage *)dragImage
 {
     NSImage *image = [self snapshot];
