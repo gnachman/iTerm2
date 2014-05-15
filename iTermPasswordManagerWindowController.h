@@ -19,7 +19,11 @@
 
 @property(nonatomic, assign) id<iTermPasswordManagerDelegate> delegate;
 
++ (NSArray *)accountNamesWithFilter:(NSString *)filter;
+
 // Re-check if the password can be entered.
 - (void)update;
+
+- (void)selectAccountName:(NSString *)name;
 
 @end

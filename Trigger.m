@@ -63,7 +63,7 @@ NSString * const kTriggerParameterKey = @"parameter";
 {
   NSDictionary *menuItems = [self menuItemsForPoupupButton];
   if (menuItems) {
-    return [NSArray arrayWithObject:menuItems];
+    return @[ menuItems ];
   } else {
     return nil;
   }
@@ -129,13 +129,30 @@ NSString * const kTriggerParameterKey = @"parameter";
     return 0;
 }
 
-- (NSArray *)tagsSortedByValueInDict:(NSDictionary *)dict
+- (int)indexForObject:(id)object {
+    return [self indexOfTag:[object intValue]];
+}
+
+- (id)objectAtIndex:(int)index {
+    int tag = [self tagAtIndex:index];
+    if (tag < 0) {
+        return nil;
+    } else {
+        return @(tag);
+    }
+}
+
+- (NSArray *)objectsSortedByValueInDict:(NSDictionary *)dict
 {
     return [dict keysSortedByValueUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
 }
 
 - (int)defaultIndex {
     return 0;
+}
+
+// Called before a trigger window opens.
+- (void)reloadData {
 }
 
 @end

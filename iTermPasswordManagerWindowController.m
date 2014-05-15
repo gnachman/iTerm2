@@ -31,6 +31,22 @@ static NSString *const kServiceName = @"iTerm2";
     NSInteger _rowForPasswordBeingShown;
 }
 
++ (NSArray *)accountNamesWithFilter:(NSString *)filter {
+    NSMutableArray *array = [NSMutableArray array];
+    if (!filter.length) {
+        filter = nil;
+    }
+    for (NSDictionary *account in [SSKeychain accountsForService:kServiceName]) {
+        NSString *accountName = account[(NSString *)kSecAttrAccount];
+        if (!filter ||
+            [accountName rangeOfString:filter
+                               options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                [array addObject:accountName];
+            }
+    }
+    return [[array sortedArrayUsingSelector:@selector(compare:)] retain];
+}
+
 - (id)init {
     return [self initWithWindowNibName:@"iTermPasswordManager"];
 }
@@ -56,6 +72,14 @@ static NSString *const kServiceName = @"iTerm2";
 - (void)update {
     [_enterPasswordButton setEnabled:([_tableView selectedRow] >= 0 &&
                                       [_delegate iTermPasswordManagerCanEnterPassword])];
+}
+
+- (void)selectAccountName:(NSString *)name {
+    NSUInteger index = [_accounts indexOfObject:name];
+    if (index != NSNotFound) {
+        [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index]
+                byExtendingSelection:NO];
+    }
 }
 
 #pragma mark - Actions
@@ -149,20 +173,8 @@ static NSString *const kServiceName = @"iTerm2";
 - (void)reloadAccounts {
     [self clearPasswordBeingShown];
     [_accounts release];
-    NSMutableArray *array = [NSMutableArray array];
     NSString *filter = [_searchField stringValue];
-    if (!filter.length) {
-        filter = nil;
-    }
-    for (NSDictionary *account in [SSKeychain accountsForService:kServiceName]) {
-        NSString *accountName = account[(NSString *)kSecAttrAccount];
-        if (!filter ||
-            [accountName rangeOfString:filter
-                               options:NSCaseInsensitiveSearch].location != NSNotFound) {
-            [array addObject:accountName];
-        }
-    }
-    _accounts = [[array sortedArrayUsingSelector:@selector(compare:)] retain];
+    _accounts = [[self class] accountNamesWithFilter:filter];
     [_tableView reloadData];
 }
 

@@ -178,7 +178,7 @@ enum {
             ++i;
         }
         isFirst = NO;
-        for (NSNumber *n in [self tagsSortedByValueInDict:dict]) {
+        for (NSNumber *n in [self objectsSortedByValueInDict:dict]) {
             if ([n intValue] == theTag) {
                 return i;
             }
@@ -197,7 +197,7 @@ enum {
             ++i;
         }
         isFirst = NO;
-        for (NSNumber *n in [self tagsSortedByValueInDict:dict]) {
+        for (NSNumber *n in [self objectsSortedByValueInDict:dict]) {
             if (i == theIndex) {
                 return [n intValue];
             }

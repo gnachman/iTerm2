@@ -636,6 +636,11 @@ static BOOL hasBecomeActive = NO;
     [[_passwordManagerWindowController window] makeKeyAndOrderFront:nil];
 }
 
+- (void)openPasswordManagerToAccountName:(NSString *)name {
+    [self openPasswordManager:nil];
+    [_passwordManagerWindowController selectAccountName:name];
+}
+
 - (IBAction)toggleToolbelt:(id)sender
 {
     [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:![self showToolbelt]]

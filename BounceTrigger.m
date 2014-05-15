@@ -38,7 +38,7 @@ enum {
 - (int)indexOfTag:(int)theTag
 {
     int i = 0;
-    for (NSNumber *n in [self tagsSortedByValueInDict:[self menuItemsForPoupupButton]]) {
+    for (NSNumber *n in [self objectsSortedByValueInDict:[self menuItemsForPoupupButton]]) {
         if ([n intValue] == theTag) {
             return i;
         }
@@ -51,7 +51,7 @@ enum {
 {
     int i = 0;
 
-    for (NSNumber *n in [self tagsSortedByValueInDict:[self menuItemsForPoupupButton]]) {
+    for (NSNumber *n in [self objectsSortedByValueInDict:[self menuItemsForPoupupButton]]) {
         if (i == index) {
             return [n intValue];
         }

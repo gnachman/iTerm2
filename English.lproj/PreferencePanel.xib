@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="5053" systemVersion="13C64" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="5056" systemVersion="13D55" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment version="1070" defaultVersion="1070" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="5053"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="5056"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="PreferencePanel">
@@ -334,11 +334,11 @@
         </customObject>
         <customObject id="5797" customClass="TriggerController">
             <connections>
-                <outlet property="actionColumn_" destination="5786" id="5800"/>
-                <outlet property="delegate_" destination="Qvt-kg-svI" id="oQh-RD-Hm3"/>
-                <outlet property="parametersColumn_" destination="5816" id="5818"/>
-                <outlet property="regexColumn_" destination="5785" id="5819"/>
-                <outlet property="tableView_" destination="5783" id="5828"/>
+                <outlet property="_actionColumn" destination="5786" id="Wgd-z5-5i7"/>
+                <outlet property="_parametersColumn" destination="5816" id="dWA-sr-82N"/>
+                <outlet property="_regexColumn" destination="5785" id="XSz-99-6Uu"/>
+                <outlet property="_tableView" destination="5783" id="vJV-I5-Q3Z"/>
+                <outlet property="delegate" destination="Qvt-kg-svI" id="M21-fa-c7S"/>
                 <outlet property="window" destination="5904" id="5919"/>
             </connections>
         </customObject>
@@ -4156,7 +4156,7 @@ Gw
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
-                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="229"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>

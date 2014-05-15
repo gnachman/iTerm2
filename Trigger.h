@@ -32,17 +32,26 @@ extern NSString * const kTriggerParameterKey;
 - (BOOL)takesParameter;
 // Returns true if the parameter this action takes is a popupbutton.
 - (BOOL)paramIsPopupButton;
-// Returns a map from NSNumber(tag) -> NSString(title)
+// Returns a map from id(tag/represented object) -> NSString(title)
 - (NSDictionary *)menuItemsForPoupupButton;
 // Returns an array of NSDictionaries mapping NSNumber(tag) -> NSString(title)
 - (NSArray *)groupedMenuItemsForPopupButton;
+
 // Index of "tag" in menu; inverse of tagAtIndex.
+// Deprecated
 - (int)indexOfTag:(int)theTag;
 // Tag at "index" in menu.
+// Deprecated
 - (int)tagAtIndex:(int)index;
 
-// Utility that returns keys sorted by values for a tag dict (i.e., an element of groupedMenuItemsForPopupButton)
-- (NSArray *)tagsSortedByValueInDict:(NSDictionary *)dict;
+// Index of represented object (usually a NSNumber tag, but could be something else)
+- (int)indexForObject:(id)object;
+// Represented object (usually a NSNumber tag, but could be something else) at an index.
+- (id)objectAtIndex:(int)index;
+
+// Utility that returns keys sorted by values for a tag/represented object dict
+// (i.e., an element of groupedMenuItemsForPopupButton)
+- (NSArray *)objectsSortedByValueInDict:(NSDictionary *)dict;
 
 - (NSString *)paramWithBackreferencesReplacedWithValues:(NSArray *)values;
 - (void)tryString:(NSString *)s inSession:(PTYSession *)aSession;
@@ -54,5 +63,8 @@ extern NSString * const kTriggerParameterKey;
 
 // If no parameter is present, the parameter index to select by default.
 - (int)defaultIndex;
+
+// Called before a trigger window opens.
+- (void)reloadData;
 
 @end

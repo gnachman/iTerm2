@@ -97,6 +97,7 @@
 #pragma mark - Triggers
 
 - (IBAction)editTriggers:(id)sender {
+    [_triggerWindowController windowWillOpen];
     [NSApp beginSheet:[_triggerWindowController window]
        modalForWindow:[self.view window]
         modalDelegate:self
@@ -110,9 +111,8 @@
 
 #pragma mark - TriggerDelegate
 
-- (void)triggerChanged:(TriggerController *)triggerController {
-    [[self.delegate profilePreferencesCurrentModel] flush];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
+- (void)triggerChanged:(TriggerController *)triggerController newValue:(NSArray *)value {
+    [self setObject:value forKey:KEY_TRIGGERS];
 }
 
 #pragma mark - SmartSelectionDelegate

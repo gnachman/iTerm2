@@ -11,27 +11,15 @@
 @class TriggerController;
 
 @protocol TriggerDelegate
-- (void)triggerChanged:(TriggerController *)controller;
+- (void)triggerChanged:(TriggerController *)controller newValue:(NSArray *)value;
 @end
 
-@interface TriggerController : NSWindowController <NSWindowDelegate> {
-  NSString *guid_;
-  BOOL hasSelection_;
-  IBOutlet NSObject<TriggerDelegate> *delegate_;  // weak
-  IBOutlet NSTableView *tableView_;
-  IBOutlet NSTableColumn *regexColumn_;
-  IBOutlet NSTableColumn *actionColumn_;
-  IBOutlet NSTableColumn *parametersColumn_;
-}
+@interface TriggerController : NSWindowController <NSWindowDelegate> 
 
 @property (nonatomic, copy) NSString *guid;
 @property (nonatomic, assign) BOOL hasSelection;
-@property (nonatomic, assign) NSObject<TriggerDelegate> *delegate;
+@property (nonatomic, assign) IBOutlet NSObject<TriggerDelegate> *delegate;
 
-- (NSArray *)triggers;
-
-- (IBAction)addTrigger:(id)sender;
-- (IBAction)removeTrigger:(id)sender;
-- (IBAction)help:(id)sender;
+- (void)windowWillOpen;
 
 @end

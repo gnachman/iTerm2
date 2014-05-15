@@ -189,6 +189,8 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (NSMenu *)downloadsMenu;
 - (NSMenu *)uploadsMenu;
 
+- (void)openPasswordManagerToAccountName:(NSString *)name;
+
 @end
 
 // Scripting support

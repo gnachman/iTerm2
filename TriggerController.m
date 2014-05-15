@@ -18,49 +18,63 @@
 #import "Trigger.h"
 #import "CoprocessTrigger.h"
 #import "SendTextTrigger.h"
+#import "PasswordTrigger.h"
 #import "FutureMethods.h"
 
-static NSMutableArray *gTriggerClasses;
-
-@implementation TriggerController
-
-@synthesize guid = guid_;
-@synthesize hasSelection = hasSelection_;
-@synthesize delegate = delegate_;
-
-+ (void)initialize
-{
-    // The analyzer flags this, but it's just a singleton.
-    gTriggerClasses = [[NSMutableArray alloc] init];
-    [gTriggerClasses addObject:[[[AlertTrigger alloc] init] autorelease]];
-    [gTriggerClasses addObject:[[[BellTrigger alloc] init] autorelease]];
-    [gTriggerClasses addObject:[[[BounceTrigger alloc] init] autorelease]];
-    [gTriggerClasses addObject:[[[GrowlTrigger alloc] init] autorelease]];
-    [gTriggerClasses addObject:[[[SendTextTrigger alloc] init] autorelease]];
-    [gTriggerClasses addObject:[[[ScriptTrigger alloc] init] autorelease]];
-    [gTriggerClasses addObject:[[[CoprocessTrigger alloc] init] autorelease]];
-    [gTriggerClasses addObject:[[[MuteCoprocessTrigger alloc] init] autorelease]];
-    [gTriggerClasses addObject:[[[HighlightTrigger alloc] init] autorelease]];
-    [gTriggerClasses addObject:[[[MarkTrigger alloc] init] autorelease]];
-    [gTriggerClasses sortUsingSelector:@selector(compareTitle:)];
+@implementation TriggerController {
+    NSArray *_triggers;
+    IBOutlet NSTableView *_tableView;
+    IBOutlet NSTableColumn *_regexColumn;
+    IBOutlet NSTableColumn *_actionColumn;
+    IBOutlet NSTableColumn *_parametersColumn;
 }
 
-- (void)dealloc
-{
-    [guid_ release];
+- (id)init {
+    self = [super init];
+    if (self) {
+        NSMutableArray *triggers = [NSMutableArray array];
+        for (Class class in [self triggerClasses]) {
+            [triggers addObject:[[class alloc] init]];
+        }
+        _triggers = [triggers retain];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_guid release];
     [super dealloc];
 }
 
-+ (int)numberOfTriggers
-{
-    return gTriggerClasses.count;
+- (NSArray *)triggerClasses {
+    return @[ [AlertTrigger class],
+              [BellTrigger class],
+              [BounceTrigger class],
+              [GrowlTrigger class],
+              [SendTextTrigger class],
+              [ScriptTrigger class],
+              [CoprocessTrigger class],
+              [MuteCoprocessTrigger class],
+              [HighlightTrigger class],
+              [MarkTrigger class],
+              [PasswordTrigger class] ];
 }
 
-+ (int)indexOfAction:(NSString *)action
-{
-    int n = [TriggerController numberOfTriggers];
+- (void)windowWillOpen {
+    for (Trigger *trigger in _triggers) {
+        [trigger reloadData];
+    }
+}
+
+- (int)numberOfTriggers {
+    return [[self triggerClasses] count];
+}
+
+- (int)indexOfAction:(NSString *)action {
+    int n = [self numberOfTriggers];
+    NSArray *classes = [self triggerClasses];
     for (int i = 0; i < n; i++) {
-        NSString *className = NSStringFromClass([[gTriggerClasses objectAtIndex:i] class]);
+        NSString *className = NSStringFromClass(classes[i]);
         if ([className isEqualToString:action]) {
             return i;
         }
@@ -68,33 +82,26 @@ static NSMutableArray *gTriggerClasses;
     return -1;
 }
 
-// Index in gTriggerClasses of an object of class "c"
-+ (NSInteger)indexOfTriggerClass:(Class)c
-{
-    for (int i = 0; i < gTriggerClasses.count; i++) {
-        if ([[gTriggerClasses objectAtIndex:i] isKindOfClass:c]) {
+// Index in triggerClasses of an object of class "c"
+- (NSInteger)indexOfTriggerClass:(Class)c {
+    NSArray *classes = [self triggerClasses];
+    for (int i = 0; i < classes.count; i++) {
+        if (classes[i] == c) {
             return i;
         }
     }
     return -1;
 }
 
-+ (Trigger *)triggerAtIndex:(int)i
-{
-    return [gTriggerClasses objectAtIndex:i];
-}
-
-+ (Trigger *)triggerWithAction:(NSString *)action
-{
-    int i = [TriggerController indexOfAction:action];
+- (Trigger *)triggerWithAction:(NSString *)action {
+    int i = [self indexOfAction:action];
     if (i == -1) {
         return nil;
     }
-    return [TriggerController triggerAtIndex:i];
+    return _triggers[i];
 }
 
-- (Profile *)bookmark
-{
+- (Profile *)bookmark {
     Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:self.guid];
     if (!bookmark) {
         bookmark = [[ProfileModel sessionsInstance] bookmarkWithGuid:self.guid];
@@ -102,83 +109,62 @@ static NSMutableArray *gTriggerClasses;
     return bookmark;
 }
 
-- (NSArray *)triggers
-{
+- (NSArray *)triggerDictionariesForCurrentProfile {
     Profile *bookmark = [self bookmark];
     NSArray *triggers = [bookmark objectForKey:KEY_TRIGGERS];
     return triggers ? triggers : [NSArray array];
 }
 
-- (ProfileModel *)modelForBookmark:(Profile *)bookmark
-{
-    if ([[ProfileModel sharedInstance] bookmarkWithGuid:[bookmark objectForKey:KEY_GUID]]) {
-        return [ProfileModel sharedInstance];
-    } else if ([[ProfileModel sessionsInstance] bookmarkWithGuid:[bookmark objectForKey:KEY_GUID]]) {
-        return [ProfileModel sessionsInstance];
-    } else {
-        return nil;
-    }
-}
-
-- (void)setTrigger:(NSDictionary *)trigger forRow:(NSInteger)rowIndex
-{
+- (void)setTriggerDictionary:(NSDictionary *)triggerDictionary forRow:(NSInteger)rowIndex {
     // Stop editing. A reload while editing crashes.
-    [tableView_ reloadData];
-    NSMutableArray *triggers = [[[self triggers] mutableCopy] autorelease];
+    [_tableView reloadData];
+    NSMutableArray *triggerDictionaries = [[[self triggerDictionariesForCurrentProfile] mutableCopy] autorelease];
     if (rowIndex < 0) {
-        assert(trigger);
-        [triggers addObject:trigger];
+        assert(triggerDictionary);
+        [triggerDictionaries addObject:triggerDictionary];
     } else {
-        if (trigger) {
-            [triggers replaceObjectAtIndex:rowIndex withObject:trigger];
+        if (triggerDictionary) {
+            [triggerDictionaries replaceObjectAtIndex:rowIndex withObject:triggerDictionary];
         } else {
-            [triggers removeObjectAtIndex:rowIndex];
+            [triggerDictionaries removeObjectAtIndex:rowIndex];
         }
     }
-    Profile *bookmark = [self bookmark];
-    [[self modelForBookmark:bookmark] setObject:triggers forKey:KEY_TRIGGERS inBookmark:bookmark];
-    [tableView_ reloadData];
-    [delegate_ triggerChanged:nil];
+    [_delegate triggerChanged:self newValue:triggerDictionaries];
+    [_tableView reloadData];
 }
 
-- (BOOL)actionTakesParameter:(NSString *)action
-{
-    return [[TriggerController triggerWithAction:action] takesParameter];
+- (BOOL)actionTakesParameter:(NSString *)action {
+    return [[self triggerWithAction:action] takesParameter];
 }
 
-- (NSDictionary *)defaultTrigger
-{
-    return [NSDictionary dictionaryWithObjectsAndKeys:
-            @"", kTriggerRegexKey,
-            [[TriggerController triggerAtIndex:[TriggerController indexOfTriggerClass:[BounceTrigger class]]] action], kTriggerActionKey,
-            nil];
+- (NSDictionary *)defaultTriggerDictionary {
+    int index = [self indexOfTriggerClass:[BounceTrigger class]];
+    Trigger *trigger = _triggers[index];
+    return @{ kTriggerRegexKey: @"",
+              kTriggerActionKey: [trigger action] };
 }
 
-- (IBAction)addTrigger:(id)sender
-{
-    [self setTrigger:[self defaultTrigger] forRow:-1];
-    [tableView_ selectRowIndexes:[NSIndexSet indexSetWithIndex:tableView_.numberOfRows - 1]
+- (IBAction)addTrigger:(id)sender {
+    [self setTriggerDictionary:[self defaultTriggerDictionary] forRow:-1];
+    [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:_tableView.numberOfRows - 1]
             byExtendingSelection:NO];
 }
 
-- (IBAction)removeTrigger:(id)sender
-{
-    assert(tableView_.selectedRow >= 0);
-    [self setTrigger:nil forRow:[tableView_ selectedRow]];
+- (IBAction)removeTrigger:(id)sender {
+    assert(_tableView.selectedRow >= 0);
+    [self setTriggerDictionary:nil forRow:[_tableView selectedRow]];
 }
 
-- (void)setGuid:(NSString *)guid
-{
-    [guid_ autorelease];
-    guid_ = [guid copy];
-    [tableView_ reloadData];
+- (void)setGuid:(NSString *)guid {
+    [_guid autorelease];
+    _guid = [guid copy];
+    [_tableView reloadData];
 }
 
 #pragma mark - NSTableViewDataSource
 
-- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView
-{
-    return [[self triggers] count];
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
+    return [[self triggerDictionariesForCurrentProfile] count];
 }
 
 - (id)tableView:(NSTableView *)aTableView
@@ -188,20 +174,20 @@ static NSMutableArray *gTriggerClasses;
         // Sanity check.
         return nil;
     }
-    NSDictionary *trigger = [[self triggers] objectAtIndex:rowIndex];
-    if (aTableColumn == regexColumn_) {
-        return [trigger objectForKey:kTriggerRegexKey];
-    } else if (aTableColumn == parametersColumn_) {
-        NSString *action = [trigger objectForKey:kTriggerActionKey];
-        Trigger *triggerObj = [TriggerController triggerWithAction:action];
+    NSDictionary *triggerDictionary = [self triggerDictionariesForCurrentProfile][rowIndex];
+    if (aTableColumn == _regexColumn) {
+        return triggerDictionary[kTriggerRegexKey];
+    } else if (aTableColumn == _parametersColumn) {
+        NSString *action = triggerDictionary[kTriggerActionKey];
+        Trigger *triggerObj = [self triggerWithAction:action];
         if ([triggerObj takesParameter]) {
-            id param = [trigger objectForKey:kTriggerParameterKey];
+            id param = triggerDictionary[kTriggerParameterKey];
             if ([triggerObj paramIsPopupButton]) {
                 if (!param) {
                     // Force popup buttons to have the first item selected by default
                     return @([triggerObj defaultIndex]);
                 } else {
-                    return @([triggerObj indexOfTag:[param intValue]]);
+                    return @([triggerObj indexForObject:param]);
                 }
             } else {
                 return param;
@@ -210,47 +196,56 @@ static NSMutableArray *gTriggerClasses;
             return @"";
         }
     } else {
-        NSString *action = [trigger objectForKey:kTriggerActionKey];
-        return [NSNumber numberWithInt:[TriggerController indexOfAction:action]];
+        NSString *action = triggerDictionary[kTriggerActionKey];
+        int theIndex = [self indexOfAction:action];
+        return @(theIndex);
     }
 }
 
-- (void)tableView:(NSTableView *)aTableView setObjectValue:(id)anObject forTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
-{
-    NSMutableDictionary *trigger = [[[[self triggers] objectAtIndex:rowIndex] mutableCopy] autorelease];
+- (void)tableView:(NSTableView *)aTableView
+   setObjectValue:(id)anObject
+   forTableColumn:(NSTableColumn *)aTableColumn
+              row:(NSInteger)rowIndex {
+    NSMutableDictionary *triggerDictionary = [[[self triggerDictionariesForCurrentProfile][rowIndex] mutableCopy] autorelease];
 
-    if (aTableColumn == regexColumn_) {
-        [trigger setObject:anObject forKey:kTriggerRegexKey];
-    } else if (aTableColumn == parametersColumn_) {
-        Trigger *triggerObj = [TriggerController triggerWithAction:[trigger objectForKey:kTriggerActionKey]];
+    if (aTableColumn == _regexColumn) {
+        triggerDictionary[kTriggerRegexKey] = anObject;
+    } else if (aTableColumn == _parametersColumn) {
+        Trigger *triggerObj = [self triggerWithAction:triggerDictionary[kTriggerActionKey]];
         if ([triggerObj paramIsPopupButton]) {
-            int theTag = [triggerObj tagAtIndex:[anObject intValue]];
-            [trigger setObject:[NSNumber numberWithInt:theTag] forKey:kTriggerParameterKey];
+            id parameter = [triggerObj objectAtIndex:[anObject intValue]];
+            if (parameter) {
+                triggerDictionary[kTriggerParameterKey] = parameter;
+            } else {
+                [triggerDictionary removeObjectForKey:kTriggerParameterKey];
+            }
         } else {
-            [trigger setObject:anObject forKey:kTriggerParameterKey];
+            triggerDictionary[kTriggerParameterKey] = anObject;
         }
     } else {
         // Action column
-        [trigger setObject:[[TriggerController triggerAtIndex:[anObject intValue]] action]
-                    forKey:kTriggerActionKey];
-        [trigger removeObjectForKey:kTriggerParameterKey];
-        Trigger *triggerObj = [TriggerController triggerWithAction:[trigger objectForKey:kTriggerActionKey]];
+        int index = [anObject intValue];
+        Trigger *theTrigger = _triggers[index];
+        triggerDictionary[kTriggerActionKey] = [theTrigger action];
+        [triggerDictionary removeObjectForKey:kTriggerParameterKey];
+        Trigger *triggerObj = [self triggerWithAction:triggerDictionary[kTriggerActionKey]];
         if ([triggerObj paramIsPopupButton]) {
-            [trigger setObject:[NSNumber numberWithInt:0] forKey:kTriggerParameterKey];
+            triggerDictionary[kTriggerParameterKey] = @0;
         }
     }
-    [self setTrigger:trigger forRow:rowIndex];
+    [self setTriggerDictionary:triggerDictionary forRow:rowIndex];
 }
 
 #pragma mark NSTableViewDelegate
-- (BOOL)tableView:(NSTableView *)aTableView shouldEditTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
-{
-    if (aTableColumn == regexColumn_) {
+- (BOOL)tableView:(NSTableView *)aTableView
+    shouldEditTableColumn:(NSTableColumn *)aTableColumn
+                      row:(NSInteger)rowIndex {
+    if (aTableColumn == _regexColumn) {
         return YES;
     }
-    if (aTableColumn == parametersColumn_) {
-        NSDictionary *trigger = [[self triggers] objectAtIndex:rowIndex];
-        NSString *action = [trigger objectForKey:kTriggerActionKey];
+    if (aTableColumn == _parametersColumn) {
+        NSDictionary *triggerDictionary = [self triggerDictionariesForCurrentProfile][rowIndex];
+        NSString *action = triggerDictionary[kTriggerActionKey];
         return [self actionTakesParameter:action];
     }
     return NO;
@@ -258,27 +253,28 @@ static NSMutableArray *gTriggerClasses;
 
 - (NSCell *)tableView:(NSTableView *)tableView
       dataCellForTableColumn:(NSTableColumn *)tableColumn
-                  row:(NSInteger)row
-{
-    if (tableColumn == actionColumn_) {
+                  row:(NSInteger)row {
+    if (tableColumn == _actionColumn) {
         NSPopUpButtonCell *cell =
-            [[[NSPopUpButtonCell alloc] initTextCell:[[TriggerController triggerAtIndex:0] title] pullsDown:NO] autorelease];
-        for (int i = 0; i < [TriggerController numberOfTriggers]; i++) {
-            [cell addItemWithTitle:[[TriggerController triggerAtIndex:i] title]];
+            [[[NSPopUpButtonCell alloc] initTextCell:[_triggers[0] title] pullsDown:NO] autorelease];
+        for (int i = 0; i < [self numberOfTriggers]; i++) {
+            [cell addItemWithTitle:[_triggers[i] title]];
         }
 
         [cell setBordered:NO];
 
         return cell;
-    } else if (tableColumn == regexColumn_) {
+    } else if (tableColumn == _regexColumn) {
         NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@"regex"] autorelease];
         [cell setEditable:YES];
         return cell;
-    } else if (tableColumn == parametersColumn_) {
-        Trigger *trigger = [TriggerController triggerWithAction:[[[self triggers] objectAtIndex:row] objectForKey:kTriggerActionKey]];
+    } else if (tableColumn == _parametersColumn) {
+        NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
+        Trigger *trigger = [self triggerWithAction:triggerDicts[row][kTriggerActionKey]];
         if ([trigger takesParameter]) {
             if ([trigger paramIsPopupButton]) {
-                NSPopUpButtonCell *cell = [[[NSPopUpButtonCell alloc] initTextCell:@"" pullsDown:NO] autorelease];
+                NSPopUpButtonCell *cell = [[[NSPopUpButtonCell alloc] initTextCell:@""
+                                                                         pullsDown:NO] autorelease];
                 NSMenu *theMenu = [cell menu];
                 BOOL isFirst = YES;
                 for (NSDictionary *items in [trigger groupedMenuItemsForPopupButton]) {
@@ -286,11 +282,12 @@ static NSMutableArray *gTriggerClasses;
                         [theMenu addItem:[NSMenuItem separatorItem]];
                     }
                     isFirst = NO;
-                    for (NSNumber *n in [trigger tagsSortedByValueInDict:items]) {
-                        NSString *theTitle = [items objectForKey:n];
+                    for (id object in [trigger objectsSortedByValueInDict:items]) {
+                        NSString *theTitle = [items objectForKey:object];
                         if (theTitle) {
-                            NSMenuItem *anItem = [[[NSMenuItem alloc] initWithTitle:theTitle action:nil keyEquivalent:@""] autorelease];
-                            [anItem setTag:[n intValue]];
+                            NSMenuItem *anItem = [[[NSMenuItem alloc] initWithTitle:theTitle
+                                                                             action:nil
+                                                                      keyEquivalent:@""] autorelease];
                             [theMenu addItem:anItem];
                         }
                     }
@@ -314,21 +311,18 @@ static NSMutableArray *gTriggerClasses;
     return nil;
 }
 
-- (void)tableViewSelectionDidChange:(NSNotification *)notification
-{
-    self.hasSelection = [tableView_ numberOfSelectedRows] > 0;
+- (void)tableViewSelectionDidChange:(NSNotification *)notification {
+    self.hasSelection = [_tableView numberOfSelectedRows] > 0;
 }
 
-- (IBAction)help:(id)sender
-{
+- (IBAction)help:(id)sender {
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://www.iterm2.com/triggers.html"]];
 }
 
 #pragma mark NSWindowDelegate
 
-- (void)windowWillClose:(NSNotification *)notification
-{
-    [tableView_ reloadData];
+- (void)windowWillClose:(NSNotification *)notification {
+    [_tableView reloadData];
 }
 
 @end
