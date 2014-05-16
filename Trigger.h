@@ -52,7 +52,10 @@ extern NSString * const kTriggerPartialLineKey;
 - (NSArray *)objectsSortedByValueInDict:(NSDictionary *)dict;
 
 - (NSString *)paramWithBackreferencesReplacedWithValues:(NSArray *)values;
-- (void)tryString:(NSString *)s inSession:(PTYSession *)aSession partialLine:(BOOL)partialLine;
+- (void)tryString:(NSString *)s
+        inSession:(PTYSession *)aSession
+      partialLine:(BOOL)partialLine
+       lineNumber:(long long)lineNumber;
 
 // Subclasses must override this.
 - (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession;
@@ -61,6 +64,10 @@ extern NSString * const kTriggerPartialLineKey;
 
 // If no parameter is present, the parameter index to select by default.
 - (int)defaultIndex;
+
+// Default value for a parameter of a popup. Trigger's implementation returns
+// @0 but subclasses can override.
+- (id)defaultPopupParameterObject;
 
 // Called before a trigger window opens.
 - (void)reloadData;

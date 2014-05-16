@@ -87,5 +87,8 @@
     return 0;
 }
 
+- (id)defaultPopupParameterObject {
+    return @"";
+}
 
 @end

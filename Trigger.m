@@ -15,7 +15,9 @@ NSString * const kTriggerParameterKey = @"parameter";
 NSString * const kTriggerPartialLineKey = @"partial";
 
 @implementation Trigger {
-    BOOL _hasFiredForThisLine;
+    // The last absolute line number on which this trigger fired for a partial
+    // line. -1 means it has not fired on the current line.
+    long long _lastLineNumber;
     NSString *regex_;
     NSString *action_;
     NSString *param_;
@@ -34,6 +36,14 @@ NSString * const kTriggerPartialLineKey = @"partial";
     trigger.param = dict[kTriggerParameterKey];
     trigger.partialLine = [dict[kTriggerPartialLineKey] boolValue];
     return trigger;
+}
+
+- (id)init {
+    self = [super init];
+    if (self) {
+        _lastLineNumber = -1;
+    }
+    return self;
 }
 
 - (NSString *)action
@@ -89,22 +99,34 @@ NSString * const kTriggerPartialLineKey = @"partial";
     assert(false);
 }
 
-- (void)tryString:(NSString *)s inSession:(PTYSession *)aSession partialLine:(BOOL)partialLine {
-    if (!partialLine) {
-        _hasFiredForThisLine = NO;
-    } else if (_hasFiredForThisLine || !_partialLine) {
+- (void)tryString:(NSString *)s
+        inSession:(PTYSession *)aSession
+      partialLine:(BOOL)partialLine
+       lineNumber:(long long)lineNumber {
+    if (_partialLine && _lastLineNumber == lineNumber) {
+        // Already fired a on a partial line on this line.
+        if (!partialLine) {
+            _lastLineNumber = -1;
+        }
+        return;
+    }
+    if (partialLine && !_partialLine) {
+        // This trigger doesn't support partial lines.
         return;
     }
     NSRange range = [s rangeOfRegex:regex_];
     if (range.location != NSNotFound) {
         NSArray *captures = [s arrayOfCaptureComponentsMatchedByRegex:regex_];
         if (captures.count) {
-            _hasFiredForThisLine = YES;
+            _lastLineNumber = lineNumber;
         }
         for (NSArray *matches in captures) {
             [self performActionWithValues:matches
                                 inSession:aSession];
         }
+    }
+    if (!partialLine) {
+        _lastLineNumber = -1;
     }
 }
 
@@ -163,6 +185,10 @@ NSString * const kTriggerPartialLineKey = @"partial";
 
 - (int)defaultIndex {
     return 0;
+}
+
+- (id)defaultPopupParameterObject {
+    return @0;
 }
 
 // Called before a trigger window opens.

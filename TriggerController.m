@@ -235,7 +235,7 @@
         [triggerDictionary removeObjectForKey:kTriggerParameterKey];
         Trigger *triggerObj = [self triggerWithAction:triggerDictionary[kTriggerActionKey]];
         if ([triggerObj paramIsPopupButton]) {
-            triggerDictionary[kTriggerParameterKey] = @0;
+            triggerDictionary[kTriggerParameterKey] = [triggerObj defaultPopupParameterObject];
         }
     }
     [self setTriggerDictionary:triggerDictionary forRow:rowIndex];
@@ -275,6 +275,7 @@
         return cell;
     } else if (tableColumn == _partialLineColumn) {
         NSButtonCell *cell = [[[NSButtonCell alloc] init] autorelease];
+        [cell setTitle:nil];
         [cell setButtonType:NSSwitchButton];
         return cell;
     } else if (tableColumn == _parametersColumn) {

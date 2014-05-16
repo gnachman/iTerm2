@@ -1229,13 +1229,19 @@ typedef enum {
 - (void)checkTriggers
 {
     for (Trigger *trigger in _triggers) {
-        [trigger tryString:_triggerLine inSession:self partialLine:NO];
+        [trigger tryString:_triggerLine
+                 inSession:self
+               partialLine:NO
+                lineNumber:[_screen absoluteLineNumberOfCursor]];
     }
 }
 
 - (void)checkPartialLineTriggers {
     for (Trigger *trigger in _triggers) {
-        [trigger tryString:_triggerLine inSession:self partialLine:YES];
+        [trigger tryString:_triggerLine
+                 inSession:self
+               partialLine:YES
+                lineNumber:[_screen absoluteLineNumberOfCursor]];
     }
 }
 
