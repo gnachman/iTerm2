@@ -1,7 +1,5 @@
 #import "NMSSH.h"
 
-#import "NMSSHChannelDelegate.h"
-
 typedef NS_ENUM(NSInteger, NMSSHChannelError) {
     NMSSHChannelExecutionError,
     NMSSHChannelExecutionResponseError,
@@ -153,6 +151,29 @@ typedef NS_ENUM(NSInteger, NMSSHChannelType)  {
  @returns Shell write success
  */
 - (BOOL)write:(NSString *)command error:(NSError **)error timeout:(NSNumber *)timeout;
+
+/**
+ Write data on the remote shell.
+
+ If an error occurs or the connection timed out, it will return NO and populate the error object.
+
+ @param data Any data
+ @param error Error handler
+ @returns Shell write success
+ */
+- (BOOL)writeData:(NSData *)data error:(NSError **)error;
+
+/**
+ Write data on the remote shell with a given timeout.
+
+ If an error occurs or the connection timed out, it will return NO and populate the error object.
+
+ @param data Any data
+ @param error Error handler
+ @param timeout The time to wait (in seconds) before giving up on the request
+ @returns Shell write success
+ */
+- (BOOL)writeData:(NSData *)data error:(NSError **)error timeout:(NSNumber *)timeout;
 
 /**
  Request size for the remote pseudo terminal.
