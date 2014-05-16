@@ -1229,7 +1229,13 @@ typedef enum {
 - (void)checkTriggers
 {
     for (Trigger *trigger in _triggers) {
-        [trigger tryString:_triggerLine inSession:self];
+        [trigger tryString:_triggerLine inSession:self partialLine:NO];
+    }
+}
+
+- (void)checkPartialLineTriggers {
+    for (Trigger *trigger in _triggers) {
+        [trigger tryString:_triggerLine inSession:self partialLine:YES];
     }
 }
 
@@ -2581,6 +2587,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (_tailFindTimer && [[[_view findViewController] view] isHidden]) {
         [self stopTailFind];
     }
+    
+    [self checkPartialLineTriggers];
     _timerRunning = NO;
 }
 

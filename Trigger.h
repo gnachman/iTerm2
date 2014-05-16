@@ -12,16 +12,14 @@
 extern NSString * const kTriggerRegexKey;
 extern NSString * const kTriggerActionKey;
 extern NSString * const kTriggerParameterKey;
+extern NSString * const kTriggerPartialLineKey;
 
-@interface Trigger : NSObject {
-    NSString *regex_;
-    NSString *action_;
-    NSString *param_;
-}
+@interface Trigger : NSObject
 
 @property (nonatomic, copy) NSString *regex;
 @property (nonatomic, copy) NSString *action;
 @property (nonatomic, copy) NSString *param;
+@property (nonatomic, assign) BOOL partialLine;
 
 + (Trigger *)triggerFromDict:(NSDictionary *)dict;
 - (NSString *)action;
@@ -54,7 +52,7 @@ extern NSString * const kTriggerParameterKey;
 - (NSArray *)objectsSortedByValueInDict:(NSDictionary *)dict;
 
 - (NSString *)paramWithBackreferencesReplacedWithValues:(NSArray *)values;
-- (void)tryString:(NSString *)s inSession:(PTYSession *)aSession;
+- (void)tryString:(NSString *)s inSession:(PTYSession *)aSession partialLine:(BOOL)partialLine;
 
 // Subclasses must override this.
 - (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession;

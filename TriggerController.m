@@ -25,6 +25,7 @@
     NSArray *_triggers;
     IBOutlet NSTableView *_tableView;
     IBOutlet NSTableColumn *_regexColumn;
+    IBOutlet NSTableColumn *_partialLineColumn;
     IBOutlet NSTableColumn *_actionColumn;
     IBOutlet NSTableColumn *_parametersColumn;
 }
@@ -177,6 +178,8 @@
     NSDictionary *triggerDictionary = [self triggerDictionariesForCurrentProfile][rowIndex];
     if (aTableColumn == _regexColumn) {
         return triggerDictionary[kTriggerRegexKey];
+    } else if (aTableColumn == _partialLineColumn) {
+        return triggerDictionary[kTriggerPartialLineKey];
     } else if (aTableColumn == _parametersColumn) {
         NSString *action = triggerDictionary[kTriggerActionKey];
         Trigger *triggerObj = [self triggerWithAction:action];
@@ -210,6 +213,8 @@
 
     if (aTableColumn == _regexColumn) {
         triggerDictionary[kTriggerRegexKey] = anObject;
+    } else if (aTableColumn == _partialLineColumn) {
+        triggerDictionary[kTriggerPartialLineKey] = anObject;
     } else if (aTableColumn == _parametersColumn) {
         Trigger *triggerObj = [self triggerWithAction:triggerDictionary[kTriggerActionKey]];
         if ([triggerObj paramIsPopupButton]) {
@@ -240,7 +245,7 @@
 - (BOOL)tableView:(NSTableView *)aTableView
     shouldEditTableColumn:(NSTableColumn *)aTableColumn
                       row:(NSInteger)rowIndex {
-    if (aTableColumn == _regexColumn) {
+    if (aTableColumn == _regexColumn || aTableColumn == _partialLineColumn) {
         return YES;
     }
     if (aTableColumn == _parametersColumn) {
@@ -267,6 +272,10 @@
     } else if (tableColumn == _regexColumn) {
         NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@"regex"] autorelease];
         [cell setEditable:YES];
+        return cell;
+    } else if (tableColumn == _partialLineColumn) {
+        NSButtonCell *cell = [[[NSButtonCell alloc] init] autorelease];
+        [cell setButtonType:NSSwitchButton];
         return cell;
     } else if (tableColumn == _parametersColumn) {
         NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];

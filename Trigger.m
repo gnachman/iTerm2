@@ -12,8 +12,14 @@
 NSString * const kTriggerRegexKey = @"regex";
 NSString * const kTriggerActionKey = @"action";
 NSString * const kTriggerParameterKey = @"parameter";
+NSString * const kTriggerPartialLineKey = @"partial";
 
-@implementation Trigger
+@implementation Trigger {
+    BOOL _hasFiredForThisLine;
+    NSString *regex_;
+    NSString *action_;
+    NSString *param_;
+}
 
 @synthesize regex = regex_;
 @synthesize action = action_;
@@ -24,8 +30,9 @@ NSString * const kTriggerParameterKey = @"parameter";
     NSString *className = [dict objectForKey:kTriggerActionKey];
     Class class = NSClassFromString(className);
     Trigger *trigger = [[[class alloc] init] autorelease];
-    trigger.regex = [dict objectForKey:kTriggerRegexKey];
-    trigger.param = [dict objectForKey:kTriggerParameterKey];
+    trigger.regex = dict[kTriggerRegexKey];
+    trigger.param = dict[kTriggerParameterKey];
+    trigger.partialLine = [dict[kTriggerPartialLineKey] boolValue];
     return trigger;
 }
 
@@ -82,11 +89,18 @@ NSString * const kTriggerParameterKey = @"parameter";
     assert(false);
 }
 
-- (void)tryString:(NSString *)s inSession:(PTYSession *)aSession
-{
+- (void)tryString:(NSString *)s inSession:(PTYSession *)aSession partialLine:(BOOL)partialLine {
+    if (!partialLine) {
+        _hasFiredForThisLine = NO;
+    } else if (_hasFiredForThisLine || !_partialLine) {
+        return;
+    }
     NSRange range = [s rangeOfRegex:regex_];
     if (range.location != NSNotFound) {
         NSArray *captures = [s arrayOfCaptureComponentsMatchedByRegex:regex_];
+        if (captures.count) {
+            _hasFiredForThisLine = YES;
+        }
         for (NSArray *matches in captures) {
             [self performActionWithValues:matches
                                 inSession:aSession];
