@@ -14,12 +14,19 @@
 #import "PasteboardHistory.h"
 #import "WindowArrangements.h"
 
+enum {
+    kUseSystemWindowRestorationSettingTag = 0,
+    kOpenDefaultWindowArrangementTag = 1,
+    kDontOpenAnyWindowsTag= 2
+};
+
 @implementation GeneralPreferencesViewController {
     // open bookmarks when iterm starts
     IBOutlet NSButton *_openBookmark;
-    
+
     // Open saved window arrangement at startup
-    IBOutlet NSButton *_openArrangementAtStartup;
+    IBOutlet NSPopUpButton *_openWindowsAtStartup;
+    IBOutlet NSMenuItem *_openDefaultWindowArrangementItem;
 
     // Quit when all windows are closed
     IBOutlet NSButton *_quitWhenAllWindowsClosed;
@@ -93,23 +100,50 @@
                                                  selector:@selector(savedArrangementChanged:)
                                                      name:kSavedArrangementDidChangeNotification
                                                    object:nil];
-        
+
     }
     return self;
 }
 
 - (void)awakeFromNib {
     PreferenceInfo *info;
-    
+
     [self defineControl:_openBookmark
                     key:kPreferenceKeyOpenBookmark
                    type:kPreferenceInfoTypeCheckbox];
-    
-    info = [self defineControl:_openArrangementAtStartup
-                           key:kPreferenceKeyOpenArrangementAtStartup
-                          type:kPreferenceInfoTypeCheckbox];
-    info.shouldBeEnabled = ^BOOL() { return [WindowArrangements count] > 0; };
 
+    info = [self defineControl:_openWindowsAtStartup
+                           key:kPreferenceKeyOpenArrangementAtStartup
+                          type:kPreferenceInfoTypeCheckbox
+                settingChanged:^(id sender) {
+                    switch ([_openWindowsAtStartup selectedTag]) {
+                        case kUseSystemWindowRestorationSettingTag:
+                            [self setBool:NO forKey:kPreferenceKeyOpenArrangementAtStartup];
+                            [self setBool:NO forKey:kPreferenceKeyOpenNoWindowsAtStartup];
+                            break;
+
+                        case kOpenDefaultWindowArrangementTag:
+                            [self setBool:YES forKey:kPreferenceKeyOpenArrangementAtStartup];
+                            [self setBool:NO forKey:kPreferenceKeyOpenNoWindowsAtStartup];
+                            break;
+
+                        case kDontOpenAnyWindowsTag:
+                            [self setBool:NO forKey:kPreferenceKeyOpenArrangementAtStartup];
+                            [self setBool:YES forKey:kPreferenceKeyOpenNoWindowsAtStartup];
+                            break;
+                    }
+                } update:^BOOL{
+                    if ([self boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
+                        [_openWindowsAtStartup selectItemWithTag:kDontOpenAnyWindowsTag];
+                    } else if ([WindowArrangements count] &&
+                               [self boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
+                        [_openWindowsAtStartup selectItemWithTag:kOpenDefaultWindowArrangementTag];
+                    } else {
+                        [_openWindowsAtStartup selectItemWithTag:kUseSystemWindowRestorationSettingTag];
+                    }
+                    return YES;
+                }];
+    [_openDefaultWindowArrangementItem setEnabled:[WindowArrangements count] > 0];
     [self defineControl:_quitWhenAllWindowsClosed
                     key:kPreferenceKeyQuitWhenAllWindowsClosed
                    type:kPreferenceInfoTypeCheckbox];
@@ -117,7 +151,7 @@
     [self defineControl:_confirmClosingMultipleSessions
                     key:kPreferenceKeyConfirmClosingMultipleTabs
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_promptOnQuit
                     key:kPreferenceKeyPromptOnQuit
                    type:kPreferenceInfoTypeCheckbox];
@@ -136,19 +170,19 @@
             [[CommandHistory sharedInstance] eraseHistory];
         }
     };
-    
+
     [self defineControl:_enableBonjour
                     key:kPreferenceKeyAddBonjourHostsToProfiles
                             type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_checkUpdate
                     key:kPreferenceKeyCheckForUpdatesAutomatically
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_checkTestRelease
                     key:kPreferenceKeyCheckForTestReleases
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     // ---------------------------------------------------------------------------------------------
     info = [self defineControl:_loadPrefsFromCustomFolder
                            key:kPreferenceKeyLoadPrefsFromCustomFolder
@@ -156,7 +190,7 @@
     info.onChange = ^() { [self loadPrefsFromCustomFolderDidChange]; };
     info.observer = ^() { [self updateEnabledStateForCustomFolderButtons]; };
 
-    
+
     // ---------------------------------------------------------------------------------------------
     info = [self defineControl:_prefsCustomFolder
                            key:kPreferenceKeyCustomFolder
@@ -169,51 +203,51 @@
         [self updatePrefsDirWarning];
     };
     [self updatePrefsDirWarning];
-    
+
     // ---------------------------------------------------------------------------------------------
     [self defineControl:_selectionCopiesText
                     key:kPreferenceKeySelectionCopiesText
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_copyLastNewline
                     key:kPreferenceKeyCopyLastNewline
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_allowClipboardAccessFromTerminal
                     key:kPreferenceKeyAllowClipboardAccessFromTerminal
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_wordChars
                     key:kPreferenceKeyCharactersConsideredPartOfAWordForSelection
                    type:kPreferenceInfoTypeStringTextField];
-    
+
     [self defineControl:_smartPlacement
                     key:kPreferenceKeySmartWindowPlacement
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_adjustWindowForFontSizeChange
                     key:kPreferenceKeyAdjustWindowForFontSizeChange
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_maxVertically
                     key:kPreferenceKeyMaximizeVerticallyOnly
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_lionStyleFullscreen
                     key:kPreferenceKeyLionStyleFullscren
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     info = [self defineControl:_openTmuxWindows
                            key:kPreferenceKeyOpenTmuxWindowsIn
                           type:kPreferenceInfoTypePopup];
     // This is how it was done before the great refactoring, but I don't see why it's needed.
     info.onChange = ^() { [self postRefreshNotification]; };
-    
+
     info = [self defineControl:_tmuxDashboardLimit
                            key:kPreferenceKeyTmuxDashboardLimit
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(0, 1000);
-    
+
     [self defineControl:_autoHideTmuxClientSession
                     key:kPreferenceKeyAutoHideTmuxClientSession
                    type:kPreferenceInfoTypeCheckbox];
@@ -230,9 +264,9 @@
 #pragma mark - Notifications
 
 - (void)savedArrangementChanged:(id)sender {
-    PreferenceInfo *info = [self infoForControl:_openArrangementAtStartup];
+    PreferenceInfo *info = [self infoForControl:_openWindowsAtStartup];
     [self updateValueForInfo:info];
-    [self updateEnabledStateForInfo:info];
+    [_openDefaultWindowArrangementItem setEnabled:[WindowArrangements count] > 0];
 }
 
 #pragma mark - Remote Prefs
@@ -244,7 +278,7 @@
         [_prefsDirWarning setHidden:YES];
         return;
     }
-    
+
     BOOL remoteLocationIsValid = [[iTermRemotePreferences sharedInstance] remoteLocationIsValid];
     [_prefsDirWarning setHidden:remoteLocationIsValid];
 }
@@ -286,7 +320,7 @@
     [panel setCanChooseFiles:NO];
     [panel setCanChooseDirectories:YES];
     [panel setAllowsMultipleSelection:NO];
-    
+
     if ([panel runModal] == NSOKButton) {
         [_prefsCustomFolder setStringValue:[panel legacyDirectory]];
         [self settingChanged:_prefsCustomFolder];

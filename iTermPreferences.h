@@ -46,6 +46,7 @@ typedef NS_ENUM(int, iTermPreferencesModifierTag) {
 // General
 extern NSString *const kPreferenceKeyOpenBookmark;
 extern NSString *const kPreferenceKeyOpenArrangementAtStartup;
+extern NSString *const kPreferenceKeyOpenNoWindowsAtStartup;
 extern NSString *const kPreferenceKeyQuitWhenAllWindowsClosed;
 extern NSString *const kPreferenceKeyConfirmClosingMultipleTabs;
 extern NSString *const kPreferenceKeyPromptOnQuit;

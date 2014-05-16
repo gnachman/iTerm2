@@ -164,7 +164,7 @@ static BOOL hasBecomeActive = NO;
         } else if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
             // Open the saved arrangement at startup.
             [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
-        } else {
+        } else if (![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
             if (![PseudoTerminalRestorer willOpenWindows]) {
                 if ([[[iTermController sharedInstance] terminals] count] == 0) {
                     [self newWindow:nil];
@@ -449,10 +449,12 @@ static BOOL hasBecomeActive = NO;
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication
 {
     if (!finishedLaunching_ &&
-        [iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
+        ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup] ||
+         [iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup])) {
         // This happens if the OS is pre 10.7 or restore windows is off in
         // 10.7's prefs->general, and the window arrangement has no windows,
-        // and it's set to load the arrangement on startup.
+        // and it's set to load the arrangement on startup. It also happens if
+        // kPreferenceKeyOpenNoWindowsAtStartup is set.
         return NO;
     }
     [self newWindow:nil];
