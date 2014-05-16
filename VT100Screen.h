@@ -193,6 +193,10 @@ extern int kVT100ScreenMinRows;
 
 - (void)resetCharset;
 
+// Called when a bell is to be run. Applies rate limiting and kicks off the bell indicators
+// (notifications, flashing lights, sounds) per user preference.
+- (void)activateBell;
+
 #pragma mark - Marks and notes
 
 - (VT100ScreenMark *)lastMark;

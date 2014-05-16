@@ -6,7 +6,8 @@
 //
 
 #import "BellTrigger.h"
-
+#import "PTYSession.h"
+#import "VT100Screen.h"
 
 @implementation BellTrigger
 
@@ -22,7 +23,7 @@
 
 - (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession
 {
-    NSBeep();
+    [aSession.screen activateBell];
 }
 
 @end
