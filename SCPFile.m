@@ -8,11 +8,11 @@
 
 #import "SCPFile.h"
 #import "NMSSH.framework/Headers/NMSSH.h"
+#import "NMSSH.framework/Headers/NMSSHConfig.h"
+#import "NMSSH.framework/Headers/NMSSHHostConfig.h"
 #import "NMSSH.framework/Headers/libssh2.h"
+#import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
-
-static NSString *const kPublicKeyPath = @"~/.ssh/id_rsa.pub";
-static NSString *const kPrivateKeyPath = @"~/.ssh/id_rsa";
 
 static NSString *const kSCPFileErrorDomain = @"com.googlecode.iterm2.SCPFile";
 
@@ -99,11 +99,6 @@ static NSError *SCPFileError(NSString *description) {
     return [components lastObject];
 }
 
-- (BOOL)havePrivateKey {
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    return [fileManager fileExistsAtPath:[kPrivateKeyPath stringByExpandingTildeInPath]];
-}
-
 // This runs in a thread.
 - (void)performTransferWrapper:(BOOL)isDownload {
     [self performTransfer:isDownload];
@@ -156,14 +151,51 @@ static NSError *SCPFileError(NSString *description) {
     return 22;
 }
 
-- (BOOL)privateKeyIsEncrypted {
-    NSString *filename = [kPrivateKeyPath stringByExpandingTildeInPath];
+- (BOOL)privateKeyIsEncrypted:(NSString *)filename {
     @autoreleasepool {
         NSString *privateKey = [NSString stringWithContentsOfFile:filename
                                                          encoding:NSUTF8StringEncoding
                                                             error:nil];
         return [privateKey rangeOfString:@"ENCRYPTED"].location != NSNotFound;
     }
+}
+
+// This runs in a thread
+- (NSArray *)configs {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *appSupport = [fileManager applicationSupportDirectory];
+    NSArray *paths = @[ [appSupport stringByAppendingPathExtension:@"iTerm/ssh_config"],
+                        [@"~/.ssh/ssh_config" stringByExpandingTildeInPath],
+                        @"/etc/ssh/ssh_config",
+                        @"/etc/ssh_config" ];
+    NSMutableArray *configs = [NSMutableArray array];
+    for (NSString *path in paths) {
+        if ([fileManager fileExistsAtPath:path]) {
+            NMSSHConfig *config = [NMSSHConfig configFromFile:path];
+            if (config) {
+                [configs addObject:config];
+            } else {
+                NSLog(@"Could not parse config file at %@", path);
+            }
+        }
+    }
+    return configs;
+}
+
+// This runs in a thread
+- (NSString *)filenameByExpandingMetasyntaticVariables:(NSString *)filename {
+    filename = [filename stringByExpandingTildeInPath];
+    NSDictionary *substitutions =
+        @{ @"%d": NSHomeDirectory(),
+           @"%u": NSUserName(),
+           @"%l": [[NSHost currentHost] name],
+           @"%h": self.session.host,
+           @"%r": self.session.username };
+    for (NSString *metavar in substitutions) {
+        filename = [filename stringByReplacingOccurrencesOfString:metavar
+                                                       withString:substitutions[metavar]];
+    }
+    return filename;
 }
 
 // This runs in a thread.
@@ -182,8 +214,9 @@ static NSError *SCPFileError(NSString *description) {
         self.session.delegate = self;
     } else {
         self.session = [[[NMSSHSession alloc] initWithHost:[self hostname]
-                                                      port:[self port]
-                                               andUsername:self.path.username] autorelease];
+                                                   configs:[self configs]
+                                           withDefaultPort:[self port]
+                                           defaultUsername:self.path.username] autorelease];
         self.session.delegate = self;
         [self.session connect];
         if (self.stopped) {
@@ -249,22 +282,45 @@ static NSError *SCPFileError(NSString *description) {
                 if (self.stopped || self.session.isAuthorized) {
                     break;
                 }
-            } else if ([authType isEqualToString:@"publickey"] && [self havePrivateKey]) {
+            } else if ([authType isEqualToString:@"publickey"]) {
                 if (self.stopped) {
                     break;
                 }
                 
-                __block NSString *password = nil;
-                if ([self privateKeyIsEncrypted]) {
-                    dispatch_sync(dispatch_get_main_queue(), ^() {
-                        password = [[FileTransferManager sharedInstance] transferrableFile:self
-                                                                 keyboardInteractivePrompt:@"Passphrase for private key:"];
-                    });
+                NSMutableArray *keyPaths = [NSMutableArray array];
+                if (self.session.hostConfig.identityFiles.count) {
+                    [keyPaths addObjectsFromArray:self.session.hostConfig.identityFiles];
+                } else {
+                    [keyPaths addObjectsFromArray:@[ @"~/.ssh/id_rsa",
+                                                     @"~/.ssh/id_dsa",
+                                                     @"~/.ssh/id_ecdsa" ]];
                 }
-                [self.session authenticateByPublicKey:[kPublicKeyPath stringByExpandingTildeInPath]
-                                                     privateKey:[kPrivateKeyPath stringByExpandingTildeInPath]
-                                                    andPassword:password];
-            
+                NSFileManager *fileManager = [NSFileManager defaultManager];
+                for (NSString *keyPath in keyPaths) {
+                    keyPath = [self filenameByExpandingMetasyntaticVariables:keyPath];
+                    if (![fileManager fileExistsAtPath:keyPath]) {
+                        NSLog(@"No key file at %@", keyPath);
+                        continue;
+                    }
+                    __block NSString *password = nil;
+                    if ([self privateKeyIsEncrypted:keyPath]) {
+                        dispatch_sync(dispatch_get_main_queue(), ^() {
+                            NSString *prompt =
+                                [NSString stringWithFormat:@"Passphrase for private key “%@”:",
+                                    keyPath];
+                            password = [[FileTransferManager sharedInstance] transferrableFile:self
+                                                                     keyboardInteractivePrompt:prompt];
+                        });
+                    }
+                    NSLog(@"Attempting to authenticate with key %@", keyPath);
+                    [self.session authenticateByPublicKey:[keyPath stringByAppendingString:@".pub"]
+                                               privateKey:keyPath
+                                              andPassword:password];
+                
+                    if (self.session.isAuthorized) {
+                        break;
+                    }
+                }
                 if (self.session.isAuthorized) {
                     break;
                 }
