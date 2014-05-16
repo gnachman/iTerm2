@@ -14,7 +14,7 @@
 
 - (NSString *)title
 {
-    return @"Send Growl Alert…";
+    return @"Post Notification…";
 }
 
 - (BOOL)takesParameter
@@ -24,7 +24,7 @@
 
 - (NSString *)paramPlaceholder
 {
-    return @"Enter message to growl";
+    return @"Enter Message";
 }
 
 - (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession
