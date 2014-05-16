@@ -91,7 +91,7 @@
 - (BOOL)removeDirectoryAtPath:(NSString *)path;
 
 /**
- Get a list of file names for a directory path
+ Get a list of files for a directory path
 
  @param path Existing directory to list items from
  @returns List of relative paths
@@ -101,6 +101,14 @@
 /// ----------------------------------------------------------------------------
 /// @name Manipulate symlinks and files
 /// ----------------------------------------------------------------------------
+
+/**
+ Reads the attributes from a file.
+
+ @param path An existing file path
+ @return A NMSFTPFile that contains the fetched file attributes.
+ */
+- (NMSFTPFile *)infoForFileAtPath:(NSString *)path;
 
 /**
  Test if a file exists at the specified path.
@@ -139,6 +147,18 @@
 - (NSData *)contentsAtPath:(NSString *)path;
 
 /**
+ Refer to contentsAtPath:
+
+ This adds the ability to get periodic updates to bytes received.
+ 
+ @param path An existing file path
+ @param progress Method called periodically with number of bytes downloaded and total file size.
+        Returns NO to abort. 
+ @returns File contents
+ */
+- (NSData *)contentsAtPath:(NSString *)path progress:(BOOL (^)(NSUInteger got, NSUInteger totalBytes))progress;
+
+/**
  Overwrite the contents of a file
 
  If no file exists, one is created.
@@ -148,6 +168,19 @@
  @returns Write success
  */
 - (BOOL)writeContents:(NSData *)contents toFileAtPath:(NSString *)path;
+
+/**
+ Refer to writeContents:toFileAtPath:
+ 
+ This adds the ability to get periodic updates to bytes sent.
+ 
+ @param contents Bytes to write
+ @param path File path to write bytes at
+ @param progress Method called periodically with number of bytes sent.
+        Returns NO to abort.
+ @returns Write success
+ */
+- (BOOL)writeContents:(NSData *)contents toFileAtPath:(NSString *)path progress:(BOOL (^)(NSUInteger sent))progress;
 
 /**
  Overwrite the contents of a file
@@ -161,6 +194,19 @@
 - (BOOL)writeFileAtPath:(NSString *)localPath toFileAtPath:(NSString *)path;
 
 /**
+ Refer to writeFileAtPath:toFileAtPath:
+ 
+ This adds the ability to get periodic updates to bytes sent.
+ 
+ @param localPath File path to read bytes at
+ @param path File path to write bytes at
+ @param progress Method called periodically with number of bytes sent.
+        Returns NO to abort.
+ @returns Write success
+ */
+- (BOOL)writeFileAtPath:(NSString *)localPath toFileAtPath:(NSString *)path progress:(BOOL (^)(NSUInteger sent))progress;
+
+/**
  Overwrite the contents of a file
 
  If no file exists, one is created.
@@ -170,6 +216,19 @@
  @returns Write success
  */
 - (BOOL)writeStream:(NSInputStream *)inputStream toFileAtPath:(NSString *)path;
+
+/**
+ Refer to writeStream:toFileAtPath:
+ 
+ This adds the ability to get periodic updates to bytes sent.
+ 
+ @param inputStream Stream to read bytes from
+ @param path File path to write bytes at
+ @param progress Method called periodically with number of bytes sent.
+        Returns NO to abort.
+ @returns Write success
+ */
+- (BOOL)writeStream:(NSInputStream *)inputStream toFileAtPath:(NSString *)path progress:(BOOL (^)(NSUInteger sent))progress;
 
 /**
  Append contents to the end of a file
@@ -192,5 +251,13 @@
  @returns Append success
  */
 - (BOOL)appendStream:(NSInputStream *)inputStream toFileAtPath:(NSString *)path;
+
+/**
+ Copy a file remotely.
+ 
+ @param fromPath Path to copy from
+ @param toPath Path to copy to
+ */
+- (BOOL)copyContentsOfPath:(NSString *)fromPath toFileAtPath:(NSString *)toPath progress:(BOOL (^)(NSUInteger copied, NSUInteger totalBytes))progress;
 
 @end

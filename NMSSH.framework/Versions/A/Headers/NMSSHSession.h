@@ -1,6 +1,6 @@
 #import "NMSSH.h"
 
-#import "NMSSHSessionDelegate.h"
+@class NMSSHHostConfig;
 
 typedef NS_ENUM(NSInteger, NMSSHSessionHash) {
     NMSSHSessionHashMD5,
@@ -54,6 +54,13 @@ typedef NS_ENUM(NSInteger, NMSSHKnownHostStatus) {
  */
 @property (nonatomic, weak) id<NMSSHSessionDelegate> delegate;
 
+/**
+ The synthesized config for the current host, produced by combining values from
+ all configs in the chain by priority, plus client-provided defaults. This is
+ only set if NMSSHSession was initialized with a config chain.
+ */
+@property (nonatomic, readonly) NMSSHHostConfig *hostConfig;
+
 /// ----------------------------------------------------------------------------
 /// @name Initialize a new SSH session
 /// ----------------------------------------------------------------------------
@@ -100,6 +107,29 @@ typedef NS_ENUM(NSInteger, NMSSHKnownHostStatus) {
  @returns NMSSHSession instance
  */
 - (instancetype)initWithHost:(NSString *)host port:(NSInteger)port andUsername:(NSString *)username;
+
+/**
+ Create and setup a new NMSSH instance using a chain of config files.
+
+ The {host} is used to perform a lookup in NMSSHConfig objects in the
+ {configs} array, which may alias the hostname and provide a port number or user
+ name. All information relevant to {host} in {configs} will be combined into
+ a single NMSSHHostConfig and saved in {self.hostConfig}. A config-
+ provided value will override {host}, {defaultUsername} or {defaultPort}. If no
+ match is found then {host} is used as the host name.
+
+ @param host Host to search {configs} with. If no matching config specifies a
+     hostname, then {host} is the server hostname.
+ @param configs An array of NMSSHHostConfig objects ordered from highest to
+     lowest priority
+ @param defaultPort The port number (may be overridden by a config)
+ @param defaultUsername A valid username the server will accept (may be
+     overridden by a config)
+ */
+- (instancetype)initWithHost:(NSString *)host
+                     configs:(NSArray *)configs
+             withDefaultPort:(NSInteger)defaultPort
+             defaultUsername:(NSString *)defaultUsername;
 
 /// ----------------------------------------------------------------------------
 /// @name Connection settings
