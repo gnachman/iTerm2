@@ -91,6 +91,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 static int gNextSessionID = 1;
 
+// Rate limit for checking instant (partial-line) triggers, in seconds.
+static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
+
 typedef enum {
     TMUX_NONE,
     TMUX_GATEWAY,  // Receiving tmux protocol messages
@@ -239,6 +242,10 @@ typedef enum {
 
     // Number of bytes received since an echo probe was sent.
     int _bytesReceivedSinceSendingEchoProbe;
+
+    // The last time at which a partial-line trigger check occurred. This keeps us from wasting CPU
+    // checking long lines over and over.
+    NSTimeInterval _lastPartialLineTriggerCheck;
 }
 
 - (id)init {
@@ -1237,6 +1244,11 @@ typedef enum {
 }
 
 - (void)checkPartialLineTriggers {
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    if (now - _lastPartialLineTriggerCheck < kMinimumPartialLineTriggerCheckInterval) {
+        return;
+    }
+    _lastPartialLineTriggerCheck = now;
     for (Trigger *trigger in _triggers) {
         [trigger tryString:_triggerLine
                  inSession:self
@@ -2593,7 +2605,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (_tailFindTimer && [[[_view findViewController] view] isHidden]) {
         [self stopTailFind];
     }
-    
+
     [self checkPartialLineTriggers];
     _timerRunning = NO;
 }
