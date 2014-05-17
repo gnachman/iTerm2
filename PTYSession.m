@@ -5562,6 +5562,27 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             host.username, host.hostname];
 }
 
+- (void)tryToRunShellIntegrationInstaller {
+    NSString *currentCommand = [self currentCommand];
+    if (currentCommand != nil) {
+        [_textview installShellIntegration:nil];
+    } else {
+        iTermWarningSelection selection =
+            [iTermWarning showWarningWithTitle:@"It looks like you're not at a command prompt."
+                                       actions:@[ @"Run Installer Anyway", @"Cancel" ]
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent];
+        switch (selection) {
+            case kiTermWarningSelection0:
+                [_textview installShellIntegration:nil];
+                break;
+              
+            default:
+                break;
+        }
+    }
+}
+
 - (void)screenSuggestShellIntegrationUpgrade {
     VT100RemoteHost *currentRemoteHost = [self currentHost];
     if (_shellIntegrationUpgradeAnnouncement) {
@@ -5581,7 +5602,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                                                    break;
 
                                                                case 0: // Yes
-                                                                   [_textview installShellIntegration:nil];
+                                                                   [self tryToRunShellIntegrationInstaller];
                                                                    break;
                                                                    
                                                                case 1: // Never for this account
