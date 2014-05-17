@@ -8,20 +8,10 @@
 
 #import "iTermAnnouncementView.h"
 
-@implementation iTermAnnouncementView {
-    CGFloat _buttonWidth;
-    NSTextView *_textView;
-    NSImageView *_icon;
-    void (^_block)(int);
+@interface iTermAnnouncementInternalView : NSView
+@end
 
-}
-
-- (void)dealloc {
-    [_block release];
-    [_textView release];
-    [_icon release];
-    [super dealloc];
-}
+@implementation iTermAnnouncementInternalView
 
 - (void)drawRect:(NSRect)dirtyRect {
     NSColor *color1 = [NSColor colorWithCalibratedRed:241.0 / 255.0
@@ -32,31 +22,73 @@
                                                 green:253.0 / 255.0
                                                  blue:212.0 / 255.0
                                                 alpha:1];
-    NSGradient *gradient = [[[NSGradient alloc] initWithStartingColor:color1 endingColor:color2] autorelease];
+    NSGradient *gradient =
+            [[[NSGradient alloc] initWithStartingColor:color1 endingColor:color2] autorelease];
     [gradient drawInRect:self.bounds angle:90];
 
     NSColor *lightBorderColor = [NSColor colorWithCalibratedRed:250.0 / 255.0
                                                           green:253.0 / 255.0
                                                            blue:240.0 / 255.0
                                                           alpha:1];
-    
+
     NSColor *darkBorderColor = [NSColor colorWithCalibratedRed:220.0 / 255.0
                                                          green:233.0 / 255.0
                                                           blue:171.0 / 255.0
                                                          alpha:1];
     [darkBorderColor set];
     NSRectFill(NSMakeRect(0, 0, self.bounds.size.width, 1));
-    
+
     [lightBorderColor set];
     NSRectFill(NSMakeRect(0, self.bounds.size.height - 1, self.bounds.size.width, 1));
-    
+
     [super drawRect:dirtyRect];
+}
+
+@end
+
+@implementation iTermAnnouncementView {
+    CGFloat _buttonWidth;
+    NSTextView *_textView;
+    NSImageView *_icon;
+    iTermAnnouncementInternalView *_internalView;
+    void (^_block)(int);
+
+}
+
+- (id)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        frameRect.size.height -= 10;
+        frameRect.origin.y = 10;
+        frameRect.origin.x = 0;
+        _internalView = [[[iTermAnnouncementInternalView alloc] initWithFrame:frameRect] autorelease];
+        _internalView.autoresizingMask = NSViewWidthSizable;
+        [self addSubview:_internalView];
+
+        NSShadow *dropShadow = [[[NSShadow alloc] init] autorelease];
+        [dropShadow setShadowColor:[[NSColor blackColor] colorWithAlphaComponent:0.5]];
+        [dropShadow setShadowOffset:NSMakeSize(0, -2.0)];
+        [dropShadow setShadowBlurRadius:2.0];
+
+        [self setWantsLayer:YES];
+        [self setShadow:dropShadow];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_block release];
+    [_textView release];
+    [_icon release];
+    [_internalView release];
+    [super dealloc];
 }
 
 - (void)createButtonsFromActions:(NSArray *)actions block:(void (^)(int index))block {
     _block = [block copy];
     static const CGFloat kMargin = 5;
-    NSRect rect = self.frame;
+    NSRect rect = _internalView.frame;
+
     for (int i = actions.count - 1; i >= 0; i--) {
         NSString *action = actions[i];
         NSButton *button = [[[NSButton alloc] init] autorelease];
@@ -74,7 +106,7 @@
                                   floor((rect.size.height - button.frame.size.height) / 2),
                                   button.frame.size.width,
                                   button.frame.size.height);
-        [self addSubview:button];
+        [_internalView addSubview:button];
     }
 }
 
@@ -87,18 +119,18 @@
     NSDictionary *attributes = @{ NSFontAttributeName: emojiFont };
     [s drawAtPoint:NSMakePoint(0, 0) withAttributes:attributes];
     [iconImage unlockFocus];
-    
+
     _icon = [[NSImageView alloc] initWithFrame:NSMakeRect(5,
-                                                          floor((self.frame.size.height - emojiHeight) / 2),
+                                                          floor((_internalView.frame.size.height - emojiHeight) / 2),
                                                           iconImage.size.width,
                                                           iconImage.size.height)];
     [_icon setImage:iconImage];
-    [self addSubview:_icon];
+    [_internalView addSubview:_icon];
 
-    NSRect rect = self.frame;
+    NSRect rect = _internalView.frame;
     rect.origin.x += _icon.frame.size.width + _icon.frame.origin.x;
     rect.size.width -= rect.origin.x;
-    
+
     rect.size.width -= _buttonWidth;
     NSTextView *textView = [[[NSTextView alloc] initWithFrame:rect] autorelease];
     textView.string = title;
@@ -117,10 +149,10 @@
     _textView = [textView retain];
     CGFloat height = font.ascender - font.descender;
     textView.frame = NSMakeRect(rect.origin.x,
-                                floor((self.frame.size.height - height) / 2),
+                                floor((_internalView.frame.size.height - height) / 2),
                                 rect.size.width,
                                 height);
-    [self addSubview:textView];
+    [_internalView addSubview:textView];
 }
 
 - (void)buttonPressed:(id)sender {
@@ -129,9 +161,10 @@
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [super resizeSubviewsWithOldSize:oldSize];
+
     NSRect rect = _textView.frame;
     static const CGFloat kMargin = 20;
-    rect.size.width = self.frame.size.width - _buttonWidth - NSMaxX(_icon.frame) - kMargin;
+    rect.size.width = _internalView.frame.size.width - _buttonWidth - NSMaxX(_icon.frame) - kMargin;
     _textView.frame = rect;
 }
 

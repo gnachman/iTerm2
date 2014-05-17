@@ -36,7 +36,7 @@
 }
 
 - (void)loadView {
-    NSRect rect = NSMakeRect(0, 0, 1000, 34);
+    NSRect rect = NSMakeRect(0, 0, 1000, 44);
     iTermAnnouncementView *view = [[[iTermAnnouncementView alloc] initWithFrame:rect] autorelease];
     [view createButtonsFromActions:self.actions block:^(int index) {
         if (!_dismissing) {
