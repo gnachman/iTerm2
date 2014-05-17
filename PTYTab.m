@@ -360,13 +360,25 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 - (NSArray *)orderedSessions {
     if ([iTermAdvancedSettingsModel navigatePanesInReadingOrder]) {
+        BOOL useTrueReadingOrder = !root_.isVertical;
         return [[self sessions] sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
             NSPoint origin1 = [self rootRelativeOriginOfSession:obj1];
             NSPoint origin2 = [self rootRelativeOriginOfSession:obj2];
-            if ((int)origin1.y == (int)origin2.y) {
-                return [@(origin1.x) compare:@(origin2.x)];
+            if (useTrueReadingOrder) {
+                // True reading order--top to bottom, then left to right.
+                if ((int)origin1.y == (int)origin2.y) {
+                    return [@(origin1.x) compare:@(origin2.x)];
+                } else {
+                    return [@(origin1.y) compare:@(origin2.y)];
+                }
             } else {
-                return [@(origin1.y) compare:@(origin2.y)];
+                // Inverted reading order. Left to right, then top to bottom.
+                // Generally makes more sense when the root split is vertical.
+                if ((int)origin1.x == (int)origin2.x) {
+                    return [@(origin1.y) compare:@(origin2.y)];
+                } else {
+                    return [@(origin1.x) compare:@(origin2.x)];
+                }
             }
         }];
     } else {
