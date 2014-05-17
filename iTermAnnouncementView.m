@@ -54,7 +54,7 @@ static const CGFloat kMargin = 8;
 
 @implementation iTermAnnouncementView {
     CGFloat _buttonWidth;
-    NSTextView *_textView;
+    NSTextField *_textField;
     NSImageView *_icon;
     iTermAnnouncementInternalView *_internalView;
     void (^_block)(int);
@@ -114,7 +114,7 @@ static const CGFloat kMargin = 8;
 
 - (void)dealloc {
     [_block release];
-    [_textView release];
+    [_textField release];
     [_icon release];
     [_internalView release];
     [super dealloc];
@@ -187,27 +187,23 @@ static const CGFloat kMargin = 8;
     rect.size.width -= rect.origin.x;
 
     rect.size.width -= _buttonWidth;
-    NSTextView *textView = [[[NSTextView alloc] initWithFrame:rect] autorelease];
-    textView.string = title;
-    [textView setEditable:NO];
-    textView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable | NSViewMaxXMargin;
-    textView.drawsBackground = NO;
+    NSTextField *textField = [[[NSTextField alloc] initWithFrame:rect] autorelease];
+    [textField setBezeled:NO];
+    [textField setStringValue:title];
+    [textField setEditable:NO];
+    textField.autoresizingMask = NSViewWidthSizable | NSViewMaxXMargin;
+    textField.drawsBackground = NO;
     NSFont *font = [NSFont systemFontOfSize:12];
-    [textView setFont:font];
-    [textView setSelectable:NO];
-    [textView sizeToFit];
-    [textView setMaxSize:CGSizeMake(FLT_MAX, FLT_MAX)];
-    [textView setHorizontallyResizable:YES];
-    [[textView textContainer] setWidthTracksTextView:NO];
-    [[textView textContainer] setContainerSize:CGSizeMake(FLT_MAX, FLT_MAX)];
+    [textField setFont:font];
+    [textField setSelectable:NO];
 
-    _textView = [textView retain];
-    CGFloat height = font.ascender - font.descender;
-    textView.frame = NSMakeRect(rect.origin.x,
-                                floor((_internalView.frame.size.height - height) / 2),
-                                rect.size.width,
-                                height);
-    [_internalView addSubview:textView];
+    _textField = [textField retain];
+    CGFloat height = [title sizeWithAttributes:@{ NSFontAttributeName: font }].height;
+    textField.frame = NSMakeRect(rect.origin.x,
+                                 floor((_internalView.frame.size.height - height) / 2),
+                                 rect.size.width,
+                                 height);
+    [_internalView addSubview:textField];
 }
 
 - (void)buttonPressed:(id)sender {
@@ -217,9 +213,9 @@ static const CGFloat kMargin = 8;
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [super resizeSubviewsWithOldSize:oldSize];
 
-    NSRect rect = _textView.frame;
+    NSRect rect = _textField.frame;
     rect.size.width = _internalView.frame.size.width - _buttonWidth - NSMaxX(_icon.frame) - kMargin;
-    _textView.frame = rect;
+    _textField.frame = rect;
 }
 
 - (void)resetCursorRects {
