@@ -8,6 +8,7 @@
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
+#import "iTermAnnouncementViewController.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
@@ -110,6 +111,7 @@ typedef enum {
 @property(nonatomic, copy) NSString *lastDirectory;
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, retain) NSColor *cursorGuideColor;
+@property(nonatomic, retain) iTermAnnouncementViewController *shellIntegrationUpgradeAnnouncement;
 @end
 
 @implementation PTYSession {
@@ -5416,6 +5418,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
+    if (_shellIntegrationUpgradeAnnouncement) {
+        [_shellIntegrationUpgradeAnnouncement dismiss];
+        self.shellIntegrationUpgradeAnnouncement = nil;
+    }
     [[[self tab] realParentWindow] sessionHostDidChange:self to:host];
 
     // Construct a map from host binding to profile. This could be expensive with a lot of profiles
@@ -5549,6 +5555,41 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     } else {
         return [n boolValue];
     }
+}
+
+- (NSString *)shellIntegrationUpgradeUserDefaultsKeyForHost:(VT100RemoteHost *)host {
+    return [NSString stringWithFormat:@"SuppressShellIntegrationUpgradeAnnouncementForHost_%@@%@",
+            host.username, host.hostname];
+}
+
+- (void)screenSuggestShellIntegrationUpgrade {
+    VT100RemoteHost *currentRemoteHost = [self currentHost];
+    if (_shellIntegrationUpgradeAnnouncement) {
+        [_shellIntegrationUpgradeAnnouncement dismiss];
+    }
+    NSString *theKey = [self shellIntegrationUpgradeUserDefaultsKeyForHost:currentRemoteHost];
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    if ([userDefaults boolForKey:theKey]) {
+        return;
+    }
+    self.shellIntegrationUpgradeAnnouncement =
+            [iTermAnnouncementViewController announcemenWithTitle:@"This account's Shell Integration scripts are out of date."
+                                                      withActions:@[ @"Upgrade", @"Ok", @"Silence Warning" ]
+                                                       completion:^(int selection) {
+                                                           switch (selection) {
+                                                               case 0: // Yes
+                                                                   [_textview installShellIntegration:nil];
+                                                                   break;
+                                                                   
+                                                               case 1: // No
+                                                                   break;
+                                                                   
+                                                               case 2: // Never for this account
+                                                                   [userDefaults setBool:YES forKey:theKey];
+                                                                   break;
+                                                           }
+                                                       }];
+    [_view addAnnouncement:_shellIntegrationUpgradeAnnouncement];
 }
 
 #pragma mark - PopupDelegate

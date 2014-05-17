@@ -3,6 +3,7 @@
 #import "SessionView.h"
 #import "DebugLogging.h"
 #import "FutureMethods.h"
+#import "iTermAnnouncementViewController.h"
 #import "iTermPreferences.h"
 #import "MovePaneController.h"
 #import "PSMTabDragAssistant.h"
@@ -19,7 +20,13 @@ static const double kTitleHeight = 22;
 // Last time any window was resized TODO(georgen):it would be better to track per window.
 static NSDate* lastResizeDate_;
 
-@implementation SessionView
+@interface SessionView () < iTermAnnouncementDelegate>
+@end
+
+@implementation SessionView {
+    NSMutableArray *_announcements;
+    iTermAnnouncementViewController *_currentAnnouncement;
+}
 
 + (double)titleHeight
 {
@@ -54,6 +61,7 @@ static NSDate* lastResizeDate_;
     [self registerForDraggedTypes:[NSArray arrayWithObjects:@"iTermDragPanePBType", @"PSMTabBarControlItemPBType", nil]];
     [lastResizeDate_ release];
     lastResizeDate_ = [[NSDate date] retain];
+    _announcements = [[NSMutableArray alloc] init];
 }
 
 - (id)initWithFrame:(NSRect)frame
@@ -101,6 +109,9 @@ static NSDate* lastResizeDate_;
     [title_ removeFromSuperview];
     [self unregisterDraggedTypes];
     [session_ release];
+    [_currentAnnouncement dismiss];
+    [_currentAnnouncement release];
+    [_announcements release];
     [super dealloc];
 }
 
@@ -666,6 +677,47 @@ static NSDate* lastResizeDate_;
 {
     if (![[MovePaneController sharedInstance] session]) {
         [[MovePaneController sharedInstance] beginDrag:session_];
+    }
+}
+
+- (void)addAnnouncement:(iTermAnnouncementViewController *)announcement {
+    [_announcements addObject:announcement];
+    announcement.delegate = self;
+    if (!_currentAnnouncement) {
+        [self showNextAnnouncement];
+    }
+}
+
+- (void)showNextAnnouncement {
+    [_currentAnnouncement dismiss];
+
+    if (_announcements.count) {
+        _currentAnnouncement = [_announcements[0] retain];
+        [_announcements removeObjectAtIndex:0];
+        NSRect finalRect = NSMakeRect(0,
+                                      self.frame.size.height - _currentAnnouncement.view.frame.size.height,
+                                      self.frame.size.width,
+                                      _currentAnnouncement.view.frame.size.height);
+
+        NSRect initialRect = finalRect;
+        initialRect.origin.y += finalRect.size.height;
+        _currentAnnouncement.view.frame = initialRect;
+        
+        _currentAnnouncement.view.animator.frame = finalRect;
+        
+        _currentAnnouncement.view.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
+        [self addSubview:_currentAnnouncement.view];
+    }
+}
+
+#pragma mark - iTermAnnouncementDelegate
+
+- (void)announcementWillDismiss:(iTermAnnouncementViewController *)announcement {
+    [_announcements removeObject:announcement];
+    if (announcement == _currentAnnouncement) {
+        [_currentAnnouncement autorelease];
+        _currentAnnouncement = nil;
+        [self showNextAnnouncement];
     }
 }
 

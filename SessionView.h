@@ -30,6 +30,7 @@
 #import "PTYSession.h"
 #import "SessionTitleView.h"
 
+@class iTermAnnouncementViewController;
 @class PTYSession;
 @class SplitSelectionView;
 @class SessionTitleView;
@@ -103,5 +104,7 @@
 
 // The frame excluding the per-pane titlebar.
 - (NSRect)contentRect;
+
+- (void)addAnnouncement:(iTermAnnouncementViewController *)announcement;
 
 @end

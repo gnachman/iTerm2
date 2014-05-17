@@ -353,6 +353,7 @@ typedef enum {
 - (void)terminalProgressDidFinish;
 - (void)terminalReturnCodeOfLastCommandWas:(int)returnCode;
 - (void)terminalFinalTermCommand:(NSArray *)argv;
+- (void)terminalSetShellIntegrationVersion:(NSString *)version;
 
 // Flag changes
 - (void)terminalWraparoundModeDidChangeTo:(BOOL)newValue;

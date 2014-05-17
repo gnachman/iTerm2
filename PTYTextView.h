@@ -404,5 +404,7 @@ typedef enum {
 // Show a visual highlight of a mark on the given line number.
 - (void)highlightMarkOnLine:(int)line;
 
+- (IBAction)installShellIntegration:(id)sender;
+
 @end
 

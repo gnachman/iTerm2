@@ -3226,6 +3226,14 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
    */
 }
 
+- (void)terminalSetShellIntegrationVersion:(NSString *)version {
+    int versionNumber = [version integerValue];
+    static int kLatestKnownVersion = 1;
+    if (versionNumber < kLatestKnownVersion) {
+        [delegate_ screenSuggestShellIntegrationUpgrade];
+    }
+}
+
 - (void)terminalWraparoundModeDidChangeTo:(BOOL)newValue {
     _wraparoundMode = newValue;
 }

@@ -216,4 +216,6 @@
 
 - (void)screenLogWorkingDirectoryAtLine:(int)line withDirectory:(NSString *)directory;
 
+- (void)screenSuggestShellIntegrationUpgrade;
+
 @end
