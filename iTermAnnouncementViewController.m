@@ -15,7 +15,9 @@
 @property(nonatomic, copy) void (^completion)(int);
 @end
 
-@implementation iTermAnnouncementViewController
+@implementation iTermAnnouncementViewController {
+    BOOL _dismissing;
+}
 
 + (instancetype)announcemenWithTitle:(NSString *)title
                          withActions:(NSArray *)actions
@@ -37,8 +39,10 @@
     NSRect rect = NSMakeRect(0, 0, 1000, 34);
     iTermAnnouncementView *view = [[[iTermAnnouncementView alloc] initWithFrame:rect] autorelease];
     [view createButtonsFromActions:self.actions block:^(int index) {
-        self.completion(index);
-        [self dismiss];
+        if (!_dismissing) {
+            self.completion(index);
+            [self dismiss];
+        }
     }];
     [view setTitle:self.title];
     view.autoresizesSubviews = YES;
@@ -46,8 +50,10 @@
 }
 
 - (void)dismiss {
-    [_delegate announcementWillDismiss:self];
-    [self.view removeFromSuperview];
+    if (!_dismissing) {
+        _dismissing = YES;
+        [_delegate announcementWillDismiss:self];
+    }
 }
 
 @end

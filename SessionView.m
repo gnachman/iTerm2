@@ -689,8 +689,8 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)showNextAnnouncement {
-    [_currentAnnouncement dismiss];
-
+    [_currentAnnouncement autorelease];
+    _currentAnnouncement = nil;
     if (_announcements.count) {
         _currentAnnouncement = [_announcements[0] retain];
         [_announcements removeObjectAtIndex:0];
@@ -715,9 +715,12 @@ static NSDate* lastResizeDate_;
 - (void)announcementWillDismiss:(iTermAnnouncementViewController *)announcement {
     [_announcements removeObject:announcement];
     if (announcement == _currentAnnouncement) {
-        [_currentAnnouncement autorelease];
-        _currentAnnouncement = nil;
-        [self showNextAnnouncement];
+        NSRect rect = announcement.view.frame;
+        rect.origin.y += rect.size.height;
+        announcement.view.animator.frame = rect;
+        [self performSelector:@selector(showNextAnnouncement)
+                   withObject:nil
+                   afterDelay:[[NSAnimationContext currentContext] duration]];
     }
 }
 
