@@ -4439,7 +4439,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [self fitTabsToWindow];
 
     if (targetSession == [[self currentTab] activeSession]) {
-        [[self currentTab] setActiveSessionPreservingViewOrder:newSession];
+        [[self currentTab] setActiveSession:newSession];
     }
     [[self currentTab] recheckBlur];
     [[self currentTab] numberOfSessionsDidChange];

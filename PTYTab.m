@@ -106,24 +106,6 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     [realParentWindow_ invalidateRestorableState];
 }
 
-- (void)appendSessionViewToViewOrder:(SessionView*)sessionView
-{
-    NSNumber* n = [NSNumber numberWithInt:[sessionView viewId]];
-    if ([viewOrder_ indexOfObject:n] == NSNotFound) {
-        int i = currentViewIndex_ + 1;
-        if (i > [viewOrder_ count]) {
-            i = [viewOrder_ count];
-        }
-        [viewOrder_ insertObject:n atIndex:i];
-    }
-    [self numberOfSessionsDidChange];
-}
-
-- (void)appendSessionToViewOrder:(PTYSession*)session
-{
-    [self appendSessionViewToViewOrder:[session view]];
-}
-
 // init/dealloc
 - (id)initWithSession:(PTYSession*)session
 {
@@ -146,8 +128,6 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         }
         [session setTab:self];
         [root_ addSubview:[session view]];
-        viewOrder_ = [[NSMutableArray alloc] init];
-        [self appendSessionToViewOrder:session];
     }
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_refreshLabels:)
@@ -185,7 +165,6 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         hiddenLiveViews_ = [[NSMutableArray alloc] init];
         [self setRoot:root];
         [PTYTab _recursiveSetDelegateIn:root_ to:self];
-        viewOrder_ = [[NSMutableArray alloc] init];
         tmuxWindow_ = -1;
     }
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -221,7 +200,6 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     root_ = nil;
     [flexibleView_ release];
     flexibleView_ = nil;
-    [viewOrder_ release];
     [fakeParentWindow_ release];
     [icon_ release];
     [idMap_ release];
@@ -284,9 +262,8 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return activeSession_;
 }
 
-- (void)setActiveSessionPreservingViewOrder:(PTYSession*)session
+- (void)setActiveSession:(PTYSession*)session
 {
-    ++preserveOrder_;
     PtyLog(@"PTYTab setActiveSession:%p", session);
     if (activeSession_ &&  activeSession_ != session && [activeSession_ dvr]) {
         [realParentWindow_ closeInstantReplay:self];
@@ -295,7 +272,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     activeSession_ = session;
     [session setLastActiveAt:[NSDate date]];
     if (activeSession_ == nil) {
-        --preserveOrder_;
+        [self recheckBlur];
         return;
     }
     if (changed) {
@@ -327,12 +304,6 @@ static const BOOL USE_THIN_SPLITTERS = YES;
       }
     }
 
-    NSUInteger i = [viewOrder_ indexOfObject:[NSNumber numberWithInt:[[session view] viewId]]];
-    if (i != NSNotFound) {
-        currentViewIndex_ = i;
-    }
-
-    --preserveOrder_;
     [realParentWindow_ invalidateRestorableState];
 
     if (changed) {
@@ -340,18 +311,6 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
     
     [[self realParentWindow] updateTabColors];
-}
-
-- (void)setActiveSession:(PTYSession*)session
-{
-    if (preserveOrder_) {
-        return;
-    }
-    [self setActiveSessionPreservingViewOrder:session];
-    [viewOrder_ removeObject:[NSNumber numberWithInt:[[session view] viewId]]];
-    [viewOrder_ addObject:[NSNumber numberWithInt:[[session view] viewId]]];
-    currentViewIndex_ = [viewOrder_ count] - 1;
-
     [self recheckBlur];
 }
 
@@ -380,73 +339,69 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return [sv session];
 }
 
-- (void)sanityCheckViewOrder {
-    // I've seen an occasional crash where we try to dereference an empty viewOrder array. I can't
-    // see why it happens, so we should at least be able to recover from it.
-    if ([viewOrder_ count] < currentViewIndex_) {
-        NSLog(@"View order %@ fails sanity check at %@", viewOrder_, [NSThread callStackSymbols]);
-        [viewOrder_ removeAllObjects];
-        for (SessionView *view in [self sessionViews]) {
-            [viewOrder_ addObject:[NSNumber numberWithInt:[view viewId]]];
-        }
-        currentViewIndex_ = 0;
-    }
-}
-
-- (SessionView *)_savedViewWithId:(int)i
-{
-    [self sanityCheckViewOrder];
-    for (NSNumber *k in idMap_) {
-        SessionView *cur = [idMap_ objectForKey:k];
-        if ([cur viewId] == [[viewOrder_ objectAtIndex:i] intValue]) {
-            return cur;
-        }
-    }
-    return nil;
-}
-
-- (void)previousSession
-{
-    --currentViewIndex_;
-    if (currentViewIndex_ < 0) {
-        currentViewIndex_ = [viewOrder_ count] - 1;
-    }
-    SessionView *sv;
-    if (isMaximized_) {
-        sv = [self _savedViewWithId:currentViewIndex_];
-        [root_ replaceSubview:[[root_ subviews] objectAtIndex:0]
-                         with:sv];
+- (NSPoint)rootRelativeOriginOfSession:(PTYSession *)session {
+    if (!isMaximized_) {
+        return [root_ convertPoint:session.view.frame.origin
+                          fromView:session.view.superview];
     } else {
-        [self sanityCheckViewOrder];
-        sv = [self _recursiveSessionViewWithId:[[viewOrder_ objectAtIndex:currentViewIndex_] intValue]
-                                        atNode:root_];
-    }
-    assert(sv);
-    if (sv) {
-        [self setActiveSessionPreservingViewOrder:[sv session]];
+        return session.savedRootRelativeOrigin;
     }
 }
 
-- (void)nextSession
-{
-    ++currentViewIndex_;
-    if (currentViewIndex_ >= [viewOrder_ count]) {
-        currentViewIndex_ = 0;
+- (NSArray *)orderedSessions {
+    NSArray *sessions = [self sessions];
+    NSArray *sessionsSortedVertically =
+        [sessions sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+            NSPoint origin1 = [self rootRelativeOriginOfSession:obj1];
+            NSPoint origin2 = [self rootRelativeOriginOfSession:obj2];
+            return [@(origin1.y) compare:@(origin2.y)];
+        }];
+    NSArray *sessionsSortedHorizontally =
+        [sessions sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+            NSPoint origin1 = [self rootRelativeOriginOfSession:obj1];
+            NSPoint origin2 = [self rootRelativeOriginOfSession:obj2];
+            return [@(origin1.x) compare:@(origin2.x)];
+        }];
+    NSMutableArray *result = [NSMutableArray array];
+    int count = sessionsSortedHorizontally.count;
+    while (result.count < count) {
+        int prevY = -1;
+        for (PTYSession *currentVerticalSession in sessionsSortedVertically) {
+            int currentY = [self rootRelativeOriginOfSession:currentVerticalSession].y;
+            if (currentY == prevY) {
+                continue;
+            }
+            prevY = currentY;
+            for (PTYSession *session in sessionsSortedHorizontally) {
+                if ((int)[self rootRelativeOriginOfSession:session].y == currentY &&
+                    ![result containsObject:session]) {
+                    [result addObject:session];
+                }
+            }
+        }
     }
-    SessionView *sv;
-    if (isMaximized_) {
-        sv = [self _savedViewWithId:currentViewIndex_];
-        [root_ replaceSubview:[[root_ subviews] objectAtIndex:0]
-                         with:sv];
-    } else {
-        [self sanityCheckViewOrder];
-        sv = [self _recursiveSessionViewWithId:[[viewOrder_ objectAtIndex:currentViewIndex_] intValue]
-                                        atNode:root_];
+    return result;
+}
+
+- (void)activateSessionRelativeToCurrentInReadingOrderBy:(int)offset {
+    NSArray *orderedSessions = [self orderedSessions];
+    NSUInteger index = [orderedSessions indexOfObject:[self activeSession]];
+    if (index != NSNotFound) {
+        index = (index + orderedSessions.count + offset) % orderedSessions.count;
+        if (isMaximized_) {
+            [root_ replaceSubview:[[root_ subviews] objectAtIndex:0]
+                             with:[orderedSessions[index] view]];
+        }
+        [self setActiveSession:orderedSessions[index]];
     }
-    assert(sv);
-    if (sv) {
-        [self setActiveSessionPreservingViewOrder:[sv session]];
-    }
+}
+
+- (void)previousSession {
+    [self activateSessionRelativeToCurrentInReadingOrderBy:-1];
+}
+
+- (void)nextSession {
+    [self activateSessionRelativeToCurrentInReadingOrderBy:1];
 }
 
 - (int)indexOfSessionView:(SessionView*)sessionView
@@ -1168,13 +1123,8 @@ static NSString* FormatRect(NSRect r) {
     // Remove the session.
     [self _recursiveRemoveView:[aSession view]];
 
-    [viewOrder_ removeObject:[NSNumber numberWithInt:[[aSession view] viewId]]];
-    if (currentViewIndex_ >= [viewOrder_ count]) {
-        // Do not allow currentViewIndex_ to hold an out-of-bounds value
-        currentViewIndex_ = [viewOrder_ count] - 1;
-    }
     if (aSession == activeSession_) {
-        [self setActiveSessionPreservingViewOrder:[(SessionView*)nearestNeighbor session]];
+        [self setActiveSession:[(SessionView*)nearestNeighbor session]];
     }
 
     [self recheckBlur];
@@ -1309,8 +1259,6 @@ static NSString* FormatRect(NSRect r) {
     }
     PtyLog(@"After:");
     [self dump];
-
-    [self appendSessionViewToViewOrder:newView];
 
     return newView;
 }
@@ -1905,19 +1853,15 @@ static NSString* FormatRect(NSRect r) {
         [result setObject:subviews forKey:SUBVIEWS];
     } else {
         SessionView* sessionView = (SessionView*)view;
-        [result setObject:VIEW_TYPE_SESSIONVIEW
-                   forKey:TAB_ARRANGEMENT_VIEW_TYPE];
-        [result setObject:[PTYTab frameToDict:[view frame]]
-                   forKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME];
-        [result setObject:[[sessionView session] arrangement]
-                   forKey:TAB_ARRANGEMENT_SESSION];
-        [result setObject:[NSNumber numberWithBool:([sessionView session] == [self activeSession])]
-                   forKey:TAB_ARRANGEMENT_IS_ACTIVE];
+        result[TAB_ARRANGEMENT_VIEW_TYPE] = VIEW_TYPE_SESSIONVIEW;
+        result[TAB_ARRANGEMENT_SESSIONVIEW_FRAME] = [PTYTab frameToDict:[view frame]];
+        result[TAB_ARRANGEMENT_SESSION] = [[sessionView session] arrangement];
+        result[TAB_ARRANGEMENT_IS_ACTIVE] = @([sessionView session] == [self activeSession]);
+
         if (idMap) {
-            [result setObject:[NSNumber numberWithInt:[idMap count]]
-                       forKey:TAB_ARRANGEMENT_ID];
+            result[TAB_ARRANGEMENT_ID] = @([idMap count]);
             [sessionView saveFrameSize];
-            [idMap setObject:sessionView forKey:[NSNumber numberWithInt:[idMap count]]];
+            idMap[@([idMap count])] = sessionView;
         }
     }
     return result;
@@ -2065,7 +2009,6 @@ static NSString* FormatRect(NSRect r) {
                                                    inTab:theTab
                                            forObjectType:objectType];
             [sessionView setSession:session];
-            [self appendSessionToViewOrder:session];
         }
         if ([[arrangement objectForKey:TAB_ARRANGEMENT_IS_ACTIVE] boolValue]) {
             return session;
@@ -2837,7 +2780,6 @@ static NSString* FormatRect(NSRect r) {
     // Terminate sessions that were removed from this tab.
     for (PTYSession *aSession in sessionsToTerminate) {
         [aSession terminate];
-        [viewOrder_ removeObject:[NSNumber numberWithInt:[[aSession view] viewId]]];
     }
 
     if (!activeSession) {
@@ -2906,6 +2848,10 @@ static NSString* FormatRect(NSRect r) {
 
 - (void)maximize
 {
+    for (PTYSession *session in [self sessions]) {
+        session.savedRootRelativeOrigin = [self rootRelativeOriginOfSession:session];
+    }
+    
     if ([self isTmuxTab]) {
         return;
     }

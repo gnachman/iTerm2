@@ -64,15 +64,6 @@
     NSDictionary* savedArrangement_;  // layout of splitters pre-maximize
     NSSize savedSize_;  // pre-maximize active session size.
 
-    // An array of view IDs that can be thought of as cyclic, ordered from least
-    // recently used to most recently, beginning at currentViewIndex_.
-    NSMutableArray* viewOrder_;
-    int currentViewIndex_;
-
-    // This is >0 if currently inside setActiveSessionPreservingViewOrder, and the
-    // view order should not be changed.
-    int preserveOrder_;
-
     // If true, report that the tab's ideal size is its currentSize.
     BOOL reportIdeal_;
 
@@ -109,7 +100,6 @@
 
 - (NSRect)absoluteFrame;
 - (PTYSession*)activeSession;
-- (void)setActiveSessionPreservingViewOrder:(PTYSession*)session;
 - (void)setActiveSession:(PTYSession*)session;
 - (NSTabViewItem *)tabViewItem;
 - (void)setTabViewItem:(NSTabViewItem *)theTabViewItem;

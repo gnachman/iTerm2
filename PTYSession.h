@@ -251,6 +251,9 @@ typedef enum {
 
 @property(nonatomic, assign) BOOL highlightCursorLine;
 
+// Used to help remember total ordering on views while one is maximzied
+@property(nonatomic, assign) NSPoint savedRootRelativeOrigin;
+
 #pragma mark - methods
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
