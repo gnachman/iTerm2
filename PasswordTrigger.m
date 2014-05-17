@@ -53,8 +53,13 @@
   return YES;
 }
 
+- (NSArray *)sortedAccountNames {
+    return [_accountNames sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+}
+
 - (int)indexForObject:(id)object {
-    NSUInteger index = [_accountNames indexOfObject:object];
+
+    NSUInteger index = [[self sortedAccountNames] indexOfObject:object];
     if (index == NSNotFound) {
         return -1;
     } else {
@@ -66,7 +71,7 @@
     if (index < 0 || index >= _accountNames.count) {
         return nil;
     }
-    return _accountNames[index];
+    return [self sortedAccountNames][index];
 }
 
 - (NSDictionary *)menuItemsForPoupupButton {
