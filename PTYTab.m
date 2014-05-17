@@ -1,21 +1,22 @@
 #import "PTYTab.h"
-#import "PTYSession.h"
-#import "WindowControllerInterface.h"
-#import "SessionView.h"
 #import "FakeWindow.h"
-#import "PreferencePanel.h"
-#import "iTermGrowlDelegate.h"
-#import "PTYScrollView.h"
-#import "PSMTabBarControl.h"
-#import "PSMTabStyle.h"
+#import "IntervalMap.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
+#import "iTermGrowlDelegate.h"
 #import "iTermPreferences.h"
-#import "TmuxLayoutParser.h"
+#import "PreferencePanel.h"
 #import "ProfileModel.h"
-#import "IntervalMap.h"
+#import "PSMTabBarControl.h"
+#import "PSMTabStyle.h"
+#import "PTYScrollView.h"
+#import "PTYSession.h"
+#import "SessionView.h"
 #import "TmuxDashboardController.h"
+#import "TmuxLayoutParser.h"
+#import "WindowControllerInterface.h"
 
 #define PtyLog DLog
 
@@ -27,7 +28,9 @@ static CGFloat AgainstGrainDim(BOOL isVertical, NSSize size);
 static void SetWithGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
 static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
 
-@implementation PTYTab
+@implementation PTYTab {
+    int _activityCounter;
+}
 
 @synthesize broadcasting = broadcasting_;
 
@@ -114,7 +117,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     if (self) {
         hiddenLiveViews_ = [[NSMutableArray alloc] init];
         activeSession_ = session;
-        [session setLastActiveAt:[NSDate date]];
+        [session setActivityCounter:@(_activityCounter++)];
         [[session view] setDimmed:NO];
         [self setRoot:[[[PTYSplitView alloc] init] autorelease]];
         PTYTab *oldTab = [session tab];
@@ -262,15 +265,22 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return activeSession_;
 }
 
-- (void)setActiveSession:(PTYSession*)session
+- (void)setActiveSession:(PTYSession*)session {
+    [self setActiveSession:session updateActivityCounter:YES];
+}
+
+- (void)setActiveSession:(PTYSession*)session updateActivityCounter:(BOOL)updateActivityCounter
 {
     PtyLog(@"PTYTab setActiveSession:%p", session);
     if (activeSession_ &&  activeSession_ != session && [activeSession_ dvr]) {
         [realParentWindow_ closeInstantReplay:self];
     }
     BOOL changed = session != activeSession_;
+    if (changed && updateActivityCounter) {
+        [activeSession_ setActivityCounter:@(_activityCounter++)];
+        [session setActivityCounter:@(_activityCounter++)];
+    }
     activeSession_ = session;
-    [session setLastActiveAt:[NSDate date]];
     if (activeSession_ == nil) {
         [self recheckBlur];
         return;
@@ -349,41 +359,26 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 }
 
 - (NSArray *)orderedSessions {
-    NSArray *sessions = [self sessions];
-    NSArray *sessionsSortedVertically =
-        [sessions sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+    if ([iTermAdvancedSettingsModel navigatePanesInReadingOrder]) {
+        return [[self sessions] sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
             NSPoint origin1 = [self rootRelativeOriginOfSession:obj1];
             NSPoint origin2 = [self rootRelativeOriginOfSession:obj2];
-            return [@(origin1.y) compare:@(origin2.y)];
-        }];
-    NSArray *sessionsSortedHorizontally =
-        [sessions sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
-            NSPoint origin1 = [self rootRelativeOriginOfSession:obj1];
-            NSPoint origin2 = [self rootRelativeOriginOfSession:obj2];
-            return [@(origin1.x) compare:@(origin2.x)];
-        }];
-    NSMutableArray *result = [NSMutableArray array];
-    int count = sessionsSortedHorizontally.count;
-    while (result.count < count) {
-        int prevY = -1;
-        for (PTYSession *currentVerticalSession in sessionsSortedVertically) {
-            int currentY = [self rootRelativeOriginOfSession:currentVerticalSession].y;
-            if (currentY == prevY) {
-                continue;
+            if ((int)origin1.y == (int)origin2.y) {
+                return [@(origin1.x) compare:@(origin2.x)];
+            } else {
+                return [@(origin1.y) compare:@(origin2.y)];
             }
-            prevY = currentY;
-            for (PTYSession *session in sessionsSortedHorizontally) {
-                if ((int)[self rootRelativeOriginOfSession:session].y == currentY &&
-                    ![result containsObject:session]) {
-                    [result addObject:session];
-                }
-            }
-        }
+        }];
+    } else {
+        return [[self sessions] sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+            PTYSession *session1 = obj1;
+            PTYSession *session2 = obj2;
+            return [session1.activityCounter compare:session2.activityCounter];
+        }];
     }
-    return result;
 }
 
-- (void)activateSessionRelativeToCurrentInReadingOrderBy:(int)offset {
+- (void)activateSessionInDirection:(int)offset {
     NSArray *orderedSessions = [self orderedSessions];
     NSUInteger index = [orderedSessions indexOfObject:[self activeSession]];
     if (index != NSNotFound) {
@@ -392,16 +387,16 @@ static const BOOL USE_THIN_SPLITTERS = YES;
             [root_ replaceSubview:[[root_ subviews] objectAtIndex:0]
                              with:[orderedSessions[index] view]];
         }
-        [self setActiveSession:orderedSessions[index]];
+        [self setActiveSession:orderedSessions[index] updateActivityCounter:NO];
     }
 }
 
 - (void)previousSession {
-    [self activateSessionRelativeToCurrentInReadingOrderBy:-1];
+    [self activateSessionInDirection:-1];
 }
 
 - (void)nextSession {
-    [self activateSessionRelativeToCurrentInReadingOrderBy:1];
+    [self activateSessionInDirection:1];
 }
 
 - (int)indexOfSessionView:(SessionView*)sessionView
@@ -620,7 +615,7 @@ static NSString* FormatRect(NSRect r) {
     PtyLog(@"OrigPoint is %lf,%lf", origPoint.x, origPoint.y);
     PTYSession* bestResult = nil;
     PTYSession* defaultResult = nil;
-    NSDate* bestDate = nil;
+    NSNumber *maxActivityCounter = nil;
     // Iterate over every possible adjacent session and select the most recently active one.
     while (offset < myRect.size.height) {
         targetPoint = origPoint;
@@ -677,11 +672,11 @@ static NSString* FormatRect(NSRect r) {
             SwapSize(&rootRelativeResultRect.size);
         }
 
-        if ((!bestDate && [result lastActiveAt]) ||
-            (bestDate && [[result lastActiveAt] isGreaterThan:bestDate])) {
+        if ((!maxActivityCounter && [result activityCounter]) ||
+            (maxActivityCounter && [[result activityCounter] isGreaterThan:maxActivityCounter])) {
             // Found a more recently used session.
             bestResult = result;
-            bestDate = [result lastActiveAt];
+            maxActivityCounter = [result activityCounter];
         }
         if (!bestResult && offset > defaultOffset) {
             // Haven't found a used session yet but this one is centered so we might pick it.

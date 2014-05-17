@@ -71,4 +71,6 @@
 
 + (double)echoProbeDuration;
 
++ (BOOL)navigatePanesInReadingOrder;
+
 @end

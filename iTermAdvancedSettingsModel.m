@@ -50,6 +50,7 @@ DEFINE_INT(minTabWidth, 75, @"Tabs: Minimum tab width")
 DEFINE_INT(minCompactTabWidth, 60, @"Tabs: Minimum tab width for tabs without close button or number")
 DEFINE_INT(optimumTabWidth, 175, @"Tabs: Preferred tab width")
 DEFINE_BOOL(addNewTabAtEndOfTabs, YES, @"Tabs: New tabs are added at the end, not next to current tab")
+DEFINE_BOOL(navigatePanesInReadingOrder, YES, @"Tabs: Next/Previous pane uses reading order, not time of last use");
 
 #pragma mark Mouse
 DEFINE_BOOL(alternateMouseScroll, NO, @"Mouse: Scroll wheel sends arrow keys in alternate screen mode")

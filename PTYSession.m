@@ -281,6 +281,7 @@ typedef enum {
         _tmuxSecureLogging = NO;
         _tailFindContext = [[FindContext alloc] init];
         _commandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
+        _activityCounter = [@0 retain];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
@@ -316,7 +317,7 @@ typedef enum {
     [_pasteboard release];
     [_pbtext release];
     [_creationDate release];
-    [_lastActiveAt release];
+    [_activityCounter release];
     [_bookmarkName release];
     [_termVariable release];
     [_colorFgBgVariable release];

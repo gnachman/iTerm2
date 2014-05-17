@@ -214,8 +214,8 @@ typedef enum {
 // size to set the window size properly.
 @property(nonatomic, assign) BOOL ignoreResizeNotifications;
 
-// Last time this session became active
-@property(nonatomic, retain) NSDate *lastActiveAt;
+// This number (int) imposes an ordering on session activity time.
+@property(nonatomic, retain) NSNumber *activityCounter;
 
 // Is there a saved scroll position?
 @property(nonatomic, readonly) BOOL hasSavedScrollPosition;
