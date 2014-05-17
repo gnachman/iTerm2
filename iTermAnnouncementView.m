@@ -183,7 +183,7 @@ static const CGFloat kMargin = 8;
     [_internalView addSubview:_icon];
 
     NSRect rect = _internalView.frame;
-    rect.origin.x += _icon.frame.size.width + _icon.frame.origin.x;
+    rect.origin.x += kMargin + _icon.frame.size.width + _icon.frame.origin.x;
     rect.size.width -= rect.origin.x;
 
     rect.size.width -= _buttonWidth;
