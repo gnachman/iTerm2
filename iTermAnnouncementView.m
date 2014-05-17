@@ -8,7 +8,7 @@
 
 #import "iTermAnnouncementView.h"
 
-static const CGFloat kMargin = 5;
+static const CGFloat kMargin = 8;
 
 @interface iTermAnnouncementInternalView : NSView
 @end
@@ -48,6 +48,10 @@ static const CGFloat kMargin = 5;
 
 @end
 
+@interface iTermAnnouncementView ()
+@property(nonatomic, assign) iTermAnnouncementViewStyle style;
+@end
+
 @implementation iTermAnnouncementView {
     CGFloat _buttonWidth;
     NSTextView *_textView;
@@ -55,6 +59,17 @@ static const CGFloat kMargin = 5;
     iTermAnnouncementInternalView *_internalView;
     void (^_block)(int);
 
+}
+
++ (id)announcementViewWithTitle:(NSString *)title
+                           style:(iTermAnnouncementViewStyle)style
+                        actions:(NSArray *)actions
+                          block:(void (^)(int index))block {
+    iTermAnnouncementView *view = [[[self alloc] initWithFrame:NSMakeRect(0, 0, 1000, 44)] autorelease];
+    view.style = style;
+    [view setTitle:title];
+    [view createButtonsFromActions:actions block:block];
+    return view;
 }
 
 - (id)initWithFrame:(NSRect)frameRect {
@@ -91,6 +106,8 @@ static const CGFloat kMargin = 5;
         [[closeButton cell] setHighlightsBy:NSContentsCellMask];
         [closeButton setTitle:@""];
         [_internalView addSubview:closeButton];
+
+        self.autoresizesSubviews = YES;
     }
     return self;
 }
@@ -132,18 +149,34 @@ static const CGFloat kMargin = 5;
     }
 }
 
-- (void)setTitle:(NSString *)title {
-    NSFont *emojiFont = [NSFont fontWithName:@"Apple Color Emoji" size:18];
-    CGFloat emojiHeight = [emojiFont ascender] - [emojiFont descender];
-    NSImage *iconImage = [[NSImage alloc] initWithSize:NSMakeSize(emojiHeight * 0.8, emojiHeight)];
-    [iconImage lockFocus];
-    NSString *s = @"⚠";  // Warning sign
-    NSDictionary *attributes = @{ NSFontAttributeName: emojiFont };
-    [s drawAtPoint:NSMakePoint(0, 0) withAttributes:attributes];
-    [iconImage unlockFocus];
+- (NSImage *)iconImage {
+    NSString *iconString;
+    switch (_style) {
+        case kiTermAnnouncementViewStyleWarning:
+            iconString = @"⚠";  // Warning sign
+            break;
+    }
 
-    _icon = [[NSImageView alloc] initWithFrame:NSMakeRect(5,
-                                                          floor((_internalView.frame.size.height - emojiHeight) / 2),
+    NSFont *emojiFont = [NSFont fontWithName:@"Apple Color Emoji" size:18];
+    NSDictionary *attributes = @{ NSFontAttributeName: emojiFont };
+
+    NSSize size = [iconString sizeWithAttributes:attributes];
+    // This is a better estimate of the height. Maybe it doesn't include leading?
+    size.height = [emojiFont ascender] - [emojiFont descender];
+    NSImage *iconImage = [[NSImage alloc] initWithSize:size];
+    [iconImage lockFocus];
+    [iconString drawAtPoint:NSMakePoint(0, 0) withAttributes:attributes];
+    [iconImage unlockFocus];
+    
+    return iconImage;
+}
+
+- (void)setTitle:(NSString *)title {
+    NSImage *iconImage = [self iconImage];
+
+    CGFloat y = floor((_internalView.frame.size.height - iconImage.size.height) / 2);
+    _icon = [[NSImageView alloc] initWithFrame:NSMakeRect(kMargin,
+                                                          y,
                                                           iconImage.size.width,
                                                           iconImage.size.height)];
     [_icon setImage:iconImage];
@@ -185,7 +218,6 @@ static const CGFloat kMargin = 5;
     [super resizeSubviewsWithOldSize:oldSize];
 
     NSRect rect = _textView.frame;
-    static const CGFloat kMargin = 20;
     rect.size.width = _internalView.frame.size.width - _buttonWidth - NSMaxX(_icon.frame) - kMargin;
     _textView.frame = rect;
 }

@@ -8,9 +8,15 @@
 
 #import <Cocoa/Cocoa.h>
 
+typedef enum {
+    kiTermAnnouncementViewStyleWarning
+} iTermAnnouncementViewStyle;
+
 @interface iTermAnnouncementView : NSView
 
-- (void)createButtonsFromActions:(NSArray *)actions block:(void (^)(int index))block;
-- (void)setTitle:(NSString *)title;
++ (id)announcementViewWithTitle:(NSString *)title
+                          style:(iTermAnnouncementViewStyle)style
+                        actions:(NSArray *)actions
+                          block:(void (^)(int index))block;
 
 @end

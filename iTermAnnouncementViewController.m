@@ -36,18 +36,15 @@
 }
 
 - (void)loadView {
-    NSRect rect = NSMakeRect(0, 0, 1000, 44);
-    iTermAnnouncementView *view = [[[iTermAnnouncementView alloc] initWithFrame:rect] autorelease];
-    [view createButtonsFromActions:self.actions block:^(int index) {
-        if (!_dismissing) {
-            self.completion(index);
-            [self dismiss];
-        }
-    }];
-    
-    [view setTitle:self.title];
-    view.autoresizesSubviews = YES;
-    self.view = view;
+    self.view = [iTermAnnouncementView announcementViewWithTitle:self.title
+                                                           style:kiTermAnnouncementViewStyleWarning
+                                                         actions:self.actions
+                                                           block:^(int index) {
+                                                               if (!_dismissing) {
+                                                                   self.completion(index);
+                                                                   [self dismiss];
+                                                               }  
+                                                           }];
 }
 
 - (void)dismiss {
