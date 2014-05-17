@@ -7,7 +7,6 @@
 //
 
 #import "iTermAnnouncementViewController.h"
-#import "iTermAnnouncementView.h"
 #import "SolidColorView.h"
 
 @interface iTermAnnouncementViewController ()
@@ -16,10 +15,12 @@
 @end
 
 @implementation iTermAnnouncementViewController {
+    iTermAnnouncementViewStyle _style;
     BOOL _dismissing;
 }
 
 + (instancetype)announcemenWithTitle:(NSString *)title
+                               style:(iTermAnnouncementViewStyle)style
                          withActions:(NSArray *)actions
                           completion:(void (^)(int))completion {
     iTermAnnouncementViewController *announcement = [[[self alloc] init] autorelease];
@@ -37,7 +38,7 @@
 
 - (void)loadView {
     self.view = [iTermAnnouncementView announcementViewWithTitle:self.title
-                                                           style:kiTermAnnouncementViewStyleWarning
+                                                           style:_style
                                                          actions:self.actions
                                                            block:^(int index) {
                                                                if (!_dismissing) {

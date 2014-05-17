@@ -5595,6 +5595,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
     self.shellIntegrationUpgradeAnnouncement =
             [iTermAnnouncementViewController announcemenWithTitle:@"This account's Shell Integration scripts are out of date."
+                                                            style:kiTermAnnouncementViewStyleWarning
                                                       withActions:@[ @"Upgrade", @"Silence Warning" ]
                                                        completion:^(int selection) {
                                                            switch (selection) {

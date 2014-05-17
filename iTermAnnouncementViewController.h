@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermAnnouncementView.h"
 
 @class iTermAnnouncementViewController;
 
@@ -19,6 +20,7 @@
 @property(nonatomic, assign) id<iTermAnnouncementDelegate> delegate;
 
 + (instancetype)announcemenWithTitle:(NSString *)title
+                               style:(iTermAnnouncementViewStyle)style
                          withActions:(NSArray *)actions
                           completion:(void (^)(int))completion;
 
