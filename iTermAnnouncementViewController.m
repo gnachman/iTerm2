@@ -44,6 +44,7 @@
             [self dismiss];
         }
     }];
+    
     [view setTitle:self.title];
     view.autoresizesSubviews = YES;
     self.view = view;

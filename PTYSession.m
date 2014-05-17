@@ -5574,17 +5574,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
     self.shellIntegrationUpgradeAnnouncement =
             [iTermAnnouncementViewController announcemenWithTitle:@"This account's Shell Integration scripts are out of date."
-                                                      withActions:@[ @"Upgrade", @"Ok", @"Silence Warning" ]
+                                                      withActions:@[ @"Upgrade", @"Silence Warning" ]
                                                        completion:^(int selection) {
                                                            switch (selection) {
+                                                               case -1: // No
+                                                                   break;
+
                                                                case 0: // Yes
                                                                    [_textview installShellIntegration:nil];
                                                                    break;
                                                                    
-                                                               case 1: // No
-                                                                   break;
-                                                                   
-                                                               case 2: // Never for this account
+                                                               case 1: // Never for this account
                                                                    [userDefaults setBool:YES forKey:theKey];
                                                                    break;
                                                            }

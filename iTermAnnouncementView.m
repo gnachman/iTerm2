@@ -8,6 +8,8 @@
 
 #import "iTermAnnouncementView.h"
 
+static const CGFloat kMargin = 5;
+
 @interface iTermAnnouncementInternalView : NSView
 @end
 
@@ -72,6 +74,23 @@
 
         [self setWantsLayer:YES];
         [self setShadow:dropShadow];
+        
+        NSImage *closeImage = [NSImage imageNamed:@"closebutton"];
+        NSSize closeSize = closeImage.size;
+        _buttonWidth = ceil(closeSize.width + kMargin);
+        NSButton *closeButton = [[[NSButton alloc] initWithFrame:NSMakeRect(frameRect.size.width - _buttonWidth,
+                                                                            floor((frameRect.size.height - closeSize.height) / 2),
+                                                                            closeSize.width,
+                                                                            closeSize.height)] autorelease];
+        closeButton.autoresizingMask = NSViewMinXMargin;
+        [closeButton setButtonType:NSMomentaryPushInButton];
+        [closeButton setImage:closeImage];
+        [closeButton setTarget:self];
+        [closeButton setAction:@selector(close:)];
+        [closeButton setBordered:NO];
+        [[closeButton cell] setHighlightsBy:NSContentsCellMask];
+        [closeButton setTitle:@""];
+        [_internalView addSubview:closeButton];
     }
     return self;
 }
@@ -84,9 +103,12 @@
     [super dealloc];
 }
 
+- (void)close:(id)sender {
+    _block(-1);
+}
+
 - (void)createButtonsFromActions:(NSArray *)actions block:(void (^)(int index))block {
     _block = [block copy];
-    static const CGFloat kMargin = 5;
     NSRect rect = _internalView.frame;
 
     for (int i = actions.count - 1; i >= 0; i--) {
