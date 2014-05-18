@@ -86,7 +86,7 @@ extern NSString *kTmuxControllerSessionWasRenamed;
 - (void)registerSession:(PTYSession *)aSession
                withPane:(int)windowPane
                inWindow:(int)window;
-- (void)deregisterWindow:(int)window windowPane:(int)windowPane;
+- (void)deregisterWindow:(int)window windowPane:(int)windowPane session:(id)session;
 - (void)changeWindow:(int)window tabTo:(PTYTab *)tab;
 - (NSValue *)positionForWindowWithPanes:(NSArray *)panes;
 
@@ -140,4 +140,7 @@ extern NSString *kTmuxControllerSessionWasRenamed;
 - (void)saveHiddenWindows;
 - (void)addAffinityBetweenPane:(int)windowPane
                    andTerminal:(PseudoTerminal *)term;
+
+- (void)swapPane:(int)pane1 withPane:(int)pane2;
+
 @end

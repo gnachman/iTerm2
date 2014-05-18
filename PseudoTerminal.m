@@ -5022,16 +5022,17 @@ NSString *kSessionsKVCKey = @"sessions";
     [itad updateBroadcastMenuState];
 }
 
-- (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session
-{
+- (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session move:(BOOL)move {
     // Things would get really complicated if you could do this in IR, so just
     // close it.
     [self closeInstantReplay:nil];
     for (PTYSession *aSession in [self sessions]) {
         if (mode) {
-            [aSession setSplitSelectionMode:(aSession != session) ? kSplitSelectionModeOn : kSplitSelectionModeCancel];
+            [aSession setSplitSelectionMode:(aSession != session) ? kSplitSelectionModeOn : kSplitSelectionModeCancel
+                                       move:move];
         } else {
-            [aSession setSplitSelectionMode:kSplitSelectionModeOff];
+            [aSession setSplitSelectionMode:kSplitSelectionModeOff
+                                       move:move];
         }
     }
 }

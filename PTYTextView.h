@@ -118,6 +118,7 @@ typedef enum {
 - (void)textViewPostTabContentsChangedNotification;
 - (void)textViewBeginDrag;
 - (void)textViewMovePane;
+- (void)textViewSwapPane;
 - (NSStringEncoding)textViewEncoding;
 - (NSString *)textViewCurrentWorkingDirectory;
 - (BOOL)textViewShouldPlaceCursorAt:(VT100GridCoord)coord verticalOk:(BOOL *)verticalOk;

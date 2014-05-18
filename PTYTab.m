@@ -7,6 +7,7 @@
 #import "iTermController.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermPreferences.h"
+#import "NSView+iTerm.h"
 #import "PreferencePanel.h"
 #import "ProfileModel.h"
 #import "PSMTabBarControl.h"
@@ -2639,7 +2640,9 @@ static NSString* FormatRect(NSRect r) {
         return NO;
     }
     if (typeOfView == kLeafLayoutNode) {
-        return YES;
+        SessionView *sessionView = (SessionView *)view;
+        PTYSession *session = sessionView.session;
+        return session.tmuxPane == [parseTree[kLayoutDictWindowPaneKey] intValue];
     }
 
     NSArray *treeChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
@@ -3073,6 +3076,79 @@ static NSString* FormatRect(NSRect r) {
                                horizontally:horizontally
                                          by:direction];
     return block != nil;
+}
+
+- (void)swapSession:(PTYSession *)session1 withSession:(PTYSession *)session2 {
+    assert(session1.tab == self);
+    if (isMaximized_) {
+        [self unmaximize];
+    }
+    if (session2.tab.hasMaximizedPane) {
+        [session2.tab unmaximize];
+    }
+
+    if (session1.tab->lockedSession_ || session2.tab->lockedSession_) {
+        return;
+    }
+    if ([session1 isTmuxClient] ||
+        [session2 isTmuxClient] ||
+        [session1 isTmuxGateway] ||
+        [session2 isTmuxGateway]) {
+        return;
+    }
+    
+    DLog(@"Before swap, %@ has superview %@ and %@ has superview %@",
+         session1.view, session1.view.superview,
+         session2.view, session2.view.superview);
+
+    PTYTab *session1Tab = session1.tab;
+    PTYTab *session2Tab = session2.tab;
+    
+    PTYSplitView *session1Superview = (PTYSplitView *)session1.view.superview;
+    NSUInteger session1Index = [[session1Superview subviews] indexOfObject:session1.view];
+    PTYSplitView *session2Superview = (PTYSplitView *)session2.view.superview;
+    NSUInteger session2Index = [[session2Superview subviews] indexOfObject:session2.view];
+    
+    session1Superview.delegate = nil;
+    session2Superview.delegate = nil;
+    if (session1Superview == session2Superview) {
+        [session1Superview swapSubview:session1.view withSubview:session2.view];
+    } else {
+        [session1.view removeFromSuperview];
+        [session2.view removeFromSuperview];
+        NSRect temp = session1.view.frame;
+        session1.view.frame = session2.view.frame;
+        session2.view.frame = temp;
+        [session1Superview insertSubview:session2.view atIndex:session1Index];
+        [session2Superview insertSubview:session1.view atIndex:session2Index];
+    }
+    session1Superview.delegate = session1Tab;
+    session2Superview.delegate = session2Tab;
+    
+    session1.tab = session2Tab;
+    session2.tab = session1Tab;
+
+    [session1Tab setActiveSession:session2];
+    [session2Tab setActiveSession:session1];
+
+    [session1Superview adjustSubviews];
+    [session2Superview adjustSubviews];
+
+    [session1Tab updatePaneTitles];
+    [session2Tab updatePaneTitles];
+
+    for (PTYTab *aTab in @[ session1Tab, session2Tab ]) {
+          for (PTYSession *aSession in aTab.sessions) {
+              [aTab fitSessionToCurrentViewSize:aSession];
+          }
+    }
+    
+    [session1Tab fitSessionToCurrentViewSize:session1];
+    [session2Tab fitSessionToCurrentViewSize:session1];
+    
+    DLog(@"After swap, %@ has superview %@ and %@ has superview %@",
+         session1.view, session1.view.superview,
+         session2.view, session2.view.superview);
 }
 
 #pragma mark NSSplitView delegate methods

@@ -15,7 +15,8 @@ typedef enum {
     kNorthHalf,
     kSouthHalf,
     kEastHalf,
-    kWestHalf
+    kWestHalf,
+    kFullPane
 } SplitSessionHalf;
 
 @class PTYSession;
@@ -46,7 +47,8 @@ typedef enum {
 - (id)initAsCancelOnly:(BOOL)cancelOnly
              withFrame:(NSRect)frame
            withSession:(PTYSession *)session
-              delegate:(id<SplitSelectionViewDelegate>)delegate;
+              delegate:(id<SplitSelectionViewDelegate>)delegate
+                  move:(BOOL)move;
 
 // Update the selected half for a drag at the given point
 - (void)updateAtPoint:(NSPoint)point;

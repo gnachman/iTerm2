@@ -330,10 +330,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [windowPanes_ setObject:aSession forKey:[self _keyForWindowPane:windowPane]];
 }
 
-- (void)deregisterWindow:(int)window windowPane:(int)windowPane
+- (void)deregisterWindow:(int)window windowPane:(int)windowPane session:(id)session
 {
-    [self releaseWindow:window];
-    [windowPanes_ removeObjectForKey:[self _keyForWindowPane:windowPane]];
+    id key = [self _keyForWindowPane:windowPane];
+    if (windowPanes_[key] == session) {
+        [self releaseWindow:window];
+        [windowPanes_ removeObjectForKey:key];
+    }
 }
 
 - (PTYTab *)window:(int)window
@@ -916,6 +919,23 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
          responseSelector:@selector(listSessionsResponse:)];
 }
 
+- (void)swapPane:(int)pane1 withPane:(int)pane2 {
+    NSString *swapPaneCommand = [NSString stringWithFormat:@"swap-pane -s %%%d -t %%%d",
+                                 pane1, pane2];
+
+    NSArray *commands = @[ [gateway_ dictionaryForCommand:swapPaneCommand
+                                           responseTarget:self
+                                         responseSelector:NULL
+                                           responseObject:nil
+                                                    flags:0],
+                           [gateway_ dictionaryForCommand:@"list-windows -F \"#{window_id} #{window_layout}\""
+                                           responseTarget:self
+                                         responseSelector:@selector(parseListWindowsResponseAndUpdateLayouts:)
+                                           responseObject:nil
+                                                    flags:0] ];
+    [gateway_ sendCommandList:commands];
+}
+
 #pragma mark - Private
 
 - (void)getOriginsResponse:(NSString *)result
@@ -1050,6 +1070,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     if (numOutstandingWindowResizes_ > 0) {
         return;
     }
+    
+    [self parseListWindowsResponseAndUpdateLayouts:response];
+}
+
+- (void)parseListWindowsResponseAndUpdateLayouts:(NSString *)response {
     NSArray *layoutStrings = [response componentsSeparatedByString:@"\n"];
     for (NSString *layoutString in layoutStrings) {
         NSArray *components = [layoutString captureComponentsMatchedByRegex:@"^@([0-9]+) (.*)"];

@@ -702,9 +702,8 @@ typedef enum {
     [[_tab realParentWindow] invalidateRestorableState];
 }
 
-- (void)setSplitSelectionMode:(SplitSelectionMode)mode
-{
-    [[self view] setSplitSelectionMode:mode];
+- (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move {
+    [[self view] setSplitSelectionMode:mode move:move];
 }
 
 - (int)overUnder:(int)proposedSize inVerticalDimension:(BOOL)vertically
@@ -965,7 +964,8 @@ typedef enum {
     if (self.tmuxMode == TMUX_CLIENT) {
         assert([_tab tmuxWindow] >= 0);
         [_tmuxController deregisterWindow:[_tab tmuxWindow]
-                               windowPane:_tmuxPane];
+                               windowPane:_tmuxPane
+                                  session:self];
         // This call to fitLayoutToWindows is necessary to handle the case where
         // a small window closes and leaves behind a larger (e.g., fullscreen)
         // window. We want to set the client size to that of the smallest
@@ -1130,7 +1130,7 @@ typedef enum {
             [[_tab realParentWindow] sendInputToAllSessions:data];
         } else {
             [[_tmuxController gateway] sendKeys:data
-                                     toWindowPane:_tmuxPane];
+                                   toWindowPane:_tmuxPane];
         }
         PTYScroller* ptys = (PTYScroller*)[_scrollview verticalScroller];
         [ptys setUserScroll:NO];
@@ -2089,7 +2089,8 @@ typedef enum {
 {
     if ([self isTmuxClient]) {
         [_tmuxController deregisterWindow:[_tab tmuxWindow]
-                               windowPane:_tmuxPane];
+                               windowPane:_tmuxPane
+                                  session:self];
     }
     _tab = tab;
     if ([self isTmuxClient]) {
@@ -4297,9 +4298,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [[MovePaneController sharedInstance] beginDrag:self];
 }
 
-- (void)textViewMovePane
-{
+- (void)textViewMovePane {
     [[MovePaneController sharedInstance] movePane:self];
+}
+
+- (void)textViewSwapPane {
+    [[MovePaneController sharedInstance] swapPane:self];
 }
 
 - (NSStringEncoding)textViewEncoding

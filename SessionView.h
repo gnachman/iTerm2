@@ -82,7 +82,7 @@
 - (BOOL)backgroundDimmed;
 - (void)saveFrameSize;
 - (void)restoreFrameSize;
-- (void)setSplitSelectionMode:(SplitSelectionMode)mode;
+- (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move;
 - (BOOL)setShowTitle:(BOOL)value adjustScrollView:(BOOL)adjustScrollView;
 - (BOOL)showTitle;
 - (void)setTitle:(NSString *)title;

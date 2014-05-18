@@ -3823,6 +3823,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate textViewMovePane];
 }
 
+- (void)swapSessions:(id)sender {
+    [_delegate textViewSwapPane];
+}
+
 - (void)clearTextViewBuffer:(id)sender
 {
     [_dataSource clearBuffer];
@@ -4075,6 +4079,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                [item action]==@selector(editTextViewSession:) ||
                [item action]==@selector(closeTextViewSession:) ||
                [item action]==@selector(movePane:) ||
+               [item action]==@selector(swapSessions:) ||
                [item action]==@selector(installShellIntegration:) ||
                ([item action] == @selector(print:) && [item tag] != 1)) {
         // We always validate the above commands
@@ -4517,11 +4522,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Split pane options
     [theMenu addItemWithTitle:@"Split Pane Vertically" action:@selector(splitTextViewVertically:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+
     [theMenu addItemWithTitle:@"Split Pane Horizontally" action:@selector(splitTextViewHorizontally:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    
+    // Separator
+    [theMenu addItem:[NSMenuItem separatorItem]];
+
     [theMenu addItemWithTitle:@"Move Session to Split Pane" action:@selector(movePane:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+
     [theMenu addItemWithTitle:@"Move Session to Window" action:@selector(moveSessionToWindow:) keyEquivalent:@""];
+
+    [theMenu addItemWithTitle:@"Swap With Session…" action:@selector(swapSessions:) keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];

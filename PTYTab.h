@@ -238,6 +238,8 @@
 - (void)moveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally;
 - (BOOL)canMoveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally;
 
+- (void)swapSession:(PTYSession *)session1 withSession:(PTYSession *)session2;
+
 #pragma mark NSSplitView delegate methods
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification;
 // This is the implementation of splitViewDidResizeSubviews. The delegate method isn't called when

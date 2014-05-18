@@ -24,8 +24,12 @@
 @property (nonatomic, assign) PTYSession *session;
 
 + (MovePaneController *)sharedInstance;
-// Iniate click-to-move mode.
+// Initiate click-to-move mode.
 - (void)movePane:(PTYSession *)session;
+
+// Initiate click-to-swap mode.
+- (void)swapPane:(PTYSession *)session;
+
 - (void)exitMovePaneMode;
 // Initiate dragging.
 - (void)beginDrag:(PTYSession *)session;

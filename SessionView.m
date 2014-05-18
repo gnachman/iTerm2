@@ -350,29 +350,28 @@ static NSDate* lastResizeDate_;
     [self setFrameSize:savedSize_];
 }
 
-- (void)_createSplitSelectionView:(BOOL)cancelOnly
-{
+- (void)_createSplitSelectionView:(BOOL)cancelOnly move:(BOOL)move {
     splitSelectionView_ = [[SplitSelectionView alloc] initAsCancelOnly:cancelOnly
                                                              withFrame:NSMakeRect(0,
                                                                                   0,
                                                                                   [self frame].size.width,
                                                                                   [self frame].size.height)
                                                            withSession:session_
-                                                              delegate:[MovePaneController sharedInstance]];
+                                                              delegate:[MovePaneController sharedInstance]
+                                                                  move:move];
     [splitSelectionView_ setFrameOrigin:NSMakePoint(0, 0)];
     [splitSelectionView_ setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
     [self addSubview:splitSelectionView_];
     [splitSelectionView_ release];
 }
 
-- (void)setSplitSelectionMode:(SplitSelectionMode)mode
-{
+- (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move {
     switch (mode) {
         case kSplitSelectionModeOn:
             if (splitSelectionView_) {
                 return;
             }
-            [self _createSplitSelectionView:NO];
+            [self _createSplitSelectionView:NO move:move];
             break;
 
         case kSplitSelectionModeOff:
@@ -381,7 +380,7 @@ static NSDate* lastResizeDate_;
             break;
 
         case kSplitSelectionModeCancel:
-            [self _createSplitSelectionView:YES];
+            [self _createSplitSelectionView:YES move:move];
             break;
     }
 }

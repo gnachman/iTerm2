@@ -335,7 +335,7 @@ typedef enum {
 - (void)pasteString:(NSString *)str flags:(PTYSessionPasteFlags)flags;
 - (void)deleteBackward:(id)sender;
 - (void)deleteForward:(id)sender;
-- (void)setSplitSelectionMode:(SplitSelectionMode)mode;
+- (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move;
 - (void)setSmartCursorColor:(BOOL)value;
 - (void)setMinimumContrast:(float)value;
 

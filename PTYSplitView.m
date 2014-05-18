@@ -23,7 +23,11 @@
 - (NSString *)description
 {
     NSMutableString *d = [NSMutableString stringWithString:@"<PTYSplitView "];
-    [d appendFormat:@"<PTYSplitView frame:%@ splitter:%@ [", [NSValue valueWithRect:[self frame]], [self isVertical] ? @"|" : @"--"];
+    [d appendFormat:@"<%@:%p frame:%@ splitter:%@ [",
+        [self class],
+        self,
+        [NSValue valueWithRect:[self frame]],
+        [self isVertical] ? @"|" : @"--"];
     for (NSView *view in [self subviews]) {
         [d appendFormat:@" (%@)", [view description]];
     }

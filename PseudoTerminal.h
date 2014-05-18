@@ -335,7 +335,7 @@ extern NSString *const kCurrentSessionDidChange;
 - (void)setBroadcastMode:(BroadcastMode)mode;
 
 // Change split selection mode for all sessions in this window.
-- (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session;
+- (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session move:(BOOL)move;
 
 // Change visibility of menu bar (but only if it should be changed--may do
 // nothing if the menu bar is on a different screen, for example).
