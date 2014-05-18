@@ -3761,7 +3761,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         if (_exited || isTmuxGateway) {
           return;
         }
-        [self sendText:keyBindingText];
+        [self sendText:[keyBindingText stringByExpandingVimSpecialCharacters]];
         break;
       case KEY_ACTION_RUN_COPROCESS:
         if (_exited || isTmuxGateway) {
@@ -4095,7 +4095,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             break;
 
         case KEY_ACTION_TEXT:
-            data = [keyBindingText dataUsingEncoding:self.encoding];
+            data = [[keyBindingText stringByExpandingVimSpecialCharacters] dataUsingEncoding:self.encoding];
             break;
 
         case KEY_ACTION_ESCAPE_SEQUENCE:

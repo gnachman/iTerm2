@@ -30,6 +30,7 @@
 #import "NSStringITerm.h"
 #import <apr-1/apr_base64.h>
 #import <Carbon/Carbon.h>
+#import "RegexKitLite.h"
 #import <wctype.h>
 
 #define AMB_CHAR_NUMBER (sizeof(ambiguous_chars) / sizeof(int))
@@ -973,6 +974,180 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 
 - (NSString *)decomposedStringWithHFSPlusMapping {
     return [self _convertBetweenUTF8AndHFSPlusAsPrecomposition:NO];
+}
+
+- (NSUInteger)indexOfSubstring:(NSString *)substring fromIndex:(NSUInteger)index {
+    return [self rangeOfString:substring options:0 range:NSMakeRange(index, self.length - index)].location;
+}
+
+- (NSString *)octalCharacter {
+    unichar value = 0;
+    for (int i = 0; i < self.length; i++) {
+        value *= 8;
+        unichar c = [self characterAtIndex:i];
+        if (c < '0' || c >= '8') {
+            return @"";
+        }
+        value += c - '0';
+    }
+    return [NSString stringWithCharacters:&value length:1];
+}
+
+- (NSString *)hexCharacter {
+    if (self.length == 0 || self.length == 3 || self.length > 4) {
+        return @"";
+    }
+    
+    unsigned int value;
+    NSScanner *scanner = [NSScanner scannerWithString:self];
+    if (![scanner scanHexInt:&value]) {
+        return @"";
+    }
+    
+    unichar chars[2];
+    int length;
+    if (value & 0xffff0000) {
+        length = 2;
+        chars[0] = value >> 16;
+        chars[1] = value & 0xffff;
+    } else {
+        length = 1;
+        chars[0] = value;
+    }
+    return [NSString stringWithCharacters:chars length:length];
+}
+
+- (NSString *)controlCharacter {
+    unichar c = [[self lowercaseString] characterAtIndex:0];
+    if (c < 'a' || c >= 'z') {
+        return @"";
+    }
+    c -= 'a' + 1;
+    return [NSString stringWithFormat:@"%c", c];
+}
+
+- (NSString *)metaCharacter {
+    return [NSString stringWithFormat:@"%c%@", 27, self];
+}
+
+- (NSString *)stringByExpandingVimSpecialCharacters {
+    typedef enum {
+        kSpecialCharacterThreeDigitOctal,  // \...    three-digit octal number (e.g., "\316")
+        kSpecialCharacterTwoDigitOctal,    // \..     two-digit octal number (must be followed by non-digit)
+        kSpecialCharacterOneDigitOctal,    // \.      one-digit octal number (must be followed by non-digit)
+        kSpecialCharacterTwoDigitHex,      // \x..    byte specified with two hex numbers (e.g., "\x1f")
+        kSpecialCharacterOneDigitHex,      // \x.     byte specified with one hex number (must be followed by non-hex char)
+        kSpecialCharacterFourDigitUnicode, // \u....  character specified with up to 4 hex numbers
+        kSpecialCharacterBackspace,        // \b      backspace <BS>
+        kSpecialCharacterEscape,           // \e      escape <Esc>
+        kSpecialCharacterFormFeed,         // \f      formfeed <FF>
+        kSpecialCharacterNewline,          // \n      newline <NL>
+        kSpecialCharacterReturn,           // \r      return <CR>
+        kSpecialCharacterTab,              // \t      tab <Tab>
+        kSpecialCharacterBackslash,        // \\      backslash
+        kSpecialCharacterDoubleQuote,      // \"      double quote
+        kSpecialCharacterControlKey,       // \<C-W>  Control key
+        kSpecialCharacterMetaKey,          // \<M-W>  Meta key
+    } SpecialCharacter;
+    
+    NSDictionary *regexes =
+        @{ @"([0-7]{3})": @(kSpecialCharacterThreeDigitOctal),
+           @"([0-7]{2})(?:[^0-8]|$)": @(kSpecialCharacterTwoDigitOctal),
+           @"([0-7])(?:[^0-8]|$)": @(kSpecialCharacterOneDigitOctal),
+           @"x([0-9a-fA-F]{2})": @(kSpecialCharacterTwoDigitHex),
+           @"x([0-9a-fA-F])(?:[^0-9a-fA-F]|$)": @(kSpecialCharacterOneDigitHex),
+           @"u([0-9a-fA-F]{4})": @(kSpecialCharacterFourDigitUnicode),
+           @"b": @(kSpecialCharacterBackspace),
+           @"e": @(kSpecialCharacterEscape),
+           @"f": @(kSpecialCharacterFormFeed),
+           @"n": @(kSpecialCharacterNewline),
+           @"r": @(kSpecialCharacterReturn),
+           @"t": @(kSpecialCharacterTab),
+           @"\\": @(kSpecialCharacterBackslash),
+           @"\"": @(kSpecialCharacterDoubleQuote),
+           @"<C-([A-Za-z])>": @(kSpecialCharacterControlKey),
+           @"<M-([A-Za-z])>": @(kSpecialCharacterControlKey) };
+           
+
+    NSMutableString *result = [NSMutableString string];
+    __block int haveAppendedUpToIndex = 0;
+    NSUInteger index = [self indexOfSubstring:@"\\" fromIndex:0];
+    while (index != NSNotFound) {
+        [result appendString:[self substringWithRange:NSMakeRange(haveAppendedUpToIndex,
+                                                                  index - haveAppendedUpToIndex)]];
+        haveAppendedUpToIndex = index + 1;
+        NSString *fragment = [self substringFromIndex:index];
+        for (NSString *regex in regexes) {
+            NSRange regexRange = [fragment rangeOfRegex:regex];
+            if (regexRange.location != NSNotFound) {
+                index += regexRange.length;
+                NSArray *capture = [fragment captureComponentsMatchedByRegex:regex];
+                switch ([regexes[regex] intValue]) {
+                    case kSpecialCharacterFourDigitUnicode:
+                    case kSpecialCharacterThreeDigitOctal:
+                    case kSpecialCharacterTwoDigitOctal:
+                    case kSpecialCharacterOneDigitOctal:
+                        [result appendString:[capture[0] octalCharacter]];
+                        break;
+                        
+                    case kSpecialCharacterTwoDigitHex:
+                    case kSpecialCharacterOneDigitHex:
+                        [result appendString:[capture[0] hexCharacter]];
+                        break;
+                        
+                    case kSpecialCharacterBackspace:
+                        [result appendFormat:@"%c", 0x7f];
+                        break;
+                        
+                    case kSpecialCharacterEscape:
+                        [result appendFormat:@"%c", 27];
+                        break;
+                        
+                    case kSpecialCharacterFormFeed:
+                        [result appendFormat:@"%c", 12];
+                        break;
+                        
+                    case kSpecialCharacterNewline:
+                        [result appendString:@"\n"];
+                        break;
+                        
+                    case kSpecialCharacterReturn:
+                        [result appendString:@"\r"];
+                        break;
+                        
+                    case kSpecialCharacterTab:
+                        [result appendString:@"\t"];
+                        break;
+                        
+                    case kSpecialCharacterBackslash:
+                        [result appendString:@"\\"];
+                        break;
+                        
+                    case kSpecialCharacterDoubleQuote:
+                        [result appendString:@"\""];
+                        break;
+                        
+                    case kSpecialCharacterControlKey:
+                        [result appendString:[capture[0] controlCharacter]];
+                        break;
+                        
+                    case kSpecialCharacterMetaKey:
+                        [result appendString:[capture[0] metaCharacter]];
+                        break;
+                }
+                haveAppendedUpToIndex = index;
+                break;
+            }  // If a regex matched
+        }  // for loop over regexes
+        
+        index = [self indexOfSubstring:@"\\" fromIndex:index];
+    }  // while searching for backslashes
+    
+    index = self.length;
+    [result appendString:[self substringWithRange:NSMakeRange(haveAppendedUpToIndex,
+                                                              index - haveAppendedUpToIndex)]];
+
+    return result;
 }
 
 @end
