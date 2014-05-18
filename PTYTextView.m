@@ -3399,38 +3399,46 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int x = clickPoint.x;
     int y = clickPoint.y;
 
-    NSMenu *menu = nil;
-    if (x < MARGIN) {
-        VT100ScreenMark *mark = [_dataSource markOnLine:y];
-        if (mark && mark.command.length) {
-            menu = [self menuForMark:mark directory:[_dataSource workingDirectoryOnLine:y]];
+    NSMenu *markMenu = nil;
+    VT100ScreenMark *mark = [_dataSource markOnLine:y];
+    if (mark && mark.command.length) {
+        markMenu = [self menuForMark:mark directory:[_dataSource workingDirectoryOnLine:y]];
+        if (x < MARGIN) {
+            return markMenu;
         }
     }
 
     VT100GridCoord coord = VT100GridCoordMake(x, y);
-    if (!menu) {
-        ImageInfo *imageInfo = [self imageInfoAtCoord:coord];
+    ImageInfo *imageInfo = [self imageInfoAtCoord:coord];
 
-        if (!imageInfo &&
-            ![_selection containsCoord:VT100GridCoordMake(x, y)]) {
-            // Didn't click on selection.
-            // Save the selection and do a smart selection. If we don't like the result, restore it.
-            iTermSelection *savedSelection = [[_selection copy] autorelease];
-            [self smartSelectWithEvent:event];
-            NSCharacterSet *nonWhiteSpaceSet = [[NSCharacterSet whitespaceAndNewlineCharacterSet] invertedSet];
-            NSString *text = [self selectedText];
-            if (!text ||
-                !text.length ||
-                [text rangeOfCharacterFromSet:nonWhiteSpaceSet].location == NSNotFound) {
-                // If all we selected was white space, undo it.
-                [_selection release];
-                _selection = [savedSelection retain];
-            }
+    if (!imageInfo &&
+        ![_selection containsCoord:VT100GridCoordMake(x, y)]) {
+        // Didn't click on selection.
+        // Save the selection and do a smart selection. If we don't like the result, restore it.
+        iTermSelection *savedSelection = [[_selection copy] autorelease];
+        [self smartSelectWithEvent:event];
+        NSCharacterSet *nonWhiteSpaceSet = [[NSCharacterSet whitespaceAndNewlineCharacterSet] invertedSet];
+        NSString *text = [self selectedText];
+        if (!text ||
+            !text.length ||
+            [text rangeOfCharacterFromSet:nonWhiteSpaceSet].location == NSNotFound) {
+            // If all we selected was white space, undo it.
+            [_selection release];
+            _selection = [savedSelection retain];
         }
-        [self setNeedsDisplay:YES];
-        menu = [self menuAtCoord:coord];
     }
-    return menu;
+    [self setNeedsDisplay:YES];
+    NSMenu *contextMenu = [self menuAtCoord:coord];
+    if (markMenu) {
+        NSMenuItem *markItem = [[[NSMenuItem alloc] initWithTitle:@"Command Info"
+                                                           action:nil
+                                                    keyEquivalent:@""] autorelease];
+        markItem.submenu = markMenu;
+        [contextMenu insertItem:markItem atIndex:0];
+        [contextMenu insertItem:[NSMenuItem separatorItem] atIndex:1];
+    }
+
+    return contextMenu;
 }
 
 - (void)extendSelectionWithEvent:(NSEvent *)event
