@@ -2848,6 +2848,9 @@ NSMutableArray* screens=0;
         [[iTermController sharedInstance] dumpViewHierarchy];
         return NO;
     }
+    if (_mouseDownWasFirstMouse && altPressed) {
+        return NO;
+    }
     [pointer_ notifyLeftMouseDown];
     mouseDownIsThreeFingerClick_ = NO;
     DLog(@"mouseDownImpl - set mouseDownIsThreeFingerClick=NO");
