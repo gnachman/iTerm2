@@ -302,7 +302,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         // this is usually faster than calling getWrappedLineWithWrapWidth since
         // most calls to the latter will just decrement line and return NULL.
         int block_lines = [block getNumLinesWithWrapWidth:width];
-        if (block_lines < line) {
+        if (block_lines <= line) {
             line -= block_lines;
             continue;
         }

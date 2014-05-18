@@ -1882,6 +1882,9 @@ NSMutableArray* screens=0;
     }
 
     NSString *s = [fmt stringFromDate:timestamp];
+    if (!timestamp || ![timestamp timeIntervalSinceReferenceDate]) {
+        s = @"";
+    }
 
     NSSize size = [s sizeWithAttributes:@{ NSFontAttributeName: [NSFont systemFontOfSize:10] }];
     int w = size.width + MARGIN;
