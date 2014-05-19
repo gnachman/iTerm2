@@ -23,6 +23,8 @@
 
 @property(nonatomic, assign) CGFloat topMargin;
 
++ (NSArray *)configuredTools;
+
 + (void)registerToolWithName:(NSString *)name withClass:(Class)c;
 + (void)populateMenu:(NSMenu *)menu;
 + (void)toggleShouldShowTool:(NSString *)theName;
