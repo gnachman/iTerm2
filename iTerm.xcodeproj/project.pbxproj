@@ -2212,12 +2212,12 @@
 				1D9A5521180FA46100B42CE9 /* iTermTests.m */,
 				1D72477211F55E5700BD4924 /* LineBufferTest.h */,
 				1D72477311F55E5700BD4924 /* LineBufferTest.m */,
+				A671C065192981D000A7F796 /* NSStringCategoryTest.h */,
+				A671C066192981D000A7F796 /* NSStringCategoryTest.m */,
 				1DD39B12180B819A004E56D5 /* VT100GridTest.h */,
 				1DD39B13180B819A004E56D5 /* VT100GridTest.m */,
 				1D9A5527180FA61700B42CE9 /* VT100ScreenTest.h */,
 				1D9A5528180FA61700B42CE9 /* VT100ScreenTest.m */,
-				A671C065192981D000A7F796 /* NSStringCategoryTest.h */,
-				A671C066192981D000A7F796 /* NSStringCategoryTest.m */,
 			);
 			name = Tests;
 			sourceTree = "<group>";
