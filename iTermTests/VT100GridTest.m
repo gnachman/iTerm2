@@ -50,6 +50,10 @@ do { \
 - (void)gridCursorDidChangeLine {
 }
 
+- (BOOL)gridUseHFSPlusMapping {
+    return NO;
+}
+
 - (void)testTypeFunctions {
     VT100GridCoord coord = VT100GridCoordMake(1, 2);
     VT100GridSize size = VT100GridSizeMake(3, 4);
@@ -1508,6 +1512,9 @@ do { \
             string = [string stringByReplacingOccurrencesOfString:@"*" withString:@""];
             [lineBuffer setCursor:range.location];
         }
+        if ([string rangeOfString:@"-"].location != NSNotFound) {
+            lineBuffer.mayHaveDoubleWidthCharacter = YES;
+        }
         [lineBuffer appendLine:[self screenCharLineForString:string]
                         length:string.length
                        partial:i == strings.count - 1
@@ -1571,7 +1578,7 @@ do { \
 
     screen_char_t *line = [grid screenCharsAtLineNumber:1];
     assert(!BackgroundColorsEqual(dc, line[0]));
-    assert(BackgroundColorsEqual(dc, line[1]));
+    assert(!BackgroundColorsEqual(dc, line[1]));
 
     // Handle DWC_SKIPs
     grid = [self mediumGrid];

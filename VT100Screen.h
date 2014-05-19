@@ -217,3 +217,9 @@ extern int kVT100ScreenMinRows;
 - (VT100ScreenMark *)lastCommandMark;  // last mark representing a command
 
 @end
+
+@interface VT100Screen (Testing)
+
+- (void)setMayHaveDoubleWidthCharacters:(BOOL)value;
+
+@end
