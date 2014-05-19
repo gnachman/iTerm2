@@ -91,13 +91,9 @@
     [super dealloc];
 }
 
-- (BOOL)isEnabled
-{
-    if ([GrowlApplicationBridge isGrowlRunning]) {
-        return enabled;
-    } else {
-        return NO;
-    }
+- (BOOL)isEnabled {
+    // This used to check if grow was running, but that crashed. I don't think it did any good.
+    return YES;
 }
 
 - (void)setEnabled:(BOOL)newState
