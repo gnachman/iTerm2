@@ -19,12 +19,12 @@
 @interface VT100ScreenTest () <iTermSelectionDelegate, VT100ScreenDelegate>
 @end
 
-@interface VT100Screen (Testing)
+@interface VT100Screen (UnitTest)
 // It's only safe to use this on a newly created screen.
 - (void)setLineBuffer:(LineBuffer *)lineBuffer;
 @end
 
-@implementation VT100Screen (Testing)
+@implementation VT100Screen (UnitTest)
 - (void)setLineBuffer:(LineBuffer *)lineBuffer {
     [linebuffer_ release];
     linebuffer_ = [lineBuffer retain];
@@ -1118,9 +1118,13 @@
         for (int j = 0; j < [line length] - 1; j++) {
             unichar c = [line characterAtIndex:j];;
             if (c == '.') c = 0;
-            if (c == '-') c = DWC_RIGHT;
+            if (c == '-') {
+                c = DWC_RIGHT;
+                [screen setMayHaveDoubleWidthCharacters:YES];
+            }
             if (j == [line length] - 1) {
                 if (c == '>') {
+                    [screen setMayHaveDoubleWidthCharacters:YES];
                     c = DWC_SKIP;
                 }
             }
@@ -1137,6 +1141,7 @@
                 break;
                 
             case '>':
+                [screen setMayHaveDoubleWidthCharacters:YES];
                 s[j].code = EOL_DWC;
                 break;
                 

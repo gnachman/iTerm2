@@ -559,7 +559,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
         for (int i = 0; i < altScreenSubSelectionTuples.count; i++) {
             LineBufferPositionRange *positionRange = altScreenSubSelectionTuples[i][0];
-            iTermSubSelection *originalSub = altScreenSubSelectionTuples[i][2];
+            iTermSubSelection *originalSub = altScreenSubSelectionTuples[i][1];
             VT100GridCoordRange newSelection;
             BOOL ok = [self computeRangeFromOriginalLimit:originalLastPos
                                             limitPosition:newLastPos
@@ -3885,3 +3885,10 @@ static void SwapInt(int *a, int *b) {
 
 @end
 
+@implementation VT100Screen (Testing)
+
+- (void)setMayHaveDoubleWidthCharacters:(BOOL)value {
+    linebuffer_.mayHaveDoubleWidthCharacter = value;
+}
+
+@end
