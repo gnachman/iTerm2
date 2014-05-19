@@ -1346,6 +1346,7 @@ typedef enum {
         case KEY_ACTION_ESCAPE_SEQUENCE:
         case KEY_ACTION_HEX_CODE:
         case KEY_ACTION_TEXT:
+        case KEY_ACTION_VIM_TEXT:
         case KEY_ACTION_RUN_COPROCESS:
         case KEY_ACTION_IGNORE:
         case KEY_ACTION_SEND_C_H_BACKSPACE:
@@ -3761,6 +3762,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         if (_exited || isTmuxGateway) {
           return;
         }
+        [self sendText:keyBindingText];
+        break;
+      case KEY_ACTION_VIM_TEXT:
+        if (_exited || isTmuxGateway) {
+          return;
+        }
         [self sendText:[keyBindingText stringByExpandingVimSpecialCharacters]];
         break;
       case KEY_ACTION_RUN_COPROCESS:
@@ -4095,6 +4102,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             break;
 
         case KEY_ACTION_TEXT:
+            data = [keyBindingText dataUsingEncoding:self.encoding];
+            break;
+
+        case KEY_ACTION_VIM_TEXT:
             data = [[keyBindingText stringByExpandingVimSpecialCharacters] dataUsingEncoding:self.encoding];
             break;
 

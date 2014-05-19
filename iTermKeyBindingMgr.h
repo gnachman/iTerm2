@@ -120,6 +120,7 @@
 #define KEY_ACTION_RUN_COPROCESS 35
 #define KEY_ACTION_FIND_REGEX 36
 #define KEY_ACTION_SET_PROFILE 37
+#define KEY_ACTION_VIM_TEXT 38
 
 @interface iTermKeyBindingMgr : NSObject {
 }
