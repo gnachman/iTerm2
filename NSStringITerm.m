@@ -1004,17 +1004,8 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         return @"";
     }
     
-    unichar chars[2];
-    int length;
-    if (value & 0xffff0000) {
-        length = 2;
-        chars[0] = value >> 16;
-        chars[1] = value & 0xffff;
-    } else {
-        length = 1;
-        chars[0] = value;
-    }
-    return [NSString stringWithCharacters:chars length:length];
+    unichar c = value;
+    return [NSString stringWithCharacters:&c length:1];
 }
 
 - (NSString *)controlCharacter {
@@ -1022,7 +1013,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     if (c < 'a' || c >= 'z') {
         return @"";
     }
-    c -= 'a' + 1;
+    c -= 'a' - 1;
     return [NSString stringWithFormat:@"%c", c];
 }
 
@@ -1051,48 +1042,53 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     } SpecialCharacter;
     
     NSDictionary *regexes =
-        @{ @"([0-7]{3})": @(kSpecialCharacterThreeDigitOctal),
-           @"([0-7]{2})(?:[^0-8]|$)": @(kSpecialCharacterTwoDigitOctal),
-           @"([0-7])(?:[^0-8]|$)": @(kSpecialCharacterOneDigitOctal),
-           @"x([0-9a-fA-F]{2})": @(kSpecialCharacterTwoDigitHex),
-           @"x([0-9a-fA-F])(?:[^0-9a-fA-F]|$)": @(kSpecialCharacterOneDigitHex),
-           @"u([0-9a-fA-F]{4})": @(kSpecialCharacterFourDigitUnicode),
-           @"b": @(kSpecialCharacterBackspace),
-           @"e": @(kSpecialCharacterEscape),
-           @"f": @(kSpecialCharacterFormFeed),
-           @"n": @(kSpecialCharacterNewline),
-           @"r": @(kSpecialCharacterReturn),
-           @"t": @(kSpecialCharacterTab),
-           @"\\": @(kSpecialCharacterBackslash),
-           @"\"": @(kSpecialCharacterDoubleQuote),
-           @"<C-([A-Za-z])>": @(kSpecialCharacterControlKey),
-           @"<M-([A-Za-z])>": @(kSpecialCharacterControlKey) };
+        @{ @"^(([0-7]{3}))": @(kSpecialCharacterThreeDigitOctal),
+           @"^(([0-7]{2}))(?:[^0-8]|$)": @(kSpecialCharacterTwoDigitOctal),
+           @"^(([0-7]))(?:[^0-8]|$)": @(kSpecialCharacterOneDigitOctal),
+           @"^(x([0-9a-fA-F]{2}))": @(kSpecialCharacterTwoDigitHex),
+           @"^(x([0-9a-fA-F]))(?:[^0-9a-fA-F]|$)": @(kSpecialCharacterOneDigitHex),
+           @"^(u([0-9a-fA-F]{4}))": @(kSpecialCharacterFourDigitUnicode),
+           @"^(b)": @(kSpecialCharacterBackspace),
+           @"^(e)": @(kSpecialCharacterEscape),
+           @"^(f)": @(kSpecialCharacterFormFeed),
+           @"^(n)": @(kSpecialCharacterNewline),
+           @"^(r)": @(kSpecialCharacterReturn),
+           @"^(t)": @(kSpecialCharacterTab),
+           @"^(\\\\)": @(kSpecialCharacterBackslash),
+           @"^(\")": @(kSpecialCharacterDoubleQuote),
+           @"^(<C-([A-Za-z])>)": @(kSpecialCharacterControlKey),
+           @"^(<M-([A-Za-z])>)": @(kSpecialCharacterMetaKey) };
            
 
     NSMutableString *result = [NSMutableString string];
     __block int haveAppendedUpToIndex = 0;
     NSUInteger index = [self indexOfSubstring:@"\\" fromIndex:0];
-    while (index != NSNotFound) {
+    while (index != NSNotFound && index < self.length) {
         [result appendString:[self substringWithRange:NSMakeRange(haveAppendedUpToIndex,
                                                                   index - haveAppendedUpToIndex)]];
         haveAppendedUpToIndex = index + 1;
-        NSString *fragment = [self substringFromIndex:index];
+        NSString *fragment = [self substringFromIndex:haveAppendedUpToIndex];
+        BOOL foundMatch = NO;
         for (NSString *regex in regexes) {
             NSRange regexRange = [fragment rangeOfRegex:regex];
             if (regexRange.location != NSNotFound) {
-                index += regexRange.length;
+                foundMatch = YES;
                 NSArray *capture = [fragment captureComponentsMatchedByRegex:regex];
+                index += [capture[1] length] + 1;
+                // capture[0]: The whole match
+                // capture[1]: Characters to consume
+                // capture[2]: Optional. Characters of interest.
                 switch ([regexes[regex] intValue]) {
-                    case kSpecialCharacterFourDigitUnicode:
                     case kSpecialCharacterThreeDigitOctal:
                     case kSpecialCharacterTwoDigitOctal:
                     case kSpecialCharacterOneDigitOctal:
-                        [result appendString:[capture[0] octalCharacter]];
+                        [result appendString:[capture[2] octalCharacter]];
                         break;
                         
+                    case kSpecialCharacterFourDigitUnicode:
                     case kSpecialCharacterTwoDigitHex:
                     case kSpecialCharacterOneDigitHex:
-                        [result appendString:[capture[0] hexCharacter]];
+                        [result appendString:[capture[2] hexCharacter]];
                         break;
                         
                     case kSpecialCharacterBackspace:
@@ -1128,18 +1124,20 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
                         break;
                         
                     case kSpecialCharacterControlKey:
-                        [result appendString:[capture[0] controlCharacter]];
+                        [result appendString:[capture[2] controlCharacter]];
                         break;
                         
                     case kSpecialCharacterMetaKey:
-                        [result appendString:[capture[0] metaCharacter]];
+                        [result appendString:[capture[2] metaCharacter]];
                         break;
                 }
                 haveAppendedUpToIndex = index;
                 break;
             }  // If a regex matched
         }  // for loop over regexes
-        
+        if (!foundMatch) {
+            ++index;
+        }
         index = [self indexOfSubstring:@"\\" fromIndex:index];
     }  // while searching for backslashes
     
