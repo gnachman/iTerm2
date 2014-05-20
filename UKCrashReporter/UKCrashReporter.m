@@ -49,8 +49,9 @@ void    UKCrashReporterCheckForCrash(void)
         
         // Get the log file, its last change date and last report date:
         NSString*        appName = [[[NSBundle mainBundle] infoDictionary] objectForKey: @"CFBundleExecutable"];
-        NSArray *folders = @[ [@"~/Library/Logs/DiagnosticReports/" stringByExpandingTildeInPath],
-                              [@"~/Library/Logs/CrashReporter/" stringByExpandingTildeInPath] ];
+        NSArray *folders = [NSArray arrayWithObjects:[@"~/Library/Logs/DiagnosticReports/" stringByExpandingTildeInPath],
+                                                     [@"~/Library/Logs/CrashReporter/" stringByExpandingTildeInPath],
+                                                     nil ];
         NSString*        crashLogPath = UKCrashReporterFindTenFiveCrashReportPath( appName, folders );
         NSDictionary*    fileAttrs = [[NSFileManager defaultManager] 
                                      attributesOfItemAtPath: crashLogPath error: nil];
