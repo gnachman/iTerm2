@@ -625,7 +625,7 @@ static BOOL hasBecomeActive = NO;
     if (!n) {
         n = [NSNumber numberWithBool:NO];
     }
-    return [n boolValue];
+    return [n boolValue] && [[ToolbeltView configuredTools] count] > 0;
 }
 
 - (IBAction)openPasswordManager:(id)sender {
@@ -1357,6 +1357,9 @@ static BOOL hasBecomeActive = NO;
     if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
       [menuItem setState:[self useBackgroundPatternIndicator]];
       return YES;
+    } else if ([menuItem action] == @selector(toggleToolbelt:)) {
+        [menuItem setState:[[[NSUserDefaults standardUserDefaults] objectForKey:@"Show Toolbelt"] boolValue]];
+        return [[ToolbeltView configuredTools] count] > 0;
     } else if ([menuItem action] == @selector(makeDefaultTerminal:)) {
         return ![self isDefaultTerminal];
     } else if (menuItem == maximizePane) {

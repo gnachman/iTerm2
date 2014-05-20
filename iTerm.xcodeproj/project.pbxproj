@@ -689,6 +689,9 @@
 		A647E3B718C5884600450FA1 /* iTermObjectPool.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3B518C5884600450FA1 /* iTermObjectPool.h */; };
 		A647E3B818C5884600450FA1 /* iTermObjectPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B618C5884600450FA1 /* iTermObjectPool.m */; };
 		A647E3B918C5884600450FA1 /* iTermObjectPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B618C5884600450FA1 /* iTermObjectPool.m */; };
+		A671C067192981D000A7F796 /* NSStringCategoryTest.h in Headers */ = {isa = PBXBuildFile; fileRef = A671C065192981D000A7F796 /* NSStringCategoryTest.h */; };
+		A671C068192981D000A7F796 /* NSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A671C066192981D000A7F796 /* NSStringCategoryTest.m */; };
+		A671C069192981D000A7F796 /* NSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A671C066192981D000A7F796 /* NSStringCategoryTest.m */; };
 		A67E0AD0186E4B71009B2B68 /* TaskNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */; };
 		A67E0AD1186E4B71009B2B68 /* TaskNotifier.m in Sources */ = {isa = PBXBuildFile; fileRef = A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */; };
 		A67E0AD2186E4B71009B2B68 /* TaskNotifier.m in Sources */ = {isa = PBXBuildFile; fileRef = A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */; };
@@ -1387,6 +1390,8 @@
 		A647E3B218C36D0300450FA1 /* VT100Token.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Token.m; sourceTree = "<group>"; };
 		A647E3B518C5884600450FA1 /* iTermObjectPool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermObjectPool.h; sourceTree = "<group>"; };
 		A647E3B618C5884600450FA1 /* iTermObjectPool.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermObjectPool.m; sourceTree = "<group>"; };
+		A671C065192981D000A7F796 /* NSStringCategoryTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSStringCategoryTest.h; sourceTree = "<group>"; };
+		A671C066192981D000A7F796 /* NSStringCategoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSStringCategoryTest.m; sourceTree = "<group>"; };
 		A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TaskNotifier.h; sourceTree = "<group>"; };
 		A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TaskNotifier.m; sourceTree = "<group>"; };
 		A67F117E18D82B9500B23C7B /* PrefsAdvanced.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = PrefsAdvanced.png; path = images/PrefsAdvanced.png; sourceTree = "<group>"; };
@@ -2207,6 +2212,8 @@
 				1D9A5521180FA46100B42CE9 /* iTermTests.m */,
 				1D72477211F55E5700BD4924 /* LineBufferTest.h */,
 				1D72477311F55E5700BD4924 /* LineBufferTest.m */,
+				A671C065192981D000A7F796 /* NSStringCategoryTest.h */,
+				A671C066192981D000A7F796 /* NSStringCategoryTest.m */,
 				1DD39B12180B819A004E56D5 /* VT100GridTest.h */,
 				1DD39B13180B819A004E56D5 /* VT100GridTest.m */,
 				1D9A5527180FA61700B42CE9 /* VT100ScreenTest.h */,
@@ -2820,6 +2827,7 @@
 				A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */,
 				A6A13AB618C33FC500B241ED /* VT100Parser.h in Headers */,
 				1DAED28812E9395E005E49ED /* GlobalSearch.h in Headers */,
+				A671C067192981D000A7F796 /* NSStringCategoryTest.h in Headers */,
 				1DAED99212EDF923005E49ED /* iTermSearchField.h in Headers */,
 				1D85D1ED1306687700A3E998 /* RegexKitLite.h in Headers */,
 				1D237D28131D8741004DD60C /* FindView.h in Headers */,
@@ -3408,6 +3416,7 @@
 				1DBB4B391901F12400832B09 /* ProfilesSessionPreferencesViewController.m in Sources */,
 				A6A269921900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.m in Sources */,
 				A68A30DD186D1429007F550F /* SCPFile.m in Sources */,
+				A671C069192981D000A7F796 /* NSStringCategoryTest.m in Sources */,
 				1D9A55B2180FA8D400B42CE9 /* UKCrashReporter.m in Sources */,
 				1D9A55B4180FA8D400B42CE9 /* UKSystemInfo.m in Sources */,
 				1D9A5544180FA81400B42CE9 /* ProfileModelWrapper.m in Sources */,
@@ -3677,6 +3686,7 @@
 				1D4983511912FC0B002E942D /* ToolDirectoriesView.m in Sources */,
 				1D3D21881482E0E500FAC8E7 /* TmuxGateway.m in Sources */,
 				1D3D21911482F18A00FAC8E7 /* TmuxController.m in Sources */,
+				A671C068192981D000A7F796 /* NSStringCategoryTest.m in Sources */,
 				1D3D21961483144600FAC8E7 /* TSVParser.m in Sources */,
 				1D3D21B014839AAB00FAC8E7 /* TmuxLayoutParser.m in Sources */,
 				A6A2698918FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m in Sources */,

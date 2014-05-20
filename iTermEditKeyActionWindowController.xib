@@ -21,14 +21,14 @@
         <window title="Set Keyboard Shortcut" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hidesOnDeactivate="YES" oneShot="NO" showsToolbarButton="NO" visibleAtLaunch="NO" animationBehavior="default" id="F0z-JX-Cv5" customClass="NSPanel">
             <windowStyleMask key="styleMask" titled="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="196" y="240" width="406" height="157"/>
+            <rect key="contentRect" x="196" y="240" width="442" height="157"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1280" height="778"/>
             <view key="contentView" id="se5-gp-TjO">
-                <rect key="frame" x="0.0" y="0.0" width="406" height="157"/>
+                <rect key="frame" x="0.0" y="0.0" width="442" height="157"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <view fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bKI-jb-USm">
-                        <rect key="frame" x="0.0" y="0.0" width="406" height="157"/>
+                        <rect key="frame" x="0.0" y="0.0" width="442" height="157"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="K5J-cS-cKV">
@@ -50,7 +50,7 @@
                                 </textFieldCell>
                             </textField>
                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GMz-jA-Nhg">
-                                <rect key="frame" x="146" y="88" width="243" height="26"/>
+                                <rect key="frame" x="146" y="88" width="279" height="26"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="NkH-n8-Fjv">
                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -128,8 +128,9 @@
                                             <menuItem title="Send Escape Sequence" tag="10" id="wWj-9U-Z2G"/>
                                             <menuItem title="Send Hex Code" tag="11" id="YXc-hq-7p6"/>
                                             <menuItem title="Send Text" tag="12" id="ky6-A2-dO2"/>
+                                            <menuItem title="Send Text with &quot;vim&quot; Special Chars" tag="38" id="gkw-IL-5aH"/>
                                             <menuItem isSeparatorItem="YES" id="rDx-uC-uV7"/>
-                                            <menuItem title="Find Regular Expression…" state="on" tag="36" id="cm6-Qm-ZZ2">
+                                            <menuItem title="Find Regular Expression…" tag="36" id="cm6-Qm-ZZ2">
                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                             </menuItem>
                                             <menuItem isSeparatorItem="YES" id="2kX-33-g8o"/>
@@ -147,7 +148,7 @@
                                 </connections>
                             </popUpButton>
                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="loN-RU-1Py">
-                                <rect key="frame" x="314" y="12" width="78" height="32"/>
+                                <rect key="frame" x="350" y="12" width="78" height="32"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="zMC-Yr-nMr">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -161,7 +162,7 @@ DQ
                                 </connections>
                             </button>
                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rEh-rY-u5S">
-                                <rect key="frame" x="232" y="12" width="82" height="32"/>
+                                <rect key="frame" x="268" y="12" width="82" height="32"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="Fhv-Fo-bzd">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -176,7 +177,7 @@ Gw
                                 </connections>
                             </button>
                             <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="q03-HA-vno" userLabel="Parameter Label">
-                                <rect key="frame" x="106" y="48" width="283" height="33"/>
+                                <rect key="frame" x="106" y="48" width="318" height="33"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Esc+" id="WbG-ev-YAV">
                                     <font key="font" metaFont="system"/>
@@ -185,7 +186,7 @@ Gw
                                 </textFieldCell>
                             </textField>
                             <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="OcE-sI-T64" userLabel="Shortcut Text Field" customClass="iTermShortcutInputView">
-                                <rect key="frame" x="149" y="119" width="237" height="22"/>
+                                <rect key="frame" x="149" y="119" width="273" height="22"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="lcf-pM-rft">
                                     <font key="font" metaFont="system"/>
@@ -198,7 +199,7 @@ Gw
                                 </connections>
                             </textField>
                             <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7JT-ar-Qef" userLabel="Parameter">
-                                <rect key="frame" x="149" y="62" width="237" height="22"/>
+                                <rect key="frame" x="149" y="62" width="273" height="22"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="ex: 0x7f" drawsBackground="YES" id="QTL-FQ-Diu">
                                     <font key="font" metaFont="system"/>
@@ -207,7 +208,7 @@ Gw
                                 </textFieldCell>
                             </textField>
                             <popUpButton hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="a20-Tf-Nfn">
-                                <rect key="frame" x="146" y="58" width="243" height="26"/>
+                                <rect key="frame" x="146" y="58" width="279" height="26"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="XwG-yb-SyJ">
                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -228,7 +229,7 @@ Gw
                                 </textFieldCell>
                             </textField>
                             <popUpButton hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Lul-IP-GkH">
-                                <rect key="frame" x="146" y="59" width="243" height="26"/>
+                                <rect key="frame" x="146" y="59" width="279" height="26"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" id="1oe-ia-azx">
                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>

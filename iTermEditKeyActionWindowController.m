@@ -113,6 +113,7 @@
             _shortcutField.disableKeyRemapping = NO;
             break;
 
+        case KEY_ACTION_VIM_TEXT:
         case KEY_ACTION_TEXT:
             [_parameter setHidden:NO];
             [[_parameter cell] setPlaceholderString:@"Enter value to send"];

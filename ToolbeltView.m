@@ -87,7 +87,13 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     if (!tools) {
         return [ToolbeltView defaultTools];
     }
-    return tools;
+    NSMutableArray *vettedTools = [NSMutableArray array];
+    for (NSString *toolName in tools) {
+        if ([gRegisteredTools objectForKey:toolName]) {
+            [vettedTools addObject:toolName];
+        }
+    }
+    return vettedTools;
 }
 
 - (id)initWithFrame:(NSRect)frame term:(PseudoTerminal *)term

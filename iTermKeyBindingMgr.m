@@ -343,6 +343,9 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
         case KEY_ACTION_HEX_CODE:
             actionString = [NSString stringWithFormat: @"%@ %@", @"Send Hex Codes:", auxText];
             break;
+        case KEY_ACTION_VIM_TEXT:
+            actionString = [NSString stringWithFormat:@"%@ \"%@\"", @"Send:", auxText];
+            break;
         case KEY_ACTION_TEXT:
             actionString = [NSString stringWithFormat:@"%@ \"%@\"", @"Send:", auxText];
             break;

@@ -122,6 +122,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)precomposedStringWithHFSPlusMapping;
 - (NSString *)decomposedStringWithHFSPlusMapping;
 
+// Expands a vim-style string's special characters
+- (NSString *)stringByExpandingVimSpecialCharacters;
+
 @end
 
 @interface NSMutableString (iTerm)
