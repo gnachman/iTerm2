@@ -3975,20 +3975,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSAttributedString *copyAttributedString = [self selectedAttributedTextWithPad:NO];
     DLog(@"Have selected text of length %d. selection=%@", (int)[copyString length], _selection);
     NSMutableArray *types = [NSMutableArray array];
-    if (copyString) {
-        [types addObject:NSStringPboardType];
-    }
     if (copyAttributedString) {
         [types addObject:NSRTFPboardType];
     }
-    [pboard declareTypes:types owner:self];
     if (copyString) {
-        [pboard setString:copyString forType:NSStringPboardType];
+        [types addObject:NSStringPboardType];
     }
+    [pboard declareTypes:types owner:self];
     if (copyAttributedString) {
         NSData *RTFData = [copyAttributedString RTFFromRange:NSMakeRange(0, [copyAttributedString length])
                                           documentAttributes:nil];
         [pboard setData:RTFData forType:NSRTFPboardType];
+    }
+    if (copyString) {
+        [pboard setString:copyString forType:NSStringPboardType];
     }
 
     [[PasteboardHistory sharedInstance] save:copyString];
