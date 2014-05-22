@@ -2,8 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSHumanReadableCopyright</key>
-	<string>GPL v2</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleDocumentTypes</key>
@@ -26,12 +24,12 @@
 			<string>Editor</string>
 		</dict>
 		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Folders</string>
 			<key>CFBundleTypeOSTypes</key>
 			<array>
 				<string>fold</string>
 			</array>
-			<key>CFBundleTypeName</key>
-			<string>Folders</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 		</dict>
@@ -61,9 +59,9 @@
 	<key>CFBundleGetInfoString</key>
 	<string>unknown</string>
 	<key>CFBundleHelpBookFolder</key>
-	<string>iTerm2 Help</string>
+	<string>OnlineHelp</string>
 	<key>CFBundleHelpBookName</key>
-	<string>iTerm2 Help</string>
+	<string>com.googlecode.iterm2.help</string>
 	<key>CFBundleIconFile</key>
 	<string>iTerm.icns</string>
 	<key>CFBundleIdentifier</key>
@@ -185,15 +183,17 @@
 	<string>YES</string>
 	<key>NSExtensions</key>
 	<dict/>
+	<key>NSHumanReadableCopyright</key>
+	<string>GPL v2</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>iTermApplication</string>
-	<key>SUPublicDSAKeyFile</key>
-	<string>dsa_pub.pem</string>
-	<key>SUFeedURLForTesting</key>
-	<string>http://iterm2.com/appcasts/legacy_testing.xml</string>
 	<key>SUFeedURLForFinal</key>
 	<string>http://iterm2.com/appcasts/legacy_final.xml</string>
+	<key>SUFeedURLForTesting</key>
+	<string>http://iterm2.com/appcasts/legacy_testing.xml</string>
+	<key>SUPublicDSAKeyFile</key>
+	<string>dsa_pub.pem</string>
 </dict>
 </plist>

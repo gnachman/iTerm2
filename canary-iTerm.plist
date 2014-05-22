@@ -59,9 +59,9 @@
 	<key>CFBundleGetInfoString</key>
 	<string>unknown</string>
 	<key>CFBundleHelpBookFolder</key>
-	<string>iTerm2 Help</string>
+	<string>OnlineHelp</string>
 	<key>CFBundleHelpBookName</key>
-	<string>iTerm2 Help</string>
+	<string>com.googlecode.iterm2.help</string>
 	<key>CFBundleIconFile</key>
 	<string>iTerm.icns</string>
 	<key>CFBundleIdentifier</key>
