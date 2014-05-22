@@ -9,6 +9,8 @@
 #import <Cocoa/Cocoa.h>
 #import "ToolbeltView.h"
 
+@class CommandHistoryEntry;
+
 @interface ToolCommandHistoryView : NSView <
   ToolbeltTool,
   NSTableViewDataSource,
@@ -18,5 +20,6 @@
 - (id)initWithFrame:(NSRect)frame;
 - (void)shutdown;
 - (void)updateCommands;
+- (CommandHistoryEntry *)selectedEntry;
 
 @end

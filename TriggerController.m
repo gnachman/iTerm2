@@ -11,6 +11,7 @@
 #import "GrowlTrigger.h"
 #import "BounceTrigger.h"
 #import "BellTrigger.h"
+#import "CaptureTrigger.h"
 #import "ScriptTrigger.h"
 #import "AlertTrigger.h"
 #import "HighlightTrigger.h"
@@ -51,6 +52,7 @@
     return @[ [AlertTrigger class],
               [BellTrigger class],
               [BounceTrigger class],
+              [CaptureTrigger class],
               [GrowlTrigger class],
               [SendTextTrigger class],
               [ScriptTrigger class],

@@ -21,6 +21,10 @@
 // Posted when the tmux font changes. Window layouts will need to be updated.
 extern NSString *const kPTYSessionTmuxFontDidChange;
 
+// Called when captured output for the current session changes.
+extern NSString *const kPTYSessionCapturedOutputDidChange;
+
+@class CapturedOutput;
 @class FakeWindow;
 @class PTYScrollView;
 @class PTYTask;
@@ -431,6 +435,9 @@ typedef enum {
 - (void)nextMarkOrNote;
 - (void)scrollToMark:(VT100ScreenMark *)mark;
 
+// Scroll to and highlight a line. Basically, a more general version of scrollToMark:.
+- (void)highlightAbsoluteLineNumber:(long long)absoluteLineNumber;
+
 // Select this session and tab and bring window to foreground.
 - (void)reveal;
 
@@ -438,6 +445,8 @@ typedef enum {
 - (NSImage *)snapshot;
 
 - (void)enterPassword:(NSString *)password;
+
+- (void)addCapturedOutput:(CapturedOutput *)capturedOutput;
 
 #pragma mark - Scripting Support
 

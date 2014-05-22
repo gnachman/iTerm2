@@ -27,7 +27,7 @@
     return @"Enter Message";
 }
 
-- (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession
+- (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
 {
     iTermGrowlDelegate *gd = [iTermGrowlDelegate sharedInstance];
     [gd growlNotify:[self paramWithBackreferencesReplacedWithValues:values]

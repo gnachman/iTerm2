@@ -51,6 +51,7 @@
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
 #import "ToolbeltView.h"
+#import "ToolCapturedOutputView.h"
 #import "ToolCommandHistoryView.h"
 #import "ToolDirectoriesView.h"
 #import "VT100Screen.h"
@@ -1932,6 +1933,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)refreshTools {
     [[toolbelt_ commandHistoryView] updateCommands];
+    [[toolbelt_ capturedOutputView] updateCapturedOutput];
     [[toolbelt_ directoriesView] updateDirectories];
 }
 

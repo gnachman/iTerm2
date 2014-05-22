@@ -58,7 +58,7 @@ extern NSString * const kTriggerPartialLineKey;
        lineNumber:(long long)lineNumber;
 
 // Subclasses must override this.
-- (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession;
+- (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber;
 
 - (NSComparisonResult)compareTitle:(Trigger *)other;
 

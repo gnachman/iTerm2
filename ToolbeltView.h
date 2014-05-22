@@ -10,10 +10,13 @@
 #import "ToolWrapper.h"
 #import "FutureMethods.h"
 
+@class ToolCapturedOutputView;
 @class ToolCommandHistoryView;
 @class ToolDirectoriesView;
 @class ToolbeltSplitView;
 @class PseudoTerminal;
+
+extern NSString *kCommandHistoryToolName;
 
 @interface ToolbeltView : NSView <NSSplitViewDelegate, ToolWrapperDelegate> {
     ToolbeltSplitView *splitter_;
@@ -48,6 +51,8 @@
 
 - (ToolCommandHistoryView *)commandHistoryView;
 - (ToolDirectoriesView *)directoriesView;
+- (ToolCapturedOutputView *)capturedOutputView;
+
 - (void)relayoutAllTools;
 
 @end

@@ -14,6 +14,5 @@
 
 - (NSString *)title;
 - (BOOL)takesParameter;
-- (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession;
 
 @end

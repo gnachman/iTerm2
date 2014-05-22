@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import "IntervalTree.h"
 
+@class CapturedOutput;
+
 @interface VT100ScreenMark : NSObject <IntervalTreeObject>
 
 // Return code of command on the line for this mark.
@@ -25,5 +27,11 @@
 
 // Time the command finished running. nil if no command or if it hasn't finished.
 @property(nonatomic, retain) NSDate *endDate;
+
+// Array of CapturedOutput objects.
+@property(nonatomic, readonly) NSArray *capturedOutput;
+
+// Add an object to self.capturedOutput.
+- (void)addCapturedOutput:(CapturedOutput *)capturedOutput;
 
 @end

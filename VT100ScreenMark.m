@@ -8,13 +8,17 @@
 
 #import "VT100ScreenMark.h"
 
-@implementation VT100ScreenMark
+@implementation VT100ScreenMark {
+    NSMutableArray *_capturedOutput;
+}
+
 @synthesize entry;
 
 - (void)dealloc {
     [_command release];
     [_startDate release];
     [_endDate release];
+    [_capturedOutput release];
     [super dealloc];
 }
 
@@ -27,6 +31,13 @@
   [_command autorelease];
   _command = [command copy];
   self.startDate = [NSDate date];
+}
+
+- (void)addCapturedOutput:(CapturedOutput *)capturedOutput {
+    if (!_capturedOutput) {
+        _capturedOutput = [[NSMutableArray alloc] init];
+    }
+    [_capturedOutput addObject:capturedOutput];
 }
 
 @end

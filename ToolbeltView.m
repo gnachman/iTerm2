@@ -7,6 +7,7 @@
 //
 
 #import "ToolbeltView.h"
+#import "ToolCapturedOutputView.h"
 #import "ToolCommandHistoryView.h"
 #import "ToolDirectoriesView.h"
 #import "ToolProfiles.h"
@@ -17,6 +18,8 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermApplication.h"
 #import "FutureMethods.h"
+
+NSString *kCommandHistoryToolName = @"Command History";
 
 @interface ToolbeltSplitView : NSSplitView {
     NSColor *dividerColor_;
@@ -62,7 +65,8 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 + (void)initialize
 {
     gRegisteredTools = [[NSMutableDictionary alloc] init];
-    [ToolbeltView registerToolWithName:@"Command History"
+    [ToolbeltView registerToolWithName:@"Captured Output" withClass:[ToolCapturedOutputView class]];
+    [ToolbeltView registerToolWithName:kCommandHistoryToolName
                              withClass:[ToolCommandHistoryView class]];
     [ToolbeltView registerToolWithName:@"Recent Directories" withClass:[ToolDirectoriesView class]];
     [ToolbeltView registerToolWithName:@"Jobs" withClass:[ToolJobs class]];
@@ -418,6 +422,11 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 - (ToolDirectoriesView *)directoriesView {
     ToolWrapper *wrapper = [tools_ objectForKey:@"Recent Directories"];
     return (ToolDirectoriesView *)wrapper.tool;
+}
+
+- (ToolCapturedOutputView *)capturedOutputView {
+    ToolWrapper *wrapper = [tools_ objectForKey:@"Captured Output"];
+    return (ToolCapturedOutputView *)wrapper.tool;
 }
 
 @end

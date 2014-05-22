@@ -68,6 +68,7 @@
 static NSString *const kAskAboutOutdatedKeyMappingKeyFormat = @"AskAboutOutdatedKeyMappingForGuid%@";
 
 NSString *const kPTYSessionTmuxFontDidChange = @"kPTYSessionTmuxFontDidChange";
+NSString *const kPTYSessionCapturedOutputDidChange = @"kPTYSessionCapturedOutputDidChange";
 
 static NSString *TERM_ENVNAME = @"TERM";
 static NSString *COLORFGBG_ENVNAME = @"COLORFGBG";
@@ -3024,6 +3025,21 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [_view snapshot];
 }
 
+#pragma mark - Captured Output
+
+- (void)addCapturedOutput:(CapturedOutput *)capturedOutput {
+    VT100ScreenMark *lastCommandMark = [_screen lastCommandMark];
+    if (!lastCommandMark) {
+        // TODO: Show an announcement
+        return;
+    }
+    [lastCommandMark addCapturedOutput:capturedOutput];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionCapturedOutputDidChange
+                                                        object:nil];
+}
+
+#pragma mark - Password Management
+
 - (void)enterPassword:(NSString *)password {
     NSData *backspace = [self backspaceData];
     if (backspace) {
@@ -3350,6 +3366,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         for (obj in objects) {
             [self highlightMarkOrNote:obj];
         }
+    }
+}
+
+- (void)highlightAbsoluteLineNumber:(long long)absoluteLineNumber {
+    VT100GridRange range = VT100GridRangeMake(absoluteLineNumber - [_screen totalScrollbackOverflow], 1);
+    if (range.location >= 0 && range.location < [_screen numberOfLines]) {
+        [_textview scrollLineNumberRangeIntoView:range];
+        [_textview highlightMarkOnLine:range.location];
     }
 }
 

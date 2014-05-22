@@ -184,15 +184,24 @@ static const CGFloat kHelpMargin = 5;
     }
 }
 
-- (void)tableViewSelectionDidChange:(NSNotification *)notification
-{
+- (CommandHistoryEntry *)selectedEntry {
     NSInteger row = [tableView_ selectedRow];
     if (row != -1) {
-        CommandHistoryEntry *entry = filteredEntries_[row];
-        if (entry.lastMark) {
-            ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-            [[wrapper.term currentSession] scrollToMark:entry.lastMark];
-        }
+        return filteredEntries_[row];
+    } else {
+        return nil;
+    }
+}
+
+- (void)tableViewSelectionDidChange:(NSNotification *)notification {
+    CommandHistoryEntry *entry = [self selectedEntry];
+
+    if (entry.lastMark) {
+        ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+        // Post a notification in case the captured output tool is observing us.
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionCapturedOutputDidChange
+                                                            object:nil];
+        [[wrapper.term currentSession] scrollToMark:entry.lastMark];
     }
 }
 

@@ -29,7 +29,7 @@
 }
 
 
-- (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession
+- (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
 {
     NSString *command = [self paramWithBackreferencesReplacedWithValues:values];
     [NSThread detachNewThreadSelector:@selector(runCommand:)

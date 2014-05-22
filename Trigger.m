@@ -94,7 +94,7 @@ NSString * const kTriggerPartialLineKey = @"partial";
     [super dealloc];
 }
 
-- (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession
+- (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
 {
     assert(false);
 }
@@ -122,7 +122,9 @@ NSString * const kTriggerPartialLineKey = @"partial";
         }
         for (NSArray *matches in captures) {
             [self performActionWithValues:matches
-                                inSession:aSession];
+                                inSession:aSession
+                                 onString:s
+                     atAbsoluteLineNumber:lineNumber];
         }
     }
     if (!partialLine) {

@@ -479,6 +479,12 @@
 		1DB67CF51486BD3D005849A1 /* TmuxStateParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB67CF31486BD3D005849A1 /* TmuxStateParser.h */; };
 		1DB67CF61486BD3D005849A1 /* TmuxStateParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB67CF41486BD3D005849A1 /* TmuxStateParser.m */; };
 		1DB72CF61396059200EB1005 /* xterm-terminfo.txt in Resources */ = {isa = PBXBuildFile; fileRef = 1DB72CF51396059200EB1005 /* xterm-terminfo.txt */; };
+		1DB83952192E95EB0037E548 /* CaptureTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB83950192E95EB0037E548 /* CaptureTrigger.h */; };
+		1DB83953192E95EB0037E548 /* CaptureTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83951192E95EB0037E548 /* CaptureTrigger.m */; };
+		1DB83954192E95EB0037E548 /* CaptureTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83951192E95EB0037E548 /* CaptureTrigger.m */; };
+		1DB83957192E9A610037E548 /* ToolCapturedOutputView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB83955192E9A610037E548 /* ToolCapturedOutputView.h */; };
+		1DB83958192E9A610037E548 /* ToolCapturedOutputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83956192E9A610037E548 /* ToolCapturedOutputView.m */; };
+		1DB83959192E9A610037E548 /* ToolCapturedOutputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83956192E9A610037E548 /* ToolCapturedOutputView.m */; };
 		1DB9D8F2183FE9EF0029F0B5 /* HotkeyWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB9D8F0183FE9EF0029F0B5 /* HotkeyWindowController.h */; };
 		1DB9D8F3183FE9EF0029F0B5 /* HotkeyWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB9D8F1183FE9EF0029F0B5 /* HotkeyWindowController.m */; };
 		1DB9D8F4183FE9EF0029F0B5 /* HotkeyWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB9D8F1183FE9EF0029F0B5 /* HotkeyWindowController.m */; };
@@ -1206,6 +1212,10 @@
 		1DB67CF41486BD3D005849A1 /* TmuxStateParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxStateParser.m; sourceTree = "<group>"; };
 		1DB7188C183E8E3600ADC5DD /* TrackedObject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrackedObject.h; sourceTree = "<group>"; };
 		1DB72CF51396059200EB1005 /* xterm-terminfo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "xterm-terminfo.txt"; sourceTree = "<group>"; };
+		1DB83950192E95EB0037E548 /* CaptureTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CaptureTrigger.h; sourceTree = "<group>"; };
+		1DB83951192E95EB0037E548 /* CaptureTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CaptureTrigger.m; sourceTree = "<group>"; };
+		1DB83955192E9A610037E548 /* ToolCapturedOutputView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolCapturedOutputView.h; sourceTree = "<group>"; };
+		1DB83956192E9A610037E548 /* ToolCapturedOutputView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCapturedOutputView.m; sourceTree = "<group>"; };
 		1DB9D8F0183FE9EF0029F0B5 /* HotkeyWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HotkeyWindowController.h; sourceTree = "<group>"; };
 		1DB9D8F1183FE9EF0029F0B5 /* HotkeyWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HotkeyWindowController.m; sourceTree = "<group>"; };
 		1DBB4B351901F12400832B09 /* ProfilesSessionPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesSessionPreferencesViewController.h; sourceTree = "<group>"; };
@@ -1719,13 +1729,12 @@
 				1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */,
 				A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */,
 				1DE214DF128212EE004E3ADF /* Autocomplete.h */,
-				A6AE1EDB192723F700780C19 /* iTermAnnouncementView.h */,
-				A6AE1ED61926F89B00780C19 /* iTermAnnouncementViewController.h */,
 				1DA26ABE15007507004B5792 /* BackgroundThread.h */,
 				1D9DCC0C142D7F5F0016228A /* BellTrigger.h */,
 				A68A3108186D2BCF007F550F /* BottomBarView.h */,
 				1D9DCC08142D7F300016228A /* BounceTrigger.h */,
 				A6E7139918F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.h */,
+				1DB83950192E95EB0037E548 /* CaptureTrigger.h */,
 				1D48B377167E809D000046EE /* CharacterRun.h */,
 				1D699BC317CABC060094F0C1 /* CharacterRunInline.h */,
 				1D407A2414BABE8700BD5035 /* charmaps.h */,
@@ -1770,6 +1779,8 @@
 				1D407A2614BABE8700BD5035 /* iTerm.h */,
 				A697100418D82E79007E901D /* iTermAdvancedSettingsController.h */,
 				A697100918D94CDA007E901D /* iTermAdvancedSettingsModel.h */,
+				A6AE1EDB192723F700780C19 /* iTermAnnouncementView.h */,
+				A6AE1ED61926F89B00780C19 /* iTermAnnouncementViewController.h */,
 				DDF0FD63062916F70080EF74 /* iTermApplication.h */,
 				20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */,
 				A6A13AA018C2D23300B241ED /* iTermColorMap.h */,
@@ -2255,6 +2266,7 @@
 				1D9DCC15142D7FC10016228A /* AlertTrigger.m */,
 				1D9DCC0D142D7F5F0016228A /* BellTrigger.m */,
 				1D9DDD91142E5AC600275650 /* CoprocessTrigger.m */,
+				1DB83951192E95EB0037E548 /* CaptureTrigger.m */,
 				1D9DCC09142D7F300016228A /* BounceTrigger.m */,
 				1D9DCC03142D7E570016228A /* GrowlTrigger.m */,
 				1D9DCC11142D7F970016228A /* ScriptTrigger.m */,
@@ -2273,6 +2285,8 @@
 				1D19C71314171F1D00617E08 /* ToolJobs.m */,
 				1D67AAA814284BF300D5DA4E /* ToolNotes.m */,
 				1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */,
+				1DB83955192E9A610037E548 /* ToolCapturedOutputView.h */,
+				1DB83956192E9A610037E548 /* ToolCapturedOutputView.m */,
 				1DE8DC8C1415546000F83147 /* ToolProfiles.m */,
 				A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */,
 				1D49834E1912FC0B002E942D /* ToolDirectoriesView.h */,
@@ -2941,11 +2955,13 @@
 				1D407A4314BABE8700BD5035 /* PTYWindow.h in Headers */,
 				A6A13AB118C33ED300B241ED /* VT100CSIParser.h in Headers */,
 				1D407A4414BABE8700BD5035 /* VT100Screen.h in Headers */,
+				1DB83952192E95EB0037E548 /* CaptureTrigger.h in Headers */,
 				1D03D420191419080049EB8F /* DirectoriesPopup.h in Headers */,
 				1D407A4514BABE8700BD5035 /* VT100Terminal.h in Headers */,
 				1D06E7D314BC04510097C0ED /* ProfileTableRow.h in Headers */,
 				1D06E7D714BC04E20097C0ED /* ProfileModelWrapper.h in Headers */,
 				1D06E7DB14BC05DB0097C0ED /* ProfileTableView.h in Headers */,
+				1DB83957192E9A610037E548 /* ToolCapturedOutputView.h in Headers */,
 				A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */,
 				1DB9D8F2183FE9EF0029F0B5 /* HotkeyWindowController.h in Headers */,
 				A6A2699C190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h in Headers */,
@@ -3267,6 +3283,7 @@
 				A68A3116186E2F14007F550F /* PopupWindow.m in Sources */,
 				A6A13ABD18C34F6400B241ED /* VT100XtermParser.m in Sources */,
 				1DABA03519253FEA00A228D8 /* PasswordTrigger.m in Sources */,
+				1DB83959192E9A610037E548 /* ToolCapturedOutputView.m in Sources */,
 				1D9A555B180FA83900B42CE9 /* ContextMenuActionPrefsController.m in Sources */,
 				A63F40AB183F3CED003A6A6D /* LineBufferHelpers.m in Sources */,
 				1D9A5531180FA73300B42CE9 /* FutureMethods.m in Sources */,
@@ -3480,6 +3497,7 @@
 				A6E7138618F263BC008D94DD /* PreferenceInfo.m in Sources */,
 				1D9A5574180FA85D00B42CE9 /* AlertTrigger.m in Sources */,
 				1D9A55A9180FA8B700B42CE9 /* PSMMetalTabStyle.m in Sources */,
+				1DB83954192E95EB0037E548 /* CaptureTrigger.m in Sources */,
 				1D9A5523180FA46100B42CE9 /* iTermTests.m in Sources */,
 				A6A13AB818C33FC500B241ED /* VT100Parser.m in Sources */,
 				1D9A559C180FA87000B42CE9 /* SessionTitleView.m in Sources */,
@@ -3702,6 +3720,7 @@
 				1DD4CE8114A51C0D00ED182E /* TmuxDashboardController.m in Sources */,
 				A68A30C2186D0DC1007F550F /* FindCursorView.m in Sources */,
 				1DA9AEEB14A51CA000BEB37B /* TmuxSessionsTable.m in Sources */,
+				1DB83953192E95EB0037E548 /* CaptureTrigger.m in Sources */,
 				1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */,
 				A6E7138018F1DB1E008D94DD /* iTermPreferences.m in Sources */,
 				A697100C18D94CDA007E901D /* iTermAdvancedSettingsModel.m in Sources */,
@@ -3732,6 +3751,7 @@
 				A6AE1EDE192723F700780C19 /* iTermAnnouncementView.m in Sources */,
 				A6E7138A18F26445008D94DD /* iTermPreferencesBaseViewController.m in Sources */,
 				A647E3B818C5884600450FA1 /* iTermObjectPool.m in Sources */,
+				1DB83958192E9A610037E548 /* ToolCapturedOutputView.m in Sources */,
 				1DF8FEF418F3217100722B35 /* KeysPreferencesViewController.m in Sources */,
 				1D085F9B16F1135F00B7FCE9 /* PasteEvent.m in Sources */,
 				A647E3AF18C3588800450FA1 /* VT100ControlParser.m in Sources */,
