@@ -38,7 +38,7 @@ static const CGFloat kMargin = 4;
         [scrollView_ setHasHorizontalScroller:NO];
         NSSize contentSize = [scrollView_ contentSize];
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        
+
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
         NSTableColumn *col;
         col = [[[NSTableColumn alloc] initWithIdentifier:@"contents"] autorelease];
@@ -52,10 +52,10 @@ static const CGFloat kMargin = 4;
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];
         [tableView_ setUsesAlternatingRowBackgroundColors:YES];
-        
+
         [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
         [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        
+
         tableView_.menu = [[[NSMenu alloc] init] autorelease];
         tableView_.menu.delegate = self;
         NSMenuItem *item;
@@ -66,10 +66,10 @@ static const CGFloat kMargin = 4;
 
         [scrollView_ setDocumentView:tableView_];
         [self addSubview:scrollView_];
-        
+
         [tableView_ sizeToFit];
         [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
-        
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(capturedOutputDidChange:)
                                                      name:kPTYSessionCapturedOutputDidChange
@@ -104,11 +104,11 @@ static const CGFloat kMargin = 4;
         [mark_ autorelease];
         mark_ = [mark retain];
     }
-    
+
     [capturedOutput_ release];
     capturedOutput_ = [theArray copy];
     [tableView_ reloadData];
-    
+
     // Updating the table data causes the cursor to change into an arrow!
     [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
 }
@@ -177,7 +177,7 @@ static const CGFloat kMargin = 4;
         return;
     }
     CapturedOutput *capturedOutput = capturedOutput_[selectedIndex];
-    
+
     if (capturedOutput) {
         ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
         [[wrapper.term currentSession] highlightAbsoluteLineNumber:capturedOutput.absoluteLineNumber];
@@ -193,7 +193,7 @@ static const CGFloat kMargin = 4;
         return;
     }
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-	[[[wrapper.term currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
+        [[[wrapper.term currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
 }
 
 - (void)doubleClickOnTableView:(id)sender {

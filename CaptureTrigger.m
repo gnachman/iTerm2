@@ -62,6 +62,7 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier =
         [session queueAnnouncement:announcement
                         identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier];
     }
+    [session takeFocus];
 }
 
 @end
