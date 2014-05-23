@@ -885,9 +885,11 @@ static const int kNumCharsToSearchForDivider = 8;
     NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
     VT100GridCoordRange theRange =
         VT100GridCoordRangeMake(0, coord.y, [_dataSource width], coord.y);
+    NSCharacterSet *columnDividers = [self columnDividers];
     [self enumerateCharsInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
                       charBlock:^BOOL(screen_char_t theChar, VT100GridCoord theCoord) {
-                          if (!theChar.complexChar && theChar.code == '|') {
+                          if (!theChar.complexChar &&
+                              [columnDividers characterIsMember:theChar.code]) {
                               [indexes addIndex:theCoord.x];
                           }
                           return NO;
@@ -896,10 +898,34 @@ static const int kNumCharsToSearchForDivider = 8;
     return indexes;
 }
 
+- (NSCharacterSet *)columnDividers {
+    static NSMutableCharacterSet *charSet;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        charSet = [[NSMutableCharacterSet alloc] init];
+        [charSet addCharactersInString:@"|\u2502"];
+    });
+    return charSet;
+}
+
+- (BOOL)characterAtCoordIsColumnDivider:(VT100GridCoord)coord {
+    NSString *theString = [self stringForCharacterAt:coord];
+    NSCharacterSet *columnDividers = [self columnDividers];
+    if (!theString.length) {
+        return NO;
+    }
+    unichar theChar = [theString characterAtIndex:0];
+    if ([columnDividers characterIsMember:theChar]) {
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
 - (BOOL)coordContainsColumnDivider:(VT100GridCoord)coord {
     int n = 1;
     for (int y = coord.y - 1; y >= 0 && y > coord.y - kNumCharsToSearchForDivider; y--) {
-        if ([[self stringForCharacterAt:VT100GridCoordMake(coord.x, y)] isEqualToString:@"|"]) {
+        if ([self characterAtCoordIsColumnDivider:VT100GridCoordMake(coord.x, y)]) {
             n++;
         } else {
             break;
@@ -907,7 +933,7 @@ static const int kNumCharsToSearchForDivider = 8;
     }
     int limit = [_dataSource numberOfLines];
     for (int y = coord.y + 1; y < limit && y < coord.y + kNumCharsToSearchForDivider; y++) {
-        if ([[self stringForCharacterAt:VT100GridCoordMake(coord.x, y)] isEqualToString:@"|"]) {
+        if ([self characterAtCoordIsColumnDivider:VT100GridCoordMake(coord.x, y)]) {
             n++;
         } else {
             break;
