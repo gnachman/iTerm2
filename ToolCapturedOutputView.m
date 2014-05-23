@@ -32,7 +32,7 @@ static const CGFloat kMargin = 4;
 - (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        spareCell_ = [[NSCell alloc] initTextCell:@""];
+        spareCell_ = [[self cell] retain];
         scrollView_ = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height - kMargin)];
         [scrollView_ setHasVerticalScroller:YES];
         [scrollView_ setHasHorizontalScroller:NO];
@@ -51,6 +51,7 @@ static const CGFloat kMargin = 4;
         [tableView_ setHeaderView:nil];
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];
+        [tableView_ setUsesAlternatingRowBackgroundColors:YES];
         
         [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
         [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
@@ -150,13 +151,8 @@ static const CGFloat kMargin = 4;
 - (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)rowIndex {
     CapturedOutput *capturedOutput = capturedOutput_[rowIndex];
     NSString *label = [self labelForCapturedOutput:capturedOutput];
-    [spareCell_ setWraps:YES];
-    [spareCell_ setLineBreakMode:NSLineBreakByCharWrapping];
     [spareCell_ setStringValue:label];
-    
-    NSTableColumn *column = tableView_.tableColumns[0];
-    CGFloat columnWidth = [column width];
-    NSRect constrainedBounds = NSMakeRect(0, 0, columnWidth, CGFLOAT_MAX);
+    NSRect constrainedBounds = NSMakeRect(0, 0, tableView_.frame.size.width, CGFLOAT_MAX);
     NSSize naturalSize = [spareCell_ cellSizeForBounds:constrainedBounds];
     return naturalSize.height;
 }
@@ -164,10 +160,13 @@ static const CGFloat kMargin = 4;
 - (NSCell *)tableView:(NSTableView *)tableView
         dataCellForTableColumn:(NSTableColumn *)tableColumn
                            row:(NSInteger)row {
-    NSCell *cell = [[[NSCell alloc] initTextCell:@""] autorelease];
+    return [self cell];
+}
+
+- (NSCell *)cell {
+    NSCell *cell = [[[NSTextFieldCell alloc] init] autorelease];
     [cell setEditable:NO];
-//    [cell setTruncatesLastVisibleLine:YES];
-    [cell setLineBreakMode:NSLineBreakByCharWrapping];
+    [cell setLineBreakMode:NSLineBreakByWordWrapping];
     [cell setWraps:YES];
     return cell;
 }

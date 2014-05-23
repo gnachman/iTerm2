@@ -46,7 +46,9 @@
 - (void)activateOnOutput:(CapturedOutput *)capturedOutput inSession:(PTYSession *)session {
     if (!session.hasCoprocess) {
         NSString *command = [self paramWithBackreferencesReplacedWithValues:capturedOutput.values];
-        [session launchCoprocessWithCommand:command];
+        if (command) {
+            [session launchCoprocessWithCommand:command];
+        }
     } else {
         // TODO: Post an announcement that two coprocesses can't run at once.
     }
