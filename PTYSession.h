@@ -26,6 +26,7 @@ extern NSString *const kPTYSessionCapturedOutputDidChange;
 
 @class CapturedOutput;
 @class FakeWindow;
+@class iTermAnnouncementViewController;
 @class PTYScrollView;
 @class PTYTask;
 @class PTYTextView;
@@ -447,6 +448,10 @@ typedef enum {
 - (void)enterPassword:(NSString *)password;
 
 - (void)addCapturedOutput:(CapturedOutput *)capturedOutput;
+
+- (void)dismissAnnouncementWithIdentifier:(NSString *)identifier;
+- (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement
+               identifier:(NSString *)identifier;
 
 #pragma mark - Scripting Support
 

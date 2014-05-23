@@ -11,7 +11,6 @@
 
 @interface iTermAnnouncementViewController ()
 @property(nonatomic, copy) NSArray *actions;
-@property(nonatomic, copy) void (^completion)(int);
 @end
 
 @implementation iTermAnnouncementViewController {
@@ -51,6 +50,7 @@
 - (void)dismiss {
     if (!_dismissing) {
         _dismissing = YES;
+        self.completion(-2);
         [_delegate announcementWillDismiss:self];
     }
 }

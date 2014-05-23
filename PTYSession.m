@@ -70,6 +70,8 @@ static NSString *const kAskAboutOutdatedKeyMappingKeyFormat = @"AskAboutOutdated
 NSString *const kPTYSessionTmuxFontDidChange = @"kPTYSessionTmuxFontDidChange";
 NSString *const kPTYSessionCapturedOutputDidChange = @"kPTYSessionCapturedOutputDidChange";
 
+static NSString *const kShellIntegrationOutOfDateAnnouncementIdentifier =
+    @"kShellIntegrationOutOfDateAnnouncementIdentifier";
 static NSString *TERM_ENVNAME = @"TERM";
 static NSString *COLORFGBG_ENVNAME = @"COLORFGBG";
 static NSString *PWD_ENVNAME = @"PWD";
@@ -112,7 +114,6 @@ typedef enum {
 @property(nonatomic, copy) NSString *lastDirectory;
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, retain) NSColor *cursorGuideColor;
-@property(nonatomic, retain) iTermAnnouncementViewController *shellIntegrationUpgradeAnnouncement;
 @end
 
 @implementation PTYSession {
@@ -249,6 +250,9 @@ typedef enum {
     // The last time at which a partial-line trigger check occurred. This keeps us from wasting CPU
     // checking long lines over and over.
     NSTimeInterval _lastPartialLineTriggerCheck;
+    
+    // Maps announcement identifiers to view controllers.
+    NSMutableDictionary *_announcements;
 }
 
 - (id)init {
@@ -283,6 +287,7 @@ typedef enum {
         _tailFindContext = [[FindContext alloc] init];
         _commandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
         _activityCounter = [@0 retain];
+        _announcements = [[NSMutableDictionary alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
@@ -351,6 +356,7 @@ typedef enum {
     _currentMarkOrNotePosition = nil;
     [_lastMark release];
     [_patternedImage release];
+    [_announcements release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -5458,10 +5464,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
-    if (_shellIntegrationUpgradeAnnouncement) {
-        [_shellIntegrationUpgradeAnnouncement dismiss];
-        self.shellIntegrationUpgradeAnnouncement = nil;
-    }
+    [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
     [[[self tab] realParentWindow] sessionHostDidChange:self to:host];
 
     // Construct a map from host binding to profile. This could be expensive with a lot of profiles
@@ -5625,20 +5628,21 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)screenSuggestShellIntegrationUpgrade {
     VT100RemoteHost *currentRemoteHost = [self currentHost];
-    if (_shellIntegrationUpgradeAnnouncement) {
-        [_shellIntegrationUpgradeAnnouncement dismiss];
-    }
+
     NSString *theKey = [self shellIntegrationUpgradeUserDefaultsKeyForHost:currentRemoteHost];
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     if ([userDefaults boolForKey:theKey]) {
         return;
     }
-    self.shellIntegrationUpgradeAnnouncement =
+    iTermAnnouncementViewController *announcement =
             [iTermAnnouncementViewController announcemenWithTitle:@"This account's Shell Integration scripts are out of date."
                                                             style:kiTermAnnouncementViewStyleWarning
                                                       withActions:@[ @"Upgrade", @"Silence Warning" ]
                                                        completion:^(int selection) {
                                                            switch (selection) {
+                                                               case -2:  // Dismiss programmatically
+                                                                   break;
+
                                                                case -1: // No
                                                                    break;
 
@@ -5651,7 +5655,31 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                                                    break;
                                                            }
                                                        }];
-    [_view addAnnouncement:_shellIntegrationUpgradeAnnouncement];
+    [self queueAnnouncement:announcement identifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
+}
+
+#pragma mark - Announcements
+
+- (void)dismissAnnouncementWithIdentifier:(NSString *)identifier {
+    iTermAnnouncementViewController *announcement = _announcements[identifier];
+    [announcement dismiss];
+}
+
+- (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement
+               identifier:(NSString *)identifier {
+    [self dismissAnnouncementWithIdentifier:identifier];
+
+    _announcements[identifier] = announcement;
+    
+    void (^originalCompletion)(int) = [announcement.completion copy];
+    NSString *identifierCopy = [identifier copy];
+    announcement.completion = ^(int selection) {
+        originalCompletion(selection);
+        [_announcements removeObjectForKey:identifierCopy];
+        [identifierCopy release];
+        [originalCompletion release];
+    };
+    [_view addAnnouncement:announcement];
 }
 
 #pragma mark - PopupDelegate

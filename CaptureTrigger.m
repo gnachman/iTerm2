@@ -7,7 +7,11 @@
 //
 
 #import "CaptureTrigger.h"
+#import "iTermAnnouncementViewController.h"
 #import "PTYSession.h"
+
+static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier =
+    @"kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier";
 
 @implementation CapturedOutput
 
@@ -50,7 +54,13 @@
             [session launchCoprocessWithCommand:command];
         }
     } else {
-        // TODO: Post an announcement that two coprocesses can't run at once.
+        iTermAnnouncementViewController *announcement =
+            [iTermAnnouncementViewController announcemenWithTitle:@"Can't run two coprocesses at once."
+                                                            style:kiTermAnnouncementViewStyleWarning
+                                                      withActions:@[ ]
+                                                       completion:^(int selection) { }];
+        [session queueAnnouncement:announcement
+                        identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier];
     }
 }
 

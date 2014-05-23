@@ -18,6 +18,7 @@
 @interface iTermAnnouncementViewController : NSViewController
 
 @property(nonatomic, assign) id<iTermAnnouncementDelegate> delegate;
+@property(nonatomic, copy) void (^completion)(int);
 
 + (instancetype)announcemenWithTitle:(NSString *)title
                                style:(iTermAnnouncementViewStyle)style
