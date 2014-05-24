@@ -26,10 +26,11 @@
 }
 
 
-- (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
+- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
 {
     NSString *message = [self paramWithBackreferencesReplacedWithValues:values];
     [aSession writeTask:[message dataUsingEncoding:NSUTF8StringEncoding]];
+    return YES;
 }
 
 @end

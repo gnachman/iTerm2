@@ -80,9 +80,10 @@ enum {
     }
 }
 
-- (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
+- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
 {
     [NSApp requestUserAttention:[self bounceType]];
+    return YES;
 }
 
 - (int)defaultIndex {

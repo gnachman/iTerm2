@@ -31,12 +31,13 @@
     [aSession launchCoprocessWithCommand:command];
 }
 
-- (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
+- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
 {
     if (![aSession hasCoprocess]) {
         NSString *command = [self paramWithBackreferencesReplacedWithValues:values];
         [self executeCommand:command inSession:aSession];
     }
+    return YES;
 }
 
 @end
@@ -63,12 +64,13 @@
     [aSession launchSilentCoprocessWithCommand:command];
 }
 
-- (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
+- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
 {
     if (![aSession hasCoprocess]) {
         NSString *command = [self paramWithBackreferencesReplacedWithValues:values];
         [self executeCommand:command inSession:aSession];
     }
+    return YES;
 }
 
 @end

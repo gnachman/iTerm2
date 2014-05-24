@@ -38,13 +38,14 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier =
   return @"Coprocess to run on activation";
 }
 
-- (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber {
+- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber {
     CapturedOutput *output = [[[CapturedOutput alloc] init] autorelease];
     output.line = string;
     output.trigger = self;
     output.values = values;
     output.absoluteLineNumber = absoluteLineNumber;
     [aSession addCapturedOutput:output];
+    return NO;
 }
 
 - (void)activateOnOutput:(CapturedOutput *)capturedOutput inSession:(PTYSession *)session {

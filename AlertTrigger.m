@@ -27,10 +27,10 @@
     return YES;
 }
 
-- (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
+- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
 {
     if (disabled_) {
-        return;
+        return YES;
     }
     NSString *message = [self paramWithBackreferencesReplacedWithValues:values];
 
@@ -58,6 +58,7 @@
         default:
             break;
     }
+    return YES;
 }
 
 @end
