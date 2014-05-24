@@ -926,6 +926,13 @@
 			remoteGlobalIDString = 874206460564169600CFC3F1;
 			remoteInfo = iTerm;
 		};
+		A6C537BA19315CCB00A08C18 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1DFA7C661923E83500DF1410;
+			remoteInfo = SSKeychain;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -3047,6 +3054,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				A6C537BB19315CCB00A08C18 /* PBXTargetDependency */,
 			);
 			name = iTerm;
 			productName = "JTerminal (Application)";
@@ -3773,6 +3781,11 @@
 			isa = PBXTargetDependency;
 			target = 874206460564169600CFC3F1 /* iTerm */;
 			targetProxy = 907F290218A5D3E400CA2ACB /* PBXContainerItemProxy */;
+		};
+		A6C537BB19315CCB00A08C18 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1DFA7C661923E83500DF1410 /* SSKeychain */;
+			targetProxy = A6C537BA19315CCB00A08C18 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
