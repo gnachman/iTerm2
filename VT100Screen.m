@@ -3135,6 +3135,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalPromptDidStart {
+    _shellIntegrationInstalled = YES;
+
     _lastCommandOutputRange.end = currentGrid_.cursor;
     _lastCommandOutputRange.end.y += [self numberOfScrollbackLines];
     _lastCommandOutputRange.start = nextCommandOutputStart_;

@@ -7,11 +7,14 @@
 //
 
 #import "CaptureTrigger.h"
+#import "CommandHistory.h"
 #import "iTermAnnouncementViewController.h"
 #import "PTYSession.h"
 
 static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier =
     @"kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier";
+static NSString *const kSuppressCaptureOutputRequiresShellIntegrationWarning =
+    @"kSuppressCaptureOutputRequiresShellIntegrationWarning";
 
 @implementation CapturedOutput
 
@@ -39,6 +42,11 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier =
 }
 
 - (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber {
+    if (!aSession.screen.shellIntegrationInstalled) {
+        if (![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputRequiresShellIntegrationWarning]) {
+            [self showShellIntegrationRequiredAnnouncementInSession:aSession];
+        }
+    }
     CapturedOutput *output = [[[CapturedOutput alloc] init] autorelease];
     output.line = string;
     output.trigger = self;
@@ -46,6 +54,31 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier =
     output.absoluteLineNumber = absoluteLineNumber;
     [aSession addCapturedOutput:output];
     return NO;
+}
+
+- (void)showShellIntegrationRequiredAnnouncementInSession:(PTYSession *)aSession {
+    NSString *theTitle = @"A Capture Output trigger fired, but Shell Integration is not installed.";
+    [aSession retain];
+    void (^completion)(int selection) = ^(int selection) {
+        switch (selection) {
+            case 0:
+                [aSession tryToRunShellIntegrationInstaller];
+                break;
+                
+            case 1:
+                [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                        forKey:kSuppressCaptureOutputRequiresShellIntegrationWarning];
+                break;
+        }
+        [aSession release];
+    };
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcemenWithTitle:theTitle
+                                                        style:kiTermAnnouncementViewStyleWarning
+                                                  withActions:@[ @"Install", @"Ignore" ]
+                                                   completion:completion];
+    [aSession queueAnnouncement:announcement
+                     identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier];
 }
 
 - (void)activateOnOutput:(CapturedOutput *)capturedOutput inSession:(PTYSession *)session {

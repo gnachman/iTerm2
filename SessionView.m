@@ -25,6 +25,7 @@ static NSDate* lastResizeDate_;
 
 @implementation SessionView {
     NSMutableArray *_announcements;
+    BOOL _inDealloc;
     iTermAnnouncementViewController *_currentAnnouncement;
 }
 
@@ -105,6 +106,7 @@ static NSDate* lastResizeDate_;
 
 - (void)dealloc
 {
+    _inDealloc = YES;
     [previousUpdate_ release];
     [title_ removeFromSuperview];
     [self unregisterDraggedTypes];
@@ -717,9 +719,11 @@ static NSDate* lastResizeDate_;
         NSRect rect = announcement.view.frame;
         rect.origin.y += rect.size.height;
         announcement.view.animator.frame = rect;
-        [self performSelector:@selector(showNextAnnouncement)
-                   withObject:nil
-                   afterDelay:[[NSAnimationContext currentContext] duration]];
+        if (!_inDealloc) {
+            [self performSelector:@selector(showNextAnnouncement)
+                       withObject:nil
+                       afterDelay:[[NSAnimationContext currentContext] duration]];
+        }
     }
 }
 

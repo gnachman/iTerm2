@@ -101,6 +101,8 @@ extern int kVT100ScreenMinRows;
     BOOL _wraparoundMode;
     BOOL _ansi;
     BOOL _insert;
+    
+    BOOL _shellIntegrationInstalled;
 }
 
 @property(nonatomic, retain) VT100Terminal *terminal;
@@ -121,6 +123,7 @@ extern int kVT100ScreenMinRows;
 @property(nonatomic, assign) BOOL appendToScrollbackWithStatusBar;
 @property(nonatomic, readonly) VT100GridCoordRange lastCommandOutputRange;
 @property(nonatomic, assign) BOOL useHFSPlusMapping;
+@property(nonatomic, readonly) BOOL shellIntegrationInstalled;  // Just a guess.
 
 // Designated initializer.
 - (id)initWithTerminal:(VT100Terminal *)terminal;

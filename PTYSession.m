@@ -5606,6 +5606,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)tryToRunShellIntegrationInstaller {
+    if (_exited) {
+        return;
+    }
     NSString *currentCommand = [self currentCommand];
     if (currentCommand != nil) {
         [_textview installShellIntegration:nil];

@@ -453,6 +453,8 @@ typedef enum {
 - (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement
                identifier:(NSString *)identifier;
 
+- (void)tryToRunShellIntegrationInstaller;
+
 #pragma mark - Scripting Support
 
 // Object specifier
