@@ -7,6 +7,7 @@
 //
 
 #import "iTermAnnouncementView.h"
+#import "NSStringITerm.h"
 
 static const CGFloat kMargin = 8;
 
@@ -54,8 +55,10 @@ static const CGFloat kMargin = 8;
 
 @implementation iTermAnnouncementView {
     CGFloat _buttonWidth;
-    NSTextField *_textField;
+    NSTextView *_textView;
     NSImageView *_icon;
+    NSButton *_closeButton;
+    NSMutableArray *_actionButtons;
     iTermAnnouncementInternalView *_internalView;
     void (^_block)(int);
 
@@ -79,7 +82,7 @@ static const CGFloat kMargin = 8;
         frameRect.origin.y = 10;
         frameRect.origin.x = 0;
         _internalView = [[[iTermAnnouncementInternalView alloc] initWithFrame:frameRect] autorelease];
-        _internalView.autoresizingMask = NSViewWidthSizable;
+        _internalView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
         [self addSubview:_internalView];
 
         NSShadow *dropShadow = [[[NSShadow alloc] init] autorelease];
@@ -105,8 +108,11 @@ static const CGFloat kMargin = 8;
         [closeButton setBordered:NO];
         [[closeButton cell] setHighlightsBy:NSContentsCellMask];
         [closeButton setTitle:@""];
+        _closeButton = [closeButton retain];
+
         [_internalView addSubview:closeButton];
 
+        _actionButtons = [[NSMutableArray alloc] init];
         self.autoresizesSubviews = YES;
     }
     return self;
@@ -114,9 +120,11 @@ static const CGFloat kMargin = 8;
 
 - (void)dealloc {
     [_block release];
-    [_textField release];
+    [_textView release];
     [_icon release];
     [_internalView release];
+    [_closeButton release];
+    [_actionButtons release];
     [super dealloc];
 }
 
@@ -145,6 +153,7 @@ static const CGFloat kMargin = 8;
                                   floor((rect.size.height - button.frame.size.height) / 2),
                                   button.frame.size.width,
                                   button.frame.size.height);
+        [_actionButtons addObject:button];
         [_internalView addSubview:button];
     }
 }
@@ -187,23 +196,23 @@ static const CGFloat kMargin = 8;
     rect.size.width -= rect.origin.x;
 
     rect.size.width -= _buttonWidth;
-    NSTextField *textField = [[[NSTextField alloc] initWithFrame:rect] autorelease];
-    [textField setBezeled:NO];
-    [textField setStringValue:title];
-    [textField setEditable:NO];
-    textField.autoresizingMask = NSViewWidthSizable | NSViewMaxXMargin;
-    textField.drawsBackground = NO;
+    NSTextView *textView = [[[NSTextView alloc] initWithFrame:rect] autorelease];
+    textView.string = title;
+    [textView setEditable:NO];
+    textView.autoresizingMask = NSViewWidthSizable | NSViewMaxXMargin;
+    textView.drawsBackground = NO;
+    
     NSFont *font = [NSFont systemFontOfSize:12];
-    [textField setFont:font];
-    [textField setSelectable:NO];
+    [textView setFont:font];
+    [textView setSelectable:NO];
 
-    _textField = [textField retain];
-    CGFloat height = [title sizeWithAttributes:@{ NSFontAttributeName: font }].height;
-    textField.frame = NSMakeRect(rect.origin.x,
+    _textView = [textView retain];
+    CGFloat height = [title heightWithAttributes:@{ NSFontAttributeName: _textView.font } constrainedToWidth:rect.size.width];
+    textView.frame = NSMakeRect(rect.origin.x,
                                  floor((_internalView.frame.size.height - height) / 2),
                                  rect.size.width,
                                  height);
-    [_internalView addSubview:textField];
+    [_internalView addSubview:textView];
 }
 
 - (void)buttonPressed:(id)sender {
@@ -213,9 +222,40 @@ static const CGFloat kMargin = 8;
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [super resizeSubviewsWithOldSize:oldSize];
 
-    NSRect rect = _textField.frame;
-    rect.size.width = _internalView.frame.size.width - _buttonWidth - NSMaxX(_icon.frame) - kMargin;
-    _textField.frame = rect;
+    NSRect rect = _textView.frame;
+    CGFloat height = [_textView.string heightWithAttributes:@{ NSFontAttributeName: _textView.font }
+                                         constrainedToWidth:rect.size.width];
+    _textView.frame = NSMakeRect(rect.origin.x,
+                                 floor((_internalView.frame.size.height - height) / 2),
+                                 _internalView.frame.size.width - _buttonWidth - NSMaxX(_icon.frame) - kMargin,
+                                 height);
+
+    NSSize closeSize = [_closeButton frame].size;
+    _closeButton.frame = NSMakeRect(self.frame.size.width - closeSize.width - kMargin,
+                                    floor((_internalView.frame.size.height - closeSize.height) / 2),
+                                    closeSize.width,
+                                    closeSize.height);
+    
+    for (NSButton *button in _actionButtons) {
+        NSRect buttonFrame = button.frame;
+        button.frame = NSMakeRect(buttonFrame.origin.x,
+                                  floor((_internalView.frame.size.height - buttonFrame.size.height) / 2),
+                                  buttonFrame.size.width,
+                                  buttonFrame.size.height);
+    }
+    
+    CGRect iconFrame = _icon.frame;
+    CGFloat y = floor((_internalView.frame.size.height - iconFrame.size.height) / 2);
+    _icon.frame = NSMakeRect(kMargin,
+                             y,
+                             iconFrame.size.width,
+                             iconFrame.size.height);
+}
+
+- (void)sizeToFit {
+    NSRect frame = self.frame;
+    frame.size.height = _textView.frame.size.height + 29;
+    self.frame = frame;
 }
 
 - (void)resetCursorRects {

@@ -125,6 +125,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Expands a vim-style string's special characters
 - (NSString *)stringByExpandingVimSpecialCharacters;
 
+// How tall is this string when rendered within a fixed width?
+- (CGFloat)heightWithAttributes:(NSDictionary *)attributes constrainedToWidth:(CGFloat)maxWidth;
+
 @end
 
 @interface NSMutableString (iTerm)

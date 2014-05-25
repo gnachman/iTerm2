@@ -345,15 +345,15 @@ static int fromhex(unichar c) {
 
 - (NSData *)dataFromHexValues
 {
-	NSMutableData *data = [NSMutableData data];
-        int length = self.length;  // Convert to signed so length-1 is safe below.
-	for (int i = 0; i < length - 1; i+=2) {
-		const char high = fromhex([self characterAtIndex:i]) << 4;
-		const char low = fromhex([self characterAtIndex:i + 1]);
-		const char b = high | low;
-		[data appendBytes:&b length:1];
-	}
-	return data;
+    NSMutableData *data = [NSMutableData data];
+    int length = self.length;  // Convert to signed so length-1 is safe below.
+    for (int i = 0; i < length - 1; i+=2) {
+        const char high = fromhex([self characterAtIndex:i]) << 4;
+        const char low = fromhex([self characterAtIndex:i + 1]);
+        const char b = high | low;
+        [data appendBytes:&b length:1];
+    }
+    return data;
 }
 
 - (NSString *)stringByReplacingEscapedHexValuesWithChars
@@ -1146,6 +1146,37 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
                                                               index - haveAppendedUpToIndex)]];
 
     return result;
+}
+
+- (CGFloat)heightWithAttributes:(NSDictionary *)attributes constrainedToWidth:(CGFloat)maxWidth {
+    NSAttributedString *attributedString =
+        [[[NSAttributedString alloc] initWithString:self attributes:attributes] autorelease];
+    if (![self length]) {
+        return 0;
+    }
+
+    NSSize size = NSMakeSize(maxWidth, FLT_MAX);
+    NSTextContainer *textContainer =
+        [[[NSTextContainer alloc] initWithContainerSize:size] autorelease];
+    NSTextStorage *textStorage =
+        [[[NSTextStorage alloc] initWithAttributedString:attributedString] autorelease];
+    NSLayoutManager *layoutManager = [[[NSLayoutManager alloc] init] autorelease];
+
+    [layoutManager addTextContainer:textContainer];
+    [textStorage addLayoutManager:layoutManager];
+    [layoutManager setHyphenationFactor:0.0];
+    
+    // Force layout.
+    [layoutManager glyphRangeForTextContainer:textContainer];
+    
+    // Don't count space added for insertion point.
+    CGFloat height =
+        [layoutManager usedRectForTextContainer:textContainer].size.height;
+    const CGFloat extraLineFragmentHeight =
+        [layoutManager extraLineFragmentRect].size.height;
+    height -= MAX(0, extraLineFragmentHeight);
+
+    return height;
 }
 
 @end

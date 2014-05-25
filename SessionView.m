@@ -316,6 +316,7 @@ static NSDate* lastResizeDate_;
 
 - (void)setFrameSize:(NSSize)frameSize
 {
+    [self updateAnnouncementFrame];
     [super setFrameSize:frameSize];
     if (frameSize.width < 340) {
         [[findView_ view] setFrameSize:NSMakeSize(MAX(150, frameSize.width - 50),
@@ -689,12 +690,31 @@ static NSDate* lastResizeDate_;
     }
 }
 
+- (void)updateAnnouncementFrame {
+    // Set the width
+    NSRect rect = _currentAnnouncement.view.frame;
+    rect.size.width = self.frame.size.width;
+    _currentAnnouncement.view.frame = rect;
+    
+    // Make it change its height
+    [(iTermAnnouncementView *)_currentAnnouncement.view sizeToFit];
+    
+    // Fix the origin
+    rect = _currentAnnouncement.view.frame;
+    rect.origin.y = self.frame.size.height - _currentAnnouncement.view.frame.size.height;
+    _currentAnnouncement.view.frame = rect;
+}
+
 - (void)showNextAnnouncement {
     [_currentAnnouncement autorelease];
     _currentAnnouncement = nil;
     if (_announcements.count) {
         _currentAnnouncement = [_announcements[0] retain];
         [_announcements removeObjectAtIndex:0];
+        
+        [self updateAnnouncementFrame];
+
+        // Animate in
         NSRect finalRect = NSMakeRect(0,
                                       self.frame.size.height - _currentAnnouncement.view.frame.size.height,
                                       self.frame.size.width,

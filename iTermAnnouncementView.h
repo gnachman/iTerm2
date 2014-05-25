@@ -19,4 +19,6 @@ typedef enum {
                         actions:(NSArray *)actions
                           block:(void (^)(int index))block;
 
+- (void)sizeToFit;
+
 @end
