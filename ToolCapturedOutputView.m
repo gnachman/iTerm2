@@ -244,7 +244,7 @@ static const CGFloat kMargin = 4;
 
     if (capturedOutput) {
         ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-        [[wrapper.term currentSession] highlightAbsoluteLineNumber:capturedOutput.absoluteLineNumber];
+        [wrapper.term.currentSession scrollToMark:capturedOutput.mark];
     }
 }
 

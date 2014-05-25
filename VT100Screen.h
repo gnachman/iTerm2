@@ -14,6 +14,7 @@
 @class VT100Grid;
 @class VT100RemoteHost;
 @class VT100ScreenMark;
+@protocol iTermMark;
 @class VT100Terminal;
 
 // Dictionary keys for -highlightTextMatchingRegex:
@@ -26,8 +27,7 @@ extern int kVT100ScreenMinRows;
     PTYNoteViewControllerDelegate,
     PTYTextViewDataSource,
     VT100GridDelegate,
-    VT100TerminalDelegate>
-{
+    VT100TerminalDelegate> {
     NSMutableSet* tabStops_;
     VT100Terminal *terminal_;
     id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
@@ -204,7 +204,9 @@ extern int kVT100ScreenMinRows;
 
 - (VT100ScreenMark *)lastMark;
 - (BOOL)markIsValid:(VT100ScreenMark *)mark;
-- (VT100ScreenMark *)addMarkStartingAtAbsoluteLine:(long long)line oneLine:(BOOL)oneLine;
+- (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
+                                       oneLine:(BOOL)oneLine
+                                       ofClass:(Class)markClass;
 - (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval;
 
 // These methods normally only return one object, but if there is a tie, all of the equally-positioned marks/notes are returned.
@@ -212,7 +214,7 @@ extern int kVT100ScreenMinRows;
 - (NSArray *)firstMarksOrNotes;
 - (NSArray *)marksOrNotesBefore:(Interval *)location;
 - (NSArray *)marksOrNotesAfter:(Interval *)location;
-- (BOOL)containsMark:(VT100ScreenMark *)mark;
+- (BOOL)containsMark:(id<iTermMark>)mark;
 
 - (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line;
 - (NSString *)workingDirectoryOnLine:(int)line;

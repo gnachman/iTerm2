@@ -434,10 +434,8 @@ typedef enum {
 - (void)showHideNotes;
 - (void)previousMarkOrNote;
 - (void)nextMarkOrNote;
-- (void)scrollToMark:(VT100ScreenMark *)mark;
-
-// Scroll to and highlight a line. Basically, a more general version of scrollToMark:.
-- (void)highlightAbsoluteLineNumber:(long long)absoluteLineNumber;
+- (void)scrollToMark:(id<iTermMark>)mark;
+- (id<iTermMark>)markAddedAtCursorOfClass:(Class)theClass;
 
 // Select this session and tab and bring window to foreground.
 - (void)reveal;

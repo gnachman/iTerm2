@@ -12,6 +12,7 @@
 #import "iTermApplicationDelegate.h"
 #import "PTYSession.h"
 #import "ToolbeltView.h"
+#import "VT100ScreenMark.h"
 
 // This one cannot be suppressed.
 static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier =
@@ -27,6 +28,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
 - (void)dealloc {
     [_values release];
     [_trigger release];
+    [_mark release];
     [super dealloc];
 }
 
@@ -79,7 +81,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     output.line = string;
     output.trigger = self;
     output.values = values;
-    output.absoluteLineNumber = absoluteLineNumber;
+    output.mark = [aSession markAddedAtCursorOfClass:[iTermCapturedOutputMark class]];
     [aSession addCapturedOutput:output];
     return NO;
 }

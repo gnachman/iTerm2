@@ -1712,8 +1712,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return [intervalTree_ containsObject:mark];
 }
 
-- (VT100ScreenMark *)addMarkStartingAtAbsoluteLine:(long long)line oneLine:(BOOL)oneLine {
-    VT100ScreenMark *mark = [[[VT100ScreenMark alloc] init] autorelease];
+- (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
+                                       oneLine:(BOOL)oneLine
+                                       ofClass:(Class)markClass {
+    id<iTermMark> mark = [[[markClass alloc] init] autorelease];
     mark.sessionID = [delegate_ screenSessionID];
     int nonAbsoluteLine = line - [self totalScrollbackOverflow];
     VT100GridCoordRange range;
@@ -1783,7 +1785,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
     while (objects) {
-        for (id<IntervalTreeObject> obj in objects) {
+        for (id obj in objects) {
             if ([obj isKindOfClass:[VT100ScreenMark class]]) {
                 return obj;
             }
@@ -1841,7 +1843,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return objects;
 }
 
-- (BOOL)containsMark:(VT100ScreenMark *)mark {
+- (BOOL)containsMark:(id<iTermMark>)mark {
     for (id obj in [intervalTree_ objectsInInterval:mark.entry.interval]) {
         if (obj == mark) {
             return YES;

@@ -11,7 +11,7 @@
 
 @class CapturedOutput;
 
-@interface VT100ScreenMark : NSObject <IntervalTreeObject>
+@protocol iTermMark <NSObject, IntervalTreeObject>
 
 // Return code of command on the line for this mark.
 @property(nonatomic, assign) int code;
@@ -34,4 +34,16 @@
 // Add an object to self.capturedOutput.
 - (void)addCapturedOutput:(CapturedOutput *)capturedOutput;
 
+@end
+
+// This is a base class for marks but should never be used directly.
+@interface iTermMark : NSObject<iTermMark>
+@end
+
+// Visible marks that can be navigated.
+@interface VT100ScreenMark : iTermMark
+@end
+
+// Invisible marks used for keep track of the location of captured output.
+@interface iTermCapturedOutputMark : iTermMark
 @end

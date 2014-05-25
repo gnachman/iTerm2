@@ -8,11 +8,17 @@
 
 #import "VT100ScreenMark.h"
 
-@implementation VT100ScreenMark {
+@implementation iTermMark {
     NSMutableArray *_capturedOutput;
 }
 
 @synthesize entry;
+@synthesize code = _code;
+@synthesize command = _command;
+@synthesize sessionID = _sessionID;
+@synthesize startDate = _startDate;
+@synthesize endDate = _endDate;
+@synthesize capturedOutput = _capturedOutput;
 
 - (void)dealloc {
     [_command release];
@@ -40,4 +46,10 @@
     [_capturedOutput addObject:capturedOutput];
 }
 
+@end
+
+@implementation VT100ScreenMark
+@end
+
+@implementation iTermCapturedOutputMark
 @end

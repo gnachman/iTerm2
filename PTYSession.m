@@ -3318,7 +3318,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)highlightMarkOrNote:(id<IntervalTreeObject>)obj {
-    if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+    if ([obj isKindOfClass:[iTermMark class]]) {
         [_textview highlightMarkOnLine:VT100GridRangeMax([_screen lineNumberRangeOfInterval:obj.entry.interval])];
     } else {
         PTYNoteViewController *note = (PTYNoteViewController *)obj;
@@ -3375,15 +3375,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
-- (void)highlightAbsoluteLineNumber:(long long)absoluteLineNumber {
-    VT100GridRange range = VT100GridRangeMake(absoluteLineNumber - [_screen totalScrollbackOverflow], 1);
-    if (range.location >= 0 && range.location < [_screen numberOfLines]) {
-        [_textview scrollLineNumberRangeIntoView:range];
-        [_textview highlightMarkOnLine:range.location];
-    }
-}
-
-- (void)scrollToMark:(VT100ScreenMark *)mark {
+- (void)scrollToMark:(id<iTermMark>)mark {
     if ([_screen containsMark:mark]) {
         VT100GridRange range = [_screen lineNumberRangeOfInterval:mark.entry.interval];
         [_textview scrollLineNumberRangeIntoView:range];
@@ -5254,14 +5246,15 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [[self tab] setActiveSession:self];
 }
 
-- (void)screenAddMarkOnLine:(int)line {
+- (id)markAddedAtLine:(int)line ofClass:(Class)markClass {
     [_textview refresh];  // In case text was appended
     if (_lastMark.command && !_lastMark.endDate) {
         _lastMark.endDate = [NSDate date];
     }
     [_lastMark release];
     _lastMark = [[_screen addMarkStartingAtAbsoluteLine:[_screen totalScrollbackOverflow] + line
-                                                oneLine:YES] retain];
+                                                oneLine:YES
+                                                ofClass:markClass] retain];
     self.currentMarkOrNotePosition = _lastMark.entry.interval;
     if (self.alertOnNextMark) {
         if (NSRunAlertPanel(@"Alert",
@@ -5274,6 +5267,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         }
         self.alertOnNextMark = NO;
     }
+    return _lastMark;
+}
+
+- (void)screenAddMarkOnLine:(int)line {
+    [self markAddedAtLine:line ofClass:[VT100ScreenMark class]];
 }
 
 // Save the current scroll position
@@ -5282,8 +5280,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [_textview refresh];  // In case text was appended
     [_lastMark release];
     _lastMark = [[_screen addMarkStartingAtAbsoluteLine:[_textview absoluteScrollPosition]
-                                                oneLine:NO] retain];
+                                                oneLine:NO
+                                                ofClass:[VT100ScreenMark class]] retain];
     self.currentMarkOrNotePosition = _lastMark.entry.interval;
+}
+
+- (VT100ScreenMark *)markAddedAtCursorOfClass:(Class)theClass {
+    return [self markAddedAtLine:[_screen numberOfScrollbackLines] + _screen.cursorY - 1
+                         ofClass:theClass];
 }
 
 - (void)screenActivateWindow {
