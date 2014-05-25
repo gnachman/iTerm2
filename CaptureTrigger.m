@@ -9,12 +9,16 @@
 #import "CaptureTrigger.h"
 #import "CommandHistory.h"
 #import "iTermAnnouncementViewController.h"
+#import "iTermApplicationDelegate.h"
 #import "PTYSession.h"
+#import "ToolbeltView.h"
 
 static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier =
     @"kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier";
 static NSString *const kSuppressCaptureOutputRequiresShellIntegrationWarning =
     @"kSuppressCaptureOutputRequiresShellIntegrationWarning";
+static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
+    @"kSuppressCaptureOutputToolNotVisibleWarning";
 
 @implementation CapturedOutput
 
@@ -41,10 +45,32 @@ static NSString *const kSuppressCaptureOutputRequiresShellIntegrationWarning =
   return @"Coprocess to run on activation";
 }
 
+- (BOOL)capturedOutputToolVisible {
+    iTermApplicationDelegate *delegate = (iTermApplicationDelegate *)[NSApp delegate];
+    if (![delegate showToolbelt]) {
+        return NO;
+    }
+    return [ToolbeltView shouldShowTool:kCapturedOutputToolName];
+}
+
+- (void)showCaptureOutputTool {
+    iTermApplicationDelegate *delegate = (iTermApplicationDelegate *)[NSApp delegate];
+    if (![delegate showToolbelt]) {
+        [delegate toggleToolbelt:nil];
+    }
+    if (![ToolbeltView shouldShowTool:kCapturedOutputToolName]) {
+        [ToolbeltView toggleShouldShowTool:kCapturedOutputToolName];
+    }
+}
+
 - (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber {
     if (!aSession.screen.shellIntegrationInstalled) {
         if (![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputRequiresShellIntegrationWarning]) {
             [self showShellIntegrationRequiredAnnouncementInSession:aSession];
+        }
+    } else if (![self capturedOutputToolVisible]) {
+        if (![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputToolNotVisibleWarning]) {
+            [self showCapturedOutputToolNotVisibleAnnouncementInSession:aSession];
         }
     }
     CapturedOutput *output = [[[CapturedOutput alloc] init] autorelease];
@@ -54,6 +80,31 @@ static NSString *const kSuppressCaptureOutputRequiresShellIntegrationWarning =
     output.absoluteLineNumber = absoluteLineNumber;
     [aSession addCapturedOutput:output];
     return NO;
+}
+
+- (void)showCapturedOutputToolNotVisibleAnnouncementInSession:(PTYSession *)aSession {
+    NSString *theTitle = @"A Capture Output trigger fired, but the Captured Output tool is not visible.";
+    [aSession retain];
+    void (^completion)(int selection) = ^(int selection) {
+        switch (selection) {
+            case 0:
+                [self showCaptureOutputTool];
+                break;
+                
+            case 1:
+                [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                        forKey:kSuppressCaptureOutputToolNotVisibleWarning];
+                break;
+        }
+        [aSession release];
+    };
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcemenWithTitle:theTitle
+                                                    style:kiTermAnnouncementViewStyleWarning
+                                              withActions:@[ @"Show It", @"Ignore" ]
+                                               completion:completion];
+    [aSession queueAnnouncement:announcement
+                     identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier];
 }
 
 - (void)showShellIntegrationRequiredAnnouncementInSession:(PTYSession *)aSession {

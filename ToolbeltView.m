@@ -19,6 +19,7 @@
 #import "iTermApplication.h"
 #import "FutureMethods.h"
 
+NSString *kCapturedOutputToolName = @"Captured Output";
 NSString *kCommandHistoryToolName = @"Command History";
 
 @interface ToolbeltSplitView : NSSplitView {
@@ -65,7 +66,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 + (void)initialize
 {
     gRegisteredTools = [[NSMutableDictionary alloc] init];
-    [ToolbeltView registerToolWithName:@"Captured Output" withClass:[ToolCapturedOutputView class]];
+    [ToolbeltView registerToolWithName:kCapturedOutputToolName withClass:[ToolCapturedOutputView class]];
     [ToolbeltView registerToolWithName:kCommandHistoryToolName
                              withClass:[ToolCommandHistoryView class]];
     [ToolbeltView registerToolWithName:@"Recent Directories" withClass:[ToolDirectoriesView class]];
@@ -415,7 +416,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 }
 
 - (ToolCommandHistoryView *)commandHistoryView {
-    ToolWrapper *wrapper = [tools_ objectForKey:@"Command History"];
+    ToolWrapper *wrapper = [tools_ objectForKey:kCommandHistoryToolName];
     return (ToolCommandHistoryView *)wrapper.tool;
 }
 
@@ -425,7 +426,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 }
 
 - (ToolCapturedOutputView *)capturedOutputView {
-    ToolWrapper *wrapper = [tools_ objectForKey:@"Captured Output"];
+    ToolWrapper *wrapper = [tools_ objectForKey:kCapturedOutputToolName];
     return (ToolCapturedOutputView *)wrapper.tool;
 }
 

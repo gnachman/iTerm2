@@ -17,6 +17,7 @@
 @class PseudoTerminal;
 
 extern NSString *kCommandHistoryToolName;
+extern NSString *kCapturedOutputToolName;
 
 @interface ToolbeltView : NSView <NSSplitViewDelegate, ToolWrapperDelegate> {
     ToolbeltSplitView *splitter_;
