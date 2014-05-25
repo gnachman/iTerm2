@@ -9,7 +9,13 @@ function print_image() {
     if [[ -n "$1" ]]; then
       printf 'name='`echo -n "$1" | base64`";"
     fi
-    echo -n "$3" | base64 -D | wc -c | awk '{printf "size=%d",$1}'
+    if $(base64 --version | grep GNU > /dev/null)
+    then
+      BASE64ARG=-d
+    else
+      BASE64ARG=-D
+    fi
+    echo -n "$3" | base64 $BASE64ARG | wc -c | awk '{printf "size=%d",$1}'
     printf ";inline=$2"
     printf ":"
     echo -n "$3"
@@ -17,7 +23,7 @@ function print_image() {
 }
 
 if [ ! -t 0 ]; then
-  print_image "" 1 $(cat | base64)
+  print_image "" 1 "$(cat | base64)"
   exit 0
 fi
 
@@ -30,7 +36,7 @@ fi
 for fn in "$@"
 do
   if [ -r $fn ] ; then
-    print_image "$fn" 1 $(base64 < "$fn")
+    print_image "$fn" 1 "$(base64 < "$fn")"
   else
     echo imgcat: $fn: No such file or directory
     exit 1
@@ -38,3 +44,4 @@ do
 done
 
 exit 0
+
