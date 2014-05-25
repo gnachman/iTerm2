@@ -13,12 +13,14 @@
 #import "PTYSession.h"
 #import "ToolbeltView.h"
 
+// This one cannot be suppressed.
 static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier =
-    @"kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier";
+    @"NoSyncTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier";
+
 static NSString *const kSuppressCaptureOutputRequiresShellIntegrationWarning =
-    @"kSuppressCaptureOutputRequiresShellIntegrationWarning";
+    @"NoSyncSuppressCaptureOutputRequiresShellIntegrationWarning";
 static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
-    @"kSuppressCaptureOutputToolNotVisibleWarning";
+    @"NoSyncSuppressCaptureOutputToolNotVisibleWarning";
 
 @implementation CapturedOutput
 
@@ -101,7 +103,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcemenWithTitle:theTitle
                                                     style:kiTermAnnouncementViewStyleWarning
-                                              withActions:@[ @"Show It", @"Ignore" ]
+                                              withActions:@[ @"Show It", @"Silence Warning" ]
                                                completion:completion];
     [aSession queueAnnouncement:announcement
                      identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier];
@@ -126,7 +128,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     iTermAnnouncementViewController *announcement =
         [iTermAnnouncementViewController announcemenWithTitle:theTitle
                                                         style:kiTermAnnouncementViewStyleWarning
-                                                  withActions:@[ @"Install", @"Ignore" ]
+                                                  withActions:@[ @"Install", @"Silence Warning" ]
                                                    completion:completion];
     [aSession queueAnnouncement:announcement
                      identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier];

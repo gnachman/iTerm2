@@ -100,6 +100,10 @@ DEFINE_BOOL(noSyncNeverRemindPrefsChangesLostForFile, NO, @"Warnings: Suppress c
 DEFINE_BOOL(suppressMultilinePasteWarningWhenPastingOneLineWithTerminalNewline, NO, @"Warnings: Suppress warning about multiline paste when pasting a single line ending with a newline")
 DEFINE_BOOL(suppressMultilinePasteWarningWhenNotAtShellPrompt, NO, @"Warnings: Suppress warning about multiline paste when not at prompt (requires Shell Integration)")
 DEFINE_BOOL(noSyncSuppressBroadcastInputWarning, NO, @"Warnings: Suppress warning about broadcasting input")
+DEFINE_BOOL(noSyncSuppressCaptureOutputRequiresShellIntegrationWarning, NO,
+            @"Warnings: Suppress warning Shell Integration is required for Capture Output");
+DEFINE_BOOL(noSyncSuppressCaptureOutputToolNotVisibleWarning, NO,
+            @"Warnings: Suppress warning that the Captured Output tool is not visible");
 
 #pragma mark Pasteboard
 DEFINE_BOOL(trimWhitespaceOnCopy, YES, @"Pasteboard: Trim whitespace when copying to pasteboard")

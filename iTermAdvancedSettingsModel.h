@@ -73,4 +73,7 @@
 
 + (BOOL)navigatePanesInReadingOrder;
 
++ (BOOL)noSyncSuppressCaptureOutputRequiresShellIntegrationWarning;
++ (BOOL)noSyncSuppressCaptureOutputToolNotVisibleWarning;
+
 @end
