@@ -1515,11 +1515,13 @@ do { \
         if ([string rangeOfString:@"-"].location != NSNotFound) {
             lineBuffer.mayHaveDoubleWidthCharacter = YES;
         }
+        screen_char_t continuation = { 0 };
         [lineBuffer appendLine:[self screenCharLineForString:string]
                         length:string.length
                        partial:i == strings.count - 1
                          width:80
-                     timestamp:0];
+                     timestamp:0
+                  continuation:continuation];
         i++;
     }
     va_end(args);

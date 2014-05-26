@@ -1000,11 +1000,18 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     for (NSData *chars in history) {
         screen_char_t *line = (screen_char_t *) [chars bytes];
         const int len = [chars length] / sizeof(screen_char_t);
+        screen_char_t continuation;
+        if (len) {
+            continuation = line[len - 1];
+        } else {
+            memset(&continuation, 0, sizeof(continuation));
+        }
         [temp appendLine:line
                   length:len
                  partial:NO
                    width:currentGrid_.size.width
-               timestamp:now];
+               timestamp:now
+            continuation:continuation];
     }
     NSMutableArray *wrappedLines = [NSMutableArray array];
     int n = [temp numLinesWithWidth:currentGrid_.size.width];
@@ -1025,11 +1032,16 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
     for (int i = 0; i < n - numberOfConsecutiveEmptyLines; i++) {
         ScreenCharArray *line = [wrappedLines objectAtIndex:i];
+        screen_char_t continuation = { 0 };
+        if (line.length) {
+            continuation = line.line[line.length - 1];
+        }
         [linebuffer_ appendLine:line.line
                          length:line.length
                         partial:(line.eol != EOL_HARD)
                           width:currentGrid_.size.width
-                      timestamp:now];
+                      timestamp:now
+                   continuation:continuation];
     }
     if (!unlimitedScrollback_) {
         [linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width];
@@ -1067,6 +1079,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             screen_char_t *dest = [altGrid_ screenCharsAtLineNumber:o];
             memcpy(dest, line, MIN(altGrid_.size.width, length) * sizeof(screen_char_t));
             const BOOL isPartial = (length > altGrid_.size.width);
+            dest[altGrid_.size.width] = dest[altGrid_.size.width - 1];  // TODO: This is probably wrong?
             dest[altGrid_.size.width].code = (isPartial ? EOL_SOFT : EOL_HARD);
             length -= altGrid_.size.width;
             line += altGrid_.size.width;
@@ -1269,9 +1282,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         return [currentGrid_ screenCharsAtLineNumber:(theIndex - numLinesInLineBuffer)];
     } else {
         // Get a line from the scrollback buffer.
+        screen_char_t continuation;
         int cont = [linebuffer_ copyLineToBuffer:buffer
                                            width:currentGrid_.size.width
-                                         lineNum:theIndex];
+                                         lineNum:theIndex
+                                    continuation:&continuation];
         if (cont == EOL_SOFT &&
             theIndex == numLinesInLineBuffer - 1 &&
             [currentGrid_ screenCharsAtLineNumber:0][1].code == DWC_RIGHT &&
@@ -1285,6 +1300,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             buffer[currentGrid_.size.width - 1].code = DWC_SKIP;
             buffer[currentGrid_.size.width - 1].complexChar = NO;
         }
+        buffer[currentGrid_.size.width] = continuation;
         buffer[currentGrid_.size.width].code = cont;
 
         return buffer;
@@ -1956,6 +1972,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         if (currentGrid_.cursorX == currentGrid_.size.width) {
             // Wrap around to the next line.
             if (aLine[currentGrid_.cursorX].code == EOL_HARD) {
+                aLine[currentGrid_.cursorX] = [currentGrid_ defaultChar];
                 aLine[currentGrid_.cursorX].code = EOL_SOFT;
             }
             [self linefeed];
@@ -3674,7 +3691,8 @@ static void SwapInt(int *a, int *b) {
         BOOL isOk = [linebuffer_ popAndCopyLastLineInto:dummy
                                                   width:currentGrid_.size.width
                                       includesEndOfLine:&cont
-                                              timestamp:NULL];
+                                              timestamp:NULL
+                                           continuation:NULL];
         NSAssert(isOk, @"Pop shouldn't fail");
     }
     free(dummy);

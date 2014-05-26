@@ -9,28 +9,33 @@
 #import <Foundation/Foundation.h>
 #import "ScreenChar.h"
 
+typedef struct {
+    NSTimeInterval timestamp;
+    screen_char_t continuation;
+} LineBlockMetadata;
+
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
 @interface LineBlock : NSObject {
     // The raw lines, end-to-end. There is no delimiter between each line.
     screen_char_t* raw_buffer;
     screen_char_t* buffer_start;  // usable start of buffer (stuff before this is dropped)
-    
+
     int start_offset;  // distance from raw_buffer to buffer_start
     int first_entry;  // first valid cumulative_line_length
-    
+
     // The number of elements allocated for raw_buffer.
     int buffer_size;
-    
+
     // There will be as many entries in this array as there are lines in raw_buffer.
     // The ith value is the length of the ith line plus the value of
     // cumulative_line_lengths[i-1] for i>0 or 0 for i==0.
     int* cumulative_line_lengths;
-    NSTimeInterval *timestamps_;
-    
+    LineBlockMetadata *metadata_;
+
     // The number of elements allocated for cumulative_line_lengths.
     int cll_capacity;
-    
+
     // The number of values in the cumulative_line_lengths array.
     int cll_entries;
 
@@ -62,7 +67,8 @@
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
-         timestamp:(NSTimeInterval)timestamp;
+         timestamp:(NSTimeInterval)timestamp
+      continuation:(screen_char_t)continuation;
 
 // Try to get a line that is lineNum after the first line in this block after wrapping them to a given width.
 // If the line is present, return a pointer to its start and fill in *lineLength with the number of bytes in the line.
@@ -70,7 +76,8 @@
 - (screen_char_t*)getWrappedLineWithWrapWidth:(int)width
                                       lineNum:(int*)lineNum
                                    lineLength:(int*)lineLength
-                            includesEndOfLine:(int*)includesEndOfLine;
+                            includesEndOfLine:(int*)includesEndOfLine
+                                 continuation:(screen_char_t *)continuationPtr;
 
 // Sets *yOffsetPtr (if not null) to the number of consecutive empty lines just before |lineNum| because
 // there's no way for the returned pointer to indicate this.
@@ -78,7 +85,9 @@
                                       lineNum:(int*)lineNum
                                    lineLength:(int*)lineLength
                             includesEndOfLine:(int*)includesEndOfLine
-                                      yOffset:(int*)yOffsetPtr;
+                                      yOffset:(int*)yOffsetPtr
+                                 continuation:(screen_char_t *)continuationPtr;
+
 
 // Get the number of lines in this block at a given screen width.
 - (int)getNumLinesWithWrapWidth: (int) width;
@@ -93,7 +102,8 @@
 - (BOOL)popLastLineInto:(screen_char_t**)ptr
              withLength:(int*)length
               upToWidth:(int)width
-              timestamp:(NSTimeInterval *)timestampPtr;
+              timestamp:(NSTimeInterval *)timestampPtr
+           continuation:(screen_char_t *)continuationPtr;
 
 // Drop lines from the start of the buffer. Returns the number of lines actually dropped
 // (either n or the number of lines in the block).
@@ -119,10 +129,6 @@
 
 // Remove extra space from the end of the buffer. Future appends will fail.
 - (void)shrinkToFit;
-
-// Append a value to cumulativeLineLengths.
-- (void)_appendCumulativeLineLength:(int)cumulativeLength
-                          timestamp:(NSTimeInterval)timestamp;
 
 // Return a raw line
 - (screen_char_t *)rawLine: (int) linenum;

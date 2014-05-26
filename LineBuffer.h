@@ -93,7 +93,8 @@
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
-         timestamp:(NSTimeInterval)timestamp;
+         timestamp:(NSTimeInterval)timestamp
+      continuation:(screen_char_t)continuation;
 
 // If more lines are in the buffer than max_lines, call this function. It will adjust the count
 // of excess lines and try to free the first block(s) if they are unused. Because this could happen
@@ -112,7 +113,10 @@
 // 0 <= lineNum < numLinesWithWidth:width
 // Returns EOL code.
 // DEPRECATED, use wrappedLineAtIndex:width: instead.
-- (int) copyLineToBuffer: (screen_char_t*) buffer width: (int) width lineNum: (int) lineNum;
+- (int)copyLineToBuffer:(screen_char_t*)buffer
+                  width:(int)width
+                lineNum:(int)lineNum
+           continuation:(screen_char_t *)continuationPtr;
 
 // Like the above but with a saner way of holding the returned data. Callers are advised not
 // to modify the screen_char_t's returned, but the ScreenCharArray is otherwise safe to
@@ -125,7 +129,8 @@
 - (BOOL)popAndCopyLastLineInto:(screen_char_t*)ptr
                          width:(int)width
              includesEndOfLine:(int*)includesEndOfLine
-                     timestamp:(NSTimeInterval *)timestampPtr;
+                     timestamp:(NSTimeInterval *)timestampPtr
+                  continuation:(screen_char_t *)continuationPtr;
 
 // Get the number of buffer lines at a given width.
 - (int) numLinesWithWidth: (int) width;
@@ -137,7 +142,7 @@
 
 // If the last wrapped line has the cursor, return true and set *x to its horizontal position.
 // 0 <= *x <= width (if *x == width then the cursor is actually on the next line).
-// Call this just before popAndCopyLastLineInto:width:includesEndOfLine.
+// Call this just before popAndCopyLastLineInto:width:includesEndOfLine:timestamp:continuation.
 - (BOOL) getCursorInLastLineWithWidth: (int) width atX: (int*) x;
 
 // Print the raw lines to the console for debugging.

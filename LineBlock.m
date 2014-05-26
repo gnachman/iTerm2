@@ -26,7 +26,7 @@
         cll_capacity = 1 + size/80;
         cll_entries = 0;
         cumulative_line_lengths = (int*) malloc(sizeof(int) * cll_capacity);
-        timestamps_ = (NSTimeInterval *)malloc(sizeof(NSTimeInterval) * cll_capacity);
+        metadata_ = (LineBlockMetadata *)malloc(sizeof(LineBlockMetadata) * cll_capacity);
         is_partial = NO;
         cached_numlines_width = -1;
     }
@@ -41,8 +41,8 @@
     if (cumulative_line_lengths) {
         free(cumulative_line_lengths);
     }
-    if (timestamps_) {
-        free(timestamps_);
+    if (metadata_) {
+        free(metadata_);
     }
     [super dealloc];
 }
@@ -59,14 +59,14 @@
     size_t cll_size = sizeof(int) * cll_capacity;
     theCopy->cumulative_line_lengths = (int*) malloc(cll_size);
     memmove(theCopy->cumulative_line_lengths, cumulative_line_lengths, cll_size);
-    theCopy->timestamps_ = (NSTimeInterval *) malloc(sizeof(NSTimeInterval) * cll_capacity);
-    memmove(theCopy->timestamps_, timestamps_, sizeof(NSTimeInterval) * cll_capacity);
+    theCopy->metadata_ = (LineBlockMetadata *) malloc(sizeof(LineBlockMetadata) * cll_capacity);
+    memmove(theCopy->metadata_, metadata_, sizeof(LineBlockMetadata) * cll_capacity);
     theCopy->cll_capacity = cll_capacity;
     theCopy->cll_entries = cll_entries;
     theCopy->is_partial = is_partial;
     theCopy->cached_numlines = cached_numlines;
     theCopy->cached_numlines_width = cached_numlines_width;
-    
+
     return theCopy;
 }
 
@@ -79,16 +79,19 @@
     }
 }
 
-- (void)_appendCumulativeLineLength:(int)cumulativeLength timestamp:(NSTimeInterval)timestamp
+- (void)_appendCumulativeLineLength:(int)cumulativeLength
+                          timestamp:(NSTimeInterval)timestamp
+                       continuation:(screen_char_t)continuation
 {
     if (cll_entries == cll_capacity) {
         cll_capacity *= 2;
         cll_capacity = MAX(1, cll_capacity);
         cumulative_line_lengths = (int*) realloc((void*) cumulative_line_lengths, cll_capacity * sizeof(int));
-        timestamps_ = (NSTimeInterval *)realloc((void *)timestamps_, cll_capacity * sizeof(NSTimeInterval));
+        metadata_ = (LineBlockMetadata *)realloc((void *)metadata_, cll_capacity * sizeof(LineBlockMetadata));
     }
     cumulative_line_lengths[cll_entries] = cumulativeLength;
-    timestamps_[cll_entries] = timestamp;
+    metadata_[cll_entries].timestamp = timestamp;
+    metadata_[cll_entries].continuation = continuation;
     ++cll_entries;
 }
 
@@ -178,6 +181,7 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
            partial:(BOOL)partial
              width:(int)width
          timestamp:(NSTimeInterval)timestamp
+      continuation:(screen_char_t)continuation
 {
     const int space_used = [self rawSpaceUsed];
     const int free_space = buffer_size - space_used - start_offset;
@@ -211,16 +215,18 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
                                            _mayHaveDoubleWidthCharacter);
             cached_numlines += newnum - oldnum;
         }
-        
+
         cumulative_line_lengths[cll_entries - 1] += length;
-        timestamps_[cll_entries - 1] = timestamp;
+        metadata_[cll_entries - 1].timestamp = timestamp;
+        metadata_[cll_entries - 1].continuation = continuation;
 #ifdef TEST_LINEBUFFER_SANITY
         [self checkAndResetCachedNumlines:@"appendLine partial case" width: width];
 #endif
     } else {
         // add a new line
         [self _appendCumulativeLineLength:(space_used + length)
-                                timestamp:timestamp];
+                                timestamp:timestamp
+                             continuation:continuation];
         if (width != cached_numlines_width) {
             cached_numlines_width = -1;
         } else {
@@ -247,7 +253,8 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
                                                  lineNum:lineNum
                                               lineLength:&length
                                        includesEndOfLine:&eol
-                                                 yOffset:yOffsetPtr];
+                                                 yOffset:yOffsetPtr
+                                            continuation:NULL];
     if (!p) {
         return -1;
     } else {
@@ -300,7 +307,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
             int consume = spans + 1;
             lineNum -= consume;
         } else {  // *lineNum <= spans
-            return timestamps_[i];
+            return metadata_[i].timestamp;
         }
         prev = cll;
     }
@@ -311,12 +318,14 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                                       lineNum:(int*)lineNum
                                    lineLength:(int*)lineLength
                             includesEndOfLine:(int*)includesEndOfLine
+                                 continuation:(screen_char_t *)continuationPtr
 {
     return [self getWrappedLineWithWrapWidth:width
                                      lineNum:lineNum
                                   lineLength:lineLength
                            includesEndOfLine:includesEndOfLine
-                                     yOffset:NULL];
+                                     yOffset:NULL
+                                continuation:continuationPtr];
 }
 
 - (screen_char_t*)getWrappedLineWithWrapWidth:(int)width
@@ -324,6 +333,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                                    lineLength:(int*)lineLength
                             includesEndOfLine:(int*)includesEndOfLine
                                       yOffset:(int*)yOffsetPtr
+                                 continuation:(screen_char_t *)continuationPtr
 {
     int prev = 0;
     int length;
@@ -380,6 +390,9 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                 // line.
                 *yOffsetPtr = numEmptyLines;
             }
+            if (continuationPtr) {
+                *continuationPtr = metadata_[i].continuation;
+            }
             return buffer_start + prev + offset;
         }
         prev = cll;
@@ -392,7 +405,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     if (width == cached_numlines_width) {
         return cached_numlines;
     }
-    
+
     int count = 0;
     int prev = 0;
     int i;
@@ -407,12 +420,12 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                                    _mayHaveDoubleWidthCharacter) + 1;
         prev = cll;
     }
-    
+
     // Save the result so it doesn't have to be recalculated until some relatively rare operation
     // occurs that invalidates the cache.
     cached_numlines_width = width;
     cached_numlines = count;
-    
+
     return count;
 }
 
@@ -425,6 +438,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
              withLength:(int*)length
               upToWidth:(int)width
               timestamp:(NSTimeInterval *)timestampPtr
+           continuation:(screen_char_t *)continuationPtr
 {
     if (cll_entries == first_entry) {
         // There is no last line to pop.
@@ -437,7 +451,10 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
         start = cumulative_line_lengths[cll_entries - 2] - start_offset;
     }
     if (timestampPtr) {
-        *timestampPtr = timestamps_[cll_entries - 1];
+        *timestampPtr = metadata_[cll_entries - 1].timestamp;
+    }
+    if (continuationPtr) {
+        *continuationPtr = metadata_[cll_entries - 1].continuation;
     }
 
     const int end = cumulative_line_lengths[cll_entries - 1] - start_offset;
@@ -466,7 +483,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
         --cll_entries;
         is_partial = NO;
     }
-    
+
     if (cll_entries == first_entry) {
         // Popped the last line. Reset everything.
         buffer_start = raw_buffer;
@@ -587,7 +604,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
             start_offset = buffer_start - raw_buffer;
             first_entry = i;
             *charsDropped = start_offset - initialOffset;
-            
+
 #ifdef TEST_LINEBUFFER_SANITY
             [self checkAndResetCachedNumlines:"dropLines" width: width];
 #endif
@@ -629,7 +646,7 @@ static NSString* RewrittenRegex(NSString* originalRegex) {
     //   - it is escaped
     //
     // It might be possible to write this as a regular substitution but it would be a crazy mess.
-    
+
     NSMutableString* rewritten = [NSMutableString stringWithCapacity:[originalRegex length]];
     BOOL escaped = NO;
     BOOL inSet = NO;
@@ -642,32 +659,32 @@ static NSString* RewrittenRegex(NSString* originalRegex) {
             case '\\':
                 escaped = !escaped;
                 break;
-                
+
             case '[':
                 if (!inSet && !escaped) {
                     inSet = YES;
                     nextCharIsFirstInSet = YES;
                 }
                 break;
-                
+
             case ']':
                 if (inSet && !escaped) {
                     inSet = NO;
                 }
                 break;
-                
+
             case ':':
                 if (inSet && firstCharInSet && prevChar == '[') {
                     nextCharIsFirstInSet = YES;
                 }
                 break;
-                
+
             case '^':
                 if (!escaped && !firstCharInSet) {
                     c = kPrefixChar;
                 }
                 break;
-                
+
             case '$':
                 if (!escaped) {
                     c = kSuffixChar;
@@ -678,7 +695,7 @@ static NSString* RewrittenRegex(NSString* originalRegex) {
         firstCharInSet = nextCharIsFirstInSet;
         [rewritten appendFormat:@"%C", c];
     }
-    
+
     return rewritten;
 }
 
@@ -702,7 +719,7 @@ static int CoreSearch(NSString* needle, screen_char_t* rawline, int raw_line_len
         if (options & FindOptCaseInsensitive) {
             apiOptions |= RKLCaseless;
         }
-        
+
         NSError* regexError = nil;
         NSRange temp;
         NSString* rewrittenRegex = RewrittenRegex(needle);
@@ -710,7 +727,7 @@ static int CoreSearch(NSString* needle, screen_char_t* rawline, int raw_line_len
                                                                           withString:[NSString stringWithFormat:@"%c", 3]];
         sanitizedHaystack = [sanitizedHaystack stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%c", kSuffixChar]
                                                                          withString:[NSString stringWithFormat:@"%c", 3]];
-        
+
         NSString* sandwich;
         BOOL hasPrefix = YES;
         BOOL hasSuffix = YES;
@@ -725,14 +742,14 @@ static int CoreSearch(NSString* needle, screen_char_t* rawline, int raw_line_len
             hasSuffix = NO;
             sandwich = [NSString stringWithFormat:@"%C%@", kPrefixChar, sanitizedHaystack];
         }
-        
+
         temp = [sandwich rangeOfRegex:rewrittenRegex
                               options:apiOptions
                               inRange:NSMakeRange(0, [sandwich length])
                               capture:0
                                 error:&regexError];
         range = temp;
-        
+
         if (backwards) {
             int locationAdjustment = hasSuffix ? 1 : 0;
             // keep searching from one char after the start of the match until we don't find anything.
@@ -817,7 +834,7 @@ static int Search(NSString* needle,
     // screen_char_t[i + deltas[i]] begins its run at charHaystack[i]
     int result = CoreSearch(needle, rawline, raw_line_length, start, end, options, resultLength,
                             haystack, charHaystack, deltas, deltas[0]);
-    
+
     free(deltas);
     free(charHaystack);
     return result;
@@ -878,11 +895,11 @@ static int Search(NSString* needle,
         // Thus, the algorithm is to do a reverse search until a hit is found
         // that begins not before 'skip', which is the leftmost acceptable
         // position.
-        
+
         int limit = raw_line_length;
         int tempResultLength;
         int tempPosition;
-        
+
         NSString* haystack;
         unichar* charHaystack;
         int* deltas;
@@ -903,7 +920,7 @@ static int Search(NSString* needle,
             }
             tempPosition = CoreSearch(needle, rawline, raw_line_length, 0, limit, options,
                                       &tempResultLength, haystack, charHaystack, deltas, 0);
-            
+
             limit = tempPosition + tempResultLength - 1;
             // find i so that i-deltas[i] == limit
             while (numUnichars >= 0 && numUnichars + deltas[numUnichars] > limit) {
@@ -958,7 +975,7 @@ static int Search(NSString* needle,
     if (offset < start_offset) {
         return -1;
     }
-    
+
     int i;
     for (i = first_entry; i < cll_entries; ++i) {
         if (cumulative_line_lengths[i] > offset) {
@@ -1044,10 +1061,10 @@ static int Search(NSString* needle,
             // The position we're searching for is in this (unwrapped) line.
             int bytes_to_consume_in_this_line = position - prev;
             int dwc_peek = 0;
-            
+
             // If the position is the left half of a double width char then include the right half in
             // the following call to NumberOfFullLines.
-            
+
             if (bytes_to_consume_in_this_line < line_length &&
                 prev + bytes_to_consume_in_this_line + 1 < eol) {
                 assert(prev + bytes_to_consume_in_this_line + 1 < buffer_size);

@@ -90,7 +90,6 @@ void LoadPrefsFromCustomFolder(void);
 
 - (void)changeFont:(id)fontManager;
 - (void)selectProfilesTab;
-- (void)underlyingBookmarkDidChange;
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename;
 

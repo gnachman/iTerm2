@@ -205,6 +205,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
            partial:(BOOL)partial
              width:(int)width
          timestamp:(NSTimeInterval)timestamp
+      continuation:(screen_char_t)continuation
 {
 #ifdef LOG_MUTATIONS
     {
@@ -224,7 +225,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     LineBlock* block = [blocks objectAtIndex: ([blocks count] - 1)];
 
     int beforeLines = [block getNumLinesWithWrapWidth:width];
-    if (![block appendLine:buffer length:length partial:partial width:width timestamp:timestamp]) {
+    if (![block appendLine:buffer
+                    length:length
+                   partial:partial
+                     width:width
+                 timestamp:timestamp
+              continuation:continuation]) {
         // It's going to be complicated. Invalidate the number of wrapped lines
         // cache.
         num_wrapped_lines_width = -1;
@@ -239,7 +245,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             BOOL ok = [block popLastLineInto:&temp
                                   withLength:&prefix_len
                                    upToWidth:[block rawBufferSize]+1
-                                   timestamp:&prefixTimestamp];
+                                   timestamp:&prefixTimestamp
+                                continuation:NULL];
             assert(ok);
             prefix = (screen_char_t*) malloc(MAX(1, prefix_len) * sizeof(screen_char_t));
             memcpy(prefix, temp, prefix_len * sizeof(screen_char_t));
@@ -271,13 +278,23 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         // Append the prefix if there is one (the prefix was a partial line that we're
         // moving out of the last block into the new block)
         if (prefix) {
-            BOOL ok = [block appendLine:prefix length:prefix_len partial:YES width:width timestamp:prefixTimestamp];
+            BOOL ok = [block appendLine:prefix
+                                 length:prefix_len
+                                partial:YES
+                                  width:width
+                              timestamp:prefixTimestamp
+                           continuation:continuation];
             NSAssert(ok, @"append can't fail here");
             free(prefix);
         }
         // Finally, append this line to the new block. We know it'll fit because we made
         // enough room for it.
-        BOOL ok = [block appendLine:buffer length:length partial:partial width:width timestamp:timestamp];
+        BOOL ok = [block appendLine:buffer
+                             length:length
+                            partial:partial
+                              width:width
+                          timestamp:timestamp
+                       continuation:continuation];
         NSAssert(ok, @"append can't fail here");
     } else if (num_wrapped_lines_width == width) {
         // Straightforward addition of a line to an existing block. Update the
@@ -315,7 +332,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 // Copy a line into the buffer. If the line is shorter than 'width' then only
 // the first 'width' characters will be modified.
 // 0 <= lineNum < numLinesWithWidth:width
-- (int)copyLineToBuffer:(screen_char_t *)buffer width:(int)width lineNum:(int)lineNum
+- (int)copyLineToBuffer:(screen_char_t *)buffer
+                  width:(int)width
+                lineNum:(int)lineNum
+           continuation:(screen_char_t *)continuationPtr
 {
     int line = lineNum;
     int i;
@@ -334,14 +354,19 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
         int length;
         int eol;
-        screen_char_t* p = [block getWrappedLineWithWrapWidth: width
-                                                      lineNum: &line
-                                                   lineLength: &length
-                                            includesEndOfLine: &eol];
+        screen_char_t continuation;
+        screen_char_t* p = [block getWrappedLineWithWrapWidth:width
+                                                      lineNum:&line
+                                                   lineLength:&length
+                                            includesEndOfLine:&eol
+                                                 continuation:&continuation];
+        if (continuationPtr) {
+            *continuationPtr = continuation;
+        }
         if (p) {
             NSAssert(length <= width, @"Length too long");
             memcpy((char*) buffer, (char*) p, length * sizeof(screen_char_t));
-            [self extendLastCharInBuffer:buffer ofLength:length toWidth:width];
+            [self extendContinuation:continuation inBuffer:buffer ofLength:length toWidth:width];
             return eol;
         }
     }
@@ -350,22 +375,20 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return NO;
 }
 
-- (void)extendLastCharInBuffer:(screen_char_t *)buffer
-                      ofLength:(int)length
-                       toWidth:(int)width {
-    if (length > 0) {
-        // Extend the attributes of the last cell across the rest of the line. This is
-        // kind of a hack but it will work 99% of the time. The background color for cells
-        // after the last populated one could be different than the last cell's.
-        // TODO: Store each line's suffix's background color similar to how timestamps
-        // are stored in LineBlock.
-        for (int i = length; i < width; i++) {
-            buffer[i] = buffer[length - 1];
-            buffer[i].code = 0;
-            buffer[i].complexChar = NO;
-        }
-    } else {
-        memset(buffer, 0, width * sizeof(screen_char_t));
+- (void)extendContinuation:(screen_char_t)continuation
+                  inBuffer:(screen_char_t *)buffer
+                  ofLength:(int)length
+                   toWidth:(int)width {
+    // The LineBlock stores a "continuation" screen_char_t for each line.
+    // Clients set this when appending a line to the LineBuffer that has an
+    // EOL_HARD. It defines the foreground and background color that null cells
+    // added after the end of the line stored in the LineBuffer will have
+    // onscreen. We take the continuation and extend it to the end of the
+    // buffer, zeroing out the code.
+    for (int i = length; i < width; i++) {
+        buffer[i] = continuation;
+        buffer[i].code = 0;
+        buffer[i].complexChar = NO;
     }
 }
 
@@ -390,7 +413,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         result.line = [block getWrappedLineWithWrapWidth:width
                                                  lineNum:&line
                                               lineLength:&length
-                                       includesEndOfLine:&eol];
+                                       includesEndOfLine:&eol
+                                            continuation:NULL];
         if (result.line) {
             result.length = length;
             result.eol = eol;
@@ -412,6 +436,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                          width:(int)width
              includesEndOfLine:(int*)includesEndOfLine
                      timestamp:(NSTimeInterval *)timestampPtr
+                  continuation:(screen_char_t *)continuationPtr
 {
     if ([self numLinesWithWidth: width] == 0) {
         return NO;
@@ -427,17 +452,22 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     // Pop the last up-to-width chars off the last line.
     int length;
     screen_char_t* temp;
+    screen_char_t continuation;
     BOOL ok = [block popLastLineInto:&temp
                           withLength:&length
                            upToWidth:width
-                           timestamp:timestampPtr];
+                           timestamp:timestampPtr
+                        continuation:&continuation];
+    if (continuationPtr) {
+        *continuationPtr = continuation;
+    }
     NSAssert(ok, @"Unexpected empty block");
     NSAssert(length <= width, @"Length too large");
     NSAssert(length >= 0, @"Negative length");
 
     // Copy into the provided buffer.
     memcpy(ptr, temp, sizeof(screen_char_t) * length);
-    [self extendLastCharInBuffer:ptr ofLength:length toWidth:width];
+    [self extendContinuation:continuation inBuffer:ptr ofLength:length toWidth:width];
 
     // Clean up the block if the whole thing is empty, otherwise another call
     // to this function would not work correctly.

@@ -9,6 +9,7 @@
 #import "iTermTests.h"
 #import "DVR.h"
 #import "DVRDecoder.h"
+#import "LineBuffer.h"
 #import "PTYNoteViewController.h"
 #import "SearchResult.h"
 #import "TmuxStateParser.h"
@@ -344,6 +345,10 @@
     return @"joblessName";
 }
 
+- (NSString *)screenProfileName {
+    return @"Default";
+}
+
 - (void)screenLogWorkingDirectoryAtLine:(int)line withDirectory:(NSString *)directory {
     [dirlog_ addObject:@[ @(line), directory ? directory : [NSNull null] ]];
 }
@@ -450,6 +455,26 @@
         [iTermSubSelection subSelectionWithRange:theRange
                                             mode:kiTermSelectionModeCharacter];
     [selection_ addSubSelection:theSub];
+}
+
+- (void)testResizeWidthRespectsContinuations {
+    VT100Screen *screen;
+    screen = [self screenWithWidth:5 height:5];
+    screen_char_t *line = [screen.currentGrid screenCharsAtLineNumber:0];
+    line[5].backgroundColor = 5;
+    [screen resizeWidth:6 height:4];
+    line = [screen.currentGrid screenCharsAtLineNumber:0];
+    assert(line[0].backgroundColor == 5);
+}
+
+- (void)testAppendingWithWraparoundOffSetsContinuation {
+    VT100Screen *screen;
+    screen = [self screenWithWidth:5 height:5];
+    [screen.terminal setWraparoundMode:NO];
+    [screen.terminal setBackgroundColor:5 alternateSemantics:NO];
+    [screen appendStringAtCursor:@"0123456789Z"];  // Should become 0123Z
+    screen_char_t *line = [screen.currentGrid screenCharsAtLineNumber:0];
+    assert(line[5].backgroundColor == 0);
 }
 
 - (void)testResizeWidthHeight {
@@ -3696,6 +3721,9 @@
 - (void)screenShowBellIndicator {
 }
 
+- (void)screenSuggestShellIntegrationUpgrade {
+}
+
 - (NSSize)screenCellSize {
     return NSMakeSize(10, 10);
 }
@@ -4024,6 +4052,21 @@
   assert(range.start.y == 1);
   assert(range.end.x == 2);
   assert(range.end.y == 6);
+}
+
+- (void)testEmptyLineRestoresBackgroundColor {
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] init] autorelease];
+    screen_char_t line[1];
+    screen_char_t continuation;
+    continuation.backgroundColor = 5;
+    [lineBuffer appendLine:line length:0 partial:NO width:80 timestamp:0 continuation:continuation];
+    
+    screen_char_t buffer[3];
+    [lineBuffer copyLineToBuffer:buffer width:3 lineNum:0 continuation:&continuation];
+    
+    assert(buffer[0].backgroundColor == 5);
+    assert(buffer[1].backgroundColor == 5);
+    assert(buffer[2].backgroundColor == 5);
 }
 
 #pragma mark - iTermSelectionDelegate

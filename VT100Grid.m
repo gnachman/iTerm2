@@ -228,7 +228,8 @@
                         length:currentLineLength
                        partial:(continuation != EOL_HARD)
                          width:size_.width
-                     timestamp:[[self lineInfoAtLineNumber:i] timestamp]];
+                     timestamp:[[self lineInfoAtLineNumber:i] timestamp]
+                  continuation:line[size_.width]];
 #ifdef DEBUG_RESIZEDWIDTH
         NSLog(@"Appended a line. now have %d lines for width %d\n",
               [lineBuffer numLinesWithWidth:size_.width], size_.width);
@@ -462,6 +463,7 @@
             line[x] = c;
         }
         if (c.code == 0 && to.x == size_.width - 1) {
+            line[size_.width] = c;
             line[size_.width].code = EOL_HARD;
         }
     }
@@ -615,9 +617,9 @@
                     // Set the continuation marker
                     screen_char_t* prevLine = [self screenCharsAtLineNumber:cursor_.y];
                     BOOL splitDwc = (cursor_.x == size_.width - 1);
+                    prevLine[size_.width] = [self defaultChar];
                     prevLine[size_.width].code = (splitDwc ? EOL_DWC : EOL_SOFT);
                     if (splitDwc) {
-                        prevLine[size_.width].code = EOL_DWC;
                         prevLine[size_.width - 1].code = DWC_SKIP;
                     }
                 }
@@ -636,8 +638,6 @@
                 // rightmost position. Move the cursor to the end of the line
                 // and insert the last character there.
 
-                // Clear the continuation marker
-                [self screenCharsAtLineNumber:cursor_.y][size_.width].code = EOL_HARD;
                 // Cause the loop to end after this character.
                 int ncx = size_.width - 1;
 
@@ -648,11 +648,15 @@
                     idx--;
                     ncx--;
                 }
+                
+                // Clear the continuation marker
+                screen_char_t *line = [self screenCharsAtLineNumber:cursor_.y];
+                line[size_.width].code = EOL_HARD;
+
                 if (ncx < 0) {
                     ncx = 0;
                 }
                 self.cursorX = ncx;
-                screen_char_t *line = [self screenCharsAtLineNumber:cursor_.y];
                 if (line[cursor_.x].code == DWC_RIGHT) {
                     // This would cause us to overwrite the second part of a
                     // double-width character. Convert it to a space.
@@ -752,6 +756,7 @@
                 } else if (src[elements].code == DWC_SKIP &&
                            aLine[size_.width].code == EOL_DWC) {
                     // Stomping on a DWC_SKIP. Join the lines normally.
+                    aLine[size_.width] = [self defaultChar];
                     aLine[size_.width].code = EOL_SOFT;
                 }
                 memmove(dst, src, elements * sizeof(screen_char_t));
@@ -820,6 +825,7 @@
         if (cursor_.x >= effective_width && ansi) {
             if (wraparound) {
                 //set the wrapping flag
+                aLine[size_.width] = [self defaultChar];
                 aLine[size_.width].code = ((effective_width == size_.width) ? EOL_SOFT : EOL_DWC);
                 self.cursorX = leftMargin;
                 numDropped += [self moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
@@ -887,6 +893,8 @@
             if (rightMargin == size_.width - 1 &&
                 aLine[rightMargin].code == DWC_SKIP) {
                 // Moving DWC_SKIP left will break it.
+                aLine[rightMargin] = aLine[rightMargin + 1];
+                aLine[rightMargin].complexChar = NO;
                 aLine[rightMargin].code = 0;
             }
             if (rightMargin == size_.width - 1 &&
@@ -1068,6 +1076,7 @@
         memmove(dest, src, sizeof(screen_char_t) * charsToCopyPerLine);
         if (size_.width != info.width) {
             // Not copying continuation marks, set them all to hard.
+            dest[size_.width] = dest[size_.width - 1];
             dest[size_.width].code = EOL_HARD;
         }
         if (charsToCopyPerLine < info.width && src[charsToCopyPerLine].code == DWC_RIGHT) {
@@ -1227,11 +1236,13 @@
         }
         int cont;
         NSTimeInterval timestamp;
+        screen_char_t continuation;
         ++numPopped;
         assert([lineBuffer popAndCopyLastLineInto:dest
                                             width:size_.width
                                 includesEndOfLine:&cont
-                                        timestamp:&timestamp]);
+                                        timestamp:&timestamp
+                                     continuation:&continuation]);
         [[self lineInfoAtLineNumber:destLineNumber] setTimestamp:timestamp];
         if (cont && dest[size_.width - 1].code == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the
@@ -1245,6 +1256,7 @@
         } else {
             prevLineStartsWithDoubleWidth = NO;
         }
+        dest[size_.width] = continuation;
         dest[size_.width].code = cont;
         if (cont == EOL_DWC) {
             dest[size_.width - 1].code = DWC_SKIP;
@@ -1582,7 +1594,8 @@
 
 - (void)clearLineData:(NSMutableData *)line {
     int length = (int)([line length] / sizeof(screen_char_t));
-    [self clearScreenChars:[line mutableBytes] inRange:VT100GridRangeMake(0, length)];
+    // Clear length+1 so that continuation is set properly
+    [self clearScreenChars:[line mutableBytes] inRange:VT100GridRangeMake(0, length + 1)];
     screen_char_t *chars = (screen_char_t *)[line mutableBytes];
     int width = [line length] / sizeof(screen_char_t) - 1;
     chars[width].code = EOL_HARD;
@@ -1604,7 +1617,8 @@
                     length:len
                    partial:(continuationMark != EOL_HARD)
                      width:size_.width
-                 timestamp:[[self lineInfoAtLineNumber:0] timestamp]];
+                 timestamp:[[self lineInfoAtLineNumber:0] timestamp]
+              continuation:line[size_.width]];
     int dropped;
     if (!unlimitedScrollback) {
         dropped = [lineBuffer dropExcessLinesWithWidth:size_.width];

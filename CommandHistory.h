@@ -13,6 +13,13 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
 @class VT100RemoteHost;
 @class VT100ScreenMark;
 
+// This is an informal protocol that the first responder may adopt.
+@protocol ShellIntegrationInstaller <NSObject>
+
+- (void)installShellIntegration:(id)sender;
+
+@end
+
 @interface CommandHistory : NSObject
 
 + (instancetype)sharedInstance;
