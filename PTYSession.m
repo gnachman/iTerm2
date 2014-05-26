@@ -2569,7 +2569,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 
     // Set color, other attributes of a tab.
-    anotherUpdateNeeded |= [[self tab] updateLabelAttributes];
+    if (![self isTmuxGateway]) {
+        anotherUpdateNeeded |= [[self tab] updateLabelAttributes];
+    }
 
     if ([[self tab] activeSession] == self) {
         // Update window info for the active tab.
