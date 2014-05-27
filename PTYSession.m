@@ -2844,6 +2844,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues
 {
+    if (!_isDivorced) {
+        [self divorceAddressBookEntryFromPreferences];
+    }
     NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:_profile];
     for (NSString *key in newValues) {
         NSObject *value = newValues[key];
@@ -2853,9 +2856,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         // This was a no-op, so there's no need to get a divorce. Happens most
         // commonly when setting tab color after a split.
         return;
-    }
-    if (!_isDivorced) {
-        [self divorceAddressBookEntryFromPreferences];
     }
     [[ProfileModel sessionsInstance] setBookmark:temp withGuid:temp[KEY_GUID]];
 
