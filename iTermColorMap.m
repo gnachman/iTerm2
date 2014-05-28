@@ -7,6 +7,7 @@
 //
 
 #import "iTermColorMap.h"
+#import "DebugLogging.h"
 #import "NSColor+iTerm.h"
 
 const int kColorMapForeground = 0;
@@ -65,6 +66,7 @@ const int kColorMap24bitBase = kColorMap8bitBase + 256;
 }
 
 - (void)setMinimumContrast:(double)value {
+    DLog(@"iTermColorMap: set minimum contrast to %f from %@", value, [NSThread callStackSymbols]);
     _minimumContrast = value;
     [memoizedContrastingColor_ release];
     memoizedContrastingColor_ = nil;
@@ -210,6 +212,7 @@ const int kColorMap24bitBase = kColorMap8bitBase + 256;
                                                  minimumContrast:_minimumContrast
                                                          mutedBy:_mutingAmount
                                                 towardComponents:backgroundComponents];
+        DLog(@"Compute color with minimum contrast %f, muting %f", _minimumContrast, _mutingAmount);
         NSColor *dimmedContrastingColor = [self dimmedColorForColor:contrastingColor];
         memoizedContrastingColor_ = [dimmedContrastingColor retain];
         if (!memoizedContrastingColor_) {

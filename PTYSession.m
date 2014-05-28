@@ -1933,6 +1933,10 @@ typedef enum {
     float minimumContrast = 0;
     if ([aDict objectForKey:KEY_MINIMUM_CONTRAST]) {
         minimumContrast = [[aDict objectForKey:KEY_MINIMUM_CONTRAST] floatValue];
+        DLog(@"Profile specifies minimum contrast of %f", minimumContrast);
+        DLog(@"Profile: %@", aDict);
+    } else {
+        DLog(@"Profile doesn't specifiy minimum contrast. Using %f", minimumContrast);
     }
     [self setMinimumContrast:minimumContrast];
 
@@ -2309,6 +2313,7 @@ typedef enum {
 
 - (void)setMinimumContrast:(float)value
 {
+    DLog(@"PTYSession setMinimumContrast to %f from %@", value, [NSThread callStackSymbols]);
     [[self textview] setMinimumContrast:value];
 }
 

@@ -5481,6 +5481,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)setMinimumContrast:(double)value
 {
+    DLog(@"Set minimum contrast to %f from %@", value, [NSThread callStackSymbols]);
     _minimumContrast = value;
     [_colorMap setMinimumContrast:value];
 }
