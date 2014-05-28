@@ -508,9 +508,6 @@ static const int kNumCharsToSearchForDivider = 8;
             break;
         }
     }
-    if (*targetOffset == -1) {
-        NSLog(@"Didn't find coord!");
-    }
     return joinedLines;
 }
 

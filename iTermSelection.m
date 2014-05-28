@@ -95,10 +95,6 @@
 
 @end
 
-@interface iTermSelection ()
-@property(nonatomic, assign) BOOL appending;
-@end
-
 @implementation iTermSelection {
     VT100GridWindowedRange _range;
     VT100GridWindowedRange _initialRange;

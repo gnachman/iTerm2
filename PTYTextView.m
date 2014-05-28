@@ -326,7 +326,7 @@ static NSImage* alertImage;
     VT100GridCoord validationClickPoint_;
 
     iTermSelection *_oldSelection;
-    
+
     // The most recent mouse-down was a "first mouse" (activated the window).
     BOOL _mouseDownWasFirstMouse;
 }
@@ -2837,9 +2837,9 @@ NSMutableArray* screens=0;
 // Returns yes if [super mouseDown:event] should be run by caller.
 - (BOOL)mouseDownImpl:(NSEvent*)event
 {
-    _mouseDownWasFirstMouse = ([event eventNumber] == firstMouseEventNumber_);
+    _mouseDownWasFirstMouse = ([event eventNumber] == firstMouseEventNumber_) || ![NSApp keyWindow];
     const BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
-    const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
+    BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
     const BOOL shiftPressed = ([event modifierFlags] & NSShiftKeyMask) != 0;
     const BOOL ctrlPressed = ([event modifierFlags] & NSControlKeyMask) != 0;
     if (gDebugLogging && altPressed && cmdPressed && shiftPressed && ctrlPressed) {
@@ -2848,7 +2848,7 @@ NSMutableArray* screens=0;
         [[iTermController sharedInstance] dumpViewHierarchy];
         return NO;
     }
-    if (_mouseDownWasFirstMouse && altPressed) {
+    if (_mouseDownWasFirstMouse && !cmdPressed) {
         return NO;
     }
     [pointer_ notifyLeftMouseDown];
@@ -2879,13 +2879,23 @@ NSMutableArray* screens=0;
 
     dragOk_ = YES;
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
-    if (!cmdPressed &&
-        frontTextView &&
-        ![_delegate textViewInSameTabAsTextView:frontTextView]) {
-        // Mouse clicks in inactive tab are always handled by superclass because we don't want clicks
-        // to select a split pane to be xterm-mouse-reported. We do allow cmd-clicks to go through
-        // incase you're clicking on a URL.
-        return YES;
+    if (frontTextView != self) {
+        if (cmdPressed && [NSApp keyWindow] == [self window]) {
+            // A cmd-click in an inactive pane in the active window behaves like a click that
+            // doesn't make the pane active.
+            mouseDown = YES;
+            cmdPressed = NO;
+            _mouseDownWasFirstMouse = YES;
+        } else {
+            // A cmd-click in in inactive window or a plain click in any window (active or not)
+            // makes the pane active.
+            _mouseDownWasFirstMouse = YES;
+            [[self window] makeFirstResponder:self];
+            return NO;
+        }
+    } else if (cmdPressed && [NSApp keyWindow] != [self window]) {
+        // A cmd-click in an active session in a non-key window acts like a click without cmd.
+        cmdPressed = NO;
     }
 
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
@@ -2919,12 +2929,8 @@ NSMutableArray* screens=0;
         [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
     }
 
-    if (mouseDownEvent != nil) {
-        [mouseDownEvent release];
-        mouseDownEvent = nil;
-    }
-    [event retain];
-    mouseDownEvent = event;
+    [mouseDownEvent autorelease];
+    mouseDownEvent = [event retain];
     mouseDragged = NO;
     mouseDown = YES;
     mouseDownOnSelection = NO;
@@ -2948,11 +2954,13 @@ NSMutableArray* screens=0;
 
         if ((theImage = [self imageInfoAtCoord:VT100GridCoordMake(x, y)])) {
             mouseDownOnImage = YES;
+            _selection.appending = NO;
         } else if ([_selection containsCoord:VT100GridCoordMake(x, y)]) {
             // not holding down shift key but there is an existing selection.
             // Possibly a drag coming up (if a cmd-drag follows)
             DLog(@"mouse down on selection");
             mouseDownOnSelection = YES;
+            _selection.appending = NO;
             return YES;
         } else {
             // start a new selection
@@ -3020,16 +3028,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [pointer_ mouseUp:event withTouches:numTouches_];
         return;
     }
-    PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
-    const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
-    if (!cmdPressed &&
-        frontTextView &&
-        ![_delegate textViewInSameTabAsTextView:frontTextView]) {
-        // Mouse clicks in inactive tab are always handled by superclass but make it first responder.
-        [[self window] makeFirstResponder: self];
-        [super mouseUp:event];
+    const BOOL cmdActuallyPressed = (([event modifierFlags] & NSCommandKeyMask) != 0);
+    const BOOL cmdPressed = cmdActuallyPressed && !_mouseDownWasFirstMouse;
+    if (mouseDown == NO) {
         return;
     }
+    mouseDown = NO;
 
     selectionScrollDirection = 0;
 
@@ -3062,14 +3066,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:NO];
     }
 
-    if (mouseDown == NO) {
-        DLog(@"Mouse up. Selection=%@", _selection);
-        return;
+    if (!(cmdActuallyPressed && _mouseDownWasFirstMouse)) {
+        // Make ourselves the first responder except in the case where you cmd-clicked in an
+        // inactive pane in a key window. We use cmdActuallyPressed instead of cmdPressed because
+        // on first-mouse cmdPressed gets unset so this function generally behaves like it got a
+        // plain click (this is the exception).
+        [[self window] makeFirstResponder:self];
     }
-    mouseDown = NO;
-
-    // make sure we have key focus
-    [[self window] makeFirstResponder:self];
 
     [_selection endLiveSelection];
     if (isUnshiftedSingleClick) {
@@ -4525,7 +4528,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     [theMenu addItemWithTitle:@"Split Pane Horizontally" action:@selector(splitTextViewHorizontally:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-    
+
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
 
@@ -7716,6 +7719,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (URLAction *)urlActionForClickAtX:(int)x y:(int)y respectingHardNewlines:(BOOL)respectHardNewlines
 {
     const VT100GridCoord coord = VT100GridCoordMake(x, y);
+    if ([self imageInfoAtCoord:coord]) {
+        // TODO(georgen): I guess we could do something if you cmd-click on an image?
+        return nil;
+    }
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     if ([extractor characterAt:coord].code == 0) {
         return nil;
@@ -7836,7 +7843,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             return action;
         }
     }
-    
+
     // No luck. Look for something vaguely URL-like.
     int prefixChars;
     NSString *joined = [prefix stringByAppendingString:suffix];
@@ -8497,12 +8504,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 #pragma mark - Mouse reporting
 
+- (NSRect)liveRect {
+    int numLines = [_dataSource numberOfLines];
+    NSRect rect;
+    int height = [_dataSource height];
+    rect.origin.y = numLines - height;
+    rect.origin.y *= lineHeight;
+    rect.origin.x = MARGIN;
+    rect.size.width = charWidth * [_dataSource width];
+    rect.size.height = lineHeight * [_dataSource height];
+    return rect;
+}
+
 - (BOOL)shouldReportMouseEvent:(NSEvent *)event at:(NSPoint)point {
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (point.y < visibleRect.origin.y) {
+    NSRect liveRect = [self liveRect];
+    if (!NSPointInRect(point, liveRect)) {
         return NO;
     }
-    if (event.type == NSLeftMouseDown && _mouseDownWasFirstMouse) {
+    if ((event.type == NSLeftMouseDown || event.type == NSLeftMouseUp) && _mouseDownWasFirstMouse) {
         return NO;
     }
     if (event.type == NSScrollWheel) {
@@ -8527,13 +8546,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             return MOUSE_BUTTON_SCROLLUP;
         }
     }
-    
+
     MouseButtonNumber buttonNumber = (MouseButtonNumber) [event buttonNumber];
     if (buttonNumber == 2) {
         // convert NSEvent's "middle button" to X11's middle button number
         buttonNumber = MOUSE_BUTTON_MIDDLE;
     }
-    
+
     return buttonNumber;
 }
 
@@ -8544,13 +8563,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (![self shouldReportMouseEvent:event at:point]) {
         return NO;
     }
-    
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    VT100GridCoord coord = VT100GridCoordMake((point.x - MARGIN - visibleRect.origin.x) / charWidth,
-                                              (point.y - visibleRect.origin.y) / lineHeight);
+
+    NSRect liveRect = [self liveRect];
+    VT100GridCoord coord = VT100GridCoordMake((point.x - liveRect.origin.x) / charWidth,
+                                              (point.y - liveRect.origin.y) / lineHeight);
     coord.x = MAX(0, coord.x);
     coord.y = MAX(0, coord.y);
-    
+
     return [_delegate textViewReportMouseEvent:event.type
                                      modifiers:event.modifierFlags
                                         button:[self mouseReportingButtonNumberForEvent:event]
