@@ -907,6 +907,11 @@ static BOOL initDone = NO;
             CGEventSetFlags(e, kCGEventFlagMaskControl);
             CGEventPost(kCGSessionEventTap, e);
             CFRelease(e);
+
+            // Give the space-switching animation time to get started; otherwise a window opened
+            // subsequent to this will appear in the previous space. This is short enough of a
+            // delay that it's not annoying when you're already there.
+            [NSThread sleepForTimeInterval:0.3];
         }
     }
 }
