@@ -5847,7 +5847,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)setBackgroundColor:(NSColor *)color {
-    [_colorMap setColor:color forKey:kColorMapBackground];
+    [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_COLOR: [color dictionaryValue] }];
 }
 
 - (NSColor *)boldColor {
@@ -5855,7 +5855,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)setBoldColor:(NSColor *)color {
-    [_colorMap setColor:color forKey:kColorMapBold];
+    [self setSessionSpecificProfileValues:@{ KEY_BOLD_COLOR: [color dictionaryValue] }];
 }
 
 - (NSColor *)cursorColor {
@@ -5863,7 +5863,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)setCursorColor:(NSColor *)color {
-    [_colorMap setColor:color forKey:kColorMapCursor];
+    [self setSessionSpecificProfileValues:@{ KEY_CURSOR_COLOR: [color dictionaryValue] }];
 }
 
 - (NSColor *)cursorTextColor {
@@ -5871,7 +5871,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)setCursorTextColor:(NSColor *)color {
-    [_colorMap setColor:color forKey:kColorMapCursorText];
+    [self setSessionSpecificProfileValues:@{ KEY_CURSOR_TEXT_COLOR: [color dictionaryValue] }];
 }
 
 - (NSColor *)foregroundColor {
@@ -5879,7 +5879,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)setForegroundColor:(NSColor *)color {
-    [_colorMap setColor:color forKey:kColorMapForeground];
+    [self setSessionSpecificProfileValues:@{ KEY_FOREGROUND_COLOR: [color dictionaryValue] }];
 }
 
 - (NSColor *)selectedTextColor {
@@ -5887,7 +5887,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)setSelectedTextColor:(NSColor *)color {
-    [_colorMap setColor:color forKey:kColorMapSelectedText];
+    [self setSessionSpecificProfileValues:@{ KEY_SELECTED_TEXT_COLOR: [color dictionaryValue] }];
 }
 
 - (NSColor *)selectionColor {
@@ -5895,7 +5895,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)setSelectionColor:(NSColor *)color {
-    [_colorMap setColor:color forKey:kColorMapSelection];
+    [self setSessionSpecificProfileValues:@{ KEY_SELECTION_COLOR: [color dictionaryValue] }];
 }
 
 #pragma mark - iTermPasteHelperDelegate
