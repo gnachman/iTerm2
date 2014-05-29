@@ -964,7 +964,7 @@ static BOOL initDone = NO;
             // Give the space-switching animation time to get started; otherwise a window opened
             // subsequent to this will appear in the previous space. This is short enough of a
             // delay that it's not annoying when you're already there.
-            [NSThread sleepForTimeInterval:0.1];
+            [NSThread sleepForTimeInterval:0.3];
         }
     }
 }
@@ -1159,7 +1159,7 @@ static BOOL initDone = NO;
         [term delayedEnterFullscreen];
     }
     if (makeKey && ![[term window] isKeyWindow]) {
-        // When this function is activated from the dock icon's context menu so make sure
+        // When this function is activated from the dock icon's context menu make sure
         // that the new window is on top of all other apps' windows. For some reason,
         // makeKeyAndOrderFront does nothing.
         [NSApp activateIgnoringOtherApps:YES];
