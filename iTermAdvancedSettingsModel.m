@@ -104,6 +104,8 @@ DEFINE_BOOL(noSyncSuppressCaptureOutputRequiresShellIntegrationWarning, NO,
             @"Warnings: Suppress warning Shell Integration is required for Capture Output");
 DEFINE_BOOL(noSyncSuppressCaptureOutputToolNotVisibleWarning, NO,
             @"Warnings: Suppress warning that the Captured Output tool is not visible");
+DEFINE_BOOL(closingTmuxWindowKillsTmuxWindows, NO, @"Warnings: Suppress kill/hide dialog when closing a tmux window");
+DEFINE_BOOL(closingTmuxTabKillsTmuxWindows, NO, @"Warnings: Suppress kill/hide dialog when closing a tmux tab");
 
 #pragma mark Pasteboard
 DEFINE_BOOL(trimWhitespaceOnCopy, YES, @"Pasteboard: Trim whitespace when copying to pasteboard")
