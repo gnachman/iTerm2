@@ -5715,7 +5715,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         if (c == 27) {
             [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
             return YES;
-        } else if (c == '\r') {
+        } else if (c == '\r' && value) {
             if ([value isEqualToString:[self currentCommand]]) {
                 // Send the enter key on.
                 [_textview keyDown:event];
@@ -5723,13 +5723,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             } else {
                 return NO;  // select the row
             }
-        } else {
+        } else if (value) {
             [_textview keyDown:event];
             return YES;
         }
-    } else {
-        return NO;
     }
+    return NO;
 }
 
 #pragma mark - Scripting Support
