@@ -5556,9 +5556,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             [[[self tab] realParentWindow] showAutoCommandHistoryForSession:self];
         }
         NSString *command = haveCommand ? [self commandInRange:_commandRange] : @"";
-        DLog(@"Update command to %@", command);
-        [[[self tab] realParentWindow] updateAutoCommandHistoryForPrefix:command
-                                                               inSession:self];
+        DLog(@"Update command to %@, have=%d, range.start.x=%d", command, (int)haveCommand, range.start.x);
+        if (haveCommand) {
+            [[[self tab] realParentWindow] updateAutoCommandHistoryForPrefix:command
+                                                                   inSession:self];
+        }
     }
 }
 

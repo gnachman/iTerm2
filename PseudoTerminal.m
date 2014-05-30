@@ -1,5 +1,6 @@
 #import "PseudoTerminal.h"
 
+
 #import "ColorsMenuItemView.h"
 #import "CommandHistory.h"
 #import "CommandHistoryEntry.h"
@@ -4325,6 +4326,10 @@ NSString *kSessionsKVCKey = @"sessions";
 - (void)hideAutoCommandHistoryForSession:(PTYSession *)session {
     if ([session sessionID] == _autoCommandHistorySessionId) {
         [self hideAutoCommandHistory];
+        DLog(@"Cancel delayed perform of show ACH window");
+        [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                                 selector:@selector(reallyShowAutoCommandHistoryForSession:)
+                                                   object:session];
     }
 }
 
