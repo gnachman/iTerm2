@@ -839,6 +839,9 @@
 		A6C4E8E11846E13800CFAA77 /* IntervalTree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */; };
 		A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
 		A6C4E8E81846E32700CFAA77 /* IntervalTreeTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */; };
+		A6C537BE1938374600A08C18 /* iTermTabBarControlView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */; };
+		A6C537BF1938374600A08C18 /* iTermTabBarControlView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */; };
+		A6C537C01938374600A08C18 /* iTermTabBarControlView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */; };
 		A6CFDAD2185D2587005DC94B /* URLAction.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CFDAD0185D2587005DC94B /* URLAction.h */; };
 		A6CFDAD3185D2587005DC94B /* URLAction.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD1185D2587005DC94B /* URLAction.m */; };
 		A6CFDAD4185D2587005DC94B /* URLAction.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD1185D2587005DC94B /* URLAction.m */; };
@@ -1502,6 +1505,8 @@
 		A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntervalTree.h; sourceTree = "<group>"; };
 		A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IntervalTreeTest.m; path = iTermTests/IntervalTreeTest.m; sourceTree = "<group>"; };
 		A6C4E8E71846E32600CFAA77 /* IntervalTreeTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IntervalTreeTest.h; path = iTermTests/IntervalTreeTest.h; sourceTree = "<group>"; };
+		A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTabBarControlView.h; sourceTree = "<group>"; };
+		A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTabBarControlView.m; sourceTree = "<group>"; };
 		A6CFDAD0185D2587005DC94B /* URLAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = URLAction.h; sourceTree = "<group>"; };
 		A6CFDAD1185D2587005DC94B /* URLAction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = URLAction.m; sourceTree = "<group>"; };
 		A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AsyncHostLookupController.h; sourceTree = "<group>"; };
@@ -1815,6 +1820,7 @@
 				FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */,
 				1DAED99012EDF923005E49ED /* iTermSearchField.h */,
 				A63BA39318A9CB43002BE075 /* iTermSelection.h */,
+				A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */,
 				A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */,
 				A6E713B818FCCDD1008D94DD /* iTermURLSchemeController.h */,
 				A6099B0318D6B0FD00081FA9 /* iTermWarning.h */,
@@ -2188,6 +2194,7 @@
 				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
 				1D373E4718F3613600773D3E /* iTermShortcutInputView.h */,
 				1D373E4818F3613600773D3E /* iTermShortcutInputView.m */,
+				A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */,
 				1D085F9116F03E5400B7FCE9 /* PasteView.m */,
 				A63F4099183B3AA7003A6A6D /* PTYNoteView.m */,
 				1D085F9D16F137D900B7FCE9 /* RoundedRectView.m */,
@@ -2745,6 +2752,7 @@
 				A697100618D82E79007E901D /* iTermAdvancedSettingsController.h in Headers */,
 				A68A3105186D2973007F550F /* TemporaryNumberAllocator.h in Headers */,
 				1D5FDD5B1208E8F000C46BA3 /* PSMOverflowPopUpButton.h in Headers */,
+				A6C537BE1938374600A08C18 /* iTermTabBarControlView.h in Headers */,
 				1D5FDD5C1208E8F000C46BA3 /* PSMProgressIndicator.h in Headers */,
 				A647E3A418C352B000450FA1 /* VT100OtherParser.h in Headers */,
 				A6A2698318FE48B200437DA9 /* NSFont+iTerm.h in Headers */,
@@ -3511,6 +3519,7 @@
 				1D9A559C180FA87000B42CE9 /* SessionTitleView.m in Sources */,
 				1D9A55B0180FA8B700B42CE9 /* PSMTabDragWindow.m in Sources */,
 				1D9A554D180FA82E00B42CE9 /* TmuxSessionsTable.m in Sources */,
+				A6C537C01938374600A08C18 /* iTermTabBarControlView.m in Sources */,
 				A647E3A118C351F400450FA1 /* VT100DCSParser.m in Sources */,
 				FB4CE4BB3E3E413B051DAFBC /* iTermRemotePreferences.m in Sources */,
 			);
@@ -3533,6 +3542,7 @@
 				A6E7138F18F26A91008D94DD /* AppearancePreferencesViewController.m in Sources */,
 				A6E7474E188C6394005355CF /* CommandUse.m in Sources */,
 				1D5FDDA51208E93600C46BA3 /* PseudoTerminal.m in Sources */,
+				A6C537BF1938374600A08C18 /* iTermTabBarControlView.m in Sources */,
 				1D5FDDA61208E93600C46BA3 /* PTYScrollView.m in Sources */,
 				A6A13AAD18C3347200B241ED /* VT100Output.m in Sources */,
 				1D5FDDA71208E93600C46BA3 /* PTYTextView.m in Sources */,

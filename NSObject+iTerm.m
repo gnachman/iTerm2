@@ -8,6 +8,9 @@
 
 #import "NSObject+iTerm.h"
 
+@implementation iTermDelayedPerform
+@end
+
 @implementation NSObject (iTerm)
 
 - (void)performSelectorWithObjects:(NSArray *)tuple {
@@ -34,11 +37,19 @@
                         waitUntilDone:NO];
 }
 
-+ (void)performAfterDuration:(NSTimeInterval)duration block:(void(^)())block {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(duration * NSEC_PER_SEC)),
+- (iTermDelayedPerform *)performBlock:(void (^)())block afterDelay:(NSTimeInterval)delay {
+    [self retain];
+    iTermDelayedPerform *delayedPerform = [[iTermDelayedPerform alloc] init];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
-                       block();
+                       if (!delayedPerform.canceled) {
+                           delayedPerform.completed = YES;
+                           block();
+                       }
+                       [self release];
+                       [delayedPerform release];
                    });
+    return delayedPerform;
 }
 
 @end

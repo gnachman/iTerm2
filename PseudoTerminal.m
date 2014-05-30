@@ -22,10 +22,12 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermInstantReplayWindowController.h"
 #import "iTermPreferences.h"
+#import "iTermTabBarControlView.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
 #import "NSStringITerm.h"
+#import "NSView+iTerm.h"
 #import "PasteboardHistory.h"
 #import "PopupModel.h"
 #import "PopupWindow.h"
@@ -34,7 +36,6 @@
 #import "ProfilesWindow.h"
 #import "PseudoTerminal.h"
 #import "PseudoTerminalRestorer.h"
-#import "PSMTabBarControl.h"
 #import "PSMTabStyle.h"
 #import "PTToolbarController.h"
 #import "PTYScrollView.h"
@@ -96,7 +97,7 @@ static const CGFloat kToolbeltMargin = 8;
 - (void)setBottomCornerRounded:(BOOL)rounded;
 @end
 
-@interface PseudoTerminal ()
+@interface PseudoTerminal () <iTermTabBarControlViewDelegate>
 @property(nonatomic, retain) PTToolbarController *toolbarController;
 @end
 
@@ -137,8 +138,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
     // This is a sometimes-visible control that shows the tabs and lets the user
     // change which is visible.
-    PSMTabBarControl *tabBarControl;
-    NSView* tabBarBackground;
+    iTermTabBarControlView *tabBarControl;
 
     // This is either 0 or 1. If 1, then a tab item is in the process of being
     // added and the tabBarControl will be shown if it is added successfully
@@ -155,7 +155,7 @@ NSString *kSessionsKVCKey = @"sessions";
     // Is the transparency setting respected?
     BOOL useTransparency_;
 
-    // Is this a full screenw indow?
+    // Is this a full screen window?
     BOOL _fullScreen;
 
     // When you enter full-screen mode the old frame size is saved here. When
@@ -203,8 +203,6 @@ NSString *kSessionsKVCKey = @"sessions";
     DirectoriesPopupWindowController *_directoriesPopupWindowController;
     AutocompleteView* autocompleteView;
 
-    NSTimer* fullScreenTabviewTimer_;
-
     // This is a hack to support old applescript code that set the window size
     // before adding a session to it, which doesn't really make sense now that
     // textviews and windows are loosely coupled.
@@ -233,8 +231,6 @@ NSString *kSessionsKVCKey = @"sessions";
 
     // Time since 1970 of last window resize
     double lastResizeTime_;
-
-    BOOL temporarilyShowingTabs_;
 
     NSMutableSet *broadcastViewIds_;
     NSTimeInterval findCursorStartTime_;
@@ -566,9 +562,24 @@ NSString *kSessionsKVCKey = @"sessions";
     [[self window] setContentView:background_];
     [background_ release];
 
-    NSRect aRect = [[[self window] contentView] bounds];
-    aRect.size.height = 22;
-    tabBarControl = [[PSMTabBarControl alloc] initWithFrame:aRect];
+    // create the tabview
+    NSRect tabViewFrame = [[[self window] contentView] bounds];
+
+    TABVIEW = [[PTYTabView alloc] initWithFrame:tabViewFrame];
+    [TABVIEW setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
+    [TABVIEW setAutoresizesSubviews:YES];
+    [TABVIEW setAllowsTruncatedLabels:NO];
+    [TABVIEW setControlSize:NSSmallControlSize];
+    [TABVIEW setTabViewType:NSNoTabsNoBorder];
+    // Add to the window
+    [[[self window] contentView] addSubview:TABVIEW];
+    [TABVIEW release];
+
+    // create the tab bar.
+    NSRect tabBarFrame = [[[self window] contentView] bounds];
+    tabBarFrame.size.height = 22;
+    tabBarControl = [[iTermTabBarControlView alloc] initWithFrame:tabBarFrame];
+    tabBarControl.itermTabBarDelegate = self;
 
     [tabBarControl retain];
     [tabBarControl setModifier:[iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]];
@@ -580,20 +591,6 @@ NSString *kSessionsKVCKey = @"sessions";
     [[[self window] contentView] addSubview:tabBarControl];
     [tabBarControl release];
 
-    // create the tabview
-    aRect = [[[self window] contentView] bounds];
-
-    TABVIEW = [[PTYTabView alloc] initWithFrame:aRect];
-    [TABVIEW setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
-    [TABVIEW setAutoresizesSubviews:YES];
-    [TABVIEW setAllowsTruncatedLabels:NO];
-    [TABVIEW setControlSize:NSSmallControlSize];
-    [TABVIEW setTabViewType:NSNoTabsNoBorder];
-    // Add to the window
-    [[[self window] contentView] addSubview:TABVIEW];
-    [TABVIEW release];
-
-    // assign tabview and delegates
     [tabBarControl setTabView:TABVIEW];
     [TABVIEW setDelegate:tabBarControl];
     [tabBarControl setDelegate:self];
@@ -704,11 +701,10 @@ NSString *kSessionsKVCKey = @"sessions";
     [commandHistoryPopup release];
     [_directoriesPopupWindowController release];
     [autocompleteView release];
+    tabBarControl.itermTabBarDelegate = nil;
+    tabBarControl.delegate = nil;
     [tabBarControl release];
     [terminalGuid_ release];
-    if (fullScreenTabviewTimer_) {
-        [fullScreenTabviewTimer_ invalidate];
-    }
     [lastArrangement_ release];
     [_divisionView release];
     [super dealloc];
@@ -1228,10 +1224,9 @@ NSString *kSessionsKVCKey = @"sessions";
 - (void)toggleFullScreenTabBar
 {
     fullscreenTabs_ = !fullscreenTabs_;
-    if (!temporarilyShowingTabs_) {
-        [[NSUserDefaults standardUserDefaults] setBool:fullscreenTabs_
-                                                forKey:kShowFullscreenTabBarKey];
-    }
+    [tabBarControl updateFlashing];
+    [[NSUserDefaults standardUserDefaults] setBool:fullscreenTabs_
+                                            forKey:kShowFullscreenTabBarKey];
     [self repositionWidgets];
     [self fitTabsToWindow];
 }
@@ -2395,19 +2390,8 @@ NSString *kSessionsKVCKey = @"sessions";
 
     [self maybeHideHotkeyWindow];
 
-    if (fullScreenTabviewTimer_) {
-        // If the window has been closed then it's possible that the
-        // timer is the only object left that is holding a reference to
-        // self. Retain and autorelease so that invalidating the timer
-        // doesn't free self while there's still stuff going on in this
-        // function.
-        [self retain];
-        [self autorelease];
-        [fullScreenTabviewTimer_ invalidate];
-        fullScreenTabviewTimer_ = nil;
-    } else {
-        [self hideFullScreenTabControl];
-    }
+    tabBarControl.flashing = NO;
+    tabBarControl.cmdPressed = NO;
 
     if ([[pbHistoryView window] isVisible] ||
         [[autocompleteView window] isVisible] ||
@@ -2420,7 +2404,7 @@ NSString *kSessionsKVCKey = @"sessions";
           __FILE__, __LINE__, aNotification);
 
     if (_fullScreen) {
-        [self hideFullScreenTabControl];
+        tabBarControl.flashing = NO;
         [self showMenuBar];
     }
     // update the cursor
@@ -2972,6 +2956,7 @@ NSString *kSessionsKVCKey = @"sessions";
         }
     }
     _fullScreen = !_fullScreen;
+    [tabBarControl updateFlashing];
     togglingFullScreen_ = YES;
     [self _updateToolbeltParentage];
     [self updateUseTransparency];
@@ -3055,7 +3040,11 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (BOOL)tabBarShouldBeVisible
 {
-    return [self tabBarShouldBeVisibleWithAdditionalTabs:0];
+    if (tabBarControl.flashing) {
+        return YES;
+    } else {
+        return [self tabBarShouldBeVisibleWithAdditionalTabs:0];
+    }
 }
 
 - (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)n
@@ -3168,6 +3157,7 @@ NSString *kSessionsKVCKey = @"sessions";
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
     lionFullScreen_ = YES;
+    [tabBarControl updateFlashing];
     [self _updateToolbeltParentage];
     // Set scrollbars appropriately
     [self updateSessionScrollbars];
@@ -3183,13 +3173,7 @@ NSString *kSessionsKVCKey = @"sessions";
 {
     DLog(@"Window will exit lion fullscreen");
     exitingLionFullscreen_ = YES;
-    [fullScreenTabviewTimer_ invalidate];
-    fullScreenTabviewTimer_ = nil;
-    if (temporarilyShowingTabs_) {
-        // If tabs were shown because you were holding cmd, reset that state.
-        [self hideFullScreenTabControl];
-        temporarilyShowingTabs_ = NO;
-    }
+    [tabBarControl updateFlashing];
     [self fitTabsToWindow];
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     if ([itad showToolbelt]) {
@@ -3205,6 +3189,7 @@ NSString *kSessionsKVCKey = @"sessions";
     exitingLionFullscreen_ = NO;
     zooming_ = NO;
     lionFullScreen_ = NO;
+    [tabBarControl updateFlashing];
     // Set scrollbars appropriately
     [self updateDivisionView];
     [self updateSessionScrollbars];
@@ -3477,6 +3462,9 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem
 {
+    DLog(@"Did select tab view %@", tabViewItem);
+    tabBarControl.flashing = YES;
+
     if (_autoCommandHistorySessionId != -1) {
         [self hideAutoCommandHistory];
     }
@@ -3593,12 +3581,16 @@ NSString *kSessionsKVCKey = @"sessions";
     return [self confirmCloseTab:aTab];
 }
 
-- (BOOL)tabView:(NSTabView*)aTabView shouldDragTabViewItem:(NSTabViewItem *)tabViewItem fromTabBar:(PSMTabBarControl *)tabBarControl
+- (BOOL)tabView:(NSTabView*)aTabView
+    shouldDragTabViewItem:(NSTabViewItem *)tabViewItem
+               fromTabBar:(PSMTabBarControl *)tabBarControl
 {
     return YES;
 }
 
-- (BOOL)tabView:(NSTabView*)aTabView shouldDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)aTabBarControl
+- (BOOL)tabView:(NSTabView*)aTabView
+    shouldDropTabViewItem:(NSTabViewItem *)tabViewItem
+                 inTabBar:(PSMTabBarControl *)aTabBarControl
 {
     if ([aTabBarControl tabView] &&  // nil -> tab dropping outside any existing tabbar to create a new window
         [[aTabBarControl tabView] indexOfTabViewItem:tabViewItem] != NSNotFound) {
@@ -3610,7 +3602,9 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
-- (void)tabView:(NSTabView*)aTabView willDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)aTabBarControl
+- (void)tabView:(NSTabView*)aTabView
+    willDropTabViewItem:(NSTabViewItem *)tabViewItem
+               inTabBar:(PSMTabBarControl *)aTabBarControl
 {
     PTYTab *aTab = [tabViewItem identifier];
     for (PTYSession* aSession in [aTab sessions]) {
@@ -3626,7 +3620,9 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
-- (void)tabView:(NSTabView*)aTabView didDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)aTabBarControl
+- (void)tabView:(NSTabView*)aTabView
+    didDropTabViewItem:(NSTabViewItem *)tabViewItem
+              inTabBar:(PSMTabBarControl *)aTabBarControl
 {
     PTYTab *aTab = [tabViewItem identifier];
     PseudoTerminal *term = (PseudoTerminal *)[aTabBarControl delegate];
@@ -3847,7 +3843,9 @@ NSString *kSessionsKVCKey = @"sessions";
     return rootMenu;
 }
 
-- (PSMTabBarControl *)tabView:(NSTabView *)aTabView newTabBarForDraggedTabViewItem:(NSTabViewItem *)tabViewItem atPoint:(NSPoint)point
+- (PSMTabBarControl *)tabView:(NSTabView *)aTabView
+    newTabBarForDraggedTabViewItem:(NSTabViewItem *)tabViewItem
+                           atPoint:(NSPoint)point
 {
     PTYTab *aTab = [tabViewItem identifier];
     if (aTab == nil) {
@@ -4745,7 +4743,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [[session textview] setNeedsDisplay:YES];
     }
     PtyLog(@"fitWindowToTabs - update tab bar");
-    [tabBarControl update];
+    [tabBarControl updateFlashing];
     PtyLog(@"fitWindowToTabs - return.");
 
     if (mustResizeTabs) {
@@ -5374,7 +5372,8 @@ NSString *kSessionsKVCKey = @"sessions";
 {
     NSSize contentSize = NSZeroSize;
 
-    if ([self tabBarShouldBeVisibleWithAdditionalTabs:tabViewItemsBeingAdded]) {
+    if (!tabBarControl.flashing &&
+        [self tabBarShouldBeVisibleWithAdditionalTabs:tabViewItemsBeingAdded]) {
         contentSize.height += [tabBarControl frame].size.height;
     }
 
@@ -5406,22 +5405,6 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
-- (void)showFullScreenTabControl
-{
-    temporarilyShowingTabs_ = YES;
-    if (!fullscreenTabs_) {
-        [self toggleFullScreenTabBar];
-    }
-}
-
-- (void)hideFullScreenTabControl
-{
-    if (temporarilyShowingTabs_ && fullscreenTabs_) {
-        [self toggleFullScreenTabBar];
-    }
-    temporarilyShowingTabs_ = NO;
-}
-
 - (void)flagsChanged:(NSEvent *)theEvent
 {
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermFlagsChanged"
@@ -5444,49 +5427,7 @@ NSString *kSessionsKVCKey = @"sessions";
         }
     }
 
-    if (![self anyFullScreen]) {
-        return;
-    }
-    if (!temporarilyShowingTabs_ && fullscreenTabs_) {
-        // Being shown non-temporarily
-        return;
-    }
-    if ((modifierFlags & NSDeviceIndependentModifierFlagsMask) == NSCommandKeyMask &&  // you pressed exactly cmd
-        ([tabBarBackground isHidden] || [tabBarBackground alphaValue] == 0) &&  // the tab bar is not visible
-        fullScreenTabviewTimer_ == nil) {  // not in the middle of doing this already
-        NSTimeInterval delay =
-            [iTermPreferences floatForKey:kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen];
-        fullScreenTabviewTimer_ = [[NSTimer scheduledTimerWithTimeInterval:delay
-                                                                    target:self
-                                                                  selector:@selector(cmdHeld:)
-                                                                  userInfo:nil
-                                                                   repeats:NO] retain];
-    } else if ((modifierFlags & NSDeviceIndependentModifierFlagsMask) != NSCommandKeyMask &&
-               fullScreenTabviewTimer_ != nil) {
-        [fullScreenTabviewTimer_ invalidate];
-        fullScreenTabviewTimer_ = nil;
-    }
-
-    // This hides the tabbar if you press any other key while it's already showing.
-    // This breaks certain popular ways of switching tabs like cmd-shift-arrow or
-    // cmd-shift-[ or ].
-    // I can't remember why I added this. Let's take it out and if nobody complains
-    // remove it for good. gn 2/12/2011.
-    // if ((modifierFlags & NSDeviceIndependentModifierFlagsMask) != NSCommandKeyMask) {
-    if (temporarilyShowingTabs_ && !(modifierFlags & NSCommandKeyMask)) {
-        [self hideFullScreenTabControl];
-        temporarilyShowingTabs_ = NO;
-    }
-}
-
-- (void)cmdHeld:(id)sender
-{
-    [fullScreenTabviewTimer_ release];
-    fullScreenTabviewTimer_ = nil;
-    // Don't show the tabbar if you're holding cmd while doing find cursor
-    if ([self anyFullScreen] && ![[[self currentSession] textview] isFindingCursor]) {
-        [self showFullScreenTabControl];
-    }
+    tabBarControl.cmdPressed = ((modifierFlags & NSDeviceIndependentModifierFlagsMask) == NSCommandKeyMask);
 }
 
 // Change position of window widgets.
@@ -5525,13 +5466,18 @@ NSString *kSessionsKVCKey = @"sessions";
             aRect.origin.y = [self _haveBottomBorder] ? 1 : 0;
             aRect.size = [[thisWindow contentView] frame].size;
             aRect.size.height -= aRect.origin.y;
-            aRect.size.height -= [tabBarControl frame].size.height;
+            if (!tabBarControl.flashing) {
+                aRect.size.height -= [tabBarControl frame].size.height;
+            }
             if ([self _haveTopBorder]) {
                 aRect.size.height -= 1;
             }
             aRect.size.width = [self tabviewWidth];
             PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
             [TABVIEW setFrame:aRect];
+            if (tabBarControl.flashing) {
+                aRect.size.height -= [tabBarControl frame].size.height;
+            }
             [self updateDivisionView];
             aRect.origin.y += aRect.size.height;
             aRect.size.height = [tabBarControl frame].size.height;
@@ -5547,8 +5493,12 @@ NSString *kSessionsKVCKey = @"sessions";
             aRect.size.width = [self tabviewWidth];
             [tabBarControl setFrame:aRect];
             [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMaxYMargin)];
-            aRect.origin.y += [tabBarControl frame].size.height;
-            aRect.size.height = [[thisWindow contentView] frame].size.height - aRect.origin.y;
+            if (tabBarControl.flashing) {
+                aRect.size.height = [[thisWindow contentView] frame].size.height;
+            } else {
+                aRect.origin.y += [tabBarControl frame].size.height;
+                aRect.size.height = [[thisWindow contentView] frame].size.height - aRect.origin.y;
+            }
             if ([self _haveTopBorder]) {
                 aRect.size.height -= 1;
             }
@@ -5584,7 +5534,7 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 
     PtyLog(@"repositionWidgets - update tab bar");
-    [tabBarControl update];
+    [tabBarControl updateFlashing];
     PtyLog(@"repositionWidgets - return.");
 }
 
@@ -6563,6 +6513,31 @@ NSString *kSessionsKVCKey = @"sessions";
     if ([self currentSession] == session) {
         [self refreshTools];
     }
+}
+
+#pragma mark - iTermTabBarControlViewDelegate
+
+- (BOOL)iTermTabBarShouldFlash {
+    return ([self anyFullScreen] &&
+            !exitingLionFullscreen_ &&
+            !fullscreenTabs_ &&
+            ![[[self currentSession] textview] isFindingCursor]);
+}
+
+- (NSTimeInterval)iTermTabBarCmdPressDuration {
+    return [iTermPreferences floatForKey:kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen];
+}
+
+- (void)iTermTabBarWillBeginFlash {
+    tabBarControl.alphaValue = 0;
+    tabBarControl.hidden = NO;
+    [self repositionWidgets];
+}
+
+- (void)iTermTabBarDidFinishFlash {
+    tabBarControl.alphaValue = 1;
+    tabBarControl.hidden = YES;
+    [self repositionWidgets];
 }
 
 #pragma mark - KeyValueCoding
