@@ -6518,7 +6518,8 @@ NSString *kSessionsKVCKey = @"sessions";
 #pragma mark - iTermTabBarControlViewDelegate
 
 - (BOOL)iTermTabBarShouldFlash {
-    return ([self anyFullScreen] &&
+    return ([iTermPreferences boolForKey:kPreferenceKeyFlashTabBarInFullscreen] &&
+            [self anyFullScreen] &&
             !exitingLionFullscreen_ &&
             !fullscreenTabs_ &&
             ![[[self currentSession] textview] isFindingCursor]);

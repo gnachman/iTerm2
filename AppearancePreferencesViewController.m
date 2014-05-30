@@ -40,6 +40,8 @@
     // Hide menu bar in non-lion fullscreen.
     IBOutlet NSButton *_hideMenuBarInFullscreen;
 
+    IBOutlet NSButton *_flashTabBarInFullscreenWhenSwitchingTabs;
+
     // Show window number in title bar.
     IBOutlet NSButton *_windowNumber;
 
@@ -125,6 +127,10 @@
                            key:kPreferenceKeyHideMenuBarInFullscreen
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
+
+    info = [self defineControl:_flashTabBarInFullscreenWhenSwitchingTabs
+                           key:kPreferenceKeyFlashTabBarInFullscreen
+                          type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_windowNumber
                            key:kPreferenceKeyShowWindowNumber
