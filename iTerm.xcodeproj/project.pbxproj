@@ -513,7 +513,6 @@
 		1DD39ACF180B7884004E56D5 /* VT100GridTypes.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */; };
 		1DD39AD7180B8118004E56D5 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39AD6180B8118004E56D5 /* Cocoa.framework */; };
 		1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1DD39ADF180B8118004E56D5 /* InfoPlist.strings */; };
-		1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 1DD39AE5180B8118004E56D5 /* Credits.rtf */; };
 		1DD39AEF180B8118004E56D5 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1DD39AEE180B8118004E56D5 /* Images.xcassets */; };
 		1DD39B10180B817B004E56D5 /* VT100Grid.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8B8A131806038F00C2DC25 /* VT100Grid.m */; };
 		1DD39B11180B817B004E56D5 /* VT100GridTypes.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */; };
@@ -1257,7 +1256,6 @@
 		1DD39ADE180B8118004E56D5 /* iTermTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "iTermTests-Info.plist"; sourceTree = "<group>"; };
 		1DD39AE0180B8118004E56D5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1DD39AE4180B8118004E56D5 /* iTermTests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermTests-Prefix.pch"; sourceTree = "<group>"; };
-		1DD39AE6180B8118004E56D5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
 		1DD39AEE180B8118004E56D5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		1DD39AF5180B8119004E56D5 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		1DD39B12180B819A004E56D5 /* VT100GridTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VT100GridTest.h; path = iTermTests/VT100GridTest.h; sourceTree = "<group>"; };
@@ -2408,7 +2406,6 @@
 				1DD39ADE180B8118004E56D5 /* iTermTests-Info.plist */,
 				1DD39ADF180B8118004E56D5 /* InfoPlist.strings */,
 				1DD39AE4180B8118004E56D5 /* iTermTests-Prefix.pch */,
-				1DD39AE5180B8118004E56D5 /* Credits.rtf */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -3126,7 +3123,6 @@
 				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
 				A6E713B718FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib in Resources */,
 				1DC13ABE1886146B00034DAE /* mark_err.png in Resources */,
-				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
 				A6E713A018F7B199008D94DD /* BulkCopyProfilePreferences.xib in Resources */,
 				1DFA9D6D18F37AA5008ADC98 /* iTermKeyMapping.xib in Resources */,
 				1DC13AC01886146B00034DAE /* mark_err@2x.png in Resources */,
@@ -3846,14 +3842,6 @@
 				1DD39AE0180B8118004E56D5 /* en */,
 			);
 			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
-		1DD39AE5180B8118004E56D5 /* Credits.rtf */ = {
-			isa = PBXVariantGroup;
-			children = (
-				1DD39AE6180B8118004E56D5 /* en */,
-			);
-			name = Credits.rtf;
 			sourceTree = "<group>";
 		};
 		1DE2154112821F1C004E3ADF /* Autocomplete.xib */ = {
