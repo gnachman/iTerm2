@@ -31,6 +31,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
 
 @implementation PTYTab {
     int _activityCounter;
+    int _uniqueId;
 }
 
 @synthesize broadcasting = broadcasting_;
@@ -144,7 +145,8 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     NSDictionary *arrangement = [self arrangement];
     PTYTab *theCopy = [PTYTab tabWithArrangement:arrangement
                                       inTerminal:[self realParentWindow]
-                                 hasFlexibleView:flexibleView_ != nil];
+                                 hasFlexibleView:flexibleView_ != nil
+                                         viewMap:nil];
     return [theCopy retain];
 }
 
@@ -156,6 +158,14 @@ static const BOOL USE_THIN_SPLITTERS = YES;
             [PTYTab _recursiveSetDelegateIn:(NSSplitView*)subView to:delegate];
         }
     }
+}
+
+- (int)uniqueId {
+    static int gNextId;
+    if (!_uniqueId) {
+        _uniqueId = ++gNextId;
+    }
+    return _uniqueId;
 }
 
 // This is used when restoring a window arrangement. A tree of splits and
@@ -1944,14 +1954,24 @@ static NSString* FormatRect(NSRect r) {
     } else {
         if (theMap) {
             NSNumber *wp = [arrangement objectForKey:TAB_ARRANGEMENT_TMUX_WINDOW_PANE];
-            if (wp) {
-                // Creating splitters for a tmux tab. The arrangement is marked
-                // up with window pane IDs, whcih may or may not already exist.
-                // When restoring a tmux tab, then all session dicts in the
-                // arrangement have a window pane. The presence of a
-                // TAB_ARRANGEMENT_TMUX_WINDOW_PANE implies that theMap is
-                // window pane->SessionView.
-                SessionView *sv = [theMap objectForKey:wp];
+            NSString *uniqueId = [PTYSession uniqueIdInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
+            if (wp || uniqueId) {
+                SessionView *sv;
+                if (wp) {
+                    // Creating splitters for a tmux tab. The arrangement is marked
+                    // up with window pane IDs, whcih may or may not already exist.
+                    // When restoring a tmux tab, then all session dicts in the
+                    // arrangement have a window pane. The presence of a
+                    // TAB_ARRANGEMENT_TMUX_WINDOW_PANE implies that theMap is
+                    // window pane->SessionView.
+                    sv = theMap[wp];
+                } else {
+                    // These session viws are expected to exist, unlike in the tmux case. This is
+                    // used when undoing a close session operation.
+                    PTYSession *session = theMap[uniqueId];
+                    sv = [session view];
+                    assert(sv);
+                }
                 NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
                 if (sv) {
                     // Recycle an existing session view.
@@ -2004,8 +2024,12 @@ static NSString* FormatRect(NSRect r) {
         SessionView* sessionView = (SessionView*)view;
 
         NSNumber *wp = [arrangement objectForKey:TAB_ARRANGEMENT_TMUX_WINDOW_PANE];
+        NSString *uniqueId = [PTYSession uniqueIdInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
         PTYSession *session;
-        if (wp && [sessionView session]) {
+        if (uniqueId && [sessionView session]) {  // TODO: Is it right to check if session exists here?
+            session = [sessionView session];
+            session.tab = self;
+        } else if (wp && [sessionView session]) {
             // Re-use existing session because the session view was recycled
             // from the existing view hierarchy when the tmux layout changed but
             // this session was not added or removed.
@@ -2030,6 +2054,39 @@ static NSString* FormatRect(NSRect r) {
 {
     [PTYTab _recursiveDrawArrangementPreview:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
                                        frame:frame];
+}
+
+- (NSArray *)_recursiveSplittersFromNode:(NSSplitView *)node splitters:(NSArray *)splitters {
+    NSArray *result = [splitters arrayByAddingObject:node];
+    for (id subview in node.subviews) {
+        if ([subview isKindOfClass:[NSSplitView class]]) {
+            result = [self _recursiveSplittersFromNode:subview splitters:result];
+        }
+    }
+    return result;
+}
+
+- (NSArray *)splitters {
+    return [self _recursiveSplittersFromNode:root_ splitters:@[ ]];
+}
+
+- (void)replaceWithContentsOfTab:(PTYTab *)tabToGut {
+    for (PTYSession *aSession in [tabToGut sessions]) {
+        aSession.tab = self;
+    }
+    for (PTYSplitView *splitview in [self splitters]) {
+        splitview.delegate = nil;
+    }
+    for (PTYSplitView *splitview in [tabToGut splitters]) {
+        splitview.delegate = self;
+    }
+    NSSplitView *temp = root_;
+    root_ = tabToGut->root_;
+    root_.delegate = self;
+    [[[self tabViewItem] tabView] addSubview:root_];
+
+    [temp removeFromSuperview];
+    tabToGut->root_ = temp;
 }
 
 - (void)enableFlexibleView
@@ -2090,11 +2147,12 @@ static NSString* FormatRect(NSRect r) {
 + (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
                     inTerminal:(NSWindowController<iTermWindowController> *)term
                hasFlexibleView:(BOOL)hasFlexible
+                       viewMap:(NSDictionary *)viewMap
 {
     PTYTab* theTab;
     // Build a tree with splitters and SessionViews but no PTYSessions.
     NSSplitView* newRoot = (NSSplitView*)[PTYTab _recusiveRestoreSplitters:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
-                                                                   fromMap:nil];
+                                                                   fromMap:viewMap];
 
     // Create a tab.
     theTab = [[[PTYTab alloc] initWithRoot:newRoot] autorelease];
@@ -2121,7 +2179,7 @@ static NSString* FormatRect(NSRect r) {
 }
 
 // This can only be used in conjunction with
-// +[tabWithArrangement:inTerminal:hasFlexibleView:].
+// +[tabWithArrangement:inTerminal:hasFlexibleView:viewMap:].
  - (void)addToTerminal:(NSWindowController<iTermWindowController> *)term
        withArrangement:(NSDictionary *)arrangement
 {
@@ -2142,10 +2200,15 @@ static NSString* FormatRect(NSRect r) {
 + (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
                         inTerminal:(NSWindowController<iTermWindowController> *)term
                    hasFlexibleView:(BOOL)hasFlexible
+                           viewMap:(NSDictionary *)viewMap
 {
     PTYTab *theTab = [PTYTab tabWithArrangement:arrangement
                                      inTerminal:term
-                                hasFlexibleView:hasFlexible];
+                                hasFlexibleView:hasFlexible
+                                        viewMap:viewMap];
+    if ([[theTab sessionViews] count] == 0) {
+        return nil;
+    }
     [theTab addToTerminal:term
           withArrangement:arrangement];
     return theTab;
@@ -2173,6 +2236,48 @@ static NSString* FormatRect(NSRect r) {
 - (NSDictionary*)arrangement
 {
     return [self arrangementWithMap:nil];
+}
+
++ (BOOL)_recursiveBuildViewMap:(NSMutableDictionary *)viewMap
+               withArrangement:(NSDictionary *)arrangement
+                      sessions:(NSArray *)sessions {
+    if ([arrangement[TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
+        for (NSDictionary *subviewDict in arrangement[SUBVIEWS]) {
+            if (![self _recursiveBuildViewMap:viewMap withArrangement:subviewDict sessions:sessions]) {
+                return NO;
+            }
+        }
+        return YES;
+    } else {
+        // Is a session view
+        NSString *uniqueId = [PTYSession uniqueIdInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
+        if (!uniqueId) {
+            return NO;
+        }
+        PTYSession *session = nil;
+        for (PTYSession *aSession in sessions) {
+            if ([aSession.uniqueID isEqualToString:uniqueId]) {
+                session = aSession;
+                break;
+            }
+        }
+        if (!session) {
+            return NO;
+        }
+        viewMap[uniqueId] = session;
+        return YES;
+    }
+}
+
++ (NSDictionary *)viewMapWithArrangement:(NSDictionary *)arrangement sessions:(NSArray *)sessions {
+    NSMutableDictionary *viewMap = [NSMutableDictionary dictionary];
+    if (![self _recursiveBuildViewMap:viewMap
+                      withArrangement:arrangement[TAB_ARRANGEMENT_ROOT]
+                             sessions:sessions]) {
+        return nil;
+    } else {
+        return viewMap;
+    }
 }
 
 + (NSSize)_recursiveSetSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
@@ -2424,7 +2529,10 @@ static NSString* FormatRect(NSRect r) {
     NSDictionary *arrangement = [PTYTab arrangementForDecoratedTmuxParseTree:parseTree
                                                                     bookmark:[PTYTab tmuxBookmark]
                                                             activeWindowPane:0];
-    PTYTab *theTab = [self tabWithArrangement:arrangement inTerminal:term hasFlexibleView:YES];
+    PTYTab *theTab = [self tabWithArrangement:arrangement
+                                   inTerminal:term
+                              hasFlexibleView:YES
+                                      viewMap:nil];
     theTab->tmuxWindow_ = tmuxWindow;
     theTab->tmuxController_ = [tmuxController retain];
     theTab->parseTree_ = [parseTree retain];
@@ -3149,6 +3257,72 @@ static NSString* FormatRect(NSRect r) {
     DLog(@"After swap, %@ has superview %@ and %@ has superview %@",
          session1.view, session1.view.superview,
          session2.view, session2.view.superview);
+}
+
+- (NSIndexPath *)pathToSplitPaneWithSession:(PTYSession *)session {
+    NSMutableArray *path = [NSMutableArray array];
+    NSView *view = session.view;
+    NSView *superview = view.superview;
+    while (view != root_) {
+        if ([superview isKindOfClass:[NSSplitView class]]) {
+            NSInteger index = [superview.subviews indexOfObject:view];
+            [path insertObject:@(index) atIndex:0];
+        }
+        view = superview;
+        superview = view.superview;
+    }
+    NSUInteger *indices = malloc(sizeof(NSUInteger) * path.count);
+    for (int i = 0; i < path.count; i++) {
+        indices[i] = [path[i] intValue];
+    }
+    NSIndexPath *indexPath =
+        [[[NSIndexPath alloc] initWithIndexes:indices length:path.count] autorelease];
+    free(indices);
+    return indexPath;
+}
+
+- (BOOL)insertSession:(PTYSession *)aSession
+               atPath:(NSIndexPath *)indexPath
+             vertical:(BOOL)isVertical {
+    NSView *view = root_;
+    for (int i = 0; i + 1 < indexPath.length; i++) {
+        if (![view isKindOfClass:[NSSplitView class]]) {
+            return NO;
+        }
+        NSInteger index = [indexPath indexAtPosition:i];
+        if (view.subviews.count < index) {
+            return NO;
+        }
+        view = view.subviews[index];
+    }
+
+    NSInteger lastIndex = [indexPath indexAtPosition:indexPath.length - 1];
+    if (lastIndex > view.subviews.count) {
+        return NO;
+    }
+
+    SessionView *targetSessionView;
+    if ([view isKindOfClass:[SessionView class]]) {
+        if (lastIndex > 1) {
+            return NO;
+        }
+        targetSessionView = (SessionView *)view;
+    } else {
+        NSArray *subviews = view.subviews;
+        if (lastIndex == 0) {
+            targetSessionView = subviews[0];
+        } else {
+            targetSessionView = subviews[lastIndex - 1];
+        }
+    }
+    PTYSession *targetSession = [targetSessionView session];
+    [[self realParentWindow] splitVertically:isVertical
+                                      before:lastIndex == 0
+                               addingSession:aSession
+                               targetSession:targetSession
+                                performSetup:NO];
+    [self fitSessionToCurrentViewSize:aSession];
+    return YES;
 }
 
 #pragma mark NSSplitView delegate methods

@@ -842,6 +842,9 @@
 		A6C537BE1938374600A08C18 /* iTermTabBarControlView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */; };
 		A6C537BF1938374600A08C18 /* iTermTabBarControlView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */; };
 		A6C537C01938374600A08C18 /* iTermTabBarControlView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */; };
+		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
+		A6C537C41939507100A08C18 /* iTermRestorableSession.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537C21939507100A08C18 /* iTermRestorableSession.m */; };
+		A6C537C51939507100A08C18 /* iTermRestorableSession.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537C21939507100A08C18 /* iTermRestorableSession.m */; };
 		A6CFDAD2185D2587005DC94B /* URLAction.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CFDAD0185D2587005DC94B /* URLAction.h */; };
 		A6CFDAD3185D2587005DC94B /* URLAction.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD1185D2587005DC94B /* URLAction.m */; };
 		A6CFDAD4185D2587005DC94B /* URLAction.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD1185D2587005DC94B /* URLAction.m */; };
@@ -1507,6 +1510,8 @@
 		A6C4E8E71846E32600CFAA77 /* IntervalTreeTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IntervalTreeTest.h; path = iTermTests/IntervalTreeTest.h; sourceTree = "<group>"; };
 		A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTabBarControlView.h; sourceTree = "<group>"; };
 		A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTabBarControlView.m; sourceTree = "<group>"; };
+		A6C537C11939507100A08C18 /* iTermRestorableSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermRestorableSession.h; sourceTree = "<group>"; };
+		A6C537C21939507100A08C18 /* iTermRestorableSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRestorableSession.m; sourceTree = "<group>"; };
 		A6CFDAD0185D2587005DC94B /* URLAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = URLAction.h; sourceTree = "<group>"; };
 		A6CFDAD1185D2587005DC94B /* URLAction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = URLAction.m; sourceTree = "<group>"; };
 		A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AsyncHostLookupController.h; sourceTree = "<group>"; };
@@ -2547,6 +2552,8 @@
 				A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */,
 				1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */,
 				A6CFDAD1185D2587005DC94B /* URLAction.m */,
+				A6C537C11939507100A08C18 /* iTermRestorableSession.h */,
+				A6C537C21939507100A08C18 /* iTermRestorableSession.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -2909,6 +2916,7 @@
 				A68A30FB186D150B007F550F /* TransferrableFileMenuItemViewController.h in Headers */,
 				A68A30F8186D150B007F550F /* SCPPath.h in Headers */,
 				1D9DDD92142E5AC600275650 /* CoprocessTrigger.h in Headers */,
+				A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */,
 				A68A30F9186D150B007F550F /* TransferrableFile.h in Headers */,
 				1D9DDD9C142E5FBB00275650 /* Coprocess.h in Headers */,
 				1D24C284142EF334006B246F /* SendTextTrigger.h in Headers */,
@@ -3406,6 +3414,7 @@
 				1D9A5548180FA82E00B42CE9 /* TmuxControllerRegistry.m in Sources */,
 				A628C7AA18764AA4009B0818 /* NSDictionary+iTerm.m in Sources */,
 				1D9A5541180FA81400B42CE9 /* ProfileListView.m in Sources */,
+				A6C537C51939507100A08C18 /* iTermRestorableSession.m in Sources */,
 				1D9A5542180FA81400B42CE9 /* ProfilesWindow.m in Sources */,
 				1D373E4B18F3613600773D3E /* iTermShortcutInputView.m in Sources */,
 				1DD39B22180B8467004E56D5 /* BackgroundThread.m in Sources */,
@@ -3669,6 +3678,7 @@
 				A6AE1ECD191FF9DB00780C19 /* iTermMouseCursor.m in Sources */,
 				1D237D29131D8741004DD60C /* FindView.m in Sources */,
 				1D237D95131D8D66004DD60C /* FindViewController.m in Sources */,
+				A6C537C41939507100A08C18 /* iTermRestorableSession.m in Sources */,
 				1D06A050134CDBED00C414EF /* Trouter.m in Sources */,
 				1D988598135D23BD0072023F /* ProcessCache.m in Sources */,
 				A68A30DC186D1429007F550F /* SCPFile.m in Sources */,

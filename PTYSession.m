@@ -19,6 +19,7 @@
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "iTermRestorableSession.h"
 #import "iTermSelection.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermTextExtractor.h"
@@ -90,6 +91,7 @@ static NSString *const SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
 static NSString *const SESSION_ARRANGEMENT_DEFAULT_NAME = @"Session Default Name";  // manually set name
 static NSString *const SESSION_ARRANGEMENT_WINDOW_TITLE = @"Session Window Title";  // server-set window name
 static NSString *const SESSION_ARRANGEMENT_NAME = @"Session Name";  // server-set "icon" (tab) name
+static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // -uniqueId, used for restoring soft-terminated sessions
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
@@ -950,7 +952,18 @@ typedef enum {
                                    actions:@[ @"OK" ]
                                 identifier:theKey
                                silenceable:kiTermWarningTypePermanentlySilenceable];
- }
+    }
+}
+
+- (iTermRestorableSession *)restorableSession {
+    iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
+    restorableSession.sessions = @[ self ];
+    restorableSession.terminalGuid = self.tab.realParentWindow.terminalGuid;
+    restorableSession.tabUniqueId = self.tab.uniqueId;
+    restorableSession.arrangement = self.tab.arrangement;
+    restorableSession.group = kiTermRestorableSessionGroupSession;
+
+    return restorableSession;
 }
 
 // Terminate a replay session but not the live session
@@ -1016,19 +1029,21 @@ typedef enum {
     }
 
     _exited = YES;
-    [_shell stop];
-    [self retain];  // We must live until -taskWasDeregistered is called.
+    BOOL undoable = YES;
+    [_view retain];  // hardstop and revive will release this.
+    if (undoable) {
+        // TODO: executeTokens:bytesHandled: should queue up tokens to avoid a race condition.
+        [self makeTerminalteUndoable];
+    } else {
+        [self hardStop];
+    }
 
     // final update of display
     [self updateDisplay];
 
     [_tab removeSession:self];
 
-    [_textview setDataSource:nil];
-    [_textview setDelegate:nil];
-    [_textview removeFromSuperview];
     _colorMap.delegate = nil;
-    _textview = nil;
 
     _screen.delegate = nil;
     [_screen setTerminal:nil];
@@ -1046,6 +1061,44 @@ typedef enum {
     [[_tab realParentWindow] sessionDidTerminate:self];
 
     _tab = nil;
+}
+
+- (void)makeTerminalteUndoable {
+    _shell.paused = YES;
+    [_textview setDataSource:nil];
+    [_textview setDelegate:nil];
+    [self performSelector:@selector(hardStop) withObject:nil afterDelay:5000];
+    [[iTermController sharedInstance] addRestorableSession:[self restorableSession]];
+}
+
+- (void)hardStop {
+    [[iTermController sharedInstance] removeSessionFromRestorableSessions:self];
+    [_view release];
+    [_shell stop];
+    [_textview setDataSource:nil];
+    [_textview setDelegate:nil];
+    [_textview removeFromSuperview];
+    [self retain];
+}
+
+- (BOOL)revive {
+    if (_shell.paused) {
+        [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                                 selector:@selector(hardStop)
+                                                   object:nil];
+        _exited = NO;
+        _textview.dataSource = _screen;
+        _textview.delegate = self;
+        _colorMap.delegate = _textview;
+        _screen.delegate = self;
+        _screen.terminal = _terminal;
+        _terminal.delegate = _screen;
+        _shell.paused = NO;
+        [_view autorelease];
+        return YES;
+    } else {
+        return NO;
+    }
 }
 
 - (void)writeTaskImpl:(NSData *)data
@@ -2034,8 +2087,7 @@ typedef enum {
     [[_tab realParentWindow] invalidateRestorableState];
 }
 
-- (NSString *)uniqueID
-{
+- (NSString *)uniqueID {
     return [self tty];
 }
 
@@ -2501,9 +2553,9 @@ typedef enum {
 - (NSDictionary*)arrangement
 {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
-    [result setObject:[NSNumber numberWithInt:[_screen width]] forKey:SESSION_ARRANGEMENT_COLUMNS];
-    [result setObject:[NSNumber numberWithInt:[_screen height]] forKey:SESSION_ARRANGEMENT_ROWS];
-    [result setObject:_profile forKey:SESSION_ARRANGEMENT_BOOKMARK];
+    result[SESSION_ARRANGEMENT_COLUMNS] = @(_screen.width);
+    result[SESSION_ARRANGEMENT_ROWS] = @(_screen.height);
+    result[SESSION_ARRANGEMENT_BOOKMARK] = _profile;
     result[SESSION_ARRANGEMENT_BOOKMARK_NAME] = _bookmarkName;
     if (_name) {
         result[SESSION_ARRANGEMENT_NAME] = _name;
@@ -2515,7 +2567,8 @@ typedef enum {
         result[SESSION_ARRANGEMENT_WINDOW_TITLE] = _windowTitle;
     }
     NSString* pwd = [_shell getWorkingDirectory];
-    [result setObject:pwd ? pwd : @"" forKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY];
+    result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
+    result[SESSION_UNIQUE_ID] = self.uniqueID;  // TODO: This isn't really unique, it's just the tty number
     return result;
 }
 
@@ -2543,6 +2596,10 @@ typedef enum {
     }
 
     return result;
+}
+
++ (NSString *)uniqueIdInArrangement:(NSDictionary *)arrangement {
+    return arrangement[SESSION_UNIQUE_ID];
 }
 
 - (void)updateScroll

@@ -51,6 +51,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
+#import "iTermRestorableSession.h"
 #import "iTermWarning.h"
 #include <objc/runtime.h>
 
@@ -107,7 +108,9 @@ BOOL IsMavericksOrLater(void) {
 }
 
 
-@implementation iTermController
+@implementation iTermController {
+    NSMutableArray *_restorableSessions;
+}
 
 static iTermController* shared = nil;
 static BOOL initDone = NO;
@@ -157,6 +160,7 @@ static BOOL initDone = NO;
 
         terminalWindows = [[NSMutableArray alloc] init];
         keyWindowIndexMemo_ = -1;
+        _restorableSessions = [[NSMutableArray alloc] init];
 
         // Activate Growl
         /*
@@ -186,7 +190,8 @@ static BOOL initDone = NO;
         [gd release];
     }
     [previouslyActiveAppPID_ release];
-
+    [_restorableSessions release];
+    [_currentRestorableSession release];
     [super dealloc];
 }
 
@@ -1237,6 +1242,15 @@ static BOOL initDone = NO;
     return nil;
 }
 
+- (PseudoTerminal *)terminalWithGuid:(NSString *)guid {
+    for (PseudoTerminal *term in [self terminals]) {
+        if ([[term terminalGuid] isEqualToString:guid]) {
+            return term;
+        }
+    }
+    return nil;
+}
+
 // http://cocoadev.com/DeterminingOSVersion
 + (BOOL)getSystemVersionMajor:(unsigned int *)major
                         minor:(unsigned int *)minor
@@ -1282,6 +1296,44 @@ static BOOL initDone = NO;
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForFinal"];
     [[NSUserDefaults standardUserDefaults] setObject:appCast forKey:@"SUFeedURL"];
+}
+
+- (void)addRestorableSession:(iTermRestorableSession *)session {
+    if (!_currentRestorableSession) {
+        [_restorableSessions addObject:session];
+    } else if (session == _currentRestorableSession) {
+        [_restorableSessions addObject:session];
+        self.currentRestorableSession = nil;
+    }
+}
+
+- (void)removeSessionFromRestorableSessions:(PTYSession *)session {
+    NSInteger index =
+        [_restorableSessions indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+            iTermRestorableSession *restorableSession = obj;
+            if ([restorableSession.sessions containsObject:session]) {
+                *stop = YES;
+                return YES;
+            } else {
+                return NO;
+            }
+        }];
+    if (index != NSNotFound) {
+        [_restorableSessions removeObjectAtIndex:index];
+    }
+}
+
+- (iTermRestorableSession *)popRestorabelSession {
+    if (!_restorableSessions.count) {
+        return nil;
+    }
+    iTermRestorableSession *restorableSession = [[[_restorableSessions lastObject] retain] autorelease];
+    [_restorableSessions removeLastObject];
+    return restorableSession;
+}
+
+- (BOOL)hasRestorableSession {
+    return _restorableSessions.count > 0;
 }
 
 #pragma mark - Scripting support

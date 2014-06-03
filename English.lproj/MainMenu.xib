@@ -327,7 +327,7 @@ DQ
                         <items>
                             <menuItem title="Undo" keyEquivalent="z" id="1061">
                                 <connections>
-                                    <action selector="undo:" target="-1" id="1062"/>
+                                    <action selector="undo:" target="201" id="Fvg-bx-tXA"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Redo" keyEquivalent="Z" id="1063">
@@ -968,7 +968,7 @@ DQ
                 </menuItem>
             </items>
         </menu>
-        <customObject id="201" userLabel="Main" customClass="iTermApplicationDelegate">
+        <customObject id="201" userLabel="iTermApplicationDelegate" customClass="iTermApplicationDelegate">
             <connections>
                 <outlet property="ABOUT" destination="498" id="507"/>
                 <outlet property="AUTHORS" destination="640" id="641"/>

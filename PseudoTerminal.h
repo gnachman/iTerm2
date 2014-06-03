@@ -38,6 +38,12 @@ extern NSString *const kCurrentSessionDidChange;
 // hotkey.
 @property(nonatomic, assign) BOOL isHotKeyWindow;
 
+// A unique string for this window. Used for tmux to remember which window
+// a tmux window should be opened in as a tab. A window restored from a
+// saved arrangement will also restore its guid. Also used for restoring sessions via "Undo" into
+// the window they were originally in. Assignable because when you undo closing a window, the guid
+// needs to be restored.
+@property(nonatomic, copy) NSString *terminalGuid;
 
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
@@ -52,6 +58,9 @@ extern NSString *const kCurrentSessionDidChange;
 // Returns a new terminal window restored from an arrangement, with
 // tabs/sessions also restored. May return nil.
 + (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement;
+
++ (instancetype)terminalWithArrangement:(NSDictionary *)arrangement
+                               sessions:(NSArray *)sessions;
 
 // Initialize a new PseudoTerminal.
 // smartLayout: If true then position windows using the "smart layout"
@@ -79,6 +88,8 @@ extern NSString *const kCurrentSessionDidChange;
                             savedWindowType:(iTermWindowType)savedWindowType
                                      screen:(int)screenNumber
                                    isHotkey:(BOOL)isHotkey;
+
+- (PTYTab *)tabWithUniqueId:(int)uniqueId;
 
 // The window's original screen.
 - (NSScreen*)screen;
@@ -313,7 +324,7 @@ extern NSString *const kCurrentSessionDidChange;
 - (float)minWidth;
 
 // Load an arrangement into an empty window.
-- (void)loadArrangement:(NSDictionary *)arrangement;
+- (BOOL)loadArrangement:(NSDictionary *)arrangement;
 
 // Returns the arrangement for this window.
 - (NSDictionary*)arrangement;
@@ -426,6 +437,14 @@ extern NSString *const kCurrentSessionDidChange;
 
 - (void)changeTabColorToMenuAction:(id)sender;
 - (void)moveSessionToWindow:(id)sender;
+
+- (void)addRevivedSession:(PTYSession *)session;
+- (void)addTabWithArrangement:(NSDictionary *)arrangement
+                     uniqueId:(int)tabUniqueId
+                     sessions:(NSArray *)sessions;
+- (void)recreateTab:(PTYTab *)tab
+    withArrangement:(NSDictionary *)arrangement
+           sessions:(NSArray *)sessions;
 
 #pragma mark - Key Value Coding
 

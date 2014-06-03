@@ -291,6 +291,8 @@ typedef enum {
                         forObjectType:(iTermObjectType)objectType;
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
                                          bookmark:(Profile *)bookmark;
++ (NSString *)uniqueIdInArrangement:(NSDictionary *)arrangement;
+
 - (void)textViewFontDidChange;
 
 // Set rows, columns from arrangement.
@@ -307,6 +309,9 @@ typedef enum {
 - (void)softTerminate;
 - (void)terminate;
 
+// Tries to revive a terminated session. Returns YES on success. It should be re-added to a tab if
+// after reviving.
+- (BOOL)revive;
 
 // Preferences
 - (void)setPreferencesFromAddressBookEntry: (NSDictionary *)aePrefs;

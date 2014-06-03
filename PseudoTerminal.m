@@ -267,11 +267,6 @@ NSString *kSessionsKVCKey = @"sessions";
     BOOL liveResize_;
     BOOL postponedTmuxTabLayoutChange_;
 
-    // A unique string for this window. Used for tmux to remember which window
-    // a tmux window should be opened in as a tab. A window restored from a
-    // saved arrangement will also restore its guid.
-    NSString *terminalGuid_;
-
     // Recalls if this was a hide-after-opening window.
     BOOL hideAfterOpening_;
 
@@ -658,7 +653,7 @@ NSString *kSessionsKVCKey = @"sessions";
     wellFormed_ = YES;
     [[self window] setRestorable:YES];
     [[self window] setRestorationClass:[PseudoTerminalRestorer class]];
-    terminalGuid_ = [[NSString stringWithFormat:@"pty-%@", [ProfileModel freshGuid]] retain];
+    self.terminalGuid = [[NSString stringWithFormat:@"pty-%@", [ProfileModel freshGuid]] retain];
 }
 
 - (void)dealloc
@@ -705,7 +700,7 @@ NSString *kSessionsKVCKey = @"sessions";
     tabBarControl.itermTabBarDelegate = nil;
     tabBarControl.delegate = nil;
     [tabBarControl release];
-    [terminalGuid_ release];
+    [_terminalGuid release];
     [lastArrangement_ release];
     [_divisionView release];
     [super dealloc];
@@ -884,6 +879,16 @@ NSString *kSessionsKVCKey = @"sessions";
 - (PTYWindow*)ptyWindow
 {
     return (PTYWindow*) [self window];
+}
+
+- (PTYTab *)tabWithUniqueId:(int)uniqueId {
+    for (int i = 0; i < [self numberOfTabs]; i++) {
+        PTYTab *tab = [[TABVIEW tabViewItemAtIndex:i] identifier];
+        if (tab.uniqueId == uniqueId) {
+            return tab;
+        }
+    }
+    return nil;
 }
 
 - (NSScreen*)screen
@@ -1170,9 +1175,18 @@ NSString *kSessionsKVCKey = @"sessions";
 // tab, and closes the window if there are no tabs left.
 - (void)removeTab:(PTYTab *)aTab
 {
+    iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
+    restorableSession.sessions = [aTab sessions];
+    restorableSession.terminalGuid = self.terminalGuid;
+    restorableSession.tabUniqueId = aTab.uniqueId;
+    restorableSession.arrangement = [aTab arrangement];
+    restorableSession.group = kiTermRestorableSessionGroupTab;
+    [[iTermController sharedInstance] setCurrentRestorableSession:restorableSession];
     for (PTYSession* session in [aTab sessions]) {
         [session terminate];
     }
+    [[iTermController sharedInstance] addRestorableSession:restorableSession];
+
     if ([TABVIEW numberOfTabViewItems] <= 1 && [self windowInited]) {
         [[self window] close];
     } else {
@@ -1683,11 +1697,21 @@ NSString *kSessionsKVCKey = @"sessions";
     return term;
 }
 
-+ (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement
-{
++ (instancetype)terminalWithArrangement:(NSDictionary *)arrangement
+                               sessions:(NSArray *)sessions {
     PseudoTerminal* term = [PseudoTerminal bareTerminalWithArrangement:arrangement];
-    [term loadArrangement:arrangement];
-    return term;
+    for (PTYSession *session in sessions) {
+        assert([session revive]);  // TODO(georgen): This isn't guarantted
+    }
+    if ([term loadArrangement:arrangement sessions:sessions]) {
+        return term;
+    } else {
+        return term;
+    }
+}
+
++ (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement {
+    return [self terminalWithArrangement:arrangement sessions:nil];
 }
 
 - (IBAction)findUrls:(id)sender {
@@ -1773,11 +1797,6 @@ NSString *kSessionsKVCKey = @"sessions";
     --tmuxOriginatedResizeInProgress_;
 }
 
-- (NSString *)terminalGuid
-{
-    return terminalGuid_;
-}
-
 - (void)hideAfterOpening
 {
     hideAfterOpening_ = YES;
@@ -1786,7 +1805,11 @@ NSString *kSessionsKVCKey = @"sessions";
                                             afterDelay:0];
 }
 
-- (void)loadArrangement:(NSDictionary *)arrangement
+- (BOOL)loadArrangement:(NSDictionary *)arrangement {
+    return [self loadArrangement:arrangement sessions:nil];
+}
+
+- (BOOL)loadArrangement:(NSDictionary *)arrangement sessions:(NSArray *)sessions
 {
     PtyLog(@"Restore arrangement: %@", arrangement);
     if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS]) {
@@ -1796,7 +1819,16 @@ NSString *kSessionsKVCKey = @"sessions";
         desiredColumns_ = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_COLUMNS] intValue];
     }
     for (NSDictionary* tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
-        [PTYTab openTabWithArrangement:tabArrangement inTerminal:self hasFlexibleView:NO];
+        NSDictionary *viewMap = nil;
+        if (sessions) {
+            viewMap = [PTYTab viewMapWithArrangement:tabArrangement sessions:sessions];
+        }
+        if (![PTYTab openTabWithArrangement:tabArrangement
+                                 inTerminal:self
+                            hasFlexibleView:NO
+                                    viewMap:viewMap]) {
+            return NO;
+        }
     }
     int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     if (windowType == WINDOW_TYPE_NORMAL ||
@@ -1824,11 +1856,11 @@ NSString *kSessionsKVCKey = @"sessions";
     }
     if ([arrangement objectForKey:TERMINAL_GUID] &&
         [[arrangement objectForKey:TERMINAL_GUID] isKindOfClass:[NSString class]]) {
-        [terminalGuid_ autorelease];
-        terminalGuid_ = [[arrangement objectForKey:TERMINAL_GUID] retain];
+        self.terminalGuid = [[arrangement objectForKey:TERMINAL_GUID] retain];
     }
 
     [self fitTabsToWindow];
+    return YES;
 }
 
 - (NSDictionary *)arrangementExcludingTmuxTabs:(BOOL)excludeTmux
@@ -1843,7 +1875,7 @@ NSString *kSessionsKVCKey = @"sessions";
         ++screenNumber;
     }
 
-    [result setObject:terminalGuid_ forKey:TERMINAL_GUID];
+    [result setObject:_terminalGuid forKey:TERMINAL_GUID];
 
     // Save window frame
     [result setObject:[NSNumber numberWithDouble:rect.origin.x]
@@ -2065,10 +2097,17 @@ NSString *kSessionsKVCKey = @"sessions";
         }
     }
 
-    // Kill sessions so their timers stop and they are freed.
+    // Save restorable sessions in controllers and make sessions terminate or prepare to terminate.
+    iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
+    restorableSession.sessions = [self sessions];
+    restorableSession.terminalGuid = self.terminalGuid;
+    restorableSession.arrangement = [self arrangement];
+    restorableSession.group = kiTermRestorableSessionGroupWindow;
+    [[iTermController sharedInstance] setCurrentRestorableSession:restorableSession];
     for (PTYSession* session in [self sessions]) {
         [session terminate];
     }
+    [[iTermController sharedInstance] addRestorableSession:restorableSession];
 
     [[self retain] autorelease];
     // This releases the last reference to self except for autorelease pools.
@@ -3883,7 +3922,7 @@ NSString *kSessionsKVCKey = @"sessions";
         // Tell the server to move the pane into its own window and sets
         // an affinity to the destination window.
         [[session tmuxController] breakOutWindowPane:[session tmuxPane]
-                                          toTabAside:[self terminalGuid]];
+                                          toTabAside:self.terminalGuid];
         return nil;
     }
     [[MovePaneController sharedInstance] removeAndClearSession];
@@ -4435,6 +4474,65 @@ NSString *kSessionsKVCKey = @"sessions";
     if (bookmark) {
         [[iTermController sharedInstance] launchBookmark:bookmark inTerminal:self];
     }
+}
+
+
+- (void)recreateTab:(PTYTab *)tab
+    withArrangement:(NSDictionary *)arrangement
+           sessions:(NSArray *)sessions {
+    NSInteger tabIndex = [TABVIEW indexOfTabViewItemWithIdentifier:tab];
+    if (tabIndex == NSNotFound) {
+        return;
+    }
+    NSMutableArray *allSessions = [NSMutableArray array];
+    [allSessions addObjectsFromArray:sessions];
+    [allSessions addObjectsFromArray:[tab sessions]];
+    NSDictionary *theMap = [PTYTab viewMapWithArrangement:arrangement sessions:allSessions];
+    if (!theMap) {
+        // Can't do it. Just add each session as its own tab.
+        for (PTYSession *session in sessions) {
+            [self addRevivedSession:session];
+        }
+        return;
+    }
+    for (PTYSession *session in sessions) {
+        assert([session revive]);
+    }
+
+    PTYSession *originalActiveSession = [tab activeSession];
+    PTYTab *temporaryTab = [PTYTab tabWithArrangement:arrangement
+                                           inTerminal:nil
+                                      hasFlexibleView:NO
+                                              viewMap:theMap];
+    [tab replaceWithContentsOfTab:temporaryTab];
+    [tab updatePaneTitles];
+    [tab setActiveSession:nil];
+    [tab setActiveSession:originalActiveSession];
+}
+
+- (void)addTabWithArrangement:(NSDictionary *)arrangement
+                     uniqueId:(int)tabUniqueId
+                     sessions:(NSArray *)sessions {
+    NSDictionary *theMap = [PTYTab viewMapWithArrangement:arrangement sessions:sessions];
+    if (!theMap) {
+        // Can't do it. Just add each session as its own tab.
+        for (PTYSession *session in sessions) {
+            if ([session revive]) {
+                [self addRevivedSession:session];
+            }
+        }
+        return;
+    }
+
+    PTYTab *tab = [PTYTab tabWithArrangement:arrangement
+                                  inTerminal:self
+                             hasFlexibleView:NO
+                                     viewMap:theMap];
+    for (id theKey in theMap) {
+        PTYSession *session = theMap[theKey];
+        assert([session revive]);  // TODO: This isn't guarantted
+    }
+    [tab addToTerminal:self withArrangement:arrangement];
 }
 
 - (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid
@@ -6023,6 +6121,12 @@ NSString *kSessionsKVCKey = @"sessions";
     [[self ptyWindow] toggleToolbarShown:sender];
 }
 
+- (void)addRevivedSession:(PTYSession *)session {
+    [self insertSession:session atIndex:[self numberOfTabs]];
+    [[self currentTab] numberOfSessionsDidChange];
+}
+
+
 // Returns true if the given menu item is selectable.
 - (BOOL)validateMenuItem:(NSMenuItem *)item
 {
@@ -6627,7 +6731,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)window:(NSWindow *)window didDecodeRestorableState:(NSCoder *)state
 {
-    [self loadArrangement:[state decodeObjectForKey:@"ptyarrangement"]];
+    [self loadArrangement:[state decodeObjectForKey:@"ptyarrangement"] sessions:nil];
 }
 
 - (BOOL)allTabsAreTmuxTabs

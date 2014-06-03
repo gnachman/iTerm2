@@ -108,6 +108,9 @@ typedef enum {
 // Underlying window
 - (NSWindow *)window;
 
+// Unique identifier
+- (NSString *)terminalGuid;
+
 // For window restoration, take a new snapshot of the current view hierarchy.
 - (void)invalidateRestorableState;
 

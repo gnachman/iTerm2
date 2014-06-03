@@ -267,13 +267,15 @@ static void HandleSigChld(int n)
     [[TaskNotifier sharedInstance] registerTask:self];
 }
 
-- (BOOL)wantsRead
-{
-    return YES;
+- (BOOL)wantsRead {
+    return !self.paused;
 }
 
 - (BOOL)wantsWrite
 {
+    if (self.paused) {
+        return NO;
+    }
     [writeLock lock];
     BOOL wantsWrite = [writeBuffer length] > 0;
     [writeLock unlock];
@@ -441,6 +443,7 @@ static void HandleSigChld(int n)
 
 - (void)stop
 {
+    self.paused = NO;
     [self loggingStop];
     [self sendSignal:SIGHUP];
 

@@ -37,6 +37,7 @@
 #import "iTermRemotePreferences.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPasswordManagerWindowController.h"
+#import "iTermRestorableSession.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "NSStringITerm.h"
@@ -1012,6 +1013,80 @@ static BOOL hasBecomeActive = NO;
                 defaultDelay:0.125];
 }
 
+- (IBAction)undo:(id)sender {
+    NSResponder *undoResponder = [self responderForMenuItem:sender];
+    if (undoResponder) {
+        [undoResponder performSelector:@selector(undo:) withObject:sender];
+    } else {
+        iTermController *controller = [iTermController sharedInstance];
+        iTermRestorableSession *restorableSession = [controller popRestorabelSession];
+        if (restorableSession) {
+            PseudoTerminal *term;
+            PTYTab *tab;
+
+            switch (restorableSession.group) {
+                case kiTermRestorableSessionGroupSession:
+                    // Restore a single session.
+                    term = [controller terminalWithGuid:restorableSession.terminalGuid];
+                    if (term) {
+                        // Reuse an existing window
+                        tab = [term tabWithUniqueId:restorableSession.tabUniqueId];
+                        if (tab) {
+                            // Add to existing tab by destroying and recreating it.
+                            [term recreateTab:tab
+                              withArrangement:restorableSession.arrangement
+                                     sessions:restorableSession.sessions];
+                        } else {
+                            // Create a new tab and add the session to it.
+                            [restorableSession.sessions[0] revive];
+                            [term addRevivedSession:restorableSession.sessions[0]];
+                        }
+                    } else {
+                        // Create a new term and add the session to it.
+                        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
+                                                                 windowType:WINDOW_TYPE_NORMAL
+                                                            savedWindowType:WINDOW_TYPE_NORMAL
+                                                                     screen:-1] autorelease];
+                        if (term) {
+                            [[iTermController sharedInstance] addInTerminals:term];
+                            term.terminalGuid = restorableSession.terminalGuid;
+                            [restorableSession.sessions[0] revive];
+                            [term addRevivedSession:restorableSession.sessions[0]];
+                        }
+                        // TODO: Might need to canonicalize window frame for certain window types. See PseudoTerminalRestorer.
+                    }
+                    break;
+
+                case kiTermRestorableSessionGroupTab:
+                    // Restore a tab, possibly with multiple sessions in split panes.
+                    term = [controller terminalWithGuid:restorableSession.terminalGuid];
+                    if (!term) {
+                        // Create a new window
+                        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
+                                                                 windowType:WINDOW_TYPE_NORMAL
+                                                            savedWindowType:WINDOW_TYPE_NORMAL
+                                                                     screen:-1] autorelease];
+                        [[iTermController sharedInstance] addInTerminals:term];
+                        term.terminalGuid = restorableSession.terminalGuid;
+                    }
+                    // Add a tab to it.
+                    [term addTabWithArrangement:restorableSession.arrangement
+                                       uniqueId:restorableSession.tabUniqueId
+                                       sessions:restorableSession.sessions];
+                    break;
+
+                case kiTermRestorableSessionGroupWindow:
+                    // Restore a widow.
+                    term = [PseudoTerminal terminalWithArrangement:restorableSession.arrangement
+                                                          sessions:restorableSession.sessions];
+                    [[iTermController sharedInstance] addInTerminals:term];
+                    term.terminalGuid = restorableSession.terminalGuid;
+                    break;
+            }
+        }
+    }
+}
+
 - (IBAction)toggleMultiLinePasteWarning:(id)sender {
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     [userDefaults setBool:![userDefaults boolForKey:kMultiLinePasteWarningUserDefaultsKey]
@@ -1352,11 +1427,40 @@ static BOOL hasBecomeActive = NO;
     [useTransparency setState:[[[iTermController sharedInstance] currentTerminal] useTransparency] ? NSOnState : NSOffState];
 }
 
+- (NSArray *)allResponders {
+    NSMutableArray *responders = [NSMutableArray array];
+    NSResponder *responder = [[NSApp keyWindow] firstResponder];
+    while (responder) {
+        [responders addObject:responder];
+        responder = [responder nextResponder];
+    }
+    return responders;
+}
+
+- (NSResponder *)responderForMenuItem:(NSMenuItem *)menuItem {
+    for (NSResponder *responder in [self allResponders]) {
+        if ([responder respondsToSelector:@selector(undo:)] &&
+            [responder respondsToSelector:@selector(validateMenuItem:)] &&
+            [responder validateMenuItem:menuItem]) {
+            return responder;
+        }
+    }
+    return nil;
+}
+
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem
 {
     if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
       [menuItem setState:[self useBackgroundPatternIndicator]];
       return YES;
+    } else if ([menuItem action] == @selector(undo:)) {
+        NSResponder *undoResponder = [self responderForMenuItem:menuItem];
+        if (undoResponder) {
+            return YES;
+        } else {
+            menuItem.title = @"Undo Close Session";
+            return [[iTermController sharedInstance] hasRestorableSession];
+        }
     } else if ([menuItem action] == @selector(toggleToolbelt:)) {
         [menuItem setState:[[[NSUserDefaults standardUserDefaults] objectForKey:@"Show Toolbelt"] boolValue]];
         return [[ToolbeltView configuredTools] count] > 0;
