@@ -2075,18 +2075,23 @@ static NSString* FormatRect(NSRect r) {
         aSession.tab = self;
     }
     for (PTYSplitView *splitview in [self splitters]) {
-        splitview.delegate = nil;
+        if (splitview != root_) {
+            splitview.delegate = nil;
+        }
     }
     for (PTYSplitView *splitview in [tabToGut splitters]) {
-        splitview.delegate = self;
+        if (splitview != tabToGut->root_) {
+            splitview.delegate = self;
+        }
     }
-    NSSplitView *temp = root_;
-    root_ = tabToGut->root_;
-    root_.delegate = self;
-    [[[self tabViewItem] tabView] addSubview:root_];
 
-    [temp removeFromSuperview];
-    tabToGut->root_ = temp;
+    while (root_.subviews.count) {
+        [root_.subviews[0] removeFromSuperview];
+    }
+    while (tabToGut->root_.subviews.count) {
+        [root_ addSubview:tabToGut->root_.subviews[0]];
+    }
+
 }
 
 - (void)enableFlexibleView

@@ -4528,6 +4528,7 @@ NSString *kSessionsKVCKey = @"sessions";
                                   inTerminal:self
                              hasFlexibleView:NO
                                      viewMap:theMap];
+    tab.uniqueId = tabUniqueId;
     for (id theKey in theMap) {
         PTYSession *session = theMap[theKey];
         assert([session revive]);  // TODO: This isn't guarantted

@@ -92,6 +92,9 @@
 
 @property(nonatomic, assign, getter=isBroadcasting) BOOL broadcasting;
 
+// uniqueId lazily auto-assigns a unique id unless you assign it a value first. It is never 0.
+@property(nonatomic, assign) int uniqueId;
+
 // init/dealloc
 - (id)initWithSession:(PTYSession*)session;
 - (id)initWithRoot:(NSSplitView*)root;
@@ -248,7 +251,6 @@
 - (BOOL)canMoveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally;
 
 - (void)swapSession:(PTYSession *)session1 withSession:(PTYSession *)session2;
-- (int)uniqueId;
 - (NSIndexPath *)pathToSplitPaneWithSession:(PTYSession *)session;
 - (BOOL)insertSession:(PTYSession *)aSession
                atPath:(NSIndexPath *)indexPath
