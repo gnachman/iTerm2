@@ -1086,7 +1086,9 @@ typedef enum {
         [NSObject cancelPreviousPerformRequestsWithTarget:self
                                                  selector:@selector(hardStop)
                                                    object:nil];
-        _exited = NO;
+        if (!_shell.hasBrokenPipe) {
+            _exited = NO;
+        }
         _textview.dataSource = _screen;
         _textview.delegate = self;
         _colorMap.delegate = _textview;
