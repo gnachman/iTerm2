@@ -1179,8 +1179,14 @@ NSString *kSessionsKVCKey = @"sessions";
     restorableSession.sessions = [aTab sessions];
     restorableSession.terminalGuid = self.terminalGuid;
     restorableSession.tabUniqueId = aTab.uniqueId;
-    restorableSession.arrangement = [aTab arrangement];
-    restorableSession.group = kiTermRestorableSessionGroupTab;
+    if (self.numberOfTabs == 1) {
+        // Closing the last tab is equivalent to closing the window.
+        restorableSession.arrangement = [self arrangement];
+        restorableSession.group = kiTermRestorableSessionGroupWindow;
+    } else {
+        restorableSession.arrangement = [aTab arrangement];
+        restorableSession.group = kiTermRestorableSessionGroupTab;
+    }
     [[iTermController sharedInstance] setCurrentRestorableSession:restorableSession];
     for (PTYSession* session in [aTab sessions]) {
         [session terminate];
@@ -2097,17 +2103,19 @@ NSString *kSessionsKVCKey = @"sessions";
         }
     }
 
-    // Save restorable sessions in controllers and make sessions terminate or prepare to terminate.
-    iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
-    restorableSession.sessions = [self sessions];
-    restorableSession.terminalGuid = self.terminalGuid;
-    restorableSession.arrangement = [self arrangement];
-    restorableSession.group = kiTermRestorableSessionGroupWindow;
-    [[iTermController sharedInstance] setCurrentRestorableSession:restorableSession];
-    for (PTYSession* session in [self sessions]) {
-        [session terminate];
+    if ([[self sessions] count]) {
+        // Save restorable sessions in controllers and make sessions terminate or prepare to terminate.
+        iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
+        restorableSession.sessions = [self sessions];
+        restorableSession.terminalGuid = self.terminalGuid;
+        restorableSession.arrangement = [self arrangement];
+        restorableSession.group = kiTermRestorableSessionGroupWindow;
+        [[iTermController sharedInstance] setCurrentRestorableSession:restorableSession];
+        for (PTYSession* session in [self sessions]) {
+            [session terminate];
+        }
+        [[iTermController sharedInstance] addRestorableSession:restorableSession];
     }
-    [[iTermController sharedInstance] addRestorableSession:restorableSession];
 
     [[self retain] autorelease];
     // This releases the last reference to self except for autorelease pools.
@@ -4488,9 +4496,28 @@ NSString *kSessionsKVCKey = @"sessions";
     [allSessions addObjectsFromArray:sessions];
     [allSessions addObjectsFromArray:[tab sessions]];
     NSDictionary *theMap = [PTYTab viewMapWithArrangement:arrangement sessions:allSessions];
-    if (!theMap) {
+
+    BOOL ok = (theMap != nil);
+    if (ok) {
+        // Make sure the proposed tab has at least all the sessions already in the current tab.
+        for (PTYSession *sessionInExistingTab in [tab sessions]) {
+            BOOL found = NO;
+            for (PTYSession *sessionInProposedTab in [theMap allValues]) {
+                if (sessionInProposedTab == sessionInExistingTab) {
+                    found = YES;
+                    break;
+                }
+            }
+            if (!found) {
+                ok = NO;
+                break;
+            }
+        }
+    }
+    if (!ok) {
         // Can't do it. Just add each session as its own tab.
         for (PTYSession *session in sessions) {
+            [session revive];
             [self addRevivedSession:session];
         }
         return;

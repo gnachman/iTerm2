@@ -1052,14 +1052,15 @@ static BOOL hasBecomeActive = NO;
                             term.terminalGuid = restorableSession.terminalGuid;
                             [restorableSession.sessions[0] revive];
                             [term addRevivedSession:restorableSession.sessions[0]];
+                            [term fitWindowToTabs];
                         }
-                        // TODO: Might need to canonicalize window frame for certain window types. See PseudoTerminalRestorer.
                     }
                     break;
 
                 case kiTermRestorableSessionGroupTab:
                     // Restore a tab, possibly with multiple sessions in split panes.
                     term = [controller terminalWithGuid:restorableSession.terminalGuid];
+                    BOOL fitTermToTabs = NO;
                     if (!term) {
                         // Create a new window
                         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
@@ -1068,11 +1069,15 @@ static BOOL hasBecomeActive = NO;
                                                                      screen:-1] autorelease];
                         [[iTermController sharedInstance] addInTerminals:term];
                         term.terminalGuid = restorableSession.terminalGuid;
+                        fitTermToTabs = YES;
                     }
                     // Add a tab to it.
                     [term addTabWithArrangement:restorableSession.arrangement
                                        uniqueId:restorableSession.tabUniqueId
                                        sessions:restorableSession.sessions];
+                    if (fitTermToTabs) {
+                        [term fitWindowToTabs];
+                    }
                     break;
 
                 case kiTermRestorableSessionGroupWindow:
