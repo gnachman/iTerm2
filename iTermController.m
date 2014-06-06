@@ -1,5 +1,3 @@
-// -*- mode:objc -*-
-// $Id: iTermController.m,v 1.78 2008-10-17 04:02:45 yfabian Exp $
 /*
  **  iTermController.m
  **
@@ -110,6 +108,7 @@ BOOL IsMavericksOrLater(void) {
 
 @implementation iTermController {
     NSMutableArray *_restorableSessions;
+    NSMutableArray *_currentRestorableSessionsStack;
 }
 
 static iTermController* shared = nil;
@@ -117,7 +116,7 @@ static BOOL initDone = NO;
 
 + (iTermController*)sharedInstance
 {
-    if(!shared && !initDone) {
+    if (!shared && !initDone) {
         shared = [[iTermController alloc] init];
         initDone = YES;
     }
@@ -132,8 +131,7 @@ static BOOL initDone = NO;
 }
 
 // init
-- (id)init
-{
+- (id)init {
     self = [super init];
 
     if (self) {
@@ -161,7 +159,7 @@ static BOOL initDone = NO;
         terminalWindows = [[NSMutableArray alloc] init];
         keyWindowIndexMemo_ = -1;
         _restorableSessions = [[NSMutableArray alloc] init];
-
+        _currentRestorableSessionsStack = [[NSMutableArray alloc] init];
         // Activate Growl
         /*
          * Need to add routine in iTerm prefs for Growl support and
@@ -191,7 +189,7 @@ static BOOL initDone = NO;
     }
     [previouslyActiveAppPID_ release];
     [_restorableSessions release];
-    [_currentRestorableSession release];
+    [_currentRestorableSessionsStack release];
     [super dealloc];
 }
 
@@ -1299,12 +1297,23 @@ static BOOL initDone = NO;
 }
 
 - (void)addRestorableSession:(iTermRestorableSession *)session {
-    if (!_currentRestorableSession) {
+    if (!self.currentRestorableSession) {
         [_restorableSessions addObject:session];
-    } else if (session == _currentRestorableSession) {
-        [_restorableSessions addObject:session];
-        self.currentRestorableSession = nil;
     }
+}
+
+- (void)pushCurrentRestorableSession:(iTermRestorableSession *)session {
+    [_currentRestorableSessionsStack insertObject:session
+                                          atIndex:0];
+}
+
+- (void)commitAndPopCurrentRestorableSession {
+    [_restorableSessions addObject:self.currentRestorableSession];
+    [_currentRestorableSessionsStack removeObjectAtIndex:0];
+}
+
+- (iTermRestorableSession *)currentRestorableSession {
+    return [_currentRestorableSessionsStack firstObject];
 }
 
 - (void)removeSessionFromRestorableSessions:(PTYSession *)session {
@@ -1323,7 +1332,7 @@ static BOOL initDone = NO;
     }
 }
 
-- (iTermRestorableSession *)popRestorabelSession {
+- (iTermRestorableSession *)popRestorableSession {
     if (!_restorableSessions.count) {
         return nil;
     }

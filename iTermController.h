@@ -57,7 +57,7 @@
     id runningApplicationClass_;
 }
 
-@property(nonatomic, assign) iTermRestorableSession *currentRestorableSession;
+@property(nonatomic, readonly) iTermRestorableSession *currentRestorableSession;
 
 + (iTermController*)sharedInstance;
 + (void)sharedInstanceRelease;
@@ -141,7 +141,9 @@
 
 - (void)addRestorableSession:(iTermRestorableSession *)session;
 - (void)removeSessionFromRestorableSessions:(PTYSession *)session;
-- (iTermRestorableSession *)popRestorabelSession;
+- (iTermRestorableSession *)popRestorableSession;
+- (void)commitAndPopCurrentRestorableSession;
+- (void)pushCurrentRestorableSession:(iTermRestorableSession *)session;
 - (BOOL)hasRestorableSession;
 
 #pragma mark - Key-Value Coding

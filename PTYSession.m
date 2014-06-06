@@ -1018,6 +1018,7 @@ typedef enum {
         [_tmuxGateway release];
         _tmuxGateway = nil;
     }
+    BOOL undoable = ![self isTmuxClient];
     _terminal.parser.tmuxParser = nil;
     self.tmuxMode = TMUX_NONE;
     [_tmuxController release];
@@ -1035,11 +1036,10 @@ typedef enum {
     }
 
     _exited = YES;
-    BOOL undoable = YES;
     [_view retain];  // hardstop and revive will release this.
     if (undoable) {
         // TODO: executeTokens:bytesHandled: should queue up tokens to avoid a race condition.
-        [self makeTerminalteUndoable];
+        [self makeTerminationUndoable];
     } else {
         [self hardStop];
     }
@@ -1069,7 +1069,7 @@ typedef enum {
     _tab = nil;
 }
 
-- (void)makeTerminalteUndoable {
+- (void)makeTerminationUndoable {
     _shell.paused = YES;
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
@@ -2599,7 +2599,9 @@ typedef enum {
     }
     NSString* pwd = [_shell getWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
-    result[SESSION_UNIQUE_ID] = self.uniqueID;  // TODO: This isn't really unique, it's just the tty number
+    if (self.uniqueID) {
+        result[SESSION_UNIQUE_ID] = self.uniqueID;  // TODO: This isn't really unique, it's just the tty number
+    }
     return result;
 }
 

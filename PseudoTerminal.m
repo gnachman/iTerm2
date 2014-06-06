@@ -1163,7 +1163,7 @@ NSString *kSessionsKVCKey = @"sessions";
         }
         return;
     }
-    [self removeTab:(PTYTab *)aTab];
+    [self removeTab:aTab];
 }
 
 - (void)closeTab:(PTYTab*)aTab
@@ -1175,23 +1175,29 @@ NSString *kSessionsKVCKey = @"sessions";
 // tab, and closes the window if there are no tabs left.
 - (void)removeTab:(PTYTab *)aTab
 {
-    iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
-    restorableSession.sessions = [aTab sessions];
-    restorableSession.terminalGuid = self.terminalGuid;
-    restorableSession.tabUniqueId = aTab.uniqueId;
-    if (self.numberOfTabs == 1) {
-        // Closing the last tab is equivalent to closing the window.
-        restorableSession.arrangement = [self arrangement];
-        restorableSession.group = kiTermRestorableSessionGroupWindow;
+    if (![aTab isTmuxTab]) {
+        iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
+        restorableSession.sessions = [aTab sessions];
+        restorableSession.terminalGuid = self.terminalGuid;
+        restorableSession.tabUniqueId = aTab.uniqueId;
+        if (self.numberOfTabs == 1) {
+            // Closing the last tab is equivalent to closing the window.
+            restorableSession.arrangement = [self arrangement];
+            restorableSession.group = kiTermRestorableSessionGroupWindow;
+        } else {
+            restorableSession.arrangement = [aTab arrangement];
+            restorableSession.group = kiTermRestorableSessionGroupTab;
+        }
+        [[iTermController sharedInstance] pushCurrentRestorableSession:restorableSession];
+        for (PTYSession* session in [aTab sessions]) {
+            [session terminate];
+        }
+        [[iTermController sharedInstance] commitAndPopCurrentRestorableSession];
     } else {
-        restorableSession.arrangement = [aTab arrangement];
-        restorableSession.group = kiTermRestorableSessionGroupTab;
+        for (PTYSession* session in [aTab sessions]) {
+            [session terminate];
+        }
     }
-    [[iTermController sharedInstance] setCurrentRestorableSession:restorableSession];
-    for (PTYSession* session in [aTab sessions]) {
-        [session terminate];
-    }
-    [[iTermController sharedInstance] addRestorableSession:restorableSession];
 
     if ([TABVIEW numberOfTabViewItems] <= 1 && [self windowInited]) {
         [[self window] close];
@@ -2104,17 +2110,27 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 
     if ([[self sessions] count]) {
+        // First close any tmux tabs because their closure is not undoable.
+        for (PTYTab *tab in [self tabs]) {
+            for (PTYSession *session in [tab sessions]) {
+                if (session.isTmuxClient) {
+                    [session terminate];
+                }
+            }
+        }
+    }
+    if ([[self sessions] count]) {
         // Save restorable sessions in controllers and make sessions terminate or prepare to terminate.
         iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
         restorableSession.sessions = [self sessions];
         restorableSession.terminalGuid = self.terminalGuid;
         restorableSession.arrangement = [self arrangement];
         restorableSession.group = kiTermRestorableSessionGroupWindow;
-        [[iTermController sharedInstance] setCurrentRestorableSession:restorableSession];
+        [[iTermController sharedInstance] pushCurrentRestorableSession:restorableSession];
         for (PTYSession* session in [self sessions]) {
             [session terminate];
         }
-        [[iTermController sharedInstance] addRestorableSession:restorableSession];
+        [[iTermController sharedInstance] commitAndPopCurrentRestorableSession];
     }
 
     [[self retain] autorelease];

@@ -1019,7 +1019,7 @@ static BOOL hasBecomeActive = NO;
         [undoResponder performSelector:@selector(undo:) withObject:sender];
     } else {
         iTermController *controller = [iTermController sharedInstance];
-        iTermRestorableSession *restorableSession = [controller popRestorabelSession];
+        iTermRestorableSession *restorableSession = [controller popRestorableSession];
         if (restorableSession) {
             PseudoTerminal *term;
             PTYTab *tab;
