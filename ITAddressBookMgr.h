@@ -161,6 +161,7 @@
 
 // Session
 #define KEY_AUTOLOG                           @"Automatically Log"
+#define KEY_UNDO_TIMEOUT                      @"Session Close Undo Timeout"
 #define KEY_LOGDIR                            @"Log Directory"
 #define KEY_SEND_CODE_WHEN_IDLE               @"Send Code When Idle"
 #define KEY_IDLE_CODE                         @"Idle Code"

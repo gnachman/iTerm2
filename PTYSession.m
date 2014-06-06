@@ -1075,7 +1075,10 @@ typedef enum {
     _shell.paused = YES;
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
-    [self performSelector:@selector(hardStop) withObject:nil afterDelay:5000];
+    [self performSelector:@selector(hardStop)
+               withObject:nil
+               afterDelay:[iTermProfilePreferences intForKey:KEY_UNDO_TIMEOUT
+                                                   inProfile:_profile]];
     [[iTermController sharedInstance] addRestorableSession:[self restorableSession]];
 }
 
