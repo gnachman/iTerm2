@@ -193,6 +193,10 @@
 - (PTYSession*)_recursiveSessionAtPoint:(NSPoint)point relativeTo:(NSView*)node;
 
 + (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame;
+
+// A viewMap maps a session's unique ID to a SessionView. Views in the
+// arrangement with matching session unique IDs will be assigned those
+// SessionView's.
 + (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
                         inTerminal:(NSWindowController<iTermWindowController> *)term
                    hasFlexibleView:(BOOL)hasFlexible
@@ -251,12 +255,10 @@
 - (BOOL)canMoveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally;
 
 - (void)swapSession:(PTYSession *)session1 withSession:(PTYSession *)session2;
-- (NSIndexPath *)pathToSplitPaneWithSession:(PTYSession *)session;
-- (BOOL)insertSession:(PTYSession *)aSession
-               atPath:(NSIndexPath *)indexPath
-             vertical:(BOOL)vertical;
+
 - (void)addToTerminal:(NSWindowController<iTermWindowController> *)term
       withArrangement:(NSDictionary *)arrangement;
+
 - (void)replaceWithContentsOfTab:(PTYTab *)tabToGut;
 
 #pragma mark NSSplitView delegate methods
