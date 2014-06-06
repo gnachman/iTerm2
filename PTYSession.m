@@ -116,6 +116,7 @@ typedef enum {
 @property(nonatomic, copy) NSString *lastDirectory;
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, retain) NSColor *cursorGuideColor;
+@property(nonatomic, copy) NSString *uniqueID;
 @end
 
 @implementation PTYSession {
@@ -365,6 +366,7 @@ typedef enum {
     [_patternedImage release];
     [_announcements release];
     [_queuedTokens release];
+    [_uniqueID release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -2119,7 +2121,11 @@ typedef enum {
 }
 
 - (NSString *)uniqueID {
-    return [self tty];
+    if (!_uniqueID) {
+        static int gNextUniqueId;
+        self.uniqueID = [NSString stringWithFormat:@"%d", ++gNextUniqueId];
+    }
+    return _uniqueID;
 }
 
 - (NSString*)formattedName:(NSString*)base
