@@ -255,6 +255,10 @@ typedef enum {
     
     // Maps announcement identifiers to view controllers.
     NSMutableDictionary *_announcements;
+
+    // Tokens get queued when a shell enters the paused state. If it gets unpaused, then these are
+    // executed before any others.
+    NSMutableArray *_queuedTokens;
 }
 
 - (id)init {
@@ -290,6 +294,7 @@ typedef enum {
         _commandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
         _activityCounter = [@0 retain];
         _announcements = [[NSMutableDictionary alloc] init];
+        _queuedTokens = [[NSMutableArray alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
@@ -359,6 +364,7 @@ typedef enum {
     [_lastMark release];
     [_patternedImage release];
     [_announcements release];
+    [_queuedTokens release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -1252,11 +1258,34 @@ typedef enum {
     });
 }
 
+- (BOOL)shouldExecuteToken {
+    return !_exited && _terminal && (self.tmuxMode == TMUX_GATEWAY || ![_shell hasMuteCoprocess]);
+}
+
 - (void)executeTokens:(const CVector *)vector bytesHandled:(int)length {
     STOPWATCH_START(executing);
     int n = CVectorCount(vector);
+
+    if (_shell.paused) {
+        // Session was closed. The close may be undone, so queue up tokens.
+        for (int i = 0; i < n; i++) {
+            [_queuedTokens addObject:CVectorGetObject(vector, i)];
+        }
+        CVectorDestroy(vector);
+        return;
+    } else if (_queuedTokens.count) {
+        // A closed session was just un-closed. Execute queued up tokens.
+        for (VT100Token *token in _queuedTokens) {
+            if (![self shouldExecuteToken]) {
+                break;
+            }
+            [_terminal executeToken:token];
+        }
+        [_queuedTokens removeAllObjects];
+    }
+
     for (int i = 0; i < n; i++) {
-        if (_exited || !_terminal || (self.tmuxMode != TMUX_GATEWAY && [_shell hasMuteCoprocess])) {
+        if (![self shouldExecuteToken]) {
             break;
         }
 

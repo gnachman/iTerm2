@@ -98,6 +98,7 @@ setup_tty_param(struct termios* term,
     
     // Number of spins of the select loop left before we tell the delegate we were deregistered.
     int _spinsNeeded;
+    BOOL _paused;
 }
 
 - (id)init
@@ -143,6 +144,20 @@ setup_tty_param(struct termios* term,
 - (BOOL)hasBrokenPipe
 {
     return brokenPipe_;
+}
+
+- (BOOL)paused {
+    @synchronized(self) {
+        return _paused;
+    }
+}
+
+- (void)setPaused:(BOOL)paused {
+    @synchronized(self) {
+        _paused = paused;
+    }
+    // Start/stop selecting on our FD
+    [[TaskNotifier sharedInstance] unblock];
 }
 
 static void HandleSigChld(int n)
