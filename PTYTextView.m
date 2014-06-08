@@ -2919,6 +2919,8 @@ NSMutableArray* screens=0;
         }
     }
 
+    mouseDown = YES;
+
     if ([self reportMouseEvent:event]) {
         return NO;
     }
@@ -2932,7 +2934,6 @@ NSMutableArray* screens=0;
     [mouseDownEvent autorelease];
     mouseDownEvent = [event retain];
     mouseDragged = NO;
-    mouseDown = YES;
     mouseDownOnSelection = NO;
     mouseDownOnImage = NO;
 
