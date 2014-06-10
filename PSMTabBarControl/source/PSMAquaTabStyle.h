@@ -10,6 +10,7 @@
 #import "PSMTabStyle.h"
 
 @interface PSMAquaTabStyle : NSObject <PSMTabStyle> {
+    BOOL _imagesHaveHorizontalOrientation;
     NSImage *aquaTabBg;
     NSImage *noborderBg;
     NSImage *aquaTabBgDown;
@@ -25,7 +26,7 @@
     NSImage *_addTabButtonRolloverImage;
 }
 
-- (void)loadImages;
+- (void)loadImagesWithHorizontalOrientation:(BOOL)horizontal;
 - (void)drawInteriorWithTabCell:(PSMTabBarCell *)cell inView:(NSView*)controlView;
 
 - (void)encodeWithCoder:(NSCoder *)aCoder;

@@ -93,6 +93,8 @@ static NSString* TERMINAL_GUID = @"TerminalGuid";
 
 // In full screen, leave a bit of space at the top of the toolbar for aesthetics.
 static const CGFloat kToolbeltMargin = 8;
+static const CGFloat kLeftTabsWidth = 150;
+static const CGFloat kHorizontalTabBarHeight = 22;
 
 @interface NSWindow (private)
 - (void)setBottomCornerRounded:(BOOL)rounded;
@@ -163,7 +165,7 @@ NSString *kSessionsKVCKey = @"sessions";
     // full-screen mode is exited that frame is restored.
     NSRect oldFrame_;
     BOOL oldFrameSizeIsBogus_;  // If set, the size in oldFrame_ shouldn't be used.
-    
+
     // When you enter fullscreen mode, the old use transparency setting is
     // saved, and then restored when you exit FS unless it was changed
     // by the user.
@@ -278,7 +280,7 @@ NSString *kSessionsKVCKey = @"sessions";
     // Initialized to -1 in -init and then set to the size of the first session
     // forever.
     int desiredRows_, desiredColumns_;
-    
+
     // Session ID of session that currently has an auto-command history window open
     int _autoCommandHistorySessionId;
 }
@@ -298,7 +300,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             return NSBorderlessWindowMask;
-            
+
         default:
             return (NSTitledWindowMask |
                     NSClosableWindowMask |
@@ -509,7 +511,7 @@ NSString *kSessionsKVCKey = @"sessions";
         styleMask = [PseudoTerminal styleMaskForWindowType:windowType];
     }
     savedWindowType_ = savedWindowType;
-    
+
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
     PTYWindow *myWindow;
     myWindow = [[PTYWindow alloc] initWithContentRect:initialFrame
@@ -573,16 +575,27 @@ NSString *kSessionsKVCKey = @"sessions";
 
     // create the tab bar.
     NSRect tabBarFrame = [[[self window] contentView] bounds];
-    tabBarFrame.size.height = 22;
+    tabBarFrame.size.height = kHorizontalTabBarHeight;
     tabBarControl = [[iTermTabBarControlView alloc] initWithFrame:tabBarFrame];
     tabBarControl.itermTabBarDelegate = self;
 
     [tabBarControl retain];
     [tabBarControl setModifier:[iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]];
-    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
-        [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMinYMargin)];
-    } else {
-        [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMaxYMargin)];
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_BottomTab:
+            tabBarControl.orientation = PSMTabBarHorizontalOrientation;
+            [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMinYMargin)];
+            break;
+
+        case PSMTab_TopTab:
+            tabBarControl.orientation = PSMTabBarHorizontalOrientation;
+            [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMaxYMargin)];
+            break;
+
+        case PSMTab_LeftTab:
+            tabBarControl.orientation = PSMTabBarVerticalOrientation;
+            tabBarControl.autoresizingMask = (NSViewHeightSizable | NSViewMaxXMargin);
+            break;
     }
     [[[self window] contentView] addSubview:tabBarControl];
     [tabBarControl release];
@@ -663,15 +676,15 @@ NSString *kSessionsKVCKey = @"sessions";
     wellFormed_ = NO;
     [toolbelt_ shutdown];
     [drawer_ release];
-    
+
     // Do not assume that [self window] is valid here. It may have been freed.
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    
+
     // Cancel any SessionView timers.
     for (PTYSession* aSession in [self sessions]) {
         [[aSession view] cancelTimers];
     }
-    
+
     // Release all our sessions
     NSTabViewItem *aTabViewItem;
     for (; [TABVIEW numberOfTabViewItems]; )  {
@@ -681,7 +694,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [theTab setParentWindow:nil];
         [TABVIEW removeTabViewItem:aTabViewItem];
     }
-    
+
     if ([[iTermController sharedInstance] currentTerminal] == self) {
         NSLog(@"Red alert! Current terminal is being freed!");
         [[iTermController sharedInstance] setCurrentTerminal:nil];
@@ -747,6 +760,11 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (CGFloat)tabviewWidth
 {
+    if ([self tabBarShouldBeVisible] &&
+        [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab)  {
+        return kLeftTabsWidth;
+    }
+
     if ([self anyFullScreen] || [self isEdgeWindow]) {
         iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
         if ([itad showToolbelt] && !exitingLionFullscreen_) {
@@ -1355,7 +1373,7 @@ NSString *kSessionsKVCKey = @"sessions";
         }
         title = [NSString stringWithFormat:@"%d. %@%@", number_+1, title, tmuxId];
     }
-    
+
     // In bug 2593, we see a crazy thing where setting the window title right
     // after a window is created causes it to have the wrong background color.
     // A delay of 0 doesn't fix it. I'm at wit's end here, so this will have to
@@ -1515,7 +1533,7 @@ NSString *kSessionsKVCKey = @"sessions";
         case WINDOW_TYPE_LION_FULL_SCREEN:
             rect = virtualScreenFrame;
             break;
-            
+
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_NORMAL:
             rect.origin.x = xOrigin + xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
@@ -1537,7 +1555,7 @@ NSString *kSessionsKVCKey = @"sessions";
             rect.size.width = virtualScreenFrame.size.width;
             rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
             break;
-            
+
         case WINDOW_TYPE_TOP_PARTIAL:
             rect.origin.x = xOrigin;
             rect.origin.y = yOrigin;
@@ -1558,32 +1576,32 @@ NSString *kSessionsKVCKey = @"sessions";
             rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
             rect.origin.y = virtualScreenFrame.size.height - rect.size.height;
             break;
-            
+
         case WINDOW_TYPE_LEFT:
             rect.origin.x = xOrigin;
             rect.origin.y = yOrigin;
             rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
             rect.size.height = virtualScreenFrame.size.height;
             break;
-            
+
         case WINDOW_TYPE_LEFT_PARTIAL:
             rect.origin.x = xOrigin;
             rect.origin.y = yOrigin;
             rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
             rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
             break;
-            
+
         case WINDOW_TYPE_RIGHT:
+            rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
             rect.origin.x = virtualScreenFrame.size.width - rect.size.width;
             rect.origin.y = yOrigin;
-            rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
             rect.size.height = virtualScreenFrame.size.height;
             break;
 
         case WINDOW_TYPE_RIGHT_PARTIAL:
+            rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
             rect.origin.x = virtualScreenFrame.size.width - rect.size.width;
             rect.origin.y = yOrigin;
-            rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
             rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
             break;
     }
@@ -1595,28 +1613,66 @@ NSString *kSessionsKVCKey = @"sessions";
 
     int N = [(NSDictionary *)[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_TABS] count];
     [[NSColor windowFrameColor] set];
-    double y;
-    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
-        y = rect.origin.y + rect.size.height - 10;
-    } else {
-        y = rect.origin.y;
+    NSRect tabsRect = NSMakeRect(rect.origin.x + 1,
+                                 rect.origin.y,
+                                 rect.size.width - 2,
+                                 10);
+    NSSize step = NSMakeSize(MIN(20, floor((rect.size.width - 2) / N)), 6);
+    NSSize tabSize;
+    const CGFloat kLeftTabPreviewWidth = 20;
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_BottomTab:
+            tabsRect.origin.y += rect.size.height - 10;
+            step.height = 0;
+            tabSize = NSMakeSize(step.width - 2, 8);
+            break;
+        case PSMTab_TopTab:
+            step.height = 0;
+            tabSize = NSMakeSize(step.width - 2, 8);
+            break;
+        case PSMTab_LeftTab:
+            tabsRect.size.width = kLeftTabPreviewWidth;
+            tabsRect.size.height = rect.size.height;
+            step.width = 0;
+            tabSize = NSMakeSize(kLeftTabPreviewWidth - 2, 4);
+            break;
     }
-    NSRectFill(NSMakeRect(rect.origin.x + 1, y, rect.size.width - 2, 10));
+    NSRectFill(tabsRect);
 
-    double x = 1;
     [[NSColor darkGrayColor] set];
-    double step = MIN(20, floor((rect.size.width - 2) / N));
+    NSRect tabRect = NSMakeRect(tabsRect.origin.x + 1,
+                                tabsRect.origin.y + 1,
+                                tabSize.width,
+                                tabSize.height);
     for (int i = 0; i < N; i++) {
-        NSRectFill(NSMakeRect(rect.origin.x + x + 1, y + 1, step - 2, 8));
-        x += step;
+        if (NSMaxY(tabRect) > NSMaxY(rect) ||
+            NSMaxX(tabRect) > NSMaxX(rect)) {
+            break;
+        }
+        NSRectFill(tabRect);
+        tabRect.origin.x += step.width;
+        tabRect.origin.y += step.height;
     }
 
     NSDictionary* tabArrangement = [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_TABS] objectAtIndex:0];
+    NSRect contentRect = NSMakeRect(rect.origin.x + 1,
+                                    rect.origin.y,
+                                    rect.size.width - 2,
+                                    rect.size.height - 11);
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+          case PSMTab_BottomTab:
+              break;
+          case PSMTab_TopTab:
+              contentRect.origin.y += 10;
+              break;
+          case PSMTab_LeftTab:
+              contentRect.origin.x += kLeftTabPreviewWidth;
+              contentRect.size.width -= kLeftTabPreviewWidth;
+              contentRect.size.height += 10;
+              break;
+    }
     [PTYTab drawArrangementPreview:tabArrangement
-                             frame:NSMakeRect(rect.origin.x + 1,
-                                              ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) ? rect.origin.y : rect.origin.y + 10,
-                                              rect.size.width - 2,
-                                              rect.size.height - 11)];
+                             frame:contentRect];
 }
 
 + (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary*)arrangement
@@ -1627,13 +1683,13 @@ NSString *kSessionsKVCKey = @"sessions";
             // Already have a hotkey window.
             return nil;
         }
-        
+
         if (![iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled]) {
             // Hotkey window disabled
             return nil;
         }
     }
-    
+
     PseudoTerminal* term;
     int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     int screenIndex = [PseudoTerminal _screenIndexForArrangement:arrangement];
@@ -1669,15 +1725,15 @@ NSString *kSessionsKVCKey = @"sessions";
                 case WINDOW_TYPE_TOP:
                     windowType = WINDOW_TYPE_TOP_PARTIAL;
                     break;
-                    
+
                 case WINDOW_TYPE_BOTTOM:
                     windowType = WINDOW_TYPE_BOTTOM_PARTIAL;
                     break;
-                    
+
                 case WINDOW_TYPE_LEFT:
                     windowType = WINDOW_TYPE_LEFT_PARTIAL;
                     break;
-                    
+
                 case WINDOW_TYPE_RIGHT:
                     windowType = WINDOW_TYPE_RIGHT_PARTIAL;
                     break;
@@ -1942,7 +1998,7 @@ NSString *kSessionsKVCKey = @"sessions";
                forKey:TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING];
 
     result[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] = @(_isHotKeyWindow);
-    
+
     return result;
 }
 
@@ -2569,7 +2625,7 @@ NSString *kSessionsKVCKey = @"sessions";
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
             return YES;
-            
+
         default:
             return NO;
     }
@@ -2875,7 +2931,7 @@ NSString *kSessionsKVCKey = @"sessions";
             menuBarIsVisible = YES;
         }
     }
-    
+
     return menuBarIsVisible ? frameMinusMenuBar : screenFrame;
 }
 
@@ -3024,7 +3080,7 @@ NSString *kSessionsKVCKey = @"sessions";
     togglingFullScreen_ = YES;
     [self _updateToolbeltParentage];
     [self updateUseTransparency];
-    
+
     if (_fullScreen) {
         PtyLog(@"toggleFullScreenMode - call adjustFullScreenWindowForBottomBarChange");
         [self fitTabsToWindow];
@@ -3040,7 +3096,16 @@ NSString *kSessionsKVCKey = @"sessions";
         // and fit the window to an imaginary session of that size.
         NSSize contentSize = [[[self window] contentView] frame].size;
         if ([self tabBarShouldBeVisible]) {
-            contentSize.height -= [tabBarControl frame].size.height;
+            switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+                case PSMTab_LeftTab:
+                    contentSize.width -= kLeftTabsWidth;
+                    break;
+
+                case PSMTab_TopTab:
+                case PSMTab_BottomTab:
+                    contentSize.height -= kHorizontalTabBarHeight;
+                    break;
+            }
         }
         if ([self _haveLeftBorder]) {
             --contentSize.width;
@@ -3062,7 +3127,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [self updateSessionScrollbars];
     PtyLog(@"toggleFullScreenMode - calling fitTabsToWindow");
     [self repositionWidgets];
-    
+
     if (!_fullScreen && oldFrameSizeIsBogus_) {
         // The window frame can be established exactly, now.
         if (oldFrameSizeIsBogus_) {
@@ -3153,7 +3218,7 @@ NSString *kSessionsKVCKey = @"sessions";
                 windowType_ = WINDOW_TYPE_TOP;
             }
             break;
-            
+
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
             frame.origin.y = [screen visibleFrame].origin.y;
@@ -3163,7 +3228,7 @@ NSString *kSessionsKVCKey = @"sessions";
                 windowType_ = WINDOW_TYPE_BOTTOM;
             }
             break;
-            
+
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_LEFT_PARTIAL:
             frame.origin.x = [screen visibleFrame].origin.x;
@@ -3173,7 +3238,7 @@ NSString *kSessionsKVCKey = @"sessions";
                 windowType_ = WINDOW_TYPE_LEFT;
             }
             break;
-            
+
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_RIGHT_PARTIAL:
             frame.origin.x = [screen visibleFrame].origin.x + [screen visibleFrame].size.width - frame.size.width;
@@ -3183,7 +3248,7 @@ NSString *kSessionsKVCKey = @"sessions";
                 windowType_ = WINDOW_TYPE_RIGHT;
             }
             break;
-            
+
         default:
             break;
     }
@@ -3723,11 +3788,19 @@ NSString *kSessionsKVCKey = @"sessions";
     if (tabViewItem == [aTabView selectedTabViewItem]) {
         NSView *textview = [tabViewItem view];
         NSRect tabFrame = [tabBarControl frame];
-        int tabHeight = tabFrame.size.height;
 
         NSRect contentFrame, viewRect;
         contentFrame = viewRect = [textview frame];
-        contentFrame.size.height += tabHeight;
+        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+            case PSMTab_LeftTab:
+                contentFrame.size.width += kLeftTabsWidth;
+                break;
+
+            case PSMTab_TopTab:
+            case PSMTab_BottomTab:
+                contentFrame.size.height += kHorizontalTabBarHeight;
+                break;
+        }
 
         // Grabs whole tabview image.
         viewImage = [[[NSImage alloc] initWithSize:contentFrame.size] autorelease];
@@ -3739,9 +3812,22 @@ NSString *kSessionsKVCKey = @"sessions";
         [textview unlockFocus];
 
         [viewImage lockFocus];
-        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
-            viewRect.origin.y += tabHeight;
+        BOOL isHorizontal = YES;
+        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+            case PSMTab_LeftTab:
+                viewRect.origin.x += kLeftTabsWidth;
+                viewRect.size.width -= kLeftTabsWidth;
+                isHorizontal = NO;
+                break;
+
+            case PSMTab_TopTab:
+                break;
+
+            case PSMTab_BottomTab:
+                viewRect.origin.y += kHorizontalTabBarHeight;
+                break;
         }
+
         [tabViewImage compositeToPoint:viewRect.origin operation:NSCompositeSourceOver];
         [viewImage unlockFocus];
 
@@ -3758,7 +3844,9 @@ NSString *kSessionsKVCKey = @"sessions";
         [transform concat];
         tabFrame.origin.y = -tabFrame.origin.y - tabFrame.size.height;
         PSMTabBarControl *control = (PSMTabBarControl *)[aTabView delegate];
-        [(id <PSMTabStyle>)[control style] drawBackgroundInRect:tabFrame color:nil];
+        [(id <PSMTabStyle>)[control style] drawBackgroundInRect:tabFrame
+                                                          color:nil
+                                                     horizontal:isHorizontal];
         [transform invert];
         [transform concat];
 
@@ -3766,9 +3854,12 @@ NSString *kSessionsKVCKey = @"sessions";
 
         offset->width = [(id <PSMTabStyle>)[tabBarControl style] leftMarginForTabBarControl];
         if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
-            offset->height = 22;
-        } else {
-            offset->height = viewRect.size.height + 22;
+            offset->height = kHorizontalTabBarHeight;
+        } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
+            offset->height = viewRect.size.height + kHorizontalTabBarHeight;
+        } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+            offset->height = 0;
+            offset->width = 0;
         }
         *styleMask = NSBorderlessWindowMask;
     } else {
@@ -3776,12 +3867,21 @@ NSString *kSessionsKVCKey = @"sessions";
         viewImage = [[tabViewItem identifier] image:YES];
 
         offset->width = [(id <PSMTabStyle>)[tabBarControl style] leftMarginForTabBarControl];
-        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
-            offset->height = 22;
+        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+            case PSMTab_LeftTab:
+                offset->width = kLeftTabsWidth;
+                offset->height = 0;
+                break;
+
+            case PSMTab_TopTab:
+                offset->height = kHorizontalTabBarHeight;
+                break;
+
+            case PSMTab_BottomTab:
+                offset->height = [viewImage size].height;
+                break;
         }
-        else {
-            offset->height = [viewImage size].height;
-        }
+
         *styleMask = NSBorderlessWindowMask;
     }
 
@@ -3868,7 +3968,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [item setRepresentedObject:tabViewItem];
         [rootMenu addItem:item];
     }
-    
+
     if ([TABVIEW numberOfTabViewItems] > 1) {
         item = [[[NSMenuItem alloc] initWithTitle:@"Move to New Window"
                                            action:@selector(moveTabToNewWindowContextualMenuAction:)
@@ -3884,7 +3984,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [item setRepresentedObject:tabViewItem];
         [rootMenu addItem:item];
     }
-    
+
     if ([TABVIEW numberOfTabViewItems] > 1) {
         item = [[[NSMenuItem alloc] initWithTitle:@"Close Tabs to the Right"
                                            action:@selector(closeTabsToTheRight:)
@@ -3892,7 +3992,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [item setRepresentedObject:tabViewItem];
         [rootMenu addItem:item];
     }
-    
+
     // add label
     [rootMenu addItem: [NSMenuItem separatorItem]];
     ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
@@ -3918,7 +4018,8 @@ NSString *kSessionsKVCKey = @"sessions";
 
     NSWindowController<iTermWindowController> * term =
         [self terminalDraggedFromAnotherWindowAtPoint:point];
-    if (([term windowType] == WINDOW_TYPE_NORMAL || [term windowType] == WINDOW_TYPE_NO_TITLE_BAR) &&
+    if (([term windowType] == WINDOW_TYPE_NORMAL ||
+         [term windowType] == WINDOW_TYPE_NO_TITLE_BAR) &&
         [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
         [[term window] setFrameTopLeftPoint:point];
     }
@@ -4078,7 +4179,7 @@ NSString *kSessionsKVCKey = @"sessions";
 - (long long)instantReplayCurrentTimestamp {
     DVR* dvr = [[self currentSession] dvr];
     DVRDecoder* decoder = nil;
-    
+
     if (dvr) {
         decoder = [[self currentSession] dvrDecoder];
         return [decoder timestamp];
@@ -4088,7 +4189,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (long long)instantReplayFirstTimestamp {
     DVR* dvr = [[self currentSession] dvr];
-    
+
     if (dvr) {
         return [dvr firstTimeStamp];
     } else {
@@ -4098,7 +4199,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (long long)instantReplayLastTimestamp {
     DVR* dvr = [[self currentSession] dvr];
-    
+
     if (dvr) {
         return [dvr lastTimeStamp];
     } else {
@@ -4145,7 +4246,7 @@ NSString *kSessionsKVCKey = @"sessions";
     NSPoint p;
     NSRect screenRect = self.window.screen.visibleFrame;
     NSRect windowRect = self.window.frame;
-    
+
     p.x = windowRect.origin.x + round((windowRect.size.width - size.width) / 2);
     if (screenRect.origin.y + size.height < windowRect.origin.y) {
         // Is there space below?
@@ -4863,7 +4964,7 @@ NSString *kSessionsKVCKey = @"sessions";
         case WINDOW_TYPE_TOP_PARTIAL:
             frame.origin.y = self.screen.visibleFrame.origin.y + self.screen.visibleFrame.size.height - frame.size.height;
             break;
-            
+
         case WINDOW_TYPE_BOTTOM_PARTIAL:
             frame.origin.y = self.screen.visibleFrame.origin.y;
             break;
@@ -4871,12 +4972,12 @@ NSString *kSessionsKVCKey = @"sessions";
         case WINDOW_TYPE_LEFT_PARTIAL:
             frame.origin.x = self.screen.visibleFrame.origin.x;
             break;
-            
+
         case WINDOW_TYPE_RIGHT_PARTIAL:
             frame.origin.x = self.screen.visibleFrame.origin.x + self.screen.visibleFrame.size.width - frame.size.width;
             break;
     }
-    
+
     BOOL didResize = NSEqualRects([[self window] frame], frame);
     [[self window] setFrame:frame display:YES];
 
@@ -5324,7 +5425,7 @@ NSString *kSessionsKVCKey = @"sessions";
 - (void)_refreshTerminal:(NSNotification *)aNotification
 {
     PtyLog(@"_refreshTerminal - calling fitWindowToTabs");
-    
+
     // If hiding of menu bar changed.
     if ([self fullScreen] && ![self lionFullScreen]) {
         if ([[self window] isKeyWindow]) {
@@ -5456,10 +5557,12 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (BOOL)_haveLeftBorder
 {
+    BOOL leftTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab);
     if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
         return NO;
     } else if ([self anyFullScreen] ||
-               windowType_ == WINDOW_TYPE_LEFT) {
+               windowType_ == WINDOW_TYPE_LEFT ||
+               (leftTabBar && [self tabBarShouldBeVisible])) {
         return NO;
     } else {
         return YES;
@@ -5521,7 +5624,15 @@ NSString *kSessionsKVCKey = @"sessions";
 
     if (!tabBarControl.flashing &&
         [self tabBarShouldBeVisibleWithAdditionalTabs:tabViewItemsBeingAdded]) {
-        contentSize.height += [tabBarControl frame].size.height;
+        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+            case PSMTab_TopTab:
+            case PSMTab_BottomTab:
+                contentSize.height += kHorizontalTabBarHeight;
+                break;
+            case PSMTab_LeftTab:
+                contentSize.width += [self tabviewWidth];
+                break;
+        }
     }
 
     // Add 1px border
@@ -5582,84 +5693,125 @@ NSString *kSessionsKVCKey = @"sessions";
 {
     PtyLog(@"repositionWidgets");
 
+    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    BOOL showToolbeltInline = ([self isEdgeWindow] || (!exitingLionFullscreen_ && [self anyFullScreen])) && [itad showToolbelt];
     BOOL hasScrollbar = [self scrollbarShouldBeVisible];
     NSWindow *thisWindow = [self window];
     [thisWindow setShowsResizeIndicator:hasScrollbar];
     if (![self tabBarShouldBeVisible]) {
         // The tabBarControl should not be visible.
         [tabBarControl setHidden:YES];
-        NSRect aRect;
-        aRect.origin.x = [self _haveLeftBorder] ? 1 : 0;
-        aRect.origin.y = [self _haveBottomBorder] ? 1 : 0;
-        aRect.size = [[thisWindow contentView] frame].size;
-        aRect.size.height -= aRect.origin.y;
-        if ([self _haveTopBorder] || _divisionView) {
-            aRect.size.height -= 1;
-        }
-        aRect.size.width = [self tabviewWidth];
-        PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
-        [TABVIEW setFrame:aRect];
+        CGFloat yOrigin = [self _haveBottomBorder] ? 1 : 0;
+        CGFloat heightAdjustment = ([self _haveTopBorder] || _divisionView) ? 1 : 0;
+        NSRect tabViewFrame =
+                NSMakeRect([self _haveLeftBorder] ? 1 : 0,
+                           yOrigin,
+                           [self tabviewWidth],
+                           [[thisWindow contentView] frame].size.height - yOrigin - heightAdjustment);
+        PtyLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
+        [TABVIEW setFrame:tabViewFrame];
         [self updateDivisionView];
     } else {
         // The tabBar control is visible.
         PtyLog(@"repositionWidgets - tabs are visible. Adjusting window size...");
         [tabBarControl setHidden:NO];
         [tabBarControl setTabLocation:[iTermPreferences intForKey:kPreferenceKeyTabPosition]];
-        NSRect aRect;
-        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
-            // Place tabs at the top.
-            // Add 1px border
-            aRect.origin.x = [self _haveLeftBorder] ? 1 : 0;
-            aRect.origin.y = [self _haveBottomBorder] ? 1 : 0;
-            aRect.size = [[thisWindow contentView] frame].size;
-            aRect.size.height -= aRect.origin.y;
-            if (!tabBarControl.flashing) {
-                aRect.size.height -= [tabBarControl frame].size.height;
+
+        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+            case PSMTab_TopTab: {
+                // Place tabs at the top.
+                // Add 1px border
+                CGFloat yOrigin = [self _haveBottomBorder] ? 1 : 0;
+                CGFloat heightAdjustment = 0;
+                if (!tabBarControl.flashing) {
+                    heightAdjustment += kHorizontalTabBarHeight;
+                }
+                if ([self _haveTopBorder]) {
+                    heightAdjustment += 1;
+                }
+
+                NSRect tabViewFrame =
+                    NSMakeRect([self _haveLeftBorder] ? 1 : 0,
+                               yOrigin,
+                               [self tabviewWidth],
+                               [[thisWindow contentView] frame].size.height - yOrigin - heightAdjustment);
+                PtyLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
+                [TABVIEW setFrame:tabViewFrame];
+
+
+                heightAdjustment = tabBarControl.flashing ? kHorizontalTabBarHeight : 0;
+                NSRect tabBarFrame = NSMakeRect(tabViewFrame.origin.x,
+                                                tabViewFrame.size.height - heightAdjustment,
+                                                tabViewFrame.size.width,
+                                                kHorizontalTabBarHeight);
+
+                [self updateDivisionView];
+                tabBarControl.frame = tabBarFrame;
+                tabBarControl.autoresizingMask = (NSViewWidthSizable | NSViewMinYMargin);
+                break;
             }
-            if ([self _haveTopBorder]) {
-                aRect.size.height -= 1;
+
+            case PSMTab_BottomTab: {
+                PtyLog(@"repositionWidgets - putting tabs at bottom");
+                // setup aRect to make room for the tabs at the bottom.
+                NSRect tabBarFrame = NSMakeRect([self _haveLeftBorder] ? 1 : 0,
+                                                [self _haveBottomBorder] ? 1 : 0,
+                                                [self tabviewWidth],
+                                                kHorizontalTabBarHeight);
+                tabBarControl.frame = tabBarFrame;
+                tabBarControl.autoresizingMask = (NSViewWidthSizable | NSViewMaxYMargin);
+
+                CGFloat heightAdjustment = tabBarControl.flashing ? 0 : tabBarFrame.origin.y + kHorizontalTabBarHeight;
+                if ([self _haveTopBorder]) {
+                    heightAdjustment += 1;
+                }
+                NSRect tabViewFrame = NSMakeRect(tabBarFrame.origin.x,
+                                                 tabBarFrame.origin.y + tabBarControl.flashing ? 0 : kHorizontalTabBarHeight,
+                                                 tabBarFrame.size.width,
+                                                 [thisWindow.contentView frame].size.height - heightAdjustment);
+                PtyLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
+                TABVIEW.frame = tabViewFrame;
+                [self updateDivisionView];
+                break;
             }
-            aRect.size.width = [self tabviewWidth];
-            PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
-            [TABVIEW setFrame:aRect];
-            if (tabBarControl.flashing) {
-                aRect.size.height -= [tabBarControl frame].size.height;
+
+            case PSMTab_LeftTab: {
+                CGFloat heightAdjustment = 0;
+                if ([self _haveBottomBorder]) {
+                    heightAdjustment += 1;
+                }
+                if ([self _haveTopBorder]) {
+                    heightAdjustment += 1;
+                }
+                NSRect tabBarFrame = NSMakeRect([self _haveLeftBorder] ? 1 : 0,
+                                                [self _haveBottomBorder] ? 1 : 0,
+                                                [self tabviewWidth],
+                                                [thisWindow.contentView frame].size.height - heightAdjustment);
+                tabBarControl.frame = tabBarFrame;
+                tabBarControl.autoresizingMask = (NSViewHeightSizable | NSViewMaxXMargin);
+
+                CGFloat widthAdjustment = 0;
+                if ([self _haveLeftBorder]) {
+                    widthAdjustment += 1;
+                }
+                if ([self _haveRightBorder]) {
+                    widthAdjustment += 1;
+                }
+                NSRect tabViewFrame = NSMakeRect(NSMaxX(tabBarFrame),
+                                                 NSMinY(tabBarFrame),
+                                                 [thisWindow.contentView frame].size.width - NSWidth(tabBarFrame) - widthAdjustment,
+                                                 NSHeight(tabBarFrame));
+                if (showToolbeltInline) {
+                    tabViewFrame.size.width -= [self fullscreenToolbeltFrame].size.width;
+                }
+                TABVIEW.frame = tabViewFrame;
+                [self updateDivisionView];
             }
-            [self updateDivisionView];
-            aRect.origin.y += aRect.size.height;
-            aRect.size.height = [tabBarControl frame].size.height;
-            [tabBarControl setFrame:aRect];
-            [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMinYMargin)];
-        } else {
-            PtyLog(@"repositionWidgets - putting tabs at bottom");
-            // setup aRect to make room for the tabs at the bottom.
-            aRect.origin.x = [self _haveLeftBorder] ? 1 : 0;
-            aRect.origin.y = [self _haveBottomBorder] ? 1 : 0;
-            aRect.size = [[thisWindow contentView] frame].size;
-            aRect.size.height = [tabBarControl frame].size.height;
-            aRect.size.width = [self tabviewWidth];
-            [tabBarControl setFrame:aRect];
-            [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMaxYMargin)];
-            if (tabBarControl.flashing) {
-                aRect.size.height = [[thisWindow contentView] frame].size.height;
-            } else {
-                aRect.origin.y += [tabBarControl frame].size.height;
-                aRect.size.height = [[thisWindow contentView] frame].size.height - aRect.origin.y;
-            }
-            if ([self _haveTopBorder]) {
-                aRect.size.height -= 1;
-            }
-            PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
-            [TABVIEW setFrame:aRect];
-            [self updateDivisionView];
         }
     }
 
-    if ([self isEdgeWindow] || (!exitingLionFullscreen_ && [self anyFullScreen])) {
-        iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-        if ([itad showToolbelt]) {
-            [toolbelt_ setFrame:[self fullscreenToolbeltFrame]];
-        }
+    if (showToolbeltInline) {
+        [toolbelt_ setFrame:[self fullscreenToolbeltFrame]];
     }
 
     // Update the tab style.
@@ -6399,7 +6551,7 @@ NSString *kSessionsKVCKey = @"sessions";
         current = tabsToRemove[0];
         [tabsToRemove removeObjectAtIndex:0];
     } while (current != tabToKeep);
-    
+
     for (PTYTab *tab in tabsToRemove) {
         [self closeTab:tab];
     }

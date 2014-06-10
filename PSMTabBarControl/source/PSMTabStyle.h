@@ -43,8 +43,8 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 
 // drawing
 - (void)drawTabCell:(PSMTabBarCell *)cell;
-- (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)color;
-- (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect;
+- (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)color horizontal:(BOOL)horizontal;
+- (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect horizontal:(BOOL)horizontal;
 
 - (void)fillPath:(NSBezierPath*)path;
 

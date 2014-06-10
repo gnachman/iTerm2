@@ -1599,8 +1599,37 @@ static NSString* FormatRect(NSRect r) {
     PtyLog(@"PTYTab image");
     NSRect tabFrame = [[realParentWindow_ tabBarControl] frame];
     NSSize viewSize = [root_ frame].size;
+    CGFloat yOrigin = 0;
+    CGFloat yOffset = 0;
+    CGFloat xOrigin = 0;
     if (withSpaceForFrame) {
-        viewSize.height += tabFrame.size.height;
+        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+            case PSMTab_BottomTab:
+                viewSize.height += tabFrame.size.height;
+                yOrigin += tabFrame.size.height;
+                break;
+
+            case PSMTab_TopTab:
+                viewSize.height += tabFrame.size.height;
+                yOffset = viewSize.height;
+                break;
+
+            case PSMTab_LeftTab:
+                xOrigin = tabFrame.size.width;
+                viewSize.width += tabFrame.size.width;
+                break;
+        }
+    }
+    BOOL horizontal;
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_BottomTab:
+        case PSMTab_TopTab:
+            horizontal = YES;
+            break;
+
+        case PSMTab_LeftTab:
+            horizontal = NO;
+            break;
     }
 
     NSImage* viewImage = [[[NSImage alloc] initWithSize:viewSize] autorelease];
@@ -1609,21 +1638,12 @@ static NSString* FormatRect(NSRect r) {
     NSRectFill(NSMakeRect(0, 0, viewSize.width, viewSize.height));
     [viewImage unlockFocus];
 
-    float yOrigin = 0;
-    if (withSpaceForFrame &&
-        [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
-        yOrigin += tabFrame.size.height;
-    }
-
-    [self _recursiveDrawSplit:root_ inImage:viewImage atOrigin:NSMakePoint(0, yOrigin)];
+    [self _recursiveDrawSplit:root_ inImage:viewImage atOrigin:NSMakePoint(xOrigin, yOrigin)];
 
     // Draw over where the tab bar would usually be
     [viewImage lockFocus];
     [[NSColor windowBackgroundColor] set];
-    if (withSpaceForFrame &&
-        [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
-        tabFrame.origin.y += [viewImage size].height;
-    }
+    tabFrame.origin.y += yOffset;
     if (withSpaceForFrame) {
         NSRectFill(tabFrame);
 
@@ -1633,7 +1653,9 @@ static NSString* FormatRect(NSRect r) {
         [transform concat];
         tabFrame.origin.y = -tabFrame.origin.y - tabFrame.size.height;
         PSMTabBarControl *control = (PSMTabBarControl *)[[realParentWindow_ tabView] delegate];
-        [(id <PSMTabStyle>)[control style] drawBackgroundInRect:tabFrame color:nil];  // TODO: use the right color
+        [(id <PSMTabStyle>)[control style] drawBackgroundInRect:tabFrame
+                                                          color:nil
+                                                     horizontal:horizontal];
         [transform invert];
         [transform concat];
     }

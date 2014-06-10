@@ -631,7 +631,7 @@
     [self drawInteriorWithTabCell:cell inView:[cell controlView]];
 }
 
-- (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)color
+- (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)color horizontal:(BOOL)horizontal
 {
     NSBezierPath *thePath = [NSBezierPath bezierPath];
     [thePath setLineWidth:1.0];
@@ -705,7 +705,7 @@
     }
 }
 
-- (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect
+- (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect horizontal:(BOOL)horizontal
 {
     if (orientation != [bar orientation]) {
         orientation = [bar orientation];
@@ -723,7 +723,7 @@
         }
     }
 
-    [self drawBackgroundInRect:rect color:[activeCell tabColor]];
+    [self drawBackgroundInRect:rect color:[activeCell tabColor] horizontal:horizontal];
 
     // no tab view == not connected
     if (![bar tabView]) {

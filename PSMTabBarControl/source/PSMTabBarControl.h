@@ -132,7 +132,8 @@ enum {
 
 enum {
     PSMTab_TopTab           = 0,
-    PSMTab_BottomTab        = 1
+    PSMTab_BottomTab        = 1,
+    PSMTab_LeftTab          = 2,
 };
 
 @interface PSMTabBarControl : NSControl <PTYTabViewDelegateProtocol> {

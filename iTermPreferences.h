@@ -30,6 +30,7 @@ extern NSString *const kTabStyleAdium;
 // Values for kPreferenceKeyTabPosition (corresponds to tags in control).
 #define TAB_POSITION_TOP PSMTab_TopTab
 #define TAB_POSITION_BOTTOM PSMTab_BottomTab
+#define TAB_POSITION_LEFT PSMTab_LeftTab
 
 // Values for kPreferenceKeyXxxRemapping (corresponds to tags in controls).
 typedef NS_ENUM(int, iTermPreferencesModifierTag) {
