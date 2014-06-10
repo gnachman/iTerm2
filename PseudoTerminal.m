@@ -5572,13 +5572,13 @@ NSString *kSessionsKVCKey = @"sessions";
 - (BOOL)_haveBottomBorder
 {
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
-    BOOL topTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
+    BOOL bottomTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab);
     if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
         return NO;
     } else if ([self anyFullScreen] ||
                windowType_ == WINDOW_TYPE_BOTTOM) {
         return NO;
-    } else if (topTabBar) {
+    } else if (!bottomTabBar) {
         // Nothing on the bottom, so need a border.
         return YES;
     } else if (!tabBarVisible) {
