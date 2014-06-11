@@ -1313,7 +1313,7 @@ static BOOL initDone = NO;
 }
 
 - (iTermRestorableSession *)currentRestorableSession {
-    return [_currentRestorableSessionsStack firstObject];
+    return _currentRestorableSessionsStack.count ? _currentRestorableSessionsStack[0] : nil;
 }
 
 - (void)removeSessionFromRestorableSessions:(PTYSession *)session {

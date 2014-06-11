@@ -91,7 +91,7 @@ static const NSTimeInterval kFlashHoldTime = 1;
                              animations:^{
                                  self.flashState = kFlashFadingIn;
                                  [_itermTabBarDelegate iTermTabBarWillBeginFlash];
-                                 self.animator.alphaValue = 1;
+                                 [self.animator setAlphaValue:1];
                              }
                              completion:^(BOOL finished) {
                                  if (self.flashState == kFlashFadingIn) {
@@ -114,7 +114,7 @@ static const NSTimeInterval kFlashHoldTime = 1;
                                                          delay:kFlashHoldTime
                                                     animations:^{
                                                         self.flashState = kFlashFadingOut;
-                                                        self.animator.alphaValue = 0;
+                                                      [self.animator setAlphaValue:0];
                                                     }
                                                     completion:^(BOOL finished) {
                                                         if (finished && self.flashState == kFlashFadingOut) {
@@ -139,7 +139,7 @@ static const NSTimeInterval kFlashHoldTime = 1;
         [NSView animateWithDuration:kAnimationDuration
                          animations:^{
                              self.flashState = kFlashFadingOut;
-                             self.animator.alphaValue = 0;
+                             [self.animator setAlphaValue:0];
                          }
                          completion:^(BOOL finished) {
                              if (finished && self.flashState == kFlashFadingOut) {

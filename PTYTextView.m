@@ -5591,7 +5591,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     blue.alphaValue = 0;
     [self addSubview:blue];
     [[NSAnimationContext currentContext] setDuration:0.5];
-    blue.animator.alphaValue = 0.75;
+    [blue.animator setAlphaValue:0.75];
     [blue performSelector:@selector(removeFromSuperview) withObject:nil afterDelay:0.75];
 }
 

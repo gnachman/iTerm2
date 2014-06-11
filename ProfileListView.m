@@ -803,9 +803,9 @@ const CGFloat kDefaultTagsWidth = 80;
     }
     newTableFrame.size.width =  self.frame.size.width - newTagsWidth;
     newTagsFrame.size.width = newTagsWidth;
-    
-    tagsView_.animator.frame = newTagsFrame;
-    tableView_.animator.frame = newTableFrame;
+
+    [tagsView_.animator setFrame:newTagsFrame];
+    [tableView_.animator setFrame:newTableFrame];
 }
 
 - (BOOL)tagsVisible {

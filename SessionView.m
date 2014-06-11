@@ -723,9 +723,9 @@ static NSDate* lastResizeDate_;
         NSRect initialRect = finalRect;
         initialRect.origin.y += finalRect.size.height;
         _currentAnnouncement.view.frame = initialRect;
-        
-        _currentAnnouncement.view.animator.frame = finalRect;
-        
+
+        [_currentAnnouncement.view.animator setFrame:finalRect];
+
         _currentAnnouncement.view.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
         [self addSubview:_currentAnnouncement.view];
     }
@@ -738,7 +738,7 @@ static NSDate* lastResizeDate_;
     if (announcement == _currentAnnouncement) {
         NSRect rect = announcement.view.frame;
         rect.origin.y += rect.size.height;
-        announcement.view.animator.frame = rect;
+        [announcement.view.animator setFrame:rect];
         if (!_inDealloc) {
             [self performSelector:@selector(showNextAnnouncement)
                        withObject:nil
