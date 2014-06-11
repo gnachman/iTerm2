@@ -86,6 +86,7 @@ static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
 // recognized as a drag.
 static const int kDragThreshold = 3;
 static const int kBroadcastMargin = 4;
+static const int kMaximizedMargin = 4;
 static const int kCoprocessMargin = 4;
 static const int kAlertMargin = 4;
 
@@ -93,6 +94,7 @@ static NSImage* bellImage;
 static NSImage* wrapToTopImage;
 static NSImage* wrapToBottomImage;
 static NSImage* broadcastInputImage;
+static NSImage* maximizedImage;
 static NSImage* coprocessImage;
 static NSImage* alertImage;
 
@@ -358,6 +360,9 @@ static NSImage* alertImage;
                                                     ofType:@"png"];
     broadcastInputImage = [[NSImage alloc] initWithContentsOfFile:broadcastInputFile];
     [broadcastInputImage setFlipped:YES];
+
+    maximizedImage = [[NSImage imageNamed:@"Maximized"] retain];
+    [maximizedImage setFlipped:YES];
 
     NSString* coprocessFile = [bundle pathForResource:@"Coprocess"
                                                     ofType:@"png"];
@@ -1761,6 +1766,7 @@ NSMutableArray* screens=0;
         DLog(@"drawRect - draw sub rectangle %@", [NSValue valueWithRect:rectArray[i]]);
         [self drawOneRect:rectArray[i]];
     }
+
     if (drawRectDuration_) {
         [drawRectDuration_ addValue:[drawRectDuration_ timeSinceTimerStarted]];
         NSLog(@"%p Moving average time draw rect is %04f, time between calls to drawRect is %04f",
@@ -1768,6 +1774,15 @@ NSMutableArray* screens=0;
     }
     const NSRect frame = [self visibleRect];
     double x = frame.origin.x + frame.size.width;
+    if ([_delegate textViewIsMaximized]) {
+        NSSize size = [maximizedImage size];
+        x -= size.width + kMaximizedMargin;
+        [maximizedImage drawAtPoint:NSMakePoint(x,
+                                                frame.origin.y + kMaximizedMargin)
+                           fromRect:NSMakeRect(0, 0, size.width, size.height)
+                          operation:NSCompositeSourceOver
+                           fraction:0.5];
+    }
     if ([_delegate textViewSessionIsBroadcastingInput]) {
         NSSize size = [broadcastInputImage size];
         x -= size.width + kBroadcastMargin;

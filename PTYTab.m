@@ -1893,15 +1893,17 @@ static NSString* FormatRect(NSRect r) {
         [result setObject:subviews forKey:SUBVIEWS];
     } else {
         SessionView* sessionView = (SessionView*)view;
-        result[TAB_ARRANGEMENT_VIEW_TYPE] = VIEW_TYPE_SESSIONVIEW;
-        result[TAB_ARRANGEMENT_SESSIONVIEW_FRAME] = [PTYTab frameToDict:[view frame]];
-        result[TAB_ARRANGEMENT_SESSION] = [[sessionView session] arrangement];
-        result[TAB_ARRANGEMENT_IS_ACTIVE] = @([sessionView session] == [self activeSession]);
+        if (sessionView.session) {
+            result[TAB_ARRANGEMENT_VIEW_TYPE] = VIEW_TYPE_SESSIONVIEW;
+            result[TAB_ARRANGEMENT_SESSIONVIEW_FRAME] = [PTYTab frameToDict:[view frame]];
+            result[TAB_ARRANGEMENT_SESSION] = [[sessionView session] arrangement];
+            result[TAB_ARRANGEMENT_IS_ACTIVE] = @([sessionView session] == [self activeSession]);
 
-        if (idMap) {
-            result[TAB_ARRANGEMENT_ID] = @([idMap count]);
-            [sessionView saveFrameSize];
-            idMap[@([idMap count])] = sessionView;
+            if (idMap) {
+                result[TAB_ARRANGEMENT_ID] = @([idMap count]);
+                [sessionView saveFrameSize];
+                idMap[@([idMap count])] = sessionView;
+            }
         }
     }
     return result;
@@ -1975,42 +1977,40 @@ static NSString* FormatRect(NSRect r) {
         return splitter;
     } else {
         if (theMap) {
-            NSNumber *wp = [arrangement objectForKey:TAB_ARRANGEMENT_TMUX_WINDOW_PANE];
-            NSString *uniqueId = [PTYSession uniqueIdInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
-            if (wp || uniqueId) {
-                SessionView *sv;
-                if (wp) {
-                    // Creating splitters for a tmux tab. The arrangement is marked
-                    // up with window pane IDs, whcih may or may not already exist.
-                    // When restoring a tmux tab, then all session dicts in the
-                    // arrangement have a window pane. The presence of a
-                    // TAB_ARRANGEMENT_TMUX_WINDOW_PANE implies that theMap is
-                    // window pane->SessionView.
-                    sv = theMap[wp];
-                } else {
-                    // These session viws are expected to exist, unlike in the tmux case. This is
-                    // used when undoing a close session operation.
-                    PTYSession *session = theMap[uniqueId];
-                    sv = [session view];
-                    assert(sv);
-                }
-                NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
-                if (sv) {
-                    // Recycle an existing session view.
-                    [sv setFrame:frame];
-                } else {
-                    // This session is new, so set a nonnegative pending window
-                    // pane and we'll create a session for it later.
-                    sv = [[[SessionView alloc] initWithFrame:frame] autorelease];
-                }
-                return sv;
-            } else {
+            SessionView *sv = nil;
+            id tabArrangementId = arrangement[TAB_ARRANGEMENT_ID];
+            if (tabArrangementId && theMap[tabArrangementId]) {
                 // Exiting a maximized-pane state, so we can get a session view from theMap, a map from arrangement id -> SessionView*
                 // where arrangement IDs are stored in the arrangement dict.
-                SessionView *sv = [theMap objectForKey:[arrangement objectForKey:TAB_ARRANGEMENT_ID]];
+                sv = [theMap objectForKey:[arrangement objectForKey:TAB_ARRANGEMENT_ID]];
                 [sv restoreFrameSize];
                 return sv;
             }
+
+            NSNumber *wp = [arrangement objectForKey:TAB_ARRANGEMENT_TMUX_WINDOW_PANE];
+            NSString *uniqueId = [PTYSession uniqueIdInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
+            if (wp && theMap[wp]) {
+                // Creating splitters for a tmux tab. The arrangement is marked
+                // up with window pane IDs, whcih may or may not already exist.
+                // When restoring a tmux tab, then all session dicts in the
+                // arrangement have a window pane. The presence of a
+                // TAB_ARRANGEMENT_TMUX_WINDOW_PANE implies that theMap is
+                // window pane->SessionView.
+                sv = theMap[wp];
+            } else if (uniqueId) {
+                PTYSession *session = theMap[uniqueId];
+                sv = [session view];
+            }
+            NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
+            if (sv) {
+                // Recycle an existing session view.
+                [sv setFrame:frame];
+            } else {
+                // This session is new, so set a nonnegative pending window
+                // pane and we'll create a session for it later.
+                sv = [[[SessionView alloc] initWithFrame:frame] autorelease];
+            }
+            return sv;
         } else {
             NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
             return [[[SessionView alloc] initWithFrame:frame] autorelease];

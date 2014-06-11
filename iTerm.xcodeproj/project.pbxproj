@@ -514,6 +514,10 @@
 		1DC13AC518864E2200034DAE /* CommandHistoryPopup.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DC13AC218864E2200034DAE /* CommandHistoryPopup.m */; };
 		1DC13AC71886507D00034DAE /* CommandHistoryPopup.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13AC61886507D00034DAE /* CommandHistoryPopup.xib */; };
 		1DC13AC81886507D00034DAE /* CommandHistoryPopup.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13AC61886507D00034DAE /* CommandHistoryPopup.xib */; };
+		1DC2A1CC1949165D005769D5 /* Maximized.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2A1CA1949165D005769D5 /* Maximized.png */; };
+		1DC2A1CD1949165D005769D5 /* Maximized.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2A1CA1949165D005769D5 /* Maximized.png */; };
+		1DC2A1CE1949165D005769D5 /* Maximized@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2A1CB1949165D005769D5 /* Maximized@2x.png */; };
+		1DC2A1CF1949165D005769D5 /* Maximized@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2A1CB1949165D005769D5 /* Maximized@2x.png */; };
 		1DC38818148E840700B89F7C /* SolidColorView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DC38816148E840600B89F7C /* SolidColorView.h */; };
 		1DC38819148E840700B89F7C /* SolidColorView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DC38817148E840700B89F7C /* SolidColorView.m */; };
 		1DC742A0127C96F90069594C /* IBarCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC7429F127C96F90069594C /* IBarCursor.png */; };
@@ -1258,6 +1262,8 @@
 		1DC13AC118864E2200034DAE /* CommandHistoryPopup.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = CommandHistoryPopup.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DC13AC218864E2200034DAE /* CommandHistoryPopup.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = CommandHistoryPopup.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DC13AC61886507D00034DAE /* CommandHistoryPopup.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CommandHistoryPopup.xib; sourceTree = "<group>"; };
+		1DC2A1CA1949165D005769D5 /* Maximized.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Maximized.png; path = images/Maximized.png; sourceTree = "<group>"; };
+		1DC2A1CB1949165D005769D5 /* Maximized@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Maximized@2x.png"; path = "images/Maximized@2x.png"; sourceTree = "<group>"; };
 		1DC38816148E840600B89F7C /* SolidColorView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = SolidColorView.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DC38817148E840700B89F7C /* SolidColorView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = SolidColorView.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DC393C317B59B08000EE0F2 /* SearchResult.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = SearchResult.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2121,6 +2127,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				1DC2A1CA1949165D005769D5 /* Maximized.png */,
+				1DC2A1CB1949165D005769D5 /* Maximized@2x.png */,
 				1DEF5E6B185F889600300319 /* Alert.png */,
 				1DEF5E6C185F889600300319 /* Alert@2x.png */,
 				1DA02CFA1327612600D7E7DB /* bell.png */,
@@ -3147,8 +3155,10 @@
 				A697101418DFA7F9007E901D /* closebutton@2x.png in Resources */,
 				1DB8FBC919468A40006BAF5C /* AquaTabsDownGraphite_vertical.png in Resources */,
 				A67F118318D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
+				1DC2A1CF1949165D005769D5 /* Maximized@2x.png in Resources */,
 				1DB8FBCD19468A40006BAF5C /* AquaTabsSeparator_vertical.png in Resources */,
 				1DC13AC81886507D00034DAE /* CommandHistoryPopup.xib in Resources */,
+				1DC2A1CD1949165D005769D5 /* Maximized.png in Resources */,
 				A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
 				1D01609E1852AA6F0014D26A /* mark.png in Resources */,
 				1DB8FBC519468A40006BAF5C /* AquaTabsDown_vertical.png in Resources */,
@@ -3197,6 +3207,7 @@
 				1D5FDD8E1208E91100C46BA3 /* AquaTabsDownGraphite.png in Resources */,
 				1D03D423191419080049EB8F /* DirectoriesPopup.xib in Resources */,
 				1DC13AC71886507D00034DAE /* CommandHistoryPopup.xib in Resources */,
+				1DC2A1CC1949165D005769D5 /* Maximized.png in Resources */,
 				1D5FDD8F1208E91100C46BA3 /* AquaTabsDownNonKey.png in Resources */,
 				1D5FDD901208E91100C46BA3 /* AquaTabsSeparator.png in Resources */,
 				1D5FDD911208E91100C46BA3 /* AquaTabsSeparatorDown.png in Resources */,
@@ -3250,6 +3261,7 @@
 				1D6A5FDF140D7AA000DE19F8 /* IBarCursorXMR.png in Resources */,
 				1D9DDE9E142E855D00275650 /* Coprocess.png in Resources */,
 				5ECE4AEA14514058002A9CC2 /* Growl Registration Ticket.growlRegDict in Resources */,
+				1DC2A1CE1949165D005769D5 /* Maximized@2x.png in Resources */,
 				1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */,
 				1DB8FBC819468A40006BAF5C /* AquaTabsDownGraphite_vertical.png in Resources */,
 				1DD4CE7D14A5163B00ED182E /* TmuxDashboard.xib in Resources */,
