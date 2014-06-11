@@ -50,7 +50,7 @@
 #include <math.h>
 #include <sys/time.h>
 
-static const int kMaxSelectedTextLengthForCustomActions = 8192;
+static const int kMaxSelectedTextLengthForCustomActions = 400;
 static const int kMaxTrouterPrefixOrSuffix = 2000;
 
 // This defines the fraction of a character's width on its right side that is used to
