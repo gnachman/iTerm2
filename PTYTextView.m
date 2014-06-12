@@ -3423,12 +3423,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
     int y = clickPoint.y;
-
     NSMenu *markMenu = nil;
     VT100ScreenMark *mark = [_dataSource markOnLine:y];
+    DLog(@"contextMenuWithEvent:%@ x=%d, mark=%@, mark command=%@", event, x, mark, [mark command]);
     if (mark && mark.command.length) {
         markMenu = [self menuForMark:mark directory:[_dataSource workingDirectoryOnLine:y]];
-        if (x < MARGIN) {
+        NSPoint locationInWindow = [event locationInWindow];
+        if (locationInWindow.x < MARGIN) {
             return markMenu;
         }
     }
