@@ -1993,11 +1993,13 @@ typedef enum {
                               @(kColorMapSelection): KEY_SELECTION_COLOR,
                               @(kColorMapSelectedText): KEY_SELECTED_TEXT_COLOR,
                               @(kColorMapBold): KEY_BOLD_COLOR,
+                              @(kColorMapLink): KEY_LINK_COLOR,
                               @(kColorMapCursor): KEY_CURSOR_COLOR,
                               @(kColorMapCursorText): KEY_CURSOR_TEXT_COLOR };
     for (NSNumber *colorKey in keyMap) {
         NSString *profileKey = keyMap[colorKey];
-        NSColor *theColor = [ITAddressBookMgr decodeColor:aDict[profileKey]];
+        NSColor *theColor = [[iTermProfilePreferences objectForKey:profileKey
+                                                         inProfile:aDict] colorValue];
         [_colorMap setColor:theColor forKey:[colorKey intValue]];
     }
 

@@ -6089,7 +6089,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 thisCharString = @"I";
             }
             if (inUnderlinedRange && !self.currentUnderlineHostname) {
-                attrs.color = [NSColor colorWithCalibratedRed:0.023 green:0.270 blue:0.678 alpha:1];
+                attrs.color = [_colorMap colorForKey:kColorMapLink];
             }
             if (!currentRun) {
                 firstRun = currentRun = malloc(sizeof(CRun));

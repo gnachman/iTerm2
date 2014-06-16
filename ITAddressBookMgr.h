@@ -74,6 +74,7 @@
 #define KEY_FOREGROUND_COLOR       @"Foreground Color"
 #define KEY_BACKGROUND_COLOR       @"Background Color"
 #define KEY_BOLD_COLOR             @"Bold Color"
+#define KEY_LINK_COLOR             @"Link Color"
 #define KEY_SELECTION_COLOR        @"Selection Color"
 #define KEY_SELECTED_TEXT_COLOR    @"Selected Text Color"
 #define KEY_CURSOR_COLOR           @"Cursor Color"
