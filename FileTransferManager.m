@@ -134,7 +134,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 }
 
 - (void)fadeWindowOut:(NSWindow *)window {
-    window.animator.alphaValue = 0;
+    [window.animator setAlphaValue:0];
     [window performSelector:@selector(release)
                withObject:nil
                afterDelay:[[NSAnimationContext currentContext] duration]];

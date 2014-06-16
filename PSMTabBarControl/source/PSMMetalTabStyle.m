@@ -403,7 +403,6 @@
             aRect.size.height--;
             NSDrawWindowBackground(aRect);
             aRect.origin.x--;
-            aRect.size.height++;
 
             // frame
             [bezier setLineWidth:1.0];
@@ -440,10 +439,12 @@
             [[NSColor colorWithCalibratedWhite:0.0 alpha:0.1] set];
             NSRectFillUsingOperation(aRect, NSCompositeSourceAtop);
         }
-        NSRect bgRect = NSMakeRect(aRect.origin.x,
-                                   aRect.origin.y,
-                                   aRect.size.width,
-                                   aRect.size.height - 2);
+        NSRect bgRect = aRect;
+        if (orientation == PSMTabBarHorizontalOrientation) {
+            bgRect.size.height -= 2;
+        } else {
+            bgRect.size.width -= 2;
+        }
         [[NSColor windowBackgroundColor] set];
         NSRectFill(bgRect);
 
@@ -573,7 +574,7 @@
     [[cell attributedStringValue] drawInRect:labelRect];
 }
 
-- (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)backgroundColor
+- (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)backgroundColor horizontal:(BOOL)horizontal
 {
     if (orientation == PSMTabBarVerticalOrientation && [tabBar frame].size.width < 2) {
         return;
@@ -609,7 +610,7 @@
     [path stroke];
 }
 
-- (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect
+- (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect horizontal:(BOOL)horizontal
 {
     if (orientation != [bar orientation]) {
         orientation = [bar orientation];
@@ -619,7 +620,7 @@
         tabBar = bar;
     }
 
-    [self drawBackgroundInRect:rect color:nil];
+    [self drawBackgroundInRect:rect color:nil horizontal:horizontal];
 
     // no tab view == not connected
     if(![bar tabView]){

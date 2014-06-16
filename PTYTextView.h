@@ -91,6 +91,7 @@ typedef enum {
 - (void)refreshAndStartTimerIfNeeded;
 - (BOOL)textViewIsActiveSession;
 - (BOOL)textViewSessionIsBroadcastingInput;
+- (BOOL)textViewIsMaximized;
 - (BOOL)textViewTabHasMaximizedPanel;
 - (void)textViewWillNeedUpdateForBlink;
 - (BOOL)textViewDelegateHandlesAllKeystrokes;

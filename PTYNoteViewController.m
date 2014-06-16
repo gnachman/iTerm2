@@ -153,7 +153,7 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     }
     hidden_ = hidden;
     [noteView_ setHidden:NO];
-    noteView_.animator.alphaValue = hidden ? 0 : 1;
+    [noteView_.animator setAlphaValue:(hidden ? 0 : 1)];
     [self performSelector:@selector(finalizeToggleOfHide)
                withObject:nil
                afterDelay:[[NSAnimationContext currentContext] duration]];

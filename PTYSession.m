@@ -1089,6 +1089,7 @@ typedef enum {
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
+    _textview = nil;
     [self retain];
 }
 
@@ -4389,35 +4390,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         [[_textview.dimmedDefaultBackgroundColor colorWithAlphaComponent:alpha] set];
         NSRectFill(rect);
     }
-
-    [self drawMaximizedPaneDottedOutlineIndicatorInView:view];
-}
-
-- (void)drawMaximizedPaneDottedOutlineIndicatorInView:(NSView *)view {
-    if ([self textViewTabHasMaximizedPanel]) {
-        NSColor *color = [_colorMap colorForKey:kColorMapBackground];
-        double grayLevel = [color isDark] ? 1 : 0;
-        color = [color colorDimmedBy:0.2 towardsGrayLevel:grayLevel];
-        NSRect frame = [_view convertRect:[_view contentRect] toView:view];
-
-        NSBezierPath *path = [[[NSBezierPath alloc] init] autorelease];
-        CGFloat left = frame.origin.x + 0.5;
-        CGFloat right = frame.origin.x + frame.size.width - 0.5;
-        CGFloat top = frame.origin.y + 0.5;
-        CGFloat bottom = frame.origin.y + frame.size.height - 0.5;
-
-        [path moveToPoint:NSMakePoint(left, top + VMARGIN)];
-        [path lineToPoint:NSMakePoint(left, top)];
-        [path lineToPoint:NSMakePoint(right, top)];
-        [path lineToPoint:NSMakePoint(right, bottom)];
-        [path lineToPoint:NSMakePoint(left, bottom)];
-        [path lineToPoint:NSMakePoint(left, top + VMARGIN)];
-
-        CGFloat dashPattern[2] = { 5, 5 };
-        [path setLineDash:dashPattern count:2 phase:0];
-        [color set];
-        [path stroke];
-    }
 }
 
 - (void)textViewPostTabContentsChangedNotification
@@ -4623,6 +4595,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (BOOL)textViewSessionIsBroadcastingInput
 {
     return [[[self tab] realParentWindow] broadcastInputToSession:self];
+}
+
+- (BOOL)textViewIsMaximized {
+    return [[self tab] hasMaximizedPane];
 }
 
 - (BOOL)textViewTabHasMaximizedPanel

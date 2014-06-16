@@ -75,48 +75,88 @@ static CGImageRef CGImageCreateWithNSImage(NSImage *image, CGRect sourceRect) {
 {
     if((self = [super init]))
     {
-        [self loadImages];
+        [self loadImagesWithHorizontalOrientation:YES];
     }
     return self;
 }
 
-- (void) loadImages
+- (NSImage *)rotatedImage:(NSImage *)image {
+    NSRect bounds = NSMakeRect(0, 0, image.size.width, image.size.height);
+    NSImageRep *bestRep = [image bestRepresentationForRect:bounds
+                                                   context:[NSGraphicsContext currentContext]
+                                                     hints:nil];
+    NSSize rotatedSize = NSMakeSize(bestRep.pixelsHigh, bestRep.pixelsWide);
+
+    NSImage *rotatedImage = [[[NSImage alloc] initWithSize:rotatedSize] autorelease];
+
+    [rotatedImage lockFocus];
+
+    NSAffineTransform *theTransform = [NSAffineTransform transform];
+    NSPoint rotatedCenter = NSMakePoint(rotatedSize.width / 2, rotatedSize.height / 2);
+
+    [theTransform translateXBy:rotatedCenter.x yBy:rotatedCenter.y];
+    [theTransform rotateByDegrees:90];
+    [theTransform translateXBy:-rotatedCenter.y yBy:-rotatedCenter.x];
+    [theTransform concat];
+
+    [bestRep drawInRect:NSMakeRect(0, 0, rotatedSize.height, rotatedSize.width)];
+
+    [rotatedImage unlockFocus];
+
+    return rotatedImage;
+}
+
+- (NSImage *)newImageNamed:(NSString *)baseName flipped:(BOOL)flipped {
+    NSString *name = [NSString stringWithFormat:@"%@%@", baseName, _imagesHaveHorizontalOrientation ? @"" : @"_vertical"];
+    NSImage *image = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:name]];
+    if (flipped) {
+        [image setFlipped:YES];
+    }
+    return image;
+}
+
+- (void)loadImagesWithHorizontalOrientation:(BOOL)horizontal
 {
+    _imagesHaveHorizontalOrientation = horizontal;
+
     // Aqua Tabs Images
-    aquaTabBg = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabsBackground"]];
-    [aquaTabBg setFlipped:YES];
+    aquaTabBg = [self newImageNamed:@"AquaTabsBackground" flipped:YES];
 
     NSSize bgSize = [aquaTabBg size];
     noborderBg = [[NSImage alloc] initWithSize:NSMakeSize(bgSize.width, bgSize.height - 2)];
-    [noborderBg lockFocus];
-    [aquaTabBg compositeToPoint:NSMakePoint(0, 0)
-                       fromRect:NSMakeRect(0, 1, bgSize.width, bgSize.height-2)
-                      operation:NSCompositeSourceOver];
-    [noborderBg unlockFocus];
-    [noborderBg setSize:NSMakeSize(300, 28)];
+    if (horizontal) {
+        [noborderBg lockFocus];
+        [aquaTabBg compositeToPoint:NSMakePoint(0, 0)
+                           fromRect:NSMakeRect(0, 1, bgSize.width, bgSize.height-2)
+                          operation:NSCompositeSourceOver];
+        [noborderBg unlockFocus];
+        [noborderBg setSize:NSMakeSize(300, 28)];
+    } else {
+        [noborderBg lockFocus];
+        [aquaTabBg compositeToPoint:NSMakePoint(0, 0)
+                           fromRect:NSMakeRect(1, 0, bgSize.width-2, bgSize.height)
+                          operation:NSCompositeSourceOver];
+        [noborderBg unlockFocus];
+        [noborderBg setSize:NSMakeSize(28, 300)];
+    }
 
-    aquaTabBgDown = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabsDown"]];
-    [aquaTabBgDown setFlipped:YES];
+    aquaTabBgDown = [self newImageNamed:@"AquaTabsDown" flipped:YES];
 
-    aquaTabBgDownGraphite = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabsDownGraphite"]];
-    [aquaTabBgDown setFlipped:YES];
+    aquaTabBgDownGraphite = [self newImageNamed:@"AquaTabsDownGraphite" flipped:YES];
 
-    aquaTabBgDownNonKey = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabsDownNonKey"]];
-    [aquaTabBgDown setFlipped:YES];
+    aquaTabBgDownNonKey = [self newImageNamed:@"AquaTabsDownNonKey" flipped:YES];
 
-    aquaDividerDown = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabsSeparatorDown"]];
-    [aquaDivider setFlipped:NO];
+    aquaDividerDown = [self newImageNamed:@"AquaTabsSeparatorDown" flipped:NO];
 
-    aquaDivider = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabsSeparator"]];
-    [aquaDivider setFlipped:NO];
+    aquaDivider = [self newImageNamed:@"AquaTabsSeparator" flipped:NO];
 
     aquaCloseButton = [[NSImage imageNamed:@"AquaTabClose_Front"] retain];
     aquaCloseButtonDown = [[NSImage imageNamed:@"AquaTabClose_Front_Pressed"] retain];
     aquaCloseButtonOver = [[NSImage imageNamed:@"AquaTabClose_Front_Rollover"] retain];
 
-    _addTabButtonImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabNew"]];
-    _addTabButtonPressedImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabNewPressed"]];
-    _addTabButtonRolloverImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabNewRollover"]];
+    _addTabButtonImage = [self newImageNamed:@"AquaTabNew" flipped:NO];
+    _addTabButtonPressedImage = [self newImageNamed:@"AquaTabNewPressed" flipped:NO];
+    _addTabButtonRolloverImage = [self newImageNamed:@"AquaTabNewRollover" flipped:NO];
 }
 
 - (void)dealloc
@@ -378,28 +418,36 @@ static CGImageRef CGImageCreateWithNSImage(NSImage *image, CGRect sourceRect) {
             tintedWithColor:(NSColor *)tabColor
                      inRect:(NSRect)cellFrame
 {
-  [NSGraphicsContext saveGraphicsState];
-  CGContextRef context = [[NSGraphicsContext currentContext] graphicsPort];
-  if (tabColor) {
-    CGContextSetBlendMode(context, kCGBlendModeNormal);
-    CGContextSetFillColorWithColor(context, [tabColor PSMCGColor]);
-    CGContextFillRect(context, NSRectToCGRect(NSMakeRect(cellFrame.origin.x + 0.5,
-                                          cellFrame.origin.y + 0.5,
-                                          cellFrame.size.width,
-                                          cellFrame.size.height)));
+    [NSGraphicsContext saveGraphicsState];
+    CGContextRef context = [[NSGraphicsContext currentContext] graphicsPort];
+    if (tabColor) {
+        CGContextSetBlendMode(context, kCGBlendModeNormal);
+        CGContextSetFillColorWithColor(context, [tabColor PSMCGColor]);
+        CGContextFillRect(context, NSRectToCGRect(NSMakeRect(cellFrame.origin.x + 0.5,
+                                                             cellFrame.origin.y + 0.5,
+                                                             cellFrame.size.width,
+                                                             cellFrame.size.height)));
 
-    CGImageRef cgBgImage = CGImageCreateWithNSImage(bgImage, CGRectMake(0, 0, 1, 22));
-    CGContextSetBlendMode(context, kCGBlendModeLuminosity);
-    CGContextSetAlpha(context, 0.7);
-    CGContextDrawImage(context, NSRectToCGRect(cellFrame), cgBgImage);
-    CFRelease(cgBgImage);
-  } else {
-    [bgImage drawInRect:cellFrame
-               fromRect:NSMakeRect(0.0, 0.0, 1.0, 22.0)
-              operation:NSCompositeSourceOver
-               fraction:1.0];
-  }
-  [NSGraphicsContext restoreGraphicsState];
+        CGImageRef cgBgImage = CGImageCreateWithNSImage(bgImage, CGRectMake(0, 0, 1, bgImage.size.height));
+        CGContextSetBlendMode(context, kCGBlendModeLuminosity);
+        CGContextSetAlpha(context, 0.7);
+        CGContextDrawImage(context, NSRectToCGRect(cellFrame), cgBgImage);
+        CFRelease(cgBgImage);
+    } else {
+        [bgImage drawInRect:cellFrame
+                   fromRect:_imagesHaveHorizontalOrientation ? NSMakeRect(0, 0, 1, bgImage.size.height)
+                                                             : NSMakeRect(0, 0, bgImage.size.width, 1)
+                  operation:NSCompositeSourceOver
+                   fraction:1.0];
+    }
+
+    if (!_imagesHaveHorizontalOrientation) {
+        [self drawVerticalMarginsInFrame:NSMakeRect(cellFrame.origin.x,
+                                                    cellFrame.origin.y,
+                                                    cellFrame.size.width,
+                                                    cellFrame.size.height)];
+    }
+    [NSGraphicsContext restoreGraphicsState];
 }
 
 - (void)drawTabCell:(PSMTabBarCell *)cell
@@ -438,20 +486,18 @@ static CGImageRef CGImageCreateWithNSImage(NSImage *image, CGRect sourceRect) {
         }
 
         [self drawBackgroundImage:bgImage tintedWithColor:tabColor inRect:cellFrame];
-        [aquaDivider compositeToPoint:NSMakePoint(cellFrame.origin.x + cellFrame.size.width - 1.0, cellFrame.origin.y + cellFrame.size.height) operation:NSCompositeSourceOver];
 
         aRect.size.height+=0.5;
 
     } else { // Unselected Tab
 
-        NSRect aRect = NSMakeRect(cellFrame.origin.x, cellFrame.origin.y, cellFrame.size.width, cellFrame.size.height);
-        aRect.origin.y += 0.5;
-        aRect.origin.x += 1.5;
-        aRect.size.width -= 1;
-
-        aRect.origin.x -= 1;
-        aRect.size.width += 1;
-
+        NSRect aRect = NSMakeRect(cellFrame.origin.x,
+                                  cellFrame.origin.y + 1,
+                                  cellFrame.size.width,
+                                  cellFrame.size.height - 2);
+        if (!_imagesHaveHorizontalOrientation) {
+            aRect.size.height += 1;
+        }
         if (tabColor) {
             [self drawBackgroundImage:bgImage tintedWithColor:tabColor inRect:cellFrame];
         }
@@ -461,15 +507,55 @@ static CGImageRef CGImageCreateWithNSImage(NSImage *image, CGRect sourceRect) {
             [[NSColor colorWithCalibratedWhite:0.0 alpha:0.1] set];
             NSRectFillUsingOperation(aRect, NSCompositeSourceAtop);
         }
-
-        [aquaDivider compositeToPoint:NSMakePoint(cellFrame.origin.x + cellFrame.size.width - 1.0, cellFrame.origin.y + cellFrame.size.height) operation:NSCompositeSourceOver];
     }
+
+    NSPoint dividerOrigin;
+    if (_imagesHaveHorizontalOrientation) {
+        dividerOrigin = NSMakePoint(NSMaxX(cellFrame) - 1, NSMaxY(cellFrame));
+        [aquaDivider compositeToPoint:dividerOrigin
+                            operation:NSCompositeSourceOver];
+    } else {
+        dividerOrigin = NSMakePoint(NSMinX(cellFrame), NSMaxY(cellFrame));
+        [aquaDivider drawInRect:NSMakeRect(dividerOrigin.x,
+                                           dividerOrigin.y,
+                                           cellFrame.size.width,
+                                           1)
+                       fromRect:NSMakeRect(0, 0, aquaDivider.size.width, aquaDivider.size.height)
+                      operation:NSCompositeSourceOver
+                       fraction:1];
+        [self drawVerticalMarginsInFrame:NSMakeRect(dividerOrigin.x,
+                                                    dividerOrigin.y,
+                                                    cellFrame.size.width,
+                                                    cellFrame.size.height)];
+    }
+
     [self drawInteriorWithTabCell:cell inView:[cell controlView]];
 }
 
-- (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)color
+- (void)drawVerticalMarginsInFrame:(NSRect)rect {
+    [[NSColor colorWithRed:174.0 / 255.0
+                     green:174.0 / 255.0
+                      blue:174.0 / 255.0
+                     alpha:1] set];
+    NSRectFill(NSMakeRect(rect.origin.x, rect.origin.y, 1, rect.size.height));
+    NSRectFill(NSMakeRect(rect.origin.x + rect.size.width - 1, rect.origin.y, 1, rect.size.height));
+}
+
+- (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)color horizontal:(BOOL)horizontal
 {
-    [aquaTabBg drawInRect:rect fromRect:NSMakeRect(0.0, 0.0, 1.0, 22.0) operation:NSCompositeSourceOver fraction:1.0];
+    if (horizontal != _imagesHaveHorizontalOrientation) {
+        [self loadImagesWithHorizontalOrientation:horizontal];
+    }
+    [aquaTabBg drawInRect:rect
+                 fromRect:horizontal ? NSMakeRect(0, 0, 1, aquaTabBg.size.height) : NSMakeRect(0, 0, aquaTabBg.size.width, 1)
+                operation:NSCompositeSourceOver
+                 fraction:1.0];
+    if (!_imagesHaveHorizontalOrientation) {
+        [self drawVerticalMarginsInFrame:NSMakeRect(rect.origin.x,
+                                                    rect.origin.y,
+                                                    rect.size.width,
+                                                    rect.size.height)];
+    }
 }
 
 - (void)fillPath:(NSBezierPath*)path
@@ -483,16 +569,16 @@ static CGImageRef CGImageCreateWithNSImage(NSImage *image, CGRect sourceRect) {
     [path stroke];
 }
 
-- (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect
+- (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect horizontal:(BOOL)horizontal
 {
     PSMTabBarCell* activeCell = nil;
     for (PSMTabBarCell *cell in [bar cells]) {
         if ([cell state] == NSOnState) {
             activeCell = cell;
             break;
-        }       
-    }   
-    [self drawBackgroundInRect:rect color:[activeCell tabColor]];
+        }
+    }
+    [self drawBackgroundInRect:rect color:[activeCell tabColor] horizontal:horizontal];
 
     // no tab view == not connected
     if(![bar tabView]){

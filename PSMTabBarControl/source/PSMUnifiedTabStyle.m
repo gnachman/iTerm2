@@ -524,7 +524,7 @@
     [[cell attributedStringValue] drawInRect:labelRect];
 }
 
-- (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)color
+- (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)color horizontal:(BOOL)horizontal
 {
     NSRect gradientRect = rect;
     gradientRect.size.height -= 1.0;
@@ -554,7 +554,7 @@
     [path stroke];
 }
 
-- (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect
+- (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect horizontal:(BOOL)horizontal
 {
     PSMTabBarCell* activeCell = nil;
     for (PSMTabBarCell *cell in [bar cells]) {
@@ -564,7 +564,7 @@
         }
     }
     tabBar = bar;
-    [self drawBackgroundInRect:rect color:[activeCell tabColor]];
+    [self drawBackgroundInRect:rect color:[activeCell tabColor] horizontal:horizontal];
 
     // no tab view == not connected
     if(![bar tabView]){

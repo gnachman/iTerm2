@@ -9,10 +9,10 @@
 #import <Foundation/Foundation.h>
 #import <Security/Security.h>
 
-#if __IPHONE_7_0 || __MAC_10_9
-	// Keychain synchronization available at compile time
-	#define SSKEYCHAIN_SYNCHRONIZATION_AVAILABLE 1
-#endif
+// Keychain synchronization available at compile time; this requires a
+// deployment target of 10.9. Changed for iTerm2 because our SDK differs from
+// our deployment target.
+#define SSKEYCHAIN_SYNCHRONIZATION_AVAILABLE 0
 
 #ifdef SSKEYCHAIN_SYNCHRONIZATION_AVAILABLE
 typedef NS_ENUM(NSUInteger, SSKeychainQuerySynchronizationMode) {
