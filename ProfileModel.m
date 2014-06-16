@@ -579,17 +579,32 @@ int gMigrated;
     return array;
 }
 
-- (void)setProfilePreservingNameAndGuidWithGuid:(NSString *)origGuid
-                                    fromProfile:(Profile *)bookmark {
+- (void)setProfilePreservingGuidWithGuid:(NSString *)origGuid
+                             fromProfile:(Profile *)bookmark {
     Profile *origProfile = [self bookmarkWithGuid:origGuid];
+    NSString *preDivorceGuid = origProfile[KEY_ORIGINAL_GUID];
+    Profile *preDivorceProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:preDivorceGuid];
+
+    // Only preserve the name if it has changed since the divorce.
+    BOOL preserveName = NO;
+    if (preDivorceProfile &&
+        ![preDivorceProfile[KEY_NAME] isEqualToString:origProfile[KEY_NAME]]) {
+        preserveName = YES;
+    }
+
     NSMutableDictionary *dict = [[bookmark mutableCopy] autorelease];
-    dict[KEY_NAME] = [[origProfile[KEY_NAME] copy] autorelease];
-    dict[KEY_GUID] = [[origGuid copy] autorelease];;
+    if (preserveName) {
+        dict[KEY_NAME] = [[origProfile[KEY_NAME] copy] autorelease];
+    }
+    dict[KEY_GUID] = [[origGuid copy] autorelease];
     
     // Change the dict in the sessions bookmarks so that if you copy it back, it gets copied to
     // the new profile.
     dict[KEY_ORIGINAL_GUID] = [[bookmark[KEY_GUID] copy] autorelease];
     [[ProfileModel sessionsInstance] setBookmark:dict withGuid:origGuid];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
+                                                        object:nil
+                                                      userInfo:nil];
 }
 
 - (void)moveGuid:(NSString*)guid toRow:(int)destinationRow

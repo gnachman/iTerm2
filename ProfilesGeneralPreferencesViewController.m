@@ -170,10 +170,9 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
         Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         Profile *origProfile = [self.delegate profilePreferencesCurrentProfile];
         NSString* origGuid = origProfile[KEY_GUID];
-        [[ProfileModel sessionsInstance] setProfilePreservingNameAndGuidWithGuid:origGuid
-                                                                     fromProfile:bookmark];
-        
-        [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
+        [[ProfileModel sessionsInstance] setProfilePreservingGuidWithGuid:origGuid
+                                                              fromProfile:bookmark];
+        [self reloadProfile];
     }
 }
 
