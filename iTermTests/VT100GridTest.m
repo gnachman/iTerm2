@@ -600,6 +600,106 @@ do { \
     assert(grid.cursorX == 2);
 }
 
+// Make sure that moveCursorLeft wraps around soft EOLs
+- (void)testMoveCursorLeftWrappingAroundSoftEOL {
+    VT100Grid *grid = [self mediumGrid]; // 4x4
+
+    NSString *string = @"abcdef";
+    screen_char_t *line = [self screenCharLineForString:string];
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    [grid appendCharsAtCursor:line
+                       length:[string length]
+      scrollingIntoLineBuffer:lineBuffer
+          unlimitedScrollback:YES
+      useScrollbackWithRegion:NO
+                   wraparound:YES
+                         ansi:NO
+                       insert:NO];
+    assert([[grid compactLineDump] isEqualToString:
+            @"abcd\n"
+            @"ef..\n"
+            @"....\n"
+            @"...."]);
+
+    assert(grid.cursorX == 2);
+    assert(grid.cursorY == 1);
+    [grid moveCursorLeft:4];
+    assert(grid.cursorX == 2);
+    assert(grid.cursorY == 0);
+}
+
+// Make sure that moveCursorLeft wraps around soft EOLs
+- (void)testMoveCursorLeftWrappingAroundDoubleWideCharEOL {
+    VT100Grid *grid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(3, 3)
+                                              delegate:self] autorelease];
+
+    NSString *string = @"abc-";  // c is double-width
+    screen_char_t *line = [self screenCharLineForString:string];
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    [grid appendCharsAtCursor:line
+                       length:[string length]
+      scrollingIntoLineBuffer:lineBuffer
+          unlimitedScrollback:YES
+      useScrollbackWithRegion:NO
+                   wraparound:YES
+                         ansi:NO
+                       insert:NO];
+    assert([[grid compactLineDump] isEqualToString:
+            @"ab>\n"
+            @"c-.\n"
+            @"..."]);
+
+    assert(grid.cursorX == 2);
+    assert(grid.cursorY == 1);
+    [grid moveCursorLeft:4];
+    assert(grid.cursorX == 1);
+    assert(grid.cursorY == 0);
+}
+
+// Make sure that moveCursorLeft wraps around soft EOLs
+- (void)testMoveCursorLeftNotWrappingAroundHardEOL {
+    VT100Grid *grid = [self mediumGrid]; // 4x4
+
+    NSString *string = @"abc";
+    screen_char_t *line = [self screenCharLineForString:string];
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    [grid appendCharsAtCursor:line
+                       length:[string length]
+      scrollingIntoLineBuffer:lineBuffer
+          unlimitedScrollback:YES
+      useScrollbackWithRegion:NO
+                   wraparound:YES
+                         ansi:NO
+                       insert:NO];
+    [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
+                                   unlimitedScrollback:YES
+                               useScrollbackWithRegion:NO];
+    grid.cursorX = 0;
+
+    string = @"d";
+    line = [self screenCharLineForString:string];
+    [grid appendCharsAtCursor:line
+                       length:[string length]
+      scrollingIntoLineBuffer:lineBuffer
+          unlimitedScrollback:YES
+      useScrollbackWithRegion:NO
+                   wraparound:YES
+                         ansi:NO
+                       insert:NO];
+
+    assert([[grid compactLineDump] isEqualToString:
+            @"abc.\n"
+            @"d...\n"
+            @"....\n"
+            @"...."]);
+
+    assert(grid.cursorX == 1);
+    assert(grid.cursorY == 1);
+    [grid moveCursorLeft:4];
+    assert(grid.cursorX == 0);
+    assert(grid.cursorY == 1);
+}
+
 - (void)testMoveCursorRight {
     VT100Grid *grid = [self mediumGrid];
     grid.cursorX = 2;
@@ -2375,6 +2475,37 @@ do { \
                                               expect:@"abcd!\n"
                                                      @"xyz.!"
                                         expectCursor:VT100GridCoordMake(3, 0)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    // Overwriting a DWC_SKIP converts EOL_DWC to EOL_SOFT
+    isAnsi_ = NO;
+    wraparoundMode_ = YES;
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abc>>\n"
+                                                     @"D-..!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"d"
+                                                  at:VT100GridCoordMake(3, 0)
+                                              expect:@"abcd+\n"
+                                                     @"D-..!"
+                                        expectCursor:VT100GridCoordMake(4, 0)
+                                    expectLineBuffer:@""
+                                       expectDropped:0];
+
+    isAnsi_ = NO;
+    wraparoundMode_ = YES;
+    [self doAppendCharsAtCursorTestWithInitialBuffer:@"abc>>\n"
+                                                     @"D-..!"
+                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
+                             useScrollbackWithRegion:YES
+                                 unlimitedScrollback:NO
+                                           appending:@"def"
+                                                  at:VT100GridCoordMake(3, 0)
+                                              expect:@"abcd+\n"
+                                                     @"ef..!"
+                                        expectCursor:VT100GridCoordMake(2, 1)
                                     expectLineBuffer:@""
                                        expectDropped:0];
 }
