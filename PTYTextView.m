@@ -545,7 +545,7 @@ static NSImage* alertImage;
     NSDictionary *theAttributes =
         @{ NSBackgroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapBackground],
            NSForegroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapForeground],
-           NSFontAttributeName: [self nonAsciiFont] ?: [NSFont systemFontOfSize:12],
+           NSFontAttributeName: self.nonAsciiFont ?: [NSFont systemFontOfSize:12],
            NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle | NSUnderlineByWordMask) };
 
     [self setMarkedTextAttributes:theAttributes];
@@ -841,6 +841,10 @@ static NSImage* alertImage;
 - (NSFont *)nonAsciiFont
 {
     return _useNonAsciiFont ? secondaryFont.font : primaryFont.font;
+}
+
+- (NSFont *)nonAsciiFontEvenIfNotUsed {
+    return secondaryFont.font;
 }
 
 + (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(double)hspace verticalSpacing:(double)vspace baseline:(double*)baseline
