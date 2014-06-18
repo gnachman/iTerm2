@@ -5493,7 +5493,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenSetBackgroundImageFile:(NSString *)filename {
-    if (![[NSFileManager defaultManager] fileExistsAtPath:filename]) {
+    filename = [filename stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+    if (!filename || ![[NSFileManager defaultManager] fileExistsAtPath:filename]) {
         return;
     }
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
