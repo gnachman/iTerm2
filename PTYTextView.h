@@ -222,6 +222,9 @@ typedef enum {
 @property(nonatomic, readonly) NSFont *font;
 @property(nonatomic, readonly) NSFont *nonAsciiFont;
 
+// Returns the non-ascii font, even if it's not being used.
+@property(nonatomic, readonly) NSFont *nonAsciiFontEvenIfNotUsed;
+
 // Size of a character.
 @property(nonatomic, readonly) double lineHeight;
 @property(nonatomic, readonly) double charWidth;

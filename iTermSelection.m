@@ -28,7 +28,7 @@
 - (BOOL)containsCoord:(VT100GridCoord)coord {
     VT100GridCoord start = VT100GridCoordRangeMin(_range.coordRange);
     VT100GridCoord end = VT100GridCoordRangeMax(_range.coordRange);
-    
+
     BOOL contained = NO;
     if (_selectionMode == kiTermSelectionModeBox) {
         int left = MIN(start.x, end.x);
@@ -41,7 +41,7 @@
         long long coordPos = (long long)coord.y * w + coord.x;
         long long minPos = (long long)start.y * w + start.x;
         long long maxPos = (long long)end.y * w + end.x;
-        
+
         contained = coordPos >= minPos && coordPos < maxPos;
     }
     if (_range.columnWindow.length) {
@@ -171,12 +171,12 @@
     _live = YES;
     _appending = NO;
     _extend = YES;
-    
+
     if ([self liveRangeIsFlipped]) {
         // Make sure range is not flipped.
         [self flip];
     }
-    
+
     VT100GridWindowedRange range = [self rangeForCurrentModeAtCoord:coord
                                               includeParentheticals:YES];
     // TODO support range.
@@ -233,7 +233,7 @@
         }
     }
     [self extendPastNulls];
-    [_delegate selectionDidChange:self];
+    [_delegate selectionDidChange:[[self retain] autorelease]];
 }
 
  - (VT100GridWindowedRange)rangeForCurrentModeAtCoord:(VT100GridCoord)coord
@@ -254,19 +254,19 @@
                  windowedRange = [_delegate selectionRangeForWordAt:coord];
              }
              break;
-             
+
          case kiTermSelectionModeWholeLine:
              windowedRange.coordRange = [_delegate selectionRangeForWrappedLineAt:coord];
              break;
-             
+
          case kiTermSelectionModeSmart:
              windowedRange = [_delegate selectionRangeForSmartSelectionAt:coord];
              break;
-             
+
          case kiTermSelectionModeLine:
              windowedRange.coordRange = [_delegate selectionRangeForLineAt:coord];
              break;
-             
+
          case kiTermSelectionModeCharacter:
          case kiTermSelectionModeBox:
              windowedRange.coordRange = VT100GridCoordRangeMake(coord.x, coord.y, coord.x, coord.y);
@@ -274,7 +274,7 @@
      }
      return windowedRange;
  }
-                             
+
 - (void)beginSelectionAt:(VT100GridCoord)coord
                     mode:(iTermSelectionMode)mode
                   resume:(BOOL)resume
@@ -289,7 +289,7 @@
     } else {
         _appending = append;
     }
-    
+
     if (!_appending) {
         [_subSelections removeAllObjects];
     }
@@ -302,7 +302,7 @@
 
     DLog(@"Begin selection, range=%@", VT100GridWindowedRangeDescription(_range));
     [self extendPastNulls];
-    [_delegate selectionDidChange:self];
+    [_delegate selectionDidChange:[[self retain] autorelease]];
 }
 
 - (void)endLiveSelection {
@@ -349,8 +349,8 @@
     _range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
     _extend = NO;
     _live = NO;
-    
-    [_delegate selectionDidChange:self];
+
+    [_delegate selectionDidChange:[[self retain] autorelease]];
 }
 
 - (BOOL)haveLiveSelection {
@@ -358,7 +358,7 @@
             _range.coordRange.start.x != -1 &&
             VT100GridCoordRangeLength(_range.coordRange, [self width]) > 0);
 }
-    
+
 - (BOOL)extending {
     return _extend;
 }
@@ -367,7 +367,7 @@
     DLog(@"Clear selection");
     _range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
     [_subSelections removeAllObjects];
-    [_delegate selectionDidChange:self];
+    [_delegate selectionDidChange:[[self retain] autorelease]];
 }
 
 - (VT100GridWindowedRange)liveRange {
@@ -398,7 +398,7 @@
         coord.x = coord.y = 0;
     }
     VT100GridWindowedRange range = [self rangeForCurrentModeAtCoord:coord includeParentheticals:NO];
-    
+
     if (!_live) {
         [self beginSelectionAt:coord mode:self.selectionMode resume:NO append:NO];
     }
@@ -407,7 +407,7 @@
         case kiTermSelectionModeCharacter:
             _range.coordRange.end = coord;
             break;
-            
+
         case kiTermSelectionModeLine:
         case kiTermSelectionModeSmart:
         case kiTermSelectionModeWholeLine:
@@ -418,7 +418,7 @@
 
     _extend = YES;
     [self extendPastNulls];
-    [_delegate selectionDidChange:self];
+    [_delegate selectionDidChange:[[self retain] autorelease]];
 }
 
 - (void)moveSelectionEndpointToRange:(VT100GridWindowedRange)range {
@@ -480,7 +480,7 @@
 - (void)moveUpByLines:(int)numLines {
     _range.coordRange.start.y -= numLines;
     _range.coordRange.end.y -= numLines;
-    
+
     if (_range.coordRange.start.y < 0 || _range.coordRange.end.y < 0) {
         [self clearSelection];
     }
@@ -504,7 +504,7 @@
             contained = !contained;
         }
     }
-    
+
     return contained;
 }
 
@@ -523,7 +523,7 @@
 
 - (void)setSelectedRange:(VT100GridWindowedRange)selectedRange {
     _range = selectedRange;
-    [_delegate selectionDidChange:self];
+    [_delegate selectionDidChange:[[self retain] autorelease]];
 }
 
 - (id)copyWithZone:(NSZone *)zone {
@@ -534,10 +534,10 @@
     theCopy->_extend = _extend;
     [theCopy->_subSelections addObjectsFromArray:_subSelections];
     theCopy->_resumable = _resumable;
-    
+
     theCopy.delegate = _delegate;
     theCopy.selectionMode = _selectionMode;
-    
+
     return theCopy;
 }
 
@@ -555,7 +555,7 @@
     VT100GridWindowedRange unflippedRange = [self unflippedRangeForRange:range];
     VT100GridRange nulls =
         [_delegate selectionRangeOfTerminalNullsOnLine:unflippedRange.coordRange.start.y];
-    
+
     // Fix the beginning of the range (start if unflipped, end if flipped)
     if (unflippedRange.coordRange.start.x > nulls.location) {
         if ([self rangeIsFlipped:range]) {
@@ -564,7 +564,7 @@
             range.coordRange.start.x = nulls.location;
         }
     }
-    
+
     // Fix the terminus of the range (end if unflipped, start if flipped)
     nulls = [_delegate selectionRangeOfTerminalNullsOnLine:unflippedRange.coordRange.end.y];
     if (unflippedRange.coordRange.end.x > nulls.location) {
@@ -656,7 +656,7 @@
                                   withObject:[iTermSubSelection subSelectionWithRange:firstRange
                                                                                  mode:mode]];
     }
-    [_delegate selectionDidChange:self];
+    [_delegate selectionDidChange:[[self retain] autorelease]];
 }
 
 - (void)setLastRange:(VT100GridWindowedRange)lastRange mode:(iTermSelectionMode)mode {
@@ -669,7 +669,7 @@
         [_subSelections addObject:[iTermSubSelection subSelectionWithRange:lastRange
                                                                       mode:mode]];
     }
-    [_delegate selectionDidChange:self];
+    [_delegate selectionDidChange:[[self retain] autorelease]];
 }
 
 - (void)addSubSelection:(iTermSubSelection *)sub {
@@ -677,7 +677,7 @@
         sub.range = [self rangeByExtendingRangePastNulls:sub.range];
     }
     [_subSelections addObject:sub];
-    [_delegate selectionDidChange:self];
+    [_delegate selectionDidChange:[[self retain] autorelease]];
 }
 
 - (void)removeWindowsWithWidth:(int)width {
@@ -786,7 +786,7 @@
         // And values in theSet that don't intersect indexes should be added to indexes.
         NSMutableIndexSet *indexesToAdd = [NSMutableIndexSet indexSetWithIndexesInRange:theRange];
         NSMutableIndexSet *indexesToRemove = [NSMutableIndexSet indexSet];
-        
+
         [indexes enumerateRangesInRange:theRange options:0 usingBlock:^(NSRange innerRange, BOOL *stop) {
             // innerRange exists in both indexes and theRange
             [indexesToRemove addIndexesInRange:innerRange];
@@ -821,7 +821,7 @@
         block(sub.range, &stop, NO);
         return;
     }
-    
+
     // NOTE: This assumes a 64-bit platform, otherwise the NSUInteger type used by index set would
     // overflow too quickly.
     assert(sizeof(NSUInteger) >= 8);
@@ -839,7 +839,7 @@
                                                     block:^(VT100GridCoordRange outerRange) {
             theRange = NSMakeRange(outerRange.start.x + outerRange.start.y * width,
                                    VT100GridCoordRangeLength(outerRange, width));
-            
+
             NSMutableIndexSet *indexesToAdd = [NSMutableIndexSet indexSetWithIndexesInRange:theRange];
             NSMutableIndexSet *indexesToRemove = [NSMutableIndexSet indexSet];
             [indexes enumerateRangesInRange:theRange options:0 usingBlock:^(NSRange range, BOOL *stop) {
@@ -849,7 +849,7 @@
             }];
             [indexes removeIndexes:indexesToRemove];
             [indexes addIndexes:indexesToAdd];
-                                           
+
             // In multipart windowed ranges, add connectors for the endpoint of all but the last
             // range. Each enumerated range is on its own line.
             if (outer.range.columnWindow.length &&
@@ -859,7 +859,7 @@
             }
         }];
     }
-    
+
     // enumerateRangesUsingBlock doesn't guarantee the ranges come in order, so put them in an array
     // and then sort it.
     NSMutableArray *allRanges = [NSMutableArray array];

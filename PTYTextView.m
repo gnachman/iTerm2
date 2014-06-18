@@ -545,7 +545,7 @@ static NSImage* alertImage;
     NSDictionary *theAttributes =
         @{ NSBackgroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapBackground],
            NSForegroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapForeground],
-           NSFontAttributeName: [self nonAsciiFont] ?: [NSFont systemFontOfSize:12],
+           NSFontAttributeName: self.nonAsciiFont ?: [NSFont systemFontOfSize:12],
            NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle | NSUnderlineByWordMask) };
 
     [self setMarkedTextAttributes:theAttributes];
@@ -841,6 +841,10 @@ static NSImage* alertImage;
 - (NSFont *)nonAsciiFont
 {
     return _useNonAsciiFont ? secondaryFont.font : primaryFont.font;
+}
+
+- (NSFont *)nonAsciiFontEvenIfNotUsed {
+    return secondaryFont.font;
 }
 
 + (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(double)hspace verticalSpacing:(double)vspace baseline:(double*)baseline
@@ -6089,7 +6093,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 thisCharString = @"I";
             }
             if (inUnderlinedRange && !self.currentUnderlineHostname) {
-                attrs.color = [NSColor colorWithCalibratedRed:0.023 green:0.270 blue:0.678 alpha:1];
+                attrs.color = [_colorMap colorForKey:kColorMapLink];
             }
             if (!currentRun) {
                 firstRun = currentRun = malloc(sizeof(CRun));

@@ -1993,11 +1993,13 @@ typedef enum {
                               @(kColorMapSelection): KEY_SELECTION_COLOR,
                               @(kColorMapSelectedText): KEY_SELECTED_TEXT_COLOR,
                               @(kColorMapBold): KEY_BOLD_COLOR,
+                              @(kColorMapLink): KEY_LINK_COLOR,
                               @(kColorMapCursor): KEY_CURSOR_COLOR,
                               @(kColorMapCursorText): KEY_CURSOR_TEXT_COLOR };
     for (NSNumber *colorKey in keyMap) {
         NSString *profileKey = keyMap[colorKey];
-        NSColor *theColor = [ITAddressBookMgr decodeColor:aDict[profileKey]];
+        NSColor *theColor = [[iTermProfilePreferences objectForKey:profileKey
+                                                         inProfile:aDict] colorValue];
         [_colorMap setColor:theColor forKey:[colorKey intValue]];
     }
 
@@ -2827,10 +2829,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSWindow *window = [[[self tab] realParentWindow] window];
     DLog(@"Before:\n%@", [window.contentView iterm_recursiveDescription]);
     DLog(@"Window frame: %@", window);
-    if ([[_textview font] isEqualTo:font] &&
-        [[_textview nonAsciiFont] isEqualTo:nonAsciiFont] &&
+    if ([_textview.font isEqualTo:font] &&
+        [_textview.nonAsciiFontEvenIfNotUsed isEqualTo:nonAsciiFont] &&
         [_textview horizontalSpacing] == horizontalSpacing &&
         [_textview verticalSpacing] == verticalSpacing) {
+        // There's an unfortunate problem that this is a band-aid over.
+        // If you change some attribute of a profile that causes sessions to reload their profiles
+        // with the kReloadAllProfiles notification, then each profile will call this in turn,
+        // and it may be a no-op for all of them. If each calls -[PseudoTerminal fitWindowToTab:[self tab]]
+        // and different tabs come up with slightly different ideal sizes (e.g., because they
+        // have different split pane layouts) then the window may shrink by a few pixels for each
+        // session.
         return;
     }
     DLog(@"Line height was %f", (float)[_textview lineHeight]);
@@ -2885,16 +2894,15 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (!fontChangeNotificationInProgress) {
         fontChangeNotificationInProgress = YES;
         [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxFontChanged
-                                                            object:[NSArray arrayWithObjects:[_textview font],
-                                                                    [_textview nonAsciiFont],
-                                                                    [NSNumber numberWithDouble:[_textview horizontalSpacing]],
-                                                                    [NSNumber numberWithDouble:[_textview verticalSpacing]],
-                                                                    nil]];
+                                                            object:@[ _textview.font,
+                                                                      _textview.nonAsciiFontEvenIfNotUsed,
+                                                                      @(_textview.horizontalSpacing),
+                                                                      @(_textview.verticalSpacing) ]];
         fontChangeNotificationInProgress = NO;
-        [PTYTab setTmuxFont:[_textview font]
-               nonAsciiFont:[_textview nonAsciiFont]
-                   hSpacing:[_textview horizontalSpacing]
-                   vSpacing:[_textview verticalSpacing]];
+        [PTYTab setTmuxFont:_textview.font
+               nonAsciiFont:_textview.nonAsciiFontEvenIfNotUsed
+                   hSpacing:_textview.horizontalSpacing
+                   vSpacing:_textview.verticalSpacing];
         [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionTmuxFontDidChange
                                                             object:nil];
     }
@@ -2909,8 +2917,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (dir) {
         // Grow or shrink
         DLog(@"grow/shrink");
-        font = [self fontWithRelativeSize:dir from:[_textview font]];
-        nonAsciiFont = [self fontWithRelativeSize:dir from:[_textview nonAsciiFont]];
+        font = [self fontWithRelativeSize:dir from:_textview.font];
+        nonAsciiFont = [self fontWithRelativeSize:dir from:_textview.nonAsciiFontEvenIfNotUsed];
         hs = [_textview horizontalSpacing];
         vs = [_textview verticalSpacing];
     } else {

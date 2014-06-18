@@ -17,8 +17,9 @@ const int kColorMapSelectedText = 4;
 const int kColorMapCursor = 5;
 const int kColorMapCursorText = 6;
 const int kColorMapInvalid = 7;
+const int kColorMapLink = 8;
 // This value plus 0...255 are accepted.
-const int kColorMap8bitBase = 8;
+const int kColorMap8bitBase = 9;
 // This value plus 0...2^24-1 are accepted as read-only keys. These must be the highest-valued keys.
 const int kColorMap24bitBase = kColorMap8bitBase + 256;
 

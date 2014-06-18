@@ -19,6 +19,7 @@ typedef int iTermColorMapKey;
 extern const int kColorMapForeground;
 extern const int kColorMapBackground;
 extern const int kColorMapBold;
+extern const int kColorMapLink;
 extern const int kColorMapSelection;
 extern const int kColorMapSelectedText;
 extern const int kColorMapCursor;
