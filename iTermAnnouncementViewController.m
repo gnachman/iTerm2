@@ -11,10 +11,10 @@
 
 @interface iTermAnnouncementViewController ()
 @property(nonatomic, copy) NSArray *actions;
+@property(nonatomic, assign) iTermAnnouncementViewStyle style;
 @end
 
 @implementation iTermAnnouncementViewController {
-    iTermAnnouncementViewStyle _style;
     BOOL _dismissing;
 }
 
@@ -26,6 +26,7 @@
     announcement.title = title;
     announcement.actions = actions;
     announcement.completion = completion;
+    announcement.style = style;
     return announcement;
 }
 
@@ -43,7 +44,7 @@
                                                                if (!_dismissing) {
                                                                    self.completion(index);
                                                                    [self dismiss];
-                                                               }  
+                                                               }
                                                            }];
 }
 

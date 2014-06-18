@@ -3082,6 +3082,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [delegate_ screenRequestAttention:request isCritical:YES];
 }
 
+- (void)terminalSetBackgroundImageFile:(NSString *)filename {
+    [delegate_ screenSetBackgroundImageFile:filename];
+}
+
 - (void)terminalSetForegroundColor:(NSColor *)color {
     [[delegate_ screenColorMap] setColor:color forKey:kColorMapForeground];
 }

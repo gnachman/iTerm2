@@ -9,7 +9,8 @@
 #import <Cocoa/Cocoa.h>
 
 typedef enum {
-    kiTermAnnouncementViewStyleWarning
+    kiTermAnnouncementViewStyleWarning,
+    kiTermAnnouncementViewStyleQuestion
 } iTermAnnouncementViewStyle;
 
 @interface iTermAnnouncementView : NSView
