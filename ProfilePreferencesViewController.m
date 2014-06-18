@@ -90,6 +90,10 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
                                                  selector:@selector(reloadProfiles)
                                                      name:kReloadAllProfiles
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(sessionProfileDidChange:)
+                                                     name:kSessionProfileDidChange
+                                                   object:nil];
     }
     return self;
 }
@@ -175,10 +179,14 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [_tabView selectTabViewItem:_generalTab];
 }
 
+- (void)reloadProfileInProfileViewControllers {
+    [[self tabViewControllers] makeObjectsPerformSelector:@selector(reloadProfile)];
+}
+
 - (void)openToProfileWithGuid:(NSString *)guid {
     [_profilesListView reloadData];
     if ([[self selectedProfile][KEY_GUID] isEqualToString:guid]) {
-        [[self tabViewControllers] makeObjectsPerformSelector:@selector(reloadProfile)];
+        [self reloadProfileInProfileViewControllers];
     } else {
         [self selectGuid:guid];
     }
@@ -211,13 +219,13 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     if (!_tabView.isHidden) {
         // Epilogue
         [self reloadData];
-        
+
         [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelDidUpdateProfileFields
                                                             object:nil
                                                           userInfo:nil];
     }
 
-    [[self tabViewControllers] makeObjectsPerformSelector:@selector(reloadProfile)];
+    [self reloadProfileInProfileViewControllers];
 }
 
 - (void)profileTableRowSelected:(id)profileTable {
@@ -448,7 +456,12 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
 - (void)reloadProfiles {
     [self refresh];
+}
 
+- (void)sessionProfileDidChange:(NSNotification *)notification {
+    if ([[notification object] isEqual:[self selectedProfile][KEY_GUID]]) {
+        [self reloadProfileInProfileViewControllers];
+    }
 }
 
 #pragma mark - Sheet

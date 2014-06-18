@@ -1950,6 +1950,8 @@ typedef enum {
     DLog(@"After session profile change overridden keys are: %@", _overriddenFields);
     [self setPreferencesFromAddressBookEntry:updatedProfile];
     [self setProfile:updatedProfile];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
+                                                        object:_profile[KEY_GUID]];
 }
 
 - (BOOL)reloadProfile
@@ -5491,17 +5493,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenSetBackgroundImageFile:(NSString *)filename {
+    if (![[NSFileManager defaultManager] fileExistsAtPath:filename]) {
+        return;
+    }
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     static NSString *kIdentifier = @"SetBackgroundImageFile";
     static NSString *kAllowedFilesKey = @"AlwaysAllowBackgroundImage";
     static NSString *kDeniedFilesKey = @"AlwaysDenyBackgroundImage";
     NSArray *allowedFiles = [userDefaults objectForKey:kAllowedFilesKey];
-    NSArray *deniedFiles = [userDefaults objectForKey:kAllowedFilesKey];
+    NSArray *deniedFiles = [userDefaults objectForKey:kDeniedFilesKey];
     if ([deniedFiles containsObject:filename]) {
         return;
     }
     if ([allowedFiles containsObject:filename]) {
-        [self setBackgroundImagePath:filename];
+        [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
         return;
     }
 
@@ -5520,20 +5525,28 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                     break;
 
                 case 0: // Yes
-                    [self setBackgroundImagePath:filename];
+                    [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
                     break;
 
-                case 1: // Always
-                    [userDefaults setObject:[[userDefaults objectForKey:kAllowedFilesKey] arrayByAddingObject:filename]
-                                     forKey:kAllowedFilesKey];
-                    [self setBackgroundImagePath:filename];
+                case 1: { // Always
+                    NSArray *allowed = [userDefaults objectForKey:kAllowedFilesKey];
+                    if (!allowed) {
+                        allowed = @[];
+                    }
+                    allowed = [allowed arrayByAddingObject:filename];
+                    [userDefaults setObject:allowed forKey:kAllowedFilesKey];
+                    [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
                     break;
-                    
-                case 2:  // Never
-                    [userDefaults setObject:[[userDefaults objectForKey:kDeniedFilesKey] arrayByAddingObject:filename]
-                                     forKey:kDeniedFilesKey];
+                }
+                case 2: {  // Never
+                    NSArray *denied = [userDefaults objectForKey:kDeniedFilesKey];
+                    if (!denied) {
+                        denied = @[];
+                    }
+                    denied = [denied arrayByAddingObject:filename];
+                    [userDefaults setObject:denied forKey:kDeniedFilesKey];
                     break;
-                    
+                }
             }
         }];
     [self queueAnnouncement:announcement identifier:kIdentifier];

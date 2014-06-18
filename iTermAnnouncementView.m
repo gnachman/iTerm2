@@ -165,7 +165,7 @@ static const CGFloat kMargin = 8;
             iconString = @"⚠";  // Warning sign
             break;
         case kiTermAnnouncementViewStyleQuestion:
-            iconString = @"?\u20e4";
+            return [NSImage imageNamed:@"QuestionMarkSign"];
             break;
     }
 

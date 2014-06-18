@@ -518,6 +518,10 @@
 		1DC2A1CD1949165D005769D5 /* Maximized.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2A1CA1949165D005769D5 /* Maximized.png */; };
 		1DC2A1CE1949165D005769D5 /* Maximized@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2A1CB1949165D005769D5 /* Maximized@2x.png */; };
 		1DC2A1CF1949165D005769D5 /* Maximized@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2A1CB1949165D005769D5 /* Maximized@2x.png */; };
+		1DC2AF5119521CFF005769D5 /* QuestionMarkSign.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2AF4F19521CFF005769D5 /* QuestionMarkSign.png */; };
+		1DC2AF5219521CFF005769D5 /* QuestionMarkSign.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2AF4F19521CFF005769D5 /* QuestionMarkSign.png */; };
+		1DC2AF5319521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2AF5019521CFF005769D5 /* QuestionMarkSign@2x.png */; };
+		1DC2AF5419521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2AF5019521CFF005769D5 /* QuestionMarkSign@2x.png */; };
 		1DC38818148E840700B89F7C /* SolidColorView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DC38816148E840600B89F7C /* SolidColorView.h */; };
 		1DC38819148E840700B89F7C /* SolidColorView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DC38817148E840700B89F7C /* SolidColorView.m */; };
 		1DC742A0127C96F90069594C /* IBarCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC7429F127C96F90069594C /* IBarCursor.png */; };
@@ -1264,6 +1268,8 @@
 		1DC13AC61886507D00034DAE /* CommandHistoryPopup.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CommandHistoryPopup.xib; sourceTree = "<group>"; };
 		1DC2A1CA1949165D005769D5 /* Maximized.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Maximized.png; path = images/Maximized.png; sourceTree = "<group>"; };
 		1DC2A1CB1949165D005769D5 /* Maximized@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Maximized@2x.png"; path = "images/Maximized@2x.png"; sourceTree = "<group>"; };
+		1DC2AF4F19521CFF005769D5 /* QuestionMarkSign.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = QuestionMarkSign.png; path = images/QuestionMarkSign.png; sourceTree = "<group>"; };
+		1DC2AF5019521CFF005769D5 /* QuestionMarkSign@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "QuestionMarkSign@2x.png"; path = "images/QuestionMarkSign@2x.png"; sourceTree = "<group>"; };
 		1DC38816148E840600B89F7C /* SolidColorView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = SolidColorView.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DC38817148E840700B89F7C /* SolidColorView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = SolidColorView.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DC393C317B59B08000EE0F2 /* SearchResult.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = SearchResult.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2127,6 +2133,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				1DC2AF4F19521CFF005769D5 /* QuestionMarkSign.png */,
+				1DC2AF5019521CFF005769D5 /* QuestionMarkSign@2x.png */,
 				1DC2A1CA1949165D005769D5 /* Maximized.png */,
 				1DC2A1CB1949165D005769D5 /* Maximized@2x.png */,
 				1DEF5E6B185F889600300319 /* Alert.png */,
@@ -3167,12 +3175,14 @@
 				1DB8FBCF19468A40006BAF5C /* AquaTabsSeparatorDown_vertical.png in Resources */,
 				1DB8FBCB19468A40006BAF5C /* AquaTabsDownNonKey_vertical.png in Resources */,
 				1DFA9D6818F37160008ADC98 /* iTermEditKeyActionWindowController.xib in Resources */,
+				1DC2AF5419521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */,
 				1DB8FBC719468A40006BAF5C /* AquaTabsBackground_vertical.png in Resources */,
 				1D03D424191419080049EB8F /* DirectoriesPopup.xib in Resources */,
 				1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */,
 				1DD39AEF180B8118004E56D5 /* Images.xcassets in Resources */,
 				1DEF5E6E185F889600300319 /* Alert.png in Resources */,
 				1D01609C1852AA6F0014D26A /* mark@2x.png in Resources */,
+				1DC2AF5219521CFF005769D5 /* QuestionMarkSign.png in Resources */,
 				1DB8FBD119468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
 				A6E713B718FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib in Resources */,
@@ -3200,7 +3210,9 @@
 				1D5FDD831208E91100C46BA3 /* iTerm.scriptTerminology in Resources */,
 				F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */,
 				1D5FDD891208E91100C46BA3 /* AquaTabNew.png in Resources */,
+				1DC2AF5119521CFF005769D5 /* QuestionMarkSign.png in Resources */,
 				1D5FDD8A1208E91100C46BA3 /* AquaTabNewPressed.png in Resources */,
+				1DC2AF5319521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */,
 				1D5FDD8B1208E91100C46BA3 /* AquaTabNewRollover.png in Resources */,
 				1D5FDD8C1208E91100C46BA3 /* AquaTabsBackground.png in Resources */,
 				1D5FDD8D1208E91100C46BA3 /* AquaTabsDown.png in Resources */,
