@@ -15,6 +15,118 @@
 					<key>Name</key>
 					<string>background color</string>
 				</dict>
+                                <key>ansiBlackColor</key>
+                                <dict>
+                                        <key>Description</key>
+                                        <string>Ansi black color</string>
+                                        <key>Name</key>
+                                        <string>ansi black color</string>
+                                </dict>
+                                <key>ansiRedColor</key>
+                                <dict>
+                                        <key>Description</key>
+                                        <string>Ansi red color</string>
+                                        <key>Name</key>
+                                        <string>ansi red color</string>
+                                </dict> 
+                                <key>ansiGreenColor</key>
+                                <dict>
+                                        <key>Description</key>
+                                        <string>Ansi green color</string>
+                                        <key>Name</key>
+                                        <string>ansi green color</string>
+                                </dict>         
+                                <key>ansiYellowColor</key>
+                                <dict>
+                                        <key>Description</key>
+                                        <string>Ansi yellow color</string>
+                                        <key>Name</key>
+                                        <string>ansi yellow color</string>
+                                </dict> 
+                                <key>ansiBlueColor</key>
+                                <dict>
+                                        <key>Description</key>
+                                        <string>Ansi blue color</string>
+                                        <key>Name</key>
+                                        <string>ansi blue color</string>
+                                </dict>
+                                <key>ansiMagentaColor</key>
+                                <dict>
+                                        <key>Description</key>
+                                        <string>Ansi magenta color</string>
+                                        <key>Name</key>
+                                        <string>ansi magenta color</string>
+                                </dict>
+                                <key>ansiCyanColor</key>
+                                <dict>
+                                        <key>Description</key>
+                                        <string>Ansi cyan color</string>
+                                        <key>Name</key>
+                                        <string>ansi cyan color</string>
+                                </dict> 
+                                <key>ansiWhiteColor</key>
+                                <dict>
+                                        <key>Description</key>
+                                        <string>Ansi white color</string>
+                                        <key>Name</key>
+                                        <string>ansi white color</string>
+                                </dict>         
+                                <key>ansiBrightBlackColor</key>
+                                <dict>
+                                        <key>Description</key>
+                                        <string>Ansi bright black color</string>
+                                        <key>Name</key>
+                                        <string>ansi bright black color</string>
+                                </dict>
+                                <key>ansiBrightRedColor</key>
+                                <dict>
+                                        <key>Description</key>
+                                        <string>Ansi bright red color</string>
+                                        <key>Name</key>
+                                        <string>ansi bright red color</string>
+                                </dict> 
+                                <key>ansiBrightGreenColor</key>
+                                <dict>
+                                        <key>Description</key>
+                                        <string>Ansi bright green color</string>
+                                        <key>Name</key>
+                                        <string>ansi bright green color</string>
+                                </dict>         
+                                <key>ansiBrightYellowColor</key>
+                                <dict>
+                                        <key>Description</key>
+                                        <string>Ansi bright yellow color</string>
+                                        <key>Name</key>
+                                        <string>ansi bright yellow color</string>
+                                </dict> 
+                                <key>ansiBrightBlueColor</key>
+                                <dict>
+                                        <key>Description</key>
+                                        <string>Ansi bright blue color</string>
+                                        <key>Name</key>
+                                        <string>ansi bright blue color</string>
+                                </dict>
+                                <key>ansiBrightMagentaColor</key>
+                                <dict>
+                                        <key>Description</key>
+                                        <string>Ansi bright magenta color</string>
+                                        <key>Name</key>
+                                        <string>ansi bright magenta color</string>
+                                </dict>
+                                <key>ansiBrightCyanColor</key>
+                                <dict>
+                                        <key>Description</key>
+                                        <string>Ansi bright cyan color</string>
+                                        <key>Name</key>
+                                        <string>ansi bright cyan color</string>
+                                </dict> 
+                                <key>ansiBrightWhiteColor</key>
+                                <dict>
+                                        <key>Description</key>
+                                        <string>Ansi bright white color</string>
+                                        <key>Name</key>
+                                        <string>ansi bright white color</string>
+                                </dict> 
 				<key>backgroundImagePath</key>
 				<dict>
 					<key>Description</key>

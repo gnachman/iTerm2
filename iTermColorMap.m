@@ -23,6 +23,16 @@ const int kColorMap8bitBase = 9;
 // This value plus 0...2^24-1 are accepted as read-only keys. These must be the highest-valued keys.
 const int kColorMap24bitBase = kColorMap8bitBase + 256;
 
+const int kColorMapAnsiBlack = kColorMap8bitBase + 0;
+const int kColorMapAnsiRed = kColorMap8bitBase + 1;
+const int kColorMapAnsiGreen = kColorMap8bitBase + 2;
+const int kColorMapAnsiYellow = kColorMap8bitBase + 3;
+const int kColorMapAnsiBlue = kColorMap8bitBase + 4;
+const int kColorMapAnsiMagenta = kColorMap8bitBase + 5;
+const int kColorMapAnsiCyan = kColorMap8bitBase + 6;
+const int kColorMapAnsiWhite = kColorMap8bitBase + 7;
+const int kColorMapAnsiBrightModifier = 8;
+
 @interface iTermColorMap ()
 @property(nonatomic, retain) NSMutableDictionary *dimmedColorCache;
 @property(nonatomic, retain) NSMutableDictionary *map;
