@@ -5974,6 +5974,138 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self setSessionSpecificProfileValues:@{ KEY_SELECTION_COLOR: [color dictionaryValue] }];
 }
 
+#pragma mark ANSI Colors
+
+- (NSColor *)ansiBlackColor {
+    return [_colorMap colorForKey:kColorMapAnsiBlack];
+}
+
+- (void)setAnsiBlackColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_0_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiRedColor {
+    return [_colorMap colorForKey:kColorMapAnsiRed];
+}
+
+- (void)setAnsiRedColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_1_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiGreenColor {
+    return [_colorMap colorForKey:kColorMapAnsiGreen];
+}
+
+- (void)setAnsiGreenColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_2_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiYellowColor {
+    return [_colorMap colorForKey:kColorMapAnsiYellow];
+}
+
+- (void)setAnsiYellowColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_3_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiBlueColor {
+    return [_colorMap colorForKey:kColorMapAnsiBlue];
+}
+
+- (void)setAnsiBlueColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_4_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiMagentaColor {
+    return [_colorMap colorForKey:kColorMapAnsiMagenta];
+}
+
+- (void)setAnsiMagentaColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_5_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiCyanColor {
+    return [_colorMap colorForKey:kColorMapAnsiCyan];
+}
+
+- (void)setAnsiCyanColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_6_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiWhiteColor {
+    return [_colorMap colorForKey:kColorMapAnsiWhite];
+}
+
+- (void)setAnsiWhiteColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_7_COLOR: [color dictionaryValue] }];
+}
+
+#pragma mark Ansi Bright Colors
+
+- (NSColor *)ansiBrightBlackColor {
+    return [_colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiBlack];
+}
+
+- (void)setAnsiBrightBlackColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_8_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiBrightRedColor {
+    return [_colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiRed];
+}
+
+- (void)setAnsiBrightRedColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_9_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiBrightGreenColor {
+    return [_colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiGreen];
+}
+
+- (void)setAnsiBrightGreenColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_10_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiBrightYellowColor {
+    return [_colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiYellow];
+}
+
+- (void)setAnsiBrightYellowColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_11_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiBrightBlueColor {
+    return [_colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiBlue];
+}
+
+- (void)setAnsiBrightBlueColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_12_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiBrightMagentaColor {
+    return [_colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiMagenta];
+}
+
+- (void)setAnsiBrightMagentaColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_13_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiBrightCyanColor {
+    return [_colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiCyan];
+}
+
+- (void)setAnsiBrightCyanColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_14_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiBrightWhiteColor {
+    return [_colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiWhite];
+}
+
+- (void)setAnsiBrightWhiteColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_15_COLOR: [color dictionaryValue] }];
+}
+
 #pragma mark - iTermPasteHelperDelegate
 
 - (void)pasteHelperWriteData:(NSData *)data {

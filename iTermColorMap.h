@@ -26,6 +26,22 @@ extern const int kColorMapCursorText;
 extern const int kColorMapInvalid;
 // This value plus 0...255 are accepted.
 extern const int kColorMap8bitBase;
+
+// The 8 basic ANSI colors, which are within the 8-bit color range. These are
+// the dark versions unless you add the bright modifier (add, don't OR).
+// These are the first colors in the 8-bit range starting at kColorMap8bitBase.
+extern const int kColorMapAnsiBlack;
+extern const int kColorMapAnsiRed;
+extern const int kColorMapAnsiGreen;
+extern const int kColorMapAnsiYellow;
+extern const int kColorMapAnsiBlue;
+extern const int kColorMapAnsiMagenta;
+extern const int kColorMapAnsiCyan;
+extern const int kColorMapAnsiWhite;
+
+// This can be added to the Ansi colors above to make them brighter.
+extern const int kColorMapAnsiBrightModifier;
+
 // This value plus 0...2^24-1 are accepted as read-only keys. These must be the highest-valued keys.
 extern const int kColorMap24bitBase;
 
