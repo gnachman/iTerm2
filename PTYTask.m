@@ -172,6 +172,23 @@ static void HandleSigChld(int n)
     return command_;
 }
 
+- (NSMutableDictionary *)environment {
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    extern char **environ;
+    for (int i = 0; environ[i]; i++) {
+        NSString *kvp = [NSString stringWithUTF8String:environ[i]];
+        NSRange equalsRange = [kvp rangeOfString:@"="];
+        if (equalsRange.location != NSNotFound) {
+            NSString *key = [kvp substringToIndex:equalsRange.location];
+            NSString *value = [kvp substringFromIndex:equalsRange.location + 1];
+            result[key] = value;
+        } else {
+            result[kvp] = @"";
+        }
+    }
+    return result;
+}
+
 - (void)launchWithPath:(NSString*)progpath
              arguments:(NSArray*)args
            environment:(NSDictionary*)env
@@ -214,22 +231,20 @@ static void HandleSigChld(int n)
         }
     }
     argv[max + 1] = NULL;
-    const int envsize = env.count;
-    const char *envKeys[envsize];
-    const char *envValues[envsize];
 
-    // This quiets an analyzer warning about envKeys[i] being uninitialized in setenv().
-    bzero(envKeys, sizeof(char *) * envsize);
-    bzero(envValues, sizeof(char *) * envsize);
-
-    // Copy values from env (our custom environment vars) into envDict
-    int i = 0;
+    NSMutableDictionary *environmentDict = [self environment];
     for (NSString *k in env) {
-        NSString *v = [env objectForKey:k];
-        envKeys[i] = [k UTF8String];
-        envValues[i] = [v UTF8String];
-        i++;
+        environmentDict[k] = env[k];
     }
+    char **environment = malloc(sizeof(char*) * (environmentDict.count + 1));
+    int i = 0;
+    for (NSString *k in environmentDict) {
+        NSString *temp = [NSString stringWithFormat:@"%@=%@", k, environmentDict[k]];
+        environment[i++] = strdup([temp UTF8String]);
+        NSLog(@"Environment var %d: %s", i, environment[i - 1]);
+    }
+    NSLog(@"argpath=%s", argpath);
+    environment[i] = NULL;
 
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
@@ -250,10 +265,11 @@ static void HandleSigChld(int n)
         }
 
         chdir(initialPwd);
-        for (i = 0; i < envsize; i++) {
-            // The analyzer warning below is an obvious lie.
-            setenv(envKeys[i], envValues[i], 1);
-        }
+
+        // Sub in our environ for the existing one. Since Mac OS doesn't have execvpe, this hack
+        // does the job.
+        extern char **environ;
+        environ = environment;
         execvp(argpath, (char* const*)argv);
 
         /* exec error */
@@ -271,6 +287,10 @@ static void HandleSigChld(int n)
                                 nil);
         return;
     }
+    for (int j = 0; j < i; j++) {
+        free(environment[j]);
+    }
+    free(environment);
 
     // Make sure the master side of the pty is closed on future exec() calls.
     fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
