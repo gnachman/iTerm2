@@ -253,7 +253,7 @@ typedef enum {
     // The last time at which a partial-line trigger check occurred. This keeps us from wasting CPU
     // checking long lines over and over.
     NSTimeInterval _lastPartialLineTriggerCheck;
-    
+
     // Maps announcement identifiers to view controllers.
     NSMutableDictionary *_announcements;
 
@@ -1950,6 +1950,8 @@ typedef enum {
     DLog(@"After session profile change overridden keys are: %@", _overriddenFields);
     [self setPreferencesFromAddressBookEntry:updatedProfile];
     [self setProfile:updatedProfile];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
+                                                        object:_profile[KEY_GUID]];
 }
 
 - (BOOL)reloadProfile
@@ -5490,6 +5492,67 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (void)screenSetBackgroundImageFile:(NSString *)filename {
+    filename = [filename stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+    if (!filename || ![[NSFileManager defaultManager] fileExistsAtPath:filename]) {
+        return;
+    }
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    static NSString *kIdentifier = @"SetBackgroundImageFile";
+    static NSString *kAllowedFilesKey = @"AlwaysAllowBackgroundImage";
+    static NSString *kDeniedFilesKey = @"AlwaysDenyBackgroundImage";
+    NSArray *allowedFiles = [userDefaults objectForKey:kAllowedFilesKey];
+    NSArray *deniedFiles = [userDefaults objectForKey:kDeniedFilesKey];
+    if ([deniedFiles containsObject:filename]) {
+        return;
+    }
+    if ([allowedFiles containsObject:filename]) {
+        [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
+        return;
+    }
+
+
+    NSString *title = [NSString stringWithFormat:@"Set background image to “%@”?", filename];
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcemenWithTitle:title
+                                                        style:kiTermAnnouncementViewStyleQuestion
+                                                  withActions:@[ @"Yes", @"Always", @"Never" ]
+                                                   completion:^(int selection) {
+            switch (selection) {
+                case -2:  // Dismiss programmatically
+                    break;
+
+                case -1: // No
+                    break;
+
+                case 0: // Yes
+                    [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
+                    break;
+
+                case 1: { // Always
+                    NSArray *allowed = [userDefaults objectForKey:kAllowedFilesKey];
+                    if (!allowed) {
+                        allowed = @[];
+                    }
+                    allowed = [allowed arrayByAddingObject:filename];
+                    [userDefaults setObject:allowed forKey:kAllowedFilesKey];
+                    [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
+                    break;
+                }
+                case 2: {  // Never
+                    NSArray *denied = [userDefaults objectForKey:kDeniedFilesKey];
+                    if (!denied) {
+                        denied = @[];
+                    }
+                    denied = [denied arrayByAddingObject:filename];
+                    [userDefaults setObject:denied forKey:kDeniedFilesKey];
+                    break;
+                }
+            }
+        }];
+    [self queueAnnouncement:announcement identifier:kIdentifier];
+}
+
 - (iTermColorMap *)screenColorMap {
     return _colorMap;
 }
@@ -5713,7 +5776,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             case kiTermWarningSelection0:
                 [_textview installShellIntegration:nil];
                 break;
-              
+
             default:
                 break;
         }
@@ -5743,7 +5806,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                                                case 0: // Yes
                                                                    [self tryToRunShellIntegrationInstaller];
                                                                    break;
-                                                                   
+
                                                                case 1: // Never for this account
                                                                    [userDefaults setBool:YES forKey:theKey];
                                                                    break;
@@ -5764,7 +5827,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self dismissAnnouncementWithIdentifier:identifier];
 
     _announcements[identifier] = announcement;
-    
+
     void (^originalCompletion)(int) = [announcement.completion copy];
     NSString *identifierCopy = [identifier copy];
     announcement.completion = ^(int selection) {

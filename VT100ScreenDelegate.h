@@ -218,4 +218,6 @@
 
 - (void)screenSuggestShellIntegrationUpgrade;
 
+- (void)screenSetBackgroundImageFile:(NSString *)filename;
+
 @end

@@ -99,6 +99,7 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotification";
 NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
 NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUpdateProfileFields";
+NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 
 @implementation PreferencePanel {
     ProfileModel *_profileModel;

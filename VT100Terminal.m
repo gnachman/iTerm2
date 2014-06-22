@@ -28,16 +28,16 @@
 @implementation VT100Terminal {
     // True if between BeginFile and EndFile codes.
     BOOL receivingFile_;
-    
+
     // In FinalTerm command mode (user is at the prompt typing a command).
     BOOL inCommand_;
 
     id<VT100TerminalDelegate> delegate_;
-    
+
     BOOL ansiMode_;         // YES=ANSI, NO=VT52
     BOOL xon_;               // YES=XON, NO=XOFF. Not currently used.
     BOOL numLock_;           // YES=ON, NO=OFF, default=YES;
-    
+
     int fgColorCode_;
     int fgGreen_;
     int fgBlue_;
@@ -47,7 +47,7 @@
     int bgBlue_;
     ColorMode bgColorMode_;
     BOOL bold_, italic_, under_, blink_, reversed_;
-    
+
     BOOL saveBold_, saveItalic_, saveUnder_, saveBlink_, saveReversed_;
     int saveCharset_;
     int saveForeground_;
@@ -60,7 +60,7 @@
     ColorMode saveBgColorMode_;
     BOOL saveOriginMode_;
     BOOL saveWraparoundMode_;
-    
+
     int sendModifiers_[NUM_MODIFIABLE_RESOURCES];
 }
 
@@ -137,7 +137,7 @@ static const int kMaxScreenRows = 4096;
         _encoding = NSASCIIStringEncoding;
         _parser = [[VT100Parser alloc] init];
         _parser.encoding = _encoding;
-        
+
         _wraparoundMode = YES;
         _autorepeatMode = YES;
         xon_ = YES;
@@ -695,19 +695,19 @@ static const int kMaxScreenRows = 4096;
                          3: CMY                  3                        YES
                          4: CMYK                 4                        YES
                          5: Indexed color        1                        NO
-                         
+
                          Optional paramters go at position 7 and 8, and indicate toleranace as an
                          integer; and color space (0=CIELUV, 1=CIELAB). Example:
-                         
+
                          CSI 38:2:255:128:64:0:5:1 m
-                         
+
                          Also accepted for xterm compatibility, but never with optional parameters:
                          CSI 38;2;255;128;64 m
-                         
+
                          Set the foreground color to red=255, green=128, blue=64 with a tolerance of
                          5 in the CIELAB color space. The 0 at the 6th position has no meaning and
                          is just a filler. */
-                        
+
                         if (token.csi->subCount[i] > 0) {
                             // Preferred syntax using colons to delimit subparameters
                             if (token.csi->subCount[i] >= 2 && token.csi->sub[i][0] == 5) {
@@ -970,7 +970,7 @@ static const int kMaxScreenRows = 4096;
         [delegate_ terminalHandleTmuxInput:token];
         return;
     }
-    
+
     // Handle sending input to pasteboard/receving files.
     if (receivingFile_) {
         if (token->type == VT100CC_BEL) {
@@ -1005,7 +1005,7 @@ static const int kMaxScreenRows = 4096;
             ![token.string hasPrefix:@"CopyToClipboard"]) {
             // Append text to clipboard except for initial command that turns on copying to
             // the clipboard.
-            
+
             [delegate_ terminalAppendDataToPasteboard:token.savedData];
         }
     }
@@ -1022,7 +1022,7 @@ static const int kMaxScreenRows = 4096;
                 SET_PARAM_DEFAULT(token.csi, 0, 0);
             }
             break;
-            
+
         default:
             break;
     }
@@ -1030,7 +1030,7 @@ static const int kMaxScreenRows = 4096;
     // Update internal state.
     [self executeModeUpdates:token];
     [self executeSGR:token];
-    
+
     // Farm out work to the delegate.
     switch (token->type) {
             // our special code
@@ -1505,7 +1505,7 @@ static const int kMaxScreenRows = 4096;
         case ITERM_GROWL:
             [delegate_ terminalPostGrowlNotification:token.string];
             break;
-            
+
         case XTERMCC_SET_KVP:
             [self executeXtermSetKvp:token];
             break;
@@ -1719,7 +1719,7 @@ static const int kMaxScreenRows = 4096;
                 dict[part] = @"";
             }
         }
-        
+
         NSString *widthString = dict[@"width"];
         VT100TerminalUnits widthUnits = kVT100TerminalUnitsCells;
         NSString *heightString = dict[@"height"];
@@ -1816,6 +1816,8 @@ static const int kMaxScreenRows = 4096;
         [delegate_ terminalCopyBufferToPasteboard];
     } else if ([key isEqualToString:@"RequestAttention"]) {
         [delegate_ terminalRequestAttention:[value boolValue]];  // true: request, false: cancel
+    } else if ([key isEqualToString:@"BackgroundImageFile"]) {
+        [delegate_ terminalSetBackgroundImageFile:value];
     }
 }
 
@@ -1914,7 +1916,7 @@ static const int kMaxScreenRows = 4096;
     if (args.count == 0) {
         return;
     }
-   
+
     NSString *command = args[0];
     if (command.length != 1) {
         return;
@@ -1924,7 +1926,7 @@ static const int kMaxScreenRows = 4096;
             // Sequence marking the start of the command prompt (FTCS_PROMPT_START)
             [delegate_ terminalPromptDidStart];
             break;
-            
+
         case 'B':
             // Sequence marking the start of the command read from the command prompt
             // (FTCS_COMMAND_START)
@@ -1933,7 +1935,7 @@ static const int kMaxScreenRows = 4096;
                 inCommand_ = YES;
             }
             break;
-            
+
         case 'C':
             // Sequence marking the end of the command read from the command prompt (FTCS_COMMAND_END)
             if (inCommand_) {
@@ -1941,7 +1943,7 @@ static const int kMaxScreenRows = 4096;
                 inCommand_ = NO;
             }
             break;
-            
+
         case 'D':
             // Return code of last command
             if (args.count >= 2) {
@@ -1962,7 +1964,7 @@ static const int kMaxScreenRows = 4096;
                 }
             }
             break;
-            
+
         case 'F':
             // Semantic text is ending.
             // First argument is same as 'D'.
@@ -1973,7 +1975,7 @@ static const int kMaxScreenRows = 4096;
                 }
             }
             break;
-            
+
         case 'G':
             // Update progress bar.
             // First argument: perecentage
@@ -1984,7 +1986,7 @@ static const int kMaxScreenRows = 4096;
                 int percent = [args[1] intValue];
                 double fraction = MAX(MIN(1, 100.0 / (double)percent), 0);
                 NSString *label = nil;
-                
+
                 if (args.count >= 3) {
                     label = args[2];
                 }

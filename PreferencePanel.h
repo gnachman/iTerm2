@@ -37,6 +37,7 @@ extern NSString *const kRefreshTerminalNotification;
 extern NSString *const kUpdateLabelsNotification;
 extern NSString *const kKeyBindingsChangedNotification;
 extern NSString *const kPreferencePanelDidUpdateProfileFields;
+extern NSString *const kSessionProfileDidChange;  // Posted by a session when it changes to update the Get Info window.
 
 // All profiles should be reloaded.
 extern NSString *const kReloadAllProfiles;
