@@ -172,21 +172,45 @@ static void HandleSigChld(int n)
     return command_;
 }
 
-- (NSMutableDictionary *)environment {
+// Returns a NSMutableDictionary containing the key-value pairs defined in the
+// global "environ" variable.
+- (NSMutableDictionary *)mutableEnvironmentDictionary {
     NSMutableDictionary *result = [NSMutableDictionary dictionary];
     extern char **environ;
-    for (int i = 0; environ[i]; i++) {
-        NSString *kvp = [NSString stringWithUTF8String:environ[i]];
-        NSRange equalsRange = [kvp rangeOfString:@"="];
-        if (equalsRange.location != NSNotFound) {
-            NSString *key = [kvp substringToIndex:equalsRange.location];
-            NSString *value = [kvp substringFromIndex:equalsRange.location + 1];
-            result[key] = value;
-        } else {
-            result[kvp] = @"";
+    if (environ != NULL) {
+        for (int i = 0; environ[i]; i++) {
+            NSString *kvp = [NSString stringWithUTF8String:environ[i]];
+            NSRange equalsRange = [kvp rangeOfString:@"="];
+            if (equalsRange.location != NSNotFound) {
+                NSString *key = [kvp substringToIndex:equalsRange.location];
+                NSString *value = [kvp substringFromIndex:equalsRange.location + 1];
+                result[key] = value;
+            } else {
+                result[kvp] = @"";
+            }
         }
     }
     return result;
+}
+
+// Returns an array of C strings terminated with a null pointer of the form
+// KEY=VALUE that is based on this process's "environ" variable. Values passed
+// in "env" are added or override existing environment vars. Both the returned
+// array and all string pointers within it are malloced and should be free()d
+// by the caller.
+- (char **)environWithOverrides:(NSDictionary *)env {
+    NSMutableDictionary *environmentDict = [self mutableEnvironmentDictionary];
+    for (NSString *k in env) {
+        environmentDict[k] = env[k];
+    }
+    char **environment = malloc(sizeof(char*) * (environmentDict.count + 1));
+    int i = 0;
+    for (NSString *k in environmentDict) {
+        NSString *temp = [NSString stringWithFormat:@"%@=%@", k, environmentDict[k]];
+        environment[i++] = strdup([temp UTF8String]);
+    }
+    environment[i] = NULL;
+    return environment;
 }
 
 - (void)launchWithPath:(NSString*)progpath
@@ -231,20 +255,7 @@ static void HandleSigChld(int n)
         }
     }
     argv[max + 1] = NULL;
-
-    NSMutableDictionary *environmentDict = [self environment];
-    for (NSString *k in env) {
-        environmentDict[k] = env[k];
-    }
-    char **environment = malloc(sizeof(char*) * (environmentDict.count + 1));
-    int i = 0;
-    for (NSString *k in environmentDict) {
-        NSString *temp = [NSString stringWithFormat:@"%@=%@", k, environmentDict[k]];
-        environment[i++] = strdup([temp UTF8String]);
-        NSLog(@"Environment var %d: %s", i, environment[i - 1]);
-    }
-    NSLog(@"argpath=%s", argpath);
-    environment[i] = NULL;
+    char **newEnviron = [self environWithOverrides:env];
 
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
@@ -269,7 +280,7 @@ static void HandleSigChld(int n)
         // Sub in our environ for the existing one. Since Mac OS doesn't have execvpe, this hack
         // does the job.
         extern char **environ;
-        environ = environment;
+        environ = newEnviron;
         execvp(argpath, (char* const*)argv);
 
         /* exec error */
@@ -287,10 +298,10 @@ static void HandleSigChld(int n)
                                 nil);
         return;
     }
-    for (int j = 0; j < i; j++) {
-        free(environment[j]);
+    for (int j = 0; newEnviron[j]; j++) {
+        free(newEnviron[j]);
     }
-    free(environment);
+    free(newEnviron);
 
     // Make sure the master side of the pty is closed on future exec() calls.
     fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
