@@ -572,6 +572,47 @@ static void reapchild(int n)
         return command_;
 }
 
+// Returns a NSMutableDictionary containing the key-value pairs defined in the
+// global "environ" variable.
+- (NSMutableDictionary *)mutableEnvironmentDictionary {
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    extern char **environ;
+    if (environ != NULL) {
+        for (int i = 0; environ[i]; i++) {
+            NSString *kvp = [NSString stringWithUTF8String:environ[i]];
+            NSRange equalsRange = [kvp rangeOfString:@"="];
+            if (equalsRange.location != NSNotFound) {
+                NSString *key = [kvp substringToIndex:equalsRange.location];
+                NSString *value = [kvp substringFromIndex:equalsRange.location + 1];
+                result[key] = value;
+            } else {
+                result[kvp] = @"";
+            }
+        }
+    }
+    return result;
+}
+
+// Returns an array of C strings terminated with a null pointer of the form
+// KEY=VALUE that is based on this process's "environ" variable. Values passed
+// in "env" are added or override existing environment vars. Both the returned
+// array and all string pointers within it are malloced and should be free()d
+// by the caller.
+- (char **)environWithOverrides:(NSDictionary *)env {
+    NSMutableDictionary *environmentDict = [self mutableEnvironmentDictionary];
+    for (NSString *k in env) {
+        environmentDict[k] = env[k];
+    }
+    char **environment = malloc(sizeof(char*) * (environmentDict.count + 1));
+    int i = 0;
+    for (NSString *k in environmentDict) {
+        NSString *temp = [NSString stringWithFormat:@"%@=%@", k, environmentDict[k]];
+        environment[i++] = strdup([temp UTF8String]);
+    }
+    environment[i] = NULL;
+    return environment;
+}
+
 - (void)launchWithPath:(NSString*)progpath
              arguments:(NSArray*)args
            environment:(NSDictionary*)env
@@ -609,17 +650,7 @@ static void reapchild(int n)
         }
     }
     argv[max + 1] = NULL;
-    const int envsize = env.count;
-    const char *envKeys[envsize];
-    const char *envValues[envsize];
-    // Copy values from env (our custom environment vars) into envDict
-    int i = 0;
-    for (NSString *k in env) {
-        NSString *v = [env objectForKey:k];
-        envKeys[i] = [k UTF8String];
-        envValues[i] = [v UTF8String];
-        i++;
-    }
+    char **newEnviron = [self environWithOverrides:env];
 
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
@@ -634,10 +665,10 @@ static void reapchild(int n)
         sigprocmask(SIG_UNBLOCK, &signals, NULL);
 
         chdir(initialPwd);
-        for (i = 0; i < envsize; i++) {
-            // The analyzer warning below is an obvious lie.
-            setenv(envKeys[i], envValues[i], 1);
-        }
+        // Sub in our environ for the existing one. Since Mac OS doesn't have execvpe, this hack
+        // does the job.
+        extern char **environ;
+        environ = newEnviron;
         execvp(argpath, (char* const*)argv);
 
         /* exec error */
@@ -657,6 +688,10 @@ static void reapchild(int n)
         }
         return;
     }
+    for (int j = 0; newEnviron[j]; j++) {
+        free(newEnviron[j]);
+    }
+    free(newEnviron);
 
     tty = [[NSString stringWithUTF8String:theTtyname] retain];
     NSParameterAssert(tty != nil);
