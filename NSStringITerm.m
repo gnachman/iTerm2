@@ -1179,6 +1179,16 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return height;
 }
 
+- (NSArray *)keyValuePair {
+    NSRange range = [self rangeOfString:@"="];
+    if (range.location == NSNotFound) {
+        return @[ self, @"" ];
+    } else {
+        return @[ [self substringToIndex:range.location],
+                  [self substringFromIndex:range.location + 1] ];
+    }
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

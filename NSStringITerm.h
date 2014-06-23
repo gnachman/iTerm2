@@ -128,6 +128,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // How tall is this string when rendered within a fixed width?
 - (CGFloat)heightWithAttributes:(NSDictionary *)attributes constrainedToWidth:(CGFloat)maxWidth;
 
+- (NSArray *)keyValuePair;
+
 @end
 
 @interface NSMutableString (iTerm)

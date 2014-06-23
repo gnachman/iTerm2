@@ -117,6 +117,8 @@ typedef enum {
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, retain) NSColor *cursorGuideColor;
 @property(nonatomic, copy) NSString *uniqueID;
+@property(nonatomic, copy) NSString *statusFormat;
+@property(nonatomic, retain) NSMutableDictionary *statusVars;
 @end
 
 @implementation PTYSession {
@@ -367,6 +369,8 @@ typedef enum {
     [_announcements release];
     [_queuedTokens release];
     [_uniqueID release];
+    [_statusFormat release];
+    [_statusVars release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -5553,8 +5557,21 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self queueAnnouncement:announcement identifier:kIdentifier];
 }
 
-- (void)screenSetBadge:(NSString *)badge {
-    _textview.badgeLabel = [badge stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+- (void)screenSetStatusFormat:(NSString *)theFormat {
+    self.statusFormat = [theFormat stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+    [self updateStatus];
+}
+
+- (void)screenSetStatusVar:(NSString *)kvpString {
+    NSArray *kvp = [kvpString keyValuePair];
+    if (kvp) {
+        _statusVars[kvp[0]] = kvp[1];
+    }
+    [self updateStatus];
+}
+
+- (void)updateStatus {
+    // TODO
 }
 
 - (iTermColorMap *)screenColorMap {

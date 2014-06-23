@@ -219,6 +219,6 @@
 - (void)screenSuggestShellIntegrationUpgrade;
 
 - (void)screenSetBackgroundImageFile:(NSString *)filename;
-- (void)screenSetBadge:(NSString *)badge;
+- (void)screenSetStatusFormat:(NSString *)theFormat;
 
 @end
