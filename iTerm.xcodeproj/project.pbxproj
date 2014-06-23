@@ -273,6 +273,9 @@
 		1D8B8A141806038F00C2DC25 /* VT100Grid.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8B8A121806038F00C2DC25 /* VT100Grid.h */; };
 		1D8B8A151806038F00C2DC25 /* VT100Grid.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8B8A131806038F00C2DC25 /* VT100Grid.m */; };
 		1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */; };
+		1D8CDF521958F31700FE1BEE /* iTermSizeRememberingView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8CDF501958F31700FE1BEE /* iTermSizeRememberingView.h */; };
+		1D8CDF531958F31700FE1BEE /* iTermSizeRememberingView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8CDF511958F31700FE1BEE /* iTermSizeRememberingView.m */; };
+		1D8CDF541958F31700FE1BEE /* iTermSizeRememberingView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8CDF511958F31700FE1BEE /* iTermSizeRememberingView.m */; };
 		1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8F396A13EB7A2C0025B80B /* BroadcastInput.png */; };
 		1D8FC67C17E67FA700A82402 /* shell_launcher.c in Sources */ = {isa = PBXBuildFile; fileRef = 1D8FC67B17E67FA700A82402 /* shell_launcher.c */; };
 		1D9053C617A5CCF100A0B64E /* MovingAverage.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9053C417A5CCF100A0B64E /* MovingAverage.h */; };
@@ -1166,6 +1169,8 @@
 		1D8B8A121806038F00C2DC25 /* VT100Grid.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100Grid.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D8B8A131806038F00C2DC25 /* VT100Grid.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Grid.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = EncodingsWithLowerCase.plist; sourceTree = "<group>"; };
+		1D8CDF501958F31700FE1BEE /* iTermSizeRememberingView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSizeRememberingView.h; sourceTree = "<group>"; };
+		1D8CDF511958F31700FE1BEE /* iTermSizeRememberingView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSizeRememberingView.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D8F396A13EB7A2C0025B80B /* BroadcastInput.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BroadcastInput.png; path = images/BroadcastInput.png; sourceTree = "<group>"; };
 		1D8FC67917E673A400A82402 /* shell_launcher.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = shell_launcher.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D8FC67B17E67FA700A82402 /* shell_launcher.c */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.c; path = shell_launcher.c; sourceTree = "<group>"; tabWidth = 4; };
@@ -2217,6 +2222,8 @@
 				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
 				1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */,
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
+				1D8CDF501958F31700FE1BEE /* iTermSizeRememberingView.h */,
+				1D8CDF511958F31700FE1BEE /* iTermSizeRememberingView.m */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -2988,6 +2995,7 @@
 				1DB67CF51486BD3D005849A1 /* TmuxStateParser.h in Headers */,
 				1DC38818148E840700B89F7C /* SolidColorView.h in Headers */,
 				1D7B9A691491D82F003A2A22 /* IntervalMap.h in Headers */,
+				1D8CDF521958F31700FE1BEE /* iTermSizeRememberingView.h in Headers */,
 				A68A30C6186D0F37007F550F /* SmartMatch.h in Headers */,
 				1DD6707714934ADE008E4361 /* PTYSplitView.h in Headers */,
 				1DD4CE8014A51C0D00ED182E /* TmuxDashboardController.h in Headers */,
@@ -3451,6 +3459,7 @@
 				A680AA1518CEA1040034D4F8 /* VT100TmuxParser.m in Sources */,
 				1D9A5530180FA70D00B42CE9 /* iTermController.m in Sources */,
 				1D53FD17181C4B4B00524D4F /* FindContext.m in Sources */,
+				1D8CDF541958F31700FE1BEE /* iTermSizeRememberingView.m in Sources */,
 				1DD39B11180B817B004E56D5 /* VT100GridTypes.m in Sources */,
 				1D9A5564180FA84700B42CE9 /* NSDateFormatterExtras.m in Sources */,
 				A6A2698A18FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m in Sources */,
@@ -3838,6 +3847,7 @@
 				1D085F8716F02E7400B7FCE9 /* PasteContext.m in Sources */,
 				1D085F8E16F0328B00B7FCE9 /* PasteViewController.m in Sources */,
 				1D085F9316F03E5400B7FCE9 /* PasteView.m in Sources */,
+				1D8CDF531958F31700FE1BEE /* iTermSizeRememberingView.m in Sources */,
 				1D085F9716F04D0900B7FCE9 /* NSBezierPath+iTerm.m in Sources */,
 				A682DE97190C5E7000BE8758 /* iTermProgressIndicator.m in Sources */,
 				A6AE1EDE192723F700780C19 /* iTermAnnouncementView.m in Sources */,

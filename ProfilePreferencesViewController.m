@@ -11,6 +11,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
 #import "PreferencePanel.h"
 #import "ProfileListView.h"
@@ -27,6 +28,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
 @interface ProfilePreferencesViewController () <
     iTermProfilePreferencesBaseViewControllerDelegate,
+    NSTabViewDelegate,
     ProfileListViewDelegate,
     ProfilesGeneralPreferencesViewControllerDelegate>
 @end
@@ -122,6 +124,8 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     if (!profile && [_profilesListView numberOfRows]) {
         [_profilesListView selectRowIndex:0];
     }
+
+    [_generalTab setView:_generalViewController.view];
 }
 
 #pragma mark - APIs
@@ -488,6 +492,23 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
 - (void)profilesGeneralPreferencesNameWillChange {
     [_profilesListView clearSearchField];
+}
+
+#pragma mark - NSTabViewDelegate
+
+- (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
+    iTermSizeRememberingView *theView = (iTermSizeRememberingView *)[tabViewItem view];
+    [theView resetToOriginalSize];
+    static const CGSize kMargin = { 9, 11 };
+    static const CGFloat kTabViewMinWidth = 579;
+    NSSize contentSize = NSMakeSize(NSMaxX(_profilesListView.frame) + kMargin.width + MAX(kTabViewMinWidth, 11 + theView.frame.size.width + 11) + kMargin.width,
+                                    kMargin.height + 9 + theView.frame.size.height + 10 + kMargin.width + 20);
+    NSWindow *window = self.view.window;
+    NSPoint windowTopLeft = NSMakePoint(NSMinX(window.frame), NSMaxY(window.frame));
+    NSRect frame = [window frameRectForContentRect:NSMakeRect(windowTopLeft.x, 0, contentSize.width, contentSize.height)];
+    frame.origin.y = windowTopLeft.y - frame.size.height;
+
+    [window setFrame:frame display:YES];
 }
 
 @end
