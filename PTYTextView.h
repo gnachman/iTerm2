@@ -356,6 +356,7 @@ typedef enum {
 - (void)saveDocumentAs:(id)sender;
 - (void)print:(id)sender;
 - (void)printContent:(NSString *)aString;
+- (void)printAttributedContent:(NSAttributedString *)aString;
 
 // Begins a new search. You may need to call continueFind repeatedly after this.
 - (void)findString:(NSString*)aString

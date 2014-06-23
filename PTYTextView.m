@@ -636,12 +636,18 @@ static NSImage* alertImage;
 
     if ([self window]) {
         trackingOptions = NSTrackingMouseEnteredAndExited | NSTrackingInVisibleRect | NSTrackingActiveAlways | NSTrackingEnabledDuringMouseDrag;
-        if (trackingArea) {
-            [self removeTrackingArea:trackingArea];
-        }
         if ([[_dataSource terminal] mouseMode] == MOUSE_REPORTING_ALL_MOTION ||
             ([NSEvent modifierFlags] & NSCommandKeyMask)) {
             trackingOptions |= NSTrackingMouseMoved;
+        }
+        if (trackingArea &&
+            NSEqualRects(trackingArea.rect, self.visibleRect) &&
+            trackingArea.options == trackingOptions) {
+            // Nothing would change.
+            return;
+        }
+        if (trackingArea) {
+            [self removeTrackingArea:trackingArea];
         }
         trackingArea = [[[NSTrackingArea alloc] initWithRect:[self visibleRect]
                                                      options:trackingOptions
@@ -4042,10 +4048,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                        isComplex:c.complexChar
                                       renderBold:&isBold
                                     renderItalic:&isItalic];
+    NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+    paragraphStyle.lineBreakMode = NSLineBreakByCharWrapping;
 
     return @{ NSForegroundColorAttributeName: fgColor,
               NSBackgroundColorAttributeName: bgColor,
               NSFontAttributeName: fontInfo.font,
+              NSParagraphStyleAttributeName: paragraphStyle,
               NSUnderlineStyleAttributeName: @(underlineStyle) };
 }
 
