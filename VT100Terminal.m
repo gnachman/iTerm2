@@ -1816,8 +1816,10 @@ static const int kMaxScreenRows = 4096;
         [delegate_ terminalCopyBufferToPasteboard];
     } else if ([key isEqualToString:@"RequestAttention"]) {
         [delegate_ terminalRequestAttention:[value boolValue]];  // true: request, false: cancel
-    } else if ([key isEqualToString:@"BackgroundImageFile"]) {
+    } else if ([key isEqualToString:@"SetBackgroundImageFile"]) {
         [delegate_ terminalSetBackgroundImageFile:value];
+    } else if ([key isEqualToString:@"SetBadge"]) {
+        [delegate_ terminalSetBadge:value];
     }
 }
 

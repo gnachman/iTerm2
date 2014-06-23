@@ -89,6 +89,8 @@ static const int kBroadcastMargin = 4;
 static const int kMaximizedMargin = 4;
 static const int kCoprocessMargin = 4;
 static const int kAlertMargin = 4;
+static const int kBadgeMargin = 4;
+static const int kBadgeRightMargin = 10;
 
 static NSImage* bellImage;
 static NSImage* wrapToTopImage;
@@ -106,6 +108,7 @@ static NSImage* alertImage;
 @property(nonatomic, retain) NSColor *cachedBackgroundColor;
 @property(nonatomic, retain) NSColor *unfocusedSelectionColor;
 @property(nonatomic, retain) Trouter *trouter;
+@property(nonatomic, retain) NSImage *badgeImage;
 
 - (NSRect)cursorRect;
 - (URLAction *)urlActionForClickAtX:(int)x
@@ -517,6 +520,8 @@ static NSImage* alertImage;
         [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
     }
     [_currentUnderlineHostname release];
+    [_badgeLabel release];
+    [_badgeImage release];
 
     [super dealloc];
 }
@@ -998,7 +1003,7 @@ NSMutableArray* screens=0;
 
     frameSize.height += VMARGIN;  // This causes a margin to be left at the top
     [[self superview] setFrameSize:frameSize];
-
+    self.badgeLabel = _badgeLabel;
     [_delegate textViewSizeDidChange];
 }
 
@@ -1777,7 +1782,11 @@ NSMutableArray* screens=0;
               self, drawRectDuration_.value, drawRectInterval_.value);
     }
     const NSRect frame = [self visibleRect];
-    double x = frame.origin.x + frame.size.width;
+    CGFloat badgeWidth = 0;
+    if (_badgeImage) {
+        badgeWidth = _badgeImage.size.width + kBadgeMargin + kBadgeRightMargin;
+    }
+    double x = frame.origin.x + frame.size.width - badgeWidth;
     if ([_delegate textViewIsMaximized]) {
         NSSize size = [maximizedImage size];
         x -= size.width + kMaximizedMargin;
@@ -5170,6 +5179,85 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     self.trouter.prefs = prefs;
 }
 
+- (void)setBadgeLabel:(NSString *)badgeLabel {
+    [_badgeLabel autorelease];
+    _badgeLabel = [badgeLabel copy];
+
+    if ([_badgeLabel length]) {
+        NSSize maxSize = self.enclosingScrollView.documentVisibleRect.size;
+        maxSize.width /= 3;  // Max size of image
+        maxSize.height /= 3;
+        NSFont *font = nil;
+        CGFloat min = 4, max = 100;
+        int points = (min + max / 2);
+        int prevPoints = -1;
+        NSSize sizeWithFont;
+        NSDictionary *attributes;
+        NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
+
+        // Compute a hue, brightness, and saturation that are visible but not
+        // overwhelming against the default background color when blended in at
+        // about 15%. This algorithm was determined experimentally and might
+        // not work well on all displays.
+        CGFloat hue = [backgroundColor hueComponent];
+        hue += 0.5 * [backgroundColor saturationComponent];
+        if (hue > 1) {
+            hue -= 1;
+        }
+        CGFloat brightness = [backgroundColor brightnessComponent];
+        const CGFloat kMinBrightnessDifference = 0.8;
+        CGFloat saturation = [backgroundColor saturationComponent];
+        if (saturation > 0.2 && saturation < 0.8 && brightness > 0.8) {
+            brightness -= kMinBrightnessDifference * 0.75;
+        } else if (saturation < 0.2 && brightness > 0.8) {
+            brightness -= 0.2;
+        } else if (brightness > 0.4) {
+            brightness -= kMinBrightnessDifference;
+        } else if (brightness < 0.4) {
+            brightness += kMinBrightnessDifference;
+        }
+        saturation = 0.75;
+        if (brightness > 0.8) {
+            saturation -= brightness - 0.8;
+        }
+        brightness = MIN(MAX(0, brightness), 1);
+        saturation = MAX(0, saturation);
+        NSColor *fillColor = [NSColor colorWithCalibratedHue:hue saturation:saturation brightness:brightness alpha:1];
+        NSFontManager *fontManager = [NSFontManager sharedFontManager];
+        while (points != prevPoints) {
+            font = [fontManager convertFont:[NSFont fontWithName:@"Helvetica" size:points]
+                                toHaveTrait:NSBoldFontMask];
+
+            attributes = @{ NSFontAttributeName: font,
+                            NSForegroundColorAttributeName: fillColor };
+            sizeWithFont = [badgeLabel sizeWithAttributes:attributes];
+            if (sizeWithFont.width > maxSize.width || sizeWithFont.height > maxSize.height) {
+                max = points;
+            } else if (sizeWithFont.width < maxSize.width && sizeWithFont.height < maxSize.height) {
+                min = points;
+            }
+            prevPoints = points;
+            points = (min + max) / 2;
+        }
+        if (sizeWithFont.width > 0 && sizeWithFont.height > 0) {
+            NSImage *image = [[NSImage alloc] initWithSize:sizeWithFont];
+            [image lockFocus];
+            NSMutableDictionary *temp = [[attributes mutableCopy] autorelease];
+            temp[NSStrokeWidthAttributeName] = @-2;
+            temp[NSStrokeColorAttributeName] = backgroundColor;
+            [badgeLabel drawAtPoint:NSZeroPoint withAttributes:temp];
+            [image unlockFocus];
+
+            self.badgeImage = image;
+        } else {
+            self.badgeImage = nil;
+        }
+    } else {
+        self.badgeImage = nil;
+    }
+    [self setNeedsDisplay:YES];
+}
+
 - (BOOL)growSelectionLeft
 {
     if (![_selection hasSelection]) {
@@ -6529,6 +6617,37 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [NSGraphicsContext restoreGraphicsState];
 }
 
+- (NSSize)drawBadgeInRect:(NSRect)rect {
+    NSImage *image = self.badgeImage;
+    if (!image) {
+        return NSZeroSize;
+    }
+    NSSize textViewSize = self.bounds.size;
+    NSSize visibleSize = [[self enclosingScrollView] documentVisibleRect].size;
+    NSSize imageSize = image.size;
+    NSRect destination = NSMakeRect(textViewSize.width - imageSize.width - kBadgeRightMargin,
+                                    textViewSize.height - visibleSize.height,
+                                    imageSize.width,
+                                    imageSize.height);
+    NSRect intersection = NSIntersectionRect(rect, destination);
+    if (intersection.size.width == 0 || intersection.size.height == 1) {
+        return NSZeroSize;
+    }
+    NSRect source = intersection;
+    source.origin.x -= destination.origin.x;
+    source.origin.y -= destination.origin.y;
+    source.origin.y = imageSize.height - (source.origin.y + source.size.height);
+
+    [image drawInRect:intersection
+             fromRect:source
+            operation:NSCompositeSourceOver
+             fraction:0.5
+       respectFlipped:YES
+                hints:nil];
+    imageSize.width += kBadgeMargin + kBadgeRightMargin;
+    return imageSize;
+}
+
 // Draw a run of background color/image and foreground text.
 - (void)drawRunStartingAtIndex:(const int)firstIndex  // Index into line of first char
                            row:(int)row               // Row number of line
@@ -6612,6 +6731,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
     }
     *defaultBgColorPtr = aColor;
+    [self drawBadgeInRect:bgRect];
 
     // Draw red stripes in the background if sending input to all sessions
     if (stripes) {
@@ -8505,6 +8625,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self updateScrollerForBackgroundColor];
         self.cachedBackgroundColor = nil;
         [[self enclosingScrollView] setBackgroundColor:[colorMap colorForKey:theKey]];
+        self.badgeLabel = _badgeLabel;
+    } else if (theKey == kColorMapForeground) {
+        self.badgeLabel = _badgeLabel;
     } else if (theKey == kColorMapSelection) {
         self.unfocusedSelectionColor = [[_colorMap colorForKey:theKey] colorDimmedBy:2.0/3.0
                                                                     towardsGrayLevel:0.5];

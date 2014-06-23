@@ -5553,6 +5553,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self queueAnnouncement:announcement identifier:kIdentifier];
 }
 
+- (void)screenSetBadge:(NSString *)badge {
+    _textview.badgeLabel = [badge stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+}
+
 - (iTermColorMap *)screenColorMap {
     return _colorMap;
 }
