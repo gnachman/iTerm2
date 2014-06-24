@@ -369,29 +369,29 @@ Gw
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <tabView type="noTabsNoBorder" initialItem="1944" id="1943" userLabel="Top level NSTabView">
-                        <rect key="frame" x="13" y="20" width="911" height="434"/>
+                        <rect key="frame" x="13" y="0.0" width="911" height="454"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <font key="font" metaFont="system"/>
                         <tabViewItems>
                             <tabViewItem label="Global Settings" identifier="1" id="1944" userLabel="Tab View Item - General">
                                 <view key="view" id="1947" userLabel="Filler">
-                                    <rect key="frame" x="0.0" y="0.0" width="911" height="434"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 </view>
                             </tabViewItem>
                             <tabViewItem label="Item 4" identifier="Item 4" id="4439" userLabel="Tab View Item - Appearance">
                                 <view key="view" id="4440" userLabel="Filler">
-                                    <rect key="frame" x="0.0" y="0.0" width="911" height="434"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 </view>
                             </tabViewItem>
                             <tabViewItem label="Bookmarks" identifier="2" id="1945" userLabel="Tab View Item - Profiles">
                                 <view key="view" id="1946">
-                                    <rect key="frame" x="0.0" y="0.0" width="911" height="434"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <tabView initialItem="2101" id="2100" userLabel="Profiles Tab View">
-                                            <rect key="frame" x="320" y="-10" width="579" height="450"/>
+                                            <rect key="frame" x="320" y="10" width="579" height="450"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <font key="font" metaFont="system"/>
                                             <tabViewItems>
@@ -450,7 +450,7 @@ Gw
                                             </connections>
                                         </tabView>
                                         <button id="2111" userLabel="Square Button - Add Profile">
-                                            <rect key="frame" x="52" y="0.0" width="24" height="24"/>
+                                            <rect key="frame" x="52" y="20" width="24" height="24"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSAddTemplate" imagePosition="only" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="2112">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -461,7 +461,7 @@ Gw
                                             </connections>
                                         </button>
                                         <button id="nFj-0n-SWO" userLabel="Square Button - Tags>">
-                                            <rect key="frame" x="0.0" y="0.0" width="53" height="24"/>
+                                            <rect key="frame" x="0.0" y="20" width="53" height="24"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <buttonCell key="cell" type="square" title="Tags >" bezelStyle="shadowlessSquare" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="u6m-pp-fub">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -472,7 +472,7 @@ Gw
                                             </connections>
                                         </button>
                                         <button id="2113" userLabel="Square Button - Delete Profile">
-                                            <rect key="frame" x="75" y="0.0" width="24" height="24"/>
+                                            <rect key="frame" x="75" y="20" width="24" height="24"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="only" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="2114">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -483,7 +483,7 @@ Gw
                                             </connections>
                                         </button>
                                         <popUpButton id="3230">
-                                            <rect key="frame" x="98" y="0.0" width="157" height="24"/>
+                                            <rect key="frame" x="98" y="20" width="157" height="24"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <popUpButtonCell key="cell" type="square" title="Other Actions..." bezelStyle="shadowlessSquare" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="3233" id="3231">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -513,7 +513,7 @@ Gw
                                             </popUpButtonCell>
                                         </popUpButton>
                                         <customView autoresizesSubviews="NO" id="3260" customClass="ProfileListView">
-                                            <rect key="frame" x="0.0" y="32" width="319" height="392"/>
+                                            <rect key="frame" x="0.0" y="52" width="319" height="392"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" heightSizable="YES"/>
                                             <connections>
                                                 <outlet property="delegate" destination="HVI-63-mNz" id="lQ2-vb-0eJ"/>
@@ -523,415 +523,18 @@ Gw
                                 </view>
                             </tabViewItem>
                             <tabViewItem label="Keys" identifier="Keys" id="3656">
-                                <view key="view" id="3657">
-                                    <rect key="frame" x="0.0" y="0.0" width="911" height="434"/>
+                                <view key="view" id="3657" userLabel="Filler">
+                                    <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                    <subviews>
-                                        <textField verticalHuggingPriority="750" id="3658">
-                                            <rect key="frame" x="-3" y="416" width="146" height="17"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Remap Modifier Keys" id="3659">
-                                                <font key="font" metaFont="systemBold"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
-                                        <textField verticalHuggingPriority="750" id="3866">
-                                            <rect key="frame" x="361" y="416" width="151" height="17"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Global Shortcut Keys" id="3867">
-                                                <font key="font" metaFont="systemBold"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
-                                        <textField verticalHuggingPriority="750" id="3673">
-                                            <rect key="frame" x="17" y="396" width="143" height="17"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Control (⌃) key:" id="3674">
-                                                <font key="font" metaFont="system"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
-                                        <textField verticalHuggingPriority="750" id="3689">
-                                            <rect key="frame" x="17" y="371" width="143" height="17"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Left option (⌥) key:" id="3690">
-                                                <font key="font" metaFont="system"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
-                                        <textField verticalHuggingPriority="750" id="3675">
-                                            <rect key="frame" x="14" y="346" width="146" height="17"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Right option (⌥) key:" id="3676">
-                                                <font key="font" metaFont="system"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
-                                        <textField verticalHuggingPriority="750" id="3677">
-                                            <rect key="frame" x="7" y="321" width="153" height="17"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Left command (⌘) key:" id="3678">
-                                                <font key="font" metaFont="system"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
-                                        <popUpButton verticalHuggingPriority="750" id="4237">
-                                            <rect key="frame" x="163" y="390" width="157" height="26"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="4238">
-                                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu"/>
-                                                <menu key="menu" title="OtherViews" id="4239">
-                                                    <items>
-                                                        <menuItem title="⌃ Control" tag="1" id="4242"/>
-                                                        <menuItem title="⌥ Left Option" tag="2" id="4244">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌥ Right Option" tag="3" id="4240">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌘ Left Command" tag="7" id="4243">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌘ Right Command" tag="8" id="4345">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                    </items>
-                                                </menu>
-                                            </popUpButtonCell>
-                                            <connections>
-                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="QbI-Zr-Gk1"/>
-                                                <outlet property="nextKeyView" destination="4383" id="5289"/>
-                                            </connections>
-                                        </popUpButton>
-                                        <popUpButton verticalHuggingPriority="750" id="4383">
-                                            <rect key="frame" x="163" y="365" width="157" height="26"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <popUpButtonCell key="cell" type="push" title="⌥ Left Option" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="2" imageScaling="proportionallyDown" inset="2" selectedItem="4387" id="4384">
-                                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu"/>
-                                                <menu key="menu" title="OtherViews" id="4385">
-                                                    <items>
-                                                        <menuItem title="⌃ Control" tag="1" id="4389"/>
-                                                        <menuItem title="⌥ Left Option" state="on" tag="2" id="4387">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌥ Right Option" tag="3" id="4390">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌘ Left Command" tag="7" id="4388">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌘ Right Command" tag="8" id="4386">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                    </items>
-                                                </menu>
-                                            </popUpButtonCell>
-                                            <connections>
-                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="nh1-K6-IOF"/>
-                                                <outlet property="nextKeyView" destination="4392" id="5290"/>
-                                            </connections>
-                                        </popUpButton>
-                                        <popUpButton verticalHuggingPriority="750" id="4392">
-                                            <rect key="frame" x="163" y="340" width="157" height="26"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <popUpButtonCell key="cell" type="push" title="⌥ Right Option" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3" imageScaling="proportionallyDown" inset="2" selectedItem="4407" id="4401">
-                                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu"/>
-                                                <menu key="menu" title="OtherViews" id="4402">
-                                                    <items>
-                                                        <menuItem title="⌃ Control" tag="1" id="4406"/>
-                                                        <menuItem title="⌥ Left Option" tag="2" id="4404">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌥ Right Option" state="on" tag="3" id="4407">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌘ Left Command" tag="7" id="4405">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌘ Right Command" tag="8" id="4403">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                    </items>
-                                                </menu>
-                                            </popUpButtonCell>
-                                            <connections>
-                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="6qy-Dl-JmM"/>
-                                                <outlet property="nextKeyView" destination="4393" id="5291"/>
-                                            </connections>
-                                        </popUpButton>
-                                        <popUpButton verticalHuggingPriority="750" id="4393">
-                                            <rect key="frame" x="163" y="315" width="157" height="26"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <popUpButtonCell key="cell" type="push" title="⌘ Left Command" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="7" imageScaling="proportionallyDown" inset="2" selectedItem="4398" id="4394">
-                                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu"/>
-                                                <menu key="menu" title="OtherViews" id="4395">
-                                                    <items>
-                                                        <menuItem title="⌃ Control" tag="1" id="4397"/>
-                                                        <menuItem title="⌥ Left Option" tag="2" id="4399">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌥ Right Option" tag="3" id="4396">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌘ Left Command" state="on" tag="7" id="4398">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌘ Right Command" tag="8" id="4400">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                    </items>
-                                                </menu>
-                                            </popUpButtonCell>
-                                            <connections>
-                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="DBf-W5-736"/>
-                                            </connections>
-                                        </popUpButton>
-                                        <popUpButton verticalHuggingPriority="750" id="4410">
-                                            <rect key="frame" x="163" y="289" width="157" height="26"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <popUpButtonCell key="cell" type="push" title="⌘ Right Command" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="8" imageScaling="proportionallyDown" inset="2" selectedItem="4413" id="4411">
-                                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu"/>
-                                                <menu key="menu" title="OtherViews" id="4412">
-                                                    <items>
-                                                        <menuItem title="⌃ Control" tag="1" id="4416"/>
-                                                        <menuItem title="⌥ Left Option" tag="2" id="4414">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌥ Right Option" tag="3" id="4417">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌘ Left Command" tag="7" id="4415">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌘ Right Command" state="on" tag="8" id="4413">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                    </items>
-                                                </menu>
-                                            </popUpButtonCell>
-                                            <connections>
-                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="w5i-9b-C8Y"/>
-                                                <outlet property="nextKeyView" destination="4118" id="5293"/>
-                                            </connections>
-                                        </popUpButton>
-                                        <textField verticalHuggingPriority="750" id="4335">
-                                            <rect key="frame" x="-3" y="295" width="163" height="17"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Right command (⌘) key:" id="4343">
-                                                <font key="font" metaFont="system"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
-                                        <popUpButton verticalHuggingPriority="750" id="4118">
-                                            <rect key="frame" x="163" y="225" width="72" height="26"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="4129">
-                                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu"/>
-                                                <menu key="menu" title="OtherViews" id="4130">
-                                                    <items>
-                                                        <menuItem title="⌥" tag="5" id="4132">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌘" tag="4" id="4133">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌘⌥" tag="6" id="4137">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                    </items>
-                                                </menu>
-                                            </popUpButtonCell>
-                                            <connections>
-                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="BY0-Ur-tJk"/>
-                                                <outlet property="nextKeyView" destination="4269" id="5294"/>
-                                            </connections>
-                                        </popUpButton>
-                                        <popUpButton verticalHuggingPriority="750" id="4269">
-                                            <rect key="frame" x="163" y="195" width="72" height="26"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <popUpButtonCell key="cell" type="push" title="⌘⌥" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" selectedItem="4273" id="4270">
-                                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu"/>
-                                                <menu key="menu" title="OtherViews" id="4271">
-                                                    <items>
-                                                        <menuItem title="⌥" tag="5" id="4274">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌘" tag="4" id="4272">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                        <menuItem title="⌘⌥" state="on" tag="6" id="4273">
-                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                        </menuItem>
-                                                    </items>
-                                                </menu>
-                                            </popUpButtonCell>
-                                            <connections>
-                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="Wk7-Hi-uEC"/>
-                                                <outlet property="nextKeyView" destination="5104" id="5295"/>
-                                            </connections>
-                                        </popUpButton>
-                                        <textField verticalHuggingPriority="750" id="3892">
-                                            <rect key="frame" x="-3" y="256" width="153" height="17"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Navigation Shortcuts" id="3893">
-                                                <font key="font" metaFont="systemBold"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
-                                        <textField verticalHuggingPriority="750" id="4085">
-                                            <rect key="frame" x="237" y="231" width="65" height="17"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="+Number" id="4086">
-                                                <font key="font" metaFont="system"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
-                                        <textField verticalHuggingPriority="750" id="4231">
-                                            <rect key="frame" x="237" y="201" width="65" height="17"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="+Number" id="4232">
-                                                <font key="font" metaFont="system"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
-                                        <textField verticalHuggingPriority="750" id="4219">
-                                            <rect key="frame" x="61" y="231" width="128" height="17"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="To switch tabs:" id="4220">
-                                                <font key="font" metaFont="system"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
-                                        <textField verticalHuggingPriority="750" id="4223">
-                                            <rect key="frame" x="32" y="201" width="128" height="17"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="To switch windows:" id="4224">
-                                                <font key="font" metaFont="system"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
-                                        <box autoresizesSubviews="NO" horizontalHuggingPriority="750" title="Box" boxType="separator" titlePosition="noTitle" id="5080">
-                                            <rect key="frame" x="336" y="0.0" width="5" height="433"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
-                                            <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
-                                            <font key="titleFont" metaFont="system"/>
-                                        </box>
-                                        <textField verticalHuggingPriority="750" id="5103">
-                                            <rect key="frame" x="-3" y="166" width="153" height="17"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Hotkey" id="5116">
-                                                <font key="font" metaFont="systemBold"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
-                                        <button id="5104">
-                                            <rect key="frame" x="-1" y="142" width="320" height="18"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <buttonCell key="cell" type="check" title="Show/hide iTerm2 with a system-wide hotkey" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5115">
-                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                <font key="font" metaFont="system"/>
-                                            </buttonCell>
-                                            <connections>
-                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="Wvw-0Z-qYj"/>
-                                                <outlet property="nextKeyView" destination="5105" id="5296"/>
-                                            </connections>
-                                        </button>
-                                        <textField verticalHuggingPriority="750" id="5105" customClass="iTermShortcutInputView">
-                                            <rect key="frame" x="82" y="114" width="235" height="22"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" refusesFirstResponder="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="5114">
-                                                <font key="font" metaFont="system"/>
-                                                <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                            <connections>
-                                                <outlet property="nextKeyView" destination="5107" id="5297"/>
-                                                <outlet property="shortcutDelegate" destination="8TE-cq-5cL" id="IzR-eX-FuZ"/>
-                                            </connections>
-                                        </textField>
-                                        <textField verticalHuggingPriority="750" id="5106">
-                                            <rect key="frame" x="27" y="116" width="53" height="17"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Hotkey:" id="5113">
-                                                <font key="font" metaFont="system"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
-                                        <button id="5107">
-                                            <rect key="frame" x="-1" y="92" width="326" height="18"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <buttonCell key="cell" type="check" title="Hotkey toggles a dedicated window with profile:" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5112">
-                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                <font key="font" metaFont="system"/>
-                                            </buttonCell>
-                                            <connections>
-                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="nuy-pI-ztg"/>
-                                                <outlet property="nextKeyView" destination="5108" id="5298"/>
-                                            </connections>
-                                        </button>
-                                        <popUpButton verticalHuggingPriority="750" id="5108">
-                                            <rect key="frame" x="27" y="62" width="293" height="26"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <popUpButtonCell key="cell" type="push" title="Select Profile" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="5111" id="5109">
-                                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu"/>
-                                                <menu key="menu" title="OtherViews" id="5110">
-                                                    <items>
-                                                        <menuItem title="Select Profile" state="on" hidden="YES" id="5111"/>
-                                                    </items>
-                                                </menu>
-                                            </popUpButtonCell>
-                                            <connections>
-                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="Its-xd-Y8n"/>
-                                            </connections>
-                                        </popUpButton>
-                                        <button id="rG7-dO-Nxw">
-                                            <rect key="frame" x="27" y="43" width="272" height="18"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <buttonCell key="cell" type="check" title="Hotkey window hides when focus is lost" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="PhL-bP-TkB">
-                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                <font key="font" metaFont="system"/>
-                                            </buttonCell>
-                                            <connections>
-                                                <action selector="settingChanged:" target="8TE-cq-5cL" id="2Ih-It-cUu"/>
-                                            </connections>
-                                        </button>
-                                        <customView id="zLA-QA-WQd">
-                                            <rect key="frame" x="363" y="20" width="508" height="393"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                        </customView>
-                                    </subviews>
                                 </view>
                             </tabViewItem>
                             <tabViewItem label="Mouse" identifier="Mouse" id="6059" userLabel="Tab View Item - Pointer">
                                 <view key="view" id="6060">
-                                    <rect key="frame" x="0.0" y="0.0" width="911" height="434"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <button id="6062">
-                                            <rect key="frame" x="343" y="58" width="154" height="18"/>
+                                            <rect key="frame" x="343" y="78" width="154" height="18"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="check" title="Focus follows mouse" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6071">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -942,7 +545,7 @@ Gw
                                             </connections>
                                         </button>
                                         <textField verticalHuggingPriority="750" id="6082">
-                                            <rect key="frame" x="17" y="397" width="288" height="17"/>
+                                            <rect key="frame" x="17" y="417" width="288" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Mouse Button &amp; Trackpad Gesture Actions" id="6083">
                                                 <font key="font" metaFont="systemBold"/>
@@ -951,7 +554,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="6088">
-                                            <rect key="frame" x="17" y="80" width="130" height="17"/>
+                                            <rect key="frame" x="17" y="100" width="130" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Left Click Behavior" id="6089">
                                                 <font key="font" metaFont="systemBold"/>
@@ -960,7 +563,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <textField verticalHuggingPriority="750" id="6410">
-                                            <rect key="frame" x="342" y="80" width="99" height="17"/>
+                                            <rect key="frame" x="342" y="100" width="99" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Miscellaneous" id="6411">
                                                 <font key="font" metaFont="systemBold"/>
@@ -969,7 +572,7 @@ Gw
                                             </textFieldCell>
                                         </textField>
                                         <scrollView autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="6090">
-                                            <rect key="frame" x="20" y="143" width="851" height="246"/>
+                                            <rect key="frame" x="20" y="163" width="851" height="246"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <clipView key="contentView" id="2zv-hI-Vxj">
                                                 <rect key="frame" x="1" y="17" width="849" height="228"/>
@@ -1031,7 +634,7 @@ Gw
                                             </tableHeaderView>
                                         </scrollView>
                                         <button verticalHuggingPriority="750" id="6115">
-                                            <rect key="frame" x="62" y="113" width="106" height="23"/>
+                                            <rect key="frame" x="62" y="133" width="106" height="23"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="smallSquare" title="Load Defaults" bezelStyle="smallSquare" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="6116">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -1042,7 +645,7 @@ Gw
                                             </connections>
                                         </button>
                                         <button verticalHuggingPriority="750" id="6214">
-                                            <rect key="frame" x="41" y="113" width="21" height="23"/>
+                                            <rect key="frame" x="41" y="133" width="21" height="23"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="smallSquare" bezelStyle="smallSquare" image="NSRemoveTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="6215">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -1054,7 +657,7 @@ Gw
                                             </connections>
                                         </button>
                                         <button verticalHuggingPriority="750" id="6216">
-                                            <rect key="frame" x="20" y="113" width="21" height="23"/>
+                                            <rect key="frame" x="20" y="133" width="21" height="23"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="smallSquare" bezelStyle="smallSquare" image="NSAddTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="6217">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -1065,7 +668,7 @@ Gw
                                             </connections>
                                         </button>
                                         <button id="6107">
-                                            <rect key="frame" x="18" y="56" width="209" height="18"/>
+                                            <rect key="frame" x="18" y="76" width="209" height="18"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="check" title="⌘-Click Opens Filename/URL" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6108">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -1076,7 +679,7 @@ Gw
                                             </connections>
                                         </button>
                                         <button id="6111">
-                                            <rect key="frame" x="18" y="36" width="320" height="18"/>
+                                            <rect key="frame" x="18" y="56" width="320" height="18"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="check" title="^-Click reported to apps, does not open menu." bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6112">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -1087,7 +690,7 @@ Gw
                                             </connections>
                                         </button>
                                         <button id="6407">
-                                            <rect key="frame" x="19" y="16" width="163" height="18"/>
+                                            <rect key="frame" x="19" y="36" width="163" height="18"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="check" title="⌥-Click moves cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6408">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -1098,7 +701,7 @@ Gw
                                             </connections>
                                         </button>
                                         <button id="6260">
-                                            <rect key="frame" x="343" y="18" width="258" height="18"/>
+                                            <rect key="frame" x="343" y="38" width="258" height="18"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="check" title="Triple-click selects full wrapped lines" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6261">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -1109,7 +712,7 @@ Gw
                                             </connections>
                                         </button>
                                         <button id="6227">
-                                            <rect key="frame" x="343" y="38" width="308" height="18"/>
+                                            <rect key="frame" x="343" y="58" width="308" height="18"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="check" title="Three-finger tap reports middle click to apps" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6228">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -1120,7 +723,7 @@ Gw
                                             </connections>
                                         </button>
                                         <box autoresizesSubviews="NO" verticalHuggingPriority="750" title="Box" boxType="separator" titlePosition="noTitle" id="6413">
-                                            <rect key="frame" x="20" y="103" width="851" height="5"/>
+                                            <rect key="frame" x="20" y="123" width="851" height="5"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
                                             <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
@@ -1131,11 +734,11 @@ Gw
                             </tabViewItem>
                             <tabViewItem label="Keys" identifier="Keys" id="5417" userLabel="Tab View Item - Arrangements">
                                 <view key="view" id="5418">
-                                    <rect key="frame" x="0.0" y="0.0" width="911" height="434"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <scrollView autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="5559">
-                                            <rect key="frame" x="20" y="21" width="240" height="379"/>
+                                            <rect key="frame" x="20" y="41" width="240" height="379"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <clipView key="contentView" id="N1C-ir-dI5">
                                                 <rect key="frame" x="1" y="17" width="238" height="361"/>
@@ -1197,7 +800,7 @@ Gw
                                             </tableHeaderView>
                                         </scrollView>
                                         <box autoresizesSubviews="NO" title="Preview" borderType="line" id="5568">
-                                            <rect key="frame" x="265" y="17" width="629" height="397"/>
+                                            <rect key="frame" x="265" y="37" width="629" height="397"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <view key="contentView">
                                                 <rect key="frame" x="1" y="1" width="627" height="381"/>
@@ -1213,7 +816,7 @@ Gw
                                             <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                         </box>
                                         <button verticalHuggingPriority="750" id="5569">
-                                            <rect key="frame" x="20" y="0.0" width="23" height="23"/>
+                                            <rect key="frame" x="20" y="20" width="23" height="23"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="smallSquare" title="-" bezelStyle="smallSquare" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5570">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -1224,7 +827,7 @@ Gw
                                             </connections>
                                         </button>
                                         <button verticalHuggingPriority="750" id="5585">
-                                            <rect key="frame" x="42" y="0.0" width="99" height="23"/>
+                                            <rect key="frame" x="42" y="20" width="99" height="23"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="smallSquare" title="Set Default" bezelStyle="smallSquare" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5586">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -1239,11 +842,11 @@ Gw
                             </tabViewItem>
                             <tabViewItem label="Advanced" identifier="Advanced" id="KyW-GB-ElH">
                                 <view key="view" id="DKc-WZ-9FS">
-                                    <rect key="frame" x="0.0" y="0.0" width="911" height="434"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <scrollView autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="wcl-c7-peg">
-                                            <rect key="frame" x="20" y="20" width="851" height="364"/>
+                                            <rect key="frame" x="20" y="40" width="851" height="364"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <clipView key="contentView" id="Fm3-fw-Qw5">
                                                 <rect key="frame" x="1" y="17" width="849" height="346"/>
@@ -1305,7 +908,7 @@ Gw
                                             </tableHeaderView>
                                         </scrollView>
                                         <searchField verticalHuggingPriority="750" id="gjV-o3-wzg">
-                                            <rect key="frame" x="20" y="392" width="378" height="22"/>
+                                            <rect key="frame" x="20" y="412" width="378" height="22"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <searchFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" borderStyle="bezel" usesSingleLineMode="YES" bezelStyle="round" id="lfd-bX-IsD">
                                                 <font key="font" metaFont="system"/>
@@ -1317,7 +920,7 @@ Gw
                                             </connections>
                                         </searchField>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="RTN-4A-tvQ">
-                                            <rect key="frame" x="426" y="397" width="447" height="17"/>
+                                            <rect key="frame" x="426" y="417" width="447" height="17"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Some changes will take effect only after restarting iTerm2." id="dKC-gp-53C">
                                                 <font key="font" metaFont="system"/>
@@ -2090,6 +1693,7 @@ DQ
                 <outlet property="_rightOptionButton" destination="4392" id="zkG-aT-oOV"/>
                 <outlet property="_switchTabModifierButton" destination="4118" id="m16-Tk-0hv"/>
                 <outlet property="_switchWindowModifierButton" destination="4269" id="LkQ-lj-KIU"/>
+                <outlet property="view" destination="Z7N-XT-vVo" id="hpk-zq-hqx"/>
             </connections>
         </customObject>
         <customObject id="pwh-OY-l3e" customClass="PointerPreferencesViewController">
@@ -5576,6 +5180,407 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
+            </subviews>
+        </customView>
+        <customView id="Z7N-XT-vVo" userLabel="Prefs - Keys" customClass="iTermSizeRememberingView">
+            <rect key="frame" x="0.0" y="0.0" width="911" height="434"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <textField verticalHuggingPriority="750" id="3658">
+                    <rect key="frame" x="-3" y="416" width="146" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Remap Modifier Keys" id="3659">
+                        <font key="font" metaFont="systemBold"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="3866">
+                    <rect key="frame" x="361" y="416" width="151" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Global Shortcut Keys" id="3867">
+                        <font key="font" metaFont="systemBold"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="3673">
+                    <rect key="frame" x="17" y="396" width="143" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Control (⌃) key:" id="3674">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="3689">
+                    <rect key="frame" x="17" y="371" width="143" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Left option (⌥) key:" id="3690">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="3675">
+                    <rect key="frame" x="14" y="346" width="146" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Right option (⌥) key:" id="3676">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="3677">
+                    <rect key="frame" x="7" y="321" width="153" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Left command (⌘) key:" id="3678">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <popUpButton verticalHuggingPriority="750" id="4237">
+                    <rect key="frame" x="163" y="390" width="157" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="4238">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" title="OtherViews" id="4239">
+                            <items>
+                                <menuItem title="⌃ Control" tag="1" id="4242"/>
+                                <menuItem title="⌥ Left Option" tag="2" id="4244">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌥ Right Option" tag="3" id="4240">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌘ Left Command" tag="7" id="4243">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌘ Right Command" tag="8" id="4345">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="8TE-cq-5cL" id="QbI-Zr-Gk1"/>
+                        <outlet property="nextKeyView" destination="4383" id="5289"/>
+                    </connections>
+                </popUpButton>
+                <popUpButton verticalHuggingPriority="750" id="4383">
+                    <rect key="frame" x="163" y="365" width="157" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" title="⌥ Left Option" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="2" imageScaling="proportionallyDown" inset="2" selectedItem="4387" id="4384">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" title="OtherViews" id="4385">
+                            <items>
+                                <menuItem title="⌃ Control" tag="1" id="4389"/>
+                                <menuItem title="⌥ Left Option" state="on" tag="2" id="4387">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌥ Right Option" tag="3" id="4390">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌘ Left Command" tag="7" id="4388">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌘ Right Command" tag="8" id="4386">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="8TE-cq-5cL" id="nh1-K6-IOF"/>
+                        <outlet property="nextKeyView" destination="4392" id="5290"/>
+                    </connections>
+                </popUpButton>
+                <popUpButton verticalHuggingPriority="750" id="4392">
+                    <rect key="frame" x="163" y="340" width="157" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" title="⌥ Right Option" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3" imageScaling="proportionallyDown" inset="2" selectedItem="4407" id="4401">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" title="OtherViews" id="4402">
+                            <items>
+                                <menuItem title="⌃ Control" tag="1" id="4406"/>
+                                <menuItem title="⌥ Left Option" tag="2" id="4404">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌥ Right Option" state="on" tag="3" id="4407">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌘ Left Command" tag="7" id="4405">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌘ Right Command" tag="8" id="4403">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="8TE-cq-5cL" id="6qy-Dl-JmM"/>
+                        <outlet property="nextKeyView" destination="4393" id="5291"/>
+                    </connections>
+                </popUpButton>
+                <popUpButton verticalHuggingPriority="750" id="4393">
+                    <rect key="frame" x="163" y="315" width="157" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" title="⌘ Left Command" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="7" imageScaling="proportionallyDown" inset="2" selectedItem="4398" id="4394">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" title="OtherViews" id="4395">
+                            <items>
+                                <menuItem title="⌃ Control" tag="1" id="4397"/>
+                                <menuItem title="⌥ Left Option" tag="2" id="4399">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌥ Right Option" tag="3" id="4396">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌘ Left Command" state="on" tag="7" id="4398">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌘ Right Command" tag="8" id="4400">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="8TE-cq-5cL" id="DBf-W5-736"/>
+                    </connections>
+                </popUpButton>
+                <popUpButton verticalHuggingPriority="750" id="4410">
+                    <rect key="frame" x="163" y="289" width="157" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" title="⌘ Right Command" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="8" imageScaling="proportionallyDown" inset="2" selectedItem="4413" id="4411">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" title="OtherViews" id="4412">
+                            <items>
+                                <menuItem title="⌃ Control" tag="1" id="4416"/>
+                                <menuItem title="⌥ Left Option" tag="2" id="4414">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌥ Right Option" tag="3" id="4417">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌘ Left Command" tag="7" id="4415">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌘ Right Command" state="on" tag="8" id="4413">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="8TE-cq-5cL" id="w5i-9b-C8Y"/>
+                        <outlet property="nextKeyView" destination="4118" id="5293"/>
+                    </connections>
+                </popUpButton>
+                <textField verticalHuggingPriority="750" id="4335">
+                    <rect key="frame" x="-3" y="295" width="163" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Right command (⌘) key:" id="4343">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <popUpButton verticalHuggingPriority="750" id="4118">
+                    <rect key="frame" x="163" y="225" width="72" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="4129">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" title="OtherViews" id="4130">
+                            <items>
+                                <menuItem title="⌥" tag="5" id="4132">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌘" tag="4" id="4133">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌘⌥" tag="6" id="4137">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="8TE-cq-5cL" id="BY0-Ur-tJk"/>
+                        <outlet property="nextKeyView" destination="4269" id="5294"/>
+                    </connections>
+                </popUpButton>
+                <popUpButton verticalHuggingPriority="750" id="4269">
+                    <rect key="frame" x="163" y="195" width="72" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" title="⌘⌥" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" selectedItem="4273" id="4270">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" title="OtherViews" id="4271">
+                            <items>
+                                <menuItem title="⌥" tag="5" id="4274">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌘" tag="4" id="4272">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌘⌥" state="on" tag="6" id="4273">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="8TE-cq-5cL" id="Wk7-Hi-uEC"/>
+                        <outlet property="nextKeyView" destination="5104" id="5295"/>
+                    </connections>
+                </popUpButton>
+                <textField verticalHuggingPriority="750" id="3892">
+                    <rect key="frame" x="-3" y="256" width="153" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Navigation Shortcuts" id="3893">
+                        <font key="font" metaFont="systemBold"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="4085">
+                    <rect key="frame" x="237" y="231" width="65" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="+Number" id="4086">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="4231">
+                    <rect key="frame" x="237" y="201" width="65" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="+Number" id="4232">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="4219">
+                    <rect key="frame" x="61" y="231" width="128" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="To switch tabs:" id="4220">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="4223">
+                    <rect key="frame" x="32" y="201" width="128" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="To switch windows:" id="4224">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <box autoresizesSubviews="NO" horizontalHuggingPriority="750" title="Box" boxType="separator" titlePosition="noTitle" id="5080">
+                    <rect key="frame" x="336" y="0.0" width="5" height="433"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
+                    <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                    <font key="titleFont" metaFont="system"/>
+                </box>
+                <textField verticalHuggingPriority="750" id="5103">
+                    <rect key="frame" x="-3" y="166" width="153" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Hotkey" id="5116">
+                        <font key="font" metaFont="systemBold"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <button id="5104">
+                    <rect key="frame" x="-1" y="142" width="320" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Show/hide iTerm2 with a system-wide hotkey" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5115">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="8TE-cq-5cL" id="Wvw-0Z-qYj"/>
+                        <outlet property="nextKeyView" destination="5105" id="5296"/>
+                    </connections>
+                </button>
+                <textField verticalHuggingPriority="750" id="5105" customClass="iTermShortcutInputView">
+                    <rect key="frame" x="82" y="114" width="235" height="22"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" refusesFirstResponder="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="5114">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                    <connections>
+                        <outlet property="nextKeyView" destination="5107" id="5297"/>
+                        <outlet property="shortcutDelegate" destination="8TE-cq-5cL" id="IzR-eX-FuZ"/>
+                    </connections>
+                </textField>
+                <textField verticalHuggingPriority="750" id="5106">
+                    <rect key="frame" x="27" y="116" width="53" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Hotkey:" id="5113">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <button id="5107">
+                    <rect key="frame" x="-1" y="92" width="326" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Hotkey toggles a dedicated window with profile:" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5112">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="8TE-cq-5cL" id="nuy-pI-ztg"/>
+                        <outlet property="nextKeyView" destination="5108" id="5298"/>
+                    </connections>
+                </button>
+                <popUpButton verticalHuggingPriority="750" id="5108">
+                    <rect key="frame" x="27" y="62" width="293" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" title="Select Profile" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="5111" id="5109">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" title="OtherViews" id="5110">
+                            <items>
+                                <menuItem title="Select Profile" state="on" hidden="YES" id="5111"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="8TE-cq-5cL" id="Its-xd-Y8n"/>
+                    </connections>
+                </popUpButton>
+                <button id="rG7-dO-Nxw">
+                    <rect key="frame" x="27" y="43" width="272" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Hotkey window hides when focus is lost" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="PhL-bP-TkB">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="8TE-cq-5cL" id="2Ih-It-cUu"/>
+                    </connections>
+                </button>
+                <customView id="zLA-QA-WQd">
+                    <rect key="frame" x="363" y="20" width="528" height="393"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                </customView>
             </subviews>
         </customView>
     </objects>

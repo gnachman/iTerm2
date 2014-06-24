@@ -178,6 +178,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 
     _globalTabViewItem.view = _generalPreferencesViewController.view;
     _appearanceTabViewItem.view = _appearancePreferencesViewController.view;
+    _keyboardTabViewItem.view = _keysViewController.view;
 
     if (_editCurrentSessionMode) {
         [self layoutSubviewsForEditCurrentSessionMode];
