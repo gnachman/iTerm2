@@ -631,13 +631,13 @@ Gw
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <tabView type="noTabsNoBorder" initialItem="1944" id="1943">
-                        <rect key="frame" x="13" y="20" width="891" height="434"/>
+                        <rect key="frame" x="13" y="20" width="911" height="434"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <font key="font" metaFont="system"/>
                         <tabViewItems>
                             <tabViewItem label="Global Settings" identifier="1" id="1944" userLabel="Tab View Item - General">
                                 <view key="view" id="1947">
-                                    <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="911" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <button id="1950">
@@ -1092,7 +1092,7 @@ Gw
                             </tabViewItem>
                             <tabViewItem label="Item 4" identifier="Item 4" id="4439" userLabel="Tab View Item - Appearance">
                                 <view key="view" id="4440">
-                                    <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="911" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <button id="4446">
@@ -1506,7 +1506,7 @@ Gw
                             </tabViewItem>
                             <tabViewItem label="Bookmarks" identifier="2" id="1945" userLabel="Tab View Item - Profiles">
                                 <view key="view" id="1946">
-                                    <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="911" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <tabView initialItem="2101" id="2100" userLabel="Profiles Tab View">
@@ -1643,7 +1643,7 @@ Gw
                             </tabViewItem>
                             <tabViewItem label="Keys" identifier="Keys" id="3656">
                                 <view key="view" id="3657">
-                                    <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="911" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <textField verticalHuggingPriority="750" id="3658">
@@ -2046,7 +2046,7 @@ Gw
                             </tabViewItem>
                             <tabViewItem label="Mouse" identifier="Mouse" id="6059" userLabel="Tab View Item - Pointer">
                                 <view key="view" id="6060">
-                                    <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="911" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <button id="6062">
@@ -2250,7 +2250,7 @@ Gw
                             </tabViewItem>
                             <tabViewItem label="Keys" identifier="Keys" id="5417" userLabel="Tab View Item - Arrangements">
                                 <view key="view" id="5418">
-                                    <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="911" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <scrollView autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="5559">
@@ -2358,7 +2358,7 @@ Gw
                             </tabViewItem>
                             <tabViewItem label="Advanced" identifier="Advanced" id="KyW-GB-ElH">
                                 <view key="view" id="DKc-WZ-9FS">
-                                    <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="911" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <scrollView autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="wcl-c7-peg">

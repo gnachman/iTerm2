@@ -180,7 +180,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     [_toolbar setVisible:NO];
 
     NSRect newFrame = [[self window] frame];
-    newFrame.size.width = [_profilesViewController size].width + 26;
+    newFrame.size.width = [_profilesViewController preferredSize].width + 26;
     [[self window] setFrame:newFrame display:YES];
 }
 

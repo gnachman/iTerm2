@@ -86,6 +86,8 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     
     // Advanced tab view controller
     IBOutlet ProfilesAdvancedPreferencesViewController *_advancedViewController;
+
+    CGFloat _minWidth;
 }
 
 - (id)init {
@@ -103,6 +105,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
                                                  selector:@selector(sessionProfileDidChange:)
                                                      name:kSessionProfileDidChange
                                                    object:nil];
+        _preferredSize = NSMakeSize(891, 434);
     }
     return self;
 }
@@ -168,8 +171,9 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [_windowViewController layoutSubviewsForEditCurrentSessionMode];
     [_sessionViewController layoutSubviewsForEditCurrentSessionMode];
     [_advancedViewController layoutSubviewsForEditCurrentSessionMode];
-    NSRect newFrame = _tabView.frame;
-    newFrame.origin.x = 0;
+    _preferredSize = NSMakeSize(579, 434);
+    NSRect newFrame = _tabView.superview.bounds;
+    newFrame.size.width -= 13;
     _tabView.frame = newFrame;
 }
 
@@ -515,7 +519,11 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [theView resetToOriginalSize];
     static const CGSize kMargin = { 9, 11 };
     static const CGFloat kTabViewMinWidth = 579;
-    NSSize contentSize = NSMakeSize(NSMaxX(_profilesListView.frame) + kMargin.width + MAX(kTabViewMinWidth, 11 + theView.frame.size.width + 11) + kMargin.width,
+    CGFloat sharedProfilesLeftSizeWidth = kMargin.width;
+    if (!_profilesListView.isHidden) {
+        sharedProfilesLeftSizeWidth = NSMaxX(_profilesListView.frame) + kMargin.width;
+    }
+    NSSize contentSize = NSMakeSize(sharedProfilesLeftSizeWidth + MAX(kTabViewMinWidth, 11 + theView.frame.size.width + 11) + kMargin.width,
                                     kMargin.height + 9 + theView.frame.size.height + 10 + kMargin.width + 20);
     NSWindow *window = self.view.window;
     NSPoint windowTopLeft = NSMakePoint(NSMinX(window.frame), NSMaxY(window.frame));

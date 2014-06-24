@@ -20,6 +20,7 @@
 @interface ProfilePreferencesViewController : iTermPreferencesBaseViewController
 
 @property(nonatomic, assign) IBOutlet id<ProfilePreferencesViewControllerDelegate> delegate;
+@property(nonatomic, readonly) NSSize preferredSize;
 
 - (void)layoutSubviewsForEditCurrentSessionMode;
 
