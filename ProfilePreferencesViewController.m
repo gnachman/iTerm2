@@ -226,6 +226,10 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [_textViewController changeFont:fontManager];
 }
 
+- (void)resizeWindowForCurrentTab {
+    [self resizeWindowForTabViewItem:_tabView.selectedTabViewItem animated:YES];
+}
+
 #pragma mark - ProfileListViewDelegate
 
 - (void)profileTableSelectionDidChange:(id)profileTable {
@@ -326,6 +330,25 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
 - (void)reloadData {
     [_profilesListView reloadData];
+}
+
+- (void)resizeWindowForTabViewItem:(NSTabViewItem *)tabViewItem animated:(BOOL)animated {
+    iTermSizeRememberingView *theView = (iTermSizeRememberingView *)[tabViewItem view];
+    [theView resetToOriginalSize];
+    static const CGSize kMargin = { 9, 11 };
+    static const CGFloat kTabViewMinWidth = 579;
+    CGFloat sharedProfilesLeftSizeWidth = kMargin.width;
+    if (!_profilesListView.isHidden) {
+        sharedProfilesLeftSizeWidth = NSMaxX(_profilesListView.frame) + kMargin.width;
+    }
+    NSSize contentSize = NSMakeSize(sharedProfilesLeftSizeWidth + MAX(kTabViewMinWidth, 11 + theView.frame.size.width + 11) + kMargin.width,
+                                    kMargin.height + 9 + theView.frame.size.height + 10 + kMargin.width + 20);
+    NSWindow *window = self.view.window;
+    NSPoint windowTopLeft = NSMakePoint(NSMinX(window.frame), NSMaxY(window.frame));
+    NSRect frame = [window frameRectForContentRect:NSMakeRect(windowTopLeft.x, 0, contentSize.width, contentSize.height)];
+    frame.origin.y = windowTopLeft.y - frame.size.height;
+
+    [window setFrame:frame display:YES animate:animated];
 }
 
 #pragma mark - Actions
@@ -515,22 +538,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 #pragma mark - NSTabViewDelegate
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
-    iTermSizeRememberingView *theView = (iTermSizeRememberingView *)[tabViewItem view];
-    [theView resetToOriginalSize];
-    static const CGSize kMargin = { 9, 11 };
-    static const CGFloat kTabViewMinWidth = 579;
-    CGFloat sharedProfilesLeftSizeWidth = kMargin.width;
-    if (!_profilesListView.isHidden) {
-        sharedProfilesLeftSizeWidth = NSMaxX(_profilesListView.frame) + kMargin.width;
-    }
-    NSSize contentSize = NSMakeSize(sharedProfilesLeftSizeWidth + MAX(kTabViewMinWidth, 11 + theView.frame.size.width + 11) + kMargin.width,
-                                    kMargin.height + 9 + theView.frame.size.height + 10 + kMargin.width + 20);
-    NSWindow *window = self.view.window;
-    NSPoint windowTopLeft = NSMakePoint(NSMinX(window.frame), NSMaxY(window.frame));
-    NSRect frame = [window frameRectForContentRect:NSMakeRect(windowTopLeft.x, 0, contentSize.width, contentSize.height)];
-    frame.origin.y = windowTopLeft.y - frame.size.height;
-
-    [window setFrame:frame display:YES animate:YES];
+    [self resizeWindowForTabViewItem:tabViewItem animated:YES];
 }
 
 @end

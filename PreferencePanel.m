@@ -101,6 +101,9 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
 NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUpdateProfileFields";
 NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 
+@interface PreferencePanel() <NSTabViewDelegate>
+
+@end
 @implementation PreferencePanel {
     ProfileModel *_profileModel;
     BOOL _editCurrentSessionMode;
@@ -128,6 +131,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     // This class is not well named. It is a lot like a view controller for the window
     // arrangements tab.
     IBOutlet WindowArrangements *arrangements_;
+    NSSize _standardSize;
 }
 
 + (instancetype)sharedInstance {
@@ -166,6 +170,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 #pragma mark - View layout
 
 - (void)awakeFromNib {
+    _standardSize = self.window.frame.size;
     [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
 
@@ -353,6 +358,19 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 
 - (ProfileModel *)profilePreferencesModel {
     return _profileModel;
+}
+
+#pragma mark - NSTabViewDelegate
+
+- (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
+    if (tabViewItem == _bookmarksTabViewItem) {
+        [_profilesViewController resizeWindowForCurrentTab];
+    } else {
+        NSRect rect = self.window.frame;
+        rect.origin.y += (rect.size.height - _standardSize.height);
+        rect.size = _standardSize;
+        [[self window] setFrame:rect display:YES animate:YES];
+    }
 }
 
 @end

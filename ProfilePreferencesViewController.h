@@ -43,4 +43,6 @@
 // Update views for changed backing state.
 - (void)refresh;
 
+- (void)resizeWindowForCurrentTab;
+
 @end
