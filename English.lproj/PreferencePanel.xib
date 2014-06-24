@@ -5314,11 +5314,11 @@ DQ
             </subviews>
         </customView>
         <customView id="G2G-W6-kWa" userLabel="Prefs - Profiles - Text" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="514" height="404"/>
+            <rect key="frame" x="0.0" y="0.0" width="514" height="390"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <button id="4765">
-                    <rect key="frame" x="221" y="355" width="226" height="18"/>
+                    <rect key="frame" x="221" y="341" width="226" height="18"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <buttonCell key="cell" type="check" title="Draw bold text in bold font" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4844">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5330,7 +5330,7 @@ DQ
                     </connections>
                 </button>
                 <button id="4766">
-                    <rect key="frame" x="221" y="335" width="226" height="18"/>
+                    <rect key="frame" x="221" y="321" width="226" height="18"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <buttonCell key="cell" type="check" title="Draw bold text in bright colors" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4843">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5342,7 +5342,7 @@ DQ
                     </connections>
                 </button>
                 <button id="5148">
-                    <rect key="frame" x="221" y="315" width="154" height="18"/>
+                    <rect key="frame" x="221" y="301" width="154" height="18"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <buttonCell key="cell" type="check" title="Blinking text allowed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5149">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5354,7 +5354,7 @@ DQ
                     </connections>
                 </button>
                 <button id="6400">
-                    <rect key="frame" x="221" y="295" width="134" height="18"/>
+                    <rect key="frame" x="221" y="281" width="134" height="18"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <buttonCell key="cell" type="check" title="Italic text allowed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6401">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5366,7 +5366,7 @@ DQ
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" id="4772">
-                    <rect key="frame" x="18" y="384" width="132" height="17"/>
+                    <rect key="frame" x="18" y="370" width="132" height="17"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Cursor" id="4835">
                         <font key="font" metaFont="systemBold"/>
@@ -5375,7 +5375,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="4998">
-                    <rect key="frame" x="220" y="384" width="132" height="17"/>
+                    <rect key="frame" x="220" y="370" width="132" height="17"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Text Rendering" id="4999">
                         <font key="font" metaFont="systemBold"/>
@@ -5384,7 +5384,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="5130">
-                    <rect key="frame" x="18" y="258" width="181" height="17"/>
+                    <rect key="frame" x="18" y="244" width="181" height="17"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Double-Width Characters:" id="5131">
                         <font key="font" metaFont="systemBold"/>
@@ -5393,7 +5393,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button id="4773">
-                    <rect key="frame" x="18" y="291" width="119" height="18"/>
+                    <rect key="frame" x="18" y="277" width="119" height="18"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <buttonCell key="cell" type="check" title="Blinking cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4834">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5405,7 +5405,7 @@ DQ
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" id="4774">
-                    <rect key="frame" x="118" y="124" width="138" height="32"/>
+                    <rect key="frame" x="118" y="110" width="138" height="32"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <buttonCell key="cell" type="push" title="Change Font" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="4833">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -5417,7 +5417,7 @@ DQ
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" id="4775">
-                    <rect key="frame" x="18" y="160" width="478" height="17"/>
+                    <rect key="frame" x="18" y="146" width="478" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Font Name" id="4832">
                         <font key="font" metaFont="system"/>
@@ -5426,7 +5426,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="4778">
-                    <rect key="frame" x="18" y="185" width="101" height="17"/>
+                    <rect key="frame" x="18" y="171" width="101" height="17"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Font" id="4829">
                         <font key="font" metaFont="systemBold"/>
@@ -5435,7 +5435,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button id="4782">
-                    <rect key="frame" x="18" y="133" width="106" height="18"/>
+                    <rect key="frame" x="18" y="119" width="106" height="18"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <buttonCell key="cell" type="check" title="Anti-aliased" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4825">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5447,7 +5447,7 @@ DQ
                     </connections>
                 </button>
                 <button id="vNf-D5-cU4">
-                    <rect key="frame" x="18" y="113" width="263" height="18"/>
+                    <rect key="frame" x="18" y="99" width="263" height="18"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <buttonCell key="cell" type="check" title="Use a different font for non-ASCII text" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="e7d-pm-ySF">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5459,7 +5459,7 @@ DQ
                     </connections>
                 </button>
                 <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" id="5017">
-                    <rect key="frame" x="20" y="315" width="98" height="58"/>
+                    <rect key="frame" x="20" y="301" width="98" height="58"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     <size key="cellSize" width="98" height="18"/>
@@ -5490,7 +5490,7 @@ DQ
                     </connections>
                 </matrix>
                 <button id="5126">
-                    <rect key="frame" x="18" y="234" width="471" height="18"/>
+                    <rect key="frame" x="18" y="220" width="471" height="18"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <buttonCell key="cell" type="check" title="Treat ambiguous-width characters as double width (not recommended)" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5127">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5502,7 +5502,7 @@ DQ
                     </connections>
                 </button>
                 <button id="IwR-5a-srh">
-                    <rect key="frame" x="18" y="214" width="396" height="18"/>
+                    <rect key="frame" x="18" y="200" width="396" height="18"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <buttonCell key="cell" type="check" title="Use HFS+ Unicode normalization (better fidelity but slower)" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6yC-Pg-xDK">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5514,11 +5514,11 @@ DQ
                     </connections>
                 </button>
                 <customView id="15P-ty-S1w">
-                    <rect key="frame" x="20" y="17" width="474" height="84"/>
+                    <rect key="frame" x="20" y="20" width="474" height="67"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <textField verticalHuggingPriority="750" id="4777">
-                            <rect key="frame" x="-2" y="42" width="478" height="17"/>
+                            <rect key="frame" x="-2" y="25" width="478" height="17"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Font Name" id="4830">
                                 <font key="font" metaFont="system"/>
@@ -5527,7 +5527,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <textField verticalHuggingPriority="750" id="5002">
-                            <rect key="frame" x="-2" y="67" width="120" height="17"/>
+                            <rect key="frame" x="-2" y="50" width="120" height="17"/>
                             <autoresizingMask key="autoresizingMask"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Non-ASCII Font" id="5003">
                                 <font key="font" metaFont="systemBold"/>
@@ -5536,7 +5536,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <button id="4783">
-                            <rect key="frame" x="-2" y="18" width="106" height="18"/>
+                            <rect key="frame" x="-2" y="1" width="106" height="18"/>
                             <autoresizingMask key="autoresizingMask"/>
                             <buttonCell key="cell" type="check" title="Anti-aliased" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4824">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5548,7 +5548,7 @@ DQ
                             </connections>
                         </button>
                         <button verticalHuggingPriority="750" tag="1" id="4776">
-                            <rect key="frame" x="97" y="10" width="138" height="32"/>
+                            <rect key="frame" x="97" y="-7" width="138" height="32"/>
                             <autoresizingMask key="autoresizingMask"/>
                             <buttonCell key="cell" type="push" title="Change Font" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="4831">
                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
