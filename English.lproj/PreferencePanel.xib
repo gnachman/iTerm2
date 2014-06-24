@@ -1545,255 +1545,9 @@ Gw
                                                     </view>
                                                 </tabViewItem>
                                                 <tabViewItem label="Text" identifier="Item 5" id="4763">
-                                                    <view key="view" id="4764">
+                                                    <view key="view" id="4764" userLabel="Filler">
                                                         <rect key="frame" x="10" y="33" width="559" height="404"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                        <subviews>
-                                                            <button id="4765">
-                                                                <rect key="frame" x="270" y="355" width="226" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Draw bold text in bold font" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4844">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="PIM-8Z-pho"/>
-                                                                    <outlet property="nextKeyView" destination="4766" id="5255"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="4766">
-                                                                <rect key="frame" x="270" y="335" width="226" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Draw bold text in bright colors" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4843">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="cey-oN-Wpl"/>
-                                                                    <outlet property="nextKeyView" destination="5148" id="5256"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="5148">
-                                                                <rect key="frame" x="270" y="315" width="154" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Blinking text allowed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5149">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="B3K-Oz-q2K"/>
-                                                                    <outlet property="nextKeyView" destination="2100" id="5257"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="6400">
-                                                                <rect key="frame" x="270" y="295" width="134" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Italic text allowed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6401">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="zu3-Kl-vVa"/>
-                                                                    <outlet property="nextKeyView" destination="2100" id="6403"/>
-                                                                </connections>
-                                                            </button>
-                                                            <textField verticalHuggingPriority="750" id="4772">
-                                                                <rect key="frame" x="67" y="384" width="132" height="17"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Cursor" id="4835">
-                                                                    <font key="font" metaFont="systemBold"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
-                                                            <textField verticalHuggingPriority="750" id="4998">
-                                                                <rect key="frame" x="269" y="384" width="132" height="17"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Text Rendering" id="4999">
-                                                                    <font key="font" metaFont="systemBold"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
-                                                            <textField verticalHuggingPriority="750" id="5130">
-                                                                <rect key="frame" x="67" y="258" width="181" height="17"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Double-Width Characters:" id="5131">
-                                                                    <font key="font" metaFont="systemBold"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
-                                                            <button id="4773">
-                                                                <rect key="frame" x="67" y="291" width="119" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Blinking cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4834">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="fKi-di-3fk"/>
-                                                                    <outlet property="nextKeyView" destination="4782" id="5249"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button verticalHuggingPriority="750" id="4774">
-                                                                <rect key="frame" x="167" y="124" width="138" height="32"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="push" title="Change Font" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="4833">
-                                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="openFontPicker:" target="lhd-u6-xr5" id="4eH-DO-YpM"/>
-                                                                    <outlet property="nextKeyView" destination="4783" id="5251"/>
-                                                                </connections>
-                                                            </button>
-                                                            <textField verticalHuggingPriority="750" id="4775">
-                                                                <rect key="frame" x="67" y="160" width="478" height="17"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Font Name" id="4832">
-                                                                    <font key="font" metaFont="system"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
-                                                            <textField verticalHuggingPriority="750" id="4778">
-                                                                <rect key="frame" x="67" y="185" width="101" height="17"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Font" id="4829">
-                                                                    <font key="font" metaFont="systemBold"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
-                                                            <button id="4782">
-                                                                <rect key="frame" x="67" y="133" width="106" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Anti-aliased" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4825">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="wBv-7V-Dfa"/>
-                                                                    <outlet property="nextKeyView" destination="4774" id="5250"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="vNf-D5-cU4">
-                                                                <rect key="frame" x="67" y="113" width="263" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Use a different font for non-ASCII text" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="e7d-pm-ySF">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="zi2-om-mwc"/>
-                                                                    <outlet property="nextKeyView" destination="4776" id="qqh-zL-dT6"/>
-                                                                </connections>
-                                                            </button>
-                                                            <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" id="5017">
-                                                                <rect key="frame" x="69" y="315" width="98" height="58"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                <size key="cellSize" width="98" height="18"/>
-                                                                <size key="intercellSpacing" width="4" height="2"/>
-                                                                <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="5023">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <cells>
-                                                                    <column>
-                                                                        <buttonCell type="radio" title="Underline" imagePosition="left" alignment="left" state="on" inset="2" id="5022">
-                                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                            <font key="font" metaFont="system"/>
-                                                                        </buttonCell>
-                                                                        <buttonCell type="radio" title="Vertical Bar" imagePosition="left" alignment="left" tag="1" inset="2" id="5027">
-                                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                            <font key="font" metaFont="system"/>
-                                                                        </buttonCell>
-                                                                        <buttonCell type="radio" title="Box" imagePosition="left" alignment="left" tag="2" inset="2" id="5029">
-                                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                            <font key="font" metaFont="system"/>
-                                                                        </buttonCell>
-                                                                    </column>
-                                                                </cells>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="4mF-fm-eeN"/>
-                                                                    <outlet property="nextKeyView" destination="4773" id="5248"/>
-                                                                </connections>
-                                                            </matrix>
-                                                            <button id="5126">
-                                                                <rect key="frame" x="67" y="234" width="471" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Treat ambiguous-width characters as double width (not recommended)" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5127">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="x1G-OP-lD8"/>
-                                                                    <outlet property="nextKeyView" destination="4765" id="5254"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="IwR-5a-srh">
-                                                                <rect key="frame" x="67" y="214" width="396" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Use HFS+ Unicode normalization (better fidelity but slower)" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6yC-Pg-xDK">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="lhd-u6-xr5" id="Kuj-iE-anj"/>
-                                                                    <outlet property="nextKeyView" destination="4765" id="fpi-3h-1te"/>
-                                                                </connections>
-                                                            </button>
-                                                            <customView id="15P-ty-S1w">
-                                                                <rect key="frame" x="69" y="17" width="474" height="84"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <subviews>
-                                                                    <textField verticalHuggingPriority="750" id="4777">
-                                                                        <rect key="frame" x="-2" y="42" width="478" height="17"/>
-                                                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Font Name" id="4830">
-                                                                            <font key="font" metaFont="system"/>
-                                                                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                        </textFieldCell>
-                                                                    </textField>
-                                                                    <textField verticalHuggingPriority="750" id="5002">
-                                                                        <rect key="frame" x="-2" y="67" width="120" height="17"/>
-                                                                        <autoresizingMask key="autoresizingMask"/>
-                                                                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Non-ASCII Font" id="5003">
-                                                                            <font key="font" metaFont="systemBold"/>
-                                                                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                        </textFieldCell>
-                                                                    </textField>
-                                                                    <button id="4783">
-                                                                        <rect key="frame" x="-2" y="18" width="106" height="18"/>
-                                                                        <autoresizingMask key="autoresizingMask"/>
-                                                                        <buttonCell key="cell" type="check" title="Anti-aliased" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4824">
-                                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                            <font key="font" metaFont="system"/>
-                                                                        </buttonCell>
-                                                                        <connections>
-                                                                            <action selector="settingChanged:" target="lhd-u6-xr5" id="xkM-Iq-WH5"/>
-                                                                            <outlet property="nextKeyView" destination="4776" id="5252"/>
-                                                                        </connections>
-                                                                    </button>
-                                                                    <button verticalHuggingPriority="750" tag="1" id="4776">
-                                                                        <rect key="frame" x="97" y="10" width="138" height="32"/>
-                                                                        <autoresizingMask key="autoresizingMask"/>
-                                                                        <buttonCell key="cell" type="push" title="Change Font" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="4831">
-                                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                                            <font key="font" metaFont="system"/>
-                                                                        </buttonCell>
-                                                                        <connections>
-                                                                            <action selector="openFontPicker:" target="lhd-u6-xr5" id="Jrk-VM-wsD"/>
-                                                                            <outlet property="nextKeyView" destination="5126" id="5253"/>
-                                                                        </connections>
-                                                                    </button>
-                                                                </subviews>
-                                                            </customView>
-                                                        </subviews>
                                                     </view>
                                                 </tabViewItem>
                                                 <tabViewItem label="Window" identifier="Item 5" id="4909">
@@ -4458,6 +4212,7 @@ DQ
                 <outlet property="_sessionViewController" destination="TG6-06-mq9" id="jYA-Wb-aH4"/>
                 <outlet property="_tabView" destination="2100" id="sRa-Z0-Ngh"/>
                 <outlet property="_terminalViewController" destination="gMD-DK-gev" id="Gzm-8d-1w7"/>
+                <outlet property="_textTab" destination="4763" id="LM3-ed-Kwk"/>
                 <outlet property="_textViewController" destination="lhd-u6-xr5" id="XTC-Yc-Vqb"/>
                 <outlet property="_toggleTagsButton" destination="nFj-0n-SWO" id="nd4-hz-FRN"/>
                 <outlet property="_windowViewController" destination="BMA-OA-Kzc" id="6zk-Vv-rly"/>
@@ -4556,7 +4311,7 @@ DQ
                 <outlet property="_useNonAsciiFont" destination="vNf-D5-cU4" id="75w-83-vyN"/>
                 <outlet property="_verticalSpacing" destination="3082" id="hsx-RO-0pB"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="W6f-xu-XYi"/>
-                <outlet property="view" destination="4764" id="gBd-ir-DS5"/>
+                <outlet property="view" destination="G2G-W6-kWa" id="dro-S5-ibW"/>
             </connections>
         </customObject>
         <customObject id="BMA-OA-Kzc" customClass="ProfilesWindowPreferencesViewController">
@@ -5556,6 +5311,256 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
+            </subviews>
+        </customView>
+        <customView id="G2G-W6-kWa" userLabel="Prefs - Profiles - Text" customClass="iTermSizeRememberingView">
+            <rect key="frame" x="0.0" y="0.0" width="514" height="404"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <button id="4765">
+                    <rect key="frame" x="221" y="355" width="226" height="18"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <buttonCell key="cell" type="check" title="Draw bold text in bold font" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4844">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="PIM-8Z-pho"/>
+                        <outlet property="nextKeyView" destination="4766" id="5255"/>
+                    </connections>
+                </button>
+                <button id="4766">
+                    <rect key="frame" x="221" y="335" width="226" height="18"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <buttonCell key="cell" type="check" title="Draw bold text in bright colors" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4843">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="cey-oN-Wpl"/>
+                        <outlet property="nextKeyView" destination="5148" id="5256"/>
+                    </connections>
+                </button>
+                <button id="5148">
+                    <rect key="frame" x="221" y="315" width="154" height="18"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <buttonCell key="cell" type="check" title="Blinking text allowed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5149">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="B3K-Oz-q2K"/>
+                        <outlet property="nextKeyView" destination="2100" id="5257"/>
+                    </connections>
+                </button>
+                <button id="6400">
+                    <rect key="frame" x="221" y="295" width="134" height="18"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <buttonCell key="cell" type="check" title="Italic text allowed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6401">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="zu3-Kl-vVa"/>
+                        <outlet property="nextKeyView" destination="2100" id="6403"/>
+                    </connections>
+                </button>
+                <textField verticalHuggingPriority="750" id="4772">
+                    <rect key="frame" x="18" y="384" width="132" height="17"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Cursor" id="4835">
+                        <font key="font" metaFont="systemBold"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="4998">
+                    <rect key="frame" x="220" y="384" width="132" height="17"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Text Rendering" id="4999">
+                        <font key="font" metaFont="systemBold"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="5130">
+                    <rect key="frame" x="18" y="258" width="181" height="17"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Double-Width Characters:" id="5131">
+                        <font key="font" metaFont="systemBold"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <button id="4773">
+                    <rect key="frame" x="18" y="291" width="119" height="18"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <buttonCell key="cell" type="check" title="Blinking cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4834">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="fKi-di-3fk"/>
+                        <outlet property="nextKeyView" destination="4782" id="5249"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" id="4774">
+                    <rect key="frame" x="118" y="124" width="138" height="32"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <buttonCell key="cell" type="push" title="Change Font" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="4833">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="openFontPicker:" target="lhd-u6-xr5" id="4eH-DO-YpM"/>
+                        <outlet property="nextKeyView" destination="4783" id="5251"/>
+                    </connections>
+                </button>
+                <textField verticalHuggingPriority="750" id="4775">
+                    <rect key="frame" x="18" y="160" width="478" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Font Name" id="4832">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="4778">
+                    <rect key="frame" x="18" y="185" width="101" height="17"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Font" id="4829">
+                        <font key="font" metaFont="systemBold"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <button id="4782">
+                    <rect key="frame" x="18" y="133" width="106" height="18"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <buttonCell key="cell" type="check" title="Anti-aliased" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4825">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="wBv-7V-Dfa"/>
+                        <outlet property="nextKeyView" destination="4774" id="5250"/>
+                    </connections>
+                </button>
+                <button id="vNf-D5-cU4">
+                    <rect key="frame" x="18" y="113" width="263" height="18"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <buttonCell key="cell" type="check" title="Use a different font for non-ASCII text" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="e7d-pm-ySF">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="zi2-om-mwc"/>
+                        <outlet property="nextKeyView" destination="4776" id="qqh-zL-dT6"/>
+                    </connections>
+                </button>
+                <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" id="5017">
+                    <rect key="frame" x="20" y="315" width="98" height="58"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    <size key="cellSize" width="98" height="18"/>
+                    <size key="intercellSpacing" width="4" height="2"/>
+                    <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="5023">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <cells>
+                        <column>
+                            <buttonCell type="radio" title="Underline" imagePosition="left" alignment="left" state="on" inset="2" id="5022">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <buttonCell type="radio" title="Vertical Bar" imagePosition="left" alignment="left" tag="1" inset="2" id="5027">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <buttonCell type="radio" title="Box" imagePosition="left" alignment="left" tag="2" inset="2" id="5029">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                        </column>
+                    </cells>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="4mF-fm-eeN"/>
+                        <outlet property="nextKeyView" destination="4773" id="5248"/>
+                    </connections>
+                </matrix>
+                <button id="5126">
+                    <rect key="frame" x="18" y="234" width="471" height="18"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <buttonCell key="cell" type="check" title="Treat ambiguous-width characters as double width (not recommended)" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5127">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="x1G-OP-lD8"/>
+                        <outlet property="nextKeyView" destination="4765" id="5254"/>
+                    </connections>
+                </button>
+                <button id="IwR-5a-srh">
+                    <rect key="frame" x="18" y="214" width="396" height="18"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <buttonCell key="cell" type="check" title="Use HFS+ Unicode normalization (better fidelity but slower)" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6yC-Pg-xDK">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="Kuj-iE-anj"/>
+                        <outlet property="nextKeyView" destination="4765" id="fpi-3h-1te"/>
+                    </connections>
+                </button>
+                <customView id="15P-ty-S1w">
+                    <rect key="frame" x="20" y="17" width="474" height="84"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <subviews>
+                        <textField verticalHuggingPriority="750" id="4777">
+                            <rect key="frame" x="-2" y="42" width="478" height="17"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Font Name" id="4830">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <textField verticalHuggingPriority="750" id="5002">
+                            <rect key="frame" x="-2" y="67" width="120" height="17"/>
+                            <autoresizingMask key="autoresizingMask"/>
+                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Non-ASCII Font" id="5003">
+                                <font key="font" metaFont="systemBold"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <button id="4783">
+                            <rect key="frame" x="-2" y="18" width="106" height="18"/>
+                            <autoresizingMask key="autoresizingMask"/>
+                            <buttonCell key="cell" type="check" title="Anti-aliased" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4824">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="settingChanged:" target="lhd-u6-xr5" id="xkM-Iq-WH5"/>
+                                <outlet property="nextKeyView" destination="4776" id="5252"/>
+                            </connections>
+                        </button>
+                        <button verticalHuggingPriority="750" tag="1" id="4776">
+                            <rect key="frame" x="97" y="10" width="138" height="32"/>
+                            <autoresizingMask key="autoresizingMask"/>
+                            <buttonCell key="cell" type="push" title="Change Font" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="4831">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="openFontPicker:" target="lhd-u6-xr5" id="Jrk-VM-wsD"/>
+                                <outlet property="nextKeyView" destination="5126" id="5253"/>
+                            </connections>
+                        </button>
+                    </subviews>
+                </customView>
             </subviews>
         </customView>
     </objects>

@@ -59,7 +59,8 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
     IBOutlet NSTabViewItem *_generalTab;
     IBOutlet NSTabViewItem *_colorsTab;
-    
+    IBOutlet NSTabViewItem *_textTab;
+
     // Colors tab view controller
     IBOutlet ProfilesColorsPreferencesViewController *_colorsViewController;
     
@@ -128,6 +129,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
     [_generalTab setView:_generalViewController.view];
     [_colorsTab setView:_colorsViewController.view];
+    [_textTab setView:_textViewController.view];
 }
 
 #pragma mark - APIs
