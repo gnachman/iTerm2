@@ -18,6 +18,10 @@
     return self;
 }
 
+- (void)awakeFromNib {
+    _originalSize = self.frame.size;
+}
+
 - (void)resetToOriginalSize {
     [self setFrameSize:_originalSize];
 }

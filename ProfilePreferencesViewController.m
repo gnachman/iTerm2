@@ -10,6 +10,7 @@
 #import "BulkCopyProfilePreferencesWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermController.h"
+#import "iTermFlippedView.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
@@ -135,14 +136,44 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
         [_profilesListView selectRowIndex:0];
     }
 
-    [_generalTab setView:_generalViewController.view];
-    [_colorsTab setView:_colorsViewController.view];
-    [_textTab setView:_textViewController.view];
-    [_windowTab setView:_windowViewController.view];
-    [_terminalTab setView:_terminalViewController.view];
-    [_sessionTab setView:_sessionViewController.view];
-    [_keysTab setView:_keysViewController.view];
-    [_advancedTab setView:_advancedViewController.view];
+    NSArray *tabViewTuples = @[ @[ _generalTab, _generalViewController.view ],
+                                @[ _colorsTab, _colorsViewController.view ],
+                                @[ _textTab, _textViewController.view ],
+                                @[ _windowTab, _windowViewController.view ],
+                                @[ _terminalTab, _terminalViewController.view ],
+                                @[ _sessionTab, _sessionViewController.view ],
+                                @[ _keysTab, _keysViewController.view ],
+                                @[ _advancedTab, _advancedViewController.view ] ];
+    for (NSArray *tuple in tabViewTuples) {
+        NSTabViewItem *tabViewItem = tuple[0];
+        NSView *view = tuple[1];
+
+        static const CGFloat kMaxHeight = 424;
+        if (view.frame.size.height > kMaxHeight) {
+            // If the view is too tall, wrap it in a scroll view.
+            NSRect theFrame = NSMakeRect(0, 0, view.frame.size.width, kMaxHeight);
+            iTermSizeRememberingView *sizeRememberingView = [[iTermSizeRememberingView alloc] initWithFrame:theFrame];
+
+            NSScrollView *scrollView = [[NSScrollView alloc] initWithFrame:theFrame];
+            scrollView.drawsBackground = NO;
+            scrollView.hasVerticalScroller = YES;
+            scrollView.hasHorizontalScroller = NO;
+
+            iTermFlippedView *flippedView = [[iTermFlippedView alloc] initWithFrame:view.frame];
+            [flippedView addSubview:view];
+            [flippedView flipSubviews];
+
+            [scrollView setDocumentView:flippedView];
+            [sizeRememberingView addSubview:scrollView];
+
+            [tabViewItem setView:sizeRememberingView];
+        } else {
+            // Replce the filler view with the real one which isn't in the view
+            // hierarchy in the .xib file which was done to make it easier for
+            // views' sizes to differ.
+            [tabViewItem setView:view];
+        }
+    }
 }
 
 #pragma mark - APIs

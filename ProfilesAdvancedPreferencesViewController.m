@@ -9,7 +9,6 @@
 #import "ProfilesAdvancedPreferencesViewController.h"
 #import "CommandHistory.h"
 #import "ITAddressBookMgr.h"
-#import "iTermFlippedView.h"
 #import "iTermProfilePreferences.h"
 #import "iTermWarning.h"
 #import "NSTextField+iTerm.h"
@@ -30,8 +29,6 @@
     IBOutlet TriggerController *_triggerWindowController;
     IBOutlet SmartSelectionController *_smartSelectionWindowController;
     IBOutlet TrouterPrefsController *_trouterPrefController;
-    IBOutlet NSScrollView *_scrollView;
-    IBOutlet iTermFlippedView *_flippedView;
     IBOutlet NSButton *_removeHost;
     IBOutlet NSTableView *_boundHostsTableView;
     
@@ -41,7 +38,7 @@
     IBOutlet NSControl *_removeBoundHost;
     IBOutlet NSControl *_boundHostShellIntegrationWarning;
     IBOutlet NSControl *_boundHostHelp;
-    
+
     BOOL _addingBoundHost;  // Don't remove empty-named hosts while this is set
 }
 
