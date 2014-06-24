@@ -76,6 +76,7 @@
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermSizeRememberingView.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "KeysPreferencesViewController.h"
@@ -173,6 +174,8 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     _standardSize = self.window.frame.size;
     [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
+
+    _globalTabViewItem.view = _generalPreferencesViewController.view;
 
     if (_editCurrentSessionMode) {
         [self layoutSubviewsForEditCurrentSessionMode];
@@ -366,9 +369,14 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     if (tabViewItem == _bookmarksTabViewItem) {
         [_profilesViewController resizeWindowForCurrentTab];
     } else {
+        iTermSizeRememberingView *theView = (iTermSizeRememberingView *)tabViewItem.view;
+        [theView resetToOriginalSize];
         NSRect rect = self.window.frame;
-        rect.origin.y += (rect.size.height - _standardSize.height);
-        rect.size = _standardSize;
+        NSSize size = [tabViewItem.view frame].size;
+        rect.origin.y += (rect.size.height - size.height);
+        rect.size = size;
+        rect.size.height += 87;
+        rect.size.width += 26;
         [[self window] setFrame:rect display:YES animate:YES];
     }
 }
