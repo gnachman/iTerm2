@@ -1569,134 +1569,9 @@ Gw
                                                     </view>
                                                 </tabViewItem>
                                                 <tabViewItem label="Keys" identifier="Item 3" id="2109">
-                                                    <view key="view" id="2110">
+                                                    <view key="view" id="2110" userLabel="Filler">
                                                         <rect key="frame" x="10" y="33" width="559" height="404"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                        <subviews>
-                                                            <textField verticalHuggingPriority="750" id="4184">
-                                                                <rect key="frame" x="14" y="384" width="159" height="17"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Profile Shortcut Keys:" id="4185">
-                                                                    <font key="font" metaFont="systemBold"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
-                                                            <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" id="4291">
-                                                                <rect key="frame" x="206" y="64" width="212" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                <size key="cellSize" width="68" height="18"/>
-                                                                <size key="intercellSpacing" width="4" height="2"/>
-                                                                <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="4304">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <cells>
-                                                                    <column>
-                                                                        <buttonCell type="radio" title="Normal" imagePosition="left" alignment="left" state="on" inset="2" id="4301">
-                                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                            <font key="font" metaFont="system"/>
-                                                                        </buttonCell>
-                                                                    </column>
-                                                                    <column>
-                                                                        <buttonCell type="radio" title="Meta" imagePosition="left" alignment="left" tag="1" inset="2" id="4302">
-                                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                            <font key="font" metaFont="system"/>
-                                                                        </buttonCell>
-                                                                    </column>
-                                                                    <column>
-                                                                        <buttonCell type="radio" title="+Esc" imagePosition="left" alignment="left" tag="2" inset="2" id="4303">
-                                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                            <font key="font" metaFont="system"/>
-                                                                        </buttonCell>
-                                                                    </column>
-                                                                </cells>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="kOZ-HN-eXg" id="JkP-R8-l3i"/>
-                                                                    <outlet property="nextKeyView" destination="4293" id="5286"/>
-                                                                </connections>
-                                                            </matrix>
-                                                            <textField verticalHuggingPriority="750" id="4292">
-                                                                <rect key="frame" x="23" y="48" width="178" height="34"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Left option (⌥) key acts as:" id="4300">
-                                                                    <font key="font" metaFont="system"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
-                                                            <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" id="4293">
-                                                                <rect key="frame" x="206" y="44" width="212" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                <size key="cellSize" width="68" height="18"/>
-                                                                <size key="intercellSpacing" width="4" height="2"/>
-                                                                <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="4296">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <cells>
-                                                                    <column>
-                                                                        <buttonCell type="radio" title="Normal" imagePosition="left" alignment="left" state="on" inset="2" id="4299">
-                                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                            <font key="font" metaFont="system"/>
-                                                                        </buttonCell>
-                                                                    </column>
-                                                                    <column>
-                                                                        <buttonCell type="radio" title="Meta" imagePosition="left" alignment="left" tag="1" inset="2" id="4298">
-                                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                            <font key="font" metaFont="system"/>
-                                                                        </buttonCell>
-                                                                    </column>
-                                                                    <column>
-                                                                        <buttonCell type="radio" title="+Esc" imagePosition="left" alignment="left" tag="2" inset="2" id="4297">
-                                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                            <font key="font" metaFont="system"/>
-                                                                        </buttonCell>
-                                                                    </column>
-                                                                </cells>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="kOZ-HN-eXg" id="Hco-9M-B7p"/>
-                                                                    <outlet property="nextKeyView" destination="5074" id="5287"/>
-                                                                </connections>
-                                                            </matrix>
-                                                            <textField verticalHuggingPriority="750" id="4294">
-                                                                <rect key="frame" x="14" y="28" width="189" height="34"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Right option (⌥) key acts as:" id="4295">
-                                                                    <font key="font" metaFont="system"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
-                                                            <button id="5074">
-                                                                <rect key="frame" x="15" y="20" width="151" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <buttonCell key="cell" type="check" title="Delete key sends ^H" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5075">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="deleteSendsCtrlHDidChange:" target="kOZ-HN-eXg" id="YRG-hR-d7y"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="U4H-3c-nZg">
-                                                                <rect key="frame" x="204" y="20" width="317" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <buttonCell key="cell" type="check" title="Numeric keypad may act as application keypad" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="cTE-39-JA0">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="kOZ-HN-eXg" id="QKb-eC-9mV"/>
-                                                                </connections>
-                                                            </button>
-                                                            <customView id="6sa-Ma-Wvi">
-                                                                <rect key="frame" x="16" y="90" width="526" height="286"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                            </customView>
-                                                        </subviews>
                                                     </view>
                                                 </tabViewItem>
                                                 <tabViewItem label="Advanced" identifier="Item 7" id="5776">
@@ -3369,6 +3244,7 @@ DQ
                 <outlet property="_copyToProfileButton" destination="5140" id="OLo-Jv-hFL"/>
                 <outlet property="_generalTab" destination="2101" id="L0w-Vv-KhM"/>
                 <outlet property="_generalViewController" destination="dVg-Ac-SiZ" id="ppv-wN-HJr"/>
+                <outlet property="_keysTab" destination="2109" id="7T9-TK-hiO"/>
                 <outlet property="_keysViewController" destination="kOZ-HN-eXg" id="4DV-Eg-7b1"/>
                 <outlet property="_otherActionsPopup" destination="3230" id="Qhw-QD-BOd"/>
                 <outlet property="_profilesListView" destination="3260" id="22S-wx-dOs"/>
@@ -3554,7 +3430,7 @@ DQ
                 <outlet property="_optionKeySends" destination="4291" id="IFj-h4-wKL"/>
                 <outlet property="_rightOptionKeySends" destination="4293" id="qUt-MU-5Nv"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="xet-WM-Yj5"/>
-                <outlet property="view" destination="2110" id="LV0-bp-Kb3"/>
+                <outlet property="view" destination="M5G-Dw-0HO" id="7cT-58-ldP"/>
             </connections>
         </customObject>
         <customObject id="Qvt-kg-svI" customClass="ProfilesAdvancedPreferencesViewController">
@@ -5577,6 +5453,135 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
+            </subviews>
+        </customView>
+        <customView id="M5G-Dw-0HO" userLabel="Prefs - Profiles - Keys" customClass="iTermSizeRememberingView">
+            <rect key="frame" x="0.0" y="0.0" width="657" height="414"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <textField verticalHuggingPriority="750" id="4184">
+                    <rect key="frame" x="14" y="394" width="159" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Profile Shortcut Keys:" id="4185">
+                        <font key="font" metaFont="systemBold"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" id="4291">
+                    <rect key="frame" x="206" y="82" width="212" height="18"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    <size key="cellSize" width="68" height="18"/>
+                    <size key="intercellSpacing" width="4" height="2"/>
+                    <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="4304">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <cells>
+                        <column>
+                            <buttonCell type="radio" title="Normal" imagePosition="left" alignment="left" state="on" inset="2" id="4301">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                        </column>
+                        <column>
+                            <buttonCell type="radio" title="Meta" imagePosition="left" alignment="left" tag="1" inset="2" id="4302">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                        </column>
+                        <column>
+                            <buttonCell type="radio" title="+Esc" imagePosition="left" alignment="left" tag="2" inset="2" id="4303">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                        </column>
+                    </cells>
+                    <connections>
+                        <action selector="settingChanged:" target="kOZ-HN-eXg" id="JkP-R8-l3i"/>
+                        <outlet property="nextKeyView" destination="4293" id="5286"/>
+                    </connections>
+                </matrix>
+                <textField verticalHuggingPriority="750" id="4292">
+                    <rect key="frame" x="14" y="66" width="178" height="34"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Left option (⌥) key acts as:" id="4300">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" id="4293">
+                    <rect key="frame" x="206" y="62" width="212" height="18"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    <size key="cellSize" width="68" height="18"/>
+                    <size key="intercellSpacing" width="4" height="2"/>
+                    <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="4296">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <cells>
+                        <column>
+                            <buttonCell type="radio" title="Normal" imagePosition="left" alignment="left" state="on" inset="2" id="4299">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                        </column>
+                        <column>
+                            <buttonCell type="radio" title="Meta" imagePosition="left" alignment="left" tag="1" inset="2" id="4298">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                        </column>
+                        <column>
+                            <buttonCell type="radio" title="+Esc" imagePosition="left" alignment="left" tag="2" inset="2" id="4297">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                        </column>
+                    </cells>
+                    <connections>
+                        <action selector="settingChanged:" target="kOZ-HN-eXg" id="Hco-9M-B7p"/>
+                        <outlet property="nextKeyView" destination="5074" id="5287"/>
+                    </connections>
+                </matrix>
+                <textField verticalHuggingPriority="750" id="4294">
+                    <rect key="frame" x="14" y="46" width="189" height="34"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Right option (⌥) key acts as:" id="4295">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <button id="5074">
+                    <rect key="frame" x="14" y="38" width="151" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Delete key sends ^H" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5075">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="deleteSendsCtrlHDidChange:" target="kOZ-HN-eXg" id="YRG-hR-d7y"/>
+                    </connections>
+                </button>
+                <button id="U4H-3c-nZg">
+                    <rect key="frame" x="14" y="18" width="317" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Numeric keypad may act as application keypad" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="cTE-39-JA0">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="kOZ-HN-eXg" id="QKb-eC-9mV"/>
+                    </connections>
+                </button>
+                <customView id="6sa-Ma-Wvi">
+                    <rect key="frame" x="16" y="108" width="621" height="278"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                </customView>
             </subviews>
         </customView>
     </objects>
