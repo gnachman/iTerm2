@@ -130,8 +130,8 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     IBOutlet NSToolbarItem *_advancedToolbarItem;
     IBOutlet NSTabViewItem *_advancedTabViewItem;
 
-    // This class is not well named. It is a lot like a view controller for the window
-    // arrangements tab.
+    // This class is not well named. It is a view controller for the window
+    // arrangements tab. It's also a singleton :(
     IBOutlet WindowArrangements *arrangements_;
     NSSize _standardSize;
 }
@@ -179,6 +179,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     _globalTabViewItem.view = _generalPreferencesViewController.view;
     _appearanceTabViewItem.view = _appearancePreferencesViewController.view;
     _keyboardTabViewItem.view = _keysViewController.view;
+    _arrangementsTabViewItem.view = arrangements_.view;
 
     if (_editCurrentSessionMode) {
         [self layoutSubviewsForEditCurrentSessionMode];
