@@ -1557,274 +1557,9 @@ Gw
                                                     </view>
                                                 </tabViewItem>
                                                 <tabViewItem label="Terminal" identifier="Item 2" id="2107">
-                                                    <view key="view" id="2108">
+                                                    <view key="view" id="2108" userLabel="Filler">
                                                         <rect key="frame" x="10" y="33" width="559" height="404"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                        <subviews>
-                                                            <popUpButton verticalHuggingPriority="750" id="2390">
-                                                                <rect key="frame" x="172" y="245" width="332" height="26"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="2427">
-                                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                                    <font key="font" metaFont="menu"/>
-                                                                    <menu key="menu" title="OtherViews" id="2428"/>
-                                                                </popUpButtonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="j9P-bz-XgQ"/>
-                                                                    <outlet property="nextKeyView" destination="2401" id="5272"/>
-                                                                </connections>
-                                                            </popUpButton>
-                                                            <textField verticalHuggingPriority="750" id="2391">
-                                                                <rect key="frame" x="36" y="249" width="136" height="19"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Character Encoding:" id="2426">
-                                                                    <font key="font" metaFont="system"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
-                                                            <textField verticalHuggingPriority="750" id="2393">
-                                                                <rect key="frame" x="27" y="222" width="145" height="17"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Report Terminal Type:" id="2424">
-                                                                    <font key="font" metaFont="system"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
-                                                            <button id="2397">
-                                                                <rect key="frame" x="26" y="105" width="164" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Silence bell" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2420">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="imh-CJ-KN3"/>
-                                                                    <outlet property="nextKeyView" destination="2403" id="5269"/>
-                                                                </connections>
-                                                            </button>
-                                                            <textField verticalHuggingPriority="750" id="2400">
-                                                                <rect key="frame" x="37" y="354" width="135" height="19"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Scrollback Lines:" id="2417">
-                                                                    <font key="font" metaFont="system"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
-                                                            <textField verticalHuggingPriority="750" id="2401">
-                                                                <rect key="frame" x="175" y="354" width="171" height="22"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2416">
-                                                                    <font key="font" metaFont="system"/>
-                                                                    <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                                <connections>
-                                                                    <outlet property="delegate" destination="gMD-DK-gev" id="dhc-Gz-JT4"/>
-                                                                    <outlet property="nextKeyView" destination="3647" id="5273"/>
-                                                                </connections>
-                                                            </textField>
-                                                            <button id="2402">
-                                                                <rect key="frame" x="27" y="198" width="215" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Enable xterm mouse reporting" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2415">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="KKF-gH-Gft"/>
-                                                                    <outlet property="nextKeyView" destination="5081" id="5277"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="2403">
-                                                                <rect key="frame" x="286" y="85" width="160" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Show bell icon in tabs" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2414">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="6Dr-os-Mn0"/>
-                                                                    <outlet property="nextKeyView" destination="3553" id="5270"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="3553">
-                                                                <rect key="frame" x="286" y="105" width="122" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Flash visual bell" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3554">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="YC0-VS-w11"/>
-                                                                    <outlet property="nextKeyView" destination="2390" id="5271"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="2404">
-                                                                <rect key="frame" x="26" y="85" width="258" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <buttonCell key="cell" type="check" title="Send Growl/Notification Center alerts" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2413">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="n1Y-rc-vcH"/>
-                                                                    <outlet property="nextKeyView" destination="2100" id="5281"/>
-                                                                </connections>
-                                                            </button>
-                                                            <comboBox verticalHuggingPriority="750" id="2405">
-                                                                <rect key="frame" x="175" y="217" width="329" height="26"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <comboBoxCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" title="vt100" drawsBackground="YES" completes="NO" numberOfVisibleItems="7" id="2412">
-                                                                    <font key="font" metaFont="system"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                                                    <objectValues>
-                                                                        <string>vt100</string>
-                                                                        <string>xterm</string>
-                                                                        <string>xterm-new</string>
-                                                                        <string>xterm-256color</string>
-                                                                        <string>ansi</string>
-                                                                        <string>rxvt</string>
-                                                                        <string>linux</string>
-                                                                    </objectValues>
-                                                                </comboBoxCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="gE7-6t-Aa0"/>
-                                                                    <outlet property="delegate" destination="gMD-DK-gev" id="LlF-ld-PpM"/>
-                                                                    <outlet property="nextKeyView" destination="2402" id="5276"/>
-                                                                </connections>
-                                                            </comboBox>
-                                                            <textField verticalHuggingPriority="750" id="2434">
-                                                                <rect key="frame" x="26" y="384" width="125" height="17"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Scrollback Buffer" id="2435">
-                                                                    <font key="font" metaFont="systemBold"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
-                                                            <textField verticalHuggingPriority="750" id="2436">
-                                                                <rect key="frame" x="26" y="277" width="136" height="17"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Terminal Emulation" id="2437">
-                                                                    <font key="font" metaFont="systemBold"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
-                                                            <textField verticalHuggingPriority="750" id="2438">
-                                                                <rect key="frame" x="25" y="129" width="136" height="17"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Notifications" id="2439">
-                                                                    <font key="font" metaFont="systemBold"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
-                                                            <textField verticalHuggingPriority="750" id="6043">
-                                                                <rect key="frame" x="26" y="52" width="136" height="17"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Environment" id="6044">
-                                                                    <font key="font" metaFont="systemBold"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
-                                                            <button id="3647">
-                                                                <rect key="frame" x="352" y="355" width="151" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <buttonCell key="cell" type="check" title="Unlimited scrollback" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="3648">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="GdK-um-hjE"/>
-                                                                    <outlet property="nextKeyView" destination="5154" id="5274"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="5081">
-                                                                <rect key="frame" x="286" y="178" width="257" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <buttonCell key="cell" type="check" title="Disable save/restore alternate screen" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5082">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="UKU-Mw-5iR"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="5633">
-                                                                <rect key="frame" x="286" y="198" width="257" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <buttonCell key="cell" type="check" title="Disable session-initiated printing" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5634">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="INZ-fW-6oY"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="6387">
-                                                                <rect key="frame" x="27" y="178" width="257" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <buttonCell key="cell" type="check" title="Terminal may report window title" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6388">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="gxb-SG-9OG"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="xih-tE-Xk7">
-                                                                <rect key="frame" x="27" y="158" width="237" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <buttonCell key="cell" type="check" title="Terminal may set tab/window title" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="hed-XP-5DZ">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="CdP-oV-hKk"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="5154">
-                                                                <rect key="frame" x="27" y="330" width="391" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <buttonCell key="cell" type="check" title="Save lines to scrollback when an app status bar is present" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5155">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="yev-sv-L5n"/>
-                                                                    <outlet property="nextKeyView" destination="2405" id="5275"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="5758">
-                                                                <rect key="frame" x="27" y="310" width="391" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <buttonCell key="cell" type="check" title="Save lines to scrollback in alternate screen mode" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5759">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="2Oz-MO-7Bw"/>
-                                                                    <outlet property="nextKeyView" destination="2405" id="5761"/>
-                                                                </connections>
-                                                            </button>
-                                                            <button id="6045">
-                                                                <rect key="frame" x="27" y="28" width="231" height="18"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <buttonCell key="cell" type="check" title="Set locale variables automatically" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6046">
-                                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                    <font key="font" metaFont="system"/>
-                                                                </buttonCell>
-                                                                <connections>
-                                                                    <action selector="settingChanged:" target="gMD-DK-gev" id="DDd-1W-Nfv"/>
-                                                                </connections>
-                                                            </button>
-                                                        </subviews>
                                                     </view>
                                                 </tabViewItem>
                                                 <tabViewItem label="Session" identifier="Item 6" id="5652">
@@ -3864,6 +3599,7 @@ DQ
                 <outlet property="_removeProfileButton" destination="2113" id="bCy-bg-Kla"/>
                 <outlet property="_sessionViewController" destination="TG6-06-mq9" id="jYA-Wb-aH4"/>
                 <outlet property="_tabView" destination="2100" id="sRa-Z0-Ngh"/>
+                <outlet property="_terminalTab" destination="2107" id="peE-0g-nN2"/>
                 <outlet property="_terminalViewController" destination="gMD-DK-gev" id="Gzm-8d-1w7"/>
                 <outlet property="_textTab" destination="4763" id="LM3-ed-Kwk"/>
                 <outlet property="_textViewController" destination="lhd-u6-xr5" id="XTC-Yc-Vqb"/>
@@ -4014,6 +3750,7 @@ DQ
                 <outlet property="_unlimitedScrollback" destination="3647" id="3g4-2U-Gbv"/>
                 <outlet property="_xtermMouseReporting" destination="2402" id="kB0-i0-VKF"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="phY-Ve-12F"/>
+                <outlet property="view" destination="0rQ-EK-tyN" id="e2I-lI-Mj1"/>
             </connections>
         </customObject>
         <customObject id="TG6-06-mq9" customClass="ProfilesSessionPreferencesViewController">
@@ -5564,6 +5301,275 @@ DQ
                     </buttonCell>
                     <connections>
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="SPU-HF-C0e"/>
+                    </connections>
+                </button>
+            </subviews>
+        </customView>
+        <customView id="0rQ-EK-tyN" userLabel="Prefs - Profiles - Terminal" customClass="iTermSizeRememberingView">
+            <rect key="frame" x="0.0" y="0.0" width="563" height="394"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <popUpButton verticalHuggingPriority="750" id="2390">
+                    <rect key="frame" x="172" y="235" width="332" height="26"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="2427">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" title="OtherViews" id="2428"/>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="j9P-bz-XgQ"/>
+                        <outlet property="nextKeyView" destination="2401" id="5272"/>
+                    </connections>
+                </popUpButton>
+                <textField verticalHuggingPriority="750" id="2391">
+                    <rect key="frame" x="36" y="239" width="136" height="19"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Character Encoding:" id="2426">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="2393">
+                    <rect key="frame" x="27" y="212" width="145" height="17"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Report Terminal Type:" id="2424">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <button id="2397">
+                    <rect key="frame" x="26" y="95" width="164" height="18"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <buttonCell key="cell" type="check" title="Silence bell" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2420">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="imh-CJ-KN3"/>
+                        <outlet property="nextKeyView" destination="2403" id="5269"/>
+                    </connections>
+                </button>
+                <textField verticalHuggingPriority="750" id="2400">
+                    <rect key="frame" x="37" y="344" width="135" height="19"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Scrollback Lines:" id="2417">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="2401">
+                    <rect key="frame" x="175" y="344" width="171" height="22"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2416">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                    <connections>
+                        <outlet property="delegate" destination="gMD-DK-gev" id="dhc-Gz-JT4"/>
+                        <outlet property="nextKeyView" destination="3647" id="5273"/>
+                    </connections>
+                </textField>
+                <button id="2402">
+                    <rect key="frame" x="27" y="188" width="215" height="18"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <buttonCell key="cell" type="check" title="Enable xterm mouse reporting" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2415">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="KKF-gH-Gft"/>
+                        <outlet property="nextKeyView" destination="5081" id="5277"/>
+                    </connections>
+                </button>
+                <button id="2403">
+                    <rect key="frame" x="288" y="75" width="160" height="18"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <buttonCell key="cell" type="check" title="Show bell icon in tabs" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2414">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="6Dr-os-Mn0"/>
+                        <outlet property="nextKeyView" destination="3553" id="5270"/>
+                    </connections>
+                </button>
+                <button id="3553">
+                    <rect key="frame" x="288" y="95" width="122" height="18"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <buttonCell key="cell" type="check" title="Flash visual bell" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3554">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="YC0-VS-w11"/>
+                        <outlet property="nextKeyView" destination="2390" id="5271"/>
+                    </connections>
+                </button>
+                <button id="2404">
+                    <rect key="frame" x="26" y="75" width="258" height="18"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <buttonCell key="cell" type="check" title="Send Growl/Notification Center alerts" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2413">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="n1Y-rc-vcH"/>
+                        <outlet property="nextKeyView" destination="2100" id="5281"/>
+                    </connections>
+                </button>
+                <comboBox verticalHuggingPriority="750" id="2405">
+                    <rect key="frame" x="175" y="207" width="329" height="26"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <comboBoxCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" title="vt100" drawsBackground="YES" completes="NO" numberOfVisibleItems="7" id="2412">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        <objectValues>
+                            <string>vt100</string>
+                            <string>xterm</string>
+                            <string>xterm-new</string>
+                            <string>xterm-256color</string>
+                            <string>ansi</string>
+                            <string>rxvt</string>
+                            <string>linux</string>
+                        </objectValues>
+                    </comboBoxCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="gE7-6t-Aa0"/>
+                        <outlet property="delegate" destination="gMD-DK-gev" id="LlF-ld-PpM"/>
+                        <outlet property="nextKeyView" destination="2402" id="5276"/>
+                    </connections>
+                </comboBox>
+                <textField verticalHuggingPriority="750" id="2434">
+                    <rect key="frame" x="26" y="374" width="125" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Scrollback Buffer" id="2435">
+                        <font key="font" metaFont="systemBold"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="2436">
+                    <rect key="frame" x="26" y="267" width="136" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Terminal Emulation" id="2437">
+                        <font key="font" metaFont="systemBold"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="2438">
+                    <rect key="frame" x="25" y="119" width="136" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Notifications" id="2439">
+                        <font key="font" metaFont="systemBold"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="6043">
+                    <rect key="frame" x="26" y="42" width="136" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Environment" id="6044">
+                        <font key="font" metaFont="systemBold"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <button id="3647">
+                    <rect key="frame" x="352" y="345" width="151" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Unlimited scrollback" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="3648">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="GdK-um-hjE"/>
+                        <outlet property="nextKeyView" destination="5154" id="5274"/>
+                    </connections>
+                </button>
+                <button id="5081">
+                    <rect key="frame" x="288" y="168" width="257" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Disable save/restore alternate screen" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5082">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="UKU-Mw-5iR"/>
+                    </connections>
+                </button>
+                <button id="5633">
+                    <rect key="frame" x="288" y="188" width="257" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Disable session-initiated printing" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5634">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="INZ-fW-6oY"/>
+                    </connections>
+                </button>
+                <button id="6387">
+                    <rect key="frame" x="27" y="168" width="257" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Terminal may report window title" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6388">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="gxb-SG-9OG"/>
+                    </connections>
+                </button>
+                <button id="xih-tE-Xk7">
+                    <rect key="frame" x="27" y="148" width="237" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Terminal may set tab/window title" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="hed-XP-5DZ">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="CdP-oV-hKk"/>
+                    </connections>
+                </button>
+                <button id="5154">
+                    <rect key="frame" x="27" y="320" width="391" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Save lines to scrollback when an app status bar is present" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5155">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="yev-sv-L5n"/>
+                        <outlet property="nextKeyView" destination="2405" id="5275"/>
+                    </connections>
+                </button>
+                <button id="5758">
+                    <rect key="frame" x="27" y="300" width="391" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Save lines to scrollback in alternate screen mode" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5759">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="2Oz-MO-7Bw"/>
+                        <outlet property="nextKeyView" destination="2405" id="5761"/>
+                    </connections>
+                </button>
+                <button id="6045">
+                    <rect key="frame" x="27" y="18" width="231" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Set locale variables automatically" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6046">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="DDd-1W-Nfv"/>
                     </connections>
                 </button>
             </subviews>
