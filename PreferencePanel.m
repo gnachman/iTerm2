@@ -112,6 +112,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     IBOutlet AppearancePreferencesViewController *_appearancePreferencesViewController;
     IBOutlet KeysPreferencesViewController *_keysViewController;
     IBOutlet ProfilePreferencesViewController *_profilesViewController;
+    IBOutlet PointerPreferencesViewController *_pointerViewController;
 
     IBOutlet NSToolbar *_toolbar;
     IBOutlet NSTabView *_tabView;
@@ -180,6 +181,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     _appearanceTabViewItem.view = _appearancePreferencesViewController.view;
     _keyboardTabViewItem.view = _keysViewController.view;
     _arrangementsTabViewItem.view = arrangements_.view;
+    _mouseTabViewItem.view = _pointerViewController.view;
 
     if (_editCurrentSessionMode) {
         [self layoutSubviewsForEditCurrentSessionMode];
