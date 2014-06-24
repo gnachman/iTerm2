@@ -1109,7 +1109,7 @@ Gw
                                 </view>
                             </tabViewItem>
                             <tabViewItem label="Item 4" identifier="Item 4" id="4439" userLabel="Tab View Item - Appearance">
-                                <view key="view" id="4440" customClass="iTermSizeRememberingView">
+                                <view key="view" id="4440">
                                     <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
@@ -1523,7 +1523,7 @@ Gw
                                 </view>
                             </tabViewItem>
                             <tabViewItem label="Bookmarks" identifier="2" id="1945" userLabel="Tab View Item - Profiles">
-                                <view key="view" id="1946" customClass="iTermSizeRememberingView">
+                                <view key="view" id="1946">
                                     <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
@@ -1539,567 +1539,9 @@ Gw
                                                     </view>
                                                 </tabViewItem>
                                                 <tabViewItem label="Colors" identifier="2" id="2102">
-                                                    <view key="view" id="2103">
+                                                    <view key="view" id="2103" userLabel="Filler">
                                                         <rect key="frame" x="10" y="33" width="559" height="404"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                        <subviews>
-                                                            <box autoresizesSubviews="NO" title="Basic Settings" borderType="line" id="xAy-vZ-yHZ">
-                                                                <rect key="frame" x="6" y="198" width="336" height="201"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <view key="contentView">
-                                                                    <rect key="frame" x="1" y="1" width="334" height="185"/>
-                                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                                    <subviews>
-                                                                        <textField verticalHuggingPriority="750" id="2284">
-                                                                            <rect key="frame" x="8" y="100" width="84" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Bold" id="2316">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <colorWell tag="17" id="2285" userLabel="Color Well - Background">
-                                                                            <rect key="frame" x="102" y="125" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="T8S-gg-Gfq"/>
-                                                                                <outlet property="nextKeyView" destination="2272" id="5221"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="20" id="2277" userLabel="Color Well - Selected Text">
-                                                                            <rect key="frame" x="284" y="126" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="L6O-KZ-SQs"/>
-                                                                                <outlet property="nextKeyView" destination="2280" id="5224"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <textField verticalHuggingPriority="750" id="2275">
-                                                                            <rect key="frame" x="159" y="156" width="84" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Selection" id="2321">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <colorWell tag="18" id="2272" userLabel="Color Well - Bold">
-                                                                            <rect key="frame" x="102" y="98" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="yls-5S-uHx"/>
-                                                                                <outlet property="nextKeyView" destination="2282" id="5222"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <textField verticalHuggingPriority="750" id="inA-QL-S7K">
-                                                                            <rect key="frame" x="8" y="74" width="84" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Links" id="Tt3-3r-Gt8">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <colorWell tag="18" id="O31-5M-Une" userLabel="Color Well - Bold">
-                                                                            <rect key="frame" x="102" y="72" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="shd-Fc-IsJ"/>
-                                                                                <outlet property="nextKeyView" destination="2282" id="gx3-Ol-EtI"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="16" id="2273" userLabel="Color Well - Foreground">
-                                                                            <rect key="frame" x="102" y="154" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="WNO-d4-D1A"/>
-                                                                                <outlet property="nextKeyView" destination="2285" id="5220"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <textField verticalHuggingPriority="750" id="2274">
-                                                                            <rect key="frame" x="159" y="128" width="89" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Selected Text" id="2322">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <colorWell tag="22" id="Wzz-9B-zqB" userLabel="Color Well - Tab Color">
-                                                                            <rect key="frame" x="284" y="98" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="pMs-Qp-NpT"/>
-                                                                                <outlet property="nextKeyView" destination="4889" id="xUe-BA-6t3"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <textField verticalHuggingPriority="750" id="2281">
-                                                                            <rect key="frame" x="8" y="128" width="84" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Background" id="2318">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <colorWell tag="19" id="2282" userLabel="Color Well - Selection">
-                                                                            <rect key="frame" x="284" y="154" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="c2g-ED-Dyy"/>
-                                                                                <outlet property="nextKeyView" destination="2277" id="5223"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <button id="j7F-r8-oes">
-                                                                            <rect key="frame" x="159" y="99" width="90" height="18"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <buttonCell key="cell" type="check" title="Tab Color" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="k6J-9z-fqf">
-                                                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                                <font key="font" metaFont="system"/>
-                                                                            </buttonCell>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="nS5-2q-gt3"/>
-                                                                                <outlet property="nextKeyView" destination="4896" id="WKO-8m-Sev"/>
-                                                                            </connections>
-                                                                        </button>
-                                                                        <slider verticalHuggingPriority="750" id="4896">
-                                                                            <rect key="frame" x="8" y="23" width="311" height="20"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <sliderCell key="cell" continuous="YES" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="4903"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="FZP-HT-Cxc"/>
-                                                                                <outlet property="nextKeyView" destination="3213" id="5228"/>
-                                                                            </connections>
-                                                                        </slider>
-                                                                        <textField verticalHuggingPriority="750" id="4897">
-                                                                            <rect key="frame" x="8" y="14" width="22" height="11"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Low" id="4902">
-                                                                                <font key="font" metaFont="miniSystem"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <textField verticalHuggingPriority="750" id="4898">
-                                                                            <rect key="frame" x="294" y="14" width="25" height="11"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="High" id="4901">
-                                                                                <font key="font" metaFont="miniSystem"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <textField verticalHuggingPriority="750" id="4899">
-                                                                            <rect key="frame" x="8" y="49" width="132" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="Minimum contrast:" id="4900">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                    </subviews>
-                                                                </view>
-                                                                <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
-                                                                <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
-                                                            </box>
-                                                            <box autoresizesSubviews="NO" title="Cursor" borderType="line" id="E5x-dY-j3k">
-                                                                <rect key="frame" x="6" y="31" width="336" height="163"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <view key="contentView">
-                                                                    <rect key="frame" x="1" y="1" width="334" height="147"/>
-                                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                                    <subviews>
-                                                                        <colorWell tag="22" id="2278" userLabel="Color Well - Cursor Text">
-                                                                            <rect key="frame" x="102" y="86" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="ZGM-jy-ShL"/>
-                                                                                <outlet property="nextKeyView" destination="4889" id="5226"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <textField verticalHuggingPriority="750" id="22f-BB-uj3">
-                                                                            <rect key="frame" x="8" y="50" width="89" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="Cursor Boost:" id="Kt3-Fn-Fff">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <colorWell tag="22" id="Yny-j0-8Wk" userLabel="Color Well - Guide">
-                                                                            <rect key="frame" x="284" y="113" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="gl9-zb-oJF"/>
-                                                                                <outlet property="nextKeyView" destination="4889" id="b5D-at-tyb"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <slider verticalHuggingPriority="750" id="evF-qt-9wo" userLabel="Horizontal Slider - Cursor Boost">
-                                                                            <rect key="frame" x="8" y="24" width="310" height="20"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <sliderCell key="cell" continuous="YES" alignment="left" maxValue="0.80000000000000004" tickMarkPosition="above" sliderType="linear" id="gKT-qi-eSF"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="FHJ-0a-eQc"/>
-                                                                                <outlet property="nextKeyView" destination="3213" id="lIB-Zw-QBm"/>
-                                                                            </connections>
-                                                                        </slider>
-                                                                        <textField verticalHuggingPriority="750" id="NBn-O5-DTw">
-                                                                            <rect key="frame" x="8" y="14" width="22" height="11"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Low" id="fXZ-c2-35T">
-                                                                                <font key="font" metaFont="miniSystem"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <textField verticalHuggingPriority="750" id="XAK-ki-q70">
-                                                                            <rect key="frame" x="293" y="14" width="25" height="11"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="High" id="bOY-LJ-sY6">
-                                                                                <font key="font" metaFont="miniSystem"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <button id="4889">
-                                                                            <rect key="frame" x="159" y="86" width="151" height="18"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <buttonCell key="cell" type="check" title="Smart Cursor Color" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4890">
-                                                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                                <font key="font" metaFont="system"/>
-                                                                            </buttonCell>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="gnk-s5-4jO"/>
-                                                                                <outlet property="nextKeyView" destination="4896" id="5227"/>
-                                                                            </connections>
-                                                                        </button>
-                                                                        <textField verticalHuggingPriority="750" id="2283">
-                                                                            <rect key="frame" x="8" y="116" width="89" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Cursor" id="2317">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <textField verticalHuggingPriority="750" id="2279">
-                                                                            <rect key="frame" x="8" y="88" width="89" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Cursor Text" id="2319">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <colorWell tag="21" id="2280" userLabel="Color Well - Cursor">
-                                                                            <rect key="frame" x="102" y="114" width="32" height="20"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="F5B-Or-dI6"/>
-                                                                                <outlet property="nextKeyView" destination="2278" id="5225"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <button id="Rpk-o3-4ec">
-                                                                            <rect key="frame" x="159" y="115" width="105" height="18"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <buttonCell key="cell" type="check" title="Cursor Guide" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="Ai2-im-FjJ">
-                                                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                                <font key="font" metaFont="system"/>
-                                                                            </buttonCell>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="IhP-Ds-PqB"/>
-                                                                                <outlet property="nextKeyView" destination="4896" id="kw5-A8-LVc"/>
-                                                                            </connections>
-                                                                        </button>
-                                                                    </subviews>
-                                                                </view>
-                                                                <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
-                                                                <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
-                                                            </box>
-                                                            <box autoresizesSubviews="NO" title="ANSI Colors" borderType="line" id="JDt-RG-YjG">
-                                                                <rect key="frame" x="344" y="84" width="199" height="315"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <view key="contentView">
-                                                                    <rect key="frame" x="1" y="1" width="197" height="299"/>
-                                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                                    <subviews>
-                                                                        <colorWell id="2286" userLabel="Color Well - Normal Red">
-                                                                            <rect key="frame" x="77" y="219" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="ApS-dl-hbo"/>
-                                                                                <outlet property="nextKeyView" destination="2295" id="5232"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="1" id="2287" userLabel="Color Well - Normal Green">
-                                                                            <rect key="frame" x="77" y="187" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="QpA-yn-xh4"/>
-                                                                                <outlet property="nextKeyView" destination="2300" id="5236"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="3" id="2288" userLabel="Color Well - Normal Blue">
-                                                                            <rect key="frame" x="77" y="123" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="Mds-Pa-R7P"/>
-                                                                                <outlet property="nextKeyView" destination="2299" id="5240"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="2" id="2289" userLabel="Color Well - Normal Yellow">
-                                                                            <rect key="frame" x="77" y="155" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="Bo9-KW-Vhp"/>
-                                                                                <outlet property="nextKeyView" destination="2294" id="5238"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="4" id="2290" userLabel="Color Well - Normal Magenta">
-                                                                            <rect key="frame" x="77" y="91" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="Sg9-KW-bCK"/>
-                                                                                <outlet property="nextKeyView" destination="2298" id="5242"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="5" id="2291" userLabel="Color Well - Normal Cyan">
-                                                                            <rect key="frame" x="77" y="59" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="Inx-PX-CQQ"/>
-                                                                                <outlet property="nextKeyView" destination="2296" id="5244"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="7" id="2292" userLabel="Color Well - Bright Black">
-                                                                            <rect key="frame" x="132" y="251" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="ArE-jS-1Rr"/>
-                                                                                <outlet property="nextKeyView" destination="2286" id="5231"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="6" id="2293" userLabel="Color Well - Normal White">
-                                                                            <rect key="frame" x="77" y="27" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="9S3-gr-M8v"/>
-                                                                                <outlet property="nextKeyView" destination="2301" id="5246"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="10" id="2294" userLabel="Color Well - Bright Yellow">
-                                                                            <rect key="frame" x="132" y="155" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="mWq-PP-fni"/>
-                                                                                <outlet property="nextKeyView" destination="2288" id="5239"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="8" id="2295" userLabel="Color Well - Bright Red">
-                                                                            <rect key="frame" x="132" y="219" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="TGp-lK-BhK"/>
-                                                                                <outlet property="nextKeyView" destination="2287" id="5233"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="14" id="2296" userLabel="Color Well - Bright Cyan">
-                                                                            <rect key="frame" x="132" y="59" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="CZb-oG-Z3y"/>
-                                                                                <outlet property="nextKeyView" destination="2293" id="5245"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="13" id="2297" userLabel="Color Well - Normal Black">
-                                                                            <rect key="frame" x="77" y="251" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="0Yj-x9-oCB"/>
-                                                                                <outlet property="nextKeyView" destination="2292" id="5230"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="12" id="2298" userLabel="Color Well - Bright Magenta">
-                                                                            <rect key="frame" x="132" y="91" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="F8a-bG-7t7"/>
-                                                                                <outlet property="nextKeyView" destination="2291" id="5243"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="11" id="2299" userLabel="Color Well - Bright Blue">
-                                                                            <rect key="frame" x="132" y="123" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="7de-PA-Dwh"/>
-                                                                                <outlet property="nextKeyView" destination="2290" id="5241"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="9" id="2300" userLabel="Color Well - Bright Green">
-                                                                            <rect key="frame" x="132" y="187" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="LSy-D5-f6E"/>
-                                                                                <outlet property="nextKeyView" destination="2289" id="5237"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <colorWell tag="15" id="2301" userLabel="Color Well - Bright White">
-                                                                            <rect key="frame" x="132" y="27" width="32" height="21"/>
-                                                                            <autoresizingMask key="autoresizingMask"/>
-                                                                            <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                                            <connections>
-                                                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="zAw-KW-fK0"/>
-                                                                                <outlet property="nextKeyView" destination="2100" id="5247"/>
-                                                                            </connections>
-                                                                        </colorWell>
-                                                                        <textField verticalHuggingPriority="750" id="2344">
-                                                                            <rect key="frame" x="16" y="251" width="38" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Black" id="2345">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <textField verticalHuggingPriority="750" id="2346">
-                                                                            <rect key="frame" x="16" y="219" width="38" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Red" id="2347">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <textField verticalHuggingPriority="750" id="2348">
-                                                                            <rect key="frame" x="16" y="187" width="42" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Green" id="2349">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <textField verticalHuggingPriority="750" id="2350">
-                                                                            <rect key="frame" x="16" y="155" width="45" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Yellow" id="2351">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <textField verticalHuggingPriority="750" id="2352">
-                                                                            <rect key="frame" x="16" y="123" width="38" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Blue" id="2353">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <textField verticalHuggingPriority="750" id="2354">
-                                                                            <rect key="frame" x="16" y="91" width="58" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Magenta" id="2355">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <textField verticalHuggingPriority="750" id="2356">
-                                                                            <rect key="frame" x="16" y="59" width="38" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Cyan" id="2357">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <textField verticalHuggingPriority="750" id="2358">
-                                                                            <rect key="frame" x="16" y="27" width="40" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="White" id="2359">
-                                                                                <font key="font" metaFont="system"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <textField verticalHuggingPriority="750" id="2360">
-                                                                            <rect key="frame" x="75" y="272" width="50" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Normal" id="2361">
-                                                                                <font key="font" metaFont="system" size="10"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                        <textField verticalHuggingPriority="750" id="2362">
-                                                                            <rect key="frame" x="130" y="272" width="42" height="17"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Bright" id="2363">
-                                                                                <font key="font" metaFont="system" size="10"/>
-                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
-                                                                    </subviews>
-                                                                </view>
-                                                                <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
-                                                                <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
-                                                            </box>
-                                                            <popUpButton verticalHuggingPriority="750" id="3213">
-                                                                <rect key="frame" x="344" y="32" width="199" height="26"/>
-                                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                <popUpButtonCell key="cell" type="push" title="Load Presets..." bezelStyle="rounded" alignment="center" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="3214">
-                                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                                    <font key="font" metaFont="menu"/>
-                                                                    <menu key="menu" title="OtherViews" id="3215">
-                                                                        <items>
-                                                                            <menuItem title="Load Presets..." state="on" hidden="YES" id="3218"/>
-                                                                        </items>
-                                                                    </menu>
-                                                                </popUpButtonCell>
-                                                                <connections>
-                                                                    <outlet property="nextKeyView" destination="2297" id="5229"/>
-                                                                </connections>
-                                                            </popUpButton>
-                                                            <textField verticalHuggingPriority="750" id="2276">
-                                                                <rect key="frame" x="15" y="355" width="84" height="17"/>
-                                                                <autoresizingMask key="autoresizingMask"/>
-                                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Foreground" id="2320">
-                                                                    <font key="font" metaFont="system"/>
-                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                </textFieldCell>
-                                                            </textField>
-                                                        </subviews>
                                                     </view>
                                                 </tabViewItem>
                                                 <tabViewItem label="Text" identifier="Item 5" id="4763">
@@ -3353,7 +2795,7 @@ Gw
                                         </tabView>
                                         <button id="2111">
                                             <rect key="frame" x="52" y="0.0" width="24" height="24"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSAddTemplate" imagePosition="only" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="2112">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                 <font key="font" metaFont="system"/>
@@ -3364,7 +2806,7 @@ Gw
                                         </button>
                                         <button id="nFj-0n-SWO">
                                             <rect key="frame" x="0.0" y="0.0" width="53" height="24"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <buttonCell key="cell" type="square" title="Tags >" bezelStyle="shadowlessSquare" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="u6m-pp-fub">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                 <font key="font" metaFont="system"/>
@@ -3375,7 +2817,7 @@ Gw
                                         </button>
                                         <button id="2113">
                                             <rect key="frame" x="75" y="0.0" width="24" height="24"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="only" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="2114">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                 <font key="font" metaFont="system"/>
@@ -3386,7 +2828,7 @@ Gw
                                         </button>
                                         <popUpButton id="3230">
                                             <rect key="frame" x="98" y="0.0" width="157" height="24"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <popUpButtonCell key="cell" type="square" title="Other Actions..." bezelStyle="shadowlessSquare" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="3233" id="3231">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                 <font key="font" metaFont="menu"/>
@@ -3416,7 +2858,7 @@ Gw
                                         </popUpButton>
                                         <customView autoresizesSubviews="NO" id="3260" customClass="ProfileListView">
                                             <rect key="frame" x="0.0" y="32" width="319" height="392"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" heightSizable="YES"/>
                                             <connections>
                                                 <outlet property="delegate" destination="HVI-63-mNz" id="lQ2-vb-0eJ"/>
                                             </connections>
@@ -3425,7 +2867,7 @@ Gw
                                 </view>
                             </tabViewItem>
                             <tabViewItem label="Keys" identifier="Keys" id="3656">
-                                <view key="view" id="3657" customClass="iTermSizeRememberingView">
+                                <view key="view" id="3657">
                                     <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
@@ -3828,7 +3270,7 @@ Gw
                                 </view>
                             </tabViewItem>
                             <tabViewItem label="Mouse" identifier="Mouse" id="6059" userLabel="Tab View Item - Pointer">
-                                <view key="view" id="6060" customClass="iTermSizeRememberingView">
+                                <view key="view" id="6060">
                                     <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
@@ -3878,7 +3320,7 @@ Gw
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
-                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="849" height="229"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -4032,7 +3474,7 @@ Gw
                                 </view>
                             </tabViewItem>
                             <tabViewItem label="Keys" identifier="Keys" id="5417" userLabel="Tab View Item - Arrangements">
-                                <view key="view" id="5418" customClass="iTermSizeRememberingView">
+                                <view key="view" id="5418">
                                     <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
@@ -4140,7 +3582,7 @@ Gw
                                 </view>
                             </tabViewItem>
                             <tabViewItem label="Advanced" identifier="Advanced" id="KyW-GB-ElH">
-                                <view key="view" id="DKc-WZ-9FS" customClass="iTermSizeRememberingView">
+                                <view key="view" id="DKc-WZ-9FS">
                                     <rect key="frame" x="0.0" y="0.0" width="891" height="434"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
@@ -5004,6 +4446,7 @@ DQ
             <connections>
                 <outlet property="_addProfileButton" destination="2111" id="bA3-2H-K5q"/>
                 <outlet property="_advancedViewController" destination="Qvt-kg-svI" id="K8f-bz-rrt"/>
+                <outlet property="_colorsTab" destination="2102" id="wm6-cz-a4e"/>
                 <outlet property="_colorsViewController" destination="p8i-eM-oBc" id="jzE-Xk-0gO"/>
                 <outlet property="_copyToProfileButton" destination="5140" id="OLo-Jv-hFL"/>
                 <outlet property="_generalTab" destination="2101" id="L0w-Vv-KhM"/>
@@ -5090,7 +4533,7 @@ DQ
                 <outlet property="_useSmartCursorColor" destination="4889" id="GhQ-EU-ndl"/>
                 <outlet property="_useTabColor" destination="j7F-r8-oes" id="HoY-6m-E99"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="NFg-pP-EcM"/>
-                <outlet property="view" destination="2103" id="mCY-pF-bzm"/>
+                <outlet property="view" destination="SCN-fS-hNB" id="yvb-17-eJa"/>
             </connections>
         </customObject>
         <customObject id="lhd-u6-xr5" customClass="ProfilesTextPreferencesViewController">
@@ -5551,6 +4994,568 @@ DQ
                         <action selector="showAdvancedWorkingDirConfigPanel:" target="dVg-Ac-SiZ" id="hr1-VG-5jr"/>
                     </connections>
                 </button>
+            </subviews>
+        </customView>
+        <customView id="SCN-fS-hNB" userLabel="Prefs - Profiles - Colors" customClass="iTermSizeRememberingView">
+            <rect key="frame" x="0.0" y="0.0" width="559" height="389"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <box autoresizesSubviews="NO" title="Basic Settings" borderType="line" id="xAy-vZ-yHZ">
+                    <rect key="frame" x="6" y="183" width="336" height="201"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <view key="contentView">
+                        <rect key="frame" x="1" y="1" width="334" height="185"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <textField verticalHuggingPriority="750" id="2284">
+                                <rect key="frame" x="8" y="100" width="84" height="17"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Bold" id="2316">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <colorWell tag="17" id="2285" userLabel="Color Well - Background">
+                                <rect key="frame" x="102" y="125" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="T8S-gg-Gfq"/>
+                                    <outlet property="nextKeyView" destination="2272" id="5221"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="20" id="2277" userLabel="Color Well - Selected Text">
+                                <rect key="frame" x="284" y="126" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="L6O-KZ-SQs"/>
+                                    <outlet property="nextKeyView" destination="2280" id="5224"/>
+                                </connections>
+                            </colorWell>
+                            <textField verticalHuggingPriority="750" id="2275">
+                                <rect key="frame" x="159" y="156" width="84" height="17"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Selection" id="2321">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <colorWell tag="18" id="2272" userLabel="Color Well - Bold">
+                                <rect key="frame" x="102" y="98" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="yls-5S-uHx"/>
+                                    <outlet property="nextKeyView" destination="2282" id="5222"/>
+                                </connections>
+                            </colorWell>
+                            <textField verticalHuggingPriority="750" id="inA-QL-S7K">
+                                <rect key="frame" x="8" y="74" width="84" height="17"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Links" id="Tt3-3r-Gt8">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <colorWell tag="18" id="O31-5M-Une" userLabel="Color Well - Bold">
+                                <rect key="frame" x="102" y="72" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="shd-Fc-IsJ"/>
+                                    <outlet property="nextKeyView" destination="2282" id="gx3-Ol-EtI"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="16" id="2273" userLabel="Color Well - Foreground">
+                                <rect key="frame" x="102" y="154" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="WNO-d4-D1A"/>
+                                    <outlet property="nextKeyView" destination="2285" id="5220"/>
+                                </connections>
+                            </colorWell>
+                            <textField verticalHuggingPriority="750" id="2274">
+                                <rect key="frame" x="159" y="128" width="89" height="17"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Selected Text" id="2322">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <colorWell tag="22" id="Wzz-9B-zqB" userLabel="Color Well - Tab Color">
+                                <rect key="frame" x="284" y="98" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="pMs-Qp-NpT"/>
+                                    <outlet property="nextKeyView" destination="4889" id="xUe-BA-6t3"/>
+                                </connections>
+                            </colorWell>
+                            <textField verticalHuggingPriority="750" id="2281">
+                                <rect key="frame" x="8" y="128" width="84" height="17"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Background" id="2318">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <colorWell tag="19" id="2282" userLabel="Color Well - Selection">
+                                <rect key="frame" x="284" y="154" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="c2g-ED-Dyy"/>
+                                    <outlet property="nextKeyView" destination="2277" id="5223"/>
+                                </connections>
+                            </colorWell>
+                            <button id="j7F-r8-oes">
+                                <rect key="frame" x="159" y="99" width="90" height="18"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="check" title="Tab Color" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="k6J-9z-fqf">
+                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="nS5-2q-gt3"/>
+                                    <outlet property="nextKeyView" destination="4896" id="WKO-8m-Sev"/>
+                                </connections>
+                            </button>
+                            <slider verticalHuggingPriority="750" id="4896">
+                                <rect key="frame" x="8" y="23" width="311" height="20"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <sliderCell key="cell" continuous="YES" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="4903"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="FZP-HT-Cxc"/>
+                                    <outlet property="nextKeyView" destination="3213" id="5228"/>
+                                </connections>
+                            </slider>
+                            <textField verticalHuggingPriority="750" id="4897">
+                                <rect key="frame" x="8" y="14" width="22" height="11"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Low" id="4902">
+                                    <font key="font" metaFont="miniSystem"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField verticalHuggingPriority="750" id="4898">
+                                <rect key="frame" x="294" y="14" width="25" height="11"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="High" id="4901">
+                                    <font key="font" metaFont="miniSystem"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField verticalHuggingPriority="750" id="4899">
+                                <rect key="frame" x="8" y="49" width="132" height="17"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="Minimum contrast:" id="4900">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                        </subviews>
+                    </view>
+                    <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
+                    <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                </box>
+                <box autoresizesSubviews="NO" title="Cursor" borderType="line" id="E5x-dY-j3k">
+                    <rect key="frame" x="6" y="16" width="336" height="163"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <view key="contentView">
+                        <rect key="frame" x="1" y="1" width="334" height="147"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <colorWell tag="22" id="2278" userLabel="Color Well - Cursor Text">
+                                <rect key="frame" x="102" y="86" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="ZGM-jy-ShL"/>
+                                    <outlet property="nextKeyView" destination="4889" id="5226"/>
+                                </connections>
+                            </colorWell>
+                            <textField verticalHuggingPriority="750" id="22f-BB-uj3">
+                                <rect key="frame" x="8" y="50" width="89" height="17"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="Cursor Boost:" id="Kt3-Fn-Fff">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <colorWell tag="22" id="Yny-j0-8Wk" userLabel="Color Well - Guide">
+                                <rect key="frame" x="284" y="113" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="gl9-zb-oJF"/>
+                                    <outlet property="nextKeyView" destination="4889" id="b5D-at-tyb"/>
+                                </connections>
+                            </colorWell>
+                            <slider verticalHuggingPriority="750" id="evF-qt-9wo" userLabel="Horizontal Slider - Cursor Boost">
+                                <rect key="frame" x="8" y="24" width="310" height="20"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <sliderCell key="cell" continuous="YES" alignment="left" maxValue="0.80000000000000004" tickMarkPosition="above" sliderType="linear" id="gKT-qi-eSF"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="FHJ-0a-eQc"/>
+                                    <outlet property="nextKeyView" destination="3213" id="lIB-Zw-QBm"/>
+                                </connections>
+                            </slider>
+                            <textField verticalHuggingPriority="750" id="NBn-O5-DTw">
+                                <rect key="frame" x="8" y="14" width="22" height="11"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Low" id="fXZ-c2-35T">
+                                    <font key="font" metaFont="miniSystem"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField verticalHuggingPriority="750" id="XAK-ki-q70">
+                                <rect key="frame" x="293" y="14" width="25" height="11"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="High" id="bOY-LJ-sY6">
+                                    <font key="font" metaFont="miniSystem"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <button id="4889">
+                                <rect key="frame" x="159" y="86" width="151" height="18"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="check" title="Smart Cursor Color" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4890">
+                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="gnk-s5-4jO"/>
+                                    <outlet property="nextKeyView" destination="4896" id="5227"/>
+                                </connections>
+                            </button>
+                            <textField verticalHuggingPriority="750" id="2283">
+                                <rect key="frame" x="8" y="116" width="89" height="17"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Cursor" id="2317">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField verticalHuggingPriority="750" id="2279">
+                                <rect key="frame" x="8" y="88" width="89" height="17"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Cursor Text" id="2319">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <colorWell tag="21" id="2280" userLabel="Color Well - Cursor">
+                                <rect key="frame" x="102" y="114" width="32" height="20"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="F5B-Or-dI6"/>
+                                    <outlet property="nextKeyView" destination="2278" id="5225"/>
+                                </connections>
+                            </colorWell>
+                            <button id="Rpk-o3-4ec">
+                                <rect key="frame" x="159" y="115" width="105" height="18"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="check" title="Cursor Guide" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="Ai2-im-FjJ">
+                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="IhP-Ds-PqB"/>
+                                    <outlet property="nextKeyView" destination="4896" id="kw5-A8-LVc"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                    </view>
+                    <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
+                    <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                </box>
+                <box autoresizesSubviews="NO" title="ANSI Colors" borderType="line" id="JDt-RG-YjG">
+                    <rect key="frame" x="344" y="69" width="199" height="315"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <view key="contentView">
+                        <rect key="frame" x="1" y="1" width="197" height="299"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <colorWell id="2286" userLabel="Color Well - Normal Red">
+                                <rect key="frame" x="77" y="219" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="ApS-dl-hbo"/>
+                                    <outlet property="nextKeyView" destination="2295" id="5232"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="1" id="2287" userLabel="Color Well - Normal Green">
+                                <rect key="frame" x="77" y="187" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="QpA-yn-xh4"/>
+                                    <outlet property="nextKeyView" destination="2300" id="5236"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="3" id="2288" userLabel="Color Well - Normal Blue">
+                                <rect key="frame" x="77" y="123" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="Mds-Pa-R7P"/>
+                                    <outlet property="nextKeyView" destination="2299" id="5240"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="2" id="2289" userLabel="Color Well - Normal Yellow">
+                                <rect key="frame" x="77" y="155" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="Bo9-KW-Vhp"/>
+                                    <outlet property="nextKeyView" destination="2294" id="5238"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="4" id="2290" userLabel="Color Well - Normal Magenta">
+                                <rect key="frame" x="77" y="91" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="Sg9-KW-bCK"/>
+                                    <outlet property="nextKeyView" destination="2298" id="5242"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="5" id="2291" userLabel="Color Well - Normal Cyan">
+                                <rect key="frame" x="77" y="59" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="Inx-PX-CQQ"/>
+                                    <outlet property="nextKeyView" destination="2296" id="5244"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="7" id="2292" userLabel="Color Well - Bright Black">
+                                <rect key="frame" x="132" y="251" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="ArE-jS-1Rr"/>
+                                    <outlet property="nextKeyView" destination="2286" id="5231"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="6" id="2293" userLabel="Color Well - Normal White">
+                                <rect key="frame" x="77" y="27" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="9S3-gr-M8v"/>
+                                    <outlet property="nextKeyView" destination="2301" id="5246"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="10" id="2294" userLabel="Color Well - Bright Yellow">
+                                <rect key="frame" x="132" y="155" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="mWq-PP-fni"/>
+                                    <outlet property="nextKeyView" destination="2288" id="5239"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="8" id="2295" userLabel="Color Well - Bright Red">
+                                <rect key="frame" x="132" y="219" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="TGp-lK-BhK"/>
+                                    <outlet property="nextKeyView" destination="2287" id="5233"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="14" id="2296" userLabel="Color Well - Bright Cyan">
+                                <rect key="frame" x="132" y="59" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="CZb-oG-Z3y"/>
+                                    <outlet property="nextKeyView" destination="2293" id="5245"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="13" id="2297" userLabel="Color Well - Normal Black">
+                                <rect key="frame" x="77" y="251" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="0Yj-x9-oCB"/>
+                                    <outlet property="nextKeyView" destination="2292" id="5230"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="12" id="2298" userLabel="Color Well - Bright Magenta">
+                                <rect key="frame" x="132" y="91" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="F8a-bG-7t7"/>
+                                    <outlet property="nextKeyView" destination="2291" id="5243"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="11" id="2299" userLabel="Color Well - Bright Blue">
+                                <rect key="frame" x="132" y="123" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="7de-PA-Dwh"/>
+                                    <outlet property="nextKeyView" destination="2290" id="5241"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="9" id="2300" userLabel="Color Well - Bright Green">
+                                <rect key="frame" x="132" y="187" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="LSy-D5-f6E"/>
+                                    <outlet property="nextKeyView" destination="2289" id="5237"/>
+                                </connections>
+                            </colorWell>
+                            <colorWell tag="15" id="2301" userLabel="Color Well - Bright White">
+                                <rect key="frame" x="132" y="27" width="32" height="21"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="p8i-eM-oBc" id="zAw-KW-fK0"/>
+                                    <outlet property="nextKeyView" destination="2100" id="5247"/>
+                                </connections>
+                            </colorWell>
+                            <textField verticalHuggingPriority="750" id="2344">
+                                <rect key="frame" x="16" y="251" width="38" height="17"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Black" id="2345">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField verticalHuggingPriority="750" id="2346">
+                                <rect key="frame" x="16" y="219" width="38" height="17"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Red" id="2347">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField verticalHuggingPriority="750" id="2348">
+                                <rect key="frame" x="16" y="187" width="42" height="17"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Green" id="2349">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField verticalHuggingPriority="750" id="2350">
+                                <rect key="frame" x="16" y="155" width="45" height="17"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Yellow" id="2351">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField verticalHuggingPriority="750" id="2352">
+                                <rect key="frame" x="16" y="123" width="38" height="17"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Blue" id="2353">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField verticalHuggingPriority="750" id="2354">
+                                <rect key="frame" x="16" y="91" width="58" height="17"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Magenta" id="2355">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField verticalHuggingPriority="750" id="2356">
+                                <rect key="frame" x="16" y="59" width="38" height="17"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Cyan" id="2357">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField verticalHuggingPriority="750" id="2358">
+                                <rect key="frame" x="16" y="27" width="40" height="17"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="White" id="2359">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField verticalHuggingPriority="750" id="2360">
+                                <rect key="frame" x="75" y="272" width="50" height="17"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Normal" id="2361">
+                                    <font key="font" metaFont="system" size="10"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField verticalHuggingPriority="750" id="2362">
+                                <rect key="frame" x="130" y="272" width="42" height="17"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Bright" id="2363">
+                                    <font key="font" metaFont="system" size="10"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                        </subviews>
+                    </view>
+                    <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
+                    <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                </box>
+                <popUpButton verticalHuggingPriority="750" id="3213">
+                    <rect key="frame" x="344" y="17" width="199" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" title="Load Presets..." bezelStyle="rounded" alignment="center" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="3214">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" title="OtherViews" id="3215">
+                            <items>
+                                <menuItem title="Load Presets..." state="on" hidden="YES" id="3218"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <outlet property="nextKeyView" destination="2297" id="5229"/>
+                    </connections>
+                </popUpButton>
+                <textField verticalHuggingPriority="750" id="2276">
+                    <rect key="frame" x="15" y="340" width="84" height="17"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Foreground" id="2320">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
             </subviews>
         </customView>
     </objects>
