@@ -522,7 +522,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     NSRect frame = [window frameRectForContentRect:NSMakeRect(windowTopLeft.x, 0, contentSize.width, contentSize.height)];
     frame.origin.y = windowTopLeft.y - frame.size.height;
 
-    [window setFrame:frame display:YES];
+    [window setFrame:frame display:YES animate:YES];
 }
 
 @end

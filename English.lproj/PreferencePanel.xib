@@ -3475,7 +3475,7 @@ DQ
                 </matrix>
                 <textField verticalHuggingPriority="750" id="2129" userLabel="Working Directory Label">
                     <rect key="frame" x="14" y="165" width="153" height="17"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Working Directory" id="2140">
                         <font key="font" metaFont="systemBold"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -3484,7 +3484,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="2131" userLabel="Command text field">
                     <rect key="frame" x="146" y="226" width="356" height="22"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2138">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -3498,7 +3498,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="5410" userLabel="Send text at start text field">
                     <rect key="frame" x="146" y="199" width="356" height="22"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="5411">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -3512,7 +3512,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="2132" userLabel="Command label">
                     <rect key="frame" x="14" y="273" width="82" height="17"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Command" id="2137">
                         <font key="font" metaFont="systemBold"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -3521,7 +3521,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="3247" userLabel="Basics label">
                     <rect key="frame" x="14" y="384" width="82" height="17"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Basics" id="3248">
                         <font key="font" metaFont="systemBold"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -3530,7 +3530,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="2133" userLabel="Name text field">
                     <rect key="frame" x="146" y="359" width="356" height="22"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2136">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -3543,7 +3543,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="2134" userLabel="Name label">
                     <rect key="frame" x="47" y="361" width="90" height="17"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Name:" id="2135">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -3552,7 +3552,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="3243" userLabel="Tags label">
                     <rect key="frame" x="47" y="308" width="90" height="17"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Tags:" id="3244">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -3561,7 +3561,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="2141" userLabel="Shortcut key label">
                     <rect key="frame" x="47" y="333" width="90" height="17"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Shortcut key:      " id="2182">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -3570,7 +3570,7 @@ DQ
                 </textField>
                 <popUpButton verticalHuggingPriority="750" id="2142" userLabel="Shortcut selection popup button">
                     <rect key="frame" x="172" y="327" width="333" height="26"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="2143">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
@@ -3676,7 +3676,7 @@ DQ
                 </tokenField>
                 <textField verticalHuggingPriority="750" id="2189" userLabel="Directory text field">
                     <rect key="frame" x="146" y="98" width="356" height="22"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2194">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -3789,7 +3789,7 @@ DQ
                         <subviews>
                             <textField verticalHuggingPriority="750" id="2284">
                                 <rect key="frame" x="8" y="100" width="84" height="17"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Bold" id="2316">
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -3798,7 +3798,7 @@ DQ
                             </textField>
                             <colorWell tag="17" id="2285" userLabel="Color Well - Background">
                                 <rect key="frame" x="102" y="125" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="T8S-gg-Gfq"/>
@@ -3807,7 +3807,7 @@ DQ
                             </colorWell>
                             <colorWell tag="20" id="2277" userLabel="Color Well - Selected Text">
                                 <rect key="frame" x="284" y="126" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="L6O-KZ-SQs"/>
@@ -3816,7 +3816,7 @@ DQ
                             </colorWell>
                             <textField verticalHuggingPriority="750" id="2275">
                                 <rect key="frame" x="159" y="156" width="84" height="17"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Selection" id="2321">
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -3825,7 +3825,7 @@ DQ
                             </textField>
                             <colorWell tag="18" id="2272" userLabel="Color Well - Bold">
                                 <rect key="frame" x="102" y="98" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="yls-5S-uHx"/>
@@ -3834,7 +3834,7 @@ DQ
                             </colorWell>
                             <textField verticalHuggingPriority="750" id="inA-QL-S7K">
                                 <rect key="frame" x="8" y="74" width="84" height="17"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Links" id="Tt3-3r-Gt8">
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -3843,7 +3843,7 @@ DQ
                             </textField>
                             <colorWell tag="18" id="O31-5M-Une" userLabel="Color Well - Bold">
                                 <rect key="frame" x="102" y="72" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="shd-Fc-IsJ"/>
@@ -3852,7 +3852,7 @@ DQ
                             </colorWell>
                             <colorWell tag="16" id="2273" userLabel="Color Well - Foreground">
                                 <rect key="frame" x="102" y="154" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="WNO-d4-D1A"/>
@@ -3861,7 +3861,7 @@ DQ
                             </colorWell>
                             <textField verticalHuggingPriority="750" id="2274">
                                 <rect key="frame" x="159" y="128" width="89" height="17"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Selected Text" id="2322">
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -3870,7 +3870,7 @@ DQ
                             </textField>
                             <colorWell tag="22" id="Wzz-9B-zqB" userLabel="Color Well - Tab Color">
                                 <rect key="frame" x="284" y="98" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="pMs-Qp-NpT"/>
@@ -3879,7 +3879,7 @@ DQ
                             </colorWell>
                             <textField verticalHuggingPriority="750" id="2281">
                                 <rect key="frame" x="8" y="128" width="84" height="17"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Background" id="2318">
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -3888,7 +3888,7 @@ DQ
                             </textField>
                             <colorWell tag="19" id="2282" userLabel="Color Well - Selection">
                                 <rect key="frame" x="284" y="154" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="c2g-ED-Dyy"/>
@@ -3957,7 +3957,7 @@ DQ
                         <subviews>
                             <colorWell tag="22" id="2278" userLabel="Color Well - Cursor Text">
                                 <rect key="frame" x="102" y="86" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="ZGM-jy-ShL"/>
@@ -3975,7 +3975,7 @@ DQ
                             </textField>
                             <colorWell tag="22" id="Yny-j0-8Wk" userLabel="Color Well - Guide">
                                 <rect key="frame" x="284" y="113" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="gl9-zb-oJF"/>
@@ -4023,7 +4023,7 @@ DQ
                             </button>
                             <textField verticalHuggingPriority="750" id="2283">
                                 <rect key="frame" x="8" y="116" width="89" height="17"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Cursor" id="2317">
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4032,7 +4032,7 @@ DQ
                             </textField>
                             <textField verticalHuggingPriority="750" id="2279">
                                 <rect key="frame" x="8" y="88" width="89" height="17"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Cursor Text" id="2319">
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4041,7 +4041,7 @@ DQ
                             </textField>
                             <colorWell tag="21" id="2280" userLabel="Color Well - Cursor">
                                 <rect key="frame" x="102" y="114" width="32" height="20"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="F5B-Or-dI6"/>
@@ -4074,7 +4074,7 @@ DQ
                         <subviews>
                             <colorWell id="2286" userLabel="Color Well - Normal Red">
                                 <rect key="frame" x="77" y="219" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="ApS-dl-hbo"/>
@@ -4083,7 +4083,7 @@ DQ
                             </colorWell>
                             <colorWell tag="1" id="2287" userLabel="Color Well - Normal Green">
                                 <rect key="frame" x="77" y="187" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="QpA-yn-xh4"/>
@@ -4092,7 +4092,7 @@ DQ
                             </colorWell>
                             <colorWell tag="3" id="2288" userLabel="Color Well - Normal Blue">
                                 <rect key="frame" x="77" y="123" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="Mds-Pa-R7P"/>
@@ -4101,7 +4101,7 @@ DQ
                             </colorWell>
                             <colorWell tag="2" id="2289" userLabel="Color Well - Normal Yellow">
                                 <rect key="frame" x="77" y="155" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="Bo9-KW-Vhp"/>
@@ -4110,7 +4110,7 @@ DQ
                             </colorWell>
                             <colorWell tag="4" id="2290" userLabel="Color Well - Normal Magenta">
                                 <rect key="frame" x="77" y="91" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="Sg9-KW-bCK"/>
@@ -4119,7 +4119,7 @@ DQ
                             </colorWell>
                             <colorWell tag="5" id="2291" userLabel="Color Well - Normal Cyan">
                                 <rect key="frame" x="77" y="59" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="Inx-PX-CQQ"/>
@@ -4128,7 +4128,7 @@ DQ
                             </colorWell>
                             <colorWell tag="7" id="2292" userLabel="Color Well - Bright Black">
                                 <rect key="frame" x="132" y="251" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="ArE-jS-1Rr"/>
@@ -4137,7 +4137,7 @@ DQ
                             </colorWell>
                             <colorWell tag="6" id="2293" userLabel="Color Well - Normal White">
                                 <rect key="frame" x="77" y="27" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="9S3-gr-M8v"/>
@@ -4146,7 +4146,7 @@ DQ
                             </colorWell>
                             <colorWell tag="10" id="2294" userLabel="Color Well - Bright Yellow">
                                 <rect key="frame" x="132" y="155" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="mWq-PP-fni"/>
@@ -4155,7 +4155,7 @@ DQ
                             </colorWell>
                             <colorWell tag="8" id="2295" userLabel="Color Well - Bright Red">
                                 <rect key="frame" x="132" y="219" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="TGp-lK-BhK"/>
@@ -4164,7 +4164,7 @@ DQ
                             </colorWell>
                             <colorWell tag="14" id="2296" userLabel="Color Well - Bright Cyan">
                                 <rect key="frame" x="132" y="59" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="CZb-oG-Z3y"/>
@@ -4173,7 +4173,7 @@ DQ
                             </colorWell>
                             <colorWell tag="13" id="2297" userLabel="Color Well - Normal Black">
                                 <rect key="frame" x="77" y="251" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="0Yj-x9-oCB"/>
@@ -4182,7 +4182,7 @@ DQ
                             </colorWell>
                             <colorWell tag="12" id="2298" userLabel="Color Well - Bright Magenta">
                                 <rect key="frame" x="132" y="91" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="F8a-bG-7t7"/>
@@ -4191,7 +4191,7 @@ DQ
                             </colorWell>
                             <colorWell tag="11" id="2299" userLabel="Color Well - Bright Blue">
                                 <rect key="frame" x="132" y="123" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="7de-PA-Dwh"/>
@@ -4200,7 +4200,7 @@ DQ
                             </colorWell>
                             <colorWell tag="9" id="2300" userLabel="Color Well - Bright Green">
                                 <rect key="frame" x="132" y="187" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="LSy-D5-f6E"/>
@@ -4209,7 +4209,7 @@ DQ
                             </colorWell>
                             <colorWell tag="15" id="2301" userLabel="Color Well - Bright White">
                                 <rect key="frame" x="132" y="27" width="32" height="21"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <connections>
                                     <action selector="settingChanged:" target="p8i-eM-oBc" id="zAw-KW-fK0"/>
@@ -4314,7 +4314,7 @@ DQ
                 <popUpButton verticalHuggingPriority="750" id="3213">
                     <rect key="frame" x="344" y="17" width="199" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="Load Presets..." bezelStyle="rounded" alignment="center" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="3214">
+                    <popUpButtonCell key="cell" type="push" title="Load Presets..." bezelStyle="rounded" alignment="center" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="3218" id="3214">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" id="3215">
@@ -4329,7 +4329,7 @@ DQ
                 </popUpButton>
                 <textField verticalHuggingPriority="750" id="2276">
                     <rect key="frame" x="15" y="340" width="84" height="17"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Foreground" id="2320">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4344,7 +4344,7 @@ DQ
             <subviews>
                 <button id="4765">
                     <rect key="frame" x="221" y="341" width="226" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Draw bold text in bold font" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4844">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4356,7 +4356,7 @@ DQ
                 </button>
                 <button id="4766">
                     <rect key="frame" x="221" y="321" width="226" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Draw bold text in bright colors" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4843">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4368,7 +4368,7 @@ DQ
                 </button>
                 <button id="5148">
                     <rect key="frame" x="221" y="301" width="154" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Blinking text allowed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5149">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4380,7 +4380,7 @@ DQ
                 </button>
                 <button id="6400">
                     <rect key="frame" x="221" y="281" width="134" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Italic text allowed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6401">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4392,7 +4392,7 @@ DQ
                 </button>
                 <textField verticalHuggingPriority="750" id="4772">
                     <rect key="frame" x="18" y="370" width="132" height="17"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Cursor" id="4835">
                         <font key="font" metaFont="systemBold"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4401,7 +4401,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="4998">
                     <rect key="frame" x="220" y="370" width="132" height="17"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Text Rendering" id="4999">
                         <font key="font" metaFont="systemBold"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4410,7 +4410,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="5130">
                     <rect key="frame" x="18" y="244" width="181" height="17"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Double-Width Characters:" id="5131">
                         <font key="font" metaFont="systemBold"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4419,7 +4419,7 @@ DQ
                 </textField>
                 <button id="4773">
                     <rect key="frame" x="18" y="277" width="119" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Blinking cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4834">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4431,7 +4431,7 @@ DQ
                 </button>
                 <button verticalHuggingPriority="750" id="4774">
                     <rect key="frame" x="118" y="110" width="138" height="32"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Change Font" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="4833">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4452,7 +4452,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="4778">
                     <rect key="frame" x="18" y="171" width="101" height="17"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Font" id="4829">
                         <font key="font" metaFont="systemBold"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4461,7 +4461,7 @@ DQ
                 </textField>
                 <button id="4782">
                     <rect key="frame" x="18" y="119" width="106" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Anti-aliased" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4825">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4473,7 +4473,7 @@ DQ
                 </button>
                 <button id="vNf-D5-cU4">
                     <rect key="frame" x="18" y="99" width="263" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Use a different font for non-ASCII text" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="e7d-pm-ySF">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4516,7 +4516,7 @@ DQ
                 </matrix>
                 <button id="5126">
                     <rect key="frame" x="18" y="220" width="471" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Treat ambiguous-width characters as double width (not recommended)" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5127">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4528,7 +4528,7 @@ DQ
                 </button>
                 <button id="IwR-5a-srh">
                     <rect key="frame" x="18" y="200" width="396" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Use HFS+ Unicode normalization (better fidelity but slower)" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6yC-Pg-xDK">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4594,7 +4594,7 @@ DQ
             <subviews>
                 <textField verticalHuggingPriority="750" id="4911">
                     <rect key="frame" x="94" y="174" width="130" height="22"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" usesSingleLineMode="YES" id="4951">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -4607,7 +4607,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="4912">
                     <rect key="frame" x="28" y="174" width="67" height="19"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Columns:" id="4950">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4616,7 +4616,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="4913">
                     <rect key="frame" x="51" y="144" width="44" height="19"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Rows:" id="4949">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4625,7 +4625,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="4914">
                     <rect key="frame" x="94" y="144" width="130" height="22"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="4947">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -4638,7 +4638,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="4992">
                     <rect key="frame" x="15" y="204" width="190" height="20"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Settings for New Windows" id="4993">
                         <font key="font" metaFont="systemBold"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4744,7 +4744,7 @@ DQ
                 </popUpButton>
                 <button id="4973">
                     <rect key="frame" x="275" y="375" width="144" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Background Image:" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4988">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4756,7 +4756,7 @@ DQ
                 </button>
                 <button id="6395">
                     <rect key="frame" x="297" y="255" width="88" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Tile image" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6396">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4768,12 +4768,12 @@ DQ
                 </button>
                 <imageView id="4974">
                     <rect key="frame" x="296" y="276" width="249" height="96"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" imageFrameStyle="grayBezel" id="4987"/>
                 </imageView>
                 <textField verticalHuggingPriority="750" id="4975">
                     <rect key="frame" x="15" y="359" width="97" height="34"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Transparency:" id="4986">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4782,7 +4782,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="6324">
                     <rect key="frame" x="296" y="232" width="68" height="17"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Blending:" id="6325">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4802,7 +4802,7 @@ DQ
                 </button>
                 <textField verticalHuggingPriority="750" id="4977">
                     <rect key="frame" x="15" y="401" width="146" height="20"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Window Appearance" id="4984">
                         <font key="font" metaFont="systemBold"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4811,7 +4811,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="6327">
                     <rect key="frame" x="275" y="401" width="146" height="20"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Background Image" id="6328">
                         <font key="font" metaFont="systemBold"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4874,7 +4874,7 @@ DQ
                 </textField>
                 <button id="5004">
                     <rect key="frame" x="15" y="38" width="299" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Disable session-initiated window resizing" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5005">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4886,7 +4886,7 @@ DQ
                 </button>
                 <button id="6416">
                     <rect key="frame" x="15" y="18" width="389" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Force this profile to open in a new window, never in a tab." bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6417">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4898,7 +4898,7 @@ DQ
                 </button>
                 <button id="5008">
                     <rect key="frame" x="15" y="58" width="458" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="If showing profile name in tab title, keep it when the title is changed" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5009">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4910,7 +4910,7 @@ DQ
                 </button>
                 <textField verticalHuggingPriority="750" id="5012">
                     <rect key="frame" x="15" y="82" width="105" height="20"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Miscellaneous" id="5013">
                         <font key="font" metaFont="systemBold"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4945,7 +4945,7 @@ DQ
             <subviews>
                 <popUpButton verticalHuggingPriority="750" id="2390">
                     <rect key="frame" x="172" y="235" width="332" height="26"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="2427">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
@@ -4958,7 +4958,7 @@ DQ
                 </popUpButton>
                 <textField verticalHuggingPriority="750" id="2391">
                     <rect key="frame" x="36" y="239" width="136" height="19"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Character Encoding:" id="2426">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4967,7 +4967,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="2393">
                     <rect key="frame" x="27" y="212" width="145" height="17"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Report Terminal Type:" id="2424">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4976,7 +4976,7 @@ DQ
                 </textField>
                 <button id="2397">
                     <rect key="frame" x="26" y="95" width="164" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Silence bell" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2420">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4988,7 +4988,7 @@ DQ
                 </button>
                 <textField verticalHuggingPriority="750" id="2400">
                     <rect key="frame" x="37" y="344" width="135" height="19"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Scrollback Lines:" id="2417">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -4997,7 +4997,7 @@ DQ
                 </textField>
                 <textField verticalHuggingPriority="750" id="2401">
                     <rect key="frame" x="175" y="344" width="171" height="22"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2416">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -5010,7 +5010,7 @@ DQ
                 </textField>
                 <button id="2402">
                     <rect key="frame" x="27" y="188" width="215" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Enable xterm mouse reporting" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2415">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -5022,7 +5022,7 @@ DQ
                 </button>
                 <button id="2403">
                     <rect key="frame" x="288" y="75" width="160" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Show bell icon in tabs" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2414">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -5034,7 +5034,7 @@ DQ
                 </button>
                 <button id="3553">
                     <rect key="frame" x="288" y="95" width="122" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Flash visual bell" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3554">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -5046,7 +5046,7 @@ DQ
                 </button>
                 <button id="2404">
                     <rect key="frame" x="26" y="75" width="258" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Send Growl/Notification Center alerts" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2413">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -5058,7 +5058,7 @@ DQ
                 </button>
                 <comboBox verticalHuggingPriority="750" id="2405">
                     <rect key="frame" x="175" y="207" width="329" height="26"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <comboBoxCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" title="vt100" drawsBackground="YES" completes="NO" numberOfVisibleItems="7" id="2412">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -5281,7 +5281,7 @@ DQ
                 </button>
                 <button id="5681">
                     <rect key="frame" x="15" y="359" width="292" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Automatically close a session when it ends" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5682">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -5293,7 +5293,7 @@ DQ
                 </button>
                 <button id="5685">
                     <rect key="frame" x="15" y="78" width="288" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Automatically log session input to files in:" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5692">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -5328,12 +5328,12 @@ DQ
                 </button>
                 <imageView hidden="YES" id="5688">
                     <rect key="frame" x="17" y="55" width="16" height="16"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="Warning" id="5689"/>
                 </imageView>
                 <button id="5697">
                     <rect key="frame" x="15" y="21" width="200" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="When idle, send ASCII code:" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5701">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -5345,7 +5345,7 @@ DQ
                 </button>
                 <textField verticalHuggingPriority="750" id="5698">
                     <rect key="frame" x="214" y="20" width="45" height="22"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="5699">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -5451,7 +5451,7 @@ DQ
                 </textField>
                 <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" id="4291">
                     <rect key="frame" x="206" y="82" width="212" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     <size key="cellSize" width="68" height="18"/>
                     <size key="intercellSpacing" width="4" height="2"/>
@@ -5485,8 +5485,8 @@ DQ
                     </connections>
                 </matrix>
                 <textField verticalHuggingPriority="750" id="4292">
-                    <rect key="frame" x="14" y="66" width="178" height="34"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <rect key="frame" x="14" y="82" width="178" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Left option (⌥) key acts as:" id="4300">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -5495,7 +5495,7 @@ DQ
                 </textField>
                 <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" id="4293">
                     <rect key="frame" x="206" y="62" width="212" height="18"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     <size key="cellSize" width="68" height="18"/>
                     <size key="intercellSpacing" width="4" height="2"/>
@@ -5529,8 +5529,8 @@ DQ
                     </connections>
                 </matrix>
                 <textField verticalHuggingPriority="750" id="4294">
-                    <rect key="frame" x="14" y="46" width="189" height="34"/>
-                    <autoresizingMask key="autoresizingMask"/>
+                    <rect key="frame" x="14" y="62" width="189" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Right option (⌥) key acts as:" id="4295">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
