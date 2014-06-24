@@ -199,6 +199,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     _copyToProfileButton.hidden = NO;
     _toggleTagsButton.hidden = YES;
     [_generalViewController layoutSubviewsForEditCurrentSessionMode];
+    _generalTab.view = _generalViewController.view;
     [_windowViewController layoutSubviewsForEditCurrentSessionMode];
     [_sessionViewController layoutSubviewsForEditCurrentSessionMode];
     [_advancedViewController layoutSubviewsForEditCurrentSessionMode];

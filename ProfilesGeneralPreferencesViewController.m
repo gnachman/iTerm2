@@ -43,6 +43,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
     // Controls
     IBOutlet NSTextField *_profileNameField;
+    IBOutlet NSTextField *_profileNameFieldForEditCurrentSession;
     IBOutlet NSPopUpButton *_profileShortcut;
     IBOutlet NSTokenField *_tagsTokenField;
     IBOutlet NSMatrix *_commandType;  // Login shell vs custom command radio buttons
@@ -58,6 +59,8 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     IBOutlet ProfileListView *_profiles;
     IBOutlet NSButton *_changeProfileButton;
     IBOutlet NSTextField *_setProfileLabel;
+
+    IBOutlet NSView *_editCurrentSessionView;
 }
 
 - (void)dealloc {
@@ -77,7 +80,12 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
                            key:KEY_NAME
                           type:kPreferenceInfoTypeStringTextField];
     info.willChange = ^() { [_profileDelegate profilesGeneralPreferencesNameWillChange]; };
-    
+
+    info = [self defineControl:_profileNameFieldForEditCurrentSession
+                           key:KEY_NAME
+                          type:kPreferenceInfoTypeStringTextField];
+    info.willChange = ^() { [_profileDelegate profilesGeneralPreferencesNameWillChange]; };
+
     [self defineControl:_profileShortcut
                     key:KEY_SHORTCUT
                    type:kPreferenceInfoTypePopup
@@ -123,34 +131,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
-    NSArray *viewsToHide = @[ _profileShortcut,
-                              _tagsTokenField,
-                              _commandType,
-                              _customCommand,
-                              _sendTextAtStart,
-                              _initialDirectoryType,
-                              _customDirectory,
-                              _editAdvancedConfigButton,
-                              _basicsLabel,
-                              _shortcutLabel,
-                              _modifierLabel,
-                              _tagsLabel,
-                              _commandLabel,
-                              _sendTextAtStartLabel,
-                              _directoryLabel,
-                              _schemesHeaderLabel,
-                              _schemesLabel,
-                              _urlSchemes ];
-    for (NSView *view in viewsToHide) {
-        view.hidden = YES;
-    }
-    
-    NSArray *viewsToShow = @[ _profiles,
-                              _changeProfileButton,
-                              _setProfileLabel ];
-    for (NSView *view in viewsToShow) {
-        view.hidden = NO;
-    }
+    self.view = _editCurrentSessionView;
 }
 
 - (void)reloadProfile {
