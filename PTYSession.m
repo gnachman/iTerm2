@@ -20,6 +20,7 @@
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermRestorableSession.h"
+#import "iTermRule.h"
 #import "iTermSelection.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermTextExtractor.h"
@@ -3973,7 +3974,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
       case KEY_ACTION_SET_PROFILE: {
           Profile *newProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
           if (newProfile) {
-              [self setProfilePreservingName:newProfile];
+              [self setProfile:newProfile preservingName:YES];
           }
           break;
       }
@@ -5389,19 +5390,29 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         newProfile = [[ProfileModel sharedInstance] defaultBookmark];
     }
     if (newProfile) {
-        [self setProfilePreservingName:newProfile];
+        [self setProfile:newProfile preservingName:YES];
     }
 }
 
-- (void)setProfilePreservingName:(NSDictionary *)newProfile {
+- (void)setProfile:(NSDictionary *)newProfile preservingName:(BOOL)preserveName {
+    BOOL defaultNameMatchesProfileName = [_defaultName isEqualToString:_profile[KEY_NAME]];
+    BOOL nameMatchesProfileName = [_name isEqualToString:_profile[KEY_NAME]];
     NSString *theName = [[self profile] objectForKey:KEY_NAME];
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:newProfile];
-    [dict setObject:theName forKey:KEY_NAME];
+    if (preserveName) {
+        [dict setObject:theName forKey:KEY_NAME];
+    }
     [self setProfile:dict];
     [self setPreferencesFromAddressBookEntry:dict];
     [_originalProfile autorelease];
     _originalProfile = [newProfile copy];
     [self remarry];
+    if (!preserveName && defaultNameMatchesProfileName) {
+        [self setDefaultName:newProfile[KEY_NAME]];
+    }
+    if (!preserveName && nameMatchesProfileName) {
+        [self setName:newProfile[KEY_NAME]];
+    }
 }
 
 - (void)screenSetPasteboard:(NSString *)value {
@@ -5619,6 +5630,22 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
     [[[self tab] realParentWindow] sessionHostDidChange:self to:host];
 
+    int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
+    NSString *path = [_screen workingDirectoryOnLine:line];
+    [self tryAutoProfileSwitchWithHostname:host.hostname username:host.username path:path];
+}
+
+- (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath {
+    int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
+    VT100RemoteHost *remoteHost = [_screen remoteHostOnLine:line];
+    [self tryAutoProfileSwitchWithHostname:remoteHost.hostname
+                                  username:remoteHost.username
+                                      path:newPath];
+}
+
+- (void)tryAutoProfileSwitchWithHostname:(NSString *)hostname
+                                username:(NSString *)username
+                                    path:(NSString *)path {
     // Construct a map from host binding to profile. This could be expensive with a lot of profiles
     // but it should be fairly rare for this code to run.
     NSMutableDictionary *stringToProfile = [NSMutableDictionary dictionary];
@@ -5629,17 +5656,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         }
     }
 
-    Profile *profile = nil;
-    // First try user@host, then host, then user@.
-    NSArray *stringsToTry = @[ [host usernameAndHostname],
-                               host.hostname,
-                               [NSString stringWithFormat:@"%@@", host.username] ];
-    for (NSString *string in stringsToTry) {
-        profile = stringToProfile[string];
-        if (profile) {
-            [self setProfilePreservingName:profile];
-            return;
+    // First, try to match any rule with the hostname
+    int bestScore = 0;
+    Profile *bestProfile = nil;
+
+    for (NSString *ruleString in stringToProfile) {
+        iTermRule *rule = [iTermRule ruleWithString:ruleString];
+        int score = [rule scoreForHostname:hostname username:username path:path];
+        if (score > bestScore) {
+            bestScore = score;
+            bestProfile = stringToProfile[ruleString];
         }
+    }
+    if (bestProfile) {
+        [self setProfile:bestProfile preservingName:NO];
     }
 }
 

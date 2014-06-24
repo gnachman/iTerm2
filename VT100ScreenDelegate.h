@@ -204,6 +204,7 @@
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color;
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host;
+- (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath;
 
 // Ok to write to shell?
 - (BOOL)screenShouldSendReport;

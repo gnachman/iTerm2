@@ -2861,7 +2861,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         dir = [delegate_ screenCurrentWorkingDirectory];
     }
     if (dir.length) {
+        BOOL didChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorLine]];
         [self setWorkingDirectory:dir onLine:cursorLine];
+        if (didChange) {
+            [delegate_ screenCurrentDirectoryDidChangeTo:dir];
+        }
     }
 }
 
