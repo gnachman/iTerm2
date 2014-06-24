@@ -117,8 +117,8 @@ typedef enum {
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, retain) NSColor *cursorGuideColor;
 @property(nonatomic, copy) NSString *uniqueID;
-@property(nonatomic, copy) NSString *statusFormat;
-@property(nonatomic, retain) NSMutableDictionary *statusVars;
+@property(nonatomic, copy) NSString *badgeFormat;
+@property(nonatomic, retain) NSMutableDictionary *badgeVars;
 @end
 
 @implementation PTYSession {
@@ -298,6 +298,7 @@ typedef enum {
         _activityCounter = [@0 retain];
         _announcements = [[NSMutableDictionary alloc] init];
         _queuedTokens = [[NSMutableArray alloc] init];
+        _badgeVars = [[NSMutableDictionary alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
@@ -369,8 +370,8 @@ typedef enum {
     [_announcements release];
     [_queuedTokens release];
     [_uniqueID release];
-    [_statusFormat release];
-    [_statusVars release];
+    [_badgeFormat release];
+    [_badgeVars release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -2123,13 +2124,18 @@ typedef enum {
     [_screen setMaxScrollbackLines:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
     _screen.appendToScrollbackWithStatusBar = [[aDict objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue];
-
+    self.badgeFormat = aDict[KEY_BADGE_FORMAT];
+    _textview.badgeLabel = [self badgeLabel];
     [self setFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NORMAL_FONT]]
         nonAsciiFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NON_ASCII_FONT]]
         horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
         verticalSpacing:[[aDict objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [_screen setSaveToScrollbackInAlternateScreen:[aDict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] ? [[aDict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] boolValue] : YES];
     [[_tab realParentWindow] invalidateRestorableState];
+}
+
+- (NSString *)badgeLabel {
+    return [_badgeFormat stringByReplacingVariableReferencesWithVariables:_badgeVars];
 }
 
 - (NSString *)uniqueID {
@@ -5557,21 +5563,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self queueAnnouncement:announcement identifier:kIdentifier];
 }
 
-- (void)screenSetStatusFormat:(NSString *)theFormat {
-    self.statusFormat = [theFormat stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
-    [self updateStatus];
+- (void)screenSetBadgeFormat:(NSString *)theFormat {
+    [self setSessionSpecificProfileValues:@{ KEY_BADGE_FORMAT: theFormat }];
+    _textview.badgeLabel = [self badgeLabel];
 }
 
-- (void)screenSetStatusVar:(NSString *)kvpString {
+- (void)screenSetBadgeVar:(NSString *)kvpString {
     NSArray *kvp = [kvpString keyValuePair];
     if (kvp) {
-        _statusVars[kvp[0]] = kvp[1];
+        _badgeVars[kvp[0]] = kvp[1];
     }
-    [self updateStatus];
-}
-
-- (void)updateStatus {
-    // TODO
+    _textview.badgeLabel = [self badgeLabel];
 }
 
 - (iTermColorMap *)screenColorMap {

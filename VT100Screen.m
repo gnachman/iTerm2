@@ -3086,12 +3086,12 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [delegate_ screenSetBackgroundImageFile:filename];
 }
 
-- (void)terminalSetStatusFormat:(NSString *)badge {
-    [delegate_ screenSetStatusFormat:badge];
+- (void)terminalSetBadgeFormat:(NSString *)badge {
+    [delegate_ screenSetBadgeFormat:badge];
 }
 
-- (void)terminalSetStatusVar:(NSString *)kvp {
-    [delegate_ screenSetStatusVar:kvp];
+- (void)terminalSetBadgeVar:(NSString *)kvp {
+    [delegate_ screenSetBadgeVar:kvp];
 }
 
 - (void)terminalSetForegroundColor:(NSColor *)color {

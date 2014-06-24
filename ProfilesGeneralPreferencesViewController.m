@@ -33,7 +33,6 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     // Labels
     IBOutlet NSTextField *_basicsLabel;
     IBOutlet NSTextField *_shortcutLabel;
-    IBOutlet NSTextField *_modifierLabel;
     IBOutlet NSTextField *_tagsLabel;
     IBOutlet NSTextField *_commandLabel;
     IBOutlet NSTextField *_sendTextAtStartLabel;
@@ -54,11 +53,11 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     IBOutlet NSButton *_editAdvancedConfigButton;  // Advanced initial directory button
     IBOutlet AdvancedWorkingDirectoryWindowController *_advancedWorkingDirWindowController;
     IBOutlet NSPopUpButton *_urlSchemes;
+    IBOutlet NSTextField *_statusBarText;
+    IBOutlet NSPopUpButton *_statusBarPresentation;
 
     // Controls for Edit Info
     IBOutlet ProfileListView *_profiles;
-    IBOutlet NSButton *_changeProfileButton;
-    IBOutlet NSTextField *_setProfileLabel;
 
     IBOutlet NSView *_editCurrentSessionView;
 }
@@ -108,7 +107,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     info.shouldBeEnabled = ^BOOL {
         return [_commandType.selectedCell tag] == kCommandTypeCustomTag;
     };
-    
+
     [self defineControl:_sendTextAtStart
                     key:KEY_INITIAL_TEXT
                    type:kPreferenceInfoTypeStringTextField];
@@ -121,6 +120,10 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     
     [self defineControl:_customDirectory
                     key:KEY_WORKING_DIRECTORY
+                   type:kPreferenceInfoTypeStringTextField];
+
+    [self defineControl:_statusBarText
+                    key:KEY_BADGE_FORMAT
                    type:kPreferenceInfoTypeStringTextField];
 
     [self updateEditAdvancedConfigButton];

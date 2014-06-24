@@ -1818,10 +1818,10 @@ static const int kMaxScreenRows = 4096;
         [delegate_ terminalRequestAttention:[value boolValue]];  // true: request, false: cancel
     } else if ([key isEqualToString:@"SetBackgroundImageFile"]) {
         [delegate_ terminalSetBackgroundImageFile:value];
-    } else if ([key isEqualToString:@"SetStatusFormat"]) {
-        [delegate_ terminalSetStatusFormat:value];
-    } else if ([key isEqualToString:@"SetStatusVar"]) {
-        [delegate_ terminalSetStatusVar:value];
+    } else if ([key isEqualToString:@"SetBadgeFormat"]) {
+        [delegate_ terminalSetBadgeFormat:value];
+    } else if ([key isEqualToString:@"SetBadgeVar"]) {
+        [delegate_ terminalSetBadgeVar:value];
     }
 }
 

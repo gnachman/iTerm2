@@ -363,7 +363,7 @@ typedef enum {
 - (NSString *)terminalProfileName;
 
 - (void)terminalSetBackgroundImageFile:(NSString *)filename;
-- (void)terminalSetStatusFormat:(NSString *)badge;
-- (void)terminalSetStatusVar:(NSString *)kvp;
+- (void)terminalSetBadgeFormat:(NSString *)badge;
+- (void)terminalSetBadgeVar:(NSString *)kvp;
 
 @end

@@ -130,6 +130,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (NSArray *)keyValuePair;
 
+- (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars;
+
 @end
 
 @interface NSMutableString (iTerm)

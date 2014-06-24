@@ -148,7 +148,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
         NSTabViewItem *tabViewItem = tuple[0];
         NSView *view = tuple[1];
 
-        static const CGFloat kMaxHeight = 424;
+        static const CGFloat kMaxHeight = 436;
         if (view.frame.size.height > kMaxHeight) {
             // If the view is too tall, wrap it in a scroll view.
             NSRect theFrame = NSMakeRect(0, 0, view.frame.size.width, kMaxHeight);
