@@ -66,7 +66,7 @@
  *  additional profile: parameter. The analog of iTermPreferences is iTermProfilePreferences.
  *  */
 #import "PreferencePanel.h"
-
+#import "AppearancePreferencesViewController.h"
 #import "GeneralPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermApplicationDelegate.h"
@@ -109,6 +109,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     ProfileModel *_profileModel;
     BOOL _editCurrentSessionMode;
     IBOutlet GeneralPreferencesViewController *_generalPreferencesViewController;
+    IBOutlet AppearancePreferencesViewController *_appearancePreferencesViewController;
     IBOutlet KeysPreferencesViewController *_keysViewController;
     IBOutlet ProfilePreferencesViewController *_profilesViewController;
 
@@ -176,6 +177,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
 
     _globalTabViewItem.view = _generalPreferencesViewController.view;
+    _appearanceTabViewItem.view = _appearancePreferencesViewController.view;
 
     if (_editCurrentSessionMode) {
         [self layoutSubviewsForEditCurrentSessionMode];
