@@ -31,7 +31,6 @@
     IBOutlet SmartSelectionController *_smartSelectionWindowController;
     IBOutlet TrouterPrefsController *_trouterPrefController;
     IBOutlet NSScrollView *_scrollView;
-    IBOutlet NSView *_rootView;
     IBOutlet iTermFlippedView *_flippedView;
     IBOutlet NSButton *_removeHost;
     IBOutlet NSTableView *_boundHostsTableView;
@@ -51,9 +50,6 @@
                                              selector:@selector(reloadProfiles:)
                                                  name:kReloadAllProfiles
                                                object:nil];
-    _scrollView.frame = _rootView.bounds;
-    [_rootView addSubview:_scrollView];
-    [_flippedView flipSubviews];
 }
 
 - (NSArray *)keysForBulkCopy {
