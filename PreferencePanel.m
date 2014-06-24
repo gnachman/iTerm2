@@ -69,6 +69,7 @@
 #import "AppearancePreferencesViewController.h"
 #import "GeneralPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAdvancedSettingsController.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
@@ -113,6 +114,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     IBOutlet KeysPreferencesViewController *_keysViewController;
     IBOutlet ProfilePreferencesViewController *_profilesViewController;
     IBOutlet PointerPreferencesViewController *_pointerViewController;
+    IBOutlet iTermAdvancedSettingsController *_advancedViewController;
 
     IBOutlet NSToolbar *_toolbar;
     IBOutlet NSTabView *_tabView;
@@ -173,7 +175,6 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 #pragma mark - View layout
 
 - (void)awakeFromNib {
-    _standardSize = self.window.frame.size;
     [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
 
@@ -182,9 +183,12 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     _keyboardTabViewItem.view = _keysViewController.view;
     _arrangementsTabViewItem.view = arrangements_.view;
     _mouseTabViewItem.view = _pointerViewController.view;
+    _advancedTabViewItem.view = _advancedViewController.view;
 
     if (_editCurrentSessionMode) {
         [self layoutSubviewsForEditCurrentSessionMode];
+    } else {
+        [self resizeWindowForTabViewItem:_globalTabViewItem];
     }
 }
 
@@ -375,16 +379,20 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     if (tabViewItem == _bookmarksTabViewItem) {
         [_profilesViewController resizeWindowForCurrentTab];
     } else {
-        iTermSizeRememberingView *theView = (iTermSizeRememberingView *)tabViewItem.view;
-        [theView resetToOriginalSize];
-        NSRect rect = self.window.frame;
-        NSSize size = [tabViewItem.view frame].size;
-        rect.origin.y += (rect.size.height - size.height);
-        rect.size = size;
-        rect.size.height += 87;
-        rect.size.width += 26;
-        [[self window] setFrame:rect display:YES animate:YES];
+        [self resizeWindowForTabViewItem:tabViewItem];
     }
+}
+
+- (void)resizeWindowForTabViewItem:(NSTabViewItem *)tabViewItem {
+    iTermSizeRememberingView *theView = (iTermSizeRememberingView *)tabViewItem.view;
+    [theView resetToOriginalSize];
+    NSRect rect = self.window.frame;
+    NSSize size = [tabViewItem.view frame].size;
+    rect.origin.y += (rect.size.height - size.height);
+    rect.size = size;
+    rect.size.height += 87;
+    rect.size.width += 26;
+    [[self window] setFrame:rect display:YES animate:YES];
 }
 
 @end
