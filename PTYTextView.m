@@ -5194,35 +5194,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         NSSize sizeWithFont;
         NSDictionary *attributes;
         NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
-
-        // Compute a hue, brightness, and saturation that are visible but not
-        // overwhelming against the default background color when blended in at
-        // about 15%. This algorithm was determined experimentally and might
-        // not work well on all displays.
-        CGFloat hue = [backgroundColor hueComponent];
-        hue += 0.5 * [backgroundColor saturationComponent];
-        if (hue > 1) {
-            hue -= 1;
-        }
-        CGFloat brightness = [backgroundColor brightnessComponent];
-        const CGFloat kMinBrightnessDifference = 0.8;
-        CGFloat saturation = [backgroundColor saturationComponent];
-        if (saturation > 0.2 && saturation < 0.8 && brightness > 0.8) {
-            brightness -= kMinBrightnessDifference * 0.75;
-        } else if (saturation < 0.2 && brightness > 0.8) {
-            brightness -= 0.2;
-        } else if (brightness > 0.4) {
-            brightness -= kMinBrightnessDifference;
-        } else if (brightness < 0.4) {
-            brightness += kMinBrightnessDifference;
-        }
-        saturation = 0.75;
-        if (brightness > 0.8) {
-            saturation -= brightness - 0.8;
-        }
-        brightness = MIN(MAX(0, brightness), 1);
-        saturation = MAX(0, saturation);
-        NSColor *fillColor = [NSColor colorWithCalibratedHue:hue saturation:saturation brightness:brightness alpha:1];
+        NSColor *fillColor = [_delegate textViewBadgeColor];
         NSFontManager *fontManager = [NSFontManager sharedFontManager];
         NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
         paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
@@ -6647,7 +6619,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [image drawInRect:intersection
              fromRect:source
             operation:NSCompositeSourceOver
-             fraction:0.5
+             fraction:1
        respectFlipped:YES
                 hints:nil];
     imageSize.width += kBadgeMargin + kBadgeRightMargin;

@@ -43,6 +43,7 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
     IBOutlet NSColorWell *_cursorColor;
     IBOutlet NSColorWell *_cursorTextColor;
     IBOutlet NSColorWell *_tabColor;
+    IBOutlet NSColorWell *_badgeColor;
 
     IBOutlet NSTextField *_cursorColorLabel;
     IBOutlet NSTextField *_cursorTextColorLabel;
@@ -139,7 +140,8 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
               KEY_CURSOR_COLOR: _cursorColor,
               KEY_CURSOR_TEXT_COLOR: _cursorTextColor,
               KEY_TAB_COLOR: _tabColor,
-              KEY_CURSOR_GUIDE_COLOR: _guideColor };
+              KEY_CURSOR_GUIDE_COLOR: _guideColor,
+              KEY_BADGE_COLOR: _badgeColor };
 }
 
 #pragma mark - Color Presets

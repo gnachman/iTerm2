@@ -4824,6 +4824,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return _cursorGuideColor;
 }
 
+- (NSColor *)textViewBadgeColor {
+    return [[iTermProfilePreferences objectForKey:KEY_BADGE_COLOR inProfile:_profile] colorValue];
+}
+
 - (void)sendEscapeSequence:(NSString *)text
 {
     if (_exited) {

@@ -104,6 +104,7 @@
 #define KEY_CURSOR_BOOST           @"Cursor Boost"
 #define KEY_USE_CURSOR_GUIDE       @"Use Cursor Guide"
 #define KEY_CURSOR_GUIDE_COLOR     @"Cursor Guide Color"
+#define KEY_BADGE_COLOR            @"Badge Color"
 
 // Display
 #define KEY_ROWS                   @"Rows"
