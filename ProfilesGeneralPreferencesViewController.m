@@ -151,6 +151,10 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
 }
 
+- (NSString *)selectedGuid {
+    return [_profiles selectedGuid];
+}
+
 #pragma mark - Copy current session to Profile
 
 // Replace a Profile in the sessions profile with a new dictionary that preserves the original

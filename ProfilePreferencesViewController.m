@@ -452,7 +452,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     if (!sourceGuid) {
         return;
     }
-    NSString* profileGuid = [sourceProfile objectForKey:KEY_ORIGINAL_GUID];
+    NSString* profileGuid = [_generalViewController selectedGuid];
     Profile* destination = [[ProfileModel sharedInstance] bookmarkWithGuid:profileGuid];
     // TODO: changing color presets in cmd-i causes profileGuid=null.
     if (sourceProfile && destination) {
