@@ -253,7 +253,7 @@ static const CGFloat kSideMarginsWithinInnerTabView = 11;
     }
     [_tabView selectTabViewItem:_generalTab];
     [self.view.window performSelector:@selector(makeFirstResponder:)
-                           withObject:_generalViewController.profileNameField
+                           withObject:_generalViewController.profileNameFieldForEditCurrentSession
                            afterDelay:0];
 }
 
