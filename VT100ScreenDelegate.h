@@ -207,6 +207,7 @@
 
 // Ok to write to shell?
 - (BOOL)screenShouldSendReport;
+- (void)screenCurrentDirectoryDidChangeTo:(NSString *)path;
 
 // FinalTerm stuff
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range;
