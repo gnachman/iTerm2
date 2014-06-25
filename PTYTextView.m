@@ -5224,13 +5224,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         saturation = MAX(0, saturation);
         NSColor *fillColor = [NSColor colorWithCalibratedHue:hue saturation:saturation brightness:brightness alpha:1];
         NSFontManager *fontManager = [NSFontManager sharedFontManager];
+        NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
+        paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
+        paragraphStyle.alignment = NSRightTextAlignment;
         while (points != prevPoints) {
             font = [fontManager convertFont:[NSFont fontWithName:@"Helvetica" size:points]
                                 toHaveTrait:NSBoldFontMask];
-
             attributes = @{ NSFontAttributeName: font,
-                            NSForegroundColorAttributeName: fillColor };
-            sizeWithFont = [badgeLabel sizeWithAttributes:attributes];
+                            NSForegroundColorAttributeName: fillColor,
+                            NSParagraphStyleAttributeName: paragraphStyle };
+            NSRect bounds = [badgeLabel boundingRectWithSize:maxSize options:NSStringDrawingUsesLineFragmentOrigin attributes:attributes];
+            sizeWithFont = bounds.size;
             if (sizeWithFont.width > maxSize.width || sizeWithFont.height > maxSize.height) {
                 max = points;
             } else if (sizeWithFont.width < maxSize.width && sizeWithFont.height < maxSize.height) {
@@ -5245,7 +5249,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             NSMutableDictionary *temp = [[attributes mutableCopy] autorelease];
             temp[NSStrokeWidthAttributeName] = @-2;
             temp[NSStrokeColorAttributeName] = backgroundColor;
-            [badgeLabel drawAtPoint:NSZeroPoint withAttributes:temp];
+            [badgeLabel drawWithRect:NSMakeRect(0, 0, sizeWithFont.width, sizeWithFont.height)
+                             options:NSStringDrawingUsesLineFragmentOrigin
+                          attributes:temp];
             [image unlockFocus];
 
             self.badgeImage = image;

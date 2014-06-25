@@ -1820,8 +1820,8 @@ static const int kMaxScreenRows = 4096;
         [delegate_ terminalSetBackgroundImageFile:value];
     } else if ([key isEqualToString:@"SetBadgeFormat"]) {
         [delegate_ terminalSetBadgeFormat:value];
-    } else if ([key isEqualToString:@"SetBadgeVar"]) {
-        [delegate_ terminalSetBadgeVar:value];
+    } else if ([key isEqualToString:@"SetUserVar"]) {
+        [delegate_ terminalSetUserVar:value];
     }
 }
 

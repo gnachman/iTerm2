@@ -3094,8 +3094,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [delegate_ screenSetBadgeFormat:badge];
 }
 
-- (void)terminalSetBadgeVar:(NSString *)kvp {
-    [delegate_ screenSetBadgeVar:kvp];
+- (void)terminalSetUserVar:(NSString *)kvp {
+    [delegate_ screenSetUserVar:kvp];
 }
 
 - (void)terminalSetForegroundColor:(NSColor *)color {

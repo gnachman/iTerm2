@@ -221,6 +221,6 @@
 
 - (void)screenSetBackgroundImageFile:(NSString *)filename;
 - (void)screenSetBadgeFormat:(NSString *)theFormat;
-- (void)screenSetBadgeVar:(NSString *)kvp;
+- (void)screenSetUserVar:(NSString *)kvp;
 
 @end

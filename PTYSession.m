@@ -5601,14 +5601,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenSetBadgeFormat:(NSString *)theFormat {
+    theFormat = [theFormat stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
     [self setSessionSpecificProfileValues:@{ KEY_BADGE_FORMAT: theFormat }];
     _textview.badgeLabel = [self badgeLabel];
 }
 
-- (void)screenSetBadgeVar:(NSString *)kvpString {
+- (void)screenSetUserVar:(NSString *)kvpString {
     NSArray *kvp = [kvpString keyValuePair];
     if (kvp) {
-        _badgeVars[kvp[0]] = kvp[1];
+        NSString *key = [NSString stringWithFormat:@"user.%@", kvp[0]];
+        if (![kvp[1] length]) {
+            [_badgeVars removeObjectForKey:key];
+        } else {
+            _badgeVars[key] = [kvp[1] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+        }
     }
     [_textview setBadgeLabel:[self badgeLabel]];
 }
