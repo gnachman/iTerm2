@@ -26,7 +26,7 @@ static const NSInteger kInitialDirectoryTypeHomeTag = 1;
 static const NSInteger kInitialDirectoryTypeRecycleTag = 2;
 static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
-@interface ProfilesGeneralPreferencesViewController () <NSMenuDelegate>
+@interface ProfilesGeneralPreferencesViewController () <NSMenuDelegate, ProfileListViewDelegate>
 @end
 
 @implementation ProfilesGeneralPreferencesViewController {
@@ -53,13 +53,15 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     IBOutlet NSButton *_editAdvancedConfigButton;  // Advanced initial directory button
     IBOutlet AdvancedWorkingDirectoryWindowController *_advancedWorkingDirWindowController;
     IBOutlet NSPopUpButton *_urlSchemes;
-    IBOutlet NSTextField *_statusBarText;
-    IBOutlet NSPopUpButton *_statusBarPresentation;
+    IBOutlet NSTextField *_badgeText;
+    IBOutlet NSTextField *_badgeTextForEditCurrentSession;
 
     // Controls for Edit Info
     IBOutlet ProfileListView *_profiles;
 
     IBOutlet NSView *_editCurrentSessionView;
+    IBOutlet NSButton *_copySettingsToProfile;
+    IBOutlet NSButton *_copyProfleToSession;
 }
 
 - (void)dealloc {
@@ -122,9 +124,15 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
                     key:KEY_WORKING_DIRECTORY
                    type:kPreferenceInfoTypeStringTextField];
 
-    [self defineControl:_statusBarText
+    [self defineControl:_badgeText
                     key:KEY_BADGE_FORMAT
                    type:kPreferenceInfoTypeStringTextField];
+
+    [self defineControl:_badgeTextForEditCurrentSession
+                    key:KEY_BADGE_FORMAT
+                   type:kPreferenceInfoTypeStringTextField];
+
+    [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
 
     [self updateEditAdvancedConfigButton];
 }
@@ -140,7 +148,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 - (void)reloadProfile {
     [super reloadProfile];
     [self populateBookmarkUrlSchemesFromProfile:[self.delegate profilePreferencesCurrentProfile]];
-    [_profiles selectRowByGuid:nil];
+    [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
 }
 
 #pragma mark - Copy current session to Profile
@@ -419,6 +427,13 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 - (id)tokenFieldCell:(NSTokenFieldCell *)tokenFieldCell
     representedObjectForEditingString:(NSString *)editingString {
     return [editingString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+}
+
+#pragma mark - ProfileListViewDelegate
+
+- (void)profileTableSelectionDidChange:(id)profileTable {
+    [_copySettingsToProfile setEnabled:[_profiles hasSelection]];
+    [_copyProfleToSession setEnabled:[_profiles hasSelection]];
 }
 
 @end
