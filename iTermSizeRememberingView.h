@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 @interface iTermSizeRememberingView : NSView
+@property(nonatomic, readonly) NSSize originalSize;
 
 - (void)resetToOriginalSize;
 

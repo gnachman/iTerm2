@@ -197,9 +197,8 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     [_profilesViewController layoutSubviewsForEditCurrentSessionMode];
     [_toolbar setVisible:NO];
 
-    NSRect newFrame = [[self window] frame];
-    newFrame.size.width = [_profilesViewController preferredSize].width + 26;
-    [[self window] setFrame:newFrame display:YES];
+    [_profilesViewController resizeWindowForCurrentTab];
+
 }
 
 #pragma mark - API

@@ -26,6 +26,8 @@
 #import "ProfilesSessionPreferencesViewController.h"
 
 static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
+static const CGFloat kExtraMarginBetweenWindowBottomAndTabViewForEditCurrentSessionMode = 7;
+static const CGFloat kSideMarginsWithinInnerTabView = 11;
 
 @interface ProfilePreferencesViewController () <
     iTermProfilePreferencesBaseViewControllerDelegate,
@@ -39,10 +41,10 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
     // Other actions… under list of profiles in prefs>profiles.
     IBOutlet NSPopUpButton *_otherActionsPopup;
-    
+
     // Tab view for profiles (general/colors/text/window/terminal/session/keys/advanced)
     IBOutlet NSTabView *_tabView;
-    
+
     // Minus under table view to delete the selected profile.
     IBOutlet NSButton *_removeProfileButton;
 
@@ -69,7 +71,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
     // Colors tab view controller
     IBOutlet ProfilesColorsPreferencesViewController *_colorsViewController;
-    
+
     // Text tab view controller
     IBOutlet ProfilesTextPreferencesViewController *_textViewController;
 
@@ -81,10 +83,10 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
     // Sessions tab view controller
     IBOutlet ProfilesSessionPreferencesViewController *_sessionViewController;
-    
+
     // Keys tab view controller
     IBOutlet ProfilesKeysPreferencesViewController *_keysViewController;
-    
+
     // Advanced tab view controller
     IBOutlet ProfilesAdvancedPreferencesViewController *_advancedViewController;
 
@@ -106,7 +108,6 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
                                                  selector:@selector(sessionProfileDidChange:)
                                                      name:kSessionProfileDidChange
                                                    object:nil];
-        _preferredSize = NSMakeSize(891, 434);
     }
     return self;
 }
@@ -120,7 +121,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
 - (void)awakeFromNib {
     [_profilesListView setUnderlyingDatasource:[_delegate profilePreferencesModel]];
-    
+
     Profile *profile = [self selectedProfile];
     if (profile) {
         _tabView.hidden = NO;
@@ -131,7 +132,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
         [_removeProfileButton setEnabled:NO];
     }
     [self refresh];
-    
+
     if (!profile && [_profilesListView numberOfRows]) {
         [_profilesListView selectRowIndex:0];
     }
@@ -148,18 +149,21 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
         NSTabViewItem *tabViewItem = tuple[0];
         NSView *view = tuple[1];
 
-        static const CGFloat kMaxHeight = 436;
+        // Maximum allowed height for a tab view item. Taller ones get a scroll view.
+        static const CGFloat kMaxHeight = 438;
         if (view.frame.size.height > kMaxHeight) {
             // If the view is too tall, wrap it in a scroll view.
             NSRect theFrame = NSMakeRect(0, 0, view.frame.size.width, kMaxHeight);
             iTermSizeRememberingView *sizeRememberingView = [[iTermSizeRememberingView alloc] initWithFrame:theFrame];
-
+            sizeRememberingView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
+            sizeRememberingView.autoresizesSubviews = YES;
             NSScrollView *scrollView = [[NSScrollView alloc] initWithFrame:theFrame];
+            scrollView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
             scrollView.drawsBackground = NO;
             scrollView.hasVerticalScroller = YES;
             scrollView.hasHorizontalScroller = NO;
 
-            iTermFlippedView *flippedView = [[iTermFlippedView alloc] initWithFrame:view.frame];
+            iTermFlippedView *flippedView = [[iTermFlippedView alloc] initWithFrame:view.bounds];
             [flippedView addSubview:view];
             [flippedView flipSubviews];
 
@@ -183,7 +187,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     if (!profile) {
         return;
     }
-    
+
     [self updateSubviewsForProfile:profile];
     [self reloadData];
     [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelDidUpdateProfileFields
@@ -203,9 +207,12 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [_windowViewController layoutSubviewsForEditCurrentSessionMode];
     [_sessionViewController layoutSubviewsForEditCurrentSessionMode];
     [_advancedViewController layoutSubviewsForEditCurrentSessionMode];
-    _preferredSize = NSMakeSize(579, 434);
     NSRect newFrame = _tabView.superview.bounds;
     newFrame.size.width -= 13;
+
+    newFrame.size.height -= kExtraMarginBetweenWindowBottomAndTabViewForEditCurrentSessionMode;
+    newFrame.origin.y += kExtraMarginBetweenWindowBottomAndTabViewForEditCurrentSessionMode;
+
     _tabView.frame = newFrame;
 }
 
@@ -268,7 +275,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     [[self tabViewControllers] makeObjectsPerformSelector:@selector(willReloadProfile)];
     Profile *profile = [self selectedProfile];
     BOOL hasSelection = (profile != nil);
-    
+
     _tabView.hidden = !hasSelection;
     _otherActionsPopup.enabled = hasSelection;
     _removeProfileButton.enabled = hasSelection && [_profilesListView numberOfRows] > 1;
@@ -366,15 +373,45 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 
 - (void)resizeWindowForTabViewItem:(NSTabViewItem *)tabViewItem animated:(BOOL)animated {
     iTermSizeRememberingView *theView = (iTermSizeRememberingView *)[tabViewItem view];
-    [theView resetToOriginalSize];
-    static const CGSize kMargin = { 9, 11 };
-    static const CGFloat kTabViewMinWidth = 579;
-    CGFloat sharedProfilesLeftSizeWidth = kMargin.width;
-    if (!_profilesListView.isHidden) {
-        sharedProfilesLeftSizeWidth = NSMaxX(_profilesListView.frame) + kMargin.width;
+
+    // The window's size includes all space around the tab view, plus the tab view.
+    // These variables hold the space on each side of the tab view.
+    CGFloat spaceAbove = 0;
+    CGFloat spaceBelow = 0;
+    CGFloat spaceLeft = 0;
+    CGFloat spaceRight = 0;
+
+    // Compute the size of the tab view item.
+    CGSize tabViewSize;
+    CGFloat preferredWidth = kSideMarginsWithinInnerTabView + theView.originalSize.width + kSideMarginsWithinInnerTabView;
+    const CGFloat kTabViewMinWidth = 579;
+    tabViewSize.width = MAX(kTabViewMinWidth, preferredWidth);
+    tabViewSize.height = theView.originalSize.height;
+
+    // Compute left margin
+    const CGFloat kSideMarginBetweenWindowAndTabView = 9;
+    if (_profilesListView.isHidden) {
+      spaceLeft = kSideMarginBetweenWindowAndTabView;
+    } else {
+      // Leave space the for the profiles list view on the left.
+      spaceLeft = NSMaxX(_profilesListView.frame) + kSideMarginBetweenWindowAndTabView;
     }
-    NSSize contentSize = NSMakeSize(sharedProfilesLeftSizeWidth + MAX(kTabViewMinWidth, 11 + theView.frame.size.width + 11) + kMargin.width,
-                                    kMargin.height + 9 + theView.frame.size.height + 10 + kMargin.width + 20);
+
+    // Other margins are easy.
+    spaceRight = kSideMarginBetweenWindowAndTabView;
+    const CGFloat kDistanceFromContentTopToTabViewItemTop = 36;
+    const CGFloat kDistanceFromContentBottomToWindowBottom = 16;
+    spaceAbove = kDistanceFromContentTopToTabViewItemTop;
+    spaceBelow = kDistanceFromContentBottomToWindowBottom;
+    if (_profilesListView.isHidden) {
+        spaceBelow += kExtraMarginBetweenWindowBottomAndTabViewForEditCurrentSessionMode;
+    }
+
+    // Compute the size of the content within the window.
+    NSSize contentSize = NSMakeSize(spaceLeft + tabViewSize.width + spaceRight,
+                                    spaceAbove + tabViewSize.height + spaceBelow);
+
+    // Compute a window frame with the new size that preserves the top left coordinate.
     NSWindow *window = self.view.window;
     NSPoint windowTopLeft = NSMakePoint(NSMinX(window.frame), NSMaxY(window.frame));
     NSRect frame = [window frameRectForContentRect:NSMakeRect(windowTopLeft.x, 0, contentSize.width, contentSize.height)];
@@ -391,7 +428,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
         NSBeep();
     } else if ([self confirmProfileDeletion:profile]) {
         int lastIndex = [_profilesListView selectedRow];
-        
+
         NSString *guid = profile[KEY_GUID];
         [self removeKeyMappingsReferringToGuid:guid];
         [[_delegate profilePreferencesModel] removeBookmarkWithGuid:guid];
@@ -402,7 +439,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
             toSelect = 0;
         }
         [_profilesListView selectRowIndex:toSelect];
-        
+
         // If a profile was deleted, update the shortcut titles that might refer to it.
         [_generalViewController updateShortcutTitles];
     }
@@ -461,11 +498,11 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
         [copyOfSource removeObjectForKey:KEY_ORIGINAL_GUID];
         [copyOfSource setObject:[destination objectForKey:KEY_NAME] forKey:KEY_NAME];
         [[ProfileModel sharedInstance] setBookmark:copyOfSource withGuid:profileGuid];
-        
+
         [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
                                                             object:nil
                                                           userInfo:nil];
-        
+
         // Update user defaults
         [[NSUserDefaults standardUserDefaults] setObject:[[ProfileModel sharedInstance] rawData]
                                                   forKey: @"New Bookmarks"];
@@ -478,7 +515,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     BulkCopyProfilePreferencesWindowController *bulkCopyController =
         [[BulkCopyProfilePreferencesWindowController alloc] init];
     bulkCopyController.sourceGuid = profile[KEY_GUID];
-    
+
     bulkCopyController.keysForColors = [_colorsViewController keysForBulkCopy];
     bulkCopyController.keysForText = [_textViewController keysForBulkCopy];
     bulkCopyController.keysForWindow = [_windowViewController keysForBulkCopy];
@@ -486,7 +523,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     bulkCopyController.keysForSession = [_sessionViewController keysForBulkCopy];
     bulkCopyController.keysForKeyboard = [_keysViewController keysForBulkCopy];
     bulkCopyController.keysForAdvanced = [_advancedViewController keysForBulkCopy];
-    
+
     [NSApp beginSheet:bulkCopyController.window
        modalForWindow:self.view.window
         modalDelegate:self
@@ -503,13 +540,13 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
     }
     NSMutableDictionary *newProfile = [NSMutableDictionary dictionaryWithDictionary:profile];
     NSString* newName = [NSString stringWithFormat:@"Copy of %@", newProfile[KEY_NAME]];
-    
+
     newProfile[KEY_NAME] = newName;
     newProfile[KEY_GUID] = [ProfileModel freshGuid];
     newProfile[KEY_DEFAULT_BOOKMARK] = @"No";
     newProfile[KEY_SHORTCUT] = @"";
     newProfile[KEY_BOUND_HOSTS] = @[];
-    
+
     [[_delegate profilePreferencesModel] addBookmark:newProfile];
     [_profilesListView reloadData];
     [_profilesListView selectRowByGuid:newProfile[KEY_GUID]];

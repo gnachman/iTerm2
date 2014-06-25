@@ -19,7 +19,9 @@
 }
 
 - (void)awakeFromNib {
-    _originalSize = self.frame.size;
+    if (NSEqualSizes(NSZeroSize, _originalSize)) {
+        _originalSize = self.frame.size;
+    }
 }
 
 - (void)resetToOriginalSize {
