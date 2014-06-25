@@ -1871,11 +1871,11 @@ DQ
             </subviews>
         </customView>
         <customView id="SCN-fS-hNB" userLabel="Prefs - Profiles - Colors" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="559" height="389"/>
+            <rect key="frame" x="0.0" y="0.0" width="571" height="389"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <box autoresizesSubviews="NO" title="Basic Settings" borderType="line" id="xAy-vZ-yHZ">
-                    <rect key="frame" x="6" y="183" width="336" height="201"/>
+                    <rect key="frame" x="17" y="183" width="336" height="201"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView">
                         <rect key="frame" x="1" y="1" width="334" height="185"/>
@@ -2061,7 +2061,7 @@ DQ
                     <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                 </box>
                 <box autoresizesSubviews="NO" title="Cursor" borderType="line" id="E5x-dY-j3k">
-                    <rect key="frame" x="6" y="16" width="336" height="163"/>
+                    <rect key="frame" x="17" y="16" width="336" height="163"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView">
                         <rect key="frame" x="1" y="1" width="334" height="147"/>
@@ -2178,7 +2178,7 @@ DQ
                     <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                 </box>
                 <box autoresizesSubviews="NO" title="ANSI Colors" borderType="line" id="JDt-RG-YjG">
-                    <rect key="frame" x="344" y="69" width="199" height="315"/>
+                    <rect key="frame" x="355" y="69" width="199" height="315"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView">
                         <rect key="frame" x="1" y="1" width="197" height="299"/>
@@ -2329,7 +2329,7 @@ DQ
                                 </connections>
                             </colorWell>
                             <textField verticalHuggingPriority="750" id="2344">
-                                <rect key="frame" x="16" y="251" width="55" height="17"/>
+                                <rect key="frame" x="16" y="253" width="55" height="17"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Black" id="2345">
                                     <font key="font" metaFont="system"/>
@@ -2338,7 +2338,7 @@ DQ
                                 </textFieldCell>
                             </textField>
                             <textField verticalHuggingPriority="750" id="2346">
-                                <rect key="frame" x="16" y="219" width="55" height="17"/>
+                                <rect key="frame" x="16" y="221" width="55" height="17"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Red" id="2347">
                                     <font key="font" metaFont="system"/>
@@ -2347,7 +2347,7 @@ DQ
                                 </textFieldCell>
                             </textField>
                             <textField verticalHuggingPriority="750" id="2348">
-                                <rect key="frame" x="16" y="187" width="55" height="17"/>
+                                <rect key="frame" x="16" y="189" width="55" height="17"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Green" id="2349">
                                     <font key="font" metaFont="system"/>
@@ -2356,7 +2356,7 @@ DQ
                                 </textFieldCell>
                             </textField>
                             <textField verticalHuggingPriority="750" id="2350">
-                                <rect key="frame" x="16" y="155" width="55" height="17"/>
+                                <rect key="frame" x="16" y="157" width="55" height="17"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Yellow" id="2351">
                                     <font key="font" metaFont="system"/>
@@ -2365,7 +2365,7 @@ DQ
                                 </textFieldCell>
                             </textField>
                             <textField verticalHuggingPriority="750" id="2352">
-                                <rect key="frame" x="16" y="123" width="55" height="17"/>
+                                <rect key="frame" x="16" y="125" width="55" height="17"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Blue" id="2353">
                                     <font key="font" metaFont="system"/>
@@ -2374,7 +2374,7 @@ DQ
                                 </textFieldCell>
                             </textField>
                             <textField verticalHuggingPriority="750" id="2354">
-                                <rect key="frame" x="13" y="91" width="58" height="17"/>
+                                <rect key="frame" x="13" y="93" width="58" height="17"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Magenta" id="2355">
                                     <font key="font" metaFont="system"/>
@@ -2383,7 +2383,7 @@ DQ
                                 </textFieldCell>
                             </textField>
                             <textField verticalHuggingPriority="750" id="2356">
-                                <rect key="frame" x="16" y="59" width="55" height="17"/>
+                                <rect key="frame" x="16" y="61" width="55" height="17"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Cyan" id="2357">
                                     <font key="font" metaFont="system"/>
@@ -2392,7 +2392,7 @@ DQ
                                 </textFieldCell>
                             </textField>
                             <textField verticalHuggingPriority="750" id="2358">
-                                <rect key="frame" x="16" y="27" width="55" height="17"/>
+                                <rect key="frame" x="16" y="29" width="55" height="17"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="White" id="2359">
                                     <font key="font" metaFont="system"/>
@@ -2424,7 +2424,7 @@ DQ
                     <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                 </box>
                 <popUpButton verticalHuggingPriority="750" id="3213">
-                    <rect key="frame" x="344" y="17" width="199" height="26"/>
+                    <rect key="frame" x="355" y="17" width="199" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Load Presets..." bezelStyle="rounded" alignment="center" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="3218" id="3214">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -2440,7 +2440,7 @@ DQ
                     </connections>
                 </popUpButton>
                 <textField verticalHuggingPriority="750" id="2276">
-                    <rect key="frame" x="15" y="340" width="84" height="17"/>
+                    <rect key="frame" x="26" y="340" width="84" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Foreground" id="2320">
                         <font key="font" metaFont="system"/>
