@@ -46,6 +46,7 @@
 #define KEY_INITIAL_TEXT                @"Initial Text"
 #define KEY_CUSTOM_DIRECTORY            @"Custom Directory"  // values are Yes, No, Recycle
 #define KEY_WORKING_DIRECTORY           @"Working Directory"
+#define KEY_BADGE_FORMAT                @"Badge Text"
 #define KEY_TERMINAL_PROFILE            @"Terminal Profile"
 #define KEY_KEYBOARD_PROFILE            @"Keyboard Profile"
 #define KEY_DISPLAY_PROFILE             @"Display Profile"
@@ -103,6 +104,7 @@
 #define KEY_CURSOR_BOOST           @"Cursor Boost"
 #define KEY_USE_CURSOR_GUIDE       @"Use Cursor Guide"
 #define KEY_CURSOR_GUIDE_COLOR     @"Cursor Guide Color"
+#define KEY_BADGE_COLOR            @"Badge Color"
 
 // Display
 #define KEY_ROWS                   @"Rows"

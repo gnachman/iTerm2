@@ -66,9 +66,10 @@
  *  additional profile: parameter. The analog of iTermPreferences is iTermProfilePreferences.
  *  */
 #import "PreferencePanel.h"
-
+#import "AppearancePreferencesViewController.h"
 #import "GeneralPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAdvancedSettingsController.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
@@ -76,6 +77,7 @@
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermSizeRememberingView.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "KeysPreferencesViewController.h"
@@ -101,12 +103,18 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
 NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUpdateProfileFields";
 NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 
+@interface PreferencePanel() <NSTabViewDelegate>
+
+@end
 @implementation PreferencePanel {
     ProfileModel *_profileModel;
     BOOL _editCurrentSessionMode;
     IBOutlet GeneralPreferencesViewController *_generalPreferencesViewController;
+    IBOutlet AppearancePreferencesViewController *_appearancePreferencesViewController;
     IBOutlet KeysPreferencesViewController *_keysViewController;
     IBOutlet ProfilePreferencesViewController *_profilesViewController;
+    IBOutlet PointerPreferencesViewController *_pointerViewController;
+    IBOutlet iTermAdvancedSettingsController *_advancedViewController;
 
     IBOutlet NSToolbar *_toolbar;
     IBOutlet NSTabView *_tabView;
@@ -125,9 +133,10 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     IBOutlet NSToolbarItem *_advancedToolbarItem;
     IBOutlet NSTabViewItem *_advancedTabViewItem;
 
-    // This class is not well named. It is a lot like a view controller for the window
-    // arrangements tab.
+    // This class is not well named. It is a view controller for the window
+    // arrangements tab. It's also a singleton :(
     IBOutlet WindowArrangements *arrangements_;
+    NSSize _standardSize;
 }
 
 + (instancetype)sharedInstance {
@@ -169,8 +178,17 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
 
+    _globalTabViewItem.view = _generalPreferencesViewController.view;
+    _appearanceTabViewItem.view = _appearancePreferencesViewController.view;
+    _keyboardTabViewItem.view = _keysViewController.view;
+    _arrangementsTabViewItem.view = arrangements_.view;
+    _mouseTabViewItem.view = _pointerViewController.view;
+    _advancedTabViewItem.view = _advancedViewController.view;
+
     if (_editCurrentSessionMode) {
         [self layoutSubviewsForEditCurrentSessionMode];
+    } else {
+        [self resizeWindowForTabViewItem:_globalTabViewItem];
     }
 }
 
@@ -179,9 +197,8 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     [_profilesViewController layoutSubviewsForEditCurrentSessionMode];
     [_toolbar setVisible:NO];
 
-    NSRect newFrame = [[self window] frame];
-    newFrame.size.width = [_profilesViewController size].width + 26;
-    [[self window] setFrame:newFrame display:YES];
+    [_profilesViewController resizeWindowForCurrentTab];
+
 }
 
 #pragma mark - API
@@ -353,6 +370,28 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 
 - (ProfileModel *)profilePreferencesModel {
     return _profileModel;
+}
+
+#pragma mark - NSTabViewDelegate
+
+- (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
+    if (tabViewItem == _bookmarksTabViewItem) {
+        [_profilesViewController resizeWindowForCurrentTab];
+    } else {
+        [self resizeWindowForTabViewItem:tabViewItem];
+    }
+}
+
+- (void)resizeWindowForTabViewItem:(NSTabViewItem *)tabViewItem {
+    iTermSizeRememberingView *theView = (iTermSizeRememberingView *)tabViewItem.view;
+    [theView resetToOriginalSize];
+    NSRect rect = self.window.frame;
+    NSSize size = [tabViewItem.view frame].size;
+    rect.origin.y += (rect.size.height - size.height);
+    rect.size = size;
+    rect.size.height += 87;
+    rect.size.width += 26;
+    [[self window] setFrame:rect display:YES animate:YES];
 }
 
 @end

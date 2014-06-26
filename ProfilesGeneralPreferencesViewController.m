@@ -26,14 +26,13 @@ static const NSInteger kInitialDirectoryTypeHomeTag = 1;
 static const NSInteger kInitialDirectoryTypeRecycleTag = 2;
 static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
-@interface ProfilesGeneralPreferencesViewController () <NSMenuDelegate>
+@interface ProfilesGeneralPreferencesViewController () <NSMenuDelegate, ProfileListViewDelegate>
 @end
 
 @implementation ProfilesGeneralPreferencesViewController {
     // Labels
     IBOutlet NSTextField *_basicsLabel;
     IBOutlet NSTextField *_shortcutLabel;
-    IBOutlet NSTextField *_modifierLabel;
     IBOutlet NSTextField *_tagsLabel;
     IBOutlet NSTextField *_commandLabel;
     IBOutlet NSTextField *_sendTextAtStartLabel;
@@ -43,6 +42,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
     // Controls
     IBOutlet NSTextField *_profileNameField;
+    IBOutlet NSTextField *_profileNameFieldForEditCurrentSession;
     IBOutlet NSPopUpButton *_profileShortcut;
     IBOutlet NSTokenField *_tagsTokenField;
     IBOutlet NSMatrix *_commandType;  // Login shell vs custom command radio buttons
@@ -53,11 +53,15 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     IBOutlet NSButton *_editAdvancedConfigButton;  // Advanced initial directory button
     IBOutlet AdvancedWorkingDirectoryWindowController *_advancedWorkingDirWindowController;
     IBOutlet NSPopUpButton *_urlSchemes;
+    IBOutlet NSTextField *_badgeText;
+    IBOutlet NSTextField *_badgeTextForEditCurrentSession;
 
     // Controls for Edit Info
     IBOutlet ProfileListView *_profiles;
-    IBOutlet NSButton *_changeProfileButton;
-    IBOutlet NSTextField *_setProfileLabel;
+
+    IBOutlet NSView *_editCurrentSessionView;
+    IBOutlet NSButton *_copySettingsToProfile;
+    IBOutlet NSButton *_copyProfleToSession;
 }
 
 - (void)dealloc {
@@ -77,7 +81,12 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
                            key:KEY_NAME
                           type:kPreferenceInfoTypeStringTextField];
     info.willChange = ^() { [_profileDelegate profilesGeneralPreferencesNameWillChange]; };
-    
+
+    info = [self defineControl:_profileNameFieldForEditCurrentSession
+                           key:KEY_NAME
+                          type:kPreferenceInfoTypeStringTextField];
+    info.willChange = ^() { [_profileDelegate profilesGeneralPreferencesNameWillChange]; };
+
     [self defineControl:_profileShortcut
                     key:KEY_SHORTCUT
                    type:kPreferenceInfoTypePopup
@@ -100,7 +109,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     info.shouldBeEnabled = ^BOOL {
         return [_commandType.selectedCell tag] == kCommandTypeCustomTag;
     };
-    
+
     [self defineControl:_sendTextAtStart
                     key:KEY_INITIAL_TEXT
                    type:kPreferenceInfoTypeStringTextField];
@@ -115,6 +124,16 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
                     key:KEY_WORKING_DIRECTORY
                    type:kPreferenceInfoTypeStringTextField];
 
+    [self defineControl:_badgeText
+                    key:KEY_BADGE_FORMAT
+                   type:kPreferenceInfoTypeStringTextField];
+
+    [self defineControl:_badgeTextForEditCurrentSession
+                    key:KEY_BADGE_FORMAT
+                   type:kPreferenceInfoTypeStringTextField];
+
+    [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
+
     [self updateEditAdvancedConfigButton];
 }
 
@@ -123,40 +142,17 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
-    NSArray *viewsToHide = @[ _profileShortcut,
-                              _tagsTokenField,
-                              _commandType,
-                              _customCommand,
-                              _sendTextAtStart,
-                              _initialDirectoryType,
-                              _customDirectory,
-                              _editAdvancedConfigButton,
-                              _basicsLabel,
-                              _shortcutLabel,
-                              _modifierLabel,
-                              _tagsLabel,
-                              _commandLabel,
-                              _sendTextAtStartLabel,
-                              _directoryLabel,
-                              _schemesHeaderLabel,
-                              _schemesLabel,
-                              _urlSchemes ];
-    for (NSView *view in viewsToHide) {
-        view.hidden = YES;
-    }
-    
-    NSArray *viewsToShow = @[ _profiles,
-                              _changeProfileButton,
-                              _setProfileLabel ];
-    for (NSView *view in viewsToShow) {
-        view.hidden = NO;
-    }
+    self.view = _editCurrentSessionView;
 }
 
 - (void)reloadProfile {
     [super reloadProfile];
     [self populateBookmarkUrlSchemesFromProfile:[self.delegate profilePreferencesCurrentProfile]];
-    [_profiles selectRowByGuid:nil];
+    [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
+}
+
+- (NSString *)selectedGuid {
+    return [_profiles selectedGuid];
 }
 
 #pragma mark - Copy current session to Profile
@@ -435,6 +431,13 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 - (id)tokenFieldCell:(NSTokenFieldCell *)tokenFieldCell
     representedObjectForEditingString:(NSString *)editingString {
     return [editingString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+}
+
+#pragma mark - ProfileListViewDelegate
+
+- (void)profileTableSelectionDidChange:(id)profileTable {
+    [_copySettingsToProfile setEnabled:[_profiles hasSelection]];
+    [_copyProfleToSession setEnabled:[_profiles hasSelection]];
 }
 
 @end

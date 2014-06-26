@@ -1179,6 +1179,64 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return height;
 }
 
+- (NSArray *)keyValuePair {
+    NSRange range = [self rangeOfString:@"="];
+    if (range.location == NSNotFound) {
+        return @[ self, @"" ];
+    } else {
+        return @[ [self substringToIndex:range.location],
+                  [self substringFromIndex:range.location + 1] ];
+    }
+}
+
+// Replace substrings like \(foo) with the value of vars[@"foo"].
+- (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars {
+    unichar *chars = (unichar *)malloc(self.length * sizeof(unichar));
+    [self getCharacters:chars];
+    enum {
+        kLiteral,
+        kEscaped,
+        kInParens
+    } state = kLiteral;
+    NSMutableString *result = [NSMutableString string];
+    NSMutableString *varName = nil;
+    for (int i = 0; i < self.length; i++) {
+        unichar c = chars[i];
+        switch (state) {
+            case kLiteral:
+                if (c == '\\') {
+                    state = kEscaped;
+                } else {
+                    [result appendFormat:@"%C", c];
+                }
+                break;
+
+            case kEscaped:
+                if (c == '(') {
+                    state = kInParens;
+                    varName = [NSMutableString string];
+                } else {
+                    [result appendFormat:@"%C", c];
+                }
+                break;
+
+            case kInParens:
+                if (c == ')') {
+                    state = kLiteral;
+                    NSString *value = vars[varName];
+                    if (value) {
+                        [result appendString:value];
+                    }
+                } else {
+                    [varName appendFormat:@"%C", c];
+                }
+                break;
+        }
+    }
+    free(chars);
+    return result;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

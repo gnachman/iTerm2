@@ -114,6 +114,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_INITIAL_TEXT: @"",
                   KEY_CUSTOM_DIRECTORY: kProfilePreferenceInitialDirectoryHomeValue,
                   KEY_WORKING_DIRECTORY: @"",
+                  KEY_BADGE_FORMAT: @"",
                   // Note: these defaults aren't used, except for link color and cursor guide color, because they are always specified.
                   KEY_FOREGROUND_COLOR:    [[NSColor colorWithCalibratedRed:0.733 green:0.733 blue:0.733 alpha:1] dictionaryValue],
                   KEY_BACKGROUND_COLOR:    [[NSColor colorWithCalibratedRed:0.000 green:0.000 blue:0.000 alpha:1] dictionaryValue],
@@ -140,6 +141,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_ANSI_14_COLOR:       [[NSColor colorWithCalibratedRed:0.333 green:1.000 blue:1.000 alpha:1] dictionaryValue],
                   KEY_ANSI_15_COLOR:       [[NSColor colorWithCalibratedRed:1.000 green:1.000 blue:1.000 alpha:1] dictionaryValue],
                   KEY_CURSOR_GUIDE_COLOR:  [[NSColor colorWithCalibratedRed:0.650 green:0.910 blue:1.000 alpha:0.25] dictionaryValue],
+                  KEY_BADGE_COLOR:         [[NSColor colorWithCalibratedRed:0.500 green:0.000 blue:0.000 alpha:1] dictionaryValue],
                   KEY_USE_CURSOR_GUIDE: @NO,
                   KEY_TAB_COLOR: [NSNull null],
                   KEY_USE_TAB_COLOR: @NO,

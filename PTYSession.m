@@ -98,6 +98,14 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 static int gNextSessionID = 1;
 
+// Keys into _badgeVars.
+static NSString *const kBadgeKeySessionName = @"session.name";
+static NSString *const kBadgeKeySessionColumns = @"session.columns";
+static NSString *const kBadgeKeySessionRows = @"session.rows";
+static NSString *const kBadgeKeySessionHostname = @"session.hostname";
+static NSString *const kBadgeKeySessionUsername = @"session.username";
+static NSString *const kBadgeKeySessionPath = @"session.path";
+
 // Rate limit for checking instant (partial-line) triggers, in seconds.
 static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
@@ -118,6 +126,8 @@ typedef enum {
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, retain) NSColor *cursorGuideColor;
 @property(nonatomic, copy) NSString *uniqueID;
+@property(nonatomic, copy) NSString *badgeFormat;
+@property(nonatomic, retain) NSMutableDictionary *badgeVars;
 @end
 
 @implementation PTYSession {
@@ -297,6 +307,7 @@ typedef enum {
         _activityCounter = [@0 retain];
         _announcements = [[NSMutableDictionary alloc] init];
         _queuedTokens = [[NSMutableArray alloc] init];
+        _badgeVars = [[NSMutableDictionary alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
@@ -317,12 +328,12 @@ typedef enum {
                                                  selector:@selector(terminalFileShouldStop:)
                                                      name:kTerminalFileShouldStopNotification
                                                    object:nil];
+        [self updateBadgeVars];
     }
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [self stopTailFind];  // This frees the substring in the tail find context, if needed.
     _shell.delegate = nil;
     dispatch_release(_executionSemaphore);
@@ -368,6 +379,8 @@ typedef enum {
     [_announcements release];
     [_queuedTokens release];
     [_uniqueID release];
+    [_badgeFormat release];
+    [_badgeVars release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -445,6 +458,30 @@ typedef enum {
     }
     [self setDvrFrame];
     return [_dvrDecoder timestamp];
+}
+
+- (void)updateBadgeVars {
+    _badgeVars[kBadgeKeySessionName] = [self name];
+    _badgeVars[kBadgeKeySessionColumns] = [NSString stringWithFormat:@"%d", _screen.width];
+    _badgeVars[kBadgeKeySessionRows] = [NSString stringWithFormat:@"%d", _screen.height];
+    VT100RemoteHost *remoteHost = [self currentHost];
+    if (remoteHost.hostname) {
+        _badgeVars[kBadgeKeySessionHostname] = remoteHost.hostname;
+    } else {
+        [_badgeVars removeObjectForKey:kBadgeKeySessionHostname];
+    }
+    if (remoteHost.username) {
+        _badgeVars[kBadgeKeySessionUsername] = remoteHost.username;
+    } else {
+        [_badgeVars removeObjectForKey:kBadgeKeySessionUsername];
+    }
+    NSString *path = [_screen workingDirectoryOnLine:_screen.numberOfScrollbackLines + _screen.cursorY - 1];
+    if (path) {
+        _badgeVars[kBadgeKeySessionPath] = path;
+    } else {
+        [_badgeVars removeObjectForKey:kBadgeKeySessionPath];
+    }
+    [_textview setBadgeLabel:[self badgeLabel]];
 }
 
 - (void)coprocessChanged
@@ -2120,13 +2157,18 @@ typedef enum {
     [_screen setMaxScrollbackLines:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
     _screen.appendToScrollbackWithStatusBar = [[aDict objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue];
-
+    self.badgeFormat = aDict[KEY_BADGE_FORMAT];
+    _textview.badgeLabel = [self badgeLabel];
     [self setFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NORMAL_FONT]]
         nonAsciiFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NON_ASCII_FONT]]
         horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
         verticalSpacing:[[aDict objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [_screen setSaveToScrollbackInAlternateScreen:[aDict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] ? [[aDict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] boolValue] : YES];
     [[_tab realParentWindow] invalidateRestorableState];
+}
+
+- (NSString *)badgeLabel {
+    return [_badgeFormat stringByReplacingVariableReferencesWithVariables:_badgeVars];
 }
 
 - (NSString *)uniqueID {
@@ -2257,6 +2299,8 @@ typedef enum {
                                                             object:[[self tab] parentWindow]
                                                           userInfo:nil];
     }
+    _badgeVars[kBadgeKeySessionName] = [self name];
+    [_textview setBadgeLabel:[self badgeLabel]];
 }
 
 - (NSString*)windowTitle
@@ -4781,6 +4825,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return _cursorGuideColor;
 }
 
+- (NSColor *)textViewBadgeColor {
+    return [[iTermProfilePreferences objectForKey:KEY_BADGE_COLOR inProfile:_profile] colorValue];
+}
+
 - (void)sendEscapeSequence:(NSString *)text
 {
     if (_exited) {
@@ -5048,6 +5096,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)screenSizeDidChange {
     [self updateScroll];
     [_textview updateNoteViewFrames];
+    _badgeVars[kBadgeKeySessionColumns] = [NSString stringWithFormat:@"%d", _screen.width];
+    _badgeVars[kBadgeKeySessionRows] = [NSString stringWithFormat:@"%d", _screen.height];
+    [_textview setBadgeLabel:[self badgeLabel]];
 }
 
 - (void)screenTriggerableChangeDidOccur {
@@ -5564,6 +5615,25 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self queueAnnouncement:announcement identifier:kIdentifier];
 }
 
+- (void)screenSetBadgeFormat:(NSString *)theFormat {
+    theFormat = [theFormat stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+    [self setSessionSpecificProfileValues:@{ KEY_BADGE_FORMAT: theFormat }];
+    _textview.badgeLabel = [self badgeLabel];
+}
+
+- (void)screenSetUserVar:(NSString *)kvpString {
+    NSArray *kvp = [kvpString keyValuePair];
+    if (kvp) {
+        NSString *key = [NSString stringWithFormat:@"user.%@", kvp[0]];
+        if (![kvp[1] length]) {
+            [_badgeVars removeObjectForKey:key];
+        } else {
+            _badgeVars[key] = [kvp[1] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+        }
+    }
+    [_textview setBadgeLabel:[self badgeLabel]];
+}
+
 - (iTermColorMap *)screenColorMap {
     return _colorMap;
 }
@@ -5627,20 +5697,22 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
+    if (host.hostname) {
+        _badgeVars[kBadgeKeySessionHostname] = host.hostname;
+    } else {
+        [_badgeVars removeObjectForKey:kBadgeKeySessionHostname];
+    }
+    if (host.username) {
+        _badgeVars[kBadgeKeySessionUsername] = host.username;
+    } else {
+        [_badgeVars removeObjectForKey:kBadgeKeySessionUsername];
+    }
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
     [[[self tab] realParentWindow] sessionHostDidChange:self to:host];
 
     int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
     NSString *path = [_screen workingDirectoryOnLine:line];
     [self tryAutoProfileSwitchWithHostname:host.hostname username:host.username path:path];
-}
-
-- (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath {
-    int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
-    VT100RemoteHost *remoteHost = [_screen remoteHostOnLine:line];
-    [self tryAutoProfileSwitchWithHostname:remoteHost.hostname
-                                  username:remoteHost.username
-                                      path:newPath];
 }
 
 - (void)tryAutoProfileSwitchWithHostname:(NSString *)hostname
@@ -5671,6 +5743,24 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (bestProfile) {
         [self setProfile:bestProfile preservingName:NO];
     }
+
+    // screenCurrentDirectoryDidChangeTo depends on us calling setBadgeLabel.
+    // If you remove it here, add one there.
+    [_textview setBadgeLabel:[self badgeLabel]];
+}
+
+- (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath {
+    if (newPath) {
+        _badgeVars[kBadgeKeySessionPath] = newPath;
+    } else {
+        [_badgeVars removeObjectForKey:kBadgeKeySessionPath];
+    }
+
+    int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
+    VT100RemoteHost *remoteHost = [_screen remoteHostOnLine:line];
+    [self tryAutoProfileSwitchWithHostname:remoteHost.hostname
+                                  username:remoteHost.username
+                                      path:newPath];
 }
 
 - (BOOL)screenShouldSendReport {

@@ -18,6 +18,8 @@
 
 @property(nonatomic, assign) IBOutlet id<ProfilesGeneralPreferencesViewControllerDelegate> profileDelegate;
 @property(nonatomic, readonly) NSTextField *profileNameField;
+@property(nonatomic, readonly) NSTextField *profileNameFieldForEditCurrentSession;
+@property(nonatomic, readonly) NSString *selectedGuid;
 
 - (void)layoutSubviewsForEditCurrentSessionMode;
 - (void)updateShortcutTitles;
