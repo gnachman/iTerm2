@@ -461,7 +461,12 @@ typedef enum {
 }
 
 - (void)updateBadgeVars {
-    _badgeVars[kBadgeKeySessionName] = [self name];
+    if (_name) {
+        _badgeVars[kBadgeKeySessionName] = [_name copy];
+    } else {
+        [_badgeVars removeObjectForKey:kBadgeKeySessionName];
+    }
+
     _badgeVars[kBadgeKeySessionColumns] = [NSString stringWithFormat:@"%d", _screen.width];
     _badgeVars[kBadgeKeySessionRows] = [NSString stringWithFormat:@"%d", _screen.height];
     VT100RemoteHost *remoteHost = [self currentHost];
@@ -2013,6 +2018,8 @@ typedef enum {
             didChange = YES;
         }
     }
+
+    _textview.badgeLabel = [self badgeLabel];
     return didChange;
 }
 

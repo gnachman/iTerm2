@@ -109,6 +109,8 @@ static NSImage* alertImage;
 @property(nonatomic, retain) NSColor *unfocusedSelectionColor;
 @property(nonatomic, retain) Trouter *trouter;
 @property(nonatomic, retain) NSImage *badgeImage;
+@property(nonatomic, retain) NSColor *badgeColor;
+@property(nonatomic, copy) NSString *bagdgeLabel;
 
 - (NSRect)cursorRect;
 - (URLAction *)urlActionForClickAtX:(int)x
@@ -334,6 +336,9 @@ static NSImage* alertImage;
 
     // The most recent mouse-down was a "first mouse" (activated the window).
     BOOL _mouseDownWasFirstMouse;
+
+    // Size of the documentVisibleRect when the badge was set.
+    NSSize _badgeDocumentVisibleRectSize;
 }
 
 
@@ -520,8 +525,9 @@ static NSImage* alertImage;
         [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
     }
     [_currentUnderlineHostname release];
-    [_badgeLabel release];
     [_badgeImage release];
+    [_badgeColor release];
+    [_bagdgeLabel release];
 
     [super dealloc];
 }
@@ -5189,8 +5195,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)setBadgeLabel:(NSString *)badgeLabel {
+    NSColor *fillColor = [_delegate textViewBadgeColor];
+    // We compare pointer equality below to catch equal nil pointers, which isEqual: cannot.
+    if (NSEqualSizes(_badgeDocumentVisibleRectSize, self.enclosingScrollView.documentVisibleRect.size) &&
+        (fillColor == _badgeColor || [fillColor isEqual:_badgeColor]) &&
+        (badgeLabel == _badgeLabel || [badgeLabel isEqualToString:_badgeLabel])) {
+        return;
+    }
+    int oldLength = [_badgeLabel length];
+    DLog(@"Recompute badge self=%p, label=new:%@ vs old:%@, color=new:%@ vs old:%@, size=new:%@ vs old:%@",
+          self,
+         badgeLabel, _badgeLabel,
+         fillColor, _badgeColor,
+         NSStringFromSize(self.enclosingScrollView.documentVisibleRect.size),
+         NSStringFromSize(_badgeDocumentVisibleRectSize));
+    _badgeDocumentVisibleRectSize = self.enclosingScrollView.documentVisibleRect.size;
     [_badgeLabel autorelease];
     _badgeLabel = [badgeLabel copy];
+    self.badgeColor = fillColor;
 
     if ([_badgeLabel length]) {
         NSSize maxSize = self.enclosingScrollView.documentVisibleRect.size;
@@ -5203,7 +5225,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         NSSize sizeWithFont;
         NSDictionary *attributes;
         NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
-        NSColor *fillColor = [_delegate textViewBadgeColor];
         NSFontManager *fontManager = [NSFontManager sharedFontManager];
         NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
         paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
@@ -5241,6 +5262,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     } else {
         self.badgeImage = nil;
+        if (oldLength == 0) {
+            // Optimization - don't call setNeedsDisplay if nothing changed.
+            return;
+        }
     }
     [self setNeedsDisplay:YES];
 }
