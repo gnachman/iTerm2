@@ -4053,6 +4053,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
       DebugLog(@"Terminal already dead");
       return;
     }
+
+    BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
+    BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
+
     // No special binding for this key combination.
     if (modflag & NSFunctionKeyMask) {
       if (debugKeyDown) {
@@ -4113,12 +4117,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         send_str = (unsigned char *)[keydat bytes];
         send_strlen = [keydat length];
       }
-    } else if (((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask &&
-                ([self optionKey] != OPT_NORMAL)) ||
-               (modflag == NSAlternateKeyMask &&
-                ([self optionKey] != OPT_NORMAL)) ||  /// synergy
-               ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask &&
-                ([self rightOptionKey] != OPT_NORMAL))) {
+    } else if ((leftAltPressed && [self optionKey] != OPT_NORMAL) ||
+               (rightAltPressed && [self rightOptionKey] != OPT_NORMAL)) {
                  if (debugKeyDown) {
                    NSLog(@"PTYSession keyDown opt + key -> modkey");
                  }
@@ -4126,10 +4126,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                  // A key was pressed while holding down option and the option key
                  // is not behaving normally. Apply the modified behavior.
                  int mode;  // The modified behavior based on which modifier is pressed.
-                 if ((modflag == NSAlternateKeyMask) ||  // synergy
-                     (modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask) {
+                 if (leftAltPressed) {
                    mode = [self optionKey];
                  } else {
+                   assert(rightAltPressed);
                    mode = [self rightOptionKey];
                  }
 
