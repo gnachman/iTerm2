@@ -2344,21 +2344,14 @@ NSMutableArray* screens=0;
         isFirstInteraction = NO;
     }
 
-    BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown BEGIN %@", event);
-    }
-    DebugLog(@"PTYTextView keyDown");
+    DLog(@"PTYTextView keyDown BEGIN %@", event);
     id delegate = [self delegate];
     if ([delegate isPasting]) {
         [delegate queueKeyDown:event];
         return;
     }
     if ([_delegate textViewDelegateHandlesAllKeystrokes]) {
-        if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown: in instant replay, send to delegate");
-        }
+        DLog(@"PTYTextView keyDown: in instant replay, send to delegate");
         // Delegate has special handling for this case.
         [delegate keyDown:event];
         return;
@@ -2370,19 +2363,17 @@ NSMutableArray* screens=0;
     BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
 
     keyIsARepeat = [event isARepeat];
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
-        NSLog(@"prev=%d", (int)prev);
-        NSLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
-        NSLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%d", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
-        NSLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
-        NSLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
-        NSLog(@"leftAltPressed && optionKey != NORMAL = %d", (int)(leftAltPressed && [delegate optionKey] != OPT_NORMAL));
-        NSLog(@"rightAltPressed && rightOptionKey != NORMAL = %d", (int)(rightAltPressed && [delegate rightOptionKey] != OPT_NORMAL));
-        NSLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
-        NSLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
-        NSLog(@"event is repeated=%d", keyIsARepeat);
-    }
+    DLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
+    DLog(@"prev=%d", (int)prev);
+    DLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
+    DLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%d", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
+    DLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
+    DLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
+    DLog(@"leftAltPressed && optionKey != NORMAL = %d", (int)(leftAltPressed && [delegate optionKey] != OPT_NORMAL));
+    DLog(@"rightAltPressed && rightOptionKey != NORMAL = %d", (int)(rightAltPressed && [delegate rightOptionKey] != OPT_NORMAL));
+    DLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
+    DLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
+    DLog(@"event is repeated=%d", keyIsARepeat);
 
     // discard repeated key events if auto repeat mode (DECARM) is disabled
     if (keyIsARepeat && ![[_dataSource terminal] autorepeatMode]) {
@@ -2407,22 +2398,17 @@ NSMutableArray* screens=0;
            (rightAltPressed && [delegate rightOptionKey] != OPT_NORMAL))) ||
          ((modflag & NSControlKeyMask) &&                          // a few special cases
           (keyCode == 0x2c /* slash */ || keyCode == 0x2a /* backslash */)))) {
-        if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown: process in delegate");
-        }
-        [delegate keyDown:event];
-        return;
+             DLog(@"PTYTextView keyDown: process in delegate");
+             [delegate keyDown:event];
+             return;
     }
 
-    if (debugKeyDown) {
-        NSLog(@"Test for command key");
-    }
+    DLog(@"Test for command key");
+
     if (modflag & NSCommandKeyMask) {
         // You pressed cmd+something but it's not handled by the delegate. Going further would
         // send the unmodified key to the terminal which doesn't make sense.
-        if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown You pressed cmd+something");
-        }
+        DLog(@"PTYTextView keyDown You pressed cmd+something");
         return;
     }
 
@@ -2431,9 +2417,8 @@ NSMutableArray* screens=0;
     BOOL workAroundControlBug = NO;
     if (!prev &&
         (modflag & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == NSControlKeyMask) {
-        if (debugKeyDown) {
-            NSLog(@"Special ctrl+key handler running");
-        }
+        DLog(@"Special ctrl+key handler running");
+
         NSString *unmodkeystr = [event charactersIgnoringModifiers];
         if ([unmodkeystr length] != 0) {
             unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
@@ -2455,9 +2440,7 @@ NSMutableArray* screens=0;
             }
             if (cc != 0xffff) {
                 [self insertText:[NSString stringWithCharacters:&cc length:1]];
-                if (debugKeyDown) {
-                    NSLog(@"PTYTextView keyDown work around control bug. cc=%d", (int)cc);
-                }
+                DLog(@"PTYTextView keyDown work around control bug. cc=%d", (int)cc);
                 workAroundControlBug = YES;
             }
         }
@@ -2466,9 +2449,7 @@ NSMutableArray* screens=0;
     if (!workAroundControlBug) {
         // Let the IME process key events
         _inputMethodIsInserting = NO;
-        if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown send to IME");
-        }
+        DLog(@"PTYTextView keyDown send to IME");
 
         // In issue 2743, it is revealed that in OS 10.9 this sometimes calls -insertText on the
         // wrong instnace of PTYTextView. We work around the issue by using a global variable to
@@ -2482,15 +2463,11 @@ NSMutableArray* screens=0;
         if (!prev &&
             !_inputMethodIsInserting &&
             ![self hasMarkedText]) {
-            if (debugKeyDown) {
-                NSLog(@"PTYTextView keyDown IME no, send to delegate");
-            }
+            DLog(@"PTYTextView keyDown IME no, send to delegate");
             [delegate keyDown:event];
         }
     }
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown END");
-    }
+    DLog(@"PTYTextView keyDown END");
 }
 
 - (BOOL)keyIsARepeat
@@ -3593,12 +3570,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event verticalOk:(BOOL)verticalOk
 {
-    BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
-    }
-    DebugLog(@"PTYTextView placeCursorOnCurrentLineWithEvent");
+    DLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
 
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
@@ -3662,14 +3634,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             i--;
         }
     }
-    if (debugKeyDown) {
-        NSLog(@"cursor at %d,%d (x,y) moved to %d,%d (x,y) [window width: %d]",
-              cursorX, cursorY, x, y, width);
-    }
+    DLog(@"cursor at %d,%d (x,y) moved to %d,%d (x,y) [window width: %d]",
+          cursorX, cursorY, x, y, width);
 
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent END");
-    }
+    DLog(@"PTYTextView placeCursorOnCurrentLineWithEvent END");
 }
 
 - (VT100GridCoordRange)rangeByTrimmingNullsFromRange:(VT100GridCoordRange)range
@@ -5008,10 +4976,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     DLog(@"PTYTextView insertText:%@", aString);
     if ([self hasMarkedText]) {
-        BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-        if (debugKeyDown) {
-            NSLog(@"insertText: clear marked text");
-        }
+        DLog(@"insertText: clear marked text");
         _inputMethodMarkedRange = NSMakeRange(0, 0);
         [markedText release];
         markedText=nil;
@@ -5051,10 +5016,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // TODO: Respect replacementRange
 - (void)setMarkedText:(id)aString selectedRange:(NSRange)selRange replacementRange:(NSRange)replacementRange
 {
-    BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-    if (debugKeyDown) {
-        NSLog(@"set marked text to %@; range %@", aString, [NSValue valueWithRange:selRange]);
-    }
+    DLog(@"set marked text to %@; range %@", aString, [NSValue valueWithRange:selRange]);
     [markedText release];
     if ([aString isKindOfClass:[NSAttributedString class]]) {
         markedText = [[NSAttributedString alloc] initWithString:[aString string]
@@ -5096,10 +5058,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)unmarkText
 {
-    BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-    if (debugKeyDown) {
-        NSLog(@"clear marked text");
-    }
+    DLog(@"clear marked text");
     // As far as I can tell this is never called.
     _inputMethodMarkedRange = NSMakeRange(0, 0);
     imeOffset = 0;

@@ -1160,28 +1160,12 @@ typedef enum {
 
 - (void)writeTaskImpl:(NSData *)data
 {
-    static BOOL checkedDebug;
-    static BOOL debugKeyDown;
-    if (!checkedDebug) {
-        debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-        checkedDebug = YES;
-    }
-    if (debugKeyDown || gDebugLogging) {
+    if (gDebugLogging) {
         NSArray *stack = [NSThread callStackSymbols];
-        if (debugKeyDown) {
-            NSLog(@"writeTaskImpl %p: called from %@", self, stack);
-        }
-        if (gDebugLogging) {
-            DebugLog([NSString stringWithFormat:@"writeTaskImpl %p: called from %@", self, stack]);
-        }
+        DLog(@"writeTaskImpl %p: called from %@", self, stack);
         const char *bytes = [data bytes];
         for (int i = 0; i < [data length]; i++) {
-            if (debugKeyDown) {
-                NSLog(@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]);
-            }
-            if (gDebugLogging) {
-                DebugLog([NSString stringWithFormat:@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]]);
-            }
+            DLog(@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]);
         }
     }
 
@@ -3759,7 +3743,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 // pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event
 {
-  BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
   unsigned char *send_str = NULL;
   unsigned char *dataPtr = NULL;
   int dataLength = 0;
@@ -3781,15 +3764,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
   }
   unicode = [keystr length] > 0 ? [keystr characterAtIndex:0] : 0;
   unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
-  if (debugKeyDown) {
-    NSLog(@"PTYSession keyDown modflag=%d keystr=%@ unmodkeystr=%@ unicode=%d unmodunicode=%d", (int)modflag, keystr, unmodkeystr, (int)unicode, (int)unmodunicode);
-  }
+  DLog(@"PTYSession keyDown modflag=%d keystr=%@ unmodkeystr=%@ unicode=%d unmodunicode=%d", (int)modflag, keystr, unmodkeystr, (int)unicode, (int)unmodunicode);
   gettimeofday(&_lastInput, NULL);
 
   if ([[[self tab] realParentWindow] inInstantReplay]) {
-    if (debugKeyDown) {
-      NSLog(@"PTYSession keyDown in IR");
-    }
+    DLog(@"PTYSession keyDown in IR");
+
     // Special key handling in IR mode, and keys never get sent to the live
     // session, even though it might be displayed.
     if (unicode == 27) {
@@ -3821,10 +3801,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
   }
 
   unsigned short keycode = [event keyCode];
-  if (debugKeyDown) {
-    NSLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
-  }
-  DebugLog([NSString stringWithFormat:@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask)]);
+  DLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
 
   // Check if we have a custom key mapping for this event
   keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
@@ -3833,10 +3810,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                               keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
 
   if (keyBindingAction >= 0) {
-    if (debugKeyDown) {
-      NSLog(@"PTYSession keyDown action=%d", keyBindingAction);
-    }
-    DebugLog([NSString stringWithFormat:@"keyBindingAction=%d", keyBindingAction]);
+    DLog(@"PTYSession keyDown action=%d", keyBindingAction);
     // A special action was bound to this key combination.
     NSString* temp;
     int profileAction = [iTermKeyBindingMgr localActionForKeyCode:unmodunicode
@@ -4045,10 +4019,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
       [self handleKeypressInTmuxGateway:unicode];
       return;
     }
-    if (debugKeyDown) {
-      NSLog(@"PTYSession keyDown no keybinding action");
-    }
-    DebugLog(@"No keybinding action");
+    DLog(@"PTYSession keyDown no keybinding action");
     if (_exited) {
       DebugLog(@"Terminal already dead");
       return;
@@ -4059,10 +4030,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
     // No special binding for this key combination.
     if (modflag & NSFunctionKeyMask) {
-      if (debugKeyDown) {
-        NSLog(@"PTYSession keyDown is a function key");
-      }
-      DebugLog(@"Is a function key");
+      DLog(@"PTYSession keyDown is a function key");
       // Handle all "special" keys (arrows, etc.)
       NSData *data = nil;
 
@@ -4119,10 +4087,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
       }
     } else if ((leftAltPressed && [self optionKey] != OPT_NORMAL) ||
                (rightAltPressed && [self rightOptionKey] != OPT_NORMAL)) {
-                 if (debugKeyDown) {
-                   NSLog(@"PTYSession keyDown opt + key -> modkey");
-                 }
-                 DebugLog(@"Option + key -> modified key");
+                 DLog(@"PTYSession keyDown opt + key -> modkey");
                  // A key was pressed while holding down option and the option key
                  // is not behaving normally. Apply the modified behavior.
                  int mode;  // The modified behavior based on which modifier is pressed.
@@ -4149,43 +4114,28 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                    }
                  }
                } else {
-                 if (debugKeyDown) {
-                   NSLog(@"PTYSession keyDown regular path");
-                 }
-                 DebugLog(@"Regular path for keypress");
+                 DLog(@"PTYSession keyDown regular path");
                  // Regular path for inserting a character from a keypress.
                  int max = [keystr length];
                  NSData *data=nil;
 
                  if (max != 1||[keystr characterAtIndex:0] > 0x7f) {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown non-ascii");
-                   }
-                   DebugLog(@"Non-ascii input");
+                   DLog(@"PTYSession keyDown non-ascii");
                    data = [keystr dataUsingEncoding:[_terminal encoding]];
                  } else {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown ascii");
-                   }
-                   DebugLog(@"ASCII input");
+                   DLog(@"PTYSession keyDown ascii");
                    data = [keystr dataUsingEncoding:NSUTF8StringEncoding];
                  }
 
                  // Enter key is on numeric keypad, but not marked as such
                  if (unicode == NSEnterCharacter && unmodunicode == NSEnterCharacter) {
                    modflag |= NSNumericPadKeyMask;
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown enter key");
-                   }
-                   DebugLog(@"Enter key");
+                   DLog(@"PTYSession keyDown enter key");
                    keystr = @"\015";  // Enter key -> 0x0d
                  }
                  // Check if we are in keypad mode
                  if (modflag & NSNumericPadKeyMask) {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown numeric keyoad");
-                   }
-                   DebugLog(@"Numeric keypad mask");
+                   DLog(@"PTYSession keyDown numeric keyoad");
                    data = [_terminal.output keypadData:unicode keystr:keystr];
                  }
 
@@ -4198,29 +4148,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                        // fat-fingered switching of tabs/windows.
                        // Do not send anything for cmd+[shift]+enter if it wasn't
                        // caught by the menu.
-                       DebugLog(@"Cmd + 0-9 or cmd + enter");
-                       if (debugKeyDown) {
-                         NSLog(@"PTYSession keyDown cmd+0-9 or cmd+enter");
-                       }
+                       DLog(@"PTYSession keyDown cmd+0-9 or cmd+enter");
                        data = nil;
                      }
                  if (data != nil) {
                    send_str = (unsigned char *)[data bytes];
                    send_strlen = [data length];
-                   DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
-                             modflag, send_strlen, send_str[0], send_str[0]]);
-                   if (debugKeyDown) {
-                     DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
-                               modflag, send_strlen, send_str[0], send_str[0]]);
-                   }
+                   DLog(@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
+                        modflag, send_strlen, send_str[0], send_str[0]);
                  }
 
                  if ((modflag & NSControlKeyMask) &&
                      send_strlen == 1 &&
                      send_str[0] == '|') {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown c-|");
-                   }
+                   DLog(@"PTYSession keyDown c-|");
                    // Control-| is sent as Control-backslash
                    send_str = (unsigned char*)"\034";
                    send_strlen = 1;
@@ -4228,27 +4169,21 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                             (modflag & NSShiftKeyMask) &&
                             send_strlen == 1 &&
                             send_str[0] == '/') {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown c-?");
-                   }
+                   DLog(@"PTYSession keyDown c-?");
                    // Control-shift-/ is sent as Control-?
                    send_str = (unsigned char*)"\177";
                    send_strlen = 1;
                  } else if ((modflag & NSControlKeyMask) &&
                             send_strlen == 1 &&
                             send_str[0] == '/') {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown c-/");
-                   }
+                   DLog(@"PTYSession keyDown c-/");
                    // Control-/ is sent as Control-/, but needs some help to do so.
                    send_str = (unsigned char*)"\037"; // control-/
                    send_strlen = 1;
                  } else if ((modflag & NSShiftKeyMask) &&
                             send_strlen == 1 &&
                             send_str[0] == '\031') {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown shift-tab -> esc[Z");
-                   }
+                   DLog(@"PTYSession keyDown shift-tab -> esc[Z");
                    // Shift-tab is sent as Esc-[Z (or "backtab")
                    send_str = (unsigned char*)"\033[Z";
                    send_strlen = 3;
