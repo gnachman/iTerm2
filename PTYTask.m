@@ -584,9 +584,9 @@ static void reapchild(int n)
             if (equalsRange.location != NSNotFound) {
                 NSString *key = [kvp substringToIndex:equalsRange.location];
                 NSString *value = [kvp substringFromIndex:equalsRange.location + 1];
-                result[key] = value;
+                [result setObject:value forKey:key];
             } else {
-                result[kvp] = @"";
+                [result setObject:@"" forKey:kvp];
             }
         }
     }
@@ -601,12 +601,12 @@ static void reapchild(int n)
 - (char **)environWithOverrides:(NSDictionary *)env {
     NSMutableDictionary *environmentDict = [self mutableEnvironmentDictionary];
     for (NSString *k in env) {
-        environmentDict[k] = env[k];
+        [environmentDict setObject:[env objectForKey:k] forKey:k];
     }
     char **environment = malloc(sizeof(char*) * (environmentDict.count + 1));
     int i = 0;
     for (NSString *k in environmentDict) {
-        NSString *temp = [NSString stringWithFormat:@"%@=%@", k, environmentDict[k]];
+        NSString *temp = [NSString stringWithFormat:@"%@=%@", k, [environmentDict objectForKey:k]];
         environment[i++] = strdup([temp UTF8String]);
     }
     environment[i] = NULL;
