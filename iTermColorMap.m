@@ -74,12 +74,14 @@ const int kColorMap24bitBase = kColorMap8bitBase + 256;
 }
 
 - (void)setDimmingAmount:(double)dimmingAmount {
+    DLog(@"iTermColorMap: set dimming amount to %f from %@", dimmingAmount, [NSThread callStackSymbols]);
     _dimmingAmount = dimmingAmount;
     [self invalidateCache];
     [_delegate colorMap:self dimmingAmountDidChangeTo:dimmingAmount];
 }
 
 - (void)setMutingAmount:(double)mutingAmount {
+   DLog(@"iTermColorMap: set muting amount to %f from %@", mutingAmount, [NSThread callStackSymbols]);
     _mutingAmount = mutingAmount;
     [_mutedMap removeAllObjects];
     [_delegate colorMap:self mutingAmountDidChangeTo:mutingAmount];
@@ -89,6 +91,7 @@ const int kColorMap24bitBase = kColorMap8bitBase + 256;
     if (!theColor || theColor == _map[@(theKey)] || theKey >= kColorMap24bitBase) {
         return;
     }
+    DLog(@"Set key %d to %@", (int)theKey, theColor);
     if (theKey == kColorMapBackground) {
         _backgroundRed = [theColor redComponent];
         _backgroundGreen = [theColor greenComponent];
@@ -124,7 +127,9 @@ const int kColorMap24bitBase = kColorMap8bitBase + 256;
 }
 
 - (NSColor *)mutedColorForKey:(iTermColorMapKey)theKey {
+    DLog(@"Look up muted color for key %d", theKey);
     if (_mutingAmount == 0) {
+        DLog(@"No muting, just use real color");
         return [self colorForKey:theKey];
     } else {
             if (theKey == kColorMapInvalid) {
@@ -142,10 +147,11 @@ const int kColorMap24bitBase = kColorMap8bitBase + 256;
                                  backgroundGreen:_backgroundGreen
                                   backgroundBlue:_backgroundBlue];
             } else {
-                NSColor *result = _mutedMap[@(theKey)];
+                NSColor *result = nil;
                 if (!result) {
                     result = [_map[@(theKey)] colorMutedBy:_mutingAmount
                                                    towards:_map[@(kColorMapBackground)]];
+                    DLog(@"Return %@ muted by %f toward %@, which is %@", _map[@(theKey)], _mutingAmount, _map[@(kColorMapBackground)], result);
                   _mutedMap[@(theKey)] = result;
                 }
                 return result;
@@ -155,11 +161,15 @@ const int kColorMap24bitBase = kColorMap8bitBase + 256;
 
 - (NSColor *)dimmedColorForKey:(iTermColorMapKey)theKey {
     if (_dimmingAmount == 0) {
+        DLog(@"Dimming amount is 0 so use muted color");
         return [self mutedColorForKey:theKey];
     }
     NSColor *theColor = _dimmedColorCache[@(theKey)];
+    DLog(@"    Pick color from cache: %@", theColor);
     if (!theColor) {
+        DLog(@"    Not in cache. Get dimmed version of %@", [self colorForKey:theKey]);
         theColor = [self dimmedColorForColor:[self colorForKey:theKey]];
+        DLog(@"      The dimmed version is %@", theColor);
         if (theKey < kColorMap24bitBase) {
             // We don't cache dimmed versions of 24 bit colors because it would get too big.
             _dimmedColorCache[@(theKey)] = theColor;
@@ -169,6 +179,7 @@ const int kColorMap24bitBase = kColorMap8bitBase + 256;
 }
 
 - (void)invalidateCache {
+    DLog(@"Invalidate cache from %@", [NSThread callStackSymbols]);
     [_dimmedColorCache removeAllObjects];
 }
 

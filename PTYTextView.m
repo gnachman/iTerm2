@@ -5921,11 +5921,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     const int underlineStartsAt = underlinedRange.location;
     const int underlineEndsAt = NSMaxRange(underlinedRange);
     const BOOL dimOnlyText = _colorMap.dimOnlyText;
+    DLog(@"Enter construct runs for row %d", row);
     for (int i = indexRange.location; i < indexRange.location + indexRange.length; i++) {
         inUnderlinedRange = (i >= underlineStartsAt && i < underlineEndsAt);
         if (theLine[i].code == DWC_RIGHT) {
             continue;
         }
+        DLog(@"code=%d, foregroundColor=%d, fgGreen=%d, fgBlue=%d, foregroundColorMode=%d",
+             theLine[i].code,
+             theLine[i].foregroundColor,
+             theLine[i].fgGreen,
+             theLine[i].fgBlue,
+             theLine[i].foregroundColorMode);
 
         BOOL doubleWidth = i < width - 1 && (theLine[i + 1].code == DWC_RIGHT);
         unichar thisCharUnichar = 0;
@@ -5944,7 +5951,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Is a selection.
             isSelection = YES;
             // NOTE: This could be optimized by caching the color.
-            CRunAttrsSetColor(&attrs, storage, [_colorMap dimmedColorForKey:kColorMapSelectedText]);
+            NSColor *theColor = [_colorMap dimmedColorForKey:kColorMapSelectedText];
+            DLog(@"case 1: background selected. Use color=%@", theColor);
+            CRunAttrsSetColor(&attrs, storage, theColor);
         } else {
             // Not a selection.
             if (reversed &&
@@ -5952,9 +5961,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 theLine[i].foregroundColorMode == ColorModeAlternate) {
                 // Has default foreground color so use background color.
                 if (!dimOnlyText) {
+                    DLog(@"case 2: use dimmed background color for text because reversed and not dimmed");
                     CRunAttrsSetColor(&attrs, storage,
                                       [_colorMap dimmedColorForKey:kColorMapBackground]);
                 } else {
+                    DLog(@"case 3: use muted background color for text becasue reversed and dimmed");
                     CRunAttrsSetColor(&attrs,
                                       storage,
                                       [_colorMap mutedColorForKey:kColorMapBackground]);
@@ -5967,6 +5978,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     theLine[i].bold == lastBold) {
                     // Looking up colors with -colorForCode:... is expensive and it's common to
                     // have consecutive characters with the same color.
+                    DLog(@"case 4: reuse last color");
                     CRunAttrsSetColor(&attrs, storage, lastColor);
                 } else {
                     // Not reversed or not subject to reversing (only default
@@ -5976,18 +5988,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     lastFgBlue = theLine[i].fgBlue;
                     lastForegroundColorMode = theLine[i].foregroundColorMode;
                     lastBold = theLine[i].bold;
-                    CRunAttrsSetColor(&attrs,
-                                      storage,
-                                      [self colorForCode:theLine[i].foregroundColor
+                    DLog(@"Case 5: look up char's color");
+                    NSColor *theColor = [self colorForCode:theLine[i].foregroundColor
                                                    green:theLine[i].fgGreen
                                                     blue:theLine[i].fgBlue
                                                colorMode:theLine[i].foregroundColorMode
                                                     bold:theLine[i].bold
-                                            isBackground:NO]);
+                                            isBackground:NO];
+                    DLog(@"case 5: color=%@", theColor);
+                    CRunAttrsSetColor(&attrs,
+                                      storage,
+                                      theColor);
                     lastColor = attrs.color;
                 }
             }
         }
+        DLog(@"The color for this char is %@", attrs.color);
 
         if (matches && !isSelection) {
             // Test if this is a highlighted match from a find.
